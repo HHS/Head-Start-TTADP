@@ -1,4 +1,5 @@
 import { cast } from 'sequelize';
+import { Cast } from 'sequelize/types/utils';
 import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
@@ -68,6 +69,23 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
         model: db.File,
         as: 'supportingAttachments',
       },
+      {
+        model: db.User,
+        as: 'approver',
+        attributes: [
+          'fullName',
+          'name',
+        ],
+        include: [
+          {
+            model: db.Role,
+            as: 'roles',
+            attributes: [
+              'name',
+            ],
+          },
+        ],
+      },
     ],
   };
 
@@ -103,6 +121,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     updatedAt: session?.updatedAt,
     event: session?.event,
     approverId: session?.approverId ?? null,
+    approver: session?.approver ?? null,
   };
 }
 
@@ -127,7 +146,7 @@ export async function createSession(request) {
   return findSessionHelper({ id: created.dataValues.id }) as Promise<SessionReportShape>;
 }
 
-export async function updateSession(id, request) {
+export async function updateSession(id: number, request) {
   const session = await SessionReportPilot.findOne({
     where: { id },
   });
@@ -138,7 +157,7 @@ export async function updateSession(id, request) {
 
   validateFields(request, ['eventId', 'data']);
 
-  const { eventId, data } = request;
+  const { eventId, data: { approverId, ...data } } = request;
 
   // Combine existing session data with new data.
   const existingData = session.data;
@@ -146,11 +165,21 @@ export async function updateSession(id, request) {
 
   const event = await findEventBySmartsheetIdSuffix(eventId);
 
+  const update = {
+    eventId: event.id,
+    data: cast(JSON.stringify(newData), 'jsonb'),
+  } as {
+    eventId: number;
+    approverId?: number;
+    data: Cast;
+  };
+
+  if (approverId) {
+    update.approverId = Number(approverId);
+  }
+
   await SessionReportPilot.update(
-    {
-      eventId: event.id,
-      data: cast(JSON.stringify(newData), 'jsonb'),
-    },
+    update,
     {
       where: { id },
       individualHooks: true,

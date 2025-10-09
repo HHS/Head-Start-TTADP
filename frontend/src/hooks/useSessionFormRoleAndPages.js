@@ -5,6 +5,7 @@ import pages from '../pages/SessionForm/pages';
 import sessionSummary from '../pages/SessionForm/pages/sessionSummary';
 import ReviewSubmitSession from '../pages/SessionForm/components/ReviewSubmit';
 import UserContext from '../UserContext';
+import { TRAINING_EVENT_ORGANIZER } from '../Constants';
 
 const createReviewPage = (applicationPages) => {
   // don't modify original array
@@ -51,6 +52,9 @@ const createReviewPage = (applicationPages) => {
 };
 
 export default function useSessionFormRoleAndPages(formData) {
+  const eventOrganizer = formData?.event?.data?.eventOrganizer || '';
+  const isRegionalNoNationalCenters = useMemo(() => TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer, [eventOrganizer]);
+
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
 
@@ -58,10 +62,12 @@ export default function useSessionFormRoleAndPages(formData) {
     isPoc,
     isCollaborator,
     isOwner,
+    isApprover,
   } = useMemo(() => {
     let isPocUser = false;
     let isCollaboratorUser = false;
     let isOwnerUser = false;
+    let isApproverUser = false;
     if (formData && formData.event) {
       if ((formData.event.pocIds && formData.event.pocIds.includes(user.id))) {
         isPocUser = true;
@@ -75,16 +81,29 @@ export default function useSessionFormRoleAndPages(formData) {
         isOwnerUser = true;
       }
     }
+
+    if (formData && formData.approverId) {
+      isApproverUser = Number(formData.approverId) === user.id;
+    }
+
     return {
       isPoc: isPocUser,
       isCollaborator: isCollaboratorUser,
       isOwner: isOwnerUser,
+      isApprover: isApproverUser,
     };
   }, [formData, user.id]);
 
   const applicationPages = useMemo(() => {
     let pagesWithReview = [];
     if (isAdminUser) {
+      pagesWithReview = [
+        pages.sessionSummary,
+        pages.participants,
+        pages.supportingAttachments,
+        pages.nextSteps,
+      ];
+    } else if (isCollaborator && isRegionalNoNationalCenters) {
       pagesWithReview = [
         pages.sessionSummary,
         pages.participants,
@@ -105,13 +124,14 @@ export default function useSessionFormRoleAndPages(formData) {
     pagesWithReview.push(reviewPage);
 
     return pagesWithReview;
-  }, [isAdminUser, isPoc]);
+  }, [isAdminUser, isCollaborator, isPoc, isRegionalNoNationalCenters]);
 
   return {
     isPoc,
     isAdminUser,
     isCollaborator,
     isOwner,
+    isApprover,
     applicationPages,
   };
 }

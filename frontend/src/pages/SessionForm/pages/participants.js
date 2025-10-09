@@ -218,19 +218,7 @@ const ReviewSection = () => {
   return <ReviewPage sections={sections} path={path} isCustomValue />;
 };
 
-export const isPageComplete = (hookForm) => {
-  const { isIstVisit } = hookForm.getValues();
-
-  if (isIstVisit === 'yes') {
-    return pageComplete(hookForm, [...fields, 'regionalOfficeTta'], true);
-  }
-
-  if (isIstVisit === 'no') {
-    return pageComplete(hookForm, [...fields, 'recipients', 'participants']);
-  }
-
-  return pageComplete(hookForm, fields);
-};
+export const isPageComplete = (hookForm) => pageComplete(hookForm, [...fields, 'recipients', 'participants']);
 
 export default {
   position,

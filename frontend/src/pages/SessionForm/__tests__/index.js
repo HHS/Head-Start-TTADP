@@ -18,7 +18,7 @@ import { istKeys, pocKeys } from '../constants';
 
 const istAndPocFields = {
   id: 1,
-  regionId: null,
+  regionId: 1,
   sessionName: 'test session',
   startDate: '01/01/2024',
   endDate: '01/01/2024',
@@ -34,7 +34,7 @@ const istAndPocFields = {
   files: [],
   ttaProvided: 'in person',
   objectiveSupportType: 'Planning',
-  isIstVisit: true,
+  isIstVisit: 'yes',
   regionalOfficeTta: 'DTL',
   recipients: [],
   participants: [],
@@ -146,10 +146,20 @@ describe('SessionReportForm', () => {
     fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
     fetchMock.get('/api/goal-templates', []);
+    fetchMock.get('/api/users/trainers/regional/region/1', [
+      { id: 1, fullName: 'Regional Trainer 1' },
+      { id: 2, fullName: 'Regional Trainer 2' },
+    ]);
+    fetchMock.get('/api/users/trainers/national-center/region/1', [
+      { id: 1, fullName: 'National Center Trainer 1' },
+      { id: 2, fullName: 'National Center Trainer 2' },
+    ]);
+    fetchMock.get('/api/session-reports/participants/1', []);
+    fetchMock.get('/api/session-reports/groups?region=1', []);
   });
 
   it('creates a new session if id is "new"', async () => {
-    fetchMock.post(sessionsUrl, { eventId: 1 });
+    fetchMock.post(sessionsUrl, { eventId: 1, regionId: 1 });
 
     act(() => {
       renderSessionForm('1', 'session-summary', 'new');
@@ -178,7 +188,9 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventName: 'Tis an event', eventId: 1 } } },
+      url, {
+        id: 1, eventId: 1, regionId: 1, data: {}, event: { regionId: 1, ownerId: 1, data: { eventName: 'Tis an event', eventId: 1 } },
+      },
     );
 
     act(() => {
@@ -209,7 +221,13 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1 } } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
+      },
     );
 
     act(() => {
@@ -230,7 +248,13 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1 } } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
+      },
     );
 
     act(() => {
@@ -252,7 +276,13 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1 } } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
+      },
     );
 
     act(() => {
@@ -287,7 +317,15 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: {
+          regionId: 1, ownerId: 2, data: { eventId: 1 }, pocIds: [1],
+        },
+      },
     );
 
     act(() => {
@@ -304,7 +342,15 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: {
+          regionId: 1, ownerId: 2, data: { eventId: 1 }, pocIds: [1],
+        },
+      },
     );
 
     act(() => {
@@ -322,7 +368,9 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1, status: 'Not started' } } },
+      url, {
+        id: 1, eventId: 1, regionId: 1, data: {}, event: { regionId: 1, ownerId: 1, data: { eventId: 1, status: 'Not started' } },
+      },
     );
 
     act(() => {
@@ -348,7 +396,9 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1, status: 'Not started' } } },
+      url, {
+        id: 1, eventId: 1, regionId: 1, data: {}, event: { regionId: 1, ownerId: 1, data: { eventId: 1, status: 'Not started' } },
+      },
     );
 
     act(() => {
@@ -374,7 +424,15 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { ...completeFormData, status: 'In progress', event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] } },
+      url, {
+        ...completeFormData,
+        id: 1,
+        data: completeFormData,
+        status: 'In progress',
+        event: {
+          regionId: 1, ownerId: 2, data: { eventId: 1 }, pocIds: [1],
+        },
+      },
     );
 
     act(() => {
@@ -411,8 +469,12 @@ describe('SessionReportForm', () => {
     fetchMock.get(
       url, {
         ...completeFormData,
+        id: 1,
+        data: completeFormData,
         status: 'In progress',
-        event: { ownerId: 1, data: { eventId: 1 }, pocIds: [2] },
+        event: {
+          regionId: 1, ownerId: 1, data: { eventId: 1 }, pocIds: [2],
+        },
       },
     );
 
@@ -451,7 +513,7 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 2, data: { eventId: 1 } } },
+      url, { eventId: 1, regionId: 1, event: { regionId: 1, ownerId: 2, data: { eventId: 1 } } },
     );
 
     const adminUser = {
@@ -500,7 +562,7 @@ describe('SessionReportForm', () => {
           eventId: 1,
           ...istAndPocFields,
         },
-        event: { ownerId: 1, data: { eventId: 1 } },
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
       },
     );
 
@@ -536,7 +598,7 @@ describe('SessionReportForm', () => {
           eventId: 1,
           ...istAndPocFields,
         },
-        event: { ownerId: 1, data: { eventId: 1 } },
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
       },
     );
 
@@ -574,7 +636,9 @@ describe('SessionReportForm', () => {
           eventId: 1,
           ...istAndPocFields,
         },
-        event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] },
+        event: {
+          regionId: 1, ownerId: 2, data: { eventId: 1 }, pocIds: [1],
+        },
       },
     );
 

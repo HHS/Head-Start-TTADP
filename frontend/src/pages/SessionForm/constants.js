@@ -29,7 +29,7 @@ export const participantsFields = {
   deliveryMethod: '',
   numberOfParticipants: '',
   language: [],
-  isIstVisit: '',
+  ttaType: [],
 };
 
 export const nextStepsFields = {
@@ -85,13 +85,17 @@ export const baseDefaultValues = {
 export const pageComplete = (
   hookForm,
   fields,
+  log = false,
 ) => fields.every((field) => {
   const val = hookForm.getValues(field);
 
   if (Array.isArray(val)) {
+    // eslint-disable-next-line no-console
+    if (log) console.log(field, val.length > 0);
     return val.length > 0;
   }
-
+  // eslint-disable-next-line no-console
+  if (log) console.log(field, !!(val));
   return !!(val);
 });
 
@@ -141,6 +145,7 @@ export const pocKeys = [
   'regionalOfficeTta',
   'recipients',
   'participants',
+  'ttaType',
   'numberOfParticipants',
   'numberOfParticipantsInPerson',
   'numberOfParticipantsVirtually',

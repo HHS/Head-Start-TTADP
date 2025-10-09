@@ -284,6 +284,7 @@ function EventCard({
           <SessionCard
             key={`session_${uuidv4()}`}
             eventId={idForLink}
+            eventOrganizer={data.eventOrganizer}
             session={s}
             expanded={reportsExpanded}
             isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}

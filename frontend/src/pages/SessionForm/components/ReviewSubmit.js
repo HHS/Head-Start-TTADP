@@ -27,6 +27,9 @@ const ReviewSubmitSession = ({
     submittedAt,
     author,
     userId,
+    approverId,
+    approver,
+    submitted,
   } = formData;
 
   const { user } = useContext(UserContext);
@@ -40,15 +43,13 @@ const ReviewSubmitSession = ({
 
   // store some values for readability
   const isCreator = userId === user.id;
+
   // eslint-disable-next-line max-len
   // const isCollaborator = collabReportSpecialists.some(({ specialistId }) => user.id === specialistId);
   // const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
   // const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
   // const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
-  // const isApprover = approvers && approvers.some((a) => a.user.id === user.id);
-
-  // const pendingOtherApprovals = (isNeedsAction || isSubmitted) && !isPendingApprover;
-  // const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
+  const isApprover = Number(approverId) === user.id;
 
   const reviewPages = pages.filter(({ review }) => Boolean(!review));
 
@@ -67,11 +68,11 @@ const ReviewSubmitSession = ({
           // author={author}
           // approvers={approvers}
           // isCreator={isCreator}
-          // isSubmitted={isSubmitted}
+          isSubmitted={submitted}
           // isApproved={isApproved}
           // isNeedsAction={isNeedsAction}
-          // isApprover={isApprover}
-          // pendingOtherApprovals={pendingOtherApprovals}
+          isApprover={isApprover}
+          approver={approver}
           // dateSubmitted={submittedAt}
           // onFormReview={onReview}
           pages={reviewPages}
@@ -85,7 +86,6 @@ const ReviewSubmitSession = ({
           onSubmit={onSubmit}
           onUpdatePage={onUpdatePage}
           reviewSubmitPagePosition={reviewSubmitPagePosition}
-          // pendingApprovalCount={pendingApprovalCount}
           // isCollaborator={isCollaborator}
         />
 
@@ -107,19 +107,17 @@ ReviewSubmitSession.propTypes = {
   error: PropTypes.string,
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
+    submitted: PropTypes.bool,
+    approver: PropTypes.shape({
+      id: PropTypes.number,
+      fullName: PropTypes.string,
+    }),
+    approverId: PropTypes.number,
     userId: PropTypes.number,
-    collabReportSpecialists: PropTypes.arrayOf(PropTypes.shape({
-      specialistId: PropTypes.number,
-    })).isRequired,
     additionalNotes: PropTypes.string,
     calculatedStatus: PropTypes.string,
     submissionStatus: PropTypes.string,
     submittedAt: PropTypes.string,
-    approvers: PropTypes.arrayOf(
-      PropTypes.shape({
-        status: PropTypes.string,
-      }),
-    ),
     author: PropTypes.shape({
       name: PropTypes.string,
       fullName: PropTypes.string,

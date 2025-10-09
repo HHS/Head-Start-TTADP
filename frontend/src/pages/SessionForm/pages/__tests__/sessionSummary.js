@@ -94,6 +94,7 @@ describe('sessionSummary', () => {
     const defaultAdditionalData = {
       status: 'Not started',
       event: {
+        regionId: 1,
         data: {
           regionId: 1,
           facilitation: 'regional_tta_staff',
@@ -120,7 +121,7 @@ describe('sessionSummary', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {sessionSummary.render(
-                  additionalData,
+                  { ...defaultAdditionalData, ...additionalData },
                   defaultFormValues,
                   1,
                   false,
@@ -145,7 +146,7 @@ describe('sessionSummary', () => {
         { id: 2, name: 'Complaint' },
       ]);
 
-      fetchMock.get('/api/users/trainers/regional/region/undefined', [
+      fetchMock.get('/api/users/trainers/regional/region/1', [
         { id: 1, fullName: 'Regional Trainer 1' },
         { id: 2, fullName: 'Regional Trainer 2' },
         { id: 3, fullName: 'Regional Trainer 3' },
@@ -153,7 +154,7 @@ describe('sessionSummary', () => {
 
       ]);
 
-      fetchMock.get('/api/users/trainers/national-center/region/undefined', [
+      fetchMock.get('/api/users/trainers/national-center/region/1', [
         { id: 1, fullName: 'National Center Trainer 1' },
         { id: 2, fullName: 'National Center Trainer 2' },
         { id: 3, fullName: 'National Center Trainer 3' },
@@ -177,6 +178,8 @@ describe('sessionSummary', () => {
 
       fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
       fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+      fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
+      fetchMock.get('/api/goal-templates', []);
     });
 
     afterEach(async () => {
@@ -344,6 +347,7 @@ describe('sessionSummary', () => {
       const additionalData = {
         status: 'Not started',
         event: {
+          regionId: 1,
           data: {
             regionId: 1,
             facilitation: 'national_center',
@@ -363,6 +367,7 @@ describe('sessionSummary', () => {
       const additionalData = {
         status: 'Not started',
         event: {
+          regionId: 1,
           data: {
             regionId: 1,
             facilitation: 'regional_tta_staff',
@@ -478,7 +483,7 @@ describe('sessionSummary', () => {
         status: 'In progress',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress', isAdminUser: true }} />);
+      render(<RenderSessionSummary formValues={values} additionalData={{ ...defaultAdditionalData, status: 'In progress', isAdminUser: true }} />);
       expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /review and submit/i })).not.toBeInTheDocument();
     });
@@ -489,7 +494,7 @@ describe('sessionSummary', () => {
         status: 'Complete',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'Complete', isAdminUser: true }} />);
+      render(<RenderSessionSummary formValues={values} additionalData={{ ...defaultAdditionalData, status: 'Complete', isAdminUser: true }} />);
       expect(screen.queryByRole('button', { name: /continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
     });

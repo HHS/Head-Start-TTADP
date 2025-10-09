@@ -13,7 +13,6 @@ import Submit from './Submit';
 // import CreatorSubmit from '../../CollaborationReportForm/Pages/components/CreatorSubmit';
 
 const TopAlert = ({
-  author,
   isNeedsAction,
   approver,
 }) => {
@@ -32,7 +31,7 @@ const TopAlert = ({
   return (
     <Alert type="info" noIcon slim className="margin-bottom-4 no-print">
       <>
-        {author.fullName}
+        Test user
         {' '}
         has requested approval for this session report.
         {' '}
@@ -66,8 +65,9 @@ const Review = ({
 
   // isCreator,
   // isCollaborator,
-  // isApprover,
-  // isSubmitted,
+  isApprover,
+  approver,
+  isSubmitted,
   // onSaveForm,
   onUpdatePage,
   onSaveDraft,
@@ -101,19 +101,21 @@ const Review = ({
       <h2 className="font-family-serif">Review and submit</h2>
 
       <IndicatesRequiredField />
-      {/* {isSubmitted && (
+      {isSubmitted && (
       <TopAlert
-        pendingApprovalCount={pendingApprovalCount}
-        isNeedsAction={isNeedsAction}
-        author={author}
-        approvers={approvers}
+        isNeedsAction={false}
+        // author={author}
+        approver={approver}
       />
-      )} */}
+      )}
       {reviewItems && reviewItems.length > 0 && (
         <div className="margin-bottom-4">
           <Accordion
             bordered
-            items={reviewItems}
+            items={reviewItems.map((item) => ({
+              ...item,
+              expanded: isApprover,
+            }))}
             pages={pages.map((page) => ({
               ...page,
               onNavigation: () => {
@@ -121,7 +123,8 @@ const Review = ({
               },
             }))}
             multiselectable
-            canEdit
+            canEdit={!isApprover}
+            doesStartExpanded={isApprover}
           />
         </div>
       )}
@@ -154,6 +157,10 @@ Review.propTypes = {
   //   id: PropTypes.number,
   //   name: PropTypes.string,
   // })).isRequired,
+  approver: PropTypes.shape({
+    id: PropTypes.number,
+    fullName: PropTypes.string,
+  }).isRequired,
   reviewItems: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
@@ -161,8 +168,8 @@ Review.propTypes = {
   })).isRequired,
   // isCollaborator: PropTypes.bool.isRequired,
   // isCreator: PropTypes.bool.isRequired,
-  // isSubmitted: PropTypes.bool.isRequired,
-  // isApprover: PropTypes.bool.isRequired,
+  isSubmitted: PropTypes.bool.isRequired,
+  isApprover: PropTypes.bool.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   // onSaveForm: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
@@ -171,13 +178,6 @@ Review.propTypes = {
     fullName: PropTypes.string,
   }).isRequired,
   reviewSubmitPagePosition: PropTypes.number.isRequired,
-  // pendingApprovalCount: PropTypes.number.isRequired,
-  // approvers: PropTypes.arrayOf(PropTypes.shape({
-  //   status: PropTypes.string,
-  //   user: PropTypes.shape({
-  //     fullName: PropTypes.string,
-  //   }),
-  // })).isRequired,
 };
 
 // Review.defaultProps = {

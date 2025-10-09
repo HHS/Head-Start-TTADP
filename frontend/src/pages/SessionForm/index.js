@@ -13,7 +13,7 @@ import {
 } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import { TRAINING_REPORT_STATUSES, REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import {
@@ -26,6 +26,7 @@ import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
 import AppLoadingContext from '../../AppLoadingContext';
 import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
+import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -37,9 +38,18 @@ const reduceDataToMatchKeys = (keys, data) => keys.reduce((acc, key) => {
   return acc;
 }, {});
 
-const determineKeyArray = (isAdminUser, isPoc) => {
+const determineKeyArray = ({
+  isAdminUser,
+  isPoc,
+  isCollaborator,
+  eventOrganizer,
+  isApprover,
+}) => {
+  // eslint-disable-next-line max-len
+  const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+
   let keyArray;
-  if (isAdminUser) {
+  if (isAdminUser || (isCollaborator && isRegionalNoNationalCenters) || isApprover) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc) {
     keyArray = pocKeys;
@@ -58,8 +68,22 @@ const determineKeyArray = (isAdminUser, isPoc) => {
    * @param {*} event - not an HTML event, but the event object from the database, which has some
    * information stored at the top level of the object, and some stored in a data column
    */
-const resetFormData = (reset, updatedSession, isPocFromSession, isAdminUser) => {
-  const keyArray = determineKeyArray(isAdminUser, isPocFromSession);
+const resetFormData = ({
+  reset,
+  updatedSession,
+  isPocFromSession = false,
+  isAdminUser = false,
+  isCollaborator = false,
+  isApprover = false,
+  eventOrganizer = '',
+}) => {
+  const keyArray = determineKeyArray({
+    isAdminUser,
+    isPoc: isPocFromSession,
+    isCollaborator,
+    eventOrganizer,
+    isApprover,
+  });
 
   const {
     data,
@@ -132,6 +156,8 @@ export default function SessionForm({ match }) {
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
+  const eventOrganizer = formData.event?.data?.eventOrganizer || '';
+
   const {
     socket,
     setSocketPath,
@@ -144,6 +170,7 @@ export default function SessionForm({ match }) {
     isAdminUser,
     isCollaborator,
     isOwner,
+    isApprover,
     applicationPages,
   } = useSessionFormRoleAndPages(formData);
 
@@ -179,10 +206,22 @@ export default function SessionForm({ match }) {
       try {
         const session = await createSession(trainingReportId);
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
-
+        // eslint-disable-next-line max-len
+        const isCollaboratorFromSession = session.event.collaboratorIds.includes(user.id) && !isAdminUser;
+        const { event: { data: { eventOrganizerFromSession } } } = session;
+        const { approverId } = session;
+        const isApproverUser = user.id === Number(approverId);
         // we don't want to refetch if we've extracted the session data
         setReportFetched(true);
-        resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
+        resetFormData({
+          reset: hookForm.reset,
+          updatedSession: session,
+          isPocFromSession,
+          isAdminUser,
+          isCollaborator: isCollaboratorFromSession,
+          eventOrganizer: eventOrganizerFromSession,
+          isApprover: isApproverUser,
+        });
         reportId.current = session.id;
         history.replace(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
       } catch (e) {
@@ -204,23 +243,51 @@ export default function SessionForm({ match }) {
       if (!currentPage || reportFetched || sessionId === 'new') {
         return;
       }
+      const viewTrUrl = `/training-report/view/${trainingReportId}`;
       try {
         const session = await getSessionBySessionId(sessionId);
-
         // is it submitted?
-        const { submitted, approver } = session;
+        const { data: { submitted }, approverId } = session;
+        const isApproverUser = user.id === Number(approverId);
         if (submitted) {
           // if submitted and not an approver (and report is not needs action)
           // get us out of here
-          const isNeedsAction = approver?.status === REPORT_STATUSES.NEEDS_ACTION;
-          if (user.id !== approver.id && !isNeedsAction) {
-            // history.push(/* view training report page */); // todo
+          const isNeedsAction = false; // approver?.status === REPORT_STATUSES.NEEDS_ACTION;
+
+          if (isApproverUser && !isNeedsAction && !isAdminUser) {
+            history.push(viewTrUrl); // todo
+            return;
+          }
+
+          if (isApproverUser) {
+            history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
+            return;
           }
         }
 
         // eslint-disable-next-line max-len
         const isPocFromSession = (session.event.pocIds || []).includes(user.id) && !isAdminUser;
-        resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
+        // eslint-disable-next-line max-len
+        const isCollaboratorFromSession = (session.event.collaboratorIds || []).includes(user.id) && !isAdminUser;
+
+        // check the event organizer and user role
+        const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
+        // eslint-disable-next-line max-len
+        if (eventOrganizerFromSession === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && isPocFromSession) {
+          // in this case, POCs have no responsiblity
+          history.push(viewTrUrl);
+          return;
+        }
+
+        resetFormData({
+          reset: hookForm.reset,
+          updatedSession: session,
+          isPocFromSession,
+          isAdminUser,
+          isCollaborator: isCollaboratorFromSession,
+          eventOrganizer: eventOrganizerFromSession,
+          isApprover: isApproverUser,
+        });
         reportId.current = session.id;
       } catch (e) {
         history.push(`/something-went-wrong/${e.status}`);
@@ -278,7 +345,13 @@ export default function SessionForm({ match }) {
         // grab the newest data from the form
         const data = hookForm.getValues();
 
-        const keyArray = determineKeyArray(isAdminUser, isPoc);
+        const keyArray = determineKeyArray({
+          isAdminUser,
+          isPoc,
+          eventOrganizer,
+          isCollaborator,
+          isApprover,
+        });
         let roleData = reduceDataToMatchKeys(keyArray, data);
 
         // Remove complete property data based on current role.
@@ -338,8 +411,18 @@ export default function SessionForm({ match }) {
         ...data
       } = hookForm.getValues();
 
+      if (data.submitted) {
+        return;
+      }
+
       // Get form data based on role IST vs POC.
-      const keyArray = determineKeyArray(isAdminUser, isPoc);
+      const keyArray = determineKeyArray({
+        isAdminUser,
+        isPoc,
+        eventOrganizer,
+        isCollaborator,
+        isApprover,
+      });
       let roleData = reduceDataToMatchKeys(keyArray, data);
 
       // If we are a POC submitting set POC submitted values in data.
@@ -366,6 +449,7 @@ export default function SessionForm({ match }) {
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
           dateSubmitted: moment().format('MM/DD/YYYY'), // date the session was submitted
           submitted: true, // tracking whether the session has been official submitted
+          submitter: user.fullName, // user submitted the session for approval
         },
         trainingReportId,
         eventId: trainingReportId || null,
