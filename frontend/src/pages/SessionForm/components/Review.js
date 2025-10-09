@@ -53,7 +53,7 @@ TopAlert.propTypes = {
 const Review = ({
   reviewItems,
   pages,
-
+  isPoc,
   onFormReview,
   // approverStatusList,
 
@@ -140,6 +140,7 @@ const Review = ({
         reviewSubmitPagePosition={reviewSubmitPagePosition}
         pages={pages}
         onFormReview={onFormReview}
+        isPoc={isPoc}
       />
     </>
   );
@@ -173,6 +174,7 @@ Review.propTypes = {
   })).isRequired,
   // isCollaborator: PropTypes.bool.isRequired,
   // isCreator: PropTypes.bool.isRequired,
+  isPoc: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
   isApprover: PropTypes.bool.isRequired,
   onUpdatePage: PropTypes.func.isRequired,

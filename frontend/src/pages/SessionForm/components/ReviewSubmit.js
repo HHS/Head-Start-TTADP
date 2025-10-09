@@ -30,6 +30,7 @@ const ReviewSubmitSession = ({
     approverId,
     approver,
     submitted,
+    event,
   } = formData;
 
   const { user } = useContext(UserContext);
@@ -50,7 +51,7 @@ const ReviewSubmitSession = ({
   // const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
   const isNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
   const isApprover = Number(approverId) === user.id;
-
+  const isPoc = (event?.pocIds || []).includes(user.id);
   const reviewPages = pages.filter(({ review }) => Boolean(!review));
 
   return (
@@ -86,6 +87,7 @@ const ReviewSubmitSession = ({
           onSubmit={onSubmit}
           onUpdatePage={onUpdatePage}
           reviewSubmitPagePosition={reviewSubmitPagePosition}
+          isPoc={isPoc}
           // isCollaborator={isCollaborator}
         />
 
@@ -107,6 +109,9 @@ ReviewSubmitSession.propTypes = {
   error: PropTypes.string,
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
+    event: PropTypes.shape({
+      pocIds: PropTypes.arrayOf(PropTypes.number),
+    }),
     submitted: PropTypes.bool,
     approver: PropTypes.shape({
       id: PropTypes.number,

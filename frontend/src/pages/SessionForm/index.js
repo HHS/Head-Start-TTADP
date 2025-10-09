@@ -159,6 +159,9 @@ export default function SessionForm({ match }) {
 
   const eventOrganizer = formData.event?.data?.eventOrganizer || '';
 
+  // eslint-disable-next-line max-len
+  const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+
   const {
     socket,
     setSocketPath,
@@ -512,9 +515,9 @@ export default function SessionForm({ match }) {
       await updateSession(sessionId, {
         data: {
           ...roleData,
+          ...(isRegionalNoNationalCenters ? { pocComplete: true } : {}),
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
           dateSubmitted: moment().format('MM/DD/YYYY'), // date the session was submitted
-          submitted: true, // tracking whether the session has been official submitted
           submitter: user.fullName, // user submitted the session for approval
         },
         trainingReportId,
