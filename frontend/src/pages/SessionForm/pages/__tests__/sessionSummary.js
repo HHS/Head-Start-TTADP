@@ -79,13 +79,13 @@ describe('sessionSummary', () => {
       id: 1,
       ownerId: null,
       eventId: 'sdfgsdfg',
+      regionId: 1,
+      facilitation: 'regional_tta_staff',
       eventDisplayId: 'event-display-id',
       event: {
         regionId: 1,
-
       },
       eventName: 'Event name',
-      regionId: 1,
       status: 'In progress',
       pageState: {
         1: NOT_STARTED,
@@ -153,7 +153,7 @@ describe('sessionSummary', () => {
         { id: 2, name: 'Complaint' },
       ]);
 
-      fetchMock.get('/api/users/trainers/regional/region/undefined', [
+      fetchMock.get('/api/users/trainers/regional/region/1', [
         { id: 1, fullName: 'Regional Trainer 1' },
         { id: 2, fullName: 'Regional Trainer 2' },
         { id: 3, fullName: 'Regional Trainer 3' },
@@ -161,7 +161,7 @@ describe('sessionSummary', () => {
 
       ]);
 
-      fetchMock.get('/api/users/trainers/national-center/region/undefined', [
+      fetchMock.get('/api/users/trainers/national-center/region/1', [
         { id: 1, fullName: 'National Center Trainer 1' },
         { id: 2, fullName: 'National Center Trainer 2' },
         { id: 3, fullName: 'National Center Trainer 3' },
@@ -185,6 +185,8 @@ describe('sessionSummary', () => {
 
       fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
       fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+      fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
+      fetchMock.get('/api/goal-templates', []);
     });
 
     afterEach(async () => {
@@ -264,7 +266,7 @@ describe('sessionSummary', () => {
         userEvent.click(removeFile);
       });
 
-      const deleteUrl = '/api/files/s/undefined/2';
+      const deleteUrl = '/api/files/s/1/2';
       fetchMock.delete(deleteUrl, 200);
 
       const confirmDelete = await screen.findByRole('button', {
@@ -351,16 +353,21 @@ describe('sessionSummary', () => {
     it('national center event facilitated by national center', async () => {
       const additionalData = {
         status: 'Not started',
+        facilitation: 'national_center',
         event: {
           data: {
             regionId: 1,
-            facilitation: 'national_center',
             eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
           },
         },
       };
 
-      render(<RenderSessionSummary additionalData={additionalData} />);
+      const formValues = {
+        ...defaultFormValues,
+        facilitation: 'national_center',
+      };
+
+      render(<RenderSessionSummary additionalData={additionalData} formValues={formValues} />);
 
       const trainers = await screen.findByLabelText(/Who provided the TTA/i);
       await selectEvent.select(trainers, ['National Center Trainer 4']);
@@ -370,16 +377,45 @@ describe('sessionSummary', () => {
     it('national center event facilitated by regional tta staff', async () => {
       const additionalData = {
         status: 'Not started',
+        facilitation: 'regional_tta_staff',
         event: {
           data: {
             regionId: 1,
-            facilitation: 'regional_tta_staff',
             eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
           },
         },
       };
 
-      render(<RenderSessionSummary additionalData={additionalData} />);
+      const formValues = {
+        ...defaultFormValues,
+        facilitation: 'regional_tta_staff',
+      };
+
+      render(<RenderSessionSummary additionalData={additionalData} formValues={formValues} />);
+
+      const trainers = await screen.findByLabelText(/Who provided the TTA/i);
+      await selectEvent.select(trainers, ['Regional Trainer 1']);
+      expect(await screen.findByText('Regional Trainer 1')).toBeVisible();
+    });
+
+    it('national center event facilitated by both', async () => {
+      const additionalData = {
+        status: 'Not started',
+        facilitation: 'both',
+        event: {
+          data: {
+            regionId: 1,
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+      };
+
+      const formValues = {
+        ...defaultFormValues,
+        facilitation: 'both',
+      };
+
+      render(<RenderSessionSummary additionalData={additionalData} formValues={formValues} />);
 
       const trainers = await screen.findByLabelText(/Who provided the TTA/i);
       await selectEvent.select(trainers, ['Regional Trainer 1']);
@@ -394,7 +430,7 @@ describe('sessionSummary', () => {
         userEvent.click(removeFile);
       });
 
-      const deleteUrl = '/api/files/s/undefined/2';
+      const deleteUrl = '/api/files/s/1/2';
       fetchMock.delete(deleteUrl, 500);
 
       const confirmDelete = await screen.findByRole('button', {
