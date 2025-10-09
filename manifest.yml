@@ -51,6 +51,9 @@ applications:
       SMTP_USER: ((SMTP_USER))
       SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
       TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
+      USER: ((cg_username))
+      PASS: ((cg_password))
+      SPACE: ((cg_space))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
