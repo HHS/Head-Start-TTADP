@@ -5,11 +5,12 @@
 }
 
 .ttahub-recipient-spotlight-content-cell-good-indicator {
- border: 1px dashed $base-light;
+ border: 1px dashed $base-medium;
+ color: $base-medium;
 }
 
 .ttahub-recipient-spotlight-content-cell-bad-indicator {
- border: 1px solid $base-lighter;
+ border: 1px solid $base-darkest;
 }
 
 .ttahub-recipient-spotlight-content .smart-hub--no-results-found {
