@@ -27,7 +27,7 @@ const sampleSpotlightData = [
     FEI: false,
   },
 ];
-/*
+
 const goodSampleSpotlightData = [
   {
     recipientId: 1,
@@ -43,7 +43,6 @@ const goodSampleSpotlightData = [
     FEI: false,
   },
 ];
-*/
 
 const createRowForEachIndicator = (name, label, value, description) => ({
   name, label, value, description,
@@ -62,6 +61,21 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
   const [spotlightData, setSpotlightData] = useState([]);
   const [hasResults, setHasResults] = useState(true);
   const [useGoodData, setUseGoodData] = useState(false);
+
+  const loadSampleData = () => {
+    setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
+    setHasResults(true);
+  };
+
+  const loadGoodData = () => {
+    setSpotlightData(mappedData(goodSampleSpotlightData[0] || {}));
+    setHasResults(true);
+  };
+
+  const showNoResults = () => {
+    setSpotlightData([]);
+    setHasResults(false);
+  };
 
   useEffect(() => {
     /*
@@ -104,7 +118,7 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
   return (
     <Container paddingX={0} paddingY={0} className="ttahub--recipient-summary">
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
-        <h2 className="margin-0 padding-0">Recipient spotlight</h2>
+        <h2 className="ttahub-card-header-title margin-0 padding-0">Recipient spotlight</h2>
         <p className="margin-0 padding-0 usa-prose">This is the recipient&apos;s current number of priority indicators.</p>
       </div>
 
@@ -143,10 +157,60 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
               </div>
             </div>
           </div>
+
+          {/* Testing buttons - inside results container */}
+          <div className="margin-top-0 border-top-1px border-base-lighter padding-1 display-flex flex-justify">
+            <button
+              type="button"
+              className="usa-button usa-button--unstyled"
+              onClick={loadSampleData}
+            >
+              Load Sample Data (with indicators)
+            </button>
+            <button
+              type="button"
+              className="usa-button usa-button--unstyled"
+              onClick={loadGoodData}
+            >
+              Load Good Data (no indicators)
+            </button>
+            <button
+              type="button"
+              className="usa-button usa-button--unstyled"
+              onClick={showNoResults}
+            >
+              Show No Results
+            </button>
+          </div>
         </div>
       ) : (
         <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto">
           <NoResultsFound customMessage="There are no current priority indicators for this recipient." hideFilterHelp />
+
+          {/* Testing buttons - inside no results container */}
+          <div className="margin-top-3 border-top-1px border-base-lighter padding-top-2 display-flex flex-justify">
+            <button
+              type="button"
+              className="usa-button usa-button--unstyled"
+              onClick={loadSampleData}
+            >
+              Load Sample Data (with indicators)
+            </button>
+            <button
+              type="button"
+              className="usa-button usa-button--unstyled"
+              onClick={loadGoodData}
+            >
+              Load Good Data (no indicators)
+            </button>
+            <button
+              type="button"
+              className="usa-button usa-button--unstyled"
+              onClick={showNoResults}
+            >
+              Show No Results
+            </button>
+          </div>
         </div>
       )}
     </Container>
