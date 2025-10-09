@@ -65,7 +65,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
   const goalTemplates = useGoalTemplates([]);
 
   const {
-    getValues,
     register,
     watch,
     setValue,
@@ -74,16 +73,14 @@ const SessionSummary = ({ datePickerKey, event }) => {
     setError,
   } = useFormContext();
 
-  const data = getValues();
-
-  const { id, regionId } = data;
+  const id = watch('id');
+  const regionId = watch('regionId');
+  const facilitation = watch('facilitation');
 
   let eventOrganizer = '';
-  let facilitation = '';
 
   if (event && event.data) {
     eventOrganizer = event.data.eventOrganizer;
-    facilitation = event.data.facilitation;
   }
 
   const {
@@ -117,6 +114,11 @@ const SessionSummary = ({ datePickerKey, event }) => {
       }
 
       if (facilitation === 'regional_tta_staff') {
+        optionsForValue = regionalTrainers;
+        return regionalTrainers;
+      }
+
+      if (facilitation === 'both') {
         optionsForValue = [...nationalCenterTrainers, ...regionalTrainers];
         return [
           {
