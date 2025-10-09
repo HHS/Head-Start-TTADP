@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
 import useFetch from './useFetch';
 import { getRegionalTrainerOptions, getNationalCenterTrainerOptions } from '../fetchers/users';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
 
 export default function useSessionStaff(event) {
   let eventOrganizer = '';
-  let facilitation = '';
+  const { watch } = useFormContext();
+
+  const facilitation = watch('facilitation');
 
   if (event && event.data) {
     eventOrganizer = event.data.eventOrganizer;
-    facilitation = event.data.facilitation;
   }
 
   const {
