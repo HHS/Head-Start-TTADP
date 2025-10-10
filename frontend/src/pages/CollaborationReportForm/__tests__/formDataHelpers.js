@@ -640,18 +640,15 @@ describe('formDataHelpers', () => {
       it('should convert conductMethod to label/value format', () => {
         const fetchedReport = {
           id: 1,
-          conductMethod: ['email', 'virtual'],
+          conductMethod: 'email',
         };
 
         const result = convertReportToFormData(fetchedReport);
 
-        expect(result.conductMethod).toEqual([
-          { label: 'Email', value: 'email' },
-          { label: 'Virtual', value: 'virtual' },
-        ]);
+        expect(result.conductMethod).toEqual('email');
       });
 
-      it('should return empty array when conductMethod is null', () => {
+      it('should return null when conductMethod is null', () => {
         const fetchedReport = {
           id: 1,
           conductMethod: null,
@@ -659,17 +656,17 @@ describe('formDataHelpers', () => {
 
         const result = convertReportToFormData(fetchedReport);
 
-        expect(result.conductMethod).toEqual([]);
+        expect(result.conductMethod).toEqual(null);
       });
 
-      it('should return empty array when conductMethod is undefined', () => {
+      it('should return null when conductMethod is undefined', () => {
         const fetchedReport = {
           id: 1,
         };
 
         const result = convertReportToFormData(fetchedReport);
 
-        expect(result.conductMethod).toEqual([]);
+        expect(result.conductMethod).toEqual(null);
       });
     });
 

@@ -11,10 +11,11 @@ cg_api: https://api.fr.cloud.gov
 cg_org: hhs-acf-ohs-tta
 
 LOG_LEVEL: info
-AUTH_BASE: https://hses.ohs.acf.hhs.gov
+AUTH_BASE: https://hses.ohs.acf.hhs.gov/oidc
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://ttahub.ohs.acf.hhs.gov
 TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov
+OIDC_AUTH_METHOD: "private_key_jwt"
 CLAMAV_ENDPOINT: https://clamapi-ttahub-prod.apps.internal:9443
 
 SMARTSHEET_ENDPOINT: ""
@@ -23,6 +24,7 @@ SUPPRESS_ERROR_LOGGING: "false"
 FORCE_CRON: "false"
 
 AUTH_CLIENT_ID: "${PROD_AUTH_CLIENT_ID}"
+PRIVATE_JWK_64: "${PRIVATE_JWK_64}"
 AUTH_CLIENT_SECRET: "${PROD_AUTH_CLIENT_SECRET}"
 cg_username: "${CLOUDGOV_PROD_USERNAME}"
 cg_password: "${CLOUDGOV_PROD_PASSWORD}"
