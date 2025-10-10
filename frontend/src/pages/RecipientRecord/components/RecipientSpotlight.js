@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faCircleExclamation, faCheck, faX,
+  faCircleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import Container from '../../../components/Container';
 import colors from '../../../colors';
@@ -12,6 +12,7 @@ import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import NoResultsFound from '../../../components/NoResultsFound';
 import './RecipientSpotlight.scss';
 
+/*
 const sampleSpotlightData = [
   {
     recipientId: 1,
@@ -43,6 +44,7 @@ const goodSampleSpotlightData = [
     FEI: false,
   },
 ];
+*/
 
 const createRowForEachIndicator = (name, label, value, description) => ({
   name, label, value, description,
@@ -62,23 +64,7 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
   const [hasResults, setHasResults] = useState(true);
   const [useGoodData, setUseGoodData] = useState(false);
 
-  const loadSampleData = () => {
-    setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
-    setHasResults(true);
-  };
-
-  const loadGoodData = () => {
-    setSpotlightData(mappedData(goodSampleSpotlightData[0] || {}));
-    setHasResults(true);
-  };
-
-  const showNoResults = () => {
-    setSpotlightData([]);
-    setHasResults(false);
-  };
-
   useEffect(() => {
-    /*
     async function fetchRecipientSpotlight() {
       try {
         const response = await getRecipientSpotlight(
@@ -105,8 +91,7 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
       }
     }
     fetchRecipientSpotlight();
-    */
-    setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
+    // setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
   }, [recipientId, regionId]);
 
   const hasIndicators = spotlightData.some((indicator) => indicator.value === true);
@@ -157,60 +142,10 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
               </div>
             </div>
           </div>
-
-          {/* Testing buttons - inside results container */}
-          <div className="margin-top-0 border-top-1px border-base-lighter padding-1 display-flex flex-justify">
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled"
-              onClick={loadSampleData}
-            >
-              Load Sample Data (with indicators)
-            </button>
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled"
-              onClick={loadGoodData}
-            >
-              Load Good Data (no indicators)
-            </button>
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled"
-              onClick={showNoResults}
-            >
-              Show No Results
-            </button>
-          </div>
         </div>
       ) : (
         <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto">
           <NoResultsFound customMessage="There are no current priority indicators for this recipient." hideFilterHelp />
-
-          {/* Testing buttons - inside no results container */}
-          <div className="margin-top-3 border-top-1px border-base-lighter padding-top-2 display-flex flex-justify">
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled"
-              onClick={loadSampleData}
-            >
-              Load Sample Data (with indicators)
-            </button>
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled"
-              onClick={loadGoodData}
-            >
-              Load Good Data (no indicators)
-            </button>
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled"
-              onClick={showNoResults}
-            >
-              Show No Results
-            </button>
-          </div>
         </div>
       )}
     </Container>
