@@ -7,6 +7,7 @@ import RegionPermissionModal from '../../components/RegionPermissionModal';
 import useFilters from '../../hooks/useFilters';
 import './index.scss';
 import NewReportButton from '../../components/NewReportButton';
+import LandingMessage from '../../components/LandingMessage';
 
 const FILTER_KEY = 'collab-landing-filters';
 
@@ -42,6 +43,7 @@ export const CollabReportsLanding = () => {
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
       />
+      <LandingMessage linkBase="/collaboration-reports/" />
       <div className="collab-report-header margin-top-0 margin-bottom-3 flex-column flex-align-start display-flex">
         <h1 className="landing tablet:margin-right-2 margin-bottom-0">
           {`Collaboration reports - ${regionLabel}`}

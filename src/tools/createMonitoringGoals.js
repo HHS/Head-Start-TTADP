@@ -101,8 +101,13 @@ const createMonitoringGoals = async () => {
 
       // Bulk insert the goals returned from the above query using sequelize Goal.bulkCreate.
       // We need to do this to ensure we enter the Goal Status Change on create.
-      await Goal.bulkCreate(goals, { individualHooks: true, transaction });
-
+      auditLogger.info(`Creating ${goals.length} monitoring goals`);
+      await Goal.bulkCreate(goals, {
+        individualHooks: true,
+        transaction,
+        userId: null,
+        ignoreHooks: ['autoPopulateCreator'], // Skip creator population for CLI scripts
+      });
       // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
       // or open Objectives
       /* Commenting out as temporarily not-needed (See [TTAHUB-4049](https://jira.acf.gov/browse/TTAHUB-4049))
@@ -208,6 +213,7 @@ const createMonitoringGoals = async () => {
       //    grants that already have properly marked Goals. This is intended to address cases
       //    where follow-up TTA is being performed beyond the initial review, which will usually
       //    be recorded on the currently active grant anyway.
+      auditLogger.info('Marking monitoring goals for follow-up TTA eligibility');
       await sequelize.query(`
       WITH eligible_grants AS (
       SELECT DISTINCT
