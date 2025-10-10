@@ -146,8 +146,7 @@ describe('findOrCreateUser', () => {
 
     expect(retrievedUser.id).toEqual(userId);
 
-    // TODO: should eventually update email addresses
-    expect(retrievedUser.email).toEqual(oldEmail);
+    expect(retrievedUser.email).toEqual(updatedEmail);
   });
 
   it('Throws when there is something wrong', async () => {
