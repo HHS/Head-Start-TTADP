@@ -11,14 +11,19 @@ import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
 import { registerEventListener } from './processHandler';
-import { hsesAuth } from './middleware/authMiddleware';
+import { getAccessToken, getUserInfo } from './middleware/authMiddleware';
+import { getPublicJwk } from './middleware/jwkKeyManager';
 import { retrieveUserDetails } from './services/currentUser';
-import cookieSession from './middleware/sessionMiddleware';
+import sessionMiddleware from './middleware/sessionMiddleware';
 
 import { logger, auditLogger, requestLogger } from './logger';
 import runCronJobs from './lib/cron';
 
 const app = express();
+
+// Behind cloud.gov’s router/LB the app sees HTTP from the proxy even though the client used HTTPS.
+// Tell Express to trust the first proxy so req.secure reflects X-Forwarded-Proto === 'https'.
+app.set('trust proxy', 1);
 
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
@@ -38,6 +43,8 @@ const serveIndex = (req, res) => {
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use(sessionMiddleware);
 
 app.use((req, res, next) => {
   // set the X-Content-Type-Options header to prevent MIME-sniffing
@@ -92,23 +99,64 @@ app.use('/api', require('./routes/apiDirectory').default);
 // Disable "X-Powered-By" header
 app.disable('x-powered-by');
 
-// TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
-app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
+// Private Key JWT Client Authentication Flow
+// The client JSON Web Key Set (JWKS) is a set of keys containing the public keys used for
+// a more secure client authentication that uses assertion instead of a client secret.
+// https://auth0.com/docs/authenticate/enterprise-connections/private-key-jwt-client-auth#private-key-jwt-client-authentication-flow
+app.get('/.well-known/jwks.json', async (_req, res) => {
+  res.json({ keys: [await getPublicJwk()] });
+});
+
+app.get(oauth2CallbackPath, async (req, res) => {
   try {
-    const user = await hsesAuth.code.getToken(req.originalUrl);
-    // user will have accessToken and refreshToken
-    logger.debug(`HSES AccessToken: ${user.accessToken}`);
+    const accessToken = await getAccessToken(req);
+    if (!accessToken) {
+      auditLogger.error('No access token retrieved');
+      return res.status(INTERNAL_SERVER_ERROR).end();
+    }
+    const subject = req.session?.claims?.sub;
+    if (!subject) {
+      auditLogger.error('No subject retrieved');
+      return res.status(INTERNAL_SERVER_ERROR).end();
+    }
+    const data = await getUserInfo(accessToken, subject);
+    const dbUser = await retrieveUserDetails(data);
+    const claims = req.session?.claims || {};
+    const idToken = req.session?.id_token || '';
+    const prevPkce = req.session?.pkce;
 
-    const dbUser = await retrieveUserDetails(user);
-    req.session.userId = dbUser.id;
-    req.session.uuid = uuidv4();
-    auditLogger.info(`User ${dbUser.id} logged in`);
+    // console.log('REQ SESSION BEFORE REGEN:', req.session);
+    await new Promise((resolve) => {
+      req.session.regenerate((err) => {
+        if (err) {
+          auditLogger(`Session regenerate failed: ${err}`);
+          res.status(INTERNAL_SERVER_ERROR).end();
+          return resolve();
+        }
 
-    logger.debug(`referrer path: ${req.session.referrerPath}`);
-    res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.referrerPath || ''));
+        req.session.accessToken = accessToken;
+        req.session.userId = dbUser.id;
+        req.session.uuid = uuidv4();
+        req.session.claims = claims;
+        req.session.id_token = idToken;
+        req.session.pkce = prevPkce;
+
+        const redirectPath = (req.session.referrerPath && req.session.referrerPath !== '/logout')
+          ? req.session.referrerPath
+          : '/';
+
+        logger.debug(`referrer path: ${req.session.referrerPath}`);
+        auditLogger.info(`User ${dbUser.id} logged in`);
+
+        res.redirect(join(process.env.TTA_SMART_HUB_URI, redirectPath));
+        return resolve();
+      });
+    });
+
+    return undefined;
   } catch (error) {
     auditLogger.error(`Error logging in: ${error}`);
-    res.status(INTERNAL_SERVER_ERROR).end();
+    return res.status(INTERNAL_SERVER_ERROR).end();
   }
 });
 

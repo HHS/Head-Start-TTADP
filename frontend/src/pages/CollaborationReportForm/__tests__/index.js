@@ -679,13 +679,13 @@ describe('CollaborationReportForm', () => {
       it('handles null conductMethod', () => {
         const data = { ...formData, conductMethod: null };
         const result = convertFormDataToReport(data);
-        expect(result.conductMethod).toEqual([]);
+        expect(result.conductMethod).toEqual(null);
       });
 
       it('handles undefined conductMethod', () => {
         const data = { ...formData, conductMethod: undefined };
         const result = convertFormDataToReport(data);
-        expect(result.conductMethod).toEqual([]);
+        expect(result.conductMethod).toEqual(null);
       });
 
       it('handles null statesInvolved', () => {
@@ -810,10 +810,7 @@ describe('CollaborationReportForm', () => {
             { label: 'Alabama', value: 'AL' },
             { label: 'Alaska', value: 'AK' },
           ],
-          conductMethod: [
-            { label: 'Email', value: 'email' },
-            { label: 'Virtual', value: 'virtual' },
-          ],
+          conductMethod: 'email',
         };
 
         const result = convertFormDataToReport(fullData);
@@ -822,7 +819,7 @@ describe('CollaborationReportForm', () => {
         expect(result.dataUsed).toEqual(['d1', 'd2']);
         expect(result.reportGoals).toEqual(['g1']);
         expect(result.statesInvolved).toEqual(['AL', 'AK']);
-        expect(result.conductMethod).toEqual(['email', 'virtual']);
+        expect(result.conductMethod).toEqual('email');
       });
 
       it('preserves other properties through rest spreading', () => {
@@ -854,7 +851,7 @@ describe('CollaborationReportForm', () => {
         expect(result.dataUsed).toEqual([]);
         expect(result.reportGoals).toEqual([]);
         expect(result.statesInvolved).toEqual([]);
-        expect(result.conductMethod).toEqual([]);
+        expect(result.conductMethod).toEqual(null);
       });
 
       it('handles mixed null/undefined/empty/populated values', () => {
@@ -864,7 +861,7 @@ describe('CollaborationReportForm', () => {
           goals: undefined,
           reportGoals: [{ label: 'RG1', value: 'rg1' }],
           statesInvolved: [],
-          conductMethod: [{ label: 'Email', value: 'email' }],
+          conductMethod: 'email',
           otherField: 'preserved',
         };
 
@@ -874,7 +871,7 @@ describe('CollaborationReportForm', () => {
         expect(result.dataUsed).toEqual([]);
         expect(result.reportGoals).toEqual(['rg1']);
         expect(result.statesInvolved).toEqual([]);
-        expect(result.conductMethod).toEqual(['email']);
+        expect(result.conductMethod).toEqual('email');
         expect(result.otherField).toBe('preserved');
       });
     });

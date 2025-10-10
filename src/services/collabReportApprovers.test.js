@@ -40,7 +40,7 @@ describe('collabReportApprovers service', () => {
       endDate: '2023-01-02',
       duration: 1,
       userId: user.id,
-      conductMethod: ['email'],
+      conductMethod: 'email',
       isStateActivity: false,
       description: 'Test collaboration report description',
       submissionStatus: REPORT_STATUSES.SUBMITTED,
