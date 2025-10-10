@@ -1,5 +1,6 @@
 import { isEqual } from 'lodash';
 import moment from 'moment';
+import { COLLAB_REPORT_DATA, STATES } from '../../Constants';
 
 /**
  * @param string
@@ -64,6 +65,17 @@ export const unflattenResourcesUsed = (array) => {
 };
 
 export const convertReportToFormData = (fetchedReport) => {
+  const {
+    participants,
+    hasDataUsed,
+    dataUsed,
+    hasGoals,
+    reportGoals,
+    statesInvolved,
+    conductMethod,
+    ...rest
+  } = fetchedReport;
+
   // Convert reasons into a checkbox-friendly format
   let reportReasons = [];
   if (fetchedReport.reportReasons) {
@@ -71,16 +83,49 @@ export const convertReportToFormData = (fetchedReport) => {
   }
 
   // Convert isStateActivity to string for radio buttons
-  let isStateActivity = '';
-  if (fetchedReport.isStateActivity !== undefined && fetchedReport.isStateActivity !== null) {
-    isStateActivity = fetchedReport.isStateActivity ? 'true' : 'false';
-  } else {
-    isStateActivity = null;
+  let isStateActivity = null;
+  if (fetchedReport.isStateActivity !== null && fetchedReport.isStateActivity !== undefined) {
+    isStateActivity = String(Boolean(fetchedReport.isStateActivity));
   }
 
-  return {
-    ...fetchedReport,
+  // Convert hasDataUsed to string for radio buttons
+  let hasDataUsedValue = null;
+  if (hasDataUsed !== null && hasDataUsed !== undefined) {
+    hasDataUsedValue = String(Boolean(hasDataUsed));
+  }
+
+  // Convert hasGoals to string for radio buttons
+  let hasGoalsValue = null;
+  if (hasGoals !== null && hasGoals !== undefined) {
+    hasGoalsValue = String(Boolean(hasGoals));
+  }
+
+  // Convert participants, dataUsed, goals, and statesInvolved for use with multiselect components
+  const participantValues = participants ? participants.map((p) => ({ label: p, value: p })) : [];
+  const dataUsedValues = dataUsed ? dataUsed.map((d) => (
+    { label: COLLAB_REPORT_DATA[d.collabReportDatum], value: d.collabReportDatum }
+  )) : [];
+  const goalsValues = reportGoals ? reportGoals.map((g) => (
+    { label: g.goalTemplate.standard, value: g.goalTemplateId }
+  )) : [];
+  const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => (
+    { label: STATES[s], value: s }
+  )) : [];
+
+  // Convert conductMethod array to object for use with single select component
+  const conductMethodValue = conductMethod || null;
+
+  const retVal = {
+    ...rest,
     reportReasons,
     isStateActivity,
+    participants: participantValues,
+    hasDataUsed: hasDataUsedValue,
+    dataUsed: dataUsedValues,
+    hasGoals: hasGoalsValue,
+    goals: goalsValues,
+    statesInvolved: statesInvolvedValues,
+    conductMethod: conductMethodValue,
   };
+  return retVal;
 };

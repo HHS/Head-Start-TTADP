@@ -239,7 +239,6 @@ class CollabReportDataUsed{
  * collabReportDatum : enum
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- collabReportDataOther : varchar(255)
  deletedAt : timestamp with time zone
 }
 
@@ -290,26 +289,21 @@ class CollabReports{
  * submissionStatus : enum
  * updatedAt : timestamp with time zone
  calculatedStatus : enum
- conductMethod : enum[]
+ conductMethod : enum
  deletedAt : timestamp with time zone
  description : text
  duration : double precision
  endDate : date
+ hasDataUsed : boolean
+ hasGoals : boolean
  isStateActivity : boolean
  name : varchar(255)
+ otherDataUsed : text
+ otherParticipants : text
  participants : enum[]
  startDate : date
  submittedAt : timestamp with time zone
 }
-
-enum enum_CollabReports_conductMethod {
- email
- in_person
- phone
- virtual
-}
-
-enum_CollabReports_conductMethod <|-- CollabReports
 
 enum enum_CollabReports_participants {
  Child Care Training and Technical Assistance Network

@@ -58,7 +58,7 @@ const reportObject = {
   regionId: 1,
   lastUpdatedById: mockUser.id,
   duration: 1,
-  conductMethod: ['in_person'],
+  conductMethod: 'in_person',
 };
 
 describe('Collab Reports Service', () => {
@@ -734,9 +734,9 @@ describe('Collab Reports Service', () => {
             },
             {
               collabReportDatum: 'other',
-              collabReportDataOther: 'Custom data source',
             },
           ],
+          otherDataUsed: 'Custom data source',
         };
 
         const result = await createOrUpdateReport(reportWithDataUsed, null);
@@ -749,7 +749,6 @@ describe('Collab Reports Service', () => {
         expect(dataUsed).toHaveLength(2);
         expect(dataUsed.find((d) => d.collabReportDatum === 'census_data')).toBeTruthy();
         expect(dataUsed.find((d) => d.collabReportDatum === 'other')).toBeTruthy();
-        expect(dataUsed.find((d) => d.collabReportDataOther === 'Custom data source')).toBeTruthy();
       });
 
       it('handles data used as simple strings', async () => {
@@ -787,7 +786,7 @@ describe('Collab Reports Service', () => {
           ...initialReport,
           dataUsed: [
             { collabReportDatum: 'pir' },
-            { collabReportDatum: 'other', collabReportDataOther: 'New source' },
+            { collabReportDatum: 'other' },
           ],
         };
 
@@ -939,7 +938,7 @@ describe('Collab Reports Service', () => {
           ],
           dataUsed: [
             { collabReportDatum: 'census_data' },
-            { collabReportDatum: 'other', collabReportDataOther: 'Custom source' },
+            { collabReportDatum: 'other' },
           ],
           statesInvolved: ['CA', 'NY'],
         };
