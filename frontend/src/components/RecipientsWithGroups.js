@@ -15,10 +15,14 @@ import FormItem from './FormItem';
 import MultiSelect from './MultiSelect';
 import GroupAlert from './GroupAlert';
 import { parseCheckboxEvent } from '../Constants';
+import QuestionTooltip from './QuestionTooltip';
 
 const placeholderText = '- Select -';
 
-const RecipientsWithGroups = ({ regionId }) => {
+const RecipientsWithGroups = ({
+  regionId,
+  showTooltip,
+}) => {
   const {
     control,
     register,
@@ -186,14 +190,19 @@ const RecipientsWithGroups = ({ regionId }) => {
       {
           groups.length > 0
            && (
-           <div className="smart-hub-activity-summary-use-group margin-top-0">
+           <div className="smart-hub-activity-summary-use-group margin-top-0 display-flex flex-align-center">
              <Checkbox
                id="use-group"
                label="Use group"
-               className="margin-top-1"
+               className={`margin-top-1 ${showTooltip ? 'margin-right-1' : ''}`}
                onChange={toggleUseGroup}
                checked={useGroups}
              />
+             {showTooltip && (
+             <QuestionTooltip
+               text="You can use a group to speed up selection, then remove recipients who did not attend."
+             />
+             )}
            </div>
            )
         }
@@ -208,6 +217,14 @@ const RecipientsWithGroups = ({ regionId }) => {
 
 RecipientsWithGroups.propTypes = {
   regionId: PropTypes.number.isRequired,
+  showTooltip: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.string,
+  ]),
+};
+
+RecipientsWithGroups.defaultProps = {
+  showTooltip: false,
 };
 
 export default RecipientsWithGroups;
