@@ -27,6 +27,7 @@ services:
       # export PUPPETEER_EXECUTABLE_PATH=`which chromium`
       - PUPPETEER_EXECUTABLE_PATH
       - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+      - OIDC_AUTH_METHOD=pkce
     volumes:
       - ".:/app:rw"
       - "node_modules-backend:/app/node_modules:rw"
