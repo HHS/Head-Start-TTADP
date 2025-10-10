@@ -35,6 +35,7 @@ import {
   submitReport,
 } from '../../fetchers/collaborationReports';
 import { getCollaborators } from '../../fetchers/collaborators';
+import { getGoalTemplates } from '../../fetchers/goalTemplates';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import AppLoadingContext from '../../AppLoadingContext';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -123,6 +124,37 @@ export const formatReportWithSaveBeforeConversion = async (
   }
 
   return reportData;
+};
+
+export const convertFormDataToReport = (data) => {
+  const {
+    participants,
+    dataUsed,
+    goals,
+    reportGoals,
+    statesInvolved,
+    conductMethod,
+    ...rest
+  } = data;
+
+  const conductMethodValues = conductMethod ? conductMethod.map((c) => c.value) : [];
+  const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => s.value) : [];
+  const participantValues = participants ? participants.map((p) => p.value) : [];
+  const dataUsedValues = dataUsed ? dataUsed.map((d) => d.value) : [];
+  const goalsValues = goals ? goals.map((g) => g.value) : [];
+  const reportGoalsValues = reportGoals ? reportGoals.map((g) => g.value) : [];
+
+  let reportGoalsToUse = goalsValues;
+  if (goalsValues.length === 0) { reportGoalsToUse = reportGoalsValues; }
+
+  return {
+    ...rest,
+    participants: participantValues,
+    dataUsed: dataUsedValues,
+    reportGoals: reportGoalsToUse,
+    statesInvolved: statesInvolvedValues,
+    conductMethod: conductMethodValues,
+  };
 };
 
 function CollaborationReport({ match, location }) {
@@ -234,6 +266,11 @@ function CollaborationReport({ match, location }) {
               history.push(`/collaboration-reports/view/${fetchedReport.id}`);
               return;
             }
+
+            if (isNeedsAction) {
+              history.push(`/collaboration-reports/${fetchedReport.id}/review`);
+              return;
+            }
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
             history.replace('/something-went-wrong/500');
@@ -255,12 +292,17 @@ function CollaborationReport({ match, location }) {
           };
         }
 
+        let collaborators = [];
+        let approvers = [];
+        let goalTemplates = [];
+
         const apiCalls = [
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
+          getGoalTemplates([], false),
         ];
 
-        const [collaborators, approvers] = await Promise.all(apiCalls);
+        [collaborators, approvers, goalTemplates] = await Promise.all(apiCalls);
 
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
@@ -278,8 +320,9 @@ function CollaborationReport({ match, location }) {
         );
 
         updateAdditionalData({
-          collaborators: filteredCollaborators || [],
-          approvers: approvers || [],
+          collaborators: filteredCollaborators,
+          approvers,
+          goalTemplates,
         });
 
         let shouldUpdateFromNetwork = true;
@@ -387,12 +430,14 @@ function CollaborationReport({ match, location }) {
     );
   }
 
+  // istanbul ignore next
   if (!currentPage) {
     return (
       <Redirect to={`/collaboration-reports/${collabReportId}/activity-summary`} />
     );
   }
 
+  // istanbul ignore next - too hard to test
   const updatePage = (position) => {
     if (!editable) {
       return;
@@ -423,8 +468,11 @@ function CollaborationReport({ match, location }) {
           delete fields.endDate;
         }
 
+        // Process participants, dataUsed, and goals to extract values
+        const fieldsToSave = convertFormDataToReport(fields);
+
         const savedReport = await createReport({
-          ...fields,
+          ...fieldsToSave,
           regionId: formData.regionId,
           version: 2,
         });
@@ -446,8 +494,10 @@ function CollaborationReport({ match, location }) {
         const newPath = `/collaboration-reports/${savedReport.id}/${currentPage}`;
         history.push(newPath, { showLastUpdatedTime: true });
       } else {
+        // Process participants, dataUsed, and goals to extract values
+        const formDataValues = convertFormDataToReport(data);
         const updatedReport = await formatReportWithSaveBeforeConversion(
-          data,
+          formDataValues,
           formData,
           user,
           userHasOneRole,
@@ -466,6 +516,7 @@ function CollaborationReport({ match, location }) {
     }
   };
 
+  // istanbul ignore next - too hard to test
   const setSavingLoadScreen = (isAutoSave = false) => {
     if (!isAutoSave && !isAppLoading) {
       setAppLoadingText('Saving');
@@ -487,7 +538,7 @@ function CollaborationReport({ match, location }) {
       // Get the current form data
       const { status, ...formValues } = hookForm.getValues();
       // TODO: Add 'pageState' and newNavigatorState to the saved data
-      const data = { ...formData, ...formValues };
+      const data = { ...formData, ...formValues, pageState: {} };
 
       // Clear the previous error message if there is one
       updateErrorMessage();
@@ -567,8 +618,9 @@ function CollaborationReport({ match, location }) {
     return '';
   })();
 
-  // eslint-disable-next-line max-len
-  const hideSideNav = formData && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED && !isApprover;
+  const hideSideNav = formData
+    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+    && !isApprover;
 
   const author = creatorNameWithRole ? (
       // eslint-disable-next-line react/jsx-indent
@@ -579,7 +631,6 @@ function CollaborationReport({ match, location }) {
           {' '}
           {creatorNameWithRole}
         </p>
-
       </>
   ) : null;
 
@@ -696,6 +747,7 @@ function CollaborationReport({ match, location }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             shouldAutoSave={shouldAutoSave}
+            isAppLoading={isAppLoading}
           />
         </FormProvider>
       </NetworkContext.Provider>

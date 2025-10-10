@@ -181,6 +181,9 @@ export default function StateMultiSelect({
     <MultiSelect
       name={name}
       control={control}
+      simple={false}
+      labelProperty="label"
+      valueProperty="value"
       options={stateCodes || []}
     />
   );
