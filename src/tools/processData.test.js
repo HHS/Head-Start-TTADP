@@ -33,6 +33,10 @@ import processData, {
   convertName, // Kept as it's still used in the main code
   processMonitoringReferences,
 } from './processData';
+import {
+  createReportAndCitationData,
+  destroyReportAndCitationData,
+} from '../services/monitoring.testHelpers';
 
 jest.mock('../logger');
 
@@ -252,6 +256,7 @@ async function destroyMonitoringData() {
   await MonitoringReviewGrantee.destroy({ where: { reviewId: 'reviewId' }, force: true });
   await MonitoringClassSummary.destroy({ where: { reviewId: 'reviewId' }, force: true });
   await MonitoringReview.destroy({ where: { reviewId: 'reviewId' }, force: true });
+  await MonitoringReview.destroy({ where: { statusId: 6006 }, force: true });
   await MonitoringReviewLink.destroy({ where: { reviewId: 'reviewId' }, force: true });
   await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
   await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
@@ -307,7 +312,10 @@ describe('processData', () => {
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-    await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
+    await ActivityRecipient.destroy({ where: { grantId: GRANT_ID_ONE } });
+    await ActivityReportFile.destroy({
+      where: { id: mockActivityReportFile.id },
+    });
     await File.destroy({ where: { id: mockFile.id } });
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({
@@ -320,11 +328,26 @@ describe('processData', () => {
         ],
       },
     });
-    await GrantNumberLink.unscoped().destroy({ where: { grantId: GRANT_ID_ONE }, force: true });
-    await GrantNumberLink.unscoped().destroy({ where: { grantId: GRANT_ID_TWO }, force: true });
-    await GrantNumberLink.unscoped().destroy({ where: { grantId: null }, force: true });
-    await Grant.unscoped().destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
-    await Grant.unscoped().destroy({ where: { id: GRANT_ID_TWO }, individualHooks: true });
+    await GrantNumberLink.unscoped().destroy({
+      where: { grantId: GRANT_ID_ONE },
+      force: true,
+    });
+    await GrantNumberLink.unscoped().destroy({
+      where: { grantId: GRANT_ID_TWO },
+      force: true,
+    });
+    await GrantNumberLink.unscoped().destroy({
+      where: { grantId: null },
+      force: true,
+    });
+    await Grant.unscoped().destroy({
+      where: { id: GRANT_ID_ONE },
+      individualHooks: true,
+    });
+    await Grant.unscoped().destroy({
+      where: { id: GRANT_ID_TWO },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } });
     await destroyMonitoringData();
@@ -447,84 +470,70 @@ describe('processData', () => {
   });
 
   describe('processMonitoringReferences', () => {
-    let report;
-    let goal;
-    let objective;
-    let aro;
+    let grant1;
+    const TEST_RECIP_ID = 99001;
+    const TEST_GRANT_ID = 99002;
+    const TEST_GRANT_NUMBER = '01GN099002';
 
     beforeAll(async () => {
-      report = await ActivityReport.create(reportObject);
-
-      goal = await Goal.create({
-        name: 'tmp goal for monitoringReferences test',
-        status: 'Not Started',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        grantId: GRANT_ID_ONE,
+      await Recipient.findOrCreate({
+        where: { id: TEST_RECIP_ID },
+        defaults: {
+          id: TEST_RECIP_ID,
+          name: 'Test Recip',
+          uei: 'TESTUEI99001',
+        },
       });
 
-      objective = await Objective.create({
-        title: 'tmp objective',
-        status: 'Not Started',
-        goalId: goal.id,
+      await Grant.findOrCreate({
+        where: { id: TEST_GRANT_ID },
+        defaults: {
+          id: TEST_GRANT_ID,
+          number: TEST_GRANT_NUMBER,
+          recipientId: TEST_RECIP_ID,
+          regionId: 1,
+          status: 'Active',
+          startDate: new Date(),
+          endDate: new Date(),
+        },
       });
 
-      aro = await ActivityReportObjective.create({
-        activityReportId: report.id,
-        objectiveId: objective.id,
-      });
-
-      await hideRecipientsGrants(reportObject.imported.granteeName);
-
-      await ActivityReportObjectiveCitation.create({
-        activityReportObjectiveId: aro.id,
-        citation: '1302.91(e)(2)(ii)',
-        monitoringReferences: [
-          {
-            acro: 'AOC',
-            name: 'AOC - 1302.91(e)(2)(ii) - Education and Child Development',
-            grantId: GRANT_ID_ONE,
-            citation: '1302.91(e)(2)(ii)',
-            severity: 3,
-            findingId: '42CFA92C-609E-426F-9920-90AE5583C0FE',
-            reviewName: '255822F1F',
-            standardId: 204445,
-            findingType: 'Area of Concern',
-            grantNumber: GRANT_NUMBER_ONE,
-            findingSource: 'Education and Child Development',
-            originalGrantId: GRANT_ID_ONE,
-            reportDeliveryDate: '2025-06-04T04:00:00+00:00',
-            monitoringFindingStatusName: 'Active',
-          },
-        ],
-      });
+      grant1 = await Grant.findByPk(TEST_GRANT_ID);
     });
 
     afterAll(async () => {
-      await ActivityReportObjectiveCitation.destroy({
-        where: { activityReportObjectiveId: aro.id },
+      await Grant.unscoped().destroy({
+        where: { id: TEST_GRANT_ID },
+        force: true,
+        individualHooks: true,
+      });
+      await Recipient.unscoped().destroy({
+        where: { id: TEST_RECIP_ID },
         force: true,
       });
-      await ActivityReportObjective.destroy({ where: { id: aro.id }, force: true });
-      await Objective.destroy({ where: { id: objective.id }, force: true });
-      await Goal.destroy({ where: { id: goal.id }, force: true });
-      await ActivityReport.destroy({ where: { id: report.id }, force: true });
     });
-
-    it('rewrites monitoringReferences[*].grantNumber to the obfuscated value', async () => {
-      await processMonitoringReferences();
+    it('obfuscates grant number in monitoring references', async () => {
+      const arocResult = await createReportAndCitationData(TEST_GRANT_NUMBER, 1);
+      await processData();
 
       const row = await ActivityReportObjectiveCitation.findOne({
-        where: { activityReportObjectiveId: aro.id },
         raw: true,
       });
-
-      const obfuscated = (await Grant.findOne({ where: { id: GRANT_ID_ONE }, raw: true })).number;
+      const obfuscated = (
+        await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true })
+      ).number;
 
       expect(row).toBeTruthy();
       expect(Array.isArray(row.monitoringReferences)).toBe(true);
-      expect(row.monitoringReferences[0].grantNumber).not.toBe(GRANT_NUMBER_ONE);
+      expect(row.monitoringReferences[0].grantNumber).not.toBe(TEST_GRANT_NUMBER);
       expect(row.monitoringReferences[0].grantNumber).toBe(obfuscated);
+      await destroyReportAndCitationData(
+        arocResult.goal,
+        arocResult.objectives,
+        arocResult.reports,
+        arocResult.topic,
+        arocResult.citations,
+      );
     });
   });
 
