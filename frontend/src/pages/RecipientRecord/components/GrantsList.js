@@ -42,7 +42,7 @@ export default function GrantsList({ summary }) {
   return (
     <Container className="ttahub-recipient-record--grants-list ttahub-recipient-record--profile-table" paddingX={0} paddingY={0}>
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
-        <h3 className="margin-0 padding-0">Grants</h3>
+        <h2 className="ttahub-recipient-record--card-header margin-0 padding-0">Grants</h2>
       </div>
       <SimpleSortableTable
         data={grantsData}
