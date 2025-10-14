@@ -30,7 +30,6 @@ const logContext = {
  */
 export async function currentUserId(req, res) {
   function idFromSessionOrLocals() {
-    /*
     if (req.session && req.session.userId) {
       httpContext.set('impersonationUserId', Number(req.session.userId));
       return Number(req.session.userId);
@@ -39,7 +38,6 @@ export async function currentUserId(req, res) {
       httpContext.set('impersonationUserId', Number(res.locals.userId));
       return Number(res.locals.userId);
     }
-      */
 
     // bypass authorization, used for cucumber UAT and axe accessibility testing
     if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
