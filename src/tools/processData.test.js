@@ -31,6 +31,8 @@ import processData, {
   hideRecipientsGrants,
   bootstrapUsers,
   convertName, // Kept as it's still used in the main code
+  convertGrantNumberCreate,
+  convertGrantNumberDrop,
   processMonitoringReferences,
 } from './processData';
 import {
@@ -470,17 +472,17 @@ describe('processData', () => {
   });
 
   describe('processMonitoringReferences', () => {
-    let grant1;
     const TEST_RECIP_ID = 99001;
     const TEST_GRANT_ID = 99002;
     const TEST_GRANT_NUMBER = '01GN099002';
+    const TEST_RECIP_NAME = 'Test Recip';
 
     beforeAll(async () => {
       await Recipient.findOrCreate({
         where: { id: TEST_RECIP_ID },
         defaults: {
           id: TEST_RECIP_ID,
-          name: 'Test Recip',
+          name: TEST_RECIP_NAME,
           uei: 'TESTUEI99001',
         },
       });
@@ -497,11 +499,21 @@ describe('processData', () => {
           endDate: new Date(),
         },
       });
-
-      grant1 = await Grant.findByPk(TEST_GRANT_ID);
+      await GrantNumberLink.findOrCreate({
+        where: { grantId: TEST_GRANT_ID },
+        defaults: {
+          grantId: TEST_GRANT_ID,
+          grantNumber: TEST_GRANT_NUMBER,
+        },
+      });
     });
 
     afterAll(async () => {
+      await GrantNumberLink.destroy({
+        where: { grantId: TEST_GRANT_ID },
+        force: true,
+        individualHooks: true,
+      });
       await Grant.unscoped().destroy({
         where: { id: TEST_GRANT_ID },
         force: true,
@@ -514,7 +526,15 @@ describe('processData', () => {
     });
     it('obfuscates grant number in monitoring references', async () => {
       const arocResult = await createReportAndCitationData(TEST_GRANT_NUMBER, 1);
-      await processData();
+      const recipientsGrants = `${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}
+${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}`;
+
+      await sequelize.transaction(async () => {
+        await convertGrantNumberCreate();
+        await hideRecipientsGrants(recipientsGrants);
+        await processMonitoringReferences();
+        await convertGrantNumberDrop();
+      });
 
       const row = await ActivityReportObjectiveCitation.findOne({
         where: { id: arocResult.citations[0].id },

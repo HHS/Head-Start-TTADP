@@ -347,7 +347,7 @@ const convertRecipientNameAndNumberDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "convertRecipientNameAndNumber"(TEXT);
 `);
 
-const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
+export const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
   CREATE OR REPLACE FUNCTION "convertGrantNumber"(grant_number TEXT, grant_id INT) 
   RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -389,7 +389,7 @@ const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
   END $$;
 `);
 
-const convertGrantNumberDrop = async () => sequelize.query(/* sql */`
+export const convertGrantNumberDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "convertGrantNumber"(TEXT, INT);
 `);
 
