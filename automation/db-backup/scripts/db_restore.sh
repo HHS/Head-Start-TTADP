@@ -623,54 +623,54 @@ function perform_restore() {
     parameters_validate "${sha256_file_path}"
     parameters_validate "${password_file_path}"
 
-#     log "INFO" "Downloading backup password"
-#     local backup_password
-#     backup_password=$(aws_s3_download_password "${password_file_path}") || {
-#         log "ERROR" "Failed to download backup password"
-#         set -e
-#         exit 1
-#     }
+    log "INFO" "Downloading backup password"
+    local backup_password
+    backup_password=$(aws_s3_download_password "${password_file_path}") || {
+        log "ERROR" "Failed to download backup password"
+        set -e
+        exit 1
+    }
 
-#     log "INFO" "Verifying the backup file from S3"
-#     aws_s3_verify_file_integrity "${backup_file_path}" "${md5_file_path}" "${sha256_file_path}" || {
-#         log "ERROR" "Failed to verify the backup file"
-#         set -e
-#         exit 1
-#     }
+    log "INFO" "Verifying the backup file from S3"
+    aws_s3_verify_file_integrity "${backup_file_path}" "${md5_file_path}" "${sha256_file_path}" || {
+        log "ERROR" "Failed to verify the backup file"
+        set -e
+        exit 1
+    }
 
-#     #set -x
-#     set -o pipefail
+    #set -x
+    set -o pipefail
 
-#     log "INFO" "Reset database before restore"
+    log "INFO" "Reset database before restore"
 
-#     psql -d postgres <<EOF
-# select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
-# DROP DATABASE IF EXISTS "${PGDATABASE}";
-# CREATE DATABASE "${PGDATABASE}";
-# EOF
+    psql -d postgres <<EOF
+select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
+DROP DATABASE IF EXISTS "${PGDATABASE}";
+CREATE DATABASE "${PGDATABASE}";
+EOF
 
-#     if [[ $? -ne 0 ]]; then
-#         log "ERROR" "Failed to reset database"
-#         exit 1
-#     fi
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Failed to reset database"
+        exit 1
+    fi
 
-#     log "INFO" "Database reset successfully"
+    log "INFO" "Database reset successfully"
 
-#     log "INFO" "Restoring the database from the backup file"
-#     aws s3 cp "s3://${backup_file_path}" - |\
-#      openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
-#      gzip -d |\
-#      psql  || {
-#         log "ERROR" "failed to restore"
-#         set -e
-#         exit 1
-#     }
+    log "INFO" "Restoring the database from the backup file"
+    aws s3 cp "s3://${backup_file_path}" - |\
+     openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
+     gzip -d |\
+     psql  || {
+        log "ERROR" "failed to restore"
+        set -e
+        exit 1
+    }
 
-#     log "INFO" "Database restore completed successfully"
+    log "INFO" "Database restore completed successfully"
 
-#     log "INFO" "clear the populated env vars"
-#     rds_clear
-#     aws_s3_clear
+    log "INFO" "clear the populated env vars"
+    rds_clear
+    aws_s3_clear
 }
 
 monitor_memory $$ &

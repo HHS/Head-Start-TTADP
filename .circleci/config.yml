@@ -1076,12 +1076,11 @@ commands:
         config: "<< parameters.backup_prefix >>-restore"
         success_message: ':database: "<< parameters.backup_prefix >>" restored to "<< parameters.rds_service_name >>"'
         timeout: "1800"
-    # - run:
-    #     when: on_fail
-    #     command: |
-    #       msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
-    #       ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower ${SLACK_BOT_TOKEN}
-
+    - run:
+        when: on_fail
+        command: |
+          msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower ${SLACK_BOT_TOKEN}
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"

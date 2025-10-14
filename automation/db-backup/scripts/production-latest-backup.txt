@@ -1,4 +1,0 @@
-cg-7409cf93-8401-40e3-b73a-f5731446b79a/production/production-2025-09-22-04-12-04-UTC.sql.zenc
-cg-7409cf93-8401-40e3-b73a-f5731446b79a/production/production-2025-09-22-04-12-04-UTC.sql.md5
-cg-7409cf93-8401-40e3-b73a-f5731446b79a/production/production-2025-09-22-04-12-04-UTC.sql.sha256
-cg-7409cf93-8401-40e3-b73a-f5731446b79a/production/production-2025-09-22-04-12-04-UTC.sql.pwd
