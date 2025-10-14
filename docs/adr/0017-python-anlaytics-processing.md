@@ -110,10 +110,6 @@ cf_dam_deploy:
         description: "Name of CircleCi project environment variable that
           holds authentication client id, a required application variable"
         type: env_var_name
-      auth_client_secret:
-        description: "Name of CircleCi project environment variable that
-          holds authentication client secret, a required application variable"
-        type: env_var_name
       cloudgov_username:
         description: "Name of CircleCi project environment variable that
           holds deployer username for cloudgov space"
@@ -153,7 +149,6 @@ cf_dam_deploy:
 --strategy rolling \ #not sure if strategy is needed for docker
               --vars-file << parameters.deploy_config_file >> \
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
-              --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>}
               ...
