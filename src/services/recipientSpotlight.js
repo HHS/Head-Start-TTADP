@@ -19,7 +19,7 @@ export async function getRecipientSpotlightIndicators(
   const grantsWhere = {
     [Op.and]: [
       scopes.grant,
-      regionId,
+      regionId ? { regionId } : {},
       {
         [Op.or]: [
           { status: 'Active' },
