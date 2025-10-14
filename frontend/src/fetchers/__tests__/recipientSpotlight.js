@@ -11,10 +11,9 @@ describe('recipientSpotlight fetcher', () => {
   it('calls the correct url with default parameters', async () => {
     const recipientId = '123';
     const regionId = '1';
-    const url = join(recipientUrl, 'recipientId', recipientId.toString(), 'regionId', regionId.toString());
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${url}?sortBy=recipientName&sortDir=desc&offset=0&limit=10`, mockResponse);
+    fetchMock.getOnce(`${recipientUrl}?recipientId=${recipientId}&regionId=${regionId}&sortBy=recipientName&direction=desc&offset=0&limit=10`, mockResponse);
 
     const response = await getRecipientSpotlight(recipientId, regionId);
 
@@ -27,10 +26,9 @@ describe('recipientSpotlight fetcher', () => {
     const regionId = '1';
     const sortBy = 'createdAt';
     const sortDir = 'asc';
-    const url = join(recipientUrl, 'recipientId', recipientId.toString(), 'regionId', regionId.toString());
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${url}?sortBy=${sortBy}&sortDir=${sortDir}&offset=0&limit=10`, mockResponse);
+    fetchMock.getOnce(`${recipientUrl}?recipientId=${recipientId}&regionId=${regionId}&sortBy=${sortBy}&direction=${sortDir}&offset=0&limit=10`, mockResponse);
 
     const response = await getRecipientSpotlight(recipientId, regionId, sortBy, sortDir);
 
@@ -43,10 +41,9 @@ describe('recipientSpotlight fetcher', () => {
     const regionId = '1';
     const offset = 10;
     const limit = 5;
-    const url = join(recipientUrl, 'recipientId', recipientId.toString(), 'regionId', regionId.toString());
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${url}?sortBy=recipientName&sortDir=desc&offset=${offset}&limit=${limit}`, mockResponse);
+    fetchMock.getOnce(`${recipientUrl}?recipientId=${recipientId}&regionId=${regionId}&sortBy=recipientName&direction=desc&offset=${offset}&limit=${limit}`, mockResponse);
 
     const response = await getRecipientSpotlight(recipientId, regionId, 'recipientName', 'desc', offset, null, limit);
 
@@ -58,10 +55,9 @@ describe('recipientSpotlight fetcher', () => {
     const recipientId = '123';
     const regionId = '1';
     const filters = 'status=active&type=spotlight';
-    const url = join(recipientUrl, 'recipientId', recipientId.toString(), 'regionId', regionId.toString());
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${url}?sortBy=recipientName&sortDir=desc&offset=0&limit=10&${filters}`, mockResponse);
+    fetchMock.getOnce(`${recipientUrl}?recipientId=${recipientId}&regionId=${regionId}&sortBy=recipientName&direction=desc&offset=0&limit=10&${filters}`, mockResponse);
 
     const response = await getRecipientSpotlight(recipientId, regionId, 'recipientName', 'desc', 0, filters);
 
@@ -77,10 +73,9 @@ describe('recipientSpotlight fetcher', () => {
     const offset = 20;
     const limit = 15;
     const filters = 'status=inactive&type=report';
-    const url = join(recipientUrl, 'recipientId', recipientId.toString(), 'regionId', regionId.toString());
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${url}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}&${filters}`, mockResponse);
+    fetchMock.getOnce(`${recipientUrl}?recipientId=${recipientId}&regionId=${regionId}&sortBy=${sortBy}&direction=${sortDir}&offset=${offset}&limit=${limit}&${filters}`, mockResponse);
 
     const response = await getRecipientSpotlight(
       recipientId,
