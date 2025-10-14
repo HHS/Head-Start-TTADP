@@ -1,14 +1,42 @@
 name: DB Restore
+
 on:
-  workflow_dispatch:
+  # workflow_dispath:
+  #   inputs:
+  #     source:
+  #       description: use processed (anonymized) or prod data
+  #       required: true
+  #       type: choice
+  #       options: 
+  #       - production
+  #       - processed
+  #       default: "processed"
+  #     source_date:
+  #       description: either "latest" or a date in YYYY-MM-DD format
+  #       required: true
+  #       type: string
+  #       default: "latest"
+  #     target_db:
+  #       description: Name of the db to restore into, e.g. "ttahub-dev-blue"
+  #       required: true
+  #       type: choice
+  #       options: 
+  #       - ttahub-staging
+  #       - ttahub-dev-blue
+  #       - ttahub-dev-red
+  #       - ttahub-dev-green
+  #       - ttahub-dev-gold
+  #       - ttahub-dev-pink
+  #   secrets:
+  #     github-token:
+  #       required: true
+
+  workflow_call:
     inputs:
       source:
         description: use processed (anonymized) or prod data
         required: true
-        type: choice
-        options: 
-        - production
-        - processed
+        type: string
         default: "processed"
       source_date:
         description: either "latest" or a date in YYYY-MM-DD format
@@ -18,14 +46,7 @@ on:
       target_db:
         description: Name of the db to restore into, e.g. "ttahub-dev-blue"
         required: true
-        type: choice
-        options: 
-        - ttahub-staging
-        - ttahub-dev-blue
-        - ttahub-dev-red
-        - ttahub-dev-green
-        - ttahub-dev-gold
-        - ttahub-dev-pink
+        type: string
     secrets:
       github-token:
         required: true
