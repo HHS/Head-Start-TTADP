@@ -103,7 +103,7 @@ export default function NextStepsRepeater({
                 && errors[name][index].collabStepDetail)}
             >
               <Label
-                htmlFor={`$next-step-${index + 1}`}
+                htmlFor={`next-step-${index + 1}`}
               >
                 {`Step ${index + 1}`}
                 {required && (<Req />)}
@@ -117,7 +117,7 @@ export default function NextStepsRepeater({
                     && errors[name][index].collabStepDetail) ? 'blank-next-step' : ''}`}
               >
                 <Textarea
-                  id={`$next-step-${index + 1}`}
+                  id={`next-step-${index + 1}`}
                   className="height-10 minh-5 smart-hub--text-area__resize-vertical"
                   name={`${name}[${index}].collabStepDetail`}
                   defaultValue={item.collabStepDetail}

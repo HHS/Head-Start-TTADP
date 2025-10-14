@@ -6,6 +6,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NextStepsRepeater from './components/NextStepsRepeater';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import { isValidDate } from '../../../utils';
 
 const path = 'next-steps';
 const position = 3;
@@ -75,7 +76,15 @@ export const isPageComplete = (hookForm) => {
     { collabStepDetail: detail, collabStepCompleteDate: date },
   ) => (
     detail !== null && detail !== '' && date !== null && date !== ''));
-  return allStepsComplete;
+  if (!allStepsComplete) return false;
+
+  const eachDateValid = steps.every((step) => {
+    if (!step.collabStepCompleteDate) return false;
+    return Boolean(isValidDate(step.collabStepCompleteDate));
+  });
+  if (!eachDateValid) return false;
+
+  return true;
 };
 
 const ReviewSection = () => {
