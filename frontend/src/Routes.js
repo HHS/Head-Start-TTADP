@@ -72,6 +72,7 @@ export default function Routes({
   const hasTrainingReportDashboard = canSeeBehindFeatureFlag(user, 'training_reports_dashboard');
 
   const locationRef = useLocation();
+  const isLogoutPage = locationRef.pathname === '/logout';
 
   const hideSideNav = (pathname) => {
     const paths = [
@@ -487,7 +488,7 @@ export default function Routes({
               ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
               : (
                 <AppWrapper padded={false} logout={logout}>
-                  <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                  <Unauthenticated loggedOut={isLogoutPage || loggedOut} timedOut={timedOut} />
                 </AppWrapper>
               )
             )}

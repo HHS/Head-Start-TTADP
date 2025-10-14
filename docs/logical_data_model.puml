@@ -289,7 +289,7 @@ class CollabReports{
  * submissionStatus : enum
  * updatedAt : timestamp with time zone
  calculatedStatus : enum
- conductMethod : enum[]
+ conductMethod : enum
  deletedAt : timestamp with time zone
  description : text
  duration : double precision
@@ -304,15 +304,6 @@ class CollabReports{
  startDate : date
  submittedAt : timestamp with time zone
 }
-
-enum enum_CollabReports_conductMethod {
- email
- in_person
- phone
- virtual
-}
-
-enum_CollabReports_conductMethod <|-- CollabReports
 
 enum enum_CollabReports_participants {
  Child Care Training and Technical Assistance Network
