@@ -40,6 +40,11 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v5
-
+      - name: Install cf cli
+        uses: cloud-gov/cf-cli-action@v1
+        with:
+          cf-version: "8.4.1"
+      - name: Cloud Gov Login
+        run: cf login -u ${{ secrets.CG_DEV_USERNAME }} -p ${{ secrets.CG_DEV_PASSWORD }} -o hhs-acf-ohs-tta -a https://api.fr.cloud.gov -s ${{ secrets.CG_DEV_SPACE }} 
       - name: Run restore script
         run: db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}
