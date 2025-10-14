@@ -80,10 +80,26 @@ describe('nextSteps Page', () => {
   });
 
   describe('isPageComplete Function', () => {
-    it('always returns true', () => {
-      expect(isPageComplete()).toBe(true);
-      expect(isPageComplete({})).toBe(true);
-      expect(isPageComplete({ someData: 'test' })).toBe(true);
+    it('returns true if at least one valid step', () => {
+      const hookForm = {
+        getValues: () => ({
+          steps: [
+            { collabStepDetail: 'Step 1 detail', collabStepCompleteDate: '2024-01-15' },
+          ],
+        }),
+      };
+
+      expect(isPageComplete(hookForm)).toBe(true);
+    });
+
+    it('returns false if steps is undefined', () => {
+      const hookForm = {
+        getValues: () => ({
+          steps: undefined,
+        }),
+      };
+
+      expect(isPageComplete(hookForm)).toBe(false);
     });
   });
 
