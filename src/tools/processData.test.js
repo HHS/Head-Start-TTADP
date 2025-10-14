@@ -525,8 +525,14 @@ describe('processData', () => {
 
       expect(row).toBeTruthy();
       expect(Array.isArray(row.monitoringReferences)).toBe(true);
-      expect(row.monitoringReferences[0].grantNumber).not.toBe(TEST_GRANT_NUMBER);
-      expect(row.monitoringReferences[0].grantNumber).toBe(obfuscated);
+
+      const referenceWithGrant = row.monitoringReferences.find(
+        (ref) => ref && typeof ref.grantNumber === 'string' && ref.grantNumber.length > 0,
+      );
+
+      expect(referenceWithGrant).toBeTruthy();
+      expect(referenceWithGrant.grantNumber).not.toBe(TEST_GRANT_NUMBER);
+      expect(referenceWithGrant.grantNumber).toBe(obfuscated);
       await destroyReportAndCitationData(
         arocResult.goal,
         arocResult.objectives,
