@@ -108,7 +108,8 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
       </div>
 
       {hasResults ? (
-        <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto">
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto" tabIndex={0}>
           <div className="display-flex flex-align-center">
             <div className="display-flex flex-column">
               <div className="display-flex flex-align-center">
