@@ -517,6 +517,7 @@ describe('processData', () => {
       await processData();
 
       const row = await ActivityReportObjectiveCitation.findOne({
+        where: { id: arocResult.citations[0].id },
         raw: true,
       });
       const obfuscated = (
