@@ -1,6 +1,6 @@
 name: DB Restore
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       source:
         description: use processed (anonymized) or prod data
