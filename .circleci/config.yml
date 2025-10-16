@@ -930,7 +930,7 @@ commands:
           cat environments/envs.json
           data=$(jq -r '"| Name | Branch | Date |", "|---|---|---|", (.[] | "| \(.username) | \(.branch) | \(.updated) |")' envs.json)
 
-          curl -sv -X POST \
+          curl --fail-with-body -X POST \
             https://slack.com/api/canvases.edit \
             -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
             -H 'Content-type: application/json;charset=utf-8' \
