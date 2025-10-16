@@ -926,34 +926,25 @@ commands:
         command: |
           mkdir -p environments
           current_env="<< parameters.target_env >>"
-          touch msg.txt
-          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then
-            exit 0;
-          fi
-          if [ -f ./environments/${current_env} ]; then
-            old_owner=$(cat ./environments/${current_env})
-            new_owner="${CIRCLE_USERNAME}"
-            if [ "${old_owner}" != "${new_owner}" ]; then
-              echo "owner changed from ${old_owner}->${new_owner}"
-              echo "${new_owner}" > environments/${current_env}
-              msg=""
-              cd environments
-              for file in *; do
-                if [ ! -d ${file} ]; then
-                  msg="${file}: $(cat ${file})\n${msg}"
-                fi;
-              done
-              cd ..
-              ./bin/notify-slack.sh \
-                "Environment owner changed: \`\`\`${msg}\`\`\`" \
-                "tm-test"
-                ${SLACK_BOT_TOKEN}
-            else
-              echo "owner not changed: ${old_owner}=${new_owner}"
-            fi
-          else
-            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
-          fi
+          node bin/write_envs.js ${current_env} ${CIRCLE_USERNAME} ${CIRCLE_BRANCH} environments/envs.json
+          
+          data=$(jq -r '"| Name | Branch | Date |", "|---|---|---|", (.[] | "| \(.username) | \(.branch) | \(.updated) |")' envs.json)
+
+          response=$(curl -sv -X POST \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H 'Content-type: application/json;charset=utf-8' \
+            --data '{
+            "canvas_id": "C08MKUTUD6G",
+            "document_content": {
+              "document": {
+                "type": "markdown",
+                "markdown": "${data}"
+              }
+            },
+            "change_type": "replace"
+          }' \
+          https://slack.com/api/canvases.edit)
+
     - save_cache:
         key: 'environment-owners'
         paths:
