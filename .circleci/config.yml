@@ -929,8 +929,9 @@ commands:
           node bin/write_envs.js ${current_env} ${CIRCLE_USERNAME} ${CIRCLE_BRANCH} environments/envs.json
           cat environments/envs.json
           data=$(jq -r '"| Name | Branch | Date |", "|---|---|---|", (.[] | "| \(.username) | \(.branch) | \(.updated) |")' envs.json)
+          echo "<< pipeline.trigger_parameters.github_app.user_name >>"
 
-          curl --fail-with-body -X POST \
+          curl -w "%{http_code}\n" --fail-with-body -X POST \
             https://slack.com/api/canvases.edit \
             -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
             -H 'Content-type: application/json;charset=utf-8' \
