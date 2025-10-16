@@ -10,6 +10,7 @@ import { getCommunicationLogById } from '../../../../fetchers/communicationLog';
 import ReadOnlyField from '../../../../components/ReadOnlyField';
 import BackLink from '../../../../components/BackLink';
 import UserContext from '../../../../UserContext';
+import sanitizeHtml from '../../../../utils/sanitize';
 import DisplayNextSteps from './components/DisplayNextSteps';
 import LogLine from './components/LogLine';
 
@@ -88,7 +89,7 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           <ReadOnlyField
             label="Purpose"
           >
-            {log.data.purpose}
+            {sanitizeHtml(log.data.purpose)}
           </ReadOnlyField>
           <ReadOnlyField
             label="Supporting goals"
@@ -98,12 +99,12 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           <ReadOnlyField
             label="Notes"
           >
-            {log.data.notes}
+            {sanitizeHtml(log.data.notes)}
           </ReadOnlyField>
           <ReadOnlyField
             label="Result"
           >
-            {log.data.result}
+            {sanitizeHtml(log.data.result)}
           </ReadOnlyField>
           <p className="usa-prose margin-bottom-0 text-bold">Supporting attachments</p>
           {log.files.map((file) => (
