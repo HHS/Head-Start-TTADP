@@ -52,7 +52,7 @@ workflows:
     # It will build the app, run all tests, then deploy if the branch matches
     # autodeploy: main->staging, production->prod
     when: pipeline.parameters.action == "build_test_deploy"
-    max_auto_reruns: 3
+    max_auto_reruns: 2
     jobs:
     - build_and_lint
     - checkpoint:
@@ -152,7 +152,6 @@ workflows:
     # backup temp db to snapshot
     # restore temp snapshot to lower env dbs
     # run migrations
-    max_auto_reruns: 3
     triggers:
     - schedule:
         cron: "0 4 * * *" # 4AM UTC = 12AM EST
