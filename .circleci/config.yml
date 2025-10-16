@@ -936,7 +936,7 @@ commands:
             if [ "${old_owner}" != "${new_owner}" ]; then
               echo "owner changed from ${old_owner}->${new_owner}"
               echo "${new_owner}" > environments/${current_env}
-              msg = ""
+              msg=""
               cd environments
               for file in *; do
                 if [ ! -d ${file} ]; then
