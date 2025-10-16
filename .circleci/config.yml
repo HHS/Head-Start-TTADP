@@ -510,48 +510,48 @@ jobs:
     - set_env_vars:
         target_env: << parameters.target_env >>
     - install_cf_tools
-    - run:
-        name: Build backend assets
-        command: yarn build
-    - when:
-        condition:
-          equal: [ << parameters.target_env >>, prod ]
-        steps:
-        - run:
-            name: Create production robots.txt
-            command: ./bin/robot-factory
-    - run:
-        name: Build frontend assets
-        command: yarn --cwd frontend run build
-    - cf_deploy:
-        target_env: << parameters.target_env >>
+    # - run:
+    #     name: Build backend assets
+    #     command: yarn build
+    # - when:
+    #     condition:
+    #       equal: [ << parameters.target_env >>, prod ]
+    #     steps:
+    #     - run:
+    #         name: Create production robots.txt
+    #         command: ./bin/robot-factory
+    # - run:
+    #     name: Build frontend assets
+    #     command: yarn --cwd frontend run build
+    # - cf_deploy:
+    #     target_env: << parameters.target_env >>
     - write_envs:
         target_env: << parameters.target_env >>
-    - run:
-        name: Run database migrations
-        command: |
-          set -x
-          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-          cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
-          cf logs tta-smarthub-${full_env} --recent | grep ${TASK_NAME}
-    - run:
-        name: Alert on migration failure
-        when: on_fail
-        command: |
-            msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
-            if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
-              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
-            fi
-    - notify_new_relic:
-        target_env: << parameters.target_env >>
-    - when:
-        condition:
-          equal: [ << parameters.target_env >>, prod ]
-        steps:
-        - notify_slack_deploy:
-            slack_bot_token: $SLACK_BOT_TOKEN
-            slack_channel: "acf-ohs-ttahub--contractor-customer-team"
-            target_env: << parameters.target_env >>
+    # - run:
+    #     name: Run database migrations
+    #     command: |
+    #       set -x
+    #       TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+    #       cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
+    #       cf logs tta-smarthub-${full_env} --recent | grep ${TASK_NAME}
+    # - run:
+    #     name: Alert on migration failure
+    #     when: on_fail
+    #     command: |
+    #         msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+    #         if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
+    #           ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+    #         fi
+    # - notify_new_relic:
+    #     target_env: << parameters.target_env >>
+    # - when:
+    #     condition:
+    #       equal: [ << parameters.target_env >>, prod ]
+    #     steps:
+    #     - notify_slack_deploy:
+    #         slack_bot_token: $SLACK_BOT_TOKEN
+    #         slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+    #         target_env: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
@@ -927,23 +927,25 @@ commands:
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           node bin/write_envs.js ${current_env} ${CIRCLE_USERNAME} ${CIRCLE_BRANCH} environments/envs.json
-          
+          cat environments/envs.json
           data=$(jq -r '"| Name | Branch | Date |", "|---|---|---|", (.[] | "| \(.username) | \(.branch) | \(.updated) |")' envs.json)
 
           response=$(curl -sv -X POST \
+            https://slack.com/api/canvases.edit \
             -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
             -H 'Content-type: application/json;charset=utf-8' \
             --data '{
-            "canvas_id": "C08MKUTUD6G",
-            "document_content": {
-              "document": {
-                "type": "markdown",
-                "markdown": "${data}"
-              }
-            },
-            "change_type": "replace"
-          }' \
-          https://slack.com/api/canvases.edit)
+              "canvas_id": "C08MKUTUD6G",
+              "changes": [{
+                "operation": "replace",
+                "document_content": {
+                  "document": {
+                    "type": "markdown",
+                    "markdown": "${data}"
+                  }
+                },
+              }]
+            }' 2>&1)
 
     - save_cache:
         key: 'environment-owners'
