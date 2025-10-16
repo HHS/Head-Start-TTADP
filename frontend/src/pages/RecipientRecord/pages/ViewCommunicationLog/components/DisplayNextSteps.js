@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ReadOnlyField from '../../../../../components/ReadOnlyField';
+import sanitizeHtml from '../../../../../utils/sanitize';
 
 export const skipDisplaySteps = (steps) => {
   if (!steps || !steps.length) {
@@ -23,12 +24,12 @@ export default function DisplayNextSteps({ title, steps }) {
           <ReadOnlyField
             label={`Step ${index + 1}`}
           >
-            { step.note }
+            { sanitizeHtml(step.note) }
           </ReadOnlyField>
           <ReadOnlyField
             label="Anticipated completion date"
           >
-            { step.completeDate }
+            { sanitizeHtml(step.completeDate) }
           </ReadOnlyField>
         </div>
       )))}

@@ -11,6 +11,7 @@ import BackLink from '../../components/BackLink';
 import LogLine from '../RecipientRecord/pages/ViewCommunicationLog/components/LogLine';
 import DisplayNextSteps from '../RecipientRecord/pages/ViewCommunicationLog/components/DisplayNextSteps';
 import Container from '../../components/Container';
+import sanitizeHtml from '../../utils/sanitize';
 
 export default function ViewRegionalCommunicationLog({ match }) {
   const { params: { regionId, logId } } = match;
@@ -79,13 +80,13 @@ export default function ViewRegionalCommunicationLog({ match }) {
             ))}
           </ReadOnlyField>
           <ReadOnlyField label="Purpose">
-            {log.data.purpose}
+            {sanitizeHtml(log.data.purpose)}
           </ReadOnlyField>
           <ReadOnlyField label="Notes">
-            {log.data.notes}
+            {sanitizeHtml(log.data.notes)}
           </ReadOnlyField>
           <ReadOnlyField label="Result">
-            {log.data.result}
+            {sanitizeHtml(log.data.result)}
           </ReadOnlyField>
           {log.files && log.files.length > 0 && (
             <>
