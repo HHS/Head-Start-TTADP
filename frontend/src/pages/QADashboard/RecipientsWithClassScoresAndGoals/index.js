@@ -219,7 +219,7 @@ export default function RecipientsWithClassScoresAndGoals() {
         stickyFooter
         title="QA dashboard filters"
       >
-        <ContentFromFeedByTag tagName="ttahub-qa-dash-class-filters" />
+        <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" />
       </Drawer>
       <RecipientsWithClassScoresAndGoalsWidget
         data={recipientsWithClassScoresAndGoalsData}
