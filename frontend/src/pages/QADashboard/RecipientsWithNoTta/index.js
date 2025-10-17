@@ -160,7 +160,7 @@ export default function RecipientsWithNoTta() {
         stickyFooter
         title="QA dashboard filters"
       >
-        <ContentFromFeedByTag tagName="ttahub-qa-dash-recipients-no-tta-filter" />
+        <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" />
       </Drawer>
       <RecipientsWithNoTtaWidget
         data={recipientsWithNoTTA}

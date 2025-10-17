@@ -200,7 +200,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
         stickyFooter
         title="QA dashboard filters"
       >
-        <ContentFromFeedByTag tagName="ttahub-qa-dash-fei-filters" />
+        <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" />
       </Drawer>
       <RecipientsWithOhsStandardFeiGoalWidget
         data={recipientsWithOhsStandardFeiGoal}
