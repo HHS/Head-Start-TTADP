@@ -52,7 +52,7 @@ workflows:
     # It will build the app, run all tests, then deploy if the branch matches
     # autodeploy: main->staging, production->prod
     when: pipeline.parameters.action == "build_test_deploy"
-    max_auto_reruns: 3
+    max_auto_reruns: 2
     jobs:
     - build_and_lint
     - checkpoint:
@@ -152,7 +152,6 @@ workflows:
     # backup temp db to snapshot
     # restore temp snapshot to lower env dbs
     # run migrations
-    max_auto_reruns: 3
     triggers:
     - schedule:
         cron: "0 4 * * *" # 4AM UTC = 12AM EST
@@ -1414,9 +1413,13 @@ commands:
     - run:
         name: Post Slack Message
         command: |
-          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-            -H 'Content-type: application/json;charset=utf-8' \
-            --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+          if [ -f /tmp/message_file.json ]; then
+            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+          else
+            echo "Skipping Slack notification because /tmp/message_file.json was not generated."
+          fi
 
   no-op:
     # placeholder command for no-op jobs
