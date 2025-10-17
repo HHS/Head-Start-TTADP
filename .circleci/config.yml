@@ -935,7 +935,7 @@ commands:
             -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
             -H 'Content-type: application/json;charset=utf-8' \
             --data '{
-              "canvas_id": "C08MKUTUD6G",
+              "canvas_id": "F09459952U9",
               "changes": [{
                 "operation": "replace",
                 "document_content": {
