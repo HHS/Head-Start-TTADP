@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import ObjectiveTitle from './ObjectiveTitle';
 import {
   OBJECTIVE_FORM_FIELD_INDEXES,
@@ -8,6 +9,7 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
+import { OBJECTIVE_STATUS } from '../../Constants';
 
 const [objectiveTitleError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -58,11 +60,11 @@ export default function ObjectiveForm({
         label="TTA objective"
         permissions={[
           userCanEdit,
-          status !== 'Closed',
-          status !== 'Suspended',
+          status !== OBJECTIVE_STATUS.COMPLETE,
+          status !== OBJECTIVE_STATUS.SUSPENDED,
           !onAR,
-          goalStatus !== 'Closed',
-          goalStatus !== 'Suspended',
+          goalStatus !== GOAL_STATUS.CLOSED,
+          goalStatus !== GOAL_STATUS.SUSPENDED,
         ]}
         value={title}
       >

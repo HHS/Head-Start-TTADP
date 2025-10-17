@@ -1,4 +1,5 @@
 import React from 'react';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import STATUSES from '../StatusDropdownStatuses';
 import colors from '../../../../colors';
 import {
@@ -13,7 +14,7 @@ import {
 describe('StatusDropdownStatuses', () => {
   it('should have correct properties for "In progress"', () => {
     const status = STATUSES['In progress'];
-    expect(status.display).toBe('In progress');
+    expect(status.display).toBe(GOAL_STATUS.IN_PROGRESS);
     expect(status.color).toBe(colors.ttahubMediumBlue);
     expect(status.icon.type).toBe(InProgress);
     expect(typeof status.IconWithProps).toBe('function');
@@ -26,7 +27,7 @@ describe('StatusDropdownStatuses', () => {
 
   it('should have correct properties for "Closed"', () => {
     const status = STATUSES.Closed;
-    expect(status.display).toBe('Closed');
+    expect(status.display).toBe(GOAL_STATUS.CLOSED);
     expect(status.color).toBe(colors.success);
     expect(status.icon.type).toBe(Closed);
     expect(typeof status.IconWithProps).toBe('function');
@@ -39,7 +40,7 @@ describe('StatusDropdownStatuses', () => {
 
   it('should have correct properties for "Draft"', () => {
     const status = STATUSES.Draft;
-    expect(status.display).toBe('Draft');
+    expect(status.display).toBe(GOAL_STATUS.DRAFT);
     expect(status.color).toBe(colors.ttahubBlue);
     expect(status.icon.type).toBe(Draft);
     expect(typeof status.IconWithProps).toBe('function');
@@ -52,7 +53,7 @@ describe('StatusDropdownStatuses', () => {
 
   it('should have correct properties for "Not Started"', () => {
     const status = STATUSES['Not Started'];
-    expect(status.display).toBe('Not started');
+    expect(status.display).toBe(GOAL_STATUS.NOT_STARTED);
     expect(status.color).toBe(colors.warning);
     expect(status.icon.type).toBe(NotStarted);
     expect(typeof status.IconWithProps).toBe('function');
@@ -65,7 +66,7 @@ describe('StatusDropdownStatuses', () => {
 
   it('should have correct properties for "Suspended"', () => {
     const status = STATUSES.Suspended;
-    expect(status.display).toBe('Suspended');
+    expect(status.display).toBe(GOAL_STATUS.SUSPENDED);
     expect(status.color).toBe(colors.errorDark);
     expect(status.icon.type).toBe(Paused);
     expect(typeof status.IconWithProps).toBe('function');
@@ -99,7 +100,7 @@ describe('StatusDropdownStatuses', () => {
 
   it('should handle "Completed" alias correctly', () => {
     const completedStatus = STATUSES.Completed;
-    expect(completedStatus.display).toBe('Closed');
+    expect(completedStatus.display).toBe(GOAL_STATUS.CLOSED);
     expect(completedStatus.color).toBe(colors.success);
     expect(completedStatus.icon.type).toBe(Closed);
     expect(typeof completedStatus.IconWithProps).toBe('function');

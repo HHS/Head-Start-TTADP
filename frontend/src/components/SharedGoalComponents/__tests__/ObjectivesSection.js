@@ -4,6 +4,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
 import ObjectivesSection from '../ObjectivesSection';
 import { GOAL_FORM_FIELDS } from '../../../pages/StandardGoalForm/constants';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 let reset;
 
@@ -56,7 +57,7 @@ describe('ObjectivesSection', () => {
     renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
     reset({
       [GOAL_FORM_FIELDS.OBJECTIVES]: [{
-        objectiveId: '1', value: 'Objective 1', onAR: false, status: 'In Progress',
+        objectiveId: '1', value: 'Objective 1', onAR: false, status: OBJECTIVE_STATUS.IN_PROGRESS,
       }],
     });
     const objectives = await screen.findAllByLabelText(/tta objective/i);
@@ -77,8 +78,8 @@ describe('ObjectivesSection', () => {
     renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
     reset({
       [GOAL_FORM_FIELDS.OBJECTIVES]: [
-        { objectiveId: '1', value: 'Objective 1', status: 'Complete' },
-        { objectiveId: '2', value: 'Objective 2', status: 'Suspended' },
+        { objectiveId: '1', value: 'Objective 1', status: OBJECTIVE_STATUS.COMPLETE },
+        { objectiveId: '2', value: 'Objective 2', status: OBJECTIVE_STATUS.SUSPENDED },
       ],
     });
 
@@ -89,7 +90,7 @@ describe('ObjectivesSection', () => {
   it('doesnt render ReadOnlyField when status is not Complete or Suspended', async () => {
     renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
     reset({
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', status: 'In Progress' }],
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', status: OBJECTIVE_STATUS.IN_PROGRESS }],
     });
 
     expect(await screen.findByText('Objective 1', { selector: 'textarea' })).toBeInTheDocument();
@@ -99,7 +100,7 @@ describe('ObjectivesSection', () => {
     renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
     reset({
       [GOAL_FORM_FIELDS.OBJECTIVES]: [{
-        objectiveId: '1', value: 'Objective 1', onAR: false, statue: 'Suspended',
+        objectiveId: '1', value: 'Objective 1', onAR: false, statue: OBJECTIVE_STATUS.SUSPENDED,
       }],
     });
 

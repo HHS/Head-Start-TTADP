@@ -1,5 +1,6 @@
 import fetchMock from 'fetch-mock';
 import { updateObjectiveStatus } from '../objective';
+import { OBJECTIVE_STATUS } from '../../Constants';
 
 describe('objectives fetcher', () => {
   afterEach(() => {
@@ -8,7 +9,7 @@ describe('objectives fetcher', () => {
   it('should call the updateObjectiveStatus endpoint', async () => {
     const ids = [1, 2, 3];
     const regionId = 1;
-    const status = 'In Progress';
+    const status = OBJECTIVE_STATUS.IN_PROGRESS;
     const closeSuspendContext = '';
     const closeSuspendReason = '';
     fetchMock.put('/api/objectives/status', { success: true });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { DECIMAL_BASE, DISALLOWED_URLS, isValidResourceUrl } from '@ttahub/common';
+import { OBJECTIVE_STATUS } from '../../Constants';
 
 export const noDisallowedUrls = (value) => {
   const urls = value.map((v) => v.value);
@@ -43,7 +44,7 @@ export const OBJECTIVE_DEFAULTS = (l) => ({
   topics: [],
   resources: [{ key: uuidv4(), value: '' }],
   id: `new-${l}`,
-  status: 'Not Started',
+  status: OBJECTIVE_STATUS.NOT_STARTED,
   isNew: true,
   closeSuspendReason: null,
   closeSuspendContext: null,

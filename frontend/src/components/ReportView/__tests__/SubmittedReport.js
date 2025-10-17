@@ -4,6 +4,7 @@ import {
   render, screen,
 } from '@testing-library/react';
 import SubmittedReport from '../SubmittedReport';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 const mockReport = {
   reportId: 123,
@@ -67,7 +68,7 @@ const mockReport = {
           files: [],
           ttaProvided: 'Training provided',
           supportType: 'Implementation',
-          status: 'Complete',
+          status: OBJECTIVE_STATUS.COMPLETE,
         },
       ],
     },
@@ -200,7 +201,7 @@ describe('SubmittedReport', () => {
           files: [],
           ttaProvided: 'Technical Assistance',
           supportType: 'Planning',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
         },
       ],
     };

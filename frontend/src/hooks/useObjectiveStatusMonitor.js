@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
+import { OBJECTIVE_STATUS } from '../Constants';
 
-const objectiveCompare = (o) => o.status !== 'Complete';
+const objectiveCompare = (o) => o.status !== OBJECTIVE_STATUS.COMPLETE;
 const evaluateObjectiveMapRefForStatus = (om) => Array.from(
   om.current.values(),
 ).some(objectiveCompare);

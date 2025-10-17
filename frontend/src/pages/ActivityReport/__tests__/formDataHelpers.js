@@ -1,4 +1,4 @@
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, GOAL_STATUS } from '@ttahub/common';
 import { convertGoalsToFormData, packageGoals } from '../formDataHelpers';
 
 describe('FormDataHelpers', () => {
@@ -7,7 +7,7 @@ describe('FormDataHelpers', () => {
       objectives: [],
       goalIds: [1, 2, 3],
       onApprovedAR: true,
-      status: 'In progress',
+      status: GOAL_STATUS.IN_PROGRESS,
     };
 
     it('correctly formats goals with multiple recipients', () => {

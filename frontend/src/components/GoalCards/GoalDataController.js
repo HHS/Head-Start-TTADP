@@ -10,7 +10,7 @@ import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common';
 import { useHistory } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
@@ -55,10 +55,10 @@ function GoalDataController({
   const [data, setData] = useState({
     statuses: {
       total: 0,
-      'Not started': 0,
-      'In progress': 0,
-      Closed: 0,
-      Suspended: 0,
+      [GOAL_STATUS.NOT_STARTED]: 0,
+      [GOAL_STATUS.IN_PROGRESS]: 0,
+      [GOAL_STATUS.CLOSED]: 0,
+      [GOAL_STATUS.SUSPENDED]: 0,
     },
     rows: [],
     count: 0,

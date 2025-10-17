@@ -4,13 +4,14 @@ import {
   render, screen, waitFor, act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import StandardGoalCard from '../StandardGoalCard';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('StandardGoalCard', () => {
   afterEach(() => fetchMock.restore());
@@ -18,7 +19,7 @@ describe('StandardGoalCard', () => {
   const goal = {
     id: 1,
     ids: [1],
-    status: 'In Progress',
+    status: GOAL_STATUS.IN_PROGRESS,
     createdAt: '2021-01-01',
     name: 'Goal text',
     goalTopics: ['Topic 1', 'Topic 2'],
@@ -39,7 +40,7 @@ describe('StandardGoalCard', () => {
         arNumber: 'AR-1',
         ttaProvided: 'TTA 1',
         reasons: ['Reason 1', 'Reason 2'],
-        status: 'Closed',
+        status: OBJECTIVE_STATUS.COMPLETE,
         activityReports: [],
         grantNumbers: ['G-1'],
         topics: [{ name: 'Topic 1' }],
@@ -53,7 +54,7 @@ describe('StandardGoalCard', () => {
         arNumber: 'AR-1',
         ttaProvided: 'TTA 1',
         reasons: ['Reason 1', 'Reason 2'],
-        status: 'Closed',
+        status: OBJECTIVE_STATUS.COMPLETE,
         activityReports: [],
         grantNumbers: ['G-1'],
         topics: [{ name: 'Topic 1' }],
@@ -313,7 +314,7 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Draft' }, user);
+    renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: GOAL_STATUS.DRAFT }, user);
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
@@ -336,7 +337,8 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Draft', onAR: false }, user);
+    renderStandardGoalCard(DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.DRAFT, onAR: false }, user);
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
@@ -359,7 +361,8 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Not Started', onAR: false }, user);
+    renderStandardGoalCard(DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.NOT_STARTED, onAR: false }, user);
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
@@ -382,7 +385,8 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Draft', onAR: false }, user);
+    renderStandardGoalCard(DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.DRAFT, onAR: false }, user);
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
@@ -409,7 +413,7 @@ describe('StandardGoalCard', () => {
       DEFAULT_PROPS,
       {
         ...goal,
-        status: 'Draft',
+        status: GOAL_STATUS.DRAFT,
         onAR: false,
         standard: 'Monitoring',
       },
@@ -441,7 +445,7 @@ describe('StandardGoalCard', () => {
       DEFAULT_PROPS,
       {
         ...goal,
-        status: 'Draft',
+        status: GOAL_STATUS.DRAFT,
         onAR: false,
         standard: 'Monitoring',
       },
@@ -470,7 +474,8 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Not Started', onAR: false }, user);
+    renderStandardGoalCard(DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.NOT_STARTED, onAR: false }, user);
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const deleteButton = screen.queryByText(/Delete/i);
     const url = `${goalApi}?goalIds=1`;
@@ -497,7 +502,8 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Not Started', onAR: false }, user);
+    renderStandardGoalCard(DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.NOT_STARTED, onAR: false }, user);
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const deleteButton = screen.queryByText(/Delete/i);
     const url = `${goalApi}?goalIds=1`;
@@ -520,7 +526,7 @@ describe('StandardGoalCard', () => {
           ttaProvided: 'TTA 1',
           endDate: '2023-01-01',
           reasons: ['Reason 1', 'Reason 2'],
-          status: 'Closed',
+          status: OBJECTIVE_STATUS.COMPLETE,
           activityReports: [],
           grantNumbers: ['G-1'],
           topics: [{ name: 'Topic 1' }],
@@ -533,7 +539,7 @@ describe('StandardGoalCard', () => {
           ttaProvided: 'TTA 2',
           endDate: '2022-09-13',
           reasons: ['Reason 3'],
-          status: 'Closed',
+          status: OBJECTIVE_STATUS.COMPLETE,
           activityReports: [],
           grantNumbers: ['G-2'],
           topics: [{ name: 'Topic 1' }],
@@ -559,15 +565,15 @@ describe('StandardGoalCard', () => {
   });
 
   it('shows different status change labels based on current status', () => {
-    const closedGoal = { ...goal, status: 'Closed' };
+    const closedGoal = { ...goal, status: GOAL_STATUS.CLOSED };
     renderStandardGoalCard({}, closedGoal);
     expect(screen.getByText(/closed on/i)).toBeInTheDocument();
 
-    const suspendedGoal = { ...goal, status: 'Suspended' };
+    const suspendedGoal = { ...goal, status: GOAL_STATUS.SUSPENDED };
     renderStandardGoalCard({}, suspendedGoal);
     expect(screen.getByText(/suspended on/i)).toBeInTheDocument();
 
-    const notStartedGoal = { ...goal, status: 'Not Started' };
+    const notStartedGoal = { ...goal, status: GOAL_STATUS.NOT_STARTED };
     renderStandardGoalCard({}, notStartedGoal);
     expect(screen.getByText(/added on/i)).toBeInTheDocument();
   });
@@ -575,7 +581,7 @@ describe('StandardGoalCard', () => {
   it('shows reopened label when goal is reopened', () => {
     const reopenedGoal = {
       ...goal,
-      statusChanges: [{ oldStatus: 'Closed' }],
+      statusChanges: [{ oldStatus: GOAL_STATUS.CLOSED }],
       isReopened: true,
     };
     renderStandardGoalCard({}, reopenedGoal);
@@ -584,7 +590,7 @@ describe('StandardGoalCard', () => {
   });
 
   it('renders reopen button for closed goals with edit permissions', async () => {
-    const closedGoal = { ...goal, status: 'Closed' };
+    const closedGoal = { ...goal, status: GOAL_STATUS.CLOSED };
     renderStandardGoalCard({}, closedGoal);
 
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
@@ -613,7 +619,7 @@ describe('StandardGoalCard', () => {
       DEFAULT_PROPS,
       {
         ...goal,
-        status: 'Closed',
+        status: GOAL_STATUS.CLOSED,
         onAR: false,
         prestandard: true,
       },
@@ -651,7 +657,7 @@ describe('StandardGoalCard', () => {
       DEFAULT_PROPS,
       {
         ...goal,
-        status: 'Draft',
+        status: GOAL_STATUS.DRAFT,
         onAR: false,
         prestandard: true,
       },
@@ -687,7 +693,7 @@ describe('StandardGoalCard', () => {
       DEFAULT_PROPS,
       {
         ...goal,
-        status: 'Not Started',
+        status: GOAL_STATUS.NOT_STARTED,
         onAR: false,
         prestandard: true,
       },
@@ -719,7 +725,7 @@ describe('StandardGoalCard', () => {
       DEFAULT_PROPS,
       {
         ...goal,
-        status: 'In Progress',
+        status: GOAL_STATUS.IN_PROGRESS,
         onAR: true,
         prestandard: true,
       },
@@ -759,7 +765,7 @@ describe('StandardGoalCard', () => {
       DEFAULT_PROPS,
       {
         ...goal,
-        status: 'Closed',
+        status: GOAL_STATUS.CLOSED,
         onAR: false,
         standard: 'Monitoring',
       },
@@ -786,7 +792,7 @@ describe('StandardGoalCard', () => {
       DEFAULT_PROPS,
       {
         ...goal,
-        status: 'Closed',
+        status: GOAL_STATUS.CLOSED,
         onAR: false,
         standard: 'Monitoring',
       },
@@ -805,7 +811,7 @@ describe('StandardGoalCard', () => {
   it('shows objectives as suspended when goal status is suspended', async () => {
     const suspendedGoal = {
       ...goal,
-      status: 'In progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       objectives: [
         {
           id: 1,
@@ -815,7 +821,7 @@ describe('StandardGoalCard', () => {
           arNumber: 'AR-1',
           ttaProvided: 'TTA 1',
           reasons: ['Reason 1', 'Reason 2'],
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           activityReports: [],
           grantNumbers: ['G-1'],
           topics: [{ name: 'Topic 1' }],
@@ -829,7 +835,7 @@ describe('StandardGoalCard', () => {
           arNumber: 'AR-1',
           ttaProvided: 'TTA 1',
           reasons: ['Reason 1', 'Reason 2'],
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           activityReports: [],
           grantNumbers: ['G-1'],
           topics: [{ name: 'Topic 1' }],
@@ -848,7 +854,7 @@ describe('StandardGoalCard', () => {
     const url = '/api/goals/changeStatus';
     fetchMock.put(url, {
       ...suspendedGoal,
-      status: 'Suspended',
+      status: GOAL_STATUS.SUSPENDED,
     });
 
     const suspended = await screen.findByRole('button', { name: /suspended/i });

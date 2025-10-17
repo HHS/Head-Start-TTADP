@@ -14,7 +14,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
+import { REPORT_STATUSES, SUPPORT_TYPES, GOAL_STATUS } from '@ttahub/common';
 import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
 import {
@@ -27,6 +27,7 @@ import {
 } from '../testHelpers';
 import { formatReportWithSaveBeforeConversion } from '..';
 import { HTTPError } from '../../../fetchers';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('ActivityReport', () => {
   const setItem = jest.fn();
@@ -467,7 +468,7 @@ describe('ActivityReport', () => {
             goalTemplateId: 13500,
             goalIds: [37502],
             isRttapa: null,
-            status: 'In Progress',
+            status: GOAL_STATUS.IN_PROGRESS,
             grantIds: [10431],
             oldGrantIds: [7764],
             isCurated: false,
@@ -477,7 +478,7 @@ describe('ActivityReport', () => {
                 id: 37502,
                 name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
                 source: null,
-                status: 'In Progress',
+                status: GOAL_STATUS.IN_PROGRESS,
                 grantId: 10431,
                 goalTemplateId: 13500,
               },
@@ -503,7 +504,7 @@ describe('ActivityReport', () => {
         id: 95297,
         label: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
         title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
-        status: 'Not Started',
+        status: GOAL_STATUS.NOT_STARTED,
         goalId: 37502,
         resources: [],
         activityReportObjectives: [],
@@ -550,7 +551,7 @@ describe('ActivityReport', () => {
           creatorRole: 'Central Office',
           createdAt: '2023-07-05T17:54:13.082Z',
           ActivityReportObjective: {
-            id: 104904, activityReportId: 23786, objectiveId: 95297, arOrder: 1, title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.', status: 'In Progress', ttaProvided: '', createdAt: '2023-07-05T17:56:15.562Z', updatedAt: '2023-07-05T17:56:15.588Z',
+            id: 104904, activityReportId: 23786, objectiveId: 95297, arOrder: 1, title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.', status: OBJECTIVE_STATUS.IN_PROGRESS, ttaProvided: '', createdAt: '2023-07-05T17:56:15.562Z', updatedAt: '2023-07-05T17:56:15.588Z',
           },
         }],
       }]);
@@ -637,7 +638,7 @@ describe('ActivityReport', () => {
               resources: [],
               files: [],
               ttaProvided: '<p>sdgfsdfg</p>\n',
-              status: 'Not Started',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
               label: 'Create a new objective',
               supportType: SUPPORT_TYPES[1],
             },
@@ -653,7 +654,7 @@ describe('ActivityReport', () => {
           ],
           goalIds: [],
           oldGrantIds: [],
-          status: 'Draft',
+          status: GOAL_STATUS.DRAFT,
           isRttapa: null,
           isCurated: false,
         }],
@@ -722,7 +723,7 @@ describe('ActivityReport', () => {
         goalsAndObjectives: [{
           id: 37504,
           name: 'New goal',
-          status: 'Draft',
+          status: GOAL_STATUS.DRAFT,
           timeframe: null,
           isFromSmartsheetTtaPlan: null,
           endDate: '',
@@ -751,7 +752,7 @@ describe('ActivityReport', () => {
           isCurated: null,
           prompts: [],
           activityReportGoals: [{
-            endDate: null, id: 76212, activityReportId: 23786, goalId: 37504, isRttapa: null, name: 'New goal', status: 'Draft', timeframe: null, closeSuspendReason: null, closeSuspendContext: null, isActivelyEdited: false, createdAt: '2023-06-21T17:54:16.699Z', updatedAt: '2023-06-21T17:54:16.699Z',
+            endDate: null, id: 76212, activityReportId: 23786, goalId: 37504, isRttapa: null, name: 'New goal', status: GOAL_STATUS.DRAFT, timeframe: null, closeSuspendReason: null, closeSuspendContext: null, isActivelyEdited: false, createdAt: '2023-06-21T17:54:16.699Z', updatedAt: '2023-06-21T17:54:16.699Z',
           }],
           grant: {},
           objectives: [{
@@ -759,7 +760,7 @@ describe('ActivityReport', () => {
             otherEntityId: null,
             goalId: 37504,
             title: 'ASDF',
-            status: 'Not Started',
+            status: OBJECTIVE_STATUS.NOT_STARTED,
             objectiveTemplateId: null,
             onAR: true,
             onApprovedAR: false,
@@ -781,7 +782,7 @@ describe('ActivityReport', () => {
               objectiveId: 95299,
               arOrder: 1,
               title: 'ASDF',
-              status: 'Not Started',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
               ttaProvided: '<p>ASDF</p>\n',
               createdAt: '2023-06-21T17:54:17.172Z',
               updatedAt: '2023-06-21T17:54:17.207Z',
@@ -839,7 +840,7 @@ describe('ActivityReport', () => {
 
       fetchMock.get('/api/goals?reportId=1&goalIds=37504', [{
         startDate: moment().format('YYYY-MM-DD'),
-        status: 'Draft',
+        status: GOAL_STATUS.DRAFT,
         value: 37504,
         label: 'dfghgh',
         id: 37504,
@@ -877,7 +878,7 @@ describe('ActivityReport', () => {
           id: 95300,
           label: 'dfghdfgh',
           title: 'dfghdfgh',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           goalId: 37505,
           resources: [],
           activityReportObjectives: [{ ttaProvided: '<p>dfgh</p>\n' }],
@@ -934,7 +935,7 @@ describe('ActivityReport', () => {
             creatorRole: 'Central Office',
             createdAt: '2023-06-21T18:06:00.221Z',
             ActivityReportObjective: {
-              id: 104905, activityReportId: 23788, objectiveId: 95300, arOrder: 1, title: 'dfghdfgh', status: 'Not Started', ttaProvided: '<p>dfgh</p>\n', createdAt: '2023-06-21T18:13:20.063Z', updatedAt: '2023-06-21T18:13:20.094Z',
+              id: 104905, activityReportId: 23788, objectiveId: 95300, arOrder: 1, title: 'dfghdfgh', status: OBJECTIVE_STATUS.NOT_STARTED, ttaProvided: '<p>dfgh</p>\n', createdAt: '2023-06-21T18:13:20.063Z', updatedAt: '2023-06-21T18:13:20.094Z',
             },
           }],
           value: 95300,

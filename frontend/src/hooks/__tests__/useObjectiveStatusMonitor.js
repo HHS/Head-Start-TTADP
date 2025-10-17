@@ -1,11 +1,12 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import useObjectiveStatusMonitor from '../useObjectiveStatusMonitor';
+import { OBJECTIVE_STATUS } from '../../Constants';
 
 describe('useObjectiveStatusMonitor', () => {
   const objectives = [
-    { ids: [1, 2], status: 'Complete' },
-    { ids: [3, 4], status: 'In Progress' },
-    { ids: [5, 6], status: 'Suspended' },
+    { ids: [1, 2], status: OBJECTIVE_STATUS.COMPLETE },
+    { ids: [3, 4], status: OBJECTIVE_STATUS.IN_PROGRESS },
+    { ids: [5, 6], status: OBJECTIVE_STATUS.SUSPENDED },
   ];
 
   it('handles a null initial state', () => {
@@ -16,10 +17,10 @@ describe('useObjectiveStatusMonitor', () => {
 
   it('handles a objectives missing ids', () => {
     const badObjectives = [
-      { status: 'Complete' },
-      { ids: [3, 4], status: 'In Progress' },
-      { ids: [5, 6], status: 'Suspended' },
-      { ids: 7, status: 'Complete' },
+      { status: OBJECTIVE_STATUS.COMPLETE },
+      { ids: [3, 4], status: OBJECTIVE_STATUS.IN_PROGRESS },
+      { ids: [5, 6], status: OBJECTIVE_STATUS.SUSPENDED },
+      { ids: 7, status: OBJECTIVE_STATUS.COMPLETE },
     ];
 
     const { result } = renderHook(() => useObjectiveStatusMonitor(badObjectives));
@@ -33,7 +34,7 @@ describe('useObjectiveStatusMonitor', () => {
     expect(result.current.atLeastOneObjectiveIsNotCompleted).toBe(true);
 
     act(() => {
-      result.current.dispatchStatusChange(null, 'Complete');
+      result.current.dispatchStatusChange(null, OBJECTIVE_STATUS.COMPLETE);
     });
 
     expect(result.current.atLeastOneObjectiveIsNotCompleted).toBe(true);
@@ -55,8 +56,8 @@ describe('useObjectiveStatusMonitor', () => {
     const { result } = renderHook(() => useObjectiveStatusMonitor(objectives));
 
     act(() => {
-      result.current.dispatchStatusChange([3, 4], 'Complete');
-      result.current.dispatchStatusChange([5, 6], 'Complete');
+      result.current.dispatchStatusChange([3, 4], OBJECTIVE_STATUS.COMPLETE);
+      result.current.dispatchStatusChange([5, 6], OBJECTIVE_STATUS.COMPLETE);
     });
 
     expect(result.current.atLeastOneObjectiveIsNotCompleted).toBe(false);
@@ -66,7 +67,7 @@ describe('useObjectiveStatusMonitor', () => {
     const { result } = renderHook(() => useObjectiveStatusMonitor(objectives));
 
     act(() => {
-      result.current.dispatchStatusChange([7, 8], 'Complete');
+      result.current.dispatchStatusChange([7, 8], OBJECTIVE_STATUS.COMPLETE);
     });
 
     expect(result.current.atLeastOneObjectiveIsNotCompleted).toBe(false);
