@@ -6,6 +6,7 @@ import { canChangeObjectiveStatus } from '../../../permissions';
 import STATUSES from './StatusDropdownStatuses';
 import StatusDropdown from './StatusDropdown';
 import useValidObjectiveStatuses from '../../../hooks/useValidObjectiveStatuses';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 export default function ObjectiveStatusDropdown({
   currentStatus,
@@ -26,8 +27,10 @@ export default function ObjectiveStatusDropdown({
 
   // Filter status options for approved AR if needed
   const filteredStatusOptions = React.useMemo(() => {
-    if (onApprovedAR && currentStatus !== 'Not Started') {
-      return statusOptions.filter((status) => ['In Progress', 'Complete', 'Suspended'].includes(status));
+    if (onApprovedAR && currentStatus !== OBJECTIVE_STATUS.NOT_STARTED) {
+      return statusOptions.filter((status) => [
+        OBJECTIVE_STATUS.IN_PROGRESS, OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED,
+      ].includes(status));
     }
     return statusOptions;
   }, [onApprovedAR, currentStatus, statusOptions]);
