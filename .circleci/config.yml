@@ -924,6 +924,7 @@ commands:
     - run:
         name: Write owner into file
         command: |
+          set -x
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           node bin/write_envs.js ${current_env} ${CIRCLE_USERNAME} ${CIRCLE_BRANCH} environments/envs.json
