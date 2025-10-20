@@ -942,7 +942,7 @@ commands:
                 "operation": "replace",
                 "document_content": {
                   "type": "markdown",
-                  "markdown": "${data}"                 
+                  "markdown": \"${data}\"                 
                 },
               }],
             }'
