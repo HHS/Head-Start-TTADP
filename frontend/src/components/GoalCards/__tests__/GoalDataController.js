@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, act, screen } from '@testing-library/react';
+import { GOAL_STATUS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -15,7 +16,7 @@ describe('GoalDataController', () => {
   const baseGoalsResponse = [{
     id: 4598,
     ids: [4598],
-    goalStatus: 'In Progress',
+    goalStatus: GOAL_STATUS.IN_PROGRESS,
     createdOn: '2021-06-15',
     goalText: 'This is goal text 1.',
     goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
@@ -28,10 +29,10 @@ describe('GoalDataController', () => {
 
   const baseStatusResponse = {
     total: 0,
-    'Not started': 0,
-    'In progress': 0,
-    Closed: 0,
-    Suspended: 0,
+    [GOAL_STATUS.NOT_STARTED]: 0,
+    [GOAL_STATUS.IN_PROGRESS]: 0,
+    [GOAL_STATUS.CLOSED]: 0,
+    [GOAL_STATUS.SUSPENDED]: 0,
   };
 
   const response = {

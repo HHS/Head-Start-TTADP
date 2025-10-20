@@ -182,7 +182,10 @@ describe('useGoalState', () => {
     });
 
     await act(async () => {
-      await result.current.submit({ goalTemplate: { goals: [{ id: 1, status: 'In Progress' }] } });
+      await result.current.submit({
+        goalTemplate:
+        { goals: [{ id: 1, status: GOAL_STATUS.IN_PROGRESS }] },
+      });
     });
 
     expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.CONFIRMATION);
