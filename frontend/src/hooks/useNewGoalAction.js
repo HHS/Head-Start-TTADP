@@ -69,8 +69,8 @@ export default function useNewGoalAction() {
         // reopen the goal(s) and redirect to the edit goal form for those goals
         const updatedGoals = await updateGoalStatus(
           goalIds,
-          'In Progress',
-          'Suspended',
+          GOAL_STATUS.IN_PROGRESS,
+          GOAL_STATUS.SUSPENDED,
           null,
           null,
         );

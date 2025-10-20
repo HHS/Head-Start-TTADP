@@ -8,12 +8,13 @@ import { GOAL_SUSPEND_REASONS } from '@ttahub/common';
 import { ModalToggleButton } from '@trussworks/react-uswds';
 import userEvent from '@testing-library/user-event';
 import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
+import { OBJECTIVE_STATUS } from '../../Constants';
 
 describe('ObjectiveSuspendModal', () => {
   const ModalComponent = (
     {
       goalIds = [1],
-      newStatus = 'Closed',
+      newStatus = OBJECTIVE_STATUS.CLOSED,
       onSubmit = jest.fn(),
       resetValues = false,
       setError = jest.fn(),
@@ -49,7 +50,7 @@ describe('ObjectiveSuspendModal', () => {
   };
 
   it('correctly shows suspend radio options', async () => {
-    render(<ModalComponent newStatus="Ceased/Suspended" />);
+    render(<ModalComponent newStatus={OBJECTIVE_STATUS.SUSPENDED} />);
 
     // Open modal.
     const button = await screen.findByText('Open');
@@ -71,7 +72,7 @@ describe('ObjectiveSuspendModal', () => {
 
   it('shows validation message', async () => {
     const setError = jest.fn();
-    render(<ModalComponent newStatus="Ceased/Suspended" setError={setError} />);
+    render(<ModalComponent newStatus={OBJECTIVE_STATUS.SUSPENDED} setError={setError} />);
 
     // Open modal.
     const button = await screen.findByText('Open');

@@ -2,6 +2,7 @@ import React from 'react';
 import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import { GOAL_STATUS } from '@ttahub/common';
 import RecipientCard from '../RecipientCard';
 
 const recipientData = {
@@ -16,13 +17,13 @@ const recipientData = {
   goals: [
     {
       goalNumber: 'G-54826',
-      status: 'In progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       creator: 'Jon Doe',
       collaborator: 'Jane Doe',
     },
     {
       goalNumber: 'G-54827',
-      status: 'Completed',
+      status: GOAL_STATUS.CLOSED,
       creator: 'Bill Smith',
       collaborator: 'Barbra Smith',
     },
@@ -86,12 +87,12 @@ describe('GoalCard', () => {
     expect(screen.queryAllByText('Collaborator').length).toBe(2);
 
     expect(screen.getByText('G-54826')).toBeInTheDocument();
-    expect(screen.getByText('In progress')).toBeInTheDocument();
+    expect(screen.getByText(GOAL_STATUS.IN_PROGRESS)).toBeInTheDocument();
     expect(screen.getByText('Jon Doe')).toBeInTheDocument();
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
 
     expect(screen.getByText('G-54827')).toBeInTheDocument();
-    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByText(GOAL_STATUS.CLOSED)).toBeInTheDocument();
     expect(screen.getByText('Bill Smith')).toBeInTheDocument();
     expect(screen.getByText('Barbra Smith')).toBeInTheDocument();
 

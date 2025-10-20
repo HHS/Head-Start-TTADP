@@ -47,13 +47,13 @@ const StatusActionTag = ({
   }
 
   switch (update.newStatus) {
-    case 'Not Started':
+    case GOAL_STATUS.NOT_STARTED:
       return <span>Added on</span>;
-    case 'In Progress':
+    case GOAL_STATUS.IN_PROGRESS:
       return <span>Started on</span>;
-    case 'Suspended':
+    case GOAL_STATUS.SUSPENDED:
       return <span>Suspended on</span>;
-    case 'Closed':
+    case GOAL_STATUS.CLOSED:
       return <span>Closed on</span>;
     case 'Complete':
       return <span>Completed on</span>;
@@ -232,7 +232,7 @@ export default function ViewGoalDetails({
       if (update && update.synthetic) {
         return <GoalUserIdentifier goal={goal} />;
       }
-      if (goal.standard === 'Monitoring' && update.newStatus === 'Not Started' && update.reason === 'Active monitoring citations') {
+      if (goal.standard === 'Monitoring' && update.newStatus === GOAL_STATUS.NOT_STARTED && update.reason === 'Active monitoring citations') {
         return ' by OHS';
       }
 
@@ -289,7 +289,7 @@ export default function ViewGoalDetails({
                 <ul className="usa-list" aria-label="Goal status updates">
                   <li>
                     <strong>
-                      {goal.status === 'Not Started' ? 'Added' : `${goal.status}`}
+                      {goal.status === GOAL_STATUS.NOT_STARTED ? 'Added' : `${goal.status}`}
                     </strong>
                     {' '}
                     on

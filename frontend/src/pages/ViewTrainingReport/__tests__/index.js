@@ -8,6 +8,7 @@ import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import AppLoadingContext from '../../../AppLoadingContext';
 import ViewTrainingReport, { formatOwnerName } from '..';
 import UserContext from '../../../UserContext';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 const oneCompleteSession = [{
   id: 7,
@@ -27,7 +28,7 @@ const oneCompleteSession = [{
       updatedAt: '2023-06-27T13:48:54.745Z',
       originalFileName: 'test-file.pdf',
     }],
-    status: 'Complete',
+    status: TRAINING_REPORT_STATUSES.COMPLETE,
     context: 'Session 1 context',
     endDate: '06/16/2023',
     eventId: 33,
@@ -95,7 +96,7 @@ const mockEvent = (data = {}) => ({
         updatedAt: '2023-06-27T13:48:54.745Z',
         originalFileName: 'test-file.pdf',
       }],
-      status: 'Complete',
+      status: TRAINING_REPORT_STATUSES.COMPLETE,
       context: 'Session 1 context',
       endDate: '06/16/2023',
       eventId: 33,
@@ -130,7 +131,7 @@ const mockEvent = (data = {}) => ({
     data: {
       id: 8,
       files: [],
-      status: 'In progress',
+      status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       context: 'Session 2 context',
       endDate: '06/23/2023',
       eventId: '1',
@@ -304,7 +305,8 @@ describe('ViewTrainingReport', () => {
     expect(el.length).toBe(3);
     const statuses = Array.from(el).map((e) => e.textContent);
     statuses.sort();
-    expect(statuses).toEqual(['Complete', 'In progress', 'Not started']);
+    expect(statuses).toEqual([
+      OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.IN_PROGRESS, OBJECTIVE_STATUS.NOT_STARTED]);
   });
 
   it('renders the necessary buttons', async () => {
