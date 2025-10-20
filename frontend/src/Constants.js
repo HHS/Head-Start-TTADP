@@ -301,3 +301,10 @@ export const COLLAB_REPORT_DATA = {
   tta_hub: 'TTA Hub',
   other: 'Other',
 };
+
+export const OBJECTIVE_STATUS = {
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  COMPLETE: 'Complete',
+};

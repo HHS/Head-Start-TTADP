@@ -4,8 +4,9 @@ import {
   render,
   screen,
 } from '@testing-library/react';
-
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import ApprovedReportV2 from '../../../components/ReportView/ApprovedReportV2';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('Approved Activity Report V2 component', () => {
   const mockObjectives = [
@@ -402,7 +403,7 @@ describe('Approved Activity Report V2 component', () => {
         {
           id: 90740,
           name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
-          status: 'In Progress',
+          status: GOAL_STATUS.IN_PROGRESS,
           endDate: '',
           isCurated: true,
           grantId: 11597,
@@ -417,7 +418,7 @@ describe('Approved Activity Report V2 component', () => {
           prompts: [],
           statusChanges: [
             {
-              oldStatus: 'Not Started',
+              oldStatus: GOAL_STATUS.NOT_STARTED,
             },
           ],
           activityReportGoals: [
@@ -428,7 +429,7 @@ describe('Approved Activity Report V2 component', () => {
               goalId: 90740,
               isRttapa: null,
               name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
-              status: 'In Progress',
+              status: GOAL_STATUS.IN_PROGRESS,
               timeframe: null,
               closeSuspendReason: null,
               closeSuspendContext: null,
@@ -443,7 +444,7 @@ describe('Approved Activity Report V2 component', () => {
               otherEntityId: null,
               goalId: 90740,
               title: 'test',
-              status: 'In Progress',
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
               objectiveTemplateId: 565,
               onAR: true,
               onApprovedAR: true,

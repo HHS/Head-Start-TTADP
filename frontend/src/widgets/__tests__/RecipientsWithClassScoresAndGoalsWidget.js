@@ -5,6 +5,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import RecipientsWithClassScoresAndGoalsWidget from '../RecipientsWithClassScoresAndGoalsWidget';
 import UserContext from '../../UserContext';
 
@@ -27,13 +28,13 @@ const recipientData = {
       goals: [
         {
           goalNumber: 'G-45641',
-          status: 'In progress',
+          status: GOAL_STATUS.IN_PROGRESS,
           creator: 'John Doe',
           collaborator: 'Jane Doe',
         },
         {
           goalNumber: 'G-25858',
-          status: 'Suspended',
+          status: GOAL_STATUS.SUSPENDED,
           creator: 'Bill Smith',
           collaborator: 'Bob Jones',
         },
