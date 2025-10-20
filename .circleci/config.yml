@@ -924,27 +924,26 @@ commands:
     - run:
         name: Write owner into file
         command: |
-          set -x
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           node bin/write_envs.js ${current_env} ${CIRCLE_USERNAME} ${CIRCLE_BRANCH} environments/envs.json
           cat environments/envs.json
-          data=$(jq -r '"| Name | Branch | Date |", "|---|---|---|",(.[] | "| \(.username) | \(.branch) | \(.updated) |")' environments/envs.json
+          data=$(jq -r '"| Name | Branch | Date |", "|---|---|---|",(.[] | "| \(.username) | \(.branch) | \(.updated) |")' environments/envs.json)
 
           curl -w "\n%{http_code}\n" --fail-with-body -X POST \
-            https://slack.com/api/canvases.edit \
-            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
-            -H 'Content-type: application/json;charset=utf-8' \
-            --data '{
-              "canvas_id": "F09459952U9",
-              "changes": [{
-                "operation": "replace",
-                "document_content": {
-                  "type": "markdown",
-                  "markdown": "'"${data}"'"         
-                },
-              }],
-            }'
+          https://slack.com/api/canvases.edit \
+          -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data '{
+            "canvas_id": "F09459952U9",
+            "changes": [{
+              "operation": "replace",
+              "document_content": {
+                "type": "markdown",
+                "markdown": "'"$data"'"
+              },
+            }],
+          }'
 
     - save_cache:
         key: 'environment-owners'
