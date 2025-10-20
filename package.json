@@ -319,7 +319,7 @@
     "mock-fs": "^5.4.1",
     "nodemon": "^2.0.4",
     "nyc": "^17.1.0",
-    "playwright": "^1.46.0",
+    "playwright": "^1.55.1",
     "puppeteer": "^13.1.1",
     "puppeteer-select": "^1.0.3",
     "redoc-cli": "^0.13.2",
