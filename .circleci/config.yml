@@ -930,7 +930,6 @@ commands:
           node bin/write_envs.js ${current_env} ${CIRCLE_USERNAME} ${CIRCLE_BRANCH} environments/envs.json
           cat environments/envs.json
           data=$(jq -r '"| Name | Branch | Date |", "|---|---|---|", (.[] | "| \(.username) | \(.branch) | \(.updated) |")' envs.json)
-          echo ${data}
 
           curl -w "\n%{http_code}\n" --fail-with-body -X POST \
             https://slack.com/api/canvases.edit \
