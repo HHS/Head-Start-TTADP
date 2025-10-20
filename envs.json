@@ -2,11 +2,11 @@
   "dev-blue": {
     "username": "john",
     "branch": "test-branch3",
-    "updated": "2025-10-16T20:33:05.650Z"
+    "updated": "10/19/2025"
   },
   "dev-red": {
     "username": "mike",
     "branch": "test-branch7",
-    "updated": "2025-10-16T20:35:36.696Z"
+    "updated": "10/19/2025"
   }
 }

@@ -53,7 +53,6 @@ applications:
       SMTP_USER: ((SMTP_USER))
       SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
       TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
-      SLACK_TOKEN: ((slack_token))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))

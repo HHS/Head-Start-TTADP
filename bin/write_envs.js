@@ -34,14 +34,6 @@ const status = loadStatus(statusFile);
 
 // Check if update is needed
 const prev = status[environment];
-if (
-  !prev
-    || prev.username !== username
-    || prev.branch !== branch
-) {
-  status[environment] = { username, branch, updated: new Date().toLocaleString() };
-  saveStatus(status, statusFile);
-  console.log(`Status updated for environment "${environment}".`);
-} else {
-  console.log(`No changes detected for environment "${environment}".`);
-}
+status[environment] = { username, branch, updated: new Date().toLocaleDateString('en-US', { timeZone: 'EST' }) };
+saveStatus(status, statusFile);
+console.log(loadStatus(statusFile));
