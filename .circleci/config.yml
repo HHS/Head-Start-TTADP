@@ -931,9 +931,11 @@ commands:
           # eng: F09459NAEKB
 
           cd environments
+          ls -la
           echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > current_env
           data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
           for file in *; do
+            cat ${file}
             if [ ! -d ${file} ]; then
               data="${data}$(cat ${file})\n"
             fi;
