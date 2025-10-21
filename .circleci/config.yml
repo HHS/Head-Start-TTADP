@@ -926,8 +926,15 @@ commands:
         command: |
           mkdir -p environments
           current_env="<< parameters.target_env >>"
-          node bin/write_envs.js ${current_env} ${CIRCLE_USERNAME} ${CIRCLE_BRANCH} environments/envs.json
-          data=$(jq -r '"Env | Name | Branch | Date |", "|---|---|---|---|",(to_entries[] | "\(.key) | \(.value.username) | \(.value.branch) | \(.value.updated)")' environments/envs.json)
+          
+          cd environments
+          echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d" > current_env
+          data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
+          for file in *; do
+            if [ ! -d ${file} ]; then
+              data="${data}$(cat ${file})\n"
+            fi;
+          done
 
           curl -w "\n%{http_code}\n" --fail-with-body -X POST \
           https://slack.com/api/canvases.edit \
