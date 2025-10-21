@@ -13,6 +13,11 @@ const purifyConfig = { ALLOWED_TAGS: [], ALLOWED_ATTR: [] };
  * @returns {string} The sanitized value
  */
 const sanitizeString = (value) => {
+  // Return empty strings as-is to avoid conversion to 'about:blank'
+  if (value === '') {
+    return '';
+  }
+
   try {
     const decoded = decodeURIComponent(value);
     const purified = DOMPurify.sanitize(decoded, purifyConfig);
@@ -31,6 +36,31 @@ const sanitizeString = (value) => {
  */
 const sanitizeUrlParams = (req, res, next) => {
   try {
+    if (req.originalUrl || req.url) {
+      const originalUrl = req.originalUrl || req.url;
+      // We'll sanitize the full URL path components
+      const pathParts = originalUrl.split('/');
+      const sanitizedParts = pathParts.map((part) => {
+        if (!part) return part; // Skip empty parts
+        return sanitizeString(part);
+      });
+
+      // Store the sanitized URL for reference/debugging
+      req.sanitizedUrl = sanitizedParts.join('/');
+
+      // If we detect malicious content, block the request
+      if (originalUrl !== req.sanitizedUrl && (originalUrl.includes('<') || originalUrl.includes('>'))) {
+        // Respond with 400 Bad Request to prevent the request from proceeding
+        res.status(400).json({
+          error: 'Bad Request',
+          message: 'Request contains potentially malicious content',
+        });
+
+        // Don't call next(), which prevents the request from proceeding
+        return;
+      }
+    }
+
     // Sanitize query parameters
     if (req.query && typeof req.query === 'object') {
       req.query = Object.keys(req.query).reduce((sanitized, key) => ({
