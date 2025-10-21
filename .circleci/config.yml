@@ -921,8 +921,6 @@ commands:
     steps:
     - restore_cache:
         key: 'environment-owners'
-        paths:
-        - environments
     - run:
         name: Write owner into file
         command: |
