@@ -156,4 +156,45 @@ describe('sanitizeUrlParams middleware', () => {
     // eslint-disable-next-line no-console
     console.error.mockRestore();
   });
+
+  it('should return 400 Bad Request when URL contains malicious content', () => {
+    req.originalUrl = '/path/with/<script>alert("XSS")</script>/endpoint';
+    req.url = '/path/with/<script>alert("XSS")</script>/endpoint';
+
+    sanitizeUrlParams(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Bad Request',
+      message: 'Request contains potentially malicious content',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should return 400 Bad Request when URL contains HTML tags', () => {
+    req.originalUrl = '/api/logs/<img src="x" onerror="alert(\'XSS\')" />/view';
+    req.url = '/api/logs/<img src="x" onerror="alert(\'XSS\')" />/view';
+
+    sanitizeUrlParams(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Bad Request',
+      message: 'Request contains potentially malicious content',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should allow normal URLs with > or < in encoded form to pass', () => {
+    // URL-encoded angle brackets that don't decode to actual HTML tags
+    req.originalUrl = '/api/data/5%3C10';
+    req.url = '/api/data/5%3C10';
+    req.query = {};
+    req.params = {};
+
+    sanitizeUrlParams(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalled();
+  });
 });
