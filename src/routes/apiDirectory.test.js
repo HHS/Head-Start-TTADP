@@ -62,4 +62,16 @@ describe('apiDirectory tests', () => {
     const res = await request(app).get('/api/logout');
     expect(res.statusCode).toBe(204);
   });
+
+  it('sets Content-Type header to application/json for successful responses', async () => {
+    const res = await request(app).get('/api/unknown');
+    // Even though this is a 404, the middleware sets Content-Type for all responses
+    expect(res.headers['content-type']).toMatch(/application\/json/);
+  });
+
+  it('sets Content-Type header for 404 responses', async () => {
+    const res = await request(app).get('/api/unknown-route');
+    expect(res.statusCode).toBe(404);
+    expect(res.headers['content-type']).toMatch(/application\/json/);
+  });
 });
