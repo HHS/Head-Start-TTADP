@@ -21,6 +21,7 @@ jest.mock('../middleware/jwkKeyManager', () => ({
   }),
 }));
 
+jest.mock('../services/users');
 jest.mock('axios');
 jest.mock('smartsheet');
 
@@ -73,5 +74,36 @@ describe('apiDirectory tests', () => {
     const res = await request(app).get('/api/unknown-route');
     expect(res.statusCode).toBe(404);
     expect(res.headers['content-type']).toMatch(/application\/json/);
+  });
+
+  it('returns the current user data from /api/user endpoint', async () => {
+    const { userById } = require('../services/users');
+    const mockUserData = {
+      id: 110110,
+      hsesUsername: 'user110110',
+      toJSON: jest.fn().mockReturnValue({
+        id: 110110,
+        hsesUsername: 'user110110',
+      }),
+    };
+    userById.mockResolvedValue(mockUserData);
+
+    const res = await request(app).get('/api/user');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({
+      id: 110110,
+      hsesUsername: 'user110110',
+    });
+    expect(mockUserData.toJSON).toHaveBeenCalled();
+  });
+
+  it('handles errors in /api/user endpoint', async () => {
+    const { userById } = require('../services/users');
+    const testError = new Error('User not found');
+    userById.mockRejectedValue(testError);
+
+    const res = await request(app).get('/api/user');
+    // The error handler will return a status code (typically 500 or similar)
+    expect(res.statusCode).toBeGreaterThanOrEqual(400);
   });
 });

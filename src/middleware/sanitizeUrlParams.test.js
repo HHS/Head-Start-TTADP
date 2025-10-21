@@ -125,14 +125,35 @@ describe('sanitizeUrlParams middleware', () => {
   });
 
   it('should handle errors gracefully and return 500', () => {
-    // Create a scenario where decoding might fail
-    req.query = {
-      param: '%E0%A4%A', // Incomplete UTF-8 sequence
-    };
+    // Mock Object.keys to throw an error when called
+    const originalObjectKeys = Object.keys;
+    Object.keys = jest.fn((obj) => {
+      if (obj && obj.willThrow) {
+        throw new Error('Test error');
+      }
+      return originalObjectKeys(obj);
+    });
+
+    req.query = { willThrow: true, param: 'value' };
+
+    // eslint-disable-next-line no-console
+    jest.spyOn(console, 'error').mockImplementation();
 
     sanitizeUrlParams(req, res, next);
 
-    // Even with problematic input, should still try to sanitize
-    expect(next).toHaveBeenCalled();
+    // Should return 500 error response
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Internal Server Error',
+      message: 'An error occurred while processing your request',
+    });
+    // eslint-disable-next-line no-console
+    expect(console.error).toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+
+    // Restore
+    Object.keys = originalObjectKeys;
+    // eslint-disable-next-line no-console
+    console.error.mockRestore();
   });
 });
