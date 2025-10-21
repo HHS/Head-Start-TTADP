@@ -927,6 +927,9 @@ commands:
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           
+          # mine: F09459952U9
+          # eng: F09459NAEKB
+
           cd environments
           echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d" > current_env
           data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
@@ -941,7 +944,7 @@ commands:
           -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
           -H 'Content-type: application/json;charset=utf-8' \
           --data '{
-            "canvas_id": "F09459NAEKB",
+            "canvas_id": "F09459952U9",
             "changes": [{
               "operation": "replace",
               "document_content": {
