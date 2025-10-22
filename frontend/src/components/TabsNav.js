@@ -13,27 +13,31 @@ export default function TabsNav({ backLink, links, ariaLabel }) {
   const liClass = 'ttahub-tabs-nav_tab display-block margin-0 padding-0';
 
   return (
-    <div className="ttahub-tabs-nav no-print">
-      <nav className="ttahub-tabs-nav_nav bg-white" aria-label={ariaLabel}>
-        <ul className="display-flex margin-0 margin-bottom-5 padding-0">
-          {links.map((link) => (
-            link.featureFlag ? (
-              <FeatureFlag key={uniqueId('tabsnav-link_')} flag={link.featureFlag}>
-                <li className={liClass}>
+    <>
+      <div className="ttahub-tabs-nav no-print">
+        <nav className="ttahub-tabs-nav_nav bg-white" aria-label={ariaLabel}>
+          <ul className="display-flex margin-0 margin-bottom-5 padding-0">
+            {links.map((link) => (
+              link.featureFlag ? (
+                <FeatureFlag key={uniqueId('tabsnav-link_')} flag={link.featureFlag}>
+                  <li className={liClass}>
+                    <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={link.to}>{link.label}</NavLink>
+                  </li>
+                </FeatureFlag>
+              ) : (
+                <li key={uniqueId('tabsnav-link_')} className={liClass}>
                   <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={link.to}>{link.label}</NavLink>
                 </li>
-              </FeatureFlag>
-            ) : (
-              <li key={uniqueId('tabsnav-link_')} className={liClass}>
-                <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={link.to}>{link.label}</NavLink>
-              </li>
-            )
-          ))}
-        </ul>
-      </nav>
-      { backLink && backLink.props && backLink.props.children ? (<FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />) : null }
-      {backLink}
-    </div>
+              )
+            ))}
+          </ul>
+        </nav>
+      </div>
+      <div>
+        { backLink && backLink.props && backLink.props.children ? (<FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />) : null }
+        {backLink}
+      </div>
+    </>
   );
 }
 
