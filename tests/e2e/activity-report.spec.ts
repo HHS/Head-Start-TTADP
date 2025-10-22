@@ -2,6 +2,12 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-plusplus */
 import { test, expect, Page } from '@playwright/test';
+
+declare global {
+  interface Window {
+    __smartHubSnapshotPageState?: { activityReportId?: string };
+  }
+}
 import { blur } from './common';
 
 async function getFullName(page: Page) {
@@ -232,9 +238,13 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // extract the AR number from the URL:
-    const url = page.url();
-    const arMatch = url.match(/report\/(\d+)/);
-    const arNumber = arMatch ? arMatch[1] : '';
+    const pageState = await page.evaluate(() => window.__smartHubSnapshotPageState);
+    let arNumber = pageState?.activityReportId;
+    if (!arNumber) {
+      const url = page.url();
+      const fallbackMatch = url.match(/report\/(\d+)/);
+      arNumber = fallbackMatch ? fallbackMatch[1] : '';
+    }
     expect(arNumber).not.toEqual('');
 
     // create the second goal
