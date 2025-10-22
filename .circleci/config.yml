@@ -920,7 +920,7 @@ commands:
         type: string
     steps:
     - restore_cache:
-        key: 'environment-owners'
+        key: env-owners-
     - run:
         name: Write owner into file
         command: |
@@ -957,7 +957,7 @@ commands:
           }'
 
     - save_cache:
-        key: 'environment-owners'
+        key: env-owners-{{ epoch }}
         paths:
         - environments
 
