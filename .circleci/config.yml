@@ -926,9 +926,6 @@ commands:
         command: |
           mkdir -p environments
           current_env="<< parameters.target_env >>"
-          
-          # mine: F09459952U9
-          # eng: F09459NAEKB
 
           cd environments
           ls -la
@@ -946,7 +943,7 @@ commands:
           -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
           -H 'Content-type: application/json;charset=utf-8' \
           --data '{
-            "canvas_id": "F09459952U9",
+            "canvas_id": "F09459NAEKB",
             "changes": [{
               "operation": "replace",
               "document_content": {
