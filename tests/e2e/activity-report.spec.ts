@@ -238,14 +238,16 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // extract the AR number from the URL:
-    const pageState = await page.evaluate(() => window.__smartHubSnapshotPageState);
-    let arNumber = pageState?.activityReportId;
-    if (!arNumber) {
-      const url = page.url();
-      const fallbackMatch = url.match(/report\/(\d+)/);
-      arNumber = fallbackMatch ? fallbackMatch[1] : '';
-    }
-    expect(arNumber).not.toEqual('');
+    const arNumberHandle = await page.waitForFunction(() => {
+      const state = (window as any).__smartHubSnapshotPageState;
+      if (state?.activityReportId) {
+        return state.activityReportId;
+      }
+      const match = window.location.href.match(/report\/(\d+)/);
+      return match ? match[1] : null;
+    });
+    const arNumber = await arNumberHandle.jsonValue() as string;
+    expect(arNumber).toBeTruthy();
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();

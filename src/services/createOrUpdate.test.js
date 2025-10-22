@@ -389,41 +389,41 @@ describe('createOrUpdate', () => {
   });
 
   it('sanitizes pageState values that are marked complete without required data', async () => {
-    const draftReport = await createReport({
-      activityRecipients: [{
-        grantId: grantIds[0],
-      }],
-      userId: report.userId,
-      submissionStatus: REPORT_STATUSES.DRAFT,
-      calculatedStatus: REPORT_STATUSES.DRAFT,
+    await db.sequelize.transaction(async () => {
+      const draftReport = await createReport({
+        activityRecipients: [{
+          grantId: grantIds[0],
+        }],
+        userId: report.userId,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      });
+
+      const updatedReport = await createOrUpdate({
+        activityReason: null,
+        deliveryMethod: null,
+        targetPopulations: [],
+        ttaType: [],
+        participants: [],
+        language: [],
+        duration: null,
+        numberOfParticipants: null,
+        startDate: null,
+        endDate: null,
+        specialistNextSteps: [{ id: null, note: '', completeDate: null }],
+        recipientNextSteps: [{ id: null, note: '', completeDate: null }],
+        pageState: {
+          1: 'Complete',
+          2: 'Complete',
+          3: 'Complete',
+          4: 'Complete',
+        },
+        approverUserIds: [],
+      }, draftReport, draftReport.userId);
+
+      expect(updatedReport.pageState['1']).toBe('In progress');
+      expect(updatedReport.pageState['2']).toBe('Not started');
+      expect(updatedReport.pageState['4']).toBe('Not started');
     });
-
-    const updatedReport = await createOrUpdate({
-      activityReason: null,
-      deliveryMethod: null,
-      targetPopulations: [],
-      ttaType: [],
-      participants: [],
-      language: [],
-      duration: null,
-      numberOfParticipants: null,
-      startDate: null,
-      endDate: null,
-      specialistNextSteps: [{ id: null, note: '', completeDate: null }],
-      recipientNextSteps: [{ id: null, note: '', completeDate: null }],
-      pageState: {
-        1: 'Complete',
-        2: 'Complete',
-        3: 'Complete',
-        4: 'Complete',
-      },
-      approverUserIds: [],
-    }, draftReport, draftReport.userId);
-
-    expect(updatedReport.pageState['1']).toBe('In progress');
-    expect(updatedReport.pageState['2']).toBe('Not started');
-    expect(updatedReport.pageState['4']).toBe('Not started');
-
-    await destroyReport(updatedReport);
   });
 });
