@@ -7,6 +7,7 @@ import { uniqueId } from 'lodash';
 import ObjectiveStatusDropdown from './components/ObjectiveStatusDropdown';
 import { updateObjectiveStatus } from '../../fetchers/objective';
 import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
+import { OBJECTIVE_STATUS } from '../../Constants';
 import './ObjectiveCard.css';
 
 function ObjectiveCard({
@@ -29,7 +30,7 @@ function ObjectiveCard({
     citations,
   } = objective;
   const modalRef = useRef(null);
-  const [localStatus, setLocalStatus] = useState(status || 'Not Started');
+  const [localStatus, setLocalStatus] = useState(status || OBJECTIVE_STATUS.NOT_STARTED);
   const [localCloseSuspendReason, setLocalCloseSuspendReason] = useState('');
   const [localCloseSuspendContext, setLocalCloseSuspendContext] = useState('');
   const [suspendReasonError, setSuspendReasonError] = useState(null);
@@ -37,7 +38,7 @@ function ObjectiveCard({
 
   // keep local status in sync if the incoming prop changes (e.g., goal suspension cascades)
   useEffect(() => {
-    setLocalStatus(status || 'Not Started');
+    setLocalStatus(status || OBJECTIVE_STATUS.NOT_STARTED);
   }, [status]);
 
   // using deep compare as we have an array in the dependency list
@@ -67,7 +68,7 @@ function ObjectiveCard({
   };
 
   const onUpdateObjectiveStatus = async (newStatus) => {
-    if (newStatus === 'Suspended') {
+    if (newStatus === OBJECTIVE_STATUS.SUSPENDED) {
       modalRef.current.toggleModal();
       return;
     }

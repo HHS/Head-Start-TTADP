@@ -2,6 +2,7 @@ import React from 'react';
 import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import { GOAL_STATUS } from '@ttahub/common';
 import GoalCard from '../GoalCard';
 
 describe('GoalCard', () => {
@@ -19,7 +20,7 @@ describe('GoalCard', () => {
   it('renders correctly', () => {
     const goal = {
       goalNumber: 'G-54826',
-      status: 'In progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       creator: 'Jon Doe',
       collaborator: 'Jane Doe',
       recipientId: 1,
