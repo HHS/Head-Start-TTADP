@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
 import { createOrUpdate } from './activityReports';
 import { createReport, destroyReport } from '../testUtils';
@@ -6,7 +7,6 @@ import {
   FILE_STATUSES,
   GOAL_STATUS,
   OBJECTIVE_STATUS,
-  REPORT_STATUSES,
 } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 
@@ -420,7 +420,7 @@ describe('createOrUpdate', () => {
       approverUserIds: [],
     }, draftReport, draftReport.userId);
 
-    expect(updatedReport.pageState['1']).toBe('Not started');
+    expect(updatedReport.pageState['1']).toBe('In progress');
     expect(updatedReport.pageState['2']).toBe('Not started');
     expect(updatedReport.pageState['4']).toBe('Not started');
 

@@ -233,7 +233,9 @@ test.describe('Activity Report', () => {
 
     // extract the AR number from the URL:
     const url = page.url();
-    const arNumber = url.split('/').find((part) => /^\d+$/.test(part));
+    const arMatch = url.match(/report\/(\d+)/);
+    const arNumber = arMatch ? arMatch[1] : '';
+    expect(arNumber).not.toEqual('');
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
