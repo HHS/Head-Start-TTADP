@@ -50,6 +50,9 @@ export const getHandler = async (req, res) => {
 
     // Event auth.
     const event = await findEventBySmartsheetIdSuffix(sessionEventId);
+    if (event.data && event.data.status === 'Complete') {
+      return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' });
+    }
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
     if (!eventAuth.canEditSession()) {

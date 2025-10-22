@@ -120,6 +120,18 @@ describe('session report handlers', () => {
       await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(403);
     });
+
+    it('returns 403 when event is complete', async () => {
+      const completedEvent = {
+        ...mockEvent,
+        data: {
+          status: 'Complete',
+        },
+      };
+      findEventBySmartsheetIdSuffix.mockResolvedValue(completedEvent);
+      await getHandler({ session: { userId: 1 }, params: { eventId: 99_998 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+    });
   });
 
   describe('getGroups', () => {
