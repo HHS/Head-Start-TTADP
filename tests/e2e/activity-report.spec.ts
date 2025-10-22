@@ -240,16 +240,9 @@ test.describe('Activity Report', () => {
     // Wait for the URL to change to the specific report ID view.
     await page.waitForURL(/.*activity-reports\/(\d+)\/goals-objectives/);
 
-    // extract the AR number from the URL:
-    const arNumberHandle = await page.waitForFunction(() => {
-      const state = (window as any).__smartHubSnapshotPageState;
-      if (state?.activityReportId) {
-        return state.activityReportId;
-      }
-      const match = window.location.href.match(/report\/(\d+)/);
-      return match ? match[1] : null;
-    });
-    const arNumber = await arNumberHandle.jsonValue() as string;
+    const url = page.url();
+    const arNumber = url.split('/').find((part) => /^\d+$/.test(part)) as string;
+
     expect(arNumber).toBeTruthy();
 
     // create the second goal
