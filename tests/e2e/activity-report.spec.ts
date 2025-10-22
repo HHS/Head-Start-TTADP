@@ -237,6 +237,9 @@ test.describe('Activity Report', () => {
     // save goal and go on to create second goal
     await page.getByRole('button', { name: 'Save goal' }).click();
 
+    // Wait for the URL to change to the specific report ID view.
+    await page.waitForURL(/.*activity-reports\/(\d+)\/goals-objectives/);
+
     // extract the AR number from the URL:
     const arNumberHandle = await page.waitForFunction(() => {
       const state = (window as any).__smartHubSnapshotPageState;
