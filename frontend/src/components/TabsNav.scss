@@ -3,8 +3,14 @@
 // "Fixes" the tabs to the top of the page
 .ttahub-tabs-nav {
     position: sticky;
-    top: 72px; // needed to 'clear' the header
+    top: 48px; // needed to 'clear' the smaller header
     z-index: 999; // makes sure the rest of the page content flows "under" the tabs
+}
+
+@media screen and (min-width: 1024px) {
+    .ttahub-tabs-nav {
+        top: 72px; // needed to 'clear' the bigger header
+    }
 }
 
 .ttahub-tabs-nav_nav {
