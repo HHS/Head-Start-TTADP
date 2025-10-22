@@ -6,16 +6,9 @@ const IN_PROGRESS = 'In progress';
 const COMPLETE = 'Complete';
 
 function normalizeStatus(value) {
-  if (value === COMPLETE) {
-    return COMPLETE;
-  }
-  if (value === IN_PROGRESS) {
-    return IN_PROGRESS;
-  }
-  if (value === NOT_STARTED) {
-    return NOT_STARTED;
-  }
-  return NOT_STARTED;
+  return [COMPLETE, IN_PROGRESS, NOT_STARTED].includes(value)
+    ? value
+    : NOT_STARTED;
 }
 
 function isPositiveNumber(value) {
@@ -120,14 +113,12 @@ function computeSummaryStatus(report) {
     numberOfParticipantsVirtually,
     startDate,
     endDate,
-    context,
   } = report;
 
   const strings = [
     activityRecipientType,
     deliveryMethod,
     activityReason,
-    context,
   ];
 
   const arrays = [
