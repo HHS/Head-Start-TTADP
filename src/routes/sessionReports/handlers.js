@@ -39,6 +39,10 @@ export const getHandler = async (req, res) => {
 
     if (id) {
       session = await findSessionById(id);
+      if (session.event && session.event && session.event.data && session.event.data.status === 'Complete') {
+        return res.status(httpCodes.FORBIDDEN).send({ message: 'Sessions on completed training events cannot be edited.' });
+      }
+
       sessionEventId = session.eventId;
     } else if (eventId) {
       sessionEventId = eventId;

@@ -106,6 +106,20 @@ describe('session report handlers', () => {
       await getHandler({ params: { eventId: 0 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
+
+    it('returns 403 when session is linked to a completed training event', async () => {
+      const completedEventSession = {
+        ...mockSession,
+        event: {
+          data: {
+            status: 'Complete',
+          },
+        },
+      };
+      findSessionById.mockResolvedValue(completedEventSession);
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+    });
   });
 
   describe('getGroups', () => {
