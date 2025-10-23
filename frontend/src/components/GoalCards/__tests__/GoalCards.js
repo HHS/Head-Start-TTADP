@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
 import {
   render, screen, fireEvent,
 } from '@testing-library/react';
@@ -14,6 +14,7 @@ import AriaLiveContext from '../../../AriaLiveContext';
 import GoalCards from '../GoalCards';
 
 import { mockWindowProperty } from '../../../testHelpers';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 jest.mock('../../../fetchers/helpers');
 jest.mock('../../ReopenReasonModal', () => ({
@@ -41,7 +42,7 @@ const defaultUser = {
 const baseGoals = [{
   id: 4598,
   ids: [4598, 4599],
-  status: 'In Progress',
+  status: GOAL_STATUS.IN_PROGRESS,
   createdAt: '2021-06-15',
   name: 'This is goal text 1.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
@@ -56,7 +57,7 @@ const baseGoals = [{
 {
   id: 8547,
   ids: [8547],
-  status: 'Not Started',
+  status: GOAL_STATUS.NOT_STARTED,
   createdAt: '2021-05-15',
   name: 'This is goal text 2.',
   goalTopics: ['Nutrition', 'Oral Health'],
@@ -71,7 +72,7 @@ const baseGoals = [{
 {
   id: 65478,
   ids: [65478],
-  status: 'Completed',
+  status: GOAL_STATUS.CLOSED,
   createdAt: '2021-04-15',
   name: 'This is goal text 3.',
   goalTopics: ['Parent and Family Engagement'],
@@ -101,7 +102,7 @@ const baseGoals = [{
 {
   id: 65480,
   ids: [65480],
-  status: 'Draft',
+  status: GOAL_STATUS.DRAFT,
   createdAt: '2021-02-15',
   name: 'This is goal text 5.',
   goalTopics: ['Safety Practices'],
@@ -116,7 +117,7 @@ const baseGoals = [{
 {
   id: 65481,
   ids: [65481],
-  status: 'Suspended',
+  status: GOAL_STATUS.SUSPENDED,
   createdAt: '2021-01-15',
   name: 'This is goal text 6.',
   goalTopics: ['Recordkeeping and Reporting'],
@@ -133,7 +134,7 @@ const baseGoals = [{
 const goalWithObjectives = [{
   id: 4458,
   ids: [4458],
-  status: 'In Progress',
+  status: GOAL_STATUS.IN_PROGRESS,
   createdAt: '2021-06-15',
   name: 'This is a goal with objectives',
   goalTopics: ['Human Resources'],
@@ -146,7 +147,7 @@ const goalWithObjectives = [{
     title: 'Objective 1 Title',
     endDate: '06/14/2021',
     reasons: ['Monitoring | Deficiency'],
-    status: 'In Progress',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
     id: 345345345,
     ids: [345345345],
     ttaProvided: '',
@@ -163,7 +164,7 @@ const goalWithObjectives = [{
     title: 'Objective 2 Title',
     endDate: '05/14/2021',
     reasons: ['Below Competitive Threshold (CLASS)'],
-    status: 'Not Started',
+    status: OBJECTIVE_STATUS.NOT_STARTED,
     id: 234234253,
     ids: [234234253],
     ttaProvided: '',
@@ -180,7 +181,7 @@ const goalWithObjectives = [{
     title: 'Objective 3 Title',
     endDate: '04/14/2021',
     reasons: ['COVID-19 response'],
-    status: 'Complete',
+    status: OBJECTIVE_STATUS.COMPLETE,
     id: 2938234,
     ids: [2938234],
     ttaProvided: '',
@@ -197,7 +198,7 @@ const goalWithObjectives = [{
     title: 'Objective 4 Title',
     endDate: '03/14/2021',
     reasons: ['New Staff / Turnover'],
-    status: 'In Progress',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
     id: 255384234,
     ids: [255384234],
     ttaProvided: '',
@@ -670,7 +671,9 @@ describe('Goals Table', () => {
         ],
       };
 
-      renderTable({ goals: [{ ...baseGoals[2], status: 'Closed' }], goalsCount: 1 }, user);
+      renderTable(
+        { goals: [{ ...baseGoals[2], status: GOAL_STATUS.CLOSED }], goalsCount: 1 }, user,
+      );
       const menuToggle = await screen.findByRole('button', { name: /Actions for goal 65478/i });
       userEvent.click(menuToggle);
 
@@ -694,7 +697,9 @@ describe('Goals Table', () => {
         ],
       };
 
-      renderTable({ goals: [{ ...baseGoals[2], status: 'Closed' }], goalsCount: 1 }, user);
+      renderTable(
+        { goals: [{ ...baseGoals[2], status: GOAL_STATUS.CLOSED }], goalsCount: 1 }, user,
+      );
       const menuToggle = await screen.findByRole('button', { name: /Actions for goal 65478/i });
       userEvent.click(menuToggle);
 

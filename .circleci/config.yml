@@ -920,42 +920,41 @@ commands:
         type: string
     steps:
     - restore_cache:
-        key: 'environment-owners'
+        key: env-owners-
     - run:
         name: Write owner into file
         command: |
           mkdir -p environments
           current_env="<< parameters.target_env >>"
-          touch msg.txt
-          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then
-            exit 0;
-          fi
-          if [ -f ./environments/${current_env} ]; then
-            old_owner=$(cat ./environments/${current_env})
-            new_owner="${CIRCLE_USERNAME}"
-            if [ "${old_owner}" != "${new_owner}" ]; then
-              echo "owner changed from ${old_owner}->${new_owner}"
-              echo "${new_owner}" > environments/${current_env}
-              msg = ""
-              cd environments
-              for file in *; do
-                if [ ! -d ${file} ]; then
-                  msg="${file}: $(cat ${file})\n${msg}"
-                fi;
-              done
-              cd ..
-              ./bin/notify-slack.sh \
-                "Environment owner changed: \`\`\`${msg}\`\`\`" \
-                "tm-test"
-                ${SLACK_BOT_TOKEN}
-            else
-              echo "owner not changed: ${old_owner}=${new_owner}"
-            fi
-          else
-            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
-          fi
+
+          cd environments
+          ls -la
+          echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > ${current_env}
+          data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
+          for file in *; do
+            cat ${file}
+            if [ ! -d ${file} ]; then
+              data="${data}$(cat ${file})\n"
+            fi;
+          done
+
+          curl -w "\n%{http_code}\n" --fail-with-body -X POST \
+          https://slack.com/api/canvases.edit \
+          -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data '{
+            "canvas_id": "F09459NAEKB",
+            "changes": [{
+              "operation": "replace",
+              "document_content": {
+                "type": "markdown",
+                "markdown": "'"$data"'"
+              },
+            }],
+          }'
+
     - save_cache:
-        key: 'environment-owners'
+        key: env-owners-{{ epoch }}
         paths:
         - environments
 
