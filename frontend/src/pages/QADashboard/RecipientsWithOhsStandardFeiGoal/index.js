@@ -11,6 +11,7 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import colors from '../../../colors';
 import RecipientsWithOhsStandardFeiGoalWidget from '../../../widgets/RecipientsWithOhsStandardFeiGoalWidget';
 import Drawer from '../../../components/Drawer';
@@ -32,18 +33,13 @@ const ALLOWED_SUBFILTERS = [
 ];
 
 export const mapGoalStatusKey = (status) => {
-  switch (status) {
-    case 'Not Started':
-      return 4;
-    case 'In Progress':
-      return 3;
-    case 'Suspended':
-      return 2;
-    case 'Closed':
-      return 1;
-    default:
-      return 0;
-  }
+  const statusMap = {
+    [GOAL_STATUS.NOT_STARTED]: 4,
+    [GOAL_STATUS.IN_PROGRESS]: 3,
+    [GOAL_STATUS.SUSPENDED]: 2,
+    [GOAL_STATUS.CLOSED]: 1,
+  };
+  return statusMap[status] || 0;
 };
 
 export default function RecipientsWithOhsStandardFeiGoal() {

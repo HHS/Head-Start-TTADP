@@ -1,13 +1,14 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ObjectiveStatus from '../ObjectiveStatus';
+import { OBJECTIVE_STATUS } from '../../../../../Constants';
 
 describe('ObjectiveStatus', () => {
   const mockOnChangeStatus = jest.fn();
   const mockOnBlur = jest.fn();
   const defaultProps = {
     onChangeStatus: mockOnChangeStatus,
-    status: 'Not Started',
+    status: OBJECTIVE_STATUS.NOT_STARTED,
     onBlur: mockOnBlur,
     closeSuspendReason: '',
     closeSuspendContext: '',
@@ -33,10 +34,10 @@ describe('ObjectiveStatus', () => {
     expect(dropdown).toBeInTheDocument();
 
     // Check all options are available
-    expect(screen.getByRole('option', { name: 'Not Started' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'In Progress' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Suspended' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Complete' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: OBJECTIVE_STATUS.NOT_STARTED })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: OBJECTIVE_STATUS.IN_PROGRESS })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: OBJECTIVE_STATUS.SUSPENDED })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: OBJECTIVE_STATUS.COMPLETE })).toBeInTheDocument();
 
     // Verify label is present
     expect(screen.getByText('Objective status')).toBeInTheDocument();
@@ -49,11 +50,11 @@ describe('ObjectiveStatus', () => {
       closeSuspendReason={defaultProps.closeSuspendReason}
       closeSuspendContext={defaultProps.closeSuspendContext}
       inputName={defaultProps.inputName}
-      status="In Progress"
+      status={OBJECTIVE_STATUS.IN_PROGRESS}
     />);
 
     const dropdown = screen.getByRole('combobox', { name: /Status for objective/i });
-    expect(dropdown).toHaveValue('In Progress');
+    expect(dropdown).toHaveValue(OBJECTIVE_STATUS.IN_PROGRESS);
   });
 
   it('filters out "Not Started" option when status is "In Progress"', () => {
@@ -63,16 +64,16 @@ describe('ObjectiveStatus', () => {
       closeSuspendReason={defaultProps.closeSuspendReason}
       closeSuspendContext={defaultProps.closeSuspendContext}
       inputName={defaultProps.inputName}
-      status="In Progress"
-      currentStatus="In Progress"
+      status={OBJECTIVE_STATUS.IN_PROGRESS}
+      currentStatus={OBJECTIVE_STATUS.IN_PROGRESS}
     />);
 
     // Not Started should be filtered out
-    expect(screen.queryByRole('option', { name: 'Not Started' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: OBJECTIVE_STATUS.NOT_STARTED })).not.toBeInTheDocument();
 
     // Other options should still be available
-    expect(screen.getByRole('option', { name: 'In Progress' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Suspended' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Complete' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: OBJECTIVE_STATUS.IN_PROGRESS })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: OBJECTIVE_STATUS.SUSPENDED })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: OBJECTIVE_STATUS.COMPLETE })).toBeInTheDocument();
   });
 });

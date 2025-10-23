@@ -6,6 +6,7 @@ import {
 } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import RecipientsWithClassScoresAndGoals from '../index';
 import UserContext from '../../../../UserContext';
 import { mockRSSData } from '../../../../testHelpers';
@@ -43,7 +44,7 @@ const recipientsWithClassScoresAndGoalsData = [
         creator: 'John Doe',
         goalCreatedAt: '2021-01-02T18:41:32.028+00:00',
         goalId: 45641,
-        goalStatus: 'In progress',
+        goalStatus: GOAL_STATUS.IN_PROGRESS,
       },
       {
         classroomOrganization: 5.0430,
@@ -59,7 +60,7 @@ const recipientsWithClassScoresAndGoalsData = [
         creator: 'Bill Smith',
         goalCreatedAt: '2021-01-02T18:41:32.028+00:00',
         goalId: 25858,
-        goalStatus: 'Suspended',
+        goalStatus: GOAL_STATUS.SUSPENDED,
       },
       {
         classroomOrganization: 8.458,
@@ -75,7 +76,7 @@ const recipientsWithClassScoresAndGoalsData = [
         creator: 'Bill Parks',
         goalCreatedAt: '2021-04-02T18:41:32.028+00:00',
         goalId: 68745,
-        goalStatus: 'Complete',
+        goalStatus: GOAL_STATUS.CLOSED,
       },
       {
         classroomOrganization: 8.459,
@@ -91,7 +92,7 @@ const recipientsWithClassScoresAndGoalsData = [
         creator: 'Nadia Parks',
         goalCreatedAt: '2021-04-02T18:41:32.028+00:00',
         goalId: 68746,
-        goalStatus: 'Not Started',
+        goalStatus: GOAL_STATUS.NOT_STARTED,
       },
       {
         classroomOrganization: 1.1,
@@ -107,7 +108,7 @@ const recipientsWithClassScoresAndGoalsData = [
         creator: 'Null Creator',
         goalCreatedAt: '2023-01-01T18:41:32.028+00:00',
         goalId: 99999,
-        goalStatus: 'Draft',
+        goalStatus: GOAL_STATUS.DRAFT,
       },
     ],
   },
@@ -159,11 +160,11 @@ describe('Recipients With Class and Scores and Goals', () => {
     goalsButton.click();
 
     expect(screen.getByText('G-45641')).toBeInTheDocument();
-    expect(screen.getByText('In progress')).toBeInTheDocument();
+    expect(screen.getByText(GOAL_STATUS.IN_PROGRESS)).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
     expect(screen.getByText('G-25858')).toBeInTheDocument();
-    expect(screen.getByText('Suspended')).toBeInTheDocument();
+    expect(screen.getByText(GOAL_STATUS.SUSPENDED)).toBeInTheDocument();
     expect(screen.getByText('Bill Smith')).toBeInTheDocument();
     expect(screen.getByText('Bob Jones')).toBeInTheDocument();
 
@@ -179,7 +180,7 @@ describe('Recipients With Class and Scores and Goals', () => {
     goalsButton.click();
 
     expect(screen.getByText('G-68745')).toBeInTheDocument();
-    expect(screen.getByText('Complete')).toBeInTheDocument();
+    expect(screen.getByText(GOAL_STATUS.CLOSED)).toBeInTheDocument();
     expect(screen.getByText('Bill Parks')).toBeInTheDocument();
     expect(screen.getByText('Jack Jones')).toBeInTheDocument();
   });

@@ -134,7 +134,7 @@ describe('Reopen Goal Reason', () => {
   });
 
   it('correctly updates context text', async () => {
-    render(<ModalComponent newStatus="Ceased/Suspended" />);
+    render(<ModalComponent newStatus={GOAL_STATUS.SUSPENDED} />);
 
     // Open modal.
     const button = await screen.findByText('Open');
