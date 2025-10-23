@@ -52,7 +52,7 @@ workflows:
     # It will build the app, run all tests, then deploy if the branch matches
     # autodeploy: main->staging, production->prod
     when: pipeline.parameters.action == "build_test_deploy"
-    max_auto_reruns: 3
+    max_auto_reruns: 2
     jobs:
     - build_and_lint
     - checkpoint:
@@ -152,7 +152,6 @@ workflows:
     # backup temp db to snapshot
     # restore temp snapshot to lower env dbs
     # run migrations
-    max_auto_reruns: 3
     triggers:
     - schedule:
         cron: "0 4 * * *" # 4AM UTC = 12AM EST
@@ -927,34 +926,24 @@ commands:
         command: |
           mkdir -p environments
           current_env="<< parameters.target_env >>"
-          touch msg.txt
-          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then
-            exit 0;
-          fi
-          if [ -f ./environments/${current_env} ]; then
-            old_owner=$(cat ./environments/${current_env})
-            new_owner="${CIRCLE_USERNAME}"
-            if [ "${old_owner}" != "${new_owner}" ]; then
-              echo "owner changed from ${old_owner}->${new_owner}"
-              echo "${new_owner}" > environments/${current_env}
-              msg = ""
-              cd environments
-              for file in *; do
-                if [ ! -d ${file} ]; then
-                  msg="${file}: $(cat ${file})\n${msg}"
-                fi;
-              done
-              cd ..
-              ./bin/notify-slack.sh \
-                "Environment owner changed: \`\`\`${msg}\`\`\`" \
-                "tm-test"
-                ${SLACK_BOT_TOKEN}
-            else
-              echo "owner not changed: ${old_owner}=${new_owner}"
-            fi
-          else
-            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
-          fi
+          node bin/write_envs.js ${current_env} ${CIRCLE_USERNAME} ${CIRCLE_BRANCH} environments/envs.json
+          data=$(jq -r '"Env | Name | Branch | Date |", "|---|---|---|---|",(to_entries[] | "\(.key) | \(.value.username) | \(.value.branch) | \(.value.updated)")' environments/envs.json)
+
+          curl -w "\n%{http_code}\n" --fail-with-body -X POST \
+          https://slack.com/api/canvases.edit \
+          -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data '{
+            "canvas_id": "F09459NAEKB",
+            "changes": [{
+              "operation": "replace",
+              "document_content": {
+                "type": "markdown",
+                "markdown": "'"$data"'"
+              },
+            }],
+          }'
+
     - save_cache:
         key: 'environment-owners'
         paths:
@@ -1414,9 +1403,13 @@ commands:
     - run:
         name: Post Slack Message
         command: |
-          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-            -H 'Content-type: application/json;charset=utf-8' \
-            --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+          if [ -f /tmp/message_file.json ]; then
+            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+          else
+            echo "Skipping Slack notification because /tmp/message_file.json was not generated."
+          fi
 
   no-op:
     # placeholder command for no-op jobs
