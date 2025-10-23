@@ -48,10 +48,6 @@ const sanitizeUrlParams = (req, res, next) => {
       // Store the sanitized URL for reference/debugging
       req.sanitizedUrl = sanitizedParts.join('/');
 
-      // If we detect malicious content, block the request
-      // Check both for literal HTML tags and for encoded HTML tag patterns
-      const hasLiteralHtmlTags = originalUrl.includes('<') || originalUrl.includes('>');
-
       // Decode and check if it contains actual HTML tags (more precise than just checking for %3C)
       let decodedUrl = originalUrl;
       try {
@@ -64,7 +60,7 @@ const sanitizeUrlParams = (req, res, next) => {
       // Check for common HTML tag patterns that indicate malicious content
       const hasDecodedHtmlTags = /<[a-z!]+[>\s/]/i.test(decodedUrl);
 
-      if (originalUrl !== req.sanitizedUrl && (hasLiteralHtmlTags || hasDecodedHtmlTags)) {
+      if (originalUrl !== req.sanitizedUrl && hasDecodedHtmlTags) {
         // Respond with 400 Bad Request to prevent the request from proceeding
         res.status(400).json({
           error: 'Bad Request',
