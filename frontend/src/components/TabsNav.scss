@@ -16,6 +16,10 @@
 .ttahub-tabs-nav_nav {
     margin-left: -2.5rem;
     margin-right: -2.5rem;
+
+    ul {
+        border-bottom: 1px solid $base-lighter; // Slight border to differentiate tabs from page content
+    }
 }
 
 @media all and (min-width: 30em) {
