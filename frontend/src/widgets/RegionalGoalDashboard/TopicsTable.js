@@ -4,30 +4,20 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   Table,
 } from '@trussworks/react-uswds';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import withWidgetData from '../withWidgetData';
 import useSessionSort from '../../hooks/useSessionSort';
 import Container from '../../components/Container';
 import colors from '../../colors';
 
-/**
- * statuses
- * @param {string} topic
- * @param {Object<{
- * 'Not Started': number;
- * 'In Progress': number;
- * 'Closed': number;
- * 'Suspended': number;
- * }>} statuses
- * @param {number} total
- */
 function TopicRow({ topic, statuses, total }) {
   return (
     <tr key={topic}>
       <td>{topic}</td>
-      <td>{statuses['Not Started']}</td>
-      <td>{statuses['In Progress']}</td>
-      <td>{statuses.Closed}</td>
-      <td>{statuses.Suspended}</td>
+      <td>{statuses[GOAL_STATUS.NOT_STARTED]}</td>
+      <td>{statuses[GOAL_STATUS.IN_PROGRESS]}</td>
+      <td>{statuses[GOAL_STATUS.CLOSED]}</td>
+      <td>{statuses[GOAL_STATUS.SUSPENDED]}</td>
       <td>{total}</td>
     </tr>
   );
@@ -36,10 +26,10 @@ function TopicRow({ topic, statuses, total }) {
 TopicRow.propTypes = {
   topic: PropTypes.string.isRequired,
   statuses: PropTypes.shape({
-    'Not Started': PropTypes.number,
-    'In Progress': PropTypes.number,
-    Closed: PropTypes.number,
-    Suspended: PropTypes.number,
+    [GOAL_STATUS.NOT_STARTED]: PropTypes.number,
+    [GOAL_STATUS.IN_PROGRESS]: PropTypes.number,
+    [GOAL_STATUS.CLOSED]: PropTypes.number,
+    [GOAL_STATUS.SUSPENDED]: PropTypes.number,
   }).isRequired,
   total: PropTypes.number.isRequired,
 };
@@ -139,10 +129,10 @@ export function TopicsTableWidget({ data, loading }) {
               <thead>
                 <tr>
                   {renderColumnHeader('Topic', 'topic')}
-                  {renderColumnHeader('Not Started', 'statuses.Not Started')}
-                  {renderColumnHeader('In Progress', 'statuses.In Progress')}
-                  {renderColumnHeader('Closed', 'statuses.Closed')}
-                  {renderColumnHeader('Suspended', 'statuses.Suspended')}
+                  {renderColumnHeader(GOAL_STATUS.NOT_STARTED, `statuses.${GOAL_STATUS.NOT_STARTED}`)}
+                  {renderColumnHeader(GOAL_STATUS.IN_PROGRESS, `statuses.${GOAL_STATUS.IN_PROGRESS}`)}
+                  {renderColumnHeader(GOAL_STATUS.CLOSED, `statuses.${GOAL_STATUS.CLOSED}`)}
+                  {renderColumnHeader(GOAL_STATUS.SUSPENDED, `statuses.${GOAL_STATUS.SUSPENDED}`)}
                   {renderColumnHeader('Total', 'total')}
                 </tr>
               </thead>
@@ -168,10 +158,10 @@ TopicsTableWidget.propTypes = {
   data: PropTypes.arrayOf(PropTypes.shape({
     topic: PropTypes.string.isRequired,
     statuses: PropTypes.shape({
-      'Not Started': PropTypes.number,
-      'In Progress': PropTypes.number,
-      Closed: PropTypes.number,
-      Suspended: PropTypes.number,
+      [GOAL_STATUS.NOT_STARTED]: PropTypes.number,
+      [GOAL_STATUS.IN_PROGRESS]: PropTypes.number,
+      [GOAL_STATUS.CLOSED]: PropTypes.number,
+      [GOAL_STATUS.SUSPENDED]: PropTypes.number,
     }).isRequired,
     total: PropTypes.number.isRequired,
   })),

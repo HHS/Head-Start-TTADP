@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import {
   useController, useFormContext, useWatch,
 } from 'react-hook-form';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import {
   Alert,
 } from '@trussworks/react-uswds';
@@ -39,6 +40,7 @@ import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
 import CitationDrawerContent from '../../../../components/CitationDrawerContent';
+import { OBJECTIVE_STATUS } from '../../../../Constants';
 
 export default function Objective({
   objective,
@@ -251,7 +253,7 @@ export default function Objective({
   } = useController({
     name: `${fieldArrayName}[${index}].status`,
     rules: { required: true },
-    defaultValue: objective.status || 'Not Started',
+    defaultValue: objective.status || OBJECTIVE_STATUS.NOT_STARTED,
   });
 
   const {
@@ -262,7 +264,7 @@ export default function Objective({
     },
   } = useController({
     rules: {
-      required: objective.status === 'Suspended',
+      required: objective.status === OBJECTIVE_STATUS.SUSPENDED,
     },
     name: `${fieldArrayName}[${index}].closeSuspendReason`,
     defaultValue: objective.closeSuspendReason || '',
@@ -361,7 +363,7 @@ export default function Objective({
   const onUpdateStatus = (event) => {
     const { value: updatedStatus } = event.target;
 
-    if (updatedStatus === 'Suspended') {
+    if (updatedStatus === OBJECTIVE_STATUS.SUSPENDED) {
       modalRef.current.toggleModal();
       return;
     }
@@ -445,7 +447,8 @@ export default function Objective({
         value={objectiveTitle}
         permissions={[
           createdHere,
-          statusForCalculations !== 'Complete' && statusForCalculations !== 'Suspended',
+          statusForCalculations !== OBJECTIVE_STATUS.COMPLETE
+          && statusForCalculations !== OBJECTIVE_STATUS.SUSPENDED,
           !onApprovedAR,
         ]}
       >
@@ -567,7 +570,7 @@ export default function Objective({
         onBlur={onBlurFiles}
         inputName={objectiveFilesInputName}
         reportId={reportId}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+        goalStatus={parentGoal ? parentGoal.status : GOAL_STATUS.NOT_STARTED}
         label="Did you use any other TTA resources that aren't available as link?"
         selectedObjectiveId={selectedObjective.id}
         userCanEdit

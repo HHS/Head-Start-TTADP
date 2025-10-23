@@ -9,8 +9,10 @@ import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import RecipientReviewSection from '../RecipientReviewSection';
 import GoalFormContext from '../../../../../GoalFormContext';
+import { OBJECTIVE_STATUS } from '../../../../../Constants';
 
 const defaultGoalsAndObjectives = [{
   id: 1,
@@ -23,7 +25,7 @@ const defaultGoalsAndObjectives = [{
     title: 'Goal 1 - Objective 1',
     topics: [],
     ttaProvided: '<p>TTA Provided for Goal 1 - Objective 1</p>',
-    status: 'In Progress',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
     courses: [],
     resources: [
       {
@@ -53,7 +55,7 @@ const defaultGoalsAndObjectives = [{
     title: 'Goal 1 - Objective 2',
     topics: [],
     ttaProvided: '<p>TTA Provided for Goal 1 - Objective 2</p>',
-    status: 'Not Started',
+    status: GOAL_STATUS.NOT_STARTED,
     courses: [],
     resources: [
       {
@@ -82,7 +84,7 @@ const defaultGoalsAndObjectives = [{
     title: 'Goal 2 - Objective 1',
     topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }],
     ttaProvided: '<p>TTA Provided for Goal 2 - Objective 1</p>',
-    status: 'Suspended',
+    status: OBJECTIVE_STATUS.SUSPENDED,
     courses: [],
     resources: [
       {
@@ -109,7 +111,7 @@ const defaultGoalsAndObjectives = [{
 {
   id: 90740,
   name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
-  status: 'In Progress',
+  status: GOAL_STATUS.IN_PROGRESS,
   endDate: '',
   isCurated: true,
   grantId: 11597,
@@ -124,7 +126,7 @@ const defaultGoalsAndObjectives = [{
   prompts: [],
   statusChanges: [
     {
-      oldStatus: 'Not Started',
+      oldStatus: GOAL_STATUS.NOT_STARTED,
     },
   ],
   activityReportGoals: [
@@ -135,7 +137,7 @@ const defaultGoalsAndObjectives = [{
       goalId: 90740,
       isRttapa: null,
       name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       timeframe: null,
       closeSuspendReason: null,
       closeSuspendContext: null,
@@ -150,7 +152,7 @@ const defaultGoalsAndObjectives = [{
       otherEntityId: null,
       goalId: 90740,
       title: 'test',
-      status: 'In Progress',
+      status: OBJECTIVE_STATUS.IN_PROGRESS,
       objectiveTemplateId: 565,
       onAR: true,
       onApprovedAR: true,
@@ -247,7 +249,7 @@ const RenderRecipientReviewSection = ({ goalsAndObjectives }) => {
 
   hookForm.watch = () => ({
     goalsAndObjectives,
-    calculatedStatus: 'Draft',
+    calculatedStatus: GOAL_STATUS.DRAFT,
   });
 
   return (
@@ -380,7 +382,7 @@ describe('RecipientReviewSection', () => {
         id: 100,
         title: 'Obj A1',
         ttaProvided: '<p>Old TTA</p>',
-        status: 'In Progress',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
         topics: [],
         resources: [],
         files: [],
@@ -397,7 +399,7 @@ describe('RecipientReviewSection', () => {
         id: 100,
         title: 'Obj A1',
         ttaProvided: '<p>New TTA</p>',
-        status: 'In Progress',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
         topics: [],
         resources: [],
         files: [],
@@ -414,7 +416,7 @@ describe('RecipientReviewSection', () => {
       hookForm.watch = () => ({
         goalsAndObjectives: stale,
         goals: live,
-        calculatedStatus: 'Draft',
+        calculatedStatus: GOAL_STATUS.DRAFT,
       });
 
       return (
@@ -441,7 +443,7 @@ describe('RecipientReviewSection', () => {
         id: 200,
         title: 'Obj B1',
         ttaProvided: '<p>Old Edit</p>',
-        status: 'In Progress',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
         topics: [],
         resources: [],
         files: [],
@@ -458,7 +460,7 @@ describe('RecipientReviewSection', () => {
         id: 200,
         title: 'Obj B1',
         ttaProvided: '<p>Live Edit</p>',
-        status: 'In Progress',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
         topics: [],
         resources: [],
         files: [],
@@ -476,7 +478,7 @@ describe('RecipientReviewSection', () => {
         goalsAndObjectives: stale,
         goals: [],
         goalForEditing: editing,
-        calculatedStatus: 'Draft',
+        calculatedStatus: GOAL_STATUS.DRAFT,
       });
 
       return (
@@ -503,7 +505,7 @@ describe('RecipientReviewSection', () => {
         id: 300,
         title: 'Obj C1',
         ttaProvided: '<p>Only Snapshot</p>',
-        status: 'In Progress',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
         topics: [],
         resources: [],
         files: [],
@@ -521,7 +523,7 @@ describe('RecipientReviewSection', () => {
         goalsAndObjectives: stale,
         goals: [],
         goalForEditing: null,
-        calculatedStatus: 'Draft',
+        calculatedStatus: GOAL_STATUS.DRAFT,
       });
 
       return (

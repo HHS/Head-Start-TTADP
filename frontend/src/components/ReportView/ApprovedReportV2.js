@@ -4,6 +4,7 @@ import Container from '../Container';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
+  OBJECTIVE_STATUS,
 } from '../../Constants';
 import {
   reportDataPropTypes,
@@ -63,7 +64,7 @@ function addObjectiveSectionsToArray(
         'TTA provided': objective.ttaProvided,
         'Support type': objective.supportType,
         'Objective status': objective.status,
-        ...(objective.status === 'Suspended' ? {
+        ...(objective.status === OBJECTIVE_STATUS.SUSPENDED ? {
           'Reason suspended': (
             objective.closeSuspendReason || ''
           ) + (` - ${objective.closeSuspendContext}` || ''),
