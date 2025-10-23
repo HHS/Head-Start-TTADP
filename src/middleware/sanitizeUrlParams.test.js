@@ -197,4 +197,54 @@ describe('sanitizeUrlParams middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalled();
   });
+
+  it('should return 400 Bad Request when URL contains encoded malicious HTML (%3C)', () => {
+    // This is the exact URL from the issue - encoded HTML tags in URL path
+    req.originalUrl = '/api/communication-logs/region/1/log/%3Cbr%3E%3Chr%3E%3Ch1%3E%E2%9D%97%E2%9D%97%E2%9D%97%20SESSION%20CORRUPTION%20ERROR%20%E2%9D%97%E2%9D%97%E2%9D%97%3C%2fh1%3E%3Cb%3E%3Cpre%3EYour%20session%20information%20appears%20to%20have%20been%20corrupted.%3Cbr%3EPlease%20%3Ca%20href%3dhttps%3a%2f%2fwww.synack.com%2farbitrarylink%3Eclick%20here%3C%2fa%3E%20to%20refesh%20session%20and%20avoid%20losing%20account%20data.%3C%2fb%3E%3Cbr%3E%3Chr%3E%3Cbr%3E%3Cbr%3E%3Cpre%3ERef%20ID%3a%20%3Ca%20href%3dhttps%3a%2f%2fwww.synack.com%2farbitrarylink%3Ebf9d2c85-354e-47fd-91f6-6d186345248e%3C%2fa%3E%3C%2fpre%3E';
+    req.url = req.originalUrl;
+    req.query = {};
+    req.params = {};
+
+    sanitizeUrlParams(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Bad Request',
+      message: 'Request contains potentially malicious content',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should return 400 Bad Request when URL contains encoded closing tag (%2f + %3E)', () => {
+    // URL with encoded closing HTML tag
+    req.originalUrl = '/api/data/test%3Cscript%3E/endpoint';
+    req.url = req.originalUrl;
+    req.query = {};
+    req.params = {};
+
+    sanitizeUrlParams(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Bad Request',
+      message: 'Request contains potentially malicious content',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should return 400 Bad Request when URL contains lowercase encoded angle brackets with tag pattern (%3c)', () => {
+    req.originalUrl = '/api/path/%3cscript%3ealert("xss")%3c/script%3e';
+    req.url = req.originalUrl;
+    req.query = {};
+    req.params = {};
+
+    sanitizeUrlParams(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Bad Request',
+      message: 'Request contains potentially malicious content',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
 });
