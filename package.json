@@ -332,6 +332,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.26.10",
+    "@braintree/sanitize-url": "^7.1.1",
     "@faker-js/faker": "^6.0.0",
     "@mesh-kit/core": "^1.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
