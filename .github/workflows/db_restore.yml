@@ -1,11 +1,7 @@
 name: DB Restore
 
 on:
-<<<<<<< HEAD
   workflow_dispatch:
-=======
-  workflow_dispath:
->>>>>>> origin/main
     inputs:
       source:
         description: use processed (anonymized) or prod data
@@ -31,17 +27,9 @@ on:
         - ttahub-dev-green
         - ttahub-dev-gold
         - ttahub-dev-pink
-<<<<<<< HEAD
 
 jobs:
   db-restore:
-=======
-    secrets:
-      github-token:
-        required: true
-
-jobs:
->>>>>>> origin/main
     runs-on: ubuntu-latest
     concurrency:
       group: db-restore
@@ -49,7 +37,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v5
-<<<<<<< HEAD
       - name: Install cf cli
         uses: cloud-gov/cf-cli-action@v1
         with:
@@ -58,5 +45,3 @@ jobs:
         run: cf login -u "${{ secrets.CG_DEV_USERNAME }} -p ${{ secrets.CG_DEV_PASSWORD }} -o hhs-acf-ohs-tta -a https://api.fr.cloud.gov -s ${{ secrets.CG_DEV_SPACE }} 
       # - name: Run restore script
       #   run: db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}
-=======
->>>>>>> origin/main
