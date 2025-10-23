@@ -7,10 +7,11 @@ import DescriptionList from './DescriptionList';
 import FindingWithinReview from './FindingWithinReview';
 import SpecialistTags from './SpecialistTags';
 import Tag from '../../../../../components/Tag';
-import ToggleTtaActivityButton from './ToggleTtaActivityButton';
+import ExpanderButton from '../../../../../components/ExpanderButton';
 
 export default function ReviewCard({ review, regionId }) {
   const [expanded, setExpanded] = useState(false);
+
   return (
     <DataCard
       testId="review-card"
@@ -59,10 +60,13 @@ export default function ReviewCard({ review, regionId }) {
           <SpecialistTags specialists={review.specialists} />
         </DescriptionItem>
       </DescriptionList>
-      <ToggleTtaActivityButton
-        count={review.findings.length}
+      <ExpanderButton
+        closeOrOpen={() => setExpanded(!expanded)}
         expanded={expanded}
-        setExpanded={setExpanded}
+        type="TTA activity"
+        showCount={false}
+        pluralize={false}
+        ariaLabel="TTA activity"
       />
       {expanded && (review.findings.map((finding) => (
         <FindingWithinReview
