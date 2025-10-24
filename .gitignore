@@ -53,3 +53,9 @@ db.sql
 # E2E Test report files
 tests/e2e/html-report
 tests/e2e/report.xml
+
+# Playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
