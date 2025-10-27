@@ -228,4 +228,31 @@ describe('sanitizeRequestBody middleware', () => {
     expect(req.body.mixedArray[4]).toEqual('normal string');
     expect(next).toHaveBeenCalled();
   });
+
+  it('should retain rich text formatting in context property', () => {
+    const richTextContent = '<h3><strong>Some</strong> <em>rich</em> <ins>text</ins> <del>that</del> is formatted.</h3>\n<ol>\n<li>Item A</li>\n<li>Item B</li>\n<li>Item C</li>\n</ol>\n<p>Second List</p>\n<ul>\n<li>Bullet Item A</li>\n<li>Bullet Item B</li>\n</ul>\n';
+
+    req.body = {
+      context: richTextContent,
+    };
+
+    sanitizeRequestBody(req, res, next);
+
+    // Verify all safe formatting tags are preserved
+    expect(req.body.context).toContain('<h3>');
+    expect(req.body.context).toContain('<strong>');
+    expect(req.body.context).toContain('<em>');
+    expect(req.body.context).toContain('<ins>');
+    expect(req.body.context).toContain('<del>');
+    expect(req.body.context).toContain('<ol>');
+    expect(req.body.context).toContain('<li>');
+    expect(req.body.context).toContain('<ul>');
+    expect(req.body.context).toContain('<p>');
+    expect(req.body.context).toContain('Item A');
+    expect(req.body.context).toContain('Item B');
+    expect(req.body.context).toContain('Item C');
+    expect(req.body.context).toContain('Bullet Item A');
+    expect(req.body.context).toContain('Bullet Item B');
+    expect(next).toHaveBeenCalled();
+  });
 });
