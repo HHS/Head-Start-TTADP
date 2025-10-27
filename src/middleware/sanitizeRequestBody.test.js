@@ -54,7 +54,8 @@ describe('sanitizeRequestBody middleware', () => {
 
     sanitizeRequestBody(req, res, next);
 
-    expect(req.body.recipients[0].name).not.toContain('<b>');
+    // Safe tags like <b> are preserved
+    expect(req.body.recipients[0].name).toContain('<b>');
     expect(req.body.recipients[1].name).toEqual('Recipient 2');
     expect(next).toHaveBeenCalled();
   });
@@ -116,7 +117,8 @@ describe('sanitizeRequestBody middleware', () => {
 
     sanitizeRequestBody(req, res, next);
 
-    expect(req.body.level1.level2.level3.value).not.toContain('<h1>');
+    // Safe tags like <h1> are preserved
+    expect(req.body.level1.level2.level3.value).toContain('<h1>');
     expect(next).toHaveBeenCalled();
   });
 
@@ -153,10 +155,13 @@ describe('sanitizeRequestBody middleware', () => {
 
     sanitizeRequestBody(req, res, next);
 
-    expect(req.body.data.purpose).not.toContain('<b>');
+    // Safe tags like <b> are preserved
+    expect(req.body.data.purpose).toContain('<b>');
+    // Dangerous tags like <script> are removed
     expect(req.body.data.notes).not.toContain('<script>');
     expect(req.body.data.communicationDate).toEqual('2025-01-01');
     expect(req.body.data.duration).toEqual(60);
+    // Dangerous tags like <img> are removed
     expect(req.body.data.otherStaff[0].label).not.toContain('<img');
     expect(req.body.data.otherStaff[1].label).toEqual('Staff Name');
     expect(next).toHaveBeenCalled();
