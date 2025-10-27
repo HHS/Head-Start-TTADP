@@ -19,6 +19,7 @@ import sessionMiddleware from './middleware/sessionMiddleware';
 import { logger, auditLogger, requestLogger } from './logger';
 import runCronJobs from './lib/cron';
 import sanitizeUrlParams from './middleware/sanitizeUrlParams';
+import sanitizeRequestBody from './middleware/sanitizeRequestBody';
 
 const app = express();
 
@@ -47,6 +48,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Sanitize URL parameters to prevent HTML injection in URLs
 app.use(sanitizeUrlParams);
+
+// Sanitize request body to prevent HTML injection in POST/PUT data
+app.use(sanitizeRequestBody);
 
 app.use(sessionMiddleware);
 
