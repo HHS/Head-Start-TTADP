@@ -202,7 +202,7 @@ describe('Objective', () => {
     const citationsButton = screen.getByRole('button', { name: /Citation/i });
     expect(citationsButton).toBeVisible();
 
-    const citationSelect = await screen.findByLabelText(/citation/i);
+    const citationSelect = await screen.findByRole('combobox', { name: /citation/i });
     await selectEvent.select(citationSelect, [/Citation 1/i]);
 
     expect(await screen.findByText(/Citation 1/i)).toBeVisible();
@@ -356,7 +356,7 @@ describe('Objective', () => {
     const citationsButton = screen.getByRole('button', { name: /Citation/i });
     expect(citationsButton).toBeVisible();
 
-    const citationSelect = await screen.findByLabelText(/citation/i);
+    const citationSelect = await screen.findByRole('combobox', { name: /citation/i });
     await selectEvent.select(citationSelect, [/Citation 1/i]);
 
     expect(await screen.findByText(/Citation 1/i)).toBeVisible();
