@@ -8,7 +8,7 @@ const DOMPurify = createDOMPurify(window);
 // Configuration for sanitization (allows safe formatting tags from Draft.js and rich text editors)
 // Removes dangerous tags and attributes while preserving legitimate HTML formatting
 const purifyConfig = {
-  ALLOWED_TAGS: ['b', 'i', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'ol', 'ul', 'li'],
+  ALLOWED_TAGS: ['b', 'i', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'ol', 'ul', 'li', 'strong', 'em', 'ins', 'del'],
   ALLOWED_ATTR: [],
 };
 
