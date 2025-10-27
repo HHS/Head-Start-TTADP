@@ -87,6 +87,9 @@ export default function Drawer({
       style={{
         top: headerHeight,
       }}
+      role="dialog"
+      aria-modal="true" // Sets the modal behavior for screen readers
+      aria-labelledby="drawerTitle"
     >
       <FocusTrap active={isOpen}>
         <div>
@@ -95,7 +98,7 @@ export default function Drawer({
             <div
               className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
             >
-              <span className="text-bold font-serif-lg" tabIndex={-1}>{title}</span>
+              <span className="text-bold font-serif-lg" id="drawerTitle" role="heading" aria-level={1}>{title}</span>
               <button
                 ref={closeButtonRef}
                 type="button"
