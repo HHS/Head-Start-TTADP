@@ -5,7 +5,12 @@ import { JSDOM } from 'jsdom';
 const { window } = new JSDOM('');
 const DOMPurify = createDOMPurify(window);
 
-const purifyConfig = { ALLOWED_TAGS: [], ALLOWED_ATTR: [] };
+// Configuration for sanitization (allows safe formatting tags from Draft.js and rich text editors)
+// Removes dangerous tags and attributes while preserving legitimate HTML formatting
+const purifyConfig = {
+  ALLOWED_TAGS: ['b', 'i', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'ol', 'ul', 'li'],
+  ALLOWED_ATTR: [],
+};
 
 /**
  * Sanitize a string value by decoding, purifying, and URL-sanitizing
@@ -24,7 +29,7 @@ const sanitizeString = (value) => {
     return sanitizeUrl(purified);
   } catch (e) {
     // If decoding fails, sanitize the original value
-    return sanitizeUrl(value);
+    return sanitizeUrl(DOMPurify.sanitize(value, purifyConfig));
   }
 };
 
