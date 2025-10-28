@@ -396,6 +396,12 @@ describe('Activity report service', () => {
         roleId: cor.id,
       });
 
+      await Permission.create({
+        userId: mockUserTwo.id,
+        regionId: 1,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      });
+
       await Grant.create({
         id: RECIPIENT_ID,
         number: 1,
