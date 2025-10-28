@@ -1,9 +1,11 @@
 import moment from 'moment';
-import { isValidResourceUrl } from '@ttahub/common';
+import { isValidResourceUrl, NAVIGATOR_PAGE_STATUSES } from '@ttahub/common';
 
-const NOT_STARTED = 'Not started';
-const IN_PROGRESS = 'In progress';
-const COMPLETE = 'Complete';
+const {
+  NOT_STARTED,
+  IN_PROGRESS,
+  COMPLETE,
+} = NAVIGATOR_PAGE_STATUSES;
 
 function normalizeStatus(value) {
   return [COMPLETE, IN_PROGRESS, NOT_STARTED].includes(value)
