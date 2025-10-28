@@ -7,6 +7,7 @@ import {
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
 } from '../../models';
+import grant from '../../models/grant';
 
 describe('goal filtersToScopes', () => {
   describe('goalFieldResponse', () => {
@@ -84,9 +85,10 @@ describe('goal filtersToScopes', () => {
 
       await Goal.destroy({
         where: {
-          id: [goal1.id, goal2.id, goal3.id],
+          grantId: goalGrant.id,
         },
         individualHooks: true,
+        force: true,
       });
 
       await Grant.destroy({
