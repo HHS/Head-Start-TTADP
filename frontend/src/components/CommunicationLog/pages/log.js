@@ -186,6 +186,14 @@ const Log = ({
             ))}
           </Dropdown>
         </FormItem>
+        <Drawer
+          triggerRef={purposeDrawerRef}
+          stickyHeader
+          stickyFooter
+          title="Purpose of communication"
+        >
+          <ContentFromFeedByTag tagName="ttahub-commlog-purpose" />
+        </Drawer>
       </div>
       <div className="margin-top-2">
         <FormItem
@@ -244,25 +252,15 @@ const Log = ({
             ))}
           </Dropdown>
         </FormItem>
+        <Drawer
+          triggerRef={resultDrawerRef}
+          stickyHeader
+          stickyFooter
+          title="Result guidance"
+        >
+          <ContentFromFeedByTag tagName="ttahub-commlog-results" />
+        </Drawer>
       </div>
-
-      <Drawer
-        triggerRef={purposeDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="Purpose of communication"
-      >
-        <ContentFromFeedByTag tagName="ttahub-commlog-purpose" />
-      </Drawer>
-
-      <Drawer
-        triggerRef={resultDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="Result guidance"
-      >
-        <ContentFromFeedByTag tagName="ttahub-commlog-results" />
-      </Drawer>
     </>
   );
 };
