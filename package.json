@@ -403,7 +403,7 @@
     "unzipper": "^0.10.14",
     "url-join": "^4.0.1",
     "uuid": "^8.3.2",
-    "validator": "^13.7.0",
+    "validator": "^13.15.20",
     "wait-for-expect": "^3.0.2",
     "winston": "^3.18",
     "ws": "^8.17.1",
