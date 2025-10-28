@@ -341,6 +341,16 @@ describe('activityReportToCsvRecord', () => {
     expect(output).toMatchObject(expectedOutput);
   });
 
+  it('returns an empty string when a date is invalid', async () => {
+    const report = ActivityReport.build({
+      createdAt: 'not-a-real-date',
+    });
+
+    const output = await activityReportToCsvRecord(report);
+
+    expect(output.createdAt).toBe('');
+  });
+
   describe('HTML Tag removal', () => {
     it('removes tags from the context field', async () => {
       const report = ActivityReport.build({

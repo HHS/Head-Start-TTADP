@@ -59,6 +59,13 @@ router.use((req, res, next) => {
   next();
 });
 
+// Explicitly set Content-Type for all API responses to prevent MIME-sniffing
+// and ensure browsers treat responses as data, not HTML
+router.use((req, res, next) => {
+  res.set('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
+
 router.use('/admin', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
 router.use('/collaboration-reports', collaborationReportsRouter);
@@ -107,8 +114,8 @@ router.get('/logout-oidc', logoutOidc);
 router.get(loginPath, login);
 
 // Server 404s need to be explicitly handled by express
-router.get('*', (req, res) => {
-  res.sendStatus(404);
+router.use('*', (_req, res) => {
+  res.status(404).json({});
 });
 
 export default router;

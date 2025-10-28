@@ -134,6 +134,36 @@ describe('event handlers', () => {
       await getHandler({ params: { eventId: 1 }, query: {} }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
+
+    it('returns 403 when trying to edit a completed event', async () => {
+      const completedEvent = {
+        ...mockEvent,
+        data: {
+          status: 'Complete',
+        },
+      };
+      findEventBySmartsheetIdSuffix.mockResolvedValue(completedEvent);
+      EventReport.mockImplementation(() => ({
+        canRead: () => true,
+      }));
+      await getHandler({ params: { eventId: 99_999 }, query: {} }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('allows viewing a completed event in read-only mode', async () => {
+      const completedEvent = {
+        ...mockEvent,
+        data: {
+          status: 'Complete',
+        },
+      };
+      findEventBySmartsheetIdSuffix.mockResolvedValue(completedEvent);
+      EventReport.mockImplementation(() => ({
+        canRead: () => true,
+      }));
+      await getHandler({ params: { eventId: 99_999 }, query: { readOnly: true } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
   });
 
   describe('createHandler', () => {
