@@ -35,6 +35,7 @@ import { currentUserId } from '../services/currentUser';
 import objectiveRouter from './objectives';
 import ssdiRouter from './ssdi';
 import citationsRouter from './citations';
+import sanitizeRequestBody from '../middleware/sanitizeRequestBody';
 
 export const loginPath = '/login';
 
@@ -44,6 +45,7 @@ const router = express.Router();
 
 router.use(httpContext.middleware);
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
+router.use(sanitizeRequestBody);
 
 router.use((req, res, next) => {
   try {
