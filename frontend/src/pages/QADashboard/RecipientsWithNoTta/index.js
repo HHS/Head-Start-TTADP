@@ -76,6 +76,18 @@ export default function RecipientsWithNoTta() {
           const recipientName = item['recipient name'];
           const dateOfLastTta = item['last tta'];
           const daysSinceLastTta = item['days since last tta'];
+
+          const parsedDate = dateOfLastTta ? moment(dateOfLastTta) : null;
+          const formattedDate = parsedDate && parsedDate.isValid()
+            ? parsedDate.format('MM/DD/YYYY')
+            : null;
+
+          const numericDaysSinceLastTta = Number(daysSinceLastTta);
+          const safeDaysSinceLastTta = Number.isFinite(numericDaysSinceLastTta)
+            && numericDaysSinceLastTta >= 0
+            ? numericDaysSinceLastTta
+            : null;
+
           return {
             id: recipientId,
             heading: recipientName,
@@ -87,11 +99,11 @@ export default function RecipientsWithNoTta() {
             data: [
               {
                 title: 'Date_of_Last_TTA',
-                value: dateOfLastTta ? moment(dateOfLastTta).format('MM/DD/YYYY') : null,
+                value: formattedDate,
               },
               {
                 title: 'Days_Since_Last_TTA',
-                value: daysSinceLastTta || null,
+                value: safeDaysSinceLastTta,
               },
             ],
           };
@@ -99,6 +111,11 @@ export default function RecipientsWithNoTta() {
 
         // Sort formattedRecipientPageData by Days Since Last TTA desc.
         formattedRecipientPageData.sort((a, b) => b.data[1].value - a.data[1].value);
+        // formattedRecipientPageData.sort((a, b) => {
+        //   const aValue = Number.isFinite(a.data[1].value) ? a.data[1].value : -Infinity;
+        //   const bValue = Number.isFinite(b.data[1].value) ? b.data[1].value : -Infinity;
+        //   return bValue - aValue;
+        // });
 
         // Add headers.
         formattedRecipientPageData = {
