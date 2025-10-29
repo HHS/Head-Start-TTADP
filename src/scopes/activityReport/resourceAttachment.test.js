@@ -105,20 +105,26 @@ describe('resourceAttachment filtersToScopes', () => {
       });
 
       // Create file attachments.
-      await createActivityReportObjectiveFileMetaData([{
-        activityReportObjectiveId: aro1.id,
-        originalFileName: 'included-file-1.pdf',
-      }]);
+      await createActivityReportObjectiveFileMetaData(
+        'included-file-1.pdf',
+        'included-file-1.pdf',
+        [aro1.id],
+        100,
+      );
 
-      await createActivityReportObjectiveFileMetaData([{
-        activityReportObjectiveId: aro2.id,
-        originalFileName: 'included-file-2.pdf',
-      }]);
+      await createActivityReportObjectiveFileMetaData(
+        'included-file-2.pdf',
+        'included-file-2.pdf',
+        [aro2.id],
+        100,
+      );
 
-      await createActivityReportObjectiveFileMetaData([{
-        activityReportObjectiveId: aro3.id,
-        originalFileName: 'excluded-file.pdf',
-      }]);
+      await createActivityReportObjectiveFileMetaData(
+        'excluded-file.pdf',
+        'excluded-file.pdf',
+        [aro3.id],
+        100,
+      );
     });
 
     afterAll(async () => {
