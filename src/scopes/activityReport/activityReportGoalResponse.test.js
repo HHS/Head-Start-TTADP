@@ -36,6 +36,7 @@ describe('activityReportGoalResponse filtersToScopes', () => {
 
     let recipient;
     let grant;
+    let grantTwo;
 
     let goalOne;
     let goalTwo;
@@ -49,6 +50,7 @@ describe('activityReportGoalResponse filtersToScopes', () => {
     beforeAll(async () => {
       recipient = await createRecipient();
       grant = await createGrant({ recipientId: recipient.id });
+      grantTwo = await createGrant({ recipientId: recipient.id });
 
       goalTemplate = await GoalTemplate.create({
         templateName: 'Goal Template For Response Test',
@@ -78,7 +80,7 @@ describe('activityReportGoalResponse filtersToScopes', () => {
       });
 
       goalTwo = await createGoal({
-        grantId: grant.id,
+        grantId: grantTwo.id,
         name: faker.lorem.sentence(10),
         status: GOAL_STATUS.IN_PROGRESS,
         goalTemplateId: goalTemplate.id,
@@ -166,7 +168,7 @@ describe('activityReportGoalResponse filtersToScopes', () => {
       });
 
       await Grant.destroy({
-        where: { id: grant.id },
+        where: { id: [grant.id, grantTwo.id] },
         individualHooks: true,
       });
 
@@ -176,7 +178,7 @@ describe('activityReportGoalResponse filtersToScopes', () => {
     });
 
     it('return correct activityReportGoalResponse filter search results', async () => {
-      const filters = { 'activityReportGoalResponse.ctn': ['chowder'] };
+      const filters = { 'activityReportGoalResponse.in': ['chowder'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {
@@ -192,7 +194,7 @@ describe('activityReportGoalResponse filtersToScopes', () => {
     });
 
     it('excludes correct activityReportGoalResponse filter search results', async () => {
-      const filters = { 'activityReportGoalResponse.nctn': ['chowder'] };
+      const filters = { 'activityReportGoalResponse.nin': ['chowder'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {

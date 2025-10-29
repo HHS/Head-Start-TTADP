@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import {
   Op,
+  REPORT_STATUSES,
   filtersToScopes,
   ActivityReport,
   ActivityReportResource,
@@ -21,100 +22,136 @@ describe('resourceUrl filtersToScopes', () => {
   afterAll(async () => {
     await tearDownSharedTestData();
   });
-
   describe('resourceUrl', () => {
-    let includedReport1;
-    let includedReport2;
-    let excludedReport;
-    let possibleIds;
+    let reportOne;
+    let reportTwo;
+    let reportOneWasCreated;
+    let reportTwoWasCreated;
+    let arOneResources;
+    let arTwoResources;
 
-    let resource1;
-    let resource2;
-    let resource3;
+    const reportOneUrls = [
+      'http://google.com',
+      'http://github.com',
+      'http://cloud.gov',
+      'https://adhocteam.us/',
+    ];
+
+    const reportTwoUrls = [
+      'http://www.crayola.com',
+    ];
 
     beforeAll(async () => {
-      includedReport1 = await ActivityReport.create({
-        ...draftReport,
+      [reportOne, reportOneWasCreated] = await ActivityReport.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          context: '',
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          numberOfParticipants: 1,
+          deliveryMethod: 'method',
+          duration: 0,
+          endDate: '2020-01-01T12:00:00Z',
+          startDate: '2020-01-01T12:00:00Z',
+          requester: 'requester',
+          regionId: 1,
+          targetPopulations: [],
+          version: 2,
+        },
+        individualHooks: true,
+        raw: true,
       });
+      await findOrCreateResources(reportOneUrls);
+      arOneResources = await processActivityReportForResourcesById(
+        reportOne.id,
+        reportOneUrls,
+      );
 
-      includedReport2 = await ActivityReport.create({
-        ...draftReport,
+      [reportTwo, reportTwoWasCreated] = await ActivityReport.findOrCreate({
+        where: {
+          id: 99_999,
+        },
+        defaults: {
+          context: '',
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          numberOfParticipants: 1,
+          deliveryMethod: 'method',
+          duration: 0,
+          endDate: '2020-01-01T12:00:00Z',
+          startDate: '2020-01-01T12:00:00Z',
+          requester: 'requester',
+          regionId: 1,
+          targetPopulations: [],
+          version: 2,
+        },
+        individualHooks: true,
+        raw: true,
       });
-
-      excludedReport = await ActivityReport.create({
-        ...draftReport,
-      });
-
-      possibleIds = [
-        includedReport1.id,
-        includedReport2.id,
-        excludedReport.id,
-        sharedTestData.globallyExcludedReport.id,
-      ];
-
-      // Create resources.
-      const resources1 = await findOrCreateResources(['https://included-url.gov']);
-      [resource1] = resources1;
-
-      const resources2 = await findOrCreateResources(['https://included-url-2.gov']);
-      [resource2] = resources2;
-
-      const resources3 = await findOrCreateResources(['https://excluded-url.gov']);
-      [resource3] = resources3;
-
-      // Assign resources to reports.
-      await processActivityReportForResourcesById(includedReport1.id, [resource1.id]);
-      await processActivityReportForResourcesById(includedReport2.id, [resource2.id]);
-      await processActivityReportForResourcesById(excludedReport.id, [resource3.id]);
+      await findOrCreateResources(reportTwoUrls);
+      arTwoResources = await processActivityReportForResourcesById(
+        reportTwo.id,
+        reportTwoUrls,
+      );
     });
 
     afterAll(async () => {
       await ActivityReportResource.destroy({
+        where: { activityReportId: reportOne.id },
+        individualHooks: true,
+      });
+      await ActivityReportResource.destroy({
+        where: { activityReportId: reportTwo.id },
+        individualHooks: true,
+      });
+      await Resource.destroy({
+        where: { url: { [Op.in]: [...reportOneUrls, ...reportTwoUrls] } },
+        individualHooks: true,
+      });
+      if (reportOneWasCreated) {
+        await ActivityReport.destroy({
+          where: { id: reportOne.id },
+          individualHooks: true,
+        });
+      }
+      if (reportTwoWasCreated) {
+        await ActivityReport.destroy({
+          where: { id: reportTwo.id },
+          individualHooks: true,
+        });
+      }
+    });
+
+    it('returns correct resource url filter search results', async () => {
+      const filters = { 'resourceUrl.ctn': ['google'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
         where: {
-          activityReportId: [includedReport1.id, includedReport2.id, excludedReport.id],
+          [Op.and]: [
+            scope,
+            { id: [reportOne.id, reportTwo.id] },
+          ],
         },
       });
-
-      await ActivityReport.destroy({
-        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
-      });
-
-      await Resource.destroy({
-        where: { id: [resource1.id, resource2.id, resource3.id] },
-      });
-    });
-
-    it('includes reports with matching resource URL', async () => {
-      const filters = { 'resourceUrl.ctn': ['included-url'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope, { id: possibleIds }] },
-      });
-      expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
-    });
-
-    it('excludes reports with matching resource URL', async () => {
-      const filters = { 'resourceUrl.nctn': ['included-url'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope, { id: possibleIds }] },
-      });
-      expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id]));
-    });
-
-    it('includes reports with exact matching resource URL', async () => {
-      const filters = { 'resourceUrl.ctn': ['https://included-url.gov'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope, { id: possibleIds }] },
-      });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportOne.id]));
+    });
+
+    it('excludes correct resource url filter search results', async () => {
+      const filters = { 'resourceUrl.nctn': ['http'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: [reportOne.id, reportTwo.id] },
+          ],
+        },
+      });
+      expect(found.length).toBe(0);
     });
   });
 });

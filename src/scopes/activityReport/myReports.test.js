@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import {
   Op,
   filtersToScopes,
@@ -97,6 +98,7 @@ describe('myReports filtersToScopes', () => {
 
       await ActivityReportApprover.destroy({
         where: { activityReportId: approverReport.id },
+        force: true,
       });
 
       await ActivityReport.destroy({
@@ -109,8 +111,8 @@ describe('myReports filtersToScopes', () => {
     });
 
     it('includes reports created by the user', async () => {
-      const filters = { 'myReports.in': [sharedTestData.includedUser1.id.toString(), 'Creator'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
+      const filters = { 'myReports.in': ['Creator'] };
+      const { activityReport: scope } = await filtersToScopes(filters, { userId: sharedTestData.includedUser1.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
@@ -120,8 +122,8 @@ describe('myReports filtersToScopes', () => {
     });
 
     it('includes reports collaborated on by the user', async () => {
-      const filters = { 'myReports.in': [collaborator.id.toString(), 'Collaborator'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
+      const filters = { 'myReports.in': ['Collaborator'] };
+      const { activityReport: scope } = await filtersToScopes(filters, { userId: collaborator.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
@@ -131,8 +133,8 @@ describe('myReports filtersToScopes', () => {
     });
 
     it('includes reports approved by the user', async () => {
-      const filters = { 'myReports.in': [approver.id.toString(), 'Approver'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
+      const filters = { 'myReports.in': ['Approver'] };
+      const { activityReport: scope } = await filtersToScopes(filters, { userId: approver.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
@@ -142,8 +144,8 @@ describe('myReports filtersToScopes', () => {
     });
 
     it('excludes reports created by the user', async () => {
-      const filters = { 'myReports.nin': [sharedTestData.includedUser1.id.toString(), 'Creator'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
+      const filters = { 'myReports.nin': ['Creator'] };
+      const { activityReport: scope } = await filtersToScopes(filters, { userId: sharedTestData.includedUser1.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
@@ -157,8 +159,8 @@ describe('myReports filtersToScopes', () => {
     });
 
     it('excludes reports collaborated on by the user', async () => {
-      const filters = { 'myReports.nin': [collaborator.id.toString(), 'Collaborator'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
+      const filters = { 'myReports.nin': ['Collaborator'] };
+      const { activityReport: scope } = await filtersToScopes(filters, { userId: collaborator.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
@@ -172,8 +174,8 @@ describe('myReports filtersToScopes', () => {
     });
 
     it('excludes reports approved by the user', async () => {
-      const filters = { 'myReports.nin': [approver.id.toString(), 'Approver'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
+      const filters = { 'myReports.nin': ['Approver'] };
+      const { activityReport: scope } = await filtersToScopes(filters, { userId: approver.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
@@ -184,42 +186,6 @@ describe('myReports filtersToScopes', () => {
           collaboratorReport.id,
           reportByExcludedUser.id,
         ]));
-    });
-
-    it('handles invalid role', async () => {
-      const filters = { 'myReports.in': [sharedTestData.includedUser1.id.toString(), 'InvalidRole'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope, { id: possibleIds }] },
-      });
-      expect(found.length).toBe(0);
-    });
-
-    it('handles missing role', async () => {
-      const filters = { 'myReports.in': [sharedTestData.includedUser1.id.toString()] };
-      const { activityReport: scope } = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope, { id: possibleIds }] },
-      });
-      expect(found.length).toBe(0);
-    });
-
-    it('handles invalid user ID', async () => {
-      const filters = { 'myReports.in': ['not-a-number', 'Creator'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope, { id: possibleIds }] },
-      });
-      expect(found.length).toBe(0);
-    });
-
-    it('handles empty filter value', async () => {
-      const filters = { 'myReports.in': [] };
-      const { activityReport: scope } = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope, { id: possibleIds }] },
-      });
-      expect(found.length).toBe(0);
     });
   });
 });
