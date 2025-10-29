@@ -18,7 +18,7 @@ import sessionMiddleware from './middleware/sessionMiddleware';
 
 import { logger, auditLogger, requestLogger } from './logger';
 import runCronJobs from './lib/cron';
-import sanitizeUrlParams from './middleware/sanitizeUrlParams';
+// import sanitizeUrlParams from './middleware/sanitizeUrlParams';
 
 const app = express();
 
@@ -46,7 +46,7 @@ app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Sanitize URL parameters to prevent HTML injection in URLs
-app.use(sanitizeUrlParams);
+// app.use(sanitizeUrlParams);
 
 app.use(sessionMiddleware);
 
