@@ -59,6 +59,7 @@ const defaultValues = {
   context: '',
   deliveryMethod: null,
   duration: null, // Keep this as null for local storage and form validation.
+  revision: 0,
   endDate: null,
   goals: [],
   recipientNextSteps: [{ id: null, note: '' }],
