@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Drawer from '../../../../../components/Drawer';
 import DrawerTriggerButton from '../../../../../components/DrawerTriggerButton';
@@ -6,6 +6,10 @@ import CitationDrawerContent from '../../../../../components/CitationDrawerConte
 
 export default function CitationDrawer({ citationNumber, bolded }) {
   const drawerTriggerRef = useRef(null);
+
+  useEffect(() => {
+    drawerTriggerRef.current.focus();
+  }, [citationNumber]);
 
   return (
     <>
