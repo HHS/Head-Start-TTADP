@@ -111,11 +111,6 @@ export default function RecipientsWithNoTta() {
 
         // Sort formattedRecipientPageData by Days Since Last TTA desc.
         formattedRecipientPageData.sort((a, b) => b.data[1].value - a.data[1].value);
-        // formattedRecipientPageData.sort((a, b) => {
-        //   const aValue = Number.isFinite(a.data[1].value) ? a.data[1].value : -Infinity;
-        //   const bValue = Number.isFinite(b.data[1].value) ? b.data[1].value : -Infinity;
-        //   return bValue - aValue;
-        // });
 
         // Add headers.
         formattedRecipientPageData = {
