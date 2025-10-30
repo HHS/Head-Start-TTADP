@@ -555,7 +555,7 @@ export async function getUserNamesByIds(ids) {
         model: Role,
         as: 'roles',
         attributes: ['id', 'name', 'fullName'],
-      }
+      },
     ],
     where: {
       id: ids,
