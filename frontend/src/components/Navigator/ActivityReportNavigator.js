@@ -3,6 +3,7 @@ import React, {
   useState,
   useContext,
   useMemo,
+  useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -132,10 +133,20 @@ const ActivityReportNavigator = ({
     trigger,
   } = hookForm;
 
+  // Track when we've just saved goals to prevent stale formData from resetting fresh goal data
+  const justSavedGoalsRef = useRef(false);
+
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
   // reset and the proper values are placed inside inputs
+  // However, skip reset if we just saved goals to prevent stale formData from overwriting
+  // fresh data
   useDeepCompareEffect(() => {
-    reset(formData);
+    if (!justSavedGoalsRef.current) {
+      reset(formData);
+    } else {
+      // Reset the flag after skipping one reset
+      justSavedGoalsRef.current = false;
+    }
   }, [currentPage, reset, formData]);
 
   const pageState = watch('pageState');
@@ -529,8 +540,10 @@ const ActivityReportNavigator = ({
         goals: packagedGoals,
         pageState: newNavigatorState(),
       };
-      const goals = await onSave(data);
-      console.log('Saved goals after onSave:', goals);
+      const { goals } = await onSave(data);
+
+      // Set flag to prevent next reset from overwriting fresh goal data with stale formData
+      justSavedGoalsRef.current = true;
       setValue('goals', goals);
 
       // On save goal re-evaluate page status.
