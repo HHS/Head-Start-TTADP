@@ -33,6 +33,51 @@ export default function filterArray(
   };
 }
 
+function normalizeExactArrayTerms(searchTerms) {
+  return searchTerms
+    .map((term) => (term === null || term === undefined ? '' : String(term).trim()))
+    .filter((term) => term.length > 0);
+}
+
+export function filterExactArray(
+  column,
+  searchTerms,
+  exclude,
+  includeOperator = Op.or,
+  excludeOperator = Op.and,
+  arrayType = 'varchar[]',
+) {
+  if (!searchTerms || searchTerms.length === 0) {
+    return {};
+  }
+
+  const normalizedTerms = normalizeExactArrayTerms(searchTerms);
+  if (!normalizedTerms.length) {
+    return {};
+  }
+
+  const matches = normalizedTerms.map(
+    (term) => `${column} @> ARRAY[${sequelize.escape(term)}]::${arrayType}`,
+  );
+
+  if (exclude) {
+    return {
+      [Op.or]: [
+        {
+          [excludeOperator]: matches.map(
+            (clause) => sequelize.literal(`NOT (${clause})`),
+          ),
+        },
+        sequelize.literal(`${column} IS NULL`),
+      ],
+    };
+  }
+
+  return {
+    [includeOperator]: matches.map((clause) => sequelize.literal(clause)),
+  };
+}
+
 /**
  *
  *  baseQuery should be a SQL statement up to and including the end of a final where
