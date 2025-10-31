@@ -8,7 +8,9 @@ export default function CitationDrawer({ citationNumber, bolded }) {
   const drawerTriggerRef = useRef(null);
 
   useEffect(() => {
+    if (drawerTriggerRef.current) {
     drawerTriggerRef.current.focus();
+  }
   }, [citationNumber]);
 
   return (
