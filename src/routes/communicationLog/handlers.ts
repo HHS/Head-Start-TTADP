@@ -2,6 +2,7 @@ import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { Request, Response } from 'express';
+import { logger } from '../../logger';
 import UserPolicy from '../../policies/user';
 import {
   // @ts-ignore
@@ -326,7 +327,22 @@ const createLogByRegionId = async (req: Request, res: Response) => {
     const userId = await currentUserId(req, res);
     const { data } = req.body;
     const { recipients, ...fields } = data;
-    const recipientIds = recipients.map((recipient: { value: number }) => Number(recipient.value));
+
+    const recipientIds = Array.isArray(recipients)
+      ? recipients
+        .map((recipient: { value: number } | null | undefined) => Number(recipient?.value))
+        .filter((id: number) => Number.isInteger(id) && id > 0)
+      : [];
+
+    if (!recipientIds.length) {
+      logger.warn('Skipping communication log creation; no recipients provided', {
+        namespace,
+        userId,
+        regionId: req.params.regionId,
+      });
+      res.status(httpCodes.NO_CONTENT).send();
+      return;
+    }
 
     const log = await createLog(recipientIds, userId, fields);
     res.status(httpCodes.CREATED).json(log);

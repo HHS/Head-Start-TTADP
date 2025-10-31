@@ -18,6 +18,7 @@ import {
   logsByScopes,
   csvLogsByScopes,
 } from '../../services/communicationLog';
+import { logger } from '../../logger';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
 import {
@@ -38,6 +39,26 @@ jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
 jest.mock('../../services/communicationLog');
 jest.mock('../../services/accessValidation');
+jest.mock('../../logger', () => ({
+  logger: {
+    warn: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+  },
+  auditLogger: {
+    warn: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+  },
+  requestLogger: {
+    warn: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
 jest.mock('../../models', () => ({
   User: {
     findAll: jest.fn(),
@@ -1052,6 +1073,65 @@ describe('communicationLog handlers', () => {
       createLog.mockRejectedValue(new Error('error'));
       await createLogByRegionId(mockRequest, { ...mockResponse });
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+
+    it('returns no content when recipients are missing', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          regionId: String(REGION_ID),
+        },
+        body: {
+          data: {
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT);
+      expect(statusJson).not.toHaveBeenCalled();
+      expect(createLog).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Skipping communication log creation; no recipients provided',
+        expect.objectContaining({
+          namespace: 'HANDLERS:COMMUNICATION_LOG',
+          userId: authorizedToCreate.id,
+          regionId: String(REGION_ID),
+        }),
+      );
+    });
+
+    it('returns no content when recipients cannot be parsed', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          regionId: String(REGION_ID),
+        },
+        body: {
+          data: {
+            recipients: [{}, { value: null }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT);
+      expect(statusJson).not.toHaveBeenCalled();
+      expect(createLog).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Skipping communication log creation; no recipients provided',
+        expect.objectContaining({
+          namespace: 'HANDLERS:COMMUNICATION_LOG',
+          userId: authorizedToCreate.id,
+          regionId: String(REGION_ID),
+        }),
+      );
     });
 
     it('admin', async () => {
