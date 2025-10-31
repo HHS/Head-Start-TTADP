@@ -200,15 +200,18 @@ const GoalsObjectives = ({
   };
 
   const onEdit = async (goal) => {
+    console.log('Editing goal1: ', goal);
     try {
       await setGoalAsActivelyEdited(reportId, goal.goalIds, pageState);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('failed to set goal as actively edited with this error:', err);
     }
-
+    console.log('Editing goal2: ', goal);
     const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
+        console.log('Editing goal3: ', goal);
     if (currentlyEditing) {
+          console.log('Editing goal4: ', goal);
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
@@ -234,7 +237,7 @@ const GoalsObjectives = ({
         return;
       }
     }
-
+        console.log('Editing goal5: ', goal);
     // clear out the existing value (we need to do this because without it
     // certain objective fields don't clear out)
     setValue('goalForEditing', null);
@@ -244,6 +247,8 @@ const GoalsObjectives = ({
     setValue('goalForEditing', goal);
     setValue('goalEndDate', goal.endDate);
     setValue('goalName', goal.name);
+    console.log('Goal IDs being edited: ', goal);
+    setValue('goalIds', goal.goalIds);
 
     toggleGoalForm(false);
     setValue(
@@ -266,10 +271,12 @@ const GoalsObjectives = ({
   }; // end onEdit
 
   // the read only component expects things a little differently
+  console.log('Preserved goals IDS: ', selectedGoals);
   const goalsForReview = selectedGoals.map((goal) => ({
     ...goal,
     goalName: goal.name,
     grants: [],
+    goalIds: goal.goalIds || [],
   }));
 
   // Add a variable to determine if a recipient has been selected.

@@ -104,6 +104,9 @@ export const formatReportWithSaveBeforeConversion = async (
   const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
   const isEmpty = Object.keys(updatedFields).length === 0;
 
+  console.log('Updated fields to save: ', updatedFields);
+  console.log('data: ', data);
+
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
@@ -495,6 +498,8 @@ function ActivityReport({
           updatedReport.activityRecipients.map((r) => r.activityRecipientId),
         );
 
+        console.log('goals after convert: ', goals, goalForEditing);
+
         reportData = {
           ...updatedReport,
           goalForEditing,
@@ -504,6 +509,7 @@ function ActivityReport({
         updateFormData(reportData, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
+        return goals;
       }
     } catch (e) {
       setConnectionActiveWithError(error, setConnectionActive);
