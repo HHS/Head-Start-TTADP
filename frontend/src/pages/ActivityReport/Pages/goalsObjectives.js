@@ -169,7 +169,13 @@ const GoalsObjectives = ({
 
   const onRemove = () => {
     const goalId = goalToRemove.id;
-    const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
+    // Deep copy to avoid shared references to nested arrays like goalIds
+    const copyOfSelectedGoals = selectedGoals.map((g) => ({
+      ...g,
+      goalIds: g.goalIds ? [...g.goalIds] : [],
+      objectives: g.objectives ? g.objectives.map((obj) => ({ ...obj })) : [],
+      prompts: g.prompts ? g.prompts.map((p) => ({ ...p })) : [],
+    }));
     const index = copyOfSelectedGoals.findIndex((g) => g.id === goalId);
 
     if (index !== -1) {
@@ -200,18 +206,14 @@ const GoalsObjectives = ({
   };
 
   const onEdit = async (goal) => {
-    console.log('Editing goal1: ', goal);
     try {
       await setGoalAsActivelyEdited(reportId, goal.goalIds, pageState);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('failed to set goal as actively edited with this error:', err);
     }
-    console.log('Editing goal2: ', goal);
     const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
-        console.log('Editing goal3: ', goal);
     if (currentlyEditing) {
-          console.log('Editing goal4: ', goal);
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
@@ -237,7 +239,6 @@ const GoalsObjectives = ({
         return;
       }
     }
-        console.log('Editing goal5: ', goal);
     // clear out the existing value (we need to do this because without it
     // certain objective fields don't clear out)
     setValue('goalForEditing', null);
@@ -247,7 +248,6 @@ const GoalsObjectives = ({
     setValue('goalForEditing', goal);
     setValue('goalEndDate', goal.endDate);
     setValue('goalName', goal.name);
-    console.log('Goal IDs being edited: ', goal);
     setValue('goalIds', goal.goalIds);
 
     toggleGoalForm(false);
@@ -259,7 +259,17 @@ const GoalsObjectives = ({
       },
     );
 
-    let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
+    // Deep copy to avoid shared references to nested arrays like goalIds
+    let copyOfSelectedGoals = selectedGoals.map((g) => ({
+      ...g,
+      goalIds: g.goalIds ? [...g.goalIds] : [],
+      objectives: g.objectives ? g.objectives.map((obj) => ({ ...obj })) : [],
+      prompts: g.prompts ? g.prompts.map((p) => ({ ...p })) : [],
+    }));
+
+    // would like to use structuredClone here for brevity but it would require fighting jsdom
+    // let copyOfSelectedGoals = selectedGoals.map((g) => structuredClone(g));
+
     // add the goal that was being edited to the "selected goals"
     if (currentlyEditing) {
       copyOfSelectedGoals.push(currentlyEditing);
@@ -271,13 +281,13 @@ const GoalsObjectives = ({
   }; // end onEdit
 
   // the read only component expects things a little differently
-  console.log('Preserved goals IDS: ', selectedGoals);
+  // Deep copy goalIds to ensure independent array references
   const goalsForReview = selectedGoals.map((goal) => ({
     ...goal,
     goalName: goal.name,
     grants: [],
-    goalIds: goal.goalIds || [],
-  }));
+    goalIds: goal.goalIds ? [...goal.goalIds] : [],
+  })); // would like to use structuredClone here for brevity but it would require fighting jsdom
 
   // Add a variable to determine if a recipient has been selected.
   const hasRecipient = activityRecipients && activityRecipients.length > 0;
