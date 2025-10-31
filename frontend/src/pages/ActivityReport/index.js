@@ -449,6 +449,7 @@ function ActivityReport({
 
   const onSave = async (data, forceUpdate = false) => {
     const approverIds = data.approvers.map((a) => a.user.id);
+    let reportData = null;
     try {
       if (reportId.current === 'new') {
         const savedReport = await createReport(
@@ -475,6 +476,7 @@ function ActivityReport({
 
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
+        reportData = savedReport;
       } else {
         const updatedReport = await formatReportWithSaveBeforeConversion(
           data,
@@ -486,7 +488,7 @@ function ActivityReport({
           forceUpdate,
         );
 
-        let reportData = updatedReport;
+        reportData = updatedReport;
 
         // format the goals and objectives appropriately, as well as divide them
         // by which one is open and which one is not
@@ -505,8 +507,10 @@ function ActivityReport({
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
+      return reportData;
     } catch (e) {
       setConnectionActiveWithError(error, setConnectionActive);
+      return reportData;
     }
   };
 
