@@ -9,7 +9,10 @@ function transformDate(field) {
     let value = '';
     const date = instance[field];
     if (date) {
-      value = moment(date).format(DATE_FORMAT);
+      const m = moment(date);
+      if (m.isValid()) {
+        value = m.format(DATE_FORMAT);
+      }
     }
     const obj = {};
     Object.defineProperty(obj, field, {

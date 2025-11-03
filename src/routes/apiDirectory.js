@@ -35,15 +35,20 @@ import { currentUserId } from '../services/currentUser';
 import objectiveRouter from './objectives';
 import ssdiRouter from './ssdi';
 import citationsRouter from './citations';
+import sanitizeRequestBody from '../middleware/sanitizeRequestBody';
 
 export const loginPath = '/login';
 
 authMiddleware.unless = unless;
 
+const sanitizeMiddleware = sanitizeRequestBody();
+sanitizeMiddleware.unless = unless;
+
 const router = express.Router();
 
 router.use(httpContext.middleware);
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
+router.use(sanitizeMiddleware.unless({ path: ['/api/files'] }));
 
 router.use((req, res, next) => {
   try {
@@ -56,6 +61,13 @@ router.use((req, res, next) => {
   } catch (err) {
     auditLogger.error(err);
   }
+  next();
+});
+
+// Explicitly set Content-Type for all API responses to prevent MIME-sniffing
+// and ensure browsers treat responses as data, not HTML
+router.use((req, res, next) => {
+  res.set('Content-Type', 'application/json; charset=utf-8');
   next();
 });
 
@@ -107,8 +119,8 @@ router.get('/logout-oidc', logoutOidc);
 router.get(loginPath, login);
 
 // Server 404s need to be explicitly handled by express
-router.get('*', (req, res) => {
-  res.sendStatus(404);
+router.use('*', (_req, res) => {
+  res.status(404).json({});
 });
 
 export default router;
