@@ -1,7 +1,7 @@
 name: DB Restore
 
 on:
-  workflow_dispath:
+  workflow_dispatch:
     inputs:
       source:
         description: use processed (anonymized) or prod data
@@ -27,11 +27,9 @@ on:
         - ttahub-dev-green
         - ttahub-dev-gold
         - ttahub-dev-pink
-    secrets:
-      github-token:
-        required: true
 
 jobs:
+  restore:
     runs-on: ubuntu-latest
     concurrency:
       group: db-restore
