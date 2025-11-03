@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { useFormContext } from 'react-hook-form';
 import Container from '../../../../../components/Container';
 import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
@@ -11,7 +12,6 @@ import Approved from '../Approved';
 const Submitter = ({
   availableApprovers,
   onFormSubmit,
-  formData,
   children,
   error,
   onSaveForm,
@@ -19,28 +19,25 @@ const Submitter = ({
   lastSaveTime,
   reviewItems,
 }) => {
-  const {
-    additionalNotes,
-    id,
-    displayId,
-    calculatedStatus,
-    approvers,
-    creatorRole,
-    goalsAndObjectives,
-    activityRecipients,
-  } = formData;
+  const { watch } = useFormContext();
+
+  const additionalNotes = watch('additionalNotes');
+  const id = watch('id');
+  const displayId = watch('displayId');
+  const calculatedStatus = watch('calculatedStatus');
+  const approvers = watch('approvers');
+  const creatorRole = watch('creatorRole');
+  const goalsAndObjectives = watch('goalsAndObjectives');
+  const activityRecipients = watch('activityRecipients');
+
   const draft = calculatedStatus === REPORT_STATUSES.DRAFT;
   const submitted = calculatedStatus === REPORT_STATUSES.SUBMITTED;
   const needsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const approved = calculatedStatus === REPORT_STATUSES.APPROVED;
-  const [approverStatusList, updateApproverStatusList] = useState([]);
 
-  useEffect(() => {
-    const updatedApprovers = approvers ? approvers.filter((a) => a.user) : [];
-    if (updatedApprovers) {
-      updateApproverStatusList(updatedApprovers);
-    }
-  }, [approvers, formData]);
+  // Compute directly from approvers instead of using state to avoid infinite loop
+  // (watch() returns new reference each render, so useEffect with [approvers] would loop)
+  const approverStatusList = approvers ? approvers.filter((a) => a.user) : [];
 
   const getNeedsActionApprovingMangers = () => {
     const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
@@ -234,26 +231,6 @@ Submitter.propTypes = {
     name: PropTypes.string,
   })).isRequired,
   onFormSubmit: PropTypes.func.isRequired,
-  formData: PropTypes.shape({
-    additionalNotes: PropTypes.string,
-    calculatedStatus: PropTypes.string,
-    creatorRole: PropTypes.string,
-    id: PropTypes.number,
-    displayId: PropTypes.string,
-    approvers: PropTypes.arrayOf(
-      PropTypes.shape({
-        status: PropTypes.string,
-      }),
-    ),
-    goalsAndObjectives: PropTypes.arrayOf(PropTypes.shape({
-      standard: PropTypes.string,
-      grantIds: PropTypes.arrayOf(PropTypes.number),
-    })),
-    activityRecipients: PropTypes.arrayOf(PropTypes.shape({
-      activityRecipientId: PropTypes.number,
-      name: PropTypes.string,
-    })),
-  }).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
   reviewItems: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string,

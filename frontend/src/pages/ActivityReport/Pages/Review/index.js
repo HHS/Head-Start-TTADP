@@ -3,6 +3,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { useFormContext } from 'react-hook-form';
 import Submitter from './Submitter';
 import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
@@ -18,22 +19,26 @@ const ReviewSubmit = ({
   isApprover,
   isPendingApprover,
   reportCreator,
-  formData,
   onSaveForm,
   pages,
   lastSaveTime,
 }) => {
-  const { additionalNotes, calculatedStatus } = formData;
+  const { watch } = useFormContext();
+  const additionalNotes = watch('additionalNotes');
+  const calculatedStatus = watch('calculatedStatus');
+  const userId = watch('userId');
+  const activityReportCollaborators = watch('activityReportCollaborators');
+
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [reviewed, updateReviewed] = useState(false);
   const [error, updateError] = useState();
 
   const { user } = useContext(UserContext);
 
-  const isCreator = user.id === formData.userId;
-  const isDraft = formData.calculatedStatus === REPORT_STATUSES.DRAFT;
-  const isCollaborator = formData.activityReportCollaborators
-  && formData.activityReportCollaborators.find((u) => u.userId === user.id);
+  const isCreator = user.id === userId;
+  const isDraft = calculatedStatus === REPORT_STATUSES.DRAFT;
+  const isCollaborator = activityReportCollaborators
+    && activityReportCollaborators.find((u) => u.userId === user.id);
 
   const creatorOrCollaborator = (isCreator || !!isCollaborator);
 
@@ -84,7 +89,6 @@ const ReviewSubmit = ({
             availableApprovers={availableApprovers}
             pages={pages}
             onFormSubmit={onFormSubmit}
-            formData={formData}
             error={error}
             onSaveForm={onSaveForm}
             lastSaveTime={lastSaveTime}
@@ -100,7 +104,6 @@ const ReviewSubmit = ({
             additionalNotes={additionalNotes}
             onFormReview={onFormReview}
             error={error}
-            formData={formData}
             isPendingApprover={isPendingApprover}
             onFormSubmit={onFormSubmit}
             reviewItems={items || []}
@@ -122,15 +125,6 @@ ReviewSubmit.propTypes = {
   onReview: PropTypes.func.isRequired,
   isApprover: PropTypes.bool.isRequired,
   isPendingApprover: PropTypes.bool.isRequired,
-  formData: PropTypes.shape({
-    additionalNotes: PropTypes.string,
-    calculatedStatus: PropTypes.string,
-    submissionStatus: PropTypes.string,
-    userId: PropTypes.number,
-    activityReportCollaborators: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-    })),
-  }).isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string.isRequired,
     role: PropTypes.arrayOf(PropTypes.string),

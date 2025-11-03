@@ -16,17 +16,16 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { useForm } from 'react-hook-form';
 import pages from './Pages';
 import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  LOCAL_STORAGE_AR_DATA_KEY,
   LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
-import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 import {
   submitReport,
@@ -88,27 +87,27 @@ const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 
 export const formatReportWithSaveBeforeConversion = async (
   data,
-  formData,
+  lastSavedData,
   user,
   userHasOneRole,
   reportId,
   approverIds,
   forceUpdate,
 ) => {
-  // if it isn't a new report, we compare it to the last response from the backend (formData)
+  // if it isn't a new report, we compare it to the last response from the backend (lastSavedData)
   // and pass only the updated to save report
   const creatorRole = !data.creatorRole && userHasOneRole
     ? user.roles[0].fullName
     : data.creatorRole;
 
-  const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
+  const updatedFields = findWhatsChanged({ ...data, creatorRole }, lastSavedData);
   const isEmpty = Object.keys(updatedFields).length === 0;
 
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
-  // formData stores them as MM/DD/YYYY so we are good in that instance
+  // lastSavedData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
   const updatedReport = isEmpty && !forceUpdate
-    ? { ...formData }
+    ? { ...lastSavedData }
     : await saveReport(
       reportId.current, {
         ...updatedFields,
@@ -151,12 +150,20 @@ function ActivityReport({
     handlePresenceUpdate,
   } = usePresenceData(setShouldAutoSave);
 
-  const [formData, updateFormData, localStorageAvailable] = useTTAHUBLocalStorage(
-    LOCAL_STORAGE_AR_DATA_KEY(activityReportId), null,
-  );
+  // Store last saved data in a ref for comparison in findWhatsChanged()
+  const lastSavedDataRef = useRef(null);
 
-  // retrieve the last time the data was saved to local storage
-  const savedToStorageTime = formData ? formData.savedToStorageTime : null;
+  // Initialize react-hook-form - this will be the single source of truth for form data
+  const hookForm = useForm({
+    mode: 'onBlur',
+    defaultValues: {
+      ...defaultValues,
+      pageState: defaultPageState,
+    },
+    shouldUnregister: false,
+  });
+
+  const { reset, getValues } = hookForm;
 
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
     LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(activityReportId), {
@@ -187,6 +194,9 @@ function ActivityReport({
   const reportId = useRef();
   const { user } = useContext(UserContext);
 
+  // Track if form has been initialized with data from the server
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
+
   const showLastUpdatedTime = (
     location.state && location.state.showLastUpdatedTime && connectionActive
   ) || false;
@@ -197,7 +207,7 @@ function ActivityReport({
     history.replace();
   }, [activityReportId, history]);
 
-  useLocalStorageCleanup(formData, activityReportId);
+  useLocalStorageCleanup(isFormInitialized ? getValues() : null, activityReportId);
 
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
@@ -255,7 +265,6 @@ function ActivityReport({
         const isAuthor = report.userId === user.id;
 
         // The report can be edited if its in draft OR needs_action state.
-
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
         setIsCollaboratorOrCreator(isCollaborator || isAuthor);
@@ -286,29 +295,13 @@ function ActivityReport({
           groups: groupsWithRecipientIds || [],
         });
 
-        let shouldUpdateFromNetwork = true;
+        const dataToStore = activityReportId !== 'new'
+          ? { ...report, goalForEditing: null }
+          : report;
 
-        // this if statement compares the "saved to storage time" and the
-        // time retrieved from the network (report.updatedAt)
-        // and whichever is newer "wins"
-
-        if (formData && savedToStorageTime) {
-          const updatedAtFromNetwork = moment(report.updatedAt);
-          const updatedAtFromLocalStorage = moment(savedToStorageTime);
-          if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
-            const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
-            if (storageIsNewer && formData.calculatedStatus === REPORT_STATUSES.DRAFT) {
-              shouldUpdateFromNetwork = false;
-            }
-          }
-        }
-
-        // Update form data.
-        if (shouldUpdateFromNetwork && activityReportId !== 'new') {
-          updateFormData({ ...formData, goalForEditing: null, ...report }, true);
-        } else {
-          updateFormData({ ...report, ...formData }, true);
-        }
+        reset(dataToStore);
+        lastSavedDataRef.current = dataToStore;
+        setIsFormInitialized(true);
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
 
@@ -360,13 +353,17 @@ function ActivityReport({
         const errorMsg = !connection ? networkErrorMessage : <>Unable to load activity report</>;
         updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
-        // component so we can redirect the user. We can do this by updating the form data
+        // component so we can redirect the user.
         if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
-          updateFormData({ regionId: report.regionId }, true);
+          reset({ regionId: report.regionId });
+          setIsFormInitialized(true);
         }
 
-        if (formData === null && !connection) {
-          updateFormData({ ...defaultValues, pageState: defaultPageState }, true);
+        if (!isFormInitialized && !connection) {
+          const fallbackData = { ...defaultValues, pageState: defaultPageState };
+          reset(fallbackData);
+          lastSavedDataRef.current = fallbackData;
+          setIsFormInitialized(true);
         }
       } finally {
         updateLoading(false);
@@ -381,6 +378,11 @@ function ActivityReport({
         loading...
       </div>
     );
+  }
+
+  const formData = isFormInitialized ? getValues() : null;
+  if (!formData) {
+    return 'loading...';
   }
 
   // If no region was able to be found, we will re-reroute user to the main page
@@ -398,7 +400,7 @@ function ActivityReport({
     );
   }
 
-  if (formData.calculatedStatus === REPORT_STATUSES.APPROVED) {
+  if (formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED) {
     return (
       <Redirect to={`/activity-reports/view/${activityReportId}`} />
     );
@@ -406,6 +408,7 @@ function ActivityReport({
 
   if (connectionActive
     && isCollaboratorOrCreator
+    && formData
     && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
     && !isPendingApprover
   ) {
@@ -456,7 +459,7 @@ function ActivityReport({
             ...data,
             ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
             nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
-            regionId: formData.regionId,
+            regionId: data.regionId,
             approverUserIds: approverIds,
             version: 3,
             activityRecipientType: 'recipient',
@@ -475,38 +478,45 @@ function ActivityReport({
 
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
-      } else {
-        const updatedReport = await formatReportWithSaveBeforeConversion(
-          data,
-          formData,
-          user,
-          userHasOneRole,
-          reportId,
-          approverIds,
-          forceUpdate,
-        );
 
-        let reportData = updatedReport;
-
-        // format the goals and objectives appropriately, as well as divide them
-        // by which one is open and which one is not
-        const { goalForEditing, goals } = convertGoalsToFormData(
-          updatedReport.goalsAndObjectives,
-          updatedReport.activityRecipients.map((r) => r.activityRecipientId),
-        );
-
-        reportData = {
-          ...updatedReport,
-          goalForEditing,
-          goals,
-        };
-
-        updateFormData(reportData, true);
-        setConnectionActive(true);
-        updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
+        // Return saved data to Navigator so it can update RHF
+        return savedReport;
       }
+      const updatedReport = await formatReportWithSaveBeforeConversion(
+        data,
+        lastSavedDataRef.current,
+        user,
+        userHasOneRole,
+        reportId,
+        approverIds,
+        forceUpdate,
+      );
+
+      let reportData = updatedReport;
+
+      // format the goals and objectives appropriately, as well as divide them
+      // by which one is open and which one is not
+      const { goalForEditing, goals } = convertGoalsToFormData(
+        updatedReport.goalsAndObjectives,
+        updatedReport.activityRecipients.map((r) => r.activityRecipientId),
+      );
+
+      reportData = {
+        ...updatedReport,
+        goalForEditing,
+        goals,
+      };
+
+      // Update ref with latest saved data
+      lastSavedDataRef.current = reportData;
+      setConnectionActive(true);
+      updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
+
+      // Return saved data to Navigator so it can update RHF
+      return reportData;
     } catch (e) {
       setConnectionActiveWithError(error, setConnectionActive);
+      return null;
     }
   };
 
@@ -519,17 +529,20 @@ function ActivityReport({
     };
     const response = await submitReport(reportId.current, reportToSubmit);
 
-    updateFormData(
-      {
-        ...formData,
-        calculatedStatus: response.calculatedStatus,
-        approvers: response.approvers,
-      },
-      true,
-    );
+    const updatedData = {
+      ...lastSavedDataRef.current,
+      calculatedStatus: response.calculatedStatus,
+      approvers: response.approvers,
+    };
+
+    // Update ref
+    lastSavedDataRef.current = updatedData;
     updateEditable(false);
 
     cleanupLocalStorage(activityReportId);
+
+    // Return updated data to Navigator so it can update RHF
+    return updatedData;
   };
 
   const onReview = async (data) => {
@@ -537,7 +550,7 @@ function ActivityReport({
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
-  const tagClass = formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
+  const tagClass = formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
 
   const author = creatorNameWithRole ? (
     <>
@@ -621,13 +634,13 @@ function ActivityReport({
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
               Activity report for Region
               {' '}
-              {formData.regionId}
+              {formData && formData.regionId}
             </h1>
             {author}
           </div>
         </Grid>
         <Grid col="auto" className="flex-align-self-center">
-          {formData.calculatedStatus && (
+          {formData && formData.calculatedStatus && (
             <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2 margin-left-2`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
@@ -635,7 +648,7 @@ function ActivityReport({
       <NetworkContext.Provider value={
         {
           connectionActive: isOnlineMode() && connectionActive,
-          localStorageAvailable,
+          localStorageAvailable: true,
         }
       }
       >
@@ -649,8 +662,7 @@ function ActivityReport({
           reportId={reportId.current}
           currentPage={currentPage}
           additionalData={initialAdditionalData}
-          formData={formData}
-          updateFormData={updateFormData}
+          hookForm={hookForm}
           pages={pages}
           onFormSubmit={onFormSubmit}
           onSave={onSave}
@@ -659,7 +671,6 @@ function ActivityReport({
           onReview={onReview}
           errorMessage={errorMessage}
           updateErrorMessage={updateErrorMessage}
-          savedToStorageTime={savedToStorageTime}
           shouldAutoSave={shouldAutoSave}
           setShouldAutoSave={setShouldAutoSave}
         />
