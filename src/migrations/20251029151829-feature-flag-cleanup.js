@@ -22,7 +22,7 @@ module.exports = {
           'manual_mark_goals_similar',
           'monitoring_integration',
           'multirecipient_communication_log',
-          'standard_goals_updates',
+          'standard_goals_update',
         ],
         FEATURE_FLAGS,
       );
