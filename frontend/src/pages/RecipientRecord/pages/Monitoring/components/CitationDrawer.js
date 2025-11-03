@@ -4,14 +4,14 @@ import Drawer from '../../../../../components/Drawer';
 import DrawerTriggerButton from '../../../../../components/DrawerTriggerButton';
 import CitationDrawerContent from '../../../../../components/CitationDrawerContent';
 
-export default function CitationDrawer({ citationNumber, bolded }) {
+export default function CitationDrawer({ citationNumber, bolded, first = false }) {
   const drawerTriggerRef = useRef(null);
 
   useEffect(() => {
-    if (drawerTriggerRef.current) {
-    drawerTriggerRef.current.focus();
-  }
-  }, [citationNumber]);
+    if (drawerTriggerRef.current && first) {
+      drawerTriggerRef.current.focus();
+    }
+  }, [citationNumber, first]);
 
   return (
     <>
@@ -33,8 +33,10 @@ export default function CitationDrawer({ citationNumber, bolded }) {
 CitationDrawer.propTypes = {
   citationNumber: PropTypes.string.isRequired,
   bolded: PropTypes.bool,
+  first: PropTypes.bool,
 };
 
 CitationDrawer.defaultProps = {
   bolded: false,
+  first: false,
 };

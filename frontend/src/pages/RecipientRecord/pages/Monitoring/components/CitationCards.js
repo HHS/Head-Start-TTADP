@@ -5,8 +5,8 @@ import CitationCard from './CitationCard';
 
 export default function CitationCards({ data, regionId }) {
   return (
-    data.map((citation) => (
-      <CitationCard key={uniqueId('citation-card-')} citation={citation} regionId={regionId} />
+    data.map((citation, i) => (
+      <CitationCard key={uniqueId('citation-card-')} citation={citation} regionId={regionId} first={i === 0} />
     )));
 }
 

@@ -68,11 +68,12 @@ export default function ReviewCard({ review, regionId }) {
         pluralize={false}
         ariaLabel="TTA activity"
       />
-      {expanded && (review.findings.map((finding) => (
+      {expanded && (review.findings.map((finding, i) => (
         <FindingWithinReview
           key={uniqueId('review-card-finding-')}
           finding={finding}
           regionId={Number(regionId)}
+          first={i === 0}
         />
       )))}
     </DataCard>

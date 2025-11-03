@@ -9,7 +9,7 @@ import ReviewWithinCitation from './ReviewWithinCitation';
 import './CitationCard.css';
 import CitationDrawer from './CitationDrawer';
 
-export default function CitationCard({ citation, regionId }) {
+export default function CitationCard({ citation, regionId, first = false }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <DataCard
@@ -19,7 +19,7 @@ export default function CitationCard({ citation, regionId }) {
     >
       <div className="display-flex flex-align-center flex-row">
         <h3 className="text-normal font-sans-xs margin-0">
-          <CitationDrawer bolded citationNumber={citation.citationNumber} />
+          <CitationDrawer bolded citationNumber={citation.citationNumber} first={first} />
         </h3>
       </div>
       <DescriptionList>
@@ -92,4 +92,9 @@ CitationCard.propTypes = {
     })).isRequired,
   }).isRequired,
   regionId: PropTypes.number.isRequired,
+  first: PropTypes.bool,
+};
+
+CitationCard.defaultProps = {
+  first: false,
 };

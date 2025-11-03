@@ -8,12 +8,12 @@ import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
 import CitationDrawer from './CitationDrawer';
 import './FindingWithinReview.css';
 
-export default function FindingWithinReview({ finding, regionId }) {
+export default function FindingWithinReview({ finding, regionId, first = false }) {
   return (
     <div className="ttahub-review-card--finding-within-review margin-top-4" key={uniqueId('review-card-finding-')}>
       <DescriptionList className="ttahub-review-card--finding-within-review-description-list">
         <DescriptionItem title="Citation">
-          <CitationDrawer citationNumber={finding.citation} />
+          <CitationDrawer citationNumber={finding.citation} first={first} />
         </DescriptionItem>
         <DescriptionItem title="Finding type">
           {finding.findingType}
@@ -46,4 +46,9 @@ FindingWithinReview.propTypes = {
     })),
   }).isRequired,
   regionId: PropTypes.number.isRequired,
+  first: PropTypes.bool,
+};
+
+FindingWithinReview.defaultProps = {
+  first: false,
 };
