@@ -21,7 +21,6 @@ on:
         required: true
         type: choice
         options: 
-        - ttahub-staging
         - ttahub-dev-blue
         - ttahub-dev-red
         - ttahub-dev-green
