@@ -248,7 +248,6 @@ const GoalsObjectives = ({
     setValue('goalForEditing', goal);
     setValue('goalEndDate', goal.endDate);
     setValue('goalName', goal.name);
-    setValue('goalIds', goal.goalIds);
 
     toggleGoalForm(false);
     setValue(
