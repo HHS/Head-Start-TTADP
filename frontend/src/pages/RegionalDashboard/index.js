@@ -12,7 +12,6 @@ import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { showFilterWithMyRegions } from '../regionHelpers';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
-import FeatureFlag from '../../components/FeatureFlag';
 import useFilters from '../../hooks/useFilters';
 import './index.css';
 import TabsNav from '../../components/TabsNav';
@@ -109,9 +108,7 @@ export default function RegionalDashboard({ match }) {
           () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
         }
       />
-      <FeatureFlag flag="training_reports_dashboard">
-        <TabsNav ariaLabel="Dashboard navigation" links={links} />
-      </FeatureFlag>
+      <TabsNav ariaLabel="Dashboard navigation" links={links} />
       <h1 className="landing margin-top-0 margin-bottom-3">
         {h1Text}
       </h1>

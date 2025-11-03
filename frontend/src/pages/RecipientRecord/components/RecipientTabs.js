@@ -23,7 +23,6 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
     {
       to: `/recipient-tta-records/${recipientId}/region/${region}/monitoring`,
       label: 'Monitoring',
-      featureFlag: 'monitoring_integration',
     },
   ];
 
