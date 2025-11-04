@@ -18,7 +18,6 @@ import {
   logsByScopes,
   csvLogsByScopes,
 } from '../../services/communicationLog';
-import { logger } from '../../logger';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
 import {
@@ -1075,7 +1074,7 @@ describe('communicationLog handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
 
-    it('returns no content when recipients are missing', async () => {
+    it('creates a log when recipients are missing', async () => {
       const mockRequest = {
         session: {
           userId: authorizedToCreate.id,
@@ -1090,21 +1089,13 @@ describe('communicationLog handlers', () => {
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      createLog.mockResolvedValue({ id: 44 });
       await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT);
-      expect(statusJson).not.toHaveBeenCalled();
-      expect(createLog).not.toHaveBeenCalled();
-      expect(logger.warn).toHaveBeenCalledWith(
-        'Skipping communication log creation; no recipients provided',
-        expect.objectContaining({
-          namespace: 'HANDLERS:COMMUNICATION_LOG',
-          userId: authorizedToCreate.id,
-          regionId: String(REGION_ID),
-        }),
-      );
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
+      expect(statusJson).toHaveBeenCalledWith({ id: 44 });
     });
 
-    it('returns no content when recipients cannot be parsed', async () => {
+    it('filters out invalid recipients before creating a log', async () => {
       const mockRequest = {
         session: {
           userId: authorizedToCreate.id,
@@ -1120,18 +1111,10 @@ describe('communicationLog handlers', () => {
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      createLog.mockResolvedValue({ id: 55 });
       await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT);
-      expect(statusJson).not.toHaveBeenCalled();
-      expect(createLog).not.toHaveBeenCalled();
-      expect(logger.warn).toHaveBeenCalledWith(
-        'Skipping communication log creation; no recipients provided',
-        expect.objectContaining({
-          namespace: 'HANDLERS:COMMUNICATION_LOG',
-          userId: authorizedToCreate.id,
-          regionId: String(REGION_ID),
-        }),
-      );
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
+      expect(statusJson).toHaveBeenCalledWith({ id: 55 });
     });
 
     it('admin', async () => {
