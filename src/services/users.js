@@ -28,6 +28,7 @@ export const userAttributes = [
   'lastLogin',
   'flags',
   'createdAt',
+  'fullName',
 ];
 
 export async function userById(userId, onlyActiveUsers = false) {
@@ -469,6 +470,15 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
     },
     include: [
       {
+        model: Role,
+        as: 'roles',
+        attributes: [
+          'fullName',
+          'name',
+          'id',
+        ],
+      },
+      {
         model: NationalCenter,
         as: 'nationalCenters',
       },
@@ -539,14 +549,20 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
 
 export async function getUserNamesByIds(ids) {
   const users = await User.findAll({
-    attributes: ['id', 'name'],
+    attributes: ['id', 'name', 'fullName'],
+    include: [
+      {
+        model: Role,
+        as: 'roles',
+        attributes: ['id', 'name', 'fullName'],
+      },
+    ],
     where: {
       id: ids,
     },
-    raw: true,
   });
 
-  return users.map((u) => u.name);
+  return users.map((u) => u.fullName);
 }
 
 export async function findAllUsersWithScope(scope) {
