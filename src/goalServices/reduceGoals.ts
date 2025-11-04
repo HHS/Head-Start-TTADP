@@ -409,6 +409,13 @@ export function reduceGoals(
   goals: IGoalModelInstance[],
   forReport = false,
 ): IReducedGoal[] {
+  // eslint-disable-next-line no-console
+  console.log('=== reduceGoals input ===');
+  // eslint-disable-next-line no-console
+  console.log('Input goals count:', goals.length);
+  // eslint-disable-next-line no-console
+  console.log('Input goals:', goals.map((g) => ({ id: g.id, name: g.name })));
+  
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
 
   const where = (g: IReducedGoal, currentValue: IGoalModelInstance) => (forReport
@@ -432,6 +439,8 @@ export function reduceGoals(
   const r = goals.reduce((previousValues: IReducedGoal[], currentValue: IGoalModelInstance) => {
     try {
       const existingGoal = previousValues.find((g) => where(g, currentValue));
+      // eslint-disable-next-line no-console
+      console.log(`reduceGoals - Processing goal id=${currentValue.id}, name="${currentValue.name}", existingGoal found=${!!existingGoal}`);
       if (existingGoal) {
         existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber || `G-${currentValue.dataValues.id}`];
         existingGoal.goalIds = [...existingGoal.goalIds, currentValue.dataValues.id];
@@ -619,6 +628,13 @@ export function reduceGoals(
       return previousValues;
     }
   }, []);
+
+  // eslint-disable-next-line no-console
+  console.log('=== reduceGoals output ===');
+  // eslint-disable-next-line no-console
+  console.log('Output goals count:', r.length);
+  // eslint-disable-next-line no-console
+  console.log('Output goals:', r.map((g) => ({ id: g.id, name: g.name, goalIds: g.goalIds })));
 
   return r;
 }

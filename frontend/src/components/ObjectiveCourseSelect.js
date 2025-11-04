@@ -24,9 +24,14 @@ export default function ObjectiveCourseSelect({
   const [options, setOptions] = useState([]);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchCourses() {
       try {
-        setOptions(await getCourses());
+        const courses = await getCourses();
+        if (isMounted) {
+          setOptions(courses);
+        }
       } catch (e) {
         // eslint-disable-next-line no-console
         console.warn('Error fetching courses from the API', e);
@@ -34,6 +39,10 @@ export default function ObjectiveCourseSelect({
     }
 
     fetchCourses();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

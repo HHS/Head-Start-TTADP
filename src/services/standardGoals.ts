@@ -147,6 +147,15 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
     return [];
   }
 
+  // eslint-disable-next-line no-console
+  console.log('=== createObjectivesForGoal called ===');
+  // eslint-disable-next-line no-console
+  console.log('Objectives input:', JSON.stringify(objectives.map((o) => ({
+    id: o.id,
+    title: o.title,
+    ttaProvided: o.ttaProvided,
+  })), null, 2));
+
   return Promise.all(objectives.filter((o) => o.title
     || o.ttaProvided
     || o.topics?.length
@@ -232,7 +241,7 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
         savedObjective = existingObjective;
       }
     }
-    return {
+    const result = {
       ...savedObjective.toJSON(),
       status,
       topics,
@@ -247,6 +256,15 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
       supportType,
       objectiveCreatedHere,
     };
+    
+    // eslint-disable-next-line no-console
+    console.log('createObjectivesForGoal returning objective:', {
+      id: result.id,
+      title: result.title,
+      ttaProvided: result.ttaProvided,
+    });
+    
+    return result;
   }));
 }
 
@@ -418,7 +436,35 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
   // Filter out any null values in the updated goals array.
   updatedGoals = updatedGoals.flat().filter((goal) => goal);
 
+  // eslint-disable-next-line no-console
+  console.log('=== BEFORE uniqBy ===');
+  // eslint-disable-next-line no-console
+  console.log('currentObjectives (before uniqBy):', JSON.stringify(currentObjectives.map((o) => ({
+    objectiveId: o.id,
+    title: o.title,
+    ttaProvided: o.ttaProvided,
+  })), null, 2));
+
   const uniqueObjectives = uniqBy(currentObjectives, 'id');
+  
+  // eslint-disable-next-line no-console
+  console.log('=== AFTER uniqBy ===');
+  // eslint-disable-next-line no-console
+  console.log('uniqueObjectives (after uniqBy):', JSON.stringify(uniqueObjectives.map((o) => ({
+    objectiveId: o.id,
+    title: o.title,
+    ttaProvided: o.ttaProvided,
+  })), null, 2));
+  
+  // eslint-disable-next-line no-console
+  console.log('=== saveStandardGoalsForReport unique objectives ===');
+  // eslint-disable-next-line no-console
+  console.log('Objectives to cache:', JSON.stringify(uniqueObjectives.map((o) => ({
+    objectiveId: o.id,
+    title: o.title,
+    ttaProvided: o.ttaProvided,
+  })), null, 2));
+  
   await Promise.all(uniqueObjectives.map(async (savedObjective) => {
     const {
       status,
@@ -434,6 +480,12 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       objectiveCreatedHere,
       citations,
     } = savedObjective;
+
+    // eslint-disable-next-line no-console
+    console.log('About to cache objective:', {
+      objectiveId: savedObjective.id,
+      ttaProvided,
+    });
 
     // this will link our objective to the activity report through
     // activity report objective and then link all associated objective data

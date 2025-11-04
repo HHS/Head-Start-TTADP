@@ -317,6 +317,22 @@ export async function activityReportAndRecipientsById(activityReportId) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
   const goalsAndObjectives = await getGoalsForReport(arId);
+  // eslint-disable-next-line no-console
+  console.log('=== activityReportAndRecipientsById goalsAndObjectives ===');
+  // eslint-disable-next-line no-console
+  console.log('Goals count:', goalsAndObjectives.length);
+  // eslint-disable-next-line no-console
+  console.log('Goals with objectives and ttaProvided:', goalsAndObjectives.map((g) => ({
+    id: g.id,
+    name: g.name,
+    goalIds: g.goalIds,
+    objectives: (g.objectives || []).map((o) => ({
+      id: o.id,
+      title: o.title,
+      ttaProvided: o.ttaProvided,
+    })),
+  })));
+  
   const objectivesWithoutGoals = await getObjectivesByReportId(arId);
 
   const recipients = await ActivityRecipient.findAll({

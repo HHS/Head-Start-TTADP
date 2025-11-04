@@ -261,6 +261,8 @@ const ActivityReportNavigator = ({
       return;
     }
     const { status, ...values } = getValues();
+    // eslint-disable-next-line no-console
+    console.log('=== onSaveForm - values.goalForEditing ===', values.goalForEditing);
     const data = { ...formData, ...values, pageState: newNavigatorState() };
 
     try {
@@ -341,6 +343,9 @@ const ActivityReportNavigator = ({
   };
 
   const onSaveDraftGoal = async (isAutoSave = false) => {
+    // eslint-disable-next-line no-console
+    console.log('=== onSaveDraftGoal called with isAutoSave:', isAutoSave);
+    
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
@@ -351,6 +356,9 @@ const ActivityReportNavigator = ({
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
     const promptErrors = getPromptErrors(promptTitles, errors);
+
+    // eslint-disable-next-line no-console
+    console.log('Goal values - name:', name, 'objectives:', objectives, 'promptErrors:', promptErrors);
 
     if (promptErrors) {
       return;
@@ -386,6 +394,9 @@ const ActivityReportNavigator = ({
 
     const endDate = formatEndDate(formEndDate);
 
+    // eslint-disable-next-line no-console
+    console.log('Raw objectives from form:', objectives);
+
     const goal = {
       ...goalForEditing,
       isActivelyBeingEditing: true,
@@ -402,9 +413,21 @@ const ActivityReportNavigator = ({
       prompts,
     );
 
+    // eslint-disable-next-line no-console
+    console.log('Packaged goals:', allGoals);
+    // eslint-disable-next-line no-console
+    console.log('Currently editing goal objectives:', goal.objectives.map((obj) => ({ title: obj.title, ttaProvided: obj.ttaProvided })));
+
     // save goal to api, come back with new ids for goal and objectives
     try {
       // we only need save goal if we have a goal name
+
+      // eslint-disable-next-line no-console
+      console.log('Calling saveGoalsForReport with:', {
+        goals: allGoals,
+        activityReportId: reportId,
+        regionId: formData.regionId,
+      });
 
       allGoals = await saveGoalsForReport(
         {
@@ -413,6 +436,17 @@ const ActivityReportNavigator = ({
           regionId: formData.regionId,
         },
       );
+
+      // eslint-disable-next-line no-console
+      console.log('SaveGoalsForReport response:', allGoals);
+      // eslint-disable-next-line no-console
+      console.log('Response goals objectives:', allGoals.map((g) => ({
+        name: g.name,
+        objectives: g.objectives.map((obj) => ({
+          title: obj.title,
+          ttaProvided: obj.ttaProvided,
+        })),
+      })));
 
       /**
          * If we are autosaving, and we are currently editing a rich text editor component, do not
@@ -458,6 +492,8 @@ const ActivityReportNavigator = ({
         });
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error saving goal:', error);
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
       // we don't want to update the context if we are autosaving,
@@ -469,6 +505,9 @@ const ActivityReportNavigator = ({
   };
 
   const onSaveAndContinueGoals = async () => {
+    // eslint-disable-next-line no-console
+    console.log('=== onSaveAndContinueGoals called');
+    
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
@@ -478,6 +517,11 @@ const ActivityReportNavigator = ({
     const endDate = getValues('goalEndDate');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
+
+    // eslint-disable-next-line no-console
+    console.log('onSaveAndContinueGoals - Raw objectives:', objectives);
+    // eslint-disable-next-line no-console
+    console.log('onSaveAndContinueGoals - objectives with ttaProvided:', objectives.map((obj) => ({ title: obj.title, ttaProvided: obj.ttaProvided })));
 
     const goal = {
       ...goalForEditing,
@@ -514,11 +558,13 @@ const ActivityReportNavigator = ({
 
     // save goal to api, come back with new ids for goal and objectives
     try {
+      // eslint-disable-next-line no-console
+      console.log('onSaveAndContinueGoals - clearing form and packaging goals');
+      
       // clear out the goal form
       setValue('goalForEditing', null);
       setValue('goalName', '');
       setValue('goalEndDate', '');
-      setValue('goalForEditing.objectives', []);
       setValue('goalPrompts', []);
 
       // set goals to form data as appropriate
@@ -532,6 +578,10 @@ const ActivityReportNavigator = ({
         grantIds,
         prompts,
       );
+      
+      // eslint-disable-next-line no-console
+      console.log('Packaged goals for save:', packagedGoals);
+      
       // save report to API
       const { status, ...values } = getValues();
       const data = {
@@ -540,7 +590,22 @@ const ActivityReportNavigator = ({
         goals: packagedGoals,
         pageState: newNavigatorState(),
       };
+      
+      // eslint-disable-next-line no-console
+      console.log('Calling onSave with data:', data);
+      
       const { goals } = await onSave(data);
+
+      // eslint-disable-next-line no-console
+      console.log('OnSave successful, goals:', goals);
+      // eslint-disable-next-line no-console
+      console.log('Response goals with ttaProvided:', goals.map((g) => ({
+        name: g.name,
+        objectives: g.objectives.map((obj) => ({
+          title: obj.title,
+          ttaProvided: obj.ttaProvided,
+        })),
+      })));
 
       // Set flag to prevent next reset from overwriting fresh goal data with stale formData
       justSavedGoalsRef.current = true;
@@ -551,6 +616,8 @@ const ActivityReportNavigator = ({
 
       updateErrorMessage('');
     } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error in onSaveAndContinueGoals:', error);
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
 

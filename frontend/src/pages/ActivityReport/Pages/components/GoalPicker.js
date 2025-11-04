@@ -88,15 +88,25 @@ const GoalPicker = ({
 
   // for fetching topic options from API
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchTopics() {
       const topics = await getTopics();
-      setTopicOptions(topics);
+      if (isMounted) {
+        setTopicOptions(topics);
+      }
     }
     fetchTopics();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Fetch citations for the goal if the source is CLASS or RANs.
   useDeepCompareEffect(() => {
+    let isMounted = true;
+
     async function fetchCitations() {
       // If we have no other goals except a monitoring goal
       //  and the source is CLASS or RANs, fetch the citations.
@@ -107,7 +117,7 @@ const GoalPicker = ({
           startDate,
         );
 
-        if (retrievedCitationOptions) {
+        if (isMounted && retrievedCitationOptions) {
           // Reduce the citation options to only unique values.
           const uniqueCitationOptions = Object.values(retrievedCitationOptions.reduce(
             (acc, current) => {
@@ -132,12 +142,16 @@ const GoalPicker = ({
           setCitationOptions(uniqueCitationOptions);
           setRawCitations(retrievedCitationOptions);
         }
-      } else {
+      } else if (isMounted) {
         setCitationOptions([]);
         setRawCitations([]);
       }
     }
     fetchCitations();
+
+    return () => {
+      isMounted = false;
+    };
   }, [goalForEditing, regionId, startDate, grantIds, isMonitoringGoal]);
 
   const onChangeGoal = async (goal) => {

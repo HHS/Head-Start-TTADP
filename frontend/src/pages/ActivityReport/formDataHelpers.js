@@ -76,6 +76,94 @@ export const findWhatsChanged = (object, base) => {
       }));
     }
 
+    // Skip goalForEditing from being sent directly to backend - it will be combined with goals
+    if (current === 'goalForEditing') {
+      return accumulator;
+    }
+
+    // When goals changes, we need to combine goalForEditing (if present) with the goals array
+    // This prevents sending duplicate goals when editing
+    if (current === 'goals' && !isEqual(base[current], object[current])) {
+      // Only process this if we haven't already set goals from activityRecipients
+      if (!accumulator.goals) {
+        // Combine goalForEditing (the goal being edited) with the other goals
+        // Also filter out any stale copy of the goal being edited from the goals array
+        const goalsWithoutEditing = object.goals ? object.goals.filter((g) => {
+          // If we have a goalForEditing, exclude any goal with the same ID from the goals array
+          if (object.goalForEditing && g.id === object.goalForEditing.id) {
+            return false;
+          }
+          return true;
+        }) : [];
+
+        // Ensure goalForEditing has the latest objectives data
+        let goalForEditingWithCurrentObjectives = object.goalForEditing;
+        if (object.goalForEditing && object.goalForEditing.objectives) {
+          // The objectives should already be up-to-date from the form, but ensure they are present
+          goalForEditingWithCurrentObjectives = {
+            ...object.goalForEditing,
+            objectives: object.goalForEditing.objectives,
+          };
+        }
+
+        const allGoals = [
+          goalForEditingWithCurrentObjectives || null,
+          ...goalsWithoutEditing,
+        ].filter((g) => g);
+
+        // eslint-disable-next-line no-console
+        console.log('findWhatsChanged - goals changed');
+        // eslint-disable-next-line no-console
+        console.log('base.goals (from formData):', base.goals ? base.goals.map((g) => ({
+          id: g.id,
+          name: g.name,
+          objectives: (g.objectives || []).map((o) => ({
+            title: o.title,
+            ttaProvided: o.ttaProvided,
+          })),
+        })) : null);
+        // eslint-disable-next-line no-console
+        console.log('object.goalForEditing FULL:', object.goalForEditing);
+        // eslint-disable-next-line no-console
+        console.log('object.goalForEditing:', object.goalForEditing ? {
+          id: object.goalForEditing.id,
+          name: object.goalForEditing.name,
+          objectives: (object.goalForEditing.objectives || []).map((o) => ({
+            title: o.title,
+            ttaProvided: o.ttaProvided,
+          })),
+        } : null);
+        // eslint-disable-next-line no-console
+        console.log('object.goals (current data):', object.goals ? object.goals.map((g) => ({
+          id: g.id,
+          name: g.name,
+          objectives: (g.objectives || []).map((o) => ({
+            title: o.title,
+            ttaProvided: o.ttaProvided,
+          })),
+        })) : null);
+        // eslint-disable-next-line no-console
+        console.log('goalsWithoutEditing length:', goalsWithoutEditing.length);
+        // eslint-disable-next-line no-console
+        console.log('allGoals final length:', allGoals.length);
+        // eslint-disable-next-line no-console
+        console.log('allGoals being sent:', allGoals.map((g) => ({
+          id: g.id,
+          name: g.name,
+          objectives: (g.objectives || []).map((o) => ({
+            title: o.title,
+            ttaProvided: o.ttaProvided,
+          })),
+        })));
+
+        // Only set goals if there are actual goals to send
+        if (allGoals.length > 0) {
+          accumulator[current] = allGoals;
+        }
+      }
+      return accumulator;
+    }
+
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
     }
@@ -188,36 +276,67 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
  */
 export const convertGoalsToFormData = (
   goals, grantIds, calculatedStatus = REPORT_STATUSES.DRAFT,
-) => goals.reduce((accumulatedData, goal) => {
-  // we are relying on the backend to have properly captured the goalForEditing
-  // if there is some breakdown happening, and we have two set,
-  // we will just fall back to just using the first matching goal
-  if (
-    // if any of the goals ids are included in the activelyEditedGoals id array
-    goal.activityReportGoals
-    && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
-    && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
-    && !accumulatedData.goalForEditing) {
-    // we set it as the goal for editing
-    // eslint-disable-next-line no-param-reassign
-    accumulatedData.goalForEditing = {
-      ...goal,
-      grantIds,
-      objectives: goal.objectives,
-      prompts: goal.prompts || [],
-    };
-  } else {
-    // otherwise we add it to the list of goals, formatting it with the correct
-    // grant ids
-    accumulatedData.goals.push({
-      ...goal,
-      grantIds,
-      prompts: goal.prompts || [],
-    });
-  }
+) => {
+  // eslint-disable-next-line no-console
+  console.log('=== convertGoalsToFormData input ===');
+  // eslint-disable-next-line no-console
+  console.log('Input goals count:', goals.length);
+  // eslint-disable-next-line no-console
+  console.log('Input goals:', goals.map((g) => ({
+    id: g.id,
+    name: g.name,
+    goalIds: g.goalIds,
+    isActivelyEdited: g.activityReportGoals?.some((arGoal) => arGoal.isActivelyEdited),
+    objectives: (g.objectives || []).map((o) => ({
+      id: o.id,
+      title: o.title,
+      ttaProvided: o.ttaProvided,
+    })),
+  })));
 
-  return accumulatedData;
-}, { goals: [], goalForEditing: null });
+  const result = goals.reduce((accumulatedData, goal) => {
+    // we are relying on the backend to have properly captured the goalForEditing
+    // if there is some breakdown happening, and we have two set,
+    // we will just fall back to just using the first matching goal
+    if (
+      // if any of the goals ids are included in the activelyEditedGoals id array
+      goal.activityReportGoals
+      && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
+      && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
+      && !accumulatedData.goalForEditing) {
+      // we set it as the goal for editing
+      // eslint-disable-next-line no-param-reassign
+      accumulatedData.goalForEditing = {
+        ...goal,
+        grantIds,
+        objectives: goal.objectives || [],
+        prompts: goal.prompts || [],
+      };
+    } else {
+      // otherwise we add it to the list of goals, formatting it with the correct
+      // grant ids
+      accumulatedData.goals.push({
+        ...goal,
+        grantIds,
+        objectives: goal.objectives || [],
+        prompts: goal.prompts || [],
+      });
+    }
+
+    return accumulatedData;
+  }, { goals: [], goalForEditing: null });
+
+  // eslint-disable-next-line no-console
+  console.log('=== convertGoalsToFormData output ===');
+  // eslint-disable-next-line no-console
+  console.log('Output goalForEditing:', result.goalForEditing ? { id: result.goalForEditing.id, name: result.goalForEditing.name } : null);
+  // eslint-disable-next-line no-console
+  console.log('Output goals count:', result.goals.length);
+  // eslint-disable-next-line no-console
+  console.log('Output goals:', result.goals.map((g) => ({ id: g.id, name: g.name })));
+
+  return result;
+};
 
 export const convertReportToFormData = (fetchedReport) => {
   let grantIds = [];

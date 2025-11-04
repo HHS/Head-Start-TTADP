@@ -140,6 +140,19 @@ export default async function getGoalsForReport(reportId: number) {
             where: {
               activityReportId: reportId,
             },
+            attributes: [
+              'id',
+              'objectiveId',
+              'activityReportId',
+              'title',
+              'status',
+              'ttaProvided',
+              'arOrder',
+              'closeSuspendReason',
+              'closeSuspendContext',
+              'supportType',
+              'objectiveCreatedHere',
+            ],
             include: [
               {
                 separate: true,
@@ -210,7 +223,40 @@ export default async function getGoalsForReport(reportId: number) {
     ],
   }) as IGoalModelInstance[];
 
+  // eslint-disable-next-line no-console
+  console.log('=== getGoalsForReport raw goals ===');
+  // eslint-disable-next-line no-console
+  console.log('Goals objectives with ttaProvided:', JSON.stringify(goals.map((g) => ({
+    goalId: g.id,
+    objectives: g.objectives.map((o) => ({
+      objectiveId: o.id,
+      objectiveTitle: o.title,
+      activityReportObjectives: o.activityReportObjectives?.map((aro) => ({
+        ttaProvided: aro.ttaProvided,
+        status: aro.status,
+      })),
+    })),
+  })), null, 2));
+
   // dedupe the goals & objectives
   const forReport = true;
-  return reduceGoals(goals, forReport);
+  const reduced = reduceGoals(goals, forReport);
+  
+  // eslint-disable-next-line no-console
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line no-console
+  console.log('=== getGoalsForReport AFTER reduce ===');
+  // eslint-disable-next-line no-console
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line no-console
+  console.log('Reduced goals objectives:', JSON.stringify(reduced.map((g) => ({
+    goalId: g.id,
+    objectives: (g.objectives || []).map((o) => ({
+      objectiveId: o.id,
+      objectiveTitle: o.title,
+      ttaProvided: (o as Record<string, unknown>).ttaProvided,
+    })),
+  })), null, 2));
+  
+  return reduced;
 }

@@ -100,10 +100,11 @@ export const formatReportWithSaveBeforeConversion = async (
   const creatorRole = !data.creatorRole && userHasOneRole
     ? user.roles[0].fullName
     : data.creatorRole;
-
+  console.log('>>>>>>> data: ', data);
+  console.log('>>>>>>> formData: ', formData);
   const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
   const isEmpty = Object.keys(updatedFields).length === 0;
-
+  console.log('>>>>>>>>>>>>>>>>>>Updated fields to save:', updatedFields);
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
@@ -129,6 +130,33 @@ export const formatReportWithSaveBeforeConversion = async (
       startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
       endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
     };
+  }
+
+  // If we sent updated goals, merge them with the backend response to ensure objectives
+  // have the latest TTA provided values. The backend response may have stale data
+  // if the goal/objective updates haven't fully propagated yet.
+  if (updatedFields && updatedFields.goals && reportData.goalsAndObjectives) {
+    reportData.goalsAndObjectives = reportData.goalsAndObjectives.map((backendGoal) => {
+      // Find the corresponding goal from the update we just sent
+      const updatedGoal = updatedFields.goals.find((g) => g.id === backendGoal.id);
+
+      if (updatedGoal && updatedGoal.objectives) {
+        // Merge objectives: use updated objectives data if available
+        return {
+          ...backendGoal,
+          objectives: backendGoal.objectives.map((backendObj) => {
+            const updatedObj = updatedGoal.objectives.find((o) => o.id === backendObj.id);
+            // Preserve the updated TTA provided if it was changed
+            return {
+              ...backendObj,
+              ...(updatedObj && { ttaProvided: updatedObj.ttaProvided }),
+            };
+          }),
+        };
+      }
+
+      return backendGoal;
+    });
   }
 
   return reportData;

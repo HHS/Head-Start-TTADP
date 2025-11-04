@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom';
 import GoalPicker from './components/GoalPicker';
 import { IN_PROGRESS } from '../../../components/Navigator/constants';
 import { setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
-import { validateGoals, validatePrompts } from './components/goalValidator';
+import { validateGoals } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
@@ -205,44 +205,83 @@ const GoalsObjectives = ({
     }
   };
 
-  const onEdit = async (goal) => {
-    try {
-      await setGoalAsActivelyEdited(reportId, goal.goalIds, pageState);
-    } catch (err) {
+  const onEdit = (goal) => {
+    // eslint-disable-next-line no-console
+    console.log('=== onEdit CALLED ===', goal);
+
+    // Call the async operation but don't await it in the click handler
+    setGoalAsActivelyEdited(reportId, goal.goalIds, pageState).catch((err) => {
       // eslint-disable-next-line no-console
       console.error('failed to set goal as actively edited with this error:', err);
-    }
+    });
+
     const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
+    console.log('------------Currently editing goal:', currentlyEditing);
+    
+    // Deep copy to avoid shared references to nested arrays like goalIds
+    // Remove the goal being edited from the goals array FIRST to prevent duplication
+    // It will be stored in goalForEditing and recombined during save
+    const copyOfSelectedGoals = selectedGoals
+      .filter((g) => g.id !== goal.id)
+      .map((g) => ({
+        ...g,
+        goalIds: g.goalIds ? [...g.goalIds] : [],
+        objectives: g.objectives ? g.objectives.map((obj) => ({ ...obj })) : [],
+        prompts: g.prompts ? g.prompts.map((p) => ({ ...p })) : [],
+      }));
+
+    // would like to use structuredClone here for brevity but it would require fighting jsdom
+    // let copyOfSelectedGoals = selectedGoals.map((g) => structuredClone(g));
+
+    // update the previously edited goal in place (if one exists)
     if (currentlyEditing) {
-      const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
-      const name = getValues('goalName');
-      const endDate = getValues('goalEndDate');
-      const areGoalsValid = validateGoals(
-        [{
+      const previousGoalIndex = copyOfSelectedGoals.findIndex((g) => g.id === currentlyEditing.id);
+      if (previousGoalIndex !== -1) {
+        // Get the current edited values from the form
+        const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
+        const updatedName = getValues('goalName');
+        const updatedEndDate = getValues('goalEndDate');
+
+        const areGoalsValid = validateGoals(
+          [{
+            ...currentlyEditing,
+            name: updatedName,
+            endDate: updatedEndDate,
+            objectives: goalForEditingObjectives,
+          }],
+          setError,
+          hasMultipleGrants,
+        );
+
+        if (areGoalsValid !== true) {
+          // eslint-disable-next-line no-console
+          console.log('Goals validation failed');
+        }
+
+        trigger().then((isValid) => {
+          if (!isValid) {
+            // eslint-disable-next-line no-console
+            console.log('Prompts validation failed');
+          }
+        });
+
+        // Update currentlyediting goal in place with modified form values
+        copyOfSelectedGoals[previousGoalIndex] = {
           ...currentlyEditing,
-          name,
-          endDate,
+          name: updatedName,
+          endDate: updatedEndDate,
           objectives: goalForEditingObjectives,
-        }],
-        setError,
-        hasMultipleGrants,
-      );
-
-      if (areGoalsValid !== true) {
-        return;
-      }
-
-      const promptTitles = getValues('goalPrompts');
-
-      const arePromptsValid = await validatePrompts(promptTitles, trigger);
-      if (!arePromptsValid) {
-        return;
+        };
       }
     }
+
+    // Update the goals array in the form (removing the goal being edited)
+    onUpdateGoals(copyOfSelectedGoals);
+    
     // clear out the existing value (we need to do this because without it
     // certain objective fields don't clear out)
     setValue('goalForEditing', null);
-    setValue('goalPrompts', []);
+    setValue('goalPrompts', goal.prompts || []);
 
     // make this goal the editable goal
     setValue('goalForEditing', goal);
@@ -258,35 +297,15 @@ const GoalsObjectives = ({
       },
     );
 
-    // Deep copy to avoid shared references to nested arrays like goalIds
-    let copyOfSelectedGoals = selectedGoals.map((g) => ({
-      ...g,
-      goalIds: g.goalIds ? [...g.goalIds] : [],
-      objectives: g.objectives ? g.objectives.map((obj) => ({ ...obj })) : [],
-      prompts: g.prompts ? g.prompts.map((p) => ({ ...p })) : [],
-    }));
-
-    // would like to use structuredClone here for brevity but it would require fighting jsdom
-    // let copyOfSelectedGoals = selectedGoals.map((g) => structuredClone(g));
-
-    // add the goal that was being edited to the "selected goals"
-    if (currentlyEditing) {
-      copyOfSelectedGoals.push(currentlyEditing);
-    }
-
-    // remove the goal we are now editing from the "selected goals"
-    copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
-    onUpdateGoals(copyOfSelectedGoals);
+    // eslint-disable-next-line no-console
+    console.log('onEdit completed, goalForEditing should now be:', goal);
   }; // end onEdit
 
   // the read only component expects things a little differently
   // Deep copy goalIds to ensure independent array references
-  const goalsForReview = selectedGoals.map((goal) => ({
-    ...goal,
-    goalName: goal.name,
-    grants: [],
-    goalIds: goal.goalIds ? [...goal.goalIds] : [],
-  })); // would like to use structuredClone here for brevity but it would require fighting jsdom
+  // Build goals list, maintaining order and including editing goal at its position
+  // Note: This is used for reference, but goals are now rendered individually above
+  // to support inline editing
 
   // Add a variable to determine if a recipient has been selected.
   const hasRecipient = activityRecipients && activityRecipients.length > 0;
@@ -358,22 +377,64 @@ const GoalsObjectives = ({
       {/**
         * all goals for review
       */}
-      { goalsForReview.length ? (
-        <ReadOnly
-          onEdit={onEdit}
-          onRemove={(goal) => {
-            setGoalToRemove(goal);
-            modalRef.current.toggleModal();
-          }}
-          createdGoals={goalsForReview}
-        />
+      { selectedGoals.length ? (
+        <div>
+          {selectedGoals.map((goal) => (
+            <div key={`goal-${goal.id}`}>
+              {goalForEditing && goal.id === goalForEditing.id ? (
+                // Render the editing form inline
+                <GoalPicker
+                  grantIds={grantIds}
+                  reportId={reportId}
+                  goalTemplates={goalTemplates}
+                />
+              ) : (
+                // Render the read-only goal
+                <ReadOnly
+                  onEdit={() => onEdit(goal)}
+                  onRemove={(g) => {
+                    setGoalToRemove(g);
+                    modalRef.current.toggleModal();
+                  }}
+                  createdGoals={[{
+                    ...goal,
+                    goalName: goal.name,
+                    grants: [],
+                    goalIds: goal.goalIds ? [...goal.goalIds] : [],
+                  }]}
+                />
+              )}
+            </div>
+          ))}
+        </div>
       ) : null }
 
       {/**
+        * If the goal form is open (form not closed), show the GoalPicker
+        * This is used for both adding new goals and editing existing ones
+      */}
+      {(() => {
+        const showInlineGoalPicker = !isGoalFormClosed && goalForEditing && (
+          goalForEditing.id === 'new' || !selectedGoals.some((g) => g.id === goalForEditing.id)
+        );
+        return showInlineGoalPicker;
+      })() ? (
+        <div>
+          <GoalPicker
+            grantIds={grantIds}
+            reportId={reportId}
+            goalTemplates={goalTemplates}
+          />
+        </div>
+        ) : null }
+
+      {/**
         * conditionally show the goal picker
+        * Only show when creating a new goal, not when editing an existing one
+        * (existing goals show the picker inline at their position)
       */}
 
-      {hasGrant && !isGoalFormClosed && startDateHasValue
+      {hasGrant && !isGoalFormClosed && startDateHasValue && !(goalForEditing && goalForEditing.id !== 'new')
         ? (
           <>
             { fetchError && (<ConnectionError />)}

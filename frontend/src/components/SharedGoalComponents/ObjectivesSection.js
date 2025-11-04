@@ -99,7 +99,7 @@ export default function ObjectivesSection({
         );
       })}
       <div className="margin-y-4">
-        <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
+        <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective22" />
       </div>
     </div>
   );

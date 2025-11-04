@@ -86,18 +86,28 @@ export default function GoalForm({
    * associated goal data
    */
   useDeepCompareEffect(() => {
+    let isMounted = true;
+
     async function fetchData() {
       try {
-        setIsAppLoading(true);
-        setAppLoadingText('Loading');
+        if (isMounted) {
+          setIsAppLoading(true);
+          setAppLoadingText('Loading');
+        }
         const allObjectiveOptions = await getGoalTemplateObjectiveOptions(
           reportId,
           goal.goalTemplateId,
         );
-        setObjectiveOptions(allObjectiveOptions);
-        setObjectiveOptionsLoaded(true);
-      } finally {
-        setIsAppLoading(false);
+        if (isMounted) {
+          setObjectiveOptions(allObjectiveOptions);
+          setObjectiveOptionsLoaded(true);
+          setIsAppLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setIsAppLoading(false);
+        }
+        throw err;
       }
     }
 
@@ -107,6 +117,10 @@ export default function GoalForm({
       setObjectiveOptions([]);
       setObjectiveOptionsLoaded(true); // Even though we didn't make the async call we are done.
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
   // We need to combine responses for all grants that already have responses
@@ -152,7 +166,7 @@ export default function GoalForm({
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
-    goalTemplateId: PropTypes.number.isRequired,
+    goalTemplateId: PropTypes.number,
     goalIds: PropTypes.arrayOf(PropTypes.number),
     value: PropTypes.oneOfType([
       PropTypes.number,

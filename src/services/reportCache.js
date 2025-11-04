@@ -258,6 +258,15 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     objectiveCreatedHere,
   } = metadata;
 
+  // eslint-disable-next-line no-console
+  console.log('=== cacheObjectiveMetadata called ===');
+  // eslint-disable-next-line no-console
+  console.log('objectiveId:', objective.id || objective.dataValues?.id);
+  // eslint-disable-next-line no-console
+  console.log('reportId:', reportId);
+  // eslint-disable-next-line no-console
+  console.log('ttaProvided from metadata:', ttaProvided);
+
   const objectiveId = objective.dataValues
     ? objective.dataValues.id
     : objective.id;
@@ -275,10 +284,16 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     }, { raw: true });
   }
   const { id: activityReportObjectiveId } = aro;
+  
+  // eslint-disable-next-line no-console
+  console.log('About to update ActivityReportObjective id:', activityReportObjectiveId);
+  // eslint-disable-next-line no-console
+  console.log('With ttaProvided:', ttaProvided);
+  
   // Updates take longer then selects to settle in the db, as a result this update needs to be
   // complete prior to calling cacheResources to prevent stale data from being returned. This
   // means the following update cannot be in the Promise.all in the return.
-  await ActivityReportObjective.update({
+  const updateResult = await ActivityReportObjective.update({
     title: objective.title,
     status: status || objective.status,
     ttaProvided,
@@ -291,6 +306,9 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     where: { id: activityReportObjectiveId },
     individualHooks: true,
   });
+  
+  // eslint-disable-next-line no-console
+  console.log('Update result:', updateResult);
 
   return Promise.all([
     Objective.update({ onAR: true }, {
