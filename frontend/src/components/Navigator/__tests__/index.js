@@ -60,6 +60,7 @@ const defaultPages = [
     label: 'first page',
     review: false,
     render: (
+      formData,
       _additionalData,
       _reportId,
       _isAppLoading,
@@ -115,6 +116,9 @@ describe('Navigator', () => {
     const hookForm = useForm({
       defaultValues: formData,
     });
+
+    const data = hookForm.watch();
+
     return (
       <UserContext.Provider value={{ user }}>
         <NetworkContext.Provider value={{
@@ -130,6 +134,7 @@ describe('Navigator', () => {
           >
             <FormProvider {...hookForm}>
               <Navigator
+                formData={data}
                 onSaveAndContinue={onSaveAndContinue}
                 onSaveDraft={onSaveDraft}
                 draftSaver={jest.fn()}
