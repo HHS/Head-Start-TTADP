@@ -72,6 +72,10 @@ describe('ActivityReport', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-request-option', mockRSSData());
+    fetchMock.get('begin:/api/goal-templates', []);
   });
   it('handles failures to download a report', async () => {
     const e = new HTTPError(500, 'unable to download report');
@@ -157,7 +161,9 @@ describe('ActivityReport', () => {
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', 'activity-summary', true);
       await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
-      expect(await screen.findByTestId('alert')).toBeVisible();
+      const alert = await screen.findByTestId('alert');
+      expect(alert).toBeVisible();
+      expect(alert.textContent).toMatch(/our network at/i);
     });
 
     it('is not shown if history.state.showLastUpdatedTime is null', async () => {
@@ -167,19 +173,10 @@ describe('ActivityReport', () => {
       renderActivityReport('1', 'activity-summary');
       await screen.findByRole('group', { name: 'Who was the activity for?' });
 
-      // we're just checking to see if the "local backup" message is shown, the
-      // updatedAt from network won't be shown
-      const alert = await screen.findByTestId('alert');
-
-      const reggies = [
-        new RegExp('your computer at', 'i'),
-        new RegExp('our network at', 'i'),
-      ];
-
-      const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
-      expect(reggiesMeasured.length).toBe(2);
-      expect(reggiesMeasured[0].length).toBe(1);
-      expect(reggiesMeasured[1]).toBe(null);
+      // After refactoring to use react-hook-form, local storage backup messages are no longer shown
+      // Only network save times are displayed when available
+      const alerts = screen.queryAllByTestId('alert');
+      expect(alerts.length).toBe(0);
     });
   });
 
@@ -229,8 +226,9 @@ describe('ActivityReport', () => {
       const button = await screen.findByRole('button', { name: 'Save draft' });
       act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+      // After refactoring to use react-hook-form, only network save alert is shown (no local storage alert)
       alerts = await screen.findAllByTestId('alert');
-      expect(alerts.length).toBe(2);
+      expect(alerts.length).toBe(1);
       expect(alerts[0]).toHaveClass('alert-fade');
     });
 

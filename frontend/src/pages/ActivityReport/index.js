@@ -295,9 +295,7 @@ function ActivityReport({
           groups: groupsWithRecipientIds || [],
         });
 
-        const dataToStore = activityReportId !== 'new'
-          ? { ...report, goalForEditing: null }
-          : report;
+        const dataToStore = report;
 
         reset(dataToStore);
         lastSavedDataRef.current = dataToStore;

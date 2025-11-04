@@ -35,8 +35,6 @@ const Submitter = ({
   const needsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const approved = calculatedStatus === REPORT_STATUSES.APPROVED;
 
-  // Compute directly from approvers instead of using state to avoid infinite loop
-  // (watch() returns new reference each render, so useEffect with [approvers] would loop)
   const approverStatusList = approvers ? approvers.filter((a) => a.user) : [];
 
   const getNeedsActionApprovingMangers = () => {

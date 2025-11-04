@@ -61,7 +61,6 @@ const defaultPages = [
     review: false,
     render: (
       _additionalData,
-      _formData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -105,7 +104,6 @@ describe('Navigator', () => {
     onSave = jest.fn(),
     onSaveDraft = jest.fn(),
     updatePage = jest.fn(),
-    updateForm = jest.fn(),
     pages = defaultPages,
     formData = initialData,
     onUpdateError = jest.fn(),
@@ -138,11 +136,8 @@ describe('Navigator', () => {
                 editable={editable}
                 reportId={1}
                 submitted={false}
-                formData={formData}
-                updateFormData={updateForm}
                 onReview={() => {}}
                 isApprover={false}
-                defaultValues={{ first: '', second: '' }}
                 pages={pages}
                 currentPage={currentPage}
                 onFormSubmit={onSubmit}
@@ -157,6 +152,7 @@ describe('Navigator', () => {
                 hideSideNav={hideSideNav}
                 autoSaveInterval={autoSaveInterval}
                 shouldAutoSave={shouldAutoSave}
+                setShouldAutoSave={jest.fn()}
               />
             </FormProvider>
           </AppLoadingContext.Provider>

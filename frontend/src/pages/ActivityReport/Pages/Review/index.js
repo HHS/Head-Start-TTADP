@@ -23,7 +23,7 @@ const ReviewSubmit = ({
   pages,
   lastSaveTime,
 }) => {
-  const { watch } = useFormContext();
+  const { watch, getValues } = useFormContext();
   const additionalNotes = watch('additionalNotes');
   const calculatedStatus = watch('calculatedStatus');
   const userId = watch('userId');
@@ -77,6 +77,8 @@ const ReviewSubmit = ({
     expanded: true,
   }));
 
+  const formData = getValues();
+
   return (
     <>
       <Helmet>
@@ -86,6 +88,7 @@ const ReviewSubmit = ({
       {(!isApprover || (isDraft && creatorOrCollaborator))
         && (
           <Submitter
+            formData={formData}
             availableApprovers={availableApprovers}
             pages={pages}
             onFormSubmit={onFormSubmit}
