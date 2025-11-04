@@ -486,7 +486,7 @@ const ActivityReportNavigator = ({
       setValue('goalPrompts', []);
 
       // set goals to form data as appropriate
-      setValue('goals', packageGoals(
+      const packagedGoals = packageGoals(
         selectedGoals,
         {
           ...goal,
@@ -495,12 +495,12 @@ const ActivityReportNavigator = ({
         },
         grantIds,
         prompts,
-      ));
-
+      );
       // save report to API
       const { status, ...values } = getValues();
       const data = {
         ...values,
+        goals: packagedGoals,
         pageState: newNavigatorState(),
       };
       const savedData = await onSave(data);
