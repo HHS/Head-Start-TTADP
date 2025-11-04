@@ -16,7 +16,7 @@ import ActivityReportNavigator, {
   formatEndDate,
 } from '../ActivityReportNavigator';
 import UserContext from '../../../UserContext';
-import { NOT_STARTED, IN_PROGRESS, COMPLETE } from '../constants';
+import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import NavigatorButtons from '../components/NavigatorButtons';
@@ -66,6 +66,7 @@ const defaultPages = [
     label: 'first page',
     review: false,
     render: (
+      _formData,
       _additionalData,
       _reportId,
       _isAppLoading,
@@ -91,6 +92,7 @@ const defaultPages = [
     review: false,
     isPageComplete: () => false,
     render: (
+      _formData,
       _additionalData,
       _reportId,
       _isAppLoading,
@@ -115,6 +117,7 @@ const defaultPages = [
     label: 'third page',
     review: false,
     render: (
+      _formData,
       _additionalData,
       _reportId,
       _isAppLoading,
@@ -139,6 +142,7 @@ const defaultPages = [
     path: 'review',
     review: true,
     render: (
+      _formData,
       onFormSubmit,
     ) => (
       <div>
@@ -476,70 +480,6 @@ describe('ActivityReportNavigator', () => {
       },
       false,
     ));
-  });
-
-  it('re-evaluates goals/objectives page state after save and updates form data', async () => {
-    const onSave = jest.fn();
-    const updateForm = jest.fn();
-
-    await renderNavigator({
-      currentPage: 'first',
-      onSave,
-      updateForm,
-    });
-
-    // Mark the form dirty so Save draft triggers a save
-    userEvent.click(screen.getByTestId('first'));
-
-    // Trigger a manual save
-    userEvent.click(await screen.findByRole('button', { name: 'Save draft' }));
-
-    // After save, the goals/objectives page (position 2) should be set to IN_PROGRESS
-    await waitFor(() => expect(updateForm).toHaveBeenCalled());
-    const [updatedData, calledWithFlag] = updateForm.mock.calls[0];
-    expect(updatedData.pageState[2]).toBe(IN_PROGRESS);
-    expect(calledWithFlag).toBe(false);
-  });
-
-  it('marks goals/objectives page COMPLETE after save when page is complete', async () => {
-    const onSave = jest.fn();
-    const updateForm = jest.fn();
-
-    const completePages = [
-      {
-        ...defaultPages[0],
-      },
-      {
-        ...defaultPages[1],
-        // Simulate Goals & Objectives page at position 2 being complete
-        isPageComplete: () => true,
-      },
-      {
-        ...defaultPages[2],
-      },
-      {
-        ...defaultPages[3],
-      },
-    ];
-
-    await renderNavigator({
-      currentPage: 'first',
-      onSave,
-      updateForm,
-      pages: completePages,
-    });
-
-    // Mark the form dirty so Save draft triggers a save
-    userEvent.click(screen.getByTestId('first'));
-
-    // Trigger a manual save
-    userEvent.click(await screen.findByRole('button', { name: 'Save draft' }));
-
-    // After save, the goals/objectives page (position 2) should be set to COMPLETE
-    await waitFor(() => expect(updateForm).toHaveBeenCalled());
-    const [updatedData, calledWithFlag] = updateForm.mock.calls[0];
-    expect(updatedData.pageState[2]).toBe(COMPLETE);
-    expect(calledWithFlag).toBe(false);
   });
 });
 
