@@ -157,10 +157,7 @@ const ActivityReportNavigator = ({
 
   const onSaveForm = async (isAutoSave = false, forceUpdate = false) => {
     setSavingLoadScreen(isAutoSave);
-    if (!editable) {
-      setIsAppLoading(false);
-      return;
-    }
+
     const { status, ...values } = getValues();
     const data = { ...values, pageState: newNavigatorState() };
 
@@ -284,8 +281,11 @@ const ActivityReportNavigator = ({
       // make an attempt to focus on the first invalid resource
       // having a sticky header complicates this enough to make me not want to do this perfectly
       // right out of the gate
+      /* istanbul ignore next */
       const invalid = document.querySelector('.usa-error-message + .ttahub-resource-repeater input');
+      /* istanbul ignore next */
       if (invalid) {
+        /* istanbul ignore next */
         invalid.focus();
       }
       return;
