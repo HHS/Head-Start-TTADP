@@ -44,4 +44,5 @@ jobs:
           cf_password: ${{ secrets.CG_DEV_PASSWORD }}
           cf_space: ${{ secrets.CG_DEV_SPACE }}
           cf_org: hhs-acf-ohs-tta
-          cf_command: apps
+          cf_command: db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}
+
