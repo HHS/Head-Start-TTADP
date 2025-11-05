@@ -928,6 +928,7 @@ commands:
           current_env="<< parameters.target_env >>"
 
           cd environments
+          rm current_env
           ls -la
           echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > ${current_env}
           data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
