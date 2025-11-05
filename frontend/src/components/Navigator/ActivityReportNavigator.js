@@ -7,9 +7,6 @@ import React, {
 import PropTypes from 'prop-types';
 import { FormProvider } from 'react-hook-form';
 import moment from 'moment';
-import {
-  IN_PROGRESS, COMPLETE,
-} from './constants';
 import { OBJECTIVE_RESOURCES, validateGoals, validatePrompts } from '../../pages/ActivityReport/Pages/components/goalValidator';
 import { saveGoalsForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
@@ -18,6 +15,7 @@ import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
 import useFormGrantData from '../../hooks/useFormGrantData';
+import useNavigatorState from './useNavigatorState';
 
 const GOALS_AND_OBJECTIVES_POSITION = 2;
 
@@ -125,7 +123,6 @@ const ActivityReportNavigator = ({
 
   const formData = getValues();
 
-  const pageState = watch('pageState');
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
 
@@ -150,72 +147,13 @@ const ActivityReportNavigator = ({
     grantIds,
   } = useFormGrantData(recipients);
 
-  const { isDirty, isValid } = formState;
+  const { isDirty } = formState;
 
-  const recalculatePageState = () => {
-    const newPageState = { ...pageState };
-    const currentGoalsObjectivesPageState = pageState[GOALS_AND_OBJECTIVES_POSITION];
-    const pageCompleteFunc = goalsAndObjectivesPage.isPageComplete;
-    const isGoalsObjectivesPageComplete = pageCompleteFunc(getValues(), formState);
-    const isCurrentPageGoalsObjectives = page.position === GOALS_AND_OBJECTIVES_POSITION;
-
-    if (isGoalsObjectivesPageComplete) {
-      newPageState[GOALS_AND_OBJECTIVES_POSITION] = COMPLETE;
-    } else if (isCurrentPageGoalsObjectives && currentGoalsObjectivesPageState === COMPLETE) {
-      newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
-    } else if (isCurrentPageGoalsObjectives) {
-      // eslint-disable-next-line max-len
-      newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentGoalsObjectivesPageState;
-    }
-
-    return newPageState;
-  };
-
-  /**
- * Updates the goals & objectives page state based on current form values
- * This ensures that after any API call (like recipient changes that remove goals)
- * we update the page state appropriately
- * @param {Object} savedData - The data returned from the save operation
- */
-  const updateGoalsObjectivesPageState = (savedData) => {
-    if (!goalsAndObjectivesPage || !savedData) return;
-
-    // Re-validate the goals and objectives page using saved data
-    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
-      .isPageComplete(savedData, formState);
-
-    // Desired state for the goals/objectives page
-    const desiredState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
-
-    // Update RHF's pageState
-    const mergedPageState = {
-      ...savedData.pageState,
-      [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
-    };
-
-    setValue('pageState', mergedPageState);
-  };
-
-  const newNavigatorState = () => {
-    const newPageState = recalculatePageState();
-
-    if (page.review || page.position === GOALS_AND_OBJECTIVES_POSITION) {
-      return newPageState;
-    }
-
-    const currentPageState = pageState[page.position];
-    const isComplete = page.isPageComplete ? page.isPageComplete(getValues(), formState) : isValid;
-
-    if (isComplete) {
-      newPageState[page.position] = COMPLETE;
-    } else if (currentPageState === COMPLETE) {
-      newPageState[page.position] = IN_PROGRESS;
-    } else {
-      newPageState[page.position] = isDirty ? IN_PROGRESS : currentPageState;
-    }
-
-    return newPageState;
-  };
+  const { newNavigatorState, updateGoalsObjectivesPageState } = useNavigatorState({
+    page,
+    goalsAndObjectivesPage,
+    hookForm,
+  });
 
   const onSaveForm = async (isAutoSave = false, forceUpdate = false) => {
     setSavingLoadScreen(isAutoSave);
