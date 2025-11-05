@@ -28,7 +28,7 @@ on:
         - ttahub-dev-pink
 
 jobs:
-  db-restore:
+  restore:
     runs-on: ubuntu-latest
     concurrency:
       group: db-restore
