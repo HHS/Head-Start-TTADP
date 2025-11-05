@@ -168,7 +168,7 @@ const ActivityReportNavigator = ({
 
       // Update RHF with saved data (includes new IDs, etc.)
       if (savedData) {
-        reset(savedData, { keepDirty: false });
+        reset(savedData);
 
         // After save, check and update the goals & objectives page state
         updateGoalsObjectivesPageState(savedData);
@@ -235,7 +235,7 @@ const ActivityReportNavigator = ({
 
       // Update RHF with saved data
       if (savedData) {
-        reset(savedData, { keepDirty: false });
+        reset(savedData);
       }
 
       updateErrorMessage('');
@@ -445,7 +445,7 @@ const ActivityReportNavigator = ({
 
       // Update RHF with saved data
       if (savedData) {
-        reset(savedData, { keepDirty: false });
+        reset(savedData);
 
         // On save goal re-evaluate page status.
         updateGoalsObjectivesPageState(savedData);
