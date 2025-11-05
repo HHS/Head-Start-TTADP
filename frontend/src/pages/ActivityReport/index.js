@@ -23,6 +23,7 @@ import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
   LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_AR_DATA_KEY,
   LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
@@ -45,6 +46,7 @@ import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
 import useLocalStorageCleanup, { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
 import usePresenceData from '../../hooks/usePresenceData';
+import useHookFormLocalStorage from '../../hooks/useHookFormLocalStorage';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -165,6 +167,8 @@ function ActivityReport({
   });
 
   const { reset, getValues } = hookForm;
+
+  useHookFormLocalStorage(LOCAL_STORAGE_AR_DATA_KEY(activityReportId), hookForm);
 
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
     LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(activityReportId), {
@@ -296,7 +300,42 @@ function ActivityReport({
           groups: groupsWithRecipientIds || [],
         });
 
-        const dataToStore = report;
+        let dataToStore = report;
+
+        // Check localStorage for newer data before resetting form
+        try {
+          const localStorageKey = LOCAL_STORAGE_AR_DATA_KEY(activityReportId);
+          const stored = window.localStorage.getItem(localStorageKey);
+
+          if (stored) {
+            const localData = JSON.parse(stored);
+
+            // Compare timestamps to determine which data is newer
+            const localTimestamp = localData.savedToStorageTime
+              ? new Date(localData.savedToStorageTime)
+              : null;
+
+            const serverTimestamp = report.updatedAt
+              ? new Date(report.updatedAt)
+              : null;
+
+            // If localStorage data is newer, prefer it
+            const shouldUseLocalStorage = localTimestamp
+              && (!serverTimestamp || localTimestamp > serverTimestamp);
+
+            if (shouldUseLocalStorage) {
+              // Merge localStorage data with fetched report
+              // This preserves server fields while using newer form edits
+              dataToStore = {
+                ...report,
+                ...localData,
+              };
+            }
+          }
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error('Error loading from localStorage during fetch:', err);
+        }
 
         reset(dataToStore);
         lastSavedDataRef.current = dataToStore;
