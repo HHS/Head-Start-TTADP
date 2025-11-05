@@ -69,6 +69,7 @@ const defaultPages = [
     label: 'first page',
     review: false,
     render: (
+      _formData,
       _additionalData,
       _reportId,
       _isAppLoading,
