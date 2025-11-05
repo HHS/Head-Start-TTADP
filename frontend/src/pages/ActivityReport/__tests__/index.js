@@ -541,4 +541,113 @@ describe('ActivityReport', () => {
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/view/1'));
     });
   });
+
+  describe('localStorage data synchronization', () => {
+    it('uses localStorage data when it is newer than server data', async () => {
+      const newerTimestamp = new Date('2024-01-02T12:00:00Z').toISOString();
+      const olderTimestamp = new Date('2024-01-01T12:00:00Z').toISOString();
+
+      const data = formData();
+      const localStorageData = {
+        ...data,
+        savedToStorageTime: newerTimestamp,
+        context: 'Updated locally',
+      };
+
+      getItem.mockReturnValue(JSON.stringify(localStorageData));
+
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        updatedAt: olderTimestamp,
+        context: 'Original from server',
+      });
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Wait for the form to render
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+
+      // Verify that localStorage.getItem was called
+      expect(getItem).toHaveBeenCalled();
+    });
+
+    it('uses server data when it is newer than localStorage data', async () => {
+      const newerTimestamp = new Date('2024-01-02T12:00:00Z').toISOString();
+      const olderTimestamp = new Date('2024-01-01T12:00:00Z').toISOString();
+
+      const data = formData();
+      const localStorageData = {
+        ...data,
+        savedToStorageTime: olderTimestamp,
+        context: 'Updated locally',
+      };
+
+      getItem.mockReturnValue(JSON.stringify(localStorageData));
+
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        updatedAt: newerTimestamp,
+        context: 'Original from server',
+      });
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Wait for the form to render
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+
+      // Verify that localStorage.getItem was called
+      expect(getItem).toHaveBeenCalled();
+    });
+  });
+
+  describe('localStorage error handling', () => {
+    it('handles localStorage errors gracefully when loading stored data', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      getItem.mockImplementation(() => {
+        throw new Error('QuotaExceededError');
+      });
+
+      fetchMock.get('/api/activity-reports/1', formData());
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Should continue to render normally with server data
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error loading from localStorage during fetch:',
+        expect.any(Error),
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('loading states', () => {
+    it('displays loading state when formData is not initialized', async () => {
+      fetchMock.get('/api/activity-reports/1', formData());
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Initial loading state
+      expect(screen.getByText('loading...')).toBeVisible();
+
+      // Should eventually show the form
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+    });
+  });
+
+  describe('error handling', () => {
+    it('displays error alert when there is an error and form is not initialized', async () => {
+      const e = new HTTPError(500, 'Server error');
+      fetchMock.get('/api/activity-reports/1', async () => { throw e; });
+
+      renderActivityReport('1', 'activity-summary', false);
+
+      const alerts = await screen.findAllByTestId('alert');
+      const errorAlert = alerts.find((alert) => alert.textContent.includes('issue with your connection'));
+      expect(errorAlert).toBeVisible();
+    });
+  });
 });

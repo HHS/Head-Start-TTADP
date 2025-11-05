@@ -15,7 +15,7 @@ import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
-import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { useForm } from 'react-hook-form';
 import pages from './Pages';
 import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
@@ -390,13 +390,6 @@ function ActivityReport({
         );
         const errorMsg = !connection ? networkErrorMessage : <>Unable to load activity report</>;
         updateError(errorMsg);
-        // If the error was caused by an invalid region, we need a way to communicate that to the
-        // component so we can redirect the user.
-        if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
-          reset({ regionId: report.regionId });
-          setIsFormInitialized(true);
-        }
-
         if (!isFormInitialized && !connection) {
           const fallbackData = { ...defaultValues, pageState: defaultPageState };
           reset(fallbackData);
@@ -423,13 +416,6 @@ function ActivityReport({
     return 'loading...';
   }
 
-  // If no region was able to be found, we will re-reroute user to the main page
-  // FIXME: when re-routing user show a message explaining what happened
-  if (formData && parseInt(formData.regionId, DECIMAL_BASE) === -1) {
-    return <Redirect to="/" />;
-  }
-
-  // This error message is a catch all assuming that the network storage is working
   if (error && !formData) {
     return (
       <Alert type="error">
