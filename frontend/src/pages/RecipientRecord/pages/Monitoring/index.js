@@ -33,10 +33,11 @@ export default function Monitoring({
   match,
 }) {
   const { params: { currentPage, recipientId, regionId } } = match;
-  const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
   const history = useHistory();
   const [byReview, setByReview] = useState([]);
   const [byCitation, setByCitation] = useState([]);
+  const [announcement, setAnnouncement] = useState('');
 
   const lookup = useMemo(() => ({
     [MONITORING_PAGES.REVIEW]: {
@@ -56,6 +57,12 @@ export default function Monitoring({
       history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/monitoring/${MONITORING_PAGES.REVIEW}`);
     }
   }, [currentPage, history, recipientId, regionId]);
+
+  useEffect(() => {
+    if (!isAppLoading && currentPage) {
+      setAnnouncement(`Monitoring data by ${currentPage} loaded.`);
+    }
+  }, [currentPage, isAppLoading]);
 
   useDeepCompareEffect(() => {
     async function fetchMonitoringData(slug) {
@@ -79,6 +86,7 @@ export default function Monitoring({
 
   return (
     <Container className="maxw-full position-relative" paddingX={0} paddingY={0} positionRelative>
+      <div aria-live="polite" className="usa-sr-only">{announcement}</div>
       <div className="padding-x-3 position-relative">
         <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
           <h2>TTA provided against monitoring citations</h2>

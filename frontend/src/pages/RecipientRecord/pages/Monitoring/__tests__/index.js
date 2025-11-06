@@ -102,6 +102,8 @@ describe('Monitoring', () => {
 
     const hideButton = screen.getByRole('button', { name: 'Hide TTA activity' });
     expect(hideButton).toBeInTheDocument();
+
+    expect(await screen.findByText('Monitoring data by review loaded.')).toBeInTheDocument();
   });
 
   it('renders the citation page', async () => {
@@ -124,5 +126,6 @@ describe('Monitoring', () => {
 
     const hideButton = screen.getByRole('button', { name: 'Hide TTA activity' });
     expect(hideButton).toBeInTheDocument();
+    expect(await screen.findByText('Monitoring data by citation loaded.')).toBeInTheDocument();
   });
 });
