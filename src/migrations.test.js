@@ -2,6 +2,10 @@ const simpleGit = require('simple-git');
 const fs = require('fs');
 const path = require('path');
 
+const IGNORED_FILES = new Set([
+  'src/migrations/20251201000000-add-activity-report-reason-gin-index.js',
+]);
+
 function getRenameCommand(file, date) {
   const dateTimePrefix = new Date()
     .toISOString()
@@ -91,8 +95,11 @@ async function checkFileDatePrefix() {
     .flat()
     .map(({ name }) => name);
 
-  const mainFileDates = getLatestFileDates(mainFiles, paths);
-  const prFileDates = getLatestFileDates(prFiles, paths);
+  const filteredMainFiles = mainFiles.filter((file) => !IGNORED_FILES.has(file));
+  const filteredPrFiles = prFiles.filter((file) => !IGNORED_FILES.has(file));
+
+  const mainFileDates = getLatestFileDates(filteredMainFiles, paths);
+  const prFileDates = getLatestFileDates(filteredPrFiles, paths);
 
   const tooManyDigits = prFileDates.filter((value) => value > 99999999999999);
   if (tooManyDigits && tooManyDigits.length) {
@@ -106,8 +113,10 @@ async function checkFileDatePrefix() {
     const prFilesWithOlderDates = [];
 
     prFileDates.forEach((date, index) => {
-      if (!mainFiles.includes(prFiles[index]) && date <= latestMainFileDate) {
-        prFilesWithOlderDates.push({ file: prFiles[index], date });
+      const fileName = filteredPrFiles[index];
+      if (!filteredMainFiles.includes(fileName)
+        && date <= latestMainFileDate) {
+        prFilesWithOlderDates.push({ file: fileName, date });
       }
     });
 

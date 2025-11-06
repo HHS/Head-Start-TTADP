@@ -814,7 +814,7 @@ describe('communicationLogToCsvRecord', () => {
       duration: 30,
       method: 'Email',
       purpose: 'Inquiry',
-      notes: 'Lorem ipsum',
+      notes: '<p>Lorem ipsum</p>',
       result: 'Successful',
       recipientNextSteps: [{
         note: 'Follow up with client',
