@@ -45,16 +45,16 @@ jobs:
           cf_space: ${{ secrets.CG_DEV_SPACE }}
           cf_org: hhs-acf-ohs-tta
           command: |
+            set -e
             TASK_NAME="task-$(date +%s)"
-            echo "Running $TASK_NAME on environment $TARGET_ENV: $COMMAND"
             COMMAND="cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}"
+            echo "Running $TASK_NAME on environment $TARGET_ENV: $COMMAND"
             cf run-task ${{ github.event.inputs.target_db }} --name $TASK_NAME --memory 2G --command "$COMMAND" 
-
             echo "Waiting for task to complete..."
             sleep 15
             ./bin/watch-task.js $TARGET_ENV $TASK_NAME
             echo "Gathering logs..."
             sleep 30
-            cf logs $TARGET_ENV --recent | grep ${TASK_NAME}"
+            cf logs $TARGET_ENV --recent | grep ${TASK_NAME}
 
 
