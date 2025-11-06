@@ -183,47 +183,40 @@ describe('Resources dashboard', () => {
       },
     });
 
-    // Get topic ID's.
-    const { topicId: classOrgTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    // Create topics if they don't exist
+    const [classOrgTopicCreated] = await Topic.findOrCreate({
       where: { name: 'CLASS: Classroom Organization' },
-      raw: true,
+      defaults: { name: 'CLASS: Classroom Organization' },
     });
 
-    const { topicId: erseaTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [erseaTopicCreated] = await Topic.findOrCreate({
       where: { name: 'ERSEA' },
-      raw: true,
+      defaults: { name: 'ERSEA' },
     });
 
-    const { topicId: coachingTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [coachingTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Coaching' },
-      raw: true,
+      defaults: { name: 'Coaching' },
     });
 
-    const { topicId: facilitiesTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [facilitiesTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Facilities' },
-      raw: true,
+      defaults: { name: 'Facilities' },
     });
 
-    const { topicId: fiscalBudgetTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [fiscalBudgetTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Fiscal / Budget' },
-      raw: true,
+      defaults: { name: 'Fiscal / Budget' },
     });
 
-    const { topicId: nutritionTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [nutritionTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Nutrition' },
-      raw: true,
+      defaults: { name: 'Nutrition' },
     });
 
-    const { topicId: oralHealthTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [oralHealthTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Oral Health' },
-      raw: true,
+      defaults: { name: 'Oral Health' },
     });
 
     // Report 1 (Mixed Resources).
@@ -248,21 +241,21 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveOne.id,
-        topicId: classOrgTopicId,
+        topicId: classOrgTopicCreated.id,
       },
     });
 
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveOne.id,
-        topicId: erseaTopicId,
+        topicId: erseaTopicCreated.id,
       },
     });
 
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveOne.id,
-        topicId: coachingTopicId,
+        topicId: coachingTopicCreated.id,
       },
     });
 
@@ -285,7 +278,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveTwo.id,
-        topicId: coachingTopicId,
+        topicId: coachingTopicCreated.id,
       },
     });
 
@@ -307,7 +300,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveThree.id,
-        topicId: nutritionTopicId,
+        topicId: nutritionTopicCreated.id,
       },
     });
 
@@ -331,7 +324,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveTwo.id,
-        topicId: oralHealthTopicId,
+        topicId: oralHealthTopicCreated.id,
       },
     });
 
@@ -355,7 +348,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveThree.id,
-        topicId: nutritionTopicId,
+        topicId: nutritionTopicCreated.id,
       },
     });
 
@@ -373,7 +366,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveForReport4.id,
-        topicId: facilitiesTopicId,
+        topicId: facilitiesTopicCreated.id,
       },
     });
 
@@ -381,7 +374,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveForReport4.id,
-        topicId: fiscalBudgetTopicId,
+        topicId: fiscalBudgetTopicCreated.id,
       },
     });
 
@@ -389,7 +382,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveForReport4.id,
-        topicId: erseaTopicId,
+        topicId: erseaTopicCreated.id,
       },
     });
 
@@ -413,7 +406,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveForReport5.id,
-        topicId: facilitiesTopicId,
+        topicId: facilitiesTopicCreated.id,
       },
     });
 
@@ -438,7 +431,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveDraft.id,
-        topicId: erseaTopicId,
+        topicId: erseaTopicCreated.id,
       },
     });
 

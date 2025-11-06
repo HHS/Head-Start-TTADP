@@ -36,7 +36,7 @@ parameters:
   action:
     description: "Choose the workflow to run"
     type: enum
-    enum: [ build_test_deploy, deploy_only, import_data, restore_db ]
+    enum: [ build_test_deploy, deploy_only, import_data, restore_db, backup_prod, clear_cache ]
     default: build_test_deploy
   target_env:
     description: "Environment to target"
@@ -52,21 +52,17 @@ workflows:
     # It will build the app, run all tests, then deploy if the branch matches
     # autodeploy: main->staging, production->prod
     when: pipeline.parameters.action == "build_test_deploy"
+    max_auto_reruns: 2
     jobs:
     - build_and_lint
-    - build_similarity_api
     - checkpoint:
         name: build_done
         requires:
         - build_and_lint
-        - build_similarity_api
     - test_frontend:
         requires:
         - build_done
     - test_backend:
-        requires:
-        - build_done
-    - test_similarity_api:
         requires:
         - build_done
     - test_e2e_app:
@@ -89,7 +85,6 @@ workflows:
         requires:
         - test_frontend
         - test_backend
-        - test_similarity_api
         - test_e2e_app
         - test_e2e_api
         - test_e2e_utils
@@ -121,14 +116,12 @@ workflows:
     when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
     jobs:
     - build_and_lint
-    - build_similarity_api
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
         serial-group: << pipeline.parameters.target_env >>/deploy-lock
         target_env: "<< pipeline.parameters.target_env >>"
         requires:
         - build_and_lint
-        - build_similarity_api
 
   import_data_cron:
     # scheduled job to download and process monitoring data
@@ -218,10 +211,9 @@ workflows:
         requires:
         - backup_temp_db
 
-  restore_db_manual:
-    # restore the anonymized db snapshot to a lower env db and run migrations
-    # uses the last production backup, does not interact with prod or modify snapshots
-    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+  backup_prod_manual:
+    # backup prod db, process(anonymize) it, then backup the processed db
+    when: pipeline.parameters.action == "backup_prod" and pipeline.trigger_source == "api"
     jobs:
     - backup_prod_db:
         serial-group: "tta-automation-lock"
@@ -237,11 +229,50 @@ workflows:
         serial-group: "tta-automation-lock"
         requires:
         - process_temp_db
+
+  restore_db_manual:
+    # restore the anonymized db snapshot to a lower env db and run migrations
+    # uses the last production backup, does not interact with prod or modify snapshots
+    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+    jobs:
     - restore_db_job:
         serial-group: tta-automation-lock
-        requires:
-        - backup_temp_db
         target_env: "<< pipeline.parameters.target_env >>"
+
+  clear_build_cache:
+    when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
+    jobs:
+    - clear_cache_job:
+        target_env: "tta-smarthub-<< pipeline.parameters.target_env >>"
+
+  clear_buildcache_cron:
+    # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
+    # see https://docs.cloud.gov/knowledge-base/2024/12/09/apt-buildpack-cache-issue/
+    triggers:
+    - schedule:
+        cron: "0 0 * * 0" # midnight Sunday
+        filters:
+          branches:
+            only:
+            - main
+    jobs:
+    - clear_cache_job:
+        target_env: "tta-smarthub-prod" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-staging"
+    - clear_cache_job:
+        target_env: "tta-automation"
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-blue" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-green" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-red" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-gold" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-pink"
+        
 
 # ----------------- Jobs -----------------
 
@@ -296,35 +327,6 @@ jobs:
         root: .
         paths:
         - .
-
-  build_similarity_api:
-    executor: docker-python-executor
-    steps:
-    - checkout
-    - create_combined_pipfreeze
-    - restore_cache:
-        keys:
-        # To manually bust the cache, increment the version e.g. v7-pip...
-        - v2-pip-deps-{{ checksum "combined-requirements.txt" }}
-        # If checksum is new, restore partial cache
-        - v2-pip-deps-
-    - run:
-        name: Install python dependencies
-        command: |
-          cd similarity_api/src
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install -U pip setuptools wheel
-          pip install -U --use-pep517 -r requirements.txt
-    - save_cache:
-        paths:
-        - similarity_api/src/venv
-        key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
-
-    - persist_to_workspace:
-        root: .
-        paths:
-        - similarity_api
 
   test_backend:
     executor: docker-postgres-executor
@@ -403,48 +405,6 @@ jobs:
     - store_test_results:
         path: reports/
 
-  test_similarity_api:
-    executor: docker-python-executor
-    steps:
-    - attach_workspace:
-        at: .
-    - run:
-        name: Syft SBOM
-        environment:
-          SYFT_VERSION: v1.5.0
-          IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
-          OUTPUT_FORMAT: json
-          OUTPUT_FILE: reports/syft_sbom.json
-        command: |
-          mkdir -p reports/
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
-          ./syft similarity_api/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "scan results saved in $OUTPUT_FILE"
-    - run:
-        name: Grype Docker image
-        environment:
-          GRYPE_VERSION: v0.92.2
-          OUTPUT_FORMAT: sarif
-          OUTPUT_FILE: reports/grype.json
-        command: |
-          mkdir -p reports
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
-          ./grype db update
-          ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "Grype scan results saved in $OUTPUT_FILE"
-    - run:
-        name: Test similarity
-        command: |
-          mkdir -p coverage/similarity
-          cd similarity_api/src
-          source venv/bin/activate
-          pip install pytest pytest-cov
-          pytest -rpP --cov=similarity --cov=. --junitxml=~/project/reports/junit.xml
-          coverage report --show-missing --skip-covered
-          coverage html -d ~/project/coverage/similarity --skip-covered
-    - store_artifacts:
-        path: reports/
-
   test_frontend:
     executor: docker-executor
     resource_class: large
@@ -454,8 +414,8 @@ jobs:
     - run:
         name: Audit checksums of color files
         command: |
-          chmod 744 ./checkcolorhash.sh
-          ./checkcolorhash.sh;
+          chmod 744 ./frontend/checkcolorhash.sh
+          cd frontend && ./checkcolorhash.sh;
     - run:
         name: Add GitHub to known_hosts
         command: |
@@ -529,17 +489,11 @@ jobs:
         name: Wait for Node.js server to start
         command: ./bin/ping-server 8080
     - run:
-        name: Wait for similarity_api to start
-        command: ./bin/ping-server 9100 localhost /openapi.json
-    - run:
         name: Pull OWASP ZAP docker image
         command: docker pull zaproxy/zap-stable:latest
     - run:
         name: Run OWASP ZAP scan for Node.js server
         command: ./bin/run-owasp-scan --target http://server:8080 --full
-    - run:
-        name: Run OWASP ZAP scan for similarity_api
-        command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
     - store_artifacts:
         path: reports
 
@@ -695,6 +649,7 @@ jobs:
           node ./build/server/src/tools/importSystemCLI.js process 1
           yarn createMonitoringGoalsCLI
           node ./build/server/src/tools/queryMonitoringDataCLI.js
+          node ./build/server/src/tools/maintainMonitoringDataCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
@@ -716,6 +671,25 @@ jobs:
         - notify_slack:
             message_text_file: monitoring-updates.txt
             slack_channel: << parameters.slack_channel >>
+
+  clear_cache_job:
+    executor: docker-executor
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - checkout
+    - install_cf_tools
+    - cf_login:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Clear build cache
+        command: |
+          app_name="<< parameters.target_env >>"
+          echo "Clearing build cache for ${app_name}"
+          app_guid=$(cf app --guid ${app_name})
+          cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+          echo "Build cache cleared"
 
 # ----------------- Commands -----------------
 
@@ -843,17 +817,6 @@ commands:
         name: Combine package-lock.json files to single file
         command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
 
-  create_combined_pipfreeze:
-    description: "Concatenate all requirements.txt files into a single file. File is used as checksum source for part of caching key."
-    parameters:
-      filename:
-        type: string
-        default: "combined-requirements.txt"
-    steps:
-    - run:
-        name: Combine requirements.txt files to single file
-        command: cat similarity_api/src/requirements.txt > << parameters.filename >>
-
   sparse_checkout:
     description: "Checkout sparse directories from a specific branch."
     parameters:
@@ -957,42 +920,41 @@ commands:
         type: string
     steps:
     - restore_cache:
-        key: 'environment-owners'
+        key: env-owners-
     - run:
         name: Write owner into file
         command: |
           mkdir -p environments
           current_env="<< parameters.target_env >>"
-          touch msg.txt
-          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then
-            exit 0;
-          fi
-          if [ -f ./environments/${current_env} ]; then
-            old_owner=$(cat ./environments/${current_env})
-            new_owner="${CIRCLE_USERNAME}"
-            if [ "${old_owner}" != "${new_owner}" ]; then
-              echo "owner changed from ${old_owner}->${new_owner}"
-              echo "${new_owner}" > environments/${current_env}
-              msg = ""
-              cd environments
-              for file in *; do
-                if [ ! -d ${file} ]; then
-                  msg="${file}: $(cat ${file})\n${msg}"
-                fi;
-              done
-              cd ..
-              ./bin/notify-slack.sh \
-                "Environment owner changed: \`\`\`${msg}\`\`\`" \
-                "tm-test"
-                ${SLACK_BOT_TOKEN}
-            else
-              echo "owner not changed: ${old_owner}=${new_owner}"
-            fi
-          else
-            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
-          fi
+
+          cd environments
+          ls -la
+          echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > ${current_env}
+          data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
+          for file in *; do
+            cat ${file}
+            if [ ! -d ${file} ]; then
+              data="${data}$(cat ${file})\n"
+            fi;
+          done
+
+          curl -w "\n%{http_code}\n" --fail-with-body -X POST \
+          https://slack.com/api/canvases.edit \
+          -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data '{
+            "canvas_id": "F09459NAEKB",
+            "changes": [{
+              "operation": "replace",
+              "document_content": {
+                "type": "markdown",
+                "markdown": "'"$data"'"
+              },
+            }],
+          }'
+
     - save_cache:
-        key: 'environment-owners'
+        key: env-owners-{{ epoch }}
         paths:
         - environments
 
@@ -1450,9 +1412,13 @@ commands:
     - run:
         name: Post Slack Message
         command: |
-          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-            -H 'Content-type: application/json;charset=utf-8' \
-            --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+          if [ -f /tmp/message_file.json ]; then
+            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+          else
+            echo "Skipping Slack notification because /tmp/message_file.json was not generated."
+          fi
 
   no-op:
     # placeholder command for no-op jobs

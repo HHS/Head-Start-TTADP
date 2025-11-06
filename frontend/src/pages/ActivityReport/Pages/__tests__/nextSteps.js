@@ -85,27 +85,10 @@ describe('next steps review', () => {
       [{ note: 'First Recipient Step', completeDate: '06/03/2022', id: 1 }],
     );
     expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what have you agreed to do next\?/i)).toBeVisible();
+    expect(await screen.queryAllByText(/step 1/i).length).toBe(2);
     expect(await screen.findByText(/first specialist step/i)).toBeVisible();
     expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what has the recipient agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByText(/first recipient step/i)).toBeVisible();
-    expect(screen.queryAllByText('Anticipated completion').length).toBe(2);
-    expect(await screen.findByText(/06\/02\/2022/i)).toBeVisible();
-    expect(await screen.findByText(/06\/03\/2022/i)).toBeVisible();
-  });
-  it('renders other entity next steps', async () => {
-    renderReviewNextSteps(
-      [{ note: 'First Specialist Step', completeDate: '06/02/2022', id: 1 }],
-      [{ note: 'First Other Entity Step', completeDate: '06/03/2022', id: 1 }],
-      'other-entity',
-    );
-    expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what have you agreed to do next\?/i)).toBeVisible();
-    expect(await screen.findByText(/first specialist step/i)).toBeVisible();
-    expect(await screen.findByText(/other entity's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what has the other entity agreed to do next\?/i)).toBeVisible();
-    expect(await screen.findByText(/first other entity step/i)).toBeVisible();
     expect(screen.queryAllByText('Anticipated completion').length).toBe(2);
     expect(await screen.findByText(/06\/02\/2022/i)).toBeVisible();
     expect(await screen.findByText(/06\/03\/2022/i)).toBeVisible();

@@ -445,5 +445,265 @@ describe('objectives handlers', () => {
       await updateStatus(request, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
+
+    it('correctly sets overrideStatus for Not Started to complete', async () => {
+      const user = {
+        id: 1,
+        permissions: [{
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+          regionId: 1,
+        }],
+      };
+
+      const regionId = 1;
+
+      userById.mockResolvedValue(user);
+
+      const request = {
+        ...mockRequest,
+        body: {
+          ids: [1, 2, 3],
+          regionId,
+          status: OBJECTIVE_STATUS.COMPLETE,
+          closeSuspendReason: 'Test reason',
+          closeSuspendContext: 'Test context',
+        },
+      };
+
+      getObjectiveRegionAndGoalStatusByIds.mockResolvedValue([
+        {
+          id: 1,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+        {
+          id: 2,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+        {
+          id: 3,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+      ]);
+
+      await updateStatus(request, mockResponse);
+
+      expect(updateObjectiveStatusByIds).toHaveBeenCalledWith(
+        [
+          1, 2, 3],
+        OBJECTIVE_STATUS.IN_PROGRESS,
+        'Test reason',
+        'Test context',
+      );
+    });
+
+    it('correctly sets overrideStatus for In Progress to Not Started', async () => {
+      const user = {
+        id: 1,
+        permissions: [{
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+          regionId: 1,
+        }],
+      };
+
+      const regionId = 1;
+
+      userById.mockResolvedValue(user);
+
+      const request = {
+        ...mockRequest,
+        body: {
+          ids: [1, 2, 3],
+          regionId,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          closeSuspendReason: 'Test reason',
+          closeSuspendContext: 'Test context',
+        },
+      };
+
+      getObjectiveRegionAndGoalStatusByIds.mockResolvedValue([
+        {
+          id: 1,
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+        {
+          id: 2,
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+        {
+          id: 3,
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+      ]);
+
+      await updateStatus(request, mockResponse);
+
+      expect(updateObjectiveStatusByIds).toHaveBeenCalledWith(
+        [1, 2, 3],
+        OBJECTIVE_STATUS.IN_PROGRESS,
+        'Test reason',
+        'Test context',
+      );
+    });
+
+    it('correctly sets overrideStatus for suspended to not started', async () => {
+      const user = {
+        id: 1,
+        permissions: [{
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+          regionId: 1,
+        }],
+      };
+
+      const regionId = 1;
+
+      userById.mockResolvedValue(user);
+
+      const request = {
+        ...mockRequest,
+        body: {
+          ids: [1, 2, 3],
+          regionId,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          closeSuspendReason: 'Test reason',
+          closeSuspendContext: 'Test context',
+        },
+      };
+
+      getObjectiveRegionAndGoalStatusByIds.mockResolvedValue([
+        {
+          id: 1,
+          status: OBJECTIVE_STATUS.SUSPENDED,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+        {
+          id: 2,
+          status: OBJECTIVE_STATUS.SUSPENDED,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+        {
+          id: 3,
+          status: OBJECTIVE_STATUS.SUSPENDED,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+      ]);
+
+      await updateStatus(request, mockResponse);
+
+      expect(updateObjectiveStatusByIds).toHaveBeenCalledWith(
+        [
+          1, 2, 3],
+        OBJECTIVE_STATUS.SUSPENDED,
+        'Test reason',
+        'Test context',
+      );
+    });
+
+    it('correctly sets overrideStatus for a variety of statuses', async () => {
+      const user = {
+        id: 1,
+        permissions: [{
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+          regionId: 1,
+        }],
+      };
+
+      const regionId = 1;
+
+      userById.mockResolvedValue(user);
+
+      const request = {
+        ...mockRequest,
+        body: {
+          ids: [1, 2, 3],
+          regionId,
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          closeSuspendReason: 'Test reason',
+          closeSuspendContext: 'Test context',
+        },
+      };
+
+      getObjectiveRegionAndGoalStatusByIds.mockResolvedValue([
+        {
+          id: 1,
+          status: OBJECTIVE_STATUS.COMPLETE,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+        {
+          id: 2,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          onApprovedAR: true,
+          goal: {
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+      ]);
+
+      await updateStatus(request, mockResponse);
+
+      expect(updateObjectiveStatusByIds).toHaveBeenCalledWith(
+        [1, 2],
+        OBJECTIVE_STATUS.IN_PROGRESS,
+        'Test reason',
+        'Test context',
+      );
+    });
   });
 });

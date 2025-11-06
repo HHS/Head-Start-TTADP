@@ -1,7 +1,7 @@
 import React, { useRef, useLayoutEffect } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import PropTypes from 'prop-types';
-import { Dropdown, Pagination } from '@trussworks/react-uswds';
+import { Dropdown, Label, Pagination } from '@trussworks/react-uswds';
 import './PaginationCard.css';
 import { getPageInfo } from '../utils';
 
@@ -18,8 +18,10 @@ function PaginationCard({
   handlePageChange,
   perPageChange,
   hideInfo,
+  hideCountHeaderOnEmpty,
   accessibleLandmarkName,
   paginationClassName,
+  noXofX,
 }) {
   const el = useRef();
   const isMobile = useMediaQuery({ maxWidth: MAX_WIDTH_MOBILE });
@@ -76,28 +78,35 @@ function PaginationCard({
       {!hideInfo && (
         <div className="smart-hub--pagination-card--contents--info display-flex flex-1 flex-align-center">
           {perPageChange ? (
-            <Dropdown
-              className="margin-top-0 margin-right-1 width-auto"
-              id="perPage"
-              name="perPage"
-              data-testid="perPage"
-              onChange={perPageChange}
-              aria-label="Select per page"
-            >
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value={totalCount}>all</option>
-            </Dropdown>
+            <div className="display-flex flex-align-center flex-justify">
+              <Label htmlFor="perPage" className={noXofX ? 'margin-top-0 margin-right-1 ' : 'usa-sr-only'}>
+                Show
+              </Label>
+              <Dropdown
+                className="margin-top-0 margin-right-1 width-auto"
+                id="perPage"
+                name="perPage"
+                data-testid="perPage"
+                onChange={perPageChange}
+                aria-label="Select per page"
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value={totalCount}>all</option>
+              </Dropdown>
+            </div>
           ) : null }
-          <span className={totalPages < 2 ? 'margin-right-1' : ''}>
-            {getPageInfo(
-              offset,
-              totalCount,
-              currentPage,
-              perPage,
-            )}
-          </span>
+          { (!noXofX && (totalCount > 0 || !hideCountHeaderOnEmpty)) && (
+            <span className={totalPages < 2 ? 'margin-right-1' : ''} data-testid="pagination-card-count-header">
+              {getPageInfo(
+                offset,
+                totalCount,
+                currentPage,
+                perPage,
+              )}
+            </span>
+          )}
         </div>
       )}
       {totalPages > 1 && (
@@ -125,6 +134,8 @@ PaginationCard.propTypes = {
   hideInfo: PropTypes.bool,
   accessibleLandmarkName: PropTypes.string,
   paginationClassName: PropTypes.string,
+  hideCountHeaderOnEmpty: PropTypes.bool,
+  noXofX: PropTypes.bool,
 };
 
 PaginationCard.defaultProps = {
@@ -137,6 +148,8 @@ PaginationCard.defaultProps = {
   hideInfo: false,
   accessibleLandmarkName: 'Pagination',
   paginationClassName: 'margin-bottom-0 margin-top-0',
+  hideCountHeaderOnEmpty: false,
+  noXofX: false,
 };
 
 export default PaginationCard;

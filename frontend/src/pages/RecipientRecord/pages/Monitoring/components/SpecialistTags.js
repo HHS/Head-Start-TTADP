@@ -45,12 +45,24 @@ export default function SpecialistTags({ specialists }) {
 
       // handle specialists with roles
       if (specialist.roles && specialist.roles.length > 0) {
+        // convert string roles to array if needed
+        const roleArray = Array.isArray(specialist.roles)
+          ? specialist.roles.flatMap((role) => {
+            if (typeof role === 'string' && role.includes(',')) {
+              return role.split(',').map((r) => r.trim());
+            }
+            return role;
+          })
+          : specialist.roles.split(',').map((role) => role.trim());
+
         // separate tag for each role
-        specialist.roles.forEach((role) => {
+        roleArray.forEach((r) => {
+          if (!r) return;
+          const roleName = typeof r === 'string' ? r : r.role.name;
           tags.push(
-            <Tag key={`${specialist.name}-${role}`} clickable>
+            <Tag key={`${specialist.name}-${roleName}`} clickable>
               <Tooltip
-                displayText={role}
+                displayText={roleName}
                 screenReadDisplayText={false}
                 buttonLabel="reveal the full name of this user"
                 tooltipText={specialist.name}

@@ -21,12 +21,12 @@ import ActivityReportNavigator from '../../components/Navigator/ActivityReportNa
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  LOCAL_STORAGE_DATA_KEY,
-  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
-  LOCAL_STORAGE_EDITABLE_KEY,
+  LOCAL_STORAGE_AR_DATA_KEY,
+  LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
-import useARLocalStorage from '../../hooks/useARLocalStorage';
+import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 import {
   submitReport,
@@ -34,21 +34,22 @@ import {
   getReport,
   getRecipientsForExistingAR,
   createReport,
-  getCollaborators,
   getApprovers,
   reviewReport,
-  resetToDraft,
   getGroupsForActivityReport,
   getRecipients,
 } from '../../fetchers/activityReports';
+import { getCollaborators } from '../../fetchers/collaborators';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
+import useLocalStorageCleanup, { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
+import usePresenceData from '../../hooks/usePresenceData';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
-  activityRecipientType: '',
+  activityRecipientType: 'recipient',
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
@@ -57,18 +58,20 @@ const defaultValues = {
   activityReportCollaborators: [],
   context: '',
   deliveryMethod: null,
-  duration: '',
+  duration: null, // Keep this as null for local storage and form validation.
+  revision: 0,
   endDate: null,
   goals: [],
   recipientNextSteps: [{ id: null, note: '' }],
   recipients: [],
   nonECLKCResourcesUsed: [],
   numberOfParticipants: null,
+  numberOfParticipantsInPerson: null,
+  numberOfParticipantsVirtually: null,
   objectivesWithoutGoals: [],
   otherResources: [],
   participantCategory: '',
   participants: [],
-  reason: [],
   requester: '',
   specialistNextSteps: [{ id: null, note: '' }],
   startDate: null,
@@ -78,6 +81,7 @@ const defaultValues = {
   approvers: [],
   recipientGroup: null,
   language: [],
+  activityReason: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -104,15 +108,15 @@ export const formatReportWithSaveBeforeConversion = async (
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
-
   const updatedReport = isEmpty && !forceUpdate
     ? { ...formData }
     : await saveReport(
       reportId.current, {
         ...updatedFields,
-        version: 2,
+        version: 3,
         approverUserIds: approverIds,
         pageState: data.pageState,
+        activityRecipientType: 'recipient',
       }, {},
     );
 
@@ -131,32 +135,6 @@ export const formatReportWithSaveBeforeConversion = async (
   return reportData;
 };
 
-export function cleanupLocalStorage(id, replacementKey) {
-  try {
-    if (replacementKey) {
-      window.localStorage.setItem(
-        LOCAL_STORAGE_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_DATA_KEY(id)),
-      );
-      window.localStorage.setItem(
-        LOCAL_STORAGE_EDITABLE_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_EDITABLE_KEY(id)),
-      );
-      window.localStorage.setItem(
-        LOCAL_STORAGE_ADDITIONAL_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id)),
-      );
-    }
-
-    window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(id));
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('Local storage may not be available: ', e);
-  }
-}
-
 function ActivityReport({
   match, location, region,
 }) {
@@ -167,23 +145,22 @@ function ActivityReport({
   const [loading, updateLoading] = useState(true);
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
-
-  const [presenceData, setPresenceData] = useState({
-    hasMultipleUsers: false,
-    otherUsers: [],
-    tabCount: 0,
-  });
   const [shouldAutoSave, setShouldAutoSave] = useState(true);
 
-  const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
-    LOCAL_STORAGE_DATA_KEY(activityReportId), null,
+  const {
+    presenceData,
+    handlePresenceUpdate,
+  } = usePresenceData(setShouldAutoSave);
+
+  const [formData, updateFormData, localStorageAvailable] = useTTAHUBLocalStorage(
+    LOCAL_STORAGE_AR_DATA_KEY(activityReportId), null,
   );
 
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId), {
+    LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(activityReportId), {
       recipients: {
         grants: [],
         otherEntities: [],
@@ -197,8 +174,11 @@ function ActivityReport({
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useLocalStorage(
-    LOCAL_STORAGE_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
+    LOCAL_STORAGE_AR_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
   );
+
+  const [isCollaboratorOrCreator, setIsCollaboratorOrCreator] = useState(false);
+
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online
   // (or at least, if the backend is responding)
@@ -218,31 +198,7 @@ function ActivityReport({
     history.replace();
   }, [activityReportId, history]);
 
-  // If there are multiple users working on the same report, we need to suspend auto-saving
-  useEffect(() => {
-    if (presenceData.hasMultipleUsers || presenceData.tabCount > 1) {
-      const otherUsernames = presenceData.otherUsers
-        .map((presenceUser) => (presenceUser.username ? presenceUser.username : 'Unknown user'))
-        .filter((username, index, self) => self.indexOf(username) === index);
-      if (otherUsernames.length > 0 || presenceData.tabCount > 1) {
-        setShouldAutoSave(false);
-      } else {
-        setShouldAutoSave(true);
-      }
-    } else {
-      setShouldAutoSave(true);
-    }
-  }, [presenceData]);
-
-  // cleanup local storage if the report has been submitted or approved
-  useEffect(() => {
-    if (formData
-      && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
-      || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
-    ) {
-      cleanupLocalStorage(activityReportId);
-    }
-  }, [activityReportId, formData]);
+  useLocalStorageCleanup(formData, activityReportId);
 
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
@@ -270,7 +226,7 @@ function ActivityReport({
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
-            version: 2,
+            version: 3,
           };
         }
 
@@ -290,6 +246,10 @@ function ActivityReport({
         ];
 
         const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
+
+        // If the report creator is in the collaborators list, remove them.
+        const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
+
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
 
@@ -298,6 +258,8 @@ function ActivityReport({
         // The report can be edited if its in draft OR needs_action state.
 
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
+
+        setIsCollaboratorOrCreator(isCollaborator || isAuthor);
 
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
@@ -308,6 +270,7 @@ function ActivityReport({
         );
 
         // Add recipientIds to groups.
+        // TODO remove for standard goals.
         const groupsWithRecipientIds = groups.map((group) => ({
           ...group,
           // Match groups to grants as recipients could have multiple grants.
@@ -319,7 +282,7 @@ function ActivityReport({
             grants: [],
             otherEntities: [],
           },
-          collaborators: collaborators || [],
+          collaborators: filteredCollaborators || [],
           availableApprovers: availableApprovers || [],
           groups: groupsWithRecipientIds || [],
         });
@@ -436,6 +399,22 @@ function ActivityReport({
     );
   }
 
+  if (formData.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    return (
+      <Redirect to={`/activity-reports/view/${activityReportId}`} />
+    );
+  }
+
+  if (connectionActive
+    && isCollaboratorOrCreator
+    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+    && !isPendingApprover
+  ) {
+    return (
+      <Redirect to={`/activity-reports/submitted/${activityReportId}`} />
+    );
+  }
+
   if (connectionActive && !editable && currentPage !== 'review') {
     return (
       <Redirect to={`/activity-reports/${activityReportId}/review`} />
@@ -471,6 +450,7 @@ function ActivityReport({
 
   const onSave = async (data, forceUpdate = false) => {
     const approverIds = data.approvers.map((a) => a.user.id);
+    let reportData = null;
     try {
       if (reportId.current === 'new') {
         const savedReport = await createReport(
@@ -480,7 +460,8 @@ function ActivityReport({
             nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
             regionId: formData.regionId,
             approverUserIds: approverIds,
-            version: 2,
+            version: 3,
+            activityRecipientType: 'recipient',
           },
         );
 
@@ -496,6 +477,7 @@ function ActivityReport({
 
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
+        reportData = savedReport;
       } else {
         const updatedReport = await formatReportWithSaveBeforeConversion(
           data,
@@ -507,29 +489,29 @@ function ActivityReport({
           forceUpdate,
         );
 
-        let reportData = updatedReport;
+        reportData = updatedReport;
 
-        // if we are dealing with a recipient report, we need to do a little magic to
         // format the goals and objectives appropriately, as well as divide them
         // by which one is open and which one is not
-        if (updatedReport.activityRecipientType === 'recipient') {
-          const { goalForEditing, goals } = convertGoalsToFormData(
-            updatedReport.goalsAndObjectives,
-            updatedReport.activityRecipients.map((r) => r.activityRecipientId),
-          );
+        const { goalForEditing, goals } = convertGoalsToFormData(
+          updatedReport.goalsAndObjectives,
+          updatedReport.activityRecipients.map((r) => r.activityRecipientId),
+        );
 
-          reportData = {
-            ...updatedReport,
-            goalForEditing,
-            goals,
-          };
-        }
+        reportData = {
+          ...updatedReport,
+          goalForEditing,
+          goals,
+        };
+
         updateFormData(reportData, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
+      return reportData;
     } catch (e) {
       setConnectionActiveWithError(error, setConnectionActive);
+      return reportData;
     }
   };
 
@@ -559,16 +541,8 @@ function ActivityReport({
     await reviewReport(reportId.current, { note: data.note, status: data.status });
   };
 
-  const onResetToDraft = async () => {
-    const fetchedReport = await resetToDraft(reportId.current);
-    const report = convertReportToFormData(fetchedReport);
-    updateFormData(report, true);
-    updateEditable(true);
-  };
-
   const reportCreator = { name: user.name, roles: user.roles };
   const tagClass = formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
-  const hideSideNav = formData.calculatedStatus === REPORT_STATUSES.SUBMITTED && !isApprover;
 
   const author = creatorNameWithRole ? (
     <>
@@ -581,12 +555,6 @@ function ActivityReport({
 
     </>
   ) : null;
-
-  /* istanbul ignore next: hard to test websocket functionality */
-  // receives presence updates from the Mesh component
-  const handlePresenceUpdate = (data) => {
-    setPresenceData(data);
-  };
 
   /* istanbul ignore next: hard to test websocket functionality */
   // eslint-disable-next-line no-shadow, no-unused-vars
@@ -652,7 +620,7 @@ function ActivityReport({
       {/* Don't render the Mesh component unless working on a saved report */}
       { activityReportId !== 'new' && (<MeshPresenceManager room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />)}
       <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
-      <Grid row className="flex-justify">
+      <Grid row>
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
@@ -663,13 +631,11 @@ function ActivityReport({
             {author}
           </div>
         </Grid>
-        {!hideSideNav && (
         <Grid col="auto" className="flex-align-self-center">
           {formData.calculatedStatus && (
-            <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.calculatedStatus)}</div>
+            <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2 margin-left-2`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
-        )}
       </Grid>
       <NetworkContext.Provider value={
         {
@@ -693,7 +659,6 @@ function ActivityReport({
           pages={pages}
           onFormSubmit={onFormSubmit}
           onSave={onSave}
-          onResetToDraft={onResetToDraft}
           isApprover={isApprover}
           isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
           onReview={onReview}
@@ -701,7 +666,7 @@ function ActivityReport({
           updateErrorMessage={updateErrorMessage}
           savedToStorageTime={savedToStorageTime}
           shouldAutoSave={shouldAutoSave}
-          hideSideNav={hideSideNav}
+          setShouldAutoSave={setShouldAutoSave}
         />
       </NetworkContext.Provider>
     </div>

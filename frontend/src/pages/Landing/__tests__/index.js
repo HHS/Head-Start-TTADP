@@ -44,9 +44,13 @@ const mockFetchWithRegionOne = () => {
   fetchMock.get(defaultOverviewUrl, overviewRegionOne);
 };
 
-const renderLanding = (user) => {
+const renderLanding = (user, locationState = null) => {
+  const initialEntries = locationState
+    ? [{ pathname: '/', state: locationState }]
+    : ['/'];
+
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={initialEntries}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
           <Landing authenticated />
@@ -184,7 +188,8 @@ describe('Landing Page', () => {
   });
 
   test('displays the correct recipients', async () => {
-    const recipient = await screen.findByRole('button', { name: /Johnston-Romaguera - 14CH00003 Johnston-Romaguera - 14CH00002 Recipient Name - 14CH1234 click to visually reveal the recipients for R14-AR-1/i });
+    const recipient = await screen.findByRole('button', { name: /click to visually reveal the recipients for R14-AR-1/i });
+    expect(recipient.textContent).toContain('Johnston-Romaguera - 14CH00003');
     const otherEntity = await screen.findByRole('cell', {
       name: /qris system/i,
     });
@@ -202,17 +207,18 @@ describe('Landing Page', () => {
   });
 
   test('displays the correct topics', async () => {
-    const topics = await screen.findByRole('button', { name: /behavioral \/ mental health class: instructional support click to visually reveal the topics for r14-ar-1/i });
-
+    const topics = await screen.findByRole('button', { name: /click to visually reveal the topics for r14-ar-1/i });
     expect(topics).toBeVisible();
     expect(topics.firstChild).toHaveClass('smart-hub--ellipsis');
     expect(topics.firstChild.firstChild.firstChild).toHaveClass('smart-hub-tooltip--truncated');
-    expect(topics.firstChild).toHaveTextContent('Behavioral / Mental Health CLASS: Instructional Support');
+    expect(topics).toHaveTextContent('Behavioral / Mental Health');
   });
 
   test('displays the correct collaborators', async () => {
-    const collaborators = await screen.findByRole('cell', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14-ar-1/i });
+    const collaborators = await screen.findByRole('cell', { name: /click to visually reveal the collaborators for r14-ar-1/i });
     expect(collaborators).toBeVisible();
+    expect(collaborators.textContent).toContain('Orange, GS');
+    expect(collaborators.textContent).toContain('Hermione Granger, SS');
     expect(collaborators.firstChild).toHaveClass('smart-hub-tooltip');
     expect(collaborators.firstChild.children.length).toBe(2);
     const truncated = collaborators.firstChild.children[1].firstChild.firstChild.firstChild;

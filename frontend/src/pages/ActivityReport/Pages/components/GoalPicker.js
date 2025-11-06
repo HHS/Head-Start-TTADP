@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { v4 as uuidv4 } from 'uuid';
-import { uniqBy } from 'lodash';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import {
-  Label, Button, Checkbox, Alert,
+  Label, Button, Alert,
 } from '@trussworks/react-uswds';
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
-import { getGoalTemplatePrompts, getGoalTemplateSource } from '../../../../fetchers/goalTemplates';
 import Req from '../../../../components/Req';
 import Option from './GoalOption';
 import SingleValue from './GoalValue';
@@ -20,6 +18,9 @@ import './GoalPicker.css';
 import GoalForm from './GoalForm';
 import Modal from '../../../../components/VanillaModal';
 import { fetchCitationsByGrant } from '../../../../fetchers/citations';
+import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
+import Drawer from '../../../../components/Drawer';
+import DrawerTriggerButton from '../../../../components/DrawerTriggerButton';
 
 export const newGoal = (grantIds) => ({
   value: uuidv4(),
@@ -45,7 +46,6 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals,
   grantIds,
   reportId,
   goalTemplates,
@@ -54,12 +54,6 @@ const GoalPicker = ({
     control, setValue, watch,
   } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
-  // the date picker component, as always, presents special challenges, it needs a key updated
-  // to re-render appropriately
-  const [templatePrompts, setTemplatePrompts] = useState(false);
-  const [useOhsStandardGoal, setOhsStandardGoal] = useState(false);
-  const activityRecipientType = watch('activityRecipientType');
-
   const [citationOptions, setCitationOptions] = useState([]);
   const [rawCitations, setRawCitations] = useState([]);
   const [grantsWithoutMonitoring, setGrantsWithoutMonitoring] = useState([]);
@@ -68,30 +62,10 @@ const GoalPicker = ({
   const activityRecipients = watch('activityRecipients');
   const regionId = watch('regionId');
   const startDate = watch('startDate');
-  const isMultiRecipientReport = activityRecipients && activityRecipients.length > 1;
 
   const modalRef = useRef();
+  const goalDrawerTriggerRef = useRef();
   const [selectedGoal, setSelectedGoal] = useState(null);
-
-  const { selectedIds, selectedNames } = (selectedGoals || []).reduce((acc, goal) => {
-    const { id, name } = goal;
-    const newSelectedIds = [...acc.selectedIds, id];
-    const newSelectedNames = [...acc.selectedNames, name];
-
-    return {
-      selectedIds: newSelectedIds,
-      selectedNames: newSelectedNames,
-    };
-  }, {
-    selectedIds: [],
-    selectedNames: [],
-  });
-
-  // excludes already selected goals from the dropdown by name and ID
-  const allAvailableGoals = availableGoals
-    .filter((goal) => goal.goalIds.every((id) => (
-      !selectedIds.includes(id)
-    )) && !selectedNames.includes(goal.name));
 
   const {
     field: {
@@ -102,7 +76,7 @@ const GoalPicker = ({
     name: 'goalForEditing',
     rules: {
       validate: {
-        validateGoal: (g) => activityRecipientType === 'other-entity' || validateGoals(g ? [g] : []) === true,
+        validateGoal: (g) => validateGoals(g ? [g] : []) === true,
       },
     },
     defaultValue: '',
@@ -166,60 +140,19 @@ const GoalPicker = ({
     fetchCitations();
   }, [goalForEditing, regionId, startDate, grantIds, isMonitoringGoal]);
 
-  const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
-
-  // We need options with the number and also we need to add the
-  // goal templates and "create new goal" to the front of all the options
-  const options = [
-    newGoal(grantIds),
-    ...uniqueAvailableGoals.map(({
-      goalNumber,
-      ...goal
-    }) => (
-      {
-        value: goal.id,
-        number: goalNumber,
-        label: goal.name,
-        objectives: [],
-        isNew: false,
-        ...goal,
-      }
-    )),
-  ];
-
   const onChangeGoal = async (goal) => {
     try {
-      if (goal.isCurated) {
-        const [prompts, source] = await Promise.all([
-          getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds),
-          // eslint-disable-next-line max-len
-          getGoalTemplateSource(goal.goalTemplateId, activityRecipients.map((ar) => ar.activityRecipientId)),
-        ]);
-
-        onChange({
-          ...goal,
-          source: source.source,
-        });
-
-        if (prompts) {
-          setTemplatePrompts(prompts);
-        }
-      } else {
-        onChange(goal);
-        setTemplatePrompts(false);
-      }
-
+      onChange(goal);
       setSelectedGoal(null);
     } catch (err) {
       onChange(goal);
-      setTemplatePrompts(false);
     }
   };
 
   const onKeep = async () => {
     const savedObjectives = goalForEditing.objectives.map((o) => ({ ...o }));
     onChangeGoal(selectedGoal);
-    setValue('goalForEditing.objectives', savedObjectives);
+    setValue('goalForEditing.objectives', savedObjectives.map((o) => ({ ...o, keepObjective: true })));
     modalRef.current.toggleModal();
   };
 
@@ -278,8 +211,6 @@ const GoalPicker = ({
     isMonitoringGoal,
     goalTemplates]);
 
-  const pickerOptions = useOhsStandardGoal ? goalTemplates : options;
-
   return (
     <>
       <Modal
@@ -297,7 +228,7 @@ const GoalPicker = ({
         </Button>
         <Button type="button" onClick={onRemove} className="usa-button--subtle">Remove objective</Button>
       </Modal>
-      <div className="margin-top-3 position-relative">
+      <div className="position-relative">
         {
           grantsWithoutMonitoring.length > 0 && (
             <Alert type="warning" className="margin-bottom-2">
@@ -329,11 +260,28 @@ const GoalPicker = ({
             </Alert>
           )
        }
-        <Label>
-          Select recipient&apos;s goal
-          <Req />
+        <div className="display-flex flex-align-center">
+          <Label className="margin-bottom-0 margin-top-0" htmlFor="goal-selector">
+            Select goal
+            <Req />
+          </Label>
+          <DrawerTriggerButton customClass="usa-button--no-margin" drawerTriggerRef={goalDrawerTriggerRef}>
+            Get help selecting a goal
+          </DrawerTriggerButton>
+        </div>
+        <Drawer
+          triggerRef={goalDrawerTriggerRef}
+          stickyHeader
+          stickyFooter
+          title="Goal guidance"
+        >
+          <ContentFromFeedByTag tagName="ttahub-ohs-standard-goals" contentSelector="table" />
+        </Drawer>
+        <div data-testid="goal-selector">
           <Select
-            name="goalForEditing"
+            inputName="goal-selector"
+            inputId="goal-selector"
+            name="goal-selector"
             control={control}
             components={components}
             onChange={onSelectGoal}
@@ -341,7 +289,11 @@ const GoalPicker = ({
               validate: validateGoals,
             }}
             className="usa-select"
-            options={pickerOptions}
+            options={goalTemplates.filter(
+              (goal) => !selectedGoals?.some(
+                (s) => s.goalTemplateId === goal.goalTemplateId,
+              ),
+            )}
             styles={{
               ...selectOptionsReset,
               option: (provided) => ({
@@ -353,23 +305,13 @@ const GoalPicker = ({
             value={goalForEditing}
             required
           />
-        </Label>
-        <Checkbox
-          label="Use OHS standard goal"
-          id="useOhsStandardGoal"
-          name="useOhsStandardGoal"
-          checked={useOhsStandardGoal}
-          className="margin-top-1"
-          onChange={() => setOhsStandardGoal(!useOhsStandardGoal)}
-        />
+        </div>
         {goalForEditing ? (
           <div>
             <GoalForm
               topicOptions={topicOptions}
               goal={goalForEditing}
               reportId={reportId}
-              templatePrompts={templatePrompts}
-              isMultiRecipientReport={isMultiRecipientReport}
               citationOptions={citationOptions}
               rawCitations={rawCitations}
               isMonitoringGoal={isMonitoringGoal}
@@ -396,10 +338,6 @@ GoalPicker.propTypes = {
     })),
   })).isRequired,
   grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  availableGoals: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
   reportId: PropTypes.oneOfType([
     PropTypes.number,
     PropTypes.string,

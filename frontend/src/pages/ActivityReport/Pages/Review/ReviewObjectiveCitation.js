@@ -17,8 +17,8 @@ const ReviewObjectiveCitation = ({
   const objectiveCitations = customValue[name];
 
   return (
-    <div className="grid-row margin-top-1 margin-bottom-3 desktop:margin-bottom-0">
-      <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6  font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
+    <div className="grid-row grid-gap margin-top-1 margin-bottom-3 desktop:margin-bottom-0">
+      <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6  font-sans-2xs desktop:font-sans-sm text-bold">
         {label}
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">

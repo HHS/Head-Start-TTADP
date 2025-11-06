@@ -6,8 +6,26 @@ import {
   screen,
   act,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import ConditionalMultiselect from '../ConditionalMultiselect';
+
+// Mock focus-trap to bypass tabbable-node requirements in JSDOM
+jest.mock('focus-trap-react', () => ({
+  __esModule: true,
+  default: ({ children }) => (
+    <div data-testid="mock-focus-trap">{children}</div>
+  ),
+}));
+
+// Mock feed component used inside the drawer so tests don't perform network calls
+jest.mock('../ContentFromFeedByTag', () => ({ className, tagName }) => (
+  <div data-testid="feed-by-tag" className={className}>
+    Feed for
+    {' '}
+    {tagName}
+  </div>
+));
 
 describe('ConditionalMultiselect', () => {
   const CM = ({
@@ -44,6 +62,11 @@ describe('ConditionalMultiselect', () => {
     onChange = jest.fn(),
     error = <></>,
     userCanEdit = true,
+    // drawer defaults off; opt-in per-test
+    drawerButtonText,
+    drawerTitle,
+    drawerTagName,
+    drawerClassName,
   }) => (
     <>
       <ConditionalMultiselect
@@ -55,6 +78,10 @@ describe('ConditionalMultiselect', () => {
         onChange={onChange}
         error={error}
         userCanEdit={userCanEdit}
+        drawerButtonText={drawerButtonText}
+        drawerTitle={drawerTitle}
+        drawerTagName={drawerTagName}
+        drawerClassName={drawerClassName}
       />
       <button type="button">for blurrin</button>
     </>
@@ -77,5 +104,52 @@ describe('ConditionalMultiselect', () => {
       render(<CM fieldValue={null} />);
     });
     expect(screen.getByText('What is a test?')).toBeInTheDocument();
+  });
+
+  it('shows a drawer trigger and opens drawer with feed content when clicked', async () => {
+    act(() => {
+      render(
+        <CM
+          drawerButtonText="Get help choosing root causes"
+          drawerTitle="Root causes"
+          drawerTagName="ttahub-fei-root-causes"
+          drawerClassName="ttahub-drawer--ttahub-fei-root-causes-guidance"
+        />,
+      );
+    });
+
+    // Drawer exists but is hidden initially
+    const title = screen.getByText('Root causes');
+    expect(title).toBeInTheDocument();
+    expect(title).not.toBeVisible();
+
+    // Click trigger to open
+    const trigger = screen.getByRole('button', { name: 'Get help choosing root causes' });
+    await userEvent.click(trigger);
+
+    // Drawer visible with mocked feed content and class
+    expect(title).toBeVisible();
+    const feed = screen.getByTestId('feed-by-tag');
+    expect(feed).toHaveTextContent('ttahub-fei-root-causes');
+    expect(feed).toHaveClass('ttahub-drawer--ttahub-fei-root-causes-guidance');
+
+    // Close the drawer
+    const closeBtn = screen.getByRole('button', { name: /close/i });
+    await userEvent.click(closeBtn);
+    expect(title).not.toBeVisible();
+  });
+
+  it('does not render a drawer trigger without a tag', () => {
+    act(() => {
+      render(
+        <CM
+          drawerButtonText="Get help choosing root causes"
+          drawerTitle="Root causes"
+          // drawerTagName omitted
+        />,
+      );
+    });
+
+    expect(screen.queryByRole('button', { name: 'Get help choosing root causes' })).not.toBeInTheDocument();
   });
 });

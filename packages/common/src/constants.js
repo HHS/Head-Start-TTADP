@@ -55,7 +55,9 @@ const TOPICS = [
   'Data and Evaluation',
   'Disabilities Services',
   'ERSEA',
+  'Emergency Preparedness, Response, and Recovery (EPRR)',
   'Environmental Health and Safety / EPRR',
+  'Environmental Health and Safety',
   'Facilities',
   'Family Support Services',
   'Fatherhood / Male Caregiving',
@@ -127,6 +129,13 @@ const TRAINING_REPORT_STATUSES = {
   SUSPENDED: 'Suspended',
 };
 exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
+
+const NAVIGATOR_PAGE_STATUSES = {
+  NOT_STARTED: 'Not started',
+  IN_PROGRESS: 'In progress',
+  COMPLETE: 'Complete',
+};
+exports.NAVIGATOR_PAGE_STATUSES = NAVIGATOR_PAGE_STATUSES;
 
 const TRAINING_REPORT_STATUSES_URL_PARAMS = {
   'not-started': TRAINING_REPORT_STATUSES.NOT_STARTED,
@@ -204,7 +213,6 @@ const CLOSE_SUSPEND_REASONS = [
 exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
 
 const GOAL_CLOSE_REASONS = [
-  'Duplicate goal',
   'Recipient request',
   'Regional Office request',
   'TTA complete',
@@ -228,6 +236,15 @@ const GOAL_SOURCES = [
 ];
 
 exports.GOAL_SOURCES = GOAL_SOURCES;
+
+const ACTIVITY_REASONS = [
+  'Federal monitoring issues, including CLASS and RANs',
+  'Group event follow-up',
+  'Recipient requested',
+  'Regional Office requested',
+];
+
+exports.ACTIVITY_REASONS = ACTIVITY_REASONS;
 
 const APPROVER_STATUSES = {
   APPROVED: 'approved',
@@ -416,3 +433,30 @@ const TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = {
   BOTH: 'both',
 };
  exports.TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS;
+
+
+ const COLLAB_REPORT_PARTICIPANTS = [
+  "Child Care and Development Fund",
+  "Child care licensing",
+  "Child Care Training and Technical Assistance Network",
+  "DOE/State PreK",
+  "Head Start Collaboration Office",
+  "Head Start Recipients",
+  "Health department/WIC",
+  "Office of Child Care",
+  "Quality Rating and Improvement System",
+  "State and territory adminstrators",
+  "Regional HSA",
+  "Regional Office staff",
+  "State HSA",
+  "State environmental health and safety systems",
+  "State family engagement systems",
+  "State health and welness systems",
+  "State homelessness agency/McKinney Vento liason",
+  "State Professional development system",
+  "TTA staff",
+  "Other",
+ ];
+
+ exports.COLLAB_REPORT_PARTICIPANTS = COLLAB_REPORT_PARTICIPANTS;
+ 

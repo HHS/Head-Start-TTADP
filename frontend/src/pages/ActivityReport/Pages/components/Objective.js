@@ -3,6 +3,7 @@ import React, {
   useContext,
   useRef,
   useMemo,
+  useEffect,
 } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
@@ -11,6 +12,7 @@ import { Link } from 'react-router-dom';
 import {
   useController, useFormContext, useWatch,
 } from 'react-hook-form';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import {
   Alert,
 } from '@trussworks/react-uswds';
@@ -38,6 +40,7 @@ import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
 import CitationDrawerContent from '../../../../components/CitationDrawerContent';
+import { OBJECTIVE_STATUS } from '../../../../Constants';
 
 export default function Objective({
   objective,
@@ -54,6 +57,7 @@ export default function Objective({
   citationOptions,
   rawCitations,
   isMonitoringGoal,
+  objectiveOptions,
 }) {
   const modalRef = useRef();
 
@@ -79,6 +83,16 @@ export default function Objective({
   const [citationWarnings, setCitationWarnings] = useState([]);
   const activityRecipients = watch('activityRecipients');
   const selectedGoals = useWatch({ name: 'goals' });
+
+  // This serves as sort of a refresh to ensure that we have the latest options and selected
+  // Objective before we attempt to lookup the objective status,
+  // note this is NOT the aro status, but the objective status from the options.
+  useEffect(() => {
+    if (objective && objectiveOptions) {
+      const origObjStatus = objectiveOptions.find((opt) => opt.id === objective.id)?.status;
+      setStatusForCalculations(origObjStatus);
+    }
+  }, [objective, objective.id, objectiveOptions]);
 
   /**
    * add controllers for all the controlled fields
@@ -239,7 +253,7 @@ export default function Objective({
   } = useController({
     name: `${fieldArrayName}[${index}].status`,
     rules: { required: true },
-    defaultValue: objective.status || 'Not Started',
+    defaultValue: objective.status || OBJECTIVE_STATUS.NOT_STARTED,
   });
 
   const {
@@ -250,7 +264,7 @@ export default function Objective({
     },
   } = useController({
     rules: {
-      required: objective.status === 'Suspended',
+      required: objective.status === OBJECTIVE_STATUS.SUSPENDED,
     },
     name: `${fieldArrayName}[${index}].closeSuspendReason`,
     defaultValue: objective.closeSuspendReason || '',
@@ -349,7 +363,7 @@ export default function Objective({
   const onUpdateStatus = (event) => {
     const { value: updatedStatus } = event.target;
 
-    if (updatedStatus === 'Suspended') {
+    if (updatedStatus === OBJECTIVE_STATUS.SUSPENDED) {
       modalRef.current.toggleModal();
       return;
     }
@@ -433,7 +447,8 @@ export default function Objective({
         value={objectiveTitle}
         permissions={[
           createdHere,
-          statusForCalculations !== 'Complete' && statusForCalculations !== 'Suspended',
+          statusForCalculations !== OBJECTIVE_STATUS.COMPLETE
+          && statusForCalculations !== OBJECTIVE_STATUS.SUSPENDED,
           !onApprovedAR,
         ]}
       >
@@ -555,7 +570,7 @@ export default function Objective({
         onBlur={onBlurFiles}
         inputName={objectiveFilesInputName}
         reportId={reportId}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+        goalStatus={parentGoal ? parentGoal.status : GOAL_STATUS.NOT_STARTED}
         label="Did you use any other TTA resources that aren't available as link?"
         selectedObjectiveId={selectedObjective.id}
         userCanEdit
@@ -604,6 +619,7 @@ export default function Objective({
         userCanEdit
         closeSuspendContext={objectiveSuspendContext}
         closeSuspendReason={objectiveSuspendReason}
+        currentStatus={statusForCalculations}
       />
     </>
   );
@@ -674,6 +690,7 @@ Objective.propTypes = {
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
+  objectiveOptions: PropTypes.arrayOf(OBJECTIVE_PROP).isRequired,
 };
 
 Objective.defaultProps = {

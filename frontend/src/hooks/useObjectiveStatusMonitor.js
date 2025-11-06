@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
+import { OBJECTIVE_STATUS } from '../Constants';
 
-const objectiveCompare = (o) => o.status !== 'Complete' && o.status !== 'Suspended';
+const objectiveCompare = (o) => o.status !== OBJECTIVE_STATUS.COMPLETE;
 const evaluateObjectiveMapRefForStatus = (om) => Array.from(
   om.current.values(),
 ).some(objectiveCompare);
@@ -16,8 +17,8 @@ export default function useObjectiveStatusMonitor(objectives) {
   );
 
   const [
-    atLeastOneObjectiveIsNotCompletedOrSuspended,
-    setAtLeastOneObjectiveIsNotCompletedOrSuspended,
+    atLeastOneObjectiveIsNotCompleted,
+    setAtLeastOneObjectiveIsNotCompleted,
   ] = useState(
     evaluateObjectiveMapRefForStatus(objectiveMap),
   );
@@ -33,7 +34,7 @@ export default function useObjectiveStatusMonitor(objectives) {
       // update with the new status
       objective.status = localStatus;
 
-      setAtLeastOneObjectiveIsNotCompletedOrSuspended(
+      setAtLeastOneObjectiveIsNotCompleted(
         evaluateObjectiveMapRefForStatus(objectiveMap),
       );
     } catch (e) {
@@ -43,7 +44,7 @@ export default function useObjectiveStatusMonitor(objectives) {
   }, []);
 
   return {
-    atLeastOneObjectiveIsNotCompletedOrSuspended,
+    atLeastOneObjectiveIsNotCompleted,
     dispatchStatusChange,
     objectiveMap,
   };

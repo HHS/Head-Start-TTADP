@@ -3,7 +3,7 @@ import React from 'react';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -21,53 +21,62 @@ const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDat
 
 const defaultStatuses = {
   total: 0,
-  'Not started': 0,
-  'In progress': 0,
-  Closed: 0,
-  Suspended: 0,
+  [GOAL_STATUS.NOT_STARTED]: 0,
+  [GOAL_STATUS.IN_PROGRESS]: 0,
+  [GOAL_STATUS.CLOSED]: 0,
+  [GOAL_STATUS.SUSPENDED]: 0,
 };
 
 describe('Goals and Objectives', () => {
   const goals = [{
     id: 4598,
-    goalStatus: 'In Progress',
-    createdOn: '2021-06-15',
-    goalText: 'This is goal text 1.',
+    status: GOAL_STATUS.IN_PROGRESS,
+    createdAt: '2021-06-15',
+    name: 'This is goal text 1.',
     goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
     objectiveCount: 5,
     goalNumbers: ['G-4598'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
-    collaborators: [],
+    goalCollaborators: [],
     ids: [4598],
+    onAR: false,
+    grant: { number: '12345' },
+    previousStatus: null,
   },
   ];
 
   const noFilterGoals = [{
     id: 4599,
-    goalStatus: 'In Progress',
-    createdOn: '2021-06-15',
-    goalText: 'This is goal text 1.',
+    status: GOAL_STATUS.IN_PROGRESS,
+    createdAt: '2021-06-15',
+    name: 'This is goal text 1.',
     goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
     objectiveCount: 5,
     goalNumbers: ['G-4599'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
-    collaborators: [],
+    goalCollaborators: [],
     ids: [4599],
+    onAR: false,
+    grant: { number: '12345' },
+    previousStatus: null,
   },
   {
     id: 4600,
     ids: [4600],
-    goalStatus: 'Not Started',
-    createdOn: '2021-07-15',
-    goalText: 'This is goal text 2.',
+    status: GOAL_STATUS.NOT_STARTED,
+    createdAt: '2021-07-15',
+    name: 'This is goal text 2.',
     goalTopics: ['Program Planning and Services'],
     objectiveCount: 1,
     goalNumbers: ['G-4600'],
     reasons: ['Monitoring | Deficiency'],
     objectives: [],
-    collaborators: [],
+    goalCollaborators: [],
+    onAR: false,
+    grant: { number: '12346' },
+    previousStatus: null,
   },
   ];
 
@@ -75,15 +84,18 @@ describe('Goals and Objectives', () => {
     {
       id: 4601,
       ids: [4601],
-      goalStatus: 'Not Started',
-      createdOn: '2021-07-15',
-      goalText: 'This is goal text 2.',
+      status: GOAL_STATUS.NOT_STARTED,
+      createdAt: '2021-07-15',
+      name: 'This is goal text 2.',
       goalTopics: ['Program Planning and Services'],
       objectiveCount: 1,
       goalNumbers: ['G-4601'],
       reasons: ['Monitoring | Deficiency'],
       objectives: [],
-      collaborators: [],
+      goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12347' },
+      previousStatus: null,
     },
   ];
 
@@ -108,7 +120,7 @@ describe('Goals and Objectives', () => {
     ],
   };
 
-  const renderGoalsAndObjectives = (ids = [], canMergeGoals = false) => {
+  const renderGoalsAndObjectives = (ids = []) => {
     const userForContext = {
       ...user,
     };
@@ -126,7 +138,6 @@ describe('Goals and Objectives', () => {
                   state: { ids }, hash: '', pathname: '', search: '',
                 }}
                 recipientName="test"
-                canMergeGoals={canMergeGoals}
               />
             </FilterContext.Provider>
           </UserContext.Provider>
@@ -155,7 +166,7 @@ describe('Goals and Objectives', () => {
     });
 
     // Filters Status.
-    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
+    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started';
     fetchMock.get(filterStatusUrl, {
       count: 1,
       goalRows: filterStatusGoals,
@@ -181,27 +192,6 @@ describe('Goals and Objectives', () => {
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
       { rows: [], count: 0 },
     );
-    const similarityResponse = [
-      {
-        goals: [
-          { ids: [1] },
-          { ids: [2] },
-          { ids: [3] },
-          { ids: [4] },
-          { ids: [5] },
-        ],
-        ids: [1, 2, 3, 4, 5],
-      },
-      {
-        goals: [
-          { ids: [1] },
-          { ids: [2] },
-        ],
-        ids: [1, 2],
-      },
-    ];
-
-    fetchMock.get('/api/goals/similar/region/1/recipient/401?cluster=true', similarityResponse);
   });
 
   afterEach(() => {
@@ -211,12 +201,6 @@ describe('Goals and Objectives', () => {
   it('renders the Goals and Objectives page appropriately', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
-  });
-
-  it('shows merge goals when prop is passed', async () => {
-    act(() => renderGoalsAndObjectives([], true));
-    expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
-    expect(await screen.findByText(/We found groups of similar goals that might be duplicates/i)).toBeVisible();
   });
 
   it('renders correctly when filter is changed', async () => {
@@ -238,7 +222,7 @@ describe('Goals and Objectives', () => {
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
-    await selectEvent.select(statusSelect, ['Not started']);
+    await selectEvent.select(statusSelect, [GOAL_STATUS.NOT_STARTED]);
 
     const apply = await screen.findByRole('button', { name: /apply filters to goals/i });
     userEvent.click(apply);
@@ -246,7 +230,7 @@ describe('Goals and Objectives', () => {
     // Expect 1 Row.
     expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
     const notStartedStatuses = await screen.findAllByText(/not started/i);
-    expect(notStartedStatuses.length).toBe(5);
+    expect(notStartedStatuses.length).toBe(6);
   });
 
   it('resets the page number when filters change', async () => {
@@ -254,7 +238,7 @@ describe('Goals and Objectives', () => {
     fetchMock.restore();
 
     // Default with 2 Rows.
-    let goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
+    let goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started';
     fetchMock.get(goalsUrl,
       {
         count: 11,
@@ -290,7 +274,7 @@ describe('Goals and Objectives', () => {
     act(() => renderGoalsAndObjectives());
 
     // Go to the next page.
-    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=10&limit=10&status.in[]=Not%20started';
+    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=10&limit=10&status.in[]=Not%20Started';
     fetchMock.get(goalsUrl,
       {
         count: 11,
@@ -322,9 +306,9 @@ describe('Goals and Objectives', () => {
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
-    await selectEvent.select(statusSelect, ['Draft']);
+    await selectEvent.select(statusSelect, [GOAL_STATUS.CLOSED]);
 
-    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started&status.in[]=Draft';
+    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started&status.in[]=Closed';
     fetchMock.get(goalsUrl,
       {
         count: 1,
@@ -367,15 +351,18 @@ describe('Goals and Objectives', () => {
     const response = [{
       id: 4598,
       ids: [4598],
-      goalStatus: 'Not Started',
-      createdOn: '2021-06-15',
-      goalText: 'This is goal text 1.',
+      status: GOAL_STATUS.NOT_STARTED,
+      createdAt: '2021-06-15',
+      name: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
-      collaborators: [],
+      goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12345' },
+      previousStatus: null,
     },
     ];
 
@@ -396,7 +383,7 @@ describe('Goals and Objectives', () => {
 
     act(() => userEvent.click(statusMenuToggle));
     act(() => userEvent.click(screen.getByRole('button', { name: /Closed/i })));
-    act(() => userEvent.click(screen.getByRole('radio', { name: /duplicate/i })));
+    act(() => userEvent.click(screen.getByRole('radio', { name: /tta/i })));
 
     const submit = await screen.findByRole('button', { name: /change goal status/i });
 
@@ -473,15 +460,18 @@ describe('Goals and Objectives', () => {
     const goalToUse = {
       id: 1,
       ids: [1, 2],
-      goalStatus: 'Not Started',
-      createdOn: '2021-06-15',
-      goalText: '',
+      status: GOAL_STATUS.NOT_STARTED,
+      createdAt: '2021-06-15',
+      name: '',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
-      collaborators: [],
+      goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12345' },
+      previousStatus: null,
     };
     const goalCount = 60;
     const goalsToDisplay = [];
@@ -662,7 +652,6 @@ describe('Goals and Objectives', () => {
 
     // Assert the select all check box is not checked.
     expect(selectAllNext).not.toBeChecked();
-
     // Shows 11 selected.
     expect(await screen.findByText(/11 selected/i)).toBeVisible();
   });

@@ -10,10 +10,9 @@ import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common';
 import { useHistory } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
-import GoalsTable from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
 import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';
@@ -24,6 +23,7 @@ import useSessionSort from '../../hooks/useSessionSort';
 import FilterContext from '../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../../pages/RecipientRecord/pages/constants';
 import RttapaUpdates from '../../widgets/RttapaUpdates';
+import GoalCards from './GoalCards';
 
 const COMMUNICATION_PURPOSES = ['RTTAPA updates', 'RTTAPA Initial Plan / New Recipient'];
 const COMMUNCATION_SORT = {
@@ -48,17 +48,17 @@ function GoalDataController({
   recipientId,
   regionId,
   hasActiveGrants,
+  hasMissingStandardGoals,
   showNewGoals,
-  canMergeGoals,
 }) {
   // Goal Data.
   const [data, setData] = useState({
     statuses: {
       total: 0,
-      'Not started': 0,
-      'In progress': 0,
-      Closed: 0,
-      Suspended: 0,
+      [GOAL_STATUS.NOT_STARTED]: 0,
+      [GOAL_STATUS.IN_PROGRESS]: 0,
+      [GOAL_STATUS.CLOSED]: 0,
+      [GOAL_STATUS.SUSPENDED]: 0,
     },
     rows: [],
     count: 0,
@@ -67,23 +67,17 @@ function GoalDataController({
   // Page Behavior.
   const [error, setError] = useState('');
   const [goalsPerPage, setGoalsPerPage] = useState(GOALS_PER_PAGE);
-  const [shouldDisplayMergeSuccess, setShouldDisplayMergedSuccess] = useState(false);
   const [logs, setLogs] = useState([]);
   const [logsLoaded, setLogsLoaded] = useState(false);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
   const [currentFilters, setCurrentFilters] = useState(filtersToQueryString(filters));
+  const [cardsAreLoaded, setCardsAreLoaded] = useState(false);
 
   useEffect(() => {
-    let isLoaded = false;
-
-    if (logsLoaded) {
-      isLoaded = true;
+    if (logsLoaded && cardsAreLoaded && isAppLoading) {
+      setIsAppLoading(false);
     }
-
-    if (!isLoaded !== isAppLoading) {
-      setIsAppLoading(!isLoaded);
-    }
-  }, [isAppLoading, logsLoaded, setIsAppLoading]);
+  }, [logsLoaded, setIsAppLoading, cardsAreLoaded, isAppLoading]);
 
   const history = useHistory();
 
@@ -104,24 +98,41 @@ function GoalDataController({
     offset: 0,
   }, `goalsTable/${recipientId}/${regionId}`);
 
+  useEffect(() => {
+    async function fetchLogs() {
+      try {
+        setIsAppLoading(true);
+        setError(null);
+        const { rows } = await getCommunicationLogsByRecipientId(
+          String(regionId),
+          String(recipientId),
+          COMMUNCATION_SORT.sortBy,
+          COMMUNCATION_SORT.direction,
+          COMMUNCATION_SORT.offset,
+          COMMUNCATION_SORT.limit,
+          LOG_FILTERS,
+        );
+
+        setLogs(rows);
+      } catch (err) {
+        setError('Error fetching communication logs');
+      } finally {
+        setLogsLoaded(true);
+      }
+    }
+    fetchLogs();
+  }, [
+    recipientId,
+    regionId,
+    setIsAppLoading,
+  ]);
+
   useDeepCompareEffect(() => {
     async function fetchGoals(query) {
       try {
-        setIsAppLoading(true);
-        const mergedGoals = (() => {
-          if (history.location && history.location.state) {
-            return history.location.state.mergedGoals;
-          }
+        setCardsAreLoaded(false);
 
-          return null;
-        })();
-
-        let { sortBy } = sortConfig;
-
-        if (mergedGoals) {
-          sortBy = 'mergedGoals';
-        }
-
+        const { sortBy } = sortConfig;
         const response = await getRecipientGoals(
           recipientId,
           regionId,
@@ -130,18 +141,18 @@ function GoalDataController({
           sortConfig.offset,
           goalsPerPage,
           query,
-          mergedGoals || [],
+          [],
         );
+
         const rolledUpGoalIds = response.allGoalIds.map((goal) => goal.id);
         const goalBuckets = response.allGoalIds;
         setData({ ...response, allGoalIds: rolledUpGoalIds, goalBuckets });
+
         setError('');
-        // display success message if we have merged goals
-        setShouldDisplayMergedSuccess((mergedGoals && mergedGoals.length > 0));
       } catch (e) {
         setError('Unable to fetch goals');
       } finally {
-        setIsAppLoading(false);
+        setCardsAreLoaded(true);
       }
     }
     const filterQuery = filtersToQueryString(filters);
@@ -169,46 +180,22 @@ function GoalDataController({
     history.location,
   ]);
 
-  useEffect(() => {
-    async function fetchLogs() {
-      try {
-        setError(null);
-        const { rows } = await getCommunicationLogsByRecipientId(
-          String(regionId),
-          String(recipientId),
-          COMMUNCATION_SORT.sortBy,
-          COMMUNCATION_SORT.direction,
-          COMMUNCATION_SORT.offset,
-          COMMUNCATION_SORT.limit,
-          LOG_FILTERS,
-        );
-
-        setLogs(rows);
-      } catch (err) {
-        setError('Error fetching communication logs');
-      } finally {
-        setLogsLoaded(true);
-      }
-    }
-    fetchLogs();
-  }, [
-    recipientId,
-    regionId,
-  ]);
-
   const handlePageChange = (pageNumber) => {
+    setCardsAreLoaded(true);
     setSortConfig({
       ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * goalsPerPage,
     });
   };
 
   const requestSort = (sortBy, direction) => {
+    setCardsAreLoaded(true);
     setSortConfig({
       ...sortConfig, sortBy, direction, activePage: 1, offset: 0,
     });
   };
 
   const perPageChange = (e) => {
+    setCardsAreLoaded(true);
     const perPageValue = parseInt(e.target.value, DECIMAL_BASE);
     setSortConfig({
       ...sortConfig,
@@ -221,22 +208,6 @@ function GoalDataController({
   const displayGoals = useMemo(() => (
     data.goalRows && data.goalRows.length ? data.goalRows : []),
   [data.goalRows]);
-
-  const setGoals = (goals) => setData({ ...data, goalRows: goals });
-
-  const dismissMergeSuccess = () => {
-    if (history.location.state && history.location.state.mergedGoals) {
-      history.location.state.mergedGoals = null;
-    }
-
-    setSortConfig({
-      ...defaultSort,
-      activePage: 1,
-      offset: 0,
-    });
-
-    setShouldDisplayMergedSuccess(false);
-  };
 
   return (
     <div>
@@ -253,11 +224,12 @@ function GoalDataController({
         </Grid>
       </Grid>
       <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId) }}>
-        <GoalsTable
+        <GoalCards
           recipientId={recipientId}
           regionId={regionId}
           filters={filters}
           hasActiveGrants={hasActiveGrants}
+          hasMissingStandardGoals={hasMissingStandardGoals}
           showNewGoals={showNewGoals || false}
           goals={displayGoals}
           error={error}
@@ -266,13 +238,9 @@ function GoalDataController({
           handlePageChange={handlePageChange}
           requestSort={requestSort}
           sortConfig={sortConfig}
-          setGoals={setGoals}
           perPage={goalsPerPage}
           perPageChange={perPageChange}
-          canMergeGoals={canMergeGoals}
-          shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
-          dismissMergeSuccess={dismissMergeSuccess}
-          goalBuckets={data.goalBuckets}
+          loading={!cardsAreLoaded}
         />
       </FilterContext.Provider>
     </div>
@@ -291,8 +259,8 @@ GoalDataController.propTypes = {
     }),
   ).isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
+  hasMissingStandardGoals: PropTypes.bool.isRequired,
   showNewGoals: PropTypes.bool.isRequired,
-  canMergeGoals: PropTypes.bool.isRequired,
 };
 
 export default GoalDataController;

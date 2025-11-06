@@ -42,28 +42,36 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('link', { name: 'Activity Reports' }).click();
 
     // Create new report.
-    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+    await page.getByRole('link', { name: '+ New Activity Report' }).click();
     const heading = page.getByRole('heading', { name: /activity report for region \d/i });
     const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
 
     // Summary page.
 
     // Recipient.
-    await page.getByRole('group', { name: /Was this activity for a recipient or other entity\?/i }).locator('label').filter({ hasText: 'Recipient' }).click();
-    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
-    await page.locator('#react-select-3-option-0-0').click();
+    await page.getByText('Recipient *- Select -').click();
+    await page.getByText('Agency 1.a in region 1, Inc.', { exact: true }).click();
+    await page.getByText(/Agency 1.a in region 1, Inc. - 01HP044444/i).click();
+    await page.getByText(/Agency 1.a in region 1, Inc. - 01HP044445/i).click();
+
     await blur(page);
     // Collaborator.
     await page.locator('#activityReportCollaborators div').filter({ hasText: '- Select -' }).nth(1).click();
-    await page.locator('#react-select-5-option-2').click();
+    // select first available option.
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await blur(page)
+
+    // Why was the activity requested?
+    await page.getByText('Why was this activity requested? *Get help choosing an option- Select -').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await blur(page);
+
     // Target population.
     await page.locator('#targetPopulations div').filter({ hasText: '- Select -' }).nth(1).click();
-    await page.locator('#react-select-7-option-0').click();
-    await blur(page);
-    // Requested by.
-    await page.getByRole('group', { name: /Who requested this activity\? Use "Regional Office" for TTA not requested by recipient/i }).locator('label').filter({ hasText: 'Recipient' }).click();
-    await page.getByRole('group', { name: 'Reason for activity' }).getByTestId('label').click();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
 
@@ -93,9 +101,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await blur(page);
 
     // Number of participants.
-    await page.locator('.smart-hub-activity-report > div:nth-child(2) > div').first().click();
-    await page.getByLabel('Number of participants involved *').click();
-    await page.getByLabel('Number of participants involved *').fill('5');
+    await page.getByLabel('Number of participants  *').fill('5');
 
     // Save and Continue.
     await page.getByRole('button', { name: 'Save and continue' }).click();
@@ -109,20 +115,14 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.keyboard.press('Enter');
     await blur(page);
 
-    // Goal title.
-    await page.getByTestId('textarea').click();
-    await page.keyboard.type('Learn how to cook.');
-    await blur(page);
-
-    // goal source
-    await page.getByLabel(/Goal source/i).selectOption('Recipient request');
-
-    // Objective.
-    await page.getByText('Select TTA objective *- Select -').click();
-    await page.keyboard.press('ArrowDown');
+    // Select a standard goal.
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
     await blur(page);
 
+    // Objective.
+    await page.waitForTimeout(5000);
 
     // Objective title.
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Prepare your first meal.');
@@ -144,10 +144,10 @@ test.describe('Activity Report Text Search Filter', () => {
 
     const supportType = page.getByRole('combobox', { name: /Support type/i });
     await supportType.selectOption('Implementing');
+    await blur(page);
+    await page.getByRole('button', { name: 'Save goal' }).click();
 
     await blur(page);
-
-    await page.getByRole('button', { name: 'Save goal' }).click();
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
@@ -225,7 +225,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // Contains goal.
     await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
-    await page.getByLabel('Enter report text').fill('cook');
+    await page.getByLabel('Enter report text').fill('Child Safe');
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
@@ -234,7 +234,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // Doesn't contain goal.
     await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
-    await page.getByLabel('Enter report text').fill('cook');
+    await page.getByLabel('Enter report text').fill('Child Safe');
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);

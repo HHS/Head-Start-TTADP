@@ -6,6 +6,7 @@ import { canChangeObjectiveStatus } from '../../../permissions';
 import STATUSES from './StatusDropdownStatuses';
 import StatusDropdown from './StatusDropdown';
 import useValidObjectiveStatuses from '../../../hooks/useValidObjectiveStatuses';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 export default function ObjectiveStatusDropdown({
   currentStatus,
@@ -15,6 +16,7 @@ export default function ObjectiveStatusDropdown({
   goalStatus,
   forceReadOnly,
   objectiveTitle,
+  onApprovedAR,
 }) {
   const { user } = useContext(UserContext);
   const [statusOptions, isReadOnly] = useValidObjectiveStatuses(
@@ -22,6 +24,16 @@ export default function ObjectiveStatusDropdown({
     canChangeObjectiveStatus(user, parseInt(regionId, DECIMAL_BASE)),
     currentStatus,
   );
+
+  // Filter status options for approved AR if needed
+  const filteredStatusOptions = React.useMemo(() => {
+    if (onApprovedAR && currentStatus !== OBJECTIVE_STATUS.NOT_STARTED) {
+      return statusOptions.filter((status) => [
+        OBJECTIVE_STATUS.IN_PROGRESS, OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED,
+      ].includes(status));
+    }
+    return statusOptions;
+  }, [onApprovedAR, currentStatus, statusOptions]);
 
   const key = currentStatus || 'Needs Status';
   const { icon, display } = STATUSES[key] || STATUSES['Needs Status'];
@@ -35,7 +47,7 @@ export default function ObjectiveStatusDropdown({
     );
   }
 
-  const getOptions = () => statusOptions.map((status) => ({
+  const getOptions = () => filteredStatusOptions.map((status) => ({
     label: status,
     onClick: () => onUpdateObjectiveStatus(status),
   }));
@@ -49,6 +61,7 @@ export default function ObjectiveStatusDropdown({
       className={className}
       icon={icon}
       display={display}
+      buttonTestId="objective-status-dropdown"
     />
   );
 }
@@ -61,6 +74,7 @@ ObjectiveStatusDropdown.propTypes = {
   className: PropTypes.string,
   forceReadOnly: PropTypes.bool,
   objectiveTitle: PropTypes.string,
+  onApprovedAR: PropTypes.bool.isRequired,
 };
 
 ObjectiveStatusDropdown.defaultProps = {

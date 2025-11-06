@@ -8,7 +8,8 @@ applications:
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
-      AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
+      OIDC_AUTH_METHOD: ((OIDC_AUTH_METHOD))
+      PRIVATE_JWK_64: ((PRIVATE_JWK_64))
       BUILD_BRANCH: ((BUILD_BRANCH))
       BUILD_COMMIT: ((BUILD_COMMIT))
       BUILD_NUMBER: ((BUILD_NUMBER))
@@ -39,7 +40,6 @@ applications:
       REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
       SEND_NOTIFICATIONS: ((SEND_NOTIFICATIONS))
       SESSION_SECRET: ((SESSION_SECRET))
-      SIMILARITY_ENDPOINT: ((SIMILARITY_ENDPOINT))
       SMARTSHEET_ACCESS_TOKEN: ((SMARTSHEET_ACCESS_TOKEN))
       SMARTSHEET_ENDPOINT: ((SMARTSHEET_ENDPOINT))
       SMTP_HOST: ((SMTP_HOST))
@@ -66,20 +66,3 @@ applications:
         instances: ((worker_instances))
         command: yarn start:worker
         memory: ((worker_memory))
-  - name: tta-similarity-api-((env))
-    strategy: rolling
-    stack: cflinuxfs4
-    buildpacks:
-      - python_buildpack
-    path: similarity_api/src
-    services:
-      - ttahub-((env))
-    env:
-      NEW_RELIC_APP_NAME: tta-similarity-api-((env))
-      NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
-    processes:
-      - type: web
-        instances: ((similarity_api_instances))
-        command: gunicorn -w 4 -b 0.0.0.0:8080 app:app --preload
-        memory: ((similarity_api_memory))
-        disk_quota: ((similarity_api_disk_quota))

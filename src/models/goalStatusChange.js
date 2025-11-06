@@ -1,4 +1,4 @@
-import { afterCreate } from './hooks/goalStatusChange';
+import { afterCreate, beforeCreate } from './hooks/goalStatusChange';
 
 const { Model } = require('sequelize');
 
@@ -66,10 +66,18 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    performedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   }, {
+    defaultScope: {
+      order: [['performedAt', 'DESC']],
+    },
     sequelize,
     modelName: 'GoalStatusChange',
     hooks: {
+      beforeCreate: async (instance) => beforeCreate(sequelize, instance),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
     },
   });

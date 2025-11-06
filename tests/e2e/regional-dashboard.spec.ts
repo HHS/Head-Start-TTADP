@@ -37,8 +37,8 @@ test('Regional Dashboard', async ({ page }) => {
 
   // toggle all the legend items off
   await page.locator('label').filter({ hasText: 'Training' }).click();
-  await page.getByText('Both').click();
-  await page.getByText('Technical Assistance').click();
+  await page.getByTestId('fieldset').getByText('Both').click();
+  await page.getByTestId('fieldset').getByText('Technical Assistance').click();
 
   // print a screenshot of the TTA hours graph
   await page.getByRole('button', { name: 'Open Actions for Total TTA hours' }).click();

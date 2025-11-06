@@ -1,9 +1,11 @@
 import httpCodes from 'http-codes';
+import { Op } from 'sequelize';
 import {
   User,
   GoalTemplate,
   Recipient,
   Group,
+  Grant,
   sequelize,
 } from '../../models';
 import {
@@ -13,8 +15,11 @@ import {
   deleteLog,
   updateLog,
   createLog,
+  logsByScopes,
+  csvLogsByScopes,
 } from '../../services/communicationLog';
 import { userById } from '../../services/users';
+import { currentUserId } from '../../services/currentUser';
 import {
   communicationLogById,
   communicationLogsByRecipientId,
@@ -23,6 +28,8 @@ import {
   createLogByRecipientId,
   communicationLogAdditionalData,
   getAvailableUsersRecipientsAndGoals,
+  communicationLogs,
+  createLogByRegionId,
 } from './handlers';
 import SCOPES from '../../middleware/scopeConstants';
 import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
@@ -41,6 +48,7 @@ jest.mock('../../models', () => ({
   Recipient: {
     findAll: jest.fn(),
   },
+  Grant: {},
   sequelize: {
     close: jest.fn(),
     col: jest.fn(),
@@ -102,6 +110,11 @@ describe('communicationLog handlers', () => {
     })),
     type: jest.fn(),
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    currentUserId.mockImplementation(async (req) => req.session.userId);
+  });
 
   afterAll(() => sequelize.close());
   describe('communicationLogById', () => {
@@ -306,6 +319,118 @@ describe('communicationLog handlers', () => {
       logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
       setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
+    });
+  });
+
+  describe('communicationLogs', () => {
+    afterEach(async () => {
+      jest.restoreAllMocks();
+    });
+    it('success', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
+      };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      await communicationLogs(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
+    });
+
+    it('with limit', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+          limit: '20',
+        },
+      };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      await communicationLogs(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
+    });
+
+    it('csv', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+          format: 'csv',
+        },
+      };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      csvLogsByScopes.mockImplementation(() => Promise.resolve('id\n1'));
+      await communicationLogs(mockRequest, { ...mockResponse });
+      expect(send).toHaveBeenCalledWith('id\n1');
+    });
+
+    it('error', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      logsByScopes.mockRejectedValue(new Error('error'));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      await communicationLogs(mockRequest, { ...mockResponse });
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+
+    it('admin', async () => {
+      const mockRequest = {
+        session: {
+          userId: admin.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(admin));
+      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      await communicationLogs(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
     });
   });
@@ -519,7 +644,7 @@ describe('communicationLog handlers', () => {
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
       logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      deleteLog.mockRejectedValue(new Error('error'));
+      deleteLog.mockResolvedValue(0);
       await deleteLogById(mockRequest, { ...mockResponse });
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
@@ -580,7 +705,7 @@ describe('communicationLog handlers', () => {
       };
       const mockUsers = [{ value: 1, label: 'UserA' }, { value: 2, label: 'UserB' }];
       const mockGoals = [{ value: 1, label: 'GoalA' }, { value: 2, label: 'GoalB' }];
-      const mockRecipients = [{ value: 1, label: 'RecipientA' }, { value: 2, label: 'RecipientB' }];
+      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }, { value: 2, label: 'RecipientB', grants: [] }];
       userById.mockResolvedValue(authorizedToReadOnly);
       User.findAll.mockResolvedValue(mockUsers);
       GoalTemplate.findAll.mockResolvedValue(mockGoals);
@@ -591,9 +716,229 @@ describe('communicationLog handlers', () => {
       expect(result).toEqual({
         regionalUsers: mockUsers,
         standardGoals: mockGoals,
-        recipients: mockRecipients,
+        recipients: [
+          { value: 1, label: 'RecipientA' },
+          { value: 2, label: 'RecipientB' },
+        ],
         groups: [],
       });
+    });
+
+    it('only returns recipients with active grants', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+      };
+      const mockUsers = [{ value: 1, label: 'UserA' }];
+      const mockGoals = [{ value: 1, label: 'GoalA' }];
+      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }];
+
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue(mockUsers);
+      GoalTemplate.findAll.mockResolvedValue(mockGoals);
+      Recipient.findAll.mockResolvedValue(mockRecipients);
+      Group.findAll.mockResolvedValue([]);
+
+      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+
+      // Verify that Recipient.findAll was called with the correct query parameters
+      expect(Recipient.findAll).toHaveBeenCalledWith({
+        attributes: [
+          ['id', 'value'],
+          ['name', 'label'],
+        ],
+        where: {
+          deleted: false,
+        },
+        include: [
+          {
+            model: Grant,
+            as: 'grants',
+            attributes: ['status', 'inactivationDate'],
+            where: {
+              regionId: REGION_ID,
+              [Op.or]: [
+                { status: 'Active' },
+                {
+                  [Op.and]: [
+                    { status: 'Inactive' },
+                    { inactivationDate: { [Op.ne]: null } },
+                    {
+                      inactivationDate: {
+                        [Op.gte]: expect.any(Date),
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            required: true,
+          },
+        ],
+        order: [['label', 'ASC']],
+      });
+
+      // Verify that the inactivationDate filter is set to 365 days ago
+      const callArgs = Recipient.findAll.mock.calls[0][0];
+      const whereClause = callArgs.include[0].where[Op.or][1][Op.and][2];
+      const inactivationDateCondition = whereClause.inactivationDate[Op.gte];
+      const timeDiff = Date.now() - inactivationDateCondition.getTime();
+      const daysDifference = timeDiff / (24 * 60 * 60 * 1000);
+      expect(daysDifference).toBeCloseTo(365, 1);
+    });
+
+    it('includes recipients with inactive grants that have inactivationDate within 365 days', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+      };
+      const mockUsers = [{ value: 1, label: 'UserA' }];
+      const mockGoals = [{ value: 1, label: 'GoalA' }];
+      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }];
+
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue(mockUsers);
+      GoalTemplate.findAll.mockResolvedValue(mockGoals);
+      Recipient.findAll.mockResolvedValue(mockRecipients);
+      Group.findAll.mockResolvedValue([]);
+
+      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+
+      const callArgs = Recipient.findAll.mock.calls[0][0];
+      const whereCondition = callArgs.include[0].where;
+
+      // Verify the where condition includes both active and recently inactive grants
+      expect(whereCondition).toEqual({
+        regionId: REGION_ID,
+        [Op.or]: [
+          { status: 'Active' },
+          {
+            [Op.and]: [
+              { status: 'Inactive' },
+              { inactivationDate: { [Op.ne]: null } },
+              {
+                inactivationDate: {
+                  [Op.gte]: expect.any(Date),
+                },
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('excludes recipients with inactive grants that have null inactivationDate', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+      };
+
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue([]);
+      GoalTemplate.findAll.mockResolvedValue([]);
+      Recipient.findAll.mockResolvedValue([]);
+      Group.findAll.mockResolvedValue([]);
+
+      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+
+      const callArgs = Recipient.findAll.mock.calls[0][0];
+      const inactiveCondition = callArgs.include[0].where[Op.or][1][Op.and];
+
+      // Verify that inactive grants must have a non-null inactivationDate
+      expect(inactiveCondition).toContainEqual({ inactivationDate: { [Op.ne]: null } });
+    });
+
+    it('excludes recipients with inactive grants older than 365 days', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+      };
+
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue([]);
+      GoalTemplate.findAll.mockResolvedValue([]);
+      Recipient.findAll.mockResolvedValue([]);
+      Group.findAll.mockResolvedValue([]);
+
+      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+
+      const callArgs = Recipient.findAll.mock.calls[0][0];
+      const whereClause = callArgs.include[0].where[Op.or][1][Op.and][2];
+      const inactivationDateCondition = whereClause.inactivationDate[Op.gte];
+
+      // Verify that the date filter excludes grants older than 365 days
+      const cutoffDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+      const actualCutoffTime = inactivationDateCondition.getTime();
+      const expectedCutoffTime = cutoffDate.getTime();
+
+      // Allow for small time differences due to test execution time
+      const timeDifference = Math.abs(actualCutoffTime - expectedCutoffTime);
+      expect(timeDifference).toBeLessThan(1000); // 1 second tolerance
+    });
+
+    it('appends (inactive) to recipient names when all grants are inactive', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+      };
+
+      const mockRecipients = [
+        {
+          value: 1,
+          label: 'Recipient with Active Grant',
+          grants: [{ status: 'Active' }],
+        },
+        {
+          value: 2,
+          label: 'Recipient with Inactive Grant',
+          grants: [{ status: 'Inactive' }],
+        },
+        {
+          value: 3,
+          label: 'Recipient with Mixed Grants',
+          grants: [{ status: 'Active' }, { status: 'Inactive' }],
+        },
+        {
+          value: 4,
+          label: 'Recipient with Multiple Inactive Grants',
+          grants: [{ status: 'Inactive' }, { status: 'Inactive' }],
+        },
+      ];
+
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue([]);
+      GoalTemplate.findAll.mockResolvedValue([]);
+      Recipient.findAll.mockResolvedValue(mockRecipients);
+      Group.findAll.mockResolvedValue([]);
+
+      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+
+      expect(result.recipients).toEqual([
+        { value: 1, label: 'Recipient with Active Grant' },
+        { value: 2, label: 'Recipient with Inactive Grant (inactive)' },
+        { value: 3, label: 'Recipient with Mixed Grants' },
+        { value: 4, label: 'Recipient with Multiple Inactive Grants (inactive)' },
+      ]);
     });
 
     it('returns null if unauthorized', async () => {
@@ -631,7 +976,6 @@ describe('communicationLog handlers', () => {
       Recipient.findAll.mockResolvedValue([]);
       Group.findAll.mockResolvedValue([]);
       await communicationLogAdditionalData(mockRequest, { ...mockResponse });
-      // eslint-disable-next-line max-len
       expect(statusJson).toHaveBeenCalledWith({
         regionalUsers: mockUsers,
         standardGoals:
@@ -639,6 +983,96 @@ describe('communicationLog handlers', () => {
         groups: [],
         recipients: [],
       });
+    });
+  });
+
+  describe('createLogByRegionId', () => {
+    afterEach(async () => {
+      jest.restoreAllMocks();
+    });
+
+    it('success', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipients: [{ value: 1 }, { value: 2 }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
+      expect(createLog).toHaveBeenCalledWith([1, 2], authorizedToCreate.id, { message: 'test' });
+    });
+
+    it('unauthorized', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipients: [{ value: 1 }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('error', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipients: [{ value: 1 }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      createLog.mockRejectedValue(new Error('error'));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+
+    it('admin', async () => {
+      const mockRequest = {
+        session: {
+          userId: admin.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipients: [{ value: 1 }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(admin));
+      createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
     });
   });
 });

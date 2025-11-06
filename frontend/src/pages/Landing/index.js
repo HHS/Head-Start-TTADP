@@ -8,19 +8,14 @@ import React, {
   useCallback,
 } from 'react';
 import {
-  Alert, Grid, Button,
+  Alert, Grid,
 } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
-import { Link, useHistory } from 'react-router-dom';
 import AriaLiveContext from '../../AriaLiveContext';
 import UserContext from '../../UserContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
-import NewReport from './NewReport';
-import './index.scss';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
 import {
@@ -28,7 +23,6 @@ import {
 } from '../../Constants';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
-import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
@@ -36,8 +30,10 @@ import { LANDING_FILTER_CONFIG } from './constants';
 import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
-import colors from '../../colors';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
+import NewActivityReportButton from '../../components/NewActivityReportButton';
+import LandingMessage from '../../components/LandingMessage';
+import './index.scss';
 
 const FILTER_KEY = 'landing-filters';
 
@@ -73,11 +69,9 @@ function Landing() {
       : allRegionsFilters,
   );
 
-  const history = useHistory();
   const [alertsLoading, setAlertsLoading] = useState(true);
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
-  const [showAlert, updateShowAlert] = useState(true);
   const [resetPagination, setResetPagination] = useState(false);
 
   const [alertsSortConfig, setAlertsSortConfig] = React.useState({
@@ -123,7 +117,9 @@ function Landing() {
       setDownloadAlertsError(true);
     } finally {
       setIsDownloadingAlerts(false);
-      downloadAllAlertsButtonRef.current.focus();
+      if (downloadAllAlertsButtonRef.current) {
+        downloadAllAlertsButtonRef.current.focus();
+      }
     }
   };
 
@@ -166,28 +162,6 @@ function Landing() {
     }
     fetchAlertReports();
   }, [alertsSortConfig, alertsOffset, alertsPerPage, filtersToApply]);
-
-  let msg;
-  const message = history.location.state && history.location.state.message;
-  if (message) {
-    msg = (
-      <>
-        You successfully
-        {' '}
-        {message.status}
-        {' '}
-        report
-        {' '}
-        <Link to={`/activity-reports/${message.reportId}`}>
-          {message.displayId}
-        </Link>
-        {' '}
-        on
-        {' '}
-        {message.time}
-      </>
-    );
-  }
 
   const regionLabel = () => {
     if (defaultRegion === 14 || hasMultipleRegions) {
@@ -252,28 +226,7 @@ function Landing() {
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
         />
-        {showAlert && message && (
-          <Alert
-            type="success"
-            role="alert"
-            className="margin-bottom-2"
-            noIcon
-            cta={(
-              <Button
-                role="button"
-                unstyled
-                aria-label="dismiss alert"
-                onClick={() => updateShowAlert(false)}
-              >
-                <span className="fa-sm margin-right-2">
-                  <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
-                </span>
-              </Button>
-            )}
-          >
-            {msg}
-          </Alert>
-        )}
+        <LandingMessage />
         <Grid row gap>
           <Grid col={12} className="display-flex flex-wrap">
             <h1 className="landing margin-top-0 margin-bottom-3 margin-right-2">{`Activity reports - ${regionLabel()}`}</h1>
@@ -282,7 +235,9 @@ function Landing() {
               && reportAlerts.length > 0
               && hasReadWrite(user)
               && appliedRegionNumber !== 14
-              && <NewReport />}
+              && (
+              <NewActivityReportButton />
+              )}
             </div>
           </Grid>
           <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
@@ -325,7 +280,6 @@ function Landing() {
           updateReportAlerts={updateReportAlerts}
           setAlertReportsCount={setAlertReportsCount}
           handleDownloadAllAlerts={handleDownloadAllAlerts}
-          message={message}
           isDownloadingAlerts={isDownloadingAlerts}
           downloadAlertsError={downloadAlertsError}
           setDownloadAlertsError={setDownloadAlertsError}

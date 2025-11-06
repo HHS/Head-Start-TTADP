@@ -4,10 +4,10 @@ import httpContext from 'express-http-context';
 import join from 'url-join';
 import { v4 as uuidv4 } from 'uuid';
 
-import authMiddleware, { login } from '../middleware/authMiddleware';
-import cookieSession from '../middleware/sessionMiddleware';
+import authMiddleware, { login, logoutOidc } from '../middleware/authMiddleware';
 import filesRouter from './files';
 import activityReportsRouter from './activityReports';
+import collaborationReportsRouter from './collaborationReports';
 import usersRouter from './users';
 import widgetsRouter from './widgets';
 import resourcesRouter from './resources';
@@ -35,16 +35,20 @@ import { currentUserId } from '../services/currentUser';
 import objectiveRouter from './objectives';
 import ssdiRouter from './ssdi';
 import citationsRouter from './citations';
+import sanitizeRequestBody from '../middleware/sanitizeRequestBody';
 
 export const loginPath = '/login';
 
 authMiddleware.unless = unless;
 
+const sanitizeMiddleware = sanitizeRequestBody();
+sanitizeMiddleware.unless = unless;
+
 const router = express.Router();
 
 router.use(httpContext.middleware);
-router.use(cookieSession);
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
+router.use(sanitizeMiddleware.unless({ path: ['/api/files'] }));
 
 router.use((req, res, next) => {
   try {
@@ -60,8 +64,16 @@ router.use((req, res, next) => {
   next();
 });
 
+// Explicitly set Content-Type for all API responses to prevent MIME-sniffing
+// and ensure browsers treat responses as data, not HTML
+router.use((req, res, next) => {
+  res.set('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
+
 router.use('/admin', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
+router.use('/collaboration-reports', collaborationReportsRouter);
 router.use('/users', usersRouter);
 router.use('/widgets', widgetsRouter);
 router.use('/files', filesRouter);
@@ -102,12 +114,13 @@ router.get('/logout', (req, res) => {
   req.session = null;
   res.sendStatus(204);
 });
+router.get('/logout-oidc', logoutOidc);
 
 router.get(loginPath, login);
 
 // Server 404s need to be explicitly handled by express
-router.get('*', (req, res) => {
-  res.sendStatus(404);
+router.use('*', (_req, res) => {
+  res.status(404).json({});
 });
 
 export default router;

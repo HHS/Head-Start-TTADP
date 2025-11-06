@@ -103,6 +103,7 @@ export const defaultKeys = [
   'pageState',
   'pocComplete',
   'ownerComplete',
+  'facilitation',
 ];
 
 export const istKeys = [
@@ -115,6 +116,7 @@ export const istKeys = [
   'objective',
   'objectiveTopics',
   'objectiveTrainers',
+  'sessionGoalTemplates',
   'useIpdCourses',
   'courses',
   'objectiveResources',

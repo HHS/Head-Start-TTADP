@@ -1,6 +1,6 @@
 import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import { canChangeGoalStatus } from '../../../permissions';
 import STATUSES from './StatusDropdownStatuses';
@@ -16,13 +16,12 @@ export default function GoalStatusDropdown({
   className,
 }) {
   const { user } = useContext(UserContext);
-  const key = status;
-  const { icon, display } = STATUSES[key] || STATUSES['Needs Status'];
+  const { icon, display } = STATUSES[status] || STATUSES['Needs Status'];
 
   const isReadOnly = useMemo(() => ((
-    status === 'Draft'
+    status === GOAL_STATUS.DRAFT
     || status === 'Completed'
-    || status === 'Closed')
+    || status === GOAL_STATUS.CLOSED)
     || !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE))
     || showReadOnlyStatus), [status, user, regionId, showReadOnlyStatus]);
 
@@ -39,12 +38,12 @@ export default function GoalStatusDropdown({
     // if the goal is ceased and has no "status suspended from" in the db you can only close it
     // otherwise, if it is ceased and has a status suspended from, you get that as an
     // additional option
-    if (status === 'Ceased/Suspended' || status === 'Suspended') {
+    if (status === 'Ceased/Suspended' || status === GOAL_STATUS.SUSPENDED) {
       if (!STATUSES[previousStatus]) {
         return [
           {
-            label: 'Closed',
-            onClick: () => onUpdateGoalStatus('Closed'),
+            label: GOAL_STATUS.CLOSED,
+            onClick: () => onUpdateGoalStatus(GOAL_STATUS.CLOSED),
           },
         ];
       }
@@ -56,37 +55,37 @@ export default function GoalStatusDropdown({
           onClick: () => onUpdateGoalStatus(previousStatus),
         },
         {
-          label: 'Closed',
-          onClick: () => onUpdateGoalStatus('Closed'),
+          label: GOAL_STATUS.CLOSED,
+          onClick: () => onUpdateGoalStatus(GOAL_STATUS.CLOSED),
         },
       ];
     }
 
-    if (status === 'In Progress' || status === 'Not Started') {
+    if (status === GOAL_STATUS.IN_PROGRESS || status === GOAL_STATUS.NOT_STARTED) {
       return [
         {
-          label: 'Closed',
-          onClick: () => onUpdateGoalStatus('Closed'),
+          label: GOAL_STATUS.CLOSED,
+          onClick: () => onUpdateGoalStatus(GOAL_STATUS.CLOSED),
         },
         {
-          label: 'Suspended',
-          onClick: () => onUpdateGoalStatus('Suspended'),
+          label: GOAL_STATUS.SUSPENDED,
+          onClick: () => onUpdateGoalStatus(GOAL_STATUS.SUSPENDED),
         },
       ];
     }
 
     return [
       {
-        label: 'In progress',
-        onClick: () => onUpdateGoalStatus('In Progress'),
+        label: GOAL_STATUS.IN_PROGRESS,
+        onClick: () => onUpdateGoalStatus(GOAL_STATUS.IN_PROGRESS),
       },
       {
-        label: 'Closed',
-        onClick: () => onUpdateGoalStatus('Closed'),
+        label: GOAL_STATUS.CLOSED,
+        onClick: () => onUpdateGoalStatus(GOAL_STATUS.CLOSED),
       },
       {
-        label: 'Suspended',
-        onClick: () => onUpdateGoalStatus('Suspended'),
+        label: GOAL_STATUS.SUSPENDED,
+        onClick: () => onUpdateGoalStatus(GOAL_STATUS.SUSPENDED),
       },
     ];
   };
@@ -100,6 +99,7 @@ export default function GoalStatusDropdown({
       className={className}
       icon={icon}
       display={display}
+      buttonTestId="goal-status-dropdown"
     />
   );
 }

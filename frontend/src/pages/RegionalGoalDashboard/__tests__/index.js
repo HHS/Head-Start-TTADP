@@ -3,7 +3,7 @@ import {
   render, screen, act, within,
 } from '@testing-library/react';
 import moment from 'moment';
-import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
+import { GOAL_STATUS, TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
@@ -20,10 +20,10 @@ const WIDGET_MOCKS = {
   },
   goalsByStatus: {
     total: 14274,
-    'Not started': 2505,
-    'In progress': 6944,
-    Suspended: 311,
-    Closed: 4514,
+    [GOAL_STATUS.NOT_STARTED]: 2505,
+    [GOAL_STATUS.IN_PROGRESS]: 6944,
+    [GOAL_STATUS.SUSPENDED]: 311,
+    [GOAL_STATUS.CLOSED]: 4514,
   },
   totalHrsAndRecipientGraph: [
     {
@@ -122,13 +122,13 @@ describe('RegionalGoalDashboard', () => {
     const graph = await screen.findByTestId('goalStatusGraph');
 
     const textStrings = [
-      'Not started',
+      GOAL_STATUS.NOT_STARTED,
       '2505/14274',
-      'In progress',
+      GOAL_STATUS.NOT_STARTED,
       '6944/14274',
-      'Suspended',
+      GOAL_STATUS.SUSPENDED,
       '311/14274',
-      'Closed',
+      GOAL_STATUS.CLOSED,
       '4514/14274',
       '14274 goals',
     ];

@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { pickBy } from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
+import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
 
 export const CONTAINS = 'contains';
 export const NOT_CONTAINS = 'does not contain';
@@ -143,8 +144,8 @@ export const CENTRAL_OFFICE = 14;
 export const ALL_REGIONS = 15;
 
 export const managerReportStatuses = [
-  'needs_action',
-  'approved',
+  APPROVER_STATUSES.NEEDS_ACTION,
+  APPROVER_STATUSES.APPROVED,
 ];
 
 export const MODEL_TYPES = {
@@ -174,10 +175,13 @@ export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
-const LOCAL_STORAGE_CACHE_NUMBER = '0.4';
-export const LOCAL_STORAGE_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
-export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
-export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+const LOCAL_STORAGE_CACHE_NUMBER = '0.5';
+export const LOCAL_STORAGE_AR_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+export const LOCAL_STORAGE_CR_DATA_KEY = (id) => `cr-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+export const LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+export const LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY = (id) => `cr-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+export const LOCAL_STORAGE_AR_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+export const LOCAL_STORAGE_CR_EDITABLE_KEY = (id) => `cr-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const SESSION_STORAGE_IMPERSONATION_KEY = `auth-impersonation-id-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY = 'regional-resources-dashboard-filters';
 
@@ -204,4 +208,103 @@ export const EMPTY_ARRAY = [];
 
 export const ROUTES = {
   SOMETHING_WENT_WRONG: '/something-went-wrong',
+};
+
+export const STATES = {
+  MA: 'Massachusetts',
+  ME: 'Maine',
+  CT: 'Connecticut',
+  RI: 'Rhode Island',
+  VT: 'Vermont',
+  NH: 'New Hampshire',
+  NY: 'New York',
+  NJ: 'New Jersey',
+  PR: 'Puerto Rico',
+  PA: 'Pennsylvania',
+  WV: 'West Virginia',
+  MD: 'Maryland',
+  DE: 'Delaware',
+  VA: 'Virginia',
+  DC: 'District of Columbia',
+  KY: 'Kentucky',
+  TN: 'Tennessee',
+  NC: 'North Carolina',
+  AL: 'Alabama',
+  MS: 'Mississippi',
+  GA: 'Georgia',
+  SC: 'South Carolina',
+  FL: 'Florida',
+  MN: 'Minnesota',
+  WI: 'Wisconsin',
+  IL: 'Illinois',
+  IN: 'Indiana',
+  MI: 'Michigan',
+  OH: 'Ohio',
+  NM: 'New Mexico',
+  OK: 'Oklahoma',
+  AR: 'Arkansas',
+  TX: 'Texas',
+  LA: 'Louisiana',
+  NE: 'Nebraska',
+  IA: 'Iowa',
+  KS: 'Kansas',
+  MO: 'Missouri',
+  MT: 'Montana',
+  ND: 'North Dakota',
+  SD: 'South Dakota',
+  WY: 'Wyoming',
+  UT: 'Utah',
+  CO: 'Colorado',
+  NV: 'Nevada',
+  CA: 'California',
+  AZ: 'Arizona',
+  HI: 'Hawaii',
+  GU: 'Guam',
+  AS: 'American Samoa',
+  VI: 'Virgin Islands',
+  MP: 'Northern Mariana Islands',
+  FM: 'Federated States of Micronesia',
+  MH: 'Marshall Islands',
+  PW: 'Republic of Palau',
+  WA: 'Washington',
+  OR: 'Oregon',
+  ID: 'Idaho',
+  AK: 'Alaska',
+};
+
+export const COLLAB_REPORT_CONDUCT_METHODS = [
+  { label: 'Email', value: 'email' },
+  { label: 'Phone', value: 'phone' },
+  { label: 'In person', value: 'in_person' },
+  { label: 'Virtual', value: 'virtual' },
+];
+
+export const COLLAB_REPORT_REASONS = {
+  participate_work_groups: 'Participate in national, regional, state, and local work groups and meetings',
+  support_coordination: 'Support partnerships, coordination, and collaboration with state/regional partners',
+  agg_regional_data: 'Aggregate, analyze, and/or present regional data',
+  develop_presentations: 'Develop and provide presentations, training, and resources to RO and/or state/regional partners',
+};
+
+export const COLLAB_REPORT_DATA = {
+  census_data: 'Census data',
+  child_abuse_and_neglect: 'Child abuse and neglect',
+  child_safety: 'Child safety',
+  child_family_health: 'Child/family health',
+  disabilities: 'Disabilities',
+  foster_care: 'Foster care',
+  homelessness: 'Homelessness',
+  kids_count: 'Kids Count',
+  licensing_data: 'Licensing data',
+  ohs_monitoring: 'OHS Monitoring',
+  pir: 'PIR',
+  tta_hub: 'TTA Hub',
+  other: 'Other',
+};
+
+export const OBJECTIVE_STATUS = {
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  COMPLETE: 'Complete',
 };

@@ -8,6 +8,7 @@ import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
+import SCOPES from '../middleware/scopeConstants';
 import {
   ActivityReport,
   ActivityReportApprover,
@@ -37,13 +38,17 @@ import {
   Course,
 } from '../models';
 import {
-  removeUnusedGoalsObjectivesFromReport,
-  saveGoalsForReport,
   removeRemovedRecipientsGoals,
 } from '../goalServices/goals';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
-import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
+import { getObjectivesByReportId } from './objectives';
 import parseDate from '../lib/date';
+import { removeUnusedGoalsObjectivesFromReport, saveStandardGoalsForReport } from './standardGoals';
+import { usersWithPermissions } from './users';
+import { auditLogger as logger } from '../logger';
+import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
+
+const namespace = 'SERVICE:ACTIVITY_REPORTS';
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -338,22 +343,26 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: Recipient,
             as: 'recipient',
-            attributes: ['name'],
+            attributes: ['id', 'name'],
           },
         ],
       },
     ],
   });
-
   const activityRecipients = recipients.map((recipient) => {
+    const recipientId = recipient.id;
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
       ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
 
     return {
       id: activityRecipientId,
+      recipientId,
       activityRecipientId, // Create or Update Report Expect's this Field.
       name,
+      // We need the actual id of the recipient to narrow down what grants are selected on the FE.
+      // Viewing legacy OE reports will have a null grant.
+      recipientIdForLookUp: recipient.grant ? recipient.grant.recipientId : null,
     };
   });
 
@@ -964,7 +973,7 @@ export function formatResources(resources) {
   }, []);
 }
 
-export async function createOrUpdate(newActivityReport, report) {
+export async function createOrUpdate(newActivityReport, report, userId) {
   let savedReport;
   const {
     approvers,
@@ -1001,6 +1010,7 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
+
   if (activityReportCollaborators) {
     const { id } = savedReport;
     const newCollaborators = activityReportCollaborators.map(
@@ -1027,24 +1037,6 @@ export async function createOrUpdate(newActivityReport, report) {
     await saveNotes(id, specialistNextSteps, false);
   }
 
-  /**
-     * since on partial updates, a new value for activity recipient type may not be passed,
-     * we use the old one in that case
-     */
-
-  const recipientType = () => {
-    if (allFields?.activityRecipientType) {
-      return allFields.activityRecipientType;
-    }
-    if (report?.activityRecipientType) {
-      return report.activityRecipientType;
-    }
-
-    return '';
-  };
-
-  const activityRecipientType = recipientType();
-
   if (
     recipientsWhoHaveGoalsThatShouldBeRemoved?.length
   ) {
@@ -1055,23 +1047,76 @@ export async function createOrUpdate(newActivityReport, report) {
     && previousActivityRecipientType !== report.activityRecipientType) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
   }
-
-  if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
-    await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
-  } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport);
+  if (goals) {
+    await saveStandardGoalsForReport(goals, userId, savedReport);
   }
 
   // Approvers are removed if approverUserIds is an empty array
   if (approverUserIds) {
-    await syncApprovers(savedReport.id, approverUserIds);
+    const regionId = savedReport.regionId ?? report?.regionId;
+    let sanitizedApproverIds = [];
+
+    if (regionId) {
+      const permittedApprovers = await usersWithPermissions(
+        [regionId],
+        [SCOPES.APPROVE_REPORTS],
+      );
+      const permittedIds = new Set(permittedApprovers.map((user) => user.id));
+      sanitizedApproverIds = Array.from(
+        new Set(
+          approverUserIds
+            .map((id) => Number(id))
+            .filter((id) => permittedIds.has(id)),
+        ),
+      );
+
+      if (sanitizedApproverIds.length !== approverUserIds.length) {
+        logger.warn('Filtered unauthorized approvers from save request', {
+          namespace,
+          activityReportId: savedReport.id,
+          requestedApproverUserIds: approverUserIds,
+          sanitizedApproverUserIds: sanitizedApproverIds,
+        });
+      }
+    } else {
+      sanitizedApproverIds = approverUserIds;
+      logger.warn('Unable to determine region when syncing approvers; skipping permission filter', {
+        namespace,
+        activityReportId: savedReport.id,
+      });
+    }
+
+    await syncApprovers(savedReport.id, sanitizedApproverIds);
   }
 
-  const [r, recips, gAndOs, oWoG] = await activityReportAndRecipientsById(savedReport.id);
+  const [reportModel, recips, gAndOs, oWoG] = await activityReportAndRecipientsById(savedReport.id);
+  const reportPlain = reportModel && reportModel.dataValues
+    ? { ...reportModel.dataValues }
+    : (reportModel || {});
+
+  const sanitizedPageState = sanitizeActivityReportPageState(
+    {
+      ...reportPlain,
+      activityRecipients: recips,
+      goalsAndObjectives: gAndOs,
+      objectivesWithoutGoals: oWoG,
+    },
+    newActivityReport.pageState || reportPlain.pageState || {},
+  );
+
+  if (!_.isEqual(reportPlain.pageState, sanitizedPageState)) {
+    await ActivityReport.update({
+      pageState: sanitizedPageState,
+    }, {
+      where: { id: savedReport.id },
+    });
+    reportPlain.pageState = sanitizedPageState;
+  }
 
   return {
-    ...r.dataValues,
-    displayId: r.displayId,
+    ...reportPlain,
+    displayId: reportModel.displayId,
+    pageState: sanitizedPageState,
     activityRecipients: recips,
     goalsAndObjectives: gAndOs,
     objectivesWithoutGoals: oWoG,

@@ -7,6 +7,7 @@ import {
   Dropdown, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
+import { Accordion } from '../../../../../components/Accordion';
 import IncompletePages from '../../../../../components/IncompletePages';
 import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 import { getEditorState } from '../../../../../utils';
@@ -27,6 +28,7 @@ const Review = ({
   pages,
   showDraftViewForApproverAndCreator,
   availableApprovers,
+  reviewItems,
 }) => {
   const { handleSubmit, register, watch } = useFormContext();
   const watchTextValue = watch('note');
@@ -52,8 +54,13 @@ const Review = ({
 
   return (
     <>
-      <h2>{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve report'}</h2>
+      <h2 className="font-family-serif">{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve'}</h2>
       <IndicatesRequiredField />
+      {reviewItems && reviewItems.length > 0 && (
+        <div className="margin-bottom-3">
+          <Accordion bordered items={reviewItems} multiselectable />
+        </div>
+      )}
       <div className="smart-hub--creator-notes" aria-label="additionalNotes">
         <p>
           <span className="text-bold">Creator notes</span>
@@ -161,6 +168,11 @@ Review.propTypes = {
   availableApprovers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
+  })).isRequired,
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    content: PropTypes.node.isRequired,
   })).isRequired,
 };
 

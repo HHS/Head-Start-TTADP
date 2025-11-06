@@ -74,6 +74,8 @@ const approvedReport = {
 };
 
 describe('createMonitoringGoals', () => {
+  // Pre-seeded data for the soft-deleted goal scenario test
+  let softDeletedGrant;
   let recipient;
   let recipientForSplitCase10;
   let recipientForMergeCase11;
@@ -2421,6 +2423,104 @@ describe('createMonitoringGoals', () => {
       name: 'Don\'t attempt to close the goal linked to this objective',
       status: 'In Progress',
     });
+
+    // Pre-seed data for: "creates a monitoring goal when an existing monitoring-template goal is soft-deleted"
+    softDeletedGrant = await Grant.create({
+      id: faker.datatype.number({ min: 9999 }),
+      number: uuidv4(),
+      recipientId: recipient.id,
+      regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
+      status: 'Active',
+    });
+
+    const reviewId = uuidv4();
+    const granteeId = uuidv4();
+    const findingId = uuidv4();
+
+    await MonitoringReviewGrantee.create({
+      id: faker.datatype.number({ min: 9999 }),
+      grantNumber: softDeletedGrant.number,
+      reviewId,
+      granteeId,
+      createTime: new Date(),
+      updateTime: new Date(),
+      updateBy: 'Support Team',
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    });
+
+    // Use existing complete statusId=1 and allowed review type within window.
+    await MonitoringReview.create({
+      reviewId,
+      contentId: uuidv4(),
+      statusId: 1, // 'Complete'
+      name: faker.random.words(3),
+      startDate: new Date(),
+      endDate: new Date(),
+      reviewType: 'RAN',
+      reportDeliveryDate: new Date(),
+      reportAttachmentId: uuidv4(),
+      outcome: faker.random.words(5),
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    });
+
+    // Finding history linked to the review; statusId aligns with MonitoringReviewStatus id=1 (Complete).
+    await MonitoringFindingHistory.create({
+      reviewId,
+      findingHistoryId: uuidv4(),
+      findingId,
+      statusId: 1,
+      narrative: faker.random.words(10),
+      ordinal: faker.datatype.number({ min: 1, max: 10 }),
+      determination: faker.random.words(5),
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+      sourceDeletedAt: null,
+    });
+
+    // Active finding status: use MonitoringFindingStatus id=1 which is 'Active' in setup.
+    await MonitoringFinding.create({
+      findingId,
+      statusId: 1,
+      findingType: faker.random.word(),
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    });
+
+    await MonitoringFindingGrant.create({
+      findingId,
+      granteeId,
+      statusId: 1,
+      findingType: faker.random.word(),
+      source: faker.random.word(),
+      correctionDeadLine: new Date(),
+      reportedDate: new Date(),
+      closedDate: null,
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+      sourceDeletedAt: null,
+    });
+
+    // Seed a monitoring-template goal for this grant and soft-delete it so it should be ignored by step 1.
+    const toSoftDelete = await Goal.create({
+      id: faker.datatype.number({ min: 9999 }),
+      name: goalTemplateName,
+      grantId: softDeletedGrant.id,
+      goalTemplateId: goalTemplate.id,
+      status: 'Not Started',
+      createdVia: 'activityReport',
+    });
+    await toSoftDelete.destroy(); // sets deletedAt (paranoid)
+
+    // Ensure the materialized view includes the new grant.
+    await GrantRelationshipToActive.refresh();
   });
 
   afterEach(() => {
@@ -2454,6 +2554,20 @@ describe('createMonitoringGoals', () => {
     expect(grant1Goals[0].goalTemplateId).toBe(goalTemplate.id);
     expect(grant1Goals[0].name).toBe(goalTemplateName);
     expect(grant1Goals[0].status).toBe('Not Started');
+
+    // Ensure initial GoalStatusChange was inserted for the created goal (creation event).
+    const goalChangeStatus1 = await GoalStatusChange.findOne({
+      where: {
+        goalId: grant1Goals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus1).not.toBeNull();
+    expect(goalChangeStatus1.userId).toBeNull();
+    expect(goalChangeStatus1.userName).toBeNull();
 
     // CASE 2: Does not create a monitoring goal for a grant that already has one.
     const grant2Goals = await Goal.findAll({ where: { grantId: grantThatAlreadyHasMonitoringGoal2.id } });
@@ -2493,6 +2607,20 @@ describe('createMonitoringGoals', () => {
     expect(grant9Goals[0].name).toBe(goalTemplateName);
     expect(grant9Goals[0].status).toBe('Not Started');
 
+    // Ensure initial GoalStatusChange exists for this created goal as well.
+    const goalChangeStatus9 = await GoalStatusChange.findOne({
+      where: {
+        goalId: grant9Goals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus9).not.toBeNull();
+    expect(goalChangeStatus9.userId).toBeNull();
+    expect(goalChangeStatus9.userName).toBeNull();
+
     // CASE 10: Creates a monitoring goal ONLY for the grant that initially had the monitoring goal and does NOT create one for the split grant..
     const grant10AGoals = await Goal.findAll({ where: { grantId: grantBeingMonitoredSplit10A.id } });
     expect(grant10AGoals.length).toBe(1);
@@ -2501,6 +2629,20 @@ describe('createMonitoringGoals', () => {
     const grant10CGoals = await Goal.findAll({ where: { grantId: grantBeingMonitoredSplit10B.id } });
     expect(grant10CGoals.length).toBe(1);
     expect(grant10CGoals[0].goalTemplateId).toBe(goalTemplate.id);
+
+    // Ensure initial GoalStatusChange for the newly created split goal (10B)
+    const goalChangeStatus10B = await GoalStatusChange.findOne({
+      where: {
+        goalId: grant10CGoals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus10B).not.toBeNull();
+    expect(goalChangeStatus10B.userId).toBeNull();
+    expect(goalChangeStatus10B.userName).toBeNull();
 
     const grant10BGoals = await Goal.findAll({ where: { grantId: grantBeingMonitoredSplit10C.id } });
     expect(grant10BGoals.length).toBe(0);
@@ -2518,20 +2660,55 @@ describe('createMonitoringGoals', () => {
     expect(grant11CGoals.length).toBe(1);
     expect(grant11CGoals[0].goalTemplateId).toBe(goalTemplate.id);
 
-    // CASE 12: Reopen closed monitoring goal if it meets the criteria.
-    const grant12Goals = await Goal.findAll({ where: { grantId: grantReopenMonitoringGoal12.id } });
-    expect(grant12Goals.length).toBe(1);
-    expect(grant12Goals[0].goalTemplateId).toBe(goalTemplate.id);
-    expect(grant12Goals[0].status).toBe('Not Started');
+    // Ensure initial GoalStatusChange for the newly created merged goal (11C)
+    const goalChangeStatus11C = await GoalStatusChange.findOne({
+      where: {
+        goalId: grant11CGoals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus11C).not.toBeNull();
+    expect(goalChangeStatus11C.userId).toBeNull();
+    expect(goalChangeStatus11C.userName).toBeNull();
 
-    // Ensure the correct GoalChangeStatus has been created.
-    const goalChangeStatus12 = await GoalStatusChange.findOne({ where: { goalId: goalForReopen12.id } });
-    expect(goalChangeStatus12).not.toBeNull();
-    expect(goalChangeStatus12.userId).toBeNull();
-    expect(goalChangeStatus12.oldStatus).toBe('Closed');
-    expect(goalChangeStatus12.newStatus).toBe('Not Started');
-    expect(goalChangeStatus12.userName).toBe('system');
-    expect(goalChangeStatus12.reason).toBe('Active monitoring citations');
+    // CASE 12: Create a new monitoring goal when an existing one is closed; keep old closed.
+    const grant12Goals = await Goal.findAll({ where: { grantId: grantReopenMonitoringGoal12.id } });
+    expect(grant12Goals.length).toBe(2);
+    // Old closed goal remains closed.
+    const closedOldGoal = grant12Goals.find((g) => g.id === goalForReopen12.id);
+    expect(closedOldGoal).toBeTruthy();
+    expect(closedOldGoal.status).toBe('Closed');
+    // New goal is created in Not Started using the monitoring template.
+    const newMonitoringGoal = grant12Goals.find((g) => g.id !== goalForReopen12.id
+      && g.goalTemplateId === goalTemplate.id
+      && g.createdVia === 'monitoring');
+    expect(newMonitoringGoal).toBeTruthy();
+    expect(newMonitoringGoal.status).toBe('Not Started');
+    // Ensure initial GoalStatusChange exists for the newly created goal (creation event).
+    const goalChangeStatus12New = await GoalStatusChange.findOne({
+      where: {
+        goalId: newMonitoringGoal.id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus12New).not.toBeNull();
+    expect(goalChangeStatus12New.userId).toBeNull();
+    expect(goalChangeStatus12New.userName).toBeNull();
+    // Ensure we did NOT change status on the old closed goal.
+    const noReopenOld = await GoalStatusChange.findOne({
+      where: {
+        goalId: goalForReopen12.id,
+        oldStatus: 'Closed',
+        newStatus: 'Not Started',
+      },
+    });
+    expect(noReopenOld).toBeNull();
 
     // CASE 13: Does not auto-close monitoring goal that no longer has any active citations.
     const grant13Goals = await Goal.findAll({ where: { grantId: grantClosedMonitoringGoal13.id } });
@@ -2541,7 +2718,17 @@ describe('createMonitoringGoals', () => {
 
     /* Commenting out temporarily since we're not auto-closing goals
     // Ensure the correct GoalChangeStatus has been created.
-    const goalChangeStatus13 = await GoalStatusChange.findOne({ where: { goalId: goalForClose13.id } });
+    // with goal hooks (createInitialStatusChange), there will be two status changes:
+    // 1. the initial status change (oldStatus=null, newStatus='Closed')
+    // 2. the status change from 'Closed' to 'Not Started'
+    // we need to find the second one
+    const goalChangeStatus13 = await GoalStatusChange.findOne({
+      where: {
+        goalId: goalForClose13.id,
+        oldStatus: 'Not started',
+        newStatus: 'Closed',
+      },
+    });
     expect(goalChangeStatus13).not.toBeNull();
     expect(goalChangeStatus13.userId).toBeNull();
     expect(goalChangeStatus13.oldStatus).toBe('Not started');
@@ -2564,8 +2751,19 @@ describe('createMonitoringGoals', () => {
 
     // CASE 16 & 17: We should not open or close goals without createdVia='monitoring'
     const grant16Goals = await Goal.findAll({ where: { grantId: grantWithNonMonitoringGoalToOpen16.id } });
-    expect(grant16Goals.length).toBe(1);
-    expect(grant16Goals[0].status).toBe('Closed');
+    expect(grant16Goals.length).toBe(2);
+
+    // Assert of the two goals one is closed one is open for the same grant. The one that is closed should have createdVia activityReport the one that is open should have created via monitoring
+    const closedMonitoringGoal = grant16Goals.find((goal) => goal.status === 'Closed');
+    const openMonitoringGoal = grant16Goals.find((goal) => goal.status === 'Not Started');
+    expect(closedMonitoringGoal).not.toBeNull();
+    expect(closedMonitoringGoal.createdVia).toBe('activityReport');
+    expect(closedMonitoringGoal.goalTemplateId).toBe(goalTemplate.id);
+    expect(closedMonitoringGoal.grantId).toBe(grantWithNonMonitoringGoalToOpen16.id);
+    expect(openMonitoringGoal).not.toBeNull();
+    expect(openMonitoringGoal.createdVia).toBe('monitoring');
+    expect(openMonitoringGoal.grantId).toBe(grantWithNonMonitoringGoalToOpen16.id);
+    expect(openMonitoringGoal.goalTemplateId).toBe(goalTemplate.id);
 
     const grant17Goals = await Goal.findAll({ where: { grantId: grantWithNonMonitoringGoalToClose17.id } });
     expect(grant17Goals.length).toBe(1);
@@ -2575,9 +2773,8 @@ describe('createMonitoringGoals', () => {
     expect(grant18Goals.length).toBe(1);
     expect(grant18Goals[0].status).toBe('In Progress');
   };
-  // TODO: Figure out why this test is failing in CI, but works locally.
-  // eslint-disable-next-line jest/no-disabled-tests -- fails in CI, but works locally.
-  it.skip('creates monitoring goals for grants that need them', async () => {
+
+  it('creates monitoring goals for grants that need them', async () => {
     // 1st Run of the CRON job.
     await createMonitoringGoals();
     await assertMonitoringGoals();
@@ -2594,5 +2791,28 @@ describe('createMonitoringGoals', () => {
     jest.spyOn(auditLogger, 'error');
     await expect(createMonitoringGoals()).rejects.toThrow();
     expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Error creating monitoring:'));
+  });
+
+  it('creates a monitoring goal when an existing monitoring-template goal is soft-deleted (ignored by step 1)', async () => {
+    // Run job and assert a new monitoring goal is created for the pre-seeded grant.
+    await createMonitoringGoals();
+
+    const goals = await Goal.findAll({ where: { grantId: softDeletedGrant.id } });
+    expect(goals.length).toBe(1);
+    expect(goals[0].goalTemplateId).toBe(goalTemplate.id);
+    expect(goals[0].createdVia).toBe('monitoring');
+    expect(goals[0].status).toBe('Not Started');
+
+    // Ensure initial status change exists for the newly created goal.
+    const gsc = await GoalStatusChange.findOne({
+      where: {
+        goalId: goals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(gsc).not.toBeNull();
   });
 });

@@ -641,7 +641,6 @@ describe('Groups service', () => {
         individuals: [mockUserTwo.id], // Switch sharedWith (opposite).
         sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
       });
-
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('name');
       expect(result.name).toBe('Group 1 with collaborators EDITED');

@@ -156,6 +156,7 @@ const reportObject = {
   activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
   version: 2,
   language: ['English', 'Spanish'],
+  activityReason: 'Recipient requested',
 };
 
 const submittedReport = {
@@ -395,6 +396,12 @@ describe('Activity report service', () => {
         roleId: cor.id,
       });
 
+      await Permission.create({
+        userId: mockUserTwo.id,
+        regionId: 1,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      });
+
       await Grant.create({
         id: RECIPIENT_ID,
         number: 1,
@@ -547,11 +554,12 @@ describe('Activity report service', () => {
     describe('createOrUpdate', () => {
       it('updates an already saved report', async () => {
         const report = await ActivityReport.create({ ...reportObject, id: 3334 });
-        await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }] }, report);
+        await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }], activityReason: 'Regional Office requested' }, report);
         expect(report.activityRecipientType).toEqual('recipient');
         expect(report.calculatedStatus).toEqual('draft');
         expect(report.ECLKCResourcesUsed).toEqual(['updated']);
         expect(report.language).toStrictEqual(['English', 'Spanish']);
+        expect(report.activityReason).toEqual('Regional Office requested');
         expect(report.id).toEqual(3334);
       });
 
@@ -610,11 +618,7 @@ describe('Activity report service', () => {
         expect(report.activityRecipients[0].id).toBe(RECIPIENT_ID);
         // Check afterCreate copySubmissionStatus hook
         expect(report.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
-      });
-
-      it('creates a new report with other-entity recipient', async () => {
-        const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'other-entity' });
-        expect(report.activityRecipients[0].id).toBe(RECIPIENT_ID);
+        expect(report.activityReason).toEqual('Recipient requested');
       });
 
       it('handles reports with collaborators', async () => {

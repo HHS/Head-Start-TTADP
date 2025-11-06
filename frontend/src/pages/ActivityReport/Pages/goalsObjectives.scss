@@ -1,0 +1,12 @@
+.smart-hub-activity-report .ttahub-plus-button-no-margin-top {
+    margin-top: 0px
+}
+/*
+/* Fix for Firefox fieldset width issue */
+/* by default FF sets the min-width to the min-content size of the fieldset. */
+.smart-hub-activity-report fieldset {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    display: block;
+}

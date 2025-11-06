@@ -9,8 +9,10 @@ import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import RecipientReviewSection from '../RecipientReviewSection';
 import GoalFormContext from '../../../../../GoalFormContext';
+import { OBJECTIVE_STATUS } from '../../../../../Constants';
 
 const defaultGoalsAndObjectives = [{
   id: 1,
@@ -23,7 +25,7 @@ const defaultGoalsAndObjectives = [{
     title: 'Goal 1 - Objective 1',
     topics: [],
     ttaProvided: '<p>TTA Provided for Goal 1 - Objective 1</p>',
-    status: 'In Progress',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
     courses: [],
     resources: [
       {
@@ -53,7 +55,7 @@ const defaultGoalsAndObjectives = [{
     title: 'Goal 1 - Objective 2',
     topics: [],
     ttaProvided: '<p>TTA Provided for Goal 1 - Objective 2</p>',
-    status: 'Not Started',
+    status: GOAL_STATUS.NOT_STARTED,
     courses: [],
     resources: [
       {
@@ -82,7 +84,7 @@ const defaultGoalsAndObjectives = [{
     title: 'Goal 2 - Objective 1',
     topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }],
     ttaProvided: '<p>TTA Provided for Goal 2 - Objective 1</p>',
-    status: 'Suspended',
+    status: OBJECTIVE_STATUS.SUSPENDED,
     courses: [],
     resources: [
       {
@@ -109,7 +111,7 @@ const defaultGoalsAndObjectives = [{
 {
   id: 90740,
   name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
-  status: 'In Progress',
+  status: GOAL_STATUS.IN_PROGRESS,
   endDate: '',
   isCurated: true,
   grantId: 11597,
@@ -124,7 +126,7 @@ const defaultGoalsAndObjectives = [{
   prompts: [],
   statusChanges: [
     {
-      oldStatus: 'Not Started',
+      oldStatus: GOAL_STATUS.NOT_STARTED,
     },
   ],
   activityReportGoals: [
@@ -135,7 +137,7 @@ const defaultGoalsAndObjectives = [{
       goalId: 90740,
       isRttapa: null,
       name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       timeframe: null,
       closeSuspendReason: null,
       closeSuspendContext: null,
@@ -150,7 +152,7 @@ const defaultGoalsAndObjectives = [{
       otherEntityId: null,
       goalId: 90740,
       title: 'test',
-      status: 'In Progress',
+      status: OBJECTIVE_STATUS.IN_PROGRESS,
       objectiveTemplateId: 565,
       onAR: true,
       onApprovedAR: true,
@@ -247,7 +249,7 @@ const RenderRecipientReviewSection = ({ goalsAndObjectives }) => {
 
   hookForm.watch = () => ({
     goalsAndObjectives,
-    calculatedStatus: 'Draft',
+    calculatedStatus: GOAL_STATUS.DRAFT,
   });
 
   return (
@@ -280,7 +282,6 @@ describe('RecipientReviewSection', () => {
 
     // Goal 1
     expect(screen.getByText(/this is my 1st goal title/i)).toBeInTheDocument();
-    expect(screen.getByText(/Goal Source 1/i)).toBeInTheDocument();
 
     // Goal 1 - Objective 1
     expect(screen.getByText('Goal 1 - Objective 1')).toBeInTheDocument();
@@ -301,7 +302,6 @@ describe('RecipientReviewSection', () => {
 
     // Goal 2
     expect(screen.getByText(/this is my 2nd goal title/i)).toBeInTheDocument();
-    expect(screen.getByText(/Goal Source 2/i)).toBeInTheDocument();
 
     // Goal 2 - Objective 1
     expect(screen.getByText('Goal 2 - Objective 1')).toBeInTheDocument();
@@ -354,8 +354,8 @@ describe('RecipientReviewSection', () => {
     expect(screen.queryAllByText(/Goal summary/i).length).toBe(1);
     expect(screen.getByText(/this is my 1st goal title/i)).toBeInTheDocument();
 
-    // Expect the text 'Root cause' to be displayed 3 times.
-    expect(screen.queryAllByText(/Root cause/i).length).toBe(3);
+    // Expect the text 'Root cause' to be displayed once.
+    expect(screen.queryAllByText(/Root cause/i).length).toBe(1);
 
     // Assert Response 1 and Response 2 are displayed.
     expect(screen.getByText(/response 1, response 2/i)).toBeInTheDocument();
@@ -371,5 +371,172 @@ describe('RecipientReviewSection', () => {
 
     // Assert 'Missing information' is displayed once.
     expect(screen.queryAllByText(/Missing Information/).length).toBe(1);
+  });
+
+  it('prefers live goals over goalsAndObjectives (shows updated TTA provided)', async () => {
+    const stale = [{
+      id: 10,
+      name: 'Goal A',
+      goalNumbers: ['G-10'],
+      objectives: [{
+        id: 100,
+        title: 'Obj A1',
+        ttaProvided: '<p>Old TTA</p>',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        citations: [],
+      }],
+    }];
+
+    const live = [{
+      id: 10,
+      name: 'Goal A',
+      goalNumbers: ['G-10'],
+      objectives: [{
+        id: 100,
+        title: 'Obj A1',
+        ttaProvided: '<p>New TTA</p>',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        citations: [],
+      }],
+    }];
+
+    // wrap useForm inside a function component to satisfy React Hooks rules
+    const RenderWithLiveGoals = () => {
+      const history = createMemoryHistory();
+      const hookForm = useForm();
+      hookForm.getValues = () => ({ activityRecipients: [] });
+      hookForm.watch = () => ({
+        goalsAndObjectives: stale,
+        goals: live,
+        calculatedStatus: GOAL_STATUS.DRAFT,
+      });
+
+      return (
+        <Router history={history}>
+          <FormProvider {...hookForm}>
+            <RecipientReviewSection />
+          </FormProvider>
+        </Router>
+      );
+    };
+
+    render(<RenderWithLiveGoals />);
+
+    expect(await screen.findByText('New TTA')).toBeInTheDocument();
+    expect(screen.queryByText('Old TTA')).not.toBeInTheDocument();
+  });
+
+  it('uses goalForEditing when present (even if selectedGoals are empty)', async () => {
+    const stale = [{
+      id: 20,
+      name: 'Goal B',
+      goalNumbers: ['G-20'],
+      objectives: [{
+        id: 200,
+        title: 'Obj B1',
+        ttaProvided: '<p>Old Edit</p>',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        citations: [],
+      }],
+    }];
+
+    const editing = {
+      id: 20,
+      name: 'Goal B',
+      goalNumbers: ['G-20'],
+      objectives: [{
+        id: 200,
+        title: 'Obj B1',
+        ttaProvided: '<p>Live Edit</p>',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        citations: [],
+      }],
+    };
+
+    // wrap useForm inside a function component to satisfy React Hooks rules
+    const RenderWithGoalForEditing = () => {
+      const history = createMemoryHistory();
+      const hookForm = useForm();
+      hookForm.getValues = () => ({ activityRecipients: [] });
+      hookForm.watch = () => ({
+        goalsAndObjectives: stale,
+        goals: [],
+        goalForEditing: editing,
+        calculatedStatus: GOAL_STATUS.DRAFT,
+      });
+
+      return (
+        <Router history={history}>
+          <FormProvider {...hookForm}>
+            <RecipientReviewSection />
+          </FormProvider>
+        </Router>
+      );
+    };
+
+    render(<RenderWithGoalForEditing />);
+
+    expect(await screen.findByText('Live Edit')).toBeInTheDocument();
+    expect(screen.queryByText('Old Edit')).not.toBeInTheDocument();
+  });
+
+  it('falls back to goalsAndObjectives when no live goals are present', async () => {
+    const stale = [{
+      id: 30,
+      name: 'Goal C',
+      goalNumbers: ['G-30'],
+      objectives: [{
+        id: 300,
+        title: 'Obj C1',
+        ttaProvided: '<p>Only Snapshot</p>',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        citations: [],
+      }],
+    }];
+
+    // wrap useForm inside a function component to satisfy React Hooks rules
+    const RenderWithFallback = () => {
+      const history = createMemoryHistory();
+      const hookForm = useForm();
+      hookForm.getValues = () => ({ activityRecipients: [] });
+      hookForm.watch = () => ({
+        goalsAndObjectives: stale,
+        goals: [],
+        goalForEditing: null,
+        calculatedStatus: GOAL_STATUS.DRAFT,
+      });
+
+      return (
+        <Router history={history}>
+          <FormProvider {...hookForm}>
+            <RecipientReviewSection />
+          </FormProvider>
+        </Router>
+      );
+    };
+
+    render(<RenderWithFallback />);
+
+    expect(await screen.findByText('Only Snapshot')).toBeInTheDocument();
   });
 });

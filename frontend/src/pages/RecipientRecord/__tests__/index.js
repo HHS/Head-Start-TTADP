@@ -132,7 +132,6 @@ describe('recipient record page', () => {
   });
 
   it('shows the recipient name', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/recipient/undefined/region/45/leadership', []);
     act(() => renderRecipientRecord());
@@ -142,7 +141,6 @@ describe('recipient record page', () => {
   });
 
   it('handles a 404', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 404);
     fetchMock.get('/api/recipient/undefined/region/45/leadership', []);
     act(() => renderRecipientRecord());
@@ -151,8 +149,7 @@ describe('recipient record page', () => {
     expect(recipientName.textContent).toEqual(' - Region 45');
   });
 
-  it('handles an error fetching merge permissions', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', 500);
+  it('renders correctly when recipient data fetch succeeds', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/recipient/undefined/region/45/leadership', []);
     act(() => renderRecipientRecord());
@@ -162,7 +159,6 @@ describe('recipient record page', () => {
   });
 
   it('renders the navigation', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/recipient/undefined/region/45/leadership', []);
     act(() => renderRecipientRecord());
@@ -174,7 +170,6 @@ describe('recipient record page', () => {
   });
 
   it('handles recipient not found', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 404);
     const spy = jest.spyOn(memoryHistory, 'push');
     await act(async () => renderRecipientRecord());
@@ -184,7 +179,6 @@ describe('recipient record page', () => {
   });
 
   it('handles fetch error', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 500);
     const spy = jest.spyOn(memoryHistory, 'push');
     act(() => renderRecipientRecord());
@@ -194,7 +188,6 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the profile page', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/recipient/1/region/45/leadership', []);
     memoryHistory.push('/recipient-tta-records/1/region/45/profile');
@@ -204,7 +197,6 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the tta history page', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/1/region/45/tta-history');
     act(() => renderRecipientRecord());
@@ -222,7 +214,6 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the goals & objectives page', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/1/region/45/rttapa');
     act(() => renderRecipientRecord());
@@ -231,7 +222,6 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the print goals page', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false', { goalRows: [] });
     memoryHistory.push('/recipient-tta-records/45/region/1/rttapa/print');
@@ -241,7 +231,6 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the communication log page', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/communication-logs/region/1/log/1', 404);
     memoryHistory.push('/recipient-tta-records/45/region/1/communication/1/view');
@@ -252,7 +241,6 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the communication log form', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/45/region/1/communication/new/log');
     act(() => renderRecipientRecord());
@@ -261,7 +249,6 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the communication logs', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/communication-logs/region/45/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', []);
     memoryHistory.push('/recipient-tta-records/45/region/1/communication');
@@ -271,7 +258,6 @@ describe('recipient record page', () => {
   });
 
   it('renders communication log header with correct structure', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/communication-logs/region/45/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', []);
     memoryHistory.push('/recipient-tta-records/45/region/1/communication');
@@ -288,18 +274,7 @@ describe('recipient record page', () => {
     expect(addButton.getAttribute('href')).toBe('/recipient-tta-records/1/region/45/communication/new');
   });
 
-  it('navigates to the merge goals page', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
-    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/recipient/1/region/45/group/1', { goalRows: [] });
-    memoryHistory.push('/recipient-tta-records/1/region/45/goals/merge/1');
-    act(() => renderRecipientRecord());
-    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    expect(await screen.findByText(/These goals might be duplicates/i)).toBeInTheDocument();
-  });
-
   it('navigates to the goal name form', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/goal-templates?grantIds=10', []);
     memoryHistory.push('/recipient-tta-records/1/region/45/goals/new');
@@ -309,7 +284,6 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the restart standard goal', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/goal-templates?grantIds=10', []);
     fetchMock.get('/api/goal-templates/standard/10/grant/10?status=Closed', {
@@ -324,15 +298,14 @@ describe('recipient record page', () => {
         numberWithProgramTypes: '1234 EHS',
       },
     });
-    fetchMock.get('/api/goal-templates/10/prompts', []);
+    fetchMock.get('/api/goal-templates/10/prompts', [[], []]);
     memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals/10/grant/10/restart');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    expect(await screen.findByText(/Goal G-1234/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Recipient TTA goal/i)).toBeInTheDocument();
   });
 
   it('navigates to the update standard goal', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/goal-templates?grantIds=10', []);
     fetchMock.get('/api/goal-templates/standard/10/grant/10', {
@@ -347,21 +320,11 @@ describe('recipient record page', () => {
         numberWithProgramTypes: '1234 EHS',
       },
     });
-    fetchMock.get('/api/goal-templates/10/prompts', []);
+    fetchMock.get('/api/goal-templates/10/prompts', [[], []]);
     memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals/10/grant/10');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     expect(await screen.findByText(/Goal G-1234/i)).toBeInTheDocument();
-  });
-
-  it('navigates to the standard goal form', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
-    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/goal-templates?grantIds=10', []);
-    memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals');
-    act(() => renderRecipientRecord());
-    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    expect(await screen.findByText(/Recipient TTA goal/i)).toBeInTheDocument();
   });
 
   describe('PageWithHeading', () => {

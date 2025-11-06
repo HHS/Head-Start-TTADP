@@ -2,24 +2,20 @@ import { Op } from 'sequelize';
 import {
   goalsByIdsAndActivityReport,
   goalByIdAndActivityReport,
-  createObjectivesForGoal,
-  saveGoalsForReport,
   goalsForGrants,
   getReportCountForGoals,
   verifyAllowedGoalStatusTransition,
   updateGoalStatusById,
   createMultiRecipientGoalsFromAdmin,
   goalRegionsById,
-  mergeGoals,
   removeRemovedRecipientsGoals,
   setActivityReportGoalAsActivelyEdited,
   createOrUpdateGoals,
   goalByIdWithActivityReportsAndRegions,
-  getGoalIdsBySimilarity,
   destroyGoal,
   mapGrantsWithReplacements,
-  groupSimilarGoalsByGrant,
 } from './goals';
+import { saveStandardGoalsForReport } from '../services/standardGoals';
 import {
   sequelize,
   Goal,
@@ -33,9 +29,14 @@ import {
   Resource,
   Topic,
   File,
-  GoalFieldResponse,
+  User,
+  Recipient,
 } from '../models';
-import { GOAL_STATUS, OBJECTIVE_STATUS, SOURCE_FIELD } from '../constants';
+import {
+  GOAL_STATUS,
+  OBJECTIVE_STATUS,
+  SOURCE_FIELD,
+} from '../constants';
 import changeGoalStatus from './changeGoalStatus';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import { auditLogger } from '../logger';
@@ -43,13 +44,8 @@ import extractObjectiveAssociationsFromActivityReportObjectives
   from './extractObjectiveAssociationsFromActivityReportObjectives';
 import { reduceGoals } from './reduceGoals';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
-import { similarGoalsForRecipient } from '../services/similarity';
-import {
-  getSimilarityGroupsByRecipientId,
-} from '../services/goalSimilarityGroup';
-import {
-  mergeCollaborators,
-} from '../models/helpers/genericCollaborator';
+import * as reportCache from '../services/reportCache';
+import {} from '../models/helpers/genericCollaborator';
 
 jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
@@ -62,24 +58,20 @@ jest.mock('./wasGoalPreviouslyClosed');
 jest.mock('./extractObjectiveAssociationsFromActivityReportObjectives');
 jest.mock('./reduceGoals');
 
-jest.mock('../services/reportCache');
+jest.mock('../services/reportCache', () => {
+  const originalModule = jest.requireActual('../services/reportCache');
+  return {
+    ...originalModule,
+    cacheGoalMetadata: jest.fn(),
+  };
+});
 jest.mock('../services/goalTemplates', () => ({
   setFieldPromptsForCuratedTemplate: jest.fn(),
 }));
 jest.mock('express-http-context', () => ({
   get: jest.fn().mockReturnValue(1), // Mock userId
 }));
-jest.mock('../services/similarity', () => ({
-  similarGoalsForRecipient: jest.fn(),
-}));
-jest.mock('../services/goalSimilarityGroup', () => ({
-  getSimilarityGroupsByRecipientId: jest.fn(),
-  createSimilarityGroup: jest.fn(),
-  setSimilarityGroupAsUserMerged: jest.fn(),
-}));
-jest.mock('../models/helpers/genericCollaborator', () => ({
-  mergeCollaborators: jest.fn(),
-}));
+jest.mock('../models/helpers/genericCollaborator', () => ({}));
 
 jest.mock('./getGoalsForReport', () => ({
   __esModule: true, // This property helps Jest handle both default and named exports
@@ -494,13 +486,13 @@ describe('Goals DB service', () => {
             },
           },
         ]);
-        await saveGoalsForReport([], { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
         expect(Objective.destroy).not.toHaveBeenCalled();
       });
 
       it('deletes the ActivityReportObjective', async () => {
         ActivityReportObjective.findAll.mockResolvedValue([]);
-        await saveGoalsForReport([], { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
         // with an empty result set no db call will be made
         expect(ActivityReportObjective.destroy).not.toHaveBeenCalled();
       });
@@ -535,7 +527,7 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        await saveGoalsForReport([], { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
 
         expect(Goal.destroy).toHaveBeenCalled();
       });
@@ -578,7 +570,7 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        await saveGoalsForReport([], { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
         expect(Goal.destroy).not.toHaveBeenCalled();
       });
 
@@ -620,70 +612,74 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        await saveGoalsForReport([], { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
         expect(Goal.destroy).not.toHaveBeenCalled();
       });
     });
 
     it('creates new goals', async () => {
+      GoalTemplate.findByPk = jest.fn().mockResolvedValue({ id: 1, templateName: 'template name', standard: 'Standard' });
       ActivityReportGoal.create.mockResolvedValue([
         {
           goalId: mockGoalId,
         },
       ]);
 
-      await saveGoalsForReport([
+      await saveStandardGoalsForReport([
         {
           isNew: true, grantIds: [mockGrantId], name: 'name', status: 'Closed', objectives: [],
         },
-      ], { id: mockActivityReportId });
+      ], 1, { id: mockActivityReportId });
       expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
         createdVia: 'activityReport',
         grantId: mockGrantId,
-        name: 'name',
-        status: 'Closed',
+        goalTemplateId: 1,
+        name: 'template name',
+        status: 'Not Started',
       }), { individualHooks: true });
     });
 
-    it('creates a monitoring goal only when the grant has an existing monitoring goal', async () => {
+    it('creates monitoring goal ar cache only when the grant has an existing monitoring goal', async () => {
       const mockMonitoringGoal = {
         id: 1,
         grantId: mockGrantId,
         name: 'Monitoring Goal',
         status: 'In Progress',
         objectives: [],
+        goalTemplateId: 1,
       };
 
       GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Monitoring' });
       Goal.findAll = jest.fn().mockResolvedValue([{ ...mockMonitoringGoal }]);
 
-      await saveGoalsForReport([
+      await saveStandardGoalsForReport([
         {
           isNew: true, grantIds: [mockGrantId], name: 'Create Monitoring Goal', status: 'In progress', objectives: [], goalTemplateId: 1,
         },
-      ], { id: mockActivityReportId });
+      ], 1, { id: mockActivityReportId });
 
-      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
-        createdVia: 'activityReport',
-        grantId: mockGrantId,
-        name: 'Create Monitoring Goal',
-        status: 'In progress',
-      }), { individualHooks: true });
+      // Because there is already a monitoring goal for this grant, it should not create a new one.
+      expect(Goal.create).not.toHaveBeenCalled();
+
+      // Expect that cacheGoalMetadata in reportCache.js was
+      // called as we still need to create the ARG.
+      expect(reportCache.cacheGoalMetadata).toHaveBeenCalled();
     });
 
     it('does not create a monitoring goal when the grant does not have an existing monitoring goal', async () => {
       GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Monitoring' });
       Goal.findAll = jest.fn().mockResolvedValue([]);
-      await saveGoalsForReport([
+      await saveStandardGoalsForReport([
         {
           isNew: true, grantIds: [mockGrantId], name: 'Dont create a monitoring goal', status: 'In progress', objectives: [], goalTemplateId: 1,
         },
-      ], { id: mockActivityReportId });
+      ], 1, { id: mockActivityReportId });
 
       expect(Goal.create).not.toHaveBeenCalledWith();
+      expect(reportCache.cacheGoalMetadata).not.toHaveBeenCalled();
     });
 
-    it('creates a monitoring goal for only the grants that has an existing monitoring goal', async () => {
+    it('creates a monitoring goal for only the grants that have an existing monitoring goal', async () => {
       GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Monitoring' });
       const mockMonitoringGoal = {
         id: 2,
@@ -691,6 +687,7 @@ describe('Goals DB service', () => {
         name: 'Monitoring Goal',
         status: 'In Progress',
         objectives: [],
+        goalTemplateId: 1,
       };
 
       Goal.findAll = jest.fn().mockResolvedValue([
@@ -698,52 +695,39 @@ describe('Goals DB service', () => {
         { ...mockMonitoringGoal, grantId: 3 },
       ]);
 
-      await saveGoalsForReport([
+      await saveStandardGoalsForReport([
         {
           isNew: true, grantIds: [1, 2, 3], name: 'Create some monitoring goals', status: 'In progress', objectives: [], goalTemplateId: 1,
         },
-      ], { id: mockActivityReportId });
+      ], 1, { id: mockActivityReportId });
 
-      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining(
+      expect(Goal.create).not.toHaveBeenCalledWith();
+
+      // Assert that cacheGoalMetadata was called twice with specific arguments
+      expect(reportCache.cacheGoalMetadata).toHaveBeenNthCalledWith(
+        1,
         {
-          createdVia: 'activityReport',
-          grantId: 2,
-          name: 'Create some monitoring goals',
-          status: 'In progress',
+          goalTemplateId: 1, grantId: 2, id: 2, name: 'Monitoring Goal', objectives: [], status: 'In Progress',
         },
+        10000007,
+        false,
+        [],
+      );
+
+      expect(reportCache.cacheGoalMetadata).toHaveBeenNthCalledWith(
+        2,
         {
-          createdVia: 'activityReport',
-          grantId: 3,
-          name: 'Create some monitoring goals',
-          status: 'In progress',
+          goalTemplateId: 1, grantId: 3, id: 2, name: 'Monitoring Goal', objectives: [], status: 'In Progress',
         },
-      ), { individualHooks: true });
-    });
-
-    it('can use existing goals', async () => {
-      ActivityReportGoal.findOne.mockResolvedValue({
-        goalId: mockGoalId,
-        activityReportId: mockActivityReportId,
-      });
-      const existingGoal = {
-        id: mockGoalId,
-        name: 'name',
-        objectives: [],
-        grantIds: [mockGrantId, mockGrantId + 1],
-        goalIds: [mockGoalId],
-      };
-
-      const set = jest.fn();
-      Goal.findOne.mockResolvedValue({
-        id: mockGoalId, update: jest.fn(), set, save: jest.fn(),
-      });
-      await saveGoalsForReport([existingGoal], { id: mockActivityReportId });
-      expect(set).toHaveBeenCalledWith({
-        name: 'name',
-      });
+        10000007,
+        false,
+        [],
+      );
     });
 
     it('can create new objectives', async () => {
+      // Mock GoalTemplate.findByPk to return a standard goal template
+      GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Standard' });
       ActivityReportGoal.findOne.mockResolvedValue([
         {
           id: mockActivityReportGoalId,
@@ -781,16 +765,19 @@ describe('Goals DB service', () => {
           status: '',
         }],
       };
-      await saveGoalsForReport([goalWithNewObjective], { id: mockActivityReportId });
+      await saveStandardGoalsForReport([goalWithNewObjective], 1, { id: mockActivityReportId });
       expect(Objective.create).toHaveBeenCalledWith({
         createdVia: 'activityReport',
         goalId: mockGoalId,
         title: 'title',
         status: 'Not Started',
+        createdViaActivityReportId: mockActivityReportId,
       });
     });
 
     it('can update existing objectives', async () => {
+      // Mock GoalTemplate.findByPk to return a standard goal template
+      GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Standard' });
       ActivityReportGoal.findOne.mockResolvedValue([
         {
           goalId: mockGoalId,
@@ -808,44 +795,13 @@ describe('Goals DB service', () => {
       };
 
       Objective.findOne.mockResolvedValue({ id: mockObjectiveId });
-      await saveGoalsForReport([existingGoal], { id: mockActivityReportId });
+      await saveStandardGoalsForReport([existingGoal], 1, { id: mockActivityReportId });
       expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title' }, { individualHooks: true });
     });
 
-    it('should call setFieldPromptsForCuratedTemplate if prompts exist and isMultiRecipientReport is false', async () => {
-      const goals = [
-        {
-          goalIds: [1],
-          grantIds: [1],
-          name: 'This is a test goal',
-          prompts: [{ promptId: 1, response: 'Test Response' }],
-          status: 'In Progress',
-          isActivelyBeingEditing: true,
-        },
-      ];
-
-      const report = {
-        id: 1001,
-      };
-
-      const mockExistingGoals = [{
-        id: 1,
-        grantId: 1,
-        name: 'This is a test goal',
-        onApprovedAR: false,
-        source: null,
-        save: jest.fn().mockResolvedValue({}),
-        set: jest.fn(),
-      }];
-
-      Goal.findAll = jest.fn().mockResolvedValue(mockExistingGoals);
-
-      await saveGoalsForReport(goals, report);
-
-      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith([1], [{ promptId: 1, response: 'Test Response' }]);
-    });
-
     it('creates a new goal when none exists by goalIds or goalTemplateId', async () => {
+      // Mock GoalTemplate.findByPk to return a standard goal template
+      GoalTemplate.findByPk = jest.fn().mockResolvedValue({ id: 1, standard: 'Standard', templateName: 'template name' });
       const goals = [
         {
           goalIds: [], // no matching goal by ID
@@ -872,24 +828,30 @@ describe('Goals DB service', () => {
         set: jest.fn(),
       });
 
-      await saveGoalsForReport(goals, report);
+      await saveStandardGoalsForReport(goals, 1, report);
 
       expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
+        goalTemplateId: 1,
         createdVia: 'activityReport',
         grantId: 1,
-        name: 'New Goal',
-        status: 'In Progress',
+        name: 'template name',
+        status: 'Not Started',
       }), { individualHooks: true });
     });
 
     it('creates a new goal when goalTemplateId exists and is curated', async () => {
+      // Mock GoalTemplate.findByPk to return a curated goal template
+      GoalTemplate.findByPk = jest.fn().mockResolvedValue({
+        id: 1, standard: 'Standard', templateName: 'template name', creationMethod: 'curated',
+      });
       const goals = [
         {
           goalIds: [],
           grantIds: [1],
-          name: 'New Curated Goal',
+          name: 'template name',
           status: 'In Progress',
           isActivelyBeingEditing: true,
+          goalTemplateId: 1,
         },
       ];
 
@@ -899,9 +861,6 @@ describe('Goals DB service', () => {
 
       Goal.findAll.mockResolvedValue([]);
       Goal.findOne.mockResolvedValue(null);
-      GoalTemplate.findByPk = jest.fn().mockResolvedValue({
-        creationMethod: 'curated',
-      });
       Goal.create.mockResolvedValue({
         id: 3,
         grantId: 1,
@@ -912,178 +871,14 @@ describe('Goals DB service', () => {
         set: jest.fn(),
       });
 
-      await saveGoalsForReport(goals, report);
+      await saveStandardGoalsForReport(goals, 1, report);
 
       expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
         grantId: 1,
-        name: 'New Curated Goal',
-        status: 'In Progress',
+        name: 'template name',
+        status: 'Not Started',
         createdVia: 'activityReport',
       }), { individualHooks: true });
-    });
-  });
-
-  describe('createObjectivesForGoal', () => {
-    const goal = { id: 1 };
-    const objectives = [
-      {
-        id: 1,
-        isNew: false,
-        ttaProvided: 'TTA provided details',
-        title: 'Objective title 1',
-        status: GOAL_STATUS.IN_PROGRESS,
-        topics: ['topic1'],
-        resources: ['resource1'],
-        files: ['file1'],
-        courses: ['course1'],
-        closeSuspendReason: null,
-        closeSuspendContext: null,
-        ActivityReportObjective: {},
-        supportType: 'supportType1',
-        goalId: 1,
-        createdHere: false,
-      },
-      {
-        id: 2,
-        isNew: true,
-        ttaProvided: 'TTA provided details',
-        title: 'Objective title 2',
-        status: 'NOT_STARTED',
-        topics: ['topic2'],
-        resources: ['resource2'],
-        files: ['file2'],
-        courses: ['course2'],
-        closeSuspendReason: null,
-        closeSuspendContext: null,
-        ActivityReportObjective: {},
-        supportType: 'supportType2',
-        goalId: 2,
-        createdHere: true,
-      },
-    ];
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should return an empty array if no objectives are provided', async () => {
-      const result = await createObjectivesForGoal(goal, null);
-      expect(result).toEqual([]);
-    });
-
-    it('should create new objectives for new items', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
-      Objective.findOne = jest.fn().mockResolvedValue(null);
-      Objective.create = jest.fn().mockResolvedValue({
-        toJSON: () => ({
-          id: 2,
-          title: 'Objective title 2',
-          status: OBJECTIVE_STATUS.NOT_STARTED,
-          goalId: goal.id,
-        }),
-      });
-
-      const result = await createObjectivesForGoal(goal, objectives);
-
-      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
-      expect(Objective.create).toHaveBeenCalledWith(expect.objectContaining({
-        title: 'Objective title 2',
-        goalId: goal.id,
-        status: OBJECTIVE_STATUS.NOT_STARTED,
-        createdVia: 'activityReport',
-      }));
-
-      expect(result).toHaveLength(2);
-      expect(result[1].title).toBe('Objective title 2');
-    });
-
-    it('should update existing objectives', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue({
-        id: 1,
-        title: 'Objective title 1',
-        onApprovedAR: false,
-        update: jest.fn().mockResolvedValue(true),
-        save: jest.fn().mockResolvedValue(true),
-        toJSON: () => ({
-          id: 1,
-          title: 'Objective title 1',
-          status: OBJECTIVE_STATUS.IN_PROGRESS,
-          goalId: goal.id,
-        }),
-      });
-
-      Objective.findOne = jest.fn().mockResolvedValue(null);
-
-      const result = await createObjectivesForGoal(goal, objectives);
-
-      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
-      expect(Objective.findByPk).toHaveBeenCalledWith(1);
-
-      expect(Objective.create).toHaveBeenCalledWith(expect.objectContaining({
-        title: 'Objective title 2',
-        goalId: goal.id,
-        status: OBJECTIVE_STATUS.NOT_STARTED,
-        createdVia: 'activityReport',
-      }));
-
-      expect(result).toHaveLength(2);
-      expect(result[0].title).toBe('Objective title 1');
-      expect(result[1].title).toBe('Objective title 2');
-    });
-
-    it('should reuse an existing objective if conditions match', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
-      Objective.findOne = jest.fn().mockResolvedValue({
-        id: 2,
-        title: 'Objective title 2',
-        status: OBJECTIVE_STATUS.NOT_STARTED,
-        toJSON: () => ({
-          id: 2,
-          title: 'Objective title 2',
-          status: OBJECTIVE_STATUS.NOT_STARTED,
-        }),
-      });
-
-      const result = await createObjectivesForGoal(goal, objectives);
-
-      expect(Objective.findByPk).toHaveBeenCalledWith(1);
-      expect(Objective.findOne).toHaveBeenCalledWith({
-        where: expect.objectContaining({
-          goalId: goal.id,
-          title: 'Objective title 2',
-          status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
-        }),
-      });
-
-      expect(result[1].title).toBe('Objective title 2');
-    });
-
-    it('should handle undefined fields without throwing an error', async () => {
-      const incompleteObjectives = [
-        {
-          id: 1,
-          isNew: false,
-          supportType: 'supportType1',
-          goalId: 1,
-          createdHere: false,
-        },
-      ];
-
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
-      Objective.findOne = jest.fn().mockResolvedValue(null);
-      Objective.create = jest.fn().mockResolvedValue({
-        toJSON: () => ({
-          id: 1,
-          title: 'Objective with missing fields',
-          status: OBJECTIVE_STATUS.NOT_STARTED,
-          goalId: goal.id,
-        }),
-      });
-
-      const result = await createObjectivesForGoal(goal, incompleteObjectives);
-
-      expect(result).toHaveLength(0);
-      expect(Objective.create).not.toHaveBeenCalled();
     });
   });
 
@@ -1337,169 +1132,6 @@ describe('Goals DB service', () => {
 
       const result = getReportCountForGoals(mockGoals);
       expect(result).toEqual(expected);
-    });
-  });
-
-  describe('mergeGoals', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should create GoalFieldResponse for each goal in grantToGoalDictionary', async () => {
-      const finalGoalId = 1;
-      const selectedGoalIds = [2, 3];
-      const goalSimiliarityGroupId = 10;
-      const mockUserId = 1;
-
-      const grantToGoalDictionary = {
-        10: 1,
-        11: 2,
-        12: 3,
-      };
-
-      const mockGoals = [
-        {
-          id: 1,
-          grantId: 10,
-          name: 'Goal 1',
-          startDate: new Date(),
-          createdAt: new Date(),
-          responses: [
-            { id: 1, goalTemplateFieldPromptId: 1, response: 'Response 1' },
-            { id: 2, goalTemplateFieldPromptId: 2, response: 'Response 2' },
-          ],
-          activityReportGoals: [],
-          goalResources: [],
-          objectives: [],
-          update: jest.fn(),
-        },
-        {
-          id: 2,
-          grantId: 11,
-          name: 'Goal 2',
-          startDate: new Date(),
-          createdAt: new Date(),
-          responses: [],
-          activityReportGoals: [],
-          goalResources: [],
-          objectives: [],
-          update: jest.fn(),
-        },
-        {
-          id: 3,
-          grantId: 12,
-          name: 'Goal 3',
-          startDate: new Date(),
-          createdAt: new Date(),
-          responses: [],
-          activityReportGoals: [],
-          goalResources: [],
-          objectives: [],
-          update: jest.fn(),
-        },
-      ];
-
-      const mockGrantsWithReplacements = [
-        { id: 10, status: 'Active' },
-        { id: 11, status: 'Active' },
-        { id: 12, status: 'Active' },
-      ];
-
-      Goal.findAll = jest.fn().mockResolvedValue(mockGoals);
-      Grant.findAll = jest.fn().mockResolvedValue(mockGrantsWithReplacements);
-      GoalFieldResponse.create = jest.fn().mockResolvedValue({});
-      Goal.bulkCreate = jest.fn().mockResolvedValue(
-        Object.keys(grantToGoalDictionary).map((grantId) => ({
-          grantId: parseInt(grantId, 10),
-          id: grantToGoalDictionary[grantId],
-        })),
-      );
-      mergeCollaborators.mockResolvedValue({});
-
-      await mergeGoals(finalGoalId, selectedGoalIds, goalSimiliarityGroupId, mockUserId);
-
-      expect(GoalFieldResponse.create).toHaveBeenCalledTimes(
-        mockGrantsWithReplacements.length * mockGoals[0].responses.length,
-      );
-
-      mockGrantsWithReplacements.forEach((grant) => {
-        mockGoals[0].responses.forEach((response) => {
-          expect(GoalFieldResponse.create).toHaveBeenCalledWith(
-            {
-              goalId: grantToGoalDictionary[grant.id],
-              goalTemplateFieldPromptId: response.goalTemplateFieldPromptId,
-              response: response.response,
-            },
-            { individualHooks: true },
-          );
-        });
-      });
-    });
-    it('should throw an error if no active grants are found to merge goals into', async () => {
-      const finalGoalId = 1;
-      const selectedGoalIds = [2, 3];
-      const goalSimiliarityGroupId = 10;
-
-      const mockGoals = [
-        {
-          id: 1,
-          grantId: 10,
-          name: 'Goal 1',
-          startDate: new Date(),
-          createdAt: new Date(),
-          responses: [],
-          activityReportGoals: [],
-          goalResources: [],
-          objectives: [],
-        },
-      ];
-
-      Goal.findAll = jest.fn().mockResolvedValue(mockGoals);
-
-      Grant.findAll = jest.fn().mockResolvedValue([]);
-
-      await expect(mergeGoals(finalGoalId, selectedGoalIds, goalSimiliarityGroupId))
-        .rejects
-        .toThrow('No active grants found to merge goals into');
-    });
-
-    it('should throw an error if the final goal is not found in selected goals', async () => {
-      const finalGoalId = 1;
-      const selectedGoalIds = [2, 3];
-      const goalSimiliarityGroupId = 10;
-
-      const mockGoals = [
-        {
-          id: 2,
-          grantId: 11,
-          name: 'Goal 2',
-          startDate: new Date(),
-          createdAt: new Date(),
-          responses: [],
-          activityReportGoals: [],
-          goalResources: [],
-          objectives: [],
-        },
-        {
-          id: 3,
-          grantId: 12,
-          name: 'Goal 3',
-          startDate: new Date(),
-          createdAt: new Date(),
-          responses: [],
-          activityReportGoals: [],
-          goalResources: [],
-          objectives: [],
-        },
-      ];
-
-      Goal.findAll = jest.fn().mockResolvedValue(mockGoals);
-
-      Grant.findAll = jest.fn().mockResolvedValue([{ id: 11, status: 'Active' }, { id: 12, status: 'Active' }]);
-
-      await expect(mergeGoals(finalGoalId, selectedGoalIds, goalSimiliarityGroupId))
-        .rejects
-        .toThrow(`Goal with id ${finalGoalId} not found in merge goals`);
     });
   });
 
@@ -2036,279 +1668,6 @@ describe('Goals DB service', () => {
       const result = await goalByIdWithActivityReportsAndRegions(1);
 
       expect(result.previousStatus).toBeUndefined();
-    });
-  });
-
-  describe('getGoalIdsBySimilarity', () => {
-    it('should correctly convert result to unique goalIdGroups', async () => {
-      const mockResult = [
-        {
-          id: 1,
-          matches: [{ id: 2 }, { id: 3 }],
-        },
-        {
-          id: 4,
-          matches: [{ id: 5 }],
-        },
-      ];
-
-      const mockGoals = [
-        {
-          id: 1,
-          status: 'Active',
-          name: 'Goal 1',
-          source: 'Source 1',
-          goalTemplateId: 101,
-          grantId: 1,
-          responses: [{ response: 'Response 1', goalId: 1 }],
-        },
-        {
-          id: 2,
-          status: 'Active',
-          name: 'Goal 2',
-          source: 'Source 2',
-          goalTemplateId: 102,
-          grantId: 2,
-          responses: [{ response: 'Response 2', goalId: 2 }],
-        },
-        {
-          id: 3,
-          status: 'Active',
-          name: 'Goal 3',
-          source: 'Source 3',
-          goalTemplateId: 103,
-          grantId: 3,
-          responses: [{ response: 'Response 3', goalId: 3 }],
-        },
-      ];
-      const expectedGoalIdGroups = [
-        {
-          finalGoalId: null,
-          goals: [1, 2, 3],
-          id: 1,
-          recipientId: 1,
-          userHasInvalidated: false,
-        },
-        {
-          finalGoalId: null,
-          goals: [4, 5],
-          id: 4,
-          recipientId: 1,
-          userHasInvalidated: false,
-        },
-      ];
-
-      Goal.findAll = jest.fn().mockImplementation((options) => {
-        const { where } = options;
-
-        return Promise.resolve(mockGoals.filter((goal) => where.id.includes(goal.id)));
-      });
-
-      similarGoalsForRecipient.mockResolvedValue({ result: mockResult });
-      getSimilarityGroupsByRecipientId.mockResolvedValue(expectedGoalIdGroups);
-
-      const goalIdGroups = await getGoalIdsBySimilarity(1, 14);
-
-      expect(goalIdGroups).toEqual(expectedGoalIdGroups);
-    });
-
-    it('should return an empty goalIdGroups array if no similarity result is provided and no existing groups are found', async () => {
-      getSimilarityGroupsByRecipientId.mockResolvedValue([]);
-
-      similarGoalsForRecipient.mockResolvedValue({ result: [] });
-
-      const goalIdGroups = await getGoalIdsBySimilarity(1, 14);
-
-      const expectedGoalIdGroups = [];
-
-      expect(goalIdGroups).toEqual(expectedGoalIdGroups);
-    });
-
-    it('should mark a goal as being on an active report if it has activityReportGoals with activityReport', async () => {
-      const mockGoals = [
-        {
-          id: 1,
-          status: 'Active',
-          name: 'Goal 1',
-          source: 'Source 1',
-          goalTemplateId: 101,
-          grantId: 1,
-          activityReportGoals: [
-            {
-              activityReport: { id: 1, calculatedStatus: 'Submitted' },
-              goalId: 1,
-            },
-          ],
-          responses: [{ response: 'Response 1', goalId: 1 }],
-        },
-        {
-          id: 2,
-          status: 'Active',
-          name: 'Goal 2',
-          source: 'Source 2',
-          goalTemplateId: 102,
-          grantId: 2,
-          activityReportGoals: [
-            {
-              activityReport: null,
-              goalId: 2,
-            },
-          ],
-          responses: [{ response: 'Response 2', goalId: 2 }],
-        },
-      ];
-
-      Goal.findAll = jest.fn().mockImplementation((options) => {
-        const { where } = options;
-        return Promise.resolve(mockGoals.filter((goal) => where.id.includes(goal.id)));
-      });
-
-      similarGoalsForRecipient.mockResolvedValue({
-        result: [
-          { id: 1, matches: [{ id: 2 }] },
-        ],
-      });
-
-      getSimilarityGroupsByRecipientId.mockResolvedValue([
-        {
-          id: 1,
-          goals: [1, 2],
-          finalGoalId: null,
-          recipientId: 1,
-          userHasInvalidated: false,
-        },
-      ]);
-
-      const goalIdGroups = await getGoalIdsBySimilarity(1, 14);
-
-      expect(goalIdGroups).toEqual(expect.any(Array));
-
-      const firstGroup = goalIdGroups[0];
-      expect(firstGroup.goals).toContain(1); // Goal with active report
-      expect(firstGroup.goals).toContain(2); // Goal without active report
-    });
-
-    it('should mark goals correctly based on the absence of activityReport in activityReportGoals', async () => {
-      const mockGoals = [
-        {
-          id: 3,
-          status: 'Active',
-          name: 'Goal 3',
-          source: 'Source 3',
-          goalTemplateId: 103,
-          grantId: 3,
-          activityReportGoals: [
-            {
-              activityReport: null,
-              goalId: 3,
-            },
-          ],
-          responses: [{ response: 'Response 3', goalId: 3 }],
-        },
-      ];
-
-      Goal.findAll = jest.fn().mockImplementation((options) => {
-        const { where } = options;
-        return Promise.resolve(mockGoals.filter((goal) => where.id.includes(goal.id)));
-      });
-
-      similarGoalsForRecipient.mockResolvedValue({
-        result: [
-          { id: 3, matches: [] },
-        ],
-      });
-
-      getSimilarityGroupsByRecipientId.mockResolvedValue([
-        {
-          id: 1,
-          goals: [3],
-          finalGoalId: null,
-          recipientId: 1,
-          userHasInvalidated: false,
-        },
-      ]);
-
-      const goalIdGroups = await getGoalIdsBySimilarity(1, 14);
-
-      expect(goalIdGroups).toEqual(expect.any(Array));
-      expect(goalIdGroups[0].goals).toContain(3);
-    });
-
-    it('groupSimilarGoalsByGrant works when undefined is passed to the function', async () => {
-      const resultToTest = undefined;
-
-      const groupedResult = groupSimilarGoalsByGrant(resultToTest);
-
-      expect(groupedResult).toEqual([]);
-    });
-
-    it('groupSimilarGoalsByGrant works as expected given a result that contains multiple grants for the same goal', async () => {
-      const resultToTest = [
-        {
-          id: 1,
-          matches: [
-            {
-              grantId: 1,
-              id: 1,
-              name: 'Similar Goal 1',
-              similarity: 0.9449410438537598,
-            },
-            {
-              grantId: 2,
-              id: 2,
-              name: 'Similar Goal 1, but not quite',
-              similarity: 0.9449410438537598,
-            },
-            {
-              grantId: 1,
-              id: 3,
-              name: 'Similar Goal 1, but not quite, there is a diff',
-              similarity: 0.9449410438537598,
-            },
-            {
-              grantId: 3,
-              id: 4,
-              name: 'Similar Goal 1, but not quite, there is a diff, at all',
-              similarity: 0.9449410438537598,
-            },
-          ],
-          name: 'Similar Goal 1',
-        },
-        {
-          id: 1,
-          matches: [
-            {
-              grantId: 2,
-              id: 5,
-              name: 'Similar Goal 2',
-              similarity: 0.9449410438537598,
-            },
-            {
-              grantId: 2,
-              id: 6,
-              name: 'Similar Goal 2, but not quite',
-              similarity: 0.9449410438537598,
-            },
-            {
-              grantId: 1,
-              id: 7,
-              name: 'Similar Goal 2, but not quite, there is a diff',
-              similarity: 0.9449410438537598,
-            },
-          ],
-          name: 'Similar Goal 2',
-        },
-      ];
-
-      const groupedResult = groupSimilarGoalsByGrant(resultToTest);
-
-      // Assert that the result is grouped by grantId.
-      // Ensure groups that had only one goal are excluded.
-      expect(groupedResult.length).toBe(2);
-      expect(groupedResult).toEqual(expect.arrayContaining([
-        expect.arrayContaining([1, 3]),
-        expect.arrayContaining([5, 6]),
-      ]));
     });
   });
 

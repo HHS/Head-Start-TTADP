@@ -14,8 +14,8 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
-import { mockRSSData, mockWindowProperty, withText } from '../../../testHelpers';
+import { REPORT_STATUSES, SUPPORT_TYPES, GOAL_STATUS } from '@ttahub/common';
+import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
 import {
   history,
@@ -27,6 +27,7 @@ import {
 } from '../testHelpers';
 import { formatReportWithSaveBeforeConversion } from '..';
 import { HTTPError } from '../../../fetchers';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('ActivityReport', () => {
   const setItem = jest.fn();
@@ -149,187 +150,6 @@ describe('ActivityReport', () => {
     });
   });
 
-  describe('groups', () => {
-    it('recipients correctly update for groups', async () => {
-      const groupRecipients = {
-        grants: [
-          { id: 11, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
-          { id: 12, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
-        ],
-        otherEntities: [],
-      };
-
-      fetchMock.get('/api/activity-reports/activity-recipients?region=1', groupRecipients, { overwriteRoutes: true });
-      fetchMock.get('/api/activity-reports/1/activity-recipients', groupRecipients, { overwriteRoutes: true });
-
-      const data = formData();
-      fetchMock.get('/api/activity-reports/1', { ...data, activityRecipients: [] });
-
-      renderActivityReport('1', 'activity-summary');
-
-      // Page is done loading.
-      expect(await screen.findByText(/who was the activity for\?/i)).toBeVisible();
-
-      // Make sure 'recipient' is selected.
-      const recipient = screen.queryAllByRole('radio', { name: /recipient/i });
-      expect(recipient[0]).toBeChecked();
-
-      // Check use group.
-      const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
-      await act(async () => {
-        userEvent.click(useGroupCheckbox);
-        await waitFor(() => expect(useGroupCheckbox).toBeChecked());
-      });
-      expect(await screen.findByText(/Group name/i)).toBeVisible();
-
-      await act(async () => {
-        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
-        userEvent.selectOptions(groupSelectBox, 'Group 2');
-
-        await waitFor(() => {
-        // expect Group 2 to be visible.
-          expect(screen.getByText('Group 2')).toBeVisible();
-        });
-      });
-
-      // Assert correct recipients.
-      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
-      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
-
-      // Change to group 1.
-      await act(async () => {
-        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
-        userEvent.selectOptions(groupSelectBox, 'Group 1');
-
-        await waitFor(() => {
-        // expect Group 1 to be visible.
-          expect(screen.getByText('Group 1')).toBeVisible();
-        });
-      });
-
-      // Assert correct recipients.
-      expect(await screen.findByText(/Group 1 Grant A/i)).toBeVisible();
-      expect(await screen.findByText(/Group 1 Grant B/i)).toBeVisible();
-
-      // Uncheck use group.
-      await act(async () => {
-        userEvent.click(useGroupCheckbox);
-        await waitFor(() => expect(useGroupCheckbox).not.toBeChecked());
-      });
-
-      // Assert Group name is not visible.
-      expect(screen.queryByText(/Group name/i)).toBeNull();
-    });
-
-    it('modifying group recipients notifies the user', async () => {
-      const groupRecipients = {
-        grants: [
-          { id: 11, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
-          { id: 12, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
-          { id: 13, name: 'Group 3 Recipients', grants: [{ activityRecipientId: 5, name: 'Group 3 Grant A' }, { activityRecipientId: 6, name: 'Group 3 Grant B' }] },
-        ],
-        otherEntities: [],
-      };
-
-      fetchMock.get('/api/activity-reports/activity-recipients?region=1', groupRecipients, { overwriteRoutes: true });
-      fetchMock.get('/api/activity-reports/1/activity-recipients', groupRecipients, { overwriteRoutes: true });
-
-      const data = formData();
-      fetchMock.get('/api/activity-reports/1', { ...data, activityRecipients: [] });
-
-      renderActivityReport('1', 'activity-summary');
-
-      // Page is done loading.
-      expect(await screen.findByText(/who was the activity for\?/i)).toBeVisible();
-
-      // Make sure 'recipient' is selected.
-      const recipient = screen.queryAllByRole('radio', { name: /recipient/i });
-      expect(recipient[0]).toBeChecked();
-
-      // Check use group.
-      const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
-      await act(async () => {
-        userEvent.click(useGroupCheckbox);
-        await waitFor(() => expect(useGroupCheckbox).toBeChecked());
-      });
-      expect(await screen.findByText(/Group name/i)).toBeVisible();
-
-      await act(async () => {
-        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
-        userEvent.selectOptions(groupSelectBox, 'Group 2');
-
-        await waitFor(() => {
-        // expect Group 2 to be visible.
-          expect(screen.getByText('Group 2')).toBeVisible();
-        });
-      });
-
-      // Assert correct recipients.
-      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
-      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
-
-      // Remove a recipient from the group.
-      await act(async () => {
-        const removeGrantButton = await screen.findByRole('button', { name: /remove group 2 grant a/i });
-        userEvent.click(removeGrantButton);
-        await waitFor(() => expect(removeGrantButton).not.toBeInTheDocument());
-      });
-
-      expect(await screen.findByText(
-        /you've successfully modified the group's recipients for this report\. changes here do not affect the group itself\./i,
-      )).toBeVisible();
-
-      // Click the reset link.
-      await act(async () => {
-        const resetLink = await screen.findByRole('button', { name: /reset or select a different group\./i });
-        userEvent.click(resetLink);
-        await waitFor(() => expect(resetLink).not.toBeInTheDocument());
-      });
-
-      // Assert use group checkbox is checked.
-      expect(useGroupCheckbox).toBeChecked();
-
-      // Select Group 2.
-      await act(async () => {
-        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
-        userEvent.selectOptions(groupSelectBox, 'Group 2');
-
-        await waitFor(() => {
-        // expect Group 2 to be visible.
-          expect(screen.getByText('Group 2')).toBeVisible();
-        });
-      });
-
-      // Assert correct recipients.
-      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
-      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
-
-      // Add recipient 'Group 3 Grant A'.
-      const recipientName = await screen.findByText(/recipient names/i);
-      const recipientSelect = await within(recipientName).findByText(/Group 2 Grant A/i);
-      await reactSelectEvent.select(recipientSelect, ['Group 3 Grant A']);
-
-      // Assert correct recipients.
-      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
-      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
-      expect(await screen.findByText(/Group 3 Grant A/i)).toBeVisible();
-
-      expect(await screen.findByText(
-        /you've successfully modified the group's recipients for this report\. changes here do not affect the group itself\./i,
-      )).toBeVisible();
-
-      // Click the reset link.
-      await act(async () => {
-        const resetLink = await screen.findByRole('button', { name: /reset or select a different group\./i });
-        userEvent.click(resetLink);
-        await waitFor(() => expect(resetLink).not.toBeInTheDocument());
-      });
-
-      // Assert use group checkbox is checked.
-      expect(useGroupCheckbox).toBeChecked();
-    });
-  });
-
   describe('last saved time', () => {
     it('is shown if history.state.showLastUpdatedTime is true', async () => {
       const data = formData();
@@ -379,35 +199,14 @@ describe('ActivityReport', () => {
 
       await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/new/supporting-attachments', {}));
     });
-
-    it('updates the page when a change is made and then navigation occurs', async () => {
-      const spy = jest.spyOn(history, 'push');
-      fetchMock.post('/api/activity-reports', { id: 1 });
-      renderActivityReport('new');
-
-      // Click the recipient radio button ("dirties" the form)
-      const whoForRadios = await screen.findAllByTestId('radio');
-      const whoForEl = within(whoForRadios[0]).getByText(/recipient/i);
-      expect(whoForEl).toBeVisible();
-      fireEvent.click(whoForEl);
-
-      // Navigate to the next page
-      const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
-      userEvent.click(button);
-
-      await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/1/supporting-attachments', { showLastUpdatedTime: true }));
-    });
   });
 
   describe('onSave', () => {
     it('calls "report create"', async () => {
       renderActivityReport('new');
       fetchMock.post('/api/activity-reports', { id: 1 });
-      const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const recipient = within(information).getByLabelText('Recipient');
-      fireEvent.click(recipient);
-
-      const recipientName = await screen.findByText(/recipient names/i);
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+      const recipientName = await screen.findByText('Recipient');
       const recipientSelectbox = await within(recipientName).findByText(/- select -/i);
       await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 
@@ -422,12 +221,10 @@ describe('ActivityReport', () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
-
-      // Click the "recipient" radio button ("dirties" the form)
-      const whoForRadios = await screen.findAllByTestId('radio');
-      const whoForEl = within(whoForRadios[0]).getByText(/recipient/i);
-      expect(whoForEl).toBeVisible();
-      act(() => userEvent.click(whoForEl));
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+      const recipientName = await screen.findByText('Recipient');
+      const recipientSelectbox = await within(recipientName).findByText(/- select -/i);
+      await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 
       const button = await screen.findByRole('button', { name: 'Save draft' });
       act(() => userEvent.click(button));
@@ -490,14 +287,13 @@ describe('ActivityReport', () => {
           name: 'goal 3',
           activityReportGoals: [{ isActivelyEdited: true }],
           prompts: [],
-          source: '',
         },
         goals: [
           {
-            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], source: '', prompts: [],
+            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], prompts: [],
           },
           {
-            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [], source: '',
+            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [],
           },
         ],
       };
@@ -530,7 +326,6 @@ describe('ActivityReport', () => {
           isActivelyEdited: true,
           name: 'goal 3',
           prompts: [],
-          source: '',
         },
         {
           activityReportGoals: [
@@ -545,7 +340,6 @@ describe('ActivityReport', () => {
           isActivelyEdited: false,
           name: 'goal 1',
           prompts: [],
-          source: '',
         },
         {
           activityReportGoals: [
@@ -560,7 +354,6 @@ describe('ActivityReport', () => {
           isActivelyEdited: false,
           name: 'goal 2',
           prompts: [],
-          source: '',
         },
       ]);
     });
@@ -586,253 +379,132 @@ describe('ActivityReport', () => {
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
     });
-
-    it('automatically sets creator role on existing report', async () => {
-      const data = formData();
-      fetchMock.get('/api/activity-reports/1', { ...data, creatorRole: null });
-      fetchMock.put('/api/activity-reports/1', {});
-      act(() => renderActivityReport(1));
-
-      // Click the "other entity" radio button ("dirties" the form)
-      const whoForRadios = await screen.findAllByTestId('radio');
-      const whoForEl = within(whoForRadios[1]).getByText(/other entity/i);
-      expect(whoForEl).toBeVisible();
-      act(() => userEvent.click(whoForEl));
-
-      const button = await screen.findByRole('button', { name: 'Save draft' });
-      act(() => userEvent.click(button));
-      const lastOptions = fetchMock.lastOptions();
-      const bodyObj = JSON.parse(lastOptions.body);
-      expect(bodyObj.creatorRole).toEqual('Reporter');
-    });
   });
 
   describe('recipient select', () => {
     describe('changes the recipient selection to', () => {
-      it('Recipient', async () => {
-        renderActivityReport('new');
-        const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const recipient = within(information).getByLabelText('Recipient');
-        fireEvent.click(recipient);
+      it('unflattens resources properly', async () => {
+        const empty = unflattenResourcesUsed(undefined);
+        expect(empty).toEqual([]);
 
-        const recipientField = await screen.findByText(/recipient names/i);
-        const recipientSelectbox = await within(recipientField).findByText(/- select -/i);
-
-        reactSelectEvent.openMenu(recipientSelectbox);
-        expect(within(recipientField).queryAllByText(/recipient name/i).length).toBe(2);
-      });
-
-      it('Other entity', async () => {
-        renderActivityReport('new');
-        const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const otherEntity = within(information).getByLabelText('Other entity');
-        fireEvent.click(otherEntity);
-
-        const otherEntities = await screen.findByText(/other entities/i);
-        const recipientSelectbox = await within(otherEntities).findByText(/- select -/i);
-
-        reactSelectEvent.openMenu(recipientSelectbox);
-        expect(await screen.findByText(withText('otherEntity'))).toBeVisible();
+        const good = unflattenResourcesUsed(['resource']);
+        expect(good).toEqual([{ value: 'resource' }]);
       });
     });
 
-    it('clears selection when other entity is selected', async () => {
-      renderActivityReport('new');
-      let information = await screen.findByRole('group', { name: 'Who was the activity for?' });
+    describe('actively editable goals', () => {
+      it('loads goals in read-only mode', async () => {
+        const data = formData();
+        fetchMock.get('/api/topic', []);
+        fetchMock.get('/api/goal-templates?grantIds=12539', []);
+        fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
+        // fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
+        fetchMock.get('/api/activity-reports/1', {
+          ...data,
+          activityRecipientType: 'recipient',
+          activityRecipients: [
+            {
+              id: 12539,
+              activityRecipientId: 12539,
+              name: 'Barton LLC - 04bear012539  - EHS, HS',
+            },
+          ],
+          objectivesWithoutGoals: [],
+          goalsAndObjectives: mockGoalsAndObjectives(false),
+        });
 
-      const recipient = within(information).getByLabelText('Recipient');
-      fireEvent.click(recipient);
+        act(() => renderActivityReport(1, 'goals-objectives', false, 1));
 
-      const recipientName = await screen.findByText(/recipient names/i);
-      let recipientSelectbox = await within(recipientName).findByText(/- select -/i);
+        await screen.findByRole('heading', { name: 'Goals and objectives' });
 
-      reactSelectEvent.openMenu(recipientSelectbox);
-      await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
+        // expect 1 read-only goals
+        const readOnlyGoals = document.querySelectorAll('.ttahub-goal-form-goal-summary');
+        expect(readOnlyGoals.length).toBe(1);
 
-      const recipientNames = await screen.findByText(/recipient names/i);
-      expect(within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
+        await screen.findByRole('heading', { name: 'Goal summary' });
+        await screen.findByText('test', { selector: 'p.usa-prose' });
 
-      information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const otherEntity = within(information).getByLabelText('Other entity');
-      fireEvent.click(otherEntity);
-      fireEvent.click(recipient);
-
-      recipientSelectbox = await screen.findByLabelText(/recipient names/i);
-      expect(within(recipientSelectbox).queryByText('Recipient Name')).toBeNull();
+        // we don't expect form controls
+        expect(document.querySelector('textarea[name="goalName"]')).toBeNull();
+      });
     });
 
-    it('unflattens resources properly', async () => {
-      const empty = unflattenResourcesUsed(undefined);
-      expect(empty).toEqual([]);
+    it('you can select an existing goal and objective and add a file after saving', async () => {
+      const dispatchEvt = (node, type, data) => {
+        const event = new Event(type, { bubbles: true });
+        Object.assign(event, data);
+        fireEvent(node, event);
+      };
 
-      const good = unflattenResourcesUsed(['resource']);
-      expect(good).toEqual([{ value: 'resource' }]);
-    });
-  });
+      const mockData = (files) => ({
+        dataTransfer: {
+          files,
+          items: files.map((file) => ({
+            kind: 'file',
+            type: file.type,
+            getAsFile: () => file,
+          })),
+          types: ['Files'],
+        },
+      });
 
-  describe('actively editable goals', () => {
-    it('loads goals in edit mode', async () => {
-      const data = formData();
-      fetchMock.get('/api/topic', []);
-      fetchMock.get('/api/goal-templates?grantIds=12539', []);
-      fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
-      fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
+      const file = (name, id) => ({
+        originalFileName: name, id, fileSize: 2000, status: 'Uploaded',
+      });
+
+      fetchMock.get('/api/goal-templates/24727/prompts?goalIds=92852', []);
+
+      fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
+      fetchMock.get('/api/goal-templates?grantIds=10431',
+        [
+          {
+            isSourceEditable: true,
+            id: 24727,
+            source: null,
+            standard: 'Child Safety',
+            label: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+            value: 24727,
+            name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+            goalTemplateId: 13500,
+            goalIds: [37502],
+            isRttapa: null,
+            status: GOAL_STATUS.IN_PROGRESS,
+            grantIds: [10431],
+            oldGrantIds: [7764],
+            isCurated: false,
+            isNew: false,
+            goals: [
+              {
+                id: 37502,
+                name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+                source: null,
+                status: GOAL_STATUS.IN_PROGRESS,
+                grantId: 10431,
+                goalTemplateId: 13500,
+              },
+            ],
+          },
+        ]);
+
       fetchMock.get('/api/activity-reports/1', {
-        ...data,
+        ...formData(),
         activityRecipientType: 'recipient',
         activityRecipients: [
           {
-            id: 12539,
-            activityRecipientId: 12539,
+            id: 10431,
+            activityRecipientId: 10431,
             name: 'Barton LLC - 04bear012539  - EHS, HS',
           },
         ],
         objectivesWithoutGoals: [],
-        goalsAndObjectives: mockGoalsAndObjectives(true),
+        goalsAndObjectives: [],
       });
 
-      act(() => renderActivityReport(1, 'goals-objectives', false, 1));
-
-      // expect no read-only goals
-      expect(document.querySelector('.ttahub-goal-form-goal-summary')).toBeNull();
-
-      // expect the form to be open
-      const goalName = await screen.findByLabelText(/Recipient's goal/i, { selector: 'textarea' });
-      expect(goalName.value).toBe('test');
-
-      // we don't need this but its for the symmetry with the below test
-      expect(document.querySelector('textarea[name="goalName"]')).not.toBeNull();
-    });
-
-    it('loads goals in read-only mode', async () => {
-      const data = formData();
-      fetchMock.get('/api/topic', []);
-      fetchMock.get('/api/goal-templates?grantIds=12539', []);
-      fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
-      // fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
-      fetchMock.get('/api/activity-reports/1', {
-        ...data,
-        activityRecipientType: 'recipient',
-        activityRecipients: [
-          {
-            id: 12539,
-            activityRecipientId: 12539,
-            name: 'Barton LLC - 04bear012539  - EHS, HS',
-          },
-        ],
-        objectivesWithoutGoals: [],
-        goalsAndObjectives: mockGoalsAndObjectives(false),
-      });
-
-      act(() => renderActivityReport(1, 'goals-objectives', false, 1));
-
-      await screen.findByRole('heading', { name: 'Goals and objectives' });
-
-      // expect 1 read-only goals
-      const readOnlyGoals = document.querySelectorAll('.ttahub-goal-form-goal-summary');
-      expect(readOnlyGoals.length).toBe(1);
-
-      await screen.findByRole('heading', { name: 'Goal summary' });
-      await screen.findByText('test', { selector: 'p.usa-prose' });
-
-      // we don't expect form controls
-      expect(document.querySelector('textarea[name="goalName"]')).toBeNull();
-    });
-  });
-
-  it('you can select an existing goal and objective and add a file after saving', async () => {
-    const dispatchEvt = (node, type, data) => {
-      const event = new Event(type, { bubbles: true });
-      Object.assign(event, data);
-      fireEvent(node, event);
-    };
-
-    const mockData = (files) => ({
-      dataTransfer: {
-        files,
-        items: files.map((file) => ({
-          kind: 'file',
-          type: file.type,
-          getAsFile: () => file,
-        })),
-        types: ['Files'],
-      },
-    });
-
-    const file = (name, id) => ({
-      originalFileName: name, id, fileSize: 2000, status: 'Uploaded',
-    });
-
-    fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
-    fetchMock.get('/api/activity-reports/goals?grantIds=10431', [{
-      endDate: null,
-      grantIds: [10431],
-      goalIds: [37502],
-      oldGrantIds: [7764],
-      created: '2023-07-05T17:56:14.755Z',
-      goalTemplateId: 13500,
-      name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-      status: 'In Progress',
-      onApprovedAR: false,
-      source: null,
-      isCurated: false,
-    }]);
-    fetchMock.get('/api/goal-templates?grantIds=10431&reportStartDate=2012-05-20', []);
-    fetchMock.get('/api/activity-reports/1', {
-      ...formData(),
-      activityRecipientType: 'recipient',
-      activityRecipients: [
-        {
-          id: 10431,
-          activityRecipientId: 10431,
-          name: 'Barton LLC - 04bear012539  - EHS, HS',
-        },
-      ],
-      objectivesWithoutGoals: [],
-      goalsAndObjectives: [],
-    });
-
-    fetchMock.get('/api/goals?reportId=1&goalIds=37502', [{
-      endDate: '',
-      status: 'In Progress',
-      value: 37502,
-      label: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-      id: 37502,
-      name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-      grant: {
-        programTypes: [],
-        name: 'Barrows Inc - 08bear010431 ',
-        numberWithProgramTypes: '08bear010431 ',
-        recipientInfo: 'Barrows Inc - 08bear010431 - 359',
-        id: 10431,
-        number: '08bear010431',
-        annualFundingMonth: 'November',
-        cdi: false,
-        status: 'Active',
-        grantSpecialistName: 'Marian Daugherty',
-        grantSpecialistEmail: 'Effie.McCullough@gmail.com',
-        programSpecialistName: 'Eddie Denesik DDS',
-        programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
-        stateCode: 'RI',
-        startDate: '2018-11-01T00:00:00.000Z',
-        endDate: '2023-10-31T00:00:00.000Z',
-        inactivationDate: null,
-        inactivationReason: null,
-        recipientId: 359,
-        oldGrantId: 7764,
-        deleted: false,
-        createdAt: '2021-03-16T01:20:44.754Z',
-        updatedAt: '2022-09-28T15:03:28.432Z',
-        regionId: 1,
-        recipient: {
-          id: 359, uei: 'LS73E9BEHVZ4', name: 'Barrows Inc', recipientType: 'Community Action Agency (CAA)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.284Z',
-        },
-      },
-      objectives: [{
+      fetchMock.get('/api/goals?reportId=1&goalTemplateId=24727', [{
         id: 95297,
         label: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
         title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
-        status: 'Not Started',
+        status: GOAL_STATUS.NOT_STARTED,
         goalId: 37502,
         resources: [],
         activityReportObjectives: [],
@@ -862,7 +534,6 @@ describe('ActivityReport', () => {
           requester: null,
           targetPopulations: [],
           virtualDeliveryType: null,
-          reason: [],
           participants: [],
           topics: [],
           programTypes: null,
@@ -880,514 +551,557 @@ describe('ActivityReport', () => {
           creatorRole: 'Central Office',
           createdAt: '2023-07-05T17:54:13.082Z',
           ActivityReportObjective: {
-            id: 104904, activityReportId: 23786, objectiveId: 95297, arOrder: 1, title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.', status: 'In Progress', ttaProvided: '', createdAt: '2023-07-05T17:56:15.562Z', updatedAt: '2023-07-05T17:56:15.588Z',
+            id: 104904, activityReportId: 23786, objectiveId: 95297, arOrder: 1, title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.', status: OBJECTIVE_STATUS.IN_PROGRESS, ttaProvided: '', createdAt: '2023-07-05T17:56:15.562Z', updatedAt: '2023-07-05T17:56:15.588Z',
           },
         }],
-        value: 95297,
-        ids: [95297],
-        recipientIds: [],
-        isNew: false,
-      }],
-      prompts: [],
-      goalNumbers: ['G-37502'],
-      goalIds: [37502],
-      grants: [{
-        id: 10431,
-        number: '08bear010431',
-        annualFundingMonth: 'November',
-        cdi: false,
-        status: 'Active',
-        grantSpecialistName: 'Marian Daugherty',
-        grantSpecialistEmail: 'Effie.McCullough@gmail.com',
-        programSpecialistName: 'Eddie Denesik DDS',
-        programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
-        stateCode: 'RI',
-        startDate: '2018-11-01T00:00:00.000Z',
-        endDate: '2023-10-31T00:00:00.000Z',
-        inactivationDate: null,
-        inactivationReason: null,
-        recipientId: 359,
-        oldGrantId: 7764,
-        deleted: false,
-        createdAt: '2021-03-16T01:20:44.754Z',
-        updatedAt: '2022-09-28T15:03:28.432Z',
+      }]);
+
+      const { container } = render(
+        <ReportComponent
+          id={1}
+          currentPage="goals-objectives"
+          showLastUpdatedTime={false}
+          userId={1}
+        />,
+
+      );
+
+      await screen.findByRole('heading', { name: 'Goals and objectives' });
+      await act(() => reactSelectEvent.select(
+        screen.getByText(/- select -/i),
+        'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+      ));
+
+      await act(() => reactSelectEvent.select(
+        screen.getByLabelText(/Select TTA objective/i),
+        'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
+      ));
+
+      const radio = document.querySelector('#add-objective-files-yes-95297-0'); // yes radio button
+      act(() => {
+        userEvent.click(radio);
+      });
+
+      const dropzone = container.querySelector('.dropzone');
+
+      fetchMock.post('/api/files', [{
+        id: 25649, originalFileName: 'BSH_UE_SRD_1.0.2.docx', key: 'dc4b723f-f151-4934-a2b3-5f513c8254a2docx', status: 'UPLOADING', fileSize: 240736, updatedAt: '2023-07-05T18:40:06.130Z', createdAt: '2023-07-05T18:40:06.130Z', url: { url: 'http://minio:9000/ttadp-test/dc4b723f-f151-4934-a2b3-5f513c8254a2docx?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEID%2F20230705%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230705T184006Z&X-Amz-Expires=360&X-Amz-Signature=595be3d29630f8275d206300c7dfce6f5e3d7b16d506b7f47d64db04418cf982&X-Amz-SignedHeaders=host', error: null },
+      }]);
+
+      const e = mockData([file('file', 1)]);
+
+      dispatchEvt(dropzone, 'drop', e);
+
+      await waitFor(() => expect(fetchMock.called('/api/files', { method: 'POST' })).toBeTruthy());
+
+      expect(await screen.findByText('BSH_UE_SRD_1.0.2.docx')).toBeInTheDocument();
+    });
+
+    it('you can add a goal and objective and add a file after saving', async () => {
+      const data = formData();
+      fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
+      fetchMock.get('/api/courses', []);
+      fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
+      fetchMock.get('/api/goal-templates?grantIds=12539&reportStartDate=2012-05-20', []);
+      fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=37504', {});
+      fetchMock.get('//api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        startDate: moment().format('YYYY-MM-DD'),
+        activityRecipientType: 'recipient',
+        activityRecipients: [
+          {
+            id: 12539,
+            activityRecipientId: 12539,
+            name: 'Barton LLC - 04bear012539  - EHS, HS',
+          },
+        ],
+        objectivesWithoutGoals: [],
+        goalsAndObjectives: [{
+          activityReportGoals: [
+            {
+              isActivelyEdited: true,
+            },
+          ],
+          value: 'a5252c25-fbc6-41cc-a655-24fabac34873',
+          number: false,
+          label: 'Create new goal',
+          objectives: [
+            {
+              title: 'sdfgsdfg',
+              topics: [
+                {
+                  id: 64,
+                  name: 'Communication',
+                },
+              ],
+              resources: [],
+              files: [],
+              ttaProvided: '<p>sdgfsdfg</p>\n',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              label: 'Create a new objective',
+              supportType: SUPPORT_TYPES[1],
+            },
+          ],
+          name: 'Create new goal',
+          goalNumber: '',
+          id: 'new',
+          isNew: true,
+          endDate: '',
+          onApprovedAR: false,
+          grantIds: [
+            11606,
+          ],
+          goalIds: [],
+          oldGrantIds: [],
+          status: GOAL_STATUS.DRAFT,
+          isRttapa: null,
+          isCurated: false,
+        }],
+      });
+
+      act(() => renderActivityReport(1, 'goals-objectives', false, 1));
+
+      await screen.findByRole('heading', { name: 'Goals and objectives' });
+
+      // assert that the file upload is visible
+      let message = await screen.findByText('Add a TTA objective and save as draft to upload resources.');
+      expect(message).toBeInTheDocument();
+
+      const radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
+      expect(radios).toBeNull();
+
+      fetchMock.put('/api/activity-reports/1', {
+        id: 23786,
+        userId: 355,
+        startDate: moment().format('YYYY-MM-DD'),
+        endDate: null,
+        lastUpdatedById: 355,
+        ECLKCResourcesUsed: [],
+        nonECLKCResourcesUsed: [],
+        additionalNotes: null,
+        numberOfParticipants: null,
+        deliveryMethod: null,
+        version: 2,
+        duration: null,
+        activityRecipientType: 'recipient',
+        activityRecipients: [
+          {
+            id: 12539,
+            activityRecipientId: 12539,
+            name: 'Barton LLC - 04bear012539  - EHS, HS',
+          },
+        ],
+        requester: null,
+        targetPopulations: [],
+        virtualDeliveryType: null,
+        participants: [],
+        topics: [],
+        programTypes: null,
+        context: '',
+        pageState: {
+          1: 'In progress', 2: 'Complete', 3: 'Not started', 4: 'Not started',
+        },
         regionId: 1,
-        recipient: {
-          id: 359, uei: 'LS73E9BEHVZ4', name: 'Barrows Inc', recipientType: 'Community Action Agency (CAA)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.284Z',
-        },
-        numberWithProgramTypes: '08bear010431 ',
-        name: 'Barrows Inc - 08bear010431 ',
-        goalId: 37502,
-      }],
-      grantIds: [10431],
-      isNew: false,
-    }]);
-
-    const { container } = render(
-      <ReportComponent
-        id={1}
-        currentPage="goals-objectives"
-        showLastUpdatedTime={false}
-        userId={1}
-      />,
-
-    );
-
-    await screen.findByRole('heading', { name: 'Goals and objectives' });
-    await act(() => reactSelectEvent.select(
-      screen.getByLabelText(/Recipient's goal/i),
-      'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-    ));
-
-    await act(() => reactSelectEvent.select(
-      screen.getByLabelText(/Select TTA objective/i),
-      'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
-    ));
-
-    const radio = document.querySelector('#add-objective-files-yes-95297-0'); // yes radio button
-    act(() => {
-      userEvent.click(radio);
-    });
-
-    const dropzone = container.querySelector('.dropzone');
-
-    fetchMock.post('/api/files', [{
-      id: 25649, originalFileName: 'BSH_UE_SRD_1.0.2.docx', key: 'dc4b723f-f151-4934-a2b3-5f513c8254a2docx', status: 'UPLOADING', fileSize: 240736, updatedAt: '2023-07-05T18:40:06.130Z', createdAt: '2023-07-05T18:40:06.130Z', url: { url: 'http://minio:9000/ttadp-test/dc4b723f-f151-4934-a2b3-5f513c8254a2docx?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEID%2F20230705%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230705T184006Z&X-Amz-Expires=360&X-Amz-Signature=595be3d29630f8275d206300c7dfce6f5e3d7b16d506b7f47d64db04418cf982&X-Amz-SignedHeaders=host', error: null },
-    }]);
-
-    const e = mockData([file('file', 1)]);
-
-    dispatchEvt(dropzone, 'drop', e);
-
-    await waitFor(() => expect(fetchMock.called('/api/files', { method: 'POST' })).toBeTruthy());
-
-    expect(await screen.findByText('BSH_UE_SRD_1.0.2.docx')).toBeInTheDocument();
-  });
-
-  it('you can add a goal and objective and add a file after saving', async () => {
-    const data = formData();
-    fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
-    fetchMock.get('/api/courses', []);
-    fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
-    fetchMock.get('/api/goal-templates?grantIds=12539&reportStartDate=2012-05-20', []);
-    fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=37504', {});
-    fetchMock.get('//api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
-    fetchMock.get('/api/activity-reports/1', {
-      ...data,
-      startDate: moment().format('YYYY-MM-DD'),
-      activityRecipientType: 'recipient',
-      activityRecipients: [
-        {
-          id: 12539,
-          activityRecipientId: 12539,
-          name: 'Barton LLC - 04bear012539  - EHS, HS',
-        },
-      ],
-      objectivesWithoutGoals: [],
-      goalsAndObjectives: [{
-        activityReportGoals: [
-          {
-            isActivelyEdited: true,
-          },
-        ],
-        value: 'a5252c25-fbc6-41cc-a655-24fabac34873',
-        number: false,
-        label: 'Create new goal',
-        objectives: [
-          {
-            title: 'sdfgsdfg',
-            topics: [
-              {
-                id: 64,
-                name: 'Communication',
-              },
-            ],
-            resources: [],
-            files: [],
-            ttaProvided: '<p>sdgfsdfg</p>\n',
-            status: 'Not Started',
-            label: 'Create a new objective',
-            supportType: SUPPORT_TYPES[1],
-          },
-        ],
-        name: 'Create new goal',
-        goalNumber: '',
-        id: 'new',
-        isNew: true,
-        endDate: '',
-        onApprovedAR: false,
-        grantIds: [
-          11606,
-        ],
-        goalIds: [],
-        oldGrantIds: [],
-        status: 'Draft',
-        isRttapa: null,
-        isCurated: false,
-        source: 'Source',
-      }],
-    });
-
-    act(() => renderActivityReport(1, 'goals-objectives', false, 1));
-
-    await screen.findByRole('heading', { name: 'Goals and objectives' });
-
-    // assert that the file upload is visible
-    let message = await screen.findByText('Add a TTA objective and save as draft to upload resources.');
-    expect(message).toBeInTheDocument();
-
-    let radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
-    expect(radios).toBeNull();
-
-    fetchMock.put('/api/activity-reports/1', {
-      id: 23786,
-      userId: 355,
-      startDate: moment().format('YYYY-MM-DD'),
-      endDate: null,
-      lastUpdatedById: 355,
-      ECLKCResourcesUsed: [],
-      nonECLKCResourcesUsed: [],
-      additionalNotes: null,
-      numberOfParticipants: null,
-      deliveryMethod: null,
-      version: 2,
-      duration: null,
-      activityRecipientType: 'recipient',
-      activityRecipients: [
-        {
-          id: 12539,
-          activityRecipientId: 12539,
-          name: 'Barton LLC - 04bear012539  - EHS, HS',
-        },
-      ],
-      requester: null,
-      targetPopulations: [],
-      virtualDeliveryType: null,
-      reason: [],
-      participants: [],
-      topics: [],
-      programTypes: null,
-      context: '',
-      pageState: {
-        1: 'In progress', 2: 'Complete', 3: 'Not started', 4: 'Not started',
-      },
-      regionId: 1,
-      submissionStatus: 'draft',
-      calculatedStatus: 'draft',
-      ttaType: [],
-      submittedDate: null,
-      updatedAt: '2023-06-21T17:54:15.844Z',
-      approvedAt: null,
-      creatorRole: 'Central Office',
-      createdAt: '2023-06-21T17:43:50.905Z',
-      legacyId: null,
-      objectivesWithGoals: [],
-      author: {},
-      files: [],
-      activityReportCollaborators: [],
-      specialistNextSteps: [{ completeDate: null, note: '', id: 130888 }],
-      recipientNextSteps: [{ completeDate: null, note: '', id: 130887 }],
-      approvers: [],
-      displayId: 'R01-AR-23786',
-      goalsAndObjectives: [{
-        id: 37504,
-        name: 'New goal',
-        status: 'Draft',
-        timeframe: null,
-        isFromSmartsheetTtaPlan: null,
-        endDate: '',
-        closeSuspendReason: null,
-        closeSuspendContext: null,
-        grantId: 10431,
-        goalTemplateId: null,
-        previousStatus: null,
-        onAR: true,
-        onApprovedAR: false,
-        isRttapa: null,
-        firstNotStartedAt: null,
-        lastNotStartedAt: null,
-        firstInProgressAt: null,
-        lastInProgressAt: null,
-        firstCeasedSuspendedAt: null,
-        lastCeasedSuspendedAt: null,
-        firstClosedAt: null,
-        lastClosedAt: null,
-        firstCompletedAt: null,
-        lastCompletedAt: null,
-        createdVia: 'activityReport',
-        rtrOrder: 1,
-        source: null,
-        createdAt: '2023-06-21T17:54:16.543Z',
-        updatedAt: '2023-06-21T17:54:16.812Z',
-        isCurated: null,
-        prompts: [],
-        activityReportGoals: [{
-          endDate: null, id: 76212, activityReportId: 23786, goalId: 37504, isRttapa: null, name: 'New goal', status: 'Draft', timeframe: null, closeSuspendReason: null, closeSuspendContext: null, source: null, isActivelyEdited: false, createdAt: '2023-06-21T17:54:16.699Z', updatedAt: '2023-06-21T17:54:16.699Z',
-        }],
-        grant: {},
-        objectives: [{
-          id: 95299,
-          otherEntityId: null,
-          goalId: 37504,
-          title: 'ASDF',
-          status: 'Not Started',
-          objectiveTemplateId: null,
+        submissionStatus: 'draft',
+        calculatedStatus: 'draft',
+        ttaType: [],
+        submittedDate: null,
+        updatedAt: '2023-06-21T17:54:15.844Z',
+        approvedAt: null,
+        creatorRole: 'Central Office',
+        createdAt: '2023-06-21T17:43:50.905Z',
+        legacyId: null,
+        objectivesWithGoals: [],
+        author: {},
+        files: [],
+        activityReportCollaborators: [],
+        specialistNextSteps: [{ completeDate: null, note: '', id: 130888 }],
+        recipientNextSteps: [{ completeDate: null, note: '', id: 130887 }],
+        approvers: [],
+        displayId: 'R01-AR-23786',
+        goalsAndObjectives: [{
+          id: 37504,
+          name: 'New goal',
+          status: GOAL_STATUS.DRAFT,
+          timeframe: null,
+          isFromSmartsheetTtaPlan: null,
+          endDate: '',
+          closeSuspendReason: null,
+          closeSuspendContext: null,
+          grantId: 10431,
+          goalTemplateId: null,
+          previousStatus: null,
           onAR: true,
           onApprovedAR: false,
-          createdVia: 'activityReport',
-          firstNotStartedAt: '2023-06-21T17:54:16.916Z',
-          lastNotStartedAt: '2023-06-21T17:54:16.916Z',
+          isRttapa: null,
+          firstNotStartedAt: null,
+          lastNotStartedAt: null,
           firstInProgressAt: null,
           lastInProgressAt: null,
-          firstSuspendedAt: null,
-          lastSuspendedAt: null,
-          firstCompleteAt: null,
-          lastCompleteAt: null,
+          firstCeasedSuspendedAt: null,
+          lastCeasedSuspendedAt: null,
+          firstClosedAt: null,
+          lastClosedAt: null,
+          firstCompletedAt: null,
+          lastCompletedAt: null,
+          createdVia: 'activityReport',
           rtrOrder: 1,
-          createdAt: '2023-06-21T17:54:16.916Z',
-          updatedAt: '2023-06-21T17:54:17.269Z',
-          activityReportObjectives: [{
-            id: 104904,
-            activityReportId: 23786,
-            objectiveId: 95299,
-            arOrder: 1,
+          createdAt: '2023-06-21T17:54:16.543Z',
+          updatedAt: '2023-06-21T17:54:16.812Z',
+          isCurated: null,
+          prompts: [],
+          activityReportGoals: [{
+            endDate: null, id: 76212, activityReportId: 23786, goalId: 37504, isRttapa: null, name: 'New goal', status: GOAL_STATUS.DRAFT, timeframe: null, closeSuspendReason: null, closeSuspendContext: null, isActivelyEdited: false, createdAt: '2023-06-21T17:54:16.699Z', updatedAt: '2023-06-21T17:54:16.699Z',
+          }],
+          grant: {},
+          objectives: [{
+            id: 95299,
+            otherEntityId: null,
+            goalId: 37504,
             title: 'ASDF',
-            status: 'Not Started',
-            ttaProvided: '<p>ASDF</p>\n',
-            createdAt: '2023-06-21T17:54:17.172Z',
-            updatedAt: '2023-06-21T17:54:17.207Z',
-            supportType: SUPPORT_TYPES[1],
-            activityReportObjectiveTopics: [{
-              id: 13747,
-              activityReportObjectiveId: 104904,
-              topicId: 64,
-              createdAt: '2023-06-21T17:54:17.428Z',
-              updatedAt: '2023-06-21T17:54:17.428Z',
-              topic: {
-                id: 64, name: 'Communication', mapsTo: null, createdAt: '2022-03-18T21:27:37.915Z', updatedAt: '2022-03-18T21:27:37.915Z', deletedAt: null,
-              },
+            status: OBJECTIVE_STATUS.NOT_STARTED,
+            objectiveTemplateId: null,
+            onAR: true,
+            onApprovedAR: false,
+            createdVia: 'activityReport',
+            firstNotStartedAt: '2023-06-21T17:54:16.916Z',
+            lastNotStartedAt: '2023-06-21T17:54:16.916Z',
+            firstInProgressAt: null,
+            lastInProgressAt: null,
+            firstSuspendedAt: null,
+            lastSuspendedAt: null,
+            firstCompleteAt: null,
+            lastCompleteAt: null,
+            rtrOrder: 1,
+            createdAt: '2023-06-21T17:54:16.916Z',
+            updatedAt: '2023-06-21T17:54:17.269Z',
+            activityReportObjectives: [{
+              id: 104904,
+              activityReportId: 23786,
+              objectiveId: 95299,
+              arOrder: 1,
+              title: 'ASDF',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              ttaProvided: '<p>ASDF</p>\n',
+              createdAt: '2023-06-21T17:54:17.172Z',
+              updatedAt: '2023-06-21T17:54:17.207Z',
+              supportType: SUPPORT_TYPES[1],
+              activityReportObjectiveTopics: [{
+                id: 13747,
+                activityReportObjectiveId: 104904,
+                topicId: 64,
+                createdAt: '2023-06-21T17:54:17.428Z',
+                updatedAt: '2023-06-21T17:54:17.428Z',
+                topic: {
+                  id: 64, name: 'Communication', mapsTo: null, createdAt: '2022-03-18T21:27:37.915Z', updatedAt: '2022-03-18T21:27:37.915Z', deletedAt: null,
+                },
+              }],
+              activityReportObjectiveFiles: [],
+              activityReportObjectiveResources: [],
             }],
-            activityReportObjectiveFiles: [],
-            activityReportObjectiveResources: [],
+            topics: [{
+              id: 64, name: 'Communication', mapsTo: null, createdAt: '2022-03-18T21:27:37.915Z', updatedAt: '2022-03-18T21:27:37.915Z', deletedAt: null,
+            }],
+            resources: [],
+            files: [],
+            value: 95299,
+            ids: [95299],
+            ttaProvided: '<p>ASDF</p>\n',
+            isNew: false,
+            arOrder: 1,
           }],
-          topics: [{
-            id: 64, name: 'Communication', mapsTo: null, createdAt: '2022-03-18T21:27:37.915Z', updatedAt: '2022-03-18T21:27:37.915Z', deletedAt: null,
-          }],
-          resources: [],
-          files: [],
-          value: 95299,
-          ids: [95299],
-          ttaProvided: '<p>ASDF</p>\n',
+          goalNumbers: ['G-37504'],
+          goalIds: [37504],
+          grants: [{ }],
+          grantIds: [10431],
           isNew: false,
-          arOrder: 1,
         }],
-        goalNumbers: ['G-37504'],
-        goalIds: [37504],
-        grants: [{ }],
-        grantIds: [10431],
-        isNew: false,
-      }],
-      objectivesWithoutGoals: [],
-    });
+        objectivesWithoutGoals: [],
+      });
 
-    expect(fetchMock.called('/api/activity-reports/1', { method: 'PUT' })).toBe(false);
-    const saveGoal = await screen.findByRole('button', { name: /save goal/i });
-    act(() => {
-      userEvent.click(saveGoal);
-    });
+      expect(fetchMock.called('/api/activity-reports/1', { method: 'PUT' })).toBe(false);
+      const saveGoal = await screen.findByRole('button', { name: /save goal/i });
+      act(() => {
+        userEvent.click(saveGoal);
+      });
 
-    const errors = document.querySelectorAll('.usa-error-message:not(:empty)');
-    expect(errors.length).toBe(0);
+      const errors = document.querySelectorAll('.usa-error-message:not(:empty)');
+      expect(errors.length).toBe(0);
 
-    await waitFor(() => {
-      expect(fetchMock.called('/api/activity-reports/1', { method: 'PUT' })).toBe(true);
-    });
+      await waitFor(() => {
+        expect(fetchMock.called('/api/activity-reports/1', { method: 'PUT' })).toBe(true);
+      });
 
-    const actions = await screen.findByRole('button', { name: /actions for goal/i });
-    act(() => {
-      userEvent.click(actions);
-    });
+      const actions = await screen.findByRole('button', { name: /actions for goal/i });
+      act(() => {
+        userEvent.click(actions);
+      });
 
-    fetchMock.get('/api/goals?reportId=1&goalIds=37504', [{
-      startDate: moment().format('YYYY-MM-DD'),
-      status: 'Draft',
-      value: 37504,
-      label: 'dfghgh',
-      id: 37504,
-      name: 'dfghgh',
-      grant: {
-        programTypes: [],
-        name: 'Dooley and Sons - 02bear011606 ',
-        numberWithProgramTypes: '02bear011606 ',
-        recipientInfo: 'Dooley and Sons - 02bear011606 - 757',
-        id: 11606,
-        number: '02bear011606',
-        annualFundingMonth: 'January',
-        cdi: false,
-        status: 'Active',
-        grantSpecialistName: 'Marian Daugherty',
-        grantSpecialistEmail: 'Effie.McCullough@gmail.com',
-        programSpecialistName: 'Eddie Denesik DDS',
-        programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
-        stateCode: 'RI',
-        startDate: '2020-01-01T00:00:00.000Z',
-        endDate: '2024-12-31T00:00:00.000Z',
-        inactivationDate: null,
-        inactivationReason: null,
-        recipientId: 757,
-        oldGrantId: 8609,
-        deleted: false,
-        createdAt: '2021-03-16T01:20:44.754Z',
-        updatedAt: '2022-09-28T15:03:28.488Z',
-        regionId: 1,
-        recipient: {
-          id: 757, uei: 'GAKEGQ34K338', name: 'Dooley and Sons', recipientType: 'Private/Public Non-Profit (Non-CAA) (e.g., church or non-profit hospital)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.279Z',
-        },
-      },
-      objectives: [{
-        id: 95300,
-        label: 'dfghdfgh',
-        title: 'dfghdfgh',
-        status: 'Not Started',
-        goalId: 37505,
-        resources: [],
-        activityReportObjectives: [{ ttaProvided: '<p>dfgh</p>\n' }],
-        files: [],
-        topics: [{
-          id: 62,
-          name: 'CLASS: Instructional Support',
-          mapsTo: null,
-          createdAt: '2022-03-18T21:27:37.915Z',
-          updatedAt: '2022-03-18T21:27:37.915Z',
-          deletedAt: null,
-          ObjectiveTopic: {
-            id: 16251, objectiveId: 95300, topicId: 62, onAR: true, onApprovedAR: false, createdAt: '2023-06-21T18:13:19.936Z', updatedAt: '2023-06-21T18:13:20.312Z',
-          },
-        }],
-        activityReports: [{
-          displayId: 'R01-AR-23788',
-          endDate: null,
-          startDate: null,
-          submittedDate: null,
-          lastSaved: '06/21/2023',
-          creatorNameWithRole: ', CO',
-          sortedTopics: [],
-          creatorName: ', CO',
-          id: 23788,
-          legacyId: null,
-          userId: 355,
-          lastUpdatedById: 355,
-          ECLKCResourcesUsed: [],
-          nonECLKCResourcesUsed: [],
-          additionalNotes: null,
-          numberOfParticipants: null,
-          deliveryMethod: null,
-          version: 2,
-          duration: null,
-          activityRecipientType: 'recipient',
-          requester: null,
-          targetPopulations: [],
-          virtualDeliveryType: null,
-          reason: [],
-          participants: [],
-          topics: [],
-          programTypes: null,
-          context: '',
-          pageState: {
-            1: 'In progress', 2: 'In progress', 3: 'Not started', 4: 'Not started',
-          },
+      fetchMock.get('/api/goals?reportId=1&goalIds=37504', [{
+        startDate: moment().format('YYYY-MM-DD'),
+        status: GOAL_STATUS.DRAFT,
+        value: 37504,
+        label: 'dfghgh',
+        id: 37504,
+        name: 'dfghgh',
+        grant: {
+          programTypes: [],
+          name: 'Dooley and Sons - 02bear011606 ',
+          numberWithProgramTypes: '02bear011606 ',
+          recipientInfo: 'Dooley and Sons - 02bear011606 - 757',
+          id: 11606,
+          number: '02bear011606',
+          annualFundingMonth: 'January',
+          cdi: false,
+          status: 'Active',
+          grantSpecialistName: 'Marian Daugherty',
+          grantSpecialistEmail: 'Effie.McCullough@gmail.com',
+          programSpecialistName: 'Eddie Denesik DDS',
+          programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
+          stateCode: 'RI',
+          startDate: '2020-01-01T00:00:00.000Z',
+          endDate: '2024-12-31T00:00:00.000Z',
+          inactivationDate: null,
+          inactivationReason: null,
+          recipientId: 757,
+          oldGrantId: 8609,
+          deleted: false,
+          createdAt: '2021-03-16T01:20:44.754Z',
+          updatedAt: '2022-09-28T15:03:28.488Z',
           regionId: 1,
-          submissionStatus: 'draft',
-          calculatedStatus: 'draft',
-          ttaType: [],
-          updatedAt: '2023-06-21T18:14:42.989Z',
-          approvedAt: null,
-          imported: null,
-          creatorRole: 'Central Office',
-          createdAt: '2023-06-21T18:06:00.221Z',
-          ActivityReportObjective: {
-            id: 104905, activityReportId: 23788, objectiveId: 95300, arOrder: 1, title: 'dfghdfgh', status: 'Not Started', ttaProvided: '<p>dfgh</p>\n', createdAt: '2023-06-21T18:13:20.063Z', updatedAt: '2023-06-21T18:13:20.094Z',
+          recipient: {
+            id: 757, uei: 'GAKEGQ34K338', name: 'Dooley and Sons', recipientType: 'Private/Public Non-Profit (Non-CAA) (e.g., church or non-profit hospital)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.279Z',
           },
-        }],
-        value: 95300,
-        ids: [95300],
-        recipientIds: [],
-        isNew: false,
-      }],
-      prompts: [],
-      goalNumbers: ['G-37505'],
-      goalIds: [37505],
-      grants: [{
-        id: 11606,
-        number: '02bear011606',
-        annualFundingMonth: 'January',
-        cdi: false,
-        status: 'Active',
-        grantSpecialistName: 'Marian Daugherty',
-        grantSpecialistEmail: 'Effie.McCullough@gmail.com',
-        programSpecialistName: 'Eddie Denesik DDS',
-        programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
-        stateCode: 'RI',
-        startDate: '2020-01-01T00:00:00.000Z',
-        endDate: '2024-12-31T00:00:00.000Z',
-        inactivationDate: null,
-        inactivationReason: null,
-        recipientId: 757,
-        oldGrantId: 8609,
-        deleted: false,
-        createdAt: '2021-03-16T01:20:44.754Z',
-        updatedAt: '2022-09-28T15:03:28.488Z',
-        regionId: 1,
-        recipient: {
-          id: 757, uei: 'GAKEGQ34K338', name: 'Dooley and Sons', recipientType: 'Private/Public Non-Profit (Non-CAA) (e.g., church or non-profit hospital)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.279Z',
         },
-        numberWithProgramTypes: '02bear011606 ',
-        name: 'Dooley and Sons - 02bear011606 ',
-        goalId: 37505,
-      }],
-      grantIds: [11606],
-      isNew: false,
-    }]);
+        objectives: [{
+          id: 95300,
+          label: 'dfghdfgh',
+          title: 'dfghdfgh',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: 37505,
+          resources: [],
+          activityReportObjectives: [{ ttaProvided: '<p>dfgh</p>\n' }],
+          files: [],
+          topics: [{
+            id: 62,
+            name: 'CLASS: Instructional Support',
+            mapsTo: null,
+            createdAt: '2022-03-18T21:27:37.915Z',
+            updatedAt: '2022-03-18T21:27:37.915Z',
+            deletedAt: null,
+            ObjectiveTopic: {
+              id: 16251, objectiveId: 95300, topicId: 62, onAR: true, onApprovedAR: false, createdAt: '2023-06-21T18:13:19.936Z', updatedAt: '2023-06-21T18:13:20.312Z',
+            },
+          }],
+          activityReports: [{
+            displayId: 'R01-AR-23788',
+            endDate: null,
+            startDate: null,
+            submittedDate: null,
+            lastSaved: '06/21/2023',
+            creatorNameWithRole: ', CO',
+            sortedTopics: [],
+            creatorName: ', CO',
+            id: 23788,
+            legacyId: null,
+            userId: 355,
+            lastUpdatedById: 355,
+            ECLKCResourcesUsed: [],
+            nonECLKCResourcesUsed: [],
+            additionalNotes: null,
+            numberOfParticipants: null,
+            deliveryMethod: null,
+            version: 2,
+            duration: null,
+            activityRecipientType: 'recipient',
+            requester: null,
+            targetPopulations: [],
+            virtualDeliveryType: null,
+            participants: [],
+            topics: [],
+            programTypes: null,
+            context: '',
+            pageState: {
+              1: 'In progress', 2: 'In progress', 3: 'Not started', 4: 'Not started',
+            },
+            regionId: 1,
+            submissionStatus: 'draft',
+            calculatedStatus: 'draft',
+            ttaType: [],
+            updatedAt: '2023-06-21T18:14:42.989Z',
+            approvedAt: null,
+            imported: null,
+            creatorRole: 'Central Office',
+            createdAt: '2023-06-21T18:06:00.221Z',
+            ActivityReportObjective: {
+              id: 104905, activityReportId: 23788, objectiveId: 95300, arOrder: 1, title: 'dfghdfgh', status: OBJECTIVE_STATUS.NOT_STARTED, ttaProvided: '<p>dfgh</p>\n', createdAt: '2023-06-21T18:13:20.063Z', updatedAt: '2023-06-21T18:13:20.094Z',
+            },
+          }],
+          value: 95300,
+          ids: [95300],
+          recipientIds: [],
+          isNew: false,
+        }],
+        prompts: [],
+        goalNumbers: ['G-37505'],
+        goalIds: [37505],
+        grants: [{
+          id: 11606,
+          number: '02bear011606',
+          annualFundingMonth: 'January',
+          cdi: false,
+          status: 'Active',
+          grantSpecialistName: 'Marian Daugherty',
+          grantSpecialistEmail: 'Effie.McCullough@gmail.com',
+          programSpecialistName: 'Eddie Denesik DDS',
+          programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
+          stateCode: 'RI',
+          startDate: '2020-01-01T00:00:00.000Z',
+          endDate: '2024-12-31T00:00:00.000Z',
+          inactivationDate: null,
+          inactivationReason: null,
+          recipientId: 757,
+          oldGrantId: 8609,
+          deleted: false,
+          createdAt: '2021-03-16T01:20:44.754Z',
+          updatedAt: '2022-09-28T15:03:28.488Z',
+          regionId: 1,
+          recipient: {
+            id: 757, uei: 'GAKEGQ34K338', name: 'Dooley and Sons', recipientType: 'Private/Public Non-Profit (Non-CAA) (e.g., church or non-profit hospital)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.279Z',
+          },
+          numberWithProgramTypes: '02bear011606 ',
+          name: 'Dooley and Sons - 02bear011606 ',
+          goalId: 37505,
+        }],
+        grantIds: [11606],
+        isNew: false,
+      }]);
 
-    const edit = await screen.findByRole('button', { name: /edit/i });
-    act(() => {
-      userEvent.click(edit);
+      const edit = await screen.findByRole('button', { name: /edit/i });
+      act(() => {
+        userEvent.click(edit);
+      });
+
+      message = screen.queryByText('Add a TTA objective and save as draft to upload resources.');
+      expect(message).toBeNull();
+
+      const didYouUse = await screen.findAllByText(/Did you use any other TTA resources/i);
+      expect(didYouUse).toHaveLength(2);
+
+      didYouUse.forEach((el) => {
+        expect(el).toBeVisible();
+      });
+      expect(screen.getByRole('group', { name: /did you use an ipd course as a resource\?/i })).toBeVisible();
     });
-
-    message = screen.queryByText('Add a TTA objective and save as draft to upload resources.');
-    expect(message).toBeNull();
-
-    const didYouUse = await screen.findAllByText(/Did you use any other TTA resources/i);
-    expect(didYouUse).toHaveLength(2);
-
-    didYouUse.forEach((el) => {
-      expect(el).toBeVisible();
-    });
-
-    radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
-    expect(radios).not.toBeNull();
   });
-});
 
-describe('formatReportWithSaveBeforeConversion', () => {
-  it('properly formats dates', async () => {
-    const reportData = await formatReportWithSaveBeforeConversion(
-      {
-        creatorRole: 'Tiny Lizard',
-        startDate: '10/04/2020',
-        endDate: '10/04/2020',
-      },
-      {
-        creatorRole: 'Tiny Lizard',
-        startDate: '10/04/2020',
-        endDate: '10/04/2020',
-      },
-      {},
-      false,
-      1,
-      [],
-    );
-    expect(reportData.startDate).toBe('10/04/2020');
-    expect(reportData.endDate).toBe('10/04/2020');
+  describe('formatReportWithSaveBeforeConversion', () => {
+    it('properly formats dates', async () => {
+      const reportData = await formatReportWithSaveBeforeConversion(
+        {
+          creatorRole: 'Tiny Lizard',
+          startDate: '10/04/2020',
+          endDate: '10/04/2020',
+        },
+        {
+          creatorRole: 'Tiny Lizard',
+          startDate: '10/04/2020',
+          endDate: '10/04/2020',
+        },
+        {},
+        false,
+        1,
+        [],
+      );
+      expect(reportData.startDate).toBe('10/04/2020');
+      expect(reportData.endDate).toBe('10/04/2020');
+    });
+  });
+
+  describe('collaborators', () => {
+    it('does not add the report creator to the selectable collaborator options', async () => {
+      const userId = 1;
+      const collaborators = [
+        { id: 1, name: 'Creator User', roles: [{ fullName: 'Creator' }] },
+        { id: 2, name: 'Other User', roles: [{ fullName: 'Other User' }] },
+      ];
+
+      fetchMock.get('/api/users/collaborators?region=1', collaborators, { overwriteRoutes: true });
+
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        userId,
+        activityReportCollaborators: [],
+      });
+
+      renderActivityReport('1');
+
+      // Click the multiselect and verify the options.
+      await waitFor(() => {
+        const select = screen.getByLabelText(/collaborating specialists/i);
+        userEvent.click(select);
+      });
+
+      // Expect 'Other User' to be visible and 'Creator User' to be hidden.
+      expect(screen.getByText('Other User')).toBeVisible();
+      expect(screen.queryByText('Creator User')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('reason for activity', () => {
+    it('shows the reason for activity', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        reasonForActivity: null,
+      });
+      renderActivityReport(1);
+
+      // We can select an activity reason.
+      // Find all form groups first
+      const formGroups = await screen.findAllByTestId('formGroup');
+      // Find the specific form group that contains both the text and a combobox
+      const formGroup = formGroups.find((group) => group.textContent.includes('Why was this activity requested?')
+               && within(group).queryByRole('combobox') !== null);
+      // Get the combobox within the found form group
+      const selectElement = within(formGroup).getByRole('combobox');
+
+      act(() => userEvent.click(selectElement));
+      const reasonOption = await screen.findByText('Recipient requested');
+      act(() => userEvent.click(reasonOption));
+      expect(screen.getByText('Recipient requested')).toBeVisible();
+    });
+  });
+
+  describe('creator, collaborator', () => {
+    it('report submitted', async () => {
+      const d = {
+        ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      };
+
+      fetchMock.get('/api/activity-reports/1', d);
+      act(() => {
+        renderActivityReport('1', 'review', true, 1);
+      });
+
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/submitted/1'));
+    });
+  });
+
+  describe('approved report', () => {
+    it('auto redirects', async () => {
+      const d = {
+        ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.APPROVED,
+      };
+
+      fetchMock.get('/api/activity-reports/1', d);
+      act(() => {
+        renderActivityReport('1', 'review', true, 1);
+      });
+
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/view/1'));
+    });
   });
 });

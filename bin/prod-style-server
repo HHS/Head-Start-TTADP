@@ -30,10 +30,6 @@ docker compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend ins
 docker compose -f docker-compose.dss.yml run --rm server yarn build
 docker compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend run build
 
-# Install dependencies for Python similarity_api
-echo "Installing Python dependencies for similarity_api..."
-docker compose -f docker-compose.dss.yml run --rm --user root similarity_api pip install --no-cache-dir -r /app/requirements.txt --timeout=60
-
 # Run database migrations using Node.js app
 echo "Running database migrations using Node.js app..."
 docker compose -f docker-compose.dss.yml run --rm server yarn db:migrate:ci

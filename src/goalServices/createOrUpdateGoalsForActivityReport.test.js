@@ -1,8 +1,8 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import crypto from 'crypto';
 import { createOrUpdateGoalsForActivityReport } from './goals';
-import { saveObjectivesForReport, getObjectivesByReportId } from '../services/objectives';
 import db, {
   Goal,
   Grant,
@@ -12,9 +12,11 @@ import db, {
   ActivityReportGoal,
   ActivityReportObjective,
   User,
-  OtherEntity,
-  ActivityRecipient,
+  GoalTemplate,
 } from '../models';
+import {
+  AUTOMATIC_CREATION,
+} from '../constants';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -53,10 +55,9 @@ describe('createOrUpdateGoalsForActivityReport', () => {
   });
 
   let activityReport;
-  let otherEntityReport;
   let user;
   let recipient;
-  let otherEntity;
+  let template;
 
   let grants = [
     {
@@ -78,14 +79,23 @@ describe('createOrUpdateGoalsForActivityReport', () => {
   ];
 
   let goalIds;
-  let oeObjectiveIds;
 
   beforeAll(async () => {
     user = await User.create(mockUser);
+    const goalTemplateName = 'Test create goal for activity reports';
+    const secret = 'secret';
+    const hash = crypto
+      .createHmac('md5', secret)
+      .update(goalTemplateName)
+      .digest('hex');
+
+    template = await GoalTemplate.create({
+      hash,
+      templateName: goalTemplateName,
+      creationMethod: AUTOMATIC_CREATION,
+    });
 
     recipient = await Recipient.create({ name: 'recipient', id: faker.datatype.number(), uei: faker.datatype.string(12) });
-
-    otherEntity = await OtherEntity.create({ name: 'Create or Update OE Objectives Entity' });
 
     grants = await Promise.all(
       grants.map((g) => Grant.create({ ...g, recipientId: recipient.id })),
@@ -106,22 +116,6 @@ describe('createOrUpdateGoalsForActivityReport', () => {
         },
       },
     );
-
-    // Other Entity Report.
-    otherEntityReport = await ActivityReport.create(
-      {
-        ...report,
-        activityRecipientType: 'other-entity',
-        userId: user.id,
-        lastUpdatedById: user.id,
-        activityRecipients: [],
-      },
-    );
-
-    await ActivityRecipient.create({
-      activityReportId: otherEntityReport.id,
-      otherEntityId: otherEntity.id,
-    });
   });
 
   afterAll(async () => {
@@ -139,31 +133,19 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       },
     });
 
+    // Delete Recipient Obj's
+    await Objective.destroy({
+      where: {
+        [db.Sequelize.Op.or]: [
+          { goalId: goalIds },
+          { createdViaActivityReportId: activityReport.id },
+        ],
+      },
+      force: true,
+    });
+
     // Delete Recipient AR.
     await ActivityReport.destroy({ where: { id: activityReport.id } });
-
-    // Delete OE ARO.
-    await ActivityReportObjective.destroy({
-      where: {
-        activityReportId: otherEntityReport.id,
-      },
-    });
-
-    // Delete OE Obj's.
-    await Objective.destroy({ where: { id: oeObjectiveIds }, force: true });
-
-    // Delete OE Recipient.
-    await ActivityRecipient.destroy({
-      where: {
-        activityReportId: otherEntityReport.id,
-      },
-    });
-
-    // Delete OE AR.
-    await ActivityReport.destroy({ where: { id: otherEntityReport.id } });
-
-    // Delete Recipient Obj's
-    await Objective.destroy({ where: { goalId: goalIds }, force: true });
 
     // Delete Goal.
     await Goal.destroy({
@@ -188,10 +170,10 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       },
     });
 
-    // Delete OE.
-    await OtherEntity.destroy({
+    // Delete Goal Template.
+    await GoalTemplate.destroy({
       where: {
-        id: otherEntity.id,
+        id: template.id,
       },
     });
 
@@ -204,113 +186,6 @@ describe('createOrUpdateGoalsForActivityReport', () => {
 
     // Close Conn.
     await db.sequelize.close();
-  });
-
-  it('creates other entity new objectives and updates existing ones', async () => {
-    const objectivesToCreate = [
-      {
-        title: 'Test create OE objective - Obj 1',
-        status: 'Not Started',
-        recipientIds: [otherEntity.dataValues.id],
-        ttaProvided: '<p>Test create OE objective - Obj 1 tta</p>',
-        topics: [],
-        resources: [],
-        files: [],
-        isNew: true,
-      },
-      {
-        title: 'Test create OE objective - Obj 2',
-        status: 'In Progress',
-        recipientIds: [otherEntity.dataValues.id],
-        ttaProvided: '<p>Test create OE objective - Obj 2 tta</p>',
-        topics: [],
-        resources: [],
-        files: [],
-        isNew: true,
-      },
-      {
-        title: 'Test create OE objective - Obj 3',
-        status: 'Complete',
-        recipientIds: [otherEntity.dataValues.id],
-        ttaProvided: '<p>Test create OE objective - Obj 3 tta</p>',
-        topics: [],
-        resources: [],
-        files: [],
-        isNew: true,
-      },
-    ];
-
-    await saveObjectivesForReport(
-      objectivesToCreate,
-      otherEntityReport,
-    );
-
-    const createdObjectives = await getObjectivesByReportId(otherEntityReport.id);
-    const createdObjectiveIds = createdObjectives.map((o) => o.id);
-
-    // Objectives (sorted by order).
-    expect(createdObjectives.length).toBe(3);
-
-    expect(createdObjectives[0].id).not.toBeNull();
-    expect(createdObjectives[0].title).toBe('Test create OE objective - Obj 1');
-    expect(createdObjectives[0].ttaProvided).toBe('<p>Test create OE objective - Obj 1 tta</p>');
-    expect(createdObjectives[0].status).toBe('Not Started');
-    expect(createdObjectives[0].otherEntityId).toBe(otherEntity.id);
-    expect(createdObjectives[0].arOrder).toBe(1);
-
-    expect(createdObjectives[1].id).not.toBeNull();
-    expect(createdObjectives[1].title).toBe('Test create OE objective - Obj 2');
-    expect(createdObjectives[1].ttaProvided).toBe('<p>Test create OE objective - Obj 2 tta</p>');
-    expect(createdObjectives[1].status).toBe('In Progress');
-    expect(createdObjectives[1].otherEntityId).toBe(otherEntity.id);
-    expect(createdObjectives[1].arOrder).toBe(2);
-
-    expect(createdObjectives[2].id).not.toBeNull();
-    expect(createdObjectives[2].title).toBe('Test create OE objective - Obj 3');
-    expect(createdObjectives[2].ttaProvided).toBe('<p>Test create OE objective - Obj 3 tta</p>');
-    expect(createdObjectives[2].status).toBe('Complete');
-    expect(createdObjectives[2].otherEntityId).toBe(otherEntity.id);
-    expect(createdObjectives[2].arOrder).toBe(3);
-
-    // Remove an Objective.
-    createdObjectives.splice(1, 1);
-
-    // Update Title and TTA Provided.
-    let updatedObjectives = createdObjectives.map((o, index) => ({
-      ...o,
-      recipientIds: [otherEntity.dataValues.id],
-      title: `My new obj ${index + 1}`,
-      ttaProvided: `<p>My new tta ${index + 1}</p>`,
-    }));
-
-    await saveObjectivesForReport(
-      updatedObjectives,
-      otherEntityReport,
-    );
-    updatedObjectives = await getObjectivesByReportId(otherEntityReport.id);
-
-    // Create combined list of Objectives to clean up.
-    oeObjectiveIds = [
-      ...new Set([...createdObjectiveIds,
-        ...updatedObjectives.map((o) => o.id)]),
-    ];
-
-    // Updated Objective.
-    expect(createdObjectives.length).toBe(2);
-
-    expect(updatedObjectives[0].id).not.toBeNull();
-    expect(updatedObjectives[0].title).toBe('My new obj 1');
-    expect(updatedObjectives[0].ttaProvided).toBe('<p>My new tta 1</p>');
-    expect(updatedObjectives[0].status).toBe('Not Started');
-    expect(updatedObjectives[0].otherEntityId).toBe(otherEntity.id);
-    expect(updatedObjectives[0].arOrder).toBe(1);
-
-    expect(updatedObjectives[1].id).not.toBeNull();
-    expect(updatedObjectives[1].title).toBe('My new obj 2');
-    expect(updatedObjectives[1].ttaProvided).toBe('<p>My new tta 2</p>');
-    expect(updatedObjectives[1].status).toBe('Complete');
-    expect(updatedObjectives[1].otherEntityId).toBe(otherEntity.id);
-    expect(updatedObjectives[1].arOrder).toBe(2);
   });
 
   it('creates recipient new goals and updates existing ones', async () => {
@@ -328,6 +203,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       onApprovedAR: false,
       regionId: 1,
       status: 'Draft',
+      goalTemplateId: template.id,
       objectives: [
         {
           title: 'Test create goal for activity reports - Obj 1',
@@ -358,6 +234,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
     let createdGoals = await createOrUpdateGoalsForActivityReport(
       goalsToCreate,
       activityReport.id,
+      mockUser.id,
     );
 
     goalIds = createdGoals[0].goalIds;
@@ -408,6 +285,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
     createdGoals = await createOrUpdateGoalsForActivityReport(
       updatedGoal,
       activityReport.id,
+      mockUser.id,
     );
 
     // Updated Goal.

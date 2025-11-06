@@ -25,6 +25,7 @@
   max-width: 500px;
 }
 
+/*
 .usa-accordion__button {
   background-color: white;
   height: 64px;
@@ -52,6 +53,7 @@
   border-bottom-right-radius: 4px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
 }
+*/
 
 .icon {
   display:inline-block;
@@ -86,5 +88,9 @@
 
 .smart-hub--form__activity-report-form legend:first-of-type,
 .smart-hub--report-legend__no-legend-margin-top legend{
+  margin-top: 0;
+}
+
+.smart-hub--report-legend--collapse-form-group .usa-form-group {
   margin-top: 0;
 }

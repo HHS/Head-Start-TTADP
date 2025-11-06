@@ -4,6 +4,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
 import ObjectivesSection from '../ObjectivesSection';
 import { GOAL_FORM_FIELDS } from '../../../pages/StandardGoalForm/constants';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 let reset;
 
@@ -48,17 +49,21 @@ describe('ObjectivesSection', () => {
     reset({ [GOAL_FORM_FIELDS.OBJECTIVES]: [] });
     fireEvent.click(screen.getByText('Add new objective'));
 
-    expect(await screen.findByLabelText(/tta objective/i)).toBeInTheDocument();
+    const objectives = await screen.findAllByLabelText(/tta objective/i);
+    expect(objectives).toHaveLength(2);
   });
 
   it('removes an objective when "Remove this objective" button is clicked', async () => {
     renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
     reset({
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: false }],
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{
+        objectiveId: '1', value: 'Objective 1', onAR: false, status: OBJECTIVE_STATUS.IN_PROGRESS,
+      }],
     });
-    expect(await screen.findByLabelText(/tta objective/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Remove this objective'));
-    expect(screen.queryByLabelText(/tta objective/i)).not.toBeInTheDocument();
+    const objectives = await screen.findAllByLabelText(/tta objective/i);
+    expect(objectives).toHaveLength(2);
+    expect(screen.getAllByText('Remove this objective')).toHaveLength(2);
+    expect(screen.queryAllByText(/tta objective/i).length).toBe(2);
   });
 
   it('renders ReadOnlyField when onAR is true', async () => {
@@ -67,5 +72,58 @@ describe('ObjectivesSection', () => {
       [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: true }],
     });
     expect(await screen.findByText('Objective 1', { selector: 'div' })).toBeInTheDocument();
+  });
+
+  it('rendes ReadOnlyField when status is Complete or Suspended', async () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [
+        { objectiveId: '1', value: 'Objective 1', status: OBJECTIVE_STATUS.COMPLETE },
+        { objectiveId: '2', value: 'Objective 2', status: OBJECTIVE_STATUS.SUSPENDED },
+      ],
+    });
+
+    expect(await screen.findByText('Objective 1', { selector: 'div' })).toBeInTheDocument();
+    expect(await screen.findByText('Objective 2', { selector: 'div' })).toBeInTheDocument();
+  });
+
+  it('doesnt render ReadOnlyField when status is not Complete or Suspended', async () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', status: OBJECTIVE_STATUS.IN_PROGRESS }],
+    });
+
+    expect(await screen.findByText('Objective 1', { selector: 'textarea' })).toBeInTheDocument();
+  });
+
+  it('shows the readonly and remove button when onAR is false', async () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{
+        objectiveId: '1', value: 'Objective 1', onAR: false, statue: OBJECTIVE_STATUS.SUSPENDED,
+      }],
+    });
+
+    expect(await screen.findByText('Objective 1', { selector: 'textarea' })).toBeInTheDocument();
+    // We hide the edite via css.
+    expect(screen.getAllByText('Remove this objective')).toHaveLength(2);
+  });
+
+  it('renders the alert when objectives are onAR', () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: true }],
+    });
+
+    expect(screen.getByText('Objectives used on reports cannot be edited.')).toBeInTheDocument();
+  });
+
+  it('does not render the alert when no objectives are onAR', () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: false }],
+    });
+
+    expect(screen.queryByText('Objectives used on reports cannot be edited.')).not.toBeInTheDocument();
   });
 });

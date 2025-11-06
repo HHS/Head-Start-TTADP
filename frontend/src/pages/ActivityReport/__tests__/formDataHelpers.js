@@ -1,4 +1,4 @@
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, GOAL_STATUS } from '@ttahub/common';
 import { convertGoalsToFormData, packageGoals } from '../formDataHelpers';
 
 describe('FormDataHelpers', () => {
@@ -7,8 +7,7 @@ describe('FormDataHelpers', () => {
       objectives: [],
       goalIds: [1, 2, 3],
       onApprovedAR: true,
-      source: 'Recipient request',
-      status: 'In progress',
+      status: GOAL_STATUS.IN_PROGRESS,
     };
 
     it('correctly formats goals with multiple recipients', () => {
@@ -33,13 +32,17 @@ describe('FormDataHelpers', () => {
         grantIds,
         [{ fieldName: 'prompt2' }],
       );
-
+      /*
+      console.log('packagedGoals123 all', packagedGoals);
+      console.log('packagedGoals123', packagedGoals[0]);
+      console.log('packagedGoals123', packagedGoals[0].prompts[0]);
+*/
       expect(packagedGoals).toEqual([
         {
           ...baseGoal,
           name: 'goal name',
           endDate: '09/01/2020',
-          prompts: [],
+          prompts: [{ fieldName: 'prompt' }],
           grantIds,
           isActivelyBeingEditing: false,
           objectives: [],
@@ -50,7 +53,7 @@ describe('FormDataHelpers', () => {
           endDate: '09/01/2020',
           isActivelyBeingEditing: true,
           grantIds,
-          prompts: [],
+          prompts: [{ fieldName: 'prompt2' }],
           objectives: [],
         },
       ]);
@@ -284,12 +287,10 @@ describe('FormDataHelpers', () => {
                 isActivelyEdited: true,
               },
             ],
-            source: 'Source',
           },
           {
             id: 2,
             objectives: [],
-            source: '',
             activityReportGoals: [
               {
                 id: 2,
@@ -306,7 +307,6 @@ describe('FormDataHelpers', () => {
         {
           id: 2,
           grantIds: [1, 2, 3],
-          source: '',
           prompts: [],
           objectives: [],
           activityReportGoals: [
@@ -317,7 +317,6 @@ describe('FormDataHelpers', () => {
 
       expect(goalForEditing).toEqual({
         id: 1,
-        source: '',
         prompts: [],
         grantIds: [1, 2, 3],
         objectives: [],
@@ -364,7 +363,6 @@ describe('FormDataHelpers', () => {
               isActivelyEdited: true,
             },
           ],
-          source: '',
           prompts: [],
         },
       ]);
@@ -372,7 +370,6 @@ describe('FormDataHelpers', () => {
       expect(goalForEditing).toEqual({
         id: 1,
         grantIds: [1, 2, 3],
-        source: '',
         activityReportGoals: [
           {
             id: 1,
@@ -416,7 +413,6 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
-          source: '',
           prompts: [],
           activityReportGoals: [
             {
@@ -427,7 +423,6 @@ describe('FormDataHelpers', () => {
         },
         {
           id: 2,
-          source: '',
           prompts: [],
           grantIds: [1, 2, 3],
           activityReportGoals: [
@@ -461,13 +456,11 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
-          source: '',
           prompts: [],
         },
         {
           id: 2,
           grantIds: [1, 2, 3],
-          source: '',
           prompts: [],
         },
       ]);
@@ -512,7 +505,6 @@ describe('FormDataHelpers', () => {
               isActivelyEdited: true,
             },
           ],
-          source: '',
           prompts: [],
         },
         {
@@ -524,7 +516,6 @@ describe('FormDataHelpers', () => {
               isActivelyEdited: true,
             },
           ],
-          source: '',
           prompts: [],
         },
       ]);

@@ -389,7 +389,6 @@ const cacheGoalMetadata = async (
   reportId,
   isActivelyBeingEditing,
   prompts,
-  isMultiRecipientReport = false,
 ) => {
   // first we check to see if the activity report -> goal link already exists
   let arg = await ActivityReportGoal.findOne({
@@ -439,8 +438,9 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
-  if (isMultiRecipientReport) {
-    // Check for fei goal prompts we need to update on the activity report goal.
+  // Save the prompts for the ARG.
+  if (!prompts || !prompts.length) {
+    // If no prompts are passed in get them from the goal.
     const goalPrompts = await GoalFieldResponse.findAll({
       attributes: [
         ['goalTemplateFieldPromptId', 'promptId'],
@@ -468,7 +468,7 @@ const cacheGoalMetadata = async (
         cachePrompts(goal.id, arg.id, goalPrompts),
       );
     }
-  } else if (prompts && prompts.length) {
+  } else if (prompts.length) {
     finalPromises.push(
       cachePrompts(goal.id, arg.id, prompts),
     );

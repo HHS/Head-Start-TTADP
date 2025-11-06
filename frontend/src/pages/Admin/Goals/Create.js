@@ -7,6 +7,7 @@ import {
   Checkbox, Dropdown, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import Container from '../../../components/Container';
 import Req from '../../../components/Req';
 import GoalSource from '../../../components/GoalForm/GoalSource';
@@ -317,7 +318,6 @@ export default function Create() {
             {prompts && (
             <ConditionalFieldsForHookForm
               prompts={prompts}
-              isMultiRecipientReport={false}
               userCanEdit
             />
             )}
@@ -327,7 +327,7 @@ export default function Create() {
               source={goalSource}
               validateGoalSource={onBlurGoalSource}
               onChangeGoalSource={onUpdateGoalSource}
-              goalStatus="Not started"
+              goalStatus={GOAL_STATUS.NOT_STARTED}
               inputName={goalSourceInputName}
               isLoading={false}
               userCanEdit

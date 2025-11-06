@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import moment from 'moment';
 import changeGoalStatus, { changeGoalStatusWithSystemUser } from './changeGoalStatus';
 import db from '../models';
 
@@ -16,6 +17,7 @@ describe('changeGoalStatus service', () => {
   let user;
   let role;
   let goal;
+  let additionalGoal;
   let systemChangedGoal;
   let grant;
   let recipient;
@@ -42,6 +44,11 @@ describe('changeGoalStatus service', () => {
       status: 'Draft',
       grantId: grant.id,
     });
+    additionalGoal = await db.Goal.create({
+      name: 'Plant a tree',
+      status: 'Draft',
+      grantId: grant.id,
+    });
     systemChangedGoal = await db.Goal.create({
       name: 'Change status using system user',
       status: 'Draft',
@@ -59,7 +66,16 @@ describe('changeGoalStatus service', () => {
   });
 
   afterAll(async () => {
-    await db.Goal.destroy({ where: { id: [goal.id, systemChangedGoal.id] }, force: true });
+    await db.Goal.destroy({
+      where: {
+        id: [
+          goal.id,
+          systemChangedGoal.id,
+          additionalGoal.id,
+        ],
+      },
+      force: true,
+    });
     await db.GrantNumberLink.destroy({ where: { grantId: grant.id }, force: true });
     await db.Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await db.Recipient.destroy({ where: { id: recipient.id } });
@@ -92,6 +108,33 @@ describe('changeGoalStatus service', () => {
     expect(statusChangeLog.userId).toBe(mockUser.id);
     expect(statusChangeLog.userName).toBe(user.name);
     expect(statusChangeLog.userRoles).toStrictEqual(['Astronaut']);
+  });
+
+  it('overrides performedAt', async () => {
+    await changeGoalStatus({
+      goalId: additionalGoal.id,
+      userId: mockUser.id,
+      newStatus,
+      reason,
+      context,
+      performedAt: '2025/01/01',
+    });
+
+    const updatedGoal = await db.Goal.findByPk(additionalGoal.id);
+    const statusChangeLog = await db.GoalStatusChange.findOne({
+      where: { goalId: additionalGoal.id, newStatus },
+    });
+
+    expect(updatedGoal.status).toBe(newStatus);
+    expect(statusChangeLog).toBeTruthy();
+    expect(statusChangeLog.oldStatus).toBe('Draft');
+    expect(statusChangeLog.newStatus).toBe(newStatus);
+    expect(statusChangeLog.reason).toBe(reason);
+    expect(statusChangeLog.context).toBe(context);
+    expect(statusChangeLog.userId).toBe(mockUser.id);
+    expect(statusChangeLog.userName).toBe(user.name);
+    expect(statusChangeLog.userRoles).toStrictEqual(['Astronaut']);
+    expect(statusChangeLog.performedAt).toStrictEqual(moment('2025/01/01').toDate());
   });
 
   it('should throw an error if the goal does not exist', async () => {
@@ -167,7 +210,8 @@ describe('changeGoalStatus service', () => {
       where: { goalId: testGoal.id },
     });
 
-    expect(statusChangeLogs.length).toBe(0);
+    // only 1 because the initial one we created
+    expect(statusChangeLogs.length).toBe(1);
 
     // Clean up
     await db.Goal.destroy({ where: { id: testGoal.id }, force: true });

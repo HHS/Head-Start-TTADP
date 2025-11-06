@@ -148,12 +148,19 @@ test.describe('get /recipient', () => {
       ),
     });
 
+    const grantMissingStandardSchema = Joi.object({
+      goalTemplateId: Joi.number().allow(null),
+      templateName: Joi.string().allow(null),
+      grantId: Joi.number().allow(null),
+    });
+
     const schema = Joi.object({
       id: Joi.number().integer().required(),
       name: Joi.string().required(),
       recipientType: Joi.string().allow(null),
       uei: Joi.string().allow(null),
       grants: Joi.array().items(grantSchema),
+      missingStandardGoals: Joi.array().items(grantMissingStandardSchema),
     });
 
     await validateSchema(response, schema, expect);

@@ -27,6 +27,25 @@ export function checkActivityReportIdParam(req, res, next) {
 }
 
 /**
+ *  Check collabReportId req param
+ *
+ * This middleware validates that the Collaboration Report id supplied
+ * by the collabReportId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkCollabReportIdParam(req, res, next) {
+  if (req.params && req.params.collabReportId && canBeInt(req.params.collabReportId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: collabReportId ${String(req?.params?.collabReportId)}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
  *  Check fileId req param
  *
  * This middleware validates that the File id supplied
