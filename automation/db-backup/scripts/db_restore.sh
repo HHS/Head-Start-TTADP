@@ -638,39 +638,41 @@ function perform_restore() {
         exit 1
     }
 
-    #set -x
-    set -o pipefail
+    echo "EXITING BEFORE RESTORE FOR SAFETY"
 
-    log "INFO" "Reset database before restore"
+#     #set -x
+#     set -o pipefail
 
-    psql -d postgres <<EOF
-select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
-DROP DATABASE IF EXISTS "${PGDATABASE}";
-CREATE DATABASE "${PGDATABASE}";
-EOF
+#     log "INFO" "Reset database before restore"
 
-    if [[ $? -ne 0 ]]; then
-        log "ERROR" "Failed to reset database"
-        exit 1
-    fi
+#     psql -d postgres <<EOF
+# select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
+# DROP DATABASE IF EXISTS "${PGDATABASE}";
+# CREATE DATABASE "${PGDATABASE}";
+# EOF
 
-    log "INFO" "Database reset successfully"
+#     if [[ $? -ne 0 ]]; then
+#         log "ERROR" "Failed to reset database"
+#         exit 1
+#     fi
 
-    log "INFO" "Restoring the database from the backup file"
-    aws s3 cp "s3://${backup_file_path}" - |\
-     openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
-     gzip -d |\
-     psql  || {
-        log "ERROR" "failed to restore"
-        set -e
-        exit 1
-    }
+#     log "INFO" "Database reset successfully"
 
-    log "INFO" "Database restore completed successfully"
+#     log "INFO" "Restoring the database from the backup file"
+#     aws s3 cp "s3://${backup_file_path}" - |\
+#      openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
+#      gzip -d |\
+#      psql  || {
+#         log "ERROR" "failed to restore"
+#         set -e
+#         exit 1
+#     }
 
-    log "INFO" "clear the populated env vars"
-    rds_clear
-    aws_s3_clear
+#     log "INFO" "Database restore completed successfully"
+
+#     log "INFO" "clear the populated env vars"
+#     rds_clear
+#     aws_s3_clear
 }
 
 monitor_memory $$ &
