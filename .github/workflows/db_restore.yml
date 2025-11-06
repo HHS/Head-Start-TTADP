@@ -44,7 +44,7 @@ jobs:
           cf_password: ${{ secrets.CG_DEV_PASSWORD }}
           cf_space: ${{ secrets.CG_DEV_SPACE }}
           cf_org: hhs-acf-ohs-tta
-          cf_command: 'login -a https://api.fr.cloud.gov -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE'
+          cf_command: apps
       - name: Execute DB Restore Task    
         run: |
           set -e
