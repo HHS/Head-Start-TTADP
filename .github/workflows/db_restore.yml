@@ -65,7 +65,7 @@ jobs:
             TARGET_ENV="${{ github.event.inputs.target_db }}"
             COMMAND="cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}"
             echo "Running $TASK_NAME on environment $TARGET_ENV: $COMMAND"
-            cf run-task $TARGET_ENV --name $TASK_NAME --m 2G --command "$COMMAND" 
+            cf run-task $TARGET_ENV --name $TASK_NAME -m 2G --command "$COMMAND" 
             echo "Waiting for task to complete..."
             sleep 15
             ./bin/watch-task.js $TARGET_ENV $TASK_NAME
