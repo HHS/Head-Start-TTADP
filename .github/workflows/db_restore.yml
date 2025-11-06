@@ -57,7 +57,7 @@ jobs:
             echo "Logging into Cloud Foundry..."
             cf login -a https://api.fr.cloud.gov \
             -u ${{ secrets.CG_DEV_USERNAME }} \
-            -p ${{ secrets.CG_DEV_USERNAME }} \
+            -p ${{ secrets.CG_DEV_PASSWORD }} \
             -s ${{ secrets.CG_DEV_SPACE }} \
             -o hhs-acf-ohs-tta
             
