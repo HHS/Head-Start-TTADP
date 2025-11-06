@@ -36,7 +36,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v5
-      - name: Login to Cloud Gov
+      - name: CF Login
         # Reference: https://github.com/cloud-gov/cg-cli-tools
         uses: cloud-gov/cg-cli-tools@main
         with:
@@ -44,17 +44,19 @@ jobs:
           cf_password: ${{ secrets.CG_DEV_PASSWORD }}
           cf_space: ${{ secrets.CG_DEV_SPACE }}
           cf_org: hhs-acf-ohs-tta
-          command: |
-            set -e
-            TASK_NAME="task-$(date +%s)"
-            COMMAND="cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}"
-            echo "Running $TASK_NAME on environment $TARGET_ENV: $COMMAND"
-            cf run-task ${{ github.event.inputs.target_db }} --name $TASK_NAME --memory 2G --command "$COMMAND" 
-            echo "Waiting for task to complete..."
-            sleep 15
-            ./bin/watch-task.js $TARGET_ENV $TASK_NAME
-            echo "Gathering logs..."
-            sleep 30
-            #cf logs $TARGET_ENV --recent | grep $TASK_NAME
+          cf_command: 'login -a https://api.fr.cloud.gov -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE'
+      - name: Execute DB Restore Task    
+        run: |
+          set -e
+          TASK_NAME="task-$(date +%s)"
+          COMMAND="cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}"
+          echo "Running $TASK_NAME on environment $TARGET_ENV: $COMMAND"
+          cf run-task ${{ github.event.inputs.target_db }} --name $TASK_NAME --memory 2G --command "$COMMAND" 
+          echo "Waiting for task to complete..."
+          sleep 15
+          ./bin/watch-task.js $TARGET_ENV $TASK_NAME
+          echo "Gathering logs..."
+          sleep 30
+          #cf logs $TARGET_ENV --recent | grep $TASK_NAME
 
 
