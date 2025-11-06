@@ -55,6 +55,6 @@ jobs:
             ./bin/watch-task.js $TARGET_ENV $TASK_NAME
             echo "Gathering logs..."
             sleep 30
-            cf logs $TARGET_ENV --recent | grep ${TASK_NAME}
+            #cf logs $TARGET_ENV --recent | grep $TASK_NAME
 
 
