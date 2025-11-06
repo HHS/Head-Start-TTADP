@@ -243,7 +243,7 @@ workflows:
     when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
     jobs:
     - clear_cache_job:
-        target_env: << pipeline.parameters.target_env >> 
+        target_env: "tta-smarthub-<< pipeline.parameters.target_env >>"
 
   clear_buildcache_cron:
     # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
@@ -685,7 +685,7 @@ jobs:
     - run:
         name: Clear build cache
         command: |
-          app_name="tta-smarthub-<< parameters.target_env >>"
+          app_name="<< parameters.target_env >>"
           echo "Clearing build cache for ${app_name}"
           app_guid=$(cf app --guid ${app_name})
           cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
