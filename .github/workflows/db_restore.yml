@@ -44,17 +44,22 @@ jobs:
       #     cf_password: ${{ secrets.CG_DEV_PASSWORD }}
       #     cf_space: ${{ secrets.CG_DEV_SPACE }}
       #     cf_org: hhs-acf-ohs-tta
-      #     cf_command: apps
+      #     cf_command: 
+      - name: Setup Cloud Foundry CLI
+        run: |
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+          echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          sudo apt-get update
+          sudo apt-get install cf8-cli -y
+
       - name: Execute DB Restore Task 
-        uses: elliottpope/cloudfoundry-cli-action@v6
-        with:
-          CF_API: https://api.my-cloud-foundry.com
-          USERNAME: ${{ secrets.CF_USER }}
-          PASSWORD: ${{ secrets.CF_PASSWORD }}
-          ORG: my-org
-          SPACE: dev
-          COMMAND: | 
-            set -e
+        run: | 
+            echo "Logging into Cloud Foundry..."
+            cf login -a https://api.fr.cloud.gov \
+            -u ${{ secrets.CG_DEV_USERNAME }} \
+            -p ${{ secrets.CG_DEV_USERNAME }} \
+            -s ${{ secrets.CG_DEV_SPACE }}
+            -o hhs-acf-ohs-tta \
             TASK_NAME="task-$(date +%s)"
             COMMAND="cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}"
             echo "Running $TASK_NAME on environment $TARGET_ENV: $COMMAND"
