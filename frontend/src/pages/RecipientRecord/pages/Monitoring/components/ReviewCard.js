@@ -11,6 +11,19 @@ import ExpanderButton from '../../../../../components/ExpanderButton';
 
 export default function ReviewCard({ review, regionId }) {
   const [expanded, setExpanded] = useState(false);
+  const btnRef = React.useRef(null);
+
+  const handleExpanderClick = () => {
+    setExpanded(!expanded);
+
+    // Setting a timeout to ensure the button is focused after state update
+    setTimeout(() => {
+      if (btnRef.current) {
+        btnRef.current.focus();
+      }
+    }, 200);
+  };
+
   return (
     <DataCard
       testId="review-card"
@@ -60,13 +73,14 @@ export default function ReviewCard({ review, regionId }) {
         </DescriptionItem>
       </DescriptionList>
       <ExpanderButton
-        closeOrOpen={() => setExpanded(!expanded)}
+        closeOrOpen={handleExpanderClick}
         count={review.findings.length}
         expanded={expanded}
         type="TTA activity"
         showCount={false}
         pluralize={false}
         ariaLabel="TTA activity"
+        ref={btnRef}
       />
       {expanded && (review.findings.map((finding) => (
         <FindingWithinReview
