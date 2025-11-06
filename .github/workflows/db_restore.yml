@@ -50,7 +50,7 @@ jobs:
           wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
           echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
           sudo apt-get update
-          sudo apt-get install cf8-cli -y
+          sudo apt-get install cf8-cli jq -y
 
       - name: Execute DB Restore Task 
         run: | 
@@ -64,13 +64,34 @@ jobs:
             TASK_NAME="task-$(date +%s)"
             TARGET_ENV="tta-smarthub-${{ github.event.inputs.target_db }}"
             COMMAND="cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}"
-            echo "Running $TASK_NAME on environment $TARGET_ENV: $COMMAND"
-            cf run-task tta-automation --name $TASK_NAME -m 2G --command "$COMMAND" 
-            echo "Waiting for task to complete..."
-            sleep 15
-            ./bin/watch-task.js $TARGET_ENV $TASK_NAME
-            echo "Gathering logs..."
-            sleep 30
+            
+            json_data=$(jq -n \
+            --arg directory "./automation" \
+            --arg config "<< parameters.config >>" \
+            --arg task_name "<< parameters.task_name >>" \
+            --arg command "<< parameters.task_command >>" \
+            --arg timeout_active_tasks "<< parameters.timeout >>" \
+            --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
+            --argjson args '<< parameters.task_args >>' \
+            '{
+              directory: $directory,
+              config: $config,
+              task_name: $task_name,
+              command: $command,
+              timeout_active_tasks: $timeout_active_tasks,
+              timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
+              args: $args
+            }')
+
+            bash ./automation/ci/scripts/cf_lambda.sh "$json_data"
+
+            #echo "Running $TASK_NAME on environment $TARGET_ENV: $COMMAND"
+            #cf run-task tta-automation --name $TASK_NAME -m 2G --command "$COMMAND" 
+            ##echo "Waiting for task to complete..."
+            #sleep 15
+            #./bin/watch-task.js $TARGET_ENV $TASK_NAME
+            #echo "Gathering logs..."
+            #sleep 30
             #cf logs $TARGET_ENV --recent | grep $TASK_NAME
 
 
