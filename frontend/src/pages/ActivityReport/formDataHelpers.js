@@ -100,7 +100,7 @@ export const unflattenResourcesUsed = (array) => {
   return array.map((value) => ({ value }));
 };
 
-export const packageGoals = (goals, goal, grantIds, prompts) => {
+export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = null) => {
   const packagedGoals = [
     // we make sure to mark all the read only goals as "ActivelyEdited: false"
     ...goals.map((g) => ({
@@ -138,7 +138,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
   ];
 
   if (goal && goal.name) {
-    packagedGoals.push({
+    const goalToPackage = {
       goalIds: goal.goalIds,
       status: goal.status,
       endDate: goal.endDate,
@@ -168,7 +168,16 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       })),
       grantIds,
       prompts: prompts || [],
-    });
+    };
+
+    // If originalIndex is provided and valid, insert at that position
+    // Otherwise, append to the end (for new goals)
+    if (originalIndex !== null && originalIndex !== undefined && originalIndex >= 0) {
+      const insertIndex = Math.min(originalIndex, packagedGoals.length);
+      packagedGoals.splice(insertIndex, 0, goalToPackage);
+    } else {
+      packagedGoals.push(goalToPackage);
+    }
   }
 
   return packagedGoals;
