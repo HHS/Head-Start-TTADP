@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useHistory, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import moment from 'moment';
+import parse from 'html-react-parser';
+import { Helmet } from 'react-helmet';
 import AppLoadingContext from '../../AppLoadingContext';
 import UserContext from '../../UserContext';
 import { getCommunicationLogById } from '../../fetchers/communicationLog';
@@ -11,6 +12,14 @@ import BackLink from '../../components/BackLink';
 import LogLine from '../RecipientRecord/pages/ViewCommunicationLog/components/LogLine';
 import DisplayNextSteps from '../RecipientRecord/pages/ViewCommunicationLog/components/DisplayNextSteps';
 import Container from '../../components/Container';
+
+const hasRichTextContent = (html) => {
+  if (!html) {
+    return false;
+  }
+  const stripped = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
+  return stripped.length > 0;
+};
 
 export default function ViewRegionalCommunicationLog({ match }) {
   const { params: { regionId, logId } } = match;
@@ -81,9 +90,11 @@ export default function ViewRegionalCommunicationLog({ match }) {
           <ReadOnlyField label="Purpose">
             {log.data.purpose}
           </ReadOnlyField>
-          <ReadOnlyField label="Notes">
-            {log.data.notes}
-          </ReadOnlyField>
+          {hasRichTextContent(log.data.notes) && (
+            <ReadOnlyField label="Notes">
+              {parse(log.data.notes)}
+            </ReadOnlyField>
+          )}
           <ReadOnlyField label="Result">
             {log.data.result}
           </ReadOnlyField>
