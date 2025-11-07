@@ -322,6 +322,7 @@ const ActivityReportNavigator = ({
       goal,
       grantIds,
       prompts,
+      goalForEditing?.originalIndex,
     );
 
     try {
@@ -400,6 +401,7 @@ const ActivityReportNavigator = ({
       goal,
       grantIds,
       prompts,
+      goalForEditing?.originalIndex,
     );
 
     // save goal to api, come back with new ids for goal and objectives
@@ -531,6 +533,7 @@ const ActivityReportNavigator = ({
         },
         grantIds,
         prompts,
+        goalForEditing?.originalIndex,
       );
       // save report to API
       const { status, ...values } = getValues();

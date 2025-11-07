@@ -113,6 +113,7 @@ const GoalsObjectives = ({
   const [fetchError, setFetchError] = useState(false);
   const [goalTemplates, setGoalTemplates] = useState([]);
   const [goalToRemove, setGoalToRemove] = useState(null);
+  const [editingGoalOriginalIndex, setEditingGoalOriginalIndex] = useState(null);
 
   const {
     field: {
@@ -162,6 +163,8 @@ const GoalsObjectives = ({
     toggleGoalForm(false);
     // An empty value here means that the Select dropdown will show its placeholder.
     setValue('goalForEditing', null);
+    // Clear the original index since we're creating a new goal
+    setEditingGoalOriginalIndex(null);
 
     // newGoal(grantIds) is still passed to the dropdown as part of the `options` prop,
     // so 'create a new goal' will still be an option.
@@ -191,6 +194,7 @@ const GoalsObjectives = ({
       setValue('goalForEditing', '');
       setValue('goalName', '');
       setValue('goalEndDate', '');
+      setEditingGoalOriginalIndex(null);
       toggleGoalForm(false);
 
       // Update the page state to reflect that there are no goals
@@ -239,25 +243,6 @@ const GoalsObjectives = ({
         return;
       }
     }
-    // clear out the existing value (we need to do this because without it
-    // certain objective fields don't clear out)
-    setValue('goalForEditing', null);
-    setValue('goalPrompts', []);
-
-    // make this goal the editable goal
-    setValue('goalForEditing', goal);
-    setValue('goalEndDate', goal.endDate);
-    setValue('goalName', goal.name);
-
-    toggleGoalForm(false);
-    setValue(
-      'pageState',
-      {
-        ...pageState,
-        [GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER]: IN_PROGRESS,
-      },
-    );
-
     // Deep copy to avoid shared references to nested arrays like goalIds
     let copyOfSelectedGoals = selectedGoals.map((g) => ({
       ...g,
@@ -269,14 +254,45 @@ const GoalsObjectives = ({
     // would like to use structuredClone here for brevity but it would require fighting jsdom
     // let copyOfSelectedGoals = selectedGoals.map((g) => structuredClone(g));
 
-    // add the goal that was being edited to the "selected goals"
+    // add the goal that was being edited back to the "selected goals" at its original position
     if (currentlyEditing) {
-      copyOfSelectedGoals.push(currentlyEditing);
+      const currentlyEditingOriginalIndex = currentlyEditing.originalIndex;
+      if (currentlyEditingOriginalIndex !== null && currentlyEditingOriginalIndex !== undefined) {
+        // Insert at the original position
+        const insertIndex = Math.min(currentlyEditingOriginalIndex, copyOfSelectedGoals.length);
+        copyOfSelectedGoals.splice(insertIndex, 0, currentlyEditing);
+      } else {
+        // Fallback to push if no original index (shouldn't happen, but safe)
+        copyOfSelectedGoals.push(currentlyEditing);
+      }
     }
+
+    // capture the original index of the goal we're about to edit
+    const originalIndex = copyOfSelectedGoals.findIndex((g) => g.id === goal.id);
+    setEditingGoalOriginalIndex(originalIndex);
 
     // remove the goal we are now editing from the "selected goals"
     copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
     onUpdateGoals(copyOfSelectedGoals);
+
+    // clear out the existing value (we need to do this because without it
+    // certain objective fields don't clear out)
+    setValue('goalForEditing', null);
+    setValue('goalPrompts', []);
+
+    // make this goal the editable goal, storing its original index
+    setValue('goalForEditing', { ...goal, originalIndex });
+    setValue('goalEndDate', goal.endDate);
+    setValue('goalName', goal.name);
+
+    toggleGoalForm(false);
+    setValue(
+      'pageState',
+      {
+        ...pageState,
+        [GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER]: IN_PROGRESS,
+      },
+    );
   }; // end onEdit
 
   // the read only component expects things a little differently
@@ -287,6 +303,16 @@ const GoalsObjectives = ({
     grants: [],
     goalIds: goal.goalIds ? [...goal.goalIds] : [],
   })); // would like to use structuredClone here for brevity but it would require fighting jsdom
+
+  // Split goals for in-place editing: goals before and after the editing position
+  let goalsBeforeEdit = goalsForReview;
+  let goalsAfterEdit = [];
+
+  if (!isGoalFormClosed && editingGoalOriginalIndex !== null && editingGoalOriginalIndex >= 0) {
+    // Split the array at the original index where the editing goal was
+    goalsBeforeEdit = goalsForReview.slice(0, editingGoalOriginalIndex);
+    goalsAfterEdit = goalsForReview.slice(editingGoalOriginalIndex);
+  }
 
   // Add a variable to determine if a recipient has been selected.
   const hasRecipient = activityRecipients && activityRecipients.length > 0;
@@ -356,21 +382,21 @@ const GoalsObjectives = ({
       */}
 
       {/**
-        * all goals for review
+        * goals before the editing goal
       */}
-      { goalsForReview.length ? (
+      { goalsBeforeEdit.length > 0 && (
         <ReadOnly
           onEdit={onEdit}
           onRemove={(goal) => {
             setGoalToRemove(goal);
             modalRef.current.toggleModal();
           }}
-          createdGoals={goalsForReview}
+          createdGoals={goalsBeforeEdit}
         />
-      ) : null }
+      ) }
 
       {/**
-        * conditionally show the goal picker
+        * conditionally show the goal picker (in-place at original position)
       */}
 
       {hasGrant && !isGoalFormClosed && startDateHasValue
@@ -388,6 +414,20 @@ const GoalsObjectives = ({
         ) : (
           null
         ) }
+
+      {/**
+        * goals after the editing goal
+      */}
+      { goalsAfterEdit.length > 0 && (
+        <ReadOnly
+          onEdit={onEdit}
+          onRemove={(goal) => {
+            setGoalToRemove(goal);
+            modalRef.current.toggleModal();
+          }}
+          createdGoals={goalsAfterEdit}
+        />
+      ) }
 
       {/**
         * we show the add new goal button if we are reviewing existing goals
