@@ -38,6 +38,26 @@ jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
 jest.mock('../../services/communicationLog');
 jest.mock('../../services/accessValidation');
+jest.mock('../../logger', () => ({
+  logger: {
+    warn: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+  },
+  auditLogger: {
+    warn: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+  },
+  requestLogger: {
+    warn: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
 jest.mock('../../models', () => ({
   User: {
     findAll: jest.fn(),
@@ -1052,6 +1072,49 @@ describe('communicationLog handlers', () => {
       createLog.mockRejectedValue(new Error('error'));
       await createLogByRegionId(mockRequest, { ...mockResponse });
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+
+    it('creates a log when recipients are missing', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          regionId: String(REGION_ID),
+        },
+        body: {
+          data: {
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      createLog.mockResolvedValue({ id: 44 });
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
+      expect(statusJson).toHaveBeenCalledWith({ id: 44 });
+    });
+
+    it('filters out invalid recipients before creating a log', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          regionId: String(REGION_ID),
+        },
+        body: {
+          data: {
+            recipients: [{}, { value: null }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      createLog.mockResolvedValue({ id: 55 });
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
+      expect(statusJson).toHaveBeenCalledWith({ id: 55 });
     });
 
     it('admin', async () => {
