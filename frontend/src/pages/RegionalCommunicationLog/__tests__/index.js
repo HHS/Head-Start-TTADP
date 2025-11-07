@@ -14,12 +14,26 @@ import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
 import { mockRSSData } from '../../../testHelpers';
 
+jest.mock('../../../components/RichEditor', () => function MockRichEditor({
+  ariaLabel,
+  value,
+  onChange,
+}) {
+  return (
+    <textarea
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+});
+
 const completeLog = {
   displayId: 'R01-CL-13213',
   id: 13213,
   userId: 355,
   data: {
-    goals: [{ label: 'CQI and Data', value: '24740' }], notes: 'sf', method: 'In person', result: 'New TTA accepted', purpose: "Program Specialist's site visit", duration: 1, regionId: '1', createdAt: '2025-01-30T01:34:04.142Z', displayId: 'R01-CL-13213', pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' }, otherStaff: [{ label: 'OtherStaff', value: '74' }], pocComplete: false, recipientId: '', communicationDate: '01/15/2025', recipientNextSteps: [{ note: 'hh', completeDate: '01/23/2025' }], specialistNextSteps: [{ note: 'ff', completeDate: '01/21/2025' }], 'pageVisited-next-steps': 'true', 'pageVisited-supporting-attachments': 'true',
+    goals: [{ label: 'CQI and Data', value: '24740' }], notes: '<p>sf</p>', method: 'In person', result: 'New TTA accepted', purpose: "Program Specialist's site visit", duration: 1, regionId: '1', createdAt: '2025-01-30T01:34:04.142Z', displayId: 'R01-CL-13213', pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' }, otherStaff: [{ label: 'OtherStaff', value: '74' }], pocComplete: false, recipientId: '', communicationDate: '01/15/2025', recipientNextSteps: [{ note: 'hh', completeDate: '01/23/2025' }], specialistNextSteps: [{ note: 'ff', completeDate: '01/21/2025' }], 'pageVisited-next-steps': 'true', 'pageVisited-supporting-attachments': 'true',
   },
   createdAt: '2025-01-30T01:34:04.142Z',
   updatedAt: '2025-01-30T14:37:25.437Z',
@@ -145,9 +159,6 @@ describe('RegionalCommunicationLog', () => {
     const purposeDropdown = within(purposeView).getByRole('combobox');
     userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
 
-    const notes = await screen.findByLabelText(/notes/i);
-    userEvent.type(notes, 'This is a note');
-
     const resultView = screen.getAllByText(/result/i)[0];
     const resultDropdown = within(resultView).getByRole('combobox');
     userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
@@ -187,9 +198,6 @@ describe('RegionalCommunicationLog', () => {
     const purposeView = screen.getAllByText(/purpose of communication/i)[0];
     const purposeDropdown = within(purposeView).getByRole('combobox');
     userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
-
-    const notes = await screen.findByLabelText(/notes/i);
-    userEvent.type(notes, 'This is a note');
 
     const resultView = screen.getAllByText(/result/i)[0];
     const resultDropdown = within(resultView).getByRole('combobox');
