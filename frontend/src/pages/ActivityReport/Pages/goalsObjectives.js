@@ -47,7 +47,7 @@ const Buttons = ({
   if (showSaveGoalsAndObjButton) {
     return (
       <>
-        <Button id="draft-goals-objectives-save-continue" className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>Save goal</Button>
+        <Button id="draft-goals-objectives-save-continue" className="margin-right-1 margin-bottom-2 margin-top-0" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>Save goal</Button>
         <Button id="draft-goals-objectives-save-draft" className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={() => onSaveDraft(false)}>Save draft</Button>
         <Button id="draft-goals-objectives-back" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(1); }}>Back</Button>
       </>
@@ -79,6 +79,11 @@ Buttons.propTypes = {
 
 const GoalsObjectives = ({
   reportId,
+  isAppLoading,
+  onContinue,
+  onSaveDraft,
+  onUpdatePage,
+  weAreAutoSaving,
 }) => {
   // NOTE: Temporary fix until we can figure out why mesh-kit is duplicating data
   // Check if this is the first time the user has opened the page,
@@ -410,6 +415,16 @@ const GoalsObjectives = ({
                 goalTemplates={goalTemplates}
               />
             </Fieldset>
+            {/**
+              * Render buttons right after the goal editing form
+            */}
+            <Buttons
+              isAppLoading={isAppLoading}
+              onContinue={onContinue}
+              onSaveDraft={onSaveDraft}
+              onUpdatePage={onUpdatePage}
+              weAreAutoSaving={weAreAutoSaving}
+            />
           </>
         ) : (
           null
@@ -433,18 +448,42 @@ const GoalsObjectives = ({
         * we show the add new goal button if we are reviewing existing goals
         * and if the report HAS goals
         */}
-      {hasGrant && isGoalFormClosed
-        ? (
-          <PlusButton onClick={addNewGoal} className="ttahub-plus-button-no-margin-top" text="Add new goal" />
-        ) : (
-          null
-        ) }
+      {hasGrant && isGoalFormClosed && (
+        <PlusButton onClick={addNewGoal} className="ttahub-plus-button-no-margin-top" text="Add new goal" />
+      )}
+
+      {/**
+        * Show navigation buttons when not editing (goal form is closed)
+        * OR when we don't have the prerequisites to edit (no grant or no start date)
+        */}
+      {(isGoalFormClosed || !hasGrant || !startDateHasValue) && (
+        <Buttons
+          isAppLoading={isAppLoading}
+          onContinue={onContinue}
+          onSaveDraft={onSaveDraft}
+          onUpdatePage={onUpdatePage}
+          weAreAutoSaving={weAreAutoSaving}
+        />
+      )}
     </>
   );
 };
 
 GoalsObjectives.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  isAppLoading: PropTypes.bool,
+  onContinue: PropTypes.func,
+  onSaveDraft: PropTypes.func,
+  onUpdatePage: PropTypes.func,
+  weAreAutoSaving: PropTypes.bool,
+};
+
+GoalsObjectives.defaultProps = {
+  isAppLoading: false,
+  onContinue: null,
+  onSaveDraft: null,
+  onUpdatePage: null,
+  weAreAutoSaving: false,
 };
 
 const ReviewSection = () => (
@@ -485,15 +524,13 @@ export default {
     <>
       <GoalsObjectives
         reportId={reportId}
-      />
-      <DraftAlert />
-      <Buttons
         isAppLoading={isAppLoading || false}
         onContinue={onContinue}
         onSaveDraft={onSaveDraft}
         onUpdatePage={onUpdatePage}
         weAreAutoSaving={weAreAutoSaving}
       />
+      <DraftAlert />
     </>
   ),
 };
