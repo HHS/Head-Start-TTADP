@@ -7,29 +7,7 @@ JSON: {
   },
   "output": {
     "defaultName": "monitoring-citation-ar-report",
-    "schema": [
-  gid,
-  grid,
-  grnumber,
-  g_created,
-  region,
-  rname,
-  rtype,
-  rdelivery_date,
-  routcome,
-  freport_date,
-  fclosed_date,
-  citation,
-  ftype,
-  fstatus,
-  fdetermination,
-  correction_deadline,
-  ar.id arid,
-  ar."startDate" arstart_date,
-  ar."deliveryMethod" ar_delivery_method,
-  cr.user_name || ':' || cr.roles AS creator,
-  STRING_AGG(DISTINCT cr.user_name || ':' || cr.roles, ';') collaborators,
-  STRING_AGG(DISTINCT t.name,';') topics
+    "schema": [ 
       {
         "columnName": "gid",
         "type": "integer",
@@ -113,6 +91,54 @@ JSON: {
         "nullable": true,
         "description": "The status label on the findingm."
       },
+      {
+        "columnName": "fdetermination",
+        "type": "string",
+        "nullable": true,
+        "description": "The determination in MonitoringFindingHistories linking the citation to the review."
+      },
+      {
+        "columnName": "correction_deadline",
+        "type": "date",
+        "nullable": true,
+        "description": "The date the original correct deadline for the finding."
+      },
+      {
+        "columnName": "arid",
+        "type": "integer",
+        "nullable": true,
+        "description": "Activity Report ID."
+      },
+      {
+        "columnName": "arstart_date",
+        "type": "date",
+        "nullable": true,
+        "description": "The startDate for the TTA activity."
+      },
+      {
+        "columnName": "ar_delivery_method",
+        "type": "string",
+        "nullable": true,
+        "description": "The TTA delivery method."
+      },
+      {
+        "columnName": "creator",
+        "type": "string",
+        "nullable": true,
+        "description": "The AR creator and slash-separated roles."
+      },
+      {
+        "columnName": "collaborators",
+        "type": "string",
+        "nullable": true,
+        "description": "Semicolon-delimited AR collaborators and slash-separated roles."
+      },
+      {
+        "columnName": "topics",
+        "type": "string",
+        "nullable": true,
+        "description": "Semicolon-delimited AR topics on the objective connecting to the citation."
+      }
     ]
   },
   "filters": [
@@ -128,9 +154,21 @@ JSON: {
       }
     },
     {
+      "name": "findingReportedDate",
+      "type": "date[]",
+      "description": "Two dates defining a range for the findingReportedDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
+      "supportsExclusion": true
+    },
+    {
       "name": "reportDeliveryDate",
       "type": "date[]",
       "description": "Two dates defining a range for the reportDeliveryDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "goalDate",
+      "type": "date[]",
+      "description": "Two dates defining a range for the Goal creation timestamp to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
       "supportsExclusion": true
     },
     {
@@ -201,33 +239,13 @@ JSON: {
       }
     },
     {
-      "name": "grantNumber",
+      "name": "grnumber",
       "type": "string[]",
       "description": "One or more grant numbers. If no values are supplied, this filter is ignored.",
       "supportsExclusion": true,
       "supportsFuzzyMatch": true
-    },
-    {
-      "name": "recipient",
-      "type": "string[]",
-      "description": "One or more recipient names. If no values are supplied, this filter is ignored.",
-      "supportsExclusion": true,
-      "supportsFuzzyMatch": true,
-      "options": {
-        "query": {
-          "sqlQuery": "SELECT DISTINCT r.name FROM \"Recipients\" r JOIN \"Grants\" gr ON r.id = gr.\"recipientId\" WHERE gr.status = 'Active' AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL OR gr.\"regionId\"::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''), '[]')::json) AS value)) ORDER BY r.name;",
-          "column": "name"
-        }
-      }
     }
   ],
-  "sorting": {
-    "default": [
-      { "level": 1, "name": "regionId", "order": "ASC" },
-      { "level": 2, "name": "number", "order": "ASC" },
-      { "level": 3, "name": "reportDeliveryDate", "order": "ASC" }
-    ]
-  },
   "customSortingSupported": false,
   "paginationSupported": false,
   "exampleUsage": "SELECT SET_CONFIG('ssdi.reportDeliveryDate', '[\"2023-01-01\", \"2023-12-31\"]', TRUE);"
