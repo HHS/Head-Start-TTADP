@@ -21,7 +21,7 @@ const RenderNextSteps = ({
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { specialistNextSteps, recipientNextSteps },
+    defaultValues: { specialistNextSteps, recipientNextSteps, activityRecipientType },
   });
 
   return (
@@ -85,7 +85,7 @@ describe('next steps review', () => {
       [{ note: 'First Recipient Step', completeDate: '06/03/2022', id: 1 }],
     );
     expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.queryAllByText(/step 1/i).length).toBe(2);
+    expect(screen.queryAllByText(/step 1/i).length).toBe(2);
     expect(await screen.findByText(/first specialist step/i)).toBeVisible();
     expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
     expect(await screen.findByText(/first recipient step/i)).toBeVisible();
