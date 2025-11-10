@@ -1,4 +1,4 @@
-import { S3 } from '@aws-sdk/client-s3';
+import { S3Client } from '@aws-sdk/client-s3';
 import { auditLogger } from '../logger';
 
 const generateS3Config = () => {
@@ -52,7 +52,7 @@ const generateS3Config = () => {
 };
 
 const { bucketName, s3Config } = generateS3Config();
-const s3 = s3Config ? new S3(s3Config) : null;
+const s3 = s3Config ? new S3Client(s3Config) : null;
 
 const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
   if (!s3Client || !bucket) {
