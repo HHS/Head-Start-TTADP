@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Link, useHistory } from 'react-router-dom';
+import parse from 'html-react-parser';
 import Container from '../../../../components/Container';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { getCommunicationLogById } from '../../../../fetchers/communicationLog';
@@ -12,6 +13,14 @@ import BackLink from '../../../../components/BackLink';
 import UserContext from '../../../../UserContext';
 import DisplayNextSteps from './components/DisplayNextSteps';
 import LogLine from './components/LogLine';
+
+const hasRichTextContent = (html) => {
+  if (!html) {
+    return false;
+  }
+  const stripped = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
+  return stripped.length > 0;
+};
 
 export default function ViewCommunicationLog({ match, recipientName }) {
   const history = useHistory();
@@ -95,11 +104,13 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           >
             {log.data.goals && log.data.goals.map((goal) => goal.label).join(', ')}
           </ReadOnlyField>
-          <ReadOnlyField
-            label="Notes"
-          >
-            {log.data.notes}
-          </ReadOnlyField>
+          {hasRichTextContent(log.data.notes) && (
+            <ReadOnlyField
+              label="Notes"
+            >
+              {parse(log.data.notes)}
+            </ReadOnlyField>
+          )}
           <ReadOnlyField
             label="Result"
           >
