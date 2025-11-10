@@ -808,6 +808,60 @@ describe('StandardGoalCard', () => {
     expect(viewButton).toBeInTheDocument();
   });
 
+  it('handles invalid status change', async () => {
+    const g = {
+      ...goal,
+      status: GOAL_STATUS.IN_PROGRESS,
+      objectives: [
+        {
+          id: 1,
+          ids: [1],
+          endDate: '2022-01-01',
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+      ],
+    };
+
+    renderStandardGoalCard({}, g);
+    const changeStatusBtn = await screen.findByRole('button', { name: /Change status for goal 1/i });
+
+    act(() => {
+      userEvent.click(changeStatusBtn);
+    });
+
+    // const url = '/api/goals/changeStatus';
+    // fetchMock.put(url, {
+    //   ...g,
+    //   status: GOAL_STATUS.CLOSED,
+    // });
+
+    const closed = await screen.findByRole('button', { name: /closed/i });
+    act(() => {
+      userEvent.click(closed);
+    });
+
+    const regionalOfficeRequest = await screen.findByText(/regional office request/i, { selector: '[for=suspending-reason-3-modal_1]' });
+    const submit = await screen.findByRole('button', { name: /Change goal status/i });
+
+    act(() => {
+      userEvent.click(regionalOfficeRequest);
+    });
+
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    expect(await screen.findByText(/The goal status cannot be changed until all In progress objectives are complete. Update the objective status./i)).toBeVisible();
+  });
+
   it('shows objectives as suspended when goal status is suspended', async () => {
     const suspendedGoal = {
       ...goal,

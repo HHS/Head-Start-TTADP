@@ -39,7 +39,6 @@ const Draft = ({
     watch,
     handleSubmit,
     register,
-    getValues,
   } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
@@ -48,10 +47,10 @@ const Draft = ({
   const promptsMissingResponses = [];
   const goalsMissingResponses = [];
 
+  const goalsAndObjectives = watch('goalsAndObjectives');
   const regionId = watch('regionId');
 
   const allGoalsHavePromptResponses = (() => {
-    const goalsAndObjectives = getValues('goalsAndObjectives');
     const curatedGoals = (goalsAndObjectives || []).filter(
       (goal) => goal.prompts && goal.prompts.length > 0,
     );
