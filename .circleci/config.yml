@@ -680,7 +680,7 @@ jobs:
           for env_name in "${environments[@]}"; do
             echo "Clearing build cache for ${env_name}"
             app_guid=$(cf app --guid ${app_name})
-            cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+            cf curl -i -f -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
             echo "Build cache cleared"
           done
 
