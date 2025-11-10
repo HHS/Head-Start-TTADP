@@ -11,6 +11,19 @@ import CitationDrawer from './CitationDrawer';
 
 export default function CitationCard({ citation, regionId }) {
   const [expanded, setExpanded] = useState(false);
+  const btnRef = React.useRef(null);
+
+  const handleExpanderClick = () => {
+    setExpanded(!expanded);
+
+    // Setting a timeout to ensure the button is focused after state update
+    setTimeout(() => {
+      if (btnRef.current) {
+        btnRef.current.focus();
+      }
+    }, 200);
+  };
+
   return (
     <DataCard
       testId="citation-card"
@@ -44,13 +57,14 @@ export default function CitationCard({ citation, regionId }) {
         </DescriptionItem>
       </DescriptionList>
       <ExpanderButton
-        closeOrOpen={() => setExpanded(!expanded)}
+        closeOrOpen={handleExpanderClick}
         count={citation.reviews.length}
         expanded={expanded}
         type="TTA activity"
         ariaLabel="TTA activity"
         showCount={false}
         pluralize={false}
+        ref={btnRef}
       />
       {expanded && (
         citation.reviews.map((review) => (

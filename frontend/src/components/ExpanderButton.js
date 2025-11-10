@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React from 'react';
+import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -8,7 +8,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 
-export default function ExpanderButton({
+const ExpanderButton = forwardRef(({
   closeOrOpen,
   count,
   expanded,
@@ -16,7 +16,7 @@ export default function ExpanderButton({
   ariaLabel,
   pluralize,
   showCount,
-}) {
+}, ref) => {
   if (count < 1) {
     return null;
   }
@@ -28,6 +28,7 @@ export default function ExpanderButton({
       onClick={() => closeOrOpen()}
       aria-label={`${expanded ? 'Hide' : 'View'} ${ariaLabel}`}
       data-testid="expander-button"
+      ref={ref}
     >
       {expanded ? 'Hide' : 'View'}
       {' '}
@@ -43,7 +44,7 @@ export default function ExpanderButton({
       <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.ttahubMediumBlue} icon={expanded ? faAngleUp : faAngleDown} />
     </button>
   );
-}
+});
 
 ExpanderButton.propTypes = {
   type: PropTypes.string.isRequired,
@@ -59,3 +60,5 @@ ExpanderButton.defaultProps = {
   pluralize: true,
   showCount: true,
 };
+
+export default ExpanderButton;
