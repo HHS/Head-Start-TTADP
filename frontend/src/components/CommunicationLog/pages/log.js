@@ -6,9 +6,7 @@ import {
   Alert,
   Button,
   TextInput,
-  Label,
   Dropdown,
-  Textarea,
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import Drawer from '../../Drawer';
@@ -23,6 +21,7 @@ import { mustBeQuarterHalfOrWhole, NOOP } from '../../../Constants';
 import MultiSelect from '../../MultiSelect';
 import { useLogContext } from '../components/LogContext';
 import CommunicationRecipients from '../components/CommunicationRecipients';
+import HookFormRichEditor from '../../HookFormRichEditor';
 
 const fields = Object.keys(defaultLogValues);
 
@@ -213,14 +212,13 @@ const Log = ({
         </FormItem>
       </div>
       <div className="margin-top-2">
-        <Label htmlFor="notes">
-          Notes
-        </Label>
-        <Textarea
+        <FormItem
+          label="Notes"
           name="notes"
-          id="notes"
-          inputRef={register()}
-        />
+          required={false}
+        >
+          <HookFormRichEditor ariaLabel="Notes" name="notes" />
+        </FormItem>
       </div>
       <div className="margin-top-2">
         <FormItem
