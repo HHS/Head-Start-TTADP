@@ -890,9 +890,10 @@ commands:
     - cf_login:
         space: << parameters.space >>
     - run:
-        name: Clear build cache (<< parameters.target_env >>)
+        name: Clear build cache (<< parameters.target_app >>)
         command: |
-          app_guid=$(cf app --guid ${app_name})
+          app_name=<< parameters.target_app >>
+          app_guid=$(cf app --guid ${})
           echo "Clearing build cache for ${app_name} (${app_guid})"
           cf curl -f -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
           echo "Build cache cleared"
