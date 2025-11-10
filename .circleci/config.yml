@@ -884,7 +884,7 @@ commands:
     parameters:
       space:
         type: string
-      app_name:
+      target_app:
         type: string
     steps:
     - cf_login:
