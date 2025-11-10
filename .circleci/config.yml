@@ -239,9 +239,8 @@ workflows:
         serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
 
-
-  clear_buildcache:
-    when: pipeline.parameters.action == "clear_cache"
+  clear_build_cache:
+    when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
     jobs:
     - clear_cache_job
 
