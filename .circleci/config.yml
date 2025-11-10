@@ -666,23 +666,32 @@ jobs:
     - run:
         name: Clear build cache
         command: |
-          environments=(
-            "tta-smarthub-dev-blue" 
-            "tta-smarthub-dev-green" 
-            "tta-smarthub-dev-red" 
-            "tta-smarthub-dev-gold" 
-            "tta-smarthub-dev-pink" 
-            "tta-smarthub-staging"
-            "tta-smarthub-prod"
-            "tta-automation"
-          )
-          
-          for env_name in "${environments[@]}"; do
+          clear_cache() {
+            local app_name=$1
             app_guid=$(cf app --guid ${app_name})
-            echo "Clearing build cache for ${env_name}:${app_guid}"
+            echo "Clearing build cache for ${env_name} (${app_guid})"
             cf curl -f -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
             echo "Build cache cleared"
+          }
+
+          dev_environments=(
+              "tta-smarthub-dev-blue"
+              "tta-smarthub-dev-green"
+              "tta-smarthub-dev-red"
+              "tta-smarthub-dev-gold"
+              "tta-smarthub-dev-pink"
+          )
+
+          cf target -s ttahub-dev
+          for app_name in "${dev_environments[@]}"; do
+              clear_cache "${app_name}"
           done
+
+          cf target -s ttahub-staging
+          clear_cache "tta-smarthub-staging"
+
+          cf target -s ttahub-prod
+          clear_cache "tta-smarthub-prod"
 
 # ----------------- Commands -----------------
 
