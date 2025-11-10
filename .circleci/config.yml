@@ -662,7 +662,7 @@ jobs:
     - checkout
     - install_cf_tools
     - cf_login:
-        target_env: tta-smarthub-staging
+        target_env: staging
     - run:
         name: Clear build cache
         command: |
