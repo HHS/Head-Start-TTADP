@@ -8,7 +8,7 @@ import {
   render, screen, waitFor, within, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useForm } from 'react-hook-form';
 import Navigator from '../ActivityReportNavigator';
 import UserContext from '../../../UserContext';
 import { NOT_STARTED, COMPLETE } from '../constants';
@@ -69,8 +69,8 @@ const defaultPages = [
     label: 'first page',
     review: false,
     render: (
-      _additionalData,
       _formData,
+      _additionalData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -115,16 +115,20 @@ describe('ActivityReportNavigator - recipient reports', () => {
     jest.useFakeTimers();
   });
 
-  // eslint-disable-next-line arrow-body-style
-  const renderNavigator = (
+  // Wrapper component to create hookForm instance for tests
+  const NavigatorWrapper = ({
     updatePage = jest.fn(),
     onSave = jest.fn(),
-
     formData = initialData,
-    updateForm = jest.fn(),
     onUpdateError = jest.fn(),
-  ) => {
-    render(
+  }) => {
+    const hookForm = useForm({
+      mode: 'onBlur',
+      defaultValues: formData,
+      shouldUnregister: false,
+    });
+
+    return (
       <UserContext.Provider value={{ user }}>
         <NetworkContext.Provider value={{
           connectionActive: true,
@@ -141,11 +145,9 @@ describe('ActivityReportNavigator - recipient reports', () => {
               editable
               reportId={1}
               submitted={false}
-              formData={formData}
-              updateFormData={updateForm}
+              hookForm={hookForm}
               onReview={() => {}}
               isApprover={false}
-              defaultValues={{ first: '', second: '' }}
               pages={defaultPages}
               currentPage="goals-objectives"
               onFormSubmit={jest.fn()}
@@ -155,10 +157,28 @@ describe('ActivityReportNavigator - recipient reports', () => {
               onResetToDraft={() => {}}
               updateLastSaveTime={() => {}}
               isPendingApprover={false}
+              setShouldAutoSave={jest.fn()}
             />
           </AppLoadingContext.Provider>
         </NetworkContext.Provider>
-      </UserContext.Provider>,
+      </UserContext.Provider>
+    );
+  };
+
+  // eslint-disable-next-line arrow-body-style
+  const renderNavigator = (
+    updatePage = jest.fn(),
+    onSave = jest.fn(),
+    formData = initialData,
+    onUpdateError = jest.fn(),
+  ) => {
+    render(
+      <NavigatorWrapper
+        updatePage={updatePage}
+        onSave={onSave}
+        formData={formData}
+        onUpdateError={onUpdateError}
+      />,
     );
   };
 

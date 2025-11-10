@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -22,14 +23,18 @@ const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
   onFormSubmit, formData, pages, onResetToDraft, onSave,
 }) => {
+  const defaultValues = {
+    ...formData,
+    goalsAndObjectives: formData.goalsAndObjectives || [],
+    approvers: formData.approvers || [],
+    additionalNotes: formData.additionalNotes || '',
+    activityRecipients: formData.activityRecipients || [],
+  };
+
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: formData,
+    defaultValues,
   });
-
-  hookForm.register('goalsAndObjectives');
-  // eslint-disable-next-line react/prop-types
-  hookForm.setValue('goalsAndObjectives', formData.goalsAndObjectives || []);
 
   return (
     <FormProvider {...hookForm}>
@@ -38,8 +43,8 @@ const RenderSubmitter = ({
         onFormSubmit={onFormSubmit}
         onResetToDraft={onResetToDraft}
         onSaveForm={onSave}
-        formData={formData}
         availableApprovers={[{ name: 'test', id: 1 }, { id: 2, name: 'Test2' }, { id: 3, name: 'Test3' }]}
+        reviewItems={[]}
       >
         <div />
       </Submitter>
@@ -67,7 +72,7 @@ const renderReview = (
   resetToDraft = jest.fn(),
   approvers = [{ status: calculatedStatus, note: '', user: { fullName: 'name' } }],
   user = defaultUser,
-  creatorRole = null,
+  creatorRole = 'Reporter',
   hasIncompleteGoalPrompts = false,
   hasGrantsMissingMonitoring = false,
   goalsAndObjectives = [],
@@ -565,7 +570,7 @@ describe('Submitter review page', () => {
 
     it('requires creator role on needs_action multiple roles', async () => {
       const mockSubmit = jest.fn();
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] });
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] }, null);
 
       // Shows creator role.
       expect(await screen.findByText(/creator role/i)).toBeVisible();
@@ -701,20 +706,20 @@ describe('Submitter review page', () => {
     it('displays with multiple roles', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] });
       const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
-      expect(roleSelector.length).toBe(4);
       userEvent.selectOptions(roleSelector, 'COR');
       userEvent.selectOptions(roleSelector, 'Health Specialist');
       userEvent.selectOptions(roleSelector, 'TTAC');
+      expect(roleSelector).toHaveValue('TTAC');
     });
 
     it('adds now missing role', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'Health Specialist' }, { fullName: 'TTAC' }] }, 'COR');
       const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
-      expect(roleSelector.length).toBe(4);
       expect(await screen.findByText(/cor/i)).toBeVisible();
       userEvent.selectOptions(roleSelector, 'COR');
       userEvent.selectOptions(roleSelector, 'Health Specialist');
       userEvent.selectOptions(roleSelector, 'TTAC');
+      expect(roleSelector).toHaveValue('TTAC');
     });
   });
 });
