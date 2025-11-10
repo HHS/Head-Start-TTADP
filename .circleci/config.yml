@@ -673,6 +673,8 @@ jobs:
             "tta-smarthub-dev-gold" 
             "tta-smarthub-dev-pink" 
             "tta-smarthub-staging"
+            "tta-smarthub-prod"
+            "tta-automation"
           )
           
           for env_name in "${environments[@]}"; do
