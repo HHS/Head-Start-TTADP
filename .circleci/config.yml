@@ -662,28 +662,28 @@ jobs:
     - checkout
     - install_cf_tools
     - cf_cache_clear:
-        space: ttahub-dev
+        space: dev
         target_app: tta-smarthub-dev-blue
     - cf_cache_clear:
-        space: ttahub-dev
+        space: dev
         target_app: tta-smarthub-dev-red
     - cf_cache_clear:
-        space: ttahub-dev
+        space: dev
         target_app: tta-smarthub-dev-green
     - cf_cache_clear:
-        space: ttahub-dev
+        space: dev
         target_app: tta-smarthub-dev-pink
     - cf_cache_clear:
-        space: ttahub-dev
+        space: dev
         target_app: tta-smarthub-dev-gold
     - cf_cache_clear:
-        space: tta-smarthub-staging
+        space: staging
         target_app: tta-smarthub-staging
     - cf_cache_clear:
-        space: tta-smarthub-prod
+        space: prod
         target_app: tta-automation
     - cf_cache_clear:
-        space: tta-smarthub-prod
+        space: prod
         target_app: tta-smarthub-prod
 
 # ----------------- Commands -----------------
