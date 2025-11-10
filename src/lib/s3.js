@@ -63,11 +63,7 @@ const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
     Key: key,
   };
   return (
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    (s3Client.deleteObject(params).promise())
+    (s3Client.deleteObject(params))
   );
 };
 
@@ -116,11 +112,7 @@ const downloadFile = (key, s3Client = s3, Bucket = bucketName) => {
     Key: key,
   };
   return (
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    (s3Client.getObject(params).promise())
+    (s3Client.getObject(params))
   );
 };
 
@@ -159,11 +151,7 @@ const uploadFile = async (buffer, name, type, s3Client = s3, Bucket = bucketName
   }
 
   return (
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    (s3Client.upload(params).promise())
+    (s3Client.upload(params))
   );
 };
 
