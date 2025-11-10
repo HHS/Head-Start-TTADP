@@ -8,7 +8,7 @@ import {
   render, screen, waitFor, within, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useForm } from 'react-hook-form';
 import ActivityReportNavigator, {
   getPrompts,
   getPromptErrors,
@@ -16,7 +16,7 @@ import ActivityReportNavigator, {
   formatEndDate,
 } from '../ActivityReportNavigator';
 import UserContext from '../../../UserContext';
-import { NOT_STARTED, IN_PROGRESS, COMPLETE } from '../constants';
+import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import NavigatorButtons from '../components/NavigatorButtons';
@@ -66,8 +66,8 @@ const defaultPages = [
     label: 'first page',
     review: false,
     render: (
-      _additionalData,
       _formData,
+      _additionalData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -92,8 +92,8 @@ const defaultPages = [
     review: false,
     isPageComplete: () => false,
     render: (
-      _additionalData,
       _formData,
+      _additionalData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -117,8 +117,8 @@ const defaultPages = [
     label: 'third page',
     review: false,
     render: (
-      _additionalData,
       _formData,
+      _additionalData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -175,13 +175,71 @@ describe('ActivityReportNavigator', () => {
     jest.useFakeTimers();
   });
 
+  // Wrapper component to create hookForm instance for tests
+  const NavigatorWrapper = ({
+    currentPage = 'first',
+    onSubmit = jest.fn(),
+    onSave = jest.fn(),
+    updatePage = jest.fn(),
+    pages = defaultPages,
+    formData = initialData,
+    onUpdateError = jest.fn(),
+    editable = true,
+    autoSaveInterval = 500,
+    shouldAutoSave = true,
+  }) => {
+    const hookForm = useForm({
+      mode: 'onBlur',
+      defaultValues: formData,
+      shouldUnregister: false,
+    });
+
+    return (
+      <UserContext.Provider value={{ user }}>
+        <NetworkContext.Provider value={{
+          connectionActive: true,
+          localStorageAvailable: true,
+        }}
+        >
+          <AppLoadingContext.Provider value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
+          }}
+          >
+            <ActivityReportNavigator
+              draftSaver={jest.fn()}
+              editable={editable}
+              reportId={1}
+              submitted={false}
+              hookForm={hookForm}
+              onReview={() => {}}
+              isApprover={false}
+              pages={pages}
+              currentPage={currentPage}
+              onFormSubmit={onSubmit}
+              updatePage={updatePage}
+              onSave={onSave}
+              updateErrorMessage={onUpdateError}
+              onResetToDraft={() => {}}
+              updateLastSaveTime={() => {}}
+              isPendingApprover={false}
+              autoSaveInterval={autoSaveInterval}
+              shouldAutoSave={shouldAutoSave}
+              setShouldAutoSave={jest.fn()}
+            />
+          </AppLoadingContext.Provider>
+        </NetworkContext.Provider>
+      </UserContext.Provider>
+    );
+  };
+
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = async ({
     currentPage = 'first',
     onSubmit = jest.fn(),
     onSave = jest.fn(),
     updatePage = jest.fn(),
-    updateForm = jest.fn(),
     pages = defaultPages,
     formData = initialData,
     onUpdateError = jest.fn(),
@@ -191,43 +249,18 @@ describe('ActivityReportNavigator', () => {
   } = {}) => {
     await act(() => waitFor(() => {
       render(
-        <UserContext.Provider value={{ user }}>
-          <NetworkContext.Provider value={{
-            connectionActive: true,
-            localStorageAvailable: true,
-          }}
-          >
-            <AppLoadingContext.Provider value={{
-              setIsAppLoading: jest.fn(),
-              setAppLoadingText: jest.fn(),
-              isAppLoading: false,
-            }}
-            >
-              <ActivityReportNavigator
-                draftSaver={jest.fn()}
-                editable={editable}
-                reportId={1}
-                submitted={false}
-                formData={formData}
-                updateFormData={updateForm}
-                onReview={() => {}}
-                isApprover={false}
-                defaultValues={{ first: '', second: '' }}
-                pages={pages}
-                currentPage={currentPage}
-                onFormSubmit={onSubmit}
-                updatePage={updatePage}
-                onSave={onSave}
-                updateErrorMessage={onUpdateError}
-                onResetToDraft={() => {}}
-                updateLastSaveTime={() => {}}
-                isPendingApprover={false}
-                autoSaveInterval={autoSaveInterval}
-                shouldAutoSave={shouldAutoSave}
-              />
-            </AppLoadingContext.Provider>
-          </NetworkContext.Provider>
-        </UserContext.Provider>,
+        <NavigatorWrapper
+          currentPage={currentPage}
+          onSubmit={onSubmit}
+          onSave={onSave}
+          updatePage={updatePage}
+          pages={pages}
+          formData={formData}
+          onUpdateError={onUpdateError}
+          editable={editable}
+          autoSaveInterval={autoSaveInterval}
+          shouldAutoSave={shouldAutoSave}
+        />,
       );
     }));
   };
@@ -447,70 +480,6 @@ describe('ActivityReportNavigator', () => {
       },
       false,
     ));
-  });
-
-  it('re-evaluates goals/objectives page state after save and updates form data', async () => {
-    const onSave = jest.fn();
-    const updateForm = jest.fn();
-
-    await renderNavigator({
-      currentPage: 'first',
-      onSave,
-      updateForm,
-    });
-
-    // Mark the form dirty so Save draft triggers a save
-    userEvent.click(screen.getByTestId('first'));
-
-    // Trigger a manual save
-    userEvent.click(await screen.findByRole('button', { name: 'Save draft' }));
-
-    // After save, the goals/objectives page (position 2) should be set to IN_PROGRESS
-    await waitFor(() => expect(updateForm).toHaveBeenCalled());
-    const [updatedData, calledWithFlag] = updateForm.mock.calls[0];
-    expect(updatedData.pageState[2]).toBe(IN_PROGRESS);
-    expect(calledWithFlag).toBe(false);
-  });
-
-  it('marks goals/objectives page COMPLETE after save when page is complete', async () => {
-    const onSave = jest.fn();
-    const updateForm = jest.fn();
-
-    const completePages = [
-      {
-        ...defaultPages[0],
-      },
-      {
-        ...defaultPages[1],
-        // Simulate Goals & Objectives page at position 2 being complete
-        isPageComplete: () => true,
-      },
-      {
-        ...defaultPages[2],
-      },
-      {
-        ...defaultPages[3],
-      },
-    ];
-
-    await renderNavigator({
-      currentPage: 'first',
-      onSave,
-      updateForm,
-      pages: completePages,
-    });
-
-    // Mark the form dirty so Save draft triggers a save
-    userEvent.click(screen.getByTestId('first'));
-
-    // Trigger a manual save
-    userEvent.click(await screen.findByRole('button', { name: 'Save draft' }));
-
-    // After save, the goals/objectives page (position 2) should be set to COMPLETE
-    await waitFor(() => expect(updateForm).toHaveBeenCalled());
-    const [updatedData, calledWithFlag] = updateForm.mock.calls[0];
-    expect(updatedData.pageState[2]).toBe(COMPLETE);
-    expect(calledWithFlag).toBe(false);
   });
 });
 

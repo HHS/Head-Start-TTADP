@@ -8,7 +8,9 @@ import { Resource } from '../models';
 const requestOptions = {
   maxRedirects: 25,
   responseEncoding: 'utf8',
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+  },
 };
 
 /**
@@ -138,6 +140,7 @@ const getMetadataValuesFrommJson = async (url) => {
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from json for Resource (URL: ${url}), received status code of ${error.response.status}. Please make sure this is a valid address:`,
         error,
+        error.stack,
       );
       result = {
         metadata: null,
