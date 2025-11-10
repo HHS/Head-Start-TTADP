@@ -888,7 +888,7 @@ commands:
         type: string
     steps:
     - cf_login:
-        space: << parameters.space >>
+        target_env: << parameters.space >>
     - run:
         name: Clear build cache (<< parameters.target_app >>)
         command: |
