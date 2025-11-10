@@ -311,7 +311,7 @@ function ActivityReport({
             const localData = JSON.parse(stored);
 
             // Compare timestamps to determine which data is newer
-            const localTimestamp = localData.savedToStorageTime
+            const localTimestamp = localData && localData.savedToStorageTime
               ? new Date(localData.savedToStorageTime)
               : null;
 
