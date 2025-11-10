@@ -239,10 +239,15 @@ workflows:
         serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
 
+
+  clear_buildcache_cron:
+    when: pipeline.parameters.action == "clear_cache"
+    jobs:
+    - clear_cache_job
+
   clear_buildcache_cron:
     # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
     # see https://docs.cloud.gov/knowledge-base/2024/12/09/apt-buildpack-cache-issue/
-    when: pipeline.parameters.action == "clear_cache"
     triggers:
     - schedule:
         cron: "0 0 * * 0" # midnight Sunday
