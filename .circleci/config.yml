@@ -661,37 +661,30 @@ jobs:
     steps:
     - checkout
     - install_cf_tools
-    - cf_login:
-        target_env: ttahub-dev
-    - run:
-        name: Clear build cache
-        command: |
-          clear_cache() {
-            local app_name=$1
-            app_guid=$(cf app --guid ${app_name})
-            echo "Clearing build cache for ${env_name} (${app_guid})"
-            cf curl -f -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
-            echo "Build cache cleared"
-          }
-
-          dev_environments=(
-              "tta-smarthub-dev-blue"
-              "tta-smarthub-dev-green"
-              "tta-smarthub-dev-red"
-              "tta-smarthub-dev-gold"
-              "tta-smarthub-dev-pink"
-          )
-
-          cf target -s ttahub-dev
-          for app_name in "${dev_environments[@]}"; do
-              clear_cache "${app_name}"
-          done
-
-          cf target -s ttahub-staging
-          clear_cache "tta-smarthub-staging"
-
-          cf target -s ttahub-prod
-          clear_cache "tta-smarthub-prod"
+    - cf_cache_clear:
+        space: ttahub-dev
+        target_app: tta-smarthub-dev-blue
+    - cf_cache_clear:
+        space: ttahub-dev
+        target_app: tta-smarthub-dev-red
+    - cf_cache_clear:
+        space: ttahub-dev
+        target_app: tta-smarthub-dev-green
+    - cf_cache_clear:
+        space: ttahub-dev
+        target_app: tta-smarthub-dev-pink
+    - cf_cache_clear:
+        space: ttahub-dev
+        target_app: tta-smarthub-dev-gold
+    - cf_cache_clear:
+        space: ttahub-staging
+        target_app: tta-smarthub-staging
+    - cf_cache_clear:
+        space: ttahub-prod
+        target_app: tta-automation
+    - cf_cache_clear:
+        space: ttahub-prod
+        target_app: tta-smarthub-prod
 
 # ----------------- Commands -----------------
 
@@ -885,6 +878,24 @@ commands:
             -p ${cg_password} \
             -o ${cg_org} \
             -s ${cg_space}
+
+  cf_cache_clear:
+    description: "Clear the build cache for a given app"
+    parameters:
+      space:
+        type: string
+      app_name:
+        type: string
+    steps:
+    - cf_login:
+        space: << parameters.space >>
+    - run:
+        name: Clear build cache (<< parameters.target_env >>)
+        command: |
+          app_guid=$(cf app --guid ${app_name})
+          echo "Clearing build cache for ${app_name} (${app_guid})"
+          cf curl -f -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+          echo "Build cache cleared"
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials and push application using deployment configuration file."
