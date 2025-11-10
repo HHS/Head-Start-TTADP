@@ -677,13 +677,13 @@ jobs:
         space: ttahub-dev
         target_app: tta-smarthub-dev-gold
     - cf_cache_clear:
-        space: ttahub-staging
+        space: tta-smarthub-staging
         target_app: tta-smarthub-staging
     - cf_cache_clear:
-        space: ttahub-prod
+        space: tta-smarthub-prod
         target_app: tta-automation
     - cf_cache_clear:
-        space: ttahub-prod
+        space: tta-smarthub-prod
         target_app: tta-smarthub-prod
 
 # ----------------- Commands -----------------
