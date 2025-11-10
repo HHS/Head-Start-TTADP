@@ -660,8 +660,6 @@ jobs:
     steps:
     - checkout
     - install_cf_tools
-    - cf_login:
-        target_env: tta-smarthub-staging
     - run:
         name: Clear build cache
         command: |
@@ -673,7 +671,7 @@ jobs:
             "tta-smarthub-dev-pink" 
             "tta-smarthub-staging"
           )
-          
+
           for env_name in "${environments[@]}"; do
             echo "Clearing build cache for ${env_name}"
             app_guid=$(cf app --guid ${app_name})
