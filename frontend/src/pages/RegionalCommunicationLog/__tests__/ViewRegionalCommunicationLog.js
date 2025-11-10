@@ -63,7 +63,7 @@ describe('ViewRegionalCommunicationLog', () => {
         method: 'Phone',
         purpose: 'Monitoring',
         duration: '1',
-        notes: 'This is a note',
+        notes: '<p>This is a note</p>',
         specialistNextSteps: [
           {
             note: 'next step 1',
@@ -128,7 +128,7 @@ describe('ViewRegionalCommunicationLog', () => {
         method: 'Phone',
         purpose: 'Monitoring',
         duration: '1',
-        notes: 'This is a note',
+        notes: '<p>This is a note</p>',
         specialistNextSteps: [
           {
             note: 'next step 1',
@@ -154,5 +154,39 @@ describe('ViewRegionalCommunicationLog', () => {
 
     expect(await screen.findByText('Tedwina User')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
+  });
+
+  it('hides notes when empty', async () => {
+    const logData = {
+      id: 1,
+      userId: '1',
+      updatedAt: new Date(),
+      files: [],
+      author: {
+        id: 1,
+        name: 'Ted User',
+      },
+      data: {
+        communicationDate: '11/01/2023',
+        result: 'Next Steps identified',
+        method: 'Phone',
+        purpose: 'Monitoring',
+        duration: '1',
+        notes: '',
+        specialistNextSteps: [],
+        recipientNextSteps: [],
+        otherStaff: [],
+      },
+    };
+
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/${LOG_ID}`;
+    fetchMock.get(url, logData);
+
+    await act(async () => {
+      renderTest();
+    });
+
+    expect(await screen.findByText('Ted User')).toBeInTheDocument();
+    expect(screen.queryByText('Notes')).toBeNull();
   });
 });

@@ -4,13 +4,13 @@ import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { useFormContext } from 'react-hook-form';
 import Review from './Review';
 import Container from '../../../../../components/Container';
 
 const Approver = ({
   onFormReview,
   reviewed,
-  formData,
   children,
   error,
   isPendingApprover,
@@ -19,12 +19,15 @@ const Approver = ({
   availableApprovers,
   reviewItems,
 }) => {
-  const {
-    additionalNotes,
-    calculatedStatus,
-    approvers,
-    submittedDate,
-  } = formData;
+  const { watch } = useFormContext();
+
+  const additionalNotes = watch('additionalNotes');
+  const calculatedStatus = watch('calculatedStatus');
+  const approvers = watch('approvers');
+  const submittedDate = watch('submittedDate');
+  const id = watch('id');
+  const displayId = watch('displayId');
+  const author = watch('author');
 
   // Approvers should be able to change their review until the report is approved.
   // isPendingApprover:
@@ -41,10 +44,9 @@ const Approver = ({
   const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
   const message = {
     time,
-    reportId: formData.id,
-    displayId: formData.displayId,
+    reportId: id,
+    displayId,
   };
-  const { author } = formData;
 
   const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
   const approverCount = approvers ? approvers.length : 0;
@@ -141,22 +143,6 @@ Approver.propTypes = {
   children: PropTypes.node.isRequired,
   error: PropTypes.string,
   isPendingApprover: PropTypes.bool.isRequired,
-  formData: PropTypes.shape({
-    additionalNotes: PropTypes.string,
-    calculatedStatus: PropTypes.string,
-    submittedDate: PropTypes.string,
-    approvers: PropTypes.arrayOf(
-      PropTypes.shape({
-        status: PropTypes.string,
-      }),
-    ),
-    author: PropTypes.shape({
-      name: PropTypes.string,
-      id: PropTypes.number,
-    }),
-    id: PropTypes.number,
-    displayId: PropTypes.string,
-  }).isRequired,
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,
     review: PropTypes.bool,

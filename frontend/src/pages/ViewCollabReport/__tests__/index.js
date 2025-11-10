@@ -142,4 +142,40 @@ describe('ViewCollabReport', () => {
     // Verify correct API endpoint was called with the ID from the match params
     expect(fetchMock.lastUrl()).toBe('/api/collaboration-reports/789');
   });
+
+  it('redirects to error page when fetch fails', async () => {
+    fetchMock.restore();
+    fetchMock.get('/api/collaboration-reports/123', {
+      status: 500,
+      body: { error: 'Internal Server Error' },
+    });
+
+    act(() => {
+      renderViewCollabReport('123');
+    });
+
+    // Wait for the redirect to occur
+    await new Promise((resolve) => { setTimeout(resolve, 100); });
+
+    // Verify redirect to error page with correct status code
+    expect(history.location.pathname).toBe('/something-went-wrong/500');
+  });
+
+  it('redirects to error page with 404 when report not found', async () => {
+    fetchMock.restore();
+    fetchMock.get('/api/collaboration-reports/999', {
+      status: 404,
+      body: { error: 'Not Found' },
+    });
+
+    act(() => {
+      renderViewCollabReport('999');
+    });
+
+    // Wait for the redirect to occur
+    await new Promise((resolve) => { setTimeout(resolve, 100); });
+
+    // Verify redirect to error page with 404 status
+    expect(history.location.pathname).toBe('/something-went-wrong/404');
+  });
 });
