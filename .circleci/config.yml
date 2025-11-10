@@ -239,15 +239,10 @@ workflows:
         serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
 
-  clear_build_cache:
-    when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
-    jobs:
-    - clear_cache_job:
-        target_env: "tta-smarthub-<< pipeline.parameters.target_env >>"
-
   clear_buildcache_cron:
     # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
     # see https://docs.cloud.gov/knowledge-base/2024/12/09/apt-buildpack-cache-issue/
+    when: pipeline.parameters.action == "clear_cache"
     triggers:
     - schedule:
         cron: "0 0 * * 0" # midnight Sunday
@@ -256,22 +251,7 @@ workflows:
             only:
             - main
     jobs:
-    - clear_cache_job:
-        target_env: "tta-smarthub-prod" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-staging"
-    - clear_cache_job:
-        target_env: "tta-automation"
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-blue" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-green" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-red" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-gold" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-pink"
+    - clear_cache_job
         
 
 # ----------------- Jobs -----------------
@@ -681,15 +661,24 @@ jobs:
     - checkout
     - install_cf_tools
     - cf_login:
-        target_env: << parameters.target_env >>
+        target_env: tta-smarthub-staging
     - run:
         name: Clear build cache
         command: |
-          app_name="<< parameters.target_env >>"
-          echo "Clearing build cache for ${app_name}"
-          app_guid=$(cf app --guid ${app_name})
-          cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
-          echo "Build cache cleared"
+          environments=(
+            "tta-smarthub-dev-blue" 
+            "tta-smarthub-dev-green" 
+            "tta-smarthub-dev-red" 
+            "tta-smarthub-dev-gold" 
+            "tta-smarthub-dev-pink" 
+            "tta-smarthub-staging"
+          )
+          
+          for env_name in "${environments[@]}"; do
+            echo "Clearing build cache for ${env_name}"
+            app_guid=$(cf app --guid ${app_name})
+            cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+            echo "Build cache cleared"
 
 # ----------------- Commands -----------------
 
