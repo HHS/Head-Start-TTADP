@@ -666,14 +666,7 @@ jobs:
     - run:
         name: Clear build cache
         command: |
-          environments=(
-            "tta-smarthub-dev-blue" 
-            "tta-smarthub-dev-green" 
-            "tta-smarthub-dev-red" 
-            "tta-smarthub-dev-gold" 
-            "tta-smarthub-dev-pink" 
-            "tta-smarthub-staging"
-          )
+          environments=("tta-smarthub-dev-blue" "tta-smarthub-dev-green" "tta-smarthub-dev-red" "tta-smarthub-dev-gold" "tta-smarthub-dev-pink" "tta-smarthub-staging")
           
           for env_name in "${environments[@]}"; do
             echo "Clearing build cache for ${env_name}"
