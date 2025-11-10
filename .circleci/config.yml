@@ -240,7 +240,7 @@ workflows:
         target_env: "<< pipeline.parameters.target_env >>"
 
 
-  clear_buildcache_cron:
+  clear_buildcache:
     when: pipeline.parameters.action == "clear_cache"
     jobs:
     - clear_cache_job
