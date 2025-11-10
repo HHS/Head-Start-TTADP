@@ -8,7 +8,7 @@
     "declaration": false,
     "allowJs": true,
     "removeComments": true,
-    "types": ["jest"]
+    "skipLibCheck": true
   },
   "include": [
     "./**/*.js",
