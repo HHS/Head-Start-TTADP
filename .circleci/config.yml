@@ -895,7 +895,7 @@ commands:
           app_name=<< parameters.target_app >>
           app_guid=$(cf app --guid ${app_name})
           echo "Clearing build cache for ${app_name} (${app_guid})"
-          cf curl -f -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+          cf curl -f -i -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
           echo "Build cache cleared"
 
   cf_deploy:
