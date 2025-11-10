@@ -4,7 +4,7 @@
 .ttahub-tabs-nav {
     position: sticky;
     top: 48px; // needed to 'clear' the smaller header
-    z-index: 999; // makes sure the rest of the page content flows "under" the tabs
+    z-index: 99; // makes sure the rest of the page content flows "under" the tabs
 }
 
 @media screen and (min-width: 1024px) {

@@ -1,6 +1,10 @@
 import faker from '@faker-js/faker';
 import db, {
-  User, EventReportPilot, Permission,
+  User,
+  EventReportPilot,
+  Permission,
+  Role,
+  UserRole,
 } from '../models';
 
 import {
@@ -105,6 +109,19 @@ describe('Users DB service', () => {
         hsesUserId: '54',
         lastLogin: new Date(),
       });
+
+      const r = await Role.create({
+        name: 'TTTT',
+        fullName: 'Test taker',
+        isSpecialist: false,
+        id: 99_883,
+      });
+
+      await UserRole.create({
+        userId: 54,
+        roleId: r.id,
+      });
+
       await User.create({
         id: 55,
         name: 'user 55',
@@ -115,13 +132,20 @@ describe('Users DB service', () => {
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [54, 55] } });
+      const users = [54, 55];
+      await UserRole.destroy({ where: { userId: users } });
+      await Role.destroy({
+        where: {
+          fullName: 'Test taker',
+        },
+      });
+      await User.destroy({ where: { id: users } });
     });
 
     it('retrieves the correct userNames', async () => {
       const users = await getUserNamesByIds([54, 55]);
       expect(users).toStrictEqual([
-        'user 54',
+        'user 54, TTTT',
         'user 55',
       ]);
     });

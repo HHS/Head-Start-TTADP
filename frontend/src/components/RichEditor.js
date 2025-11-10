@@ -10,9 +10,10 @@
  * threshold as well.
 */
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
+import { EditorState, convertToRaw } from 'draft-js';
 import draftToHtml from 'draftjs-to-html';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
@@ -28,25 +29,45 @@ const BASE_EDITOR_HEIGHT = '10rem';
  * value: The value of the Editor
  * onChange: Called whenever there is a change typed in the editor
  */
+const EMPTY_HTML = '<p></p>';
+
+const toHtml = (state) => draftToHtml(convertToRaw(state.getCurrentContent()));
+
+const createEditorState = (html) => {
+  if (!html || html === EMPTY_HTML) {
+    return EditorState.createEmpty();
+  }
+  return getEditorState(html);
+};
+
 const RichEditor = ({
   ariaLabel, value, onChange, onBlur,
 }) => {
-  let defaultEditorState;
-  if (value) {
-    defaultEditorState = getEditorState(value);
-  }
+  const [editorState, setEditorState] = useState(() => createEditorState(value));
+  const lastHtmlRef = useRef(value || '');
 
-  const onInternalChange = (currentContentState) => {
-    const html = draftToHtml(currentContentState);
-    onChange(html);
+  useEffect(() => {
+    const incomingHtml = value || '';
+    if (incomingHtml !== lastHtmlRef.current) {
+      lastHtmlRef.current = incomingHtml;
+      setEditorState(createEditorState(incomingHtml));
+    }
+  }, [value]);
+
+  const handleEditorChange = (state) => {
+    setEditorState(state);
+    const html = toHtml(state);
+    const sanitizedHtml = html === EMPTY_HTML ? '' : html;
+    lastHtmlRef.current = sanitizedHtml;
+    onChange(sanitizedHtml);
   };
 
   return (
     <Editor
+      editorState={editorState}
       onBlur={onBlur}
       spellCheck
-      defaultEditorState={defaultEditorState}
-      onChange={onInternalChange}
+      onEditorStateChange={handleEditorChange}
       ariaLabel={ariaLabel}
       handlePastedText={() => false}
       tabIndex="0"

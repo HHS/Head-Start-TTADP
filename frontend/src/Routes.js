@@ -20,7 +20,7 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
 import LegacyReport from './pages/LegacyReport';
-import isAdmin, { canSeeBehindFeatureFlag } from './permissions';
+import isAdmin from './permissions';
 import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
@@ -69,7 +69,6 @@ export default function Routes({
   notifications,
 }) {
   const admin = isAdmin(user);
-  const hasTrainingReportDashboard = canSeeBehindFeatureFlag(user, 'training_reports_dashboard');
 
   const locationRef = useLocation();
   const isLogoutPage = locationRef.pathname === '/logout';
@@ -312,7 +311,6 @@ export default function Routes({
           path="/dashboards/regional-dashboard/activity-reports"
           render={({ match }) => (
             <AppWrapper
-              padded={!(hasTrainingReportDashboard)}
               authenticated
               logout={logout}
               hasAlerts={!!(alert)}
@@ -326,9 +324,7 @@ export default function Routes({
           path="/dashboards/regional-dashboard/:reportType(training-reports|all-reports)"
           render={({ match }) => (
             <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
-              <FeatureFlag flag="training_reports_dashboard" renderNotFound>
-                <RegionalDashboard match={match} />
-              </FeatureFlag>
+              <RegionalDashboard match={match} />
             </AppWrapper>
           )}
         />
