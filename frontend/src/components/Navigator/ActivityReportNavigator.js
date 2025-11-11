@@ -16,7 +16,7 @@ import { OBJECTIVE_RESOURCES, validateGoals, validatePrompts } from '../../pages
 import { saveGoalsForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
 import AppLoadingContext from '../../AppLoadingContext';
-import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport/formDataHelpers';
+import { convertGoalsToFormData, packageGoals, calculateGoalOrder } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
 import useFormGrantData from '../../hooks/useFormGrantData';
@@ -326,9 +326,23 @@ const ActivityReportNavigator = ({
     );
 
     try {
+      // First, set goals to the packaged goals array (with edited goal at correct position)
       setValue('goals', allGoals);
+
+      // Calculate and set goalOrder before getting all values
+      // This ensures goalOrder is included when we call getValues()
+      const goalOrder = calculateGoalOrder(allGoals);
+
+      // Get all current values AFTER setting goalOrder
       const { status, ...values } = getValues();
-      const data = { ...formData, ...values, pageState: newNavigatorState() };
+
+      // Explicitly include goalOrder in the data to be saved
+      const data = {
+        ...formData,
+        ...values,
+        goalOrder, // Explicitly add goalOrder
+        pageState: newNavigatorState(),
+      };
       await onSave(data);
 
       updateErrorMessage('');
@@ -396,6 +410,7 @@ const ActivityReportNavigator = ({
       regionId: formData.regionId,
     };
 
+    // IN-PLACE EDITING: Package goals with the edited goal at its original position
     let allGoals = packageGoals(
       selectedGoals,
       goal,
@@ -403,6 +418,24 @@ const ActivityReportNavigator = ({
       prompts,
       goalForEditing?.originalIndex,
     );
+
+    // GOAL ORDER PRESERVATION: Calculate goalOrder BEFORE sending to backend
+    //
+    // WHY THIS IS CRITICAL:
+    // - Backend ALWAYS returns goals ordered by activityReportGoals.createdAt
+    //   (when added to report)
+    // - But users want goals in the order they arranged them
+    // - We must calculate goalOrder NOW, before backend changes the order
+    //
+    // WHAT goalOrder IS:
+    // - An array of goal IDs in the correct display order:
+    //   [3, 1, 2] means goal 3 first, then 1, then 2
+    // - Saved to the backend so we can restore the correct order when fetching goals later
+    //
+    // TIMING MATTERS:
+    // - If we calculated goalOrder AFTER the API call, we'd capture the wrong order
+    //   (backend's createdAt order, not user's intended order)
+    const goalOrder = calculateGoalOrder(allGoals);
 
     // save goal to api, come back with new ids for goal and objectives
     try {
@@ -430,9 +463,11 @@ const ActivityReportNavigator = ({
 
       const allowUpdateFormData = shouldUpdateFormData(isAutoSave);
 
+      // GOAL ORDER RESTORATION: Use the goalOrder we calculated earlier to restore correct order
+      // Backend returned goals in createdAt order, but we pass goalOrder to sort them back
       const {
         goals, goalForEditing: newGoalForEditing,
-      } = convertGoalsToFormData(allGoals, grantIds);
+      } = convertGoalsToFormData(allGoals, grantIds, formData.calculatedStatus, goalOrder);
 
       // update form data
       const { status, ...values } = getValues();
@@ -443,6 +478,7 @@ const ActivityReportNavigator = ({
         ...values,
         goals,
         goalForEditing: newGoalForEditing,
+        goalOrder,
         [objectivesFieldArrayName]: newGoalForEditing ? newGoalForEditing.objectives : null,
       };
 
@@ -536,6 +572,7 @@ const ActivityReportNavigator = ({
         goalForEditing?.originalIndex,
       );
       // save report to API
+      // Note: onSave will calculate goalOrder from the goals returned by the API
       const { status, ...values } = getValues();
       const data = {
         ...formData,

@@ -27,7 +27,13 @@ import {
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
-import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
+import {
+  convertGoalsToFormData,
+  convertReportToFormData,
+  findWhatsChanged,
+  packageGoals,
+  calculateGoalOrder,
+} from './formDataHelpers';
 import {
   submitReport,
   saveReport,
@@ -306,7 +312,23 @@ function ActivityReport({
 
         // Update form data.
         if (shouldUpdateFromNetwork && activityReportId !== 'new') {
-          updateFormData({ ...formData, goalForEditing: null, ...report }, true);
+          // IN-PLACE EDITING: Preserve goalForEditing when refetching from network
+          //
+          // THE PROBLEM: When we refetch report data from the network (e.g., after saving),
+          // the network response doesn't know about the in-place editing position because
+          // it's calculated from the form state, not stored directly in the database.
+          //
+          // THE SOLUTION: If formData.goalForEditing has an originalIndex (user is editing),
+          // preserve it from the local formData instead of using the network response.
+          // This prevents losing the in-place editing position during network refetches.
+          const preservedGoalForEditing = formData.goalForEditing?.originalIndex !== undefined
+            ? formData.goalForEditing
+            : report.goalForEditing;
+          updateFormData({
+            ...formData,
+            ...report,
+            goalForEditing: preservedGoalForEditing,
+          }, true);
         } else {
           updateFormData({ ...report, ...formData }, true);
         }
@@ -491,17 +513,52 @@ function ActivityReport({
 
         reportData = updatedReport;
 
-        // format the goals and objectives appropriately, as well as divide them
+        // Format the goals and objectives appropriately, as well as divide them
         // by which one is open and which one is not
         const { goalForEditing, goals } = convertGoalsToFormData(
           updatedReport.goalsAndObjectives,
           updatedReport.activityRecipients.map((r) => r.activityRecipientId),
+          updatedReport.calculatedStatus,
+          updatedReport.goalOrder,
         );
+
+        // GOAL ORDER RECALCULATION: Ensure goalOrder is correct after backend returns goals
+        //
+        // WHY NEEDED: After saving to the backend, we need to recalculate goalOrder to ensure
+        // it matches the current state of goals (including any goals being edited in place).
+        //
+        // HOW IT WORKS:
+        // 1. Use packageGoals to reassemble all goals in their correct order
+        //    (including goalForEditing at its originalIndex position)
+        // 2. Calculate goalOrder from this correctly-ordered array
+        // 3. If goalOrder differs from what the backend has, save it immediately
+        //
+        // EXAMPLE: If user is editing goal 1 at position 0, and backend returns goals ordered
+        // by createdAt, we need to calculate the correct order [1, 2, 3] and save it.
+        const grantIds = updatedReport.activityRecipients.map((r) => r.activityRecipientId);
+        const allGoalsInOrder = packageGoals(
+          goals,
+          goalForEditing,
+          grantIds,
+          goalForEditing?.prompts || [],
+          goalForEditing?.originalIndex,
+        );
+        const goalOrder = calculateGoalOrder(allGoalsInOrder);
+
+        // If goalOrder changed from what backend has, persist the correct order immediately
+        if (JSON.stringify(goalOrder) !== JSON.stringify(updatedReport.goalOrder)) {
+          await saveReport(
+            reportId.current,
+            { goalOrder },
+            {},
+          );
+        }
 
         reportData = {
           ...updatedReport,
           goalForEditing,
           goals,
+          goalOrder,
         };
 
         updateFormData(reportData, true);
