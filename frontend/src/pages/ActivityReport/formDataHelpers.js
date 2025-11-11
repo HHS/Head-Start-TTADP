@@ -100,6 +100,27 @@ export const unflattenResourcesUsed = (array) => {
   return array.map((value) => ({ value }));
 };
 
+/**
+ * Calculate the goal order array from packaged goals
+ *
+ * PURPOSE: The backend returns goals ordered by createdAt (when they were added to the report),
+ * but users want goals to stay in the order they arranged them. This function creates a
+ * "goal order" array that remembers the user's intended order.
+ *
+ * WHY NEEDED: When editing goals in place, we need to preserve their position even after
+ * saving to the backend and navigating between pages.
+ *
+ * @param {Array} packagedGoals - The goals in their intended display order
+ * @returns {Array} Array of goal IDs in order (e.g., [3, 1, 2] means goal 3 is first)
+ *
+ * EXAMPLE:
+ * packagedGoals = [{id: 3, name: "Goal A"}, {id: 1, name: "Goal B"}, {id: 2, name: "Goal C"}]
+ * Returns: [3, 1, 2] - preserving the display order regardless of IDs
+ */
+export const calculateGoalOrder = (packagedGoals) => packagedGoals
+  .map((g) => g.id)
+  .filter((id) => id); // Filter out any undefined/null IDs (for new goals not yet saved)
+
 export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = null) => {
   const packagedGoals = [
     // we make sure to mark all the read only goals as "ActivelyEdited: false"
@@ -140,6 +161,11 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
   if (goal && goal.name) {
     const goalToPackage = {
       goalIds: goal.goalIds,
+      // IMPORTANT: Include id for goalOrder calculation
+      // Without this, calculateGoalOrder can't track which goal is which when the goal
+      // being edited is packaged. This caused a bug where edited goals appeared at the
+      // bottom of the list after saving.
+      id: goal.id,
       status: goal.status,
       endDate: goal.endDate,
       onApprovedAR: goal.onApprovedAR,
@@ -170,12 +196,21 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
       prompts: prompts || [],
     };
 
-    // If originalIndex is provided and valid, insert at that position
-    // Otherwise, append to the end (for new goals)
+    // IN-PLACE EDITING: If originalIndex is provided, insert goal at that position
+    // This is crucial for the "edit goals in place" feature - when a user edits a goal,
+    // we temporarily remove it from the goals array and put it in goalForEditing.
+    // When saving, we need to put it back at its ORIGINAL position (originalIndex),
+    // not at the end of the array.
+    //
+    // EXAMPLE: If editing the 2nd goal out of 5:
+    // - originalIndex = 1 (zero-based index)
+    // - packagedGoals currently has 4 goals (the edited one was removed)
+    // - We insert at position 1, putting it back where it was
     if (originalIndex !== null && originalIndex !== undefined && originalIndex >= 0) {
       const insertIndex = Math.min(originalIndex, packagedGoals.length);
       packagedGoals.splice(insertIndex, 0, goalToPackage);
     } else {
+      // No originalIndex means this is a NEW goal, append to end
       packagedGoals.push(goalToPackage);
     }
   }
@@ -196,37 +231,68 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
  * @returns { goal[], goalForEditing }
  */
 export const convertGoalsToFormData = (
-  goals, grantIds, calculatedStatus = REPORT_STATUSES.DRAFT,
-) => goals.reduce((accumulatedData, goal) => {
-  // we are relying on the backend to have properly captured the goalForEditing
-  // if there is some breakdown happening, and we have two set,
-  // we will just fall back to just using the first matching goal
-  if (
-    // if any of the goals ids are included in the activelyEditedGoals id array
-    goal.activityReportGoals
-    && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
-    && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
-    && !accumulatedData.goalForEditing) {
-    // we set it as the goal for editing
-    // eslint-disable-next-line no-param-reassign
-    accumulatedData.goalForEditing = {
-      ...goal,
-      grantIds,
-      objectives: goal.objectives,
-      prompts: goal.prompts || [],
-    };
-  } else {
-    // otherwise we add it to the list of goals, formatting it with the correct
-    // grant ids
-    accumulatedData.goals.push({
-      ...goal,
-      grantIds,
-      prompts: goal.prompts || [],
+  goals, grantIds, calculatedStatus = REPORT_STATUSES.DRAFT, goalOrder = null,
+) => {
+  // GOAL ORDER RESTORATION: Re-sort goals to match user's intended order
+  //
+  // THE PROBLEM: Backend returns goals ordered by activityReportGoals.createdAt (when they
+  // were first added to the report), but users want goals in the order they arranged them.
+  //
+  // THE SOLUTION: Before the backend saves goals, we calculate goalOrder (an array of IDs
+  // in the correct order). When fetching goals back, we use goalOrder to re-sort them
+  // to match the user's intended order.
+  //
+  // EXAMPLE:
+  // - Backend returns: [Goal B (id:2, createdAt: older), Goal A (id:1, createdAt: newer)]
+  // - goalOrder: [1, 2] (user wants Goal A first)
+  // - After sorting: [Goal A (id:1), Goal B (id:2)] ✓
+  let sortedGoals = goals;
+  if (goalOrder && Array.isArray(goalOrder) && goalOrder.length > 0) {
+    sortedGoals = [...goals].sort((a, b) => {
+      const indexA = goalOrder.indexOf(a.id);
+      const indexB = goalOrder.indexOf(b.id);
+      // If goal not in goalOrder, put it at the end (shouldn't happen, but defensive)
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
     });
   }
 
-  return accumulatedData;
-}, { goals: [], goalForEditing: null });
+  return sortedGoals.reduce((accumulatedData, goal, currentIndex) => {
+    // we are relying on the backend to have properly captured the goalForEditing
+    // if there is some breakdown happening, and we have two set,
+    // we will just fall back to just using the first matching goal
+    if (
+      // if any of the goals ids are included in the activelyEditedGoals id array
+      goal.activityReportGoals
+      && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
+      && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
+      && !accumulatedData.goalForEditing) {
+      // we set it as the goal for editing
+      // eslint-disable-next-line no-param-reassign
+      accumulatedData.goalForEditing = {
+        ...goal,
+        grantIds,
+        objectives: goal.objectives,
+        prompts: goal.prompts || [],
+        // Preserve the original index so the goal appears in the correct position
+        // when editing in place, even after navigating away and returning
+        originalIndex: currentIndex,
+      };
+    } else {
+      // otherwise we add it to the list of goals, formatting it with the correct
+      // grant ids
+      accumulatedData.goals.push({
+        ...goal,
+        grantIds,
+        prompts: goal.prompts || [],
+      });
+    }
+
+    return accumulatedData;
+  }, { goals: [], goalForEditing: null });
+};
 
 export const convertReportToFormData = (fetchedReport) => {
   let grantIds = [];
@@ -240,7 +306,10 @@ export const convertReportToFormData = (fetchedReport) => {
   }));
 
   const { goals, goalForEditing } = convertGoalsToFormData(
-    fetchedReport.goalsAndObjectives, grantIds, fetchedReport.calculatedStatus,
+    fetchedReport.goalsAndObjectives,
+    grantIds,
+    fetchedReport.calculatedStatus,
+    fetchedReport.goalOrder,
   );
 
   const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);

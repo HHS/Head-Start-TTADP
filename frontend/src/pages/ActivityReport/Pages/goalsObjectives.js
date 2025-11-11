@@ -309,14 +309,30 @@ const GoalsObjectives = ({
     goalIds: goal.goalIds ? [...goal.goalIds] : [],
   })); // would like to use structuredClone here for brevity but it would require fighting jsdom
 
-  // Split goals for in-place editing: goals before and after the editing position
+  // IN-PLACE EDITING: Split goals array to render the goal editing form at its original position
+  //
+  // WHY: When editing a goal, we want it to appear in-place at its original position in the list
+  // (not at the top or bottom of the page).
+  //
+  // HOW IT WORKS:
+  // 1. We split the goals array into two parts: goals before and goals after the editing position
+  // 2. We render: goalsBeforeEdit -> GoalPicker (editing form) -> goalsAfterEdit
+  // 3. This creates the visual effect that the goal is being edited "in place"
+  //
+  // CRITICAL FIX: Use goalForEditing.originalIndex from hook form (NOT local state)
+  // - Hook form state persists across navigation (saved to backend)
+  // - Local state (editingGoalOriginalIndex) resets when navigating away and returning
+  // - This was the root cause of goals appearing at the bottom after navigation
   let goalsBeforeEdit = goalsForReview;
   let goalsAfterEdit = [];
 
-  if (!isGoalFormClosed && editingGoalOriginalIndex !== null && editingGoalOriginalIndex >= 0) {
+  // Prefer goalForEditing.originalIndex (persists), fallback to local state (initial edit)
+  const originalIndexForSplit = goalForEditing?.originalIndex ?? editingGoalOriginalIndex;
+
+  if (!isGoalFormClosed && originalIndexForSplit !== null && originalIndexForSplit >= 0) {
     // Split the array at the original index where the editing goal was
-    goalsBeforeEdit = goalsForReview.slice(0, editingGoalOriginalIndex);
-    goalsAfterEdit = goalsForReview.slice(editingGoalOriginalIndex);
+    goalsBeforeEdit = goalsForReview.slice(0, originalIndexForSplit);
+    goalsAfterEdit = goalsForReview.slice(originalIndexForSplit);
   }
 
   // Add a variable to determine if a recipient has been selected.
