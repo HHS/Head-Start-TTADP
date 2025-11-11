@@ -1,11 +1,9 @@
 import { Readable } from 'stream';
 import { mockClient } from 'aws-sdk-client-mock';
-import { S3 } from '@aws-sdk/client-s3';
 import { auditLogger } from '../../../logger';
 import { generateS3Config } from '../../s3';
 import S3Client from '../s3';
 
-jest.mock('S3');
 jest.mock('../../../logger', () => ({
   auditLogger: {
     error: jest.fn(),
@@ -50,7 +48,7 @@ describe('S3Client', () => {
         },
       };
       const client = new S3Client(customConfig);
-      expect(S3).toHaveBeenCalledWith(customConfig.s3Config);
+      expect(client).toHaveBeenCalledWith(customConfig.s3Config);
     });
   });
 
@@ -61,7 +59,7 @@ describe('S3Client', () => {
 
       await mockS3.uploadFileAsStream(key, stream);
 
-      expect(S3).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key, Body: stream });
+      expect(S3Client).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key, Body: stream });
       expect(mockS3.promise).toHaveBeenCalled();
     });
 
