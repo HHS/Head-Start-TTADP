@@ -23,12 +23,12 @@ describe('S3Client', () => {
 
   beforeEach(() => {
     mockS3 = {
-      upload: jest.fn().mockReturnThis(),
+      Upload: jest.fn().mockReturnThis(),
       promise: jest.fn(),
-      getObject: jest.fn().mockReturnThis(),
+      GetObjectCommandOutput: jest.fn().mockReturnThis(),
       headObject: jest.fn().mockReturnThis(),
       deleteObject: jest.fn().mockReturnThis(),
-      listObjectsV2: jest.fn().mockReturnThis(),
+      ListObjectsV2CommandOutput: jest.fn().mockReturnThis(),
     };
     S3.mockImplementation(() => mockS3);
 
