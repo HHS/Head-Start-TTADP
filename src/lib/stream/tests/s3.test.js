@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { mockClient } from 'aws-sdk-client-mock';
+import { S3Client } from '@aws-sdk/client-s3';
 import { auditLogger } from '../../../logger';
-import S3Client from '../s3';
 import { generateS3Config } from '../../s3';
 
 jest.mock('../../../logger', () => ({
