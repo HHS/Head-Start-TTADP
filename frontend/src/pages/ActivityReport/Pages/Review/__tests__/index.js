@@ -58,7 +58,6 @@ const RenderReview = ({
         onSubmit={onSubmit}
         reviewItems={[]}
         availableApprovers={availableApprovers}
-        formData={formData}
         onReview={onReview}
         onSaveForm={() => { }}
         isApprover={isApprover}
