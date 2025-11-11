@@ -1,8 +1,11 @@
 import { Readable } from 'stream';
 import { mockClient } from 'aws-sdk-client-mock';
+import { S3 } from '@aws-sdk/client-s3';
 import { auditLogger } from '../../../logger';
 import { generateS3Config } from '../../s3';
 import S3Client from '../s3';
+
+jest.mock('@aws-sdk/client-s3');
 
 jest.mock('../../../logger', () => ({
   auditLogger: {
@@ -19,20 +22,29 @@ describe('S3Client', () => {
   });
 
   beforeEach(() => {
+    mockS3 = {
+      upload: jest.fn().mockReturnThis(),
+      promise: jest.fn(),
+      getObject: jest.fn().mockReturnThis(),
+      headObject: jest.fn().mockReturnThis(),
+      deleteObject: jest.fn().mockReturnThis(),
+      listObjectsV2: jest.fn().mockReturnThis(),
+    };
+    S3.mockImplementation(() => mockS3);
+
     s3Client = new S3Client({ bucketName: 'test-bucket', s3Config: { signatureVersion: 'v4', s3ForcePathStyle: true } });
-    mockS3 = mockClient(S3Client);
+    // mockS3 = mockClient(S3Client);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-    mockS3.reset();
   });
 
   describe('constructor', () => {
     it('should create an S3 client with default configuration', () => {
       const s3Config = generateS3Config();
       const client = new S3Client();
-      expect(client).toHaveBeenCalledWith(s3Config.s3Config);
+      expect(S3).toHaveBeenCalledWith(s3Config.s3Config);
     });
 
     it('should create an S3 client with custom configuration', () => {
@@ -48,7 +60,7 @@ describe('S3Client', () => {
         },
       };
       const client = new S3Client(customConfig);
-      expect(client).toHaveBeenCalledWith(customConfig.s3Config);
+      expect(S3).toHaveBeenCalledWith(customConfig.s3Config);
     });
   });
 
@@ -57,9 +69,9 @@ describe('S3Client', () => {
       const key = 'test-key';
       const stream = new Readable();
 
-      await mockS3.uploadFileAsStream(key, stream);
+      await s3Client.uploadFileAsStream(key, stream);
 
-      expect(S3Client).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key, Body: stream });
+      expect(mockS3.upload).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key, Body: stream });
       expect(mockS3.promise).toHaveBeenCalled();
     });
 
