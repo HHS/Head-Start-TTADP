@@ -321,11 +321,10 @@ function ActivityReport({
           // THE SOLUTION: If formData.goalForEditing has an originalIndex (user is editing),
           // preserve it from the local formData instead of using the network response.
           // This prevents losing the in-place editing position during network refetches.
-          const preservedGoalForEditing = formData.goalForEditing?.originalIndex !== undefined
+          const preservedGoalForEditing = formData?.goalForEditing?.originalIndex !== undefined
             ? formData.goalForEditing
             : report.goalForEditing;
           updateFormData({
-            ...formData,
             ...report,
             goalForEditing: preservedGoalForEditing,
           }, true);
@@ -421,7 +420,7 @@ function ActivityReport({
     );
   }
 
-  if (formData.calculatedStatus === REPORT_STATUSES.APPROVED) {
+  if (formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED) {
     return (
       <Redirect to={`/activity-reports/view/${activityReportId}`} />
     );
@@ -429,6 +428,7 @@ function ActivityReport({
 
   if (connectionActive
     && isCollaboratorOrCreator
+    && formData
     && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
     && !isPendingApprover
   ) {
