@@ -162,7 +162,7 @@ describe('RegionalCommunicationLogDashboard', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
 
-    const actions = screen.getByRole('button', { name: 'Actions for Communication Log' });
+    const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
     act(() => userEvent.click(actions));
 
     await waitFor(() => expect(screen.getByRole('menuitem', { name: /view/i })).toBeInTheDocument());
@@ -190,7 +190,7 @@ describe('RegionalCommunicationLogDashboard', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
 
-    const actions = screen.getByRole('button', { name: 'Actions for Communication Log' });
+    const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
     act(() => userEvent.click(actions));
 
     // click delete
