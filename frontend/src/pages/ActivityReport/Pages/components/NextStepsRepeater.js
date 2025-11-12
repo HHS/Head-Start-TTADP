@@ -101,6 +101,7 @@ export default function NextStepsRepeater({
     errorsObj[fieldName]
     && errorsObj[fieldName][idx]
     && errorsObj[fieldName][idx].completeDate
+    && !required
     && errorsObj[fieldName][idx].completeDate.ref.value !== '');
 
   return (
