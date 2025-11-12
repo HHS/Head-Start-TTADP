@@ -46,6 +46,11 @@ describe('ActivityReport', () => {
   });
 
   beforeEach(() => {
+    // Reset history to prevent state leakage between tests
+    history.entries = [];
+    history.index = -1;
+    history.push('/');
+
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
     fetchMock.get('/api/activity-reports/1/activity-recipients', recipients);
     fetchMock.get('/api/activity-reports/groups?region=1', [{
@@ -68,6 +73,11 @@ describe('ActivityReport', () => {
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-request-option', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -156,7 +166,7 @@ describe('ActivityReport', () => {
 
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', 'activity-summary', true);
-      await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
       expect(await screen.findByTestId('alert')).toBeVisible();
     });
 
@@ -411,6 +421,7 @@ describe('ActivityReport', () => {
           ],
           objectivesWithoutGoals: [],
           goalsAndObjectives: mockGoalsAndObjectives(false),
+          goalForEditing: null,
         });
 
         act(() => renderActivityReport(1, 'goals-objectives', false, 1));
@@ -556,15 +567,19 @@ describe('ActivityReport', () => {
         }],
       }]);
 
-      const { container } = render(
-        <ReportComponent
-          id={1}
-          currentPage="goals-objectives"
-          showLastUpdatedTime={false}
-          userId={1}
-        />,
+      let container;
+      await act(async () => {
+        const result = render(
+          <ReportComponent
+            id={1}
+            currentPage="goals-objectives"
+            showLastUpdatedTime={false}
+            userId={1}
+          />,
 
-      );
+        );
+        container = result.container;
+      });
 
       await screen.findByRole('heading', { name: 'Goals and objectives' });
       await act(() => reactSelectEvent.select(
@@ -578,7 +593,7 @@ describe('ActivityReport', () => {
       ));
 
       const radio = document.querySelector('#add-objective-files-yes-95297-0'); // yes radio button
-      act(() => {
+      await act(async () => {
         userEvent.click(radio);
       });
 
@@ -590,7 +605,9 @@ describe('ActivityReport', () => {
 
       const e = mockData([file('file', 1)]);
 
-      dispatchEvt(dropzone, 'drop', e);
+      await act(async () => {
+        dispatchEvt(dropzone, 'drop', e);
+      });
 
       await waitFor(() => expect(fetchMock.called('/api/files', { method: 'POST' })).toBeTruthy());
 
@@ -822,7 +839,7 @@ describe('ActivityReport', () => {
 
       expect(fetchMock.called('/api/activity-reports/1', { method: 'PUT' })).toBe(false);
       const saveGoal = await screen.findByRole('button', { name: /save goal/i });
-      act(() => {
+      await act(async () => {
         userEvent.click(saveGoal);
       });
 
@@ -834,7 +851,7 @@ describe('ActivityReport', () => {
       });
 
       const actions = await screen.findByRole('button', { name: /actions for goal/i });
-      act(() => {
+      await act(async () => {
         userEvent.click(actions);
       });
 
@@ -979,12 +996,14 @@ describe('ActivityReport', () => {
       }]);
 
       const edit = await screen.findByRole('button', { name: /edit/i });
-      act(() => {
+      await act(async () => {
         userEvent.click(edit);
       });
 
-      message = screen.queryByText('Add a TTA objective and save as draft to upload resources.');
-      expect(message).toBeNull();
+      await waitFor(() => {
+        message = screen.queryByText('Add a TTA objective and save as draft to upload resources.');
+        expect(message).toBeNull();
+      });
 
       const didYouUse = await screen.findAllByText(/Did you use any other TTA resources/i);
       expect(didYouUse).toHaveLength(2);
@@ -1082,9 +1101,7 @@ describe('ActivityReport', () => {
       };
 
       fetchMock.get('/api/activity-reports/1', d);
-      act(() => {
-        renderActivityReport('1', 'review', true, 1);
-      });
+      renderActivityReport('1', 'review', true, 1);
 
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/submitted/1'));
     });
@@ -1097,11 +1114,10 @@ describe('ActivityReport', () => {
       };
 
       fetchMock.get('/api/activity-reports/1', d);
-      act(() => {
-        renderActivityReport('1', 'review', true, 1);
-      });
+      renderActivityReport('1', 'review', true, 1);
 
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/view/1'));
+      await waitFor(() => expect(history.location.pathname)
+        .toEqual('/activity-reports/view/1'));
     });
   });
 });
