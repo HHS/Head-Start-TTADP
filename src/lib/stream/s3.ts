@@ -38,6 +38,7 @@ class S3Client {
     try {
       await new Upload({
         client: this.s3,
+
         params: {
           Bucket: this.bucketName,
           Key: key,
