@@ -97,6 +97,12 @@ export default function NextStepsRepeater({
     return register();
   })();
 
+  const showCompleteDateError = (errorsObj, fieldName, idx) => (
+    errorsObj[fieldName]
+    && errorsObj[fieldName][idx]
+    && errorsObj[fieldName][idx].completeDate
+    && errorsObj[fieldName][idx].completeDate.ref.value !== '');
+
   return (
     <>
       <div className="ttahub-next-steps-repeater">
@@ -152,8 +158,7 @@ export default function NextStepsRepeater({
             </FormGroup>
             <FormGroup
               className="margin-top-1 margin-bottom-2"
-              error={(errors[name] && errors[name][index]
-                && errors[name][index].completeDate)}
+              error={showCompleteDateError(errors, name, index)}
             >
               <Label
                 htmlFor={`${stepType}-next-step-date-${index + 1}`}
@@ -161,13 +166,11 @@ export default function NextStepsRepeater({
                 {dateLabel(index)}
                 {required && (<Req announce />)}
               </Label>
-              {(errors[name] && errors[name][index]
-                  && errors[name][index].completeDate)
+              {showCompleteDateError(errors, name, index)
                 ? <ErrorMessage>Enter a valid date</ErrorMessage>
                 : null}
               <div
-                className={(errors[name] && errors[name][index]
-                    && errors[name][index].completeDate) ? 'blank-next-step-date' : ''}
+                className={showCompleteDateError(errors, name, index) ? 'blank-next-step-date' : ''}
               >
                 <ControlledDatePicker
                   inputId={`${stepType}-next-step-date-${index + 1}`}
