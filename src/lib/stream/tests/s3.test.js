@@ -22,9 +22,9 @@ jest.mock('../../logger', () => ({
 
 // Now import S3 and the S3Client under test
 
-function streamToString(stream: Readable): Promise<string> {
+function streamToString(stream) {
   return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
+    const chunks = [];
     stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
     stream.on('error', (err) => reject(err));
     stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
@@ -41,7 +41,7 @@ describe('S3Client', () => {
   describe('uploadFileAsStream', () => {
     it('calls Upload and waits for done()', async () => {
       const uploadDone = jest.fn().mockResolvedValue(undefined);
-      (Upload as unknown as jest.Mock).mockImplementation(() => ({ done: uploadDone }));
+      (Upload).mockImplementation(() => ({ done: uploadDone }));
 
       const client = new S3Client({ bucketName: BUCKET, s3Config: {} });
       const stream = Readable.from(Buffer.from('hello'));
@@ -54,7 +54,7 @@ describe('S3Client', () => {
     it('logs and rethrows when upload fails', async () => {
       const error = new Error('upload failed');
       const uploadDone = jest.fn().mockRejectedValue(error);
-      (Upload as unknown as jest.Mock).mockImplementation(() => ({ done: uploadDone }));
+      (Upload).mockImplementation(() => ({ done: uploadDone }));
 
       const client = new S3Client({ bucketName: BUCKET, s3Config: {} });
       const stream = Readable.from(Buffer.from('data'));
