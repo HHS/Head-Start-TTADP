@@ -242,8 +242,7 @@ workflows:
   clear_build_cache:
     when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
     jobs:
-    - clear_cache_job:
-        target_env: "tta-smarthub-<< pipeline.parameters.target_env >>"
+    - clear_cache_job
 
   clear_buildcache_cron:
     # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
@@ -256,22 +255,7 @@ workflows:
             only:
             - main
     jobs:
-    - clear_cache_job:
-        target_env: "tta-smarthub-prod" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-staging"
-    - clear_cache_job:
-        target_env: "tta-automation"
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-blue" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-green" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-red" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-gold" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-pink"
+    - clear_cache_job
         
 
 # ----------------- Jobs -----------------
@@ -674,22 +658,33 @@ jobs:
 
   clear_cache_job:
     executor: docker-executor
-    parameters:
-      target_env:
-        type: string
     steps:
     - checkout
     - install_cf_tools
-    - cf_login:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Clear build cache
-        command: |
-          app_name="<< parameters.target_env >>"
-          echo "Clearing build cache for ${app_name}"
-          app_guid=$(cf app --guid ${app_name})
-          cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
-          echo "Build cache cleared"
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-blue
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-red
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-green
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-pink
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-gold
+    - cf_cache_clear:
+        space: staging
+        target_app: tta-smarthub-staging
+    - cf_cache_clear:
+        space: prod
+        target_app: tta-automation
+    - cf_cache_clear:
+        space: prod
+        target_app: tta-smarthub-prod
 
 # ----------------- Commands -----------------
 
@@ -883,6 +878,25 @@ commands:
             -p ${cg_password} \
             -o ${cg_org} \
             -s ${cg_space}
+
+  cf_cache_clear:
+    description: "Clear the build cache for a given app"
+    parameters:
+      space:
+        type: string
+      target_app:
+        type: string
+    steps:
+    - cf_login:
+        target_env: << parameters.space >>
+    - run:
+        name: Clear build cache (<< parameters.target_app >>)
+        command: |
+          app_name=<< parameters.target_app >>
+          app_guid=$(cf app --guid ${app_name})
+          echo "Clearing build cache for ${app_name} (${app_guid})"
+          cf curl -f -i -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+          echo "Build cache cleared"
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials and push application using deployment configuration file."
