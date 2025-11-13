@@ -80,7 +80,6 @@ const ActivitySummary = ({
   recipients,
   collaborators,
   setShouldAutoSave,
-  formData,
 }) => {
   const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
 
@@ -159,7 +158,7 @@ const ActivitySummary = ({
         ? await getGoalTemplates(newRecipientGrantIds)
         : [];
 
-      citations = newRecipientGrantIds.length > 0 ? await fetchCitationsByGrant(formData.regionId,
+      citations = newRecipientGrantIds.length > 0 ? await fetchCitationsByGrant(getValues('regionId'),
         newRecipientGrantIds, startDate)
         : [];
     } catch (err) {
@@ -617,11 +616,6 @@ ActivitySummary.propTypes = {
     ),
   }).isRequired,
   setShouldAutoSave: PropTypes.func.isRequired,
-  formData: PropTypes.shape({
-    calculatedStatus: PropTypes.string,
-    pageState: PropTypes.shape({}),
-    regionId: PropTypes.number.isRequired,
-  }).isRequired,
 };
 
 const getNumberOfParticipants = (deliveryMethod) => {
@@ -792,7 +786,7 @@ export default {
   review: false,
   render: (
     additionalData,
-    formData,
+    _formData,
     _reportId,
     isAppLoading,
     onContinue,
@@ -812,7 +806,6 @@ export default {
           collaborators={collaborators}
           groups={groups}
           setShouldAutoSave={setShouldAutoSave}
-          formData={formData}
         />
         <Alert />
         <NavigatorButtons
