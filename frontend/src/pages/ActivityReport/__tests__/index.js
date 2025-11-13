@@ -237,7 +237,7 @@ describe('ActivityReport', () => {
       act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       alerts = await screen.findAllByTestId('alert');
-      expect(alerts.length).toBe(2);
+      expect(alerts.length).toBe(3);
       expect(alerts[0]).toHaveClass('alert-fade');
       expect(alerts[0]).toHaveTextContent('Autosaved on');
     });
