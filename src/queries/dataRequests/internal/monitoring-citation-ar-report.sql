@@ -321,39 +321,11 @@ WHERE gt.standard = 'Monitoring'
     )
   )
   AND (
-  NULLIF(current_setting('ssdi.goalDate', true), '') IS NULL
-    OR (
-      (current_setting('ssdi.goalDate.not', true) = 'true'
-        AND NOT g."createdAt"::date <@ (
-          SELECT
-              CONCAT(
-                  '[',
-                  MIN(value::timestamp),
-                  ',',
-                  COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp),
-                  ')'
-              )::daterange AS my_array
-          FROM json_array_elements_text(
-            COALESCE(NULLIF(current_setting('ssdi.goalDate', true), ''), '[]')::json
-          ) AS value
-        )
+    NULLIF(current_setting('ssdi.goalDate', true), '') IS NULL
+    OR g."createdAt"::date <@ (
+      SELECT CONCAT('[',MIN(value::timestamp),',',MAX(value::timestamp),')')::daterange AS my_array
+      FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.goalDate', true), ''),'[]')::json) AS value
       )
-      OR (current_setting('ssdi.goalDate.not', true) != 'true'
-        AND g."createdAt"::date <@ (
-          SELECT
-              CONCAT(
-                  '[',
-                  MIN(value::timestamp),
-                  ',',
-                  COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp),
-                  ')'
-              )::daterange AS my_array
-          FROM json_array_elements_text(
-            COALESCE(NULLIF(current_setting('ssdi.goalDate', true), ''), '[]')::json
-          ) AS value
-        )
-      )
-    )
   )
 ),
 findings AS (
@@ -484,9 +456,8 @@ LEFT JOIN "ActivityReportCollaborators" arc
   ON arc."activityReportId" = ar.id
 LEFT JOIN collab_roles cl
   ON arc."userId" = cl.user_id
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
 -- Filter for review outcome if ssdi.reviewOutcomes is defined
-AND (
+WHERE (
   NULLIF(current_setting('ssdi.reviewOutcomes', true), '') IS NULL
   OR (
     (current_setting('ssdi.reviewOutcomes.not', true) = 'true'
@@ -621,7 +592,7 @@ AND (
 AND (
   NULLIF(current_setting('ssdi.region', true), '') IS NULL
   OR (
-    gr."regionId" IN (
+    region IN (
       SELECT
         value::integer
       FROM json_array_elements_text(
@@ -630,4 +601,5 @@ AND (
     )
   )
 )
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
 ;
