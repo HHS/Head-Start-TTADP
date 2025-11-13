@@ -33,7 +33,7 @@ export default function Monitoring({
   match,
 }) {
   const { params: { currentPage, recipientId, regionId } } = match;
-  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+  const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
   const history = useHistory();
   const [byReview, setByReview] = useState([]);
   const [byCitation, setByCitation] = useState([]);
@@ -59,17 +59,17 @@ export default function Monitoring({
   }, [currentPage, history, recipientId, regionId]);
 
   useEffect(() => {
-    if (!isAppLoading && currentPage) {
-      setAnnouncement(`Monitoring data by ${currentPage} loaded.`);
-    }
-  }, [currentPage, isAppLoading]);
+    setAppLoadingText('Loading monitoring data');
+  }, [setAppLoadingText]);
 
   useDeepCompareEffect(() => {
     async function fetchMonitoringData(slug) {
       setIsAppLoading(true);
+      setAnnouncement('Loading monitoring data');
       try {
         const data = await lookup[slug].fetcher(recipientId, regionId);
         lookup[slug].setter(data);
+        setAnnouncement(`Monitoring data by ${currentPage} loaded.`);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching monitoring data:', error);
@@ -86,7 +86,7 @@ export default function Monitoring({
 
   return (
     <Container className="maxw-full position-relative" paddingX={0} paddingY={0} positionRelative>
-      <div aria-live="polite" className="usa-sr-only">{announcement}</div>
+      <div role="status">{announcement}</div>
       <div className="padding-x-3 position-relative">
         <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
           <h2>TTA provided against monitoring citations</h2>

@@ -38,7 +38,11 @@ describe('Monitoring', () => {
   const history = createMemoryHistory();
   const renderTest = (currentPage = '') => {
     render(
-      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
+      >
         <UserContext.Provider value={{ user: { id: 1 } }}>
           <Router history={history}>
             <Monitoring
