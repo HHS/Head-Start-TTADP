@@ -3,13 +3,19 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Grid, ModalToggleButton } from '@trussworks/react-uswds';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import colors from '../colors';
 import VanillaModal from '../components/VanillaModal';
 import DisplayTableToggle from '../components/DisplayTableToggleButton';
+
+const GOAL_STATUSES = [
+  'Not started',
+  'In progress',
+  'Suspended',
+  'Closed',
+];
 
 const STATUS_COLORS = [
   colors.ttahubOrange,
@@ -58,7 +64,7 @@ export function GoalStatusChart({ data, loading }) {
       if (!data) {
         return [];
       }
-      return Object.values(GOAL_STATUS).map((status) => ({ data: [status, data[status]] }));
+      return GOAL_STATUSES.map((status) => ({ data: [status, data[status]] }));
     }, [data],
   );
 
@@ -69,7 +75,7 @@ export function GoalStatusChart({ data, loading }) {
       return;
     }
 
-    const newBars = Object.values(GOAL_STATUS).map((status, index) => ({
+    const newBars = GOAL_STATUSES.map((status, index) => ({
       ratio: `${data[status]}/${data.total}`,
       percentage: data[status] / data.total,
       label: status,
@@ -108,13 +114,13 @@ export function GoalStatusChart({ data, loading }) {
         </ModalToggleButton>
         <VanillaModal modalRef={modalRef} heading="Goal status guide" className="maxw-tablet">
           <>
-            <h3 className="margin-bottom-0">{GOAL_STATUS.NOT_STARTED}</h3>
+            <h3 className="margin-bottom-0">Not started</h3>
             <p className="usa-prose margin-0">Goal is approved, but TTA hasn&apos;t begun. Goal cannot be edited.</p>
-            <h3 className="margin-bottom-0">{GOAL_STATUS.IN_PROGRESS}</h3>
+            <h3 className="margin-bottom-0">In progress</h3>
             <p className="usa-prose margin-0">
               TTA is being provided to the recipient. More TTA related to this goal is anticipated.
             </p>
-            <h3 className="margin-bottom-0">{GOAL_STATUS.SUSPENDED}</h3>
+            <h3 className="margin-bottom-0">Suspended</h3>
             <p className="usa-prose margin-0">One of the following conditions exists:</p>
             <ul className="usa-list margin-0">
               <li>TTA paused due to staff changes</li>
@@ -122,7 +128,7 @@ export function GoalStatusChart({ data, loading }) {
               <li>Recipient not responding</li>
               <li>Regional office and recipient agree to pause TTA</li>
             </ul>
-            <h3 className="margin-bottom-0">{GOAL_STATUS.CLOSED}</h3>
+            <h3 className="margin-bottom-0">Closed</h3>
             <p className="usa-prose margin-0">One of the following conditions exists:</p>
             <ul className="usa-list margin-0">
               <li>TTA for goal is complete</li>
@@ -190,10 +196,10 @@ export function GoalStatusChart({ data, loading }) {
 GoalStatusChart.propTypes = {
   data: PropTypes.shape({
     total: PropTypes.number,
-    [GOAL_STATUS.NOT_STARTED]: PropTypes.number,
-    [GOAL_STATUS.IN_PROGRESS]: PropTypes.number,
-    [GOAL_STATUS.CLOSED]: PropTypes.number,
-    [GOAL_STATUS.SUSPENDED]: PropTypes.number,
+    'Not Started': PropTypes.number,
+    'In Progress': PropTypes.number,
+    Closed: PropTypes.number,
+    'Ceased/Suspended': PropTypes.number,
   }),
   loading: PropTypes.bool,
 };
@@ -201,10 +207,10 @@ GoalStatusChart.propTypes = {
 GoalStatusChart.defaultProps = {
   data: {
     total: 0,
-    [GOAL_STATUS.NOT_STARTED]: 0,
-    [GOAL_STATUS.IN_PROGRESS]: 0,
-    [GOAL_STATUS.CLOSED]: 0,
-    [GOAL_STATUS.SUSPENDED]: 0,
+    'Not started': 0,
+    'In progress': 0,
+    Closed: 0,
+    Suspended: 0,
   },
   loading: false,
 };

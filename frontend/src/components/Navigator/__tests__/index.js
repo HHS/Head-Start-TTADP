@@ -60,8 +60,8 @@ const defaultPages = [
     label: 'first page',
     review: false,
     render: (
+      formData,
       _additionalData,
-      _formData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -105,7 +105,6 @@ describe('Navigator', () => {
     onSave = jest.fn(),
     onSaveDraft = jest.fn(),
     updatePage = jest.fn(),
-    updateForm = jest.fn(),
     pages = defaultPages,
     formData = initialData,
     onUpdateError = jest.fn(),
@@ -117,6 +116,9 @@ describe('Navigator', () => {
     const hookForm = useForm({
       defaultValues: formData,
     });
+
+    const data = hookForm.watch();
+
     return (
       <UserContext.Provider value={{ user }}>
         <NetworkContext.Provider value={{
@@ -132,17 +134,15 @@ describe('Navigator', () => {
           >
             <FormProvider {...hookForm}>
               <Navigator
+                formData={data}
                 onSaveAndContinue={onSaveAndContinue}
                 onSaveDraft={onSaveDraft}
                 draftSaver={jest.fn()}
                 editable={editable}
                 reportId={1}
                 submitted={false}
-                formData={formData}
-                updateFormData={updateForm}
                 onReview={() => {}}
                 isApprover={false}
-                defaultValues={{ first: '', second: '' }}
                 pages={pages}
                 currentPage={currentPage}
                 onFormSubmit={onSubmit}
@@ -157,6 +157,7 @@ describe('Navigator', () => {
                 hideSideNav={hideSideNav}
                 autoSaveInterval={autoSaveInterval}
                 shouldAutoSave={shouldAutoSave}
+                setShouldAutoSave={jest.fn()}
               />
             </FormProvider>
           </AppLoadingContext.Provider>
