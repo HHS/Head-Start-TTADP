@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "20.19.3"
+    "node": "22.20.0"
   },
   "scripts": {
     "build": "tsc -p src",
