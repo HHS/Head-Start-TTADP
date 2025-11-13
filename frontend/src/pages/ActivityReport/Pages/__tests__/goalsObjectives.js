@@ -537,7 +537,9 @@ describe('goals objectives', () => {
         name: 'Goal with Prompts',
         isNew: true,
         goalIds: [1],
-        grants: [{ value: 1, label: 'Turtle 1', programs: [], id: 1 }],
+        grants: [{
+          value: 1, label: 'Turtle 1', programs: [], id: 1,
+        }],
         prompts: [{ promptId: 1, title: 'Test Prompt', response: 'Test Response' }],
         objectives: [{
           id: 1,
@@ -548,7 +550,9 @@ describe('goals objectives', () => {
         }],
       }];
 
-      const sampleGoals = [{ name: 'Goal with Prompts', id: 5, objectives: [], prompts: [{ promptId: 1, title: 'Test Prompt', response: 'Test Response' }] }];
+      const sampleGoals = [{
+        name: 'Goal with Prompts', id: 5, objectives: [], prompts: [{ promptId: 1, title: 'Test Prompt', response: 'Test Response' }],
+      }];
       const isGoalFormClosed = true;
       const toggleGoalForm = jest.fn();
 
