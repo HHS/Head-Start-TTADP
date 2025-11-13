@@ -241,4 +241,224 @@ describe('Navigator', () => {
 
     expect(onSaveDraft).toHaveBeenCalledTimes(0);
   });
+
+  describe('goalForEditing page state behavior', () => {
+    const goalsAndObjectivesPage = {
+      position: 2,
+      path: 'goals-objectives',
+      label: 'Goals and objectives',
+      review: false,
+      render: () => <div>Goals Page</div>,
+    };
+
+    it('shows "In Progress" when goalForEditing has a value', async () => {
+      const pagesWithGoals = [defaultPages[0], goalsAndObjectivesPage];
+      const dataWithGoalBeingEdited = {
+        ...initialData,
+        pageState: { 1: NOT_STARTED, 2: 'Complete' }, // Saved as Complete
+        goalForEditing: { id: 1, name: 'Test Goal', objectives: [] }, // But goal is being edited
+      };
+
+      renderNavigator({
+        pages: pagesWithGoals,
+        formData: dataWithGoalBeingEdited,
+        currentPage: 'first', // Navigate away from goals page
+      });
+
+      // Find the Goals and objectives page state tag
+      const goalsPageElement = screen.getByText('Goals and objectives').closest('button');
+      const pageStateTag = goalsPageElement.querySelector('.usa-tag');
+
+      // Should show "In Progress" even though pageState says "Complete"
+      expect(pageStateTag).toHaveTextContent('In Progress');
+    });
+
+    it('shows "Complete" when goalForEditing is null', async () => {
+      const pagesWithGoals = [defaultPages[0], goalsAndObjectivesPage];
+      const dataWithNoGoalBeingEdited = {
+        ...initialData,
+        pageState: { 1: NOT_STARTED, 2: 'Complete' },
+        goalForEditing: null, // No goal being edited
+      };
+
+      renderNavigator({
+        pages: pagesWithGoals,
+        formData: dataWithNoGoalBeingEdited,
+        currentPage: 'first',
+      });
+
+      const goalsPageElement = screen.getByText('Goals and objectives').closest('button');
+      const pageStateTag = goalsPageElement.querySelector('.usa-tag');
+
+      // Should show "Complete" from pageState since no goal is being edited
+      expect(pageStateTag).toHaveTextContent('Complete');
+    });
+
+    it('shows "Complete" when goalForEditing is an empty object', async () => {
+      const pagesWithGoals = [defaultPages[0], goalsAndObjectivesPage];
+      const dataWithEmptyGoalForEditing = {
+        ...initialData,
+        pageState: { 1: NOT_STARTED, 2: 'Complete' },
+        goalForEditing: {}, // Empty object - not actually being edited
+      };
+
+      renderNavigator({
+        pages: pagesWithGoals,
+        formData: dataWithEmptyGoalForEditing,
+        currentPage: 'first',
+      });
+
+      const goalsPageElement = screen.getByText('Goals and objectives').closest('button');
+      const pageStateTag = goalsPageElement.querySelector('.usa-tag');
+
+      // Should show "Complete" because empty object means no active editing
+      expect(pageStateTag).toHaveTextContent('Complete');
+    });
+
+    it('transitions from "In Progress" to "Complete" when goalForEditing is cleared', async () => {
+      const pagesWithGoals = [defaultPages[0], goalsAndObjectivesPage];
+      const dataWithGoalBeingEdited = {
+        ...initialData,
+        pageState: { 1: NOT_STARTED, 2: 'In progress' },
+        goalForEditing: { id: 1, name: 'Test Goal', objectives: [] },
+      };
+
+      const NavigatorWrapper = () => {
+        const hookForm = useForm({
+          mode: 'onChange',
+          defaultValues: dataWithGoalBeingEdited,
+          shouldUnregister: false,
+        });
+
+        return (
+          <UserContext.Provider value={{ user }}>
+            <NetworkContext.Provider
+              value={{ connectionActive: true, localStorageAvailable: true }}
+            >
+              <AppLoadingContext.Provider
+                value={{
+                  isAppLoading: false,
+                  setIsAppLoading: jest.fn(),
+                  setAppLoadingText: jest.fn(),
+                }}
+              >
+                <FormProvider {...hookForm}>
+                  <Navigator
+                    formData={dataWithGoalBeingEdited}
+                    pages={pagesWithGoals}
+                    currentPage="first"
+                    reportId="1"
+                    updatePage={jest.fn()}
+                    onSave={jest.fn()}
+                    onFormSubmit={jest.fn()}
+                    onReview={jest.fn()}
+                    reportCreator={{}}
+                    additionalData={{}}
+                    isApprover={false}
+                    formDataStatusProp="calculatedStatus"
+                    errorMessage=""
+                    onSaveDraft={jest.fn()}
+                    onSaveAndContinue={jest.fn()}
+                    updateShowSavedDraft={jest.fn()}
+                    showSavedDraft={false}
+                    preFlightForNavigation={jest.fn(() => Promise.resolve(true))}
+                    datePickerKey="test"
+                    lastSaveTime={null}
+                    savedToStorageTime={null}
+                    updateErrorMessage={jest.fn()}
+                    onResetToDraft={() => {}}
+                    updateLastSaveTime={() => {}}
+                    isPendingApprover={false}
+                    hideSideNav={false}
+                    autoSaveInterval={null}
+                    shouldAutoSave={false}
+                    setShouldAutoSave={jest.fn()}
+                  />
+                </FormProvider>
+              </AppLoadingContext.Provider>
+            </NetworkContext.Provider>
+          </UserContext.Provider>
+        );
+      };
+
+      const { rerender } = render(<NavigatorWrapper />);
+
+      // Initially should show "In Progress"
+      let goalsPageElement = screen.getByText('Goals and objectives').closest('button');
+      let pageStateTag = goalsPageElement.querySelector('.usa-tag');
+      expect(pageStateTag).toHaveTextContent('In Progress');
+
+      // Simulate clearing goalForEditing (like clicking "Save goal")
+      const updatedData = {
+        ...dataWithGoalBeingEdited,
+        pageState: { 1: NOT_STARTED, 2: 'Complete' }, // Updated to Complete
+        goalForEditing: null, // Cleared
+      };
+
+      const UpdatedNavigatorWrapper = () => {
+        const hookForm = useForm({
+          mode: 'onChange',
+          defaultValues: updatedData,
+          shouldUnregister: false,
+        });
+
+        return (
+          <UserContext.Provider value={{ user }}>
+            <NetworkContext.Provider
+              value={{ connectionActive: true, localStorageAvailable: true }}
+            >
+              <AppLoadingContext.Provider
+                value={{
+                  isAppLoading: false,
+                  setIsAppLoading: jest.fn(),
+                  setAppLoadingText: jest.fn(),
+                }}
+              >
+                <FormProvider {...hookForm}>
+                  <Navigator
+                    formData={updatedData}
+                    pages={pagesWithGoals}
+                    currentPage="first"
+                    reportId="1"
+                    updatePage={jest.fn()}
+                    onSave={jest.fn()}
+                    onFormSubmit={jest.fn()}
+                    onReview={jest.fn()}
+                    reportCreator={{}}
+                    additionalData={{}}
+                    isApprover={false}
+                    formDataStatusProp="calculatedStatus"
+                    errorMessage=""
+                    onSaveDraft={jest.fn()}
+                    onSaveAndContinue={jest.fn()}
+                    updateShowSavedDraft={jest.fn()}
+                    showSavedDraft={false}
+                    preFlightForNavigation={jest.fn(() => Promise.resolve(true))}
+                    datePickerKey="test"
+                    lastSaveTime={null}
+                    savedToStorageTime={null}
+                    updateErrorMessage={jest.fn()}
+                    onResetToDraft={() => {}}
+                    updateLastSaveTime={() => {}}
+                    isPendingApprover={false}
+                    hideSideNav={false}
+                    autoSaveInterval={null}
+                    shouldAutoSave={false}
+                    setShouldAutoSave={jest.fn()}
+                  />
+                </FormProvider>
+              </AppLoadingContext.Provider>
+            </NetworkContext.Provider>
+          </UserContext.Provider>
+        );
+      };
+
+      rerender(<UpdatedNavigatorWrapper />);
+
+      // After clearing goalForEditing, should show "Complete"
+      goalsPageElement = screen.getByText('Goals and objectives').closest('button');
+      pageStateTag = goalsPageElement.querySelector('.usa-tag');
+      expect(pageStateTag).toHaveTextContent('Complete');
+    });
+  });
 });
