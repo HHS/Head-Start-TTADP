@@ -114,7 +114,7 @@ const renderGoals = (
   const fetchResponse = throwFetchError ? 500 : goals;
 
   const url = join(goalUrl, `?${query}`);
-  fetchMock.get(url, fetchResponse);
+  fetchMock.get(url, fetchResponse, { overwriteRoutes: true });
   render(
     <UserContext.Provider value={{ user: { flags: [] } }}>
       <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
@@ -526,6 +526,49 @@ describe('goals objectives', () => {
       expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();
+    });
+  });
+
+  describe('additional coverage tests', () => {
+    it('deep copies prompts when removing a goal', async () => {
+      // Lines 185 & 256: prompts deep copy in onRemove and onEdit
+      const goalsWithPrompts = [{
+        id: 5,
+        name: 'Goal with Prompts',
+        isNew: true,
+        goalIds: [1],
+        grants: [{ value: 1, label: 'Turtle 1', programs: [], id: 1 }],
+        prompts: [{ promptId: 1, title: 'Test Prompt', response: 'Test Response' }],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          courses: [],
+        }],
+      }];
+
+      const sampleGoals = [{ name: 'Goal with Prompts', id: 5, objectives: [], prompts: [{ promptId: 1, title: 'Test Prompt', response: 'Test Response' }] }];
+      const isGoalFormClosed = true;
+      const toggleGoalForm = jest.fn();
+
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, false, toggleGoalForm, null, goalsWithPrompts);
+
+      const actions = await screen.findByRole('button', { name: /actions for goal 5/i });
+      act(() => userEvent.click(actions));
+      const [removeButton] = await screen.findAllByRole('button', { name: 'Remove' });
+      act(() => userEvent.click(removeButton));
+
+      await waitFor(async () => {
+        expect(await screen.findByText(/If you remove the goal, the objectives and TTA provided content will also be deleted/i)).toBeVisible();
+      });
+
+      const modalRemove = await screen.findByLabelText(/remove goal/i);
+      act(() => userEvent.click(modalRemove));
+
+      await waitFor(() => {
+        expect(screen.queryByText('Goal with Prompts')).toBeNull();
+      });
     });
   });
 });
