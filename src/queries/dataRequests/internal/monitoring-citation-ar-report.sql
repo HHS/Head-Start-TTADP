@@ -30,7 +30,8 @@ JSON: {
         "columnName": "g_created",
         "type": "timestamp",
         "nullable": false,
-        "description": "The timestamp for when the Monitoring Goals was created."
+        "description": "The timestamp for when the Monitoring Goal was created."
+      },
       {
         "columnName": "region",
         "type": "integer",
