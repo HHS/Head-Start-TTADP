@@ -4,7 +4,7 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:-browsers
+    - image: cimg/node:22.20.0-browsers
   docker-postgres-executor:
     docker:
     - image: cimg/node:22.20.0-browsers
