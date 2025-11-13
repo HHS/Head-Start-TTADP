@@ -110,3 +110,10 @@
     opacity: 1;
   }
 }
+
+// Goal Locator Column Styles
+.smart-hub-goal-locator-column {
+  @media screen and (max-width: 1023px) {
+    display: none; // Hide on mobile, GoalLocator uses fixed positioning instead
+  }
+}
