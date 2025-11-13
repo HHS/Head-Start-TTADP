@@ -183,7 +183,12 @@ const ActivityReportNavigator = ({
     const isGoalsObjectivesPageComplete = pageCompleteFunc(getValues(), formState);
     const isCurrentPageGoalsObjectives = page.position === GOALS_AND_OBJECTIVES_POSITION;
 
-    if (isGoalsObjectivesPageComplete) {
+    // If a goal is being edited, the page CANNOT be complete regardless of current page
+    // This ensures the page state shows "In Progress" even
+    // after navigating away from goals-objectives
+    if (formData.goalForEditing) {
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
+    } else if (isGoalsObjectivesPageComplete) {
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = COMPLETE;
     } else if (isCurrentPageGoalsObjectives && currentGoalsObjectivesPageState === COMPLETE) {
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
@@ -204,13 +209,20 @@ const ActivityReportNavigator = ({
   const updateGoalsObjectivesPageState = (currentFormData) => {
     if (!goalsAndObjectivesPage) return;
 
+    // If a goal is being edited, the page is always IN_PROGRESS regardless of validation
+    // Only check the currentFormData (data being saved), not formData prop which may be stale
+    const hasGoalBeingEdited = currentFormData && currentFormData.goalForEditing;
+
     // Re-validate the goals and objectives page using current form values
     // Prefer the freshly saved data payload to avoid using stale form values
+    const dataToCheck = currentFormData || getValues();
     const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
-      .isPageComplete(currentFormData || getValues(), formState);
+      .isPageComplete(dataToCheck, formState);
 
     // Desired state for the goals/objectives page
-    const desiredState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
+    // If a goal is being edited, force IN_PROGRESS state
+    const completionState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
+    const desiredState = hasGoalBeingEdited ? IN_PROGRESS : completionState;
 
     // IMPORTANT: Base our merge on the most up-to-date pageState coming from the
     // data payload that just saved (currentFormData), not the watched pageState,
@@ -578,6 +590,7 @@ const ActivityReportNavigator = ({
         ...formData,
         ...values,
         goals: packagedGoals,
+        goalForEditing: null, // Explicitly clear goalForEditing since we just closed the form
         pageState: newNavigatorState(),
       };
       const { goals } = await onSave(data);
@@ -709,6 +722,7 @@ ActivityReportNavigator.propTypes = {
     calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),
     regionId: PropTypes.number.isRequired,
+    goalForEditing: PropTypes.shape({}),
   }).isRequired,
   updateFormData: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,
