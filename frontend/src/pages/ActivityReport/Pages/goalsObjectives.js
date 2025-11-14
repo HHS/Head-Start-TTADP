@@ -434,13 +434,15 @@ const GoalsObjectives = ({
             {/**
               * Render buttons right after the goal editing form
             */}
-            <Buttons
-              isAppLoading={isAppLoading}
-              onContinue={onContinue}
-              onSaveDraft={onSaveDraft}
-              onUpdatePage={onUpdatePage}
-              weAreAutoSaving={weAreAutoSaving}
-            />
+            <div className="margin-bottom-4">
+              <Buttons
+                isAppLoading={isAppLoading}
+                onContinue={onContinue}
+                onSaveDraft={onSaveDraft}
+                onUpdatePage={onUpdatePage}
+                weAreAutoSaving={weAreAutoSaving}
+              />
+            </div>
           </>
         ) : (
           null
