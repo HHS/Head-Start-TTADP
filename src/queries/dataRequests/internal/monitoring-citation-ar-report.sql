@@ -197,12 +197,6 @@ JSON: {
       }
     },
     {
-      "name": "findingReportedDate",
-      "type": "date[]",
-      "description": "Two dates defining a range for the findingReportedDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
-      "supportsExclusion": true
-    },
-    {
       "name": "findingStatus",
       "type": "string[]",
       "description": "One or more finding statuses. If no values are supplied, this filter is ignored.",
@@ -439,8 +433,8 @@ SELECT
   ar.id arid,
   ar."startDate" arstart_date,
   ar."deliveryMethod" ar_delivery_method,
-  cr.user_name || ':' || cr.roles AS creator,
-  STRING_AGG(DISTINCT cr.user_name || ':' || cr.roles, ';') collaborators,
+  TRIM(cr.user_name) || ':' || cr.roles AS creator,
+  STRING_AGG(DISTINCT TRIM(cl.user_name) || ':' || cl.roles, ';') collaborators,
   STRING_AGG(DISTINCT t.name,';') topics
 FROM joined_ars
 LEFT JOIN "ActivityReports" ar
@@ -602,4 +596,5 @@ AND (
   )
 )
 GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+ORDER BY 5,2,1,11
 ;
