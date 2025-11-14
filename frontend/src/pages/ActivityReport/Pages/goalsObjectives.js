@@ -424,7 +424,13 @@ const GoalsObjectives = ({
         ? (
           <>
             { fetchError && (<ConnectionError />)}
-            <Fieldset className="margin-0">
+            <Fieldset
+              className="margin-0"
+              style={{
+                visibility: isAppLoading ? 'hidden' : 'visible',
+                pointerEvents: isAppLoading ? 'none' : 'auto',
+              }}
+            >
               <GoalPicker
                 grantIds={grantIds}
                 reportId={reportId}
