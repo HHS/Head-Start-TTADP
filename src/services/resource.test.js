@@ -1164,17 +1164,17 @@ describe('resource', () => {
   describe('ActivityReports Resource Processing', () => {
     describe('calculateIsAutoDetectedForActivityReport', () => {
       let sourceFields;
-      it('returns false when context changes', () => {
+      it('returns true when context changes', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT];
-        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
       });
-      it('returns false when context and notes change', () => {
+      it('returns true when context and notes change', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.NOTES];
-        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
       });
-      it('returns false when mixed with other fields', () => {
+      it('returns true when mixed with other fields', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.ECLKC];
-        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.REPORT.ECLKC];
@@ -1313,7 +1313,7 @@ describe('resource', () => {
         expect(arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
           .toEqual(2);
         expect(arResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(false);
+          .toEqual(true);
       });
       it('expected usage, delete', async () => {
         let data = {
@@ -1431,7 +1431,7 @@ describe('resource', () => {
           .find((r) => r.dataValues.resourceId === resources[0].id).dataValues.sourceFields.length)
           .toEqual(2);
         expect(arResources.find((r) => r.dataValues.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(false);
+          .toEqual(true);
       });
     });
     describe('processActivityReportForResourcesById', () => {
@@ -1491,7 +1491,9 @@ describe('resource', () => {
       it('expected usage, empty urls', async () => {
         const arResources = await processActivityReportForResourcesById(activityReport.id, []);
 
-        expect(arResources.length).toEqual(0);
+        expect(arResources.length).toEqual(1);
+        expect(arResources[0].dataValues.sourceFields.sort())
+          .toEqual([SOURCE_FIELD.REPORT.CONTEXT]);
       });
       it('expected usage, with urls', async () => {
         const arResources = await processActivityReportForResourcesById(
@@ -1499,15 +1501,12 @@ describe('resource', () => {
           urls,
         );
         expect(arResources.length).toEqual(4);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
         arResources.forEach((resource) => {
+          const expected = resource.resource.dataValues.url === urls[0]
+            ? [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.RESOURCE]
+            : [SOURCE_FIELD.REPORT.RESOURCE];
           expect(resource.dataValues.sourceFields.sort())
-            .toEqual([SOURCE_FIELD.REPORT.RESOURCE]);
+            .toEqual(expected.sort());
         });
       });
       it('expected usage, add and remove urls', async () => {
@@ -1515,7 +1514,9 @@ describe('resource', () => {
           activityReport.id,
           [],
         );
-        expect(arResources.length).toEqual(0);
+        expect(arResources.length).toEqual(1);
+        expect(arResources[0].dataValues.sourceFields.sort())
+          .toEqual([SOURCE_FIELD.REPORT.CONTEXT]);
         arResources = await processActivityReportForResourcesById(
           activityReport.id,
           [urls[0]],
@@ -1528,6 +1529,7 @@ describe('resource', () => {
           .find((r) => r.dataValues.resource.dataValues.url === urls[0])
           .dataValues.sourceFields.sort())
           .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
             SOURCE_FIELD.REPORT.RESOURCE,
           ].sort());
 
@@ -1535,9 +1537,18 @@ describe('resource', () => {
           activityReport.id,
           [urls[1]],
         );
-        expect(arResources.length).toEqual(1);
-        expect(arResources[0].resource.dataValues.url).toEqual(urls[1]);
-        expect(arResources[0].dataValues.sourceFields.sort())
+        expect(arResources.length).toEqual(2);
+        const urlOneResources = arResources
+          .filter((r) => r.dataValues.resource.dataValues.url === urls[0]);
+        const urlTwoResource = arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]);
+        expect(urlOneResources.length).toEqual(1);
+        expect(urlOneResources[0].dataValues.sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
+          ]);
+        expect(urlTwoResource).toBeTruthy();
+        expect(urlTwoResource.dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.RESOURCE,
           ].sort());
@@ -1554,6 +1565,7 @@ describe('resource', () => {
           .find((r) => r.dataValues.resource.dataValues.url === urls[0])
           .dataValues.sourceFields.sort())
           .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
             SOURCE_FIELD.REPORT.RESOURCE,
           ].sort());
         expect(arResources
@@ -1570,7 +1582,9 @@ describe('resource', () => {
           activityReport.id,
           [],
         );
-        expect(arResources.length).toEqual(0);
+        expect(arResources.length).toEqual(1);
+        expect(arResources[0].dataValues.sourceFields.sort())
+          .toEqual([SOURCE_FIELD.REPORT.CONTEXT]);
       });
     });
   });
