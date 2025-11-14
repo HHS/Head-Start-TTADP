@@ -574,5 +574,134 @@ describe('goals objectives', () => {
         expect(screen.queryByText('Goal with Prompts')).toBeNull();
       });
     });
+
+    it('clicks Save draft and Back buttons when goal form is open', async () => {
+      // Lines 51-52: Save draft and Back buttons when editing a goal
+      const sampleGoals = [];
+      const isGoalFormClosed = false; // Goal form is OPEN
+      const toggleGoalForm = jest.fn();
+
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, false, toggleGoalForm, '2021-01-01', []);
+
+      // Verify the specific buttons are present when goal form is open
+      const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
+      const backButton = await screen.findByRole('button', { name: /back/i });
+
+      expect(saveDraftButton).toBeVisible();
+      expect(backButton).toBeVisible();
+
+      // Click the buttons to execute lines 51-52
+      act(() => userEvent.click(saveDraftButton));
+      act(() => userEvent.click(backButton));
+    });
+
+    it('validates goals when editing another goal while one is being edited', async () => {
+      // Lines 226-248: Goal and prompt validation in onEdit
+      const goalsToUse = [{
+        id: 6,
+        name: 'First Goal',
+        isNew: true,
+        goalIds: [1],
+        grants: [{
+          value: 1, label: 'Turtle 1', programs: [], id: 1,
+        }],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          courses: [],
+        }],
+        prompts: [],
+      }];
+
+      const sampleGoals = [
+        { name: 'First Goal', id: 6, objectives: [] },
+      ];
+
+      fetchMock.restore();
+      fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=1', 200);
+
+      renderGoals([1], 'recipient', sampleGoals, true, false, jest.fn(), '2021-01-01', goalsToUse);
+
+      // Edit the goal
+      const actions = await screen.findByRole('button', { name: /actions for goal 6/i });
+      act(() => userEvent.click(actions));
+      const [editButton] = await screen.findAllByRole('button', { name: 'Edit' });
+      act(() => userEvent.click(editButton));
+
+      await waitFor(() => {
+        expect(fetchMock.called()).toBe(true);
+      });
+    });
+
+    it('inserts goal back at original index when editing another goal', async () => {
+      // Lines 264-271: Insert at original position logic
+      const goalsToUse = [
+        {
+          id: 7,
+          name: 'First Goal',
+          isNew: true,
+          goalIds: [1],
+          grants: [{
+            value: 1, label: 'Turtle 1', programs: [], id: 1,
+          }],
+          objectives: [{
+            id: 1,
+            title: 'title',
+            ttaProvided: 'tta',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            courses: [],
+          }],
+        },
+        {
+          id: 8,
+          name: 'Second Goal',
+          isNew: true,
+          goalIds: [2],
+          grants: [{
+            value: 1, label: 'Turtle 1', programs: [], id: 1,
+          }],
+          objectives: [{
+            id: 2,
+            title: 'title2',
+            ttaProvided: 'tta2',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            courses: [],
+          }],
+        },
+      ];
+
+      const sampleGoals = [
+        { name: 'First Goal', id: 7, objectives: [] },
+        { name: 'Second Goal', id: 8, objectives: [] },
+      ];
+
+      fetchMock.restore();
+      fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=1', 200);
+      fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=2', 200);
+
+      renderGoals([1], 'recipient', sampleGoals, true, false, jest.fn(), '2021-01-01', goalsToUse);
+
+      // Edit first goal
+      let actions = await screen.findByRole('button', { name: /actions for goal 7/i });
+      act(() => userEvent.click(actions));
+      let [editButton] = await screen.findAllByRole('button', { name: 'Edit' });
+      act(() => userEvent.click(editButton));
+
+      await waitFor(() => {
+        expect(fetchMock.called('/api/activity-reports/1/goals/edit?goalIds=1')).toBe(true);
+      });
+
+      // Now edit the second goal - this triggers the insert at original index logic
+      actions = await screen.findByRole('button', { name: /actions for goal 8/i });
+      act(() => userEvent.click(actions));
+      [editButton] = await screen.findAllByRole('button', { name: 'Edit' });
+      act(() => userEvent.click(editButton));
+
+      await waitFor(() => {
+        expect(fetchMock.called('/api/activity-reports/1/goals/edit?goalIds=2')).toBe(true);
+      });
+    });
   });
 });

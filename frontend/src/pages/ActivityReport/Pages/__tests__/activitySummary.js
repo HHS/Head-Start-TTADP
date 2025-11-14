@@ -386,3 +386,80 @@ describe('isPageComplete', () => {
     expect(result).toBe(false);
   });
 });
+
+describe('citationsDiffer', () => {
+  it('returns false when no existing goals have different citations', () => {
+    const { citationsDiffer } = require('../activitySummary');
+    const existingGoals = [
+      {
+        objectives: [
+          {
+            citations: [
+              { citation: 'ABC' },
+              { citation: 'DEF' },
+            ],
+          },
+        ],
+      },
+    ];
+    const fetchedCitations = [
+      { citation: 'ABC' },
+      { citation: 'DEF' },
+    ];
+    expect(citationsDiffer(existingGoals, fetchedCitations)).toBe(false);
+  });
+
+  it('returns true when existing goals have different citations', () => {
+    const { citationsDiffer } = require('../activitySummary');
+    const existingGoals = [
+      {
+        objectives: [
+          {
+            citations: [
+              { citation: 'XYZ' },
+            ],
+          },
+        ],
+      },
+    ];
+    const fetchedCitations = [
+      { citation: 'ABC' },
+    ];
+    expect(citationsDiffer(existingGoals, fetchedCitations)).toBe(true);
+  });
+});
+
+describe('checkRecipientsAndGoals', () => {
+  it('returns EMPTY_RECIPIENTS_WITH_GOALS when no recipients but has goals', () => {
+    const { checkRecipientsAndGoals } = require('../activitySummary');
+    const data = {
+      goalsAndObjectives: [{ id: 1 }],
+      activityRecipients: [],
+      goalTemplates: [],
+      citationsByGrant: [],
+    };
+    expect(checkRecipientsAndGoals(data, false)).toBe('EMPTY_RECIPIENTS_WITH_GOALS');
+  });
+
+  it('returns MISSING_MONITORING_GOAL when monitoring goals exist but no monitoring goal templates', () => {
+    const { checkRecipientsAndGoals } = require('../activitySummary');
+    const data = {
+      goalsAndObjectives: [{ name: '(monitoring) goal' }],
+      activityRecipients: [{ id: 1 }],
+      goalTemplates: [{ standard: 'Other' }],
+      citationsByGrant: [],
+    };
+    expect(checkRecipientsAndGoals(data, true)).toBe('MISSING_MONITORING_GOAL');
+  });
+
+  it('returns null when no modal is needed', () => {
+    const { checkRecipientsAndGoals } = require('../activitySummary');
+    const data = {
+      goalsAndObjectives: [],
+      activityRecipients: [{ id: 1 }],
+      goalTemplates: [],
+      citationsByGrant: [],
+    };
+    expect(checkRecipientsAndGoals(data, false)).toBe(null);
+  });
+});
