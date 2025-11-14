@@ -90,7 +90,7 @@ JSON: {
         "columnName": "fstatus",
         "type": "string",
         "nullable": true,
-        "description": "The status label on the findingm."
+        "description": "The status label on the finding."
       },
       {
         "columnName": "fdetermination",
