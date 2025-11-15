@@ -2,6 +2,31 @@
 # yarn lockfile v1
 
 
+<<<<<<< HEAD
+=======
+"@ampproject/remapping@^2.2.0":
+  version "2.3.0"
+  resolved "https://registry.npmjs.org/@ampproject/remapping/-/remapping-2.3.0.tgz"
+  integrity sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==
+  dependencies:
+    "@jridgewell/gen-mapping" "^0.3.5"
+    "@jridgewell/trace-mapping" "^0.3.24"
+
+"@apm-js-collab/code-transformer@^0.8.0":
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/@apm-js-collab/code-transformer/-/code-transformer-0.8.2.tgz#a3160f16d1c4df9cb81303527287ad18d00994d1"
+  integrity sha512-YRjJjNq5KFSjDUoqu5pFUWrrsvGOxl6c3bu+uMFc9HNNptZ2rNU/TI2nLw4jnhQNtka972Ee2m3uqbvDQtPeCA==
+
+"@apm-js-collab/tracing-hooks@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@apm-js-collab/tracing-hooks/-/tracing-hooks-0.3.1.tgz#414d3a93c3a15d8be543a3fac561f7c602b6a588"
+  integrity sha512-Vu1CbmPURlN5fTboVuKMoJjbO5qcq9fA5YXpskx3dXe/zTBvjODFoerw+69rVBlRLrJpwPqSDqEuJDEKIrTldw==
+  dependencies:
+    "@apm-js-collab/code-transformer" "^0.8.0"
+    debug "^4.4.1"
+    module-details-from-path "^1.0.4"
+
+>>>>>>> origin/main
 "@asamuzakjp/css-color@^3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@asamuzakjp/css-color/-/css-color-3.2.0.tgz#cc42f5b85c593f79f1fa4f25d2b9b321e61d1794"
@@ -2470,10 +2495,17 @@
     node-gyp-build "^4.8.1"
     prebuildify "^6.0.1"
 
+<<<<<<< HEAD
 "@newrelic/native-metrics@^11.1.0":
   version "11.1.0"
   resolved "https://registry.yarnpkg.com/@newrelic/native-metrics/-/native-metrics-11.1.0.tgz#6a42005dce61a2ff8ba1cae8978cfc98c085a698"
   integrity sha512-V+FRgRgv6R8LAnVsix8d1bL5SMmBONURaT/6F//rOgycvU7PfPoVEocacpSRzPFxMI27e46iAf3W5fGosbQ8yQ==
+=======
+"@newrelic/native-metrics@^12.0.0":
+  version "12.0.0"
+  resolved "https://registry.yarnpkg.com/@newrelic/native-metrics/-/native-metrics-12.0.0.tgz#6ab7ccfa358fa3d4704adfa8b8f8738096409985"
+  integrity sha512-l0MTkuazDMaEDWJk4ufHVgco4ssWhk/uSUYTn33dFOHAqpHLyxZHxxzKJb4vyZkhRy11UaKNhmNiAiXH557SJQ==
+>>>>>>> origin/main
   dependencies:
     nan "^2.22.2"
     node-gyp-build "^4.8.1"
@@ -2581,6 +2613,13 @@
   version "0.202.0"
   resolved "https://registry.yarnpkg.com/@opentelemetry/api-logs/-/api-logs-0.202.0.tgz#78ddb3b4a30232fd0916b99f27777b1936355d03"
   integrity sha512-fTBjMqKCfotFWfLzaKyhjLvyEyq5vDKTTFfBmx21btv3gvy8Lq6N5Dh2OzqeuN4DjtpSvNT1uNVfg08eD2Rfxw==
+  dependencies:
+    "@opentelemetry/api" "^1.3.0"
+
+"@opentelemetry/api-logs@0.203.0", "@opentelemetry/api-logs@^0.203.0":
+  version "0.203.0"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/api-logs/-/api-logs-0.203.0.tgz#3309a76c51a848ea820cd7f00ee62daf36b06380"
+  integrity sha512-9B9RU0H7Ya1Dx/Rkyc4stuBZSGVQF27WigitInx2QQoj6KUpEFYPKoWjdFTunJYxmXmh17HeBvbMa1EhGyPmqQ==
   dependencies:
     "@opentelemetry/api" "^1.3.0"
 
@@ -2755,7 +2794,20 @@
     "@opentelemetry/core" "2.2.0"
     "@opentelemetry/resources" "2.2.0"
 
+<<<<<<< HEAD
 "@opentelemetry/sdk-metrics@2.0.1":
+=======
+"@opentelemetry/sdk-logs@^0.203.0":
+  version "0.203.0"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/sdk-logs/-/sdk-logs-0.203.0.tgz#01bc7c0549929d2864af2ab0ba23fd5ce02b5b0a"
+  integrity sha512-vM2+rPq0Vi3nYA5akQD2f3QwossDnTDLvKbea6u/A2NZ3XDkPxMfo/PNrDoXhDUD/0pPo2CdH5ce/thn9K0kLw==
+  dependencies:
+    "@opentelemetry/api-logs" "0.203.0"
+    "@opentelemetry/core" "2.0.1"
+    "@opentelemetry/resources" "2.0.1"
+
+"@opentelemetry/sdk-metrics@2.0.1", "@opentelemetry/sdk-metrics@^2.0.1":
+>>>>>>> origin/main
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@opentelemetry/sdk-metrics/-/sdk-metrics-2.0.1.tgz#efb6e9349e8a9038ac622e172692bfcdcad8010b"
   integrity sha512-wf8OaJoSnujMAHWR3g+/hGvNcsC16rf9s1So4JlMiFaFHiE4HpIA3oUh+uWZQ7CNuK8gVW/pQSkgoa5HkkOl0g==
@@ -4361,18 +4413,26 @@ are-we-there-yet@^3.0.0:
     delegates "^1.0.0"
     readable-stream "^3.6.0"
 
-argparse@^1.0.7, argparse@~1.0.9:
+argparse@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz"
+  integrity sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==
+
+argparse@~1.0.9:
   version "1.0.10"
   resolved "https://registry.yarnpkg.com/argparse/-/argparse-1.0.10.tgz#bcd6791ea5ae09725e17e5ad988134cd40b3d911"
   integrity sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg==
   dependencies:
     sprintf-js "~1.0.2"
 
+<<<<<<< HEAD
 argparse@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/argparse/-/argparse-2.0.1.tgz#246f50f3ca78a3240f6c997e8a9bd1eac49e4b38"
   integrity sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==
 
+=======
+>>>>>>> origin/main
 aria-query@^5.3.2:
   version "5.3.2"
   resolved "https://registry.yarnpkg.com/aria-query/-/aria-query-5.3.2.tgz#93f81a43480e33a338f19163a3d10a50c01dcd59"
@@ -6850,7 +6910,7 @@ esprima@^1.2.0:
   resolved "https://registry.yarnpkg.com/esprima/-/esprima-1.2.5.tgz#0993502feaf668138325756f30f9a51feeec11e9"
   integrity sha512-S9VbPDU0adFErpDai3qDkjq8+G05ONtKzcyNrPKg/ZKa+tf879nX2KexNU95b31UoTJjRLInNBHHHjFPoCd7lQ==
 
-esprima@^4.0.0, esprima@^4.0.1:
+esprima@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/esprima/-/esprima-4.0.1.tgz#13b04cdb3e6c5d19df91ab6987a8695619b0aa71"
   integrity sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==
@@ -9057,6 +9117,7 @@ js-stringify@^1.0.2:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
+<<<<<<< HEAD
 js-yaml@^3.13.1, js-yaml@^3.14.1:
   version "3.14.1"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.14.1.tgz#dae812fdb3825fa306609a8717383c50c36a0537"
@@ -9069,6 +9130,12 @@ js-yaml@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.1.0.tgz#c1fb65f8f5017901cdd2c951864ba18458a10602"
   integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
+=======
+js-yaml@^3.13.1, js-yaml@^3.14.1, js-yaml@^4.1.0, js-yaml@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.1.1.tgz#854c292467705b699476e1a2decc0c8a3458806b"
+  integrity sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==
+>>>>>>> origin/main
   dependencies:
     argparse "^2.0.1"
 
@@ -9940,7 +10007,7 @@ mock-fs@^5.4.1:
   resolved "https://registry.yarnpkg.com/mock-fs/-/mock-fs-5.5.0.tgz#94a46d299aaa588e735a201cbe823c876e91f385"
   integrity sha512-d/P1M/RacgM3dB0sJ8rjeRNXxtapkPCUnMGmIN0ixJ16F/E4GUZCvWcSGfWGz8eaXYvn1s9baUwNjI4LOPEjiA==
 
-module-details-from-path@^1.0.3:
+module-details-from-path@^1.0.3, module-details-from-path@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/module-details-from-path/-/module-details-from-path-1.0.4.tgz#b662fdcd93f6c83d3f25289da0ce81c8d9685b94"
   integrity sha512-EGWKgxALGMgzvxYF1UyGTy0HXX/2vHLkw6+NvDKW2jypWbHpjQuj4UMcqQWXHERJhVGKikolT06G3bcKe4fi7w==
@@ -10087,18 +10154,28 @@ netmask@^2.0.2:
   resolved "https://registry.yarnpkg.com/netmask/-/netmask-2.0.2.tgz#8b01a07644065d536383835823bc52004ebac5e7"
   integrity sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==
 
+<<<<<<< HEAD
 newrelic@^12.16.1:
   version "12.25.0"
   resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-12.25.0.tgz#31260f8ba48408f0cc52755245b973883a6dd2f1"
   integrity sha512-WqYv7EvOcOQhvnMbPvjhZzcihO36qj2iNOO6jTfaixku+f558KFawXdNjw3Gl3kL1ycrTfO7N0ywrIZ1ggKGbA==
+=======
+newrelic@^13.6.4:
+  version "13.6.4"
+  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-13.6.4.tgz#f71f11bc5568e5a8a1e456353a2ba9eb8ebb6de2"
+  integrity sha512-XtksoototHdFDsP8YV9TvjZQjJ/wrA7stOVlT5P7FOli6J4ZOgbW0jldB0o19rMrl6Dh+34EfhfpfVferohqRw==
+>>>>>>> origin/main
   dependencies:
+    "@apm-js-collab/tracing-hooks" "^0.3.1"
     "@grpc/grpc-js" "^1.13.2"
     "@grpc/proto-loader" "^0.7.5"
     "@newrelic/security-agent" "^2.4.2"
     "@opentelemetry/api" "^1.9.0"
+    "@opentelemetry/api-logs" "^0.203.0"
     "@opentelemetry/core" "^2.0.0"
     "@opentelemetry/exporter-metrics-otlp-proto" "^0.201.1"
     "@opentelemetry/resources" "^2.0.1"
+    "@opentelemetry/sdk-logs" "^0.203.0"
     "@opentelemetry/sdk-metrics" "^2.0.1"
     "@opentelemetry/sdk-trace-base" "^2.0.0"
     "@tyriar/fibonacci-heap" "^2.0.7"
@@ -10114,7 +10191,7 @@ newrelic@^12.16.1:
     winston-transport "^4.5.0"
   optionalDependencies:
     "@newrelic/fn-inspect" "^4.4.0"
-    "@newrelic/native-metrics" "^11.1.0"
+    "@newrelic/native-metrics" "^12.0.0"
     "@prisma/prisma-fmt-wasm" "^4.17.0-16.27eb2449f178cd9fe1a4b892d732cc4795f75085"
 
 next-tick@^1.1.0:
