@@ -41,8 +41,8 @@ import ModalWithCancel from '../../../components/ModalWithCancel';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import Req from '../../../components/Req';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
+import FormItemWithDrawerTriggerLabel from '../../../components/FormItemWithDrawerTriggerLabel';
 
 export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
   const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
@@ -344,25 +344,11 @@ const ActivitySummary = ({
           >
             <ContentFromFeedByTag tagName="ttahub-tta-request-option" className="ttahub-drawer--objective-topics-guidance" contentSelector="table" />
           </Drawer>
-          <FormItem
-            className="margin-0"
-            customLabel={(
-              <div className="display-flex">
-                <Label className="margin-bottom-0" htmlFor="activityReason">
-                  Why was this activity requested?
-                </Label>
-                {' '}
-                <Req />
-                <button
-                  type="button"
-                  className="usa-button usa-button--unstyled margin-left-1 activity-summary-button-no-top-margin"
-                  ref={activityReasonRef}
-                >
-                  Get help choosing an option
-                </button>
-              </div>
-          )}
+          <FormItemWithDrawerTriggerLabel
+            label="Why was this activity requested?"
             name="activityReason"
+            drawerTriggerRef={activityReasonRef}
+            drawerTriggerLabel="Get help choosing an option"
             required
           >
             <Controller
@@ -410,7 +396,8 @@ const ActivitySummary = ({
               name="activityReason"
               defaultValue={null}
             />
-          </FormItem>
+          </FormItemWithDrawerTriggerLabel>
+
         </div>
         <div className="margin-top-2">
           <FormItem

@@ -2,25 +2,27 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
 import Req from './Req';
+import DrawerTriggerButton from './DrawerTriggerButton';
 
 export default function LabelWithTriggerRef({
   children,
+  buttonLabel,
   triggerRef,
+  htmlFor,
+  required,
 }) {
   return (
     <div className="display-flex">
-      <Label className="margin-bottom-0" htmlFor="activityReason">
+      <Label className={`margin-0 ${!required ? 'margin-right-1' : ''}`} htmlFor={htmlFor}>
         {children}
       </Label>
       {' '}
-      <Req />
-      <button
-        type="button"
-        className="usa-button usa-button--unstyled margin-left-1 activity-summary-button-no-top-margin"
-        ref={triggerRef}
+      {required && (<Req />)}
+      <DrawerTriggerButton
+        drawerTriggerRef={triggerRef}
       >
-        Get help choosing an option
-      </button>
+        {buttonLabel}
+      </DrawerTriggerButton>
     </div>
   );
 }
@@ -28,4 +30,11 @@ export default function LabelWithTriggerRef({
 LabelWithTriggerRef.propTypes = {
   children: PropTypes.node.isRequired,
   triggerRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
+  buttonLabel: PropTypes.string.isRequired,
+  htmlFor: PropTypes.string.isRequired,
+  required: PropTypes.bool,
+};
+
+LabelWithTriggerRef.defaultProps = {
+  required: false,
 };
