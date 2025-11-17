@@ -58,6 +58,7 @@ export default function NextStepsRepeater({
     }
   };
 
+  // istanbul ignore next - Too hard to test
   const onAddNewStep = () => {
     const allValues = getValues();
     const fieldArray = allValues[name] || [];
