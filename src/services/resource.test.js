@@ -1296,7 +1296,7 @@ describe('resource', () => {
             {
               activityReportId: 9999,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC, SOURCE_FIELD.REPORT.CONTEXT],
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC, SOURCE_FIELD.REPORT.RESOURCE],
               isAutoDetected: false,
             },
           ],
@@ -1313,7 +1313,7 @@ describe('resource', () => {
         expect(arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
           .toEqual(2);
         expect(arResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(true);
+          .toEqual(false);
       });
       it('expected usage, delete', async () => {
         let data = {
@@ -1431,7 +1431,7 @@ describe('resource', () => {
           .find((r) => r.dataValues.resourceId === resources[0].id).dataValues.sourceFields.length)
           .toEqual(2);
         expect(arResources.find((r) => r.dataValues.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(true);
+          .toEqual(false);
       });
     });
     describe('processActivityReportForResourcesById', () => {
