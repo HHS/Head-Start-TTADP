@@ -6,7 +6,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
 import NetworkContext from '../../../../NetworkContext';
-import activitySummary, { isPageComplete } from '../activitySummary';
+import activitySummary, {
+  isPageComplete,
+  citationsDiffer,
+  checkRecipientsAndGoals,
+} from '../activitySummary';
 import { getGoalTemplates } from '../../../../fetchers/goalTemplates';
 import { fetchCitationsByGrant } from '../../../../fetchers/citations';
 
@@ -389,7 +393,6 @@ describe('isPageComplete', () => {
 
 describe('citationsDiffer', () => {
   it('returns false when no existing goals have different citations', () => {
-    const { citationsDiffer } = require('../activitySummary');
     const existingGoals = [
       {
         objectives: [
@@ -410,7 +413,6 @@ describe('citationsDiffer', () => {
   });
 
   it('returns true when existing goals have different citations', () => {
-    const { citationsDiffer } = require('../activitySummary');
     const existingGoals = [
       {
         objectives: [
@@ -431,7 +433,6 @@ describe('citationsDiffer', () => {
 
 describe('checkRecipientsAndGoals', () => {
   it('returns EMPTY_RECIPIENTS_WITH_GOALS when no recipients but has goals', () => {
-    const { checkRecipientsAndGoals } = require('../activitySummary');
     const data = {
       goalsAndObjectives: [{ id: 1 }],
       activityRecipients: [],
@@ -442,7 +443,6 @@ describe('checkRecipientsAndGoals', () => {
   });
 
   it('returns MISSING_MONITORING_GOAL when monitoring goals exist but no monitoring goal templates', () => {
-    const { checkRecipientsAndGoals } = require('../activitySummary');
     const data = {
       goalsAndObjectives: [{ name: '(monitoring) goal' }],
       activityRecipients: [{ id: 1 }],
@@ -453,7 +453,6 @@ describe('checkRecipientsAndGoals', () => {
   });
 
   it('returns null when no modal is needed', () => {
-    const { checkRecipientsAndGoals } = require('../activitySummary');
     const data = {
       goalsAndObjectives: [],
       activityRecipients: [{ id: 1 }],
