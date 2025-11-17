@@ -172,6 +172,28 @@ const resourcesFromField = (
   }, seed)
   : seed);
 
+const toSourceFieldList = (sourceFields) => {
+  if (Array.isArray(sourceFields)) {
+    return sourceFields
+      .filter((field) => typeof field === 'string' && field.length > 0);
+  }
+  if (typeof sourceFields === 'string' && sourceFields.length > 0) {
+    return [sourceFields];
+  }
+  return [];
+};
+
+const coerceSourceFieldList = (resource, clone = false) => {
+  if (!resource || typeof resource !== 'object') {
+    return resource;
+  }
+
+  const normalizedResource = clone ? { ...resource } : resource;
+  normalizedResource.sourceFields = toSourceFieldList(normalizedResource.sourceFields);
+
+  return normalizedResource;
+};
+
 // Merge all the records that share the same url and genericId, collecting all
 // the sourceFields they are from.
 const mergeRecordsByUrlAndGenericId = (records) => (
@@ -260,10 +282,15 @@ const filterResourcesForSync = (
     };
   }
 
+  const coercedIncomingResources = incomingResources
+    .map((resource) => coerceSourceFieldList(resource, true));
+  const coercedCurrentResources = currentResources
+    .map((resource) => coerceSourceFieldList(resource));
+
   // pull all of the new and expanded resources in a single pass over the incomingResources.
-  const newExpandedResources = incomingResources
+  const newExpandedResources = coercedIncomingResources
     .reduce((resources, resource) => {
-      const matchingFromFields = currentResources
+      const matchingFromFields = coercedCurrentResources
         .filter((cr) => cr.genericId === resource.genericId
         && cr.resourceId === resource.resourceId);
       const isCreated = matchingFromFields.length === 0;
@@ -327,9 +354,9 @@ const filterResourcesForSync = (
     }, { created: [], expanded: [] });
 
   // pull all of the removed and reduced resources in a single pass over the currentResources.
-  const removedReducedResources = currentResources
+  const removedReducedResources = coercedCurrentResources
     .reduce((resources, resource) => {
-      const isRemoved = !incomingResources.some((rff) => (
+      const isRemoved = !coercedIncomingResources.some((rff) => (
         rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId
       ));
@@ -352,7 +379,7 @@ const filterResourcesForSync = (
         };
       }
 
-      const matchingFromFields = incomingResources
+      const matchingFromFields = coercedIncomingResources
         .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
       const isReduced = matchingFromFields
@@ -415,7 +442,7 @@ const filterResourcesForSync = (
       const fromReduced = deltaFromReduced
         ?.find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
-      const fromOriginal = currentResources
+      const fromOriginal = coercedCurrentResources
         .find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
       const deltaSourceFields = resource.sourceFields
@@ -533,7 +560,7 @@ const getResourcesForModel = async (
     : model.findAll({
       where: {
         [resourceTableForeignKey]: genericId,
-        sourceFields: { [Op.contains]: 'resource' },
+        sourceFields: { [Op.contains]: ['resource'] },
       },
       include: [
         {
