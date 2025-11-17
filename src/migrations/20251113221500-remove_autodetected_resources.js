@@ -30,10 +30,6 @@ module.exports = {
         table: 'GoalResources',
         keepFields: [SOURCE_FIELD.GOAL.RESOURCE],
       },
-      // {
-      //   table: 'ActivityReportGoalResources',
-      //   resourceField: SOURCE_FIELD.REPORTGOAL.RESOURCE,
-      // },
       {
         table: 'ActivityReportObjectiveResources',
         keepFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
