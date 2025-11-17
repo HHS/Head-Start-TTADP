@@ -424,13 +424,7 @@ const GoalsObjectives = ({
         ? (
           <>
             { fetchError && (<ConnectionError />)}
-            <Fieldset
-              className="margin-0"
-              style={{
-                visibility: isAppLoading ? 'hidden' : 'visible',
-                pointerEvents: isAppLoading ? 'none' : 'auto',
-              }}
-            >
+            <Fieldset className="margin-0">
               <GoalPicker
                 grantIds={grantIds}
                 reportId={reportId}
@@ -440,13 +434,7 @@ const GoalsObjectives = ({
             {/**
               * Render buttons right after the goal editing form
             */}
-            <div
-              className="margin-bottom-4"
-              style={{
-                visibility: isAppLoading ? 'hidden' : 'visible',
-                pointerEvents: isAppLoading ? 'none' : 'auto',
-              }}
-            >
+            <div className="margin-bottom-4">
               <Buttons
                 isAppLoading={isAppLoading}
                 onContinue={onContinue}
