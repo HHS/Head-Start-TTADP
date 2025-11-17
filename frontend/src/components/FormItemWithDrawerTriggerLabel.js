@@ -6,7 +6,6 @@ import { FormGroup, ErrorMessage } from '@trussworks/react-uswds';
 import LabelWithTriggerRef from './LabelWithTriggerRef';
 
 function FormItemWithDrawerTriggerLabel({
-  hint,
   children,
   name,
   drawerTriggerRef,
@@ -28,13 +27,6 @@ function FormItemWithDrawerTriggerLabel({
       >
         {label}
       </LabelWithTriggerRef>
-      {hint && (
-        <>
-          <br />
-          <span className="usa-hint">{hint}</span>
-          <br />
-        </>
-      )}
       <ReactHookFormError
         errors={errors}
         name={name}
@@ -49,14 +41,12 @@ FormItemWithDrawerTriggerLabel.propTypes = {
   label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   children: PropTypes.node.isRequired,
   name: PropTypes.string.isRequired,
-  hint: PropTypes.string,
   drawerTriggerRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
   drawerTriggerLabel: PropTypes.string.isRequired,
   required: PropTypes.bool,
 };
 
 FormItemWithDrawerTriggerLabel.defaultProps = {
-  hint: '',
   required: true,
 };
 
