@@ -347,9 +347,10 @@ const ActivitySummary = ({
           <FormItem
             className="margin-0"
             customLabel={(
-              <>
-                <Label className="margin-bottom-0" htmlFor="activityReason" />
-                Why was this activity requested?
+              <div className="display-flex">
+                <Label className="margin-bottom-0" htmlFor="activityReason">
+                  Why was this activity requested?
+                </Label>
                 {' '}
                 <Req />
                 <button
@@ -359,7 +360,7 @@ const ActivitySummary = ({
                 >
                   Get help choosing an option
                 </button>
-              </>
+              </div>
           )}
             name="activityReason"
             required
