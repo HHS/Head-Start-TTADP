@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { S3Client } from '@aws-sdk/client-s3';
-=======
-import { S3 } from '@aws-sdk/client-s3';
->>>>>>> 605c33bdb (merge main)
 import { auditLogger } from '../logger';
 
 const generateS3Config = () => {
@@ -67,15 +63,7 @@ const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
     Key: key,
   };
   return (
-<<<<<<< HEAD
     (s3Client.deleteObject(params))
-=======
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    (s3Client.deleteObject(params).promise())
->>>>>>> 605c33bdb (merge main)
   );
 };
 
@@ -124,15 +112,7 @@ const downloadFile = (key, s3Client = s3, Bucket = bucketName) => {
     Key: key,
   };
   return (
-<<<<<<< HEAD
     (s3Client.getObject(params))
-=======
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    (s3Client.getObject(params).promise())
->>>>>>> 605c33bdb (merge main)
   );
 };
 
@@ -171,15 +151,7 @@ const uploadFile = async (buffer, name, type, s3Client = s3, Bucket = bucketName
   }
 
   return (
-<<<<<<< HEAD
     (s3Client.upload(params))
-=======
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    // The `.promise()` call might be on an JS SDK v2 client API.
-    // If yes, please remove .promise(). If not, remove this comment.
-    (s3Client.upload(params).promise())
->>>>>>> 605c33bdb (merge main)
   );
 };
 
