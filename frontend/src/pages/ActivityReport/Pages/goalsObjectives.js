@@ -440,7 +440,13 @@ const GoalsObjectives = ({
             {/**
               * Render buttons right after the goal editing form
             */}
-            <div className="margin-bottom-4">
+            <div
+              className="margin-bottom-4"
+              style={{
+                visibility: isAppLoading ? 'hidden' : 'visible',
+                pointerEvents: isAppLoading ? 'none' : 'auto',
+              }}
+            >
               <Buttons
                 isAppLoading={isAppLoading}
                 onContinue={onContinue}
