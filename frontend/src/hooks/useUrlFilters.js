@@ -17,13 +17,12 @@ export default function useUrlFilters(defaultFilters) {
   // initial state should derive from whats in the url if possible
   // we don't want to be doing this every time the component rerenders so we store it in a usememo
   const initialValue = useMemo(() => {
-    const params = queryStringToFilters(new URL(window.location).search.substring(1));
-
+    const params = queryStringToFilters(location.search.substring(1));
     if (params.length) {
       return params;
     }
     return defaultFilters;
-  }, [defaultFilters]);
+  }, [defaultFilters, location.search]);
 
   const updateUrl = (filters) => {
     const search = `?${filtersToQueryString(filters)}`;
