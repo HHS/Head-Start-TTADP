@@ -1144,17 +1144,17 @@ describe('resource', () => {
   describe('ActivityReports Resource Processing', () => {
     describe('calculateIsAutoDetectedForActivityReport', () => {
       let sourceFields;
-      it('expected usage, single', () => {
+      it('returns false when context changes', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT];
-        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
       });
-      it('expected usage, multiple', () => {
+      it('returns false when context and notes change', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.NOTES];
-        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
       });
-      it('expected usage, multiple with only once auto-detected', () => {
+      it('returns false when mixed with ECLKC', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.ECLKC];
-        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.REPORT.ECLKC];
