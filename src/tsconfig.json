@@ -1,8 +1,12 @@
 {
   "compilerOptions": {
+    "incremental": true, // Enables incremental compilation, build only the changed code
     "target": "esnext",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "nodenext", // Sets the module system to use (commonjs, nodenext, esnext)
+    "skipLibCheck": true, // Skips type checking of declaration files
+    "resolveJsonModule": true, // Allows importing JSON files as modules
+    "noErrorTruncation": true, // When enabled, this option prevents TypeScript from truncating error messages, providing full details about the error.    
+    "moduleResolution": "nodenext",
     "outDir": "../build/server",
     "esModuleInterop": true,
     "declaration": false,
