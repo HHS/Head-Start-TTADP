@@ -35,6 +35,7 @@ import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 import MyGroupsProvider from './components/MyGroupsProvider';
 import ScrollToTop from './components/ScrollToTop';
+import useGaPageView from './hooks/useGaPageView';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
 import TrainingReportForm from './pages/TrainingReportForm';
@@ -72,6 +73,9 @@ export default function Routes({
 
   const locationRef = useLocation();
   const isLogoutPage = locationRef.pathname === '/logout';
+
+  // Track page views and content groups for Google Analytics
+  useGaPageView();
 
   const hideSideNav = (pathname) => {
     const paths = [
