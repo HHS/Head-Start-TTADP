@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { isValidResourceUrl } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
@@ -25,10 +25,21 @@ export default function ResourceRepeater({
   toolTipText,
   isLoading,
 }) {
+  const [showNoResourcesError, setShowNoResourcesError] = useState(false);
+
   const addResource = () => {
-    if ((error) || resources.some((r) => !r.value)) {
+    console.log('Adding resource, current resources:', resources);
+    if (resources.some((r) => !r.value)) {
+      console.log('No resources to add to');
+      setShowNoResourcesError(true);
       return;
     }
+    setShowNoResourcesError(false);
+
+    if (error) {
+      return;
+    }
+
     const newResources = [...resources, { key: uuidv4(), value: '' }];
     setResources(newResources);
   };
@@ -49,7 +60,7 @@ export default function ResourceRepeater({
 
   return (
     <>
-      <FormGroup error={!!(error)}>
+      <FormGroup error={!!(error) || showNoResourcesError}>
         <div>
           <Fieldset>
             <legend>
@@ -64,6 +75,7 @@ export default function ResourceRepeater({
           </Fieldset>
           <ErrorMessage>
             {error}
+            {showNoResourcesError ? 'A resource must be entered before adding another.' : ''}
           </ErrorMessage>
           <div className="ttahub-resource-repeater">
             { resources.map((r, i) => (
