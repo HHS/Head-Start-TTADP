@@ -131,7 +131,6 @@
     "node-fetch": "^2.6.7",
     "protobufjs": "^7.2.4",
     "got": "^11.8.5",
-    "glob": "^11.1.0",
     "undici": "^5.10.0",
     "selenium-webdriver": "^4",
     "json5": "^2.2.3",
