@@ -1411,7 +1411,14 @@ export async function getAllDownloadableActivityReports(
   userId = 0,
   reportIds = [],
 ) {
-  const regions = readRegions || [];
+  const toNumberArray = (value) => [value]
+    .flat()
+    .filter((item) => item !== undefined && item !== null && `${item}`.length > 0)
+    .map((item) => parseInt(item, DECIMAL_BASE))
+    .filter((item) => Number.isInteger(item));
+
+  const regions = toNumberArray(readRegions);
+  const parsedReportIds = toNumberArray(reportIds);
 
   const { activityReport: scopes } = await filtersToScopes(filters, { userId });
   const where = {
@@ -1422,8 +1429,8 @@ export async function getAllDownloadableActivityReports(
     [Op.and]: scopes,
   };
 
-  if (reportIds.length) {
-    where.id = { [Op.in]: reportIds };
+  if (parsedReportIds.length) {
+    where.id = { [Op.in]: parsedReportIds };
   }
 
   return getDownloadableActivityReports(where);
