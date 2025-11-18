@@ -27,7 +27,6 @@ if (!bypassSockets) {
   } = generateRedisConfig();
 
   const mesh = new MeshServer({
-    server,
     redisOptions: {
       host: redisUrl ? new URL(redisUrl).hostname : 'localhost',
       port: redisUrl ? parseInt(new URL(redisUrl).port, 10) || 6379 : 6379,
