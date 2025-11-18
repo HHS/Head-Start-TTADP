@@ -28,9 +28,7 @@ export default function ResourceRepeater({
   const [showNoResourcesError, setShowNoResourcesError] = useState(false);
 
   const addResource = () => {
-    console.log('Adding resource, current resources:', resources);
     if (resources.some((r) => !r.value)) {
-      console.log('No resources to add to');
       setShowNoResourcesError(true);
       return;
     }
