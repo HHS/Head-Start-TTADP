@@ -215,10 +215,10 @@ export default function HorizontalTableWidget(
                   />
                 ))}
                 {r.actions && r.actions.length ? (
-                  <td data-label="Row actions" key={`horizontal_table_row_actions_${index}`} className={`smarthub-horizontal-table-last-column text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
+                  <td data-label={`Row actions for ${r.title || r.heading}`} key={`horizontal_table_row_actions_${index}`} className={`smarthub-horizontal-table-last-column text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
                     <ContextMenu
                       fixed
-                      label="Actions for Communication Log"
+                      label={`Actions for ${r.title || r.heading}`}
                       menuItems={r.actions}
                       menuWidthOffset={110}
                     />
