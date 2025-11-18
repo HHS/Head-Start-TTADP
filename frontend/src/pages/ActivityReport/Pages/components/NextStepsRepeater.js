@@ -98,12 +98,15 @@ export default function NextStepsRepeater({
     return register();
   })();
 
-  const showCompleteDateError = (errorsObj, fieldName, idx) => (
-    errorsObj[fieldName]
-    && errorsObj[fieldName][idx]
-    && errorsObj[fieldName][idx].completeDate
-    && !required
-    && errorsObj[fieldName][idx].completeDate.ref.value !== '');
+  const showCompleteDateError = (errorsObj, fieldName, idx) => {
+    const hasCompleteDateError = (
+      errorsObj[fieldName]
+      && errorsObj[fieldName][idx]
+      && errorsObj[fieldName][idx].completeDate
+    );
+
+    return required ? hasCompleteDateError : hasCompleteDateError && errorsObj[fieldName][idx].completeDate?.ref?.value !== '';
+  };
 
   return (
     <>
