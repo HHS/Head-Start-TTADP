@@ -321,48 +321,60 @@ describe('goals objectives', () => {
       const throwFetchError = false;
       const toggleGoalForm = jest.fn();
       fetchMock.restore();
-      fetchMock.get('/api/activity-report/1/goals/edit?goalId=1', 200);
+      // Re-mock /api/topic after restore (was originally set in beforeEach)
+      fetchMock.get('/api/topic', []);
+      // Mock the PUT endpoint for editing goal with goalIds=1
+      fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=1', 200);
 
-      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm, null, goalsToUse);
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm, '2021-01-01', goalsToUse);
 
       // Verify both goals are visible
       expect(await screen.findByText('Sample Goal to Remove')).toBeVisible();
       expect(await screen.findByText('Sample Goal to Edit')).toBeVisible();
 
-      // Edit the first goal
+      // Edit goal 4 (Sample Goal to Edit)
       let actions = await screen.findByRole('button', { name: /actions for goal 4/i });
       act(() => userEvent.click(actions));
       const [editButton] = await screen.findAllByRole('button', { name: 'Edit' });
-      act(async () => {
+      await act(async () => {
         userEvent.click(editButton);
-        await waitFor(async () => {
-          expect(await screen.findByText('Sample Goal to Remove')).toBeVisible();
-          expect(await screen.findByText('Sample Goal to Edit')).toBeVisible();
+        // Wait for the fetch to complete
+        await waitFor(() => {
+          expect(fetchMock.called('/api/activity-reports/1/goals/edit?goalIds=1')).toBe(true);
         });
       });
 
-      // Remove the first goal
+      // After editing, goal 4 is now in the edit form, so only goal 3 should be visible in the readonly section
+      expect(await screen.findByText('Sample Goal to Remove')).toBeVisible();
+      // Goal 4 is being edited so it's not in the readonly display anymore
+      expect(screen.queryByText('Sample Goal to Edit')).toBeNull();
+
+      // Remove goal 3 while goal 4 is being edited
       actions = await screen.findByRole('button', { name: /actions for goal 3/i });
       act(() => userEvent.click(actions));
       const [removeButton] = await screen.findAllByRole('button', { name: 'Remove' });
       userEvent.click(removeButton);
 
-      act(async () => {
-        // wait for modal text to be visible.
-        await waitFor(async () => {
-          expect(await screen.findByText(/If you remove the goal, the objectives and TTA provided content will also be deleted/i)).toBeVisible();
+      // wait for modal text to be visible.
+      await waitFor(async () => {
+        expect(await screen.findByText(/If you remove the goal, the objectives and TTA provided content will also be deleted/i)).toBeVisible();
+      });
+
+      const modalRemove = await screen.findByLabelText(/remove goal/i);
+      await act(async () => {
+        userEvent.click(modalRemove);
+        await waitFor(() => {
+          // Assert goal 3 was removed
+          expect(screen.queryAllByText('Sample Goal to Remove').length).toBe(0);
         });
       });
 
-      act(async () => {
-        const modalRemove = await screen.findByLabelText(/remove goal/i);
-        userEvent.click(modalRemove);
-        await waitFor(async () => {
-          // Assert the goal was removed while the goal being edited is visible still.
-          expect(screen.queryAllByText('Sample Goal to Remove').length).toBe(0);
-          expect(await screen.findByText('Sample Goal to Edit')).toBeVisible();
-        });
-      });
+      // Goal 4 is still being edited (not in readonly display),
+      // so we should still have the goal form open
+      // The goal name should be in an input field for editing
+      expect(screen.queryByText('Sample Goal to Edit')).toBeNull(); // Not in readonly display
+      // Verify that goal 3 was successfully removed and goal 4 is still being edited
+      expect(screen.queryByRole('button', { name: /add new goal/i })).toBeVisible();
     });
 
     it('does not fetch if there are no grants', async () => {
@@ -678,6 +690,8 @@ describe('goals objectives', () => {
       ];
 
       fetchMock.restore();
+      // Re-mock /api/topic after restore (was originally set in beforeEach)
+      fetchMock.get('/api/topic', []);
       fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=1', 200);
       fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=2', 200);
 
@@ -687,20 +701,24 @@ describe('goals objectives', () => {
       let actions = await screen.findByRole('button', { name: /actions for goal 7/i });
       act(() => userEvent.click(actions));
       let [editButton] = await screen.findAllByRole('button', { name: 'Edit' });
-      act(() => userEvent.click(editButton));
-
-      await waitFor(() => {
-        expect(fetchMock.called('/api/activity-reports/1/goals/edit?goalIds=1')).toBe(true);
+      await act(async () => {
+        userEvent.click(editButton);
+        // Wait for the fetch to complete and state to settle
+        await waitFor(() => {
+          expect(fetchMock.called('/api/activity-reports/1/goals/edit?goalIds=1')).toBe(true);
+        });
       });
 
       // Now edit the second goal - this triggers the insert at original index logic
       actions = await screen.findByRole('button', { name: /actions for goal 8/i });
       act(() => userEvent.click(actions));
       [editButton] = await screen.findAllByRole('button', { name: 'Edit' });
-      act(() => userEvent.click(editButton));
-
-      await waitFor(() => {
-        expect(fetchMock.called('/api/activity-reports/1/goals/edit?goalIds=2')).toBe(true);
+      await act(async () => {
+        userEvent.click(editButton);
+        // Wait for the fetch to complete and state to settle
+        await waitFor(() => {
+          expect(fetchMock.called('/api/activity-reports/1/goals/edit?goalIds=2')).toBe(true);
+        });
       });
     });
   });
