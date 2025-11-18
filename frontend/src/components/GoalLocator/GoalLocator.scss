@@ -1,0 +1,102 @@
+@import '../../colors';
+
+.goal-locator {
+  position: sticky;
+  top: 48px; // Mobile header height
+  z-index: 99; // Same as TabsNav to maintain consistency
+
+  @media screen and (min-width: 1024px) {
+    top: 72px; // Desktop header height
+  }
+
+  @media screen and (max-width: 767px) {
+    // Mobile: minimal styling
+    position: fixed;
+    top: auto;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 100; // Higher on mobile to ensure visibility
+  }
+}
+
+.goal-locator__content {
+  background-color: white; // White background to stand out
+  border: 2px solid $ttahub-blue; // Thicker border for emphasis
+  border-left: 6px solid $ttahub-blue; // Even thicker left border
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); // More prominent shadow
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px); // Subtle lift on hover
+  }
+
+  @media screen and (max-width: 767px) {
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    border-left-width: 2px;
+    border-width: 2px;
+  }
+}
+
+// Desktop view
+.goal-locator__desktop {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  @media screen and (max-width: 767px) {
+    display: none;
+  }
+}
+
+.goal-locator__label {
+  font-size: 0.875rem;
+  color: $base-dark;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.goal-locator__count {
+  font-size: 1rem;
+  color: $text-ink;
+  line-height: 1.4;
+
+  strong {
+    font-size: 1.5rem;
+    color: $ttahub-blue;
+    font-weight: 700;
+  }
+}
+
+.goal-locator__description {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid $base-lighter;
+  font-size: 0.875rem;
+  color: $base-dark;
+  font-style: italic;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+// Mobile view
+.goal-locator__mobile {
+  display: none;
+
+  @media screen and (max-width: 767px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.goal-locator__mobile-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: $ttahub-blue;
+  white-space: nowrap;
+  line-height: 1;
+}

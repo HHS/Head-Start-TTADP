@@ -26,6 +26,7 @@ import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import AppLoadingContext from '../../AppLoadingContext';
+import GoalLocator from '../GoalLocator';
 
 const Navigator = ({
   formData,
@@ -117,6 +118,8 @@ const Navigator = ({
     }
   }, autoSaveInterval);
 
+  const goalForEditing = watch('goalForEditing');
+
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
 
@@ -127,6 +130,17 @@ const Navigator = ({
       } else {
         stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
       }
+    }
+
+    // SPECIAL CASE: Goals and objectives page (position 2) should always show
+    // IN_PROGRESS if a goal is being edited, regardless of what pageState says
+    const GOALS_AND_OBJECTIVES_POSITION = 2;
+    const hasGoalBeingEdited = goalForEditing != null
+      && typeof goalForEditing === 'object'
+      && Object.keys(goalForEditing).length > 0;
+
+    if (p.position === GOALS_AND_OBJECTIVES_POSITION && hasGoalBeingEdited) {
+      stateOfPage = IN_PROGRESS;
     }
 
     const state = p.review ? formData[formDataStatusProp] : stateOfPage;
@@ -158,11 +172,13 @@ const Navigator = ({
   );
 
   const newLocal = 'smart-hub-sidenav-wrapper no-print';
+  const isGoalsPage = page.path === 'goals-objectives';
+  const goals = formData.goals || [];
 
   return (
     <Grid row gap>
       { !hideSideNav && (
-      <Grid data-testid="side-nav" className={newLocal} col={12} desktop={{ col: 4 }}>
+      <Grid data-testid="side-nav" className={newLocal} col={12} desktop={{ col: isGoalsPage ? 3 : 4 }}>
         <SideNav
           skipTo="navigator-form"
           skipToMessage="Skip to report content"
@@ -173,7 +189,7 @@ const Navigator = ({
         />
       </Grid>
       )}
-      <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
+      <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: isGoalsPage ? 6 : 8 }}>
         <div id="navigator-form">
           {page.review && page.render(
             formData,
@@ -221,6 +237,11 @@ const Navigator = ({
             )}
         </div>
       </Grid>
+      {isGoalsPage && (
+        <Grid className="smart-hub-goal-locator-column no-print" col={12} desktop={{ col: 3 }}>
+          <GoalLocator goals={goals} />
+        </Grid>
+      )}
     </Grid>
   );
 };
@@ -232,6 +253,7 @@ Navigator.propTypes = {
     calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),
     regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    goals: PropTypes.arrayOf(PropTypes.shape({})),
   }).isRequired,
   errorMessage: PropTypes.string,
   lastSaveTime: PropTypes.instanceOf(moment),
