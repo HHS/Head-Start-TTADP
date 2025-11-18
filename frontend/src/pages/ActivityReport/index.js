@@ -32,7 +32,7 @@ import {
   convertReportToFormData,
   findWhatsChanged,
   packageGoals,
-  calculateGoalOrder,
+  extractGoalIdsInOrder,
 } from './formDataHelpers';
 import {
   submitReport,
@@ -539,7 +539,7 @@ function ActivityReport({
           goalForEditing?.prompts || [],
           goalForEditing?.originalIndex,
         );
-        const goalOrder = calculateGoalOrder(allGoalsInOrder);
+        const goalOrder = extractGoalIdsInOrder(allGoalsInOrder);
 
         // If goalOrder changed from what backend has, persist the correct order immediately
         if (JSON.stringify(goalOrder) !== JSON.stringify(savedReport.goalOrder)) {

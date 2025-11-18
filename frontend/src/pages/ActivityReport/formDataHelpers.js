@@ -101,11 +101,12 @@ export const unflattenResourcesUsed = (array) => {
 };
 
 /**
- * Calculate the goal order array from packaged goals
+ * Extract goal IDs in their current display order to preserve user-arranged ordering
  *
  * PURPOSE: The backend returns goals ordered by createdAt (when they were added to the report),
- * but users want goals to stay in the order they arranged them. This function creates a
- * "goal order" array that remembers the user's intended order.
+ * but users want goals to stay in the order they arranged them. This function extracts goal IDs
+ * from the packaged goals array to create an order array
+ * that remembers the user's intended sequence.
  *
  * WHY NEEDED: When editing goals in place, we need to preserve their position even after
  * saving to the backend and navigating between pages.
@@ -117,7 +118,7 @@ export const unflattenResourcesUsed = (array) => {
  * packagedGoals = [{id: 3, name: "Goal A"}, {id: 1, name: "Goal B"}, {id: 2, name: "Goal C"}]
  * Returns: [3, 1, 2] - preserving the display order regardless of IDs
  */
-export const calculateGoalOrder = (packagedGoals) => packagedGoals
+export const extractGoalIdsInOrder = (packagedGoals) => packagedGoals
   .map((g) => g.id)
   .filter((id) => id); // Filter out any undefined/null IDs (for new goals not yet saved)
 
@@ -162,7 +163,7 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
     const goalToPackage = {
       goalIds: goal.goalIds,
       // IMPORTANT: Include id for goalOrder calculation
-      // Without this, calculateGoalOrder can't track which goal is which when the goal
+      // Without this, extractGoalIdsInOrder can't track which goal is which when the goal
       // being edited is packaged. This caused a bug where edited goals appeared at the
       // bottom of the list after saving.
       id: goal.id,

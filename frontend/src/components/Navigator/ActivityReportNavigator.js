@@ -11,7 +11,7 @@ import { OBJECTIVE_RESOURCES, validateGoals, validatePrompts } from '../../pages
 import { saveGoalsForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
 import AppLoadingContext from '../../AppLoadingContext';
-import { convertGoalsToFormData, packageGoals, calculateGoalOrder } from '../../pages/ActivityReport/formDataHelpers';
+import { convertGoalsToFormData, packageGoals, extractGoalIdsInOrder } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
 import useFormGrantData from '../../hooks/useFormGrantData';
@@ -234,7 +234,7 @@ const ActivityReportNavigator = ({
 
       // Calculate and set goalOrder before getting all values
       // This ensures goalOrder is included when we call getValues()
-      const goalOrder = calculateGoalOrder(allGoals);
+      const goalOrder = extractGoalIdsInOrder(allGoals);
 
       // Get all current values AFTER setting goalOrder
       const { status, ...values } = getValues();
@@ -345,7 +345,7 @@ const ActivityReportNavigator = ({
     // TIMING MATTERS:
     // - If we calculated goalOrder AFTER the API call, we'd capture the wrong order
     //   (backend's createdAt order, not user's intended order)
-    const goalOrder = calculateGoalOrder(allGoals);
+    const goalOrder = extractGoalIdsInOrder(allGoals);
 
     // save goal to api, come back with new ids for goal and objectives
     try {
