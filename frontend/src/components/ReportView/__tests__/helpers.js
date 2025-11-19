@@ -16,6 +16,7 @@ import {
   getResponses,
   calculateGoalsAndObjectives,
 } from '../helpers';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('helpers', () => {
   describe('renderData', () => {
@@ -271,7 +272,7 @@ describe('helpers', () => {
         files: [],
         ttaProvided: 'Training provided',
         supportType: 'Planning',
-        status: 'In Progress',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
       },
     ];
 
@@ -293,7 +294,7 @@ describe('helpers', () => {
           'Resource attachments': 'None provided',
           'TTA provided': 'Training provided',
           'Support type': 'Planning',
-          'Objective status': 'In Progress',
+          'Objective status': OBJECTIVE_STATUS.IN_PROGRESS,
         },
         isStriped: false,
       });
@@ -302,7 +303,7 @@ describe('helpers', () => {
     it('handles suspended objectives', () => {
       const suspendedObjective = [{
         ...mockObjectives[0],
-        status: 'Suspended',
+        status: OBJECTIVE_STATUS.SUSPENDED,
         closeSuspendReason: 'Test reason',
         closeSuspendContext: 'Test context',
       }];
@@ -382,7 +383,7 @@ describe('helpers', () => {
           files: [],
           ttaProvided: 'Technical Assistance',
           supportType: 'Planning',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
         },
       ],
     };

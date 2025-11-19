@@ -313,3 +313,10 @@ export const EVENT_PARTNERSHIP = {
   STATE_HSA: 'state_hsa',
   NO: 'no',
 };
+
+export const OBJECTIVE_STATUS = {
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  COMPLETE: 'Complete',
+};

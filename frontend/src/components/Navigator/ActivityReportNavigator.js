@@ -5,12 +5,8 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider } from 'react-hook-form';
 import moment from 'moment';
-import {
-  IN_PROGRESS, COMPLETE,
-} from './constants';
 import { OBJECTIVE_RESOURCES, validateGoals, validatePrompts } from '../../pages/ActivityReport/Pages/components/goalValidator';
 import { saveGoalsForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
@@ -19,6 +15,7 @@ import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
 import useFormGrantData from '../../hooks/useFormGrantData';
+import useNavigatorState from './useNavigatorState';
 
 const GOALS_AND_OBJECTIVES_POSITION = 2;
 
@@ -88,8 +85,7 @@ export const shouldUpdateFormData = (isAutoSave) => {
 
 const ActivityReportNavigator = ({
   editable,
-  formData,
-  updateFormData,
+  hookForm,
   pages,
   onFormSubmit,
   onReview,
@@ -106,7 +102,6 @@ const ActivityReportNavigator = ({
   updateLastSaveTime,
   errorMessage,
   updateErrorMessage,
-  savedToStorageTime,
   shouldAutoSave,
   setShouldAutoSave,
 }) => {
@@ -114,12 +109,6 @@ const ActivityReportNavigator = ({
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   // eslint-disable-next-line max-len
   const goalsAndObjectivesPage = useMemo(() => pages.find((p) => p.position === GOALS_AND_OBJECTIVES_POSITION), [pages]);
-
-  const hookForm = useForm({
-    mode: 'onBlur', // putting it to onBlur as the onChange breaks the new goal form
-    defaultValues: formData,
-    shouldUnregister: false,
-  });
 
   const {
     formState,
@@ -132,13 +121,8 @@ const ActivityReportNavigator = ({
     trigger,
   } = hookForm;
 
-  // A new form page is being shown so we need to reset `react-hook-form` so validations are
-  // reset and the proper values are placed inside inputs
-  useDeepCompareEffect(() => {
-    reset(formData);
-  }, [currentPage, reset, formData]);
+  const formData = getValues();
 
-  const pageState = watch('pageState');
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
 
@@ -163,102 +147,32 @@ const ActivityReportNavigator = ({
     grantIds,
   } = useFormGrantData(recipients);
 
-  const { isDirty, isValid } = formState;
+  const { isDirty } = formState;
 
-  const recalculatePageState = () => {
-    const newPageState = { ...pageState };
-    const currentGoalsObjectivesPageState = pageState[GOALS_AND_OBJECTIVES_POSITION];
-    const pageCompleteFunc = goalsAndObjectivesPage.isPageComplete;
-    const isGoalsObjectivesPageComplete = pageCompleteFunc(getValues(), formState);
-    const isCurrentPageGoalsObjectives = page.position === GOALS_AND_OBJECTIVES_POSITION;
-
-    if (isGoalsObjectivesPageComplete) {
-      newPageState[GOALS_AND_OBJECTIVES_POSITION] = COMPLETE;
-    } else if (isCurrentPageGoalsObjectives && currentGoalsObjectivesPageState === COMPLETE) {
-      newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
-    } else if (isCurrentPageGoalsObjectives) {
-      // eslint-disable-next-line max-len
-      newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentGoalsObjectivesPageState;
-    }
-
-    return newPageState;
-  };
-
-  /**
- * Updates the goals & objectives page state based on current form values
- * This ensures that after any API call (like recipient changes that remove goals)
- * we update the page state appropriately
- * @param {Object} currentFormData - The current form data
- */
-  const updateGoalsObjectivesPageState = (currentFormData) => {
-    if (!goalsAndObjectivesPage) return;
-
-    // Re-validate the goals and objectives page using current form values
-    // Prefer the freshly saved data payload to avoid using stale form values
-    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
-      .isPageComplete(currentFormData || getValues(), formState);
-
-    // Desired state for the goals/objectives page
-    const desiredState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
-
-    // IMPORTANT: Base our merge on the most up-to-date pageState coming from the
-    // data payload that just saved (currentFormData), not the watched pageState,
-    // to avoid reverting other pages (e.g., Next steps) to a stale state.
-    const basePageState = (currentFormData && currentFormData.pageState)
-      ? currentFormData.pageState
-      : (pageState || {});
-
-    // Always update the form data to ensure downstream consumers (and tests)
-    // see a post-save pageState that reflects the latest validation outcome.
-    // This is a no-op when the value is unchanged, but keeps behavior consistent.
-    const mergedPageState = {
-      ...basePageState,
-      [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
-    };
-
-    updateFormData({
-      ...currentFormData,
-      pageState: mergedPageState,
-    }, false);
-  };
-
-  const newNavigatorState = () => {
-    const newPageState = recalculatePageState();
-
-    if (page.review || page.position === GOALS_AND_OBJECTIVES_POSITION) {
-      return newPageState;
-    }
-
-    const currentPageState = pageState[page.position];
-    const isComplete = page.isPageComplete ? page.isPageComplete(getValues(), formState) : isValid;
-
-    if (isComplete) {
-      newPageState[page.position] = COMPLETE;
-    } else if (currentPageState === COMPLETE) {
-      newPageState[page.position] = IN_PROGRESS;
-    } else {
-      newPageState[page.position] = isDirty ? IN_PROGRESS : currentPageState;
-    }
-
-    return newPageState;
-  };
+  const { newNavigatorState, updateGoalsObjectivesPageState } = useNavigatorState({
+    page,
+    goalsAndObjectivesPage,
+    hookForm,
+  });
 
   const onSaveForm = async (isAutoSave = false, forceUpdate = false) => {
     setSavingLoadScreen(isAutoSave);
-    if (!editable) {
-      setIsAppLoading(false);
-      return;
-    }
+
     const { status, ...values } = getValues();
-    const data = { ...formData, ...values, pageState: newNavigatorState() };
+    const data = { ...values, pageState: newNavigatorState() };
 
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
-      await onSave(data, forceUpdate);
+      const savedData = await onSave(data, forceUpdate);
 
-      // After save, check and update the goals & objectives page state
-      updateGoalsObjectivesPageState(data);
+      // Update RHF with saved data (includes new IDs, etc.)
+      if (savedData) {
+        reset(savedData);
+
+        // After save, check and update the goals & objectives page state
+        updateGoalsObjectivesPageState(savedData);
+      }
 
       updateLastSaveTime(moment());
     } catch (error) {
@@ -301,7 +215,7 @@ const ActivityReportNavigator = ({
       name,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
-      regionId: formData.regionId,
+      regionId: getValues('regionId'),
     };
 
     // the above logic has packaged all the fields into a tidy goal object and we can now
@@ -316,8 +230,13 @@ const ActivityReportNavigator = ({
     try {
       setValue('goals', allGoals);
       const { status, ...values } = getValues();
-      const data = { ...formData, ...values, pageState: newNavigatorState() };
-      await onSave(data);
+      const data = { ...values, pageState: newNavigatorState() };
+      const savedData = await onSave(data);
+
+      // Update RHF with saved data
+      if (savedData) {
+        reset(savedData);
+      }
 
       updateErrorMessage('');
       updateLastSaveTime(moment());
@@ -362,8 +281,11 @@ const ActivityReportNavigator = ({
       // make an attempt to focus on the first invalid resource
       // having a sticky header complicates this enough to make me not want to do this perfectly
       // right out of the gate
+      /* istanbul ignore next */
       const invalid = document.querySelector('.usa-error-message + .ttahub-resource-repeater input');
+      /* istanbul ignore next */
       if (invalid) {
+        /* istanbul ignore next */
         invalid.focus();
       }
       return;
@@ -381,7 +303,7 @@ const ActivityReportNavigator = ({
       name,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
-      regionId: formData.regionId,
+      regionId: getValues('regionId'),
     };
 
     let allGoals = packageGoals(
@@ -399,14 +321,14 @@ const ActivityReportNavigator = ({
         {
           goals: allGoals,
           activityReportId: reportId,
-          regionId: formData.regionId,
+          regionId: getValues('regionId'),
         },
       );
 
       /**
          * If we are autosaving, and we are currently editing a rich text editor component, do not
-         * update the form data. This is to prevent the rich text editor from losing focus
-         * when the form data is updated.
+         * update the form. This is to prevent the rich text editor from losing focus
+         * when the form is updated.
          *
          * This introduces the possibility of a bug with extra objectives - that is, if the user
          * enters an objective title, starts typing TTA provided, and then the autosave happens,
@@ -415,26 +337,17 @@ const ActivityReportNavigator = ({
          * existing objectives, nor is it an issue if another save happens in between at any point.
          */
 
-      const allowUpdateFormData = shouldUpdateFormData(isAutoSave);
+      const allowUpdateForm = shouldUpdateFormData(isAutoSave);
 
       const {
         goals, goalForEditing: newGoalForEditing,
       } = convertGoalsToFormData(allGoals, grantIds);
 
-      // update form data
-      const { status, ...values } = getValues();
-
-      // plug in new values
-      const data = {
-        ...formData,
-        ...values,
-        goals,
-        goalForEditing: newGoalForEditing,
-        [objectivesFieldArrayName]: newGoalForEditing ? newGoalForEditing.objectives : null,
-      };
-
-      if (allowUpdateFormData) {
-        updateFormData(data, false);
+      // Update RHF with new values (includes new IDs from API)
+      if (allowUpdateForm) {
+        setValue('goals', goals);
+        setValue('goalForEditing', newGoalForEditing);
+        setValue(objectivesFieldArrayName, newGoalForEditing ? newGoalForEditing.objectives : null);
       }
 
       updateErrorMessage('');
@@ -474,7 +387,7 @@ const ActivityReportNavigator = ({
       name,
       endDate,
       objectives,
-      regionId: formData.regionId,
+      regionId: getValues('regionId'),
     };
 
     await validatePrompts(promptTitles, trigger);
@@ -511,7 +424,7 @@ const ActivityReportNavigator = ({
       setValue('goalPrompts', []);
 
       // set goals to form data as appropriate
-      setValue('goals', packageGoals(
+      const packagedGoals = packageGoals(
         selectedGoals,
         {
           ...goal,
@@ -520,19 +433,23 @@ const ActivityReportNavigator = ({
         },
         grantIds,
         prompts,
-      ));
-
+      );
       // save report to API
       const { status, ...values } = getValues();
       const data = {
-        ...formData,
         ...values,
+        goals: packagedGoals,
         pageState: newNavigatorState(),
       };
-      await onSave(data);
+      const savedData = await onSave(data);
 
-      // On save goal re-evaluate page status.
-      updateGoalsObjectivesPageState(data);
+      // Update RHF with saved data
+      if (savedData) {
+        reset(savedData);
+
+        // On save goal re-evaluate page status.
+        updateGoalsObjectivesPageState(savedData);
+      }
 
       updateErrorMessage('');
     } catch (error) {
@@ -625,7 +542,6 @@ const ActivityReportNavigator = ({
           currentPage={currentPage}
           additionalData={additionalData}
           formData={formData}
-          updateFormData={updateFormData}
           pages={pages}
           onFormSubmit={onFormSubmit}
           onSave={onSaveForm}
@@ -634,7 +550,6 @@ const ActivityReportNavigator = ({
           onReview={onReview}
           errorMessage={errorMessage}
           updateErrorMessage={updateErrorMessage}
-          savedToStorageTime={savedToStorageTime}
           onSaveDraft={draftSaver}
           onSaveAndContinue={onSaveAndContinue}
           autoSaveInterval={autoSaveInterval}
@@ -650,16 +565,22 @@ const ActivityReportNavigator = ({
 
 ActivityReportNavigator.propTypes = {
   editable: PropTypes.bool.isRequired,
-  formData: PropTypes.shape({
-    calculatedStatus: PropTypes.string,
-    pageState: PropTypes.shape({}),
-    regionId: PropTypes.number.isRequired,
+  hookForm: PropTypes.shape({
+    formState: PropTypes.shape({
+      isDirty: PropTypes.bool,
+      isValid: PropTypes.bool,
+    }),
+    getValues: PropTypes.func,
+    setValue: PropTypes.func,
+    setError: PropTypes.func,
+    watch: PropTypes.func,
+    errors: PropTypes.shape({}),
+    reset: PropTypes.func,
+    trigger: PropTypes.func,
   }).isRequired,
-  updateFormData: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,
   updateErrorMessage: PropTypes.func.isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
-  savedToStorageTime: PropTypes.string,
   updateLastSaveTime: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
@@ -695,7 +616,6 @@ ActivityReportNavigator.defaultProps = {
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
   lastSaveTime: null,
-  savedToStorageTime: null,
   errorMessage: '',
   reportCreator: {
     name: null,

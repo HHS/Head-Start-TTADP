@@ -24,6 +24,12 @@ const defaultValues = {
   id: 0,
   recipientId: '',
   userId: '',
+  recipients: [],
+  goals: [],
+  otherStaff: [],
+  author: { name: '' },
+  notes: '',
+  result: '',
   pageState: {
     1: NOT_STARTED,
     2: NOT_STARTED,
@@ -75,7 +81,7 @@ const resetFormData = (reset, updatedLog) => {
     ...defaultValues,
     ...data,
     ...fields,
-    recipients: recipients.map((r) => ({ value: String(r.id), label: r.name })),
+    recipients: (recipients || []).map((r) => ({ value: String(r.id), label: r.name })),
   };
 
   reset(form);

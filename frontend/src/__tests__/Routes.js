@@ -10,7 +10,6 @@ import AriaLiveContext from '../AriaLiveContext';
 import MyGroupsProvider from '../components/MyGroupsProvider';
 
 const defaultFlags = [
-  'training_reports_dashboard',
   'quality_assurance_dashboard',
   'regional_goal_dashboard',
   'resources_dashboard',
@@ -71,9 +70,6 @@ function MockFeatureFlag({ flag, children, renderNotFound }) {
   if (flag === 'quality_assurance_dashboard' && !window.test_quality_assurance_dashboard_flag) {
     return renderNotFound ? <div>QA Dashboard Flag Not Found</div> : null;
   }
-  if (flag === 'training_reports_dashboard' && !window.test_training_reports_dashboard_flag) {
-    return renderNotFound ? <div>Training Reports Dashboard Flag Not Found</div> : null;
-  }
   return children;
 }
 MockFeatureFlag.propTypes = {
@@ -116,7 +112,6 @@ const RenderRoutes = async (
 
   window.test_regional_goal_dashboard_flag = user.flags.includes('regional_goal_dashboard');
   window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
-  window.test_training_reports_dashboard_flag = user.flags.includes('training_reports_dashboard');
 
   const defaultProps = {
     alert: null,
@@ -180,7 +175,6 @@ describe('Routes', () => {
     fetchMock.restore();
     delete window.test_regional_goal_dashboard_flag;
     delete window.test_quality_assurance_dashboard_flag;
-    delete window.test_training_reports_dashboard_flag;
   });
 
   // --- authenticated routes ---
@@ -352,12 +346,6 @@ describe('Routes', () => {
     const flagsWithoutQA = defaultFlags.filter((f) => f !== 'quality_assurance_dashboard');
     await RenderRoutes('/dashboards/qa-dashboard', true, { flags: flagsWithoutQA });
     expect(await screen.findByText('QA Dashboard Flag Not Found')).toBeInTheDocument();
-  });
-
-  it('does not render Training Reports Dashboard if flag is off', async () => {
-    const flagsWithoutTrainingReports = defaultFlags.filter((f) => f !== 'training_reports_dashboard');
-    await RenderRoutes('/dashboards/regional-dashboard/training-reports', true, { flags: flagsWithoutTrainingReports });
-    expect(await screen.findByText('Training Reports Dashboard Flag Not Found')).toBeInTheDocument();
   });
 
   // --- unauthenticated scenarios ---

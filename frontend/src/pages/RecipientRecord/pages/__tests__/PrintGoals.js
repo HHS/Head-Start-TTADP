@@ -7,12 +7,13 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import { act } from 'react-dom/test-utils';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
 import PrintGoals from '../PrintGoals';
 import UserContext from '../../../../UserContext';
 import { filtersToQueryString } from '../../../../utils';
 import FilterContext from '../../../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../constants';
+import { OBJECTIVE_STATUS } from '../../../../Constants';
 
 const memoryHistory = createMemoryHistory();
 
@@ -23,7 +24,7 @@ describe('PrintGoals', () => {
   const goals = [
     {
       id: 4598,
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       createdOn: '2021-06-15',
       name: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
@@ -35,7 +36,7 @@ describe('PrintGoals', () => {
     },
     {
       id: 4599,
-      status: 'Closed',
+      status: GOAL_STATUS.CLOSED,
       createdOn: '2021-06-15',
       name: 'This is goal text 2.',
       goalTopics: ['Human Resources', 'Safety Practices'],
@@ -50,7 +51,7 @@ describe('PrintGoals', () => {
           grantNumber: '123',
           endDate: '01/01/02',
           reasons: ['Empathy', 'Generosity', 'Friendship'],
-          status: 'Complete',
+          status: OBJECTIVE_STATUS.COMPLETE,
           topics: ['Human Resources', 'Safety Practices'],
           activityReports: [
             {
@@ -102,7 +103,7 @@ describe('PrintGoals', () => {
     );
   };
 
-  const filters = [{ topic: 'status', condition: 'is', query: ['Closed'] }];
+  const filters = [{ topic: 'status', condition: 'is', query: [GOAL_STATUS.CLOSED] }];
   const baseMock = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false`;
   const filteredMockURL = `${baseMock}&${filtersToQueryString(filters)}`;
   // const filteredMockURLGoalOne = `${baseMock}&${filtersToQueryString(filterWithJustGoalOne)}`;
