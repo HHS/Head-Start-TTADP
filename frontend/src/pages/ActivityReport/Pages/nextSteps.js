@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
@@ -29,7 +28,10 @@ export const isPageComplete = (formData, formState) => {
   );
 };
 
-const NextSteps = ({ activityRecipientType }) => {
+const NextSteps = () => {
+  const { watch } = useFormContext();
+  const activityRecipientType = watch('activityRecipientType');
+
   // Create labels.
   const labelDisplayName = activityRecipientType === 'other-entity' ? 'Other entities' : "Recipient's";
 
@@ -58,13 +60,9 @@ const NextSteps = ({ activityRecipientType }) => {
   );
 };
 
-NextSteps.propTypes = {
-  activityRecipientType: PropTypes.string,
-};
+NextSteps.propTypes = {};
 
-NextSteps.defaultProps = {
-  activityRecipientType: '',
-};
+NextSteps.defaultProps = {};
 
 export const getNextStepsSections = (specialistNextSteps, recipientNextSteps) => {
   const specialistItems = (specialistNextSteps || []).map((step, index) => ([
@@ -128,7 +126,7 @@ export default {
   ),
   render: (
     _additionalData,
-    formData,
+    _formData,
     _reportId,
     isAppLoading,
     onContinue,
@@ -138,22 +136,19 @@ export default {
     _datePickerKey,
     _onFormSubmit,
     Alert,
-  ) => {
-    const { activityRecipientType } = formData;
-    return (
-      <>
-        <NextSteps activityRecipientType={activityRecipientType} />
-        <Alert />
-        <NavigatorButtons
-          isAppLoading={isAppLoading}
-          onContinue={onContinue}
-          onSaveDraft={onSaveDraft}
-          onUpdatePage={onUpdatePage}
-          path="next-steps"
-          position={4}
-        />
-      </>
-    );
-  },
+  ) => (
+    <>
+      <NextSteps />
+      <Alert />
+      <NavigatorButtons
+        isAppLoading={isAppLoading}
+        onContinue={onContinue}
+        onSaveDraft={onSaveDraft}
+        onUpdatePage={onUpdatePage}
+        path="next-steps"
+        position={4}
+      />
+    </>
+  ),
   isPageComplete,
 };

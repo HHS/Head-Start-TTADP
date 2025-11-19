@@ -17,7 +17,7 @@ export default function DisplayNextSteps({ title, steps }) {
 
   return (
     <>
-      <h3>{title}</h3>
+      <h2>{title}</h2>
       {steps.map(((step, index) => (
         <div key={`${title}${step.note}`}>
           <ReadOnlyField

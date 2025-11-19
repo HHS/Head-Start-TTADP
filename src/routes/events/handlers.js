@@ -84,6 +84,10 @@ export const getHandler = async (req, res) => {
 
     if (eventId) {
       event = await findEventBySmartsheetIdSuffix(eventId, scopes);
+
+      if (event && event.data && event.data.status === 'Complete' && !readOnly) {
+        return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' });
+      }
     } else if (regionId) {
       event = await findEventsByRegionId(regionId);
     } else if (ownerId) {

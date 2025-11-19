@@ -22,6 +22,7 @@ jest.mock('../../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Pro
 const mockUser = {
   id: 49,
   name: 'Joe Green',
+  fullName: 'Joe Green',
   phoneNumber: '555-555-554',
   hsesUserId: '49',
   hsesUsername: 'test49@test.com',

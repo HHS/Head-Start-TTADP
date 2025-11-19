@@ -1,37 +1,56 @@
 @use '../colors.scss' as *;
 
+// "Fixes" the tabs to the top of the page
+.ttahub-tabs-nav {
+    position: sticky;
+    top: 48px; // needed to 'clear' the smaller header
+    z-index: 99; // makes sure the rest of the page content flows "under" the tabs
+}
+
+@media screen and (min-width: 1024px) {
+    .ttahub-tabs-nav {
+        top: 72px; // needed to 'clear' the bigger header
+    }
+}
+
 .ttahub-tabs-nav_nav {
     margin-left: -2.5rem;
     margin-right: -2.5rem;
+
+    ul {
+        border-bottom: 1px solid $base-lighter; // Slight border to differentiate tabs from page content
+    }
 }
 
-@media all and (min-width: 30em){
+@media all and (min-width: 30em) {
     .ttahub-tabs-nav_nav {
         margin-left: -1.5rem;
     }
 }
 
-@media all and (min-width: 40em){
+@media all and (min-width: 40em) {
     .ttahub-tabs-nav_nav {
         margin-left: -2.5rem;
     }
 }
 
-.ttahub-tabs-nav_link, .ttahub-tabs-nav_link:visited {
+.ttahub-tabs-nav_link,
+.ttahub-tabs-nav_link:visited {
     color: $text-ink;
     text-decoration: none;
 }
 
 .ttahub-tabs-nav_tab {
     min-width: 6rem;
-    text-align:center;
+    text-align: center;
 }
 
-.ttahub-tabs-nav_link--active{
+.ttahub-tabs-nav_link--active {
     border-bottom: 4px solid $ttahub-blue;
     font-weight: bold;
 }
 
-a.ttahub-tabs-nav_back-to-search, a.ttahub-tabs-nav_back-to-search:visited {
+a.ttahub-tabs-nav_back-to-search,
+a.ttahub-tabs-nav_back-to-search:visited {
     color: $ttahub-blue;
 }

@@ -7,7 +7,9 @@ import {
   act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import ResourceRepeater from '../ResourceRepeater';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('ResourceRepeater', () => {
   it('shows the regular view', async () => {
@@ -19,10 +21,10 @@ describe('ResourceRepeater', () => {
       ]}
       setResources={jest.fn()}
       validateResources={jest.fn()}
-      status="In Progress"
+      status={OBJECTIVE_STATUS.IN_PROGRESS}
       isOnReport={false}
       isLoading={false}
-      goalStatus="In Progress"
+      goalStatus={GOAL_STATUS.IN_PROGRESS}
       userCanEdit
     />);
 
@@ -46,10 +48,10 @@ describe('ResourceRepeater', () => {
       resources={resources}
       setResources={jest.fn()}
       validateResources={validateResourcesMock}
-      status="In Progress"
+      status={OBJECTIVE_STATUS.IN_PROGRESS}
       isOnReport={false}
       isLoading={false}
-      goalStatus="In Progress"
+      goalStatus={GOAL_STATUS.IN_PROGRESS}
       userCanEdit
     />);
 
@@ -68,10 +70,10 @@ describe('ResourceRepeater', () => {
       ]}
       setResources={jest.fn()}
       validateResources={jest.fn()}
-      status="In Progress"
+      status={OBJECTIVE_STATUS.IN_PROGRESS}
       isOnReport={false}
       isLoading={false}
-      goalStatus="In Progress"
+      goalStatus={GOAL_STATUS.IN_PROGRESS}
       userCanEdit
       toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually a HeadStart.gov page."
     />);
@@ -89,10 +91,10 @@ describe('ResourceRepeater', () => {
       ]}
       setResources={setResources}
       validateResources={jest.fn()}
-      status="In Progress"
+      status={OBJECTIVE_STATUS.IN_PROGRESS}
       isOnReport={false}
       isLoading={false}
-      goalStatus="In Progress"
+      goalStatus={GOAL_STATUS.IN_PROGRESS}
       userCanEdit
     />);
 
@@ -114,10 +116,10 @@ describe('ResourceRepeater', () => {
       ]}
       setResources={setResources}
       validateResources={jest.fn()}
-      status="In Progress"
+      status={OBJECTIVE_STATUS.IN_PROGRESS}
       isOnReport={false}
       isLoading={false}
-      goalStatus="In Progress"
+      goalStatus={GOAL_STATUS.IN_PROGRESS}
       userCanEdit
     />);
 
