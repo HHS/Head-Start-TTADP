@@ -35,7 +35,6 @@ import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 import MyGroupsProvider from './components/MyGroupsProvider';
 import ScrollToTop from './components/ScrollToTop';
-import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
 import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
@@ -351,17 +350,6 @@ export default function Routes({
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <Group match={match} />
-            </AppWrapper>
-          )}
-        />
-        <Route
-          exact
-          path="/regional-goal-dashboard"
-          render={() => (
-            <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="regional_goal_dashboard" renderNotFound>
-                <RegionalGoalDashboard user={user} />
-              </FeatureFlag>
             </AppWrapper>
           )}
         />
