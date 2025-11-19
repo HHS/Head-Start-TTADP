@@ -344,7 +344,8 @@ describe('goals objectives', () => {
         });
       });
 
-      // After editing, goal 4 is now in the edit form, so only goal 3 should be visible in the readonly section
+      // After editing, goal 4 is now in the edit form, so only goal 3 should be
+      // visible in the readonly section
       expect(await screen.findByText('Sample Goal to Remove')).toBeVisible();
       // Goal 4 is being edited so it's not in the readonly display anymore
       expect(screen.queryByText('Sample Goal to Edit')).toBeNull();
