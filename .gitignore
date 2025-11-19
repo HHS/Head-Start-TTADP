@@ -59,3 +59,7 @@ tests/e2e/report.xml
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Claude/Anthropic config files
+CLAUDE.md
+
