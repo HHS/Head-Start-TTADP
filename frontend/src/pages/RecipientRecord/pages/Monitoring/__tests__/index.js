@@ -38,7 +38,11 @@ describe('Monitoring', () => {
   const history = createMemoryHistory();
   const renderTest = (currentPage = '') => {
     render(
-      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
+      >
         <UserContext.Provider value={{ user: { id: 1 } }}>
           <Router history={history}>
             <Monitoring
@@ -102,6 +106,8 @@ describe('Monitoring', () => {
 
     const hideButton = screen.getByRole('button', { name: 'Hide TTA activity' });
     expect(hideButton).toBeInTheDocument();
+
+    expect(await screen.findByText('Monitoring data by review loaded.')).toBeInTheDocument();
   });
 
   it('renders the citation page', async () => {
@@ -124,5 +130,6 @@ describe('Monitoring', () => {
 
     const hideButton = screen.getByRole('button', { name: 'Hide TTA activity' });
     expect(hideButton).toBeInTheDocument();
+    expect(await screen.findByText('Monitoring data by citation loaded.')).toBeInTheDocument();
   });
 });
