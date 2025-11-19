@@ -1,8 +1,12 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "skipLibCheck": true, 
+    "incremental": true,
+    "resolveJsonModule": true, 
+    "noErrorTruncation": true,
     "outDir": "../build/server",
     "esModuleInterop": true,
     "declaration": false,
