@@ -550,16 +550,26 @@ describe('Recipient DB service', () => {
       const duplicateTemplateName = `duplicate standard goal ${faker.datatype.number()}`;
 
       duplicateGoalTemplateOne = await GoalTemplate.create({
-        templateName: duplicateTemplateName,
+        templateName: `${duplicateTemplateName}-a`,
         creationMethod: CREATION_METHOD.CURATED,
         standard: 'RTTAPA',
       });
 
       duplicateGoalTemplateTwo = await GoalTemplate.create({
-        templateName: duplicateTemplateName,
+        templateName: `${duplicateTemplateName}-b`,
         creationMethod: CREATION_METHOD.CURATED,
         standard: 'RTTAPA',
       });
+
+      await duplicateGoalTemplateOne.update(
+        { templateName: duplicateTemplateName },
+        { hooks: false, individualHooks: false },
+      );
+
+      await duplicateGoalTemplateTwo.update(
+        { templateName: duplicateTemplateName },
+        { hooks: false, individualHooks: false },
+      );
 
       await Goal.create({
         recipientId: recipientWithTemplatesWithSameName.id,
