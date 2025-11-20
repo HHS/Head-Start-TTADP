@@ -1,8 +1,14 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
 import { createOrUpdate } from './activityReports';
 import { createReport, destroyReport } from '../testUtils';
-import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import {
+  FILE_STATUSES,
+  GOAL_STATUS,
+  OBJECTIVE_STATUS,
+} from '../constants';
+import SCOPES from '../middleware/scopeConstants';
 
 const {
   Goal,
@@ -16,6 +22,9 @@ const {
   ActivityReportObjectiveResource,
   Topic,
   Resource,
+  User,
+  Permission,
+  ActivityReportApprover,
 } = db;
 
 describe('createOrUpdate', () => {
@@ -80,17 +89,14 @@ describe('createOrUpdate', () => {
         activityReportId: report.id,
       },
     });
-
     grantIds = arecips.map((ar) => ar.grantId);
 
     topic = await Topic.create({
       name: faker.lorem.sentence(),
     });
-
     goals = await Promise.all(grantIds.map((grantId) => Goal.create({
       name: faker.lorem.sentence(),
       status: GOAL_STATUS.NOT_STARTED,
-      endDate: '04/14/2024',
       createdVia: 'activityReport',
       grantId,
       onAR: true,
@@ -103,7 +109,6 @@ describe('createOrUpdate', () => {
         goalId: g.id,
         name: g.name,
         status: g.status,
-        endDate: g.endDate,
       })
     ))));
 
@@ -117,7 +122,6 @@ describe('createOrUpdate', () => {
         goalId: g.id,
       })
     ))));
-
     const aros = await Promise.all((objectives.map((o) => (
       ActivityReportObjective.create({
         activityReportId: report.id,
@@ -206,7 +210,10 @@ describe('createOrUpdate', () => {
 
     await Objective.destroy({
       where: {
-        goalId: goals[0].id,
+        [db.Sequelize.Op.or]: [
+          { goalId: goals[0].id },
+          { createdViaActivityReportId: report.id },
+        ],
       },
       individualHooks: true,
       force: true,
@@ -218,7 +225,6 @@ describe('createOrUpdate', () => {
       },
       individualHooks: true,
     });
-
     await Goal.destroy({
       where: {
         grantId: grantIds[0],
@@ -234,7 +240,6 @@ describe('createOrUpdate', () => {
       individualHooks: true,
       force: true,
     });
-
     await destroyReport(report);
     await db.sequelize.close();
   });
@@ -246,14 +251,13 @@ describe('createOrUpdate', () => {
     const request = {
       recipientsWhoHaveGoalsThatShouldBeRemoved,
       goals: [{
+        goalTemplateId: 2,
         id: goal.id,
         name: goal.name,
         status: goal.status,
         timeframe: null,
         isFromSmartsheetTtaPlan: null,
-        endDate: goal.endDate,
         grantId: grantIds[0],
-        goalTemplateId: null,
         onAR: true,
         onApprovedAR: false,
         isRttapa: null,
@@ -319,5 +323,107 @@ describe('createOrUpdate', () => {
     ).toBe(
       arecips.length - recipientsWhoHaveGoalsThatShouldBeRemoved.length,
     );
+  });
+
+  it('filters approvers without the approve permission for the region', async () => {
+    const permittedUser = await User.create({
+      homeRegionId: report.regionId,
+      name: faker.name.findName(),
+      hsesUsername: faker.internet.email(),
+      hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 1000000 }))}`,
+      email: faker.internet.email(),
+      phoneNumber: '555-123-4567',
+      lastLogin: new Date(),
+    });
+
+    const unauthorizedUser = await User.create({
+      homeRegionId: report.regionId,
+      name: faker.name.findName(),
+      hsesUsername: faker.internet.email(),
+      hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 1000000 }))}`,
+      email: faker.internet.email(),
+      phoneNumber: '555-987-6543',
+      lastLogin: new Date(),
+    });
+
+    await Permission.create({
+      userId: permittedUser.id,
+      regionId: report.regionId,
+      scopeId: SCOPES.APPROVE_REPORTS,
+    });
+
+    try {
+      await createOrUpdate({
+        approverUserIds: [permittedUser.id, unauthorizedUser.id],
+      }, report, report.userId);
+
+      const approvers = await ActivityReportApprover.findAll({
+        where: { activityReportId: report.id },
+      });
+      const approverIds = approvers.map((a) => a.userId);
+
+      expect(approverIds).toContain(permittedUser.id);
+      expect(approverIds).not.toContain(unauthorizedUser.id);
+    } finally {
+      await ActivityReportApprover.destroy({
+        where: {
+          activityReportId: report.id,
+          userId: [permittedUser.id, unauthorizedUser.id],
+        },
+        force: true,
+        individualHooks: true,
+      });
+
+      await Permission.destroy({
+        where: {
+          userId: permittedUser.id,
+          scopeId: SCOPES.APPROVE_REPORTS,
+          regionId: report.regionId,
+        },
+        individualHooks: true,
+      });
+
+      await permittedUser.destroy({ force: true, individualHooks: true });
+      await unauthorizedUser.destroy({ force: true, individualHooks: true });
+    }
+  });
+
+  it('sanitizes pageState values that are marked complete without required data', async () => {
+    await db.sequelize.transaction(async () => {
+      const draftReport = await createReport({
+        activityRecipients: [{
+          grantId: grantIds[0],
+        }],
+        userId: report.userId,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      });
+
+      const updatedReport = await createOrUpdate({
+        activityReason: null,
+        deliveryMethod: null,
+        targetPopulations: [],
+        ttaType: [],
+        participants: [],
+        language: [],
+        duration: null,
+        numberOfParticipants: null,
+        startDate: null,
+        endDate: null,
+        specialistNextSteps: [{ id: null, note: '', completeDate: null }],
+        recipientNextSteps: [{ id: null, note: '', completeDate: null }],
+        pageState: {
+          1: 'Complete',
+          2: 'Complete',
+          3: 'Complete',
+          4: 'Complete',
+        },
+        approverUserIds: [],
+      }, draftReport, draftReport.userId);
+
+      expect(updatedReport.pageState['1']).toBe('In progress');
+      expect(updatedReport.pageState['2']).toBe('Not started');
+      expect(updatedReport.pageState['4']).toBe('Not started');
+    });
   });
 });

@@ -19,6 +19,10 @@ import {
   MonitoringReviewLink,
   MonitoringReviewStatusLink,
   MonitoringClassSummary,
+  Goal,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  Objective,
   ZALGoal,
 } from '../models';
 import processData, {
@@ -26,11 +30,15 @@ import processData, {
   hideUsers,
   hideRecipientsGrants,
   bootstrapUsers,
-  convertEmails,
-  convertName,
-  convertFileName,
-  convertRecipientName,
+  convertName, // Kept as it's still used in the main code
+  convertGrantNumberCreate,
+  convertGrantNumberDrop,
+  processMonitoringReferences,
 } from './processData';
+import {
+  createReportAndCitationData,
+  destroyReportAndCitationData,
+} from '../services/monitoring.testHelpers';
 
 jest.mock('../logger');
 
@@ -95,7 +103,6 @@ const mockFile = {
   fileSize: 54417,
 };
 
-// TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
 const reportObject = {
   activityRecipientType: 'recipient',
   userId: mockUser.id,
@@ -251,6 +258,7 @@ async function destroyMonitoringData() {
   await MonitoringReviewGrantee.destroy({ where: { reviewId: 'reviewId' }, force: true });
   await MonitoringClassSummary.destroy({ where: { reviewId: 'reviewId' }, force: true });
   await MonitoringReview.destroy({ where: { reviewId: 'reviewId' }, force: true });
+  await MonitoringReview.destroy({ where: { statusId: 6006 }, force: true });
   await MonitoringReviewLink.destroy({ where: { reviewId: 'reviewId' }, force: true });
   await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
   await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
@@ -306,7 +314,10 @@ describe('processData', () => {
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-    await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
+    await ActivityRecipient.destroy({ where: { grantId: GRANT_ID_ONE } });
+    await ActivityReportFile.destroy({
+      where: { id: mockActivityReportFile.id },
+    });
     await File.destroy({ where: { id: mockFile.id } });
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({
@@ -319,17 +330,33 @@ describe('processData', () => {
         ],
       },
     });
-    await GrantNumberLink.unscoped().destroy({ where: { grantId: GRANT_ID_ONE }, force: true });
-    await GrantNumberLink.unscoped().destroy({ where: { grantId: GRANT_ID_TWO }, force: true });
-    await GrantNumberLink.unscoped().destroy({ where: { grantId: null }, force: true });
-    await Grant.unscoped().destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
-    await Grant.unscoped().destroy({ where: { id: GRANT_ID_TWO }, individualHooks: true });
+    await GrantNumberLink.unscoped().destroy({
+      where: { grantId: GRANT_ID_ONE },
+      force: true,
+    });
+    await GrantNumberLink.unscoped().destroy({
+      where: { grantId: GRANT_ID_TWO },
+      force: true,
+    });
+    await GrantNumberLink.unscoped().destroy({
+      where: { grantId: null },
+      force: true,
+    });
+    await Grant.unscoped().destroy({
+      where: { id: GRANT_ID_ONE },
+      individualHooks: true,
+    });
+    await Grant.unscoped().destroy({
+      where: { id: GRANT_ID_TWO },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } });
+    await destroyMonitoringData();
     await sequelize.close();
   });
 
-  it('transforms user emails, recipientName in the ActivityReports table (imported)', async () => {
+  it('transforms user emails and recipient names in the ActivityReports table (imported)', async () => {
     const report = await ActivityReport.create(reportObject);
     mockActivityReportFile.activityReportId = report.id;
     await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
@@ -369,7 +396,7 @@ describe('processData', () => {
 
   describe('hideUsers', () => {
     it('transforms user names and emails in the Users table', async () => {
-      await hideUsers(mockUser.id.toString());
+      await hideUsers([mockUser.id]);
       const transformedMockUser = await User.findOne({ where: { id: mockUser.id } });
       expect(transformedMockUser.email).not.toBe(mockUser.email);
       expect(transformedMockUser.hsesUsername).not.toBe(mockUser.hsesUsername);
@@ -389,7 +416,8 @@ describe('processData', () => {
       const transformedRecipient = await Recipient.findOne({ where: { id: RECIPIENT_ID_ONE } });
       expect(transformedRecipient.name).not.toBe('Agency One, Inc.');
     });
-    it('transforms grant names in the Grants table', async () => {
+
+    it('transforms grant numbers in the Grants table', async () => {
       await hideRecipientsGrants(reportObject.imported.granteeName);
 
       const transformedGrant = await Grant.findOne({ where: { recipientId: RECIPIENT_ID_ONE } });
@@ -427,20 +455,112 @@ describe('processData', () => {
     it('updates grant numbers in the MonitoringReviewGrantee table', async () => {
       await hideRecipientsGrants(reportObject.imported.granteeName);
 
-      // Find the updated record
+      // Verify that no record with the old grant number exists anymore
       const monitoringReviewGranteeRecord = await MonitoringReviewGrantee.findOne({
         where: { grantNumber: GRANT_NUMBER_ONE },
       });
 
-      // Verify that no record with the old grant number exists anymore
       expect(monitoringReviewGranteeRecord).toBeNull();
 
+      // Verify that no record with the old grant number exists anymore
       const monitoringClassSummaryRecord = await MonitoringClassSummary.findOne({
         where: { grantNumber: GRANT_NUMBER_ONE },
       });
 
-      // Verify that no record with the old grant number exists anymore
       expect(monitoringClassSummaryRecord).toBeNull();
+    });
+  });
+
+  describe('processMonitoringReferences', () => {
+    const TEST_RECIP_ID = 99001;
+    const TEST_GRANT_ID = 99002;
+    const TEST_GRANT_NUMBER = '01GN099002';
+    const TEST_RECIP_NAME = 'Test Recip';
+
+    beforeAll(async () => {
+      await Recipient.findOrCreate({
+        where: { id: TEST_RECIP_ID },
+        defaults: {
+          id: TEST_RECIP_ID,
+          name: TEST_RECIP_NAME,
+          uei: 'TESTUEI99001',
+        },
+      });
+
+      await Grant.findOrCreate({
+        where: { id: TEST_GRANT_ID },
+        defaults: {
+          id: TEST_GRANT_ID,
+          number: TEST_GRANT_NUMBER,
+          recipientId: TEST_RECIP_ID,
+          regionId: 1,
+          status: 'Active',
+          startDate: new Date(),
+          endDate: new Date(),
+        },
+      });
+      await GrantNumberLink.findOrCreate({
+        where: { grantId: TEST_GRANT_ID },
+        defaults: {
+          grantId: TEST_GRANT_ID,
+          grantNumber: TEST_GRANT_NUMBER,
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await GrantNumberLink.destroy({
+        where: { grantId: TEST_GRANT_ID },
+        force: true,
+        individualHooks: true,
+      });
+      await Grant.unscoped().destroy({
+        where: { id: TEST_GRANT_ID },
+        force: true,
+        individualHooks: true,
+      });
+      await Recipient.unscoped().destroy({
+        where: { id: TEST_RECIP_ID },
+        force: true,
+      });
+    });
+    it('obfuscates grant number in monitoring references', async () => {
+      const arocResult = await createReportAndCitationData(TEST_GRANT_NUMBER, 1);
+      const recipientsGrants = `${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}
+${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}`;
+
+      await sequelize.transaction(async () => {
+        await convertGrantNumberCreate();
+        await hideRecipientsGrants(recipientsGrants);
+        await processMonitoringReferences();
+        await convertGrantNumberDrop();
+      });
+
+      const row = await ActivityReportObjectiveCitation.findOne({
+        where: { id: arocResult.citations[0].id },
+        raw: true,
+      });
+      const obfuscated = (
+        await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true })
+      ).number;
+
+      expect(row).toBeTruthy();
+      expect(Array.isArray(row.monitoringReferences)).toBe(true);
+
+      const referenceWithGrant = row.monitoringReferences.find(
+        (ref) => ref && typeof ref.grantNumber === 'string' && ref.grantNumber.length > 0,
+      );
+
+      expect(referenceWithGrant).toBeTruthy();
+      expect(referenceWithGrant.grantNumber).not.toBe(TEST_GRANT_NUMBER);
+      expect(referenceWithGrant.grantNumber).toBe(obfuscated);
+      await destroyReportAndCitationData(
+        arocResult.goal,
+        arocResult.objectives,
+        arocResult.reports,
+        arocResult.topic,
+        arocResult.citations,
+      );
     });
   });
 
@@ -452,30 +572,13 @@ describe('processData', () => {
 
       expect(user.homeRegionId).toBe(14);
     });
+
     it('gives permissions to users', async () => {
       await bootstrapUsers();
 
       const user = await User.findOne({ where: { hsesUserId: '51113' } });
       const userPermissions = await Permission.findAll({ where: { userId: user.id } });
       expect(userPermissions.length).toBe(16);
-    });
-  });
-
-  describe('convertEmails', () => {
-    it('handles null emails', async () => {
-      const emails = convertEmails(null);
-      expect(emails).toBe(null);
-    });
-
-    it('handles emails lacking a @', async () => {
-      const emails = convertEmails('test,test2@test.com,test3');
-      expect(emails.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)).toBeTruthy();
-    });
-
-    it('should convert a single email address to a transformed email address', () => {
-      const input = 'real@example.com';
-      const output = convertEmails(input);
-      expect(output).toMatch(/^no-send_/);
     });
   });
 
@@ -487,20 +590,6 @@ describe('processData', () => {
         id: expect.any(Number),
         name: expect.any(String),
       });
-    });
-  });
-
-  describe('convertFileName', () => {
-    it('handles null file names', async () => {
-      const fileName = await convertFileName(null);
-      expect(fileName).toBe(null);
-    });
-  });
-
-  describe('convertRecipientName', () => {
-    it('handles null recipient names', async () => {
-      const recipientName = await convertRecipientName(null);
-      expect(recipientName).toBe(null);
     });
   });
 });

@@ -17,12 +17,13 @@ import FilterSelect from './FilterSelect';
 import FilterInput from './FilterInput';
 import { handleArrayQuery } from './helpers';
 import FilterRoles from './FilterRoles';
+import FilterFEIRootCause from './FilterFEIRootCause';
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
 export const createDateFilter = {
   id: 'createDate',
-  display: 'Created on',
+  display: 'Created on (goal)',
   conditions: DATE_CONDITIONS,
   defaultValues: {
     'is within': '',
@@ -109,6 +110,21 @@ export const userRolesFilter = {
   ),
 };
 
+export const feiRootCauseFilter = {
+  id: 'goalResponse',
+  display: 'FEI root cause',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterFEIRootCause
+      inputId={`fei-root-cause-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const goalNameFilter = {
   id: 'goalName',
   display: 'Goal text',
@@ -132,7 +148,7 @@ export const grantNumberFilter = (possibleGrants) => ({
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: (query) => {
     const toDisplay = query.map((q) => {
-      const grant = possibleGrants.find((g) => g.number === q);
+      const grant = (possibleGrants || []).find((g) => g.number === q);
       if (grant) {
         return grant.numberWithProgramTypes;
       }
@@ -147,9 +163,9 @@ export const grantNumberFilter = (possibleGrants) => ({
       onApply={onApplyQuery}
       inputId={`grant-number-${condition}-${id}`}
       labelText="Select grant numbers to filter by"
-      options={possibleGrants.map((g) => ({
+      options={(possibleGrants || []).map((g) => ({
         value: g.number,
-        label: g.numberWithProgramTypes,
+        label: `${g.numberWithProgramTypes} - ${g.status}`,
       }))}
       selectedValues={query}
       mapByValue

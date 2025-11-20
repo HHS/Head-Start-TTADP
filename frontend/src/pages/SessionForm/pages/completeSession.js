@@ -54,14 +54,14 @@ const CompleteSession = ({
       return;
     }
 
-    if (!formData.event.data.goal) {
+    if (!formData.event.data.vision) {
       const eventId = getEventIdSlug(formData.event.data.eventId);
       setError('status', {
         message: (
           <span>
-            Vision and goal for
+            Vision for
             {' '}
-            <Link to={`/training-report/${eventId}/vision-goal`}>{formData.event.data.eventId}</Link>
+            <Link to={`/training-report/${eventId}/vision`}>{formData.event.data.eventId}</Link>
             {' '}
             must be completed before completing session
           </span>),
@@ -160,7 +160,7 @@ CompleteSession.propTypes = {
     event: PropTypes.shape({
       data: PropTypes.shape({
         eventId: PropTypes.string,
-        goal: PropTypes.string,
+        vision: PropTypes.string,
       }),
     }),
     id: PropTypes.number,
@@ -186,6 +186,7 @@ export default {
   review: false,
   label: 'Complete session',
   path,
+  /* istanbul ignore next: not easy to test */
   isPageComplete: ({ getValues }) => {
     const { status } = getValues();
     return status === EVENT_REPORT_STATUSES.COMPLETE;

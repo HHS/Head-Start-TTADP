@@ -7,6 +7,7 @@ import {
   UNFINISHED_OBJECTIVES,
   GOAL_MISSING_OBJECTIVE,
   OBJECTIVE_TOPICS,
+  OBJECTIVE_CITATIONS,
   OBJECTIVE_TITLE,
   OBJECTIVE_TTA,
   OBJECTIVE_RESOURCES,
@@ -48,6 +49,7 @@ const goalUnfinishedObjective = {
   name: 'Test goal',
   endDate: '2021-01-01',
   isRttapa: 'No',
+  source: 'source',
   objectives: [
     { ...validObjective },
     { ...missingTTAProvided },
@@ -58,6 +60,7 @@ const goalNoObjectives = {
   name: 'Test goal',
   endDate: '2021-01-01',
   isRttapa: 'No',
+  source: 'source',
   objectives: [],
 };
 
@@ -65,6 +68,7 @@ const goalValid = {
   name: 'Test goal',
   endDate: '2021-01-01',
   isRttapa: 'No',
+  source: 'Source',
   objectives: [
     { ...validObjective },
     { ...validObjective },
@@ -108,6 +112,18 @@ describe('validateGoals', () => {
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, { message: OBJECTIVE_TOPICS });
+      });
+
+      it('if one objective has no "citations"', () => {
+        const objectives = [
+          { ...validObjective },
+          { ...validObjective, citations: [] },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError, 'goalForEditing.objectives', true);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].citations`, { message: OBJECTIVE_CITATIONS });
       });
 
       it('if one objective has no "supportType"', () => {

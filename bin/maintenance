@@ -33,7 +33,7 @@ while [ "$1" != "" ]; do
                                     maintenance=$1
                                     ;;
         --environment | -e)         shift
-                                    if [[ "$1" != "prod" && "$1" != "staging" && "$1" != "dev" && "$1" != "sandbox" ]]; then
+                                    if [[ "$1" != "prod" && "$1" != "staging" && "$1" != "dev" ]]; then
                                         echo "$1 is not a valid value"
                                         help
                                         exit 1
@@ -50,11 +50,11 @@ while [ "$1" != "" ]; do
     shift
 done
 
-# Check the cf-cli v7 is available
+# Check the cf-cli v7 or v8 is available
 version=$(cf version | cut -d " " -f 3 | cut -d "." -f 1)
-if [[ $version != "7" ]]; then
-    echo "Cloud Foundry CLI v7 not found. Please install it to continue"
-    echo "https://github.com/cloudfoundry/cli/wiki/V7-CLI-Installation-Guide"
+if [[ $version != "8" && $version != "7" ]]; then
+    echo "Cloud Foundry CLI v7 or v8 not found. Please install it to continue."
+    echo "https://docs.cloudfoundry.org/cf-cli/install-go-cli.html"
     exit 1
 fi
 

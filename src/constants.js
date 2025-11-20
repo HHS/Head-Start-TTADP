@@ -38,9 +38,11 @@ const SEARCH_RESULTS_PER_PAGE = 23;
 
 const AUTOMATIC_CREATION = 'Automatic';
 const CURATED_CREATION = 'Curated';
+const SYSTEM_GENERATED = 'System Generated';
 const CREATION_METHOD = {
   AUTOMATIC: AUTOMATIC_CREATION,
   CURATED: CURATED_CREATION,
+  SYSTEM_GENERATED,
 };
 
 const GOAL_STATUS = {
@@ -56,8 +58,6 @@ const GOAL_COLLABORATORS = {
   EDITOR: 'Editor', // The user(s) who edits the text of a goal
   LINKER: 'Linker', // The user who links the goal to a report
   UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where goal is used
-  MERGE_CREATOR: 'Merge-Creator', // The user who merged the goal on the goal created by the merge
-  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the goal on the goals merged
 };
 
 const GRANT_PERSONNEL_ROLES = [
@@ -81,8 +81,6 @@ const OBJECTIVE_COLLABORATORS = {
   EDITOR: 'Editor', // The user(s) who edits the text of a objective
   LINKER: 'Linker', // The user who links the objective to a report
   UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where objective is used
-  MERGE_CREATOR: 'Merge-Creator', // The user who merged the objective on the objective created by the merge
-  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the objective on the objectives merged
 };
 
 const NEXTSTEP_NOTETYPE = {
@@ -141,18 +139,10 @@ const EMAIL_ACTIONS = {
   RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
   RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
   TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
-  TRAINING_REPORT_POC_SESSION_COMPLETE: 'trainingReportPocComplete',
-  TRAINING_REPORT_POC_VISION_GOAL_COMPLETE: 'trainingReportPocVisionGoalComplete',
-  TRAINING_REPORT_POC_ADDED: 'trainingReportPocAdded',
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
-  TRAINING_REPORT_SESSION_COMPLETED: 'trainingReportSessionCompleted',
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
-};
-
-const AWS_ELASTICSEARCH_ACTIONS = {
-  ADD_INDEX_DOCUMENT: 'addIndexDocument',
-  UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
-  DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
+  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
+  TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
 };
 
 const S3_ACTIONS = {
@@ -217,11 +207,7 @@ const SOURCE_FIELD = {
 };
 
 const RESOURCE_DOMAIN = {
-  ECLKC: 'eclkc.ohs.acf.hhs.gov',
-};
-
-const AWS_ELASTIC_SEARCH_INDEXES = {
-  ACTIVITY_REPORTS: 'activityreports',
+  HEAD_START: 'headstart.gov',
 };
 
 const GRANT_INACTIVATION_REASONS = {
@@ -239,7 +225,6 @@ const MAINTENANCE_TYPE = {
   DAILY_DB_MAINTENANCE: 'DAILY DB MAINTENANCE',
   CORRECT_AR_FLAGS: 'CORRECT AR FLAGS',
   CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
-  IMPORT_SCHEDULE: 'IMPORT_SCHEDULE',
   IMPORT_DOWNLOAD: 'IMPORT_DOWNLOAD',
   IMPORT_PROCESS: 'IMPORT_PROCESS',
 };
@@ -247,9 +232,8 @@ const MAINTENANCE_TYPE = {
 const FEATURE_FLAGS = [
   'anv_statistics',
   'regional_goal_dashboard',
-  'closed_goal_merge_override',
-  'training_reports_dashboard',
   'quality_assurance_dashboard',
+  'collaboration_report',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -258,12 +242,30 @@ const MAINTENANCE_CATEGORY = {
   IMPORT: 'IMPORT',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'tr'];
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin', 'monitoring', 'merge'];
 
-const CURRENT_GOAL_SIMILARITY_VERSION = 3;
+const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
+const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;
+
+const COMMUNICATION_LOG_LIMIT_MAX = 1000;
+
+const SORT_DIR = {
+  ASC: 'ASC',
+  DESC: 'DESC',
+};
+
+const REGIONS = [
+  'Northeast',
+  'Midwest',
+  'West',
+  'AIAN',
+  'Southeast',
+  'Southwest',
+];
 
 module.exports = {
-  CURRENT_GOAL_SIMILARITY_VERSION,
+  FEI_PROD_GOAL_TEMPLATE_ID,
+  CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
   FILE_STATUSES,
   IMPORT_STATUSES,
   IMPORT_DATA_STATUSES,
@@ -286,16 +288,17 @@ module.exports = {
   RESOURCE_ACTIONS,
   USER_SETTINGS,
   EMAIL_ACTIONS,
-  AWS_ELASTICSEARCH_ACTIONS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,
   PROMPT_FIELD_TYPE,
   SOURCE_FIELD,
   RESOURCE_DOMAIN,
-  AWS_ELASTIC_SEARCH_INDEXES,
   GRANT_INACTIVATION_REASONS,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
   FEATURE_FLAGS,
+  SORT_DIR,
+  COMMUNICATION_LOG_LIMIT_MAX,
+  REGIONS,
 };

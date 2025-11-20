@@ -1,7 +1,7 @@
 import {
-  getResourcesForActivityReportObjectives,
   processActivityReportObjectiveForResourcesById,
 } from './resource';
+import { auditLogger } from '../logger';
 
 const { Op } = require('sequelize');
 const {
@@ -12,11 +12,13 @@ const {
   ActivityReportObjectiveCourse,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  ActivityReportObjectiveCitation,
   Goal,
   GoalFieldResponse,
   GoalTemplateFieldPrompt,
   Objective,
   sequelize,
+  Topic,
 } = require('../models');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
@@ -62,7 +64,7 @@ const cacheResources = async (_objectiveId, activityReportObjectiveId, resources
 
   const resourceIds = resources
     .map((r) => {
-      if (r.resource && r.resource.id) return r.resource.id;
+      if (r.resource?.id) return r.resource.id;
       if (r.resourceId) return r.resourceId;
       return null;
     })
@@ -107,21 +109,50 @@ export const cacheCourses = async (objectiveId, activityReportObjectiveId, cours
 };
 
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
-  const topicIds = topics.map((topic) => topic.id);
+  // Find all topics with missing ids
+  const topicsNeedingLookup = topics.filter((t) => !t.id && t.name);
+  let resolvedTopics = [];
+  if (topicsNeedingLookup.length > 0) {
+    auditLogger.info(
+      'Some topics were missing IDs and required a lookup. '
+      + `ObjectiveId: ${objectiveId}, AROId: ${activityReportObjectiveId}, `
+      + `Raw topics: ${JSON.stringify(topicsNeedingLookup)}`,
+    );
+    const topicNames = topicsNeedingLookup.map((t) => t.name);
+    const foundTopics = await Topic.findAll({
+      where: { name: topicNames },
+    });
+
+    // Log any that weren't found
+    const foundNames = new Set(foundTopics.map((t) => t.name));
+    const missing = topicNames.filter((n) => !foundNames.has(n));
+    if (missing.length) {
+      auditLogger.error(`Could not resolve topic names: ${missing.join(', ')} for objectiveId: ${objectiveId}`);
+    }
+
+    resolvedTopics = foundTopics.map((t) => ({ id: t.id, name: t.name }));
+  }
+
+  const enrichedTopics = topics.map((t) => {
+    if (t.id) return t;
+    const resolved = resolvedTopics.find((rt) => rt.name === t.name);
+    return resolved ? { ...t, id: resolved.id } : null;
+  }).filter(Boolean);
+
+  const topicIds = enrichedTopics.map((t) => t.id);
+
   const topicsSet = new Set(topicIds);
   const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
     where: { activityReportObjectiveId },
   });
-  const originalTopicIds = originalAROTopics.map((originalAROTopic) => originalAROTopic.topicId)
-    || [];
-  // Get topics for ARO we need to delete.
-  const removedTopicIds = originalTopicIds.filter((topicId) => !topicsSet.has(topicId));
-  // Get topics to keep.
-  const currentTopicIds = new Set(originalTopicIds.filter((topicId) => topicsSet.has(topicId)));
-  const newTopicsIds = topicIds.filter((topicId) => !currentTopicIds.has(topicId));
+  const originalTopicIds = originalAROTopics.map((t) => t.topicId);
+
+  const removedTopicIds = originalTopicIds.filter((id) => !topicsSet.has(id));
+  const currentTopicIds = new Set(originalTopicIds.filter((id) => topicsSet.has(id)));
+  const newTopicIds = topicIds.filter((id) => !currentTopicIds.has(id));
 
   return Promise.all([
-    ...newTopicsIds.map(async (topicId) => ActivityReportObjectiveTopic.create({
+    ...newTopicIds.map((topicId) => ActivityReportObjectiveTopic.create({
       activityReportObjectiveId,
       topicId,
     })),
@@ -138,11 +169,85 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   ]);
 };
 
+/*
+  - ActivityReportObjectiveCitation -
+  Each row in this table is per grant (from ARO).
+  Each row has a json column called 'monitoringReferences', this is an array of objects.
+  Each object is unique by a combination of grantId, findingId, and reviewName (for the same grant).
+  To avoid complex lookups, we will simply UPDATE (by id) existing and CREATE new citations.
+  Citations to remove will be determined by id.
+*/
+export const cacheCitations = async (objectiveId, activityReportObjectiveId, citations = []) => {
+  let newCitations = [];
+  // Delete all existing citations for this activity report objective.
+  await ActivityReportObjectiveCitation.destroy({
+    where: { activityReportObjectiveId },
+    individualHooks: true,
+    hookMetadata: { objectiveId },
+  });
+
+  // Get the goal for this objective.
+  const goal = await Goal.findOne({
+    attributes: ['grantId', 'createdVia'],
+    include: [
+      {
+        model: Objective,
+        as: 'objectives',
+        where: { id: objectiveId },
+        required: true,
+      },
+    ],
+  });
+
+  if (!goal) {
+    auditLogger.info(`No goal found for objective ${objectiveId}. Skipping citation caching.`);
+    return [];
+  }
+
+  if (goal.createdVia !== 'monitoring') {
+    // If this is no longer a monitoring goal associated with this objective,
+    // we don't (and shouldn't) save any citations.
+    return [];
+  }
+
+  // Create citations to save.
+  if (citations && citations.length > 0) {
+    // Get the grant id from the goal.
+    const grantForThisCitation = goal.grantId;
+    // Get all the citations for the grant.
+    const citationsToSave = citations.reduce((acc, citation) => {
+      const { monitoringReferences } = citation;
+      monitoringReferences.forEach((ref) => {
+        const { grantId } = ref;
+        if (grantId === grantForThisCitation && !acc.find((c) => c.standardId === ref.standardId)) {
+          acc.push(citation);
+        }
+      });
+      return acc;
+    }, []);
+    newCitations = citationsToSave.map((citation) => (
+      {
+        activityReportObjectiveId,
+        citation: citation.citation,
+        // Only save the monitoring references for the grant we are working with.
+        monitoringReferences: citation.monitoringReferences.filter(
+          (ref) => ref.grantId === grantForThisCitation,
+        ),
+      }));
+    // If we have citations to save, create them.
+    if (newCitations.length > 0) {
+      return ActivityReportObjectiveCitation.bulkCreate(newCitations, { individualHooks: true });
+    }
+  }
+  return newCitations;
+};
+
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
     files,
     resources,
     topics,
+    citations,
     ttaProvided,
     status,
     courses,
@@ -196,6 +301,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
     cacheCourses(objectiveId, activityReportObjectiveId, courses),
+    cacheCitations(objectiveId, activityReportObjectiveId, citations),
   ]);
 };
 
@@ -283,7 +389,6 @@ const cacheGoalMetadata = async (
   reportId,
   isActivelyBeingEditing,
   prompts,
-  isMultiRecipientReport = false,
 ) => {
   // first we check to see if the activity report -> goal link already exists
   let arg = await ActivityReportGoal.findOne({
@@ -302,7 +407,6 @@ const cacheGoalMetadata = async (
       timeframe: goal.timeframe,
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
-      endDate: goal.endDate,
       isRttapa: null,
       isActivelyEdited: isActivelyBeingEditing || false,
       source: goal.source,
@@ -320,7 +424,6 @@ const cacheGoalMetadata = async (
       timeframe: goal.timeframe,
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
-      endDate: goal.endDate,
       source: goal.source,
       isRttapa: null,
       isActivelyEdited: isActivelyBeingEditing || false,
@@ -335,8 +438,9 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
-  if (isMultiRecipientReport) {
-    // Check for fei goal prompts we need to update on the activity report goal.
+  // Save the prompts for the ARG.
+  if (!prompts || !prompts.length) {
+    // If no prompts are passed in get them from the goal.
     const goalPrompts = await GoalFieldResponse.findAll({
       attributes: [
         ['goalTemplateFieldPromptId', 'promptId'],
@@ -364,7 +468,7 @@ const cacheGoalMetadata = async (
         cachePrompts(goal.id, arg.id, goalPrompts),
       );
     }
-  } else if (prompts && prompts.length) {
+  } else if (prompts.length) {
     finalPromises.push(
       cachePrompts(goal.id, arg.id, prompts),
     );

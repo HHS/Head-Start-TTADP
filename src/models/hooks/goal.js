@@ -1,10 +1,13 @@
 const { Op } = require('sequelize');
-const { GOAL_STATUS, GOAL_COLLABORATORS, OBJECTIVE_STATUS } = require('../../constants');
+const {
+  GOAL_STATUS,
+  GOAL_COLLABORATORS,
+  OBJECTIVE_STATUS,
+} = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
 } = require('../helpers/genericCollaborator');
 const { skipIf } = require('../helpers/flowControl');
-const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../helpers/goalSource');
 
 const processForEmbeddedResources = async (_sequelize, instance) => {
   // eslint-disable-next-line global-require
@@ -13,23 +16,6 @@ const processForEmbeddedResources = async (_sequelize, instance) => {
   if (calculateIsAutoDetectedForGoal(changed)) {
     await processGoalForResourcesById(instance.id);
   }
-};
-
-const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
-  const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
-    where: {
-      hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', name), '')),
-      regionId,
-    },
-    defaults: {
-      templateName: name,
-      lastUsed: createdAt,
-      regionId,
-      creationMethod: 'Automatic',
-    },
-    transaction,
-  });
-  return { id: goalTemplate[0].id, name };
 };
 
 const autoPopulateOnAR = (_sequelize, instance, options) => {
@@ -49,50 +35,6 @@ const autoPopulateOnApprovedAR = (_sequelize, instance, options) => {
     if (!options.fields.includes('onApprovedAR')) {
       options.fields.push('onApprovedAR');
     }
-  }
-};
-
-const preventNameChangeWhenOnApprovedAR = (_sequelize, instance) => {
-  if (instance.onApprovedAR === true) {
-    const changed = instance.changed();
-    if (instance.id !== null
-      && Array.isArray(changed)
-      && changed.includes('name')) {
-      throw new Error('Goal name change not allowed for goals on approved activity reports.');
-    }
-  }
-};
-
-const invalidateSimilarityScores = async (sequelize, instance, options) => {
-  const changed = Array.from(instance.changed());
-
-  if (changed.includes('name')) {
-    await sequelize.models.SimScoreGoalCache.destroy({
-      where: {
-        [Op.or]: [
-          { goal1: instance.id },
-          { goal2: instance.id },
-        ],
-      },
-      transaction: options.transaction,
-    });
-  }
-};
-
-const propagateName = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('name')
-    && instance.goalTemplateId !== null
-    && instance.goalTemplateId !== undefined) {
-    await sequelize.models.GoalTemplate.update(
-      { templateName: instance.name },
-      {
-        where: { id: instance.goalTemplateId },
-        transaction: options.transaction,
-        individualHooks: true,
-      },
-    );
   }
 };
 
@@ -123,101 +65,6 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
     );
   }
   return Promise.resolve();
-};
-
-const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, options) => {
-  const changed = Array.from(instance.changed());
-
-  if (changed.includes('name')) {
-    const { id: goalId } = instance;
-
-    if (!goalId) return;
-
-    const similarityGroup = await sequelize.models.GoalSimilarityGroup.findOne({
-      attributes: ['recipientId', 'id'],
-      include: [
-        {
-          model: sequelize.models.Goal,
-          as: 'goals',
-          attributes: ['id'],
-          required: true,
-          where: {
-            id: goalId,
-          },
-        },
-      ],
-      transaction: options.transaction,
-    });
-
-    if (!similarityGroup) return;
-
-    await sequelize.models.GoalSimilarityGroupGoal.destroy({
-      where: {
-        goalSimilarityGroupId: similarityGroup.id,
-      },
-      transaction: options.transaction,
-    });
-
-    await sequelize.models.GoalSimilarityGroup.destroy({
-      where: {
-        recipientId: similarityGroup.recipientId,
-        userHasInvalidated: false,
-        finalGoalId: null,
-      },
-      transaction: options.transaction,
-    });
-  }
-};
-
-const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, instance, options) => {
-  const { grantId } = instance;
-
-  if (!grantId) return;
-
-  const recipient = await sequelize.models.Recipient.findOne({
-    attributes: ['id'],
-    include: [
-      {
-        model: sequelize.models.Grant,
-        as: 'grants',
-        attributes: ['id'],
-        required: true,
-        where: {
-          id: grantId,
-        },
-      },
-    ],
-    transaction: options.transaction,
-  });
-
-  if (!recipient) return;
-
-  const groups = await sequelize.models.GoalSimilarityGroup.findAll({
-    where: {
-      recipientId: recipient.id,
-      userHasInvalidated: false,
-      finalGoalId: null,
-    },
-    transaction: options.transaction,
-  });
-
-  if (groups.length === 0) return;
-
-  await sequelize.models.GoalSimilarityGroupGoal.destroy({
-    where: {
-      goalSimilarityGroupId: groups.map((group) => group.id),
-    },
-    transaction: options.transaction,
-  });
-
-  await sequelize.models.GoalSimilarityGroup.destroy({
-    where: {
-      recipientId: recipient.id,
-      userHasInvalidated: false,
-      finalGoalId: null,
-    },
-    transaction: options.transaction,
-  });
 };
 
 /**
@@ -268,24 +115,11 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
   }
 };
 
-const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
-  const changed = instance.changed();
-  const NO_GOOD_STATUSES = [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED];
-  if (Array.isArray(changed)
-    && changed.includes('status')
-    && NO_GOOD_STATUSES.includes(instance.status)) {
-    const objectives = await sequelize.models.Objective.findAll({
-      where: {
-        goalId: instance.id,
-        status: {
-          [Op.not]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
-        },
-      },
-    });
+const preventPreStandardEditing = async (_sequelize, instance) => {
+  const isPreStandard = !!(instance.prestandard);
 
-    if (objectives.length > 0) {
-      throw new Error('Cannot close a goal with open objectives.');
-    }
+  if (isPreStandard) {
+    throw new Error(`Cannot edit the goal ${instance.id} because it is marked as pre-standard`);
   }
 };
 
@@ -295,45 +129,84 @@ const beforeValidate = async (sequelize, instance, options) => {
   }
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
-  preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
-const beforeUpdate = async (sequelize, instance, options) => {
-  preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
-  await preventCloseIfObjectivesOpen(sequelize, instance, options);
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
+const beforeCreate = async (sequelize, instance, options) => {
+};
+
+const beforeUpdate = async (sequelize, instance, _options) => {
+  await preventPreStandardEditing(sequelize, instance);
+};
+
+/**
+ * Creates a GoalStatusChange record for the initial status of a goal
+ * This ensures the creation event is always included in status history
+ */
+const createInitialStatusChange = async (sequelize, instance, options) => {
+  if (!instance.id) {
+    // If the instance does not have an ID, it means it has not been created yet.
+    // We should not create a status change for a goal that does not exist.
+    return;
+  }
+  // get the creator collaborator type
+  const creatorType = await sequelize.models.CollaboratorType.findOne({
+    where: { name: GOAL_COLLABORATORS.CREATOR },
+    transaction: options.transaction,
+  });
+
+  // get the creator collaborator for this goal
+  const goalCollaborator = creatorType ? await sequelize.models.GoalCollaborator.findOne({
+    where: {
+      goalId: instance.id,
+      collaboratorTypeId: creatorType.id,
+    },
+    include: [
+      {
+        model: sequelize.models.User,
+        as: 'user',
+        attributes: ['id', 'name'],
+      },
+    ],
+    transaction: options.transaction,
+  }) : null;
+
+  // create a GoalStatusChange record for the initial status
+  await sequelize.models.GoalStatusChange.create({
+    goalId: instance.id,
+    userId: goalCollaborator?.userId || options.userId || null,
+    userName: goalCollaborator?.user?.name || null,
+    oldStatus: null,
+    newStatus: instance.status || 'Not Started',
+    reason: 'Goal created',
+    context: 'Creation',
+  }, {
+    transaction: options.transaction,
+  });
 };
 
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await autoPopulateCreator(sequelize, instance, options);
-  await invalidateSimilarityGroupsOnCreationOrDestruction(sequelize, instance, options);
+  await createInitialStatusChange(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
-  await propagateName(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
-  await invalidateSimilarityScores(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);
-  await invalidateGoalSimilarityGroupsOnUpdate(sequelize, instance, options);
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
-  await invalidateSimilarityGroupsOnCreationOrDestruction(sequelize, instance, options);
   await updateTrainingReportGoalText(sequelize, instance, options);
 };
 
 export {
   processForEmbeddedResources,
-  findOrCreateGoalTemplate,
   autoPopulateOnApprovedAR,
-  preventNameChangeWhenOnApprovedAR,
-  preventCloseIfObjectivesOpen,
-  propagateName,
+  createInitialStatusChange,
   beforeValidate,
   beforeUpdate,
   afterCreate,
   afterUpdate,
+  beforeCreate,
   afterDestroy,
 };

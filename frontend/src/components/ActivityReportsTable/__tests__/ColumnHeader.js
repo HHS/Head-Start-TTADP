@@ -4,9 +4,23 @@ import {
   render, screen, act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ColumnHeader from '../ColumnHeader';
+import ColumnHeader, { getClassNamesFor } from '../ColumnHeader';
 
 describe('ActivityReportsTable ColumnHeader', () => {
+  describe('getClassNamesFor', () => {
+    it('returns empty string when sortBy does not match', () => {
+      expect(getClassNamesFor('shoes', 'hats', 'asc')).toBe('');
+    });
+
+    it('returns asc when sortBy matches and sortDirection is asc', () => {
+      expect(getClassNamesFor('shoes', 'shoes', 'asc')).toBe('asc');
+    });
+
+    it('returns desc when sortBy matches and sortDirection is desc', () => {
+      expect(getClassNamesFor('shoes', 'shoes', 'desc')).toBe('desc');
+    });
+  });
+
   const renderColumnHeader = (onUpdateSort = jest.fn(), sortDirection = 'asc') => {
     const name = 'fanciest shoes';
     render(

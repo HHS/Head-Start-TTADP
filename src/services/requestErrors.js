@@ -1,5 +1,3 @@
-import models from '../models';
-
 export default async function createRequestError({
   operation,
   uri,
@@ -8,11 +6,13 @@ export default async function createRequestError({
   responseBody = 'N/A',
   responseCode = 'N/A',
 }) {
+  // eslint-disable-next-line global-require
+  const { RequestErrors } = require('../models');
   try {
     const requestErrorBody = {
       operation, uri, method, requestBody, responseBody, responseCode,
     };
-    const requestError = await models.RequestErrors.create(requestErrorBody, { transaction: null });
+    const requestError = await RequestErrors.create(requestErrorBody, { transaction: null });
     return requestError.id;
   } catch (err) {
     throw new Error('Error creating RequestError entry');
@@ -20,12 +20,14 @@ export default async function createRequestError({
 }
 
 export async function requestErrors({ filter = '{}', range = '[0,9]', sort = '["createdAt","DESC"]' } = {}) {
+  // eslint-disable-next-line global-require
+  const { RequestErrors } = require('../models');
   const offset = JSON.parse(range)[0];
   const limit = JSON.parse(range)[1];
   const order = JSON.parse(sort);
   const where = JSON.parse(filter);
 
-  return models.RequestErrors.findAndCountAll({
+  return RequestErrors.findAndCountAll({
     where,
     order: [order],
     offset,
@@ -34,20 +36,26 @@ export async function requestErrors({ filter = '{}', range = '[0,9]', sort = '["
 }
 
 export async function requestErrorById(id) {
-  return models.RequestErrors.findOne({
+  // eslint-disable-next-line global-require
+  const { RequestErrors } = require('../models');
+  return RequestErrors.findOne({
     where: { id },
   });
 }
 
 export async function requestErrorsByIds({ filter = '{}' } = {}) {
-  return models.RequestErrors.findAll({
+  // eslint-disable-next-line global-require
+  const { RequestErrors } = require('../models');
+  return RequestErrors.findAll({
     where: JSON.parse(filter),
     attributes: ['id'],
   });
 }
 
 export async function delRequestErrors({ filter = '{}' } = {}) {
-  return models.RequestErrors.destroy({
+  // eslint-disable-next-line global-require
+  const { RequestErrors } = require('../models');
+  return RequestErrors.destroy({
     where: JSON.parse(filter),
   });
 }

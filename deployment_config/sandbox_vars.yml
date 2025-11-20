@@ -5,9 +5,15 @@ web_disk_quota: 2GB
 worker_instances: 2
 worker_memory: 1GB
 worker_disk_quota: 2GB
-similarity_api_instances: 1
-similarity_api_memory: 1GB
-similarity_api_disk_quota: 5GB
+
+app_name: tta-smarthub-sandbox
+app_url: https://tta-smarthub-${full_env}.app.cloud.gov/
+cg_username: ${CLOUDGOV_SANDBOX_USERNAME}
+cg_password: ${CLOUDGOV_SANDBOX_PASSWORD}
+cg_space: ${CLOUDGOV_SANDBOX_SPACE}
+cg_org: hhs-acf-ohs-tta
+cg_api: https://api.fr.cloud.gov
+
 LOG_LEVEL: info
 AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
@@ -16,5 +22,35 @@ TTA_SMART_HUB_URI: https://tta-smarthub-sandbox.app.cloud.gov
 CLAMAV_ENDPOINT: https://clamapi-ttahub-dev.apps.internal:9443
 SEND_NOTIFICATIONS: "true"
 SUPPRESS_ERROR_LOGGING: "false"
-SIMILARITY_ENDPOINT: https://tta-similarity-api-sandbox.app.cloud.gov/compute
 SMARTSHEET_ENDPOINT: https://api.smartsheetgov.com/2.0/
+FORCE_CRON: "false"
+AUTH_CLIENT_ID: SANDBOX_AUTH_CLIENT_ID
+
+SESSION_SECRET: "${SANDBOX_SESSION_SECRET}"
+JWT_SECRET: "${SANDBOX_JWT_SECRET}"
+HSES_DATA_FILE_URL: "${HSES_DATA_FILE_URL}"
+HSES_DATA_USERNAME: "${HSES_DATA_USERNAME}"
+HSES_DATA_PASSWORD: "${HSES_DATA_PASSWORD}"
+SMTP_HOST: ${STAGING_SMTP_HOST}
+SMTP_PORT: ${STAGING_SMTP_PORT}
+SMTP_HOST_TEST: ${SMTP_HOST_TEST}
+SMTP_PORT_TEST: ${SMTP_PORT_TEST}
+SMTP_SECURE: ${SMTP_SECURE}
+SMTP_IGNORE_TLS: ${STAGING_SMTP_IGNORE_TLS}
+FROM_EMAIL_ADDRESS: ${FROM_EMAIL_ADDRESS}
+SMTP_USER: ${SMTP_USER}
+SMTP_PASSWORD: ${SMTP_PASSWORD}
+ITAMS_MD_HOST: ${ITAMS_MD_HOST}
+ITAMS_MD_PORT: ${ITAMS_MD_PORT}
+ITAMS_MD_USERNAME: "${ITAMS_MD_USERNAME}"
+ITAMS_MD_PASSWORD: "${ITAMS_MD_PASSWORD}"
+SMARTSHEET_ACCESS_TOKEN: "${SMARTSHEET_ACCESS_TOKEN}"
+
+REACT_APP_GTM_ENABLED: ${SANDBOX_GTM_ENABLED}
+REACT_APP_GTM_ID: ${GLOBAL_GTM_ID}
+REACT_APP_GTM_AUTH: ${SANDBOX_GTM_AUTH}
+REACT_APP_GTM_PREVIEW: ${SANDBOX_GTM_PREVIEW}
+REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
+REACT_APP_INCLUDE_ACCESSIBILITY_CSS: "false"
+
+new_relic_app_id: "867346799"

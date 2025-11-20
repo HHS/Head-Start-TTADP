@@ -15,6 +15,8 @@ const CloseSuspendReasonModal = ({
   const [showValidationError, setShowValidationError] = useState(false);
 
   const key = goalIds.join();
+  // Create a unique ID for this instance of the modal
+  const uniqueId = `modal_${key}`;
 
   useEffect(() => {
     // Every time we show the modal reset the form.
@@ -29,13 +31,12 @@ const CloseSuspendReasonModal = ({
     setCloseSuspendReason(e.target.value);
     setShowValidationError(false);
   };
-
-  const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
+  const generateReasonRadioButtons = () => reasonRadioOptions.map((r, index) => (
     <Radio
-      id={r.trim().replace(' ', '-').toLowerCase()}
-      key={r}
+      id={`${reasonDisplayStatus}-reason-${index}-${uniqueId}`}
+      key={`${r}-${uniqueId}`}
       onChange={reasonChanged}
-      name="closeSuspendReason"
+      name={`${reasonDisplayStatus}-reason-${index}-${uniqueId}`}
       label={r}
       value={r}
       className="smart-hub--report-checkbox"
@@ -53,13 +54,12 @@ const CloseSuspendReasonModal = ({
       onSubmit(goalIds, newStatus, oldGoalStatus, closeSuspendReason, closeSuspendContext);
     }
   };
-
   return (
     <div className="smart-hub--goal-close-suspend-reason">
       <Modal
         modalRef={modalRef}
         onOk={validateSubmit}
-        modalId="CloseSuspendReasonModal"
+        modalId={`CloseSuspendReasonModal-${uniqueId}`}
         title={`Why are you ${reasonDisplayStatus} this goal?`}
         okButtonText="Submit"
         okButtonAriaLabel="Change goal status"
@@ -72,20 +72,20 @@ const CloseSuspendReasonModal = ({
         >
           <FormGroup error={showValidationError} className="margin-top-0">
             <Fieldset>
-              {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
-              {
-                generateReasonRadioButtons()
-              }
+              <ErrorMessage>
+                { showValidationError ? `Please select a reason for ${reasonDisplayStatus} goal.` : ''}
+              </ErrorMessage>
+              {generateReasonRadioButtons()}
             </Fieldset>
           </FormGroup>
           <FormGroup>
             <Fieldset>
-              <Label htmlFor="close-suspend-reason-context">
+              <Label htmlFor={`close-suspend-reason-context-${uniqueId}`}>
                 Additional context
               </Label>
               <Textarea
-                id="close-suspend-reason-context"
-                name="close-suspend-reason-context"
+                id={`close-suspend-reason-context-${uniqueId}`}
+                name={`close-suspend-reason-context-${uniqueId}`}
                 type="text"
                 value={closeSuspendContext}
                 onChange={contextChanged}

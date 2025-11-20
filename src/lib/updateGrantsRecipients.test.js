@@ -2,10 +2,25 @@
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
-import updateGrantsRecipients, { processFiles, updateCDIGrantsWithOldGrantData } from './updateGrantsRecipients';
+import updateGrantsRecipients, {
+  getPersonnelField, processFiles, updateCDIGrantsWithOldGrantData, syncGeoRegionGroups,
+} from './updateGrantsRecipients';
 import db, {
-  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, ProgramPersonnel,
+  sequelize,
+  Recipient,
+  Goal,
+  Grant,
+  GrantReplacements,
+  GrantReplacementTypes,
+  GrantNumberLink,
+  ActivityRecipient,
+  Group,
+  GroupGrant,
+  Program,
+  ZALGrant,
+  ProgramPersonnel,
 } from '../models';
+import { logger } from '../logger';
 
 jest.mock('axios');
 const mockZip = jest.fn();
@@ -85,6 +100,15 @@ describe('Update grants, program personnel, and recipients', () => {
     await ProgramPersonnel.unscoped().destroy({
       where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
+    await GrantReplacements.destroy({
+      where: {
+        [Op.or]: [
+          { replacingGrantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+          { replacedGrantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+        ],
+      },
+    });
+    await GroupGrant.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } }, force: true });
     await Grant.unscoped().destroy({
       where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
       individualHooks: true,
@@ -98,15 +122,23 @@ describe('Update grants, program personnel, and recipients', () => {
     await ProgramPersonnel.unscoped().destroy({
       where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
+    await GrantReplacements.destroy({
+      where: {
+        [Op.or]: [
+          { replacingGrantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+          { replacedGrantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+        ],
+      },
+    });
+    await GroupGrant.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } }, force: true });
     await Grant.unscoped().destroy({
       where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
       individualHooks: true,
     });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    jest.clearAllMocks();
   });
-  afterAll(async () => {
-    await db.sequelize.close();
-  });
+
   it('should import or update recipients', async () => {
     const recipientsBefore = await Recipient.findAll(
       { where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } },
@@ -126,15 +158,22 @@ describe('Update grants, program personnel, and recipients', () => {
     const recipient7782 = await Recipient.findOne({ where: { id: 7782 } });
     expect(recipient7782).toBeDefined();
 
-    const grant1 = await Grant.findOne({ where: { id: 8110 } });
-    expect(grant1.oldGrantId).toBe(7842);
+    const grant1 = await GrantReplacements.findOne({
+      where: { replacedGrantId: 7842, replacingGrantId: 8110 },
+    });
+    expect(grant1).toBeDefined();
 
-    const grant2 = await Grant.findOne({ where: { id: 11835 } });
-    expect(grant2.oldGrantId).toBe(2591);
+    const grant2 = await GrantReplacements.findOne({
+      where: { replacedGrantId: 2591, replacingGrantId: 11835 },
+    });
+    expect(grant2).toBeDefined();
+
     expect(recipient.recipientType).toBe('Community Action Agency (CAA)');
 
-    const grant3 = await Grant.findOne({ where: { id: 10448 } });
-    expect(grant3.oldGrantId).toBe(null);
+    const grant3 = await GrantReplacements.findOne({
+      where: { replacedGrantId: null, replacingGrantId: 10448 },
+    });
+    expect(grant3).toBeDefined();
 
     const grantForRecipients = await Grant.findAll({ where: { recipientId: 7782 } });
     expect(grantForRecipients.length).toEqual(2);
@@ -178,7 +217,7 @@ describe('Update grants, program personnel, and recipients', () => {
 
     const grants = await Grant.unscoped().findAll({ where: { recipientId: 1335 } });
     expect(grants).toBeDefined();
-    expect(grants.length).toBe(7);
+    expect(grants.length).toBe(8);
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
 
@@ -188,7 +227,7 @@ describe('Update grants, program personnel, and recipients', () => {
     const totalGrants = await Grant.unscoped().findAll({
       where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    expect(totalGrants.length).toBe(19);
+    expect(totalGrants.length).toBe(25);
   });
 
   it('should import or update program personnel', async () => {
@@ -942,26 +981,151 @@ describe('Update grants, program personnel, and recipients', () => {
 
   it('includes the inactivated date', async () => {
     await processFiles();
-    const grant = await Grant.findOne({ where: { id: 8317 } });
+    const grant = await Grant.findOne({ where: { id: 7842 } });
     // simulate updating an existing grant with null inactivationDate
     await grant.update({ inactivationDate: null }, { individualHooks: true });
-    const grantWithNullinactivationDate = await Grant.findOne({ where: { id: 8317 } });
+    const grantWithNullinactivationDate = await Grant.findOne({ where: { id: 7842 } });
     expect(grantWithNullinactivationDate.inactivationDate).toBeNull();
     await processFiles();
-    const grantWithinactivationDate = await Grant.findOne({ where: { id: 8317 } });
+    const grantWithinactivationDate = await Grant.findOne({ where: { id: 7842 } });
     expect(grantWithinactivationDate.inactivationDate).toEqual(new Date('2022-07-31'));
+  });
+
+  it('includes the replacement date', async () => {
+    await processFiles();
+    // const grant = await Grant.findOne({ where: { id: 7842 } });
+    // simulate updating an existing grant replacement with null replacementDate
+    await GrantReplacements.update(
+      { replacementDate: null },
+      { where: { replacedGrantId: 7842 }, individualHooks: true },
+    );
+    const grantReplacementWithNullDate = await GrantReplacements.findOne({
+      where: { replacedGrantId: 7842 },
+    });
+    expect(grantReplacementWithNullDate.replacementDate).toBeNull();
+    await processFiles();
+    const grantReplacement = await GrantReplacements.findOne({ where: { replacedGrantId: 7842 } });
+    expect(grantReplacement.replacementDate).toEqual('2021-10-01');
   });
 
   it('includes the inactivated reason', async () => {
     await processFiles();
-    const grant = await Grant.findOne({ where: { id: 8317 } });
+    const grant = await Grant.findOne({ where: { id: 7842 } });
     // simulate updating an existing grant with null inactivationReason
     await grant.update({ inactivationReason: null }, { individualHooks: true });
-    const grantWithNullinactivationReason = await Grant.findOne({ where: { id: 8317 } });
+    const grantWithNullinactivationReason = await Grant.findOne({ where: { id: 7842 } });
     expect(grantWithNullinactivationReason.inactivationReason).toBeNull();
     await processFiles();
-    const grantWithinactivationReason = await Grant.findOne({ where: { id: 8317 } });
+    const grantWithinactivationReason = await Grant.findOne({ where: { id: 7842 } });
     expect(grantWithinactivationReason.inactivationReason).toEqual('Replaced');
+  });
+
+  it('includes the grant_replacement_type', async () => {
+    await processFiles();
+    // simulate updating an existing grant replacement with null grantReplacementTypeId
+    await GrantReplacements.update(
+      { grantReplacementTypeId: null },
+      { where: { replacedGrantId: 7842 }, individualHooks: true },
+    );
+    const grantWithNullInactivationType = await GrantReplacements.findOne({
+      where: { replacedGrantId: 7842, grantReplacementTypeId: null },
+    });
+    expect(grantWithNullInactivationType).not.toBeNull();
+    await processFiles();
+    const grantReplacementWithInactivationReason = await GrantReplacements.findOne({
+      where: { replacedGrantId: 7842, grantReplacementTypeId: { [Op.ne]: null } },
+    });
+
+    const grantReplacementType = await GrantReplacementTypes.findOne({
+      where: { id: grantReplacementWithInactivationReason.grantReplacementTypeId },
+    });
+
+    expect(grantReplacementType.name).toEqual('DRS Non-Competitive Continuation');
+  });
+
+  it('includes the geographicRegion and geographicRegionId', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 14869 } });
+
+    expect(grant).not.toBeNull();
+    expect(grant.geographicRegion).toBe('West');
+    expect(grant.geographicRegionId).toBe(85);
+
+    const grantWithNullGeo = await Grant.findOne({ where: { id: 7842 } });
+
+    expect(grantWithNullGeo).not.toBeNull();
+    expect(grantWithNullGeo.geographicRegion).toBeNull();
+    expect(grantWithNullGeo.geographicRegionId).toBeNull();
+  });
+
+  describe('Updating GroupGrants', () => {
+    let group;
+    let groupGrant;
+    let grant;
+
+    afterEach(async () => {
+      if (grant && grant.id) {
+        await GrantReplacements.destroy({ where: { replacedGrantId: grant.id } });
+        await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+      }
+    });
+
+    it('should update the group', async () => {
+      [grant] = await Grant.findOrCreate({
+        where: { id: 7842 },
+        defaults: {
+          recipientId: 10, regionId: 1, number: 'X1',
+        },
+      });
+
+      [group] = await Group.findOrCreate({
+        where: { name: 'my test group 1234' },
+        defaults: { isPublic: true },
+      });
+
+      [groupGrant] = await GroupGrant.findOrCreate({
+        where: { grantId: grant.id, groupId: group.id },
+        defaults: { grantId: grant.id, groupId: group.id },
+      });
+
+      await processFiles();
+      const found = await GroupGrant.findOne({ where: { groupId: group.id } });
+
+      // Expect the grant id referenced by this group to have been updated with
+      // the id of the grant that has replaced this one.
+      expect([8110, 9999]).toContain(found.grantId);
+
+      await GroupGrant.destroy({ where: { groupId: group.id } });
+      await Group.destroy({ where: { id: group.id } });
+    });
+
+    it('should update all groups when multiple grants replace a single grant', async () => {
+      [grant] = await Grant.findOrCreate({
+        where: { id: 7842 },
+        defaults: {
+          recipientId: 10, regionId: 1, number: 'X1',
+        },
+      });
+
+      [group] = await Group.findOrCreate({
+        where: { name: 'my test group 1234' },
+        defaults: { isPublic: true },
+      });
+
+      [groupGrant] = await GroupGrant.findOrCreate({
+        where: { grantId: grant.id, groupId: group.id },
+        defaults: { grantId: grant.id, groupId: group.id },
+      });
+
+      await processFiles();
+      const found = await GroupGrant.findAll({ where: { groupId: group.id } });
+
+      // expect there to be two entities found:
+      expect(found.length).toBe(2);
+
+      await GroupGrant.destroy({ where: { grantId: [8110, 9999] } });
+      await Group.destroy({ where: { id: group.id } });
+    });
   });
 
   describe('updateCDIGrantsWithOldGrantData', () => {
@@ -970,10 +1134,9 @@ describe('Update grants, program personnel, and recipients', () => {
         where: { id: { [Op.in]: [3001, 3002, 3003, 3004] } },
         individualHooks: true,
       });
-      await db.sequelize.close();
     });
 
-    it('should update CDI grants based on oldGrantId', async () => {
+    it('should update CDI grants based on replacedGrantId', async () => {
       // Create old grants
       const oldGrant1 = await Grant.create({
         id: 3001, recipientId: 10, regionId: 1, number: 'X1',
@@ -982,24 +1145,325 @@ describe('Update grants, program personnel, and recipients', () => {
         id: 3002, recipientId: 11, regionId: 2, number: 'X2',
       });
 
-      // Create CDI grants linked to old grants
-      const grant1 = await Grant.create({
-        id: 3003, cdi: true, oldGrantId: oldGrant1.id, number: 'X3', recipientId: 628,
+      // Create CDI grants
+      const newGrant1 = await Grant.create({
+        id: 3003, cdi: true, number: 'X3', recipientId: 628,
       });
-      const grant2 = await Grant.create({
-        id: 3004, cdi: true, oldGrantId: oldGrant2.id, number: 'X4', recipientId: 628,
+      const newGrant2 = await Grant.create({
+        id: 3004, cdi: true, number: 'X4', recipientId: 628,
       });
 
-      await updateCDIGrantsWithOldGrantData([grant1, grant2]);
+      // Create the replacements (normally done by processFiles), linking them to the old grants
+      await GrantReplacements.create({
+        replacedGrantId: oldGrant1.id,
+        replacingGrantId: newGrant1.id,
+      });
+
+      await GrantReplacements.create({
+        replacedGrantId: oldGrant2.id,
+        replacingGrantId: newGrant2.id,
+      });
+
+      await updateCDIGrantsWithOldGrantData([newGrant1, newGrant2]);
 
       // Fetch the updated grants from the database
-      const updatedGrant1 = await Grant.findByPk(grant1.id);
-      const updatedGrant2 = await Grant.findByPk(grant2.id);
+      const updatedGrant1 = await Grant.findByPk(newGrant1.id);
+      const updatedGrant2 = await Grant.findByPk(newGrant2.id);
 
       expect(updatedGrant1.recipientId).toEqual(10);
       expect(updatedGrant1.regionId).toEqual(1);
       expect(updatedGrant2.recipientId).toEqual(11);
       expect(updatedGrant2.regionId).toEqual(2);
     });
+
+    it('shouldn\'t throw an error if there are no grant replacements found', async () => {
+      // spy on logger.error.
+      jest.spyOn(logger, 'error').mockImplementation(() => { });
+      jest.spyOn(logger, 'info').mockImplementation(() => { });
+      const newGrant = {
+        id: 8546, cdi: true, number: 'X5', recipientId: 628, regionId: 13,
+      };
+
+      await updateCDIGrantsWithOldGrantData([newGrant]);
+
+      // Ensure logger.error wasn't called.
+      expect(logger.error).not.toHaveBeenCalled();
+
+      // Expect logger.info to display the message that no replacements were found.
+      expect(logger.info).toHaveBeenCalledWith('updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: 8546, skipping');
+    });
+
+    it('logs an error if all oldGrants dont have the same recipient and region id', async () => {
+      const newGrant = {
+        id: 8546, cdi: true, number: 'X5', recipientId: 628, regionId: 13,
+      };
+
+      // spy on logger.error.
+      jest.spyOn(logger, 'error').mockImplementation(() => { });
+
+      // Mock return replacements.
+      jest.spyOn(GrantReplacements, 'findAll').mockResolvedValueOnce([{ replacedGrantId: 1 }, { replacedGrantId: 2 }]);
+
+      // Mock return old grants.
+      jest.spyOn(Grant, 'findByPk').mockResolvedValueOnce({ recipientId: 1, regionId: 1 });
+      jest.spyOn(Grant, 'findByPk').mockResolvedValueOnce({ recipientId: 2, regionId: 2 });
+
+      await updateCDIGrantsWithOldGrantData([newGrant]);
+
+      // Ensure logger.error was called.
+      expect(logger.error).toHaveBeenCalledWith(
+        'updateGrantsRecipients: Error updating grants:',
+        'Expected all valid replaced grants to have the same recipient and region for CDI grant 8546, skipping',
+      );
+    });
+  });
+
+  describe('syncGeoRegionGroups', () => {
+    let transaction;
+    let grant;
+    let inactiveGrant;
+    let replacingGrant;
+    let group;
+    const regionName = 'Northeast';
+
+    beforeAll(async () => {
+      group = await Group.findOne({ where: { name: regionName } });
+    });
+
+    beforeEach(async () => {
+      transaction = await sequelize.transaction();
+
+      grant = await Grant.create({
+        id: 1001,
+        status: 'Active',
+        number: '14NE0001',
+        recipientId: 1,
+        regionId: 1,
+        startDate: '2023-01-01',
+        endDate: '2024-01-01',
+        geographicRegion: regionName,
+      }, { transaction });
+
+      inactiveGrant = await Grant.create({
+        id: 1003,
+        status: 'Inactive',
+        number: '14NE0003',
+        recipientId: 1,
+        regionId: 1,
+        startDate: '2023-01-01',
+        endDate: '2024-01-01',
+        geographicRegion: regionName,
+      }, { transaction });
+
+      replacingGrant = await Grant.create({
+        id: 2004,
+        status: 'Active',
+        number: '14NE2004',
+        recipientId: 1,
+        regionId: 1,
+        startDate: '2023-01-01',
+        endDate: '2024-01-01',
+        geographicRegion: regionName,
+      }, { transaction });
+    });
+
+    afterEach(async () => {
+      await transaction.rollback();
+    });
+
+    it('adds missing GroupGrants for active grants in region', async () => {
+      const countBefore = await GroupGrant.count({ transaction });
+      expect(countBefore).toBe(0);
+
+      await syncGeoRegionGroups({ transaction });
+
+      const countAfter = await GroupGrant.count({ transaction });
+      expect(countAfter).toBe(2);
+
+      const gg = await GroupGrant.findOne({ transaction });
+      expect(gg.groupId).toBe(group.id);
+      expect(gg.grantId).toBe(grant.id);
+    });
+
+    it('removes GroupGrants for inactive grants', async () => {
+      await GroupGrant.create({
+        groupId: group.id,
+        grantId: inactiveGrant.id,
+      }, { transaction });
+
+      const countBefore = await GroupGrant.count({ transaction });
+      expect(countBefore).toBe(1);
+
+      await syncGeoRegionGroups({ transaction });
+
+      const countAfter = await GroupGrant.count({ transaction });
+      expect(countAfter).toBe(2);
+
+      const inactiveStillExists = await GroupGrant.findOne({
+        where: { grantId: inactiveGrant.id },
+        transaction,
+      });
+      expect(inactiveStillExists).toBeNull();
+    });
+
+    it('does not remove replaced grants from groups', async () => {
+      await GroupGrant.create({
+        groupId: group.id,
+        grantId: inactiveGrant.id,
+      }, { transaction });
+
+      await GrantReplacements.create({
+        replacedGrantId: inactiveGrant.id,
+        replacingGrantId: replacingGrant.id,
+      }, { transaction });
+
+      const countBefore = await GroupGrant.count({ transaction });
+      expect(countBefore).toBe(1);
+
+      await syncGeoRegionGroups({ transaction });
+
+      const countAfter = await GroupGrant.count({ transaction });
+      expect(countAfter).toBe(2);
+
+      const existingGroupGrants = await GroupGrant.findAll({
+        where: { groupId: group.id },
+        transaction,
+      });
+      const grantIds = existingGroupGrants.map((g) => g.grantId);
+
+      expect(grantIds).toContain(replacingGrant.id);
+      expect(grantIds).toContain(grant.id);
+    });
+  });
+
+  describe('GeoGroups - GroupGrants replacing grant sync', () => {
+    let group;
+    const regionName = 'Northeast';
+
+    beforeAll(async () => {
+      // Make sure the group exists
+      [group] = await Group.findOrCreate({
+        where: { name: regionName },
+        defaults: { isPublic: true },
+      });
+    });
+
+    it('after import replaces old grant in group with replacing grant', async () => {
+      const grantAId = 4001;
+
+      // Simulate initial state in the DB
+
+      // The replaced (inactive) grant already in the group
+      await Grant.create({
+        id: grantAId,
+        status: 'Inactive',
+        number: '14NE4001',
+        recipientId: 1,
+        regionId: 1,
+        geographicRegion: regionName,
+        startDate: '2022-01-01',
+        endDate: '2023-01-01',
+      });
+
+      await GroupGrant.create({
+        groupId: group.id,
+        grantId: grantAId,
+      });
+
+      // Before import
+      const preImportGrants = await GroupGrant.findAll({ where: { groupId: group.id } });
+      const preImportGrantIds = preImportGrants.map((g) => g.grantId);
+      expect(preImportGrantIds).toContain(4001);
+      expect(preImportGrantIds).not.toContain(4002);
+
+      // --- Process data ---
+      await processFiles();
+
+      const postImportGrants = await GroupGrant.findAll({ where: { groupId: group.id } });
+      const postImportGrantIds = postImportGrants.map((g) => g.grantId);
+
+      expect(postImportGrantIds).toContain(4002);
+      expect(postImportGrantIds).not.toContain(4001);
+    });
+
+    it('after import updates chain replacement so group has only final active replacing grant', async () => {
+      const grantAId = 5001;
+      const grantBId = 5002;
+      const grantCId = 5003;
+
+      // Create Grant A (original, inactive)
+      await Grant.create({
+        id: grantAId,
+        status: 'Inactive',
+        number: '14NE5001',
+        recipientId: 1,
+        regionId: 1,
+        geographicRegion: regionName,
+        startDate: '2020-01-01',
+        endDate: '2021-01-01',
+      });
+
+      // // Create Grant B (replaces A, but is now also inactive)
+      await Grant.create({
+        id: grantBId,
+        status: 'Inactive',
+        number: '14NE5002',
+        recipientId: 1,
+        regionId: 1,
+        geographicRegion: regionName,
+        startDate: '2021-02-01',
+        endDate: '2022-01-01',
+      });
+
+      // Create Grant C (replaces B, active)
+      await Grant.create({
+        id: grantCId,
+        status: 'Active',
+        number: '14NE5003',
+        recipientId: 1,
+        regionId: 1,
+        geographicRegion: regionName,
+        startDate: '2022-02-01',
+        endDate: '2024-01-01',
+      });
+
+      // Create replacement links
+      await GrantReplacements.create({
+        replacedGrantId: grantAId,
+        replacingGrantId: grantBId,
+      });
+      await GrantReplacements.create({
+        replacedGrantId: grantBId,
+        replacingGrantId: grantCId,
+      });
+
+      // Simulate existing GroupGrant on B (from earlier import)
+      await GroupGrant.create({
+        groupId: group.id,
+        grantId: grantBId,
+      });
+
+      // Verify before import
+      const pre = await GroupGrant.findAll({ where: { groupId: group.id } });
+      const preIds = pre.map((g) => g.grantId);
+      expect(preIds).toContain(grantBId);
+      expect(preIds).not.toContain(grantCId);
+
+      // --- Process import ---
+      await processFiles();
+
+      // Verify after import
+      const post = await GroupGrant.findAll({ where: { groupId: group.id } });
+      const postIds = post.map((g) => g.grantId);
+      expect(postIds).toContain(grantCId);
+      expect(postIds).not.toContain(grantBId);
+    });
+  });
+});
+
+describe('getPersonnelField', () => {
+  it('returns null when data is not an object', () => {
+    const out = getPersonnelField('role', 'field', 'program');
+    expect(out).toBeNull();
   });
 });

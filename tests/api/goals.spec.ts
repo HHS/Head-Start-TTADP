@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
-import Joi from 'joi';
+import Joi from '@hapi/joi';
 import { root, validateSchema } from './common';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
 
-test('get /goals?goalIds[]=&reportId', async ({ request }) => {
+test('get /goals?reportId&goalTemplateId', async ({ request }) => {
   const response = await request.get(
-    `${root}/goals?goalIds[]=4&reportId=10000`,
+    `${root}/goals?reportId=10000&goalTemplateId=1`,
     { headers: { 'playwright-user-id': '1' } },
   );
 
@@ -50,7 +50,9 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     inactivationDate: Joi.any().allow(null),
     inactivationReason: Joi.any().allow(null),
     deleted: Joi.any().allow(null),
-    recipientNameWithPrograms: Joi.string()
+    recipientNameWithPrograms: Joi.string(),
+    geographicRegionId: Joi.number().allow(null),
+    geographicRegion: Joi.string().allow(null),
   });
 
   const schema = Joi.array().items(Joi.object({
@@ -71,7 +73,17 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     isNew: Joi.boolean(),
     collaborators: Joi.array().items(Joi.any().allow(null)),
     prompts: Joi.object(),
+    promptsForReview: Joi.array().items(Joi.object({
+      key: Joi.string(),
+      recipients: Joi.array().items(Joi.object({
+        id: Joi.number(),
+        name: Joi.string(),
+      })),
+      responses: Joi.array().items(Joi.string()),
+    })),
     source: Joi.any(),
+    onApprovedAR: Joi.boolean(),
+    isSourceEditable: Joi.boolean(),
     statusChanges: Joi.array().items(Joi.object({
       oldStatus: Joi.string(),
       newStatus: Joi.string(),

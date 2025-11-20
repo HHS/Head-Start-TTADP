@@ -1,6 +1,5 @@
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
-import { expect } from '@playwright/test';
 import { determineMergeGoalStatus } from '@ttahub/common';
 import db, {
   Recipient,
@@ -109,7 +108,6 @@ describe('Goals DB service', () => {
       await Goal.create({
         name: existingGoalName,
         status: 'Draft',
-        endDate: null,
         onApprovedAR: false,
         grantId: grant.id,
         createdVia: 'rtr',
@@ -270,7 +268,6 @@ describe('Goals DB service', () => {
       const data = {
         ...mockRequestData,
         goalText,
-        endDate: faker.date.future(),
         goalSource: 'Recipient request',
       };
       const response = await createMultiRecipientGoalsFromAdmin(data);
@@ -285,7 +282,6 @@ describe('Goals DB service', () => {
       const data = {
         ...mockRequestData,
         goalText,
-        endDate: faker.date.future(),
         goalSource: 'Recipient request',
         createReport: true,
       };
@@ -372,7 +368,6 @@ describe('Goals DB service', () => {
       goal = await Goal.create({
         name: '    Goal for Objectives with leading and trailing values    ',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,

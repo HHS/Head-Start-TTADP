@@ -1,0 +1,21 @@
+// TODO: we can refactor the react/HTML to use 
+// the uswds css classes and existing components
+// to dispose of this file entirely
+
+.collab-report-header {
+  gap: 0rem;
+
+  @media (min-width: 84em) {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+
+    h1 {
+      margin: .67em 0;
+    }
+
+    div {
+      margin-top: 0;
+    }
+  }
+}

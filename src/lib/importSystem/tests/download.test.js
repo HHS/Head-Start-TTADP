@@ -1,27 +1,13 @@
 import { Readable } from 'stream';
 import * as download from '../download';
 import {
-  getPriorFile,
-  importHasMoreToDownload,
-  importHasMoreToProcess,
-  getNextFileToProcess,
-  recordAvailableFiles,
-  recordAvailableDataFiles,
   logFileToBeCollected,
-  setImportFileHash,
   setImportFileStatus,
-  setImportDataFileStatus,
-  setImportDataFileStatusByPath,
-  updateAvailableDataFileMetadata,
-  importSchedules,
 } from '../record';
-import SftpClient, { FileInfo as SFTPFileInfo } from '../../stream/sftp';
-import Hasher from '../../stream/hasher';
-import S3Client from '../../stream/s3';
+import SftpClient from '../../stream/sftp';
 import {
   updateStatusByKey,
 } from '../../../services/files';
-import addToScanQueue from '../../../services/scanQueue';
 import { auditLogger } from '../../../logger';
 import {
   FILE_STATUSES,

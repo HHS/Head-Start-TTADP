@@ -32,6 +32,8 @@ import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
 import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
 import { withActivityReportGoalResponse, withoutActivityReportGoalResponse } from './activityReportGoalResponse';
 import { withGoalName, withoutGoalName } from './goalName';
+import { withGrantStatus, withoutGrantStatus } from './grantStatus';
+import { withoutStatus } from '../goals/status';
 
 export const topicToQuery = {
   reportId: {
@@ -65,8 +67,18 @@ export const topicToQuery = {
     nctn: (query) => withoutAuthor(query),
   },
   topic: {
-    in: (query) => withTopics(query),
-    nin: (query) => withoutTopics(query),
+    in: (query, _options, _userId, validTopics) => withTopics(
+      query,
+      _options,
+      _userId,
+      validTopics,
+    ),
+    nin: (query, _options, _userId, validTopics) => withoutTopics(
+      query,
+      _options,
+      _userId,
+      validTopics,
+    ),
   },
   collaborators: {
     ctn: (query) => withCollaborators(query),
@@ -102,6 +114,10 @@ export const topicToQuery = {
   reason: {
     in: (query) => withReason(query),
     nin: (query) => withoutReason(query),
+  },
+  grantStatus: {
+    in: (query) => withGrantStatus(query),
+    nin: (query) => withoutGrantStatus(query),
   },
   participants: {
     in: (query) => withParticipants(query),
@@ -168,6 +184,6 @@ export const topicToQuery = {
   },
 };
 
-export function activityReportsFiltersToScopes(filters, options, userId) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId);
+export function activityReportsFiltersToScopes(filters, options, userId, validTopics) {
+  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
 }

@@ -53,7 +53,6 @@ const RenderApprover = ({
       <Approver
         onFormReview={onFormReview}
         reviewed={reviewed}
-        formData={formData}
         isPendingApprover
         pages={pages}
         availableApprovers={[{ id: 1, name: 'Approver 1' }]}
@@ -103,13 +102,13 @@ describe('Approver review page', () => {
   describe('when the report is submitted', () => {
     it('displays the submit review component', async () => {
       renderReview(REPORT_STATUSES.SUBMITTED, () => { }, false);
-      expect(await screen.findByText('Review and approve report')).toBeVisible();
+      expect(await screen.findByText('Review and approve')).toBeVisible();
     });
 
     it('allows the approver to submit a review and redirects them after', async () => {
       const mockSubmit = jest.fn();
       const history = renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true);
-      const dropdown = await screen.findByTestId('dropdown');
+      const dropdown = document.querySelector('.usa-select');
       userEvent.selectOptions(dropdown, 'approved');
       const button = await screen.findByRole('button');
       userEvent.click(button);
@@ -179,30 +178,6 @@ describe('Approver review page', () => {
       );
       const button = await screen.findByRole('button');
       expect(button).toBeDisabled();
-    });
-  });
-
-  describe('when the report is approved', () => {
-    it('displays the approved component', async () => {
-      renderReview(REPORT_STATUSES.APPROVED, () => { }, false);
-      expect(await screen.findByText('Report approved')).toBeVisible();
-    });
-
-    it('shows approver notes', async () => {
-      const approverWithNotes = [
-        {
-          id: 1, status: null, note: '<p></p>\n', user: { id: 1, fullName: 'approver 1' },
-        },
-        {
-          id: 2, status: null, note: '<p>These are my sample notes 2.</p>\n', user: { id: 2, fullName: 'approver 2' },
-        },
-        {
-          id: 3, status: null, note: null, user: { id: 1, fullName: 'approver 3' },
-        },
-      ];
-      renderReview(REPORT_STATUSES.APPROVED, () => { }, false, approverWithNotes);
-      const alert = document.querySelector('.usa-alert');
-      expect(alert).not.toBe(null);
     });
   });
 

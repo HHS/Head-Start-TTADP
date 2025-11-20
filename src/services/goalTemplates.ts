@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { Sequelize, Op } from 'sequelize';
 import db from '../models';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
@@ -49,6 +48,7 @@ interface PromptResponse {
   promptId: number,
   response: string[] | null;
   goalIds: number[];
+  grantId: number;
 }
 
 /**
@@ -59,14 +59,47 @@ specified region.
 */
 export async function getCuratedTemplates(
   grantIds: number[] | null,
+  includeClosedAndSuspendedGoals = false,
 ): Promise<GoalTemplate[]> {
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
+
+  let monitoringGoalIds = [];
+  const monitoringGoals = await GoalModel.findAll({
+    attributes: ['id'],
+    where: {
+      goalTemplateId: {
+        [Op.in]: sequelize.literal('(SELECT id FROM "GoalTemplates" WHERE standard = \'Monitoring\')'),
+      },
+      grantId: grantIds,
+    },
+  });
+  monitoringGoalIds = monitoringGoals.map((goal) => goal.id);
+
+  const goalWhere = {
+    grantId: grantIds,
+  } as {
+    grantId: number[],
+    status?: {
+      [Op.notIn]: string[]
+    },
+  };
+
+  if (!includeClosedAndSuspendedGoals) {
+    goalWhere.status = {
+      [Op.notIn]: [
+        GOAL_STATUS.SUSPENDED,
+        GOAL_STATUS.CLOSED,
+      ],
+    };
+  }
 
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
       'source',
+      'isSourceEditable',
+      'standard',
       ['templateName', 'label'],
       ['id', 'value'],
       ['templateName', 'name'],
@@ -74,7 +107,6 @@ export async function getCuratedTemplates(
       [Sequelize.literal('ARRAY[]::int[]'), 'goalIds'],
       [Sequelize.literal('NULL::varchar'), 'isRttapa'],
       [Sequelize.literal(`'${GOAL_STATUS.NOT_STARTED}'`), 'status'],
-      [Sequelize.literal('NULL::varchar'), 'endDate'],
       [Sequelize.literal('ARRAY[]::int[]'), 'grantIds'],
       [Sequelize.literal('ARRAY[]::int[]'), 'oldGrantIds'],
       [Sequelize.literal('TRUE'), 'isCurated'], // setting this tells the frontnd to check for conditional prompts
@@ -105,28 +137,55 @@ export async function getCuratedTemplates(
           'status',
           'grantId',
           'goalTemplateId',
+          'prestandard',
         ],
         required: false,
-        where: {
-          grantId: grantIds,
-          status: {
-            [Op.notIn]: [
-              GOAL_STATUS.SUSPENDED,
-              GOAL_STATUS.CLOSED,
-            ],
-          },
-        },
+        where: goalWhere,
       },
     ],
     where: {
       creationMethod: CREATION_METHOD.CURATED,
-      [Op.or]: [
-        { '$"region.grants"."id"$': { [Op.not]: null } },
-        { regionId: null },
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { '$"region.grants"."id"$': { [Op.not]: null } },
+            { regionId: null },
+          ],
+        },
+        {
+          [Op.or]: [
+            { '$goals.id$': monitoringGoalIds },
+            {
+              standard: {
+                [Op.not]: 'Monitoring',
+              },
+            },
+          ],
+        },
       ],
     },
-    ORDER: [['name', 'ASC']],
+    order: [['templateName', 'ASC']],
   });
+}
+
+export async function getSourceFromTemplate(
+  goalTemplateId: number,
+  grantIds: number[],
+) {
+  const goal = await GoalModel.findOne({
+    where: {
+      goalTemplateId,
+      grantId: grantIds,
+    },
+    attributes: ['source'],
+    include: {
+      model: GoalTemplateModel,
+      as: 'goalTemplate',
+      attributes: ['source'],
+    },
+  });
+
+  return goal?.source || goal?.goalTemplate?.source;
 }
 
 /**
@@ -208,17 +267,148 @@ export async function getFieldPromptsForCuratedTemplate(
       }
       return promptsWithResponses;
     },
-    // the inital set of prompts, including the
-    // response key if not already present
-    prompts.map((p: FieldPrompts) => {
-      if (p.response) {
-        return p;
-      }
-
-      return { ...p, response: [] };
-    }),
+    // the inital set of prompts, which can't have a response yet
+    // because `prompts` is an array of GoalTemplateFieldPromptModel, which both
+    // doesn't include a response and doesn't join with GoalFieldResponseModel.
+    prompts.map((p: FieldPrompts) => ({ ...p, response: [] })),
   );
   return restructuredPrompts;
+}
+
+/**
+Retrieves field prompts for a curated goal template and associated goals for Activity Reports.
+We need things a little bit differently for Activity Reports as we need it per grant.
+@param goalTemplateId - The ID of the goal template to retrieve prompts for.
+@param goalIds - An array of goal IDs to retrieve responses for. Can be null if no
+  responses are needed.
+@returns Any array of field prompt responses and prompts.
+*/
+export async function getFieldPromptsForActivityReports(
+  goalTemplateId: number,
+  goalIds: number[] | null,
+): Promise<FieldPrompts[]> {
+  // Collect the data from the DB for the passed goalTemplate and goalIds
+  // and return the prompts with the responses for the passed goalIds
+  const [prompts, responses] = await Promise.all([
+    GoalTemplateFieldPromptModel.findAll({
+      attributes: [
+        ['id', 'promptId'],
+        'ordinal',
+        'title',
+        'prompt',
+        'hint',
+        'caution',
+        'fieldType',
+        'options',
+        'validations',
+        'goalTemplateId',
+      ],
+      where: { goalTemplateId },
+      order: [['ordinal', 'asc']],
+      raw: true,
+    }),
+    GoalFieldResponseModel.findAll({
+      attributes: [
+        ['goalTemplateFieldPromptId', 'promptId'],
+        'response',
+        [
+          sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))),
+          'goalIds',
+        ],
+        [
+          sequelize.col('"goal"."grantId"'),
+          'grantId',
+        ],
+      ],
+      where: { goalId: goalIds },
+      include: [{
+        model: GoalTemplateFieldPromptModel,
+        as: 'prompt',
+        required: true,
+        attributes: [],
+        include: [{
+          model: GoalTemplateModel,
+          as: 'goalTemplate',
+          required: true,
+          attributes: [],
+          where: { id: goalTemplateId },
+        }],
+      },
+      {
+        model: GoalModel,
+        as: 'goal',
+        required: true,
+        attributes: [],
+      }],
+      group: [
+        '"GoalFieldResponse"."goalTemplateFieldPromptId"',
+        '"GoalFieldResponse"."response"',
+        '"goal"."grantId"',
+      ],
+      raw: true,
+    }),
+  ]);
+
+  // restructure the collected data into one object with all responses for the passed goalIds if
+  // any exists
+
+  const restructuredPrompts = responses.reduce(
+    (
+      promptsWithResponses: FieldPrompts[],
+      response: PromptResponse,
+    ) => {
+      // Find the matching prompt for this response.
+      const matchingPrompt = prompts.find((p) => p.promptId === response.promptId);
+      if (matchingPrompt) {
+        promptsWithResponses.push({
+          ...matchingPrompt,
+          grantId: response.grantId,
+          response: response.response ? [...response.response] : [],
+        });
+      }
+      return promptsWithResponses;
+    },
+    [],
+  );
+  return [restructuredPrompts, prompts];
+}
+
+/**
+ * Validates the response for a given prompt based on its requirements.
+ * @param {string[]} response - The response to validate.
+ * @param {any} promptRequirements - The requirements of the prompt.
+ * @throws Will throw an error if the response is invalid.
+ */
+export function validatePromptResponse(response: string[], promptRequirements) {
+  if (promptRequirements.fieldType === PROMPT_FIELD_TYPE.MULTISELECT) {
+    if (response && response.filter((r) => !promptRequirements.options.includes(r)).length > 0) {
+      throw new Error(
+        `Response for '${promptRequirements.title}' contains invalid values. Invalid values: ${
+          response.filter((r) => !promptRequirements.options.includes(r)).map((r) => `'${r}'`).join(', ')
+        }.`,
+      );
+    }
+
+    if (promptRequirements.validations) {
+      const { rules } = promptRequirements.validations;
+
+      if (rules) {
+        const maxSelections = (() => {
+          const max = rules?.find((r) => r.name === 'maxSelections');
+          if (max) {
+            return max.value;
+          }
+          return false;
+        })();
+
+        if (maxSelections && response && response.length > maxSelections) {
+          throw new Error(
+            `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
+          );
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -280,13 +470,12 @@ export async function setFieldPromptForCuratedTemplate(
       raw: true,
     }),
   ]);
-
   if (!promptRequirements) {
     throw new Error(`No prompt found with ID ${promptId}`);
   }
 
+  // We always want to update the goal field response when saving the report.
   const goalIdsToUpdate = currentResponses
-    .filter((r) => r.response)
     .map((r) => r.goalId);
 
   const recordsToCreate = goalIds.filter((id) => currentResponses.every((r) => r.goalId !== id))
@@ -295,44 +484,8 @@ export async function setFieldPromptForCuratedTemplate(
       goalTemplateFieldPromptId: promptId,
       response,
     }));
-
   if (goalIdsToUpdate.length || recordsToCreate.length) {
-    if (promptRequirements.fieldType === PROMPT_FIELD_TYPE.MULTISELECT) {
-      if (response
-        && response
-          .filter((r) => !promptRequirements.options.includes(r))
-          .length > 0) {
-        return Promise.reject(new Error(
-          `Response for '${promptRequirements.title}' contains invalid values. Invalid values: ${
-            response
-              .filter((r) => !promptRequirements.options.includes(r))
-              .map((r) => `'${r}'`)
-              .join(', ')
-          }.`,
-        ));
-      }
-
-      // todo - rip out this validation logic and put it in it's own function
-      if (promptRequirements.validations) {
-        const { rules } = promptRequirements.validations;
-
-        if (rules) {
-          const maxSelections = (() => {
-            const max = rules?.find((r) => r.name === 'maxSelections');
-            if (max) {
-              return max.value;
-            }
-            return false;
-          })();
-
-          if (maxSelections && response && response.length > maxSelections) {
-            throw new Error(
-              `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
-            );
-          }
-        }
-      }
-    }
+    validatePromptResponse(response, promptRequirements);
 
     return Promise.all([
       GoalFieldResponseModel.update(

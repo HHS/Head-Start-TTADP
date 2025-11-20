@@ -1,7 +1,18 @@
 import { test, expect } from '@playwright/test';
 import { blur } from './common';
+import { query } from '../utils/common';
 
-test('can fill out and complete a training and session report', async ({ page }) => {
+test.beforeAll(async ({ request }) => {
+  // Set user to a temporary admin.
+  await query(request, 'insert into "Permissions" ("userId", "regionId", "scopeId") values (5, 1, 2);')
+});
+
+test.afterAll(async ({ request }) => {
+  // Remove the temporary admin.
+  await query(request, 'delete from "Permissions" where "userId" = 5 AND "regionId" = 1 AND "scopeId" = 2;')
+});
+
+test('can fill out and complete a training and session report', async ({ page}) => {
   // navigate to training reports
   await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Training Reports' }).click();
@@ -12,37 +23,33 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await page.keyboard.press('Escape');
-
-  await page.getByText(/Event region point of contact/i).click();
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
-  await page.keyboard.press('Escape');
   await page.getByText('Recipients').click();
+
   await page.getByLabel('Event start date *mm/dd/yyyy').fill('01/02/2023');
   await page.getByLabel('Event end date *mm/dd/yyyy').fill('02/02/2023');
-  await page.getByRole('button', { name: 'Save and continue' }).click();
 
-  // event vision and goal
-  await page.getByLabel('Event goal *').fill('Event goal');
-  await page.getByRole('button', { name: 'Save and continue' }).click();
-  await page.getByRole('button', { name: 'Submit event' }).click();
+  await page.getByRole('button', { name: 'Review and submit' }).click();
 
-  // verify event cannot be submitted
-  expect(page.getByText('Event must be complete to submit')).toBeTruthy();
+  // Click the modal 'Yes, and continue' button.
+  await page.waitForTimeout(2000); // wait for first post to complete
+  await page.getByRole('button', { name: 'Yes, continue' }).click();
 
-  // go back to training reports and create a session
-  await page.getByRole('link', { name: 'Back to Training Reports' }).click();
-  await page.getByTestId('ellipsis-button').click();
+  // Back on the TR page click create session.
+  await page.getByTestId('context-menu-actions-btn').click();
   await page.getByRole('button', { name: 'Create session' }).click();
 
-  // session summary
+  // IST/Creator session summary
   await page.waitForTimeout(2000); // wait for first post to complete
   await page.getByLabel('Session name *').fill('First session');
   await page.getByLabel('Session start date *mm/dd/yyyy').fill('01/02/2023');
   await page.getByLabel('Session end date *mm/dd/yyyy').fill('02/02/2023');
   await page.getByLabel('Duration in hours (round to the nearest quarter hour) *').fill('5');
   await page.getByLabel('Session context *').fill('Context');
-  await page.getByLabel('Session objective *').fill('Objective');
+  await page.getByLabel('Session objectives *').fill('Objective');
+
+  await page.getByText('Select the goals that this activity supports *Get help selecting a goal').click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
 
   await page.getByText('Topics *Get help choosing topics').click();
   await page.keyboard.press('ArrowDown');
@@ -55,14 +62,18 @@ test('can fill out and complete a training and session report', async ({ page })
 
   await page.locator('#ttaProvided').fill('TTA');
 
-  await page.getByTestId('dropdown').selectOption('Introducing');
+  await page.locator('select.usa-select').selectOption('Introducing');
+  await blur(page);
+  await page.waitForTimeout(2000); // wait for first post to complete
+  // Click Save and continue.
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(2000); // wait for first post to complete
 
   // session participants
   await page.getByTestId('form').getByText('No').click();
   await blur(page);
+  await page.waitForTimeout(2000);
 
   await page.getByText(/Recipients/i).click();
   await page.keyboard.press('ArrowDown');
@@ -93,35 +104,32 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByTestId('recipientNextSteps-input').fill('test ');
   await page.getByLabel('When do you anticipate completing step 1? *').fill('07/02/2023');
   await page.getByLabel('When does the recipient anticipate completing step 1? *').fill('07/03/2023');
-  await page.getByRole('button', { name: 'Save and continue' }).click();
 
+  // Save POC session draft.
+  await page.getByRole('button', { name: 'Save draft' }).click();
+
+ // Leave the session.
   await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Training Reports' }).click();
   await page.getByRole('link', { name: 'In progress' }).click();
 
-  // edit session and save changes
+  // edit session and submit changes
   await page.getByRole('button', { name: 'View sessions for event R01-PD-23-1037' }).click();
   await page.getByRole('link', { name: 'Edit session' }).click();
-  await page.getByLabel('Session name *').fill('First session revised');
+  await page.getByRole('button', { name: 'Next steps Complete' }).click();
+  await page.waitForTimeout(2000); // wait for first post to complete
+  await page.getByRole('button', { name: 'Review and submit' }).click();
 
-  await page.getByRole('button', { name: 'Complete session Not Started' }).click();
+  // Click the modal 'Yes, and continue' button.
+  await page.getByRole('button', { name: 'Yes, continue' }).click();
 
-  // complete session 
-  await page.getByTestId('dropdown').selectOption('Complete');
-  await page.getByRole('button', { name: 'Submit session' }).click();
+  // Verify the session is now complete.
+  await page.getByLabel('View sessions for event R01-PD-23-').click();
+  await page.getByText('Status Complete').click();
 
-  // complete event
-  await page.getByTestId('ellipsis-button').click();
-  await page.getByRole('button', { name: 'Edit event' }).click();
-  await page.getByText(/complete event/i).click();
-  await page.getByTestId('dropdown').selectOption('Complete');
-  await page.getByRole('button', { name: 'Submit event' }).click();
-
-  await page.waitForTimeout(2000); // waiting for navigation
-
-  // view event
-  await page.getByTestId('ellipsis-button').click();
-  await page.getByTestId('menu').getByTestId('button').click();
+  // view/print event
+  await page.getByTestId('context-menu-actions-btn').click();
+  await page.getByTestId('menu').getByText('View/Print event').click();
 
   await page.waitForTimeout(2000); // waiting for navigation
 

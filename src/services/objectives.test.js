@@ -535,6 +535,7 @@ describe('Objectives DB service', () => {
           id: grant.id,
         },
         force: true,
+        individualHooks: true,
       });
 
       await Recipient.destroy({
@@ -553,10 +554,11 @@ describe('Objectives DB service', () => {
 
       expect(x.length).toBe(2);
       expect(x[0].goal.grant.regionId).toBe(grant.regionId);
-      expect(x[0].goal.status).toBe(goal.status);
+      // the default status is 'In Progress' if not specified
+      expect(x[0].goal.status).toBe('Not Started');
 
       expect(x[1].goal.grant.regionId).toBe(grant.regionId);
-      expect(x[1].goal.status).toBe(goal.status);
+      expect(x[1].goal.status).toBe('Not Started');
     });
   });
 

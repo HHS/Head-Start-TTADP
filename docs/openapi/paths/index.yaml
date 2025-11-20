@@ -18,10 +18,6 @@
   $ref: './adminAllUsers.yaml'
 '/admin/recipients':
   $ref: './recipients.yaml'
-'/admin/grants/cdi':
-  $ref: './grants.yaml'
-'/admin/grants/cdi/{grantId}':
-  $ref: './updateGrant.yaml'
 '/activity-reports':
   $ref: './activity-reports/activity-reports.yaml'
 '/activity-reports/download-all':
@@ -64,8 +60,6 @@
   $ref: './widgets/reasonList.yaml'
 '/widgets/topicAndFrequencyGraph':
   $ref: './widgets/topicAndFrequencyGraph.yaml'
-'/search':
-  $ref: './search/search.yaml'
 '/settings':
   $ref: './settings/index.yaml'
 '/settings/email':

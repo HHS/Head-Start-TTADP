@@ -2,7 +2,6 @@ import React from 'react';
 import { Switch, Route } from 'react-router';
 import { NavLink } from 'react-router-dom';
 import User from './users';
-import Cdi from './cdi';
 import Diag from './diag';
 import Flags from './Flags';
 import SiteAlerts from './SiteAlerts';
@@ -12,16 +11,16 @@ import Goals from './Goals';
 import SS from './SS';
 import TrainingReports from './TrainingReports';
 import Courses from './Courses';
+import CourseEdit from './CourseEdit';
+import FeedPreview from './FeedPreview';
+import BuildInfo from '../../components/BuildInfo';
 
 function Admin() {
   return (
     <>
       <h1>Admin</h1>
       <h2>Support</h2>
-      <div className="margin-bottom-2">
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
-          CDI grants
-        </NavLink>
+      <div className="margin-bottom-2 flex-wrap display-flex flex-gap-1">
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/courses">
           Courses
         </NavLink>
@@ -49,6 +48,9 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/ss">
           SS
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/feed-preview">
+          Confluence feed preview
+        </NavLink>
       </div>
       <h2>Engineer only</h2>
       <div className="margin-bottom-2">
@@ -57,10 +59,6 @@ function Admin() {
         </NavLink>
       </div>
       <Switch>
-        <Route
-          path="/admin/cdi/:grantId?"
-          render={({ match }) => <Cdi match={match} />}
-        />
         <Route
           path="/admin/users/:userId?"
           render={({ match }) => <User match={match} />}
@@ -71,7 +69,9 @@ function Admin() {
         />
         <Route
           path="/admin/diag/"
-          render={({ match }) => <Diag match={match} />}
+          render={({ match }) => (
+            <Diag match={match} />
+          )}
         />
         <Route
           path="/admin/flags/"
@@ -101,7 +101,16 @@ function Admin() {
           path="/admin/courses/"
           render={({ match }) => <Courses match={match} />}
         />
+        <Route
+          path="/admin/course/:courseId"
+          render={({ match }) => <CourseEdit match={match} />}
+        />
+        <Route
+          path="/admin/feed-preview"
+          render={() => <FeedPreview />}
+        />
       </Switch>
+      <BuildInfo />
     </>
   );
 }

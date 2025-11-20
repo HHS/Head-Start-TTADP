@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import Objective from './Objective';
@@ -11,9 +15,13 @@ export default function Objectives({
   topicOptions,
   noObjectiveError,
   reportId,
+  citationOptions,
+  rawCitations,
+  isMonitoringGoal,
+  objectiveOptionsLoaded,
 }) {
   const { errors, getValues, setValue } = useFormContext();
-
+  const isMonitoring = citationOptions && citationOptions.length > 0;
   const fieldArrayName = 'goalForEditing.objectives';
   const objectivesForGoal = getValues(fieldArrayName);
   const defaultValues = objectivesForGoal || [];
@@ -35,11 +43,11 @@ export default function Objectives({
   });
 
   const [usedObjectiveIds, setUsedObjectiveIds] = useState(
-    fields ? fields.map(({ value }) => value) : [],
+    fields ? fields.map(({ id }) => id) : [],
   );
 
   const onAddNew = () => {
-    append({ ...NEW_OBJECTIVE() });
+    append({ ...NEW_OBJECTIVE(isMonitoring) });
   };
 
   const setUpdatedUsedObjectiveIds = () => {
@@ -54,7 +62,9 @@ export default function Objectives({
 
   const onInitialObjSelect = (objective) => {
     try {
-      append(objective);
+      // For some reason append was excluding key properties like id and value.
+      // This would cause the first objective selected to remain in the available list.
+      setValue(fieldArrayName, [...getValues(fieldArrayName) || [], objective]);
     } catch (e) {
       // this is simply for unit tests not passing
     } finally {
@@ -78,19 +88,20 @@ export default function Objectives({
     setUpdatedUsedObjectiveIds();
   };
 
-  const options = [
-    NEW_OBJECTIVE(),
-    // filter out used objectives and return them in them in a format that react-select understands
-    ...objectiveOptions.filter((objective) => !usedObjectiveIds.includes(objective.value)).map(
-      (objective) => ({
+  // filter out used objectives and return them in a format that react-select understands
+  const options = useMemo(() => [
+    ...objectiveOptions
+      .filter((objective) => !usedObjectiveIds.includes(objective.value))
+      .map((objective) => ({
         ...objective,
         label: objective.title,
         value: objective.value,
         isNew: false,
-      }),
-    ),
-  ];
+      })),
+    NEW_OBJECTIVE(isMonitoring),
+  ], [usedObjectiveIds, objectiveOptions, isMonitoring]);
 
+  const firstObjective = fields.length < 1;
   const removeObjective = (index) => {
     // Remove the objective.
     remove(index);
@@ -98,7 +109,13 @@ export default function Objectives({
     setUpdatedUsedObjectiveIds();
   };
 
-  const firstObjective = fields.length < 1;
+  useEffect(() => {
+    if (objectiveOptionsLoaded && firstObjective && options && options.length === 1) {
+      // Instead of append, you can use setValue to directly set the first objective
+      setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
+    }
+  }, [firstObjective, options.length, objectiveOptionsLoaded, isMonitoring, options, setValue]);
+  // console.log('objective options: ', objectiveOptions);
   return (
     <>
       {/*
@@ -106,7 +123,6 @@ export default function Objectives({
         afterwards, it does something slightly different and is shown within
         each objective
       */}
-
       {firstObjective
         ? (
           <ObjectiveSelect
@@ -137,10 +153,15 @@ export default function Objectives({
               parentGoal={getValues('goalForEditing')}
               initialObjectiveStatus={objective.status}
               reportId={reportId}
+              citationOptions={citationOptions}
+              rawCitations={rawCitations}
+              isMonitoringGoal={isMonitoringGoal}
+              // We don't do the look up here as we might still be loading stuff.
+              objectiveOptions={objectiveOptions || []}
             />
           );
         })}
-      {firstObjective ? null : <PlusButton text="Add new objective" onClick={onAddNew} /> }
+      {firstObjective || (fields.length === 1 && getValues(`${fieldArrayName}[0].title`) === '') ? null : <PlusButton text="Add new objective" onClick={onAddNew} /> }
     </>
   );
 }
@@ -150,9 +171,33 @@ Objectives.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
+  isMonitoringGoal: PropTypes.bool,
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
   objectiveOptions: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
   reportId: PropTypes.number.isRequired,
+  objectiveOptionsLoaded: PropTypes.bool.isRequired,
+};
+
+Objectives.defaultProps = {
+  citationOptions: [],
+  rawCitations: [],
+  isMonitoringGoal: false,
 };

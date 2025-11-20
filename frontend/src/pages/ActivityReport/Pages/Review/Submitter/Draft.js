@@ -7,7 +7,8 @@ import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
-import IncompletePages from '../IncompletePages';
+import { Accordion } from '../../../../../components/Accordion';
+import IncompletePages from '../../../../../components/IncompletePages';
 import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
@@ -16,7 +17,9 @@ import DismissingComponentWrapper from '../../../../../components/DismissingComp
 import NetworkContext from '../../../../../NetworkContext';
 import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
+import MissingCitationAlerts from '../../components/MissingCitationAlerts';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
+import './Draft.scss';
 
 const Draft = ({
   availableApprovers,
@@ -28,12 +31,14 @@ const Draft = ({
   approverStatusList,
   lastSaveTime,
   creatorRole,
+  grantsMissingMonitoring,
+  grantsMissingCitations,
+  reviewItems,
 }) => {
   const {
     watch,
     handleSubmit,
     register,
-    getValues,
   } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
@@ -42,22 +47,23 @@ const Draft = ({
   const promptsMissingResponses = [];
   const goalsMissingResponses = [];
 
+  const goalsAndObjectives = watch('goalsAndObjectives');
   const regionId = watch('regionId');
 
   const allGoalsHavePromptResponses = (() => {
-    const goalsAndObjectives = getValues('goalsAndObjectives');
-    const curatedGoals = (goalsAndObjectives || []).filter((goal) => goal.isCurated);
-
+    const curatedGoals = (goalsAndObjectives || []).filter(
+      (goal) => goal.prompts && goal.prompts.length > 0,
+    );
     if (!curatedGoals.length) return true;
 
     return curatedGoals.every((goal) => goal.prompts
       .every((prompt) => {
-        if (!prompt.allGoalsHavePromptResponse) {
+        if (!prompt.response || !prompt.response.length) {
           promptsMissingResponses.push(prompt.title);
           goalsMissingResponses.push(goal);
         }
 
-        return prompt.allGoalsHavePromptResponse;
+        return prompt.response && prompt.response.length > 0;
       }));
   })();
 
@@ -75,8 +81,13 @@ const Draft = ({
     return completeRoleList.sort();
   };
 
+  const canSubmitReport = allGoalsHavePromptResponses
+  && !hasIncompletePages
+  && !grantsMissingMonitoring.length
+  && !grantsMissingCitations.length;
+
   const onSubmit = (e) => {
-    if (allGoalsHavePromptResponses && !hasIncompletePages) {
+    if (canSubmitReport) {
       onFormSubmit(e);
       updatedJustSubmitted(true);
     }
@@ -102,8 +113,16 @@ const Draft = ({
   return (
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
-      <h2>Submit Report</h2>
-      <IndicatesRequiredField />
+      <h2 className="font-family-serif">Review and submit</h2>
+      <IndicatesRequiredField className="margin-bottom-0 margin-top-0" />
+      <p className="usa-prose margin-top-2 margin-bottom-5">
+        Review the information in each section before submitting for approval.
+        <br />
+        Once submitted, you will no longer be able to edit the report.
+      </p>
+      {reviewItems && reviewItems.length > 0 && (
+      <Accordion bordered items={reviewItems} multiselectable />
+      )}
       <Form className="smart-hub--form-large smart-hub--form__draft smart-hub--form" onSubmit={handleSubmit(onSubmit)}>
         {
           showRolesDropdown
@@ -129,29 +148,26 @@ const Draft = ({
             )
             : null
         }
-        <Fieldset className={`smart-hub--report-legend margin-top-4 ${!showRolesDropdown ? 'smart-hub--report-legend__no-legend-margin-top' : ''}`} legend="Additional Notes">
+        <Fieldset className={`smart-hub--report-legend margin-top-0 ${!showRolesDropdown ? 'smart-hub--report-legend__no-legend-margin-top' : ''}`}>
           <FormItem
             label="Creator notes"
             name="additionalNotes"
             required={false}
+            formGroupClassName="margin-top-4"
           >
             <div className={`margin-top-1 ${textAreaClass}`}>
               <HookFormRichEditor ariaLabel="Additional notes" name="additionalNotes" id="additionalNotes" />
             </div>
           </FormItem>
         </Fieldset>
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
-          <p className="margin-top-4">
-            Submitting this form for approval means that you will no longer be in draft
-            mode. Please review all information in each section before submitting to your
-            manager(s) for approval.
-          </p>
+        <Fieldset className="smart-hub--report-legend">
           { !connectionActive && (
             <ConnectionError />
           )}
           <FormItem
             label="Approving manager"
             name="approvers"
+            formGroupClassName="margin-top-4"
           >
             <ApproverSelect
               name="approvers"
@@ -161,6 +177,11 @@ const Draft = ({
             />
           </FormItem>
         </Fieldset>
+        <MissingCitationAlerts
+          reportId={reportId}
+          grantsMissingMonitoring={grantsMissingMonitoring}
+          grantsMissingCitations={grantsMissingCitations}
+        />
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
         {!allGoalsHavePromptResponses && (
         <SomeGoalsHaveNoPromptResponse
@@ -170,10 +191,10 @@ const Draft = ({
           onSaveDraft={onSaveForm}
         />
         )}
-        <div className="margin-top-3">
+        <div className={approverStatusList && approverStatusList.length > 0 ? 'margin-top-3' : 'margin-top-0'}>
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>
-        <Button disabled={!connectionActive} id="draft-review-submit" type="submit">Submit for approval</Button>
+        <Button className="draft-button-margin" disabled={!connectionActive} id="draft-review-submit" type="submit">Submit for approval</Button>
         { !connectionActive && (
         <Alert type="warning" noIcon>
           There&#39;s an issue with your connection.
@@ -191,6 +212,7 @@ const Draft = ({
           id="draft-review-save-draft"
           outline
           type="button"
+          className="draft-button-margin"
           onClick={async () => {
             await onSaveForm(false);
             updateShowSavedDraft(true);
@@ -231,6 +253,13 @@ Draft.propTypes = {
   })).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
   creatorRole: PropTypes.string.isRequired,
+  grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
+  grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    title: PropTypes.string,
+    content: PropTypes.node,
+  })).isRequired,
 };
 
 Draft.defaultProps = {

@@ -179,7 +179,7 @@ describe('Filter Panel', () => {
     renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
 
     // Date filter pill exists.
-    expect(await screen.findByRole('button', { name: /this button removes the filter: date started is within/i })).toBeVisible();
+    expect(await screen.findByRole('button', { name: /this button removes the filter: date started \(ar\) is within/i })).toBeVisible();
 
     // Region filter pills are hidden.
     expect(screen.queryByRole('button', { name: /this button removes the filter: region is 1/i })).toBeNull();

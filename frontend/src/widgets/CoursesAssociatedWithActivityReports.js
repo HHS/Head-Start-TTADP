@@ -174,6 +174,21 @@ function CoursesAssociatedWithActivityReports({
     setCoursesPerPage(courseUse.slice(offset, offset + perPageNumber));
   }, [offset, perPageNumber, courseUse]);
 
+  const menuItems = [
+    {
+      label: 'Export selected rows',
+      onClick: () => {
+        exportRows('selected');
+      },
+    },
+    {
+      label: 'Export table',
+      onClick: () => {
+        exportRows('all');
+      },
+    },
+  ];
+
   return (
     <WidgetContainer
       title="iPD courses cited on Activity Reports"
@@ -186,9 +201,9 @@ function CoursesAssociatedWithActivityReports({
       offset={offset}
       perPage={perPageNumber}
       handlePageChange={handlePageChange}
-      enableCheckboxes
-      exportRows={exportRows}
+      menuItems={menuItems}
       footNote="* Collection of iPD courses in the TTA Hub began on March 7, 2024."
+      titleMargin={{ bottom: 1 }}
     >
       <HorizontalTableWidget
         headers={data.headers || []}

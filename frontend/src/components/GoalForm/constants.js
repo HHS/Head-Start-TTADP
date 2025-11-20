@@ -1,22 +1,12 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { DECIMAL_BASE } from '@ttahub/common';
-import { uniq } from 'lodash';
+import { DECIMAL_BASE, DISALLOWED_URLS, isValidResourceUrl } from '@ttahub/common';
+import { OBJECTIVE_STATUS } from '../../Constants';
 
-// regex to match a valid url, it must start with http:// or https://, have at least one dot, and not end with a dot or a space
-const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
-
-export const isValidResourceUrl = (attempted) => {
-  try {
-    const httpOccurences = (attempted.match(/http/gi) || []).length;
-    if (httpOccurences !== 1 || !VALID_URL_REGEX.test(attempted)) {
-      return false;
-    }
-    const u = new URL(attempted);
-    return (u !== '');
-  } catch (e) {
-    return false;
-  }
+export const noDisallowedUrls = (value) => {
+  const urls = value.map((v) => v.value);
+  const disallowedUrl = DISALLOWED_URLS.find((disallowed) => urls.includes(disallowed.url));
+  return disallowedUrl ? disallowedUrl.error : true;
 };
 
 export const objectivesWithValidResourcesOnly = (objectives) => {
@@ -42,20 +32,19 @@ export const FORM_FIELD_INDEXES = {
   GRANTS: 0,
   NAME: 1,
   GOAL_SOURCES: 2,
-  END_DATE: 3,
-  OBJECTIVES_EMPTY: 4,
-  OBJECTIVES: 5,
-  GOAL_PROMPTS: 6,
+  OBJECTIVES_EMPTY: 3,
+  OBJECTIVES: 4,
+  GOAL_PROMPTS: 5,
 };
 
-export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>, [], {}];
+export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, [], {}];
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
   title: '',
   topics: [],
   resources: [{ key: uuidv4(), value: '' }],
   id: `new-${l}`,
-  status: 'Not Started',
+  status: OBJECTIVE_STATUS.NOT_STARTED,
   isNew: true,
   closeSuspendReason: null,
   closeSuspendContext: null,
@@ -113,57 +102,12 @@ export const dismissOnNoMatch = (event, selector, dismiss) => {
   }
 };
 
-/**
- *
- * converts an array of grants to an object with the grant number
- * as the key and the default value as the value
- *
- * @param {Array} grants - an array of grants
- * @param {Object} value - the current value of the form { grantNumber: value }
- * @param {String} defaultValue - the default value for the form
- * @returns {Object} - the new value of the form
- */
-export const grantsToMultiValue = (grants, value = {}, defaultValue = '') => {
-  const current = [];
-  const values = uniq(Object.values(value));
-  let def = defaultValue;
-  if (values.length === 1 && values[0] !== defaultValue) {
-    [def] = values;
-  }
-
-  const newValue = grants.reduce((s, grant) => {
-    current.push(grant.numberWithProgramTypes);
-
-    if (value[grant.numberWithProgramTypes]) {
-      return {
-        ...s,
-        [grant.numberWithProgramTypes]: value[grant.numberWithProgramTypes],
-      };
-    }
-
-    return {
-      ...s,
-      [grant.numberWithProgramTypes]: def || defaultValue,
-    };
-  }, value);
-
-  const keys = Object.keys(newValue);
-  const removedKeys = keys.filter((k) => !current.includes(k));
-
-  removedKeys.forEach((k) => {
-    delete newValue[k];
-  });
-
-  return newValue;
-};
-
 export const grantsToGoals = ({
   selectedGrants,
   name,
   status,
   source,
   isCurated,
-  endDate,
   regionId,
   recipient,
   objectives,
@@ -178,7 +122,6 @@ export const grantsToGoals = ({
     status,
     source: goalSource || null,
     isCurated,
-    endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
     regionId: parseInt(regionId, DECIMAL_BASE),
     recipientId: recipient.id,
     objectives,

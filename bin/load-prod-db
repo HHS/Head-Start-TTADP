@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Script to load a .sql file into the local postgres database
+
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <path-to-sql-file>"
+    echo "Example: $0 /path/to/backup.sql"
+    exit 1
+fi
+
+SQL_FILE="$1"
+
+if [ ! -f "$SQL_FILE" ]; then
+    echo "Error: SQL file '$SQL_FILE' not found"
+    exit 1
+fi
+
+# Export postgres credentials from .env
+export $(grep POSTGRES_PASSWORD   ./.env)
+export $(grep POSTGRES_USERNAME   ./.env)
+export PGPASSWORD=${POSTGRES_PASSWORD}
+
+echo "Dropping current data"
+psql -U ${POSTGRES_USERNAME} -h localhost -p 5432 -d ttasmarthub -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+
+echo "Loading data from $SQL_FILE into ttasmarthub database..."
+
+# Load the SQL file into the database
+psql -U ${POSTGRES_USERNAME} -h localhost -p 5432 -d ttasmarthub -f "$SQL_FILE"
+
+if [ $? -eq 0 ]; then
+    echo "Successfully loaded data from $SQL_FILE"
+else
+    echo "Error loading data from $SQL_FILE"
+    exit 1
+fi

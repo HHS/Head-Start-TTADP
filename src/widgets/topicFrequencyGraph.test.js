@@ -1,4 +1,4 @@
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TOPICS } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -156,6 +156,15 @@ describe('Topics and frequency graph widget', () => {
         id: 5,
       },
     });
+
+    // Find or create every topic in the TOPICS constant.
+    await Promise.all(TOPICS.map(async (topicName) => {
+      await Topic.findOrCreate({
+        where: { name: topicName },
+        defaults: { name: topicName },
+      });
+    }));
+
     const [systemSpecialist] = await Role.findOrCreate({
       where: {
         fullName: 'System Specialist',
@@ -387,8 +396,13 @@ describe('Topics and frequency graph widget', () => {
       },
       force: true,
     });
-    await Goal.destroy({ where: { id: [firstGoal.id, secondGoal.id, thirdGoal.id] }, force: true });
-    await UserRole.destroy({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
+    await Goal.destroy({
+      where: { id: [firstGoal.id, secondGoal.id, thirdGoal.id] },
+      force: true,
+    });
+    await UserRole.destroy({
+      where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
+    });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
       where: { id: [GRANT_ID] },
@@ -464,11 +478,15 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Environmental Health and Safety / EPRR',
+        topic: 'Emergency Preparedness, Response, and Recovery (EPRR)',
         count: 0,
       },
       {
-        topic: 'Equity',
+        topic: 'Environmental Health and Safety',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
       {
@@ -637,11 +655,15 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Environmental Health and Safety / EPRR',
+        topic: 'Emergency Preparedness, Response, and Recovery (EPRR)',
         count: 0,
       },
       {
-        topic: 'Equity',
+        topic: 'Environmental Health and Safety',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
       {
@@ -810,11 +832,15 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Environmental Health and Safety / EPRR',
+        topic: 'Emergency Preparedness, Response, and Recovery (EPRR)',
         count: 0,
       },
       {
-        topic: 'Equity',
+        topic: 'Environmental Health and Safety',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
       {
@@ -982,11 +1008,15 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Environmental Health and Safety / EPRR',
+        topic: 'Emergency Preparedness, Response, and Recovery (EPRR)',
         count: 0,
       },
       {
-        topic: 'Equity',
+        topic: 'Environmental Health and Safety',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
       {

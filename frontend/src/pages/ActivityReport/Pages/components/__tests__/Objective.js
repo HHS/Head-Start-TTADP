@@ -1,17 +1,24 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import {
   render, screen, within, act, fireEvent, waitFor,
 } from '@testing-library/react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import selectEvent from 'react-select-event';
 import React from 'react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import Objective from '../Objective';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import UserContext from '../../../../../UserContext';
 import { mockRSSData } from '../../../../../testHelpers';
+import { OBJECTIVE_STATUS } from '../../../../../Constants';
+
+const history = createMemoryHistory();
 
 const defaultObjective = {
   id: 1,
@@ -19,7 +26,7 @@ const defaultObjective = {
   topics: [],
   title: 'This is an objective title',
   ttaProvided: '<p><ul><li>What</li></ul></p>',
-  status: 'Not started',
+  status: OBJECTIVE_STATUS.NOT_STARTED,
   ids: [1],
   objectiveCreatedHere: true,
 };
@@ -54,11 +61,17 @@ let getValues;
 
 const RenderObjective = ({
   // eslint-disable-next-line react/prop-types
-  objective = defaultObjective, onRemove = () => {},
+  objective = defaultObjective,
+  onRemove = () => {},
+  citationOptions = [],
+  rawCitations = [],
+  additionalHookFormData = {},
+  isMonitoringGoal = false,
 }) => {
   const hookForm = useForm({
     mode: 'onBlur',
     defaultValues: {
+      ...additionalHookFormData,
       objectives: [objective],
       collaborators: [],
       author: {
@@ -77,63 +90,68 @@ const RenderObjective = ({
   };
 
   return (
-    <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
-      <FormProvider {...hookForm}>
-        <AppLoadingContext.Provider value={
+    <Router history={history}>
+      <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
+        <FormProvider {...hookForm}>
+          <AppLoadingContext.Provider value={
         {
           setAppLoadingText: jest.fn(),
           setIsAppLoading: jest.fn(),
         }
       }
-        >
-          <Objective
-            objective={defaultObjective}
-            topicOptions={[]}
-            options={[
-              {
-                label: 'Create a new objective',
-                value: 'Create a new objective',
-                topics: [],
-                resources: [],
-                files: [],
-                status: 'Not Started',
-                title: '',
-                courses: [],
-                supportType: '',
-                objectiveCreatedHere: true,
-              },
-              {
-                courses: [],
-                supportType: '',
-                label: 'Existing objective',
-                value: 123,
-                topics: [],
-                resources: [],
-                files: [],
-                status: 'Complete',
-                title: 'Existing objective',
-                objectiveCreatedHere: false,
-              }]}
-            index={1}
-            remove={onRemove}
-            fieldArrayName="objectives"
-            goalId={1}
-            onRemove={onRemove}
-            onUpdate={onUpdate}
-            parentLabel="goals"
-            objectiveAriaLabel="1 on goal 1"
-            goalIndex={0}
-            objectiveIndex={0}
-            errors={{}}
-            onObjectiveChange={jest.fn()}
-            onSaveDraft={jest.fn()}
-            parentGoal={{ status: 'In Progress' }}
-            initialObjectiveStatus="Not Started"
-            reportId={98123}
-          />
-        </AppLoadingContext.Provider>
-      </FormProvider>
-    </UserContext.Provider>
+          >
+            <Objective
+              objective={defaultObjective}
+              topicOptions={[]}
+              citationOptions={citationOptions}
+              rawCitations={rawCitations}
+              isMonitoringGoal={isMonitoringGoal}
+              options={[
+                {
+                  label: 'Create a new objective',
+                  value: 'Create a new objective',
+                  topics: [],
+                  resources: [],
+                  files: [],
+                  status: OBJECTIVE_STATUS.NOT_STARTED,
+                  title: '',
+                  courses: [],
+                  supportType: '',
+                  objectiveCreatedHere: true,
+                },
+                {
+                  courses: [],
+                  supportType: '',
+                  label: 'Existing objective',
+                  value: 123,
+                  topics: [],
+                  resources: [],
+                  files: [],
+                  status: OBJECTIVE_STATUS.COMPLETE,
+                  title: 'Existing objective',
+                  objectiveCreatedHere: false,
+                }]}
+              index={1}
+              remove={onRemove}
+              fieldArrayName="objectives"
+              goalId={1}
+              onRemove={onRemove}
+              onUpdate={onUpdate}
+              parentLabel="goals"
+              objectiveAriaLabel="1 on goal 1"
+              goalIndex={0}
+              objectiveIndex={0}
+              errors={{}}
+              onObjectiveChange={jest.fn()}
+              onSaveDraft={jest.fn()}
+              parentGoal={{ status: GOAL_STATUS.IN_PROGRESS }}
+              initialObjectiveStatus={OBJECTIVE_STATUS.NOT_STARTED}
+              reportId={98123}
+            />
+          </AppLoadingContext.Provider>
+        </FormProvider>
+      </UserContext.Provider>
+    </Router>
   );
 };
 
@@ -153,6 +171,41 @@ describe('Objective', () => {
   it('renders an objective that doesn\'t have a status', async () => {
     render(<RenderObjective objective={{ ...defaultObjective, status: '' }} />);
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+  });
+
+  it('renders the citations dropdown when there are citations available', async () => {
+    const citationOptions = [{
+      label: 'Label 1',
+      options: [
+        { name: 'Citation 1', id: 1 },
+      ],
+    }];
+
+    const rawCitations = [{
+      citation: 'Citation 1',
+      standardId: 1,
+      grants: [{
+        acro: 'DEF',
+        citation: 'Citation 1',
+        grantId: 1,
+        grantNumber: '12345',
+      }],
+    }];
+
+    render(<RenderObjective
+      citationOptions={citationOptions}
+      rawCitations={rawCitations}
+      isMonitoringGoal
+    />);
+    const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });
+    expect(helpButton).toBeVisible();
+    const citationsButton = screen.getByRole('button', { name: /Citation/i });
+    expect(citationsButton).toBeVisible();
+
+    const citationSelect = await screen.findByRole('combobox', { name: /citation/i });
+    await selectEvent.select(citationSelect, [/Citation 1/i]);
+
+    expect(await screen.findByText(/Citation 1/i)).toBeVisible();
   });
 
   it('uploads a file', async () => {
@@ -203,7 +256,7 @@ describe('Objective', () => {
     await screen.findByText('What');
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
     await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Existing objective']));
-    expect(await screen.findByText(/Existing objective/i, { selector: 'p' })).toBeVisible();
+    expect(await screen.findByText(/Existing objective/i, { selector: 'div.usa-prose' })).toBeVisible();
     expect(screen.queryByText(/This is an objective title/i, { selector: 'textarea' })).toBeNull();
     expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(0);
     await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
@@ -215,7 +268,7 @@ describe('Objective', () => {
     render(<RenderObjective />);
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
     const select = await screen.findByLabelText(/objective status/i);
-    userEvent.selectOptions(select, 'Suspended');
+    userEvent.selectOptions(select, OBJECTIVE_STATUS.SUSPENDED);
 
     const recipientRequestReason = await screen.findByLabelText(/Recipient request/i);
     userEvent.click(recipientRequestReason);
@@ -234,16 +287,16 @@ describe('Objective', () => {
     render(<RenderObjective />);
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
     const select = await screen.findByLabelText(/objective status/i);
-    userEvent.selectOptions(select, 'In Progress');
+    userEvent.selectOptions(select, OBJECTIVE_STATUS.IN_PROGRESS);
 
-    expect(await screen.findByLabelText(/objective status/i)).toHaveValue('In Progress');
+    expect(await screen.findByLabelText(/objective status/i)).toHaveValue(OBJECTIVE_STATUS.IN_PROGRESS);
   });
 
   it('when changing status to suspended, you can cancel', async () => {
     render(<RenderObjective />);
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
     const select = await screen.findByLabelText(/objective status/i);
-    userEvent.selectOptions(select, 'Suspended');
+    userEvent.selectOptions(select, OBJECTIVE_STATUS.SUSPENDED);
 
     const recipientRequestReason = await screen.findByLabelText(/Recipient request/i);
     userEvent.click(recipientRequestReason);
@@ -255,5 +308,61 @@ describe('Objective', () => {
 
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
     expect(await screen.findByText(/not started/i)).toBeVisible();
+  });
+
+  it('shows a warning when the citations selected are not for all the grants selected', async () => {
+    const citationOptions = [{
+      label: 'Label 1',
+      options: [
+        { name: 'Citation 1', id: 1 },
+      ],
+    }];
+
+    const rawCitations = [{
+      citation: 'Citation 1',
+      standardId: 1,
+      grants: [{
+        acro: 'DEF',
+        citation: 'Citation 1',
+        grantId: 1,
+        grantNumber: '12345',
+      }],
+    }];
+
+    const additionalHookFormData = {
+      activityRecipients: [
+        {
+          id: 1,
+          activityRecipientId: 1,
+          name: 'Recipient 1',
+        },
+        {
+          id: 2,
+          activityRecipientId: 2,
+          name: 'Recipient 2',
+        },
+      ],
+    };
+
+    render(<RenderObjective
+      citationOptions={citationOptions}
+      rawCitations={rawCitations}
+      additionalHookFormData={additionalHookFormData}
+      isMonitoringGoal
+    />);
+
+    const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });
+    expect(helpButton).toBeVisible();
+    const citationsButton = screen.getByRole('button', { name: /Citation/i });
+    expect(citationsButton).toBeVisible();
+
+    const citationSelect = await screen.findByRole('combobox', { name: /citation/i });
+    await selectEvent.select(citationSelect, [/Citation 1/i]);
+
+    expect(await screen.findByText(/Citation 1/i)).toBeVisible();
+
+    expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+    expect(await screen.findByText(/Recipient 2/i)).toBeVisible();
+    expect(await screen.findByText(/To avoid errors when submitting the report, you can either/i)).toBeVisible();
   });
 });

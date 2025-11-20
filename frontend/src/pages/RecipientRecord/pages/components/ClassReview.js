@@ -3,31 +3,12 @@ import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import Container from '../../../../components/Container';
 import Drawer from '../../../../components/Drawer';
 import { getClassScores } from '../../../../fetchers/monitoring';
-import './ClassReview.scss';
 import { useGrantData } from '../GrantDataContext';
 import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
-
-const BadgeAbove = () => (
-  <span className="ttahub-badge--success font-sans-2xs text-white text-bold">
-    Above all thresholds
-  </span>
-);
-
-const BadgeBelowQuality = () => (
-  <span className="ttahub-badge--warning font-sans-2xs text-bold">
-    Below quality
-  </span>
-);
-
-const BadgeBelowCompetitive = () => (
-  <span className="ttahub-badge--error font-sans-2xs text-white text-bold">
-    Below competitive
-  </span>
-);
+import { getScoreBadge } from '../../../../components/ClassScoreBadge';
 
 const ClassReview = ({ grantNumber, recipientId, regionId }) => {
   const { updateGrantClassData } = useGrantData();
@@ -42,34 +23,6 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
     };
     fetchScores();
   }, [grantNumber, recipientId, regionId, updateGrantClassData]);
-
-  const getScoreBadge = (key, score, received) => {
-    if (key === 'ES' || key === 'CO') {
-      if (score >= 6) return BadgeAbove();
-      if (score < 5) return BadgeBelowCompetitive();
-      return BadgeBelowQuality();
-    }
-
-    if (key === 'IS') {
-      if (score >= 3) return BadgeAbove();
-
-      // IS is slightly more complicated.
-      // See TTAHUB-2097 for details.
-      const dt = moment(received, 'MM/DD/YYYY');
-
-      if (dt.isAfter('2025-08-01')) {
-        if (score < 2.5) return BadgeBelowCompetitive();
-        return BadgeBelowQuality();
-      }
-
-      if (dt.isAfter('2020-11-09') && dt.isBefore('2025-07-31')) {
-        if (score < 2.3) return BadgeBelowCompetitive();
-        return BadgeBelowQuality();
-      }
-    }
-
-    return null;
-  };
 
   if (!scores || Object.keys(scores).length === 0) return null;
 
@@ -107,7 +60,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
             <FontAwesomeIcon icon={faExternalLinkAlt} size="sm" className="margin-left-1" />
           </Link>
         </div>
-        <div className="margin-top-1">
+        <div className="margin-top-2">
           <button
             type="button"
             className="usa-button usa-button--unstyled font-sans-xs"
@@ -138,7 +91,9 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
             <p className="margin-y-1">
               <strong>Emotional support</strong>
             </p>
-            {getScoreBadge('ES', scores.ES, scores.received)}
+            {
+              getScoreBadge('ES', scores.ES, scores.received)
+            }
           </div>
           <p className="margin-0">
             {scores.ES}
@@ -153,7 +108,9 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
             <p className="margin-y-1">
               <strong>Classroom organization</strong>
             </p>
-            {getScoreBadge('CO', scores.CO, scores.received)}
+            {
+              getScoreBadge('CO', scores.CO, scores.received)
+            }
           </div>
           <p className="margin-0">
             {scores.CO}
@@ -168,7 +125,9 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
             <p className="margin-y-1">
               <strong>Instructional support</strong>
             </p>
-            {getScoreBadge('IS', scores.IS, scores.received)}
+            {
+              getScoreBadge('IS', scores.IS, scores.received)
+            }
           </div>
           <p className="margin-0">
             {scores.IS}

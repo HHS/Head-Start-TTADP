@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { auditLogger } = require('../logger');
 const generateFullName = require('./helpers/generateFullName');
 
 export default (sequelize, DataTypes) => {
@@ -27,6 +28,11 @@ export default (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
+        if (!this.user) {
+          const { stack } = new Error();
+          auditLogger.error(`Access attempt to undefined user for userID: ${this.userId}, stack: ${stack}`);
+          return '';
+        }
         const roles = this.roles && this.roles.length
           ? this.roles : this.user.roles;
         return generateFullName(this.user.name, roles);

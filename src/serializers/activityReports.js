@@ -19,7 +19,6 @@ ActivityReportsPresenter.prototype.attributes = function attributes(instance) {
     displayId: attrs.displayId,
     duration: parseFloat(attrs.duration),
     endDate: instance.getDataValue('endDate'),
-    reason: attrs.reason,
     region: attrs.regionId,
     reportCreationDate: attrs.createdAt,
     reportLastUpdated: attrs.updatedAt,

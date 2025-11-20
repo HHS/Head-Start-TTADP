@@ -8,7 +8,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsisH } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 import Menu from './Menu';
 
@@ -31,8 +31,14 @@ function ContextMenu({
       menuWidthOffset={menuWidthOffset}
       up={up}
       menuHeightOffset={menuHeightOffset}
-      buttonText={<FontAwesomeIcon color={colors.textInk} icon={faEllipsisH} />}
-      buttonTestId="ellipsis-button"
+      buttonText={(
+        <>
+          <span className="usa-button--unstyled">Actions</span>
+          <span>&nbsp;</span>
+          <FontAwesomeIcon color={colors.textLink} icon={faChevronDown} />
+        </>
+)}
+      buttonTestId="context-menu-actions-btn"
       fixed={fixed}
     />
   );
@@ -43,6 +49,7 @@ ContextMenu.propTypes = {
   menuItems: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     onClick: PropTypes.func,
+    id: PropTypes.string,
   })).isRequired,
   backgroundColor: PropTypes.string,
   left: PropTypes.bool,
@@ -54,7 +61,7 @@ ContextMenu.propTypes = {
 
 ContextMenu.defaultProps = {
   backgroundColor: 'white',
-  left: true,
+  left: false,
   up: false,
   menuHeightOffset: 120,
   menuWidthOffset: 135,

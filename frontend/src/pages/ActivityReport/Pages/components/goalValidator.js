@@ -2,6 +2,7 @@ import {
   validateListOfResources,
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
+import { NOOP } from '../../../../Constants';
 
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
 export const GOAL_MISSING_OBJECTIVE = 'Select a TTA objective';
@@ -11,6 +12,7 @@ export const OBJECTIVE_ROLE = 'Select a specialist role';
 export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link. Invalid resources will not be saved.';
 export const OBJECTIVE_TTA = 'Describe the TTA provided';
 export const OBJECTIVE_TOPICS = 'Select at least one topic';
+export const OBJECTIVE_CITATIONS = 'Select at least one citation';
 
 /**
  * Function to validate a single value based on a user's flags
@@ -39,6 +41,7 @@ export const unfinishedObjectives = (
   objectives,
   setError = () => {},
   fieldArrayName = 'goalForEditing.objectives',
+  isMonitoringGoal = false,
 ) => {
   const unfinished = objectives.some(
     (objective, index) => {
@@ -55,6 +58,13 @@ export const unfinishedObjectives = (
 
       if (!objective.topics || !objective.topics.length) {
         setError(`${fieldArrayName}[${index}].topics`, { message: OBJECTIVE_TOPICS });
+        incomplete = true;
+      }
+
+      // We only validate citations if they exist (they are not always required).
+      if (isMonitoringGoal && (!objective.citations
+        || (objective.citations && !objective.citations.length))) {
+        setError(`${fieldArrayName}[${index}].citations`, { message: OBJECTIVE_CITATIONS });
         incomplete = true;
       }
 
@@ -89,7 +99,8 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
 
     // Every goal must have an objective or the `goals` field has unfinished goals
     if (goal.objectives && goal.objectives.length > 0) {
-      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError, 'goalForEditing.objectives');
+      const isMonitoringGoal = goal.standard === 'Monitoring';
+      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError, 'goalForEditing.objectives', isMonitoringGoal);
       if (objectivesUnfinished) {
         return objectivesUnfinished;
       }
@@ -102,8 +113,8 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
   return false;
 };
 
-export const validateGoals = (goals, setError = () => {}) => {
-  if (goals.length < 1) {
+export const validateGoals = (goals, setError = NOOP) => {
+  if (!goals || goals.length < 1) {
     return GOALS_EMPTY;
   }
 

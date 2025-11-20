@@ -83,7 +83,6 @@ h1.landing {
   font-size: 40px;
   font-family: "Merriweather", serif;
   font-weight: 700;
-  margin-right: 0px;
 }
 
 .landing .usa-table {
@@ -165,33 +164,8 @@ h1.landing {
   margin-left: 0px;
 }
 
-.smart-hub--plus {
-  display: none;
-  font-size: 40px;
-}
-
-@media(min-width: 480px ){
-  .smart-hub--plus {
-    display: inline;
-  } 
-  .smart-hub--new-report {
-    margin-left: 10px;
-    margin-top: 7px;
-    float: right;
-  }
-}
-
-.smart-hub--new-report-btn {
-  line-height: 0.5;
-  min-width: 220px;
-  background-color: $ttahub-medium-blue;
-  max-height: 44px;
-  border-radius: 5px;
-  padding: 0.7rem 1.25rem 0.75rem 1.25rem;
-}
-
-.smart-hub--create-new-report {
-  padding-top: 30px;
+.ttahub-goal-form-goal-summary .position-relative .usa-button.smart-hub--button__no-margin-all-around {
+  margin: 0px;
 }
 
 thead th > .sortable {

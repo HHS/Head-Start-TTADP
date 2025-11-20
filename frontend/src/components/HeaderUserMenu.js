@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
+import AvatarGroup from './AvatarGroup';
 import DropdownMenu from './DropdownMenu';
 import './HeaderUserMenu.scss';
 import NavLink from './NavLink';
@@ -12,15 +13,17 @@ import UserContext from '../UserContext';
 import isAdmin from '../permissions';
 import colors from '../colors';
 import Pill from './Pill';
-import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
+import { SESSION_STORAGE_IMPERSONATION_KEY, SUPPORT_LINK } from '../Constants';
 import { storageAvailable } from '../hooks/helpers';
 
 function UserMenuNav({ items }) {
   return (
     <div>
       <ul className="user-menu-nav">
-        {items.map(({ key, element, liClass }) => (
-          <li key={key} className={liClass}>
+        {items.map(({
+          key, element, liClass, presentation,
+        }) => (
+          <li key={key} className={liClass} role={presentation ? 'presentation' : 'listitem'}>
             {element}
           </li>
         ))}
@@ -33,6 +36,7 @@ UserMenuNav.propTypes = {
   items: PropTypes.arrayOf(PropTypes.shape({
     key: PropTypes.number,
     element: PropTypes.element,
+    presentation: PropTypes.bool,
   })).isRequired,
 };
 
@@ -77,7 +81,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     {
       key: 4,
       label: 'Contact support',
-      to: 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a',
+      to: SUPPORT_LINK,
       external: true,
     },
     { key: 5, space: true },
@@ -91,12 +95,13 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     {
       key: 8,
       label: 'Log out',
-      to: '/logout',
+      href: '/api/logout-oidc',
     },
   ].map(({
     key,
     label,
     to,
+    href,
     external = false,
     divider = false,
     space = false,
@@ -105,12 +110,13 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     fn = onItemClick,
   }) => {
     if (showIfAdmin && !userIsAdmin) return false;
-    if (divider) return { key, element: <hr /> };
-    if (space) return { key, element: <div className="height-6" /> };
+    if (divider) return { key, presentation: true, element: <hr /> };
+    if (space) return { key, presentation: true, element: <div aria-hidden="true" className="height-6" /> };
 
     if (external) {
       return {
         key,
+        presentation: false,
         element: (
           <Link key={key} className="usa-nav__link" href={to} target="_blank" rel="noopener noreferrer">
             <span>{label}</span>
@@ -120,9 +126,27 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
         ),
       };
     }
-
+    if (href) {
+      return {
+        key,
+        presentation: false,
+        element: (
+          <a
+            key={key}
+            className="usa-nav__link"
+            href={href}
+            onClick={fn}
+            rel="noopener noreferrer"
+          >
+            <span>{label}</span>
+            {badge}
+          </a>
+        ),
+      };
+    }
     return {
       key,
+      presentation: false,
       element: (
         <>
           <NavLink key={key} to={to} fn={fn}>
@@ -195,12 +219,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
       className="no-print"
     >
       <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
-        <h4 className="margin-0 display-flex flex-align-center padding-2 border-bottom border-gray-10">
-          <Avatar name={user.name} />
-          <span className="margin-left-2">
-            {user.name}
-          </span>
-        </h4>
+        <AvatarGroup userName={user.name} />
         {isImpersonating && (
           <div className="display-flex flex-justify-center margin-top-2">
             <Button type="button" onClick={stopImpersonating}>

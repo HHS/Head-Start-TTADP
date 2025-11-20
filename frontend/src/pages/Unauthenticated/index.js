@@ -5,8 +5,8 @@ import {
   Link,
 } from '@trussworks/react-uswds';
 
-import logo1x from '../../images/eclkc-blocks-logo-78.png';
-import logo2x from '../../images/eclkc-blocks-logo-156.png';
+import logo1x from '../../images/headstart-blocks-logo-78.png';
+import logo2x from '../../images/headstart-blocks-logo-156.png';
 
 import HubIdentifier from '../../components/HubIdentifier';
 
@@ -25,7 +25,7 @@ function Unauthenticated({ loggedOut, timedOut }) {
     <div className="display-flex flex-column height-viewport">
       <div role="dialog" aria-labelledby="welcome-message" aria-describedby="login-description" className="position-relative margin-x-auto margin-top-7 z-top flex-1">
         <div className="maxw-mobile margin-x-auto padding-y-7">
-          <img src={logo1x} srcSet={`${logo2x} 2x`} width="78" height="78" alt="ECLKC Blocks Logo" className="smart-hub-logo display-block margin-x-auto" />
+          <img src={logo1x} srcSet={`${logo2x} 2x`} width="78" height="78" alt="Office of Head Start logo" className="smart-hub-logo display-block margin-x-auto" />
           <h1 id="welcome-message" className="font-serif-xl text-center margin-4">
             Welcome to the TTA Hub
           </h1>
@@ -38,7 +38,7 @@ function Unauthenticated({ loggedOut, timedOut }) {
             <p id="login-description">
               You must log in with HSES in order to access the Office of Head Start TTA Hub.
             </p>
-            <Link referrerPolicy="same-origin" className="usa-button display-block margin-x-1 margin-top-4" variant="unstyled" href="/api/login">
+            <Link referrerPolicy="strict-origin-when-cross-origin" className="usa-button display-block margin-x-1 margin-top-4" variant="unstyled" href="/api/login">
               Log In with HSES
             </Link>
           </div>

@@ -26,6 +26,11 @@ export default class EventReport {
     ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
   }
 
+  hasPocInRegion() {
+    // eslint-disable-next-line max-len
+    return !!this.permissions.find((p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS && p.regionId === this.eventReport.regionId);
+  }
+
   /**
    * Determines if the user has write access to the specified region
    * or to the region of their current event report.
@@ -135,7 +140,7 @@ export default class EventReport {
 
   // some handy & fun aliases
   canEditEvent() {
-    return this.isAdmin() || this.isAuthor() || this.isPoc();
+    return this.isAdmin() || this.isAuthor();
   }
 
   canCreateSession() {
@@ -156,5 +161,13 @@ export default class EventReport {
 
   canSuspendOrCompleteEvent() {
     return this.isAdmin() || this.isAuthor();
+  }
+
+  canSeeAlerts() {
+    return this.isAdmin() || !!this.permissions.find(
+      (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS,
+    ) || !!this.permissions.find(
+      (p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS,
+    );
   }
 }

@@ -8,7 +8,10 @@ import {
 import Modal from './Modal';
 
 const ReopenReasonModal = ({
-  modalRef, goalId, onSubmit, resetValues,
+  modalRef,
+  goalId,
+  onSubmit,
+  resetValues,
 }) => {
   const [reopenReason, setReopenReason] = useState('');
   const [reopenContext, setReopenContext] = useState('');
@@ -105,9 +108,12 @@ ReopenReasonModal.propTypes = {
     PropTypes.func,
     PropTypes.shape(),
   ]).isRequired,
-  goalId: PropTypes.number.isRequired,
+  goalId: PropTypes.number,
   onSubmit: PropTypes.func.isRequired,
   resetValues: PropTypes.bool.isRequired,
+};
+ReopenReasonModal.defaultProps = {
+  goalId: null,
 };
 
 export default ReopenReasonModal;

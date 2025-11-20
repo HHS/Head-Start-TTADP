@@ -2,9 +2,7 @@
 /* eslint-disable no-console */
 import React, {
   useContext,
-  useMemo,
   useState,
-  useCallback,
   useEffect,
 } from 'react';
 import moment from 'moment';
@@ -13,15 +11,12 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import useFilters from '../../hooks/useFilters';
 import FilterPanel from '../../components/filter/FilterPanel';
-import { allRegionsUserHasPermissionTo } from '../../permissions';
-import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
-import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
-import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 import ResourceUse from '../../widgets/ResourceUse';
-import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
-import './index.scss';
+import { showFilterWithMyRegions } from '../regionHelpers';
+import { filtersToQueryString, formatDateRange } from '../../utils';
 import { fetchFlatResourceData } from '../../fetchers/Resources';
 import {
   downloadReports,
@@ -35,18 +30,24 @@ import RegionPermissionModal from '../../components/RegionPermissionModal';
 import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
 import useSessionSort from '../../hooks/useSessionSort';
+import './index.scss';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
   string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
   withSpaces: false,
 });
+
+const additionalDefaultFilters = [
+  {
+    id: uuidv4(),
+    topic: 'startDate',
+    condition: 'is within',
+    query: defaultDate,
+  },
+];
 export default function ResourcesDashboard() {
   const { user } = useContext(UserContext);
-  const ariaLiveContext = useContext(AriaLiveContext);
-  const regions = allRegionsUserHasPermissionTo(user);
-  const defaultRegion = user.homeRegionId || regions[0] || 0;
-  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
   const [isLoading, setIsLoading] = useState(false);
   const [areReportsLoading, setAreReportsLoading] = useState(false);
   const [resourcesData, setResourcesData] = useState({});
@@ -56,9 +57,6 @@ export default function ResourcesDashboard() {
     count: 0,
     rows: [],
   });
-  const hasCentralOffice = useMemo(() => (
-    user && user.homeRegionId && user.homeRegionId === 14
-  ), [user]);
 
   const [activityReportSortConfig, setActivityReportSortConfig] = useSessionSort({
     sortBy: 'updatedAt',
@@ -72,87 +70,25 @@ export default function ResourcesDashboard() {
     (activePage - 1) * REPORTS_PER_PAGE,
   );
 
-  const getFiltersWithAllRegions = () => {
-    const filtersWithAllRegions = [...allRegionsFilters];
-    return filtersWithAllRegions;
-  };
-  const centralOfficeWithAllRegionFilters = getFiltersWithAllRegions();
+  const {
+    // from useUserDefaultRegionFilters
+    regions,
+    // defaultRegion,
+    allRegionsFilters,
 
-  const defaultFilters = useMemo(() => {
-    if (hasCentralOffice) {
-      return [...centralOfficeWithAllRegionFilters,
-        {
-          id: uuidv4(),
-          topic: 'startDate',
-          condition: 'is within',
-          query: defaultDate,
-        }];
-    }
-
-    return [
-      {
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-    ];
-  }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
-
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
+    // filter functionality
+    filters,
+    setFilters,
+    onApplyFilters,
+    onRemoveFilter,
+    filterConfig,
+  } = useFilters(
+    user,
     REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY,
-    defaultFilters,
+    true,
+    additionalDefaultFilters,
+    RESOURCES_DASHBOARD_FILTER_CONFIG,
   );
-
-  const setFilters = useCallback((newFilters) => {
-    setFiltersInHook(newFilters);
-    setResetPagination(true);
-    setActivityReportOffset(0);
-    setActivityReportSortConfig({
-      ...activityReportSortConfig,
-      activePage: 1,
-    });
-  }, [activityReportSortConfig, setActivityReportSortConfig, setFiltersInHook]);
-
-  // Remove Filters.
-  const onRemoveFilter = (id, addBackDefaultRegions) => {
-    const newFilters = [...filters];
-    const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      if (addBackDefaultRegions) {
-        // We always want the regions to appear in the URL.
-        setFilters([...allRegionsFilters, ...newFilters]);
-      } else {
-        setFilters(newFilters);
-      }
-    }
-  };
-
-  // Apply filters.
-  const onApplyFilters = (newFilters, addBackDefaultRegions) => {
-    if (addBackDefaultRegions) {
-      // We always want the regions to appear in the URL.
-      setFilters([
-        ...allRegionsFilters,
-        ...newFilters,
-      ]);
-    } else {
-      setFilters([
-        ...newFilters,
-      ]);
-    }
-
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to topics with resources `);
-  };
-
-  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
   const { reportIds } = resourcesData;
 
@@ -169,7 +105,7 @@ export default function ResourcesDashboard() {
         );
         setActivityReports(data);
         updateError('');
-      } catch (e) {
+      } /* istanbul ignore next: cannot test console.log */ catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
         updateError('Unable to fetch reports');
@@ -192,7 +128,7 @@ export default function ResourcesDashboard() {
     async function fetcHResourcesData() {
       setIsLoading(true);
       // Filters passed also contains region.
-      const filterQuery = filtersToQueryString(filtersToApply);
+      const filterQuery = filtersToQueryString(filters);
       try {
         const data = await fetchFlatResourceData(
           filterQuery,
@@ -208,7 +144,7 @@ export default function ResourcesDashboard() {
     // Call resources fetch.
     fetcHResourcesData();
   }, [
-    filtersToApply,
+    filters,
   ]);
 
   const handleDownloadReports = async (setIsDownloading, setDownloadError, url, buttonRef) => {
@@ -217,7 +153,7 @@ export default function ResourcesDashboard() {
       const blob = await downloadReports(url);
       const csv = URL.createObjectURL(blob);
       window.location.assign(csv);
-    } catch (err) {
+    } /* istanbul ignore next: hard to test error on download */ catch (err) {
       setDownloadError(true);
     } finally {
       setIsDownloading(false);
@@ -241,6 +177,7 @@ export default function ResourcesDashboard() {
     );
   };
 
+  /* istanbul ignore next: hard to test downloads */
   const handleDownloadClick = async (
     reportCheckboxes,
     setIsDownloading,
@@ -295,20 +232,13 @@ export default function ResourcesDashboard() {
           filters={filters}
           onApplyFilters={onApplyFilters}
           onRemoveFilter={onRemoveFilter}
-          filterConfig={RESOURCES_DASHBOARD_FILTER_CONFIG}
+          filterConfig={filterConfig}
           allUserRegions={regions}
         />
       </Grid>
       <ResourcesDashboardOverview
         data={resourcesData.resourcesDashboardOverview}
         loading={isLoading}
-        fields={[
-          'Reports with resources',
-          'ECLKC Resources',
-          'Recipients reached',
-          'Participants reached',
-        ]}
-        showTooltips
       />
       <ResourceUse
         data={resourcesData.resourcesUse}

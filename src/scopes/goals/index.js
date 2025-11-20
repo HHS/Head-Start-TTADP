@@ -6,7 +6,6 @@ import { withReasons, withoutReasons } from './reasons';
 import { withRecipientName, withoutRecipientName } from './recipient';
 import { withRecipientId } from './recipientId';
 import { withRegion, withoutRegion } from './region';
-import { withRoles, withoutRoles } from './role';
 import {
   containsGrantNumber, doesNotContainGrantNumber, withGrantNumber, withoutGrantNumber,
 } from './grantNumber';
@@ -27,6 +26,7 @@ import { withResourceUrl, withoutResourceUrl } from './resouceUrl';
 import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole';
 import { withGoalName, withoutGoalName } from './goalName';
+import { withGoalResponse, withoutGoalResponse } from './goalResponse';
 
 export const topicToQuery = {
   createDate: {
@@ -56,8 +56,13 @@ export const topicToQuery = {
     nin: (query) => withoutStatus(query),
   },
   topic: {
-    in: (query, options) => withTopics(query, options),
-    nin: (query, options) => withoutTopics(query, options),
+    in: (query, options, _userId, validTopics) => withTopics(query, options, _userId, validTopics),
+    nin: (query, options, _userId, validTopics) => withoutTopics(
+      query,
+      options,
+      _userId,
+      validTopics,
+    ),
   },
   reason: {
     in: (query, options) => withReasons(query, options),
@@ -73,10 +78,6 @@ export const topicToQuery = {
   region: {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
-  },
-  role: {
-    in: (query) => withRoles(query),
-    nin: (query) => withoutRoles(query),
   },
   group: {
     in: (query, _options, userId) => withGroup(query, userId),
@@ -139,8 +140,12 @@ export const topicToQuery = {
     ctn: (query) => withGoalName(query),
     nctn: (query) => withoutGoalName(query),
   },
+  goalResponse: {
+    in: (query) => withGoalResponse(query),
+    nin: (query) => withoutGoalResponse(query),
+  },
 };
 
-export function goalsFiltersToScopes(filters, options, userId) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId);
+export function goalsFiltersToScopes(filters, options, userId, validTopics) {
+  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
 }

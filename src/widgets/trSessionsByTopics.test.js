@@ -248,6 +248,7 @@ describe('TR sessions by topic', () => {
       where: {
         id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id],
       },
+      individualHooks: true,
     });
 
     // delete recipients
@@ -294,5 +295,58 @@ describe('TR sessions by topic', () => {
 
     const secondTopic = data.find((d) => topic2.name === d.topic);
     expect(secondTopic.count).toBe(1);
+  });
+
+  it('handles topics that are not in the topics list', async () => {
+    // eslint-disable-next-line global-require
+    const helpers = require('./helpers');
+    const originalFindAll = db.EventReportPilot.findAll;
+    const originalGetAllTopics = helpers.getAllTopicsForWidget;
+    const originalBaseTRScopes = helpers.baseTRScopes;
+
+    const nonExistentTopic = 'Non-existent Topic';
+    const mockReports = [{
+      sessionReports: [{
+        data: {
+          objectiveTopics: [nonExistentTopic, topic1.name],
+        },
+      }],
+    }];
+
+    const mockTopics = [
+      { name: topic1.name },
+    ];
+
+    db.EventReportPilot.findAll = jest.fn().mockResolvedValue(mockReports);
+    helpers.getAllTopicsForWidget = jest.fn().mockResolvedValue(mockTopics);
+    helpers.baseTRScopes = jest.fn().mockReturnValue({
+      where: {},
+      include: {
+        model: SessionReportPilot,
+        as: 'sessionReports',
+        attributes: ['data', 'eventId'],
+        where: {
+          'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+        required: true,
+      },
+    });
+
+    const scopes = {
+      grant: [{ id: [grant1.id] }],
+      trainingReport: [{ id: [trainingReport1.id] }],
+    };
+    const data = await trSessionsByTopic(scopes);
+
+    expect(data.length).toBe(1);
+    expect(data[0].topic).toBe(topic1.name);
+    expect(data[0].count).toBe(1);
+
+    const nonExistentTopicInResult = data.find((d) => d.topic === nonExistentTopic);
+    expect(nonExistentTopicInResult).toBeUndefined();
+
+    db.EventReportPilot.findAll = originalFindAll;
+    helpers.getAllTopicsForWidget = originalGetAllTopics;
+    helpers.baseTRScopes = originalBaseTRScopes;
   });
 });

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import Joi from 'joi';
+import Joi from '@hapi/joi';
 import { root, validateSchema } from './common';
 
 enum SortBy {
@@ -99,6 +99,8 @@ test.describe('get /recipient', () => {
         createdAt: Joi.string().isoDate(),
         updatedAt: Joi.string().isoDate(),
       }),
+      geographicRegionId: Joi.number().allow(null),
+      geographicRegion: Joi.string().allow(null),
     });
 
     const recipientSchema = Joi.object({
@@ -146,12 +148,19 @@ test.describe('get /recipient', () => {
       ),
     });
 
+    const grantMissingStandardSchema = Joi.object({
+      goalTemplateId: Joi.number().allow(null),
+      templateName: Joi.string().allow(null),
+      grantId: Joi.number().allow(null),
+    });
+
     const schema = Joi.object({
       id: Joi.number().integer().required(),
       name: Joi.string().required(),
       recipientType: Joi.string().allow(null),
       uei: Joi.string().allow(null),
       grants: Joi.array().items(grantSchema),
+      missingStandardGoals: Joi.array().items(grantMissingStandardSchema),
     });
 
     await validateSchema(response, schema, expect);
@@ -185,7 +194,16 @@ test.describe('get /recipient', () => {
       Joi.object({
         id: Joi.number(),
         isCurated: Joi.boolean(),
+        isSourceEditable: Joi.boolean(),
         prompts: Joi.object(),
+        promptsForReview: Joi.array().items(Joi.object({
+          key: Joi.string(),
+          recipients: Joi.array().items(Joi.object({
+            id: Joi.number(),
+            name: Joi.string(),
+          })),
+          responses: Joi.array().items(Joi.string()),
+        })),
         name: Joi.string(),
         source: Joi.object(),
         goalTemplateId: Joi.number().allow(null),

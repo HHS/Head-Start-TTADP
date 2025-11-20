@@ -2,9 +2,7 @@ import faker from '@faker-js/faker';
 import db, {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
-  EventReportPilotGoal,
-  Grant,
-  Recipient,
+  Grant, Recipient,
   SessionReportPilot,
 } from '../models';
 import { createEvent, destroyEvent } from './event';
@@ -16,8 +14,8 @@ import {
   updateSession,
   getPossibleSessionParticipants,
   findSessionHelper,
+  validateFields,
 } from './sessionReports';
-import sessionReportPilot from '../models/sessionReportPilot';
 import { createGrant, createGoal, destroyGoal } from '../testUtils';
 
 jest.mock('bull');
@@ -43,7 +41,6 @@ describe('session reports service', () => {
   });
 
   afterAll(async () => {
-    await EventReportPilotGoal.destroy({ where: { eventId: event.id }, force: true });
     await destroyEvent(event.id);
     await db.sequelize.close();
   });
@@ -58,6 +55,12 @@ describe('session reports service', () => {
       });
 
       await destroySession(created.id);
+    });
+
+    it('throws an error when the event is not found', async () => {
+      await expect(createSession({ eventId: 999999, data: { card: 'ace' } }))
+        .rejects
+        .toThrow('Event with id 999999 not found');
     });
   });
 
@@ -99,8 +102,7 @@ describe('session reports service', () => {
   });
 
   describe('destroySession', () => {
-    let eventReportPilotGoal; let goal; let grant; let
-      createdSession;
+    let goal; let grant; let createdSession;
     const grantData = {
       id: 5555555,
       number: '1234',
@@ -115,19 +117,11 @@ describe('session reports service', () => {
     };
     beforeAll(async () => {
       createdSession = await createSession({ eventId: event.id, data: {} });
-      const eventReportPilotGoalData = {
-        goalId: 99_111,
-        eventId: event.id,
-        sessionId: createdSession.id,
-        grantId: 5555555,
-      };
       grant = await createGrant(grantData);
       goal = await createGoal(goalData);
-      eventReportPilotGoal = await EventReportPilotGoal.create(eventReportPilotGoalData);
     });
 
     afterAll(async () => {
-      await EventReportPilotGoal.destroy({ where: { eventId: event.id }, force: true });
       await SessionReportPilot.destroy({ where: { eventId: event.id }, force: true });
       await destroyGoal(goalData);
       await Grant.destroy({ where: { id: 5555555 }, force: true, individualHooks: true });
@@ -155,14 +149,8 @@ describe('session reports service', () => {
       );
     });
     it('should delete session', async () => {
-      // Verify the session and the corresponding EventReportPilotGoal record are present
+      // Verify the session record is present
       expect(createdSession).toBeDefined();
-      const evntRPGoal = await EventReportPilotGoal.findOne({
-        where: { sessionId: createdSession.id },
-      });
-
-      expect(evntRPGoal).toBeDefined();
-      expect(evntRPGoal.sessionId).toEqual(createdSession.id);
 
       // Delete the session
       await destroySession(createdSession.id);
@@ -170,11 +158,6 @@ describe('session reports service', () => {
       // Verify the session was deleted
       const session = await SessionReportPilot.findByPk(createdSession.id);
       expect(session).toBeNull();
-      const evntRPGoalAfterSessionDelete = await EventReportPilotGoal.findOne({
-        where: { eventId: event.id },
-      });
-      expect(evntRPGoalAfterSessionDelete).toBeDefined();
-      expect(evntRPGoalAfterSessionDelete.sessionId).toBeNull();
     });
   });
 
@@ -324,7 +307,7 @@ describe('session reports service', () => {
     });
 
     afterAll(async () => {
-      await sessionReportPilot.destroy({
+      await SessionReportPilot.destroy({
         where: {
           id: sessionIds,
         },
@@ -338,6 +321,55 @@ describe('session reports service', () => {
       expect(sessions[0].data.startDate).toBe('02/10/2022');
       expect(sessions[1].data.startDate).toBe('04/20/2022');
       expect(sessions[2].data.startDate).toBe('01/01/2023');
+    });
+
+    it('should return null if no sessions are found', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findAll').mockResolvedValueOnce(null);
+      const sessions = await findSessionHelper({ eventId: 999999 }, true);
+      expect(sessions).toBeNull();
+    });
+
+    it('should return a single session when plural is false', async () => {
+      const session = await findSessionHelper({ id: sessionIds[0] }, false);
+      expect(session).toHaveProperty('id', sessionIds[0]);
+    });
+
+    it('should return multiple sessions when plural is true', async () => {
+      const sessions = await findSessionHelper({ eventId: createdEvent.id }, true);
+      expect(sessions.length).toBe(3);
+    });
+
+    it('should return default values when data, files, supportingAttachments, and event are undefined', async () => {
+      const createdSession = await SessionReportPilot.create({
+        eventId: createdEvent.id,
+        data: {},
+      });
+
+      const foundSession = await findSessionHelper({ id: createdSession.id });
+
+      expect(foundSession).toHaveProperty('data', {});
+      expect(foundSession).toHaveProperty('files', []);
+      expect(foundSession).toHaveProperty('supportingAttachments', []);
+
+      await SessionReportPilot.destroy({ where: { id: createdSession.id } });
+    });
+
+    it('should return null for the eventId when session.event is null', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({ id: 999 });
+      const foundSession = await findSessionHelper({ id: 'it doesnt matter' });
+      expect(foundSession).toHaveProperty('eventId', null);
+      expect(foundSession).toHaveProperty('id', 999);
+      expect(foundSession).toHaveProperty('data', {});
+      expect(foundSession).toHaveProperty('files', []);
+      expect(foundSession).toHaveProperty('supportingAttachments', []);
+    });
+  });
+
+  describe('validateFields', () => {
+    it('throws an error when there are missingFields', () => {
+      expect(() => {
+        validateFields({ field1: 'value1' }, ['field1', 'field2']);
+      }).toThrow();
     });
   });
 });

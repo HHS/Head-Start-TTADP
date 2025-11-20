@@ -14,6 +14,7 @@ import db, {
   ActivityReportObjective,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  Resource,
 } from '../../models';
 import filtersToScopes from '../../scopes';
 import {
@@ -28,10 +29,11 @@ import { processActivityReportObjectiveForResourcesById } from '../resource';
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
 const REGION_ID = 14;
-const NONECLKC_DOMAIN = 'non.test1.gov';
-const ECLKC_RESOURCE_URL = `https://${RESOURCE_DOMAIN.ECLKC}/test`;
-const ECLKC_RESOURCE_URL2 = `https://${RESOURCE_DOMAIN.ECLKC}/test2`;
-const NONECLKC_RESOURCE_URL = `https://${NONECLKC_DOMAIN}/a/b/c`;
+const NON_HEADSTART_DOMAIN = 'non.test1.gov';
+const HEADSTART_RESOURCE_URL = `https://${RESOURCE_DOMAIN.HEAD_START}/test`;
+const HEADSTART_RESOURCE_URL2 = `https://${RESOURCE_DOMAIN.HEAD_START}/test2`;
+const NON_HEADSTART_RESOURCE_URL = `https://${NON_HEADSTART_DOMAIN}/a/b/c`;
+const MAPPED_ECLKC_RESOURCE = 'https://eclkc.ohs.acf.hhs.gov/testmapped';
 
 const mockUser = {
   id: 5426871,
@@ -59,7 +61,6 @@ const mockGrant = {
 const mockGoal = {
   name: 'Goal 1',
   status: 'Draft',
-  endDate: null,
   isFromSmartsheetTtaPlan: false,
   onApprovedAR: false,
   onAR: false,
@@ -73,7 +74,7 @@ const reportObject = {
   calculatedStatus: REPORT_STATUSES.APPROVED,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
-  ECLKCResourcesUsed: ['test'],
+  HeadStartResourcesUsed: ['test'],
   activityRecipients: [
     { grantId: GRANT_ID_ONE },
   ],
@@ -182,53 +183,40 @@ describe('Resources dashboard', () => {
       },
     });
 
-    // Get topic ID's.
-    const { topicId: classOrgTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    // Create topics if they don't exist
+    const [classOrgTopicCreated] = await Topic.findOrCreate({
       where: { name: 'CLASS: Classroom Organization' },
-      raw: true,
+      defaults: { name: 'CLASS: Classroom Organization' },
     });
 
-    const { topicId: erseaTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [erseaTopicCreated] = await Topic.findOrCreate({
       where: { name: 'ERSEA' },
-      raw: true,
+      defaults: { name: 'ERSEA' },
     });
 
-    const { topicId: coachingTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [coachingTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Coaching' },
-      raw: true,
+      defaults: { name: 'Coaching' },
     });
 
-    const { topicId: facilitiesTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [facilitiesTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Facilities' },
-      raw: true,
+      defaults: { name: 'Facilities' },
     });
 
-    const { topicId: fiscalBudgetTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [fiscalBudgetTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Fiscal / Budget' },
-      raw: true,
+      defaults: { name: 'Fiscal / Budget' },
     });
 
-    const { topicId: nutritionTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [nutritionTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Nutrition' },
-      raw: true,
+      defaults: { name: 'Nutrition' },
     });
 
-    const { topicId: oralHealthTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [oralHealthTopicCreated] = await Topic.findOrCreate({
       where: { name: 'Oral Health' },
-      raw: true,
-    });
-
-    const { topicId: equityTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'Equity' },
-      raw: true,
+      defaults: { name: 'Oral Health' },
     });
 
     // Report 1 (Mixed Resources).
@@ -253,29 +241,29 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveOne.id,
-        topicId: classOrgTopicId,
+        topicId: classOrgTopicCreated.id,
       },
     });
 
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveOne.id,
-        topicId: erseaTopicId,
+        topicId: erseaTopicCreated.id,
       },
     });
 
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveOne.id,
-        topicId: coachingTopicId,
+        topicId: coachingTopicCreated.id,
       },
     });
 
-    // Report 1 ECLKC Resource 1.
-    // Report 1 Non-ECLKC Resource 1.
+    // Report 1 HeadStart Resource 1.
+    // Report 1 Non-HeadStart Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportOneObjectiveOne.id,
-      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL, MAPPED_ECLKC_RESOURCE],
     );
 
     // Report 1 - Activity Report Objective 2
@@ -290,13 +278,13 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveTwo.id,
-        topicId: coachingTopicId,
+        topicId: coachingTopicCreated.id,
       },
     });
 
     await processActivityReportObjectiveForResourcesById(
       activityReportOneObjectiveTwo.id,
-      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
     );
 
     // Report 1 - Activity Report Objective 3 (No resources)
@@ -312,11 +300,11 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportOneObjectiveThree.id,
-        topicId: nutritionTopicId,
+        topicId: nutritionTopicCreated.id,
       },
     });
 
-    // Report 2 (Only ECLKC).
+    // Report 2 (Only HeadStart).
     const reportTwo = await ActivityReport.create({ ...regionOneReportB });
     await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
 
@@ -326,21 +314,21 @@ describe('Resources dashboard', () => {
       objectiveId: objective.id,
     });
 
-    // Report 2 ECLKC Resource 1.
+    // Report 2 HeadStart Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveTwo.id,
-      [ECLKC_RESOURCE_URL, ECLKC_RESOURCE_URL2],
+      [HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
     );
 
     // Report 2 Topic 1.
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveTwo.id,
-        topicId: oralHealthTopicId,
+        topicId: oralHealthTopicCreated.id,
       },
     });
 
-    // Report 3 (Only Non-ECLKC).
+    // Report 3 (Only Non-HeadStart).
     const reportThree = await ActivityReport.create({ ...regionOneReportC });
     await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
 
@@ -350,17 +338,17 @@ describe('Resources dashboard', () => {
       objectiveId: objective.id,
     });
 
-    // Report 3 Non-ECLKC Resource 1.
+    // Report 3 Non-HeadStart Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveThree.id,
-      [NONECLKC_RESOURCE_URL, ECLKC_RESOURCE_URL2],
+      [NON_HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
     );
 
     // Report 3 Topic 1.
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveThree.id,
-        topicId: nutritionTopicId,
+        topicId: nutritionTopicCreated.id,
       },
     });
 
@@ -378,7 +366,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveForReport4.id,
-        topicId: facilitiesTopicId,
+        topicId: facilitiesTopicCreated.id,
       },
     });
 
@@ -386,7 +374,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveForReport4.id,
-        topicId: fiscalBudgetTopicId,
+        topicId: fiscalBudgetTopicCreated.id,
       },
     });
 
@@ -394,14 +382,14 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveForReport4.id,
-        topicId: erseaTopicId,
+        topicId: erseaTopicCreated.id,
       },
     });
 
-    // Report 4 Non-ECLKC Resource 1.
+    // Report 4 Non-HeadStart Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveForReport4.id,
-      [ECLKC_RESOURCE_URL2],
+      [HEADSTART_RESOURCE_URL2],
     );
 
     // Report 5 (No resources).
@@ -418,7 +406,7 @@ describe('Resources dashboard', () => {
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveForReport5.id,
-        topicId: facilitiesTopicId,
+        topicId: facilitiesTopicCreated.id,
       },
     });
 
@@ -432,26 +420,18 @@ describe('Resources dashboard', () => {
       objectiveId: objective.id,
     });
 
-    // Report Draft ECLKC Resource 1.
-    // Report Draft Non-ECLKC Resource 1.
+    // Report Draft HeadStart Resource 1.
+    // Report Draft Non-HeadStart Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveDraft.id,
-      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
     );
-
-    // Draft Report 5 Topic 1.
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveDraft.id,
-        topicId: equityTopicId,
-      },
-    });
 
     // Draft Report 5 Topic 2.
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveDraft.id,
-        topicId: erseaTopicId,
+        topicId: erseaTopicCreated.id,
       },
     });
 
@@ -501,16 +481,20 @@ describe('Resources dashboard', () => {
   it('resourceUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     let resourceUseResult;
+    const mappedResource = await Resource.findOne({
+      where: { url: MAPPED_ECLKC_RESOURCE },
+    });
+
     await db.sequelize.transaction(async () => {
       ({ resourceUseResult } = await resourceFlatData(scopes));
 
       expect(resourceUseResult).toBeDefined();
-      expect(resourceUseResult.length).toBe(3);
+      expect(resourceUseResult.length).toBe(4);
 
       expect(resourceUseResult).toStrictEqual([
         {
           date: '2021-01-01',
-          url: 'https://eclkc.ohs.acf.hhs.gov/test',
+          url: 'https://headstart.gov/test',
           rollUpDate: 'Jan-21',
           title: null,
           resourceCount: '2',
@@ -518,11 +502,19 @@ describe('Resources dashboard', () => {
         },
         {
           date: '2021-01-01',
-          url: 'https://eclkc.ohs.acf.hhs.gov/test2',
+          url: 'https://headstart.gov/test2',
           rollUpDate: 'Jan-21',
           title: null,
           resourceCount: '3',
           totalCount: '3',
+        },
+        {
+          date: '2021-01-01',
+          url: 'https://headstart.gov/testmapped',
+          rollUpDate: 'Jan-21',
+          title: null,
+          resourceCount: '1',
+          totalCount: '1',
         },
         {
           date: '2021-01-01',
@@ -546,13 +538,13 @@ describe('Resources dashboard', () => {
 
       expect(topicUseResult).toStrictEqual([
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
         },
         {
-          name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+          name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
+          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '4', totalCount: '4', date: '2021-01-01',
         },
         {
           name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
@@ -581,7 +573,7 @@ describe('Resources dashboard', () => {
         numberOfParticipants,
         numberOfRecipients,
         pctOfReportsWithResources,
-        pctOfECKLKCResources,
+        pctOfHeadStartResources,
       } = overView;
 
       // Number of Participants.
@@ -603,12 +595,12 @@ describe('Resources dashboard', () => {
         },
       ]);
 
-      // Percent of ECLKC reports.
-      expect(pctOfECKLKCResources).toStrictEqual([
+      // Percent of HeadStart reports.
+      expect(pctOfHeadStartResources).toStrictEqual([
         {
-          eclkcCount: '2',
-          allCount: '3',
-          eclkcPct: '66.67',
+          headStartCount: '3',
+          allCount: '4',
+          headStartPct: '75.00',
         },
       ]);
     });
@@ -828,7 +820,8 @@ describe('Resources dashboard', () => {
         pctOfReportsWithResources: [{ resourcesPct: '80.0000', reportsWithResourcesCount: '4', totalReportsCount: '5' }],
         numberOfParticipants: [{ participants: '44' }],
         numberOfRecipients: [{ recipients: '1' }],
-        pctOfECKLKCResources: [{ eclkcCount: '2', allCount: '3', eclkcPct: '66.6667' }],
+        pctOfHeadStartResources: [{ headStartCount: '2', allCount: '3', headStartPct: '66.6667' }],
+        pctOfReportsWithCourses: [{ coursesPct: '80.0000', reportsWithCoursesCount: '4', totalReportsCount: '5' }],
       },
     };
 
@@ -847,9 +840,12 @@ describe('Resources dashboard', () => {
         numResources: '1',
       },
       resource: {
-        numEclkc: '2',
+        numHeadStart: '2',
         num: '3',
-        percentEclkc: '66.67%',
+        percentHeadStart: '66.67%',
+      },
+      ipdCourses: {
+        percentReports: '80.00%',
       },
     });
   });

@@ -1,38 +1,34 @@
 import { Op } from 'sequelize';
-import { filterAssociation } from './utils';
-
-const selectDistinctGrants = (join: string, having: string) => `
-  SELECT DISTINCT
-    "Grants"."id"
-  FROM "Grants"
-  ${join}
-  GROUP BY "Grants"."id"
-  HAVING ${having}`;
-
-const goalNameIncludeExclude = (include = true) => {
-  const a = include ? '' : 'bool_or("Goals".name IS NULL) OR';
-
-  return selectDistinctGrants(
-    'LEFT JOIN "Goals" ON "Goals"."grantId" = "Grants"."id"',
-    `${a} LOWER(STRING_AGG("Goals".name, CHR(10)))`,
-  );
-};
+import { sequelize } from '../../models';
 
 export function withGoalName(searchText: string[]) {
-  const search = [`${searchText.map((st) => st.toLowerCase())}`];
+  const searchTerms = searchText.map((term) => `%${term.toLowerCase()}%`);
 
   return {
-    [Op.or]: [
-      filterAssociation(goalNameIncludeExclude(true), search, false, 'LIKE'),
-    ],
+    where: {
+      [Op.or]: searchTerms.map((term) => sequelize.literal(`"Recipient"."id" IN (
+          SELECT DISTINCT "Grants"."recipientId"  
+          FROM "Grants"  
+          INNER JOIN "Goals" ON "Goals"."grantId" = "Grants"."id"  
+          GROUP BY "Grants"."id"  
+          HAVING LOWER(STRING_AGG("Goals".name, CHR(10))) LIKE ${sequelize.escape(term)}
+        )`)),
+    },
   };
 }
 
 export function withoutGoalName(searchText: string[]) {
-  const search = [`${searchText.map((st) => st.toLowerCase())}`];
+  const searchTerms = searchText.map((term) => `%${term.toLowerCase()}%`);
+
   return {
-    [Op.and]: [
-      filterAssociation(goalNameIncludeExclude(false), search, false, 'NOT LIKE'),
-    ],
+    where: {
+      [Op.and]: searchTerms.map((term) => sequelize.literal(`"Recipient"."id" NOT IN (
+          SELECT DISTINCT "Grants"."recipientId"  
+          FROM "Grants"  
+          INNER JOIN "Goals" ON "Goals"."grantId" = "Grants"."id"  
+          GROUP BY "Grants"."id"  
+          HAVING LOWER(STRING_AGG("Goals".name, CHR(10))) LIKE ${sequelize.escape(term)}
+        )`)),
+    },
   };
 }

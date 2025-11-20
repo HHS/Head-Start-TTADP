@@ -1,9 +1,12 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import crypto from 'crypto';
 import {
-  saveGoalsForReport,
-} from './goals';
+  CURATED_CREATION,
+} from '../constants';
+import { saveStandardGoalsForReport } from '../services/standardGoals';
 import db, {
+  User,
   Goal,
   Grant,
 
@@ -12,10 +15,28 @@ import db, {
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
   ActivityReportGoalFieldResponse,
+  GoalTemplate,
 } from '../models';
 import { createReport, destroyReport } from '../testUtils';
+import goal from '../models/goal';
+
+const mockUser = {
+  id: faker.datatype.number({ min: 9999 }),
+  homeRegionId: 1,
+  name: 'user942571',
+  hsesUsername: 'user942571',
+  hsesUserId: '942571',
+  lastLogin: new Date(),
+};
 
 describe('saveGoalsForReport multi recipient', () => {
+  // User.
+  let user;
+
+  // Template.
+  let goalTemplate;
+  const templateName = 'One template to rule them all';
+
   // Recipients.
   let multiRecipientRecipientA;
   let multiRecipientRecipientB;
@@ -33,7 +54,26 @@ describe('saveGoalsForReport multi recipient', () => {
   let multiRecipientGoalOneB;
   let multiRecipientGoalTwo;
 
+  // FEI Prompt.
+  let fieldPrompt;
+
   beforeAll(async () => {
+    // Create user.
+    user = await User.create(mockUser);
+
+    // Create goal template.
+    const secret = 'secret';
+    const hash = crypto
+      .createHmac('md5', secret)
+      .update(templateName)
+      .digest('hex');
+
+    goalTemplate = await GoalTemplate.create({
+      hash,
+      templateName,
+      creationMethod: CURATED_CREATION,
+    });
+
     // Create recipients.
     multiRecipientRecipientA = await Recipient.create({
       id: faker.datatype.number({ min: 10000, max: 100000 }),
@@ -99,22 +139,25 @@ describe('saveGoalsForReport multi recipient', () => {
       name: 'One fei goal to rule them all',
       status: 'Draft',
       grantId: multiRecipientGrantOneA.id,
+      goalTemplateId: goalTemplate.id,
     });
 
     multiRecipientGoalOneB = await Goal.create({
       name: 'One fei goal to rule them all',
       status: 'Draft',
       grantId: multiRecipientGrantOneB.id,
+      goalTemplateId: goalTemplate.id,
     });
 
     multiRecipientGoalTwo = await Goal.create({
       name: 'One fei goal to rule them all',
       status: 'Draft',
       grantId: multiRecipientGrantTwo.id,
+      goalTemplateId: goalTemplate.id,
     });
 
     // find 'FEI root cause' field prompt.
-    const fieldPrompt = await GoalTemplateFieldPrompt.findOne({
+    fieldPrompt = await GoalTemplateFieldPrompt.findOne({
       where: {
         title: 'FEI root cause',
       },
@@ -213,30 +256,52 @@ describe('saveGoalsForReport multi recipient', () => {
       individualHooks: true,
     });
 
+    // Delete GoalTemplate.
+    await GoalTemplate.destroy({
+      where: {
+        id: goalTemplate.id,
+      },
+      individualHooks: true,
+    });
+
+    // Delete User.
+    await User.destroy({
+      where: {
+        id: user.id,
+      },
+      individualHooks: true,
+    });
     await db.sequelize.close();
   });
 
-  it('correctly updates multi recipient report root causes', async () => {
+  it('correctly updates multi recipient report root causes per grant', async () => {
     // call the function.
-    await saveGoalsForReport([
-      {
-        name: 'One fei goal to rule them all',
-        label: 'One fei goal to rule them all',
-        isNew: false,
-        goalIds: [multiRecipientGoalOneA.id, multiRecipientGoalOneB.id, multiRecipientGoalTwo.id],
-        grantIds: [
-          multiRecipientGrantOneA.id,
-          multiRecipientGrantOneB.id,
-          multiRecipientGrantTwo.id,
-        ],
-        status: 'In Progress',
-        objectives: [],
-        // endDate: new Date(),
-        regionId: 1,
-        source: 'Regional office priority',
-        createdVia: 'activityReport',
-      },
-    ], { id: multiRecipientActivityReport.id });
+    await saveStandardGoalsForReport(
+      [
+        {
+          name: 'One fei goal to rule them all',
+          label: 'One fei goal to rule them all',
+          isNew: false,
+          goalTemplateId: goalTemplate.id,
+          goalIds: [
+            multiRecipientGoalOneA.id,
+            multiRecipientGoalOneB.id,
+            multiRecipientGoalTwo.id,
+          ],
+          grantIds: [
+            multiRecipientGrantOneA.id,
+            multiRecipientGrantOneB.id,
+            multiRecipientGrantTwo.id,
+          ],
+          status: 'In Progress',
+          objectives: [],
+          regionId: 1,
+          source: 'Regional office priority',
+          createdVia: 'activityReport',
+        }],
+      user.id,
+      { id: multiRecipientActivityReport.id },
+    );
 
     // Retrieve ActivityReportGoals.
     const activityReportGoals = await ActivityReportGoal.findAll({
@@ -260,51 +325,47 @@ describe('saveGoalsForReport multi recipient', () => {
     expect(response).toContainEqual([]);
     expect(response).toContainEqual(['Facilities']);
 
-    // Update GoalFieldResponses.
-    await GoalFieldResponse.update({
-      response: ['First Response Updated', 'Second Response Updated', 'Third Response Updated'],
-    }, {
-      where: {
-        goalId: multiRecipientGoalOneA.id,
-      },
-    });
-
-    await GoalFieldResponse.update({
-      response: ['Fourth Response Updated'],
-    }, {
-      where: {
-        goalId: multiRecipientGoalOneB.id,
-      },
-    });
-
-    await GoalFieldResponse.update({
-      response: ['Sixth Response Updated', 'Seventh Response Updated'],
-    }, {
-      where: {
-        goalId: multiRecipientGoalTwo.id,
-      },
-    });
-
     // call the function.
-    await saveGoalsForReport([
-      {
-        name: 'One fei goal to rule them all',
-        label: 'One fei goal to rule them all',
-        isNew: false,
-        goalIds: [multiRecipientGoalOneA.id, multiRecipientGoalOneB.id, multiRecipientGoalTwo.id],
-        grantIds: [
-          multiRecipientGrantOneA.id,
-          multiRecipientGrantOneB.id,
-          multiRecipientGrantTwo.id,
-        ],
-        status: 'In Progress',
-        objectives: [],
-        // endDate: new Date(),
-        regionId: 1,
-        source: 'Regional office priority',
-        createdVia: 'activityReport',
-      },
-    ], { id: multiRecipientActivityReport.id });
+    await saveStandardGoalsForReport(
+      [
+        {
+          name: 'One fei goal to rule them all',
+          label: 'One fei goal to rule them all',
+          isNew: false,
+          goalIds: [multiRecipientGoalOneA.id, multiRecipientGoalOneB.id, multiRecipientGoalTwo.id],
+          goalTemplateId: goalTemplate.id,
+          grantIds: [
+            multiRecipientGrantOneA.id,
+            multiRecipientGrantOneB.id,
+            multiRecipientGrantTwo.id,
+          ],
+          status: 'In Progress',
+          objectives: [],
+          regionId: 1,
+          source: 'Regional office priority',
+          createdVia: 'activityReport',
+          prompts: [
+            {
+              grantId: multiRecipientGrantOneA.id,
+              response: ['Workforce'],
+              promptId: fieldPrompt.id,
+            },
+            {
+              grantId: multiRecipientGrantOneB.id,
+              response: ['Other ECE Care Options', 'Unavailable'],
+              promptId: fieldPrompt.id,
+            },
+            {
+              grantId: multiRecipientGrantTwo.id,
+              response: ['Community Partnerships'],
+              promptId: fieldPrompt.id,
+            },
+          ],
+        },
+      ],
+      user.id,
+      { id: multiRecipientActivityReport.id },
+    );
 
     activityReportGoalFieldResponses = await ActivityReportGoalFieldResponse.findAll({
       where: {
@@ -313,10 +374,27 @@ describe('saveGoalsForReport multi recipient', () => {
     });
     expect(activityReportGoalFieldResponses.length).toBe(3);
 
-    // Check the response.
+    // We don't expect the responses to be updated in the ActivityReportGoalFieldResponses
+    // from the GoalFieldResponses whe saving the AR.
     const updatedResponses = activityReportGoalFieldResponses.map((arg) => arg.response);
-    expect(updatedResponses).toContainEqual(['First Response Updated', 'Second Response Updated', 'Third Response Updated']);
-    expect(updatedResponses).toContainEqual(['Fourth Response Updated']);
-    expect(updatedResponses).toContainEqual(['Sixth Response Updated', 'Seventh Response Updated']);
+    expect(updatedResponses).toContainEqual(['Workforce']);
+    expect(updatedResponses).toContainEqual(['Other ECE Care Options', 'Unavailable']);
+    expect(updatedResponses).toContainEqual(['Community Partnerships']);
+
+    // We do expect the goal field responses to be updated.
+    const updatedGoalFieldResponses = await GoalFieldResponse.findAll({
+      where: {
+        goalId: [
+          multiRecipientGoalOneA.id,
+          multiRecipientGoalOneB.id,
+          multiRecipientGoalTwo.id,
+        ],
+      },
+    });
+
+    const goalFieldResponses = updatedGoalFieldResponses.map((arg) => arg.response);
+    expect(goalFieldResponses).toContainEqual(['Workforce']);
+    expect(goalFieldResponses).toContainEqual(['Other ECE Care Options', 'Unavailable']);
+    expect(goalFieldResponses).toContainEqual(['Community Partnerships']);
   });
 });

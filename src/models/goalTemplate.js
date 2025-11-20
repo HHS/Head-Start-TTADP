@@ -22,12 +22,6 @@ export default (sequelize, DataTypes) => {
         models.GoalTemplateObjectiveTemplate,
         { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' },
       );
-      GoalTemplate.belongsToMany(models.ObjectiveTemplate, {
-        through: models.GoalTemplateObjectiveTemplate,
-        foreignKey: 'goalTemplateId',
-        otherKey: 'objectiveTemplateId',
-        as: 'goalTemplates',
-      });
       GoalTemplate.hasMany(models.GoalTemplateFieldPrompt, { foreignKey: 'goalTemplateId', as: 'prompts' });
       GoalTemplate.hasMany(models.GoalTemplateResource, { foreignKey: 'goalTemplateId', as: 'goalTemplateResources' });
       GoalTemplate.belongsToMany(models.Resource, {
@@ -35,6 +29,15 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'goalTemplateId',
         otherKey: 'resourceId',
         as: 'resources',
+      });
+      GoalTemplate.hasMany(models.CollabReportGoal, { foreignKey: 'goalTemplateId', as: 'collabReportGoals' });
+      // Session Report Pilot Goal Templates.
+      GoalTemplate.hasMany(models.SessionReportPilotGoalTemplate, { foreignKey: 'goalTemplateId', as: 'sessionReportGoalTemplates' });
+      GoalTemplate.belongsToMany(models.SessionReportPilot, {
+        through: models.SessionReportPilotGoalTemplate,
+        foreignKey: 'goalTemplateId',
+        otherKey: 'sessionReportPilotId',
+        as: 'sessionReports',
       });
     }
   }
@@ -73,6 +76,16 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.STRING,
     },
+    standard: {
+      allowNull: true,
+      type: DataTypes.TEXT,
+    },
+    isSourceEditable: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.source === null;
+      },
+    },
   }, {
     sequelize,
     modelName: 'GoalTemplate',
@@ -82,6 +95,7 @@ export default (sequelize, DataTypes) => {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
+    paranoid: true,
   });
   return GoalTemplate;
 };

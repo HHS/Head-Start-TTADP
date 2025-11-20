@@ -1,9 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
+import ResourceUseSparklineGraph from './ResourceUseSparklineGraph';
 
 function ResourceUse({ data, loading }) {
+  const [displayTable, setDisplayTable] = useState(false);
+  const menuItems = [
+    {
+      label: `View as ${displayTable ? 'graph' : 'table'}`,
+      onClick: () => setDisplayTable(!displayTable),
+    },
+  ];
+
   return (
     <WidgetContainer
       title="Resource use"
@@ -11,13 +20,23 @@ function ResourceUse({ data, loading }) {
       loading={loading}
       loadingLabel="Resource use loading"
       showPagingBottom={false}
+      displayTable={displayTable}
+      setDisplayTable={setDisplayTable}
+      menuItems={menuItems}
+      titleMargin={{ bottom: 1 }}
     >
+      {displayTable && (
       <HorizontalTableWidget
         id="resourceUse"
         headers={data.headers}
-        data={data.resources.map((d) => ({ ...d, heading: d.title || d.heading, link: d.heading }))}
+        data={data.resources.map((d) => (
+          { ...d, heading: d.title || d.heading, link: d.heading }))}
         firstHeading="Resource URL"
       />
+      )}
+
+      {(!displayTable) && (<ResourceUseSparklineGraph data={data} />)}
+
     </WidgetContainer>
   );
 }

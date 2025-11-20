@@ -1,0 +1,12 @@
+---
+applications:
+- name: tta-automation
+  stack: cflinuxfs4
+  memory: ((memory))
+  disk_quota: ((disk_quota))
+  instances: ((instances))
+  no-route: true
+  buildpacks:
+    - ((buildpack))
+  command: ((command))
+  services: ((bound_services))

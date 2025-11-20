@@ -39,9 +39,9 @@ const resourcesDefault = {
       percentResources: '40.85%',
     },
     resource: {
-      numEclkc: '1,819',
+      numHeadStart: '1,819',
       num: '2,365',
-      percentEclkc: '79.91%',
+      percentHeadStart: '79.91%',
     },
     recipient: {
       numResources: '248',
@@ -49,9 +49,15 @@ const resourcesDefault = {
     participant: {
       numParticipants: '765',
     },
+    ipdCourses: {
+      percentReports: '4.65%',
+    },
   },
   resourcesUse: {
-    headers: ['Jan-22'],
+    headers: [{
+      displayName: 'Jan-22',
+      name: 'January 2022',
+    }],
     resources: [
       {
         heading: 'https://test1.gov',
@@ -70,7 +76,20 @@ const resourcesDefault = {
     ],
   },
   topicUse: {
-    headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+    headers: [
+      {
+        displayName: 'Oct-22',
+        name: 'October 2022',
+      },
+      {
+        displayName: 'Nov-22',
+        name: 'November 2022',
+      },
+      {
+        displayName: 'Dec-22',
+        name: 'December 2022',
+      },
+    ],
     topics: [{
       heading: 'https://official1.gov',
       isUrl: true,
@@ -106,9 +125,9 @@ const resourcesRegion1 = {
       percentResources: '2.65%',
     },
     resource: {
-      numEclkc: '819',
+      numHeadStart: '819',
       num: '1,365',
-      percentEclkc: '1.66%',
+      percentHeadStart: '1.66%',
     },
     recipient: {
       numResources: '148',
@@ -116,9 +135,15 @@ const resourcesRegion1 = {
     participant: {
       numParticipants: '665',
     },
+    ipdCourses: {
+      percentReports: '4.65%',
+    },
   },
   resourcesUse: {
-    headers: ['Jan-22'],
+    headers: [{
+      displayName: 'Jan-22',
+      name: 'January 2022',
+    }],
     resources: [
       {
         heading: 'https://test2.gov',
@@ -137,7 +162,20 @@ const resourcesRegion1 = {
     ],
   },
   topicUse: {
-    headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+    headers: [
+      {
+        displayName: 'Oct-22',
+        name: 'October 2022',
+      },
+      {
+        displayName: 'Nov-22',
+        name: 'November 2022',
+      },
+      {
+        displayName: 'Dec-22',
+        name: 'December 2022',
+      },
+    ],
     topics: [{
       heading: 'https://official2.gov',
       isUrl: true,
@@ -173,9 +211,9 @@ const resourcesRegion2 = {
       percentResources: '1.65%',
     },
     resource: {
-      numEclkc: '818',
+      numHeadStart: '818',
       num: '365',
-      percentEclkc: '.66%',
+      percentHeadStart: '.66%',
     },
     recipient: {
       numResources: '148',
@@ -183,9 +221,15 @@ const resourcesRegion2 = {
     participant: {
       numParticipants: '565',
     },
+    ipdCourses: {
+      percentReports: '4.65%',
+    },
   },
   resourcesUse: {
-    headers: ['Jan-22'],
+    headers: [{
+      displayName: 'Jan-22',
+      name: 'January 2022',
+    }],
     resources: [
       {
         heading: 'https://test3.gov',
@@ -204,7 +248,20 @@ const resourcesRegion2 = {
     ],
   },
   topicUse: {
-    headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+    headers: [
+      {
+        displayName: 'Oct-22',
+        name: 'October 2022',
+      },
+      {
+        displayName: 'Nov-22',
+        name: 'November 2022',
+      },
+      {
+        displayName: 'Dec-22',
+        name: 'December 2022',
+      },
+    ],
     topics: [{
       heading: 'https://official3.gov',
       isUrl: true,
@@ -254,6 +311,7 @@ const reportPostUrl = '/api/activity-reports/reportsByManyIds';
 
 describe('Resource Dashboard page', () => {
   afterEach(() => fetchMock.restore());
+
   const renderResourcesDashboard = (user) => {
     render(
       <UserContext.Provider value={{ user }}>
@@ -296,13 +354,25 @@ describe('Resource Dashboard page', () => {
     renderResourcesDashboard(user);
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
 
+    const button = await screen.findByRole('button', { name: /Open Actions for Resource use/i });
+
+    act(() => {
+      userEvent.click(button);
+    });
+
+    const viewAsTable = await screen.findByRole('button', { name: /view as table/i });
+
+    act(() => {
+      userEvent.click(viewAsTable);
+    });
+
     // Overview (initial).
     expect(screen.getByText(/40.85%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
@@ -313,8 +383,8 @@ describe('Resource Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/177/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -355,7 +425,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/7,135 of 18,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/1.66%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/819 of 1,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
@@ -395,7 +465,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
@@ -406,8 +476,8 @@ describe('Resource Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/177/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -442,8 +512,12 @@ describe('Resource Dashboard page', () => {
     expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/6,135 of 17,914/i)).toBeInTheDocument();
 
+    // iPD courses
+    expect(screen.getByText(/4.65%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports citing ipd courses[ \t]*$/i)[0]).toBeInTheDocument();
+
     expect(screen.getByText(/.66%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
@@ -454,7 +528,7 @@ describe('Resource Dashboard page', () => {
     // Resource Use.
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/19/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
 
     // Resources Region 2.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -479,7 +553,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
@@ -490,8 +564,8 @@ describe('Resource Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/177/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Add non-region filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -517,7 +591,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/6,135 of 17,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/.66%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
@@ -528,7 +602,7 @@ describe('Resource Dashboard page', () => {
     // Resource Use.
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/19/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
 
     // Resources Region 2.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -553,7 +627,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
@@ -564,8 +638,8 @@ describe('Resource Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/177/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -584,7 +658,7 @@ describe('Resource Dashboard page', () => {
   it('handles errors by displaying an error message', async () => {
     // Page Load.
     fetchMock.get(`${resourcesUrl}?${allRegions}`, 500, { overwriteRoutes: true });
-    fetchMock.post(reportPostUrl, reportResponse);
+    fetchMock.post(reportPostUrl, 500);
 
     const user = {
       homeRegionId: 14,

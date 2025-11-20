@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script sets up a server as run-owasp-scan expects it
+# This script sets up the system as run-owasp-scan expects it
 
 # Setup script to fail on any error and log all output
 set -e
@@ -23,22 +23,20 @@ else
     echo "No old build directory found, skipping removal."
 fi
 
-# Run a production style build (single BE server with static FE)
-echo "Running yarn install on server..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn install --production=false
-echo "Running yarn install on frontend..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend install --production=false
-echo "Building backend..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn build
-echo "Building frontend..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend run build
+# Install dependencies and build for Node.js app
+echo "Installing and building Node.js app..."
+docker compose -f docker-compose.dss.yml run --rm server yarn install --production=false
+docker compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend install --production=false
+docker compose -f docker-compose.dss.yml run --rm server yarn build
+docker compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend run build
 
-# Starting services
-echo "Starting services..."
-docker-compose -f docker-compose.dss.yml up -d
+# Run database migrations using Node.js app
+echo "Running database migrations using Node.js app..."
+docker compose -f docker-compose.dss.yml run --rm server yarn db:migrate:ci
 
-# Running database migrations
-echo "Running database migrations..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn db:migrate:ci
+# Start all services
+echo "Starting all services..."
+docker compose -f docker-compose.dss.yml up -d
 
-echo "Server setup completed successfully."
+echo "Setup completed successfully."
+docker ps

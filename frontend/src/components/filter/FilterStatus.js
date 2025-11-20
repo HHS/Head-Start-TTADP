@@ -1,32 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import FilterSelect from './FilterSelect';
 
 // when/if we use this status filter for a different model, we can pass these in as a prop instead
 // of defining these here
 
-const options = [
-  {
-    label: 'Draft',
-    value: 'Draft',
-  },
-  {
-    label: 'Not started',
-    value: 'Not started',
-  },
-  {
-    label: 'In progress',
-    value: 'In progress',
-  },
-  {
-    label: 'Closed',
-    value: 'Closed',
-  },
-  {
-    label: 'Suspended',
-    value: 'Suspended',
-  },
-];
+const options = Object.values(GOAL_STATUS).map((status) => ({
+  label: status,
+  value: status,
+}));
 
 export default function FilterStatus({
   onApply,

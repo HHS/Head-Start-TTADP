@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { VALID_URL_REGEX } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportResource,
@@ -14,7 +15,6 @@ import {
   NextStepResource,
   Resource,
 } from '../models';
-import { VALID_URL_REGEX } from '../lib/urlUtils';
 import { SOURCE_FIELD } from '../constants';
 import Semaphore from '../lib/semaphore';
 
@@ -56,6 +56,24 @@ const REPORTOBJECTIVE_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
 ];
 
+const handleEclkcMapping = async (url) => {
+  let matchingHeadStart = null;
+  if (url.includes('eclkc.ohs.acf.hhs.gov')) {
+    matchingHeadStart = await Resource.findOne({
+      where: {
+        url: url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov'),
+      },
+    });
+    if (!matchingHeadStart) {
+      matchingHeadStart = await Resource.create({
+        url: url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov'),
+        domain: 'headstart.gov',
+      });
+    }
+  }
+  return matchingHeadStart;
+};
+
 // -----------------------------------------------------------------------------
 // Resource Table
 // -----------------------------------------------------------------------------
@@ -64,7 +82,11 @@ const findOrCreateResource = async (url) => {
   if (url === undefined || url === null || typeof url !== 'string') return undefined;
   let resource = await Resource.findOne({ where: { url }, raw: true, plain: true });
   if (!resource) {
-    const newResource = await Resource.create({ url });
+    const matchingHeadStart = await handleEclkcMapping(url);
+    const newResource = await Resource.create({
+      url,
+      mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
+    });
     resource = await newResource.get({ plain: true });
   }
   return resource;
@@ -95,9 +117,14 @@ const findOrCreateResources = async (urls) => {
       .map((currentResource) => currentResource.url));
     newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
   }
+
   const resources = [
     ...await Promise.all(newURLs.map(async (url) => {
-      const resource = await Resource.create({ url });
+      const matchingHeadStart = await handleEclkcMapping(url);
+      const resource = await Resource.create({
+        url,
+        mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
+      });
       return resource.get({ plain: true });
     })),
     ...(currentResources || []),
@@ -169,6 +196,28 @@ const resourcesFromField = (
     }];
   }, seed)
   : seed);
+
+const toSourceFieldList = (sourceFields) => {
+  if (Array.isArray(sourceFields)) {
+    return sourceFields
+      .filter((field) => typeof field === 'string' && field.length > 0);
+  }
+  if (typeof sourceFields === 'string' && sourceFields.length > 0) {
+    return [sourceFields];
+  }
+  return [];
+};
+
+const coerceSourceFieldList = (resource, clone = false) => {
+  if (!resource || typeof resource !== 'object') {
+    return resource;
+  }
+
+  const normalizedResource = clone ? { ...resource } : resource;
+  normalizedResource.sourceFields = toSourceFieldList(normalizedResource.sourceFields);
+
+  return normalizedResource;
+};
 
 // Merge all the records that share the same url and genericId, collecting all
 // the sourceFields they are from.
@@ -258,10 +307,15 @@ const filterResourcesForSync = (
     };
   }
 
+  const coercedIncomingResources = incomingResources
+    .map((resource) => coerceSourceFieldList(resource, true));
+  const coercedCurrentResources = currentResources
+    .map((resource) => coerceSourceFieldList(resource));
+
   // pull all of the new and expanded resources in a single pass over the incomingResources.
-  const newExpandedResources = incomingResources
+  const newExpandedResources = coercedIncomingResources
     .reduce((resources, resource) => {
-      const matchingFromFields = currentResources
+      const matchingFromFields = coercedCurrentResources
         .filter((cr) => cr.genericId === resource.genericId
         && cr.resourceId === resource.resourceId);
       const isCreated = matchingFromFields.length === 0;
@@ -325,9 +379,9 @@ const filterResourcesForSync = (
     }, { created: [], expanded: [] });
 
   // pull all of the removed and reduced resources in a single pass over the currentResources.
-  const removedReducedResources = currentResources
+  const removedReducedResources = coercedCurrentResources
     .reduce((resources, resource) => {
-      const isRemoved = !incomingResources.some((rff) => (
+      const isRemoved = !coercedIncomingResources.some((rff) => (
         rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId
       ));
@@ -350,7 +404,7 @@ const filterResourcesForSync = (
         };
       }
 
-      const matchingFromFields = incomingResources
+      const matchingFromFields = coercedIncomingResources
         .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
       const isReduced = matchingFromFields
@@ -413,7 +467,7 @@ const filterResourcesForSync = (
       const fromReduced = deltaFromReduced
         ?.find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
-      const fromOriginal = currentResources
+      const fromOriginal = coercedCurrentResources
         .find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
       const deltaSourceFields = resource.sourceFields
@@ -531,7 +585,7 @@ const getResourcesForModel = async (
     : model.findAll({
       where: {
         [resourceTableForeignKey]: genericId,
-        sourceFields: { [Op.contains]: 'resource' },
+        sourceFields: { [Op.contains]: ['resource'] },
       },
       include: [
         {

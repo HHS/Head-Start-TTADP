@@ -1,26 +1,13 @@
 @use '../../../../colors.scss' as *;
 
-%badge {
-  background-color: $success-darkest;
-  border-radius: 12px;
-  padding: 4px 12px;
-}
-
-.ttahub-badge--success {
-  @extend %badge;
-}
-
-.ttahub-badge--warning {
-  background-color: $warning;
-  @extend %badge;
-}
-
-.ttahub-badge--error {
-  background-color: $error;
-  @extend %badge;
-}
-
 .ttahub-class-feed-article .ttahub-feed-article {
   margin-bottom: 12px;
   padding-bottom: 0;
+}
+
+.ttahub-class-feed-article .ttahub-feed-article p:has(strong){
+  text-align: left;
+}
+.ttahub-class-feed-article .ttahub-feed-article th .usa-prose {
+  margin: 0;
 }

@@ -1,0 +1,21 @@
+@startuml
+
+title "TTA Hub Admin"
+
+actor TTAUSER as TU
+participant "TTA Hub\n frontend" as FRONTEND
+participant "TTA Hub\n backend" as BACKEND
+
+group Account: Account Management
+    autonumber 1
+    TU -> FRONTEND : View Landing Page
+    TU -> FRONTEND : Navigate to User\Account Management
+    FRONTEND <- BACKEND : Display Account Management settings for user
+    TU --> FRONTEND : Create A Group
+    FRONTEND <-- BACKEND : Display My Groups\Create Group page
+    TU --> FRONTEND : Create Group Name, Select Recipients, Set Privacy, Co-Owners, Region
+    FRONTEND <-- BACKEND : Display User\Account Management page with new group
+    TU --> FRONTEND : Send Verification Mail
+end
+
+@enduml

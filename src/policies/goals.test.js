@@ -76,13 +76,30 @@ describe('Goals policies', () => {
       const goal = {
         objectives: [],
         grant: { regionId: 2 },
-
       };
       const user = {
         permissions: [
           {
             regionId: 2,
             scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      };
+
+      const policy = new Goal(user, goal);
+      expect(policy.canDelete()).toBe(true);
+    });
+
+    it('returns true if user is admin', async () => {
+      const goal = {
+        objectives: [],
+        grant: { regionId: 2 },
+      };
+      const user = {
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
           },
         ],
       };
@@ -214,6 +231,54 @@ describe('Goals policies', () => {
 
       const policy = new Goal(user, goal);
       expect(policy.isOnApprovedActivityReports()).toBe(true);
+    });
+  });
+
+  describe('canView', () => {
+    it('returns false if no goal', () => {
+      const user = {
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.APPROVE_REPORTS,
+          },
+        ],
+      };
+
+      const policy = new Goal(user);
+      expect(policy.canView()).toBe(false);
+    });
+
+    it('returns false if goal has no grant', () => {
+      const user = {
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.APPROVE_REPORTS,
+          },
+        ],
+      };
+
+      const policy = new Goal(user, {});
+      expect(policy.canView()).toBe(false);
+    });
+
+    it('returns true if user has permissions in that region', () => {
+      const user = {
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.APPROVE_REPORTS,
+          },
+        ],
+      };
+
+      const goal = {
+        grant: { regionId: 2 },
+      };
+
+      const policy = new Goal(user, goal);
+      expect(policy.canView()).toBe(true);
     });
   });
 });

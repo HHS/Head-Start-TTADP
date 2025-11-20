@@ -8,6 +8,7 @@ import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import colors from '../colors';
 import VanillaModal from '../components/VanillaModal';
+import DisplayTableToggle from '../components/DisplayTableToggleButton';
 
 const GOAL_STATUSES = [
   'Not started',
@@ -36,8 +37,8 @@ function Bar({
   };
 
   return (
-    <div className="ttahub-goal-bar-container display-flex flex-justify flex-1">
-      <div className="ttahub-goal-bar height-3 bg-base-lightest width-full" aria-hidden="true">
+    <div className="ttahub-goal-bar-container display-flex flex-justify flex-1" aria-hidden="true">
+      <div className="ttahub-goal-bar height-3 bg-base-lightest width-full">
         <div className="ttahub-goal-bar-color height-full width-full" style={style} />
       </div>
     </div>
@@ -81,15 +82,11 @@ export function GoalStatusChart({ data, loading }) {
       color: STATUS_COLORS[index],
       count: data[status],
       total: data.total,
+      readableRatio: `${data[status]} of ${data.total} goals`,
     }));
 
     setBars(newBars);
   }, [data]);
-
-  // toggle the data table
-  function toggleAccessibleData() {
-    updateShowAccessibleData((current) => !current);
-  }
 
   if (!data) {
     return null;
@@ -104,14 +101,11 @@ export function GoalStatusChart({ data, loading }) {
           </h2>
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
-          <button
-            type="button"
-            className="usa-button--unstyled"
-            aria-label={showAccessibleData ? 'display goal statuses by number as a graph' : 'display goal statuses by number as a table'}
-            onClick={toggleAccessibleData}
-          >
-            {showAccessibleData ? 'Display graph' : 'Display table'}
-          </button>
+          <DisplayTableToggle
+            title="goal statuses by number"
+            displayTable={showAccessibleData}
+            setDisplayTable={updateShowAccessibleData}
+          />
         </Grid>
       </Grid>
       <Grid row className="margin-bottom-2">
@@ -164,13 +158,14 @@ export function GoalStatusChart({ data, loading }) {
               </p>
               <div className="display-flex flex-justify">
                 <div>
-                  {bars.map(({ label }) => (
+                  {bars.map(({ label, readableRatio }) => (
                     <div key={label} className="display-flex height-6 margin-right-1">
                       <span>{label}</span>
+                      <span className="usa-sr-only">{readableRatio}</span>
                     </div>
                   ))}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1" aria-hidden="true">
                   {bars.map(({ label, percentage, color }) => (
                     <div key={label} className="display-flex height-6">
                       <div className="display-flex width-full" key={color}>
@@ -183,10 +178,10 @@ export function GoalStatusChart({ data, loading }) {
                     </div>
                   ))}
                 </div>
-                <div>
-                  {bars.map(({ label, ratio, readableRatio }) => (
+                <div aria-hidden="true">
+                  {bars.map(({ label, ratio }) => (
                     <div key={label} className="display-flex height-6 margin-left-1">
-                      <span aria-label={readableRatio}>{ratio}</span>
+                      <span>{ratio}</span>
                     </div>
                   ))}
                 </div>
@@ -206,7 +201,7 @@ GoalStatusChart.propTypes = {
     Closed: PropTypes.number,
     'Ceased/Suspended': PropTypes.number,
   }),
-  loading: PropTypes.bool.isRequired,
+  loading: PropTypes.bool,
 };
 
 GoalStatusChart.defaultProps = {
@@ -217,6 +212,7 @@ GoalStatusChart.defaultProps = {
     Closed: 0,
     Suspended: 0,
   },
+  loading: false,
 };
 
 export default withWidgetData(GoalStatusChart, 'goalStatusByGoalName');

@@ -4,13 +4,17 @@ const { default: newQueue, increaseListeners } = require('../queue');
 const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
+const { isTrue } = require('../../envParser');
 const { default: LockManager } = require('../lockManager');
+const { default: transactionQueueWrapper } = require('../../workers/transactionWrapper');
+const { default: referenceData } = require('../../workers/referenceData');
 
 const maintenanceQueue = newQueue('maintenance');
 const maintenanceQueueProcessors = {};
 
 const lockManagers = {};
 
+const cronEnrollmentFunctions = [];
 const maintenanceCronJobs = {};
 
 // Function to remove a specific job by ID
@@ -62,10 +66,10 @@ const onCompletedMaintenance = (job, result) => {
  * @param {string} category - The category to add the processor to.
  * @param {function} processor - The function that processes the queue.
  */
-const addQueueProcessor = (category, processor) => {
+const addQueueProcessor = (category, processor, runInTransaction = true) => {
   // Assigns the processor function to the specified category in the queueProcessors object.
   if (!maintenanceQueueProcessors[category]) {
-    maintenanceQueueProcessors[category] = processor;
+    maintenanceQueueProcessors[category] = { processor, runInTransaction };
   }
 };
 
@@ -103,28 +107,34 @@ const processMaintenanceQueue = () => {
 
   // Process each category in the queue using its corresponding processor
   Object.entries(maintenanceQueueProcessors)
-    .map(([category, processor]) => maintenanceQueue.process(category, processor));
+    .map(([category, { processor, runInTransaction }]) => maintenanceQueue.process(
+      category,
+      runInTransaction
+        ? transactionQueueWrapper(
+          processor,
+          category,
+        )
+        : processor,
+    ));
 };
 
 /**
  * Adds a maintenance job to the queue if a processor is defined for the given type.
- *
- * @param {string} category - The type of maintenance job to add to the queue.
- * @param {*} [data=null] - Optional data to include with the maintenance job.
  */
-const enqueueMaintenanceJob = async (
+const enqueueMaintenanceJob = async ({
   category,
-  data = null,
+  data = {},
   requiredLaunchScript = null,
   requiresLock = false,
   holdLock = false,
-) => {
+  jobSettings = {},
+}) => {
   const action = async () => {
     // Check if there is a processor defined for the given type
     if (category in maintenanceQueueProcessors) {
       try {
         // Add the job to the maintenance queue
-        maintenanceQueue.add(category, data);
+        maintenanceQueue.add(category, { ...data, ...referenceData() }, jobSettings);
       } catch (err) {
         // Log any errors that occur when adding the job to the queue
         auditLogger.error(err);
@@ -158,6 +168,35 @@ const enqueueMaintenanceJob = async (
     auditLogger.error(err);
     throw err;
   }
+};
+
+/**
+ * Registers an async cron enrollment function to be executed later.
+ * @param {function} enrollFunction - An async function that takes (instanceId, contextId)
+ */
+const registerCronEnrollmentFunction = (enrollFunction) => {
+  cronEnrollmentFunctions.push(enrollFunction);
+};
+
+/**
+ * Executes all registered async cron enrollment functions with the current instance,
+ * context, and env.
+ * @param {string} instanceId - The Cloud Foundry instance ID
+ * @param {number} contextId - A unique identifier for the deployment or environment
+ * @param {string} env - The application environment (e.g., 'production', 'staging', 'development')
+ * @returns {Promise<void>}
+ */
+const executeCronEnrollmentFunctions = async (instanceId, contextId, env) => {
+  auditLogger.log('info', `Executing cron enrollment functions for instance ${instanceId}, context ${contextId}, env ${env}`);
+
+  // Execute all registered functions asynchronously
+  await Promise.all(cronEnrollmentFunctions.map(async (fn) => {
+    try {
+      await fn(instanceId, contextId, env);
+    } catch (err) {
+      auditLogger.error(`Error executing cron enrollment function: ${err.message}`, err);
+    }
+  }));
 };
 
 /**
@@ -313,7 +352,9 @@ const runMaintenanceCronJobs = (timezone = 'America/New_York') => {
     .reduce((acc, [category, typeJobs]) => {
       auditLogger.log('info', `Maintenance: runMaintenanceCronJobs: category: ${category}`);
       const categoryObj = createCategory(category, typeJobs, timezone);
-      acc[categoryObj.name] = categoryObj.jobs;
+      // Extract the category name from the returned object
+      const categoryName = Object.keys(categoryObj)[0];
+      acc[categoryName] = categoryObj[categoryName];
       return acc;
     }, {});
 
@@ -520,34 +561,58 @@ const maintenance = async (job) => {
 // a task in this category is processed.
 addQueueProcessor(MAINTENANCE_CATEGORY.MAINTENANCE, maintenance);
 
-// Adds a cron job with the specified maintenance category, type, and function to execute
-addCronJob(
-  MAINTENANCE_CATEGORY.MAINTENANCE, // The maintenance category is "DB"
-  MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS, // The maintenance type is "DAILY_DB_MAINTENANCE"
-  // The function to execute takes in the category, type, timezone, and schedule parameters
-  (category, type, timezone, schedule) => new CronJob(
-    schedule, // The schedule parameter specifies when the job should run
-    () => enqueueMaintenanceJob(
-      MAINTENANCE_CATEGORY.MAINTENANCE, // constant representing the category of maintenance
-      {
-        type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS, // shorthand property notation for type: type
-        dateOffSet: 90, // otherwise, merge the provided data object
-      },
+/**
+ * Registers maintenance cron jobs using the common cron enrollment mechanism.
+ */
+registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
+  if (!isTrue('FORCE_CRON')) {
+    if (instanceId !== '0') {
+      auditLogger.log('info', `Skipping maintenance cron job enrollment on instance ${instanceId} in environment ${env}`);
+      return;
+    }
+
+    if (env !== 'production') {
+      auditLogger.log('info', `Skipping maintenance cron job enrollment in non-production environment (${env})`);
+      return;
+    }
+
+    if (contextId !== 1) {
+      auditLogger.log('info', `Skipping maintenance cron job enrollment on context ${contextId} in environment ${env} for instance ${instanceId}`);
+      return;
+    }
+  }
+  auditLogger.log('info', `Registering maintenance cron jobs for context ${contextId} in environment ${env} for instance ${instanceId}`);
+
+  addCronJob(
+    MAINTENANCE_CATEGORY.MAINTENANCE, // The maintenance category is "DB"
+    MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS, // The maintenance type is "DAILY_DB_MAINTENANCE"
+    // The function to execute takes in the category, type, timezone, and schedule parameters
+    (category, type, timezone, schedule) => new CronJob(
+      schedule, // The schedule parameter specifies when the job should run
+      () => enqueueMaintenanceJob({
+        // constant representing the category of maintenance
+        category: MAINTENANCE_CATEGORY.MAINTENANCE,
+        data: {
+          // shorthand property notation for type: type
+          type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS,
+          dateOffSet: 90, // otherwise, merge the provided data object
+        },
+      }),
+      null,
+      true,
+      timezone, // The timezone parameter specifies the timezone in which the job should run
     ),
-    null,
-    true,
-    timezone, // The timezone parameter specifies the timezone in which the job should run
-  ),
-  /**
-   * This cron expression breaks down as follows:
-   *  30 - The minute when the job will run (in this case, 30 minutes past the hour)
-   *  22 - The hour when the job will run (in this case, 10 pm)
-   *  * - The day of the month when the job will run (in this case, any day of the month)
-   *  * - The month when the job will run (in this case, any month)
-   *  * - The day of the week when the job will run (in this case, any day of the week)
-   * */
-  '30 22 * * *',
-);
+    /**
+     * This cron expression breaks down as follows:
+     *  30 - The minute when the job will run (in this case, 30 minutes past the hour)
+     *  22 - The hour when the job will run (in this case, 10 pm)
+     *  * - The day of the month when the job will run (in this case, any day of the month)
+     *  * - The month when the job will run (in this case, any month)
+     *  * - The day of the week when the job will run (in this case, any day of the week)
+     * */
+    '30 22 * * *',
+  );
+});
 
 module.exports = {
   // testing only exports
@@ -570,6 +635,8 @@ module.exports = {
   processMaintenanceQueue,
   enqueueMaintenanceJob,
   // cron exports
+  registerCronEnrollmentFunction,
+  executeCronEnrollmentFunctions,
   addCronJob,
   hasCronJob,
   removeCronJob,

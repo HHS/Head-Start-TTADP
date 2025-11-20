@@ -1,1169 +1,1441 @@
+# ----------------- Base Config -----------------
+
 version: 2.1
-orbs:
-  node: circleci/node@5.0.2
 executors:
   docker-executor:
-    # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:18.20.3-browsers
+    - image: cimg/node:20.19.3-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:18.20.3-browsers
-        environment:
-          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: cimg/postgres:15.6
-        environment:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: secretpass
-          POSTGRES_DB: ttasmarthub
+    - image: cimg/node:20.19.3-browsers
+      environment:
+        DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+        REDIS_HOST: localhost
+        REDIS_PASS: secretpass
+    - image: cimg/postgres:15.12
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: secretpass
+        POSTGRES_DB: ttasmarthub
+    - image: cimg/redis:6.2.17
+      environment:
+        REDIS_PASSWORD: secretpass
   docker-python-executor:
     docker:
-      - image: cimg/python:3.9.19
-  docker-postgres-elasticsearch-executor:
+    - image: cimg/python:3.9.21
+  docker-base:
     docker:
-      - image: cimg/node:18.20.3-browsers
-        environment:
-          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: cimg/postgres:15.6
-        environment:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: secretpass
-          POSTGRES_DB: ttasmarthub
-      - image: opensearchproject/opensearch:1.3.2
-        name: opensearch
-        environment:
-          transport.host: 0.0.0.0
-          network.host: 0.0.0.0
-          http.port: 9200
-          cluster.name: opensearch-cluster
-          node.name: opensearch-node1
-          discovery.type: single-node
-          DISABLE_SECURITY_PLUGIN: true
-          ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+    - image: cimg/base:2021.04
   machine-executor:
     machine:
       image: ubuntu-2204:current
-  aws-executor:
-    docker:
-      - image: cimg/aws:2024.03
-commands:
-  sparse_checkout:
-    description: "Checkout a sparse directory from a specific branch."
-    parameters:
-      directory:
-        type: string
-        description: "Directory to checkout sparsely"
-      branch:
-        type: string
-        description: "Branch to checkout"
+
+# ----------------- Parameters -----------------
+
+parameters:
+  action:
+    description: "Choose the workflow to run"
+    type: enum
+    enum: [ build_test_deploy, deploy_only, import_data, restore_db, backup_prod, clear_cache ]
+    default: build_test_deploy
+  target_env:
+    description: "Environment to target"
+    type: enum
+    enum: [ '-', dev-blue, dev-green, dev-red, dev-gold, dev-pink, staging ]
+    default: '-'
+
+# ----------------- Workflows -----------------
+
+workflows:
+  build_test_deploy:
+    # This is the primary workflow that runs on each push to the GitHub repo
+    # It will build the app, run all tests, then deploy if the branch matches
+    # autodeploy: main->staging, production->prod
+    when: pipeline.parameters.action == "build_test_deploy"
+    max_auto_reruns: 2
+    jobs:
+    - build_and_lint
+    - checkpoint:
+        name: build_done
+        requires:
+        - build_and_lint
+    - test_frontend:
+        requires:
+        - build_done
+    - test_backend:
+        requires:
+        - build_done
+    - test_e2e_app:
+        requires:
+        - build_done
+    - test_e2e_api:
+        requires:
+        - build_done
+    - test_e2e_utils:
+        requires:
+        - build_done
+    - test_cucumber:
+        requires:
+        - build_done
+    - dynamic_security_scan:
+        requires:
+        - build_done
+    - checkpoint:
+        name: tests_done
+        requires:
+        - test_frontend
+        - test_backend
+        - test_e2e_app
+        - test_e2e_api
+        - test_e2e_utils
+        - test_cucumber
+        - dynamic_security_scan
+    - deploy_job:
+        name: autodeploy_staging
+        serial-group: deploy-lock/staging
+        target_env: "staging"
+        requires:
+        - tests_done
+        filters:
+          branches:
+            only:
+            - main
+    - deploy_job:
+        name: autodeploy_prod
+        serial-group: deploy-lock/prod
+        target_env: "prod"
+        requires:
+        - tests_done
+        filters:
+          branches:
+            only:
+            - production
+
+  deploy_only:
+    # job to be triggered manually, will build the app and deploy to target env
+    when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
+    jobs:
+    - build_and_lint
+    - deploy_job:
+        name: deploy (<< pipeline.parameters.target_env >>)
+        serial-group: << pipeline.parameters.target_env >>/deploy-lock
+        target_env: "<< pipeline.parameters.target_env >>"
+        requires:
+        - build_and_lint
+
+  import_data_cron:
+    # scheduled job to download and process monitoring data
+    triggers:
+    - schedule:
+        cron: "0 13 * * *" # 1PM UTC = 9AM EST
+        filters:
+          branches:
+            only:
+            - production
+    jobs:
+    - run_import_job:
+        target_env: "prod"
+        slack_channel: acf-ohs-ttahub--contractor-customer-team
+
+  import_data_manual:
+    # for manual testing of the data import workflow
+    when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
+    jobs:
+    - run_import_job:
+        target_env: "<< pipeline.parameters.target_env >>"
+
+  restore_db_cron:
+    # scheduled job to ensure lower envs have a recent copy of the database
+    # backup prod db to snapshot
+    # restore prod db to temp db
+    # process (anonymize) the data in temp db
+    # backup temp db to snapshot
+    # restore temp snapshot to lower env dbs
+    # run migrations
+    triggers:
+    - schedule:
+        cron: "0 4 * * *" # 4AM UTC = 12AM EST
+        filters:
+          branches:
+            only:
+            - main
+    jobs:
+    - backup_prod_db:
+        serial-group: "tta-automation-lock"
+    - restore_prod_to_temp:
+        serial-group: "tta-automation-lock"
+        requires:
+        - backup_prod_db
+    - process_temp_db:
+        serial-group: "tta-automation-lock"
+        requires:
+        - restore_prod_to_temp
+    - backup_temp_db:
+        serial-group: "tta-automation-lock"
+        requires:
+        - process_temp_db
+    - restore_db_job:
+        name: restore (dev-green)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-green"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-blue)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-blue"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-red)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-red"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-gold)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-gold"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-pink)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-pink"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (staging)
+        serial-group: "tta-automation-lock"
+        target_env: "staging"
+        requires:
+        - backup_temp_db
+
+  backup_prod_manual:
+    # backup prod db, process(anonymize) it, then backup the processed db
+    when: pipeline.parameters.action == "backup_prod" and pipeline.trigger_source == "api"
+    jobs:
+    - backup_prod_db:
+        serial-group: "tta-automation-lock"
+    - restore_prod_to_temp:
+        serial-group: "tta-automation-lock"
+        requires:
+        - backup_prod_db
+    - process_temp_db:
+        serial-group: "tta-automation-lock"
+        requires:
+        - restore_prod_to_temp
+    - backup_temp_db:
+        serial-group: "tta-automation-lock"
+        requires:
+        - process_temp_db
+
+  restore_db_manual:
+    # restore the anonymized db snapshot to a lower env db and run migrations
+    # uses the last production backup, does not interact with prod or modify snapshots
+    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+    jobs:
+    - restore_db_job:
+        serial-group: tta-automation-lock
+        target_env: "<< pipeline.parameters.target_env >>"
+
+  clear_build_cache:
+    when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
+    jobs:
+    - clear_cache_job
+
+  clear_buildcache_cron:
+    # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
+    # see https://docs.cloud.gov/knowledge-base/2024/12/09/apt-buildpack-cache-issue/
+    triggers:
+    - schedule:
+        cron: "0 0 * * 0" # midnight Sunday
+        filters:
+          branches:
+            only:
+            - main
+    jobs:
+    - clear_cache_job
+        
+
+# ----------------- Jobs -----------------
+
+jobs:
+  build_and_lint:
+    executor: docker-executor
+    resource_class: large
     steps:
-      - run:
-          name: Install Git
-          command: |
-            sudo apt-get update && sudo apt-get install -y git
-      - run:
-          name: Clone Repository
-          command: |
-            git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
-      - run:
-          name: Setup Sparse Checkout
-          command: |
-            git config core.sparseCheckout true
-            echo "<< parameters.directory >>/*" >> .git/info/sparse-checkout
-      - run:
-          name: Checkout Branch
-          command: |
-            git checkout << parameters.branch >>
+    - checkout
+    - create_combined_yarnlock
+    - restore_cache:
+        keys:
+        # To manually bust the cache, increment the version e.g. v7-yarn...
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        # If checksum is new, restore partial cache
+        - v16-yarn-deps-
+    - run: yarn deps
+    - save_cache:
+        paths:
+        - node_modules
+        - frontend/node_modules
+        - packages/common/node_modules
+        key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+    - run:
+        name: Ensure reports directory exists
+        command: mkdir reports
+    - run: yarn build
+    - run:
+        name: Lint backend
+        command: yarn lint:ci
+    - run:
+        name: Audit vulnerability of backend node_modules
+        command: |
+          chmod 744 ./tools/run-yarn-audit.js
+          ./tools/run-yarn-audit.js;
+    - run:
+        name: Lint frontend
+        command: yarn --cwd frontend lint:ci
+    - run:
+        name: Audit vulnerability of frontend node_modules
+        command: |
+          cd frontend
+          chmod 744 ../tools/run-yarn-audit.js
+          ../tools/run-yarn-audit.js;
+    - store_artifacts:
+        path: reports
+        destination: backend-lint.xml
+    - store_artifacts:
+        path: frontend/reports
+        destination: frontend-lint.xml
+    - persist_to_workspace:
+        root: .
+        paths:
+        - .
+
+  test_backend:
+    executor: docker-postgres-executor
+    resource_class: large
+    environment:
+      SFTP_EXPOSED_PORT: 2222
+    steps:
+    - attach_workspace:
+        at: .
+    - run:
+        name: Add GitHub to known_hosts
+        command: |
+          mkdir -p ~/.ssh/
+          touch ~/.ssh/known_hosts
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+    - run:
+        name: Run migrations ci
+        command: yarn db:migrate:ci
+    - run:
+        name: Run seeders
+        command: yarn db:seed:ci
+    - run:
+        name: Test backend
+        command: |
+          chmod 744 ./bin/test-backend-ci
+          ./bin/test-backend-ci
+    - run:
+        name: Merge coverage & generate report
+        when: always
+        command: |
+          temp_dir="coverage-temp"
+          report_dir="coverage-report"
+          mkdir -p ${temp_dir}
+
+          find . -name "coverage-final.json" -print0 | while IFS= read -r -d $'\0' file; do
+            relative_path="${file#./}"
+            new_name="${relative_path//\//-}"
+            new_path="${temp_dir}/${new_name}"
+            cp "$file" "${new_path}"
+          done
+          npx nyc merge ${temp_dir} ${temp_dir}/merged-coverage.json
+          npx nyc report --temp-dir ${temp_dir} --report-dir ${report_dir} --reporter=html --reporter=json-summary
+          echo "Coverage report: https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/${CIRCLE_NODE_INDEX}/coverage-report/index.html"
+    - run:
+        name: Check coverage for modified lines
+        when: always
+        command: |
+          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+            chmod +x ./tools/check-coverage.js
+            node -r esm ./tools/check-coverage.js \
+              --directory-filter=src/,tools/ \
+              --fail-on-uncovered=false \
+              --output-format=json,html
+          else
+            echo "Not a PR build. Skipping coverage check."
+          fi
+    - run:
+        name: Summarize coverage
+        when: always
+        command: |
+          chmod +x ./tools/summarize-coverageCLI.js
+          node ./tools/summarize-coverageCLI.js \
+            ./coverage/coverage-final.json \
+            90
+    - run:
+        name: Compress coverage artifacts
+        command: zip backend-coverage-artifacts.zip coverage/
+        when: always
+    - store_artifacts:
+        path: backend-coverage-artifacts.zip
+    - store_artifacts:
+        path: coverage-report/
+    - store_artifacts:
+        path: coverage-artifacts/
+        destination: uncovered-lines
+    - store_test_results:
+        path: reports/
+
+  test_frontend:
+    executor: docker-executor
+    resource_class: large
+    steps:
+    - attach_workspace:
+        at: .
+    - run:
+        name: Audit checksums of color files
+        command: |
+          chmod 744 ./frontend/checkcolorhash.sh
+          cd frontend && ./checkcolorhash.sh;
+    - run:
+        name: Add GitHub to known_hosts
+        command: |
+          mkdir -p /home/circleci/.ssh
+          ssh-keyscan -H github.com >> /home/circleci/.ssh/known_hosts
+    - run:
+        name: Test frontend
+        command: yarn --cwd frontend run test:ci --maxWorkers=50%
+    - run:
+        name: Check coverage for modified lines
+        command: |
+          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+            chmod +x ./tools/check-coverage.js
+            node -r esm ./tools/check-coverage.js \
+              --coverage-file=../frontend/coverage/coverage-final.json \
+              --artifact-dir=../frontend/coverage-artifacts \
+              --directory-filter=frontend/ \
+              --fail-on-uncovered=false \
+              --output-format=json,html
+          else
+            echo "Not a PR build. Skipping coverage check."
+          fi
+        when: always
+    - store_test_results:
+        path: frontend/reports/
+    - store_artifacts:
+        path: frontend/coverage/
+    - store_artifacts:
+        path: frontend/coverage-artifacts/
+        destination: uncovered-lines
+
+  test_e2e_app:
+    executor: docker-postgres-executor
+    resource_class: large
+    steps:
+    - run_e2e_test:
+        cmd: yarn e2e
+        artifact_path: tests/e2e
+
+  test_e2e_api:
+    executor: docker-postgres-executor
+    steps:
+    - run_e2e_test:
+        cmd: yarn e2e:api
+        artifact_path: tests/api
+
+  test_e2e_utils:
+    executor: docker-postgres-executor
+    steps:
+    - run_e2e_test:
+        cmd: yarn e2e:utils
+        artifact_path: tests/utilsTests
+
+  test_cucumber:
+    executor: docker-postgres-executor
+    steps:
+    - run_e2e_test:
+        cmd: yarn cucumber:ci
+        artifact_path: reports
+
+  dynamic_security_scan:
+    executor: machine-executor
+    resource_class: large
+    steps:
+    - attach_workspace:
+        at: .
+    - run:
+        name: Start up local services
+        command: ./bin/prod-style-server
+    - run:
+        name: Wait for Node.js server to start
+        command: ./bin/ping-server 8080
+    - run:
+        name: Pull OWASP ZAP docker image
+        command: docker pull zaproxy/zap-stable:latest
+    - run:
+        name: Run OWASP ZAP scan for Node.js server
+        command: ./bin/run-owasp-scan --target http://server:8080 --full
+    - store_artifacts:
+        path: reports
+
+  deploy_job:
+    executor: docker-executor
+    resource_class: large
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - checkout
+    - attach_workspace:
+        at: .
+    - set_env_vars:
+        target_env: << parameters.target_env >>
+    - install_cf_tools
+    - run:
+        name: Build backend assets
+        command: yarn build
+    - when:
+        condition:
+          equal: [ << parameters.target_env >>, prod ]
+        steps:
+        - run:
+            name: Create production robots.txt
+            command: ./bin/robot-factory
+    - run:
+        name: Build frontend assets
+        command: yarn --cwd frontend run build
+    - cf_deploy:
+        target_env: << parameters.target_env >>
+    - write_envs:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Run database migrations
+        command: |
+          set -x
+          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+          cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
+          cf logs tta-smarthub-${full_env} --recent | grep ${TASK_NAME}
+    - run:
+        name: Alert on migration failure
+        when: on_fail
+        command: |
+            msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+            if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+            fi
+    - notify_new_relic:
+        target_env: << parameters.target_env >>
+    - when:
+        condition:
+          equal: [ << parameters.target_env >>, prod ]
+        steps:
+        - notify_slack_deploy:
+            slack_bot_token: $SLACK_BOT_TOKEN
+            slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+            target_env: << parameters.target_env >>
+
+  backup_prod_db:
+    executor: docker-executor
+    steps:
+    - checkout
+    - cf_backup:
+        target_env: prod
+        rds_service_name: ttahub-prod
+        s3_service_name: ttahub-db-backups
+        backup_prefix: production
+
+  restore_prod_to_temp:
+    executor: docker-executor
+    steps:
+    - checkout
+    - cf_restore:
+        target_env: prod
+        rds_service_name: ttahub-process
+        s3_service_name: ttahub-db-backups
+        backup_prefix: production
+
+  process_temp_db:
+    executor: docker-executor
+    steps:
+    - checkout
+    - create_combined_yarnlock
+    - restore_cache:
+        keys:
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
+    - run: |
+        yarn deps
+        yarn build
+    - cf_process:
+        target_env: prod
+
+  backup_temp_db:
+    executor: docker-executor
+    steps:
+    - checkout
+    - cf_backup:
+        target_env: prod
+        rds_service_name: ttahub-process
+        s3_service_name: ttahub-db-backups
+        backup_prefix: processed
+
+  restore_db_job:
+    executor: docker-executor
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - checkout
+    - cf_restore:
+        target_env: prod # this is the source of the backup
+        rds_service_name: "ttahub-<< parameters.target_env >>"
+        s3_service_name: ttahub-db-backups
+        backup_prefix: processed
+    - cf_migrate:
+        app_name: "tta-smarthub-<< parameters.target_env >>"
+        target_env: << parameters.target_env >>
+
+  run_cmd:
+    # run given command in the target environment
+    executor: docker-executor
+    parameters:
+      command:
+        type: string
+      target_env:
+        type: string
+    steps:
+    - cf_task:
+        the_command: << parameters.command >>
+        target_env: "<< parameters.target_env >>"
+
+  # no-op job used for checkpointing others
+  checkpoint:
+    executor: docker-base
+    steps: [ no-op ]
+
+  run_import_job:
+    # run the data import / monitoring job in target environment
+    executor: docker-executor
+    parameters:
+      target_env:
+        type: string
+      slack_channel:
+        type: string
+        default: acf-head-start-alerts-lower
+    steps:
+    - checkout
+    - cf_task:
+        the_command: |
+          node ./build/server/src/tools/importSystemCLI.js download 1
+          node ./build/server/src/tools/importSystemCLI.js process 1
+          yarn createMonitoringGoalsCLI
+          node ./build/server/src/tools/queryMonitoringDataCLI.js
+          node ./build/server/src/tools/maintainMonitoringDataCLI.js
+        target_env: << parameters.target_env >>
+        logfile: cmd_log.txt
+    - run:
+        command: |
+          if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
+            echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
+          else
+            results=$(grep -o "Recent Monitoring Updates.*" cmd_log.txt | tail -n 1)
+            delim=":"
+            json_data=${results#*"$delim"}
+            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
+            echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
+          fi
+          cat monitoring-updates.txt
+    - when:
+        condition:
+          equal: [ << parameters.target_env >>, "prod" ]
+        steps:
+        - notify_slack:
+            message_text_file: monitoring-updates.txt
+            slack_channel: << parameters.slack_channel >>
+
+  clear_cache_job:
+    executor: docker-executor
+    steps:
+    - checkout
+    - install_cf_tools
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-blue
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-red
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-green
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-pink
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-gold
+    - cf_cache_clear:
+        space: staging
+        target_app: tta-smarthub-staging
+    - cf_cache_clear:
+        space: prod
+        target_app: tta-automation
+    - cf_cache_clear:
+        space: prod
+        target_app: tta-smarthub-prod
+
+# ----------------- Commands -----------------
+
+commands:
+
+  set_env_vars:
+    # set env vars, based on (ci) template in deployment_config
+    # these will persist across steps in a job, but not across jobs
+    # these values will be available in any subsequent bash env
+    parameters:
+      target_env:
+        type: string
+      filename:
+        description: "Filename to write env vars to"
+        type: string
+        default: "env.vars"
+      do_export:
+        description: "Export env vars to bash env"
+        type: boolean
+        default: true
+    steps:
+    - run:
+        name: Set env vars (<< parameters.target_env >>)
+        command: |
+          # $full_env maps to the full env name (dev-blue, dev-green, etc), or same as cfg
+          # $cfg_env maps to the primary "level" (dev, staging, prod)
+          export full_env=<< parameters.target_env >>
+          export cfg_env=${full_env}
+          if [[ $full_env == *"dev"* ]]; then cfg_env="dev"; fi
+          echo "export full_env=${full_env}" >> "$BASH_ENV"
+          echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
+          # convert yml cfg to env style
+          ./tools/parse-env-CLI.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
+          # substitute actual values from circle into env.vars file
+          circleci env subst < ./temp.vars > env.vars
+          # iterate through ci.vars file and export each line,
+          while read line; do
+            if [ -n "${line}" ] && [ << parameters.do_export >>=='true' ]; then
+              echo "export ${line}">>"$BASH_ENV"
+            fi
+          done < env.vars
+
+  install_cf_tools:
+    description: "Install Cloud Foundry CLI"
+    steps:
+    - run:
+        name: Install CF tools
+        command: |
+          # Install Cloud Foundry CLI
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+          echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          sudo apt-get update
+          sudo apt-get install -y cf8-cli
+          # Install plugin needed for connect-to-service
+          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+
+  run_e2e_test:
+    parameters:
+      cmd:
+        type: string
+      artifact_path:
+        type: string
+    steps:
+    - attach_workspace:
+        at: .
+    - run:
+        name: Start backend (8080) & watch logs
+        command: |
+          export BYPASS_AUTH=true
+          export CURRENT_USER_ID=5
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:web
+        background: true
+    - run:
+        name: Start frontend (3000) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          export BYPASS_AUTH=true
+          export CURRENT_USER_ID=5
+          export TTA_SMART_HUB_URI="http://localhost:3000"
+          yarn playwright install
+          yarn client
+        background: true
+    - run:
+        name: Start testing server (9999) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:testingonly
+        background: true
+    - run:
+        name: Run migrations ci
+        command: yarn db:migrate:ci
+    - run:
+        name: Seed database
+        command: yarn db:seed:ci
+    - run:
+        name: Wait for server to start
+        command: |
+          ./bin/ping-server 3000 # frontend
+          ./bin/ping-server 9999 localhost "/testingonly" # testonly
+          #./bin/ping-server 8080 localhost "/health" # backend
+          sleep 30s # there is no way to check backend health without auth
+    - run:
+        name: << parameters.cmd >>
+        command: |
+          export TTA_SMART_HUB_URI="http://localhost:3000"
+          export PLAYWRIGHT_WORKERS=1
+          << parameters.cmd >>
+    - store_artifacts:
+        path: << parameters.artifact_path >>
+    - store_test_results:
+        path: << parameters.artifact_path >>
+
   create_combined_yarnlock:
-    description: "Concatenate all yarn.json files into single file.
-      File is used as checksum source for part of caching key."
+    description: "Concatenate all yarn.json files into single file. File is used as checksum source for part of caching key."
     parameters:
       filename:
         type: string
         default: "combined-yarnlock.txt"
     steps:
-      - run:
-          name: Combine package-lock.json files to single file
-          command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
-  create_combined_pipfreeze:
-    description: "Concatenate all requirements.txt files into a single file. File is used as checksum source for part of caching key."
+    - run:
+        name: Combine package-lock.json files to single file
+        command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
+
+  sparse_checkout:
+    description: "Checkout sparse directories from a specific branch."
     parameters:
-      filename:
+      directories:
         type: string
-        default: "combined-requirements.txt"
+        description: "Comma-separated list of directories to checkout sparsely"
+      branch:
+        type: string
+        description: "Branch to checkout"
     steps:
-      - run:
-          name: Combine requirements.txt files to single file
-          command: cat similarity_api/src/requirements.txt > << parameters.filename >>
+    - run:
+        name: Install Git
+        command: |
+          sudo apt-get update && sudo apt-get install -y git
+    - run:
+        name: Clone Repository
+        command: |
+          git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
+    - run:
+        name: Sparse Checkout
+        environment:
+          DIRECTORIES: "<< parameters.directories >>"
+        command: |
+          git config core.sparseCheckout true
+          echo $DIRECTORIES | tr ',' '\n' | while read dir; do
+            echo "$dir" | tee -a .git/info/sparse-checkout
+          done
+
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
-      env_name:
-        description: "Name of the environment. Ex. sandbox, dev, staging, prod"
-        type: string
-      new_relic_app_id:
-        description: "App ID used in New Relic"
-        type: string
-      new_relic_api_key:
-        description: "API key from New Relic"
+      target_env:
         type: string
     steps:
-      - run:
-          name: Notify New Relic
-          command: |
-            curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.new_relic_app_id >>/deployments.json" \
-            -H "X-Api-Key: << parameters.new_relic_api_key >>" -i \
-            -H "Content-Type: application/json" \
-            -d \
-            "{
-              \"deployment\": {
-                \"revision\": \"<< pipeline.git.revision >>\",
-                \"description\": \"<< parameters.env_name >> Successfully Deployed\"
-              }
-            }"
+    - set_env_vars:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Notify New Relic
+        command: |
+          curl -X POST "https://api.newrelic.com/v2/applications/${new_relic_app_id}/deployments.json" \
+          -H "X-Api-Key: $NEW_RELIC_REST_API_KEY" -i \
+          -H "Content-Type: application/json" \
+          -d \
+          "{
+            \"deployment\": {
+              \"revision\": \"<< pipeline.git.revision >>\",
+              \"description\": \"${full_env} Successfully Deployed\"
+            }
+          }"
+
+  cf_login:
+    description: "Login to Cloud Foundry space with service account credentials"
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - set_env_vars:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Login with service account
+        command: |
+          cf login -a ${cg_api} \
+            -u ${cg_username} \
+            -p ${cg_password} \
+            -o ${cg_org} \
+            -s ${cg_space}
+
+  cf_cache_clear:
+    description: "Clear the build cache for a given app"
+    parameters:
+      space:
+        type: string
+      target_app:
+        type: string
+    steps:
+    - cf_login:
+        target_env: << parameters.space >>
+    - run:
+        name: Clear build cache (<< parameters.target_app >>)
+        command: |
+          app_name=<< parameters.target_app >>
+          app_guid=$(cf app --guid ${app_name})
+          echo "Clearing build cache for ${app_name} (${app_guid})"
+          cf curl -f -i -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+          echo "Build cache cleared"
+
+  cf_deploy:
+    description: "Login to cloud foundry space with service account credentials and push application using deployment configuration file."
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - set_env_vars:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Login with service account
+        command: |
+          cf login -a ${cg_api} \
+            -u ${cg_username} \
+            -p ${cg_password} \
+            -o ${cg_org} \
+            -s ${cg_space}
+    - run:
+        name: Push application
+        command: |
+          circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
+          cat app.vars
+          echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
+          cf push \
+            --vars-file app.vars \
+            --var BUILD_BRANCH=${CIRCLE_BRANCH} \
+            --var BUILD_COMMIT=${CIRCLE_SHA1} \
+            --var BUILD_NUMBER=<< pipeline.number >> \
+            --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
+            --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
+
+  write_envs:
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - restore_cache:
+        key: env-owners-
+    - run:
+        name: Write owner into file
+        command: |
+          mkdir -p environments
+          current_env="<< parameters.target_env >>"
+
+          cd environments
+          ls -la
+          echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > ${current_env}
+          data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
+          for file in *; do
+            cat ${file}
+            if [ ! -d ${file} ]; then
+              data="${data}$(cat ${file})\n"
+            fi;
+          done
+
+          curl -w "\n%{http_code}\n" --fail-with-body -X POST \
+          https://slack.com/api/canvases.edit \
+          -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data '{
+            "canvas_id": "F09459NAEKB",
+            "changes": [{
+              "operation": "replace",
+              "document_content": {
+                "type": "markdown",
+                "markdown": "'"$data"'"
+              },
+            }],
+          }'
+
+    - save_cache:
+        key: env-owners-{{ epoch }}
+        paths:
+        - environments
+
+  cf_task:
+    description: "Login, run task, send notification"
+    parameters:
+      the_command:
+        description: "Command to run"
+        type: string
+      target_env:
+        description: "Desired env to run cmd in"
+        type: string
+      logfile:
+        type: string
+        default: cmd_log.txt
+    steps:
+    - checkout
+    - install_cf_tools
+    - set_env_vars:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Login with service account
+        command: |
+          cf login -a ${cg_api} \
+          -u ${cg_username} \
+          -p ${cg_password} \
+          -o ${cg_org} \
+          -s ${cg_space}
+    - run:
+        name: Set task name
+        command: |
+          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+          echo "export TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+    - run:
+        name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
+        background: true
+        command: |
+          cf run-task \
+            tta-smarthub-<< parameters.target_env >> \
+            --command "<< parameters.the_command >>" \
+            --name ${TASK_NAME} \
+            -m 2GB \
+            -k 2GB
+
+          echo "Watching logs..."
+          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME}
+
+    - run:
+        name: "Wait for task to complete"
+        no_output_timeout: 30m
+        command: |
+          set +e
+          sleep 15
+          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME}
+          sleep 30
+          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
+
+    - run:
+        name: Logout of service account
+        command: |
+          # Wait for the log monitoring process to terminate
+          sleep 5
+          # Logout from Cloud Foundry
+          cf logout
+
+  cf_backup:
+    description: "Backup database to S3"
+    parameters:
+      target_env: { type: string }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+    - cf_automation_task:
+        task_name: "backup"
+        target_env: << parameters.target_env >>
+        task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
+        task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+        config: "<< parameters.backup_prefix >>-backup"
+        success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
+
+  cf_process:
+    description: "Process database from S3"
+    parameters:
+      target_env: { type: string }
+    steps:
+    - cf_automation_task:
+        target_env: << parameters.target_env >>
+        task_name: "process"
+        task_command: "cd /home/vcap/app/automation/nodejs/scripts; bash ./run.sh"
+        task_args: '["/home/vcap/app/build/server/src/tools/processDataCLI.js"]'
+        config: "process"
+        success_message: ':database: Restored data processed'
+        directory: "./"
+        timeout: "3000"
+
+  cf_restore:
+    description: "Restore db from S3 to << parameters.target_env >>"
+    parameters:
+      target_env: { type: string }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+    - run:
+        name: Validate Parameters (<< parameters.target_env >>)
+        command: |
+          if [ "<< parameters.rds_service_name >>" == "ttahub-prod" ]; then
+            echo "Error: rds_service_name cannot be 'ttahub-prod'"
+            exit 1
+          fi
+    - cf_automation_task:
+        target_env: << parameters.target_env >>
+        task_name: "restore_s3:<< parameters.backup_prefix >>->rds:<< parameters.rds_service_name >>"
+        task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
+        task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+        config: "<< parameters.backup_prefix >>-restore"
+        success_message: ':database: "<< parameters.backup_prefix >>" restored to "<< parameters.rds_service_name >>"'
+        timeout: "1800"
+    - run:
+        when: on_fail
+        command: |
+          msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower ${SLACK_BOT_TOKEN}
+
+
+  cf_retention:
+    description: "Delete Backup from S3 based on retention"
+    parameters:
+      target_env: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+    - cf_automation_task:
+        target_env: << parameters.target_env >>
+        task_name: "retention"
+        task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
+        task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
+        config: "<< parameters.backup_prefix >>-backup"
+        success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
+
+  cf_migrate:
+    description: "Login to Cloud Foundry space, run migration"
+    parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match application name specified in manifest"
+        type: string
+      target_env:
+        description: "Desired env to run cmd in"
+        type: string
+      cg_api:
+        description: "Cloud Foundry API endpoint"
+        type: string
+        default: "https://api.fr.cloud.gov"
+    steps:
+    - set_env_vars:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Login with service account
+        command: |
+          cf login -a ${cg_api} \
+            -u ${cg_username} \
+            -p ${cg_password} \
+            -o ${cg_org} \
+            -s ${cg_space}
+    - run:
+        name: "Migrate database: << parameters.app_name >>"
+        command: |
+          cf run-task << parameters.app_name >> \
+            --command "yarn db:migrate:prod" \
+            --name "migrate"
+
+  install_automation_deps:
+    steps:
+    - run:
+        name: Install Automation Dependencies
+        command: |
+          set -e
+          set -u
+          set -o pipefail
+          set -o noglob
+          set -o noclobber
+
+          # update
+          sudo apt-get update
+          # Install uuid-runtime to have access to uuidgen
+          # Install pv wget
+          sudo apt-get install -y pv uuid-runtime wget coreutils jq apt-utils
+
+          # Install Cloud Foundry CLI
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+          echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          sudo apt-get update
+          sudo apt-get install -y cf8-cli
+          # Install plugin needed for connect-to-service
+          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+
+          # The line you want to ensure exists in the /etc/hosts file
+          line="127.0.0.1        localhost"
+
+          # Check if the line already exists
+          if ! grep -qF "$line" /etc/hosts; then
+              # If the line does not exist, append it
+              echo "$line" | sudo tee -a /etc/hosts > /dev/null
+              echo "Line added to /etc/hosts"
+          else
+              echo "Line already exists in /etc/hosts"
+          fi
+
+          # cleanup
+          sudo rm -rf /var/lib/apt/lists/*
+
+  cf_automation_task:
+    description: "Running [<< parameters.task_name >>] from [<< parameters.target_env >>: << parameters.task_args >>]"
+    parameters:
+      task_name:
+        # do not include spaces in the task_name or it will break the status parsing
+        description: "Name of the automation task to run"
+        type: string
+      task_command:
+        description: "Command to run for the automation task"
+        type: string
+      task_args:
+        description: "Arguments for the automation task"
+        type: string
+      target_env:
+        description: "Environment to run the task in"
+        type: string
+      config:
+        description: "Config to use for the automation task"
+        type: string
+      success_message:
+        description: "Success message for Slack notification"
+        type: string
+      timeout:
+        description: "Max duration allowed for task"
+        type: string
+        default: "1800"
+      directory:
+        description: 'directory to root to push'
+        type: string
+        default: "./automation"
+    steps:
+    - install_automation_deps
+    - set_env_vars:
+        target_env: << parameters.target_env >>
+        do_export: false
+    - run:
+        name: Login with service account
+        command: |
+          source env.vars
+          cf login -a ${cg_api} \
+            -u ${cg_username} \
+            -p ${cg_password} \
+            -o ${cg_org} \
+            -s ${cg_space}
+    - run:
+        name: Watch task logs
+        background: true
+        command: |
+          #!/bin/bash
+
+          CONTROL_FILE="/tmp/stop_tail"
+          rm -f $CONTROL_FILE
+
+          # Function to start tailing logs
+          start_log_tailing() {
+              echo "Starting cf logs for tta-automation..."
+              cf logs tta-automation &
+              TAIL_PID=$!
+          }
+
+          # Start tailing logs for the first time
+          start_log_tailing
+
+          # Monitor the cf logs process
+          while [ ! -f $CONTROL_FILE ]; do
+              # Check if the cf logs process is still running
+              if ! kill -0 $TAIL_PID 2>/dev/null; then
+                  echo "cf logs command has stopped unexpectedly. Restarting..."
+                  start_log_tailing
+              fi
+              sleep 1
+          done
+
+          # Kill the cf logs command
+          kill -9 $TAIL_PID
+          echo "cf logs command for tta-automation has been terminated."
+    - run:
+        name: |
+          "Running cmd: << parameters.task_name >>
+              in << parameters.target_env >>
+              args:<< parameters.task_args >>
+              cmd: << parameters.task_command >>"
+        command: |
+          json_data=$(jq -n \
+            --arg directory "<< parameters.directory >>" \
+            --arg config "<< parameters.config >>" \
+            --arg task_name "<< parameters.task_name >>" \
+            --arg command "<< parameters.task_command >>" \
+            --arg timeout_active_tasks "<< parameters.timeout >>" \
+            --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
+            --argjson args '<< parameters.task_args >>' \
+            '{
+              directory: $directory,
+              config: $config,
+              task_name: $task_name,
+              command: $command,
+              timeout_active_tasks: $timeout_active_tasks,
+              timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
+              args: $args
+            }')
+
+          # Set execute permission
+          find ./automation -name "*.sh" -exec chmod +x {} \;
+          ./automation/ci/scripts/cf_lambda.sh "$json_data"
+    - run:
+        name: Logout of service account
+        command: |
+          # Signal the log monitoring to stop
+          CONTROL_FILE="/tmp/stop_tail"
+          touch $CONTROL_FILE
+
+          # Wait for the log monitoring process to terminate
+          sleep 5
+
+          # Logout from Cloud Foundry
+          cf logout
+
   notify_slack:
-    description: "Notify slack of a deploy to production"
+    description: "Notify Slack @ << parameters.slack_channel >>"
     parameters:
       slack_bot_token:
         description: "Slack bot token"
         type: string
+        default: $SLACK_BOT_TOKEN
+      slack_channel:
+        description: "Slack channel name to post the message to"
+        default: "acf-head-start-alerts-lower"
+        type: string
+      message_text:
+        description: "Message text to post to Slack"
+        type: string
+        default: ""
+      message_text_file:
+        description: "message text_file.  If provided, this will be used instead of message_text"
+        type: string
+        default: ""
+    steps:
+    - run:
+        name: Notify Slack
+        command: |
+          if [[ -n "<< parameters.message_text >>" ]]; then
+            MESSAGE="<< parameters.message_text >>"
+          else
+            MESSAGE=$(cat "<< parameters.message_text_file >>")
+          fi
+
+          echo "Sending: ${MESSAGE}"
+          # Ensure all parameters are provided
+          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE" ]; then
+            echo "Missing required parameter. Notification will not be sent."
+            exit 0
+          fi
+
+          response=$(curl -s -X POST \
+            -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+            -H 'Content-type: application/json;charset=utf-8' \
+            --data "{
+              \"channel\": \"<< parameters.slack_channel >>\",
+              \"text\": \"$MESSAGE\"
+            }" \
+            https://slack.com/api/chat.postMessage)
+          ok=$(echo $response | jq -r '.ok')
+          error=$(echo $response | jq -r '.error')
+          if [ "$ok" != "true" ]; then
+            echo "Slack notification failed: $error"
+            exit 1
+          else
+            echo "Slack notification sent successfully"
+          fi
+
+
+  notify_slack_deploy:
+    parameters:
+      slack_bot_token:
+        description: "Slack bot token"
+        type: string
+        default: $SLACK_BOT_TOKEN
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
+      target_env:
+        type: string
     steps:
+    - checkout
+    - set_env_vars:
+        target_env: << parameters.target_env >>
     - run:
-        name: Notify Slack of Deployment
+        name: Generate Slack Message JSON
         command: |
-          # Check if the CIRCLE_PULL_REQUEST variable is set and extract the PR number from it
-          if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+          env_name=<< parameters.target_env >>
+
+          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-            MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
           else
-            MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+            COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
+              PR_NUMBER=$(echo "$COMMIT_MESSAGE" | grep -oP '(?<=Merge pull request #)\d+')
+            else
+              echo "No PR number found."
+              exit 0
+            fi
           fi
 
-          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-          -H 'Content-type: application/json;charset=utf-8' \
-          --data "{
-            \"channel\": \"<< parameters.slack_channel >>\",
-            \"text\": \"$MESSAGE_TEXT\"
-          }" https://slack.com/api/chat.postMessage
+          PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
 
-  cf_deploy:
-    description: "Login to cloud foundry space with service account credentials
-      and push application using deployment configuration file."
-    parameters:
-      app_name:
-        description: "Name of Cloud Foundry cloud.gov application; must match
-          application name specified in manifest"
-        type: string
-      auth_client_id:
-        description: "Name of CircleCi project environment variable that
-          holds authentication client id, a required application variable"
-        type: env_var_name
-      auth_client_secret:
-        description: "Name of CircleCi project environment variable that
-          holds authentication client secret, a required application variable"
-        type: env_var_name
-      cloudgov_username:
-        description: "Name of CircleCi project environment variable that
-          holds deployer username for cloudgov space"
-        type: env_var_name
-      cloudgov_password:
-        description: "Name of CircleCi project environment variable that
-          holds deployer password for cloudgov space"
-        type: env_var_name
-      cloudgov_space:
-        description: "Name of CircleCi project environment variable that
-          holds name of cloudgov space to target for application deployment"
-        type: env_var_name
-      deploy_config_file:
-        description: "Path to deployment configuration file"
-        type: string
-      session_secret:
-        description: "Name of CircleCi project environment variable that
-          holds session secret, a required application variable"
-        type: env_var_name
-      jwt_secret:
-        description: "CircleCi project environment variable used by the backend
-          token service for the email verification flow."
-        type: env_var_name
-      new_relic_license:
-        description: "Name of CircleCI project environment variable that
-          holds the New Relic License key, a required application variable"
-        type: env_var_name
-      hses_data_file_url:
-        description: "Url to download HSES grants and recipient data from"
-        type: env_var_name
-      hses_data_username:
-        description: "Username used to access the HSES grants and recipient data"
-        type: env_var_name
-      hses_data_password:
-        description: "Password used to access the HSES grants and recipient data"
-        type: env_var_name
-      smtp_host:
-        description: "SMTP server"
-        type: env_var_name
-      smtp_port:
-        description: "SMTP port"
-        type: env_var_name
-      smtp_host_test:
-        description: "SMTP server test"
-        type: env_var_name
-      smtp_port_test:
-        description: "SMTP port test"
-        type: env_var_name
-      smtp_secure:
-        description: "SMTP secure transport"
-        type: env_var_name
-      smtp_ignore_tls:
-        description: "SMTP specifies whether to negotiate TLS"
-        type: env_var_name
-      from_email_address:
-        description: "From email address"
-        type: env_var_name
-      smtp_user:
-        description: "SMTP user"
-        type: env_var_name
-      smtp_password:
-        description: "SMTP password"
-        type: env_var_name
-      suppress_error_logging:
-        description: "Stop logging of non-sequelize errors to the db"
-        type: env_var_name
-      itams_md_host:
-        description: "host url for itams monitoring data"
-        type: env_var_name
-      itams_md_port:
-        description: "port for itams monitoring data"
-        type: env_var_name
-      itams_md_username:
-        description: "username for itams monitoring data"
-        type: env_var_name
-      itams_md_password:
-        description: "password for itams monitoring data"
-        type: env_var_name
-      smartsheet_access_token:
-        description: "non-production smartsheet access token"
-        type: env_var_name
-    steps:
-      - run:
-          name: Login with service account
-          command: |
-            cf login -a << pipeline.parameters.cg_api >> \
-              -u ${<< parameters.cloudgov_username >>} \
-              -p ${<< parameters.cloudgov_password >>} \
-              -o << pipeline.parameters.cg_org >> \
-              -s ${<< parameters.cloudgov_space >>}
-      - run:
-          name: Push application with deployment vars
-          command: |
-            cf push \
-              --vars-file << parameters.deploy_config_file >> \
-              --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
-              --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
-              --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
-              --var SESSION_SECRET=${<< parameters.session_secret >>} \
-              --var JWT_SECRET=${<< parameters.jwt_secret >>} \
-              --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
-              --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
-              --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
-              --var SMTP_HOST=${<< parameters.smtp_host >>} \
-              --var SMTP_PORT=${<< parameters.smtp_port >>} \
-              --var SMTP_HOST_TEST=${<< parameters.smtp_host_test >>} \
-              --var SMTP_PORT_TEST=${<< parameters.smtp_port_test >>} \
-              --var SMTP_USER=${<< parameters.smtp_user >>} \
-              --var SMTP_PASSWORD=${<< parameters.smtp_password >>} \
-              --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
-              --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
-              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>} \
-              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>} \
-              --var ITAMS_MD_HOST=${<< parameters.itams_md_host >>} \
-              --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
-              --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
-              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>} \
-              --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>}
-      # - run:
-      #     name: Push maintenance application
-      #     command: |
-      #       cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
-  cf_backup:
-    description: "Login to cloud foundry space with service account credentials, Connect to DB & S3, backup DB to S3"
-    parameters:
-      auth_client_secret:
-        description: "Name of CircleCi project environment variable that
-          holds authentication client secret, a required application variable"
-        type: env_var_name
-      cloudgov_username:
-        description: "Name of CircleCi project environment variable that
-          holds deployer username for cloudgov space"
-        type: env_var_name
-      cloudgov_password:
-        description: "Name of CircleCi project environment variable that
-          holds deployer password for cloudgov space"
-        type: env_var_name
-      cloudgov_space:
-        description: "Name of CircleCi project environment variable that
-          holds name of cloudgov space to target for application deployment"
-        type: env_var_name
-      rds_service_name:
-        description: "Name of the rds service to backup"
-        type: string
-      s3_service_name:
-        description: "Name of the s3 service access"
-        type: string
-      backup_prefix:
-        description: "prefix name to use for backups"
-        type: string
-    steps:
-      - run:
-          name: Install Dependencies
-          command: |
-            set -e
-            set -u
-            set -o pipefail
-            set -o noglob
-            set -o noclobber
+          PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}")
 
-            # update
-            sudo apt-get update
-            # Install uuid-runtime to have access to uuidgen
-            # Install pv wget
-            sudo apt-get install pv uuid-runtime wget
-            # Install Cloud Foundry CLI
-            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
-            sudo apt-get update
-            sudo apt-get install cf8-cli
-            # Install plugin needed for connect-to-service
-            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+          PR_BODY=$(echo "$PR_DATA" | jq -r .body)
+          PR_TITLE=$(echo "$PR_DATA" | jq -r .title)
 
-            # The line you want to ensure exists in the /etc/hosts file
-            line="127.0.0.1        localhost"
+          extract_section() {
+            echo "$PR_BODY" | awk -v section="## $1" '
+              BEGIN {found=0}
+              $0 ~ section {found=1; next}
+              /^## / && found {exit}
+              found {print}
+            ' | head -c 600 | sed 's/^/> /'
+          }
 
-            # Check if the line already exists
-            if ! grep -qF "$line" /etc/hosts; then
-                # If the line does not exist, append it
-                echo "$line" | sudo tee -a /etc/hosts > /dev/null
-                echo "Line added to /etc/hosts"
-            else
-                echo "Line already exists in /etc/hosts"
-            fi
+          DESC=$(extract_section "Description of change")
+          ISSUES=$(extract_section "Issue")
 
-            # cleanup
-            sudo rm -rf /var/lib/apt/lists/*
-      - run:
-          name: Login with service account
-          command: |
-            cf login -a << pipeline.parameters.cg_api >> \
-              -u ${<< parameters.cloudgov_username >>} \
-              -p ${<< parameters.cloudgov_password >>} \
-              -o << pipeline.parameters.cg_org >> \
-              -s ${<< parameters.cloudgov_space >>}
-      - run:
-          name: cf_lambda - script to trigger backup
-          command: |
-            set -x
-            json_data=$(jq -n \
-              --arg automation_dir "./automation" \
-              --arg manifest "manifest.yml" \
-              --arg task_name "backup" \
-              --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
-              --argjson args '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]' \
-              '{
-                automation_dir: $automation_dir,
-                manifest: $manifest,
-                task_name: $task_name,
-                command: $command,
-                args: $args
-              }')
+          jq -n \
+            --arg channel "<< parameters.slack_channel >>" \
+            --arg pr_number "#$PR_NUMBER" \
+            --arg pr_link "$PR_LINK" \
+            --arg title "$PR_TITLE" \
+            --arg desc "$DESC" \
+            --arg issues "$ISSUES" \
+            --arg env "$env_name" \
+            '{
+              channel: $channel,
+              blocks: [
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: Deployment of production PR <\($pr_link)|\($pr_number)> was successful!" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
+                { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
+              ]
+            }' > /tmp/message_file.json
+    - run:
+        name: Post Slack Message
+        command: |
+          if [ -f /tmp/message_file.json ]; then
+            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+          else
+            echo "Skipping Slack notification because /tmp/message_file.json was not generated."
+          fi
 
-            # Set execute permission
-            find ./automation -name "*.sh" -exec chmod +x {} \;
-
-            ./automation/ci/scripts/cf_lambda.sh "$json_data"
-          environment:
-            CF_RDS_SERVICE_NAME: ttahub-prod
-            CF_S3_SERVICE_NAME: ttahub-db-backups
-      - run:
-          name: Logout of service account
-          command: |
-            cf logout
-parameters:
-  cg_org:
-    description: "Cloud Foundry cloud.gov organization name"
-    default: "hhs-acf-ohs-tta"
-    type: string
-  cg_api:
-    description: "URL of Cloud Controller in Cloud Foundry cloud.gov instance"
-    default: "https://api.fr.cloud.gov"
-    type: string
-  prod_git_url:
-    description: "URL of github repo that will deploy to prod"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  staging_git_url:
-    description: "URL of github repo that will deploy to staging"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  dev_git_url:
-    description: "URL of github repo that will deploy to dev"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  sandbox_git_url:
-    description: "URL of github repo that will deploy to sandbox"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  prod_git_branch:
-    description: "Name of github branch that will deploy to prod"
-    default: "production"
-    type: string
-  staging_git_branch:
-    description: "Name of github branch that will deploy to staging"
-    default: "main"
-    type: string
-  dev_git_branch: # change to feature branch to test deployment
-    description: "Name of github branch that will deploy to dev"
-    default: "mb/TTAHUB-2943/remove-models"
-    type: string
-  sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-smartsheet"
-    type: string
-  prod_new_relic_app_id:
-    default: "877570491"
-    type: string
-  staging_new_relic_app_id:
-    default: "868729138"
-    type: string
-  dev_new_relic_app_id:
-    default: "867221900"
-    type: string
-  sandbox_new_relic_app_id:
-    default: "867346799"
-    type: string
-  manual-trigger:
-    type: boolean
-    default: false
-jobs:
-  build_and_lint:
-    executor: docker-executor
+  no-op:
+    # placeholder command for no-op jobs
     steps:
-      - checkout
-      - create_combined_yarnlock
-      - restore_cache:
-          keys:
-            # To manually bust the cache, increment the version e.g. v7-yarn...
-            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-            # If checksum is new, restore partial cache
-            - v14-yarn-deps-
-      - run: yarn deps
-      - save_cache:
-          paths:
-            - node_modules
-            - frontend/node_modules
-            - packages/common/node_modules
-          key: v11-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-      - run:
-          name: Lint backend
-          command: yarn lint:ci
-      - run:
-          name: Audit vulnerability of backend node_modules
-          command: |
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
-      - run:
-          name: Lint frontend
-          command: yarn --cwd frontend lint:ci
-      - run:
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
-      - run:
-          name: Check nodejs version compatibility with buildpack
-          command: |
-            chmod +x ./bin/check_node_version_compatibility.sh
-            ./bin/check_node_version_compatibility.sh
-      - store_artifacts:  # store backend lint reports
-          path: reports
-      - store_artifacts:  # store frontend lint reports
-          path: frontend/reports
-      - run:
-          name: Remove similarity api data
-          command: rm -rf similarity_api
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
-    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
-    resource_class: large
-  build_and_lint_similarity_api:
-    executor: docker-python-executor
-    steps:
-      - checkout
-      - create_combined_pipfreeze
-      - restore_cache:
-          keys:
-            # To manually bust the cache, increment the version e.g. v7-pip...
-            - v2-pip-deps-{{ checksum "combined-requirements.txt" }}
-            # If checksum is new, restore partial cache
-            - v2-pip-deps-
-      - run:
-          name: Install python dependencies
-          command: |
-            cd similarity_api/src
-            python3 -m venv venv
-            source venv/bin/activate
-            pip install -U pip setuptools wheel
-            pip install -U -r requirements.txt
-      - run:
-          name: Check python version compatibility  with buildpack
-          command: |
-            chmod +x ./bin/check_python_version_compatibility.sh
-            ./bin/check_python_version_compatibility.sh
-      - save_cache:
-          paths:
-            - similarity_api/src/venv
-          key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
-      - store_artifacts:  # store backend lint reports
-          path: reports
-      - store_artifacts:  # store frontend lint reports
-          path: similarity_api/reports
-      - persist_to_workspace:
-          root: .
-          paths:
-            - similarity_api
-    resource_class: large
-  test_backend:
-    executor: docker-postgres-elasticsearch-executor
-    environment:
-        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-        AWS_ELASTICSEARCH_ACCESS_KEY: admin
-        AWS_ELASTICSEARCH_SECRET_KEY: admin
-        SFTP_EXPOSED_PORT: 2222
-    steps:
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: default
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Run seeders
-          command: yarn db:seed:ci
-      - run:
-          name: Monitor database
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
-          background: true
-      - run:
-          name: Test backend
-          command:  |
-            chmod 744 ./bin/test-backend-ci
-            ./bin/test-backend-ci
-      - run:
-          name: Compress coverage artifacts
-          command: tar -cvzf backend-coverage-artifacts.tar coverage/
-      - store_artifacts:
-          path: coverage/
-      - store_artifacts:
-          path: backend-coverage-artifacts.tar
-      - store_test_results:
-          path: reports/
-    resource_class: large
-  test_similarity_api:
-    executor: docker-python-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: default
-      - run:
-          name: Syft SBOM
-          environment:
-            SYFT_VERSION: v1.5.0
-            IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
-            OUTPUT_FORMAT: json
-            OUTPUT_FILE:  reports/syft_sbom.json
-          command: |
-            mkdir -p reports/
-            curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
-            ./syft similarity_api/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-            echo "scan results saved in $OUTPUT_FILE"
-          # echo $GITHUB_PAT | ./syft login ghcr.io -u $GITHUB_USERNAME --password-stdin  -vv
-          # echo $GITHUB_PAT | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
-      - run:
-          name: Grype Docker image
-          environment:
-            GRYPE_VERSION: v0.78.0
-            OUTPUT_FORMAT: sarif
-            OUTPUT_FILE: reports/grype.json
-          command: |
-            curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
-            ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-            echo "scan results saved in $OUTPUT_FILE"
-      - run:
-          name: Test similarity
-          command: |
-            mkdir -p coverage/similarity
-            cd similarity_api/src
-            source venv/bin/activate
-            pip install pytest pytest-cov
-            pytest -rpP --cov=similarity --cov=. --junitxml=~/project/reports/junit.xml
-            coverage report --show-missing --skip-covered
-            coverage html -d ~/project/coverage/similarity --skip-covered
-      - store_artifacts:
-          path: reports/
-    resource_class: large
-  test_frontend:
-    executor: docker-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Audit checksums of color files
-          command: |
-            chmod 744 ./checkcolorhash.sh
-            ./checkcolorhash.sh;
-      - run:
-          name: Test frontend
-          command: yarn --cwd frontend run test:ci --maxWorkers=50%
-      - store_test_results:
-          path: frontend/reports/
-      - store_artifacts:
-          path: frontend/coverage/
-    resource_class: large
-  test_e2e:
-    executor: docker-postgres-elasticsearch-executor
-    environment:
-        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-        AWS_ELASTICSEARCH_ACCESS_KEY: admin
-        AWS_ELASTICSEARCH_SECRET_KEY: admin
-    steps:
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: default
-      - run:
-          name: Start server
-          command: |
-            yarn build
-            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
-          background: true
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      - run:
-          name: Install playwright dependencies
-          command: |
-            npx playwright install
-      - run:
-          name: Monitor database
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
-          background: true
-      - run:
-          name: Run playwright tests
-          command: yarn e2e:ci
-      - store_artifacts:
-          path: playwright/e2e
-    resource_class: large
-  test_api:
-    executor: docker-postgres-elasticsearch-executor
-    environment:
-        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-        AWS_ELASTICSEARCH_ACCESS_KEY: admin
-        AWS_ELASTICSEARCH_SECRET_KEY: admin
-    steps:
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: default
-      - run:
-          name: Start server
-          command: |
-            yarn build
-            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
-          background: true
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      - run:
-          name: Monitor database
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
-          background: true
-      - run:
-          name: Install playwright dependencies
-          command: |
-            npx playwright install
-      - run:
-          name: Run playwright tests
-          command: yarn e2e:api
-      - store_artifacts:
-          path: playwright/api
-    resource_class: large
-  test_utils:
-    executor: docker-postgres-elasticsearch-executor
-    environment:
-        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-        AWS_ELASTICSEARCH_ACCESS_KEY: admin
-        AWS_ELASTICSEARCH_SECRET_KEY: admin
-    steps:
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: default
-      - run:
-          name: Start server
-          command: |
-            yarn build
-            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
-          background: true
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      - run:
-          name: Install playwright dependencies
-          command: |
-            npx playwright install
-      - run:
-          name: Run playwright tests
-          command: yarn e2e:utils
-      - store_artifacts:
-          path: playwright/utilsTests
-    resource_class: large
-  cucumber_test:
-    executor: docker-postgres-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Start server
-          command: |
-            yarn build
-            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
-          background: true
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      - run:
-          name: Run cucumber
-          command: |
-            yarn cucumber:ci
-      - store_artifacts:
-          path: reports/
-    resource_class: large
-  dynamic_security_scan:
-    executor: machine-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Start up local server
-          command: ./bin/prod-style-server
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 8080
-      - run:
-          name: Pull OWASP ZAP docker image
-          command: docker pull softwaresecurityproject/zap-stable:latest
-      - run:
-          name: Make reports directory group writeable
-          command: chmod g+w reports
-      - run:
-          name: Run OWASP ZAP
-          command: ./bin/run-owasp-scan
-      - store_artifacts:
-          path: reports/owasp_report.html
-    resource_class: large
-  deploy:
-    executor: docker-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Build backend assets
-          command: yarn build
-      - when:
-          condition:
-            and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
-          steps:
-          - run:
-              name: Create production robot
-              command: ./bin/robot-factory
-      - run:
-          name: Install Cloud Foundry
-          command: |
-            curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
-            sudo dpkg -i cf-cli_amd64.deb
-      - when:  # sandbox: for short-term feature development, see README.md
-          condition:
-            and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.sandbox_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
-          steps:
-            - run:
-                name: Build frontend assets
-                command: yarn --cwd frontend run build
-                environment:
-                  REACT_APP_GTM_ENABLED: $SANDBOX_GTM_ENABLED
-                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
-                  REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
-                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
-            - cf_deploy:
-                app_name: tta-smarthub-sandbox
-                auth_client_id: SANDBOX_AUTH_CLIENT_ID
-                auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
-                cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
-                cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
-                cloudgov_space: CLOUDGOV_SANDBOX_SPACE
-                deploy_config_file: deployment_config/sandbox_vars.yml
-                new_relic_license: NEW_RELIC_LICENSE_KEY
-                session_secret: SANDBOX_SESSION_SECRET
-                jwt_secret: SANDBOX_JWT_SECRET
-                hses_data_file_url: HSES_DATA_FILE_URL
-                hses_data_username: HSES_DATA_USERNAME
-                hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: STAGING_SMTP_HOST
-                smtp_port: STAGING_SMTP_PORT
-                smtp_host_test: SMTP_HOST_TEST
-                smtp_port_test: SMTP_PORT_TEST
-                smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
-                from_email_address: FROM_EMAIL_ADDRESS
-                smtp_user: SMTP_USER
-                suppress_error_logging: SUPPRESS_ERROR_LOGGING
-                smtp_password: SMTP_PASSWORD
-                itams_md_host: ITAMS_MD_HOST
-                itams_md_port: ITAMS_MD_PORT
-                itams_md_username: ITAMS_MD_USERNAME
-                itams_md_password: ITAMS_MD_PASSWORD
-                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
-            - run:
-                name: Migrate database
-                command: |
-                  cf run-task tta-smarthub-sandbox \
-                    --command "yarn db:migrate:prod" \
-                    --name "Reset DB"
-            - notify_new_relic:
-                env_name: sandbox
-                new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
-                new_relic_api_key: $NEW_RELIC_REST_API_KEY
-      - when:  # dev
-          condition:
-            and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
-          steps:
-            - run:
-                name: Build frontend assets
-                command: yarn --cwd frontend run build
-                environment:
-                  REACT_APP_GTM_ENABLED: $DEV_GTM_ENABLED
-                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
-                  REACT_APP_GTM_AUTH: $DEV_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
-                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-dev.app.cloud.gov
-            - cf_deploy:
-                app_name: tta-smarthub-dev
-                auth_client_id: DEV_AUTH_CLIENT_ID
-                auth_client_secret: DEV_AUTH_CLIENT_SECRET
-                cloudgov_username: CLOUDGOV_DEV_USERNAME
-                cloudgov_password: CLOUDGOV_DEV_PASSWORD
-                cloudgov_space: CLOUDGOV_DEV_SPACE
-                deploy_config_file: deployment_config/dev_vars.yml
-                new_relic_license: NEW_RELIC_LICENSE_KEY
-                session_secret: DEV_SESSION_SECRET
-                jwt_secret: DEV_JWT_SECRET
-                hses_data_file_url: HSES_DATA_FILE_URL
-                hses_data_username: HSES_DATA_USERNAME
-                hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: STAGING_SMTP_HOST
-                smtp_port: STAGING_SMTP_PORT
-                smtp_host_test: SMTP_HOST_TEST
-                smtp_port_test: SMTP_PORT_TEST
-                smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
-                from_email_address: FROM_EMAIL_ADDRESS
-                smtp_user: SMTP_USER
-                smtp_password: SMTP_PASSWORD
-                suppress_error_logging: SUPPRESS_ERROR_LOGGING
-                itams_md_host: ITAMS_MD_HOST
-                itams_md_port: ITAMS_MD_PORT
-                itams_md_username: ITAMS_MD_USERNAME
-                itams_md_password: ITAMS_MD_PASSWORD
-                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
-            - run:
-                name: Migrate database
-                command: |
-                  cf run-task tta-smarthub-dev \
-                    --command "yarn db:migrate:prod" \
-                    --name "Reset DB"
-            - notify_new_relic:
-                env_name: dev
-                new_relic_app_id: << pipeline.parameters.dev_new_relic_app_id >>
-                new_relic_api_key: $NEW_RELIC_REST_API_KEY
-      - when:  # staging
-          condition:
-            and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
-          steps:
-            - run:
-                name: Build frontend assets
-                command: yarn --cwd frontend run build
-                environment:
-                  REACT_APP_GTM_ENABLED: $STAGING_GTM_ENABLED
-                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
-                  REACT_APP_GTM_AUTH: $STAGING_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $STAGING_GTM_PREVIEW
-                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-staging.app.cloud.gov
-            - cf_deploy:
-                app_name: tta-smarthub-staging
-                auth_client_id: STAGING_AUTH_CLIENT_ID
-                auth_client_secret: STAGING_AUTH_CLIENT_SECRET
-                cloudgov_username: CLOUDGOV_STAGING_USERNAME
-                cloudgov_password: CLOUDGOV_STAGING_PASSWORD
-                cloudgov_space: CLOUDGOV_STAGING_SPACE
-                deploy_config_file: deployment_config/staging_vars.yml
-                new_relic_license: NEW_RELIC_LICENSE_KEY
-                session_secret: STAGING_SESSION_SECRET
-                jwt_secret: STAGING_JWT_SECRET
-                hses_data_file_url: HSES_DATA_FILE_URL
-                hses_data_username: HSES_DATA_USERNAME
-                hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: STAGING_SMTP_HOST
-                smtp_port: STAGING_SMTP_PORT
-                smtp_host_test: SMTP_HOST_TEST
-                smtp_port_test: SMTP_PORT_TEST
-                smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
-                from_email_address: FROM_EMAIL_ADDRESS
-                smtp_user: SMTP_USER
-                smtp_password: SMTP_PASSWORD
-                suppress_error_logging: SUPPRESS_ERROR_LOGGING
-                itams_md_host: ITAMS_MD_HOST
-                itams_md_port: ITAMS_MD_PORT
-                itams_md_username: ITAMS_MD_USERNAME
-                itams_md_password: ITAMS_MD_PASSWORD
-                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
-            - run:
-                name: Run database migrations
-                command: |
-                  cf run-task tta-smarthub-staging --command "yarn db:migrate:prod" --name migrate
-            - notify_new_relic:
-                env_name: staging
-                new_relic_app_id: << pipeline.parameters.staging_new_relic_app_id >>
-                new_relic_api_key: $NEW_RELIC_REST_API_KEY
-      - when:  # prod
-          condition:
-            and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
-          steps:
-            - run:
-                name: Build frontend assets
-                command: yarn --cwd frontend run build
-                environment:
-                  REACT_APP_GTM_ENABLED: $PROD_GTM_ENABLED
-                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
-                  REACT_APP_GTM_AUTH: $PROD_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $PROD_GTM_PREVIEW
-                  REACT_APP_WEBSOCKET_URL: wss://ttahub.ohs.acf.hhs.gov
-            - cf_deploy:
-                app_name: tta-smarthub-prod
-                auth_client_id: PROD_AUTH_CLIENT_ID
-                auth_client_secret: PROD_AUTH_CLIENT_SECRET
-                cloudgov_username: CLOUDGOV_PROD_USERNAME
-                cloudgov_password: CLOUDGOV_PROD_PASSWORD
-                cloudgov_space: CLOUDGOV_PROD_SPACE
-                deploy_config_file: deployment_config/prod_vars.yml
-                new_relic_license: NEW_RELIC_LICENSE_KEY
-                session_secret: PROD_SESSION_SECRET
-                jwt_secret: PROD_JWT_SECRET
-                hses_data_file_url: PROD_HSES_DATA_FILE_URL
-                hses_data_username: PROD_HSES_DATA_USERNAME
-                hses_data_password: PROD_HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
-                smtp_host_test: SMTP_HOST_TEST
-                smtp_port_test: SMTP_PORT_TEST
-                smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: SMTP_IGNORE_TLS
-                from_email_address: FROM_EMAIL_ADDRESS
-                smtp_user: SMTP_USER
-                smtp_password: SMTP_PASSWORD
-                suppress_error_logging: SUPPRESS_ERROR_LOGGING
-                itams_md_host: ITAMS_MD_HOST
-                itams_md_port: ITAMS_MD_PORT
-                itams_md_username: ITAMS_MD_USERNAME
-                itams_md_password: ITAMS_MD_PASSWORD
-                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
-            - run:
-                name: Run database migrations
-                command: |
-                  cf run-task tta-smarthub-prod --command "yarn db:migrate:prod" --name migrate
-            - notify_new_relic:
-                env_name: prod
-                new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
-                new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - notify_slack:
-                slack_bot_token: $SLACK_BOT_TOKEN
-                slack_channel: "acf-ohs-ttahub--contractor-customer-team"
-    resource_class: large
-  backup_upload_production:
-    docker:
-      - image: cimg/base:2024.05
-    steps:
-    - sparse_checkout:
-          directory: 'automation'
-          branch: << pipeline.git.branch >>
-    - cf_backup:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cloudgov_username: CLOUDGOV_PROD_USERNAME
-          cloudgov_password: CLOUDGOV_PROD_PASSWORD
-          cloudgov_space: CLOUDGOV_PROD_SPACE
-          rds_service_name: ttahub-prod
-          s3_service_name: ttahub-db-backups
-          backup_prefix: production
-workflows:
-  build_test_deploy:
-    when:
-      equal: [false, << pipeline.parameters.manual-trigger >>]
-    jobs:
-      - build_and_lint
-      - build_and_lint_similarity_api
-      - test_backend:
-          requires:
-            - build_and_lint
-      - test_frontend:
-          requires:
-            - build_and_lint
-      - test_e2e:
-          requires:
-            - build_and_lint
-      - test_api:
-          requires:
-            - build_and_lint
-      - test_similarity_api:
-          requires:
-            - build_and_lint_similarity_api
-      - test_utils:
-          requires:
-            - build_and_lint
-      - cucumber_test:
-          requires:
-            - build_and_lint
-      - dynamic_security_scan:
-          requires:
-            - build_and_lint
-      - backup_upload_production:
-          requires:
-            - test_backend
-            - test_frontend
-            - test_e2e
-            - test_api
-            - test_similarity_api
-            - test_utils
-            - cucumber_test
-            - dynamic_security_scan
-          filters:
-            branches:
-              only:
-                - << pipeline.parameters.prod_git_branch >>
-      - deploy:
-          requires:
-            - test_backend
-            - test_frontend
-            - test_e2e
-            - test_api
-            - test_similarity_api
-            - test_utils
-            - cucumber_test
-            - dynamic_security_scan
-          filters:
-            branches:
-              only:
-                - << pipeline.parameters.sandbox_git_branch >>
-                - << pipeline.parameters.dev_git_branch >>
-                - << pipeline.parameters.staging_git_branch >>
-                - << pipeline.parameters.prod_git_branch >>
-  daily_scan:
-    triggers:
-      - schedule:
-          cron: "0 12 * * 1-5"
-          filters:
-            branches:
-              only:
-                - << pipeline.parameters.dev_git_branch >>
-                - << pipeline.parameters.staging_git_branch >>
-                - << pipeline.parameters.prod_git_branch >>
-    jobs:
-      - build_and_lint
-      - build_and_lint_similarity_api
-      - test_backend:
-          requires:
-            - build_and_lint
-      - test_frontend:
-          requires:
-            - build_and_lint
-      - test_e2e:
-          requires:
-            - build_and_lint
-      - test_api:
-          requires:
-            - build_and_lint
-      - test_similarity_api:
-          requires:
-            - build_and_lint_similarity_api
-      - test_utils:
-          requires:
-            - build_and_lint
-      - dynamic_security_scan:
-          requires:
-            - build_and_lint
-  daily_backup_upload_production:
-    triggers:
-      - schedule:
-          cron: "0 10 * * 1-5"
-          filters:
-            branches:
-              only:
-                - << pipeline.parameters.prod_git_branch >>
-    jobs:
-      - backup_upload_production
-  manual_backup_upload_production:
-    when:
-      equal: [true, << pipeline.parameters.manual-trigger >>]
-    jobs:
-      - backup_upload_production
+    - run:
+        command: echo "ok"

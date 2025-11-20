@@ -1,5 +1,5 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import { OBJECTIVE_STATUS } from '../constants';
+import { CREATION_METHOD, OBJECTIVE_STATUS } from '../constants';
 import {
   ActivityReport,
   User,
@@ -8,10 +8,13 @@ import {
   ActivityReportGoal,
   Grant,
   Goal,
+  GoalFieldResponse,
+  GoalTemplate,
   Recipient,
   ActivityReportCollaborator,
   ActivityReportObjective,
   Resource,
+  Course,
   Topic,
   Objective,
   File,
@@ -59,6 +62,12 @@ describe('activityReportToCsvRecord', () => {
       grantId: 1,
       timeframe: 'None',
       createdVia: 'activityReport',
+      goalTemplate: {
+        creationMethod: CREATION_METHOD.AUTOMATIC,
+        id: 20_800,
+      },
+      source: 'RTTAPA development',
+      responses: [],
     },
     {
       name: 'Goal 2',
@@ -67,6 +76,12 @@ describe('activityReportToCsvRecord', () => {
       grantId: 1,
       timeframe: 'None',
       createdVia: 'rtr',
+      goalTemplate: {
+        creationMethod: CREATION_METHOD.AUTOMATIC,
+        id: 20_801,
+      },
+      source: 'RTTAPA development',
+      responses: [],
     },
     {
       name: 'Goal 3',
@@ -75,6 +90,12 @@ describe('activityReportToCsvRecord', () => {
       grantId: 1,
       timeframe: 'None',
       createdVia: 'imported',
+      goalTemplate: {
+        creationMethod: CREATION_METHOD.AUTOMATIC,
+        id: 20_802,
+      },
+      source: 'RTTAPA development',
+      responses: [],
     },
     {
       name: 'Goal 3',
@@ -83,6 +104,12 @@ describe('activityReportToCsvRecord', () => {
       grantId: 2,
       timeframe: 'None',
       createdVia: 'activityReport',
+      goalTemplate: {
+        creationMethod: CREATION_METHOD.AUTOMATIC,
+        id: 20_803,
+      },
+      source: 'RTTAPA development',
+      responses: [],
     },
     {
       name: 'Goal 4',
@@ -91,6 +118,12 @@ describe('activityReportToCsvRecord', () => {
       grantId: 3,
       timeframe: 'None',
       createdVia: 'activityReport',
+      goalTemplate: {
+        creationMethod: CREATION_METHOD.AUTOMATIC,
+        id: 20_804,
+      },
+      source: 'RTTAPA development',
+      responses: [],
     },
     // Same goal different recipient.
     {
@@ -100,6 +133,12 @@ describe('activityReportToCsvRecord', () => {
       grantId: 4,
       timeframe: 'None',
       createdVia: 'activityReport',
+      goalTemplate: {
+        creationMethod: CREATION_METHOD.AUTOMATIC,
+        id: 20_805,
+      },
+      source: 'RTTAPA development',
+      responses: [],
     },
   ];
 
@@ -110,6 +149,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[0],
+      supportType: 'Maintaining',
     },
     {
       id: 12,
@@ -117,6 +157,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[0],
+      supportType: 'Maintaining',
     },
     {
       id: 13,
@@ -124,6 +165,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[1],
+      supportType: 'Maintaining',
     },
     {
       id: 14,
@@ -131,6 +173,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[1],
+      supportType: 'Maintaining',
     },
     {
       id: 15,
@@ -138,6 +181,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[1],
+      supportType: 'Maintaining',
     },
     {
       id: 16,
@@ -145,6 +189,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[2],
+      supportType: 'Maintaining',
     },
     {
       id: 17,
@@ -152,6 +197,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[2],
+      supportType: 'Maintaining',
     },
     // Duplicate Objective name for goal 4.
     {
@@ -160,6 +206,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[4],
+      supportType: 'Maintaining',
     },
     {
       id: 19,
@@ -167,6 +214,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[4],
+      supportType: 'Maintaining',
     },
     // Same as goal 1 different recipient.
     {
@@ -175,6 +223,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[5],
+      supportType: 'Maintaining',
     },
     {
       id: 21,
@@ -182,6 +231,7 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[5],
+      supportType: 'Maintaining',
     },
   ];
 
@@ -192,7 +242,6 @@ describe('activityReportToCsvRecord', () => {
       userId: 3,
       user: {
         name: 'Test Approver 1',
-
       },
     },
     {
@@ -290,6 +339,16 @@ describe('activityReportToCsvRecord', () => {
       nonECLKCResourcesUsed: 'one\ntwo',
     };
     expect(output).toMatchObject(expectedOutput);
+  });
+
+  it('returns an empty string when a date is invalid', async () => {
+    const report = ActivityReport.build({
+      createdAt: 'not-a-real-date',
+    });
+
+    const output = await activityReportToCsvRecord(report);
+
+    expect(output.createdAt).toBe('');
   });
 
   describe('HTML Tag removal', () => {
@@ -415,7 +474,6 @@ describe('activityReportToCsvRecord', () => {
           as: 'approvers',
           include: [{ model: User, as: 'user' }],
         },
-
         {
           model: ActivityReportObjective,
           as: 'activityReportObjectives',
@@ -423,6 +481,22 @@ describe('activityReportToCsvRecord', () => {
             {
               model: Objective,
               as: 'objective',
+              include: [
+                {
+                  model: Goal,
+                  as: 'goal',
+                  include: [
+                    {
+                      model: GoalTemplate,
+                      as: 'goalTemplate',
+                    },
+                    {
+                      model: GoalFieldResponse,
+                      as: 'responses',
+                    },
+                  ],
+                },
+              ],
             },
             {
               model: Resource,
@@ -436,10 +510,15 @@ describe('activityReportToCsvRecord', () => {
               model: File,
               as: 'files',
             },
+            {
+              model: Course,
+              as: 'courses',
+            },
           ],
         },
       ],
     });
+
     const output = await activityReportToCsvRecord(report.toJSON());
     const {
       creatorName,
@@ -471,6 +550,7 @@ describe('activityReportToCsvRecord', () => {
       topics: [{ name: 'Topic 1' }],
       resources: [{ url: 'https://test.gov' }],
       files: [{ originalFileName: 'TestFile.docx' }],
+      courses: [{ name: 'Other' }],
     }));
 
     const output = makeGoalsAndObjectivesObject(objectives);
@@ -479,10 +559,15 @@ describe('activityReportToCsvRecord', () => {
       'goal-1': 'Goal 1',
       'goal-1-status': 'Not Started',
       'goal-1-created-from': 'activityReport',
+      'goal-1-fei-root-causes': '',
+      'goal-1-source': 'RTTAPA development',
+      'goal-1-standard-ohs-goal': 'No',
       'objective-1.1': 'Objective 1.1',
       'objective-1.1-topics': 'Topic 1',
       'objective-1.1-resourcesLinks': 'https://test.gov',
       'objective-1.1-nonResourceLinks': 'TestFile.docx',
+      'objective-1.1-courses': 'Other',
+      'objective-1.1-supportType': 'Maintaining',
       'objective-1.1-ttaProvided': 'Training',
       'objective-1.1-status': 'Complete',
       'objective-1.2': 'Objective 1.2',
@@ -491,54 +576,129 @@ describe('activityReportToCsvRecord', () => {
       'objective-1.2-nonResourceLinks': 'TestFile.docx',
       'objective-1.2-ttaProvided': 'Training',
       'objective-1.2-status': 'Complete',
+      'objective-1.2-courses': 'Other',
+      'objective-1.2-supportType': 'Maintaining',
       'goal-2-id': '2081',
       'goal-2': 'Goal 2',
       'goal-2-status': 'Not Started',
       'goal-2-created-from': 'rtr',
+      'goal-2-fei-root-causes': '',
+      'goal-2-source': 'RTTAPA development',
+      'goal-2-standard-ohs-goal': 'No',
       'objective-2.1': 'Objective 2.1',
       'objective-2.1-topics': 'Topic 1',
       'objective-2.1-resourcesLinks': 'https://test.gov',
       'objective-2.1-nonResourceLinks': 'TestFile.docx',
       'objective-2.1-ttaProvided': 'Training',
       'objective-2.1-status': 'Complete',
+      'objective-2.1-courses': 'Other',
+      'objective-2.1-supportType': 'Maintaining',
       'objective-2.2': 'Objective 2.2',
       'objective-2.2-topics': 'Topic 1',
       'objective-2.2-resourcesLinks': 'https://test.gov',
       'objective-2.2-nonResourceLinks': 'TestFile.docx',
       'objective-2.2-ttaProvided': 'Training',
       'objective-2.2-status': 'Complete',
+      'objective-2.2-courses': 'Other',
+      'objective-2.2-supportType': 'Maintaining',
       'objective-2.3': 'Objective 2.3',
       'objective-2.3-topics': 'Topic 1',
       'objective-2.3-resourcesLinks': 'https://test.gov',
       'objective-2.3-nonResourceLinks': 'TestFile.docx',
       'objective-2.3-ttaProvided': 'Training',
       'objective-2.3-status': 'Complete',
+      'objective-2.3-courses': 'Other',
+      'objective-2.3-supportType': 'Maintaining',
       'goal-3-id': '2082',
       'goal-3': 'Goal 3',
       'goal-3-status': 'Not Started',
       'goal-3-created-from': 'imported',
+      'goal-3-fei-root-causes': '',
+      'goal-3-source': 'RTTAPA development',
+      'goal-3-standard-ohs-goal': 'No',
       'objective-3.1': 'Objective 3.1',
       'objective-3.1-topics': 'Topic 1',
       'objective-3.1-resourcesLinks': 'https://test.gov',
       'objective-3.1-nonResourceLinks': 'TestFile.docx',
       'objective-3.1-ttaProvided': 'Training',
       'objective-3.1-status': 'Complete',
+      'objective-3.1-courses': 'Other',
+      'objective-3.1-supportType': 'Maintaining',
       'goal-4-id': '2084',
       'goal-4': 'Goal 4',
       'goal-4-status': 'Not Started',
       'goal-4-created-from': 'activityReport',
+      'goal-4-fei-root-causes': '',
+      'goal-4-source': 'RTTAPA development',
+      'goal-4-standard-ohs-goal': 'No',
       'objective-4.1': 'Objective 3.1',
       'objective-4.1-topics': 'Topic 1',
       'objective-4.1-resourcesLinks': 'https://test.gov',
       'objective-4.1-nonResourceLinks': 'TestFile.docx',
       'objective-4.1-ttaProvided': 'Training',
       'objective-4.1-status': 'Complete',
+      'objective-4.1-courses': 'Other',
+      'objective-4.1-supportType': 'Maintaining',
       'objective-4.2': 'Objective 4.2',
       'objective-4.2-topics': 'Topic 1',
       'objective-4.2-resourcesLinks': 'https://test.gov',
       'objective-4.2-nonResourceLinks': 'TestFile.docx',
       'objective-4.2-ttaProvided': 'Training',
       'objective-4.2-status': 'Complete',
+      'objective-4.2-courses': 'Other',
+      'objective-4.2-supportType': 'Maintaining',
+    });
+  });
+
+  it('handles a null goal source', () => {
+    const objectives = mockObjectives.map((mo, i) => {
+      if (i === 0) {
+        return {
+          ...mo,
+          title: 'same title',
+          goal: {
+            ...mo.goal,
+            source: null,
+            name: 'same name',
+          },
+          topics: [{ name: 'Topic 1' }],
+          resources: [{ url: 'https://test.gov' }],
+          files: [{ originalFileName: 'TestFile.docx' }],
+          courses: [{ name: 'Other' }],
+        };
+      }
+
+      return {
+        ...mo,
+        title: 'same title',
+        goal: {
+          ...mo.goal,
+          name: 'same name',
+        },
+        topics: [{ name: 'Topic 1' }],
+        resources: [{ url: 'https://test.gov' }],
+        files: [{ originalFileName: 'TestFile.docx' }],
+        courses: [{ name: 'Other' }],
+      };
+    });
+
+    const output = makeGoalsAndObjectivesObject(objectives);
+    expect(output).toEqual({
+      'goal-1-id': '2080\n2081\n2082\n2084\n2085',
+      'goal-1': 'same name',
+      'goal-1-status': 'Not Started',
+      'goal-1-created-from': 'activityReport',
+      'goal-1-fei-root-causes': '',
+      'goal-1-source': 'RTTAPA development',
+      'goal-1-standard-ohs-goal': 'No',
+      'objective-1.1': 'same title',
+      'objective-1.1-topics': 'Topic 1',
+      'objective-1.1-resourcesLinks': 'https://test.gov',
+      'objective-1.1-nonResourceLinks': 'TestFile.docx',
+      'objective-1.1-courses': 'Other',
+      'objective-1.1-supportType': 'Maintaining',
+      'objective-1.1-ttaProvided': 'Training',
+      'objective-1.1-status': 'Complete',
     });
   });
 
@@ -654,19 +814,19 @@ describe('communicationLogToCsvRecord', () => {
       duration: 30,
       method: 'Email',
       purpose: 'Inquiry',
-      notes: 'Lorem ipsum',
+      notes: '<p>Lorem ipsum</p>',
       result: 'Successful',
+      recipientNextSteps: [{
+        note: 'Follow up with client',
+      }],
+      specialistNextSteps: [{
+        note: 'Schedule a meeting',
+      }],
     },
     files: [
       { originalFileName: 'file1.txt' },
       { originalFileName: 'file2.txt' },
     ],
-    recipientNextSteps: {
-      note: 'Follow up with client',
-    },
-    specialistNextSteps: {
-      note: 'Schedule a meeting',
-    },
   };
 
   it('should transform the log into a CSV record', () => {
@@ -682,6 +842,9 @@ describe('communicationLogToCsvRecord', () => {
       files: 'file1.txt\nfile2.txt',
       recipientNextSteps: 'Follow up with client',
       specialistNextSteps: 'Schedule a meeting',
+      otherStaff: '',
+      goals: '',
+      regionId: '',
     };
 
     expect(communicationLogToCsvRecord(log)).toEqual(expectedRecord);
@@ -709,6 +872,11 @@ describe('communicationLogToCsvRecord', () => {
       notes: '',
       purpose: '',
       result: '',
+      goals: '',
+      otherStaff: '',
+      recipientNextSteps: '',
+      specialistNextSteps: '',
+      regionId: '',
     });
   });
 });

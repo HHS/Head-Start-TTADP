@@ -1,0 +1,13 @@
+@use '../../colors.scss' as *;
+
+.smart-hub-widget-container .smart-hub-widget-container-header p {
+  max-width: 700px;
+}
+
+.smart-hub-widget-container .smart-hub--menu-button .fa-ellipsis {
+  font-size: 1.5rem;
+}
+
+.smart-hub-border-base--pagination-box {
+  border: 1px solid $base-lighter;
+}

@@ -51,7 +51,7 @@ describe('supportingAttachments', () => {
     };
 
     // eslint-disable-next-line react/prop-types
-    const RenderSupportingAttachments = ({ formValues = defaultFormValues }) => {
+    const RenderSupportingAttachments = ({ formValues = defaultFormValues, additionalData = { status: 'In progress' } }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -66,7 +66,7 @@ describe('supportingAttachments', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {supportingAttachments.render(
-                  null,
+                  additionalData,
                   formValues,
                   1,
                   false,
@@ -94,7 +94,15 @@ describe('supportingAttachments', () => {
       expect(await screen.findByText(/meetings agendas/i)).toBeVisible();
       expect(await screen.findByText(/sign-in or attendance sheets/i)).toBeVisible();
       expect(await screen.findByText(/other non-resource items not available online/i)).toBeVisible();
-      expect(await screen.findByText(/example: \.doc, \.pdf, \.txt, \.csv \(max size 30 mb\)/i)).toBeVisible();
+      expect(await screen.findByText(/File types accepted/i)).toBeVisible();
+    });
+
+    it('shows the the coninue button when status is complete', async () => {
+      act(() => {
+        render(<RenderSupportingAttachments additionalData={{ status: 'Complete' }} />);
+      });
+      expect(screen.queryByRole('button', { name: 'Save and continue' })).not.toBeInTheDocument();
+      expect(await screen.findByText(/continue/i)).toBeVisible();
     });
   });
 });

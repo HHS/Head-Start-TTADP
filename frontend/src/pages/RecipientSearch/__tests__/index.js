@@ -16,6 +16,7 @@ import { SCOPE_IDS } from '@ttahub/common';
 import RecipientSearch, { determineDefaultSort } from '../index';
 import { mockWindowProperty } from '../../../testHelpers';
 import UserContext from '../../../UserContext';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 const query = 'ground control';
 
@@ -123,9 +124,11 @@ const recipientUrl = join('/', 'api', 'recipient');
 const renderRecipientSearch = (user) => {
   render((
     <Router history={history}>
-      <UserContext.Provider value={{ user }}>
-        <RecipientSearch user={user} />
-      </UserContext.Provider>
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <UserContext.Provider value={{ user }}>
+          <RecipientSearch user={user} />
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
     </Router>
   ));
 };
@@ -363,7 +366,7 @@ describe('the recipient search page', () => {
       fireEvent.click(button);
     });
 
-    const next = await screen.findByRole('link', { name: /go to page number 2/i });
+    const [next] = await screen.findAllByRole('button', { name: /page 2/i });
     const nextUrl = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&sortBy=name&direction=asc&offset=12');
 
     fetchMock.get(nextUrl,

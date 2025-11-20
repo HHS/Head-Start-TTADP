@@ -57,7 +57,7 @@ function Menu({
         width,
       } = buttonRef.current.getBoundingClientRect();
 
-      // we could be progratically calculating the height and width offset numbers
+      // we could be programmatically calculating the height and width offset numbers
       // but a little manual work up front will save on performance in the browser
 
       let leftPos = l + width;
@@ -105,19 +105,10 @@ function Menu({
   };
 
   const placementClass = (() => {
-    if (left && up) {
-      return 'smart-hub--menu__left_and_up';
-    }
-
-    if (left) {
-      return 'smart-hub--menu__left';
-    }
-
-    if (up) {
-      return 'smart-hub--menu__up';
-    }
-
-    return '';
+    if (left && up) return 'smart-hub--menu__left_and_up';
+    if (left) return 'smart-hub--menu__left';
+    if (up) return 'smart-hub--menu__up';
+    return 'smart-hub--menu__right';
   })();
 
   const positionClass = fixed ? 'position-fixed' : 'position-absolute';
@@ -152,7 +143,7 @@ function Menu({
         <ul className="usa-list usa-list--unstyled" role="menu">
           {menuItems.map((item) => (
             <li key={item.label} role="menuitem">
-              <Button type="button" onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin">
+              <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin" aria-label={item.label}>
                 <div className="padding-2 padding-right-3">
                   {item.label}
                 </div>
@@ -171,6 +162,7 @@ Menu.propTypes = {
   menuItems: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
     onClick: PropTypes.func,
+    id: PropTypes.string,
   })).isRequired,
   backgroundColor: PropTypes.string,
   buttonTestId: PropTypes.string,

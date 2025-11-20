@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {
-  render, screen, act,
+  render, screen, act, waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
@@ -60,8 +60,8 @@ const defaultPages = [
     label: 'first page',
     review: false,
     render: (
+      formData,
       _additionalData,
-      _formData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -99,21 +99,26 @@ describe('Navigator', () => {
   });
 
   const NavigatorWithForm = ({
-    onSaveAndContinue,
-    currentPage,
-    onSubmit,
-    onSave,
-    onSaveDraft,
-    updatePage,
-    updateForm,
-    pages,
-    formData,
-    onUpdateError,
-    editable,
-  }) => {
+    onSaveAndContinue = jest.fn(),
+    currentPage = 'first',
+    onSubmit = jest.fn(),
+    onSave = jest.fn(),
+    onSaveDraft = jest.fn(),
+    updatePage = jest.fn(),
+    pages = defaultPages,
+    formData = initialData,
+    onUpdateError = jest.fn(),
+    editable = true,
+    hideSideNav = false,
+    autoSaveInterval = 500,
+    shouldAutoSave = true,
+  } = {}) => {
     const hookForm = useForm({
       defaultValues: formData,
     });
+
+    const data = hookForm.watch();
+
     return (
       <UserContext.Provider value={{ user }}>
         <NetworkContext.Provider value={{
@@ -129,17 +134,15 @@ describe('Navigator', () => {
           >
             <FormProvider {...hookForm}>
               <Navigator
+                formData={data}
                 onSaveAndContinue={onSaveAndContinue}
                 onSaveDraft={onSaveDraft}
                 draftSaver={jest.fn()}
                 editable={editable}
                 reportId={1}
                 submitted={false}
-                formData={formData}
-                updateFormData={updateForm}
                 onReview={() => {}}
                 isApprover={false}
-                defaultValues={{ first: '', second: '' }}
                 pages={pages}
                 currentPage={currentPage}
                 onFormSubmit={onSubmit}
@@ -151,6 +154,10 @@ describe('Navigator', () => {
                 isPendingApprover={false}
                 updateShowSavedDraft={jest.fn()}
                 showSavedDraft={false}
+                hideSideNav={hideSideNav}
+                autoSaveInterval={autoSaveInterval}
+                shouldAutoSave={shouldAutoSave}
+                setShouldAutoSave={jest.fn()}
               />
             </FormProvider>
           </AppLoadingContext.Provider>
@@ -160,33 +167,9 @@ describe('Navigator', () => {
   };
 
   // eslint-disable-next-line arrow-body-style
-  const renderNavigator = (
-    onSaveAndContinue = jest.fn(),
-    currentPage = 'first',
-    onSubmit = jest.fn(),
-    onSave = jest.fn(),
-    onSaveDraft = jest.fn(),
-    updatePage = jest.fn(),
-    updateForm = jest.fn(),
-    pages = defaultPages,
-    formData = initialData,
-    onUpdateError = jest.fn(),
-    editable = true,
-  ) => {
+  const renderNavigator = (params) => {
     render(
-      <NavigatorWithForm
-        onSaveAndContinue={onSaveAndContinue}
-        currentPage={currentPage}
-        onSubmit={onSubmit}
-        onSave={onSave}
-        onSaveDraft={onSaveDraft}
-        updatePage={updatePage}
-        updateForm={updateForm}
-        pages={pages}
-        formData={formData}
-        onUpdateError={onUpdateError}
-        editable={editable}
-      />,
+      <NavigatorWithForm {...params} />,
     );
   };
 
@@ -200,16 +183,63 @@ describe('Navigator', () => {
 
   it('calls on save and continue if passed in', async () => {
     const onSaveAndContinue = jest.fn();
-    act(() => {
-      renderNavigator(onSaveAndContinue);
-    });
+    renderNavigator({ onSaveAndContinue });
 
     const onSaveButton = screen.getByText('Save and continue');
-
     act(() => {
       userEvent.click(onSaveButton);
     });
 
     expect(onSaveAndContinue).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the side nav when the hideSideNav prop is true', async () => {
+    renderNavigator({ hideSideNav: true });
+
+    // Expect not to find the class 'smart-hub-sidenav-wrapper' in the document.
+    expect(screen.queryAllByTestId('side-nav').length).toBe(0);
+  });
+
+  it('shows the side nav when the hideSideNav prop is false', async () => {
+    renderNavigator({ hideSideNav: false });
+
+    // Expect to find the test id 'side-nav' in the document.
+    expect(screen.getByTestId('side-nav')).toBeInTheDocument();
+  });
+
+  it('autosaves when the shouldAutoSave prop is true', async () => {
+    const onSaveDraft = jest.fn();
+    renderNavigator({ shouldAutoSave: true, onSaveDraft });
+
+    // mark the form as dirty so that onSave is called
+    await act(() => waitFor(() => {
+      userEvent.click(screen.getByTestId('first'));
+    }));
+
+    // Fast-forward time to trigger the autosave interval
+    await act(() => waitFor(() => {
+      jest.advanceTimersByTime(800);
+    }));
+
+    await waitFor(() => {
+      expect(onSaveDraft).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('does not autosave when the shouldAutoSave prop is false', async () => {
+    const onSaveDraft = jest.fn();
+    renderNavigator({ shouldAutoSave: false, onSaveDraft });
+
+    // mark the form as dirty
+    await act(() => waitFor(() => {
+      userEvent.click(screen.getByTestId('first'));
+    }));
+
+    // Fast-forward time to trigger the autosave interval
+    await act(() => waitFor(() => {
+      jest.advanceTimersByTime(800);
+    }));
+
+    expect(onSaveDraft).toHaveBeenCalledTimes(0);
   });
 });

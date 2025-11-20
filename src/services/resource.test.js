@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
@@ -60,9 +61,47 @@ describe('resource', () => {
     describe('findOrCreateResource', () => {
       const urlGoogle = 'http://google.com';
       let url;
+
+      let existingHeadStartResource;
+      let createdECLKCResource;
+      let createdECLKCResource2;
+      let createdHeadStartResource;
+
+      beforeAll(async () => {
+        existingHeadStartResource = await Resource.create({
+          url: 'https://headstart.gov/existingsingle',
+          domain: 'headstart.gov',
+        });
+      });
+
+      afterAll(async () => {
+        // Delete created ECLKC resource.
+        await Resource.destroy({
+          where: {
+            id: [
+              createdECLKCResource ? createdECLKCResource.id : 0,
+              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+
+        // Delete existingHeadStartResource.
+        await Resource.destroy({
+          where: {
+            id: [
+              existingHeadStartResource ? existingHeadStartResource.id : 0,
+              createdHeadStartResource ? createdHeadStartResource.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+      });
+
       beforeEach(() => {
         url = urlGoogle;
       });
+
       afterEach(async () => {
         await Resource.destroy({
           where: { url: urlGoogle },
@@ -108,6 +147,30 @@ describe('resource', () => {
         const resource = await findOrCreateResource(url);
         expect(resource).toBe(undefined);
       });
+
+      it('maps to an existing headstart.gov resource if the url is ECLKC', async () => {
+        createdECLKCResource = await findOrCreateResource('https://eclkc.ohs.acf.hhs.gov/existingsingle');
+        expect(createdECLKCResource).not.toBeNull();
+        // Verify eclkc with and existing headstart.gov
+        expect(createdECLKCResource.url).toBe('https://eclkc.ohs.acf.hhs.gov/existingsingle');
+        expect(createdECLKCResource.mapsTo).toBe(existingHeadStartResource.id);
+      });
+
+      it('maps to an non existing headstart.gov resource if the url is ECLKC', async () => {
+        createdECLKCResource2 = await findOrCreateResource('https://eclkc.ohs.acf.hhs.gov/notexistingsingle');
+        expect(createdECLKCResource2).not.toBeNull();
+
+        // Find the headstart url we auto created.
+        createdHeadStartResource = await Resource.findOne({
+          where: { url: 'https://headstart.gov/notexistingsingle' },
+        });
+        expect(createdHeadStartResource).not.toBeNull();
+        expect(createdHeadStartResource.domain).toBe('headstart.gov');
+
+        // Verify eclkc with the auto created headstart url.
+        expect(createdECLKCResource2.url).toBe('https://eclkc.ohs.acf.hhs.gov/notexistingsingle');
+        expect(createdECLKCResource2.mapsTo).toBe(createdHeadStartResource.id);
+      });
     });
     describe('findOrCreateResources', () => {
       const urlsTest = [
@@ -121,6 +184,43 @@ describe('resource', () => {
         if (a.id > b.id) return 1;
         return 0;
       };
+
+      let existingHeadStartResource;
+      let createdECLKCResource;
+      let createdECLKCResource2;
+      let createdHeadStartResource;
+
+      beforeAll(async () => {
+        existingHeadStartResource = await Resource.create({
+          url: 'https://headstart.gov/existing',
+          domain: 'headstart.gov',
+        });
+      });
+
+      afterAll(async () => {
+        // Delete created ECLKC resource.
+        await Resource.destroy({
+          where: {
+            id: [
+              createdECLKCResource ? createdECLKCResource.id : 0,
+              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+
+        // Delete existingHeadStartResource.
+        await Resource.destroy({
+          where: {
+            id: [
+              existingHeadStartResource ? existingHeadStartResource.id : 0,
+              createdHeadStartResource ? createdHeadStartResource.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+      });
+
       beforeEach(() => {
         urls = urlsTest;
       });
@@ -170,6 +270,27 @@ describe('resource', () => {
         urls = {};
         const resources = await findOrCreateResources(urls);
         expect(resources).toMatchObject([]);
+      });
+
+      it('maps to an existing headstart.gov resource if the url is ECLKC', async () => {
+        const resources = await findOrCreateResources(['https://eclkc.ohs.acf.hhs.gov/existing', 'https://eclkc.ohs.acf.hhs.gov/notexisting']);
+        expect(resources.length).toBe(2);
+        // Verify eclkc with and existing headstart.gov
+        createdECLKCResource = resources.find((r) => (r.url === 'https://eclkc.ohs.acf.hhs.gov/existing'));
+        expect(createdECLKCResource.url).toBe('https://eclkc.ohs.acf.hhs.gov/existing');
+        expect(createdECLKCResource.mapsTo).toBe(existingHeadStartResource.id);
+
+        // Find the headstart url we auto created.
+        createdHeadStartResource = await Resource.findOne({
+          where: { url: 'https://headstart.gov/notexisting' },
+        });
+        expect(createdHeadStartResource).not.toBeNull();
+        expect(createdHeadStartResource.domain).toBe('headstart.gov');
+
+        // Verify eclkc with the auto created headstart url.
+        createdECLKCResource2 = resources.find((r) => (r.url === 'https://eclkc.ohs.acf.hhs.gov/notexisting'));
+        expect(createdECLKCResource2.url).toBe('https://eclkc.ohs.acf.hhs.gov/notexisting');
+        expect(createdECLKCResource2.mapsTo).toBe(createdHeadStartResource.id);
       });
     });
   });
@@ -875,6 +996,26 @@ describe('resource', () => {
             destroy: [{ genericId: 1, resourceIds: [2, 3, 4, 5] }],
           });
       });
+      it('normalizes non-array sourceFields before processing', () => {
+        currentResources[0].sourceFields = null;
+        incomingResources[2].sourceFields = 'd';
+
+        const result = filterResourcesForSync(
+          incomingResources,
+          currentResources,
+        );
+
+        expect(result.update).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            resourceId: 2,
+            sourceFields: ['b', 'c'],
+          }),
+          expect.objectContaining({
+            resourceId: 3,
+            sourceFields: ['d'],
+          }),
+        ]));
+      });
       it('expected usage, empty currentResources', () => {
         currentResources = [];
         expect(filterResourcesForSync(
@@ -1023,15 +1164,15 @@ describe('resource', () => {
   describe('ActivityReports Resource Processing', () => {
     describe('calculateIsAutoDetectedForActivityReport', () => {
       let sourceFields;
-      it('expected usage, single', () => {
+      it('returns true when context changes', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT];
         expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
       });
-      it('expected usage, multiple', () => {
+      it('returns true when context and notes change', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.NOTES];
         expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
       });
-      it('expected usage, multiple with only once auto-detected', () => {
+      it('returns true when mixed with other fields', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.ECLKC];
         expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
       });
@@ -1156,7 +1297,7 @@ describe('resource', () => {
               activityReportId: 9999,
               resourceId: resources[0].id,
               sourceFields: [SOURCE_FIELD.REPORT.NONECLKC, SOURCE_FIELD.REPORT.CONTEXT],
-              isAutoDetected: true,
+              isAutoDetected: false,
             },
           ],
           destroy: [],
@@ -1266,7 +1407,7 @@ describe('resource', () => {
               activityReportId: 9999,
               resourceId: resources[0].id,
               sourceFields: [SOURCE_FIELD.REPORT.NONECLKC, SOURCE_FIELD.REPORT.CONTEXT],
-              isAutoDetected: true,
+              isAutoDetected: false,
             },
           ],
           destroy: [
@@ -1351,15 +1492,8 @@ describe('resource', () => {
         const arResources = await processActivityReportForResourcesById(activityReport.id, []);
 
         expect(arResources.length).toEqual(1);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
-          ].sort());
+        expect(arResources[0].dataValues.sourceFields.sort())
+          .toEqual([SOURCE_FIELD.REPORT.CONTEXT]);
       });
       it('expected usage, with urls', async () => {
         const arResources = await processActivityReportForResourcesById(
@@ -1367,25 +1501,13 @@ describe('resource', () => {
           urls,
         );
         expect(arResources.length).toEqual(4);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
-            SOURCE_FIELD.REPORT.RESOURCE,
-          ].sort());
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.RESOURCE,
-          ].sort());
+        arResources.forEach((resource) => {
+          const expected = resource.resource.dataValues.url === urls[0]
+            ? [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.RESOURCE]
+            : [SOURCE_FIELD.REPORT.RESOURCE];
+          expect(resource.dataValues.sourceFields.sort())
+            .toEqual(expected.sort());
+        });
       });
       it('expected usage, add and remove urls', async () => {
         let arResources = await processActivityReportForResourcesById(
@@ -1393,15 +1515,8 @@ describe('resource', () => {
           [],
         );
         expect(arResources.length).toEqual(1);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
-          ].sort());
+        expect(arResources[0].dataValues.sourceFields.sort())
+          .toEqual([SOURCE_FIELD.REPORT.CONTEXT]);
         arResources = await processActivityReportForResourcesById(
           activityReport.id,
           [urls[0]],
@@ -1423,21 +1538,17 @@ describe('resource', () => {
           [urls[1]],
         );
         expect(arResources.length).toEqual(2);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
+        const urlOneResources = arResources
+          .filter((r) => r.dataValues.resource.dataValues.url === urls[0]);
+        const urlTwoResource = arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]);
+        expect(urlOneResources.length).toEqual(1);
+        expect(urlOneResources[0].dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.CONTEXT,
-          ].sort());
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
+          ]);
+        expect(urlTwoResource).toBeTruthy();
+        expect(urlTwoResource.dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.RESOURCE,
           ].sort());
@@ -1472,11 +1583,8 @@ describe('resource', () => {
           [],
         );
         expect(arResources.length).toEqual(1);
-        expect(arResources[0].resource.dataValues.url).toEqual(urls[0]);
         expect(arResources[0].dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
-          ].sort());
+          .toEqual([SOURCE_FIELD.REPORT.CONTEXT]);
       });
     });
   });
@@ -2400,6 +2508,7 @@ describe('resource', () => {
     });
     describe('syncResourcesForActivityReportObjective', () => {
       let resources;
+      let goal;
       let objective;
       let reportObjective;
       const urls = [
@@ -2409,9 +2518,19 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
+        [goal] = await Goal.findOrCreate({
+          where: {
+            grantId: 315,
+            name: 'Resource Goal test. http://google.com',
+            status: GOAL_STATUS.NOT_STARTED,
+            onAR: false,
+            onApprovedAR: false,
+          },
+          individualHooks: true,
+        });
         [objective] = await Objective.findOrCreate({
           where: {
-            goalId: 1,
+            goalId: goal.id,
             title: 'Resource Objective test. http://google.com',
             status: OBJECTIVE_STATUS.NOT_STARTED,
             onAR: false,
@@ -2681,6 +2800,7 @@ describe('resource', () => {
     });
     describe('processActivityReportObjectiveForResourcesById', () => {
       let resources;
+      let goal;
       let objective;
       let reportObjective;
       const urls = [
@@ -2690,9 +2810,19 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
+        [goal] = await Goal.findOrCreate({
+          where: {
+            grantId: 315,
+            name: 'Resource Goal test. http://google.com',
+            status: GOAL_STATUS.NOT_STARTED,
+            onAR: false,
+            onApprovedAR: false,
+          },
+          individualHooks: true,
+        });
         [objective] = await Objective.findOrCreate({
           where: {
-            goalId: 1,
+            goalId: goal.id,
             title: 'Resource Objective test. http://google.com',
             status: OBJECTIVE_STATUS.NOT_STARTED,
             onAR: false,

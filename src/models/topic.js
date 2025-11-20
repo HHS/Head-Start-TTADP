@@ -25,6 +25,22 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportObjectiveId',
         as: 'activityReportObjectives',
       });
+
+      models.Topic.belongsTo(
+        models.Topic,
+        {
+          foreignKey: 'mapsTo',
+          as: 'mapsToTopic',
+        },
+      );
+
+      models.Topic.hasMany(
+        models.Topic,
+        {
+          foreignKey: 'mapsTo',
+          as: 'mapsFromTopics',
+        },
+      );
     }
   }
   Topic.init({
@@ -36,6 +52,11 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    deprecated: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
   }, {
     sequelize,

@@ -1,13 +1,41 @@
 @use 'colors.scss' as *;
 @use './Grid.scss';
-
 @use './widgets/widgets.scss';
+@use './print.scss';
 
 @font-face {
   font-family: 'FontAwesome';
   src: url('./assets/fa-solid-900.ttf') format('truetype'), url('./assets/fa-solid-900.woff2') format('woff2');
   font-weight: bold;
 }
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Regular.ttf') format('truetype');
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Bold.ttf') format('truetype');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Italic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-BoldItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: bold;
+}
+
+
 
 a {
   color: $text-link;
@@ -87,6 +115,10 @@ body {
   color: $text-ink
 }
 
+.base-medium {
+  color: $base-medium;
+}
+
 .smart-hub-bg-blue-primary {
   background-color: $ttahub-blue;
 }
@@ -124,6 +156,19 @@ body {
 .flex-gap-1 {
   gap: 0.5em;
 }
+/* ========== a new breakpoint for display-flex reset ========== */
+
+@media all and (min-width: 80em){
+  .desktop-lg\:display-flex {
+    display: flex;
+  }
+
+  .desktop-lg\:margin-y-0 {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
 
 .flex-gap-2 {
   gap: 1em;
@@ -132,8 +177,8 @@ body {
 /* ========== some form resets ========== */
 
 .usa-button:not(
-  .usa-button--outline, 
-  .usa-button--unstyled, 
+  .usa-button--outline,
+  .usa-button--unstyled,
   .usa-button--secondary,
   :disabled,
   .usa-modal__close
@@ -150,9 +195,14 @@ body {
   color: $ttahub-medium-blue;
 }
 
-input:not([disabled]):focus, 
-select:not([disabled]):focus, 
-textarea:not([disabled]):focus, 
+.usa-button.usa-button--no-margin,
+.usa-form .usa-button.usa-button--no-margin {
+  margin: 0;
+}
+
+input:not([disabled]):focus,
+select:not([disabled]):focus,
+textarea:not([disabled]):focus,
 button:not([disabled]):focus {
   outline: .25rem solid $blue-vivid-focus;
 }
@@ -416,4 +466,80 @@ fill: #1B1B1B;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.space-y-2 > * + * {
+  margin-top: 2rem;
+}
+
+.lead-paragraph {
+  font-family: "Merriweather Web", Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 20em) {
+  .mobile-tablet-space-y-2 > * + * {
+    margin-top: 2rem;
+  }
+}
+
+@media (min-width: 50em) and (max-width: 75em) {
+  .tablet-lg\:grid-col {
+    flex: 1 1;
+    width: auto;
+    max-width: 100%;
+    min-width: 1px;
+  }
+
+  .tablet-lg\:grid-col-3 {
+    flex: 0 0 25%;
+    width: 25%;
+    max-width: 25%;
+  }
+
+  .mobile-lg\:space-y-0 > * + * {
+    margin-top: 0;
+  }
+}
+
+@media (min-width: 75em) {
+  .tablet-lg\:grid-col {
+    flex: 1 1;
+    width: auto;
+    max-width: 100%;
+    min-width: 1px;
+  }
+
+  .tablet-lg\:grid-col-3 {
+    flex: 0 0 25%;
+    width: 25%;
+    max-width: 25%;
+  }
+
+  .mobile-lg\:space-y-0 > * + * {
+    margin-top: 0;
+  }
+
+  .mobile-tablet-space-y-2 > * + * {
+    margin-top: 0;
+  }
+
+  .desktop\:space-x-1 > * + * {
+    margin-left: 1rem;
+  }
+
+  .desktop\:space-x-2 > * + * {
+    margin-left: 2rem;
+  }
+}
+
+.rdw-link-decorator-icon {
+  display: none;
+}
+
+.resource-link-wrapper {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }

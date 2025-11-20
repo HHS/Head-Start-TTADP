@@ -88,6 +88,7 @@ function ActivityReportsTable({
     const filterQuery = filtersToQueryString(filters);
     const downloadURL = getAllReportsDownloadURL(filterQuery);
 
+    /* istanbul ignore next: cannot test "assign" */
     try {
       // changed the way this works ever so slightly because I was thinking
       // you'd want a try/catch around the fetching of the reports and not the
@@ -106,6 +107,7 @@ function ActivityReportsTable({
     }
   };
 
+  /* istanbul ignore next: cannot test "assign" */
   const handleDownloadClick = async (
     reportCheckboxes,
     setIsDownloading,
@@ -184,14 +186,11 @@ ActivityReportsTable.propTypes = {
   ).isRequired,
   tableCaption: PropTypes.string.isRequired,
   resetPagination: PropTypes.bool,
-  setResetPagination: PropTypes.func,
+  setResetPagination: PropTypes.func.isRequired,
 };
 
 ActivityReportsTable.defaultProps = {
   resetPagination: false,
-  setResetPagination: () => {
-    // do nothing
-  },
 };
 
 export default ActivityReportsTable;

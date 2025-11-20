@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import Joi from 'joi';
+import Joi from '@hapi/joi';
 import { root, validateSchema } from './common';
 
 test('get /user', async ({ request }) => {
@@ -8,6 +8,7 @@ test('get /user', async ({ request }) => {
   const schema = Joi.object({
     id: Joi.number().required(),
     name: Joi.string().required(),
+    fullName: Joi.string().required(),
     hsesUserId: Joi.string().required(),
     hsesUsername: Joi.string().required(),
     hsesAuthorities: Joi.any().allow(null),

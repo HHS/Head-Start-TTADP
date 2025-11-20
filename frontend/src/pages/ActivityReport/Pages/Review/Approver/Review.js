@@ -1,5 +1,4 @@
 import React, { useContext } from 'react';
-import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
@@ -8,8 +7,8 @@ import {
   Dropdown, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
-import { useHistory } from 'react-router-dom';
-import IncompletePages from '../IncompletePages';
+import { Accordion } from '../../../../../components/Accordion';
+import IncompletePages from '../../../../../components/IncompletePages';
 import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 import { getEditorState } from '../../../../../utils';
 import FormItem from '../../../../../components/FormItem';
@@ -28,26 +27,13 @@ const Review = ({
   dateSubmitted,
   pages,
   showDraftViewForApproverAndCreator,
-  creatorIsApprover,
-  onResetToDraft,
-  calculatedStatus,
   availableApprovers,
+  reviewItems,
 }) => {
   const { handleSubmit, register, watch } = useFormContext();
   const watchTextValue = watch('note');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
   const { user } = useContext(UserContext);
-  const history = useHistory();
-
-  const onReset = async () => {
-    try {
-      await onResetToDraft();
-      history.push('/activity-reports');
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(err);
-    }
-  };
 
   const defaultEditorState = getEditorState(additionalNotes || 'No creator notes');
   const otherManagerNotes = approverStatusList
@@ -66,12 +52,15 @@ const Review = ({
   const hasIncompletePages = incompletePages.length > 0;
   const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
 
-  const showReset = (calculatedStatus !== REPORT_STATUSES.DRAFT && creatorIsApprover);
-
   return (
     <>
-      <h2>{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve report'}</h2>
+      <h2 className="font-family-serif">{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve'}</h2>
       <IndicatesRequiredField />
+      {reviewItems && reviewItems.length > 0 && (
+        <div className="margin-bottom-3">
+          <Accordion bordered items={reviewItems} multiselectable />
+        </div>
+      )}
       <div className="smart-hub--creator-notes" aria-label="additionalNotes">
         <p>
           <span className="text-bold">Creator notes</span>
@@ -90,7 +79,7 @@ const Review = ({
       }
 
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
-        <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top" legend="Review and submit report">
+        <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top">
           <Label htmlFor="note">Add manager notes</Label>
           <div className={`margin-top-1 ${textAreaClass}`}>
             <HookFormRichEditor
@@ -137,12 +126,7 @@ const Review = ({
           </>
         ) : (
           <div className="margin-bottom-3">
-            <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
-              <p className="margin-top-4">
-                Submitting this form for approval means that you will no longer be in draft
-                mode. Please review all information in each section before submitting to your
-                manager(s) for approval.
-              </p>
+            <Fieldset className="smart-hub--report-legend margin-top-4">
               <FormItem
                 label="Approving manager"
                 name="approvers"
@@ -161,7 +145,6 @@ const Review = ({
         <ApproverStatusList approverStatus={approverStatusList} />
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
         <Button disabled={hasIncompletePages} type="submit">{hasBeenReviewed ? 'Update report' : 'Submit'}</Button>
-        {showReset && <Button className="margin-bottom-3" type="button" outline onClick={onReset}>Reset to Draft</Button>}
       </Form>
     </>
   );
@@ -177,17 +160,19 @@ Review.propTypes = {
     status: PropTypes.string,
   })),
   showDraftViewForApproverAndCreator: PropTypes.bool.isRequired,
-  creatorIsApprover: PropTypes.bool,
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,
     review: PropTypes.bool,
     label: PropTypes.string,
   })).isRequired,
-  onResetToDraft: PropTypes.func.isRequired,
-  calculatedStatus: PropTypes.string.isRequired,
   availableApprovers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
+  })).isRequired,
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    content: PropTypes.node.isRequired,
   })).isRequired,
 };
 
@@ -196,7 +181,6 @@ Review.defaultProps = {
   additionalNotes: '',
   approverStatusList: [],
   dateSubmitted: null,
-  creatorIsApprover: false,
 };
 
 export default Review;

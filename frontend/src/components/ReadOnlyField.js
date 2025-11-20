@@ -8,8 +8,8 @@ export default function ReadOnlyField({ label, children }) {
 
   return (
     <>
-      <p className="usa-prose margin-bottom-0 text-bold">{label}</p>
-      <p className="usa-prose margin-top-0">{children}</p>
+      <div className="usa-prose margin-top-2 margin-bottom-0 text-bold" data-testid="read-only-label">{label}</div>
+      <div className="usa-prose margin-top-0" data-testid="read-only-value">{children}</div>
     </>
   );
 }

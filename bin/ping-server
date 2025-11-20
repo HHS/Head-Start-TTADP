@@ -1,17 +1,35 @@
 #!/bin/bash
+# Usage: ./bin/ping-server <port> [hostname] [urlpath] [max_attempts]
+
+# Ensure port is provided
+if [ -z "$1" ]; then
+  echo "Error: Port is required."
+  echo "Usage: $0 <port> [hostname] [urlpath] [max_attempts]"
+  exit 1
+fi
 
 PORT=$1
+HOSTNAME=${2:-localhost} # Default to 'localhost' if hostname is not provided
+URLPATH=${3}
 
-# from https://stackoverflow.com/questions/11904772/how-to-create-a-loop-in-bash-that-is-waiting-for-a-webserver-to-respond
+# Retry configuration
 attempt_counter=0
-max_attempts=10
+max_attempts=${4:-10}
 
-until $(curl --output /dev/null --max-time 10 --silent --head --fail http://localhost:${PORT}); do
-    if [ ${attempt_counter} -eq ${max_attempts} ];then
-      echo "Max attempts reached"
-      exit 1
+echo "Pinging server at http://${HOSTNAME}:${PORT}${URLPATH}..."
+
+until $(curl --output /dev/null --max-time 10 --silent --head --fail http://${HOSTNAME}:${PORT}${URLPATH}); do
+    if [ ${attempt_counter} -eq ${max_attempts} ]; then
+        echo "Error: Max attempts reached. Server at ${HOSTNAME}:${PORT}${URLPATH} is not responding."
+        exit 1
     fi
 
-    attempt_counter=$(($attempt_counter+1))
+    attempt_counter=$((attempt_counter + 1))
+    echo "Attempt ${attempt_counter}/${max_attempts}: Retrying in 30 seconds..."
     sleep 30
 done
+
+# log the response for tracking
+curl --silent --head --fail http://${HOSTNAME}:${PORT}${URLPATH}
+
+echo "Success: Server at ${HOSTNAME}:${PORT}${URLPATH} is responding."

@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common';
 import { ActivityReport } from '../models';
 
 function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
@@ -41,13 +41,28 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
   // Build out return Graph data.
   const res = [
     {
-      name: 'Hours of Training', x: [], y: [], month: [],
+      name: 'Hours of Technical Assistance',
+      x: [],
+      y: [],
+      month: [],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TECHNICAL_ASSISTANCE,
+      trace: 'circle',
     },
     {
-      name: 'Hours of Technical Assistance', x: [], y: [], month: [],
+      name: 'Hours of Both',
+      x: [],
+      y: [],
+      month: [],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.BOTH,
+      trace: 'triangle',
     },
     {
-      name: 'Hours of Both', x: [], y: [], month: [],
+      name: 'Hours of Training',
+      x: [],
+      y: [],
+      month: [],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TRAINING,
+      trace: 'square',
     },
   ];
 
@@ -128,9 +143,9 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
       // Check if we have added this activity report for this date.
       if (!arDates.find((cache) => cache.id === r.id && cache.date === r.startDate)) {
         // Populate Both.
-        if ((r.ttaType.includes('training') && r.ttaType.includes('technical-assistance')) || r.ttaType.includes('Both')) {
+        if (r.ttaType && ((r.ttaType.includes('training') && r.ttaType.includes('technical-assistance')) || r.ttaType.includes('Both'))) {
           addOrUpdateResponse(2, res, xValue, r.duration, month);
-        } else if (r.ttaType.includes('training') || r.ttaType.includes('Training')) {
+        } else if (r.ttaType && (r.ttaType.includes('training') || r.ttaType.includes('Training'))) {
           // Hours of Training.
           addOrUpdateResponse(0, res, xValue, r.duration, month);
         } else {

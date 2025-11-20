@@ -24,6 +24,7 @@
 - [ ] Logical Data Model updated
 - [ ] [Architectural Decision Records](https://adr.github.io/) written for major infrastructure decisions
 - [ ] UI review complete
+- [ ] QA review complete
 
 ### Before merge to main
 
@@ -32,7 +33,12 @@
 
 ### Production Deploy
 
+- [ ] PR created as **Draft**
 - [ ] Staging smoke test completed
+- [ ] PR transitioned to **Open**
+- [ ] Reviewer added _(after transitioning to Open to ensure Slack notifications trigger)_
+  - _Sequence: Draft PR → Smoke test → Open PR → Add reviewer_
+  - _Confirm that Slack notification was sent after reviewer was added_
 
 ### After merge/deploy
 

@@ -3,39 +3,25 @@ import {
   createGoals,
   changeGoalStatus,
   reopenGoal,
-  retrieveGoalsByIds,
+  retrieveObjectiveOptionsByGoalTemplate,
   deleteGoal,
-  mergeGoalHandler,
-  getSimilarGoalsForRecipient,
-  getSimilarGoalsByText,
   getMissingDataForActivityReport,
+  createGoalsFromTemplate,
+  getGoalHistory,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
-import { checkRegionIdParam, checkRecipientIdParam } from '../../middleware/checkIdParamMiddleware';
+import { checkRegionIdParam, checkGoalTemplateIdParam } from '../../middleware/checkIdParamMiddleware';
 
 const router = express.Router();
 router.post('/', transactionWrapper(createGoals));
-router.get('/', transactionWrapper(retrieveGoalsByIds));
-router.get(
-  '/recipient/:recipientId/region/:regionId/nudge',
-  checkRegionIdParam,
-  checkRecipientIdParam,
-  transactionWrapper(getSimilarGoalsByText),
-);
-router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 router.post(
-  '/recipient/:recipientId/region/:regionId/merge',
-  checkRegionIdParam,
-  checkRecipientIdParam,
-  transactionWrapper(mergeGoalHandler),
+  '/template/:goalTemplateId',
+  checkGoalTemplateIdParam,
+  transactionWrapper(createGoalsFromTemplate),
 );
+router.get('/', transactionWrapper(retrieveObjectiveOptionsByGoalTemplate));
+router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 router.delete('/', transactionWrapper(deleteGoal));
-router.get(
-  '/similar/region/:regionId/recipient/:recipientId',
-  checkRegionIdParam,
-  checkRecipientIdParam,
-  transactionWrapper(getSimilarGoalsForRecipient),
-);
 
 router.get(
   '/region/:regionId/incomplete',
@@ -44,5 +30,7 @@ router.get(
 );
 
 router.put('/reopen', transactionWrapper(reopenGoal));
+
+router.get('/:goalId/history', transactionWrapper(getGoalHistory));
 
 export default router;

@@ -3,26 +3,25 @@
 import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { Link, useHistory } from 'react-router-dom';
 import moment from 'moment';
+import { uniq } from 'lodash';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
-import NewReport from './NewReport';
-import './index.scss';
-import { ALERTS_PER_PAGE } from '../../Constants';
+import {
+  ALERTS_PER_PAGE,
+} from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
 import TooltipWithCollection from '../../components/TooltipWithCollection';
 import Tooltip from '../../components/Tooltip';
 import TableHeader from '../../components/TableHeader';
-import { cleanupLocalStorage } from '../ActivityReport';
+import { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
 import UserContext from '../../UserContext';
-import {
-  PendingApprovalIcon,
-  Closed as ApprovedIcon,
-  NeedsActionIcon,
-} from '../../components/icons';
+import ApproverTableDisplay from '../../components/ApproverTableDisplay';
+import { getStatusDisplayAndClassnames } from '../../utils';
+import NewActivityReportButton from '../../components/NewActivityReportButton';
+import './index.scss';
 
 const isCollaborator = (report, user) => {
   if (!report.activityReportCollaborators) return false;
@@ -31,31 +30,164 @@ const isCollaborator = (report, user) => {
 
 const isCreator = (report, user) => report.userId === user.id;
 
-const ProperIcon = ({ approvalStatus }) => {
-  switch (approvalStatus) {
-    case APPROVER_STATUSES.APPROVED:
-      return <ApprovedIcon />;
-    case APPROVER_STATUSES.NEEDS_ACTION:
-      return <NeedsActionIcon />;
-    case APPROVER_STATUSES.PENDING:
-    default:
-      return <PendingApprovalIcon />;
-  }
-};
-
-ProperIcon.propTypes = {
-  approvalStatus: PropTypes.string,
-};
-
-ProperIcon.defaultProps = {
-  approvalStatus: APPROVER_STATUSES.PENDING,
-};
-
-export function ReportsRow({ reports, removeAlert, message }) {
+function ReportRow({
+  report,
+  index,
+  length,
+  updateIdToDelete,
+  modalRef,
+}) {
   const history = useHistory();
+  const { user } = useContext(UserContext);
+
+  const {
+    id,
+    displayId,
+    activityRecipients,
+    startDate,
+    calculatedStatus,
+    approvers,
+    createdAt,
+    creatorName,
+    activityReportCollaborators,
+  } = report;
+
+  const recipients = activityRecipients.map((ar) => (
+    ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
+  ));
+
+  const collaboratorNames = uniq(activityReportCollaborators
+    ? activityReportCollaborators.map((collaborator) => (
+      collaborator.fullName)) : []);
+
+  const idKey = `my_alerts_${id}`;
+  const idLink = `/activity-reports/${id}`;
+  const contextMenuLabel = `View activity report ${id}`;
+
+  const menuItems = [
+    {
+      label: 'View',
+      onClick: () => { history.push(idLink); },
+    },
+  ];
+
+  if (isCollaborator(report, user) || isCreator(report, user)) {
+    menuItems.push({
+      label: 'Delete',
+      onClick: () => { updateIdToDelete(id); modalRef.current.toggleModal(true); },
+    });
+  }
+
+  const message = history.location.state && history.location.state.message;
+
+  const { displayStatus, statusClassName } = getStatusDisplayAndClassnames(
+    calculatedStatus,
+    approvers,
+    message && Number(message.reportId) === id,
+  );
+
+  return (
+    <tr key={idKey}>
+      <td>
+        <Link
+          to={idLink}
+        >
+          {displayId}
+        </Link>
+      </td>
+      <td>
+        <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
+      </td>
+      <td>{startDate}</td>
+      <td>
+        { creatorName && (
+          <Tooltip
+            displayText={creatorName}
+            tooltipText={creatorName}
+            buttonLabel={`click to reveal: ${creatorName} `}
+            screenReadDisplayText={false}
+          />
+        )}
+      </td>
+      <td>
+        {moment(createdAt).format('MM/DD/YYYY')}
+      </td>
+      <td>
+        <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
+      </td>
+      <td className="ttahub-approver-cell">
+        <div className="display-flex flex-column flex-justify">
+          <ApproverTableDisplay approvers={approvers} />
+        </div>
+      </td>
+      <td>
+        <Tag
+          className={statusClassName}
+        >
+          {displayStatus}
+        </Tag>
+      </td>
+      <td>
+        <ContextMenu
+          label={contextMenuLabel}
+          menuItems={menuItems}
+          menuWidthOffset={110}
+          menuHeightOffset={80}
+          up={index + 1 === length}
+          fixed
+        />
+      </td>
+    </tr>
+  );
+}
+
+ReportRow.propTypes = {
+  report: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    displayId: PropTypes.string.isRequired,
+    activityRecipients: PropTypes.arrayOf(PropTypes.shape({
+      grant: PropTypes.shape({
+        recipient: PropTypes.shape({
+          name: PropTypes.string.isRequired,
+        }),
+      }),
+      otherEntity: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+      }),
+    })).isRequired,
+    startDate: PropTypes.string.isRequired,
+    calculatedStatus: PropTypes.string.isRequired,
+    approvers: PropTypes.arrayOf(PropTypes.object).isRequired,
+    createdAt: PropTypes.string.isRequired,
+    creatorName: PropTypes.string,
+    activityReportCollaborators: PropTypes.arrayOf(PropTypes.shape({
+      userId: PropTypes.number.isRequired,
+      fullName: PropTypes.string.isRequired,
+    })),
+    userId: PropTypes.number.isRequired,
+  }).isRequired,
+  message: PropTypes.shape({
+    time: PropTypes.string,
+    reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    displayId: PropTypes.string,
+    status: PropTypes.string,
+  }),
+  index: PropTypes.number.isRequired,
+  length: PropTypes.number.isRequired,
+  updateIdToDelete: PropTypes.func.isRequired,
+  modalRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.any }),
+  ]).isRequired,
+};
+
+ReportRow.defaultProps = {
+  message: null,
+};
+
+export function ReportsRow({ reports, removeAlert }) {
   const [idToDelete, updateIdToDelete] = useState(0);
   const modalRef = useRef();
-  const { user } = useContext(UserContext);
 
   const onDelete = async (reportId) => {
     if (modalRef && modalRef.current) {
@@ -66,148 +198,16 @@ export function ReportsRow({ reports, removeAlert, message }) {
     cleanupLocalStorage(reportId);
   };
 
-  const tableRows = reports.map((report, index, { length }) => {
-    const {
-      id,
-      displayId,
-      activityRecipients,
-      startDate,
-      calculatedStatus,
-      approvers,
-      createdAt,
-      creatorName,
-      activityReportCollaborators,
-    } = report;
-
-    const recipients = activityRecipients.map((ar) => (
-      ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
-    ));
-
-    const approverNames = approvers ? approvers.sort((a, b) => (
-      a.user.fullName.localeCompare(b.user.fullName)
-    )).map((a) => (
-      <span key={a.id}>
-        <ProperIcon approvalStatus={a.status} />
-        {a.user.fullName}
-      </span>
-    )) : [];
-
-    const collaboratorNames = activityReportCollaborators
-      ? activityReportCollaborators.map((collaborator) => (
-        collaborator.fullName)) : [];
-
-    const idKey = `my_alerts_${id}`;
-    const idLink = `/activity-reports/${id}`;
-    const contextMenuLabel = `View activity report ${id}`;
-    let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
-    let displayStatus = calculatedStatus;
-
-    const justSubmitted = message && Number(message.reportId) === id;
-    if (justSubmitted) {
-      displayStatus = 'Submitted';
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
-    }
-
-    if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
-      displayStatus = 'Needs action';
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
-    }
-
-    if (
-      calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
-      && approvers && approvers.length > 0
-      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
-    ) {
-      displayStatus = 'Reviewed';
-      statusClassName = 'smart-hub--table-tag-status smart-hub--status-reviewed';
-    }
-
-    if (
-      calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
-      && approvers && approvers.length > 0
-      && approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
-    ) {
-      displayStatus = 'Needs action';
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
-    }
-
-    if (
-      calculatedStatus !== REPORT_STATUSES.APPROVED
-      && approvers && approvers.length > 0
-      && approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
-    ) {
-      displayStatus = REPORT_STATUSES.APPROVED;
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.APPROVED}`;
-    }
-
-    const menuItems = [
-      {
-        label: 'View',
-        onClick: () => { history.push(idLink); },
-      },
-    ];
-
-    if (isCollaborator(report, user) || isCreator(report, user)) {
-      menuItems.push({
-        label: 'Delete',
-        onClick: () => { updateIdToDelete(id); modalRef.current.toggleModal(true); },
-      });
-    }
-
-    return (
-      <tr key={idKey}>
-        <td>
-          <Link
-            to={idLink}
-          >
-            {displayId}
-          </Link>
-        </td>
-        <td>
-          <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
-        </td>
-        <td>{startDate}</td>
-        <td>
-          { creatorName && (
-          <Tooltip
-            displayText={creatorName}
-            tooltipText={creatorName}
-            buttonLabel={`click to reveal: ${creatorName} `}
-            screenReadDisplayText={false}
-          />
-          )}
-        </td>
-        <td>
-          {moment(createdAt).format('MM/DD/YYYY')}
-        </td>
-        <td>
-          <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
-        </td>
-        <td className="ttahub-approver-cell">
-          <div className="display-flex flex-column flex-justify">
-            {approverNames}
-          </div>
-        </td>
-        <td>
-          <Tag
-            className={statusClassName}
-          >
-            {displayStatus}
-          </Tag>
-        </td>
-        <td>
-          <ContextMenu
-            label={contextMenuLabel}
-            menuItems={menuItems}
-            menuWidthOffset={110}
-            menuHeightOffset={80}
-            up={index + 1 === length}
-            fixed
-          />
-        </td>
-      </tr>
-    );
-  });
+  const tableRows = reports.map((report, index, { length }) => (
+    <ReportRow
+      key={report.id}
+      report={report}
+      index={index}
+      length={length}
+      updateIdToDelete={updateIdToDelete}
+      modalRef={modalRef}
+    />
+  ));
 
   return (
     <>
@@ -275,7 +275,6 @@ function MyAlerts(props) {
     setDownloadAlertsError,
     downloadAllAlertsButtonRef,
     downloadSelectedAlertsButtonRef,
-    message,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -336,7 +335,11 @@ function MyAlerts(props) {
                 Would you like to begin a new activity report?
               </p>
             )}
-            {newBtn && <NewReport />}
+            {newBtn && (
+              <div className="display-flex flex-justify-center">
+                <NewActivityReportButton />
+              </div>
+            )}
           </div>
         </Container>
       )}
@@ -380,7 +383,7 @@ function MyAlerts(props) {
                 </tr>
               </thead>
               <tbody>
-                <ReportsRow reports={reports} removeAlert={removeAlert} message={message} />
+                <ReportsRow reports={reports} removeAlert={removeAlert} />
               </tbody>
             </Table>
           </div>

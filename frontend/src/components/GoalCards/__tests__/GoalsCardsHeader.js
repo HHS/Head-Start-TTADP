@@ -1,70 +1,61 @@
 import React from 'react';
-import { render, act, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import userEvent from '@testing-library/user-event';
-import fetchMock from 'fetch-mock';
+import { SCOPE_IDS } from '@ttahub/common';
 import GoalCardsHeader from '../GoalsCardsHeader';
 import UserContext from '../../../UserContext';
 
-describe('GoalDataController', () => {
-  const DEFAULT_USER = {
-    name: '',
-    id: 1,
-  };
+describe('GoalCardsHeader', () => {
+  const history = createMemoryHistory();
+  const REGION_ID = '1';
+  const RECIPIENT_ID = '1';
 
-  const REGION_ID = 1;
-  const RECIPIENT_ID = 1;
-
-  beforeEach(() => {
-    const url = `/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`;
-    fetchMock.get(url, [{ ids: [1], goals: [2] }]);
-  });
-
-  afterEach(() => fetchMock.restore());
-
-  const dismissMergeSuccess = jest.fn();
-
-  const defaultProps = {
-    title: 'TTA Goals',
-    count: 1,
+  const defaultSortConfig = {
+    sortBy: 'createdOn',
+    direction: 'desc',
     activePage: 1,
     offset: 0,
-    perPage: 10,
-    handlePageChange: jest.fn(),
-    hidePagination: true,
-    sortConfig: {
-      sortBy: 'mergedGoals',
-      direction: 'ASC',
-      activePage: 1,
-      offset: 0,
-    },
+  };
+
+  const defaultProps = {
+    title: 'Test Goals Header',
+    count: 3,
+    recipientId: RECIPIENT_ID,
+    regionId: REGION_ID,
+    hasActiveGrants: true,
+    sortConfig: defaultSortConfig,
     requestSort: jest.fn(),
     numberOfSelectedGoals: 0,
     allGoalsChecked: false,
     selectAllGoalCheckboxSelect: jest.fn(),
     selectAllGoals: jest.fn(),
-    selectedGoalIds: [],
-    perPageChange: jest.fn(),
-    pageGoalIds: 1,
+    pageSelectedGoalIds: [],
+    pageGoalIds: [1, 2, 3],
     showRttapaValidation: false,
     draftSelectedRttapa: [],
-    shouldDisplayMergeSuccess: true,
-    dismissMergeSuccess,
-    filters: [],
-    recipientId: String(RECIPIENT_ID),
-    regionId: String(REGION_ID),
-    hasActiveGrants: true,
-    showNewGoals: false,
-    canMergeGoals: true,
+    activePage: 1,
+    offset: 0,
+    perPage: 10,
+    handlePageChange: jest.fn(),
+    perPageChange: jest.fn(),
+    allSelectedGoalIds: {},
+    goalBuckets: [],
+    hasMissingStandardGoals: true,
   };
-  const history = createMemoryHistory();
 
-  const renderTest = (props = {}, locationState = undefined) => {
-    history.location.state = locationState;
+  const renderTest = (props = {}, userPermissions = [
+    { scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, regionId: 1 },
+  ]) => {
+    const user = {
+      id: 1,
+      name: 'test user',
+      permissions: userPermissions,
+    };
 
     render(
-      <UserContext.Provider value={{ user: DEFAULT_USER }}>
+      <UserContext.Provider value={{ user }}>
         <Router history={history}>
           {/* eslint-disable-next-line react/jsx-props-no-spreading */}
           <GoalCardsHeader {...defaultProps} {...props} />
@@ -73,35 +64,54 @@ describe('GoalDataController', () => {
     );
   };
 
-  it('displays correct message with merged goals', async () => {
-    act(() => {
-      renderTest(
-        {}, // props
-        {
-          mergedGoals: [1, 2], // location state
-        },
-      );
-    });
-
-    expect(await screen.findByText(/goals g-1, g-2 have been merged/i)).toBeInTheDocument();
-    const resetSort = await screen.findByRole('button', { name: 'Reset goal sort order' });
-    userEvent.click(resetSort);
-    expect(dismissMergeSuccess).toBeCalled();
+  it('renders the title', () => {
+    renderTest();
+    expect(screen.getByText('Test Goals Header')).toBeInTheDocument();
   });
 
-  it('displays correct singular message with merged goals', async () => {
-    act(() => {
-      renderTest(
-        {}, // props
-        {
-          mergedGoals: [1], // location state
-        },
-      );
-    });
+  it('shows the "Add new goals" button when user has permission and active grants', () => {
+    renderTest();
+    expect(screen.getByText('Add new goals')).toBeInTheDocument();
+  });
 
-    expect(await screen.findByText(/goal g-1 has been merged/i)).toBeInTheDocument();
-    const resetSort = await screen.findByRole('button', { name: 'Reset goal sort order' });
-    userEvent.click(resetSort);
-    expect(dismissMergeSuccess).toBeCalled();
+  it('hides the "Add new goals" button when user lacks permission', () => {
+    renderTest({}, [{ scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS, regionId: 1 }]);
+    expect(screen.queryByText('Add new goals')).not.toBeInTheDocument();
+  });
+
+  it('hides the "Add new goals" button when there are no missing standard goals', () => {
+    renderTest({ hasMissingStandardGoals: false });
+
+    expect(screen.queryByText('Add new goals')).not.toBeInTheDocument();
+  });
+
+  it('hides the "Add new goals" button when there are no active grants', () => {
+    renderTest({ hasActiveGrants: false });
+    expect(screen.queryByText('Add new goals')).not.toBeInTheDocument();
+  });
+
+  it('calls requestSort when the sort dropdown is changed', () => {
+    const requestSortMock = jest.fn();
+    renderTest({ requestSort: requestSortMock });
+
+    const sortDropdown = screen.getByTestId('sortGoalsBy');
+    userEvent.selectOptions(sortDropdown, 'goalStatus-asc');
+
+    expect(requestSortMock).toHaveBeenCalledWith('goalStatus', 'asc');
+  });
+
+  it('displays the selected count when goals are selected', () => {
+    renderTest({ numberOfSelectedGoals: 2 });
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+  });
+
+  it('calls selectAllGoalCheckboxSelect when the select all checkbox is clicked', () => {
+    const selectAllMock = jest.fn();
+    renderTest({ selectAllGoalCheckboxSelect: selectAllMock });
+
+    const selectAllCheckbox = screen.getByLabelText('Select all');
+    userEvent.click(selectAllCheckbox);
+
+    expect(selectAllMock).toHaveBeenCalled();
   });
 });

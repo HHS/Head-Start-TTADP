@@ -8,12 +8,16 @@ import { devices } from '@playwright/test';
 const config = {
   testDir: '.',
   outputDir: './test-results',
-  workers: 3, // this was originally set to 3, but changed to 2 when I saw data collisions, but tests have been improved since then so I think it's safe to go back to 3
+  workers: 1, // setting to a higher number may result in test failures, ymmv
   expect: {
     timeout: 20000,
   },
   fullyParallel: true,
-  reporter: [['html', { outputFolder: './report', open: 'never' }]],
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: './html-report', open: 'never' }],
+    ['junit', { outputFile: './report.xml' }]
+  ],
   timeout: 300000,
   globalTimeout: 900000,
   globalSetup: './init/globalSetup.ts',
@@ -30,6 +34,7 @@ const config = {
         headless: true,
         ignoreHTTPSErrors: true,
         acceptDownloads: true,
+        viewport: { width: 1920, height: 1080 },
       },
     },
   ],

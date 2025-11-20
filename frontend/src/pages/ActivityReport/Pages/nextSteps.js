@@ -1,12 +1,12 @@
 import React from 'react';
-import moment from 'moment';
-import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
+import { useFormContext } from 'react-hook-form';
 import NextStepsRepeater from './components/NextStepsRepeater';
 import ReviewPage from './Review/ReviewPage';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import { isValidDate } from '../../../utils';
 
 export const isPageComplete = (formData, formState) => {
   const { isValid } = formState;
@@ -23,14 +23,15 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
-  if (![...specialistNextSteps, ...recipientNextSteps].every((step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid())) {
-    return false;
-  }
-
-  return true;
+  return [...specialistNextSteps, ...recipientNextSteps].every(
+    (step) => step.note && Boolean(isValidDate(step.completeDate)),
+  );
 };
 
-const NextSteps = ({ activityRecipientType }) => {
+const NextSteps = () => {
+  const { watch } = useFormContext();
+  const activityRecipientType = watch('activityRecipientType');
+
   // Create labels.
   const labelDisplayName = activityRecipientType === 'other-entity' ? 'Other entities' : "Recipient's";
 
@@ -59,44 +60,60 @@ const NextSteps = ({ activityRecipientType }) => {
   );
 };
 
-NextSteps.propTypes = {
-  activityRecipientType: PropTypes.string,
-};
+NextSteps.propTypes = {};
 
-NextSteps.defaultProps = {
-  activityRecipientType: '',
-};
+NextSteps.defaultProps = {};
 
-const getNextStepsSections = (activityRecipientType) => {
-  const isRecipient = activityRecipientType === 'recipient';
-  const labelDisplayName = isRecipient ? "Recipient's" : 'Other entity\'s';
-  const subtitleDisplayText = isRecipient ? 'recipient' : 'other entity';
+const getNextStepsSections = (specialistNextSteps, recipientNextSteps) => {
+  const specialistItems = (specialistNextSteps || []).map((step, index) => ([
+    {
+      label: `Step ${index + 1}`,
+      name: 'step',
+      customValue: { step: step.note },
+    },
+    {
+      label: 'Anticipated completion',
+      name: 'date',
+      customValue: { date: step.completeDate },
+    },
+  ]));
+
+  const recipientItems = (recipientNextSteps || []).map((step, index) => ([
+    {
+      label: `Step ${index + 1}`,
+      name: 'step',
+      customValue: { step: step.note },
+    },
+    {
+      label: 'Anticipated completion',
+      name: 'date',
+      customValue: { date: step.completeDate },
+    },
+  ]));
+
   return [
     {
       title: "Specialist's next steps",
+      isEditSection: true,
       anchor: 'specialist-next-steps',
-      items: [
-        { label: 'What have you agreed to do next?', name: 'specialistNextSteps', path: 'note' },
-        { label: 'Anticipated completion', name: 'specialistNextSteps', path: 'completeDate' },
-      ],
+      items: [...specialistItems.flatMap((item) => item)],
     },
     {
-      title: `${labelDisplayName} next steps`,
+      title: "Recipient's next steps",
       anchor: 'recipient-next-steps',
-      items: [
-        { label: `What has the ${subtitleDisplayText} agreed to do next?`, name: 'recipientNextSteps', path: 'note' },
-        { label: 'Anticipated completion', name: 'recipientNextSteps', path: 'completeDate' },
-      ],
+      items: [...recipientItems.flatMap((item) => item)],
     },
   ];
 };
 
-const ReviewSection = ({ activityRecipientType }) => (
-  <ReviewPage sections={getNextStepsSections(activityRecipientType)} path="next-steps" />
-);
-
-ReviewSection.propTypes = {
-  activityRecipientType: PropTypes.string.isRequired,
+const ReviewSection = () => {
+  const { watch } = useFormContext();
+  const {
+    specialistNextSteps,
+    recipientNextSteps,
+  } = watch();
+  return (
+    <ReviewPage sections={getNextStepsSections(specialistNextSteps, recipientNextSteps)} path="next-steps" isCustomValue />);
 };
 
 export default {
@@ -109,7 +126,7 @@ export default {
   ),
   render: (
     _additionalData,
-    formData,
+    _formData,
     _reportId,
     isAppLoading,
     onContinue,
@@ -119,22 +136,19 @@ export default {
     _datePickerKey,
     _onFormSubmit,
     Alert,
-  ) => {
-    const { activityRecipientType } = formData;
-    return (
-      <>
-        <NextSteps activityRecipientType={activityRecipientType} />
-        <Alert />
-        <NavigatorButtons
-          isAppLoading={isAppLoading}
-          onContinue={onContinue}
-          onSaveDraft={onSaveDraft}
-          onUpdatePage={onUpdatePage}
-          path="next-steps"
-          position={4}
-        />
-      </>
-    );
-  },
+  ) => (
+    <>
+      <NextSteps />
+      <Alert />
+      <NavigatorButtons
+        isAppLoading={isAppLoading}
+        onContinue={onContinue}
+        onSaveDraft={onSaveDraft}
+        onUpdatePage={onUpdatePage}
+        path="next-steps"
+        position={4}
+      />
+    </>
+  ),
   isPageComplete,
 };

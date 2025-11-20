@@ -3,26 +3,27 @@ import {
   render,
   screen,
 } from '@testing-library/react';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { TopicsTableWidget } from '../../../widgets/RegionalGoalDashboard/TopicsTable';
 
 const TEST_DATA = [
   {
     topic: 'Topic 1',
     statuses: {
-      'In Progress': 1,
-      'Not Started': 2,
-      Closed: 3,
-      Suspended: 4,
+      [GOAL_STATUS.IN_PROGRESS]: 1,
+      [GOAL_STATUS.NOT_STARTED]: 2,
+      [GOAL_STATUS.CLOSED]: 3,
+      [GOAL_STATUS.SUSPENDED]: 4,
     },
     total: 10,
   },
   {
     topic: 'Topic 2',
     statuses: {
-      'In Progress': 5,
-      'Not Started': 6,
-      Closed: 7,
-      Suspended: 8,
+      [GOAL_STATUS.IN_PROGRESS]: 5,
+      [GOAL_STATUS.NOT_STARTED]: 6,
+      [GOAL_STATUS.CLOSED]: 7,
+      [GOAL_STATUS.SUSPENDED]: 8,
     },
     total: 26,
   },

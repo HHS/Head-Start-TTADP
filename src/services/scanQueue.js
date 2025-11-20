@@ -1,6 +1,8 @@
 import newQueue, { increaseListeners } from '../lib/queue';
 import { logger, auditLogger } from '../logger';
 import processFile from '../workers/files';
+import transactionQueueWrapper from '../workers/transactionWrapper';
+import referenceData from '../workers/referenceData';
 
 const scanQueue = newQueue('scan');
 const addToScanQueue = (fileKey) => {
@@ -12,7 +14,10 @@ const addToScanQueue = (fileKey) => {
   };
 
   return scanQueue.add(
-    fileKey,
+    {
+      ...fileKey,
+      ...(referenceData()),
+    },
     {
       attempts: retries,
       backoff: backOffOpts,
@@ -25,9 +30,9 @@ const addToScanQueue = (fileKey) => {
 const onFailedScanQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
 const onCompletedScanQueue = (job, result) => {
   if (result.status === 200) {
-    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   } else {
-    auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+    auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   }
 };
 const processScanQueue = () => {
@@ -35,7 +40,13 @@ const processScanQueue = () => {
   scanQueue.on('failed', onFailedScanQueue);
   scanQueue.on('completed', onCompletedScanQueue);
   increaseListeners(scanQueue);
-  scanQueue.process((job) => processFile(job.data.key));
+  const processFileFromJob = async (job) => processFile(job.data.key);
+  scanQueue.process(
+    transactionQueueWrapper(
+      processFileFromJob,
+      'scan',
+    ),
+  );
 };
 
 export {

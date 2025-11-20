@@ -3,10 +3,12 @@ import {
   act,
   render,
   screen,
+  waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
 import join from 'url-join';
-import { MemoryRouter } from 'react-router';
+import { Router } from 'react-router';
 import Group from '../Group';
 import AppLoadingContext from '../../../AppLoadingContext';
 
@@ -17,13 +19,15 @@ describe('Group', () => {
     fetchMock.restore();
   });
 
+  const history = createMemoryHistory();
+
   const renderGroup = (groupId) => {
     render(
-      <MemoryRouter>
+      <Router history={history}>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
           <Group match={{ params: { groupId }, path: '', url: '' }} />
         </AppLoadingContext.Provider>
-      </MemoryRouter>,
+      </Router>,
     );
   };
 
@@ -75,36 +79,40 @@ describe('Group', () => {
   });
 
   it('handles null response', async () => {
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get(join(endpoint, '1'), null);
-
-    act(() => {
+    act(async () => {
       renderGroup(1);
     });
 
-    const error = await screen.findByText('There was an error fetching your group');
-    expect(error).toBeInTheDocument();
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
+    });
   });
 
   it('handles 404', async () => {
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get(join(endpoint, '1'), 404);
-
-    act(() => {
+    act(async () => {
       renderGroup(1);
     });
 
-    const error = await screen.findByText('There was an error fetching your group');
-    expect(error).toBeInTheDocument();
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/404');
+    });
   });
 
   it('handles 500', async () => {
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get(join(endpoint, '1'), 500);
 
-    act(() => {
+    await act(async () => {
       renderGroup(1);
     });
 
-    const error = await screen.findByText('There was an error fetching your group');
-    expect(error).toBeInTheDocument();
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
+    });
   });
 
   it('handles no group id', async () => {

@@ -7,7 +7,7 @@ import {
 import Container from '../Container';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
-import { REPORTS_PER_PAGE } from '../../Constants';
+import { parseCheckboxEvent, REPORTS_PER_PAGE } from '../../Constants';
 import './ReportsTable.css';
 
 export default function ReportsTable({
@@ -51,7 +51,7 @@ export default function ReportsTable({
 
   // The all-reports checkbox can select/deselect all visible reports
   const toggleSelectAll = (event) => {
-    const { target: { checked = null } = {} } = event;
+    const { checked } = parseCheckboxEvent(event);
 
     if (checked === true) {
       setReportCheckboxes(makeReportCheckboxes(reports, true));
@@ -63,7 +63,7 @@ export default function ReportsTable({
   };
 
   const handleReportSelect = (event) => {
-    const { target: { checked = null, value = null } = {} } = event;
+    const { checked, value } = parseCheckboxEvent(event);
     if (checked === true) {
       setReportCheckboxes({ ...reportCheckboxes, [value]: true });
     } else {
@@ -220,7 +220,7 @@ ReportsTable.propTypes = {
   reports: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
-      regionId: PropTypes.string,
+      regionId: PropTypes.number, // JSON parsed into a number
       activityRecipients: PropTypes.arrayOf(PropTypes.shape(
         { activityRecipientId: PropTypes.number },
       )),

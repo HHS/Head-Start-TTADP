@@ -165,8 +165,10 @@ export const usersWithSetting = async (key, values) => {
             required: false,
           },
         ],
-        where: { '$userSettingOverrides.id$': null },
-        '$permissions.scopeId$': SITE_ACCESS,
+        where: {
+          '$userSettingOverrides.id$': null,
+          '$permissions.scopeId$': SITE_ACCESS,
+        },
       });
     } else {
       // this is an override.

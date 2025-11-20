@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable import/no-extraneous-dependencies */
+/* istanbul ignore file: tested elsewhere  */
 import React from 'react';
 import { Router } from 'react-router';
 import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
@@ -35,10 +36,21 @@ export const formData = () => ({
     3: 'in-progress',
     4: 'in-progress',
   },
-  endDate: moment().format('MM/DD/YYYY'),
-  activityRecipients: ['Recipient Name 1'],
+  endDate: moment().format('YYYY-MM-DD'),
+
+  // value: 14826,
+  // label: 'Ability Connection Colorado, Inc. - 08CH012276  - EHS, HS',
+  // recipientIdForLookUp: 933,
+  // name: 'Ability Connection Colorado, Inc. - 08CH012276  - EHS, HS',
+  // activityRecipientId: 14826
+  activityRecipients: [{
+    value: 1,
+    activityRecipientId: 1,
+    label: 'Recipient Name 1',
+    name: 'Recipient Name 1',
+    recipientIdForLookUp: 1,
+  }],
   numberOfParticipants: '1',
-  reason: ['reason 1'],
   activityRecipientType: 'recipient',
   collaborators: [],
   participants: ['CEO / CFO / Executive'],
@@ -46,7 +58,7 @@ export const formData = () => ({
   calculatedStatus: REPORT_STATUSES.DRAFT,
   submissionStatus: REPORT_STATUSES.DRAFT,
   resourcesUsed: 'eclkcurl',
-  startDate: moment().format('MM/DD/YYYY'),
+  startDate: moment().format('YYYY-MM-DD'),
   targetPopulations: ['target 1'],
   author: { name: 'test', roles: { fullName: 'Reporter' } },
   topics: 'first',
@@ -98,7 +110,11 @@ export const renderActivityReport = (id, currentPage = 'activity-summary', showL
 };
 
 export const recipients = {
-  grants: [{ name: 'recipient', grants: [{ activityRecipientId: 1, name: 'Recipient Name' }] }],
+  grants: [{
+    id: 1,
+    name: 'Recipient Name',
+    grants: [{ activityRecipientId: 1, name: 'Recipient Name', number: 'number' }],
+  }],
   otherEntities: [{ activityRecipientId: 1, name: 'otherEntity' }],
 };
 

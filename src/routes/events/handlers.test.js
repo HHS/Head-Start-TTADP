@@ -1,4 +1,5 @@
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import httpCodes from 'http-codes';
 import db from '../../models';
 import {
   getHandler,
@@ -6,6 +7,7 @@ import {
   updateHandler,
   deleteHandler,
   getByStatus,
+  getTrainingReportAlertsHandler,
 } from './handlers';
 import {
   createEvent,
@@ -16,6 +18,7 @@ import {
   findEventsByRegionId,
   updateEvent,
   findEventsByStatus,
+  getTrainingReportAlertsForUser,
 } from '../../services/event';
 import EventReport from '../../policies/event';
 
@@ -31,6 +34,7 @@ jest.mock('../../services/event', () => ({
   updateEvent: jest.fn(),
   destroyEvent: jest.fn(),
   findEventsByStatus: jest.fn(),
+  getTrainingReportAlertsForUser: jest.fn(),
 }));
 
 const mockEvent = {
@@ -129,6 +133,36 @@ describe('event handlers', () => {
       findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await getHandler({ params: { eventId: 1 }, query: {} }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('returns 403 when trying to edit a completed event', async () => {
+      const completedEvent = {
+        ...mockEvent,
+        data: {
+          status: 'Complete',
+        },
+      };
+      findEventBySmartsheetIdSuffix.mockResolvedValue(completedEvent);
+      EventReport.mockImplementation(() => ({
+        canRead: () => true,
+      }));
+      await getHandler({ params: { eventId: 99_999 }, query: {} }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('allows viewing a completed event in read-only mode', async () => {
+      const completedEvent = {
+        ...mockEvent,
+        data: {
+          status: 'Complete',
+        },
+      };
+      findEventBySmartsheetIdSuffix.mockResolvedValue(completedEvent);
+      EventReport.mockImplementation(() => ({
+        canRead: () => true,
+      }));
+      await getHandler({ params: { eventId: 99_999 }, query: { readOnly: true } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });
 
@@ -356,6 +390,59 @@ describe('event handlers', () => {
         mockResponse,
       );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+  describe('getTrainingReportAlertsHandler', () => {
+    it('works', async () => {
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+        user: {
+          id: 1,
+        },
+        canSeeAlerts: () => true,
+      }));
+      getTrainingReportAlertsForUser.mockResolvedValue({});
+      await getTrainingReportAlertsHandler(
+        {
+          session: { userId: 1 },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.OK);
+    });
+    it('handles auth', async () => {
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+        user: {
+          id: 1,
+        },
+        canSeeAlerts: () => false,
+      }));
+      await getTrainingReportAlertsHandler(
+        {
+          session: { userId: 1 },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('handles errors', async () => {
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+        user: {
+          id: 1,
+        },
+        canSeeAlerts: () => true,
+      }));
+      getTrainingReportAlertsForUser.mockRejectedValue(new Error('error'));
+      await getTrainingReportAlertsHandler(
+        {
+          session: { userId: 1 },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
   });
 });

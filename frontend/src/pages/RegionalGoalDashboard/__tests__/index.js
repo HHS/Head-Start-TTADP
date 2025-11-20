@@ -3,6 +3,7 @@ import {
   render, screen, act, within,
 } from '@testing-library/react';
 import moment from 'moment';
+import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
@@ -30,18 +31,24 @@ const WIDGET_MOCKS = {
       x: ['Jul-22', 'Aug-22', 'Sep-22'],
       y: [338.5, 772, 211],
       month: [false, false, false],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TRAINING,
+      trace: 'square',
     },
     {
       name: 'Hours of Technical Assistance',
       x: ['Jul-22', 'Aug-22', 'Sep-22'],
       y: [279.5, 274.5, 155.5],
       month: [false, false, false],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TECHNICAL_ASSISTANCE,
+      trace: 'circle',
     },
     {
       name: 'Hours of Both',
       x: ['Jul-22', 'Aug-22', 'Sep-22'],
       y: [279.5, 274.5, 155.5],
       month: [false, false, false],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.BOTH,
+      trace: 'triangle',
     },
   ],
 };
@@ -147,7 +154,7 @@ describe('RegionalGoalDashboard', () => {
     let heading = await screen.findByText(/region 1 goal dashboard/i);
     expect(heading).toBeVisible();
 
-    const removeDate = await screen.findByRole('button', { name: /this button removes the filter: date started is within/i });
+    const removeDate = await screen.findByRole('button', { name: /this button removes the filter: date started \(ar\) is within/i });
     act(() => userEvent.click(removeDate));
 
     heading = await screen.findByText(/region 1 goal dashboard/i);

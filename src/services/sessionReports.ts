@@ -8,10 +8,9 @@ const {
   EventReportPilot,
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
-  EventReportPilotGoal,
 } = db;
 
-const validateFields = (request, requiredFields) => {
+export const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
 
   if (missingFields.length) {
@@ -32,13 +31,6 @@ export async function destroySession(id: number): Promise<void> {
     { individualHooks: true },
   );
 
-  // Disassociate session from goals.
-  await EventReportPilotGoal.update(
-    { sessionId: null },
-    { where: { sessionId: id } },
-    { individualHooks: true },
-  );
-
   // Delete session.
   await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
@@ -51,8 +43,6 @@ type WhereOptions = {
 
 // eslint-disable-next-line max-len
 export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
-  let session;
-
   const query = {
     attributes: [
       'id',
@@ -80,11 +70,9 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     ],
   };
 
-  if (plural) {
-    session = await SessionReportPilot.findAll(query);
-  } else {
-    session = await SessionReportPilot.findOne(query);
-  }
+  const session = plural
+    ? await SessionReportPilot.findAll(query)
+    : await SessionReportPilot.findOne(query);
 
   if (!session) {
     return null;
@@ -112,7 +100,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     files: session?.files ?? [],
     supportingAttachments: session?.supportingAttachments ?? [],
     updatedAt: session?.updatedAt,
-    event: session?.event ?? {},
+    event: session?.event,
   };
 }
 
@@ -150,12 +138,16 @@ export async function updateSession(id, request) {
 
   const { eventId, data } = request;
 
+  // Combine existing session data with new data.
+  const existingData = session.data;
+  const newData = { ...existingData, ...data };
+
   const event = await findEventBySmartsheetIdSuffix(eventId);
 
   await SessionReportPilot.update(
     {
       eventId: event.id,
-      data: cast(JSON.stringify(data), 'jsonb'),
+      data: cast(JSON.stringify(newData), 'jsonb'),
     },
     {
       where: { id },

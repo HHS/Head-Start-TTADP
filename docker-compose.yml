@@ -1,7 +1,8 @@
-version: "3.7"
 services:
   api-docs:
     image: redocly/redoc
+    profiles:
+      - full_stack
     ports:
       - "5003:80"
     volumes:
@@ -12,6 +13,8 @@ services:
     image: postgres:15.6
     container_name: postgres_docker
     env_file: .env
+    profiles:
+      - minimal_required_postgres
     ports:
       - "5432:5432"
     volumes:
@@ -19,6 +22,8 @@ services:
     shm_size: 1g
   minio:
     image: minio/minio:RELEASE.2024-01-01T16-36-33Z
+    profiles:
+      - full_stack
     env_file: .env
     ports:
       - "9000:9000"
@@ -28,54 +33,50 @@ services:
     command: server /data --console-address ":9001"
   aws-cli:
     image: amazon/aws-cli
+    profiles:
+      - full_stack
     env_file: .env
     command: ["--endpoint-url", "http://minio:9000", "s3api", "create-bucket", "--bucket", "$S3_BUCKET"]
     depends_on:
       - minio
   clamav-rest:
     image: ajilaag/clamav-rest
+    profiles:
+      - full_stack
     ports:
       - "9443:9443"
     environment:
       - MAX_FILE_SIZE=30M
-  similarity_api:
-    build:
-      context: ./similarity_api
-    ports:
-      - "9100:8080"
-    env_file: .env
-    depends_on:
-      - db
-    volumes:
-      - "./similarity_api/src:/app:rw"
   redis:
-    image: redis:5.0.6-alpine
+    image: redis:6.2.6
+    profiles:
+      - minimal_required_redis
     command: ['redis-server', '--requirepass', '$REDIS_PASS']
     env_file: .env
     ports:
       - "6379:6379"
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    profiles:
+      - minimal_required_redis
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:${REDIS_PASS}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
   mailcatcher:
     image: schickling/mailcatcher
+    profiles:
+      - full_stack
     ports:
       - "1025:1025"
       - "1080:1080"
-  opensearch-node1:
-    image: opensearchproject/opensearch:1.3.2
-    env_file: .env
-    container_name: opensearch-node1
-    environment:
-      - cluster.name=opensearch-cluster
-      - node.name=opensearch-node1
-      - "DISABLE_SECURITY_PLUGIN=true" # disables security plugin entirely in OpenSearch by setting plugins.security.disabled: true in opensearch.yml
-      - "discovery.type=single-node" # disables bootstrap checks that are enabled when network.host is set to a non-loopback address
-    volumes:
-      - opensearch-data1:/usr/share/opensearch/data
-    ports:
-      - 9200:9200
-      - 9600:9600 # required for Performance Analyzer
   testingonly:
     build:
       context: .
+    profiles:
+      - full_stack
     ports:
       - "9999:9999"
     depends_on:
@@ -88,6 +89,8 @@ services:
       - NODE_ENV=development
   sftp:
     image: jmcombs/sftp:alpine
+    profiles:
+      - full_stack
     volumes:
         - ./test-sftp:/home/tta_ro/ProdTTAHome
         - ./test-sftp/sshd_config:/etc/ssh/sshd_config
@@ -97,4 +100,6 @@ services:
 volumes:
   dbdata: {}
   minio-data: {}
-  opensearch-data1: {}
+  yarn-cache: {}
+  node_modules-backend: {}
+  node_modules-frontend: {}

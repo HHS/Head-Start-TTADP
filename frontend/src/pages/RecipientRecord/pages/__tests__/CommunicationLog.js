@@ -36,28 +36,55 @@ describe('CommunicationLog', () => {
 
   it('renders the communication log approriately', async () => {
     fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', {
+      rows: [
+        {
+          data: {
+            goals: [{ label: 'First goal', value: '16' }, { label: 'Second goal', value: '10' }],
+            notes: '',
+            method: 'Phone',
+            result: '',
+            purpose: 'My purpose',
+            duration: 0.25,
+            regionId: '1',
+            createdAt: '2025-01-22T00:28:35.416Z',
+            displayId: 'R01-CL-00001',
+            pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
+            otherStaff: [{ label: 'Harry', value: '10' }],
+            pocComplete: false,
+            communicationDate: '01/01/2025',
+            recipientNextSteps: [{ note: 'recip step 1', completeDate: '02/02/2025' }],
+            specialistNextSteps: [{ note: 'spec step 1', completeDate: '02/01/2025' }],
+            'pageVisited-next-steps': 'true',
+            'pageVisited-supporting-attachments': 'true',
+          },
+          files: [
+            {
+              id: 1,
+              originalFileName: 'cat.png',
+            },
+          ],
+          author: {
+            name: 'Harry Potter',
+            id: 1,
+          },
+        },
+      ],
+      count: 1,
+    });
+    await act(() => waitFor(() => renderTest()));
+    const tableCells = screen.getAllByRole('cell');
+    const tableCellContents = tableCells.map((cell) => cell.textContent).join('');
+    expect(tableCellContents).toMatch(/My purpose/i);
+  });
+
+  it('formats the log correctly', async () => {
+    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', {
       rows: [],
       count: 0,
     });
     await act(() => waitFor(() => renderTest()));
 
     expect(screen.getByText('Communication log')).toBeInTheDocument();
-  });
-
-  it('you can export logs', async () => {
-    const response = {
-      rows: [],
-      count: 0,
-    };
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', response);
-    await act(() => waitFor(() => renderTest()));
-
-    expect(screen.getByText('Communication log')).toBeInTheDocument();
-
-    const exportLog = await screen.findByRole('button', { name: /export log/i });
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&format=csv&', 'test\nnew');
-    await act(() => waitFor(() => userEvent.click(exportLog)));
-    expect(fetchMock.called('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&format=csv&')).toBe(true);
   });
 
   it('you can apply a filter', async () => {

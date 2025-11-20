@@ -25,12 +25,39 @@ Boundary(aws, "AWS GovCloud") {
         Container(worker_app, "<&layers> TTA Hub Worker Application", "NodeJS, Bull", "Perform background work and data processing")
         Container(similarity_api, "Similarity API", "Python", "AI application to identify similarity of text")
         Container(clamav, "File scanning API", "ClamAV", "Internal application for scanning user uploads\n\n docker: ajilaag/clamav-rest:20211026")
+        Container(www_jwks, ".well-known/jwks.json (JWKS)", "HTTP JSON", "Publishes public JWK (kid) for token client-auth verification")
       }
+      Boundary(auto, "Automation") {
+        Container(auto_prod_backup, "<&layers> Automation (Production backup)", "bash", "Streams database backup directly to s3(backup) in a password protected encrypted zip compressed format") #green
+        Container(auto_prod_restore, "<&layers> Automation (Restore for processing)", "bash", "Streams database backup directly from s3(backup) in a password protected encrypted zip compressed format to processing DB") #green
+        Container(auto_prod_proc, "<&layers> Automation (Processing to remove PII)", "NodeJS", "Processes restored production data to remove PII for use in lower environments") #green
+        Container(auto_proc_backup, "<&layers> Automation (Backup processed DB)", "bash", "Streams processed database backup directly to s3(backup) in a password protected encrypted zip compressed format") #green
+        Container(auto_proc_restore, "<&layers> Automation (Restore processed data to lower environments)", "bash", "Streams processed database backup directly from s3(backup) in a password protected encrypted zip compressed format to lower environment DB") #green
+      }
+      note right of auto
+          At any one time, a max of only one of these configurations is enabled.
+          All connections are unbound when not in use.
+          No routes are configured.
+          Resources (RAM, Disk) are minimized to only what is needed for the singular automation task.
+      end note
       Boundary(cloudgov_services, "Services") {
         ContainerDb(www_db, "PostgreSQL Database", "AWS RDS", "Contains content and configuration for the TTA Hub")
         ContainerDb(www_s3, "AWS S3 bucket", "AWS S3", "Stores static file assets")
         ContainerDb(www_redis, "Redis Database", "AWS Elasticache", "Queue of background jobs to work on")
-        Container(Elasticache, "Elasticache", "AWS Elasticache", "Elasticache for search results")
+
+        ContainerDb(auto_db, "Automation PostgreSQL Database", "AWS RDS", "Used to process production data to remove PII") #green
+        ContainerDb(auto_s3, "Automation AWS S3 bucket", "AWS S3", "Stores production and processed DB backups") #green
+
+        ContainerDb(logs_s3, "Log transfer AWS S3 bucket", "AWS S3", "Stores production DB logs when requested from cloud.gov") #orange
+      }
+      Boundary(cloudgov_services_staging, "Services - Staging") {
+        ContainerDb(staging_db, "PostgreSQL Database", "AWS RDS", "Contains PII-free content and configuration for the TTA Hub testing") #violet
+      }
+      Boundary(cloudgov_services_dev, "Services - Dev") {
+        ContainerDb(dev_db, "PostgreSQL Database", "AWS RDS", "Contains PII-free content and configuration for the TTA Hub testing") #violet
+      }
+      Boundary(cloudgov_services_sandbox, "Services - Sandbox") {
+        ContainerDb(sandbox_db, "PostgreSQL Database", "AWS RDS", "Contains PII-free content and configuration for the TTA Hub testing") #violet
       }
     }
   }
@@ -49,6 +76,23 @@ Boundary(gsa_saas, "SaaS") {
 Boundary(gsa_fed_saas, "FedRAMP-approved SaaS") {
   System_Ext(newrelic, "New Relic", "Continuous Monitoring")
 }
+
+Rel(www_db, auto_prod_backup, "backup", "pg_dump")
+Rel(auto_prod_backup, auto_s3, "store", "aws s3")
+
+Rel(auto_s3, auto_prod_restore, "retrieve", "aws s3")
+Rel(auto_prod_restore, auto_db, "restore", "psql")
+
+BiRel(auto_db, auto_prod_proc, "process", "psql")
+
+Rel(auto_db, auto_proc_backup, "backup", "pg_dump")
+Rel(auto_proc_backup, auto_s3, "store", "aws s3")
+
+Rel(auto_s3, auto_proc_restore, "retrieve", "aws s3")
+Rel(auto_proc_restore, staging_db, "restore", "psql")
+Rel(auto_proc_restore, dev_db, "restore", "psql")
+Rel(auto_proc_restore, sandbox_db, "restore", "psql")
+
 Rel(developer, newrelic, "Manage performance & logging", "https GET/POST/PUT/DELETE (443)")
 Rel(www_app, newrelic, "reports telemetry", "tcp (443)")
 Rel(developer, google_tag_manager, "Configure tags")
@@ -66,9 +110,16 @@ Rel(worker_app, clamav, "scans files", "https POST (9443)")
 Rel(worker_app, AWS_SES_SMTP_Server, "notifies users", "port 587")
 Rel(AWS_SES_SMTP_Server, AWS_SNS, "notifies admin")
 Rel(www_app, HSES_DATA, "retrieve Recipient data", "https GET (443)")
-Rel(www_app, HSES_AUTH, "authenticates user", "OAuth2")
+Rel(www_app, HSES_AUTH, "authenticates user", "OIDC (Auth Code + PKCE; client auth: private_key_jwt)")
+Rel(www_app, www_jwks, "serves", "https GET (443)")
+Rel(HSES_AUTH, www_jwks, "fetches public keys", "https GET (443)")
 Rel(personnel, HSES_DATA, "verify identity", "https GET/POST (443)")
-
+Rel(www_app, HSES_AUTH, "ends session (RP-initiated logout)", "OIDC end-session")
+note right of www_app
+- Local session cleared (cookie + server store)
+- Browser redirected to HSES end-session
+- Returns to post_logout_redirect_uri
+end note
 
 BiRel(worker_app, SFTP, "CLASS/Monitoring: collects file", "sftp readdir, createReadStream - SSH (22)")
 Rel(worker_app, www_s3, "CLASS/Monitoring: cache file", "vpc endpoint")
@@ -115,4 +166,4 @@ Instructions
 
 ### Notes
 
-* See the help docs for [C4 variant of PlantUML](https://github.com/RicardoNiepel/C4-PlantUML) for syntax help.
+* See the help docs for [C4 variant of PlantUML](https://github.com/plantuml-stdlib/C4-PlantUML) for syntax help.

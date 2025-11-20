@@ -20,13 +20,15 @@ export default function ContentFromFeedByTag({
   tagName,
   contentSelector,
   className,
+  openLinksInNewTab,
 }) {
   const [content, setContent] = useState('');
 
   useEffect(() => {
+    const abortController = new AbortController();
     async function fetchSingleItemByTag() {
       try {
-        const response = await getSingleFeedItemByTag(tagName);
+        const response = await getSingleFeedItemByTag(tagName, abortController.signal);
         const dom = parseFeedIntoDom(response);
 
         // get individual entries
@@ -42,7 +44,7 @@ export default function ContentFromFeedByTag({
               setContent(contentElement.outerHTML);
             } else {
               // eslint-disable-next-line no-console
-              console.log('No content element found with selector', contentSelector, 'displaying entire contents instead');
+              console.log('No content element found with selector', contentSelector, 'displaying entire contents instead: ', tagName);
               setContent(summaryContent);
             }
           } else if (summaryContent) {
@@ -50,19 +52,28 @@ export default function ContentFromFeedByTag({
           }
         }
       } catch (err) {
+        // ignore abort error
+        if (err.name === 'AbortError') {
+          // eslint-disable-next-line no-console
+          console.log('Fetch aborted');
+          return;
+        }
         // eslint-disable-next-line no-console
         console.log('There was an error fetching content with tag', tagName, err);
       }
     }
 
     fetchSingleItemByTag();
-  }, [tagName, contentSelector]);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [contentSelector, tagName]);
 
   const classNames = `${className} ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
-
   return (
     <div className={classNames}>
-      <FeedArticle title="" content={content} unread={false} key={content} partial />
+      <FeedArticle title="" content={content} unread={false} key={content} openLinksInNewTab={openLinksInNewTab} partial />
     </div>
   );
 }
@@ -71,9 +82,11 @@ ContentFromFeedByTag.propTypes = {
   tagName: PropTypes.string.isRequired,
   contentSelector: PropTypes.string,
   className: PropTypes.string,
+  openLinksInNewTab: PropTypes.bool,
 };
 
 ContentFromFeedByTag.defaultProps = {
   contentSelector: '',
   className: '',
+  openLinksInNewTab: false,
 };

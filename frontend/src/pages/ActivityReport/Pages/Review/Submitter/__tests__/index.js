@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -22,14 +23,18 @@ const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
   onFormSubmit, formData, pages, onResetToDraft, onSave,
 }) => {
+  const defaultValues = {
+    ...formData,
+    goalsAndObjectives: formData.goalsAndObjectives || [],
+    approvers: formData.approvers || [],
+    additionalNotes: formData.additionalNotes || '',
+    activityRecipients: formData.activityRecipients || [],
+  };
+
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: formData,
+    defaultValues,
   });
-
-  hookForm.register('goalsAndObjectives');
-  // eslint-disable-next-line react/prop-types
-  hookForm.setValue('goalsAndObjectives', formData.goalsAndObjectives || []);
 
   return (
     <FormProvider {...hookForm}>
@@ -38,8 +43,8 @@ const RenderSubmitter = ({
         onFormSubmit={onFormSubmit}
         onResetToDraft={onResetToDraft}
         onSaveForm={onSave}
-        formData={formData}
         availableApprovers={[{ name: 'test', id: 1 }, { id: 2, name: 'Test2' }, { id: 3, name: 'Test3' }]}
+        reviewItems={[]}
       >
         <div />
       </Submitter>
@@ -67,8 +72,14 @@ const renderReview = (
   resetToDraft = jest.fn(),
   approvers = [{ status: calculatedStatus, note: '', user: { fullName: 'name' } }],
   user = defaultUser,
-  creatorRole = null,
+  creatorRole = 'Reporter',
   hasIncompleteGoalPrompts = false,
+  hasGrantsMissingMonitoring = false,
+  goalsAndObjectives = [],
+  additionalCitations = [],
+  grantIds = [2],
+  additionalObjectives = [],
+  hasMultipleGrantsMissingMonitoring = false,
 ) => {
   const formData = {
     approvers,
@@ -83,11 +94,61 @@ const renderReview = (
     formData.goalsAndObjectives = [{
       isCurated: true,
       prompts: [{
-        allGoalsHavePromptResponse: false,
         title: 'FEI Goal',
       }],
       goalIds: [1, 2],
     }];
+  }
+
+  if (hasGrantsMissingMonitoring) {
+    formData.activityRecipients = [{
+      activityRecipientId: 1,
+      name: 'recipient missing monitoring',
+    },
+    {
+      activityRecipientId: 2,
+      name: 'recipient with monitoring 2',
+    },
+    ];
+
+    if (hasMultipleGrantsMissingMonitoring) {
+      formData.activityRecipients.push({
+        activityRecipientId: 3,
+        name: 'recipient with monitoring 3',
+      });
+    }
+
+    formData.goalsAndObjectives = [
+      ...goalsAndObjectives,
+      {
+        isCurated: true,
+        prompts: [{
+          title: 'FEI Goal',
+        }],
+        standard: 'Monitoring',
+        objectives: [
+          ...additionalObjectives,
+          {
+            id: 1,
+            citations: [
+              ...additionalCitations,
+              {
+                id: 1,
+                text: 'citation 1',
+                monitoringReferences: [{
+                  grantId: 2,
+                }],
+              },
+            ],
+          },
+        ],
+        goalIds: [1, 2],
+        grantIds,
+      }];
+
+    if (hasMultipleGrantsMissingMonitoring) {
+      formData.goalsAndObjectives[0].grantIds.push(3);
+    }
   }
 
   const history = createMemoryHistory();
@@ -115,7 +176,7 @@ describe('Submitter review page', () => {
   describe('when the report is a draft', () => {
     it('displays the draft review component', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { });
-      expect(await screen.findByText('Submit Report')).toBeVisible();
+      expect(await screen.findByText(/review and submit/i)).toBeVisible();
     });
 
     it('allows the author to submit for review', async () => {
@@ -136,6 +197,247 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, false);
       const alert = await screen.findByText('Incomplete report');
       expect(alert).toBeVisible();
+    });
+
+    it('shows an error that some grants don\'t have monitoring', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [
+          {
+            id: 1,
+            text: 'additional citation',
+            monitoringReferences: [{
+              grantId: 1,
+            }],
+          },
+        ],
+      );
+      expect(await screen.findByText(/this grant does not have the standard monitoring goal/i)).toBeVisible();
+      expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
+    });
+
+    it('shows an error if multiple grants don\'t have monitoring', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [
+          {
+            id: 1,
+            text: 'additional citation',
+            monitoringReferences: [{
+              grantId: 1,
+            }],
+          },
+        ],
+        [],
+        [2, 3],
+      );
+      expect(await screen.findByText(/these grants do not have the standard monitoring goal/i)).toBeVisible();
+      expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
+    });
+
+    it('shows an error if some of the grants are missing citations', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [1, 2],
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+    });
+
+    it('shows an error when more than one grant is missing citations', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [1, 2, 3],
+        [],
+        true,
+      );
+
+      expect(await screen.findByText(/these grants do not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+      // expect(true).toBe(false);
+    });
+
+    it('shows an error if some of the objectives are missing citations', async () => {
+      const objectiveMissingCitation = [
+        {
+          id: 2,
+          citations: [],
+        },
+      ];
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [2],
+        objectiveMissingCitation,
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+      // expect(true).toBe(false);
+    });
+
+    it('shows an error if missing citations with multiple goals', async () => {
+      const additionalGoals = [
+        {
+          isCurated: false,
+          prompts: [],
+          standard: 'normal',
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [3],
+          grantIds: [3],
+        },
+      ];
+
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        additionalGoals,
+        [],
+        [1],
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+    });
+
+    it('hides an error if some of the grants are missing citations', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [{
+          isCurated: false,
+          prompts: [{
+            title: 'A regular goal',
+          }],
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [1],
+        }],
+        [
+          {
+            id: 1,
+            text: 'additional citation',
+            monitoringReferences: [{
+              grantId: 1,
+            }],
+          },
+        ],
+      );
+      expect(screen.queryAllByText(/This grant does not have any of the citations selected/i).length).toBe(0);
+    });
+
+    it('hides error that some grants don\'t have monitoring if we have more than one goal', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [{
+          isCurated: false,
+          prompts: [{
+            title: 'A regular goal',
+          }],
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [1],
+        }],
+        [
+          {
+            id: 1,
+            text: 'additional citation',
+            monitoringReferences: [{
+              grantId: 1,
+            }],
+          },
+        ],
+      );
+      expect(screen.queryAllByText(/this grant does not have the standard monitoring goal/i).length).toBe(0);
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(0);
     });
 
     it('shows an error if goals are missing prompts', async () => {
@@ -197,35 +499,6 @@ describe('Submitter review page', () => {
     it('displays the approved component', async () => {
       renderReview(REPORT_STATUSES.APPROVED, () => { });
       expect(await screen.findByText('Report approved')).toBeVisible();
-    });
-  });
-
-  describe('when the report has been submitted', () => {
-    it('displays the submitted page', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true);
-      const allAlerts = await screen.findAllByTestId('alert');
-      const successAlert = allAlerts.find((alert) => alert.textContent.includes('Success'));
-      expect(successAlert).toBeVisible();
-    });
-
-    it('the reset to draft button works', async () => {
-      const onReset = jest.fn();
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, onReset);
-      const button = await screen.findByRole('button', { name: 'Reset to Draft' });
-      userEvent.click(button);
-      await waitFor(() => expect(onReset).toHaveBeenCalled());
-    });
-
-    it('shows manager notes', async () => {
-      const approvers = [
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
-        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved 1.', user: { fullName: 'Approved User 1' } },
-        { status: REPORT_STATUSES.APPROVED, user: { fullName: 'Approved User 2' } },
-      ];
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, () => { }, approvers);
-      expect(await screen.findByText(/report needs action\./i)).toBeVisible();
-      expect(await screen.findByText(/report is approved 1\./i)).toBeVisible();
-      expect(await screen.findByText(/no manager notes/i)).toBeVisible();
     });
   });
 
@@ -297,7 +570,7 @@ describe('Submitter review page', () => {
 
     it('requires creator role on needs_action multiple roles', async () => {
       const mockSubmit = jest.fn();
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] });
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] }, null);
 
       // Shows creator role.
       expect(await screen.findByText(/creator role/i)).toBeVisible();
@@ -343,6 +616,85 @@ describe('Submitter review page', () => {
       userEvent.click(reSubmit);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
+
+    it('shows an error if some of the objectives are missing citations', async () => {
+      const mockSubmit = jest.fn();
+      const objectiveMissingCitation = [
+        {
+          id: 2,
+          citations: [],
+        },
+      ];
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [2],
+        objectiveMissingCitation,
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+
+      // Get the 'Update report' button.
+      const button = await screen.findByRole('button', { name: 'Update report' });
+      userEvent.click(button);
+
+      // Expect submit not to be called.
+      await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
+    });
+
+    it('shows an error if missing citations with multiple goals', async () => {
+      const mockSubmit = jest.fn();
+      const additionalGoals = [
+        {
+          isCurated: false,
+          prompts: [],
+          standard: 'normal',
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [3],
+          grantIds: [3],
+        },
+      ];
+
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        additionalGoals,
+        [],
+        [1],
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+
+      // Get the 'Update report' button.
+      const button = await screen.findByRole('button', { name: 'Update report' });
+      userEvent.click(button);
+
+      // Expect submit not to be called.
+      await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
+    });
   });
 
   describe('creator role when report is draft', () => {
@@ -354,20 +706,20 @@ describe('Submitter review page', () => {
     it('displays with multiple roles', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] });
       const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
-      expect(roleSelector.length).toBe(4);
       userEvent.selectOptions(roleSelector, 'COR');
       userEvent.selectOptions(roleSelector, 'Health Specialist');
       userEvent.selectOptions(roleSelector, 'TTAC');
+      expect(roleSelector).toHaveValue('TTAC');
     });
 
     it('adds now missing role', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'Health Specialist' }, { fullName: 'TTAC' }] }, 'COR');
       const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
-      expect(roleSelector.length).toBe(4);
       expect(await screen.findByText(/cor/i)).toBeVisible();
       userEvent.selectOptions(roleSelector, 'COR');
       userEvent.selectOptions(roleSelector, 'Health Specialist');
       userEvent.selectOptions(roleSelector, 'TTAC');
+      expect(roleSelector).toHaveValue('TTAC');
     });
   });
 });

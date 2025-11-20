@@ -20,21 +20,36 @@ const {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveCourse,
+  ActivityReportObjectiveCitation,
   sequelize,
   Resource,
   ActivityReportGoal,
   Topic,
   Course,
   File,
+  Program,
 } = db;
-
+// TODO: TTAHUB-3970: This might need to be changed to ensure we
+//  return the selected goal template name for display.
 export default async function getGoalsForReport(reportId: number) {
   const goals = await Goal.findAll({
     attributes: {
+      exclude: [
+        'timeframe',
+        'isFromSmartsheetTtaPlan',
+        'isRttapa',
+        'mapsToParentGoalId',
+        'createdAt',
+        'updatedAt',
+        'createdVia',
+        'deletedAt',
+      ],
       include: [
+
         [sequelize.col('grant.regionId'), 'regionId'],
         [sequelize.col('grant.recipient.id'), 'recipientId'],
         [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
+        [sequelize.literal('"goalTemplate"."standard"'), 'standard'],
         [sequelize.literal(`(
           SELECT
             jsonb_agg( DISTINCT jsonb_build_object(
@@ -48,7 +63,8 @@ export default async function getGoalsForReport(reportId: number) {
               'options', gtfp.options,
               'validations', gtfp.validations,
               'response', gfr.response,
-              'reportResponse', argfr.response
+              'reportResponse', argfr.response,
+              'grantId', "Goal"."grantId"
             ))
           FROM "GoalTemplateFieldPrompts" gtfp
           LEFT JOIN "GoalFieldResponses" gfr
@@ -60,13 +76,32 @@ export default async function getGoalsForReport(reportId: number) {
           WHERE "goalTemplate".id = gtfp."goalTemplateId"
           GROUP BY 1=1
         )`), 'prompts'],
+        [
+          sequelize.literal(`(
+          SELECT COUNT(*) > 0
+          FROM "Goals" g2
+          WHERE g2."goalTemplateId" = "Goal"."goalTemplateId"
+            AND g2."grantId" = "Goal"."grantId"
+            AND g2."status" = 'Closed'
+            AND g2."id" != "Goal"."id"
+        )`),
+          'isReopened',
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*) = 1
+            FROM "ActivityReportGoals" arg
+            WHERE arg."goalId" = "Goal".id
+          )`),
+          'firstUsage',
+        ],
       ],
     },
     include: [
       {
         model: GoalStatusChange,
         as: 'statusChanges',
-        attributes: ['oldStatus'],
+        attributes: ['oldStatus', 'newStatus', 'reason'],
         required: false,
       },
       {
@@ -87,6 +122,11 @@ export default async function getGoalsForReport(reportId: number) {
         model: Grant,
         as: 'grant',
         required: true,
+        include: [{
+          model: Program,
+          as: 'programs',
+          attributes: ['programType'],
+        }],
       },
       {
         separate: true,
@@ -108,10 +148,18 @@ export default async function getGoalsForReport(reportId: number) {
                 required: false,
                 include: [
                   {
+                    attributes: ['id', 'name', 'mapsTo'],
                     model: Topic,
                     as: 'topic',
+                    paranoid: false,
                   },
                 ],
+              },
+              {
+                separate: true,
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
+                required: false,
               },
               {
                 separate: true,

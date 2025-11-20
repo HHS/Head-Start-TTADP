@@ -86,6 +86,15 @@ class ActivityReportGoals{
  timeframe : text
 }
 
+class ActivityReportObjectiveCitations{
+ * id : integer : <generated>
+ * activityReportObjectiveId : integer
+ * citation : text
+ * createdAt : timestamp with time zone : now()
+ * monitoringReferences : jsonb
+ * updatedAt : timestamp with time zone : now()
+}
+
 class ActivityReportObjectiveCourses{
  * id : integer : <generated>
  * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
@@ -169,8 +178,10 @@ class ActivityReports{
  userId : integer : REFERENCES "Users".id
  * regionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone : now()
+ * revision : integer : 0
  * updatedAt : timestamp with time zone : now()
  * version : integer : 2
+ activityReason : varchar(255)
  activityRecipientType : varchar(255)
  additionalNotes : text
  approvedAt : timestamp with time zone
@@ -186,6 +197,8 @@ class ActivityReports{
  legacyId : varchar(255)
  nonECLKCResourcesUsed : text[]
  numberOfParticipants : integer
+ numberOfParticipantsInPerson : integer
+ numberOfParticipantsVirtually : integer
  pageState : json
  participants : varchar(255)[]
  programTypes : varchar(255)[]
@@ -199,6 +212,123 @@ class ActivityReports{
  ttaType : varchar(255)[]
  virtualDeliveryType : varchar(255)
 }
+
+class CollabReportActivityStates{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * activityStateCode : varchar(255)
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class CollabReportApprovers{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ note : text
+ status : enum
+}
+
+class CollabReportDataUsed{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * collabReportDatum : enum
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class CollabReportGoals{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class CollabReportReasons{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * createdAt : timestamp with time zone
+ * reasonId : enum
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class CollabReportSpecialists{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * specialistId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class CollabReportSteps{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * collabStepCompleteDate : date
+ * collabStepDetail : text
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class CollabReports{
+ * id : integer : <generated>
+ lastUpdatedById : integer : REFERENCES "Users".id
+ * regionId : integer : REFERENCES "Regions".id
+ * userId : integer : REFERENCES "Users".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * submissionStatus : enum
+ * updatedAt : timestamp with time zone
+ calculatedStatus : enum
+ conductMethod : enum
+ deletedAt : timestamp with time zone
+ description : text
+ duration : double precision
+ endDate : date
+ hasDataUsed : boolean
+ hasGoals : boolean
+ isStateActivity : boolean
+ name : varchar(255)
+ otherDataUsed : text
+ otherParticipants : text
+ participants : enum[]
+ startDate : date
+ submittedAt : timestamp with time zone
+}
+
+enum enum_CollabReports_participants {
+ Child Care Training and Technical Assistance Network
+ Child Care and Development Fund
+ Child care licensing
+ DOE/State PreK
+ Head Start Collaboration Office
+ Head Start Recipients
+ Health department/WIC
+ Office of Child Care
+ Other
+ Quality Rating and Improvement System
+ Regional HSA
+ Regional Office staff
+ State HSA
+ State Professional development system
+ State and territory adminstrators
+ State environmental health and safety systems
+ State family engagement systems
+ State health and welness systems
+ State homelessness agency/McKinney Vento liason
+ TTA staff
+}
+
+enum_CollabReports_participants <|-- CollabReports
 
 class CollaboratorRoles{
  * id : integer : <generated>
@@ -227,9 +357,16 @@ class CommunicationLogFiles{
  * updatedAt : timestamp with time zone
 }
 
+class CommunicationLogRecipients{
+ * id : integer : <generated>
+ * communicationLogId : integer : REFERENCES "CommunicationLogs".id
+ * recipientId : integer : REFERENCES "Recipients".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
 class CommunicationLogs{
  * id : integer : <generated>
- * recipientId : integer : REFERENCES "Recipients".id
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
  * data : jsonb
@@ -244,16 +381,6 @@ class Courses{
  * persistsOnUpload : boolean : false
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
-}
-
-class EventReportPilotGoals{
- * id : integer : <generated>
- sessionId : integer : REFERENCES "SessionReportPilots".id
- * eventId : integer : REFERENCES "EventReportPilots".id
- * goalId : integer : REFERENCES "Goals".id
- * grantId : integer : REFERENCES "Grants".id
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
 }
 
 class EventReportPilotNationalCenterUsers{
@@ -330,37 +457,19 @@ enum enum_GoalResources_sourceFields {
 
 enum_GoalResources_sourceFields <|-- GoalResources
 
-class GoalSimilarityGroupGoals{
- * id : integer : <generated>
- * goalId : integer : REFERENCES "Goals".id
- * goalSimilarityGroupId : integer : REFERENCES "GoalSimilarityGroups".id
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- excludedIfNotAdmin : boolean : false
-}
-
-class GoalSimilarityGroups{
- * id : integer : <generated>
- finalGoalId : integer : REFERENCES "Goals".id
- * recipientId : integer : REFERENCES "Recipients".id
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- * userHasInvalidated : boolean : false
- version : integer
-}
-
 class GoalStatusChanges{
  * id : integer : <generated>
+ userId : integer : REFERENCES "Users".id
  * goalId : integer : REFERENCES "Goals".id
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone : now()
- * newStatus : varchar(255)
- * reason : text
  * updatedAt : timestamp with time zone : now()
- * userName : varchar(255)
- * userRoles : varchar(255)[]
  context : text
+ newStatus : varchar(255)
  oldStatus : varchar(255)
+ performedAt : timestamp with time zone
+ reason : text
+ userName : varchar(255)
+ userRoles : varchar(255)[]
 }
 
 class GoalTemplateFieldPrompts{
@@ -411,8 +520,10 @@ class GoalTemplates{
  * templateName : text
  * templateNameModifiedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
  lastUsed : timestamp with time zone
  source : varchar(255)
+ standard : text
 }
 
 class Goals{
@@ -423,6 +534,7 @@ class Goals{
  * createdAt : timestamp with time zone
  * onApprovedAR : boolean : false
  * onAR : boolean : false
+ * prestandard : boolean : false
  * updatedAt : timestamp with time zone
  createdVia : enum
  deletedAt : timestamp with time zone
@@ -445,9 +557,27 @@ class GrantNumberLinks{
  deletedAt : timestamp with time zone
 }
 
+class GrantReplacementTypes{
+ * id : integer : <generated>
+ mapsTo : integer : REFERENCES "GrantReplacementTypes".id
+ * createdAt : timestamp with time zone : now()
+ * name : text
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+}
+
+class GrantReplacements{
+ * id : integer : <generated>
+ grantReplacementTypeId : integer : REFERENCES "GrantReplacementTypes".id
+ * replacedGrantId : integer : REFERENCES "Grants".id
+ * replacingGrantId : integer : REFERENCES "Grants".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ replacementDate : date
+}
+
 class Grants{
  * id : integer
- oldGrantId : integer : REFERENCES "Grants".id
  regionId : integer : REFERENCES "Regions".id
  * recipientId : integer : REFERENCES "Recipients".id
  * createdAt : timestamp with time zone : now()
@@ -457,6 +587,8 @@ class Grants{
  cdi : boolean : false
  deleted : boolean : false
  endDate : timestamp with time zone
+ geographicRegion : varchar(255)
+ geographicRegionId : integer
  granteeName : varchar(255)
  grantSpecialistEmail : varchar(255)
  grantSpecialistName : varchar(255)
@@ -533,6 +665,7 @@ class Imports{
  * updatedAt : timestamp with time zone
  fileMask : text
  path : text
+ postProcessingActions : jsonb
 }
 
 class MailerLogs{
@@ -856,6 +989,7 @@ class ObjectiveTemplates{
 
 class Objectives{
  * id : integer : <generated>
+ createdViaActivityReportId : integer : REFERENCES "ActivityReports".id
  goalId : integer : REFERENCES "Goals".id
  mapsToParentObjectiveId : integer : REFERENCES "Objectives".id
  objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
@@ -920,10 +1054,10 @@ class Programs{
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
- endDate : varchar(255)
+ endDate : date
  name : varchar(255)
  programType : varchar(255)
- startDate : varchar(255)
+ startDate : date
  startYear : varchar(255)
  status : varchar(255)
 }
@@ -957,6 +1091,7 @@ class RequestErrors{
 
 class Resources{
  * id : integer : <generated>
+ mapsTo : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
  * domain : text
  * updatedAt : timestamp with time zone
@@ -1003,6 +1138,24 @@ class SessionReportPilotFiles{
  * updatedAt : timestamp with time zone
 }
 
+class SessionReportPilotGoalTemplates{
+ * id : integer : <generated>
+ * goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class SessionReportPilotGrants{
+ * id : integer : <generated>
+ * grantId : integer : REFERENCES "Grants".id
+ * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
 class SessionReportPilotSupportingAttachments{
  * id : integer : <generated>
  * fileId : integer : REFERENCES "Files".id
@@ -1011,22 +1164,22 @@ class SessionReportPilotSupportingAttachments{
  * updatedAt : timestamp with time zone
 }
 
+class SessionReportPilotTrainers{
+ * id : integer : <generated>
+ * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
 class SessionReportPilots{
  * id : integer : <generated>
+ approverId : integer : REFERENCES "Users".id
  * eventId : integer : REFERENCES "EventReportPilots".id
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
-}
-
-class SimScoreGoalCaches{
- * id : integer : <generated>
- * createdAt : timestamp with time zone
- * goal1 : integer
- * goal2 : integer
- * recipient_id : integer
- * score : decimal(3,1)
- * updatedAt : timestamp with time zone
 }
 
 class SiteAlerts{
@@ -1046,6 +1199,7 @@ class SiteAlerts{
 class Topics{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
+ * deprecated : boolean : false
  * name : varchar(255)
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
@@ -1105,10 +1259,9 @@ class Users{
 
 enum enum_Users_flags {
  anv_statistics
- closed_goal_merge_override
+ collaboration_report
  quality_assurance_dashboard
  regional_goal_dashboard
- training_reports_dashboard
 }
 
 enum_Users_flags <|-- Users
@@ -1232,6 +1385,20 @@ class ZALActivityReportGoals{
  session_sig : text
 }
 
+class ZALActivityReportObjectiveCitations{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALActivityReportObjectiveCourses{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1330,6 +1497,118 @@ class ZALActivityReports{
  session_sig : text
 }
 
+class ZALCollabReportActivityStates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCollabReportApprovers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCollabReportDataUsed{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCollabReportGoals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCollabReportReasons{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCollabReportSpecialists{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCollabReportSteps{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCollabReports{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALCollaboratorRoles{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1359,6 +1638,20 @@ class ZALCollaboratorTypes{
 }
 
 class ZALCommunicationLogFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCommunicationLogRecipients{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1410,20 +1703,6 @@ class ZALDDL{
  object_identity : varchar(255)
  object_type : varchar(255)
  schema_name : varchar(255)
- session_sig : text
-}
-
-class ZALEventReportPilotGoals{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
  session_sig : text
 }
 
@@ -1498,34 +1777,6 @@ class ZALGoalFieldResponses{
 }
 
 class ZALGoalResources{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
-class ZALGoalSimilarityGroupGoals{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
-class ZALGoalSimilarityGroups{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1624,6 +1875,34 @@ class ZALGoals{
 }
 
 class ZALGrantNumberLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALGrantReplacementTypes{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALGrantReplacements{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2267,6 +2546,34 @@ class ZALSessionReportPilotFiles{
  session_sig : text
 }
 
+class ZALSessionReportPilotGoalTemplates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALSessionReportPilotGrants{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALSessionReportPilotSupportingAttachments{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2281,7 +2588,7 @@ class ZALSessionReportPilotSupportingAttachments{
  session_sig : text
 }
 
-class ZALSessionReportPilots{
+class ZALSessionReportPilotTrainers{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2295,7 +2602,7 @@ class ZALSessionReportPilots{
  session_sig : text
 }
 
-class ZALSimScoreGoalCaches{
+class ZALSessionReportPilots{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2455,10 +2762,12 @@ class ZALZAFilter{
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
+Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
+ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : activityReportObjective, activityReportObjectiveCitations
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : activityReportObjective, activityReportObjectiveCourses
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : activityReportObjective, activityReportObjectiveFiles
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : activityReportObjective, activityReportObjectiveResources
@@ -2471,14 +2780,21 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportActivityStates : collabReport, activityStates
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : collabReport, approvers
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportDataUsed : collabReport, dataUsed
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportGoals : collabReport, reportGoals
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportReasons : collabReport, reportReasons
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSpecialists : collabReport, collabReportSpecialists
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSteps : collabReport, steps
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorTypes : mapsToCollaboratorType, mapsFromCollaboratorTypes
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goalCollaborator, collaboratorType
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : groupCollaborator, collaboratorType
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : objectiveCollaborator, collaboratorType
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : communicationLog, communicationLogFiles
+CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : communicationLog, communicationLogRecipients
 Courses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : course, activityReportObjectiveCourses
 Courses "1" --[#black,dashed,thickness=2]--{  "n" Courses : mapsFromCourse, mapsToCourse
-EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : event, eventReportPilotGoals
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : event, eventReportPilotNationalCenterUsers
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
@@ -2486,33 +2802,33 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : f
 Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, communicationLogFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : supportingAttachments, file
-GoalSimilarityGroups "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroupGoals : goalSimilarityGroup, goalSimilarityGroups
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" CollabReportGoals : goalTemplate, collabReportGoals
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateFieldPrompts : goalTemplate, prompts
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : goalTemplate, goalTemplateObjectiveTemplates
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : goalTemplate, goalTemplateResources
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, goalTemplate
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGoalTemplates : sessionReportGoalTemplates, goalTemplate
 Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, originalGoal, activityReportGoals, reassignedActivityReportGoals
-Goals "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : goal, eventReportPilotGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goal, goalCollaborators
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, responses
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
-Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroupGoals : goal, goalSimilarityGroupGoals
-Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : finalGoal, goalSimilarityGroups
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalStatusChanges : goal, statusChanges
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
-Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
 GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringClassSummaries, grantNumberLink
 GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, grantNumberLink
+GrantReplacementTypes "1" --[#black,dashed,thickness=2]--{  "n" GrantReplacementTypes : mapsFromReplacementType, mapsToReplacementType
+GrantReplacementTypes "1" --[#black,dashed,thickness=2]--{  "n" GrantReplacements : grantReplacements, grantReplacementType
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
-Grants "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : grant, eventReportPilotGoals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
-Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" GrantReplacements : replacedGrant, replacingGrant, replacedGrantReplacements, replacingGrantReplacements
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGrants : sessionGrants, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" undefined : grantRelationships, activeGrantRelationships
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : group, groupCollaborators
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles
@@ -2535,8 +2851,8 @@ MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReview
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, monitoringReviewLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
-MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : statusLink, monitoringFindingStandards
-MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandardes, statusLink
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : standardLink, monitoringFindingStandards
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandards, standardLink
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : nationalCenter, eventReportPilotNationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
@@ -2550,11 +2866,10 @@ OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : oth
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
 ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : mapsFromProgramPersonnel, mapsToProgramPersonnel
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
-Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : recipient, communicationLogs
-Recipients "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : recipient, goalSimilarityGroups
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : recipient, communicationLogRecipients
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
-Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
+Regions "1" --[#black,dashed,thickness=2]--{  "n" CollabReports : region, collabReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplates : region, objectiveTemplates
@@ -2566,19 +2881,25 @@ Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : re
 Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : resource, goalResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : resource, goalTemplateResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : resource, nextStepResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" Resources : mapsFromResource, mapsToResource
 Roles "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : role, collaboratorRoles
 Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
-SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : session, eventReportPilotGoals
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionReport, sessionFiles
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGoalTemplates : sessionReportPilot, sessionGoalTemplates
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGrants : sessionReportPilot, sessionGrants
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : sessionReport, sessionSupportingAttachments
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : sessionReportPilot, sessionTrainers
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
+Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromTopics
 UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
+Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : user, collabReportApprovers, approvers
+Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSpecialists : specialist, collabReportSpecialists
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : user, eventReportPilotNationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : user, goalCollaborators
@@ -2587,6 +2908,8 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : user, group
 Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : user, objectiveCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
+Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : trainer, sessionTrainers
+Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : approver, sessionReportsAsApprover
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
@@ -2603,24 +2926,24 @@ ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topi
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, activityReports
-ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports
+ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : createdViaActivityReportObjectives, objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports, createdViaActivityReport
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherEntities, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
+CollabReports "n" }--[#black,dotted,thickness=2]--{ "n" Users : collaboratingSpecialists, collabReports
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, collaboratorTypes
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, collaboratorTypes
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, collaboratorTypes
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Users : usersThroughGoalCollaborators, usersThroughGroupCollaborators, usersThroughObjectiveCollaborators, collaboratorTypesThroughGoalCollaborator, collaboratorTypesThroughGroupCollaborator, collaboratorTypesThroughObjectiveCollaborator
 CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, logs
-EventReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, eventReportPilots
-EventReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, eventReports
+CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Recipients : recipients, logs
 Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, sessionsWithSupportingAttachments, files, supportingAttachments
-GoalSimilarityGroups "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, similarityGroups
 GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
-GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
+GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessionReports, goalTemplates
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
+Grants "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessionReports, grants
 Groups "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, groups
 NationalCenters "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, nationalCenters
 NextSteps "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, nextSteps
@@ -2629,5 +2952,6 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+SessionReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Users : trainers, sessionReports
 
 @enduml

@@ -17,10 +17,21 @@ interface DecodedCSV {
 
 export async function getAllCourses(where: WhereOptions = {}) {
   return Course.findAll({
-    where,
+    where: {
+      ...where,
+      mapsTo: null,
+    },
     order: [['persistsOnUpload', 'ASC'], ['name', 'ASC']],
     attributes: ['name', 'id'],
   });
+}
+
+export async function getCourseById(id: number) {
+  return Course.findByPk(id);
+}
+
+export async function createCourseByName(name: string) {
+  return Course.create({ name, persistsOnUpload: true });
 }
 
 export async function csvImport(buffer: Buffer | string) {
@@ -36,6 +47,12 @@ export async function csvImport(buffer: Buffer | string) {
   const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
   let rowCount = 1;
   let results;
+
+  const baseCourseScopes = {
+    persistsOnUpload: false, // We don't want to delete courses that persist on import.
+    mapsTo: null, // we only want to update courses that are not mapped to another course.
+  };
+
   try {
     results = await Promise.all(parsed.map(async (course: DecodedCSV) => {
       // Trim unexpected chars.
@@ -54,6 +71,7 @@ export async function csvImport(buffer: Buffer | string) {
 
       // Always trim leading and trailing spaces.
       rawCourseName = rawCourseName.trim();
+      rawCourseName.replace('’', '\'');
 
       // Remove all spaces and special characters from the course name.
       const cleanCourseName = rawCourseName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
@@ -66,10 +84,7 @@ export async function csvImport(buffer: Buffer | string) {
               Sequelize.fn('lower', Sequelize.fn('regexp_replace', Sequelize.col('name'), '[^a-zA-Z0-9]', '', 'g')),
               { [Op.like]: cleanCourseName },
             ),
-            {
-              deletedAt: null,
-              persistsOnUpload: false, // We don't want to delete courses that persist on import.
-            },
+            baseCourseScopes,
           ],
         },
       });
@@ -103,7 +118,6 @@ export async function csvImport(buffer: Buffer | string) {
               id: {
                 [Op.in]: existingCourses.map((c: ICourse) => c.id),
               },
-              deletedAt: null,
             },
           });
 
@@ -133,8 +147,7 @@ export async function csvImport(buffer: Buffer | string) {
         id: {
           [Op.notIn]: importedCourseIds,
         },
-        deletedAt: null,
-        persistsOnUpload: false,
+        ...baseCourseScopes,
       },
       returning: true,
     });

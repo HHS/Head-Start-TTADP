@@ -6,7 +6,11 @@ const { sequelize } = db;
 export function beforeCommunicationDate(dates: string[]) {
   return {
     [Op.and]: [
-      sequelize.literal(`("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone <= ${sequelize.escape(dates[0])}::timestamp with time zone`),
+      sequelize.literal(`
+        ("CommunicationLog"."data"#>>'{communicationDate}') IS NOT NULL
+        AND ("CommunicationLog"."data"#>>'{communicationDate}') <> ''
+        AND ("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone <= ${sequelize.escape(dates[0])}::timestamp with time zone
+      `),
     ],
   };
 }
@@ -14,7 +18,11 @@ export function beforeCommunicationDate(dates: string[]) {
 export function afterCommunicationDate(dates: string[]) {
   return {
     [Op.and]: [
-      sequelize.literal(`("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone >= ${sequelize.escape(dates[0])}::timestamp with time zone`),
+      sequelize.literal(`
+        ("CommunicationLog"."data"#>>'{communicationDate}') IS NOT NULL
+        AND ("CommunicationLog"."data"#>>'{communicationDate}') <> ''
+        AND ("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone >= ${sequelize.escape(dates[0])}::timestamp with time zone
+      `),
     ],
   };
 }
@@ -29,7 +37,13 @@ export function withinCommunicationDate(dates: string[]) {
 
   return {
     [Op.and]: [
-      sequelize.literal(`("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone BETWEEN ${sequelize.escape(startDate)}::timestamp with time zone AND ${sequelize.escape(endDate)}::timestamp with time zone`),
+      sequelize.literal(`
+        ("CommunicationLog"."data"#>>'{communicationDate}') IS NOT NULL
+        AND ("CommunicationLog"."data"#>>'{communicationDate}') <> ''
+        AND ("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone
+        BETWEEN ${sequelize.escape(startDate)}::timestamp with time zone
+        AND ${sequelize.escape(endDate)}::timestamp with time zone
+      `),
     ],
   };
 }

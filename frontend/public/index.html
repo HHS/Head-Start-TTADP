@@ -3,8 +3,6 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/logo64.png" />
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta
@@ -17,8 +15,8 @@
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
 
-    <script src="%PUBLIC_URL%/fontawesome.min.js"></script>
-    <script src="%PUBLIC_URL%/regular.min.js"></script>
+    <script nonce="__NONCE__" src="%PUBLIC_URL%/fontawesome.min.js"></script>
+    <script nonce="__NONCE__" src="%PUBLIC_URL%/regular.min.js"></script>
 
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <!--
@@ -55,5 +53,10 @@
       })(window,document,'script','dataLayer', '%REACT_APP_GTM_ID%');</script>
       <!-- End Google Tag Manager -->
     <% } %> 
+
+    <% if (process.env.REACT_APP_INCLUDE_ACCESSIBILITY_CSS === 'true') { %>
+      <link rel="stylesheet" href="%PUBLIC_URL%/accessibility-errors.css">
+    <% } %> 
+
   </body>
 </html>

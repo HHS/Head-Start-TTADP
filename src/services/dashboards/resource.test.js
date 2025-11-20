@@ -28,10 +28,10 @@ import { processActivityReportObjectiveForResourcesById } from '../resource';
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
 const REGION_ID = 14;
-const NONECLKC_DOMAIN = 'non.test1.gov';
-const ECLKC_RESOURCE_URL = `https://${RESOURCE_DOMAIN.ECLKC}/test`;
-const ECLKC_RESOURCE_URL2 = `https://${RESOURCE_DOMAIN.ECLKC}/test2`;
-const NONECLKC_RESOURCE_URL = `https://${NONECLKC_DOMAIN}/a/b/c`;
+const NON_HEADSTART_DOMAIN = 'non.test1.gov';
+const HEADSTART_RESOURCE_URL = `https://${RESOURCE_DOMAIN.HEAD_START}/test`;
+const HEADSTART_RESOURCE_URL2 = `https://${RESOURCE_DOMAIN.HEAD_START}/test2`;
+const NON_HEADSTART_RESOURCE_URL = `https://${NON_HEADSTART_DOMAIN}/a/b/c`;
 
 const mockUser = {
   id: 5426871,
@@ -59,7 +59,6 @@ const mockGrant = {
 const mockGoal = {
   name: 'Goal 1',
   status: 'Draft',
-  endDate: null,
   isFromSmartsheetTtaPlan: false,
   onApprovedAR: false,
   onAR: false,
@@ -73,7 +72,7 @@ const reportObject = {
   calculatedStatus: REPORT_STATUSES.APPROVED,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
-  ECLKCResourcesUsed: ['test'],
+  HeadStartResourcesUsed: ['test'],
   activityRecipients: [
     { grantId: GRANT_ID_ONE },
   ],
@@ -182,11 +181,11 @@ describe('Resources dashboard', () => {
       },
     });
 
-    const { topicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [topic] = await Topic.findOrCreate({
       where: { name: 'CLASS: Classroom Organization' },
-      raw: true,
+      defaults: { name: 'CLASS: Classroom Organization' },
     });
+    const topicId = topic.id;
 
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
@@ -195,14 +194,14 @@ describe('Resources dashboard', () => {
       },
     });
 
-    // Report 1 ECLKC Resource 1.
-    // Report 1 Non-ECLKC Resource 1.
+    // Report 1 HeadStart Resource 1.
+    // Report 1 Non-HeadStart Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveOne.id,
-      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
     );
 
-    // Report 2 (Only ECLKC).
+    // Report 2 (Only HeadStart).
     const reportTwo = await ActivityReport.create({ ...regionOneReportB });
     await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
 
@@ -212,13 +211,13 @@ describe('Resources dashboard', () => {
       objectiveId: objective.id,
     });
 
-    // Report 2 ECLKC Resource 1.
+    // Report 2 HeadStart Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveTwo.id,
-      [ECLKC_RESOURCE_URL],
+      [HEADSTART_RESOURCE_URL],
     );
 
-    // Report 3 (Only Non-ECLKC).
+    // Report 3 (Only Non-HeadStart).
     const reportThree = await ActivityReport.create({ ...regionOneReportC });
     await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
 
@@ -228,10 +227,10 @@ describe('Resources dashboard', () => {
       objectiveId: objective.id,
     });
 
-    // Report 3 Non-ECLKC Resource 1.
+    // Report 3 Non-HeadStart Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveThree.id,
-      [NONECLKC_RESOURCE_URL, ECLKC_RESOURCE_URL2],
+      [NON_HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
     );
 
     // Report 4 (No Resources).
@@ -254,11 +253,11 @@ describe('Resources dashboard', () => {
       objectiveId: objective.id,
     });
 
-    // Report Draft ECLKC Resource 1.
-    // Report Draft Non-ECLKC Resource 1.
+    // Report Draft HeadStart Resource 1.
+    // Report Draft Non-HeadStart Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveDraft.id,
-      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
     );
   });
 
@@ -305,22 +304,22 @@ describe('Resources dashboard', () => {
     const res = await resourceList(scopes);
     expect(res.length).toBe(4);
 
-    expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
-    expect(res[0].url).toBe(ECLKC_RESOURCE_URL);
+    expect(res[0].name).toBe(HEADSTART_RESOURCE_URL);
+    expect(res[0].url).toBe(HEADSTART_RESOURCE_URL);
     expect(res[0].count).toBe(2);
     expect(res[0].reportCount).toBe(2);
     expect(res[0].participantCount).toBe(22);
     expect(res[0].recipientCount).toBe(1);
 
-    expect(res[1].name).toBe(NONECLKC_RESOURCE_URL);
-    expect(res[1].url).toBe(NONECLKC_RESOURCE_URL);
+    expect(res[1].name).toBe(NON_HEADSTART_RESOURCE_URL);
+    expect(res[1].url).toBe(NON_HEADSTART_RESOURCE_URL);
     expect(res[1].count).toBe(2);
     expect(res[1].reportCount).toBe(2);
     expect(res[1].participantCount).toBe(22);
     expect(res[1].recipientCount).toBe(1);
 
-    expect(res[2].name).toBe(ECLKC_RESOURCE_URL2);
-    expect(res[2].url).toBe(ECLKC_RESOURCE_URL2);
+    expect(res[2].name).toBe(HEADSTART_RESOURCE_URL2);
+    expect(res[2].url).toBe(HEADSTART_RESOURCE_URL2);
     expect(res[2].count).toBe(1);
     expect(res[2].reportCount).toBe(1);
     expect(res[2].participantCount).toBe(11);
@@ -343,22 +342,22 @@ describe('Resources dashboard', () => {
     const res = await resourceList(scopes);
     expect(res.length).toBe(3);
 
-    expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
-    expect(res[0].url).toBe(ECLKC_RESOURCE_URL);
+    expect(res[0].name).toBe(HEADSTART_RESOURCE_URL);
+    expect(res[0].url).toBe(HEADSTART_RESOURCE_URL);
     expect(res[0].count).toBe(2);
     expect(res[0].reportCount).toBe(2);
     expect(res[0].participantCount).toBe(22);
     expect(res[0].recipientCount).toBe(1);
 
-    expect(res[1].name).toBe(NONECLKC_RESOURCE_URL);
-    expect(res[1].url).toBe(NONECLKC_RESOURCE_URL);
+    expect(res[1].name).toBe(NON_HEADSTART_RESOURCE_URL);
+    expect(res[1].url).toBe(NON_HEADSTART_RESOURCE_URL);
     expect(res[1].count).toBe(2);
     expect(res[1].reportCount).toBe(2);
     expect(res[1].participantCount).toBe(22);
     expect(res[1].recipientCount).toBe(1);
 
-    expect(res[2].name).toBe(ECLKC_RESOURCE_URL2);
-    expect(res[2].url).toBe(ECLKC_RESOURCE_URL2);
+    expect(res[2].name).toBe(HEADSTART_RESOURCE_URL2);
+    expect(res[2].url).toBe(HEADSTART_RESOURCE_URL2);
     expect(res[2].count).toBe(1);
     expect(res[2].reportCount).toBe(1);
     expect(res[2].participantCount).toBe(11);
@@ -370,13 +369,13 @@ describe('Resources dashboard', () => {
     const domains = await resourceDomainList(scopes);
     expect(domains.length).toBe(2);
 
-    expect(domains[0].domain).toBe(RESOURCE_DOMAIN.ECLKC);
+    expect(domains[0].domain).toBe(RESOURCE_DOMAIN.HEAD_START);
     expect(domains[0].count).toBe(3);
     expect(domains[0].resourceCount).toBe(2);
     expect(domains[0].reportCount).toBe(3);
     expect(domains[0].recipientCount).toBe(1);
 
-    expect(domains[1].domain).toBe(NONECLKC_DOMAIN);
+    expect(domains[1].domain).toBe(NON_HEADSTART_DOMAIN);
     expect(domains[1].count).toBe(2);
     expect(domains[1].resourceCount).toBe(1);
     expect(domains[1].reportCount).toBe(2);
@@ -392,32 +391,32 @@ describe('Resources dashboard', () => {
       },
       recipient: {
         num: '1',
-        // numEclkc: '1',
+        // numHeadStart: '1',
         // numNoResources: '0',
-        // numNonEclkc: '1',
+        // numNonHeadStart: '1',
         numResources: '1',
-        // percentEclkc: '100.00%',
+        // percentHeadStart: '100.00%',
         // percentNoResources: '0%',
-        // percentNonEclkc: '100.00%',
+        // percentNonHeadStart: '100.00%',
         percentResources: '100.00%',
       },
       report: {
         num: '4',
-        // numEclkc: '2',
+        // numHeadStart: '2',
         // numNoResources: '1',
-        // numNonEclkc: '2',
+        // numNonHeadStart: '2',
         numResources: '3',
-        // percentEclkc: '50.00%',
+        // percentHeadStart: '50.00%',
         // percentNoResources: '25.00%',
-        // percentNonEclkc: '50.00%',
+        // percentNonHeadStart: '50.00%',
         percentResources: '75.00%',
       },
       resource: {
         num: '3',
-        numEclkc: '2',
-        // numNonEclkc: '1',
-        percentEclkc: '66.67%',
-        // percentNonEclkc: '50.00%',
+        numHeadStart: '2',
+        // numNonHeadStart: '1',
+        percentHeadStart: '66.67%',
+        // percentNonHeadStart: '50.00%',
       },
     });
   });
@@ -429,7 +428,7 @@ describe('Resources dashboard', () => {
       headers: ['Jan-21'],
       resources: [
         {
-          heading: 'https://eclkc.ohs.acf.hhs.gov/test',
+          heading: 'https://headstart.gov/test',
           isUrl: true,
           title: null,
           data: [
@@ -447,7 +446,7 @@ describe('Resources dashboard', () => {
           ],
         },
         {
-          heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
+          heading: 'https://headstart.gov/test2',
           isUrl: true,
           title: null,
           data: [
@@ -482,7 +481,7 @@ describe('Resources dashboard', () => {
     expect(data).toStrictEqual({
       overview: {
         report: { num: '4', numResources: '3', percentResources: '75.00%' },
-        resource: { num: '3', numEclkc: '2', percentEclkc: '66.67%' },
+        resource: { num: '3', numHeadStart: '2', percentHeadStart: '66.67%' },
         recipient: { num: '1', numResources: '1', percentResources: '100.00%' },
         participant: { numParticipants: '44' },
       },
@@ -490,7 +489,7 @@ describe('Resources dashboard', () => {
         headers: ['Jan-21'],
         resources: [
           {
-            heading: 'https://eclkc.ohs.acf.hhs.gov/test',
+            heading: 'https://headstart.gov/test',
             isUrl: true,
             title: null,
             data: [
@@ -508,7 +507,7 @@ describe('Resources dashboard', () => {
             ],
           },
           {
-            heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
+            heading: 'https://headstart.gov/test2',
             isUrl: true,
             title: null,
             data: [
@@ -532,7 +531,7 @@ describe('Resources dashboard', () => {
       },
       domainList: [
         {
-          domain: 'eclkc.ohs.acf.hhs.gov',
+          domain: 'headstart.gov',
           count: 3,
           reportCount: 3,
           recipientCount: 1,

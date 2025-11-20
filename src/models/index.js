@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const cls = require('cls-hooked');
+const httpContext = require('express-http-context'); // eslint-disable-line import/no-import-module-exports
 
 const namespace = cls.createNamespace('transaction');
 const basename = path.basename(__filename);
@@ -24,6 +25,19 @@ if (config.use_env_variable) {
 
 audit.attachHooksForAuditing(sequelize);
 
+function isConnectionOpen() {
+  const { pool } = sequelize.connectionManager;
+
+  if (!pool) {
+    return false;
+  }
+
+  // Check if there are any active connections in the pool
+  // eslint-disable-next-line no-underscore-dangle
+  const isOpen = pool._availableObjects.length > 0 || pool._inUseObjects.length > 0;
+  return isOpen;
+}
+
 fs
   .readdirSync(__dirname)
   .filter((file) => (file.indexOf('.') !== 0)
@@ -37,7 +51,9 @@ fs
       if (modelDef && modelDef.default) {
         const model = modelDef.default(sequelize, Sequelize);
         db[model.name] = model;
-        if (model.name !== 'RequestErrors') {
+        // GrantRelationshipToActive is excluded here because it is a materialized view,
+        // so we don't want a ZAL created for it.
+        if (model.name !== 'RequestErrors' && model.name !== 'GrantRelationshipToActive') {
           const auditModel = audit.generateAuditModel(sequelize, model);
           db[auditModel.name] = auditModel;
         }
@@ -47,6 +63,22 @@ fs
       throw error;
     }
   });
+
+const descriptiveDetails = () => {
+  const loggedUser = httpContext.get('loggedUser') || null;
+  const transactionId = httpContext.get('transactionId') || null;
+  const sessionSig = httpContext.get('sessionSig') || null;
+  const impersonationId = httpContext.get('impersonationUserId') || null;
+  const descriptor = httpContext.get('auditDescriptor') || null;
+
+  return {
+    ...(descriptor && { descriptor }),
+    ...(loggedUser && { loggedUser }),
+    ...(impersonationId && { impersonationId }),
+    ...(sessionSig && { sessionSig }),
+    ...(transactionId && { transactionId }),
+  };
+};
 
 // make models for remaining audit system tables
 {
@@ -76,6 +108,8 @@ Object.keys(db).forEach((modelName) => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
+db.descriptiveDetails = descriptiveDetails;
+db.isConnectionOpen = isConnectionOpen;
 
 module.exports = db;
 

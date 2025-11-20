@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
@@ -15,7 +15,6 @@ export default function GoalsObjectives({
   regionId,
   recipient,
   location,
-  canMergeGoals,
 }) {
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
@@ -28,19 +27,29 @@ export default function GoalsObjectives({
 
   const possibleGrants = recipient.grants;
 
-  const onRemoveFilter = (id) => {
+  const onRemoveFilter = useCallback((id) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
     newFilters.splice(index, 1);
     setFilters(newFilters);
-  };
+  }, [filters, setFilters]);
 
-  const filtersToApply = expandFilters(filters);
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+  const hasActiveGrants = useMemo(() => {
+    if (recipient.grants && recipient.grants.find((g) => g.status === 'Active')) {
+      return true;
+    }
 
-  let hasActiveGrants = false;
-  if (recipient.grants.find((g) => g.status === 'Active')) {
-    hasActiveGrants = true;
-  }
+    return false;
+  }, [recipient.grants]);
+
+  const hasMissingStandardGoals = useMemo(() => {
+    if (recipient.missingStandardGoals && recipient.missingStandardGoals.length > 0) {
+      return true;
+    }
+
+    return false;
+  }, [recipient.missingStandardGoals]);
 
   return (
     <>
@@ -63,8 +72,8 @@ export default function GoalsObjectives({
           recipientId={recipientId}
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
+          hasMissingStandardGoals={hasMissingStandardGoals}
           showNewGoals={showNewGoals || false}
-          canMergeGoals={canMergeGoals}
         />
       </div>
     </>
@@ -78,8 +87,12 @@ GoalsObjectives.propTypes = {
     grants: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number.isRequired,
       numberWithProgramTypes: PropTypes.string.isRequired,
-    })).isRequired,
+    })),
+    missingStandardGoals: PropTypes.arrayOf(PropTypes.shape({
+      goalTemplateId: PropTypes.number.isRequired,
+      templateName: PropTypes.string.isRequired,
+      grantId: PropTypes.number.isRequired,
+    })),
   }).isRequired,
   location: ReactRouterPropTypes.location.isRequired,
-  canMergeGoals: PropTypes.bool.isRequired,
 };

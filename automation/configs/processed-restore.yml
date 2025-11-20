@@ -1,0 +1,15 @@
+instances: 1
+memory: 1G
+disk_quota: 64M
+
+buildpack: "binary_buildpack"
+command: "./cf/scripts/idol.sh"
+
+bound_services:
+  - ttahub-db-backups
+  - ttahub-dev-green
+  - ttahub-dev-red
+  - ttahub-dev-blue
+  - ttahub-dev-gold
+  - ttahub-dev-pink
+  - ttahub-staging

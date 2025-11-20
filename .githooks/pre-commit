@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 set -e
 
+# Set USE_DOCKER based on whether both backend and frontend containers are running
+USE_DOCKER=false
+if [ "$(docker ps | grep -E "head-start-ttadp-backend|head-start-ttadp-frontend" | wc -l)" -eq 2 ]; then
+  USE_DOCKER=true
+fi
+
+# Ensure node_modules is populated for frontend or backend (only for non-Docker users)
+check_and_run_yarn() {
+  local dir=$1
+  if [ ! -d "$dir/node_modules" ] || [ -z "$(ls -A "$dir/node_modules")" ]; then
+    echo "Installing dependencies in $dir"
+    (cd "$dir" && yarn)
+  fi
+}
+
 common_changed=false
 common_package_json_changed=false
 frontend_yarn_lock_changed=false
@@ -9,7 +24,6 @@ files=$(git diff --cached --name-only)
 
 for f in $files
 do
-
   # check if packages/common/src/index.js was changed
   if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
     common_changed=true
@@ -37,19 +51,28 @@ do
     git add "$f"
   fi
 
-  # Autolint changed .js files
-  if [ -e "$f" ] && [[ $f == *.js ]]; then
-    yarn lint:fix:single "$f"
-    git add "$f"
-  fi
-
-  # Autolint changed .ts files
-  if [ -e "$f" ] && [[ $f == *.ts ]]; then
-    yarn lint:fix:single "$f"
+  # Autolint changed .js and .ts files
+  if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.ts ]]); then
+    if [ "$USE_DOCKER" = true ]; then
+      if [[ $f == frontend/* ]]; then
+        docker compose run -T --rm frontend yarn lint:fix:single "${f#frontend/}"
+      else
+        docker compose --profile minimal_required_postgres --profile minimal_required_redis run -T --rm backend yarn lint:fix:single "$f"
+      fi
+    else
+      if [[ $f == frontend/* ]]; then
+        check_and_run_yarn frontend
+        (cd frontend && yarn lint:fix:single "${f#frontend/}")
+      else
+        check_and_run_yarn "."
+        yarn lint:fix:single "$f"
+      fi
+    fi
     git add "$f"
   fi
 done
 
+# Versioning and lock file checks
 if [ $common_changed = true ]; then
   if [ $common_package_json_changed = false ]; then
     echo "ERROR: common/src/index.js was changed, but common/package.json was not updated. Please make sure to publish a new version."

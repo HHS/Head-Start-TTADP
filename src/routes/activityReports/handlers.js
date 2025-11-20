@@ -24,6 +24,7 @@ import {
   createOrUpdate,
   activityReports,
   setStatus,
+  handleSoftDeleteReport,
   activityReportAlerts,
   activityReportByLegacyId,
   getDownloadableActivityReportsByIds,
@@ -135,6 +136,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'TTA type',
         },
         {
+          key: 'language',
+          header: 'Language',
+        },
+        {
           key: 'deliveryMethod',
           header: 'Delivery method',
         },
@@ -173,8 +178,16 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Specialist next steps',
         },
         {
+          key: 'specialistNextStepsCompleteDate',
+          header: 'Specialist next steps anticipated completion date',
+        },
+        {
           key: 'recipientNextSteps',
           header: 'Recipient next steps',
+        },
+        {
+          key: 'recipientNextStepsCompleteDate',
+          header: 'Recipient next steps anticipated completion date',
         },
         {
           key: 'createdAt',
@@ -243,8 +256,9 @@ export async function updateLegacyFields(req, res) {
     // no authorization here because the entire route is only available to admins
     const imported = { ...report.imported, ...req.body };
     logger.debug(`Saving new data: ${JSON.stringify(imported, null, 2)}`);
+    const userId = await currentUserId(req, res);
 
-    const savedReport = await createOrUpdate({ imported }, report);
+    const savedReport = await createOrUpdate({ imported }, report, userId);
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -282,6 +296,8 @@ export async function getLegacyReport(req, res) {
 export async function getGoals(req, res) {
   try {
     const { grantIds } = req.query;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const goals = await goalsForGrants(grantIds);
     res.json(goals);
   } catch (error) {
@@ -574,7 +590,7 @@ export async function softDeleteReport(req, res) {
       return;
     }
 
-    await setStatus(report, REPORT_STATUSES.DELETED);
+    await handleSoftDeleteReport(report);
     res.sendStatus(204);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -636,7 +652,7 @@ export async function submitReport(req, res) {
       additionalNotes,
       creatorRole,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
-    }, report);
+    }, report, userId);
 
     // Create, restore or destroy this report's approvers
     const currentApprovers = await syncApprovers(activityReportId, approverUserIds);
@@ -707,6 +723,24 @@ export async function getActivityRecipients(req, res) {
   const { region } = req.query;
   const targetRegion = parseInt(region, DECIMAL_BASE);
   const activityRecipients = await possibleRecipients(targetRegion);
+  res.json(activityRecipients);
+}
+
+export async function getActivityRecipientsForExistingReport(req, res) {
+  const { activityReportId } = req.params;
+
+  const [report] = await activityReportAndRecipientsById(activityReportId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+  const authorization = new ActivityReport(user, report);
+
+  if (!authorization.canGet()) {
+    res.sendStatus(403);
+    return;
+  }
+
+  const targetRegion = parseInt(report.regionId, DECIMAL_BASE);
+  const activityRecipients = await possibleRecipients(targetRegion, activityReportId);
   res.json(activityRecipients);
 }
 
@@ -869,7 +903,7 @@ export async function saveReport(req, res) {
     // since we may not get all fields in the request body
     const savedReport = await createOrUpdate({
       ...existingReport, activityRecipients, ...newReport,
-    }, report);
+    }, report, userId);
 
     if (savedReport.activityReportCollaborators) {
       // only include collaborators that aren't already in the report
@@ -925,7 +959,7 @@ export async function createReport(req, res) {
       return;
     }
     // updateCollaboratorRoles(newReport);
-    const report = await createOrUpdate(newReport);
+    const report = await createOrUpdate(newReport, null, userId);
     if (report.activityReportCollaborators) {
       const collabs = report.activityReportCollaborators;
 

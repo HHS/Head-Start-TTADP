@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
     "target": "esnext",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "outDir": "../build/server",
     "esModuleInterop": true,
-    "moduleResolution": "node",
     "declaration": false,
     "allowJs": true,
     "removeComments": true,
@@ -12,7 +12,9 @@
   },
   "include": [
     "./**/*.js",
-    "./**/*.ts"
+    "./**/*.ts",
+    "../tools/**/*",
+    "../tests/utils/**/*",
+    "../bin/**/*.js"
   ]
 }
-

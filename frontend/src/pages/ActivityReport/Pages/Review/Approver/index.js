@@ -1,32 +1,33 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
-import UserContext from '../../../../../UserContext';
+import { useFormContext } from 'react-hook-form';
 import Review from './Review';
-import Approved from '../Approved';
 import Container from '../../../../../components/Container';
 
 const Approver = ({
   onFormReview,
   reviewed,
-  formData,
   children,
   error,
   isPendingApprover,
   pages,
-  onResetToDraft,
   onFormSubmit,
   availableApprovers,
+  reviewItems,
 }) => {
-  const {
-    additionalNotes,
-    calculatedStatus,
-    approvers,
-    submittedDate,
-  } = formData;
+  const { watch } = useFormContext();
+
+  const additionalNotes = watch('additionalNotes');
+  const calculatedStatus = watch('calculatedStatus');
+  const approvers = watch('approvers');
+  const submittedDate = watch('submittedDate');
+  const id = watch('id');
+  const displayId = watch('displayId');
+  const author = watch('author');
 
   // Approvers should be able to change their review until the report is approved.
   // isPendingApprover:
@@ -43,11 +44,9 @@ const Approver = ({
   const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
   const message = {
     time,
-    reportId: formData.id,
-    displayId: formData.displayId,
+    reportId: id,
+    displayId,
   };
-  const { author } = formData;
-  const { user } = useContext(UserContext);
 
   const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
   const approverCount = approvers ? approvers.length : 0;
@@ -87,11 +86,6 @@ const Approver = ({
           Please review all information in each section before submitting.
         </>
         )}
-        {approved && (
-        <>
-          This report has been approved and is no longer editable
-        </>
-        )}
       </Alert>
     );
   };
@@ -100,7 +94,7 @@ const Approver = ({
     <>
       {renderTopAlert()}
       {children}
-      <Container skipTopPadding className="margin-top-2 padding-top-2 padding-bottom-1" skipBottomPadding>
+      <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding paddingY={0}>
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
             <b>Error</b>
@@ -128,17 +122,8 @@ const Approver = ({
               approverStatusList={approvers}
               pages={pages}
               showDraftViewForApproverAndCreator={showDraftViewForApproverAndCreator}
-              creatorIsApprover={author.id === user.id}
-              onResetToDraft={onResetToDraft}
-              calculatedStatus={calculatedStatus}
               availableApprovers={availableApprovers}
-            />
-          )}
-        {approved
-          && (
-            <Approved
-              additionalNotes={additionalNotes}
-              approverStatusList={approvers}
+              reviewItems={reviewItems}
             />
           )}
       </Container>
@@ -158,29 +143,19 @@ Approver.propTypes = {
   children: PropTypes.node.isRequired,
   error: PropTypes.string,
   isPendingApprover: PropTypes.bool.isRequired,
-  formData: PropTypes.shape({
-    additionalNotes: PropTypes.string,
-    calculatedStatus: PropTypes.string,
-    submittedDate: PropTypes.string,
-    approvers: PropTypes.arrayOf(
-      PropTypes.shape({
-        status: PropTypes.string,
-      }),
-    ),
-    author: PropTypes.shape({
-      name: PropTypes.string,
-      id: PropTypes.number,
-    }),
-    id: PropTypes.number,
-    displayId: PropTypes.string,
-  }).isRequired,
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,
     review: PropTypes.bool,
     label: PropTypes.string,
   })).isRequired,
-  onResetToDraft: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
+  reviewItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      content: PropTypes.node.isRequired,
+    }),
+  ).isRequired,
 };
 
 Approver.defaultProps = {

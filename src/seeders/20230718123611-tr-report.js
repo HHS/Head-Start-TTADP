@@ -41,7 +41,8 @@ module.exports = {
       "data",
       "imported",
       "createdAt",
-      "updatedAt"
+      "updatedAt",
+      "pocIds"
     ) VALUES (
       5,
       ARRAY[]::INTEGER[],
@@ -49,8 +50,10 @@ module.exports = {
       CAST('{"eventId":"R01-PD-23-1037","Full Event Title":"R01 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","eventName":"Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","eventOrganizer":"Regional PD Event (with National Centers)","audience":"Recipients","Event Duration/# NC Days of Support":"Series","reasons":["Ongoing Quality Improvement"],"targetPopulations":["None"],"vision":"Oral Health","creator":"cucumber@hogwarts.com"}' AS JSONB),
       CAST('{"Event ID":"R01-PD-23-1037","Full Event Title":"R01 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","Edit Title":"Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","Event Organizer - Type of Event":"Regional PD Event (with National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Reason for Activity":"Ongoing Quality Improvement","Target Population(s)":"None","Overall Vision/Goal for the PD Event":"Oral Health","Creator":"cucumber@hogwarts.com"}' AS JSONB),
       NOW(),
-      NOW()
-    );    
+      NOW(),
+        ARRAY
+        [3]::INTEGER[] -- Harry Potter POC.
+    );
   `);
   },
 

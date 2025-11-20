@@ -210,6 +210,7 @@ describe('TR overview widget', () => {
       where: {
         id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id],
       },
+      individualHooks: true,
     });
 
     // delete recipients
@@ -232,9 +233,11 @@ describe('TR overview widget', () => {
   it('filters and calculates training report', async () => {
     // Confine this to the grants and reports that we created
     const scopes = {
-      grant: [
-        { id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] },
-      ],
+      grant: {
+        where: [
+          { id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] },
+        ],
+      },
       trainingReport: [
         { id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] },
       ],
@@ -254,5 +257,53 @@ describe('TR overview widget', () => {
       sumDuration: '4.25',
       totalRecipients: '5',
     });
+  });
+
+  it('ignores numberOfParticipants if a string', async () => {
+    // - session report 7
+    await createSessionReport({
+      eventId: trainingReport3.id,
+      data: {
+        deliveryMethod: 'in-person',
+        duration: 1,
+        recipients: [{ value: grant1.id }, { value: grant2.id }],
+        numberOfParticipantsVirtually: 0,
+        numberOfParticipantsInPerson: 0,
+        numberOfParticipants: '',
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      },
+    });
+
+    // - session report 8
+    await createSessionReport({
+      eventId: trainingReport3.id,
+      data: {
+        deliveryMethod: 'in-person',
+        duration: 1,
+        recipients: [{ value: grant1.id }, { value: grant2.id }],
+        numberOfParticipantsVirtually: 0,
+        numberOfParticipantsInPerson: 0,
+        numberOfParticipants: 'twenty-five',
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      },
+    });
+
+    // Confine this to the grants and reports that we created
+    const scopes = {
+      grant: {
+        where: [
+          { id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] },
+        ],
+      },
+      trainingReport: [
+        { id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] },
+      ],
+    };
+
+    // run our function
+    const data = await trOverview(scopes);
+
+    // validate result
+    expect(data.numParticipants).toBe('100');
   });
 });

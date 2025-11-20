@@ -8,6 +8,10 @@
   padding-left: 2rem;
 }
 
+.ttahub-feed-whats-new .ttahub-feed-article-content .feed div:last-child{
+  display: none;
+}
+
 // this adds the little green circle to the left of the "new" notification
 .ttahub-feed-whats-new  .ttahub-feed-article--unread .ttahub-feed-article-content:before {
     content: '';

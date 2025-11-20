@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { formatDate } = require('../lib/modelHelpers');
 
 export default (sequelize, DataTypes) => {
   class Program extends Model {
@@ -23,8 +24,14 @@ export default (sequelize, DataTypes) => {
     },
     programType: DataTypes.STRING,
     startYear: DataTypes.STRING,
-    startDate: DataTypes.STRING,
-    endDate: DataTypes.STRING,
+    startDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
+    endDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
     status: DataTypes.STRING,
     name: DataTypes.STRING,
   }, {

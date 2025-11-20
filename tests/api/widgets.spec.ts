@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import Joi from 'joi';
+import Joi from '@hapi/joi';
 import { reseed } from '../utils/common';
 import { root, validateSchema } from './common';
 
@@ -57,6 +57,8 @@ test.describe('widgets', () => {
     const schema = Joi.array().items(
       Joi.object({
         name: Joi.string().required(),
+        id: Joi.string().required(),
+        trace: Joi.string().required(),
         x: Joi.array().items(Joi.string()).required(),
         y: Joi.array().items(Joi.number()).required(),
         month: Joi.array().items(Joi.boolean()).required()
@@ -66,8 +68,8 @@ test.describe('widgets', () => {
     await validateSchema(response, schema, expect);
   });
 
-  test('reasonList', async ({ request }) => {
-    const response = await request.get(`${root}/widgets/reasonList`);
+  test('standardGoalsList', async ({ request }) => {
+    const response = await request.get(`${root}/widgets/standardGoalsList`);
     expect(response.status()).toBe(200);
 
     const schema = Joi.array().items(
@@ -117,14 +119,8 @@ test.describe('widgets', () => {
       count: Joi.number().integer().required()
     });
 
-    const reasonsSchema = Joi.object({
-      category: Joi.string().required(),
-      count: Joi.number().integer().required()
-    });
-
     const schema = Joi.object({
-      topics: Joi.array().items(topicSchema).required(),
-      reasons: Joi.array().items(reasonsSchema).required()
+      topics: Joi.array().items(topicSchema).required()
     });
 
     await validateSchema(response, schema, expect);

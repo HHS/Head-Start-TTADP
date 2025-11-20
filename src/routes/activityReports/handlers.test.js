@@ -70,11 +70,16 @@ jest.mock('../../services/activityReports', () => ({
   getAllDownloadableActivityReports: jest.fn(),
   getDownloadableActivityReportsByIds: jest.fn(),
   activityReportsForCleanup: jest.fn(),
+  handleSoftDeleteReport: jest.fn(),
 }));
 
 jest.mock('../../services/objectives', () => ({
   saveObjectivesForReport: jest.fn(),
   getObjectivesByReportId: jest.fn(),
+}));
+
+jest.mock('../../services/currentUser', () => ({
+  currentUserId: jest.fn().mockResolvedValue(1),
 }));
 
 jest.mock('../../services/userSettings', () => ({
@@ -242,7 +247,7 @@ describe('Activity Report handlers', () => {
       activityReportByLegacyId.mockResolvedValue(report);
       createOrUpdate.mockResolvedValue(report);
       await updateLegacyFields(request, mockResponse);
-      expect(createOrUpdate).toHaveBeenCalledWith({ imported: { comments } }, report);
+      expect(createOrUpdate).toHaveBeenCalledWith({ imported: { comments } }, report, 1);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
     });
 
@@ -425,6 +430,7 @@ describe('Activity Report handlers', () => {
           displayId,
           objectivesWithoutGoals: [],
         },
+        1,
       );
       expect(syncApprovers).toHaveBeenCalledWith(1, [mockManager.id, secondMockManager.id]);
       expect(assignedNotification).toHaveBeenCalled();
@@ -694,6 +700,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canDelete: () => true,
       }));
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       await softDeleteReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
     });
@@ -702,6 +709,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canDelete: () => false,
       }));
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       await softDeleteReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });

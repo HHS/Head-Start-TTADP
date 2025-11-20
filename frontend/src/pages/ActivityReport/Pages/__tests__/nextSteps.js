@@ -21,7 +21,7 @@ const RenderNextSteps = ({
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { specialistNextSteps, recipientNextSteps },
+    defaultValues: { specialistNextSteps, recipientNextSteps, activityRecipientType },
   });
 
   return (
@@ -85,27 +85,10 @@ describe('next steps review', () => {
       [{ note: 'First Recipient Step', completeDate: '06/03/2022', id: 1 }],
     );
     expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what have you agreed to do next\?/i)).toBeVisible();
+    expect(screen.queryAllByText(/step 1/i).length).toBe(2);
     expect(await screen.findByText(/first specialist step/i)).toBeVisible();
     expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what has the recipient agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByText(/first recipient step/i)).toBeVisible();
-    expect(screen.queryAllByText('Anticipated completion').length).toBe(2);
-    expect(await screen.findByText(/06\/02\/2022/i)).toBeVisible();
-    expect(await screen.findByText(/06\/03\/2022/i)).toBeVisible();
-  });
-  it('renders other entity next steps', async () => {
-    renderReviewNextSteps(
-      [{ note: 'First Specialist Step', completeDate: '06/02/2022', id: 1 }],
-      [{ note: 'First Other Entity Step', completeDate: '06/03/2022', id: 1 }],
-      'other-entity',
-    );
-    expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what have you agreed to do next\?/i)).toBeVisible();
-    expect(await screen.findByText(/first specialist step/i)).toBeVisible();
-    expect(await screen.findByText(/other entity's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what has the other entity agreed to do next\?/i)).toBeVisible();
-    expect(await screen.findByText(/first other entity step/i)).toBeVisible();
     expect(screen.queryAllByText('Anticipated completion').length).toBe(2);
     expect(await screen.findByText(/06\/02\/2022/i)).toBeVisible();
     expect(await screen.findByText(/06\/03\/2022/i)).toBeVisible();
@@ -326,5 +309,29 @@ describe('isPageComplete for Next steps', () => {
       ],
     }, { isValid: false });
     expect(result).toBe(false);
+  });
+
+  it('returns true if completeDate is a valid ISO format', () => {
+    const result = isPageComplete({
+      specialistNextSteps: [
+        { note: 'ISO test', completeDate: '2025-05-17' },
+      ],
+      recipientNextSteps: [
+        { note: 'ISO test 2', completeDate: '2025-05-18' },
+      ],
+    }, { isValid: false });
+    expect(result).toBe(true);
+  });
+
+  it('returns true if completeDate is a valid dot format', () => {
+    const result = isPageComplete({
+      specialistNextSteps: [
+        { note: 'Dot format test', completeDate: '5.17.25' },
+      ],
+      recipientNextSteps: [
+        { note: 'Another one', completeDate: '5.18.25' },
+      ],
+    }, { isValid: false });
+    expect(result).toBe(true);
   });
 });

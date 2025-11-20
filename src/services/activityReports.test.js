@@ -1,3 +1,4 @@
+import faker from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
@@ -14,6 +15,9 @@ import db, {
   Role,
   UserRole,
   Program,
+  Goal,
+  Objective,
+  ActivityReportGoal,
 } from '../models';
 import {
   createOrUpdate,
@@ -32,11 +36,15 @@ import {
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
   activityReportsApprovedByDate,
+  handleSoftDeleteReport,
 } from './activityReports';
 import SCOPES from '../middleware/scopeConstants';
 
-import { createReport, destroyReport } from '../testUtils';
+import {
+  createGrant, createRecipient, createReport, destroyReport,
+} from '../testUtils';
 import { auditLogger } from '../logger';
+import { GOAL_STATUS } from '../constants';
 
 const RECIPIENT_ID = 30;
 const RECIPIENT_ID_SORTING = 31;
@@ -44,6 +52,14 @@ const ALERT_RECIPIENT_ID = 345;
 
 const RECIPIENT_WITH_PROGRAMS_ID = 425;
 const DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID = 426;
+
+const INACTIVE_GRANT_ID_ONE = faker.datatype.number({ min: 9999 });
+const INACTIVE_GRANT_ID_TWO = faker.datatype.number({ min: 9999 });
+const INACTIVE_GRANT_ID_THREE = faker.datatype.number({ min: 9999 });
+
+let inactiveActivityReportOne;
+let inactiveActivityReportTwo;
+let inactiveActivityReportMissingStartDate;
 
 const mockUser = {
   id: 1115665161,
@@ -140,6 +156,7 @@ const reportObject = {
   activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
   version: 2,
   language: ['English', 'Spanish'],
+  activityReason: 'Recipient requested',
 };
 
 const submittedReport = {
@@ -357,7 +374,7 @@ describe('Activity report service', () => {
         ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
         Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGA2' } }),
-        Region.create({ name: 'office 19', id: 19 }),
+        Region.findOrCreate({ where: { name: 'office 19', id: 19 } }),
       ]);
 
       const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
@@ -379,6 +396,12 @@ describe('Activity report service', () => {
         roleId: cor.id,
       });
 
+      await Permission.create({
+        userId: mockUserTwo.id,
+        regionId: 1,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      });
+
       await Grant.create({
         id: RECIPIENT_ID,
         number: 1,
@@ -387,6 +410,80 @@ describe('Activity report service', () => {
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),
+      });
+
+      // Create a inactive grant with a 'inactivationDate' date less than 60 days ago.
+      await Grant.create({
+        id: INACTIVE_GRANT_ID_ONE,
+        number: faker.datatype.number({ min: 9999 }),
+        recipientId: RECIPIENT_ID,
+        regionId: 19,
+        status: 'Inactive',
+        startDate: new Date(),
+        endDate: new Date(),
+        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 60)),
+      });
+
+      // Create a inactive grant with a 'inactivationDate' date more than 90 days ago.
+      await Grant.create({
+        id: INACTIVE_GRANT_ID_TWO,
+        number: faker.datatype.number({ min: 9999 }),
+        recipientId: RECIPIENT_ID,
+        regionId: 19,
+        status: 'Inactive',
+        startDate: new Date(),
+        endDate: new Date(),
+        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 366)),
+      });
+
+      await Grant.create({
+        id: INACTIVE_GRANT_ID_THREE,
+        number: faker.datatype.number({ min: 9999 }),
+        recipientId: RECIPIENT_ID,
+        regionId: 19,
+        status: 'Inactive',
+        startDate: new Date(),
+        endDate: new Date(),
+        inactivationDate: new Date(),
+      });
+
+      // Create a ActivityReport within 60 days.
+      inactiveActivityReportOne = await ActivityReport.create({
+        ...submittedReport,
+        userId: mockUser.id,
+        lastUpdatedById: mockUser.id,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        activityRecipients: [],
+        // Set a start date that will return the inactive grant.
+        startDate: new Date(new Date().setDate(new Date().getDate() - 62)),
+        endDate: new Date(new Date().setDate(new Date().getDate() - 62)),
+      });
+
+      // Create a ActivityReport outside of 90 days.
+      inactiveActivityReportTwo = await ActivityReport.create({
+        ...submittedReport,
+        userId: mockUser.id,
+        lastUpdatedById: mockUser.id,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        activityRecipients: [],
+        // Set a start date that will NOT return the inactive grant.
+        startDate: new Date(new Date().setDate(new Date().getDate() + 366)),
+        endDate: new Date(new Date().setDate(new Date().getDate() + 366)),
+      });
+
+      // Create a ActivityReport without start date.
+      inactiveActivityReportMissingStartDate = await ActivityReport.create({
+        ...submittedReport,
+        userId: mockUser.id,
+        lastUpdatedById: mockUser.id,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        activityRecipients: [],
+        // If there is no start date use today's date.
+        startDate: null,
+        endDate: null,
       });
     });
 
@@ -398,30 +495,44 @@ describe('Activity report service', () => {
         alertsMockUserOne.id,
         alertsMockUserTwo.id,
         mockUserFour.id,
-        mockUserFive.id];
+        mockUserFive.id,
+      ];
+
+      // Get reports and their IDs
       const reports = await ActivityReport.findAll({ where: { userId: userIds } });
       const ids = reports.map((report) => report.id);
+
+      // Delete dependent entities FIRST (in the correct order)
       await NextStep.destroy({ where: { activityReportId: ids } });
       await ActivityRecipient.destroy({ where: { activityReportId: ids } });
       await ActivityReportApprover.destroy({ where: { activityReportId: ids }, force: true });
       await ActivityReportCollaborator.destroy({ where: { activityReportId: ids }, force: true });
-      await ActivityReport.destroy({ where: { id: ids } });
+
+      await ActivityReport.destroy({ where: { id: ids }, force: true });
+
+      // User-related cleanup
       await UserRole.destroy({ where: { userId: userIds } });
-      await User.destroy({ where: { id: userIds } });
       await Permission.destroy({ where: { userId: userIds } });
-      await OtherEntity.destroy({ where: { id: RECIPIENT_ID } });
+      await User.destroy({ where: { id: userIds }, force: true });
+
+      // Delete program dependencies
       await Program.destroy({ where: { id: [585, 586, 587] } });
-      await Grant.unscoped().destroy({
+
+      // Delete Grants BEFORE Recipients
+      await Grant.destroy({
         where: {
-          id: [
+          recipientId: [
             RECIPIENT_ID,
             RECIPIENT_ID_SORTING,
             RECIPIENT_WITH_PROGRAMS_ID,
             DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
           ],
         },
+        force: true,
         individualHooks: true,
       });
+
+      // Only now delete the Recipients
       await Recipient.unscoped().destroy({
         where: {
           id: [
@@ -431,18 +542,24 @@ describe('Activity report service', () => {
             DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
           ],
         },
+        force: true,
+        individualHooks: true,
       });
+
+      // Clean up any additional entities
+      await OtherEntity.destroy({ where: { id: RECIPIENT_ID }, force: true });
       await Region.destroy({ where: { id: 19 } });
     });
 
     describe('createOrUpdate', () => {
       it('updates an already saved report', async () => {
         const report = await ActivityReport.create({ ...reportObject, id: 3334 });
-        await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }] }, report);
+        await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }], activityReason: 'Regional Office requested' }, report);
         expect(report.activityRecipientType).toEqual('recipient');
         expect(report.calculatedStatus).toEqual('draft');
         expect(report.ECLKCResourcesUsed).toEqual(['updated']);
         expect(report.language).toStrictEqual(['English', 'Spanish']);
+        expect(report.activityReason).toEqual('Regional Office requested');
         expect(report.id).toEqual(3334);
       });
 
@@ -501,11 +618,7 @@ describe('Activity report service', () => {
         expect(report.activityRecipients[0].id).toBe(RECIPIENT_ID);
         // Check afterCreate copySubmissionStatus hook
         expect(report.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
-      });
-
-      it('creates a new report with other-entity recipient', async () => {
-        const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'other-entity' });
-        expect(report.activityRecipients[0].id).toBe(RECIPIENT_ID);
+        expect(report.activityReason).toEqual('Recipient requested');
       });
 
       it('handles reports with collaborators', async () => {
@@ -620,8 +733,8 @@ describe('Activity report service', () => {
         // Given an report with some notes
         const reportObjectWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-05-31T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-10T12:00:00Z' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-02T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-22T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '05/31/2022' }, { note: 'harry', completeDate: '06/10/2022' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/02/2022' }, { note: 'Toy Story', completeDate: '06/22/2022' }],
         };
         // When that report is created
         let report;
@@ -645,7 +758,7 @@ describe('Activity report service', () => {
         // And no recipient notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-05-31T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-10T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '05/31/2022' }, { note: 'harry', completeDate: '06/10/2022' }],
           recipientNextSteps: [],
         };
 
@@ -659,7 +772,8 @@ describe('Activity report service', () => {
         }
 
         // Then we see that it was saved correctly
-        expect(report.recipientNextSteps.length).toBe(0);
+        expect(report.recipientNextSteps.length).toBe(1);
+        expect(report.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
         expect(report.specialistNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['05/31/2022', '06/10/2022']));
@@ -671,7 +785,7 @@ describe('Activity report service', () => {
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-02T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-22T12:00:00Z' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/02/2022' }, { note: 'Toy Story', completeDate: '06/22/2022' }],
         };
 
         // When that report is created
@@ -684,7 +798,8 @@ describe('Activity report service', () => {
         }
 
         // Then we see that it was saved correctly
-        expect(report.specialistNextSteps.length).toBe(0);
+        expect(report.specialistNextSteps.length).toBe(1);
+        expect(report.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
         expect(report.recipientNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
         expect(report.recipientNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/02/2022', '06/22/2022']));
@@ -694,13 +809,13 @@ describe('Activity report service', () => {
         // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '06/01/2022' }, { note: 'harry', completeDate: '06/02/2022' }],
           recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
         // When the report is updated with new set of specialist notes
-        const notes = { specialistNextSteps: [{ note: 'harry', completeDate: '2022-06-04T12:00:00Z' }, { note: 'spongebob', completeDate: '2022-06-06T12:00:00Z' }] };
+        const notes = { specialistNextSteps: [{ note: 'harry', completeDate: '06/04/2022' }, { note: 'spongebob', completeDate: '06/06/2022' }] };
         const updatedReport = await createOrUpdate(notes, report);
 
         // Then we see it was updated correctly
@@ -716,12 +831,12 @@ describe('Activity report service', () => {
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-01T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-02T12:00:00Z' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/01/2022' }, { note: 'Toy Story', completeDate: '06/02/2022' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
         // When the report is updated with new set of recipient notes
-        const notes = { recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-04T12:00:00Z' }, { note: 'spongebob', completeDate: '2022-06-06T12:00:00Z' }] };
+        const notes = { recipientNextSteps: [{ note: 'One Piece', completeDate: '06/04/2022' }, { note: 'spongebob', completeDate: '06/06/2022' }] };
         const updatedReport = await createOrUpdate(notes, report);
 
         // Then we see it was updated correctly
@@ -736,8 +851,8 @@ describe('Activity report service', () => {
         // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-03T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-04T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '06/01/2022' }, { note: 'harry', completeDate: '06/02/2022' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/02/2022' }, { note: 'Toy Story', completeDate: '06/04/2022' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
@@ -750,16 +865,18 @@ describe('Activity report service', () => {
 
         // Then we see the report was updated correctly
         expect(updatedReport.id).toBe(report.id);
-        expect(updatedReport.recipientNextSteps.length).toBe(0);
-        expect(updatedReport.specialistNextSteps.length).toBe(0);
+        expect(updatedReport.recipientNextSteps.length).toBe(1);
+        expect(updatedReport.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(updatedReport.specialistNextSteps.length).toBe(1);
+        expect(updatedReport.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
       });
 
       it('handles notes being the same', async () => {
         // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-03T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-04T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '06/01/2022' }, { note: 'harry', completeDate: '06/02/2022' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/03/2022' }, { note: 'Toy Story', completeDate: '06/04/2022' }],
         };
         const report = await createOrUpdate(reportWithNotes);
         const recipientIds = report.recipientNextSteps.map((note) => note.id);
@@ -874,8 +991,8 @@ describe('Activity report service', () => {
           programType: 'EHS',
           startYear: 'Aeons ago',
           status: 'active',
-          startDate: 'today',
-          endDate: 'tomorrow',
+          startDate: new Date('2023-01-01'),
+          endDate: new Date('2025-01-01'),
         });
 
         await Program.create({
@@ -885,17 +1002,17 @@ describe('Activity report service', () => {
           programType: 'HS',
           startYear: 'The murky depths of time',
           status: 'active',
-          startDate: 'today',
-          endDate: 'tomorrow',
+          startDate: new Date('2023-01-01'),
+          endDate: new Date('2025-01-01'),
         });
 
         expect(recipientWithProgram.name).toBe('recipient with program');
         const createdGrant = await Grant.findOne({ where: { number: 'recipgrantnumber695' } });
-        expect(createdGrant.name).toBe('recipient with program - recipgrantnumber695 ');
+        expect(createdGrant.name).toBe('recipient with program - recipgrantnumber695');
         const [foundReport, activityRecipients] = await activityReportAndRecipientsById(report.id);
         expect(foundReport).not.toBeNull();
         expect(activityRecipients.length).toBe(1);
-        expect(activityRecipients[0].name).toBe('recipient with program - recipgrantnumber695  - EHS, HS');
+        expect(activityRecipients[0].name).toBe('recipient with program - recipgrantnumber695 - EHS, HS');
       });
       it('excludes soft deleted approvers', async () => {
         // To include deleted approvers in future add paranoid: false
@@ -1068,8 +1185,19 @@ describe('Activity report service', () => {
       it('retrieves correct recipients in region', async () => {
         const region = 19;
         const recipients = await possibleRecipients(region);
-
         expect(recipients.grants.length).toBe(1);
+
+        // Get the grant with the id ALERT_RECIPIENT_ID.
+        const alertRecipient = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === RECIPIENT_ID,
+        );
+        expect(alertRecipient.length).toBe(1);
+
+        // Get the grant with the id inactiveGrantIdOne.
+        const inactiveRecipient = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_ONE,
+        );
+        expect(inactiveRecipient.length).toBe(1);
       });
 
       it('retrieves no recipients in empty region', async () => {
@@ -1077,6 +1205,63 @@ describe('Activity report service', () => {
         const recipients = await possibleRecipients(region);
 
         expect(recipients.grants.length).toBe(0);
+      });
+
+      it('retrieves inactive grant inside of range with report', async () => {
+        const region = 19;
+        const recipients = await possibleRecipients(region, inactiveActivityReportOne.id);
+        expect(recipients.grants.length).toBe(1);
+
+        // Get the grant with the id RECIPIENT_ID.
+        const alertRecipient = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === RECIPIENT_ID,
+        );
+        expect(alertRecipient.length).toBe(1);
+
+        // Get the grant with the id inactiveGrantIdOne.
+        const inactiveRecipient = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_ONE,
+        );
+        expect(inactiveRecipient.length).toBe(1);
+      });
+
+      it('doesn\'t retrieve inactive grant outside of range with report', async () => {
+        const region = 19;
+        const recipients = await possibleRecipients(region, inactiveActivityReportTwo.id);
+        expect(recipients.grants.length).toBe(1);
+        expect(recipients.grants[0].grants.length).toBe(1);
+
+        // Get the grant with the id RECIPIENT_ID.
+        const alertRecipient = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === RECIPIENT_ID,
+        );
+        expect(alertRecipient.length).toBe(1);
+      });
+
+      it('retrieves inactive grant inside of range with report missing start date', async () => {
+        const region = 19;
+        // eslint-disable-next-line max-len
+        const recipients = await possibleRecipients(region, inactiveActivityReportMissingStartDate.id);
+        expect(recipients.grants.length).toBe(1);
+        expect(recipients.grants[0].grants.length).toBe(3);
+
+        // Get the grant with the id RECIPIENT_ID.
+        const alertRecipient = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === RECIPIENT_ID,
+        );
+        expect(alertRecipient.length).toBe(1);
+
+        // Get the grant with the id INACTIVE_GRANT_ID_ONE.
+        const inactiveGrantOne = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_ONE,
+        );
+        expect(inactiveGrantOne.length).toBe(1);
+
+        // Get the grant with the id INACTIVE_GRANT_ID_THREE (todays date).
+        const inactiveGrantThree = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_THREE,
+        );
+        expect(inactiveGrantThree.length).toBe(1);
       });
     });
 
@@ -1134,8 +1319,8 @@ describe('Activity report service', () => {
           programType: 'DWN',
           startYear: 'Aeons ago',
           status: 'active',
-          startDate: 'today',
-          endDate: 'tomorrow',
+          startDate: new Date('2023-01-01'),
+          endDate: new Date('2025-01-01'),
         });
 
         // create one approved legacy
@@ -1157,7 +1342,7 @@ describe('Activity report service', () => {
           (r) => r.id === approvedReport.id,
         );
         expect(foundApprovedReports.length).toBe(1);
-        expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695  - DWN');
+        expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695 - DWN');
       });
 
       it('returns all approved reports when provided with IDs', async () => {
@@ -1166,6 +1351,18 @@ describe('Activity report service', () => {
           {},
           0,
           [approvedReport.id],
+        );
+        const ids = rows.map((row) => row.id);
+        expect(ids.length).toEqual(1);
+        expect(ids).toContain(approvedReport.id);
+      });
+
+      it('coerces single report id params into an array', async () => {
+        const rows = await getAllDownloadableActivityReports(
+          '14',
+          {},
+          0,
+          `${approvedReport.id}`,
         );
         const ids = rows.map((row) => row.id);
         expect(ids.length).toEqual(1);
@@ -1798,6 +1995,140 @@ describe('Activity report service', () => {
         expect(authorDigest).toBeDefined();
         expect(authorDigest.id).toBe(report.id);
       });
+    });
+  });
+  describe('handleSoftDeleteReport', () => {
+    let user;
+    let report;
+    let alternateReport;
+    let unrelatedReport;
+    let recipient;
+    let grant;
+    let goal;
+    let alternateGoal;
+    let unrelatedGoal;
+
+    beforeAll(async () => {
+      user = await User.create({
+        ...mockUserFour,
+        hsesUserId: faker.datatype.string(10),
+        id: faker.datatype.number({ min: 90000 }),
+      });
+      recipient = await createRecipient({});
+      grant = await createGrant({ recipientId: recipient.id });
+
+      report = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+      alternateReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+      unrelatedReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+      unrelatedGoal = await Goal.create({
+        name: 'Unrelated Goal',
+        createdVia: 'activityReport',
+        grantId: grant.id,
+        status: GOAL_STATUS.NOT_STARTED,
+      });
+      goal = await Goal.create({
+        name: 'Test Goal',
+        createdVia: 'activityReport',
+        grantId: grant.id,
+        status: GOAL_STATUS.NOT_STARTED,
+      });
+      alternateGoal = await Goal.create({
+        name: 'Test Alternate Goal',
+        createdVia: 'activityReport',
+        grantId: grant.id,
+        status: GOAL_STATUS.NOT_STARTED,
+      });
+      await Objective.create({
+        title: 'Test Objective',
+        goalId: goal.id,
+        status: GOAL_STATUS.NOT_STARTED,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: unrelatedReport.id,
+        goalId: unrelatedGoal.id,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: report.id,
+        goalId: goal.id,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: report.id,
+        goalId: alternateGoal.id,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: alternateReport.id,
+        goalId: alternateGoal.id,
+      });
+    });
+
+    afterAll(async () => {
+      const reports = [report.id, alternateReport.id, unrelatedReport.id];
+      const goals = [goal.id, alternateGoal.id, unrelatedGoal.id];
+      await ActivityReportGoal.destroy(
+        {
+          where: {
+            activityReportId: reports,
+          },
+        },
+      );
+      await Objective.destroy({ where: { goalId: goals }, force: true });
+      await Goal.destroy({ where: { id: goals }, force: true });
+      await ActivityReport.unscoped().destroy({ where: { id: reports }, force: true });
+      // await ActivityReport.unscoped().destroy({ where: { userId: user.id }, force: true });
+      await Grant.destroy({ where: { id: grant.id }, force: true, individualHooks: true });
+      await Recipient.destroy({ where: { id: recipient.id }, force: true });
+      await User.destroy({ where: { id: user.id }, force: true });
+    });
+
+    it('soft deletes goals and objectives associated with the report', async () => {
+      expect(report.submissionStatus).toBe(REPORT_STATUSES.APPROVED);
+      await handleSoftDeleteReport(report);
+
+      const objs = await Objective.findAll({
+        where: { goalId: [goal.id, alternateGoal.id] },
+        paranoid: false,
+      });
+      const gls = await Goal.findAll({
+        where: { id: [goal.id, alternateGoal.id] },
+        paranoid: false,
+      });
+
+      expect(report.submissionStatus).toBe(REPORT_STATUSES.DELETED);
+      expect(objs.length).toBe(1);
+      const deletedObjectives = objs.filter((o) => o.deletedAt !== null);
+      expect(deletedObjectives.length).toBe(1);
+      const [deletedObjective] = deletedObjectives;
+      expect(deletedObjective.goalId).toBe(goal.id);
+      expect(gls.length).toBe(2);
+      const deletedGoals = gls.filter((g) => g.deletedAt !== null);
+      expect(deletedGoals.length).toBe(1);
+      const [deletedGoal] = deletedGoals;
+      expect(deletedGoal.id).toBe(goal.id);
+
+      const unrelated = await Goal.findByPk(unrelatedGoal.id, { paranoid: false });
+      expect(unrelated).not.toBeNull();
+      expect(unrelated.deletedAt).toBeNull();
     });
   });
 });

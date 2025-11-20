@@ -1,103 +1,23 @@
-import sequelize from 'sequelize';
-import { classScore, monitoringData } from './monitoring';
+import { createMonitoringData, destroyMonitoringData } from './monitoring.testHelpers';
+import {
+  classScore,
+  monitoringData,
+  ttaByReviews,
+  ttaByCitations,
+} from './monitoring';
 import db from '../models';
 
 const {
   Grant,
   GrantNumberLink,
-  MonitoringReviewGrantee,
-  MonitoringReviewStatus,
-  MonitoringReview,
-  MonitoringReviewLink,
-  MonitoringReviewStatusLink,
   MonitoringClassSummary,
+  MonitoringReview,
 } = db;
 
 const RECIPIENT_ID = 9;
 const REGION_ID = 1;
 const GRANT_NUMBER = '01HP044446';
 const GRANT_ID = 665;
-
-async function createMonitoringData(grantNumber) {
-  await MonitoringClassSummary.findOrCreate({
-    where: { grantNumber },
-    defaults: {
-      reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
-      grantNumber,
-      emotionalSupport: 6.2303,
-      classroomOrganization: 5.2303,
-      instructionalSupport: 3.2303,
-      reportDeliveryDate: '2023-05-22 21:00:00-07',
-      hash: 'seedhashclasssum1',
-      sourceCreatedAt: '2023-05-22 21:00:00-07',
-      sourceUpdatedAt: '2023-05-22 21:00:00-07',
-    },
-  });
-
-  await MonitoringReviewGrantee.findOrCreate({
-    where: { grantNumber },
-    defaults: {
-      reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
-      granteeId: '14FC5A81-8E27-4B06-A107-9C28762BC2F6',
-      grantNumber,
-      sourceCreatedAt: '2024-02-12 14:31:55.74-08',
-      sourceUpdatedAt: '2024-02-12 14:31:55.74-08',
-      createTime: '2023-11-14 21:00:00-08',
-      updateTime: '2024-02-12 14:31:55.74-08',
-      updateBy: 'Support Team',
-    },
-  });
-
-  await MonitoringReview.findOrCreate({
-    where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' },
-    defaults: {
-      reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
-      contentId: '653DABA6-DE64-4081-B5B3-9A126487E8F',
-      statusId: 6006,
-      startDate: '2024-02-12',
-      endDate: '2024-02-12',
-      reviewType: 'FA-1',
-      reportDeliveryDate: '2023-02-21 21:00:00-08',
-      outcome: 'Complete',
-      hash: 'seedhashrev2',
-      sourceCreatedAt: '2023-02-22 21:00:00-08',
-      sourceUpdatedAt: '2023-02-22 21:00:00-08',
-    },
-  });
-
-  await MonitoringReviewLink.findOrCreate({
-    where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' },
-    defaults: {
-      reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
-    },
-  });
-
-  await MonitoringReviewStatusLink.findOrCreate({
-    where: { statusId: 6006 },
-    defaults: {
-      statusId: 6006,
-    },
-  });
-
-  await MonitoringReviewStatus.findOrCreate({
-    where: { statusId: 6006 },
-    defaults: {
-      statusId: 6006,
-      name: 'Complete',
-      sourceCreatedAt: '2024-02-12 14:31:55.74-08',
-      sourceUpdatedAt: '2024-02-12 14:31:55.74-08',
-    },
-  });
-}
-
-async function destroyMonitoringData(grantNumber) {
-  await MonitoringReviewGrantee.destroy({ where: { grantNumber }, force: true });
-  await MonitoringClassSummary.destroy({ where: { grantNumber }, force: true });
-  await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
-  await MonitoringReviewLink.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
-  await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
-  await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
-}
 
 describe('monitoring services', () => {
   beforeAll(async () => {
@@ -118,7 +38,7 @@ describe('monitoring services', () => {
 
   afterAll(async () => {
     await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
-    await sequelize.close();
+    await db.sequelize.close();
   });
 
   describe('classScore', () => {
@@ -141,11 +61,58 @@ describe('monitoring services', () => {
         regionId: REGION_ID,
         grantNumber: GRANT_NUMBER,
         received: expect.any(String),
-        // sequelize retrieves numeric fields as strings
         ES: expect.any(String),
         CO: expect.any(String),
         IS: expect.any(String),
       });
+    });
+    it('returns an empty object when no score is found', async () => {
+      jest.spyOn(MonitoringClassSummary, 'findOne').mockResolvedValueOnce(null);
+
+      const data = await classScore({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
+      });
+
+      expect(data).toEqual({});
+    });
+    it('returns an empty object when the score date is before 2020-11-09', async () => {
+      jest.spyOn(MonitoringClassSummary, 'findOne').mockResolvedValueOnce({
+        emotionalSupport: 6.2303,
+        classroomOrganization: 5.2303,
+        instructionalSupport: 3.2303,
+        reportDeliveryDate: '2020-10-01 21:00:00-07',
+      });
+
+      const data = await classScore({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
+      });
+
+      expect(data).toEqual({});
+    });
+    it('returns an empty object when the grant is a CDI grant', async () => {
+      jest.spyOn(MonitoringClassSummary, 'findOne').mockResolvedValueOnce({
+        emotionalSupport: 6.2303,
+        classroomOrganization: 5.2303,
+        instructionalSupport: 3.2303,
+        reportDeliveryDate: '2025-05-22 21:00:00-07',
+      });
+
+      jest.spyOn(Grant, 'findOne').mockResolvedValueOnce({
+        number: GRANT_NUMBER,
+        cdi: true,
+      });
+
+      const data = await classScore({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
+      });
+
+      expect(data).toEqual({});
     });
   });
   describe('monitoringData', () => {
@@ -171,10 +138,6 @@ describe('monitoring services', () => {
     });
 
     it('returns data in the correct format', async () => {
-      const recipientId = RECIPIENT_ID;
-      const regionId = REGION_ID;
-      const grantNumber = GRANT_NUMBER;
-
       const grant = await Grant.findOne({
         where: { id: GRANT_ID },
       });
@@ -188,19 +151,33 @@ describe('monitoring services', () => {
       expect(grantNumberLink).not.toBeNull();
 
       const data = await monitoringData({
-        recipientId,
-        regionId,
-        grantNumber,
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
       });
 
       expect(data).toEqual({
-        recipientId,
-        regionId,
-        grant: grantNumber,
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grant: GRANT_NUMBER,
         reviewStatus: 'Complete',
-        reviewDate: '02/22/2023',
+        reviewDate: '02/22/2025',
         reviewType: 'FA-1',
       });
+    });
+
+    it('returns the most recent review', async () => {
+      const data = await monitoringData({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
+      });
+
+      expect(data).not.toBeNull();
+      expect(data.reviewDate).toEqual('02/22/2025');
+
+      await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C809' }, force: true });
+      await MonitoringReview.destroy({ where: { reviewId: 'D58FBB78-91CA-4236-8DB6-0022E7E8D909' }, force: true });
     });
   });
   describe('Grant afterCreate', () => {
@@ -238,6 +215,22 @@ describe('monitoring services', () => {
       expect(createdGrantNumberLink).not.toBeNull();
       expect(createdGrantNumberLink.grantNumber).toEqual('14CH123');
       expect(createdGrantNumberLink.grantId).toEqual(GRANT_ID + 2);
+    });
+  });
+  describe('ttaByReviews', () => {
+    // ttaByReviews is a stub function that returns some sample data currently,
+    // so this test just ensures it returns an array for coverage purposes.
+    it('returns an array', async () => {
+      const data = await ttaByReviews(RECIPIENT_ID, REGION_ID);
+      expect(Array.isArray(data)).toBe(true);
+    });
+  });
+  describe('ttaByCitations', () => {
+    // ttaByCitations is a stub function that returns some sample data currently,
+    // so this test just ensures it returns an array for coverage purposes.
+    it('returns an array', async () => {
+      const data = await ttaByCitations(RECIPIENT_ID, REGION_ID);
+      expect(Array.isArray(data)).toBe(true);
     });
   });
 });

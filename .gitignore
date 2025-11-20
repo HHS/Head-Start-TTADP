@@ -11,6 +11,7 @@ tests/api/report
 tests/e2e/report
 tests/e2e/test-results
 tests/api/test-results
+test-results
 
 # Ignore /doc => /docs symbolic link created for adr-tools
 /doc
@@ -42,8 +43,23 @@ newrelic_agent.log
 # DB files
 .vscode/settings.json
 
-# Similarity job scheduler DB
-*.sqlite
-
 # Python cache
 __pycache__/
+
+# Database backup stuff
+bounce.sql
+db.sql
+
+# E2E Test report files
+tests/e2e/html-report
+tests/e2e/report.xml
+
+# Playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Claude/Anthropic config files
+CLAUDE.md
+

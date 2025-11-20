@@ -21,7 +21,33 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
-## 1.4.0 
+# 2.2.14
+Added two new topics.
+
+# 2.2.11
+Remove duplicate goal close reason.
+
+# 2.2.10
+Change the values for "why was the activity conducted?".
+
+# 2.2.9
+Added activity report "why was the activity conducted?" values.
+
+# 2.2.7
+Additional variations of disallowed ECLKC and HeadStart URLS.
+
+# 2.2.3
+Target population and reason changes
+
+## 2.2.2
+
+Change ECLKC to headstart.gov.
+
+## 2.1.6
+
+Remove constants related to ElasticSearch.
+
+## 1.4.0
 Add SUPPORT_TYPE
 
 ### 1.1.9/1.2.0
@@ -40,7 +66,7 @@ Distinguish between training report url params and training report statuses
 Add "event target populations"
 
 ###  1.1.2
-#### 1.1.1 
+#### 1.1.1
 - Add COLLABORATOR_TRAINING_REPORTS permissions
 
 

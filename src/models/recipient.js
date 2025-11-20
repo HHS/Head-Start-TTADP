@@ -12,8 +12,13 @@ export default (sequelize, DataTypes) => {
   class Recipient extends Model {
     static associate(models) {
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
-      Recipient.hasMany(models.SimScoreGoalCache, { foreignKey: 'recipient_id', as: 'recipient' });
-      Recipient.hasMany(models.CommunicationLog, { foreignKey: 'recipientId', as: 'communicationLogs' });
+      Recipient.hasMany(models.CommunicationLogRecipient, { foreignKey: 'recipientId', as: 'communicationLogRecipients' });
+      Recipient.belongsToMany(models.CommunicationLog, {
+        through: models.CommunicationLogRecipient,
+        foreignKey: 'recipientId',
+        otherKey: 'communicationLogId',
+        as: 'logs',
+      });
     }
   }
   Recipient.init({

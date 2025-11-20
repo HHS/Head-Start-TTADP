@@ -122,6 +122,7 @@ function ResourcesAssociatedWithTopics({
       offset={offset}
       perPage={perPageNumber}
       handlePageChange={handlePageChange}
+      titleMargin={{ bottom: 1 }}
     >
       <HorizontalTableWidget
         headers={data.headers || []}

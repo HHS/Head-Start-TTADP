@@ -1,7 +1,17 @@
-@use '../colors.scss' as *;
+@use "../colors.scss" as *;
 
-@media(min-width: 60em) {
-  .smarthub-horizontal-table-widget .data-header{
+@media (min-width: 60em) {
+  .smarthub-horizontal-table-widget
+  .smarthub-horizontal-table-first-column-border::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    border-right: 1px solid black;
+  }
+
+  .smarthub-horizontal-table-widget .data-header {
     background: #fff;
     border-bottom: 0px;
     position: sticky;
@@ -9,21 +19,24 @@
     vertical-align: bottom;
   }
 
-  .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column {
-    position: sticky;
-    z-index: 1;
-    max-width: 330px;
-    min-width: 330px;
-    box-shadow: inset 0 0 0 black, inset -1px 0 0 black;
-  }
-
   .smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column {
     z-index: 1;
     position: sticky;
     right: 0;
     font-weight: bold;
-    box-shadow: inset 1px 0 0 black, inset 0 0 0 black;
     min-width: 90px;
+  }
+
+  // Because putting the border on the sticky element doesn't work, and box-shadow
+  // isn't ideal because of z-indexing weirdness that happens when a ContextMenu
+  // is above the border.
+  .smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-left: 1px solid black;
   }
 
   .smarthub-horizontal-table-widget .usa-table-container--scrollable th {
@@ -36,7 +49,7 @@
   min-width: 44px;
   position: sticky;
   left: 0;
-
+  z-index: 1;
 }
 
 .smarthub-horizontal-table-widget thead .checkbox-column {
@@ -45,62 +58,109 @@
   left: 0;
 }
 
-  .smarthub-horizontal-table-widget .usa-table .data-header {
-    min-width: 90px;
-  }
+.smarthub-horizontal-table-widget .usa-table .data-header {
+  min-width: 90px;
+  white-space: nowrap;
+}
 
-  .smarthub-horizontal-table-widget .usa-table thead th[aria-sort] {
-      background-color: white;
-  }
+.smarthub-horizontal-table-widget .usa-table thead th[aria-sort] {
+  background-color: white;
+}
 
-  .smarthub-horizontal-table-widget {
-    height: calc(100% - 1.5rem);
-  }
+.smarthub-horizontal-table-widget {
+  height: calc(100% - 1.5rem);
+}
 
-  .smarthub-horizontal-table-widget .usa-table-container--scrollable {
-    overflow-x: auto;
-    overflow-y: auto;
-  }
+.smarthub-horizontal-table-widget .usa-table-container--scrollable {
+  overflow-x: auto;
+  overflow-y: auto;
+}
 
-  .smarthub-horizontal-table-widget .usa-table-container--scrollable thead {
-    border-top: 1px solid lightgray;
-  }
+.smarthub-horizontal-table-widget .usa-table-container--scrollable thead {
+  border-top: 1px solid lightgray;
+}
 
-  .smarthub-horizontal-table-widget .usa-table td {
-    border: none;
-    text-align: left;
-  }
+.smarthub-horizontal-table-widget .usa-table td {
+  border: none;
+  text-align: left;
+  max-width: 250px;
+}
 
-  .smarthub-horizontal-table-widget .usa-table .data-description {
-    max-width: 500px;
-  }
+.smarthub-horizontal-table-widget .usa-table .data-description {
+  max-width: 500px;
+}
 
-  .smarthub-horizontal-table-widget .usa-table .data-description p {
-    margin: 0px;
-    padding: 0px;
-  }
+.smarthub-horizontal-table-widget .usa-table .data-description p {
+  margin: 0px;
+  padding: 0px;
+}
 
-  .smarthub-horizontal-table-widget .usa-table thead th button {
-    text-decoration: none;
-    font-weight: bold;
-    color: $base-darkest;
-  }
+.smarthub-horizontal-table-widget .usa-table thead th button {
+  text-decoration: none;
+  font-weight: bold;
+  color: $base-darkest;
+}
 
-  .smarthub-horizontal-table-widget .usa-checkbox__label {
-    padding-left: 0;
-  }
+// Because .usa-table--borderless thead th applies a transparent
+// background, so .bg-white on the th isn't specific enough, hence
+// a class seems like an okay solution here.
+.smarthub-horizontal-table-widget .usa-table thead th.fixed-th {
+  background-color: white;
+}
 
-  .smarthub-horizontal-table-widget a {
-     max-width: 50ch; /* the ch unit is character, so a max width of 55 characters */
-     display: inline-block;
-     vertical-align: middle;
-   }
+.smarthub-horizontal-table-widget .usa-checkbox__label {
+  padding-left: 0;
+}
 
-   // select the svg on the page and set the vertical-align to middle.
-   .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column svg {
-      vertical-align: middle;
-    }
+.smarthub-horizontal-table-widget a {
+  max-width: 50ch; /* the ch unit is character, so a max width of 55 characters */
+  display: inline-block;
+  vertical-align: middle;
+}
 
-    .smarthub-horizontal-table-widget .left-with-checkbox {
-      left: 44px;
-    }
+// select the svg on the page and set the vertical-align to middle.
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column svg {
+  vertical-align: middle;
+}
+
+.smarthub-horizontal-table-widget .left-with-checkbox {
+  left: 44px;
+}
+
+
+.smarthub-horizontal-table-widget tfoot {
+  border-top: 1px solid $text-ink;
+}
+
+.smarthub-horizontal-table-widget tfoot td {
+  font-weight: bold;
+}
+
+// First footer cell sticky.
+.smarthub-horizontal-table-widget tfoot td:first-child {
+  left: 0;
+  position: sticky;
+  z-index: 1;
+  min-width: 64px;
+}
+
+// Second footer cell sticky.
+.smarthub-horizontal-table-widget tfoot td:nth-child(2) {
+  position: sticky;
+  z-index: 1;
+  max-width: 330px;
+  left: 44px;
+}
+
+// Make sure first column is always sticky.
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column {
+  position: sticky;
+  z-index: 1;
+  max-width: 330px;
+}
+
+// Ensure cell font size is consistent, even when it's a tooltip wrapper
+.smarthub-horizontal-table-widget .usa-table tbody td,
+.smarthub-horizontal-table-widget .usa-table tbody td .smart-hub-tooltip .smart-hub--ellipsis {
+  font-size: 1.06rem;
+}

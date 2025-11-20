@@ -23,10 +23,10 @@ export default async function manuallyTriggerImportSystem(
           await process(importId);
           break;
         case 'queueDownload':
-          enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_DOWNLOAD, importId);
+          enqueueImportMaintenanceJob({ type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id: importId });
           break;
         case 'queueProcess':
-          enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_PROCESS, importId);
+          enqueueImportMaintenanceJob({ type: MAINTENANCE_TYPE.IMPORT_PROCESS, id: importId });
           break;
         default:
           throw new Error(`Unknown action: '${action}'`);

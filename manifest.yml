@@ -4,69 +4,65 @@ applications:
     strategy: rolling
     stack: cflinuxfs4
     buildpacks:
-      - https://github.com/cloudfoundry/nodejs-buildpack
+      - https://github.com/cloudfoundry/nodejs-buildpack.git
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
-      AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
+      OIDC_AUTH_METHOD: ((OIDC_AUTH_METHOD))
+      PRIVATE_JWK_64: ((PRIVATE_JWK_64))
+      BUILD_BRANCH: ((BUILD_BRANCH))
+      BUILD_COMMIT: ((BUILD_COMMIT))
+      BUILD_NUMBER: ((BUILD_NUMBER))
+      BUILD_TIMESTAMP: ((BUILD_TIMESTAMP))
+      CLAMAV_ENDPOINT: ((CLAMAV_ENDPOINT))
+      FORCE_CRON: ((FORCE_CRON))
+      FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
+      HSES_DATA_FILE_URL: ((HSES_DATA_FILE_URL))
+      HSES_DATA_PASSWORD: ((HSES_DATA_PASSWORD))
+      HSES_DATA_USERNAME: ((HSES_DATA_USERNAME))
+      ITAMS_MD_HOST: ((ITAMS_MD_HOST))
+      ITAMS_MD_PASSWORD: ((ITAMS_MD_PASSWORD))
+      ITAMS_MD_PORT: ((ITAMS_MD_PORT))
+      ITAMS_MD_USERNAME: ((ITAMS_MD_USERNAME))
+      JWT_SECRET: ((JWT_SECRET))
       LOG_JSON_FORMAT: "true"
       LOG_LEVEL: ((LOG_LEVEL))
       NEW_RELIC_APP_NAME: tta-smarthub-((env))
       NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
       NODE_ENV: production
-      # Soon to be removed in favor of TTA_SMART_HUB_URI
+      NODE_MODULES_CACHE: "false"
+      REACT_APP_GTM_AUTH: ((REACT_APP_GTM_AUTH))
+      REACT_APP_GTM_ENABLED: ((REACT_APP_GTM_ENABLED))
+      REACT_APP_GTM_ID: ((REACT_APP_GTM_ID))
+      REACT_APP_GTM_PREVIEW: ((REACT_APP_GTM_PREVIEW))
+      REACT_APP_INCLUDE_ACCESSIBILITY_CSS: ((REACT_APP_INCLUDE_ACCESSIBILITY_CSS))
+      REACT_APP_WEBSOCKET_URL: ((REACT_APP_WEBSOCKET_URL))
       REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
-      SESSION_SECRET: ((SESSION_SECRET))
-      JWT_SECRET: ((JWT_SECRET))
-      TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
-      HSES_DATA_FILE_URL: ((HSES_DATA_FILE_URL))
-      HSES_DATA_USERNAME: ((HSES_DATA_USERNAME))
-      HSES_DATA_PASSWORD: ((HSES_DATA_PASSWORD))
-      CLAMAV_ENDPOINT: ((CLAMAV_ENDPOINT))
-      SMTP_HOST: ((SMTP_HOST))
-      SMTP_PORT: ((SMTP_PORT))
-      SMTP_HOST_TEST: ((SMTP_HOST_TEST))
-      SMTP_PORT_TEST: ((SMTP_PORT_TEST))
-      SMTP_USER: ((SMTP_USER))
-      SMTP_PASSWORD: ((SMTP_PASSWORD))
       SEND_NOTIFICATIONS: ((SEND_NOTIFICATIONS))
-      SMTP_SECURE: ((SMTP_SECURE))
-      SMTP_IGNORE_TLS: ((SMTP_IGNORE_TLS))
-      FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
-      NODE_MODULES_CACHE: false
-      SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
-      SIMILARITY_ENDPOINT: ((SIMILARITY_ENDPOINT))
-      SMARTSHEET_ENDPOINT: ((SMARTSHEET_ENDPOINT))
+      SESSION_SECRET: ((SESSION_SECRET))
       SMARTSHEET_ACCESS_TOKEN: ((SMARTSHEET_ACCESS_TOKEN))
+      SMARTSHEET_ENDPOINT: ((SMARTSHEET_ENDPOINT))
+      SMTP_HOST: ((SMTP_HOST))
+      SMTP_HOST_TEST: ((SMTP_HOST_TEST))
+      SMTP_IGNORE_TLS: ((SMTP_IGNORE_TLS))
+      SMTP_PASSWORD: ((SMTP_PASSWORD))
+      SMTP_PORT: ((SMTP_PORT))
+      SMTP_PORT_TEST: ((SMTP_PORT_TEST))
+      SMTP_SECURE: ((SMTP_SECURE))
+      SMTP_USER: ((SMTP_USER))
+      SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
+      TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
       - ttahub-document-upload-((env))
-      - ttahub-elasticsearch-((env))
     processes:
       - type: web
         instances: ((web_instances))
         command: yarn start:web
         memory: ((web_memory))
+        disk_quota: ((app_disk_quota))
       - type: worker
         instances: ((worker_instances))
         command: yarn start:worker
         memory: ((worker_memory))
-  - name: tta-similarity-api-((env))
-    strategy: rolling
-    stack: cflinuxfs4
-    health-check-type: process
-    buildpacks:
-      - python_buildpack
-    path: similarity_api/src
-    services:
-      - ttahub-((env))
-    env:
-      NEW_RELIC_APP_NAME: tta-similarity-api-((env))
-      NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
-    processes:
-      - type: web
-        instances: ((similarity_api_instances))
-        command: gunicorn -w 4 -b 0.0.0.0:8080 app:app --preload
-        memory: ((similarity_api_memory))
-        disk_quota: ((similarity_api_disk_quota))

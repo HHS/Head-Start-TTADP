@@ -1,0 +1,109 @@
+/**
+
+Approach & code taken from Heydon Pickering's article on testing HTML with modern CSS
+https://heydonworks.com/article/testing-html-with-modern-css/
+
+**/
+
+:root {
+    --error-outline: 0.25rem solid red;
+    --warning-outline: 0.25rem solid orange;
+}
+  
+a:not([href]) {
+    outline: var(--error-outline);
+    --error: 'The link does not have an href. Did you mean to use a <button>?';
+}
+
+a[href^="javascript"] {
+    outline: var(--error-outline);
+    --error-javascript-href: 'The href does not appear to include a location. Did you mean to use a <button>?';
+}
+  
+a[disabled] {
+    outline: var(--error-outline);
+    --error-anchor-disabled: 'The disabled property is not valid on anchors (links). Did you mean to use a <button>?';
+}
+
+label:not(:has(:is(input,output,textarea,select))):not([for]) {
+    outline: var(--error-outline);
+    --error-unassociated-label: 'The <label> neither uses the `for` attribute nor wraps an applicable form element'
+}
+
+input:not(form input) {
+    outline: var(--warning-outline);
+    --error-input-orphan: 'The input is outside a <form> element. Users may benefit from <form> semantics and behaviors.'
+}
+
+body :not(:is(header,nav,main,[role="main"],aside,footer)):not(:is(header,nav,[role="main"],main,aside,footer) *):not(.skip-link) {
+    outline: var(--error-outline);
+    --error-content-outside-landmark: 'You have some content that is not inside a landmark (header, nav, main, aside, or footer)';
+}
+  
+/**
+* Crazy tabindexing
+----------------------------------------------------------------------
+*/
+
+[tabindex]:not([tabindex="0"]):not([tabindex="-1"]) {
+    outline: var(--error-outline);
+    --error-bad-tabindexing: 'Do not disrupt the natural tab order';
+}
+
+/**
+* <div>s in the wrong places
+----------------------------------------------------------------------
+*/
+
+abbr div, b div, i div, span div, em div, 
+strong div, small div, cite div, q div, code div, 
+label div {
+    outline: var(--error-outline);
+    --error-divs-inside-inline: 'Do not put <div>s inside inline elements.';
+}
+
+/**
+* List errors
+----------------------------------------------------------------------
+*/
+
+ol > *:not(li), 
+ul > *:not(li) {
+    outline: var(--error-outline);
+    --error-invalid-list-children: 'Only <li> can be a direct child of <ul> or <ol>.';
+}
+
+dl > *:not(dt):not(dd) {
+    outline: var(--error-outline);
+    --error-invalid-elements-inside-definition-list: 'This element does not belong directly inside a definition list.';
+}
+
+dt + *:not(dd) {
+    outline: var(--error-outline);
+    --error-definition-must-follow-title: 'Definitions must follow definition titles.';
+}
+
+/**
+* Empty elements
+----------------------------------------------------------------------
+*/
+
+*:empty:not(script):not(input):not(br):not(img):not(link):not(hr):not(embed):not(area):not(command):not(col):not(param):not(source):not(track):not(wbr):not(base):not(keygen):not([aria-hidden="true"]):not(svg):not(svg *) {
+    outline: var(--warning-outline);
+    --warning-empty-element: 'This element is empty. Why?';
+}
+
+/**
+* Form errors
+----------------------------------------------------------------------
+*/
+
+form:not([action]) {
+    outline: var(--error-outline);
+    --error-form-missing-action: 'Forms must have action attributes.';
+}
+
+fieldset > *:first-child:not(legend) {
+    outline: var(--error-outline);
+    --error-fieldset-missing-legend: 'Place a legend as the first element in this fieldset.';
+}

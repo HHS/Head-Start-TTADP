@@ -1,6 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
-import Plotly from 'plotly.js-basic-dist';
+import moment from 'moment';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
@@ -8,6 +13,7 @@ import AccessibleWidgetData from './AccessibleWidgetData';
 import ButtonSelect from '../components/ButtonSelect';
 import colors from '../colors';
 import MediaCaptureButton from '../components/MediaCaptureButton';
+import DisplayTableToggle from '../components/DisplayTableToggleButton';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -39,6 +45,11 @@ export function TopicFrequencyGraphWidget({
   loading,
   title,
 }) {
+  const exportName = useMemo(() => {
+    const TODAY = moment().format('YYYY-MM-DD');
+    return `${TODAY} ${title}`;
+  }, [title]);
+
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
 
@@ -135,7 +146,11 @@ export function TopicFrequencyGraphWidget({
     };
 
     // draw the plot
-    Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, responsive: true });
+    import('plotly.js-basic-dist').then((Plotly) => {
+      if (bars.current) {
+        Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, responsive: true });
+      }
+    });
   }, [data, order, setOrder, showAccessibleData]);
 
   /**
@@ -149,11 +164,6 @@ export function TopicFrequencyGraphWidget({
   const onApplySort = (selected) => {
     setOrder(selected.value);
   };
-
-  // toggle the data table
-  function toggleType() {
-    setShowAccessibleData(!showAccessibleData);
-  }
 
   return (
     <Container className="ttahub--topic-frequency-graph width-full" loading={loading} loadingLabel="Topic frequency loading">
@@ -195,20 +205,15 @@ export function TopicFrequencyGraphWidget({
                 buttonText="Save screenshot"
                 id="rd-save-screenshot-topic-frequency"
                 className="margin-x-2"
-                title={title}
+                title={exportName}
               />
             )
             : null}
-          <button
-            type="button"
-            className="usa-button--unstyled margin-top-2"
-            onClick={toggleType}
-            data-html2canvas-ignore
-            id="rd-display-table-topic-frequency"
-            aria-label={showAccessibleData ? `Display ${title} as graph` : `Display ${title} as table`}
-          >
-            {showAccessibleData ? 'Display graph' : 'Display table'}
-          </button>
+          <DisplayTableToggle
+            title={title}
+            displayTable={showAccessibleData}
+            setDisplayTable={setShowAccessibleData}
+          />
         </Grid>
 
       </Grid>

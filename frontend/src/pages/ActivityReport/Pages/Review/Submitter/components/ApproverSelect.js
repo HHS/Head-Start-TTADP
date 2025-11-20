@@ -1,24 +1,28 @@
-import React from 'react';
+import React, { useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { useController } from 'react-hook-form';
 import _ from 'lodash';
-import useSpellCheck from '../../../../../../hooks/useSpellCheck';
 import { DropdownIndicator, sortSelect, styles } from '../../../../../../components/MultiSelect';
+import useExistingApprovers from '../../../../../../hooks/useExistingApprovers';
 
 function ApproverSelect({
   name,
   options,
   labelProperty,
   valueProperty,
+  filterInitialValue = false,
+  required = true,
 }) {
-  /**
-   * unfortunately, given our support for ie11, we can't
-   * upgrade to react-select v5, which support a spellcheck
-   * attribute. Here is an awkward solution I've concocted
-   * in it's stead.
-  */
-  useSpellCheck(name);
+  let rules = {};
+
+  if (required) {
+    rules = {
+      validate: {
+        notEmpty: (value) => (value && value.length) || 'Select at least one manager',
+      },
+    };
+  }
 
   const {
     field: {
@@ -28,13 +32,21 @@ function ApproverSelect({
     },
   } = useController({
     name,
-    rules: {
-      validate: {
-        notEmpty: (value) => (value && value.length) || 'Select at least one manager',
-      },
-    },
+    rules,
     defaultValue: null,
   });
+
+  const { filteredOptions, filteredValues } = useExistingApprovers(options);
+
+  const initialValueRef = useRef(selectValue);
+
+  const opts = useMemo(() => {
+    if (!filterInitialValue || !initialValueRef.current) {
+      return options;
+    }
+
+    return filteredOptions;
+  }, [filterInitialValue, filteredOptions, options]);
 
   /*
    * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
@@ -46,6 +58,12 @@ function ApproverSelect({
     if (!value) {
       return [];
     }
+
+    // Filter out initial values from display if filterInitialValue is true
+    if (filterInitialValue) {
+      return filteredValues;
+    }
+
     return value.map((item) => ({
       ...item,
       label: _.get(item, labelProperty),
@@ -81,13 +99,13 @@ function ApproverSelect({
       inputId={name}
       styles={styles()}
       components={{ DropdownIndicator }}
-      options={options}
+      options={opts}
       tabSelectsValue={false}
       isClearable={false}
       closeMenuOnSelect={false}
       hideSelectedOptions
       placeholder=""
-      required
+      required={required}
       isMulti
     />
   );
@@ -102,6 +120,7 @@ ApproverSelect.propTypes = {
   name: PropTypes.string.isRequired,
   labelProperty: PropTypes.string,
   valueProperty: PropTypes.string,
+  filterInitialValue: PropTypes.bool,
   options: PropTypes.arrayOf(
     PropTypes.shape({
       value,
@@ -114,17 +133,14 @@ ApproverSelect.propTypes = {
       label: PropTypes.string.isRequired,
     }),
   ).isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
-  //   control: PropTypes.object.isRequired,
-  components: PropTypes.shape({}),
-  rules: PropTypes.shape({}),
+  required: PropTypes.bool,
 };
 
 ApproverSelect.defaultProps = {
   labelProperty: 'label',
   valueProperty: 'value',
-  components: {},
-  rules: {},
+  filterInitialValue: false,
+  required: true,
 };
 
 export default ApproverSelect;

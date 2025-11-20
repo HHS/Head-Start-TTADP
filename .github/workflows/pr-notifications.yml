@@ -9,23 +9,57 @@ on:
 jobs:
   notify_slack:
     runs-on: ubuntu-latest
+    env:
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      SLACK_CHANNEL: "acf-ohs-ttahub--contractor-customer-team"
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
-      - name: Notify slack when a PR to production is opened
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Get PR body
+        uses: actions/github-script@v7
+        id: get-body
+        with:
+          result-encoding: string
+          script: return context.payload.pull_request.body;
+
+      - name: Notify Slack when a PR to production is opened
         run: |
-          if [ "$PR_NUMBER" != "" ]; then
-            PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
-            TEXT_MESSAGE=":rocket: A production PR <$PR_LINK|$PR_NUMBER> is now open!"
-          else
-            TEXT_MESSAGE=":rocket: A new change was pushed to the production branch. Check the latest commits for more details."
-          fi
+          echo "${{ steps.get-body.outputs.result }}" > pr_body.md
+
+          extract_section() {
+            awk -v section="$1" '
+              BEGIN {found=0}
+              $0 ~ section {found=1; next}
+              /^## / && found {exit}
+              found {print}
+            ' pr_body.md | head -c 600
+          }
+
+          DESC=$(extract_section "^## Description of change")
+          TEST=$(extract_section "^## How to test")
+          ISSUES=$(extract_section "^## Issue")
+
+          PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
+
+          JSON=$(jq -n \
+            --arg channel "$SLACK_CHANNEL" \
+            --arg pr_number "#$PR_NUMBER" \
+            --arg pr_link "$PR_LINK" \
+            --arg title "$PR_TITLE" \
+            --arg desc "> $(echo "$DESC" | sed 's/^/> /')" \
+            --arg issues "$(echo "$ISSUES" | sed 's/^/> /')" \
+            '{
+              channel: $channel,
+              blocks: [
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
+                { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
+              ]
+            }')
 
           curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-          -H 'Content-type: application/json;charset=utf-8' \
-          --data "{
-            \"channel\": \"acf-ohs-ttahub--contractor-customer-team\",
-            \"text\": \"$TEXT_MESSAGE\"
-          }" https://slack.com/api/chat.postMessage
+            -H 'Content-type: application/json;charset=utf-8' \
+            --data "$JSON" https://slack.com/api/chat.postMessage

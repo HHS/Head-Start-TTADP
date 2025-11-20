@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import {
   FormGroup, Label, Button, Textarea, ErrorMessage,
 } from '@trussworks/react-uswds';
@@ -12,6 +11,7 @@ import './NextStepsRepeater.scss';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
 import Req from '../../../../components/Req';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
+import { isValidDate } from '../../../../utils';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
@@ -66,21 +66,15 @@ export default function NextStepsRepeater({
         setError(`${name}[${index}].note`, { message: 'Please enter a next step' });
       }
 
-      if (!(field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid())) {
+      const parsedDate = isValidDate(field.completeDate);
+      if (!field.completeDate || !parsedDate) {
         setError(`${name}[${index}].completeDate`, { message: 'Please enter a valid date' });
       }
 
-      const isValid = (() => {
-        if (errors[name] && errors[name][index] && errors[name][index].note) {
-          return false;
-        }
-
-        if (errors[name] && errors[name][index] && errors[name][index].completeDate) {
-          return false;
-        }
-
-        return true;
-      })();
+      const isValid = !(
+        errors[name]?.[index]?.note
+        || errors[name]?.[index]?.completeDate
+      );
 
       return isValid;
     });
@@ -147,7 +141,7 @@ export default function NextStepsRepeater({
                     onClick={() => onRemoveStep(index)}
                   >
                     <FontAwesomeIcon className="margin-x-1" color="#000" icon={faTrash} />
-                    <span className="sr-only">
+                    <span className="usa-sr-only">
                       remove step
                       {' '}
                       {index + 1}

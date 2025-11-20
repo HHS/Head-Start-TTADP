@@ -1,4 +1,3 @@
-version: "3.7"
 services:
   backend:
     build:
@@ -11,11 +10,11 @@ services:
     depends_on:
       - db
       - redis
+    env_file: .env
     environment:
       - POSTGRES_HOST=postgres_docker
       - REDIS_HOST=redis
       - SMTP_HOST=mailcatcher
-      - FONTAWESOME_NPM_AUTH_TOKEN
       # On an M1 mac, puppeteer install fails with the message:
       # "The chromium binary is not available for arm64"
       #
@@ -29,6 +28,8 @@ services:
       - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
     volumes:
       - ".:/app:rw"
+      - "node_modules-backend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
     deploy:
       resources:
         limits:
@@ -44,6 +45,8 @@ services:
     volumes:
       - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
+      - "node_modules-frontend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
     environment:
       - BACKEND_PROXY=http://backend:8080
   worker:
@@ -60,3 +63,5 @@ services:
       - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
+      - "node_modules-backend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"

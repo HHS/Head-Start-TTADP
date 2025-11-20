@@ -19,7 +19,6 @@ import {
 import moment from 'moment';
 import useInterval from '@use-it/interval';
 import Container from '../Container';
-import SocketAlert from '../SocketAlert';
 import {
   IN_PROGRESS, COMPLETE,
 } from './constants';
@@ -33,7 +32,6 @@ const Navigator = ({
   pages,
   onFormSubmit,
   onReview,
-  onResetToDraft,
   currentPage,
   additionalData,
   onSave,
@@ -46,7 +44,6 @@ const Navigator = ({
   lastSaveTime,
   errorMessage,
   savedToStorageTime,
-  socketMessageStore,
   onSaveDraft,
   onSaveAndContinue,
   showSavedDraft,
@@ -54,7 +51,9 @@ const Navigator = ({
   datePickerKey,
   formDataStatusProp,
   shouldAutoSave,
+  setShouldAutoSave,
   preFlightForNavigation,
+  hideSideNav,
 }) => {
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -121,9 +120,13 @@ const Navigator = ({
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
 
-    let stateOfPage = pageState[p.position];
+    let stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
     if (stateOfPage !== COMPLETE) {
-      stateOfPage = current ? IN_PROGRESS : pageState[p.position];
+      if (current) {
+        stateOfPage = IN_PROGRESS;
+      } else {
+        stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
+      }
     }
 
     const state = p.review ? formData[formDataStatusProp] : stateOfPage;
@@ -155,9 +158,11 @@ const Navigator = ({
   );
 
   const newLocal = 'smart-hub-sidenav-wrapper no-print';
+
   return (
     <Grid row gap>
-      <Grid className={newLocal} col={12} desktop={{ col: 4 }}>
+      { !hideSideNav && (
+      <Grid data-testid="side-nav" className={newLocal} col={12} desktop={{ col: 4 }}>
         <SideNav
           skipTo="navigator-form"
           skipToMessage="Skip to report content"
@@ -167,9 +172,8 @@ const Navigator = ({
           savedToStorageTime={savedToStorageTime}
         />
       </Grid>
+      )}
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <SocketAlert store={socketMessageStore} />
-
         <div id="navigator-form">
           {page.review && page.render(
             formData,
@@ -178,12 +182,12 @@ const Navigator = ({
             onReview,
             isApprover,
             isPendingApprover,
-            onResetToDraft,
             onSave,
             navigatorPages,
             reportCreator,
             lastSaveTime,
             onUpdatePage,
+            onSaveDraft,
           )}
           {!page.review
             && (
@@ -209,6 +213,7 @@ const Navigator = ({
                     datePickerKey,
                     onFormSubmit,
                     DraftAlert,
+                    setShouldAutoSave,
                   )}
                 </Form>
 
@@ -223,7 +228,6 @@ const Navigator = ({
 Navigator.propTypes = {
   onSaveDraft: PropTypes.func.isRequired,
   onSaveAndContinue: PropTypes.func,
-  onResetToDraft: PropTypes.func.isRequired,
   formData: PropTypes.shape({
     calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),
@@ -258,20 +262,14 @@ Navigator.propTypes = {
       PropTypes.string,
     ]),
   }),
-  socketMessageStore: PropTypes.shape({
-    user: PropTypes.oneOfType([
-      PropTypes.shape({
-        name: PropTypes.string,
-      }),
-      PropTypes.string,
-    ]),
-  }),
   showSavedDraft: PropTypes.bool,
   updateShowSavedDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string,
   formDataStatusProp: PropTypes.string,
   shouldAutoSave: PropTypes.bool,
+  setShouldAutoSave: PropTypes.func,
   preFlightForNavigation: PropTypes.func,
+  hideSideNav: PropTypes.bool,
 };
 
 Navigator.defaultProps = {
@@ -282,7 +280,6 @@ Navigator.defaultProps = {
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
-  socketMessageStore: null,
   reportCreator: {
     name: null,
     role: null,
@@ -290,7 +287,9 @@ Navigator.defaultProps = {
   datePickerKey: '',
   formDataStatusProp: 'calculatedStatus',
   shouldAutoSave: true,
+  setShouldAutoSave: () => {},
   preFlightForNavigation: () => Promise.resolve(true),
+  hideSideNav: false,
 };
 
 export default Navigator;

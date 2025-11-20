@@ -6,6 +6,16 @@
         <replacement_date>10-01-2021</replacement_date>
         <grant_replacement_type>DRS Non-Competitive Continuation</grant_replacement_type>
     </grant_award_replacement>
+    <!--
+      The below element was added to test the behavior of multiple grants replacing a single grant.
+      In this case, 7842 is replaced by both 8110 and 9999.
+    -->
+    <grant_award_replacement>
+        <replaced_grant_award_id>7842</replaced_grant_award_id>
+        <replacement_grant_award_id>9999</replacement_grant_award_id>
+        <replacement_date>10-01-2021</replacement_date>
+        <grant_replacement_type>DRS Non-Competitive Continuation</grant_replacement_type>
+    </grant_award_replacement>
     <grant_award_replacement>
         <replaced_grant_award_id>2591</replaced_grant_award_id>
         <replacement_grant_award_id>11835</replacement_grant_award_id>
@@ -15,6 +25,24 @@
     <grant_award_replacement>
         <replaced_grant_award_id>5975</replaced_grant_award_id>
         <replacement_grant_award_id>11274</replacement_grant_award_id>
+        <replacement_date>10-03-2021</replacement_date>
+        <grant_replacement_type>DRS Non-Competitive Continuation</grant_replacement_type>
+    </grant_award_replacement>
+    <grant_award_replacement>
+        <replaced_grant_award_id>4001</replaced_grant_award_id>
+        <replacement_grant_award_id>4002</replacement_grant_award_id>
+        <replacement_date>10-03-2021</replacement_date>
+        <grant_replacement_type>DRS Non-Competitive Continuation</grant_replacement_type>
+    </grant_award_replacement>
+        <grant_award_replacement>
+        <replaced_grant_award_id>5001</replaced_grant_award_id>
+        <replacement_grant_award_id>5002</replacement_grant_award_id>
+        <replacement_date>09-03-2021</replacement_date>
+        <grant_replacement_type>DRS Non-Competitive Continuation</grant_replacement_type>
+    </grant_award_replacement>
+        <grant_award_replacement>
+        <replaced_grant_award_id>5002</replaced_grant_award_id>
+        <replacement_grant_award_id>5003</replacement_grant_award_id>
         <replacement_date>10-03-2021</replacement_date>
         <grant_replacement_type>DRS Non-Competitive Continuation</grant_replacement_type>
     </grant_award_replacement>

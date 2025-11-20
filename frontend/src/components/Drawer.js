@@ -6,6 +6,8 @@ import React, {
   useState,
 } from 'react';
 import PropTypes from 'prop-types';
+import FocusTrap from 'focus-trap-react';
+import { uniqueId } from 'lodash';
 import './Drawer.scss';
 import useOnClickOutside from '../hooks/useOnOutsideClick';
 
@@ -31,10 +33,17 @@ export default function Drawer({
   useOnClickOutside(useCallback(() => setIsOpen(false), []), [elementRef, triggerRef]);
 
   useEffect(() => {
-    const triggerElement = triggerRef.current;
-    if (triggerElement) triggerElement.addEventListener('click', () => setIsOpen(true));
+    const triggerElement = triggerRef ? triggerRef.current : null;
+
+    const openDrawer = () => setIsOpen(true);
+
+    if (triggerElement) {
+      triggerElement.addEventListener('click', openDrawer);
+    }
     return () => {
-      if (triggerElement) triggerElement.removeEventListener('click', () => setIsOpen(true));
+      if (triggerElement) {
+        triggerElement.removeEventListener('click', openDrawer);
+      }
     };
   }, [triggerRef]);
 
@@ -52,18 +61,6 @@ export default function Drawer({
     }
     return undefined;
   }, [isOpen]);
-
-  const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
-  }, [setIsOpen]);
-
-  useEffect(() => {
-    document.addEventListener('keydown', onEscape, false);
-    return () => {
-      document.removeEventListener('keydown', onEscape, false);
-      setIsOpen(false);
-    };
-  }, [onEscape]);
 
   const classNames = [
     'smart-hub-drawer',
@@ -83,6 +80,8 @@ export default function Drawer({
     classNames.push('slide-in-right');
   }
 
+  const uniqueDrawerID = uniqueId('smart-hub-drawer-');
+
   return (
     <div
       hidden={!isOpen}
@@ -91,42 +90,49 @@ export default function Drawer({
       style={{
         top: headerHeight,
       }}
+      role="dialog"
+      aria-modal="true" // Sets the modal behavior for screen readers
+      aria-labelledby={uniqueDrawerID}
     >
-      <div>
-        {title && (
-          <div
-            className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
-          >
-            <span className="text-bold font-serif-lg">{title}</span>
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="usa-button usa-button--outline smart-hub-button--no-margin"
+      <FocusTrap active={isOpen}>
+        <div>
+          <div>
+            {title && (
+            <div
+              className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
             >
-              Close
-            </button>
+              <span className="text-bold font-serif-lg" id={uniqueDrawerID} role="heading" aria-level={1}>{title}</span>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="usa-button usa-button--outline smart-hub-button--no-margin"
+              >
+                Close
+              </button>
+            </div>
+            )}
+
+            <div
+              className="overflow-y-auto padding-1 margin-1"
+              // eslint-disable-next-line
+              tabIndex="0"
+            >
+              {children}
+            </div>
           </div>
-        )}
 
-        <div
-          className="overflow-y-auto padding-1 margin-1"
-          // eslint-disable-next-line
-          tabIndex="0"
-        >
-          {children}
+          {footer && (
+          <div
+            className={`bg-base-lightest padding-105 ${
+              stickyFooter ? 'position-sticky pin-bottom' : ''
+            }`}
+          >
+            {footer}
+          </div>
+          )}
         </div>
-      </div>
-
-      {footer && (
-      <div
-        className={`bg-base-lightest padding-105 ${
-          stickyFooter ? 'position-sticky pin-bottom' : ''
-        }`}
-      >
-        {footer}
-      </div>
-      )}
+      </FocusTrap>
     </div>
   );
 }

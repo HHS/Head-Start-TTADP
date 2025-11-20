@@ -27,13 +27,12 @@ const reviewPage = {
   path: 'review',
   render:
     (
-      formData,
+      _formData,
       onSubmit,
       additionalData,
       onReview,
       isApprover,
       isPendingApprover,
-      onResetToDraft,
       onSaveForm,
       allPages,
       reportCreator,
@@ -46,16 +45,14 @@ const reviewPage = {
         onReview={onReview}
         isApprover={isApprover}
         isPendingApprover={isPendingApprover}
-        onResetToDraft={onResetToDraft}
         lastSaveTime={lastSaveTime}
         reviewItems={
           pages.map((p) => ({
             id: p.path,
             title: p.label,
-            content: p.reviewSection(formData.activityRecipientType),
+            content: p.reviewSection(),
           }))
         }
-        formData={formData}
         pages={allPages}
         reportCreator={reportCreator}
       />

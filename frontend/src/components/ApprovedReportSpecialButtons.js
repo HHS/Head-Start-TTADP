@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Grid, ModalToggleButton } from '@trussworks/react-uswds';
+import { Grid, ModalToggleButton, Button } from '@trussworks/react-uswds';
 import { canUnlockReports } from '../permissions';
 import PrintToPdf from './PrintToPDF';
 
@@ -9,6 +9,8 @@ export default function ApprovedReportSpecialButtons({
   modalRef,
   user,
   showUnlockReports,
+  showCompleteEvent,
+  onCompleteEvent,
 }) {
   const [successfullyCopiedClipboard, setSuccessfullyCopiedClipboard] = useState(false);
   const [somethingWentWrongWithClipboard, setSomethingWentWrongWithClipboard] = useState(false);
@@ -59,25 +61,29 @@ export default function ApprovedReportSpecialButtons({
           id="approved-print"
           disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false}
         />
+        {(showCompleteEvent && onCompleteEvent) ? (
+          <Button onClick={onCompleteEvent} className="no-print">
+            Complete event
+          </Button>
+        ) : null}
         {showUnlockReports && user && user.permissions && canUnlockReports(user)
           ? <ModalToggleButton type="button" className="usa-button usa-button--outline no-print" modalRef={modalRef} opener>Unlock report</ModalToggleButton>
           : null}
+        {showUnlockReports && <UnlockModal /> }
       </Grid>
-      {showUnlockReports && <UnlockModal /> }
     </>
   );
 }
 
 ApprovedReportSpecialButtons.propTypes = {
-  UnlockModal: PropTypes.node,
+  UnlockModal: PropTypes.func,
   user: PropTypes.shape({
-    permissions: PropTypes.arrayOf(PropTypes.string),
+    permissions: PropTypes.arrayOf(PropTypes.shape()), // Object of unknown shape
   }),
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape(),
-  ]),
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]),
   showUnlockReports: PropTypes.bool,
+  onCompleteEvent: PropTypes.func,
+  showCompleteEvent: PropTypes.bool,
 };
 
 ApprovedReportSpecialButtons.defaultProps = {
@@ -85,4 +91,6 @@ ApprovedReportSpecialButtons.defaultProps = {
   modalRef: null,
   showUnlockReports: false,
   user: null,
+  onCompleteEvent: null,
+  showCompleteEvent: false,
 };

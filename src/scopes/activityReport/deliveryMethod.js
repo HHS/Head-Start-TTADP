@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
-function formatDeliveryMethod(deliveryMethod) {
+export function formatDeliveryMethod(deliveryMethod) {
   const method = deliveryMethod.toLowerCase();
   if (method === 'in person') {
     return 'in-person';

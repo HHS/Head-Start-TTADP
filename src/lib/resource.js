@@ -8,7 +8,9 @@ import { Resource } from '../models';
 const requestOptions = {
   maxRedirects: 25,
   responseEncoding: 'utf8',
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+  },
 };
 
 /**
@@ -40,18 +42,15 @@ const commonAuthNames = [
  * @param {boolean} filtered - Indicates whether the list is filtered or not. Default is false.
  * @returns {number} - The updated status code.
  */
-const overrideStatusCodeOnAuthRequired = (statusCode, list, data, filtered = false) => {
-  // Check if authentication is required based on the list and data
+export const overrideStatusCodeOnAuthRequired = (statusCode, list, data, filtered = false) => {
   const requiresAuth = list
-    .filter((commonAuthName) => !(filtered || commonAuthName === 'auth'))
-    .some((commonAuthName) => data && data?.includes(commonAuthName));
+    .filter((commonAuthName) => (filtered ? commonAuthName !== 'auth' : true))
+    .some((commonAuthName) => data && data.includes(commonAuthName));
 
-  // If authentication is required and the original status code is OK, return UNAUTHORIZED
   if (statusCode === httpCodes.OK && requiresAuth) {
     return httpCodes.UNAUTHORIZED;
   }
 
-  // Otherwise, return the original status code
   return statusCode || httpCodes.SERVICE_UNAVAILABLE;
 };
 
@@ -109,8 +108,8 @@ const getMimeType = async (url) => {
 const getMetadataValuesFrommJson = async (url) => {
   let result;
   try {
-    // Attempt to get the resource metadata (if valid ECLKC resource).
-    // Sample: https://eclkc.ohs.acf.hhs.gov/mental-health/article/head-start-heals-campaign?_format=json
+    // Attempt to get the resource metadata (if valid HeadStart or ECLKC resource).
+    // Sample: https://headstart.gov/mental-health/article/head-start-heals-campaign?_format=json
     let metadataUrl;
 
     // Check if the URL already contains query parameters
@@ -141,6 +140,7 @@ const getMetadataValuesFrommJson = async (url) => {
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from json for Resource (URL: ${url}), received status code of ${error.response.status}. Please make sure this is a valid address:`,
         error,
+        error.stack,
       );
       result = {
         metadata: null,
@@ -388,8 +388,9 @@ const getResourceMetaDataJob = async (job) => {
   } = job.data;
 
   try {
-    // Determine if this is an ECLKC resource.
+    // Determine if this is an ECLKC or HeadStart resource.
     const isEclkc = resourceUrl.includes('eclkc.ohs.acf.hhs.gov');
+    const isHeadStart = resourceUrl.includes('headstart.gov');
 
     let statusCode;
     let mimeType;
@@ -414,15 +415,15 @@ const getResourceMetaDataJob = async (job) => {
       return { status: statusCode || 500, data: { url: resourceUrl } };
     }
 
-    // If it is an ECLKC resource, get the metadata values.
-    if (isEclkc) {
+    // If it is an ECLKC or HeadStart resource, get the metadata values.
+    if (isEclkc || isHeadStart) {
       ({ title, statusCode } = await getMetadataValues(resourceUrl));
       if (statusCode !== httpCodes.OK) {
         auditLogger.error(`Resource Queue: Warning, unable to retrieve metadata or resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`);
         return { status: statusCode || 500, data: { url: resourceUrl } };
       }
     } else {
-      // If it is not an ECLKC resource, scrape the page title.
+      // If it is not an HeadStart resource, scrape the page title.
       ({ title, statusCode } = await getPageScrapeValues(resourceUrl));
       if (statusCode !== httpCodes.OK) {
         auditLogger.error(`Resource Queue: Warning, unable to retrieve resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`);

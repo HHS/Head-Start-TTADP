@@ -1,17 +1,21 @@
 import React from 'react';
+import { isValidResourceUrl } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  FormGroup, Label, Button, Fieldset,
+  FormGroup,
+  Label,
+  Button,
+  Fieldset,
+  ErrorMessage,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
-import QuestionTooltip from './QuestionTooltip';
+import QuestionTooltip from '../QuestionTooltip';
 import URLInput from '../URLInput';
 import colors from '../../colors';
 import './ResourceRepeater.scss';
-import { OBJECTIVE_LINK_ERROR } from './constants';
 
 export default function ResourceRepeater({
   resources,
@@ -19,10 +23,12 @@ export default function ResourceRepeater({
   error,
   validateResources,
   toolTipText,
-  validateOnRemove,
   isLoading,
 }) {
   const addResource = () => {
+    if ((error) || resources.some((r) => !r.value)) {
+      return;
+    }
     const newResources = [...resources, { key: uuidv4(), value: '' }];
     setResources(newResources);
   };
@@ -31,27 +37,19 @@ export default function ResourceRepeater({
     const newResources = [...resources];
     newResources.splice(i, 1);
     setResources(newResources);
-
-    // This is an attempt to handle on remove validation for resources.
-    // the AR and RTR use two different approaches to validation.
-    // This works around it by allowing the parent component to pass in a validation function.
-    if (validateOnRemove) {
-      validateOnRemove(newResources);
-    } else {
-      validateResources();
-    }
+    validateResources();
   };
 
   const updateResource = (value, i) => {
     const newResources = [...resources];
-    const toUpdate = { ...newResources[i], value };
+    const toUpdate = { ...newResources[i], value: value.trim() };
     newResources.splice(i, 1, toUpdate);
     setResources(newResources);
   };
 
   return (
     <>
-      <FormGroup error={error.props.children}>
+      <FormGroup error={!!(error)}>
         <div>
           <Fieldset>
             <legend>
@@ -64,11 +62,13 @@ export default function ResourceRepeater({
               Enter one resource per field. To enter more resources, select “Add new resource”
             </span>
           </Fieldset>
-          {error.props.children ? OBJECTIVE_LINK_ERROR : null}
+          <ErrorMessage>
+            {error}
+          </ErrorMessage>
           <div className="ttahub-resource-repeater">
             { resources.map((r, i) => (
-              <div key={r.key} className="display-flex" id="resources">
-                <Label htmlFor={`resource-${i + 1}`} className="sr-only">
+              <div key={r.key} className={`display-flex${r.value && !isValidResourceUrl(r.value) ? ' ttahub-resource__error' : ''}`} id="resources">
+                <Label htmlFor={`resource-${i + 1}`} className="usa-sr-only">
                   Resource
                   {' '}
                   { i + 1 }
@@ -77,13 +77,13 @@ export default function ResourceRepeater({
                   id={`resource-${i + 1}`}
                   onBlur={validateResources}
                   onChange={({ target: { value } }) => updateResource(value, i)}
-                  value={r.value}
+                  value={r.value || ''}
                   disabled={isLoading}
                 />
                 { resources.length > 1 ? (
                   <Button unstyled type="button" onClick={() => removeResource(i)}>
                     <FontAwesomeIcon className="margin-x-1" color={colors.ttahubMediumBlue} icon={faTrash} />
-                    <span className="sr-only">
+                    <span className="usa-sr-only">
                       remove resource
                       {' '}
                       { i + 1 }
@@ -109,15 +109,14 @@ ResourceRepeater.propTypes = {
     value: PropTypes.string,
   })).isRequired,
   setResources: PropTypes.func.isRequired,
-  error: PropTypes.node.isRequired,
+  error: PropTypes.string,
   validateResources: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   toolTipText: PropTypes.string,
-  validateOnRemove: PropTypes.func,
 };
 
 ResourceRepeater.defaultProps = {
+  error: '',
   isLoading: false,
-  toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.',
-  validateOnRemove: null,
+  toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually a HeadStart.gov page.',
 };

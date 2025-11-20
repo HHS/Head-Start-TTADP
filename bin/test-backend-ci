@@ -4,7 +4,7 @@ declare -i exit_code=0
 
 check_exit() {
     if [[ "$1" -ne 0 ]]; then
-        echo "$lr last docker-compose command failed"
+        echo "$lr last docker compose command failed"
         ((exit_code++))
     fi
 }
@@ -41,7 +41,7 @@ main(){
 	check_exit "$?"
 
     # then list through the folders and run the tests
-    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices")
+    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "widgets" "goalServices")
 
     for target in "${targets[@]}"; do
         # jest command to
@@ -80,6 +80,33 @@ main(){
         echo
         log "Errors occurred during script execution"
    	fi
+
+	#run tests on tools
+	node_modules/.bin/cross-env \
+		JEST_JUNIT_OUTPUT_DIR=reports \
+		JEST_JUNIT_OUTPUT_NAME="tools".xml \
+		POSTGRES_USERNAME=postgres \
+		POSTGRES_DB=ttasmarthub \
+		CURRENT_USER_ID=5 \
+		CI=true \
+		node \
+		--expose-gc \
+		./node_modules/.bin/jest \
+		tools \
+		--coverage=false \
+		--colors \
+		--reporters=jest-junit \
+		--reporters=default \
+		--runInBand \
+		--silent \
+		--colors \
+		--logHeapUsage \
+		--forceExit
+
+	check_exit "$?"
+
+    # Merge coverage reports
+    node ./tools/merge-coverage.js
 
     exit "$exit_code"
 }

@@ -9,7 +9,7 @@ const selectDistinctActivityReports = (join, having) => `
   GROUP BY "ActivityReports"."id"
   HAVING ${having}`;
 
-const activityReportResourceIncludeExclude = (include = true) => {
+const activityReportResourceIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("Resources"."url" IS NULL) OR';
 
   return selectDistinctActivityReports(
@@ -18,7 +18,7 @@ const activityReportResourceIncludeExclude = (include = true) => {
   );
 };
 
-const activityReportGoalResourceIncludeExclude = (include = true) => {
+const activityReportGoalResourceIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("Resources"."url" IS NULL) OR';
 
   return selectDistinctActivityReports(
@@ -27,7 +27,7 @@ const activityReportGoalResourceIncludeExclude = (include = true) => {
   );
 };
 
-const activityReportObjectiveResourceIncludeExclude = (include = true) => {
+const activityReportObjectiveResourceIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("Resources"."url" IS NULL) OR';
 
   return selectDistinctActivityReports(
@@ -36,7 +36,7 @@ const activityReportObjectiveResourceIncludeExclude = (include = true) => {
   );
 };
 
-const nextStepsResourceIncludeExclude = (include = true) => {
+const nextStepsResourceIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("Resources"."url" IS NULL) OR';
 
   return selectDistinctActivityReports(

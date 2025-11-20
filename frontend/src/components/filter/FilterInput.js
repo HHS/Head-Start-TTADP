@@ -14,7 +14,7 @@ export default function FilterInput({
 
   return (
     <>
-      <label className="sr-only" htmlFor={inputId}>{label}</label>
+      <label className="usa-sr-only" htmlFor={inputId}>{label}</label>
       <input className="usa-input" type="text" name={inputId} id={inputId} value={query} onChange={onChange} />
     </>
   );

@@ -13,16 +13,20 @@ function subQuery(baseQuery, searchTerms, operator, comparator) {
 
 export function withProgramTypes(types) {
   return {
-    [Op.or]: [
-      filterAssociation(programTypeFilter, types, false, subQuery, '='),
-    ],
+    where: {
+      [Op.or]: [
+        filterAssociation(programTypeFilter, types, false, subQuery, '='),
+      ],
+    },
   };
 }
 
 export function withoutProgramTypes(types) {
   return {
-    [Op.and]: [
-      filterAssociation(programTypeFilter, types, true, subQuery, '='),
-    ],
+    where: {
+      [Op.and]: [
+        filterAssociation(programTypeFilter, types, true, subQuery, '='),
+      ],
+    },
   };
 }

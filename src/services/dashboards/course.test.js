@@ -44,7 +44,6 @@ const mockGrant = {
 const mockGoal = {
   name: 'Goal 1',
   status: 'Draft',
-  endDate: null,
   isFromSmartsheetTtaPlan: false,
   onApprovedAR: false,
   onAR: false,
@@ -284,7 +283,7 @@ describe('Course dashboard', () => {
     aroNoCourses = await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: reportThree.id,
-      ttaProvided: 'course resource widget 3',
+      ttaProvided: 'course resource widget 4',
       status: 'In Progress',
     });
 
@@ -298,7 +297,7 @@ describe('Course dashboard', () => {
     // Report 4 ARO 1.
     aroOnlyCourseOne = await ActivityReportObjective.create({
       objectiveId: objective.id,
-      activityReportId: reportThree.id,
+      activityReportId: reportFour.id,
       ttaProvided: 'course resource widget 3',
       status: 'In Progress',
     });
@@ -376,12 +375,11 @@ describe('Course dashboard', () => {
 
     expect(headers).not.toBeNull();
     expect(headers.length).toBe(1);
-    expect(headers[0]).toBe('Jan-25');
+    expect(headers[0]).toStrictEqual({ displayName: 'Jan-25', name: 'January 2025' });
 
     const expectedResults = [
       {
         heading: 'Widget Course 1',
-        id: courseOne.id,
         url: 'Widget Course 1',
         course: 'Widget Course 1',
         title: 'Widget Course 1',
@@ -395,7 +393,6 @@ describe('Course dashboard', () => {
       },
       {
         heading: 'Widget Course 2',
-        id: courseTwo.id,
         url: 'Widget Course 2',
         course: 'Widget Course 2',
         title: 'Widget Course 2',
@@ -409,7 +406,6 @@ describe('Course dashboard', () => {
       },
       {
         heading: 'Widget Course 3',
-        id: courseThree.id,
         url: 'Widget Course 3',
         course: 'Widget Course 3',
         title: 'Widget Course 3',
@@ -429,42 +425,36 @@ describe('Course dashboard', () => {
     const data = [
       {
         course: 'Widget Course 1',
-        id: 1,
         rollUpDate: 'Jan-21',
         count: '3',
         total: '4',
       },
       {
         course: 'Widget Course 1',
-        id: 1,
         rollUpDate: 'Feb-21',
         count: '1',
         total: '4',
       },
       {
         course: 'Widget Course 2',
-        id: 2,
         rollUpDate: 'Jan-21',
         count: '2',
         total: '5',
       },
       {
         course: 'Widget Course 2',
-        id: 2,
         rollUpDate: 'Feb-21',
         count: '3',
         total: '5',
       },
       {
         course: 'Widget Course 3',
-        id: 3,
         rollUpDate: 'Jan-21',
         count: '1',
         total: '1',
       },
       {
         course: 'Widget Course 3',
-        id: 3,
         rollUpDate: 'Feb-21',
         count: '0',
         total: '1',
@@ -477,8 +467,8 @@ describe('Course dashboard', () => {
 
     expect(headers).not.toBeNull();
     expect(headers.length).toBe(2);
-    expect(headers[0]).toBe('Jan-21');
-    expect(headers[1]).toBe('Feb-21');
+    expect(headers[0]).toStrictEqual({ displayName: 'Jan-21', name: 'January 2021' });
+    expect(headers[1]).toStrictEqual({ displayName: 'Feb-21', name: 'February 2021' });
 
     expect(courses).not.toBeNull();
     expect(courses.length).toBe(3);
@@ -494,7 +484,6 @@ describe('Course dashboard', () => {
         title: 'Widget Course 2',
         sortBy: 'Widget Course 2',
         total: '5',
-        id: 2,
         isUrl: false,
         data: [
           { title: 'Jan-21', value: '2' },
@@ -509,7 +498,6 @@ describe('Course dashboard', () => {
         title: 'Widget Course 1',
         sortBy: 'Widget Course 1',
         total: '4',
-        id: 1,
         isUrl: false,
         data: [
           { title: 'Jan-21', value: '3' },
@@ -524,7 +512,6 @@ describe('Course dashboard', () => {
         title: 'Widget Course 3',
         sortBy: 'Widget Course 3',
         total: '1',
-        id: 3,
         isUrl: false,
         data: [
           { title: 'Jan-21', value: '1' },
@@ -541,7 +528,6 @@ describe('Course dashboard', () => {
     const data = [
       {
         course: 'Widget Course 1',
-        id: 1,
         rollUpDate: 'Mar-24',
         count: '0',
         total: '2',
@@ -549,7 +535,6 @@ describe('Course dashboard', () => {
       },
       {
         course: 'Widget Course 1',
-        id: 2,
         rollUpDate: 'Apr-24',
         count: '2',
         total: '2',
@@ -561,8 +546,8 @@ describe('Course dashboard', () => {
     const { headers, courses } = result;
 
     expect(headers.length).toBe(2);
-    expect(headers[0]).toBe('Mar-24');
-    expect(headers[1]).toBe('Apr-24');
+    expect(headers[0]).toStrictEqual({ displayName: 'Mar-24', name: 'March 2024' });
+    expect(headers[1]).toStrictEqual({ displayName: 'Apr-24', name: 'April 2024' });
 
     expect(courses).not.toBeNull();
     expect(courses.length).toBe(1);
@@ -575,7 +560,6 @@ describe('Course dashboard', () => {
         title: 'Widget Course 1',
         sortBy: 'Widget Course 1',
         total: '2',
-        id: 1,
         isUrl: false,
         data: [
           { title: 'Mar-24', value: '-', date: '2024-03-07' },

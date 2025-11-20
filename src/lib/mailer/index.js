@@ -1,10 +1,14 @@
+/* istanbul ignore file: tested but not showing up in coverage */
 /* eslint-disable @typescript-eslint/return-await */
 import { createTransport } from 'nodemailer';
-import { uniq } from 'lodash';
+import moment from 'moment';
+import { uniq, lowerCase } from 'lodash';
 import { QueryTypes } from 'sequelize';
 import Email from 'email-templates';
 import * as path from 'path';
-import { sequelize } from '../../models';
+import {
+  sequelize,
+} from '../../models';
 import { auditLogger, logger } from '../../logger';
 import newQueue, { increaseListeners } from '../queue';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
@@ -16,7 +20,10 @@ import {
   activityReportsApprovedByDate,
 } from '../../services/activityReports';
 import { userById } from '../../services/users';
-import logEmailNotification from './logNotifications';
+import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
+import transactionQueueWrapper from '../../workers/transactionWrapper';
+import referenceData from '../../workers/referenceData';
+import safeParse from '../../models/helpers/safeParse';
 
 export const notificationQueue = newQueue('notifications');
 
@@ -90,16 +97,32 @@ export const filterAndDeduplicateEmails = (emails) => {
 };
 
 export const onFailedNotification = (job, error) => {
-  auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
-  logEmailNotification(job, false, error);
+  if (job.data.reports && Array.isArray(job.data.reports)) {
+    job.data.reports.forEach((report) => {
+      auditLogger.error(`job ${job.name} failed for report ${report.displayId} with error ${error}`);
+    });
+    logDigestEmailNotification(job, false, error);
+  } else {
+    auditLogger.error(`job ${job.name} failed for report ${(job.data.report?.displayId) || 'unknown'} with error ${error}`);
+    logEmailNotification(job, false, error);
+  }
 };
 
 export const onCompletedNotification = (job, result) => {
-  if (result != null) {
-    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId || job.data.report.id}`);
+  if (job.data.reports && Array.isArray(job.data.reports)) {
+    job.data.reports.forEach((report) => {
+      if (result != null) {
+        logger.info(`Successfully sent ${job.name} notification for ${report.displayId}`);
+        logDigestEmailNotification(job, true, result);
+      } else {
+        logger.info(`Did not send ${job.name} notification for ${report.displayId} preferences are not set or marked as "no-send"`);
+      }
+    });
+  } else if (result != null) {
+    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId || job.data}`);
     logEmailNotification(job, true, result);
   } else {
-    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`);
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data} preferences are not set or marked as "no-send"`);
   }
 };
 
@@ -355,6 +378,7 @@ export const collaboratorAssignedNotification = (report, newCollaborators) => {
       const data = {
         report,
         newCollaborator: collaborator.user,
+        ...referenceData(),
       };
       notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_ADDED, data);
     } catch (err) {
@@ -370,6 +394,7 @@ export const approverAssignedNotification = (report, newApprovers) => {
       const data = {
         report,
         newApprover: approver,
+        ...referenceData(),
       };
       notificationQueue.add(EMAIL_ACTIONS.SUBMITTED, data);
     } catch (err) {
@@ -385,6 +410,7 @@ export const reportApprovedNotification = (report, authorWithSetting, collabsWit
       report,
       authorWithSetting,
       collabsWithSettings,
+      ...referenceData(),
     };
     notificationQueue.add(EMAIL_ACTIONS.APPROVED, data);
   } catch (err) {
@@ -408,6 +434,7 @@ export const programSpecialistRecipientReportApprovedNotification = (
       report,
       programSpecialists,
       recipients,
+      ...referenceData(),
     };
     notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, data);
   } catch (err) {
@@ -428,7 +455,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
 
   const toEmails = filterAndDeduplicateEmails([emailTo]);
 
-  if (toEmails.length === 0) {
+  if (!toEmails || toEmails.length === 0) {
     logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`);
     return null;
   }
@@ -446,6 +473,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
         wordwrap: 120,
       },
     });
+
     return email.send({
       template: path.resolve(emailTemplatePath, templatePath),
       message: {
@@ -459,131 +487,42 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
 
 /**
  * @param {db.models.EventReportPilot.dataValues} event
+ * @param {number} sessionId
  */
-export const trVisionAndGoalComplete = async (event) => {
+export const trSessionCreated = async (event, sessionId) => {
   if (process.env.CI) return;
   try {
-    const thoseWhoRequireNotifying = uniq([
-      event.ownerId,
-      ...event.collaboratorIds,
-    ]);
-
-    // due to the way sequelize sends the JSON column :(
-    const parsedData = JSON.parse(event.data.val); // parse the JSON string
-    const { eventId } = parsedData; // extract the pretty url
-    const eId = eventId.split('-').pop();
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
-
-    await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
-      const user = await userById(id);
-      const data = {
-        displayId: eventId,
-        reportPath,
-        emailTo: [user.email],
-        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id} | ${eId}`,
-        templatePath: 'tr_poc_vision_goal_complete',
-      };
-
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE, data);
-    }));
-  } catch (err) {
-    auditLogger.error(err);
-  }
-};
-
-/**
- * @param {db.models.EventReportPilot.dataValues} event
- */
-export const trPocSessionComplete = async (event) => {
-  if (process.env.CI) return;
-  try {
-    const thoseWhoRequireNotifying = [
-      event.ownerId,
-      ...event.collaboratorIds,
-    ];
-
-    await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
-      const user = await userById(id);
-      const { eventId } = event.data;
-      const eId = eventId.split('-').pop();
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
-
-      const data = {
-        displayId: eventId,
-        reportPath,
-        emailTo: [user.email],
-        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id}`,
-        templatePath: 'tr_poc_session_complete',
-      };
-
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE, data);
-    }));
-  } catch (err) {
-    auditLogger.error(err);
-  }
-};
-
-/**
- * @param {db.models.EventReportPilot.dataValues} event
- */
-export const trSessionCreated = async (event) => {
-  if (process.env.CI) return;
-  try {
-    if (!event.pocIds && !event.pocIds.length) {
+    if (!event.pocIds || !event.pocIds.length) {
       auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
     }
 
-    await Promise.all(event.pocIds.map(async (id) => {
-      const user = await userById(id);
+    const { eventId } = event.data;
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
 
-      const { eventId } = event.data;
-      const eId = eventId.split('-').pop();
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+    await Promise.all(event.pocIds.map(async (id) => {
+      const user = await userById(id, true);
+      const emailTo = filterAndDeduplicateEmails([user.email]);
+
+      if (emailTo.length === 0) {
+        logger.info(`Did not send tr session created notification for ${eId} preferences are not set or marked as "no-send"`);
+        return null;
+      }
 
       const data = {
         displayId: eventId,
         reportPath,
-        emailTo: [user.email],
+        emailTo,
         debugMessage: `MAILER: Notifying ${user.email} that a session was created for TR ${event.id}`,
         templatePath: 'tr_session_created',
         report: {
           ...event,
           displayId: eventId,
         },
+        ...referenceData(),
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
-    }));
-  } catch (err) {
-    auditLogger.error(err);
-  }
-};
-
-/**
- * @param {db.models.EventReportPilot.dataValues} event
- */
-export const trSessionCompleted = async (event) => {
-  if (process.env.CI) return;
-  try {
-    if (!event.pocIds && !event.pocIds.length) {
-      auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
-    }
-
-    await Promise.all(event.pocIds.map(async (id) => {
-      const user = await userById(id);
-
-      const { eventId } = event.data;
-      const eId = eventId.split('-').pop();
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
-
-      const data = {
-        displayId: eventId,
-        reportPath,
-        emailTo: [user.email],
-        debugMessage: `MAILER: Notifying ${user.email} that a session was completed for TR ${event.id}`,
-        templatePath: 'tr_session_completed',
-      };
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED, data);
     }));
   } catch (err) {
     auditLogger.error(err);
@@ -601,24 +540,35 @@ export const trCollaboratorAdded = async (
 ) => {
   if (process.env.CI) return;
   try {
-    const collaborator = await userById(newCollaboratorId);
+    const collaborator = await userById(newCollaboratorId, true);
     if (!collaborator) {
       throw new Error(`Unable to notify user with ID ${newCollaboratorId} that they were added as a collaborator to TR ${report.id}, a user with that ID does not exist`);
     }
 
     // due to the way sequelize sends the JSON column :(
-    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
+    const parsedData = safeParse(report); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
     const eId = eventId.split('-').pop();
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
+    const emailTo = filterAndDeduplicateEmails([collaborator.email]);
+
+    if (!emailTo || emailTo.length === 0) {
+      logger.info(`Did not send tr collaborator added notification for ${eId} preferences are not set or marked as "no-send"`);
+      return;
+    }
 
     const data = {
       displayId: eventId,
       user: collaborator,
       reportPath,
-      emailTo: [collaborator.email],
+      emailTo,
+      report: {
+        displayId: eventId,
+      },
       templatePath: 'tr_collaborator_added',
       debugMessage: `MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`,
+      ...referenceData(),
     };
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED, data);
@@ -632,28 +582,32 @@ export const trCollaboratorAdded = async (
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId
  */
-export const trPocAdded = async (
+export const trOwnerAdded = async (
   report,
-  newPocId,
+  ownerId,
 ) => {
   if (process.env.CI) return;
   try {
-    const poc = await userById(newPocId);
+    const owner = await userById(ownerId, true);
 
     // due to the way sequelize sends the JSON column :(
-    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
+    const parsedData = safeParse(report); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
     const eId = eventId.split('-').pop();
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
     const data = {
       displayId: eventId,
       reportPath,
-      emailTo: [poc.email],
-      debugMessage: `MAILER: Notifying ${poc.email} that they were added as a collaborator to TR ${report.id}`,
-      templatePath: 'tr_poc_added',
+      report: {
+        displayId: eventId,
+      },
+      emailTo: [owner.email],
+      debugMessage: `MAILER: Notifying ${owner.email} that they were added as an owner to TR ${report.id}`,
+      templatePath: 'tr_event_imported',
+      ...referenceData(),
     };
 
-    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED, data);
+    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED, data);
   } catch (err) {
     auditLogger.error(err);
   }
@@ -664,32 +618,47 @@ export const trPocAdded = async (
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId
  */
-export const trPocEventComplete = async (
+export const trEventComplete = async (
   event,
 ) => {
   if (process.env.CI) return;
   try {
-    if (!event.pocIds && !event.pocIds.length) {
-      auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
+    const userIds = uniq([
+      ...event.collaboratorIds,
+      ...event.pocIds,
+    ]).filter((id) => id && id !== event.ownerId);
+
+    const parsedData = safeParse(event); // parse the JSON string
+    const { eventId } = parsedData; // extract the pretty url
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eId}`;
+
+    const emails = await Promise.all(userIds.map(async (id) => {
+      const user = await userById(id, true);
+      if (!user) return null;
+      return user.email;
+    }));
+
+    const emailTo = filterAndDeduplicateEmails(emails.filter((email) => email));
+
+    if (!emailTo || emailTo.length === 0) {
+      logger.info(`Did not send tr event complete notification for ${eId} preferences are not set or marked as "no-send"`);
+      return;
     }
 
-    await Promise.all(event.pocIds.map(async (id) => {
-      const user = await userById(id);
-      const parsedData = JSON.parse(event.data.val); // parse the JSON string
-      const { eventId } = parsedData; // extract the pretty url
-      const eId = eventId.split('-').pop();
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
-
-      const data = {
+    const data = {
+      displayId: eventId,
+      emailTo,
+      reportPath,
+      report: {
         displayId: eventId,
-        emailTo: [user.email],
-        reportPath,
-        debugMessage: `MAILER: Notifying ${user.email} that TR ${event.id} is complete`,
-        templatePath: 'tr_event_complete',
-      };
+      },
+      debugMessage: `MAILER: Notifying ${emailTo.join(', ')} that TR ${event.id} is complete`,
+      templatePath: 'tr_event_complete',
+      ...referenceData(),
+    };
 
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
-    }));
+    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
   } catch (err) {
     auditLogger.error(err);
   }
@@ -708,6 +677,7 @@ export const changesRequestedNotification = (
       approver,
       authorWithSetting,
       collabsWithSettings,
+      ...referenceData(),
     };
     notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION, data);
   } catch (err) {
@@ -742,6 +712,7 @@ export async function collaboratorDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
       notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
       return data;
@@ -779,6 +750,7 @@ export async function changesRequestedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
@@ -817,6 +789,7 @@ export async function submittedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
@@ -856,6 +829,7 @@ export async function approvedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.APPROVED_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
@@ -908,25 +882,224 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
     specialists = specialists.filter((s) => s !== null);
 
     const users = await Promise.all(
-      specialists.map(async (s) => userById(s.id)),
+      specialists.map(async (s) => userById(s.id, true)),
     );
 
     const records = users.map((user) => {
       const data = {
         user,
         reports,
-        type: EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST,
+        type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
-      notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, data);
       return data;
     });
 
     return Promise.all(records);
   } catch (err) {
     logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);
+    throw err;
+  }
+}
+
+const TR_NOTIFICATION_CONFIG_DICT = {
+  noSessionsCreated: {
+    toDiff: 'endDate',
+    debug: (email, eventId) => `MAILER: Notifying ${email} that no sessions have been created for TR ${eventId}`,
+    emails: [
+      {
+        templatePath: 'tr_owner_reminder_no_sessions',
+        users: 'ownerId',
+        reportPath: ({ eventStatus }) => `${process.env.TTA_SMART_HUB_URI}/training-reports/${lowerCase(eventStatus).replace(' ', '-')}`,
+      },
+      {
+        templatePath: 'tr_collaborator_reminder_no_sessions',
+        users: 'collaboratorIds',
+        reportPath: ({ eventStatus }) => `${process.env.TTA_SMART_HUB_URI}/training-reports/${lowerCase(eventStatus).replace(' ', '-')}`,
+      },
+    ],
+  },
+  missingEventInfo: {
+    toDiff: 'startDate',
+    debug: (email, eventId) => `MAILER: Notifying ${email} that they need to complete event info for TR ${eventId}`,
+    emails: [
+      {
+        templatePath: 'tr_owner_reminder_event',
+        users: 'ownerId',
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}`,
+      },
+      {
+        templatePath: 'tr_collaborator_reminder_event',
+        users: 'collaboratorIds',
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}`,
+      },
+    ],
+  },
+  missingSessionInfo: {
+    toDiff: 'startDate',
+    debug: (email, eventId) => `MAILER: Notifying ${email} that they need to complete session info for TR ${eventId}`,
+    emails: [
+      {
+        templatePath: 'tr_owner_reminder_session',
+        users: 'ownerId',
+        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
+      },
+      {
+        templatePath: 'tr_collaborator_reminder_session',
+        users: 'collaboratorIds',
+        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
+      },
+      {
+        templatePath: 'tr_poc_reminder_session',
+        users: 'pocIds',
+        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
+      },
+    ],
+  },
+  eventNotCompleted: {
+    toDiff: 'endDate',
+    debug: (email, eventId) => `MAILER: Notifying ${email} that they need to complete event ${eventId}`,
+    emails: [
+      {
+        templatePath: 'tr_owner_reminder_event_not_completed',
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eventId.split('-').pop()}`,
+        users: 'ownerId',
+      },
+    ],
+  },
+};
+
+export async function trainingReportTaskDueNotifications(freq) {
+  const date = frequencyToInterval(freq);
+  logger.info(`MAILER: Starting Training Report Task Due Notifications with freq ${freq}`);
+  try {
+    if (!date) {
+      throw new Error('date is null');
+    }
+
+    // get all outstanding training reports
+    // eslint-disable-next-line global-require
+    const { getTrainingReportAlerts } = require('../../services/event');
+    // imported here to avoid circular dependency import
+
+    const alerts = await getTrainingReportAlerts();
+
+    const today = moment().startOf('day');
+    const emailData = alerts.reduce((accumulatedEmailData, alert) => {
+      const alertTypeConfig = TR_NOTIFICATION_CONFIG_DICT[alert.alertType];
+      // Some kind of garbage type got in the alerts,
+      // we don't know how to handle it
+      if (!alertTypeConfig) {
+        return accumulatedEmailData;
+      }
+
+      const { toDiff } = alertTypeConfig;
+      // If the alert[toDiff] is falsy, we do not have a date to diff against
+      // and can't send an email
+      if (!alert[toDiff]) {
+        return accumulatedEmailData;
+      }
+
+      const dateToDiff = moment(alert[toDiff], 'MM/DD/YYYY').startOf('day');
+
+      const diff = today.diff(dateToDiff, 'days');
+      // Depending on the diff, the subject starts a certain way
+      // either "Reminder" or "Past due"
+      let prefix = '';
+      if (diff >= 20) {
+        if (diff === 20) {
+          prefix = 'Reminder:';
+        }
+
+        // if diff is 40 or ten days after 40...
+        if (diff === 40 || (diff > 40 && (diff % 10 === 0))) {
+          prefix = 'Past due:';
+        }
+      }
+
+      // if we don't have a prefix, we don't send an email
+      if (!prefix) {
+        return accumulatedEmailData;
+      }
+
+      const emailsForAlert = alertTypeConfig.emails;
+      // we run this for a for loop first so we can format the data
+      // for easy promise-consumption
+      emailsForAlert.forEach((emailConfig) => {
+        const { users, templatePath, reportPath } = emailConfig;
+
+        // flatten the array and remove any nulls
+        const userIds = [alert[users]].flat().map((v) => Number(v)).filter((id) => id);
+
+        userIds.forEach((id) => {
+          const data = {
+            displayId: alert.eventId,
+            prefix,
+            // send the alert and the users (remember, users is ownerId | collaboratorIds | pocIds)
+            // to obtain the specific destination
+            reportPath: reportPath(alert, users),
+            debugMessage: alertTypeConfig.debug,
+            templatePath,
+            userId: id,
+          };
+
+          accumulatedEmailData.push(data);
+        });
+      });
+
+      return accumulatedEmailData;
+    }, []); // close reducer
+
+    // we are going to store our users here
+    // so that we don't requery the same user multiple times
+    // for different reports (small user pool for TRs, lots of duplication)
+    const userMap = new Map();
+
+    return Promise.all(emailData.map(async (mail) => {
+      // check our map to see if we have the user already
+      // if not, query the user and store it
+      const { userId } = mail;
+      let user = userMap.get(userId);
+      if (!user) {
+        user = await userById(userId, true);
+
+        if (!user) {
+          return null;
+        }
+
+        userMap.set(userId, user);
+      }
+
+      const emailTo = filterAndDeduplicateEmails([user.email]);
+
+      if (!emailTo || emailTo.length === 0) {
+        return null;
+      }
+
+      const data = {
+        displayId: mail.displayId,
+        report: {
+          displayId: mail.displayId,
+        },
+        prefix: mail.prefix,
+        reportPath: mail.reportPath,
+        emailTo,
+        debugMessage: mail.debugMessage(user.email, mail.displayId),
+        templatePath: mail.templatePath,
+      };
+
+      logger.info(`Sending ${mail.templatePath} to ${emailTo.join(', ')} for TR ${mail.displayId}`);
+
+      notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE, data);
+
+      return data;
+    }));
+  } catch (err) {
+    logger.info(`MAILER: trainingReportTaskDueNotifications with freq ${freq} error ${err}`);
     throw err;
   }
 }
@@ -992,51 +1165,120 @@ export const processNotificationQueue = () => {
   notificationQueue.on('completed', onCompletedNotification);
   increaseListeners(notificationQueue, 10);
 
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
+  notificationQueue.process(
+    EMAIL_ACTIONS.NEEDS_ACTION,
+    transactionQueueWrapper(
+      notifyChangesRequested,
+      EMAIL_ACTIONS.NEEDS_ACTION,
+    ),
+  );
 
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
+  notificationQueue.process(
+    EMAIL_ACTIONS.SUBMITTED,
+    transactionQueueWrapper(
+      notifyApproverAssigned,
+      EMAIL_ACTIONS.SUBMITTED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.APPROVED,
+    transactionQueueWrapper(
+      notifyReportApproved,
+      EMAIL_ACTIONS.APPROVED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.COLLABORATOR_ADDED,
+    transactionQueueWrapper(
+      notifyCollaboratorAssigned,
+      EMAIL_ACTIONS.COLLABORATOR_ADDED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
+    transactionQueueWrapper(
+      notifyRecipientReportApproved,
+      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.SUBMITTED_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.SUBMITTED_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.APPROVED_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.APPROVED_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+    ),
+  );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
-    sendTrainingReportNotification,
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+    ),
   );
 
   notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
-    sendTrainingReportNotification,
+    EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
+    ),
   );
 
   notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
-    sendTrainingReportNotification,
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
-    sendTrainingReportNotification,
+    EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
+    ),
   );
 };
 
@@ -1045,7 +1287,11 @@ export const processNotificationQueue = () => {
  * @param {string} token
  * @returns Promise<any>
  */
-export const sendEmailVerificationRequestWithToken = (user, token) => {
+export const sendEmailVerificationRequestWithToken = (
+  user,
+  token,
+  transport = defaultTransport,
+) => {
   const toEmails = filterAndDeduplicateEmails([user.email]);
 
   if (toEmails.length === 0) {
@@ -1057,7 +1303,7 @@ export const sendEmailVerificationRequestWithToken = (user, token) => {
       from: process.env.FROM_EMAIL_ADDRESS,
     },
     send,
-    transport: defaultTransport,
+    transport,
     htmlToText: {
       wordwrap: 120,
     },

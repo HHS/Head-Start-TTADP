@@ -1,8 +1,14 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES, TRAINING_REPORT_STATUSES, REASONS } from '@ttahub/common';
+import {
+  REPORT_STATUSES,
+  TRAINING_REPORT_STATUSES,
+  REASONS,
+  DEPRECATED_REASONS,
+} from '@ttahub/common';
 import {
   ActivityReport,
   Grant,
+  GrantReplacements,
   Recipient,
   SessionReportPilot,
   Topic,
@@ -10,13 +16,12 @@ import {
 } from '../models';
 
 export const getAllTopicsForWidget = async () => Topic.findAll({
-  attributes: ['id', 'name', 'deletedAt'],
-  where: { deletedAt: null },
+  attributes: ['id', 'name'],
   order: [['name', 'ASC']],
 });
 
 export function generateReasonList() {
-  const reasons = REASONS
+  const reasons = [...REASONS, ...DEPRECATED_REASONS]
     .map((reason) => ({ name: reason, count: 0 }))
     .sort((a, b) => {
       if (a.name < b.name) {
@@ -61,25 +66,32 @@ export function baseTRScopes(scopes) {
 export async function getAllRecipientsFiltered(scopes) {
   return Recipient.findAll({
     attributes: [
-      [sequelize.fn('DISTINCT', sequelize.col('"Recipient"."id"')), 'id'],
+      [sequelize.fn('DISTINCT', sequelize.col('"Recipient"."id"')), 'id'], // This is required for scopes.
+      [sequelize.col('grants.regionId'), 'regionId'],
     ],
     raw: true,
+    where: {
+      '$grants.endDate$': { [Op.gt]: '2020-08-31' },
+      '$grants.deleted$': { [Op.ne]: true },
+      [Op.or]: [
+        { '$grants.replacedGrantReplacements.replacementDate$': null },
+        { '$grants.replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+      ],
+    },
     include: [
       {
-        attributes: ['regionId'], // This is required for scopes.
-        model: Grant,
+        model: Grant.unscoped(),
         as: 'grants',
         required: true,
-        where: {
-          [Op.and]: [
-            scopes.grant,
-            { endDate: { [Op.gt]: '2020-08-31' } },
-            { deleted: { [Op.ne]: true } },
-            {
-              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
-            },
-          ],
-        },
+        attributes: [],
+        where: scopes.grant.where,
+        include: [
+          {
+            model: GrantReplacements,
+            as: 'replacedGrantReplacements',
+            attributes: [],
+          },
+        ],
       },
     ],
   });
@@ -121,7 +133,7 @@ export async function countOccurrences(scopes, column, possibilities) {
 export function countBySingleKey(data, key, results) {
   // Get counts for each key.
   data?.forEach((point) => {
-    point[key].forEach((r) => {
+    (point[key] || []).forEach((r) => {
       const obj = results.find((e) => e.name === r);
       if (obj) {
         obj.count += 1;

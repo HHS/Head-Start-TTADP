@@ -4,10 +4,11 @@ import React, {
   useState,
 } from 'react';
 import { capitalize } from 'lodash';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert } from '@trussworks/react-uswds';
-import { eventById } from '../../fetchers/event';
+import { eventById, completeEvent } from '../../fetchers/event';
 import { getNamesByIds } from '../../fetchers/users';
 import AppLoadingContext from '../../AppLoadingContext';
 import BackLink from '../../components/BackLink';
@@ -15,9 +16,14 @@ import Container from '../../components/Container';
 import ReadOnlyContent from '../../components/ReadOnlyContent';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import './index.css';
+import UserContext from '../../UserContext';
 
 export const formatOwnerName = (event) => {
   try {
+    if (event && event.owner && event.owner.nameWithNationalCenters) {
+      return event.owner.nameWithNationalCenters;
+    }
+
     if (event && event.data && event.data.owner) {
       if (event.eventReportPilotNationalCenterUsers) {
         const user = event.eventReportPilotNationalCenterUsers
@@ -57,9 +63,14 @@ const FORBIDDEN = 403;
 
 export default function ViewTrainingReport({ match }) {
   const [event, setEvent] = useState(null);
-  const [error, setError] = useState(null);
+  const [alertMessage, setAlertMessage] = useState({
+    type: 'error',
+    message: '',
+  });
   const [eventCollaborators, setEventCollaborators] = useState([]);
   const [eventPoc, setEventPoc] = useState([]);
+
+  const { user } = useContext(UserContext);
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
@@ -77,7 +88,10 @@ export default function ViewTrainingReport({ match }) {
           message = 'You do not have permission to view this page';
         }
 
-        setError(message);
+        setAlertMessage({
+          type: 'error',
+          message,
+        });
       } finally {
         setIsAppLoading(false);
       }
@@ -127,6 +141,64 @@ export default function ViewTrainingReport({ match }) {
   const pageTitle = event && event.data && event.data.eventId ? `Training event report ${event.data.eventId}` : 'Training event report';
   const ownerName = formatOwnerName(event);
 
+  const canCompleteEvent = (() => {
+    if (!event || !event.data) {
+      return false;
+    }
+    const isOwner = event && event.ownerId === user.id;
+    const isCompleteOrSuspended = [
+      TRAINING_REPORT_STATUSES.COMPLETE,
+      TRAINING_REPORT_STATUSES.SUSPENDED,
+    ].includes(event.data.status || '');
+
+    const eventSubmitted = event && event.data && event.data.eventSubmitted;
+    const sessionReports = event && event.sessionReports ? event.sessionReports : [];
+
+    if (!isOwner) {
+      return false;
+    }
+
+    if (isCompleteOrSuspended) {
+      return false;
+    }
+
+    // eslint-disable-next-line max-len
+    if (sessionReports.length === 0 || !sessionReports.every((session) => session.data.status === TRAINING_REPORT_STATUSES.COMPLETE)) {
+      return false;
+    }
+
+    if (!eventSubmitted) {
+      return false;
+    }
+
+    return true;
+  })();
+
+  const onCompleteEvent = async () => {
+    try {
+      setAlertMessage({
+        type: '',
+        message: '',
+      });
+
+      setIsAppLoading(true);
+      const { sessionReports: sessions, ...eventReport } = event;
+      await completeEvent(match.params.trainingReportId, eventReport);
+      setEvent(null);
+      setAlertMessage({
+        type: 'success',
+        message: 'Event completed successfully',
+      });
+    } catch (err) {
+      setAlertMessage({
+        type: 'error',
+        message: 'Sorry, something went wrong',
+      });
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
+
   const eventSummary = event && event.data ? [{
     heading: 'Event Summary',
     data: {
@@ -142,20 +214,53 @@ export default function ViewTrainingReport({ match }) {
       'Training type': event.data['Event Duration/# NC Days of Support'],
       Reasons: event.data.reasons,
       'Target populations': event.data.targetPopulations,
+      Vision: event.data.vision,
     },
     striped: true,
-  }, {
-    heading: 'Vision and goal',
-    data: {
-      Vision: event.data.vision,
-      Goal: event.data.goal,
-    },
   }] : [];
+
+  const isIstVisit = (session) => {
+    if (session.data.isIstVisit === 'yes' || (session.data.regionalOfficeTta && session.data.regionalOfficeTta.length > 0)) {
+      return true;
+    }
+    return false;
+  };
+
+  const generateIstOfficeOrRecipientProperties = (session) => {
+    if (isIstVisit(session)) {
+      return {
+        'Regional Office/TTA': session.data.regionalOfficeTta.join(', '),
+      };
+    }
+
+    return {
+      Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
+      'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
+    };
+  };
+
+  const generateNumberOfParticipants = (session) => {
+    // In person or virtual.
+    if (session.data.deliveryMethod === 'in-person' || session.data.deliveryMethod === 'virtual') {
+      const numberOfParticipants = session.data.numberOfParticipants ? session.data.numberOfParticipants.toString() : '';
+      return {
+        'Number of participants': numberOfParticipants,
+      };
+    }
+    // Hybrid.
+    const numberOfParticipantsInPerson = session.data.numberOfParticipantsInPerson ? session.data.numberOfParticipantsInPerson.toString() : '';
+    const numberOfParticipantsVirtually = session.data.numberOfParticipantsVirtually ? session.data.numberOfParticipantsVirtually.toString() : '';
+    return {
+      'Number of participants attending in person': numberOfParticipantsInPerson,
+      'Number of participants attending virtually': numberOfParticipantsVirtually,
+    };
+  };
 
   const sessions = event && event.sessionReports ? event.sessionReports.map((session, index) => (
     <ReadOnlyContent
       key={session.id}
       title={`Session ${index + 1}`}
+      displayStatus={session.data.status || 'Not started'}
       sections={[{
         heading: 'Session Summary',
         striped: true,
@@ -172,25 +277,19 @@ export default function ViewTrainingReport({ match }) {
           'Session objective': session.data.objective,
           Topics: session.data.objectiveTopics,
           Trainers: session.data.objectiveTrainers,
-          'Resource links': session.data.objectiveResources ? session.data.objectiveResources.map((o) => o.value) : [],
-          'iPD Courses': session.data.courses ? session.data.courses.map((o) => o.name) : [],
-          'Resource attachments': session.data.files ? session.data.files.map((f) => f.originalFileName) : [],
+          'Resource links': session.data.objectiveResources && session.data.objectiveResources.filter((r) => r.value).length ? session.data.objectiveResources.map((o) => o.value) : 'None',
+          'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name) : 'None',
+          'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None',
           'Support type': session.data.objectiveSupportType,
         },
       }, {
         heading: 'Participants',
         striped: true,
         data: {
-          Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
-          'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
-          'Number of participants': String((
-            session.data.numberOfParticipants || 0
-          ) + (
-            session.data.numberOfParticipantsVirtually || 0
-          ) + (
-            session.data.numberOfParticipantsInPerson || 0
-          )),
+          'IST visit': isIstVisit(session) ? 'Yes' : 'No',
+          ...generateIstOfficeOrRecipientProperties(session),
           'Delivery method': capitalize(session.data.deliveryMethod || ''),
+          ...generateNumberOfParticipants(session),
           'Language used': session.data.language ? session.data.language.join(', ') : [],
           'TTA provided': session.data.ttaProvided,
         },
@@ -215,17 +314,20 @@ export default function ViewTrainingReport({ match }) {
         <title>
           Training Event Report
           {' '}
-          {(event && event.data) ? event.data.eventId : ''}
+          {(event && event.data) ? String(event.data.eventId) : ''}
         </title>
       </Helmet>
       <BackLink to={backLinkUrl}>
         Back to Training Reports
       </BackLink>
-      <ApprovedReportSpecialButtons />
+      <ApprovedReportSpecialButtons
+        showCompleteEvent={canCompleteEvent}
+        onCompleteEvent={onCompleteEvent}
+      />
       <Container className="margin-top-2 maxw-tablet-lg ttahub-completed-training-report-container">
-        { error && (
-        <Alert type="error">
-          {error}
+        { alertMessage.message && (
+        <Alert type={alertMessage.type}>
+          {alertMessage.message}
         </Alert>
         )}
         <h1 className="landing">{pageTitle}</h1>

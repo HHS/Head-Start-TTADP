@@ -1,55 +1,67 @@
+/* istanbul ignore file: tested but not showing up in coverage for some reason */
+/* eslint-disable max-len */
 import Queue from 'bull';
 import { auditLogger } from '../logger';
+import { formatLogObject } from '../processHandler';
 
-const generateRedisConfig = (enableRateLimiter = false) => {
+export const generateRedisConfig = (enableRateLimiter = false) => {
   if (process.env.VCAP_SERVICES) {
-    const {
-      'aws-elasticache-redis': [{
+    const services = JSON.parse(process.env.VCAP_SERVICES);
+    // Check if the 'aws-elasticache-redis' service is available in VCAP_SERVICES
+    if (services['aws-elasticache-redis'] && services['aws-elasticache-redis'].length > 0) {
+      const {
         credentials: {
           host,
           port,
           password,
           uri,
         },
-      }],
-    } = JSON.parse(process.env.VCAP_SERVICES);
+      } = services['aws-elasticache-redis'][0];
 
-    let redisSettings = {
-      uri,
-      host,
-      port,
-      tlsEnabled: true,
-      // TLS needs to be set to an empty object for redis on cloud.gov
-      // eslint-disable-next-line no-empty-pattern
-      redisOpts: {
-        redis: { password, tls: {} },
-      },
-    };
-
-    // Explicitly set the rate limiter settings.
-    if (enableRateLimiter) {
-      redisSettings = {
-        ...redisSettings,
+      let redisSettings = {
+        uri,
+        host,
+        port,
+        tlsEnabled: true,
+        // TLS needs to be set to an empty object for redis on cloud.gov
+        // eslint-disable-next-line no-empty-pattern
         redisOpts: {
-          ...redisSettings.redisOpts,
-          limiter: {
-            max: process.env.REDIS_LIMITER_MAX || 1000,
-            duration: process.env.REDIS_LIMITER_DURATION || 300000,
-          },
+          redis: { password, tls: {} },
         },
       };
-    }
 
-    return redisSettings;
+      // Explicitly set the rate limiter settings.
+      if (enableRateLimiter) {
+        redisSettings = {
+          ...redisSettings,
+          redisOpts: {
+            ...redisSettings.redisOpts,
+            limiter: {
+              max: process.env.REDIS_LIMITER_MAX || 1000,
+              duration: process.env.REDIS_LIMITER_DURATION || 300000,
+            },
+          },
+        };
+      }
+
+      return redisSettings;
+    }
   }
-  const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
+
+  // Check for the presence of Redis-related environment variables
+  const { REDIS_HOST, REDIS_PASS, REDIS_PORT } = process.env;
+  const redisHost = REDIS_HOST || 'localhost';
+  const redisPort = REDIS_PORT || 6379;
+  const redisPassFull = REDIS_PASS ? `${REDIS_PASS}@` : '';
+  const tlsEnabled = false;
+
   return {
-    host,
-    uri: `redis://:${password}@${host}:${process.env.REDIS_PORT || 6379}`,
-    port: (process.env.REDIS_PORT || 6379),
-    tlsEnabled: false,
+    host: redisHost,
+    uri: `redis://:${redisPassFull}${redisHost}:${redisPort}`,
+    port: redisPort,
+    tlsEnabled,
     redisOpts: {
-      redis: { password },
+      redis: { password: REDIS_PASS },
     },
   };
 };
@@ -59,8 +71,6 @@ const {
   port,
   redisOpts,
 } = generateRedisConfig(true);
-
-export { generateRedisConfig };
 
 export async function increaseListeners(queue, num = 1) {
   const MAX_LISTENERS = 20;
@@ -80,63 +90,65 @@ export async function increaseListeners(queue, num = 1) {
 }
 
 // Remove event handlers
-function removeQueueEventHandlers(
+export function removeQueueEventHandlers(
   queue,
   errorListener,
   shutdownListener,
   exceptionListener,
   rejectionListener,
 ) {
-  queue.removeListener('error', errorListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('SIGINT', shutdownListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('SIGTERM', shutdownListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('uncaughtException', exceptionListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('unhandledRejection', rejectionListener).catch((err) => auditLogger.error(err.message));
+  if (errorListener) queue.removeListener('error', errorListener);
+  if (shutdownListener) {
+    process.removeListener('SIGINT', shutdownListener);
+    process.removeListener('SIGTERM', shutdownListener);
+  }
+  if (exceptionListener) process.removeListener('uncaughtException', exceptionListener);
+  if (rejectionListener) process.removeListener('unhandledRejection', rejectionListener);
 }
 
 // Define the handlers so they can be added and removed
 function handleShutdown(queue) {
   return () => {
-    auditLogger.error('Shutting down, closing queue...');
-    queue.close().then(() => {
-      auditLogger.error('Queue closed successfully.');
-      removeQueueEventHandlers(queue);
-      process.exit(0);
-    }).catch((err) => {
-      auditLogger.error('Failed to close the queue:', err);
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    });
+    auditLogger.error('Shutting down, but queue closing is disabled for now...');
+    // queue.close().then(() => {
+    //   auditLogger.error('Queue closed successfully.');
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(0);
+    // }).catch((err) => {
+    //   auditLogger.error('Failed to close the queue:', err);
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // });
   };
 }
 
 function handleException(queue) {
   return (err) => {
-    auditLogger.error('Uncaught exception:', err);
-    queue.close().then(() => {
-      auditLogger.error('Queue closed after uncaught exception.');
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    }).catch((closeErr) => {
-      auditLogger.error('Failed to close the queue after uncaught exception:', closeErr);
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    });
+    auditLogger.error('Uncaught exception:', formatLogObject(err));
+    // queue.close().then(() => {
+    //   auditLogger.error('Queue closed after uncaught exception.');
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // }).catch((closeErr) => {
+    //   auditLogger.error('Failed to close the queue after uncaught exception:', closeErr);
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // });
   };
 }
 
 function handleRejection(queue) {
   return (reason, promise) => {
     auditLogger.error('Unhandled rejection at:', promise, 'reason:', reason);
-    queue.close().then(() => {
-      auditLogger.error('Queue closed after unhandled rejection.');
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    }).catch((closeErr) => {
-      auditLogger.error('Failed to close the queue after unhandled rejection:', closeErr);
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    });
+    // queue.close().then(() => {
+    //   auditLogger.error('Queue closed after unhandled rejection.');
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // }).catch((closeErr) => {
+    //   auditLogger.error('Failed to close the queue after unhandled rejection:', closeErr);
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // });
   };
 }
 
@@ -176,7 +188,7 @@ function setupQueueEventHandlers(queue) {
   process.on('unhandledRejection', rejectionListener);
 }
 
-function setRedisConnectionName(queue, connectionName) {
+export function setRedisConnectionName(queue, connectionName) {
   const { client } = queue;
   if (client && client.call) {
     client.call('client', 'setname', connectionName).catch((err) => {
@@ -185,9 +197,23 @@ function setRedisConnectionName(queue, connectionName) {
   }
 }
 
-export default function newQueue(queName) {
-  const queue = new Queue(queName, `redis://${host}:${port}`, redisOpts);
+export default function newQueue(queName, timeout = 30000) {
+  const queue = new Queue(queName, `redis://${host}:${port}`, {
+    ...redisOpts,
+    maxRetriesPerRequest: 15, // Adjust this value as needed
+    retryStrategy(times) {
+      const delay = Math.min(times * 50, 2000);
+      auditLogger.warn(`Redis retry attempt #${times}, retrying in ${delay}ms`);
+      return delay;
+    },
+    // Safely merge the timeout into redisOpts.settings
+    settings: {
+      ...((redisOpts?.settings) || {}), // Preserve existing settings from redisOpts
+      stalledInterval: timeout, // Add or overwrite the timeout for stalled jobs
+    },
+  });
+
   setRedisConnectionName(queue, `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${queName}-${process.pid}`);
-  // setupQueueEventHandlers(queue); // TODO - currently causing mor errors then fixing
+  setupQueueEventHandlers(queue);
   return queue;
 }

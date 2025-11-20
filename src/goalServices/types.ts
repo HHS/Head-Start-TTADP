@@ -17,7 +17,21 @@ interface IPrompt {
   }[];
   dataValues?: IPrompt;
   toJSON?: () => IPrompt;
-  allGoalsHavePromptResponse?: boolean;
+  grantId?: number;
+  grantDisplayName?: string;
+}
+
+interface IReviewPrompt {
+  key: string;
+  promptId: number;
+  responses: string[];
+  grantId?: number;
+  grantDisplayName?: string;
+  recipients:
+  {
+    id: number;
+    name: string;
+  }[];
 }
 
 interface ITopic {
@@ -55,9 +69,18 @@ interface ICourse {
   name: string;
 }
 
+interface ICitation {
+  citation: string;
+}
+
 interface ICourseModelInstance extends ICourse {
   dataValues?: ICourse;
   toJSON?: () => ICourse;
+}
+
+interface ICitationModelInstance extends ICourse {
+  dataValues?: ICitation;
+  toJSON?: () => ICitation;
 }
 
 interface IActivityReportObjective {
@@ -90,6 +113,12 @@ interface IActivityReportObjective {
   activityReportObjectiveCourses: {
     course: ICourse;
   }[];
+  activityReportObjectiveCitations: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dataValues: any;
+    citation: string;
+    monitoringReferences: JSON;
+  }[];
 }
 
 interface IActivityReportObjectivesModelInstance extends IActivityReportObjective {
@@ -103,7 +132,6 @@ interface IGrant {
   status: string;
   startDate: string;
   endDate: string;
-  oldGrantId: number;
   recipientId: number;
   numberWithProgramTypes: string;
   number: string;
@@ -117,6 +145,7 @@ interface IGrant {
     }
   }
   goalId?: number;
+  recipientNameWithPrograms: string;
 }
 
 interface IGrantModelInstance extends IGrant {
@@ -131,7 +160,6 @@ interface IActivityReportGoal {
   updatedAt: Date;
   name: string;
   status: string;
-  endDate: string;
   isActivelyEdited: boolean;
   source: string | {
     [key: string]: string;
@@ -201,7 +229,6 @@ interface IGoalCollaborator {
 interface IGoal {
   id: number;
   name: string;
-  endDate: string;
   isCurated: boolean;
   grantId: number;
   createdVia: string;
@@ -224,6 +251,7 @@ interface IGoal {
   grantIds: number[];
   isNew: boolean;
   isReopenedGoal: boolean;
+  isSourceEditable: boolean;
   collaborators: {
     goalNumber: string;
     goalCreator: IGoalCollaborator;
@@ -235,7 +263,6 @@ interface IGoal {
 interface IReducedGoal {
   id: number;
   name: string;
-  endDate: string;
   status: string;
   regionId: number;
   recipientId: number;
@@ -253,6 +280,7 @@ interface IReducedGoal {
   prompts : {
     [x: string]: IPrompt[];
   } | IPrompt[];
+  promptsForReview: IReviewPrompt[];
   statusChanges?: { oldStatus: string }[];
   goalNumber: string;
   goalNumbers: string[];
@@ -269,6 +297,7 @@ interface IReducedGoal {
     goalCreatorRoles: string;
   }[];
   activityReportGoals?: IActivityReportGoal[];
+  isSourceEditable: boolean;
 }
 
 interface IGoalModelInstance extends IGoal {
@@ -324,6 +353,7 @@ export {
   IActivityReportObjective,
   IObjective,
   IGoal,
+  ICitation,
   // -- model version of the above -- //
   IGoalModelInstance,
   IGrantModelInstance,
@@ -333,10 +363,12 @@ export {
   IFileModelInstance,
   IObjectiveModelInstance,
   IActivityReportObjectivesModelInstance,
+  ICitationModelInstance,
   // -- after going through reduceGoals -- //
   IReducedObjective,
   IReducedGoal,
   // -- other entity objective -- //
   IOtherEntityObjective,
   IOtherEntityObjectiveModelInstance,
+  IReviewPrompt,
 };

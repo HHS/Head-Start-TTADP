@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import parse from 'csv-parse/lib/browser';
 import PropTypes from 'prop-types';
 import {
@@ -9,10 +9,10 @@ import {
   Button,
 } from '@trussworks/react-uswds';
 import languageEncoding from 'detect-file-encoding-and-language';
-import Container from '../../../components/Container';
 import {
   importCsv,
 } from '../../../fetchers/Admin';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 export default function CsvImport(
   {
@@ -23,6 +23,7 @@ export default function CsvImport(
     primaryIdColumn,
   },
 ) {
+  const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [error, setError] = useState();
   const [success, setSuccess] = useState();
   const [info, setInfo] = useState();
@@ -37,6 +38,8 @@ export default function CsvImport(
   const fileInputRef = useRef(null);
 
   const importCsvFile = async () => {
+    setAppLoadingText('Loading...');
+    setIsAppLoading(true);
     try {
       // If errors return.
       if (error) {
@@ -78,9 +81,11 @@ export default function CsvImport(
     } finally {
       // Clear file input.
       setInfo('');
+      setIsAppLoading(false);
     }
   };
 
+  /* istanbul ignore next: internal mechanism tested elsewhere */
   const onChange = async (e) => {
     const { files } = e.target;
 
@@ -177,113 +182,111 @@ export default function CsvImport(
   };
   return (
     <>
-      <Container paddingX={1} paddingY={1} className="smart-hub--overflow-auto">
-        <div>
-          <h2>
-            {
-                // Capitalize first letter of each word in typeName.
-                typeName.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-            }
-            {' '}
-            Import
-          </h2>
-          {(success && !error) && (
-            <Alert type="success" className="margin-bottom-1 maxw-mobile-lg" noIcon>
-              {success}
-            </Alert>
-          )}
-          {error && (
-            <Alert type="error" className="margin-bottom-1 maxw-mobile-lg" noIcon>
-              {error}
-            </Alert>
-          )}
-          {info && (
-          <Alert type="info" className="margin-bottom-1 maxw-mobile-lg" noIcon>
-            {info}
+      <div>
+        <h2>
+          {
+              // Capitalize first letter of each word in typeName.
+              typeName.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+          }
+          {' '}
+          Import
+        </h2>
+        {(success && !error) && (
+          <Alert type="success" className="margin-bottom-1 maxw-mobile-lg" noIcon>
+            {success}
           </Alert>
-          )}
-          <div className="display-flex">
-            <FormGroup>
-              <Label htmlFor="tr-file-input-single">Input accepts a single file</Label>
-              <FileInput id="tr-file-input-single" name="tr-file-input-single" onChange={onChange} ref={fileInputRef} />
-              {(success) && (
-                <div>
-                  <h3>Import Summary:</h3>
-                  <ul>
-                    {
-                        created && created.length > 0 && (
-                        <li>
-                          {`${created.length} created`}
-                          {created.map((c) => (
-                            <li key={c.name} style={{ marginLeft: '20px' }}>{c.name}</li>
-                          ))}
-                        </li>
-                        )
-                        }
-                    {
-                        skipped && skipped.length > 0 && (
-                        <li>
-                          {`${skipped.length} skipped`}
-                          {skipped.map((item) => (
-                            <li key={item} style={{ marginLeft: '20px' }}>{item}</li>
-                          ))}
-                        </li>
-                        )
+        )}
+        {error && (
+          <Alert type="error" className="margin-bottom-1 maxw-mobile-lg" noIcon>
+            {error}
+          </Alert>
+        )}
+        {info && (
+        <Alert type="info" className="margin-bottom-1 maxw-mobile-lg" noIcon>
+          {info}
+        </Alert>
+        )}
+        <div className="display-flex">
+          <FormGroup>
+            <Label htmlFor="tr-file-input-single">Input accepts a single file</Label>
+            <FileInput id="tr-file-input-single" name="tr-file-input-single" onChange={onChange} ref={fileInputRef} />
+            {(success) && (
+              <div>
+                <h3>Import Summary:</h3>
+                <ul>
+                  {
+                      created && created.length > 0 && (
+                      <li>
+                        {`${created.length} created`}
+                        {created.map((c) => (
+                          <li key={c.name} style={{ marginLeft: '20px' }}>{c.name}</li>
+                        ))}
+                      </li>
+                      )
                       }
-                    {
-                        errors && errors.length > 0 && (
-                        <li>
-                          {`${errors.length} errors`}
-                          {errors.map((err) => (
-                            <li key={err} style={{ marginLeft: '20px' }}>{err}</li>
-                          ))}
-                        </li>
-                        )
-                      }
-                    {
-                        replaced && replaced.length > 0 && (
-                        <li>
-                          {`${replaced.length} replaced`}
-                          {replaced.map((r) => (
-                            <li key={r.name} style={{ marginLeft: '20px' }}>{r.name}</li>
-                          ))}
-                        </li>
-                        )
-                        }
-                    {
-                         updated && updated.length > 0 && (
-                         <li>
-                           {`${updated.length} updated`}
-                           {updated.map((u) => (
-                             <li key={u.name} style={{ marginLeft: '20px' }}>{u.name}</li>
-                           ))}
-                         </li>
-                         )
-                        }
-                    {
-                        deleted && deleted.length > 0 && (
-                        <li>
-                          {`${deleted.length} deleted`}
-                          {deleted.map((d) => (
-                            <li key={d.name} style={{ marginLeft: '20px' }}>{d.name}</li>
-                          ))}
-                        </li>
-                        )
-
+                  {
+                      skipped && skipped.length > 0 && (
+                      <li>
+                        {`${skipped.length} skipped`}
+                        {skipped.map((item) => (
+                          <li key={item} style={{ marginLeft: '20px' }}>{item}</li>
+                        ))}
+                      </li>
+                      )
                     }
-                  </ul>
-                </div>
-              )}
-              <Button className="margin-top-2" type="button" onClick={importCsvFile}>
-                Upload
-                {' '}
-                { typeName }
-              </Button>
-            </FormGroup>
-          </div>
+                  {
+                      errors && errors.length > 0 && (
+                      <li>
+                        {`${errors.length} errors`}
+                        {errors.map((err) => (
+                          <li key={err} style={{ marginLeft: '20px' }}>{err}</li>
+                        ))}
+                      </li>
+                      )
+                    }
+                  {
+                      replaced && replaced.length > 0 && (
+                      <li>
+                        {`${replaced.length} replaced`}
+                        {replaced.map((r) => (
+                          <li key={r.name} style={{ marginLeft: '20px' }}>{r.name}</li>
+                        ))}
+                      </li>
+                      )
+                      }
+                  {
+                        updated && updated.length > 0 && (
+                        <li>
+                          {`${updated.length} updated`}
+                          {updated.map((u) => (
+                            <li key={u.name} style={{ marginLeft: '20px' }}>{u.name}</li>
+                          ))}
+                        </li>
+                        )
+                      }
+                  {
+                      deleted && deleted.length > 0 && (
+                      <li>
+                        {`${deleted.length} deleted`}
+                        {deleted.map((d) => (
+                          <li key={d.name} style={{ marginLeft: '20px' }}>{d.name}</li>
+                        ))}
+                      </li>
+                      )
 
+                  }
+                </ul>
+              </div>
+            )}
+            <Button className="margin-top-2" type="button" onClick={importCsvFile}>
+              Upload
+              {' '}
+              { typeName }
+            </Button>
+          </FormGroup>
         </div>
-      </Container>
+
+      </div>
     </>
   );
 }

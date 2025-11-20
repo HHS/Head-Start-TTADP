@@ -1,4 +1,4 @@
-import { TRAINING_REPORT_STATUSES, REASONS } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, REASONS, DEPRECATED_REASONS } from '@ttahub/common';
 import db, {
   EventReportPilot,
   SessionReportPilot,
@@ -223,6 +223,7 @@ describe('TR reason list', () => {
       where: {
         id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id],
       },
+      individualHooks: true,
     });
 
     // delete recipients
@@ -255,8 +256,9 @@ describe('TR reason list', () => {
 
     // run our function
     const data = await trReasonList(scopes);
+    const rs = [...DEPRECATED_REASONS, ...REASONS];
 
-    expect(data.length).toBe(REASONS.length);
+    expect(data.length).toBe(rs.length);
 
     const areaOfConcern = data.find((reason) => reason.name === 'Monitoring | Area of Concern');
     expect(areaOfConcern.count).toBe(2);
@@ -269,6 +271,6 @@ describe('TR reason list', () => {
 
     const filteredOut = data.filter((reason) => reason.count === 0);
 
-    expect(filteredOut.length).toBe(REASONS.length - 3);
+    expect(filteredOut.length).toBe(rs.length - 3);
   });
 });

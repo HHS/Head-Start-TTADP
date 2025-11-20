@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import NotFound from '../pages/NotFound';
+import { Redirect } from 'react-router';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
 
@@ -16,7 +16,7 @@ export default function DisplayWithPermission({
 
   if (!admin && !userHasScope) {
     if (renderNotFound) {
-      return <NotFound />;
+      return <Redirect to="/something-went-wrong/404" />;
     }
     return <></>;
   }

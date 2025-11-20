@@ -2,17 +2,24 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import moment from 'moment';
-import { render, screen, act } from '@testing-library/react';
+import {
+  render, screen, act, fireEvent,
+} from '@testing-library/react';
 import { useForm } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import { Grid } from '@trussworks/react-uswds';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
-
 import ControlledDatePicker from '../ControlledDatePicker';
+
+const defaultValidation = {
+  beforeMessage: '',
+  afterMessage: '',
+  invalidMessage: '',
+};
 
 describe('Controlled Date Picker', () => {
   // eslint-disable-next-line react/prop-types
-  const TestDatePicker = ({ setEndDate }) => {
+  const TestDatePicker = ({ setEndDate, customValidationMessages = defaultValidation }) => {
     const {
       control, errors, handleSubmit, watch,
     } = useForm({
@@ -34,9 +41,11 @@ describe('Controlled Date Picker', () => {
               Start date
             </label>
             <ControlledDatePicker
+              customValidationMessages={customValidationMessages}
               control={control}
               name="startDate"
               value={startDate}
+              minDate="09/01/2020"
               setEndDate={setEndDate}
               maxDate={endDate}
               isStartDate
@@ -56,6 +65,7 @@ describe('Controlled Date Picker', () => {
               minDate={startDate}
               key="endDateKey"
               inputId="endDate"
+              customValidationMessages={customValidationMessages}
             />
           </Grid>
         </Grid>
@@ -87,6 +97,47 @@ describe('Controlled Date Picker', () => {
     act(() => userEvent.clear(sd));
     userEvent.type(sd, '01/03/2021');
     expect(setEndDate).toHaveBeenCalled();
+  });
+
+  it('displays custom validation messages', async () => {
+    const setEndDate = jest.fn();
+    render(<TestDatePicker
+      setEndDate={setEndDate}
+      customValidationMessages={{
+        beforeMessage: 'Before message',
+        afterMessage: 'After message',
+        invalidMessage: 'Invalid message',
+      }}
+    />);
+
+    const ed = await screen.findByRole('textbox', { name: /end date/i });
+    const sd = await screen.findByRole('textbox', { name: /start date/i });
+
+    act(() => {
+      userEvent.type(sd, '13/99/9999');
+      fireEvent.blur(sd);
+    });
+    expect(await screen.findByText('Invalid message')).toBeVisible();
+    act(() => {
+      userEvent.clear(sd);
+      userEvent.clear(ed);
+    });
+    userEvent.type(ed, '12/31/2020');
+    userEvent.type(sd, '08/31/2020');
+
+    fireEvent.blur(sd);
+
+    expect(await screen.findByText('After message')).toBeVisible();
+
+    act(() => {
+      userEvent.clear(sd);
+      userEvent.clear(ed);
+    });
+    userEvent.type(ed, '12/31/2020');
+    userEvent.type(sd, '01/01/2021');
+
+    fireEvent.blur(ed);
+    expect(await screen.findByText('Before message')).toBeVisible();
   });
 
   it('can set future start date and adjust end date', async () => {

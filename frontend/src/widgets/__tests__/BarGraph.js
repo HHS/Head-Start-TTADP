@@ -1,9 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import React, { createRef } from 'react';
 import {
   render,
   waitFor,
   act,
+  screen,
 } from '@testing-library/react';
 import BarGraph from '../BarGraph';
 
@@ -20,13 +21,17 @@ const TEST_DATA = [{
   count: 0,
 }];
 
-const renderBarGraph = async () => {
+const renderBarGraph = (data = TEST_DATA) => {
   act(() => {
-    render(<BarGraph data={TEST_DATA} />);
+    render(<BarGraph data={data} widgetRef={createRef()} />);
   });
 };
 
 describe('Bar Graph', () => {
+  it('handles null data', () => {
+    renderBarGraph(null);
+    expect(document.querySelector('svg')).toBe(null);
+  });
   it('is shown', async () => {
     renderBarGraph();
 
@@ -39,5 +44,15 @@ describe('Bar Graph', () => {
     const point2 = document.querySelector('g.xtick');
     // eslint-disable-next-line no-underscore-dangle
     expect(point2.__data__.text).toBe('0');
+  });
+
+  it('shows no results found', async () => {
+    renderBarGraph([]);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /no results found\./i })).toBeDefined();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeDefined();
+      expect(screen.getByText('Get help using filters')).toBeDefined();
+    });
   });
 });

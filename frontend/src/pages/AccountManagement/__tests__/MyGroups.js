@@ -8,7 +8,8 @@ import {
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter } from 'react-router';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import { GROUP_SHARED_WITH } from '@ttahub/common/src/constants';
 import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
@@ -22,9 +23,11 @@ const user = {
 };
 
 describe('MyGroups', () => {
+  const history = createMemoryHistory();
+
   const renderMyGroups = (groupId = null) => {
     render(
-      <MemoryRouter>
+      <Router history={history}>
         <UserContext.Provider value={{ user }}>
           <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
             <MyGroupsProvider>
@@ -32,7 +35,7 @@ describe('MyGroups', () => {
             </MyGroupsProvider>
           </AppLoadingContext.Provider>
         </UserContext.Provider>
-      </MemoryRouter>,
+      </Router>,
     );
   };
 
@@ -213,14 +216,13 @@ describe('MyGroups', () => {
   });
 
   it('handles fetch errors', async () => {
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get('/api/group/1', 500);
-
-    act(() => {
+    await act(async () => {
       renderMyGroups(1);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(/There was an error fetching your group/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
+      });
     });
   });
 

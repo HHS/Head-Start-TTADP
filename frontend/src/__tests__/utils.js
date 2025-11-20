@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom';
 import moment from 'moment';
 import {
-  queryStringToFilters, filtersToQueryString, formatDateRange, decodeQueryParam,
+  queryStringToFilters,
+  filtersToQueryString,
+  formatDateRange,
+  decodeQueryParam,
+  isInternalGovernmentLink,
 } from '../utils';
 
 describe('queryStringToFilters', () => {
@@ -20,6 +24,26 @@ describe('decodeQueryParam', () => {
     const param = 'a,b,c';
     const query = decodeQueryParam(param);
     expect(query).toStrictEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('isInternalGovernmentLink', () => {
+  it('correctly validates eclkc url', () => {
+    const url = 'https://eclkc.ohs.acf.hhs.gov';
+    const isValid = isInternalGovernmentLink(url);
+    expect(isValid).toBe(true);
+  });
+
+  it('correctly validates headstart url', () => {
+    const url = 'https://headstart.gov/fsafsafs/dsalkjf';
+    const isValid = isInternalGovernmentLink(url);
+    expect(isValid).toBe(true);
+  });
+
+  it('correctly validates non-government url', () => {
+    const url = 'https://google.com';
+    const isValid = isInternalGovernmentLink(url);
+    expect(isValid).toBe(false);
   });
 });
 
@@ -60,6 +84,32 @@ describe('filtersToQueryString', () => {
     ];
     const str = filtersToQueryString(filters);
     expect(str).toBe(`region.in[]=14&startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
+  });
+
+  it('handles region, second param', () => {
+    const filters = [
+      {
+        id: '07bc65ed-a4ce-410f-b7be-f685bc8921ed',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2021/11/13-2021/12/13',
+      },
+    ];
+    const str = filtersToQueryString(filters, '14');
+    expect(str).toBe(`startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}&region.in[]=14`);
+  });
+
+  it('handles oddball region', () => {
+    const filters = [
+      {
+        id: '07bc65ed-a4ce-410f-b7be-f685bc8921ed',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2021/11/13-2021/12/13',
+      },
+    ];
+    const str = filtersToQueryString(filters, 'YOLO');
+    expect(str).toBe(`startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
   });
 });
 

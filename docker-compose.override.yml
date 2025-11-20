@@ -1,8 +1,9 @@
-version: "3.7"
 services:
   backend:
     build:
       context: .
+    profiles:
+      - minimal_required_node
     command: yarn server
     user: ${CURRENT_USER:-root}
     ports:
@@ -14,7 +15,6 @@ services:
       - POSTGRES_HOST=postgres_docker
       - REDIS_HOST=redis
       - SMTP_HOST=mailcatcher
-      - FONTAWESOME_NPM_AUTH_TOKEN
       # On an M1 mac, puppeteer install fails with the message:
       # "The chromium binary is not available for arm64"
       #
@@ -29,9 +29,13 @@ services:
       - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
     volumes:
       - ".:/app:rw"
+      - "node_modules-backend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
   frontend:
     build:
       context: .
+    profiles:
+      - minimal_required_node
     command: yarn start
     user: ${CURRENT_USER:-root}
     stdin_open: true
@@ -41,13 +45,16 @@ services:
       - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
       - "./packages:/packages:ro"
+      - "node_modules-frontend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
     environment:
       - BACKEND_PROXY=http://backend:8080
-      - FONTAWESOME_NPM_AUTH_TOKEN
       - REACT_APP_WEBSOCKET_URL
   worker:
     build:
       context: .
+    profiles:
+      - minimal_required_node
     command: yarn worker
     env_file: .env
     depends_on:
@@ -59,23 +66,17 @@ services:
       - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
+      - "node_modules-backend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
   owasp_zap_backend:
-    image: softwaresecurityproject/zap-stable:latest
-    platform: linux/arm64
+    image: zaproxy/zap-stable:latest
+    profiles:
+      - full_stack_zap
+    platform: linux/amd64
     user: zap
-    command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report.html
+    command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report_.html
     volumes:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw
     depends_on:
       - backend
-  owasp_zap_similarity:
-    image: softwaresecurityproject/zap-stable:latest
-    platform: linux/arm64
-    user: zap
-    command: zap-api-scan.py -t http://similarity:8080/openapi.json -f openapi -I -i -r owasp_api_report.html
-    volumes:
-      - ./zap.conf:/zap/wrk/zap.conf:ro
-      - ./reports:/zap/wrk:rw
-    depends_on:
-      - similarity_api

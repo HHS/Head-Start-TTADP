@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
-import { Alert } from '@trussworks/react-uswds';
 import { useController } from 'react-hook-form';
 import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
 import ConditionalMultiselectForHookForm from './ConditionalMultiselectForHookForm';
@@ -9,23 +8,45 @@ import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldC
 
 const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS;
 
+const formatPromptTitle = (field) => `${field.grantId}-${formatTitleForHtmlAttribute(field.title)}`;
+
 export const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations, value, userCanEdit) => (
+    render: (
+      field,
+      validations,
+      value,
+      userCanEdit,
+      drawerButtonText,
+      drawerTitle,
+      drawerTagName,
+      drawerClassName,
+    ) => (
       <ConditionalMultiselectForHookForm
         validations={validations}
         fieldData={field}
-        fieldName={formatTitleForHtmlAttribute(field.title)}
+        fieldName={formatPromptTitle(field)}
         defaultValue={value}
-        key={`conditional-multiselect-${formatTitleForHtmlAttribute(field.title)}`}
+        key={`conditional-multiselect-${formatPromptTitle(field)}`}
         userCanEdit={userCanEdit}
+        // drawer props forwarded from parent (GoalForm)
+        drawerButtonText={drawerButtonText}
+        drawerTitle={drawerTitle}
+        drawerTagName={drawerTagName}
+        drawerClassName={drawerClassName}
       />
     ),
   },
 };
 
 export default function ConditionalFieldsForHookForm({
-  prompts, isMultiRecipientReport, userCanEdit,
+  prompts,
+  userCanEdit,
+  heading,
+  drawerButtonText,
+  drawerTitle,
+  drawerTagName,
+  drawerClassName,
 }) {
   const {
     field: {
@@ -45,43 +66,44 @@ export default function ConditionalFieldsForHookForm({
     setInitialValues(newPromptValues);
   }, [prompts, initialValues]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     // on mount, update the goal conditional fields
     // with the prompt data
 
-    const goalPrompts = prompts.map(({ promptId, title }) => ({
-      promptId, title, fieldName: formatTitleForHtmlAttribute(title),
+    const goalPrompts = (prompts || []).map(({ promptId, title, grantId }) => ({
+      promptId, title, fieldName: formatPromptTitle({ title, grantId }), grantId,
     }));
+    onUpdateGoalPrompts(goalPrompts);
+  }, [onUpdateGoalPrompts, prompts]);
 
-    onUpdateGoalPrompts(isMultiRecipientReport ? [] : goalPrompts);
-  }, [onUpdateGoalPrompts, isMultiRecipientReport, prompts]);
-
-  const fields = prompts.map((prompt) => {
-    if (isMultiRecipientReport) {
-      if (prompt.caution) {
-        return (
-          <Alert variant="warning" key={prompt.title}>
-            {prompt.caution}
-          </Alert>
-        );
-      }
-
-      return null;
-    }
-
+  const fields = (prompts || []).map((prompt) => {
     if (FIELD_DICTIONARY[prompt.fieldType]) {
       return FIELD_DICTIONARY[prompt.fieldType].render(
         prompt,
         prompt.validations,
         prompt.response,
         userCanEdit,
+        drawerButtonText,
+        drawerTitle,
+        drawerTagName,
+        drawerClassName,
       );
     }
 
     return null;
   });
 
-  return fields;
+  return (
+    <>
+      {
+      heading
+      && prompts
+      && prompts.length > 0
+      && (<h3>{heading}</h3>)
+      }
+      {fields}
+    </>
+  );
 }
 
 ConditionalFieldsForHookForm.propTypes = {
@@ -91,10 +113,19 @@ ConditionalFieldsForHookForm.propTypes = {
     prompt: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
   }.isRequired)).isRequired,
-  isMultiRecipientReport: PropTypes.bool.isRequired,
-  canEdit: PropTypes.bool,
+  userCanEdit: PropTypes.bool,
+  heading: PropTypes.string,
+  drawerButtonText: PropTypes.string,
+  drawerTitle: PropTypes.string,
+  drawerTagName: PropTypes.string,
+  drawerClassName: PropTypes.string,
 };
 
-ConditionalMultiselectForHookForm.defaultProps = {
+ConditionalFieldsForHookForm.defaultProps = {
   userCanEdit: false,
+  heading: null,
+  drawerButtonText: '',
+  drawerTitle: '',
+  drawerTagName: '',
+  drawerClassName: '',
 };

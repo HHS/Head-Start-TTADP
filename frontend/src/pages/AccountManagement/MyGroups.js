@@ -20,7 +20,7 @@ import {
 } from '../../fetchers/groups';
 import { MyGroupsContext } from '../../components/MyGroupsProvider';
 import AppLoadingContext from '../../AppLoadingContext';
-import QuestionTooltip from '../../components/GoalForm/QuestionTooltip';
+import QuestionTooltip from '../../components/QuestionTooltip';
 
 const mapSelectedRecipients = (grants) => grants.map((grant) => ({
   value: grant.id,
@@ -112,7 +112,7 @@ export default function MyGroups({ match }) {
           });
         }
       } catch (err) {
-        setError('There was an error fetching your group');
+        history.push(`/something-went-wrong/${err.status || 500}`);
       } finally {
         setIsAppLoading(false);
       }
@@ -122,7 +122,7 @@ export default function MyGroups({ match }) {
     if (groupId && usersFetched && recipientsFetched) {
       getGroup();
     }
-  }, [groupId, setIsAppLoading, reset, usersFetched, recipientsFetched]);
+  }, [groupId, setIsAppLoading, reset, usersFetched, recipientsFetched, history]);
 
   const isCreator = !groupId || (groupCreator && user.id === groupCreator.id);
 

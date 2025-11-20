@@ -10,6 +10,7 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import CsvImport from '../CsvImport';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const testCsvUrl = join('/', 'api', 'admin', 'test-csv');
 
@@ -20,7 +21,7 @@ const goodTestCSVFile = "Primary ID,Edit Title,IST Name:,Creator,Event Organizer
 // eslint-disable-next-line quotes
 const duplicateTestCSVFile = "Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
 // eslint-disable-next-line quotes
-const missingCoumnsTestCSVFile = "Primary ID Missing,Edit Title Missing,IST Name:,Creator Missing,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
+const missingColumnsTestCSVFile = "Primary ID Missing,Edit Title Missing,IST Name:,Creator Missing,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
 // eslint-disable-next-line quotes
 const invalidColumnTestCsvFile = "Invalid Column,Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\ninvalid value,event test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\ninvalid value 2,event test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n";
 
@@ -34,19 +35,32 @@ describe('CsvImport', () => {
     languageEncoding.mockImplementation(() => Promise.resolve({ encoding: 'utf-8' }));
   });
 
-  it('displays the component', async () => {
+  const renderTestComponent = (
+    validCsvHeaders = [],
+    requiredCsvHeaders = [],
+  ) => {
     const history = createMemoryHistory();
     render(
       <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={[]}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
+        <AppLoadingContext.Provider value={{
+          setIsAppLoading: jest.fn(),
+          setAppLoadingText: jest.fn(),
+        }}
+        >
+          <CsvImport
+            validCsvHeaders={validCsvHeaders}
+            requiredCsvHeaders={requiredCsvHeaders}
+            typeName="Test CSV"
+            apiPathName="test-csv"
+            primaryIdColumn="Primary ID"
+          />
+        </AppLoadingContext.Provider>
       </Router>,
     );
+  };
+
+  it('displays the component', async () => {
+    renderTestComponent();
 
     // Assert Displays text 'test csv import'
     const csvHeader = await screen.findByRole('heading', { name: /test csv import/i });
@@ -66,18 +80,7 @@ describe('CsvImport', () => {
   });
 
   it('displays csv required error', async () => {
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={[]}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
+    renderTestComponent();
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
@@ -97,18 +100,7 @@ describe('CsvImport', () => {
   });
 
   it('displays duplicate event id error', async () => {
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={[]}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
+    renderTestComponent();
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
@@ -132,17 +124,9 @@ describe('CsvImport', () => {
   });
 
   it('displays missing columns error', async () => {
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
+    renderTestComponent(
+      [],
+      ['Primary ID', 'Edit Title', 'Creator'],
     );
 
     // Assert by data-testid 'file-input-input'.
@@ -151,7 +135,7 @@ describe('CsvImport', () => {
 
     act(async () => {
     // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
-      const file = new File([missingCoumnsTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+      const file = new File([missingColumnsTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
       userEvent.upload(fileInput, file);
 
       await waitFor(async () => {
@@ -167,9 +151,7 @@ describe('CsvImport', () => {
     });
   });
 
-  it('displays invalid columns', async () => {
-    const history = createMemoryHistory();
-
+  it('displays invalid columns error', async () => {
     const validColumns = [
       'Primary ID',
       'Edit Title',
@@ -183,17 +165,7 @@ describe('CsvImport', () => {
       'Audience',
       'Overall Vision/Goal for the PD Event',
     ];
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={validColumns}
-          requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
+    renderTestComponent(validColumns);
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
@@ -218,18 +190,7 @@ describe('CsvImport', () => {
   });
 
   it('ignores invalid columns', async () => {
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
+    renderTestComponent([], ['Primary ID', 'Edit Title', 'Creator']);
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
@@ -248,18 +209,7 @@ describe('CsvImport', () => {
   });
 
   it('displays good import csv', async () => {
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
+    renderTestComponent([], ['Primary ID', 'Edit Title', 'Creator']);
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
@@ -325,19 +275,7 @@ describe('CsvImport', () => {
   });
 
   it('displays optional summary results', async () => {
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
-
+    renderTestComponent([], ['Primary ID', 'Edit Title', 'Creator']);
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
     expect(fileInput).toBeVisible();
@@ -431,18 +369,7 @@ describe('CsvImport', () => {
   });
 
   it('displays bad import csv', async () => {
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
+    renderTestComponent([], ['Primary ID', 'Edit Title', 'Creator']);
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
@@ -476,19 +403,7 @@ describe('CsvImport', () => {
   });
 
   it('displays error if no import file is selected', async () => {
-    // Render.
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
+    renderTestComponent([], ['Primary ID', 'Edit Title', 'Creator']);
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
@@ -524,18 +439,7 @@ describe('CsvImport', () => {
     fetchMock.post(testCsvUrl, { status: 200, body: { success: false, count: 0 } });
 
     languageEncoding.mockImplementationOnce(() => Promise.resolve({ encoding: 'ansi' }));
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={[]}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
+    renderTestComponent();
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
@@ -584,18 +488,7 @@ describe('CsvImport', () => {
     languageEncoding.mockImplementationOnce(() => {
       throw new Error('Exception thrown');
     });
-    const history = createMemoryHistory();
-    render(
-      <Router history={history}>
-        <CsvImport
-          validCsvHeaders={[]}
-          requiredCsvHeaders={[]}
-          typeName="Test CSV"
-          apiPathName="test-csv"
-          primaryIdColumn="Primary ID"
-        />
-      </Router>,
-    );
+    renderTestComponent();
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');

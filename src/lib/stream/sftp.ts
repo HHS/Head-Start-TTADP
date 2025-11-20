@@ -178,6 +178,7 @@ class SftpClient {
             this.connected = true;
             resolve();
           })
+          /* istanbul ignore next: hard to test errors */
           .on('error', (err) => {
             auditLogger.error(JSON.stringify(err));
             this.connected = false; // Ensure the connected flag is set to false on error

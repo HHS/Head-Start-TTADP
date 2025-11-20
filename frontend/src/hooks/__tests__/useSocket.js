@@ -4,7 +4,8 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import useSocket, { publishLocation } from '../useSocket';
+import { renderHook } from '@testing-library/react-hooks';
+import useSocket, { publishLocation, usePublishWebsocketLocationOnInterval } from '../useSocket';
 
 describe('publishLocation', () => {
   it('sends a message when the socket is open', () => {
@@ -77,5 +78,25 @@ describe('useSocket', () => {
   it('sends a message when the socket is opened', async () => {
     // check that the message was sent
     expect(global.sendMsg).not.toBeNull();
+  });
+
+  it('uses default WS_URL when environment variable is not set', () => {
+    delete process.env.REACT_APP_WEBSOCKET_URL;
+    const { result } = renderHook(() => useSocket({ name: 'test' }));
+    expect(result.current.socket.url).toBe('');
+  });
+
+  it('uses default interval value in usePublishWebsocketLocationOnInterval', () => {
+    const socket = { send: jest.fn(), readyState: 1, OPEN: 1 };
+    const { result } = renderHook(() => usePublishWebsocketLocationOnInterval(socket, 'test', { name: 'test' }, 1234));
+    expect(result.current).toBeUndefined();
+  });
+
+  it('covers the close function in socket ref', () => {
+    const { result } = renderHook(() => useSocket({ name: 'test' }));
+    act(() => {
+      result.current.socket.close();
+    });
+    expect(result.current.socket.close).toBeDefined();
   });
 });

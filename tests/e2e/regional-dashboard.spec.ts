@@ -4,6 +4,7 @@ test('Regional Dashboard', async ({ page }) => {
   //navigate to the dashboard
   await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Regional Dashboard' }).click();
+  await page.waitForURL(/region\.in/i);
 
   // get page URL
   const url = page.url();
@@ -13,11 +14,13 @@ test('Regional Dashboard', async ({ page }) => {
 
   // open the filter menu, change the region filter to state code
   await page.getByRole('button', { name: /open filters for this page/i }).click();
-  await page.getByLabel('Select a filter').selectOption('stateCode');
-  await page.getByLabel('Select a condition').selectOption('contains');
-  await page.getByLabel('Select a condition').focus();
-  await page.keyboard.press('Tab');
-  await page.keyboard.type('Rhode Island');
+  await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
+  await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
+
+
+  await page.getByLabel('condition', { exact: true }).selectOption('contains');
+  await page.locator('.ttahub-filter-select__input-container').click();
+  await page.getByText('Rhode Island (RI)', { exact: true }).click();
   await page.keyboard.press('Enter');
 
   await page.getByTestId('filters').click();
@@ -27,15 +30,19 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByRole('button', { name: 'This button removes the filter: State or territory contains RI' }).click();
 
   // switch the total training graph's display type back and forth
-  await page.getByRole('button', { name: 'display total training and technical assistance hours as table' }).click();
-  await page.getByRole('button', { name: 'display total training and technical assistance hours as graph' }).click();
+  await page.getByRole('button', { name: 'Open Actions for Total TTA hours' }).click();
+  await page.getByRole('button', { name: 'Display table' }).click();
+  await page.getByRole('button', { name: 'Open Actions for Total TTA hours' }).click();
+  await page.getByRole('button', { name: 'Display graph' }).click();
 
   // toggle all the legend items off
   await page.locator('label').filter({ hasText: 'Training' }).click();
-  await page.getByText('Both').click();
-  await page.getByText('Technical Assistance').click();
+  await page.getByTestId('fieldset').getByText('Both').click();
+  await page.getByTestId('fieldset').getByText('Technical Assistance').click();
 
   // print a screenshot of the TTA hours graph
+  await page.getByRole('button', { name: 'Open Actions for Total TTA hours' }).click();
+
   await Promise.all([
     page.waitForEvent('download'),
     page.locator('#rd-save-screenshot').click()

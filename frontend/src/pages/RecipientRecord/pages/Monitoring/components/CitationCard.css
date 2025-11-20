@@ -1,0 +1,12 @@
+@media (min-width: 1445px) {
+  .ttahub-monitoring-citation-card
+    .ttahub-data-card-description-list:not(
+      .ttahub-data-card-description-list__vertical
+    ) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .ttahub-monitoring-citation-card .ttahub-monitoring-citation-card-category {
+    grid-column: span 2;
+  }
+}

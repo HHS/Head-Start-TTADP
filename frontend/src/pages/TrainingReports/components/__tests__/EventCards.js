@@ -81,6 +81,12 @@ describe('EventCards', () => {
             eventType={eventType}
             onRemoveSession={jest.fn()}
             onDeleteEvent={onDeleteEvent}
+            removeEventFromDisplay={jest.fn()}
+            alerts={{
+              message: null,
+              setMessage: jest.fn(),
+              setParentMessage: jest.fn(),
+            }}
           />
         </UserContext.Provider>
       </MemoryRouter>));
@@ -204,7 +210,7 @@ describe('EventCards', () => {
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);
 
     // Show correct actions for region event.
@@ -212,7 +218,7 @@ describe('EventCards', () => {
     button.click(button);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
   it('POC cannot create sessions', () => {
@@ -259,12 +265,12 @@ describe('EventCards', () => {
     const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);
   });
 
-  it('collaborators cannot create training', () => {
+  it('collaborators cannot edit training', () => {
     const collaboratorEvents = [{
       id: 1,
       ownerId: 3,
@@ -309,7 +315,7 @@ describe('EventCards', () => {
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);
   });
 
@@ -359,7 +365,7 @@ describe('EventCards', () => {
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/delete event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);
   });
 
@@ -416,7 +422,7 @@ describe('EventCards', () => {
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
 
     // Click delete.
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
@@ -427,5 +433,34 @@ describe('EventCards', () => {
     const confirmBtn = screen.getByRole('button', { name: /delete event/i });
     userEvent.click(confirmBtn);
     expect(deleteFunction).toHaveBeenCalledWith('1234', 1);
+  });
+
+  it('renders an Alert message if there is one', () => {
+    const renderECWithAlert = (
+      events = defaultEvents,
+      eventType = EVENT_STATUS.NOT_STARTED,
+      user = DEFAULT_USER,
+      onDeleteEvent = jest.fn(),
+    ) => {
+      render((
+        <MemoryRouter>
+          <UserContext.Provider value={{ user }}>
+            <EventCards
+              events={events}
+              eventType={eventType}
+              onRemoveSession={jest.fn()}
+              onDeleteEvent={onDeleteEvent}
+              removeEventFromDisplay={jest.fn()}
+              alerts={{
+                message: { type: 'info', text: 'Test Alert' },
+                setMessage: jest.fn(),
+                setParentMessage: jest.fn(),
+              }}
+            />
+          </UserContext.Provider>
+        </MemoryRouter>));
+    };
+    renderECWithAlert();
+    expect(screen.getByText('Test Alert')).toBeInTheDocument();
   });
 });

@@ -3,8 +3,10 @@ import PropTypes from 'prop-types';
 import { GOAL_SUSPEND_REASONS } from '@ttahub/common';
 import {
   Textarea, Fieldset, Label, FormGroup, Button, Radio, ModalToggleButton,
+  ErrorMessage,
 } from '@trussworks/react-uswds';
 import VanillaModal from './VanillaModal';
+import { OBJECTIVE_STATUS } from '../Constants';
 
 const SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
 
@@ -23,12 +25,14 @@ export default function ObjectiveSuspendModal({
 }) {
   const onClick = () => {
     if (!objectiveSuspendReason) {
-      setError(true);
+      setError({
+        message: 'Reason for suspension is required',
+      });
       return;
     }
 
     // hey if we're here, we're suspendin'
-    onChangeStatus('Suspended');
+    onChangeStatus(OBJECTIVE_STATUS.SUSPENDED);
     modalRef.current.toggleModal();
   };
 
@@ -46,11 +50,13 @@ export default function ObjectiveSuspendModal({
       modalRef={modalRef}
     >
       <Fieldset>
-        <FormGroup error={error.props.children}>
+        <FormGroup error={!!(error)}>
           <Label className="usa-sr-only" htmlFor={`suspend-objective-${objectiveId}-reason`}>
             Reason for suspension
           </Label>
-          { error }
+          <ErrorMessage>
+            { error ? error.message : ''}
+          </ErrorMessage>
           { SUSPEND_REASONS.map((r) => (
             <Radio
               id={`suspend-objective-${objectiveId}-reason-${r.trim().replace(' ', '-').toLowerCase()}`}
@@ -98,5 +104,8 @@ ObjectiveSuspendModal.propTypes = {
   onChangeSuspendContext: PropTypes.func.isRequired,
   onChangeStatus: PropTypes.func.isRequired,
   setError: PropTypes.func.isRequired,
-  error: PropTypes.node.isRequired,
+  error: PropTypes.node,
+};
+ObjectiveSuspendModal.defaultProps = {
+  error: undefined,
 };

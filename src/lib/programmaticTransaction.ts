@@ -1,5 +1,5 @@
-import { QueryTypes } from 'sequelize';
-import { sequelize } from '../models'; // Ensure this path is correct
+import { QueryTypes, Op } from 'sequelize';
+import db, { sequelize } from '../models';
 import { auditLogger } from '../logger';
 
 // Define the structure for maximum ID records
@@ -9,21 +9,55 @@ interface MaxIdRecord {
 }
 
 // Fetch the maximum IDs from the audit tables
-const fetchMaxIds = async (): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRecord>(/* sql */ `
-  SELECT
-      cls.relname AS table_name,
-      seq_data.last_value AS max_id
-  FROM pg_class seq
-  JOIN pg_depend dep ON dep.objid = seq.oid
-  JOIN pg_class cls ON cls.oid = dep.refobjid
-  JOIN pg_attribute attr ON attr.attrelid = dep.refobjid AND attr.attnum = dep.refobjsubid
-  JOIN pg_sequences seq_data ON seq_data.sequencename = seq.relname
-  WHERE seq.relkind = 'S'
-  AND cls.relname LIKE 'ZAL%'
-  AND cls.relname != 'ZALDDL'
-  AND attr.attname = 'id'
-  AND seq_data.schemaname = 'public';
-`, { type: QueryTypes.SELECT });
+// Parameters:
+// - includeDDL (boolean): If true, includes tables with Data Definition Language (DDL) logs
+// (e.g., schema changes).  DDL refers to commands used to create, alter, and delete database
+// objects, such as CREATE TABLE, ALTER TABLE, etc.
+const fetchMaxIds = async (
+  includeDDL = false,
+): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRecord>(
+  // Use a different SQL query depending on whether to include DDL tables or not
+  includeDDL
+    ? /* sql */ `
+      SELECT
+          cls.relname AS table_name, -- The name of the table in the database
+          -- The highest ID value in the sequence, or 0 if no value
+          COALESCE(seq_data.last_value, 0) AS max_id
+      FROM pg_class seq
+      -- Join to capture dependency relationships between sequences and tables
+      JOIN pg_depend dep ON dep.objid = seq.oid
+      JOIN pg_class cls ON cls.oid = dep.refobjid
+      -- Match sequences with the table's ID column
+      JOIN pg_attribute attr ON attr.attrelid = dep.refobjid AND attr.attnum = dep.refobjsubid
+      -- Retrieve the sequence data for the current sequences
+      JOIN pg_sequences seq_data ON seq_data.sequencename = seq.relname
+      WHERE seq.relkind = 'S' -- Limit to sequence objects ('S' indicates sequences)
+      AND cls.relname LIKE 'ZAL%' -- Limit to audit tables (tables starting with 'ZAL')
+      AND attr.attname = 'id' -- Ensure the sequence is linked to the 'id' column in the table
+      AND seq_data.schemaname = 'public'; -- Only consider sequences in the 'public' schema
+    `
+    : /* sql */ `
+      SELECT
+          cls.relname AS table_name, -- The name of the table in the database
+          -- The highest ID value in the sequence, or 0 if no value
+          COALESCE(seq_data.last_value, 0) AS max_id
+      FROM pg_class seq
+      -- Join to capture dependency relationships between sequences and tables
+      JOIN pg_depend dep ON dep.objid = seq.oid
+      JOIN pg_class cls ON cls.oid = dep.refobjid
+      -- Match sequences with the table's ID column
+      JOIN pg_attribute attr ON attr.attrelid = dep.refobjid AND attr.attnum = dep.refobjsubid
+      -- Retrieve the sequence data for the current sequences
+      JOIN pg_sequences seq_data ON seq_data.sequencename = seq.relname
+      WHERE seq.relkind = 'S' -- Limit to sequence objects ('S' indicates sequences)
+      AND cls.relname LIKE 'ZAL%' -- Limit to audit tables (tables starting with 'ZAL')
+      -- Exclude the DDL audit table ('ZALDDL' is used for schema change logs)
+      AND cls.relname != 'ZALDDL'
+      AND attr.attname = 'id' -- Ensure the sequence is linked to the 'id' column in the table
+      AND seq_data.schemaname = 'public'; -- Only consider sequences in the 'public' schema
+    `,
+  { type: QueryTypes.SELECT }, // Use SELECT query type for fetching results
+);
 
 interface ChangeRecord {
   source_table: string;
@@ -44,7 +78,7 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
   }) => sequelize.query<ChangeRecord>(/* sql */ `
     SELECT *, '${table_name}' AS source_table
     FROM "${table_name}"
-    WHERE id > :maxId
+    WHERE id > COALESCE(:maxId, 0)
     ORDER BY dml_timestamp DESC
   `, {
     replacements: { maxId: max_id },
@@ -66,6 +100,29 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   }
   const tableName = change.source_table.replace('ZAL', '');
   try {
+    const generateReplacements = (delta) => Object.entries(delta.old_row_data).reduce(
+      (acc, [key, value]) => {
+        let parsedValue;
+
+        // Try to parse the value as JSON
+        try {
+          // @ts-ignore
+          // Argument of type 'unknown' is not assignable to parameter of type 'string'.ts(2345)
+          parsedValue = JSON.parse(value);
+        } catch (error) {
+          parsedValue = value; // If parsing fails, use the original value
+        }
+
+        return {
+          ...acc,
+          [key]: Array.isArray(parsedValue)
+            ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
+            : parsedValue,
+        };
+      },
+      { id: delta.data_id },
+    );
+
     switch (change.dml_type) {
       case 'INSERT':
         // Use parameterized query to safely delete
@@ -81,11 +138,7 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
             .map((key) => `"${key}"`)
             .join(', ');
 
-          const replacements = Object.entries(change.old_row_data)
-            .reduce((acc, [key, value]) => ({
-              ...acc,
-              [key]: value,
-            }), {});
+          const replacements = generateReplacements(change);
 
           await sequelize.query(/* sql */ `
             INSERT INTO "${tableName}" (${columns})
@@ -100,11 +153,13 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
             .map((key) => `"${key}" = :${key}`)
             .join(', ');
 
+          const replacements = generateReplacements(change);
+
           await sequelize.query(/* sql */ `
             UPDATE "${tableName}"
             SET ${setClause}
             WHERE id = :id;
-          `, { replacements: { ...change.old_row_data, id: change.data_id } });
+          `, { replacements });
         }
         break;
       default:
@@ -133,8 +188,83 @@ const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   }
 };
 
-const captureSnapshot = async (): Promise<MaxIdRecord[]> => fetchMaxIds();
+const captureSnapshot = async (
+  includeDDL = false,
+): Promise<MaxIdRecord[]> => fetchMaxIds(includeDDL);
 const rollbackToSnapshot = async (maxIds: MaxIdRecord[]): Promise<void> => revertAllChanges(maxIds);
+
+// This method of validating the transaction has not modified data is needed as the following
+// command fails on any creation of temp tables:
+// `SET TRANSACTION READ ONLY;`
+const hasModifiedData = async (snapShot, transactionId) => {
+  if (!transactionId) {
+    throw new Error('Transaction ID not found');
+  }
+
+  const zalTables = Object.keys(db)
+    // Filter the keys of the `db` object for tables that start with 'ZAL'
+    .filter((key) => key.startsWith('ZAL'))
+    // Endpoints Descriptor Are allowed to be added to the audit log
+    .filter((key) => key !== 'ZALZADescriptor')
+    .sort();
+
+  if (zalTables.length === 0) {
+    return false;
+  }
+
+  const buildCondition = (table, maxId) => {
+    let condition:{
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      id: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      dml_txid?: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ddl_txid?: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      object_identity?: any,
+    } = {
+      id: { [Op.gt]: Number(maxId) },
+      dml_txid: transactionId,
+    }; // Default condition for ZAL tables
+
+    if (table === 'ZALDDL') {
+      condition = {
+        id: { [Op.gt]: Number(maxId) },
+        ddl_txid: transactionId,
+        object_identity: { [Op.notLike]: 'pg_temp.%' },
+      };
+    }
+    return condition;
+  };
+
+  // Create an array of promises for each table
+  const queryPromises = zalTables.map((table) => {
+    const tableName = db[table]?.getTableName();
+
+    if (!tableName) {
+      throw new Error(`Table name not found for model: ${table}`);
+    }
+
+    const snapShotEntry = snapShot.find((entry) => entry.table_name === tableName);
+
+    if (!snapShotEntry) {
+      throw new Error(`Snapshot entry not found for table: ${tableName}`);
+    }
+
+    const condition = buildCondition(table, snapShotEntry.max_id);
+
+    return db[table].findOne({
+      where: condition,
+      attributes: ['id'], // Only return the `id` column
+    });
+  });
+
+  // Await all the promises at once
+  const results = await Promise.all(queryPromises);
+
+  // Check if any of the results returned a non-null value
+  return results.some((result) => result !== null);
+};
 
 export {
   MaxIdRecord,
@@ -145,4 +275,5 @@ export {
   revertAllChanges,
   captureSnapshot,
   rollbackToSnapshot,
+  hasModifiedData,
 };

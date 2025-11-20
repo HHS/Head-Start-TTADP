@@ -20,7 +20,7 @@ Given('I am on the landing page', async () => {
     page.waitForNavigation(),
     await page.goto(`${scope.uri}/activity-reports/new`),
   ]);
-  await scope.context.currentPage.waitForSelector('#main-content > div.smart-hub-activity-report > div.grid-row.flex-justify > div.grid-col-auto.flex-align-self-center > div');
+  await scope.context.currentPage.waitForSelector('#main-content > .smart-hub-activity-report');
 });
 
 When('I select {string}', async (inputLabel) => {
@@ -28,6 +28,12 @@ When('I select {string}', async (inputLabel) => {
   const selector = `//label[text()='${inputLabel}']`;
   const element = await page.$x(selector);
   await element[0].click();
+});
+
+Then('I see text containing {string}', async (string) => {
+  const page = scope.context.currentPage;
+  const pageContent = await page.content();
+  assertTrue(pageContent.includes(string), `Expected page to contain text "${string}", but it did not.`);
 });
 
 Then('I see {string} as an option in the {string} multiselect', async (expectedOption, dropdownLabel) => {

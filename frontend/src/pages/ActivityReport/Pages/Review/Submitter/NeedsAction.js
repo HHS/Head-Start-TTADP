@@ -6,14 +6,16 @@ import {
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import { useHistory } from 'react-router';
+import { Accordion } from '../../../../../components/Accordion';
 import RichEditor from '../../../../../components/RichEditor';
 import ApproverSelect from './components/ApproverSelect';
 import FormItem from '../../../../../components/FormItem';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
-import IncompletePages from '../IncompletePages';
+import IncompletePages from '../../../../../components/IncompletePages';
 import UserContext from '../../../../../UserContext';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
+import MissingCitationAlerts from '../../components/MissingCitationAlerts';
 
 const NeedsAction = ({
   additionalNotes,
@@ -24,6 +26,9 @@ const NeedsAction = ({
   displayId,
   reportId,
   availableApprovers,
+  reviewItems,
+  grantsMissingMonitoring,
+  grantsMissingCitations,
 }) => {
   const hasIncompletePages = incompletePages.length > 0;
   const { user } = useContext(UserContext);
@@ -37,9 +42,12 @@ const NeedsAction = ({
   const approvers = watch('approvers');
 
   const submit = async () => {
+    const hasCitationIssues = grantsMissingMonitoring.length
+    || grantsMissingCitations.length;
+
     if (!submitCR) {
       setShowCreatorRoleError(true);
-    } else if (!hasIncompletePages) {
+    } else if (!hasIncompletePages && !hasCitationIssues) {
       await onSubmit({
         additionalNotes: creatorNotes,
         creatorRole: submitCR,
@@ -69,8 +77,11 @@ const NeedsAction = ({
 
   return (
     <>
-      <h2>Review and submit</h2>
+      <h2 className="font-family-serif">Review and submit</h2>
       <IndicatesRequiredField />
+      {reviewItems && reviewItems.length > 0 && (
+      <Accordion bordered items={reviewItems} multiselectable />
+      )}
       <div className="margin-bottom-2">
         {
           !userHasOneRole
@@ -144,6 +155,11 @@ const NeedsAction = ({
             lockExistingValues
           />
         </FormItem>
+        <MissingCitationAlerts
+          reportId={reportId}
+          grantsMissingMonitoring={grantsMissingMonitoring}
+          grantsMissingCitations={grantsMissingCitations}
+        />
       </div>
       <div className="margin-top-3">
         <Button className="margin-bottom-4" onClick={submit}>Update report</Button>
@@ -167,6 +183,13 @@ NeedsAction.propTypes = {
   creatorRole: PropTypes.string,
   displayId: PropTypes.string.isRequired,
   reportId: PropTypes.string.isRequired,
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    content: PropTypes.node.isRequired,
+  })).isRequired,
+  grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
+  grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 NeedsAction.defaultProps = {

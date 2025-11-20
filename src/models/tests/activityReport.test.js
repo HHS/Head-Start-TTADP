@@ -103,6 +103,7 @@ const sampleReport = {
   reason: ['reason'],
   ttaType: ['type'],
   regionId: 2,
+  activityReason: 'recipient request',
   targetPopulations: ['target pop'],
   author: {
     fullName: 'Kiwi, GS',
@@ -131,7 +132,6 @@ describe('Activity Reports model', () => {
   let otherEntity;
   const grants = [];
   let report;
-  let reportToIndex;
   let reportToSubmit;
   let activityRecipients;
   const goals = [];
@@ -162,7 +162,6 @@ describe('Activity Reports model', () => {
     grants[1] = await Grant.findOne({ where: { id: mockGrant[1].id } });
     report = await ActivityReport.create({ ...sampleReport });
     reportToSubmit = await ActivityReport.create({ ...sampleReport });
-    reportToIndex = await ActivityReport.create({ ...sampleReport, context: 'AWS Elasticsearch' });
     activityRecipients = await Promise.all([
       await ActivityRecipient.create({ activityReportId: report.id, grantId: grants[0].id }),
       await ActivityRecipient.create({ activityReportId: report.id, grantId: grants[1].id }),
@@ -222,7 +221,6 @@ describe('Activity Reports model', () => {
     await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
     await ActivityReportGoal.destroy({ where: { activityReportId: report.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
-    await ActivityReport.destroy({ where: { id: reportToIndex.id } });
     await ActivityReport.destroy({ where: { id: reportToSubmit.id } });
     await Objective.destroy({ where: { id: objectives.map((o) => o.id) }, force: true });
     await Goal.destroy({ where: { id: goals.map((g) => g.id) }, force: true });
@@ -273,7 +271,11 @@ describe('Activity Reports model', () => {
     });
 
     await preReport.update(
-      { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      {
+        userId: user.id,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      },
     );
     await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },

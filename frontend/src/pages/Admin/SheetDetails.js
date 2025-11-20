@@ -69,7 +69,10 @@ const SheetDetails = ({ sheetId }) => {
 };
 
 SheetDetails.propTypes = {
-  sheetId: PropTypes.string.isRequired,
+  sheetId: PropTypes.string,
+};
+SheetDetails.defaultProps = {
+  sheetId: null,
 };
 
 export default SheetDetails;

@@ -36,6 +36,7 @@ export const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
   pocComplete: false,
+  ownerComplete: false,
 };
 
 export const defaultFormValues = {
@@ -59,6 +60,23 @@ export const defaultValues = {
     4: NOT_STARTED,
   },
 };
+
+export const baseDefaultValues = {
+  id: 0,
+  regionId: 0,
+  ownerId: null,
+  eventId: '',
+  eventDisplayId: '',
+  eventName: '',
+  status: 'In progress',
+  pageState: {
+    1: NOT_STARTED,
+    2: NOT_STARTED,
+    3: NOT_STARTED,
+    4: NOT_STARTED,
+  },
+};
+
 export const pageComplete = (
   hookForm,
   fields,
@@ -71,3 +89,57 @@ export const pageComplete = (
 
   return !!(val);
 });
+
+export const supportingAttachmentsVisitedField = 'pageVisited-supporting-attachments';
+
+export const defaultKeys = [
+  'id',
+  'regionId',
+  'ownerId',
+  'eventId',
+  'eventDisplayId',
+  'eventName',
+  'status',
+  'pageState',
+  'pocComplete',
+  'ownerComplete',
+  'facilitation',
+];
+
+export const istKeys = [
+  ...defaultKeys,
+  'sessionName',
+  'startDate',
+  'endDate',
+  'duration',
+  'context',
+  'objective',
+  'objectiveTopics',
+  'objectiveTrainers',
+  'sessionGoalTemplates',
+  'useIpdCourses',
+  'courses',
+  'objectiveResources',
+  'addObjectiveFilesYes',
+  'files',
+  'ttaProvided',
+  'objectiveSupportType',
+];
+
+export const pocKeys = [
+  ...defaultKeys,
+  'isIstVisit',
+  'regionalOfficeTta',
+  'recipients',
+  'participants',
+  'numberOfParticipants',
+  'numberOfParticipantsInPerson',
+  'numberOfParticipantsVirtually',
+  'deliveryMethod',
+  'language',
+  'supportingAttachments',
+  'recipientNextSteps',
+  'specialistNextSteps',
+  'istSelectionComplete',
+  supportingAttachmentsVisitedField,
+];

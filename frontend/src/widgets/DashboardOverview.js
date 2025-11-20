@@ -7,9 +7,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from './withWidgetData';
 import './DashboardOverview.css';
-import Loader from '../components/Loader';
-import Tooltip from '../components/Tooltip';
 import colors from '../colors';
+import { DashboardOverviewContainer } from './DashboardOverviewContainer';
+import Tooltip from '../components/Tooltip';
 
 export function Field({
   label,
@@ -62,116 +62,107 @@ Field.defaultProps = {
   showTooltip: false,
 };
 
-const DASHBOARD_FIELDS = {
-  'Activity reports': {
-    render: (data, showTooltip) => (
-      <Field
-        key="activity-reports"
-        showTooltip={showTooltip}
-        tooltipText="The number of approved activity reports."
-        icon={faChartColumn}
-        iconColor={colors.success}
-        backgroundColor={colors.successLighter}
-        label="Activity reports"
-        data={data.numReports}
-      />
-    ),
+const getDashboardFields = (data, showTooltip) => ([
+  {
+    lookUpKey: 'Activity reports',
+    key: 'activity-reports',
+    showTooltip,
+    tooltipText: 'The number of approved activity reports.',
+    icon: faChartColumn,
+    iconColor: colors.success,
+    backgroundColor: colors.successLighter,
+    label1: 'Activity reports',
+    data: data.numReports,
   },
-  'Training reports': {
-    render: (data, showTooltip) => (
-      <Field
-        key="training-reports"
-        showTooltip={showTooltip}
-        tooltipText="Training reports with a completed session"
-        icon={faChartColumn}
-        iconColor={colors.success}
-        backgroundColor={colors.successLighter}
-        label={`across ${data.numReports} Training Reports`}
-        data={`${data.numSessions} sessions`}
-      />
-    ),
+  {
+    lookUpKey: 'Training reports',
+    key: 'training-reports',
+    showTooltip,
+    tooltipText: 'Training reports with a completed session',
+    icon: faChartColumn,
+    iconColor: colors.success,
+    backgroundColor: colors.successLighter,
+    label1: `across ${data.numReports} Training Reports`,
+    data: `${data.numSessions} sessions`,
   },
-  'Grants served': {
-    render: (data, showTooltip) => (
-      <Field
-        key="grants-served"
-        showTooltip={showTooltip}
-        icon={faBuilding}
-        iconColor={colors.ttahubMediumBlue}
-        backgroundColor={colors.ttahubBlueLight}
-        label="Grants served"
-        tooltipText="Each grant is only counted once"
-        data={data.numGrants}
-      />
-    ),
+  {
+    lookUpKey: 'Grants served',
+    key: 'grants-served',
+    showTooltip,
+    icon: faBuilding,
+    iconColor: colors.ttahubMediumBlue,
+    backgroundColor: colors.ttahubBlueLight,
+    label1: 'Grants served',
+    tooltipText: 'Each grant is only counted once',
+    data: data.numGrants,
   },
-  Participants: {
-    render: (data, showTooltip) => (
-      <Field
-        key="participants"
-        showTooltip={showTooltip}
-        tooltipText="The number of people in all activities"
-        icon={faUserFriends}
-        iconColor={colors.ttahubBlue}
-        backgroundColor={colors.ttahubBlueLighter}
-        label="Participants"
-        data={data.numParticipants}
-      />
-    ),
+  {
+    lookUpKey: 'Participants',
+    key: 'participants',
+    showTooltip,
+    tooltipText: 'The number of people in all activities',
+    icon: faUserFriends,
+    iconColor: colors.ttahubBlue,
+    backgroundColor: colors.ttahubBlueLighter,
+    label1: 'Participants',
+    data: data.numParticipants,
   },
-  'Hours of TTA': {
-    render: (data, showTooltip) => (
-      <Field
-        key="hours-of-tta"
-        showTooltip={showTooltip}
-        tooltipText="Rounded to the nearest half hour"
-        icon={faClock}
-        iconColor={colors.ttahubOrange}
-        backgroundColor={colors.ttahubOrangeLight}
-        label="Hours of TTA"
-        data={data.sumDuration}
-        decimalPlaces={1}
-      />
-    ),
+  {
+    lookUpKey: 'Hours of TTA',
+    key: 'hours-of-tta',
+    showTooltip,
+    tooltipText: 'Rounded to the nearest half hour',
+    icon: faClock,
+    iconColor: colors.ttahubOrange,
+    backgroundColor: colors.ttahubOrangeLight,
+    label1: 'Hours of TTA',
+    data: data.sumDuration,
+    decimalPlaces: 1,
   },
-  'In person activities': {
-    render: (data, showTooltip) => (
-      <Field
-        key="in-person-activities"
-        icon={faUser}
-        showTooltip={showTooltip}
-        tooltipText="Excludes virtual activities"
-        iconColor={colors.ttahubMagenta}
-        backgroundColor={colors.ttahubMagentaLight}
-        label="In person activities"
-        data={data.inPerson}
-      />
-    ),
+  {
+    lookUpKey: 'In person activities',
+    key: 'in-person-activities',
+    icon: faUser,
+    showTooltip,
+    tooltipText: 'Excludes virtual activities',
+    iconColor: colors.ttahubMagenta,
+    backgroundColor: colors.ttahubMagentaLight,
+    label1: 'In person activities',
+    data: data.inPerson,
   },
-  'Recipients served': {
-    render: (data, showTooltip) => (
-      <Field
-        key="recipients-served"
-        icon={faUser}
-        showTooltip={showTooltip}
-        label={`${data.numRecipients} ${data.numRecipients === 1 ? 'Recipient' : 'Recipients'} of ${data.totalRecipients}`}
-        iconColor={colors.ttahubMagenta}
-        backgroundColor={colors.ttahubMagentaLight}
-        tooltipText="Recipients have at least one active grant"
-        data={data.recipientPercentage}
-      />
-    ),
+  {
+    lookUpKey: 'Recipients served',
+    key: 'recipients-served',
+    icon: faUser,
+    showTooltip,
+    label1: `${data.numRecipients} ${data.numRecipients === 1 ? 'Recipient' : 'Recipients'} of ${data.totalRecipients}`,
+    iconColor: colors.ttahubMagenta,
+    backgroundColor: colors.ttahubMagentaLight,
+    tooltipText: 'Recipients have at least one active grant',
+    data: data.recipientPercentage,
   },
-};
+]);
 
 export function DashboardOverviewWidget({
-  data, loading, fields, showTooltips,
+  data,
+  loading,
+  fields,
+  showTooltips,
 }) {
+  // Get the fields we need while maintaining the order.
+  const fieldsToDisplay = fields.map(
+    (field) => getDashboardFields(
+      data, showTooltips,
+    ).find(
+      (f) => f.lookUpKey === field,
+    ),
+  ).filter(Boolean);
+
   return (
-    <Grid row className="smart-hub--dashboard-overview margin-bottom-3 position-relative">
-      <Loader loading={loading} loadingLabel="Overview loading" />
-      { fields.map((field) => DASHBOARD_FIELDS[field].render(data, showTooltips, field)) }
-    </Grid>
+    <DashboardOverviewContainer
+      fieldData={fieldsToDisplay}
+      loading={loading}
+    />
   );
 }
 

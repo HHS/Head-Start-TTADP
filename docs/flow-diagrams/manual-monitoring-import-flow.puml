@@ -1,0 +1,41 @@
+@startuml
+
+title Manual Import CLI Flow
+!pragma useVerticalIf on
+
+start
+
+:Import is triggered via CLI;
+:Run `yarn import:system download <importId>`;
+:Connect to SFTP and check for files;
+
+if (New files?) then (yes)
+  repeat
+    :Stream file to S3;
+    if (Upload succeeds?) then (yes)
+      :Mark as COLLECTED;
+    else (no)
+      :Mark as UPLOAD_FAILED;
+      :Log error;
+    endif
+  repeat while (More files)
+endif
+
+:Run `yarn import:system process <importId>`;
+if (Files to process?) then (yes)
+  :Download ZIP from S3;
+  :Extract XML files;
+  repeat
+    :Remap, validate;
+    :Insert/update/delete records;
+    :Log schema, hash, record counts;
+  repeat while (More XML files)
+  :Mark as PROCESSED;
+endif
+
+if (Post-processing?) then (yes)
+  :Run post-processing actions;
+endif
+
+stop
+@enduml

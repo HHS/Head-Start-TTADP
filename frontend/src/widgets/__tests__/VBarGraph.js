@@ -1,12 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import React, { createRef } from 'react';
 import {
   render,
   waitFor,
   act,
   screen,
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import VBarGraph from '../VBarGraph';
 
 const TEST_DATA = [{
@@ -22,15 +21,15 @@ const TEST_DATA = [{
   count: 0,
 }];
 
-const renderBarGraph = async () => {
+const renderBarGraph = async (props) => {
   act(() => {
-    render(<VBarGraph data={TEST_DATA} xAxisLabel="Names" yAxisLabel="Counts" />);
+    render(<VBarGraph data={props.data} xAxisLabel="Names" yAxisLabel="Counts" widgetRef={createRef()} />);
   });
 };
 
 describe('VBar Graph', () => {
   it('is shown', async () => {
-    renderBarGraph();
+    renderBarGraph({ data: TEST_DATA });
 
     await waitFor(() => expect(document.querySelector('svg')).not.toBe(null));
 
@@ -43,19 +42,13 @@ describe('VBar Graph', () => {
     expect(point2.__data__.text).toBe('one');
   });
 
-  it('toggles table view', async () => {
-    act(() => {
-      renderBarGraph();
+  it('shows no results found', async () => {
+    renderBarGraph({ data: [] });
+
+    await waitFor(() => {
+      expect(screen.getByText(/no results found/i)).toBeVisible();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible();
+      expect(screen.getByText('Get help using filters')).toBeVisible();
     });
-
-    await waitFor(() => expect(document.querySelector('svg')).not.toBe(null));
-
-    const button = await screen.findByRole('button', { name: /as table/i });
-    act(() => {
-      userEvent.click(button);
-    });
-
-    const table = document.querySelector('table');
-    expect(table).not.toBeNull();
   });
 });

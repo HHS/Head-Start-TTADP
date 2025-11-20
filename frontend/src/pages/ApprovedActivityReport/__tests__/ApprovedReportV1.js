@@ -4,7 +4,8 @@ import {
   render,
   screen,
 } from '@testing-library/react';
-import ApprovedReportV1, { calculateGoalsAndObjectives } from '../components/ApprovedReportV1';
+import ApprovedReportV1, { calculateGoalsAndObjectives } from '../../../components/ReportView/ApprovedReportV1';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('Approved Activity Report V1 component', () => {
   const title = 'Gabba Gabba Hey';
@@ -67,7 +68,7 @@ describe('Approved Activity Report V1 component', () => {
         otherEntityId: 10,
         goalId: null,
         title,
-        status: 'Complete',
+        status: OBJECTIVE_STATUS.COMPLETE,
         onAR: true,
         onApprovedAR: true,
         topics: [],

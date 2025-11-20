@@ -1,13 +1,17 @@
-import axios from 'axios';
 import httpCodes from 'http-codes';
 import httpContext from 'express-http-context';
-import isEmail from 'validator/lib/isEmail';
 import { v4 as uuidv4 } from 'uuid';
 
 import { logger, auditLogger } from '../logger';
 import findOrCreateUser from './findOrCreateUser';
 import handleErrors from '../lib/apiErrorHandler';
 import { validateUserAuthForAdmin } from './accessValidation';
+
+const namespace = 'MIDDLEWARE:CURRENT USER';
+
+const logContext = {
+  namespace,
+};
 
 /**
  * Get Current User ID
@@ -58,6 +62,12 @@ export async function currentUserId(req, res) {
         // Verify admin access.
         try {
           const userId = idFromSessionOrLocals();
+
+          if (userId === null) {
+            auditLogger.error('Impersonation failure. No valid user ID found in session or locals.');
+            return res.sendStatus(httpCodes.UNAUTHORIZED);
+          }
+
           if (!(await validateUserAuthForAdmin(Number(userId)))) {
             auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
             return res.sendStatus(httpCodes.UNAUTHORIZED);
@@ -68,7 +78,7 @@ export async function currentUserId(req, res) {
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
         } catch (e) {
-          return handleErrors(req, res, e);
+          return handleErrors(req, res, e, logContext);
         }
 
         httpContext.set('impersonationUserId', Number(impersonatedUserId));
@@ -76,7 +86,7 @@ export async function currentUserId(req, res) {
       }
     } catch (e) {
       auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`);
-      return handleErrors(req, res, e);
+      return handleErrors(req, res, e, logContext);
     }
   }
 
@@ -100,42 +110,29 @@ export async function currentUserId(req, res) {
 /**
  * Retrieve User Details
  *
- * This method retrives the current user details from HSES and finds or creates the TTA Hub user
+ * This method retrieves the current user details from HSES and finds or creates the TTA Hub user
  */
-export async function retrieveUserDetails(accessToken) {
-  const requestObj = accessToken.sign({
-    method: 'get',
-    url: `${process.env.AUTH_BASE}/auth/user/me`,
-  });
-
-  const { url } = requestObj;
-  const { data } = await axios.get(url, requestObj);
-
+export async function retrieveUserDetails(data) {
   logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
 
-  let name; let username; let userId; let authorities;
-  if (data.principal.attributes) { // PIV card use response
-    name = data.name;
-    username = data.principal.attributes.user.username;
-    userId = data.principal.attributes.user.userId;
-    authorities = data.principal.attributes.user.authorities;
-  } else {
-    name = data.name;
-    username = data.principal.username;
-    userId = data.principal.userId;
-    authorities = data.principal.authorities;
-  }
+  const name = [data?.given_name, data?.family_name].filter(Boolean).join(' ') || null;
 
-  let email = null;
-  if (isEmail(username)) {
-    email = username;
+  const email = data?.email ? data.email.toString() : null;
+  const hsesUsername = data?.sub ? data.sub.toString() : null;
+  const hsesUserId = data?.userId ? data.userId.toString() : null;
+  const hsesAuthorities = data?.roles || [];
+  if (!hsesUsername) {
+    auditLogger.error('OIDC: missing hsesUsername (sub) from HSES; user not created');
+    throw new Error(`Missing required user info from HSES: ${JSON.stringify({
+      hsesUsername,
+    })}`);
   }
 
   return findOrCreateUser({
     name,
     email,
-    hsesUsername: username,
-    hsesAuthorities: authorities.map(({ authority }) => authority),
-    hsesUserId: userId.toString(),
+    hsesUsername,
+    hsesAuthorities,
+    hsesUserId,
   });
 }

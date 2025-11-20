@@ -24,11 +24,23 @@ const reasonListUrl = join('api', 'widgets', 'reasonList');
 const reasonListResponse = [{ name: 'Ongoing Quality Improvement', count: 3 }];
 const totalHrsAndRecipientGraphUrl = join('api', 'widgets', 'totalHrsAndRecipientGraph');
 const totalHoursResponse = [{
-  name: 'Hours of Training', x: ['17', '18', '23', '2', '3'], y: [1.5, 0, 0, 0, 0], month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  name: 'Hours of Training',
+  x: ['17', '18', '23', '2', '3'],
+  y: [1.5, 0, 0, 0, 0],
+  month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  trace: 'circle',
 }, {
-  name: 'Hours of Technical Assistance', x: ['17', '18', '23', '2', '3'], y: [0, 0, 2.5, 2.5, 0], month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  name: 'Hours of Technical Assistance',
+  x: ['17', '18', '23', '2', '3'],
+  y: [0, 0, 2.5, 2.5, 0],
+  month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  trace: 'square',
 }, {
-  name: 'Hours of Both', x: ['17', '18', '23', '2', '3'], y: [1.5, 1.5, 0, 0, 3.5], month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  name: 'Hours of Both',
+  x: ['17', '18', '23', '2', '3'],
+  y: [1.5, 1.5, 0, 0, 3.5],
+  month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  trace: 'triangle',
 }];
 const topicFrequencyGraphUrl = join('api', 'widgets', 'topicFrequencyGraph');
 const topicFrequencyResponse = [{ topic: 'Behavioral / Mental Health / Trauma', count: 0 }, { topic: 'Child Screening and Assessment', count: 0 }];
@@ -44,6 +56,34 @@ const lastThirtyDaysParams = `startDate.win=${encodeURIComponent(lastThirtyDays)
 const allRegions = 'region.in[]=1&region.in[]=2';
 const regionInParams = 'region.in[]=1';
 
+const hoursOfTrainingUrl = '/api/widgets/trHoursOfTrainingByNationalCenter';
+const trReasonListUrl = '/api/widgets/trReasonList';
+const overviewUrl = '/api/widgets/trOverview';
+const sessionsByTopicUrl = '/api/widgets/trSessionsByTopic';
+const standardGoalsListUrl = join('api', 'widgets', 'standardGoalsList');
+const standardGoalsListResponse = [];
+const feedItemUrl = '/api/feeds/item?tag=ttahub-qa-dash-filters';
+const feedItemResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>QA Dashboard Filters</title>
+  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+  <subtitle>Confluence Syndication Feed</subtitle>
+  <id>https://acf-ohs.atlassian.net/wiki</id>
+  <entry>
+    <title>QA Dashboard Filters</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <category term="ttahub-qa-dash-filters" />
+    <author>
+      <name>Anonymous Hub User</name>
+    </author>
+    <updated>2023-03-22T21:03:16Z</updated>
+    <published>2023-03-22T21:03:16Z</published>
+    <summary type="html">&lt;div class="feed"&gt;&lt;p&gt;Filter information&lt;/p&gt;&lt;/div&gt;</summary>
+    <dc:creator>Anonymous Hub User</dc:creator>
+    <dc:date>2023-03-22T21:03:16Z</dc:date>
+  </entry>
+</feed>`;
+
 describe('Regional Dashboard page', () => {
   beforeEach(async () => {
     fetchMock.get(overViewUrl, overViewResponse);
@@ -51,6 +91,22 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(totalHrsAndRecipientGraphUrl, totalHoursResponse);
     fetchMock.get(topicFrequencyGraphUrl, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10`, activityReportsResponse);
+    fetchMock.get(standardGoalsListUrl, standardGoalsListResponse);
+    fetchMock.get(feedItemUrl, feedItemResponse);
+
+    fetchMock.get(overviewUrl, {
+      numReports: '0',
+      totalRecipients: '0',
+      recipientPercentage: '0%',
+      numGrants: '0',
+      numRecipients: '0',
+      sumDuration: '0',
+      numParticipants: '0',
+      numSessions: '0',
+    });
+    fetchMock.get(trReasonListUrl, []);
+    fetchMock.get(hoursOfTrainingUrl, []);
+    fetchMock.get(sessionsByTopicUrl, []);
   });
 
   afterEach(() => fetchMock.restore());
@@ -85,6 +141,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${allRegions}&${lastThirtyDaysParams}`, activityReportsResponse);
+    fetchMock.get(`${standardGoalsListUrl}?${allRegions}&${lastThirtyDaysParams}`, standardGoalsListResponse);
 
     // Only Region 1.
     fetchMock.get(`${overViewUrl}?${regionInParams}`, overViewResponse);
@@ -92,6 +149,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}`, activityReportsResponse);
+    fetchMock.get(`${standardGoalsListUrl}?${regionInParams}`, standardGoalsListResponse);
 
     renderDashboard(user);
     let heading = await screen.findByText(/regional tta activity dashboard/i);
@@ -143,7 +201,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
 
     renderDashboard(user);
-    const heading = await screen.findByText(/region 1 tta activity dashboard/i);
+    const heading = await screen.findByText(/Regional TTA activity dashboard/i);
     expect(heading).toBeVisible();
   });
 
@@ -163,7 +221,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
 
     renderDashboard(user, 'activity-reports');
-    const heading = await screen.findByText(/region 1 dashboard - activity reports/i);
+    const heading = await screen.findByText(/regional dashboard - activity reports/i);
     expect(heading).toBeVisible();
   });
 
@@ -183,7 +241,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
 
     renderDashboard(user, 'training-reports');
-    const heading = await screen.findByText(/region 1 dashboard - training reports/i);
+    const heading = await screen.findByText(/regional dashboard - training reports/i);
     expect(heading).toBeVisible();
   });
 
@@ -203,7 +261,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
 
     renderDashboard(user, 'all-reports');
-    const heading = await screen.findByText(/region 1 dashboard - all reports/i);
+    const heading = await screen.findByText(/regional dashboard - all reports/i);
     expect(heading).toBeVisible();
   });
 

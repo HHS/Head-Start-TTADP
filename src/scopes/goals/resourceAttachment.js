@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { filterAssociation, selectDistinctActivityReportGoalIds } from './utils';
 
-const activityReportFilesIncludeExclude = (include = true) => {
+const activityReportFilesIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("Files"."originalFileName" IS NULL) OR';
 
   return selectDistinctActivityReportGoalIds(
@@ -11,7 +11,7 @@ const activityReportFilesIncludeExclude = (include = true) => {
   );
 };
 
-const activityReportObjectiveFilesIncludeExclude = (include = true) => {
+const activityReportObjectiveFilesIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("Files"."originalFileName" IS NULL) OR';
 
   return selectDistinctActivityReportGoalIds(

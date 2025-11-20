@@ -1,0 +1,29 @@
+@use '../../../../colors.scss' as *;
+
+.goal-history-content {
+  .responses-section {
+    margin-bottom: 1.5rem;
+  }
+
+  ul.usa-list {
+    padding-left: 1.5rem;
+    margin-top: 0.5rem;
+  }
+  /*
+  /* ensure the spacing between resource items is the same. */
+  .objective-details-section .usa-list li {
+    margin-bottom: 0.25rem;
+  }
+  
+  .resource-sections-container {
+    ul {
+      margin-bottom: 0;
+    }
+    
+    ul + ul {
+      margin-top: 0;
+    }
+  }
+}
+
+

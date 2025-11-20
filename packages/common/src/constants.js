@@ -55,8 +55,9 @@ const TOPICS = [
   'Data and Evaluation',
   'Disabilities Services',
   'ERSEA',
+  'Emergency Preparedness, Response, and Recovery (EPRR)',
   'Environmental Health and Safety / EPRR',
-  'Equity',
+  'Environmental Health and Safety',
   'Facilities',
   'Family Support Services',
   'Fatherhood / Male Caregiving',
@@ -92,7 +93,6 @@ const REASONS = [
   'Change in Scope',
   'Child Incident',
   'Complaint',
-  'COVID-19 response',
   'Full Enrollment',
   'New Recipient',
   'New Director or Management',
@@ -106,6 +106,12 @@ const REASONS = [
   'Monitoring | Deficiency',
 ];
 exports.REASONS = REASONS;
+
+const DEPRECATED_REASONS = [
+  'COVID-19 response'
+];
+
+exports.DEPRECATED_REASONS = DEPRECATED_REASONS;
 
 const REPORT_STATUSES = {
   DRAFT: 'draft',
@@ -123,6 +129,13 @@ const TRAINING_REPORT_STATUSES = {
   SUSPENDED: 'Suspended',
 };
 exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
+
+const NAVIGATOR_PAGE_STATUSES = {
+  NOT_STARTED: 'Not started',
+  IN_PROGRESS: 'In progress',
+  COMPLETE: 'Complete',
+};
+exports.NAVIGATOR_PAGE_STATUSES = NAVIGATOR_PAGE_STATUSES;
 
 const TRAINING_REPORT_STATUSES_URL_PARAMS = {
   'not-started': TRAINING_REPORT_STATUSES.NOT_STARTED,
@@ -143,7 +156,7 @@ exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool Children (ages 3-5)',
-  'Pregnant Women / Pregnant Persons',
+  'Expectant families',
   'Affected by Child Welfare Involvement',
   'Affected by Disaster',
   'Affected by Substance Use',
@@ -157,7 +170,6 @@ const TARGET_POPULATIONS = [
 exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
 const EVENT_TARGET_POPULATIONS = [
-  'Children/Families affected by systemic discrimination/bias/exclusion',
   'Children/Families affected by traumatic events',
   'Parents/Families impacted by health disparities',
 ];
@@ -201,7 +213,6 @@ const CLOSE_SUSPEND_REASONS = [
 exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
 
 const GOAL_CLOSE_REASONS = [
-  'Duplicate goal',
   'Recipient request',
   'Regional Office request',
   'TTA complete',
@@ -225,6 +236,15 @@ const GOAL_SOURCES = [
 ];
 
 exports.GOAL_SOURCES = GOAL_SOURCES;
+
+const ACTIVITY_REASONS = [
+  'Federal monitoring issues, including CLASS and RANs',
+  'Group event follow-up',
+  'Recipient requested',
+  'Regional Office requested',
+];
+
+exports.ACTIVITY_REASONS = ACTIVITY_REASONS;
 
 const APPROVER_STATUSES = {
   APPROVED: 'approved',
@@ -277,9 +297,7 @@ const COMMUNICATION_METHODS = [
 exports.COMMUNICATION_METHODS = COMMUNICATION_METHODS;
 
 const COMMUNICATION_PURPOSES = [
-  'CLASS',
-  'FEI',
-  'Monitoring',
+  'General Check-In',
   'New TTA request',
   'Program Specialist or Regional Office meeting',
   'Program Specialist\'s Monthly contact',
@@ -364,3 +382,81 @@ const REOPEN_REASONS = {
 };
 
 exports.REOPEN_REASONS = REOPEN_REASONS;
+
+const DISALLOWED_URLS = [{
+  url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://eclkc.ohs.acf.hhs.gov/cas/login',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+},{
+  url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://www.eclkc.ohs.acf.hhs.gov/cas/login',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://headstart.gov/cas/login',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+},{
+  url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://www.headstart.gov/cas/login',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}
+];
+
+exports.DISALLOWED_URLS = DISALLOWED_URLS;
+
+const VALID_URL_REGEX = /(?<url>(?<scheme>http(?:s)?):\/\/(?:(?<user>[a-zA-Z0-9._]+)(?:[:](?<password>[a-zA-Z0-9%._\+~#=]+))?[@])?(?:(?:www\.)?(?<host>[-a-zA-Z0-9%._\+~#=]{1,}\.[a-z]{2,6})|(?<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?<port>[0-9]+))?(?:[\/](?<path>[-a-zA-Z0-9'@:%_\+.,~#&\/=()]*[-a-zA-Z0-9@:%_\+.~#&\/=()])?)?(?:[?](?<query>[-a-zA-Z0-9@:%_\+.~#&\/=()]*))*)/ig;
+exports.VALID_URL_REGEX = VALID_URL_REGEX;
+
+const TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = {
+  TRAINING: 'training',
+  TECHNICAL_ASSISTANCE: 'technical-assistance',
+  BOTH: 'both',
+};
+ exports.TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS;
+
+
+ const COLLAB_REPORT_PARTICIPANTS = [
+  "Child Care and Development Fund",
+  "Child care licensing",
+  "Child Care Training and Technical Assistance Network",
+  "DOE/State PreK",
+  "Head Start Collaboration Office",
+  "Head Start Recipients",
+  "Health department/WIC",
+  "Office of Child Care",
+  "Quality Rating and Improvement System",
+  "State and territory adminstrators",
+  "Regional HSA",
+  "Regional Office staff",
+  "State HSA",
+  "State environmental health and safety systems",
+  "State family engagement systems",
+  "State health and welness systems",
+  "State homelessness agency/McKinney Vento liason",
+  "State Professional development system",
+  "TTA staff",
+  "Other",
+ ];
+
+ exports.COLLAB_REPORT_PARTICIPANTS = COLLAB_REPORT_PARTICIPANTS;
+ 

@@ -1,7 +1,9 @@
 import { Op, WhereOptions } from 'sequelize';
 import { map, pickBy } from 'lodash';
 import { DECIMAL_BASE } from '@ttahub/common';
+import db from '../models';
 
+const { Topic } = db;
 /**
  * Takes an array of string date ranges (2020/09/01-2021/10/02, for example)
  * and attempts to turn them into something sequelize can understand
@@ -16,7 +18,7 @@ export function compareDate(dates: string[], property: string, operator: string)
     ...acc,
     {
       [property]: {
-        [operator]: new Date(date),
+        [operator]: date,
       },
     },
   ], []);
@@ -45,15 +47,15 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
       ...acc,
       {
         [property]: {
-          [Op.gte]: new Date(startDate),
-          [Op.lte]: new Date(endDate),
+          [Op.gte]: startDate,
+          [Op.lte]: endDate,
         },
       },
     ];
   }, []);
 }
 
-export function createFiltersToScopes(filters, topicToQuery, options, userId) {
+export function createFiltersToScopes(filters, topicToQuery, options, userId, validTopics) {
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
     if (!(topic in topicToQuery)) {
@@ -64,7 +66,7 @@ export function createFiltersToScopes(filters, topicToQuery, options, userId) {
 
   return map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
-    return topicToQuery[topic][condition]([query].flat(), options, userId);
+    return topicToQuery[topic][condition]([query].flat(), options, userId, validTopics);
   });
 }
 
@@ -99,16 +101,22 @@ export function createFiltersToScopes(filters, topicToQuery, options, userId) {
 export function filterAssociation(baseQuery, searchTerms, exclude, callback, comparator = '~*', escape = true) {
   if (exclude) {
     return {
-      [Op.and]: callback(baseQuery, searchTerms, 'NOT IN', comparator, escape),
+      where: {
+        [Op.and]: callback(baseQuery, searchTerms, 'NOT IN', comparator, escape),
+      },
     };
   }
 
   return {
-    [Op.or]: callback(baseQuery, searchTerms, 'IN', comparator, escape),
+    where: {
+      [Op.or]: callback(baseQuery, searchTerms, 'IN', comparator, escape),
+    },
   };
 }
 
-export const idClause = (query: string[]) => query.filter((id: string) => !Number.isNaN(parseInt(id, DECIMAL_BASE))).join(',');
+export const validatedIdArray = (query: string[]): number[] => query
+  .map((id) => Number(id))
+  .filter((id) => Number.isInteger(id));
 
 /**
  * Extracts the WHERE clause from a Sequelize model's findAll query and replaces the model name
@@ -139,3 +147,8 @@ export const scopeToWhere = async (
 
   return where;
 };
+
+export async function getValidTopicsSet() {
+  const rows = await Topic.findAll({ attributes: ['name'], raw: true });
+  return new Set(rows.map((r) => r.name));
+}

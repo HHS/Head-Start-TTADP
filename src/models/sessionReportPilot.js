@@ -27,6 +27,32 @@ export default (sequelize, DataTypes) => {
         otherKey: 'fileId',
         as: 'supportingAttachments',
       });
+      // Approver.
+      SessionReportPilot.belongsTo(models.User, { foreignKey: 'approverId', as: 'approver' });
+      // Trainers.
+      SessionReportPilot.hasMany(models.SessionReportPilotTrainer, { foreignKey: 'sessionReportPilotId', as: 'sessionTrainers' });
+      SessionReportPilot.belongsToMany(models.User, {
+        through: models.SessionReportPilotTrainer,
+        foreignKey: 'sessionReportPilotId',
+        otherKey: 'userId',
+        as: 'trainers',
+      });
+      // Grants.
+      SessionReportPilot.hasMany(models.SessionReportPilotGrant, { foreignKey: 'sessionReportPilotId', as: 'sessionGrants' });
+      SessionReportPilot.belongsToMany(models.Grant, {
+        through: models.SessionReportPilotGrant,
+        foreignKey: 'sessionReportPilotId',
+        otherKey: 'grantId',
+        as: 'grants',
+      });
+      // Goal Templates.
+      SessionReportPilot.hasMany(models.SessionReportPilotGoalTemplate, { foreignKey: 'sessionReportPilotId', as: 'sessionGoalTemplates' });
+      SessionReportPilot.belongsToMany(models.GoalTemplate, {
+        through: models.SessionReportPilotGoalTemplate,
+        foreignKey: 'sessionReportPilotId',
+        otherKey: 'goalTemplateId',
+        as: 'goalTemplates',
+      });
     }
   }
 
@@ -40,6 +66,10 @@ export default (sequelize, DataTypes) => {
     eventId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    approverId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     data: {
       type: DataTypes.JSONB,

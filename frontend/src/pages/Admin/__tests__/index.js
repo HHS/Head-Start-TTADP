@@ -10,10 +10,10 @@ import { createMemoryHistory } from 'history';
 
 import Admin from '../index';
 
-const grantsUrl = join('/', 'api', 'admin', 'grants', 'cdi?unassigned=false&active=true');
 const recipientsUrl = join('/', 'api', 'admin', 'recipients');
 const usersUrl = join('/', 'api', 'admin', 'users');
 const featuresUrl = join('/api', 'admin', 'users', 'features');
+const buildInfoUrl = '/api/admin/buildInfo';
 
 describe('Admin landing page', () => {
   const history = createMemoryHistory();
@@ -21,21 +21,15 @@ describe('Admin landing page', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
-    fetchMock.get(grantsUrl, []);
     fetchMock.get(recipientsUrl, []);
     fetchMock.get(usersUrl, []);
     fetchMock.get(featuresUrl, []);
-  });
-
-  it('displays the cdi page', async () => {
-    history.push('/admin/cdi');
-    render(
-      <Router history={history}>
-        <Admin />
-      </Router>,
-    );
-    const grantView = await screen.findByText('Please select a grant');
-    expect(grantView).toBeVisible();
+    fetchMock.get(buildInfoUrl, {
+      branch: 'main',
+      commit: 'abcdef12345',
+      buildNumber: '123',
+      timestamp: '2024-11-13 12:34:56',
+    });
   });
 
   it('displays the user page', async () => {
@@ -72,6 +66,7 @@ describe('Admin landing page', () => {
     const requestErrors = await screen.findByRole('heading', { name: /requesterrors/i });
     expect(requestErrors).toBeVisible();
   });
+
   it('displays the site alerts page', async () => {
     fetchMock.get('/api/admin/alerts', []);
     history.push('/admin/site-alerts');
@@ -95,6 +90,18 @@ describe('Admin landing page', () => {
     );
 
     const heading = await screen.findByRole('heading', { name: /national centers/i });
+    expect(heading).toBeVisible();
+  });
+
+  it('displays the feed preview page', async () => {
+    history.push('/admin/feed-preview');
+    render(
+      <Router history={history}>
+        <Admin />
+      </Router>,
+    );
+
+    const heading = await screen.findByRole('heading', { name: /Preview confluence RSS feed/i });
     expect(heading).toBeVisible();
   });
 });

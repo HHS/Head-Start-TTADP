@@ -46,6 +46,8 @@ export default function CourseDashboard() {
     user,
     REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY,
     true,
+    [],
+    COURSE_DASHBOARD_FILTER_CONFIG,
   );
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);

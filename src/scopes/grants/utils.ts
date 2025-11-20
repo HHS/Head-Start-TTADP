@@ -23,7 +23,9 @@ export function expandArrayContains(key: string, array: string[], exclude: boole
   });
 
   return {
-    [Op.or]: scopes,
+    where: {
+      [Op.or]: scopes,
+    },
   };
 }
 

@@ -5,6 +5,7 @@ import { useController } from 'react-hook-form';
 import {
   DatePicker,
 } from '@trussworks/react-uswds';
+import { isValidDate } from '../utils';
 
 // this is the format used in every place we see
 import { DATE_DISPLAY_FORMAT, DATEPICKER_VALUE_FORMAT } from '../Constants';
@@ -21,7 +22,9 @@ export default function ControlledDatePicker({
   isStartDate,
   inputId,
   endDate,
+  customValidationMessages,
   required,
+  additionalValidation,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -54,20 +57,29 @@ export default function ControlledDatePicker({
 
   const formattedValue = value ? moment(value, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT) : '';
 
+  const {
+    beforeMessage,
+    afterMessage,
+    invalidMessage,
+  } = customValidationMessages;
+
   // this is our custom validation function we pass to the hook form controller
   function validate(v) {
-    const newValue = moment(v, DATE_DISPLAY_FORMAT);
-
-    if (!newValue.isValid()) {
-      return 'Enter valid date';
-    }
+    const newValue = isValidDate(v);
+    if (!newValue) return invalidMessage || 'Enter valid date';
 
     if (newValue.isBefore(min.moment)) {
-      return `Please enter a date after ${min.display}`;
+      return afterMessage || `Please enter a date after ${min.display}`;
     }
 
     if (newValue.isAfter(max.moment)) {
-      return `Please enter a date before ${max.display}`;
+      return beforeMessage || `Please enter a date before ${max.display}`;
+    }
+
+    // Call any additional validation logic.
+    const customValidationMsg = additionalValidation();
+    if (customValidationMsg) {
+      return customValidationMsg;
     }
 
     return true;
@@ -135,6 +147,12 @@ ControlledDatePicker.propTypes = {
   inputId: PropTypes.string.isRequired,
   endDate: PropTypes.string,
   required: PropTypes.bool,
+  customValidationMessages: PropTypes.shape({
+    beforeMessage: PropTypes.string,
+    afterMessage: PropTypes.string,
+    invalidMessage: PropTypes.string,
+  }),
+  additionalValidation: PropTypes.func,
 };
 
 ControlledDatePicker.defaultProps = {
@@ -145,4 +163,10 @@ ControlledDatePicker.defaultProps = {
   setEndDate: () => {},
   required: true,
   value: '',
+  customValidationMessages: {
+    beforeMessage: '',
+    afterMessage: '',
+    invalidMessage: '',
+  },
+  additionalValidation: () => {},
 };

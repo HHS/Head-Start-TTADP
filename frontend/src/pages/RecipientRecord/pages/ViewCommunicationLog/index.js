@@ -2,9 +2,9 @@ import React, { useEffect, useState, useContext } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Alert } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
+import parse from 'html-react-parser';
 import Container from '../../../../components/Container';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { getCommunicationLogById } from '../../../../fetchers/communicationLog';
@@ -14,7 +14,16 @@ import UserContext from '../../../../UserContext';
 import DisplayNextSteps from './components/DisplayNextSteps';
 import LogLine from './components/LogLine';
 
+const hasRichTextContent = (html) => {
+  if (!html) {
+    return false;
+  }
+  const stripped = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
+  return stripped.length > 0;
+};
+
 export default function ViewCommunicationLog({ match, recipientName }) {
+  const history = useHistory();
   const {
     params: {
       recipientId,
@@ -26,7 +35,6 @@ export default function ViewCommunicationLog({ match, recipientName }) {
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [log, setLog] = useState();
-  const [error, setError] = useState();
 
   const isAuthor = log && log.author && log.author.id === user.id;
 
@@ -37,28 +45,22 @@ export default function ViewCommunicationLog({ match, recipientName }) {
         const response = await getCommunicationLogById(regionId, communicationLogId);
         setLog(response);
       } catch (err) {
-        setError('There was an error fetching the communication log.');
+        history.push(`/something-went-wrong/${err.status}`);
       } finally {
         setIsAppLoading(false);
       }
     }
 
-    if (!log && !error) {
+    if (!log) {
       fetchLog();
     }
-  }, [communicationLogId, error, log, regionId, setIsAppLoading]);
+  }, [communicationLogId, log, regionId, setIsAppLoading, history]);
 
-  if (!log && !error) {
+  if (!log) {
     return null;
   }
 
-  if (error) {
-    return (
-      <Alert type="error">
-        {error}
-      </Alert>
-    );
-  }
+  const editLink = log.recipients.length > 1 ? `/communication-log/region/${regionId}/log/${log.id}/log` : `/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/log`;
 
   return (
     <>
@@ -80,21 +82,35 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           {isAuthor && (
           <Link
             className="position-absolute top-0 right-0 margin-top-4 margin-right-4"
-            to={`/recipient-tta-records/${log.recipientId}/region/${regionId}/communication/${log.id}/log`}
+            to={editLink}
           >
             Edit
           </Link>
           )}
+          <ReadOnlyField
+            label="Other TTA staff"
+          >
+            {log.data.otherStaff && log.data.otherStaff.map((u) => (
+              <div key={u.value}>{u.label}</div>
+            ))}
+          </ReadOnlyField>
           <ReadOnlyField
             label="Purpose"
           >
             {log.data.purpose}
           </ReadOnlyField>
           <ReadOnlyField
-            label="Notes"
+            label="Supporting goals"
           >
-            {log.data.notes}
+            {log.data.goals && log.data.goals.map((goal) => goal.label).join(', ')}
           </ReadOnlyField>
+          {hasRichTextContent(log.data.notes) && (
+            <ReadOnlyField
+              label="Notes"
+            >
+              {parse(log.data.notes)}
+            </ReadOnlyField>
+          )}
           <ReadOnlyField
             label="Result"
           >

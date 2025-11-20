@@ -4,8 +4,9 @@ import {
   render,
   screen,
 } from '@testing-library/react';
-
-import ApprovedReportV2 from '../components/ApprovedReportV2';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import ApprovedReportV2 from '../../../components/ReportView/ApprovedReportV2';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('Approved Activity Report V2 component', () => {
   const mockObjectives = [
@@ -145,7 +146,8 @@ describe('Approved Activity Report V2 component', () => {
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
-    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
+    const noneProvided = await screen.findAllByText(/None provided/i);
+    expect(noneProvided[0]).toBeInTheDocument();
   });
 
   it('handles empty resources', async () => {
@@ -165,20 +167,8 @@ describe('Approved Activity Report V2 component', () => {
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
-    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
-  });
-
-  it('hides the goal close anticipation date', async () => {
-    render(<ApprovedReportV2 data={{
-      ...report,
-      goalsAndObjectives: [{
-        name: 'Goal without close date',
-        goalNumbers: ['1'],
-        objectives: mockObjectives,
-      }],
-    }}
-    />);
-    expect(screen.queryAllByText(/anticipated close date/i).length).toBe(0);
+    const noneProvided = await screen.findAllByText(/None provided/i);
+    expect(noneProvided[0]).toBeInTheDocument();
   });
 
   it('shows the goal close date and goal source', async () => {
@@ -196,8 +186,6 @@ describe('Approved Activity Report V2 component', () => {
       }],
     }}
     />);
-    expect(await screen.findByText(/anticipated close date/i)).toBeInTheDocument();
-    expect(await screen.findByText('05/03/2023')).toBeInTheDocument();
     expect(await screen.findByText('Source')).toBeInTheDocument();
   });
 
@@ -245,7 +233,32 @@ describe('Approved Activity Report V2 component', () => {
     expect(screen.queryAllByText(/FEI goal source/i).length).toBe(1);
   });
 
-  it('in person', async () => {
+  it('shows the courses label if there were selected courses', async () => {
+    const thisMockObjective = mockObjectives[0];
+    thisMockObjective.courses = [{ name: 'Course One' }];
+
+    render(<ApprovedReportV2 data={{
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal without close date',
+        goalNumbers: ['1'],
+        objectives: [thisMockObjective],
+        endDate: '05/02/2023',
+        activityReportGoals: [{
+          endDate: '05/03/2023',
+          source: null,
+        }],
+        prompts: [{
+          title: 'FEI goal source',
+          reportResponse: ['response'],
+        }],
+      }],
+    }}
+    />);
+    expect(screen.queryAllByText(/Courses/i).length).toBe(1);
+  });
+
+  it('displays "in person" delivery methods', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'in-person',
     }}
@@ -254,7 +267,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
   });
 
-  it('language', async () => {
+  it('displays the chosen language', async () => {
     render(<ApprovedReportV2 data={{
       ...report, language: ['Gobbledegook'],
     }}
@@ -263,7 +276,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Gobbledegook/i)).toBeInTheDocument();
   });
 
-  it('virtual', async () => {
+  it('displays virtual delivery methods', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'virtual', virtualDeliveryType: 'Sandwich', approvedAt: '2021-01-01',
     }}
@@ -272,7 +285,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Virtual: Sandwich/i)).toBeInTheDocument();
   });
 
-  it('hybrid', async () => {
+  it('displays hybrid delivery methods', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'hybrid',
     }}
@@ -281,7 +294,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText('Hybrid')).toBeInTheDocument();
   });
 
-  it('submitted date shown', async () => {
+  it('shows submitted date when present', async () => {
     render(<ApprovedReportV2 data={{
       ...report, submittedDate: '2023-01-09',
     }}
@@ -290,7 +303,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
   });
 
-  it('submitted date hidden', async () => {
+  it('hides null submitted dates', async () => {
     render(<ApprovedReportV2 data={{
       ...report, submittedDate: null,
     }}
@@ -369,5 +382,147 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Third Step/i)).toBeInTheDocument();
     expect(await screen.findByText(/Fourth Step/i)).toBeInTheDocument();
     expect(screen.queryAllByRole('heading', { name: /recipient's next steps/i }).length).toBe(0);
+  });
+
+  it('correctly displays objectives with citations', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      activityRecipients: [
+        {
+          id: 11074,
+          activityRecipientId: 11074,
+          name: 'R1 - GRANT1 - HS',
+        },
+        {
+          id: 11966,
+          activityRecipientId: 11966,
+          name: 'R1 - GRANT2 - EHS',
+        },
+      ],
+      goalsAndObjectives: [
+        {
+          id: 90740,
+          name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
+          status: GOAL_STATUS.IN_PROGRESS,
+          endDate: '',
+          isCurated: true,
+          grantId: 11597,
+          goalTemplateId: 24696,
+          onAR: true,
+          onApprovedAR: true,
+          rtrOrder: 1,
+          source: 'Federal monitoring issues, including CLASS and RANs',
+          regionId: 1,
+          recipientId: 1442,
+          standard: 'Monitoring',
+          prompts: [],
+          statusChanges: [
+            {
+              oldStatus: GOAL_STATUS.NOT_STARTED,
+            },
+          ],
+          activityReportGoals: [
+            {
+              endDate: null,
+              id: 155612,
+              activityReportId: 48418,
+              goalId: 90740,
+              isRttapa: null,
+              name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
+              status: GOAL_STATUS.IN_PROGRESS,
+              timeframe: null,
+              closeSuspendReason: null,
+              closeSuspendContext: null,
+              source: 'Federal monitoring issues, including CLASS and RANs',
+              isActivelyEdited: false,
+              originalGoalId: null,
+            },
+          ],
+          objectives: [
+            {
+              id: 231994,
+              otherEntityId: null,
+              goalId: 90740,
+              title: 'test',
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+              objectiveTemplateId: 565,
+              onAR: true,
+              onApprovedAR: true,
+              createdVia: 'activityReport',
+              rtrOrder: 1,
+              value: 231994,
+              ids: [
+                231994,
+                231995,
+                231996,
+              ],
+              ttaProvided: '<p>tta</p>\n',
+              supportType: 'Planning',
+              isNew: false,
+              arOrder: 1,
+              objectiveCreatedHere: true,
+              topics: [],
+              resources: [],
+              files: [],
+              courses: [],
+              citations: [
+                {
+                  id: 200205,
+                  activityReportObjectiveId: 241644,
+                  citation: '1302.12(k)',
+                  monitoringReferences: [
+                    {
+                      acro: 'AOC',
+                      name: 'AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+                      grantId: 11966,
+                      citation: '1302.12(k)',
+                      severity: 3,
+                      findingId: '8D18F077-CD6F-4869-AB21-E76EB682433B',
+                      reviewName: '230706F2',
+                      standardId: 200205,
+                      findingType: 'Area of Concern',
+                      grantNumber: '01CH011566',
+                      findingSource: 'Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+                      reportDeliveryDate: '2023-06-26T04:00:00+00:00',
+                      monitoringFindingStatusName: 'Active',
+                    },
+                  ],
+                  name: 'AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+                },
+              ],
+            },
+          ],
+          isSourceEditable: true,
+          goalNumber: 'G-90740',
+          promptsForReview: [],
+          isNew: false,
+          goalNumbers: [
+            'G-90740',
+            'G-90683',
+            'G-90846',
+          ],
+          goalIds: [
+            90740,
+            90683,
+            90846,
+          ],
+          grantIds: [
+            11597,
+            11074,
+            11966,
+          ],
+          collaborators: [
+            {
+              goalNumber: 'G-90683',
+            },
+          ],
+          isReopenedGoal: false,
+        },
+      ],
+    }}
+    />);
+
+    expect(await screen.findByTestId('review-citation-label')).toHaveTextContent('R1 - GRANT2 - EHS');
+    expect(await screen.findByTestId('review-citation-listitem')).toHaveTextContent('AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance');
   });
 });

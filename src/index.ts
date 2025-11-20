@@ -1,15 +1,14 @@
+/* eslint-disable import/first */
 if (process.env.NODE_ENV === 'production') {
   // eslint-disable-next-line global-require
   require('newrelic');
 }
 
-/* eslint-disable import/first */
-import { WebSocketServer } from 'ws';
-import { createClient } from 'redis';
+// @ts-ignore
+import { MeshServer } from '@mesh-kit/core/server';
 import app from './app';
 import { auditLogger } from './logger';
 import { generateRedisConfig } from './lib/queue';
-/* eslint-enable import/first */
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
 
@@ -18,63 +17,50 @@ const server = app.listen(port, () => {
   auditLogger.info(`Listening on port ${port}`);
 });
 
+let meshServerInstance: MeshServer | null = null;
+
 if (!bypassSockets) {
   const {
     uri: redisUrl,
     tlsEnabled,
+    redisOpts,
   } = generateRedisConfig();
 
-  // IIFE to get around top level awaits
-  (async () => {
-    try {
-      const wss = new WebSocketServer({ server });
+  const mesh = new MeshServer({
+    server,
+    redisOptions: {
+      host: redisUrl ? new URL(redisUrl).hostname : 'localhost',
+      port: redisUrl ? parseInt(new URL(redisUrl).port, 10) || 6379 : 6379,
+      password: redisUrl ? redisOpts?.redis?.password || undefined : undefined,
+      tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
+    },
+  });
 
-      const redisClient = createClient({
-        url: redisUrl,
-        socket: {
-          tls: tlsEnabled,
-        },
+  meshServerInstance = mesh;
+
+  mesh.ready()
+    .then(() => {
+      // allow mesh to track presence for rooms that are prefixed with 'ar-'
+      mesh.trackPresence(/^ar-.*$/);
+
+      process.on('SIGINT', async () => {
+        // disconnects any active connections, cleans up redis, and then closes the server
+        await mesh.close();
+
+        process.exit(0);
       });
-      await redisClient.connect();
+    })
+    .catch((err: unknown) => {
+      auditLogger.error('Failed to initialize Mesh server:', err);
+    });
+}
 
-      wss.on('connection', async (ws, req) => {
-        // We need to set up duplicate connections for subscribing,
-        // as once a client is in "subscribe" mode, it can't send
-        // any other commands (like "publish")
-        const subscriber = redisClient.duplicate();
-        await subscriber.connect();
-
-        // Set the connection name using the CLIENT SETNAME command
-        const connectionName = `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-subscriber-${process.pid}`;
-        try {
-          await subscriber.sendCommand(['CLIENT', 'SETNAME', connectionName]);
-        } catch (err) {
-          auditLogger.error('Failed to set Redis connection name:', err);
-        }
-        const channelName = req.url;
-        // subscribe to the channel, the function is a callback for what to
-        // do when a message is received via redis pub/sub
-        await subscriber.subscribe(channelName, (message) => {
-          ws.send(message);
-        });
-
-        // when a message is received via websocket, publish it to redis
-        ws.on('message', async (message) => {
-          try {
-            const { channel, ...data } = JSON.parse(message);
-            await redisClient.publish(channel, JSON.stringify(data));
-          } catch (err) {
-            auditLogger.error('WEBSOCKET: The following message was unable to be parsed and returned an error: ', message, err);
-          }
-        });
-
-        // on close, unsubscribe from the channel
-        ws.on('close', async () => subscriber.unsubscribe(channelName));
-      });
-    } catch (err) {
-      auditLogger.error(err);
-    }
-  })();
+/**
+ * Returns the mesh server instance if it exists
+ * @returns The mesh server instance or null if it doesn't exist
+ */
+export function getMeshServer(): MeshServer | null {
+  return meshServerInstance;
 }
 
 export default server;

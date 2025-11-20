@@ -33,7 +33,7 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
   return (
     <>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
-      <label className="sr-only" htmlFor="region">Select region to filter by</label>
+      <label className="usa-sr-only" htmlFor="region">Select region to filter by</label>
       <Dropdown name="region" id="region" value={appliedRegion} onChange={onApplyRegion}>
         {regions.map((region) => (
           <option key={region} value={region}>

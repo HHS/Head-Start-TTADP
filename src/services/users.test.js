@@ -1,6 +1,10 @@
 import faker from '@faker-js/faker';
 import db, {
-  User, EventReportPilot, Permission,
+  User,
+  EventReportPilot,
+  Permission,
+  Role,
+  UserRole,
 } from '../models';
 
 import {
@@ -36,16 +40,63 @@ describe('Users DB service', () => {
         hsesUserId: '55',
         lastLogin: new Date(),
       });
+
+      // Active user.
+      await User.create({
+        id: 56,
+        name: 'user 56',
+        hsesUsername: 'user.56',
+        hsesUserId: '56',
+        lastLogin: new Date(),
+      });
+
+      await Permission.create({
+        userId: 56,
+        regionId: 14,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        userId: 56,
+        regionId: 1,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      // In-active users.
+      await User.create({
+        id: 57,
+        name: 'user 57',
+        hsesUsername: 'user.57',
+        hsesUserId: '57',
+      });
+
+      await Permission.create({
+        userId: 57,
+        regionId: 1,
+        scopeId: SCOPES.READ_REPORTS,
+      });
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [54, 55] } });
+      await Permission.destroy({ where: { userId: [56, 57] } });
+      await User.destroy({ where: { id: [54, 55, 56, 57] } });
     });
 
     it('retrieves the correct user', async () => {
       const user = await userById(54);
       expect(user.id).toBe(54);
       expect(user.name).toBe('user 54');
+    });
+
+    it('retrieves user if they are active', async () => {
+      const user = await userById(56, true);
+      expect(user.id).toBe(56);
+      expect(user.name).toBe('user 56');
+    });
+
+    it('does not retrieve user if they are inactive', async () => {
+      const user = await userById(57, true);
+      expect(user).toBe(null);
     });
   });
 
@@ -58,6 +109,19 @@ describe('Users DB service', () => {
         hsesUserId: '54',
         lastLogin: new Date(),
       });
+
+      const r = await Role.create({
+        name: 'TTTT',
+        fullName: 'Test taker',
+        isSpecialist: false,
+        id: 99_883,
+      });
+
+      await UserRole.create({
+        userId: 54,
+        roleId: r.id,
+      });
+
       await User.create({
         id: 55,
         name: 'user 55',
@@ -68,13 +132,20 @@ describe('Users DB service', () => {
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [54, 55] } });
+      const users = [54, 55];
+      await UserRole.destroy({ where: { userId: users } });
+      await Role.destroy({
+        where: {
+          fullName: 'Test taker',
+        },
+      });
+      await User.destroy({ where: { id: users } });
     });
 
     it('retrieves the correct userNames', async () => {
       const users = await getUserNamesByIds([54, 55]);
       expect(users).toStrictEqual([
-        'user 54',
+        'user 54, TTTT',
         'user 55',
       ]);
     });
@@ -375,7 +446,7 @@ describe('Users DB service', () => {
 
     const eventReportPilotId = faker.datatype.number({ min: 25000 });
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       await Promise.all(
         users.map((u) => User.create({
           id: u.id,
@@ -403,7 +474,7 @@ describe('Users DB service', () => {
       );
     });
 
-    afterEach(async () => {
+    afterAll(async () => {
       await User.destroy({ where: { id: userIds } });
       await EventReportPilot.destroy({ where: { id: eventReportPilotId } });
     });

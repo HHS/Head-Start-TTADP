@@ -5,20 +5,19 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider } from 'react-hook-form';
 import moment from 'moment';
-import {
-  IN_PROGRESS, COMPLETE,
-} from './constants';
 import { OBJECTIVE_RESOURCES, validateGoals, validatePrompts } from '../../pages/ActivityReport/Pages/components/goalValidator';
-import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/activityReports';
+import { saveGoalsForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
-import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 import AppLoadingContext from '../../AppLoadingContext';
-import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
+import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
+import useFormGrantData from '../../hooks/useFormGrantData';
+import useNavigatorState from './useNavigatorState';
+
+const GOALS_AND_OBJECTIVES_POSITION = 2;
 
 /**
    *
@@ -34,21 +33,22 @@ import Navigator from '.';
 export function getPrompts(promptTitles, getValues) {
   let prompts = [];
   if (promptTitles) {
-    prompts = promptTitles.map(({ promptId, title, fieldName }) => ({
-      promptId,
-      title,
-      response: getValues(fieldName),
-    }));
+    prompts = promptTitles.map(({
+      promptId, title, fieldName, grantId,
+    }) => {
+      const response = getValues(fieldName);
+      return {
+        promptId,
+        title,
+        response,
+        grantId,
+      };
+    });
   }
 
   return prompts;
 }
 
-/**
-   *
-   * @param {} isAutoSave
-   * @returns
-   */
 export function getPromptErrors(promptTitles, errors) {
   let promptErrors = false;
 
@@ -65,21 +65,6 @@ export function getPromptErrors(promptTitles, errors) {
 }
 
 export const formatEndDate = (formEndDate) => ((formEndDate && formEndDate.toLowerCase() !== 'invalid date') ? formEndDate : '');
-
-export const packageGoals = (goals, goal, grantIds, prompts) => [
-  // we make sure to mark all the read only goals as "ActivelyEdited: false"
-  ...goals.map((g) => ({
-    ...g,
-    grantIds,
-    isActivelyBeingEditing: false,
-    prompts: grantIds.length < 2 ? g.prompts : [],
-  })),
-  {
-    ...goal,
-    grantIds,
-    prompts: grantIds.length < 2 ? prompts : [],
-  },
-];
 
 /**
  * @summary checks to see if the tta provided field contains the cursor
@@ -100,12 +85,10 @@ export const shouldUpdateFormData = (isAutoSave) => {
 
 const ActivityReportNavigator = ({
   editable,
-  formData,
-  updateFormData,
+  hookForm,
   pages,
   onFormSubmit,
   onReview,
-  onResetToDraft,
   currentPage,
   additionalData,
   onSave,
@@ -119,17 +102,13 @@ const ActivityReportNavigator = ({
   updateLastSaveTime,
   errorMessage,
   updateErrorMessage,
-  savedToStorageTime,
-  socketMessageStore,
+  shouldAutoSave,
+  setShouldAutoSave,
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
-
-  const hookForm = useForm({
-    mode: 'onBlur', // putting it to onBlur as the onChange breaks the new goal form
-    defaultValues: formData,
-    shouldUnregister: false,
-  });
+  // eslint-disable-next-line max-len
+  const goalsAndObjectivesPage = useMemo(() => pages.find((p) => p.position === GOALS_AND_OBJECTIVES_POSITION), [pages]);
 
   const {
     formState,
@@ -142,31 +121,16 @@ const ActivityReportNavigator = ({
     trigger,
   } = hookForm;
 
-  // A new form page is being shown so we need to reset `react-hook-form` so validations are
-  // reset and the proper values are placed inside inputs
-  useDeepCompareEffect(() => {
-    reset(formData);
-  }, [currentPage, reset, formData]);
+  const formData = getValues();
 
-  const pageState = watch('pageState');
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
-  const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   // if we have a goal in the form, we want to say "goal form is not closed"
   const [isGoalFormClosed, toggleGoalForm] = useState(
     !(goalForEditing) && selectedGoals && selectedGoals.length > 0,
-  );
-
-  // Toggle objectives readonly only if all objectives are saved and pass validation.
-  const areInitialObjectivesValid = validateObjectives(selectedObjectivesWithoutGoals);
-  const hasUnsavedObjectives = selectedObjectivesWithoutGoals.filter((u) => !u.id);
-  const [isObjectivesFormClosed, toggleObjectiveForm] = useState(
-    selectedObjectivesWithoutGoals.length > 0
-      && areInitialObjectivesValid === true
-      && hasUnsavedObjectives.length === 0,
   );
 
   const setSavingLoadScreen = (isAutoSave = false) => {
@@ -176,53 +140,40 @@ const ActivityReportNavigator = ({
     }
   };
 
-  const activityRecipientType = watch('activityRecipientType');
-  const isGoalsObjectivesPage = page.path === 'goals-objectives';
+  const isGoalsObjectivesPage = page?.path === 'goals-objectives';
   const recipients = watch('activityRecipients');
-  const isRecipientReport = activityRecipientType === 'recipient';
 
-  const grantIds = isRecipientReport ? recipients.map((r) => {
-    if (r.grant) {
-      return r.grant.id;
-    }
+  const {
+    grantIds,
+  } = useFormGrantData(recipients);
 
-    return r.activityRecipientId;
-  }) : [];
+  const { isDirty } = formState;
 
-  const { isDirty, isValid } = formState;
+  const { newNavigatorState, updateGoalsObjectivesPageState } = useNavigatorState({
+    page,
+    goalsAndObjectivesPage,
+    hookForm,
+  });
 
-  const newNavigatorState = () => {
-    if (page.review) {
-      return pageState;
-    }
-
-    const currentPageState = pageState[page.position];
-    const isComplete = page.isPageComplete ? page.isPageComplete(getValues(), formState) : isValid;
-    const newPageState = { ...pageState };
-
-    if (isComplete) {
-      newPageState[page.position] = COMPLETE;
-    } else if (currentPageState === COMPLETE) {
-      newPageState[page.position] = IN_PROGRESS;
-    } else {
-      newPageState[page.position] = isDirty ? IN_PROGRESS : currentPageState;
-    }
-
-    return newPageState;
-  };
   const onSaveForm = async (isAutoSave = false, forceUpdate = false) => {
     setSavingLoadScreen(isAutoSave);
-    if (!editable) {
-      setIsAppLoading(false);
-      return;
-    }
+
     const { status, ...values } = getValues();
-    const data = { ...formData, ...values, pageState: newNavigatorState() };
+    const data = { ...values, pageState: newNavigatorState() };
 
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
-      await onSave(data, forceUpdate);
+      const savedData = await onSave(data, forceUpdate);
+
+      // Update RHF with saved data (includes new IDs, etc.)
+      if (savedData) {
+        reset(savedData);
+
+        // After save, check and update the goals & objectives page state
+        updateGoalsObjectivesPageState(savedData);
+      }
+
       updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
@@ -232,10 +183,7 @@ const ActivityReportNavigator = ({
   };
 
   const showSaveGoalsAndObjButton = isGoalsObjectivesPage
-  && !isGoalFormClosed
-  && !isObjectivesFormClosed;
-
-  const isOtherEntityReport = activityRecipientType === 'other-entity';
+  && !isGoalFormClosed;
 
   /**
      * @summary This function is called when a page is navigated and is somewhat
@@ -249,7 +197,6 @@ const ActivityReportNavigator = ({
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
-    const source = getValues('goalSource');
     const promptTitles = getValues('goalPrompts');
     let prompts = [];
     const promptErrors = getPromptErrors(promptTitles, errors);
@@ -266,10 +213,9 @@ const ActivityReportNavigator = ({
       ...goalForEditing,
       isActivelyBeingEditing: true,
       name,
-      source,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
-      regionId: formData.regionId,
+      regionId: getValues('regionId'),
     };
 
     // the above logic has packaged all the fields into a tidy goal object and we can now
@@ -284,8 +230,13 @@ const ActivityReportNavigator = ({
     try {
       setValue('goals', allGoals);
       const { status, ...values } = getValues();
-      const data = { ...formData, ...values, pageState: newNavigatorState() };
-      await onSave(data);
+      const data = { ...values, pageState: newNavigatorState() };
+      const savedData = await onSave(data);
+
+      // Update RHF with saved data
+      if (savedData) {
+        reset(savedData);
+      }
 
       updateErrorMessage('');
       updateLastSaveTime(moment());
@@ -308,7 +259,6 @@ const ActivityReportNavigator = ({
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
     const promptErrors = getPromptErrors(promptTitles, errors);
-    const source = getValues('goalSource');
 
     if (promptErrors) {
       return;
@@ -331,8 +281,11 @@ const ActivityReportNavigator = ({
       // make an attempt to focus on the first invalid resource
       // having a sticky header complicates this enough to make me not want to do this perfectly
       // right out of the gate
+      /* istanbul ignore next */
       const invalid = document.querySelector('.usa-error-message + .ttahub-resource-repeater input');
+      /* istanbul ignore next */
       if (invalid) {
+        /* istanbul ignore next */
         invalid.focus();
       }
       return;
@@ -350,8 +303,7 @@ const ActivityReportNavigator = ({
       name,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
-      regionId: formData.regionId,
-      source,
+      regionId: getValues('regionId'),
     };
 
     let allGoals = packageGoals(
@@ -364,20 +316,19 @@ const ActivityReportNavigator = ({
     // save goal to api, come back with new ids for goal and objectives
     try {
       // we only need save goal if we have a goal name
-      if (name) {
-        allGoals = await saveGoalsForReport(
-          {
-            goals: allGoals,
-            activityReportId: reportId,
-            regionId: formData.regionId,
-          },
-        );
-      }
+
+      allGoals = await saveGoalsForReport(
+        {
+          goals: allGoals,
+          activityReportId: reportId,
+          regionId: getValues('regionId'),
+        },
+      );
 
       /**
          * If we are autosaving, and we are currently editing a rich text editor component, do not
-         * update the form data. This is to prevent the rich text editor from losing focus
-         * when the form data is updated.
+         * update the form. This is to prevent the rich text editor from losing focus
+         * when the form is updated.
          *
          * This introduces the possibility of a bug with extra objectives - that is, if the user
          * enters an objective title, starts typing TTA provided, and then the autosave happens,
@@ -386,26 +337,17 @@ const ActivityReportNavigator = ({
          * existing objectives, nor is it an issue if another save happens in between at any point.
          */
 
-      const allowUpdateFormData = shouldUpdateFormData(isAutoSave);
+      const allowUpdateForm = shouldUpdateFormData(isAutoSave);
 
       const {
         goals, goalForEditing: newGoalForEditing,
       } = convertGoalsToFormData(allGoals, grantIds);
 
-      // update form data
-      const { status, ...values } = getValues();
-
-      // plug in new values
-      const data = {
-        ...formData,
-        ...values,
-        goals,
-        goalForEditing: newGoalForEditing,
-        [objectivesFieldArrayName]: newGoalForEditing ? newGoalForEditing.objectives : null,
-      };
-
-      if (allowUpdateFormData) {
-        updateFormData(data, false);
+      // Update RHF with new values (includes new IDs from API)
+      if (allowUpdateForm) {
+        setValue('goals', goals);
+        setValue('goalForEditing', newGoalForEditing);
+        setValue(objectivesFieldArrayName, newGoalForEditing ? newGoalForEditing.objectives : null);
       }
 
       updateErrorMessage('');
@@ -428,107 +370,6 @@ const ActivityReportNavigator = ({
     }
   };
 
-  const onSaveDraftOetObjectives = async (isAutoSave = false) => {
-    const fieldArrayName = 'objectivesWithoutGoals';
-    const currentObjectives = getValues(fieldArrayName);
-    const otherEntityIds = recipients.map((otherEntity) => otherEntity.activityRecipientId);
-
-    let invalidResources = false;
-    const invalidResourceIndices = [];
-
-    if (currentObjectives) {
-      // refire the objective resource validation
-      currentObjectives.forEach((objective, index) => {
-        if (!validateListOfResources(objective.resources)) {
-          invalidResources = true;
-          invalidResourceIndices.push(index);
-        }
-      });
-    }
-
-    if (!isAutoSave && invalidResources) {
-      // make an attempt to focus on the first invalid resource
-      // having a sticky header complicates this enough to make me not want to do this perfectly
-      // right out of the gate
-      const invalid = document.querySelector('.usa-error-message + .ttahub-resource-repeater input');
-      if (invalid) {
-        invalid.focus();
-      }
-      return;
-    }
-
-    // we don't want to change the app loading context if we are autosaving
-    if (!isAutoSave) {
-      // Prevent user from making changes to objectives during auto-save.
-      setSavingLoadScreen(isAutoSave);
-    }
-
-    // Save objectives.
-    try {
-      let newObjectives = await saveObjectivesForReport(
-        {
-          objectivesWithoutGoals: objectivesWithValidResourcesOnly(
-            currentObjectives.map((objective) => (
-              { ...objective, recipientIds: otherEntityIds }
-            )),
-          ),
-          activityReportId: reportId,
-          region: formData.regionId,
-        },
-      );
-
-      // if we are autosaving, we want to preserve the resources that were added in the UI
-      // whether or not they are valid (although nothing is saved to the database)
-      // this is a convenience so that a work in progress isn't erased
-      if (isAutoSave && newObjectives) {
-        newObjectives = newObjectives.map((objective, objectiveIndex) => ({
-          ...objective,
-          resources: currentObjectives[objectiveIndex].resources,
-        }));
-      }
-
-      /**
-         * If we are autosaving, and we are currently editing a rich text editor component, do not
-         * update the form data. This is to prevent the rich text editor from losing focus
-         * when the form data is updated.
-         *
-         * This introduces the possibility of a bug with extra objectives - that is, if the user
-         * enters an objective title, starts typing TTA provided, and then the autosave happens,
-         * an objective will be created. If the title is then changed AFTERWARDS, before any other
-         * non-autosave save happens, it will create yet another objective. This is not an issue on
-         * existing objectives, nor is it an issue if another save happens in between at any point.
-         */
-      const allowUpdateFormData = shouldUpdateFormData(isAutoSave);
-
-      // update form data
-      const { status, ...values } = getValues();
-      const data = { ...formData, ...values, pageState: newNavigatorState() };
-
-      if (allowUpdateFormData) {
-        updateFormData(data);
-      }
-
-      // Set updated objectives.
-      setValue('objectivesWithoutGoals', newObjectives);
-      updateLastSaveTime(moment()); // update the last saved time
-      updateShowSavedDraft(true); // show the saved draft message
-      updateErrorMessage('');
-
-      // we have to do this here, after the form data has been updated
-      if (isAutoSave) {
-        invalidResourceIndices.forEach((index) => {
-          setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
-        });
-      }
-    } catch (error) {
-      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
-    } finally {
-      if (!isAutoSave) {
-        setIsAppLoading(false);
-      }
-    }
-  };
-
   const onSaveAndContinueGoals = async () => {
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
@@ -539,16 +380,14 @@ const ActivityReportNavigator = ({
     const endDate = getValues('goalEndDate');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
-    const source = getValues('goalSource');
 
     const goal = {
       ...goalForEditing,
       isActivelyBeingEditing: false,
       name,
       endDate,
-      source,
       objectives,
-      regionId: formData.regionId,
+      regionId: getValues('regionId'),
     };
 
     await validatePrompts(promptTitles, trigger);
@@ -583,10 +422,9 @@ const ActivityReportNavigator = ({
       setValue('goalEndDate', '');
       setValue('goalForEditing.objectives', []);
       setValue('goalPrompts', []);
-      setValue('goalSource', '');
 
       // set goals to form data as appropriate
-      setValue('goals', packageGoals(
+      const packagedGoals = packageGoals(
         selectedGoals,
         {
           ...goal,
@@ -595,17 +433,23 @@ const ActivityReportNavigator = ({
         },
         grantIds,
         prompts,
-      ));
-
+      );
       // save report to API
       const { status, ...values } = getValues();
       const data = {
-        ...formData,
         ...values,
-        pageState:
-          newNavigatorState(),
+        goals: packagedGoals,
+        pageState: newNavigatorState(),
       };
-      await onSave(data);
+      const savedData = await onSave(data);
+
+      // Update RHF with saved data
+      if (savedData) {
+        reset(savedData);
+
+        // On save goal re-evaluate page status.
+        updateGoalsObjectivesPageState(savedData);
+      }
 
       updateErrorMessage('');
     } catch (error) {
@@ -616,42 +460,11 @@ const ActivityReportNavigator = ({
     toggleGoalForm(true);
   };
 
-  const onObjectiveSaveAndContinue = async () => {
-    // Get other-entity objectives.
-    const fieldArrayName = 'objectivesWithoutGoals';
-    const objectives = getValues(fieldArrayName);
-
-    // Validate objectives.
-    const areObjectivesValid = validateObjectives(objectives, setError);
-    if (areObjectivesValid !== true) {
-      return;
-    }
-
-    const otherEntityIds = recipients.map((otherEntity) => otherEntity.activityRecipientId);
-
-    try {
-      setValue('objectivesWithoutGoals', objectivesWithValidResourcesOnly(objectives.map((objective) => (
-        { ...objective, recipientIds: otherEntityIds }
-      ))));
-
-      updateErrorMessage('');
-    } catch (error) {
-      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
-    }
-
-    toggleObjectiveForm(true);
-  };
-
   const onSaveAndContinueGoalsAndObjectives = async () => {
     setSavingLoadScreen();
     try {
-      if (isOtherEntityReport) {
-        // Save objectives for other-entity report.
-        await onObjectiveSaveAndContinue();
-      } else {
-        // Save goals for recipient report.
-        await onSaveAndContinueGoals();
-      }
+      // Save goals for recipient report.
+      await onSaveAndContinueGoals();
     } finally {
       setIsAppLoading(false);
     }
@@ -660,7 +473,14 @@ const ActivityReportNavigator = ({
   const onSaveDraft = async () => {
     try {
       setSavingLoadScreen();
-      await onSaveForm(); // save the form data to the server
+
+      // Prevent saving draft if the form is not dirty,
+      // unless we are on the supporting attachments page which can be "blank".
+      if (isDirty || currentPage === 'supporting-attachments') {
+        // save the form data to the server
+        await onSaveForm();
+      }
+
       updateShowSavedDraft(true); // show the saved draft message
     } finally {
       setIsAppLoading(false);
@@ -674,15 +494,9 @@ const ActivityReportNavigator = ({
      */
   const draftSaver = async (isAutoSave = false, isNavigation = false) => {
     // Determine if we should save draft on auto save.
-    const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed && isRecipientReport;
-    const saveObjectivesDraft = (
-      isGoalsObjectivesPage && !isObjectivesFormClosed && !isRecipientReport
-    );
+    const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
 
-    if (isOtherEntityReport && saveObjectivesDraft) {
-      // Save other-entity draft.
-      await onSaveDraftOetObjectives(isAutoSave);
-    } else if (saveGoalsDraft) {
+    if (saveGoalsDraft) {
       if (!isNavigation) {
         // Save recipient draft.
         await onSaveDraftGoal(isAutoSave);
@@ -711,16 +525,13 @@ const ActivityReportNavigator = ({
   return (
     <GoalFormContext.Provider value={{
       isGoalFormClosed,
-      isObjectivesFormClosed,
       toggleGoalForm,
-      toggleObjectiveForm,
       isAppLoading,
       setIsAppLoading,
     }}
     >
       <FormProvider {...hookForm}>
         <Navigator
-          socketMessageStore={socketMessageStore}
           key={currentPage}
           editable={editable}
           updatePage={updatePage}
@@ -731,22 +542,21 @@ const ActivityReportNavigator = ({
           currentPage={currentPage}
           additionalData={additionalData}
           formData={formData}
-          updateFormData={updateFormData}
           pages={pages}
           onFormSubmit={onFormSubmit}
           onSave={onSaveForm}
-          onResetToDraft={onResetToDraft}
           isApprover={isApprover}
           isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
           onReview={onReview}
           errorMessage={errorMessage}
           updateErrorMessage={updateErrorMessage}
-          savedToStorageTime={savedToStorageTime}
           onSaveDraft={draftSaver}
           onSaveAndContinue={onSaveAndContinue}
           autoSaveInterval={autoSaveInterval}
           showSavedDraft={showSavedDraft}
           updateShowSavedDraft={updateShowSavedDraft}
+          shouldAutoSave={shouldAutoSave}
+          setShouldAutoSave={setShouldAutoSave}
         />
       </FormProvider>
     </GoalFormContext.Provider>
@@ -754,18 +564,23 @@ const ActivityReportNavigator = ({
 };
 
 ActivityReportNavigator.propTypes = {
-  onResetToDraft: PropTypes.func.isRequired,
   editable: PropTypes.bool.isRequired,
-  formData: PropTypes.shape({
-    calculatedStatus: PropTypes.string,
-    pageState: PropTypes.shape({}),
-    regionId: PropTypes.number.isRequired,
+  hookForm: PropTypes.shape({
+    formState: PropTypes.shape({
+      isDirty: PropTypes.bool,
+      isValid: PropTypes.bool,
+    }),
+    getValues: PropTypes.func,
+    setValue: PropTypes.func,
+    setError: PropTypes.func,
+    watch: PropTypes.func,
+    errors: PropTypes.shape({}),
+    reset: PropTypes.func,
+    trigger: PropTypes.func,
   }).isRequired,
-  updateFormData: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,
   updateErrorMessage: PropTypes.func.isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
-  savedToStorageTime: PropTypes.string,
   updateLastSaveTime: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
@@ -793,27 +608,20 @@ ActivityReportNavigator.propTypes = {
       PropTypes.string,
     ]),
   }),
-  socketMessageStore: PropTypes.shape({
-    user: PropTypes.oneOfType([
-      PropTypes.shape({
-        name: PropTypes.string,
-      }),
-      PropTypes.string,
-    ]),
-  }),
+  shouldAutoSave: PropTypes.bool,
+  setShouldAutoSave: PropTypes.func.isRequired,
 };
 
 ActivityReportNavigator.defaultProps = {
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
   lastSaveTime: null,
-  savedToStorageTime: null,
   errorMessage: '',
-  socketMessageStore: null,
   reportCreator: {
     name: null,
     role: null,
   },
+  shouldAutoSave: true,
 };
 
 export default ActivityReportNavigator;

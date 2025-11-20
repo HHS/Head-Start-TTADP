@@ -342,12 +342,6 @@ function rds_test_connectivity() {
     fi
 }
 
-function rds_dump_prep() {
-  rds_validate
-
-  # all arguments are read from exports directly
-  echo "pg_dump"
-}
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -477,7 +471,7 @@ function aws_s3_safe_remove_file() {
 }
 
 aws_s3_verify_file_integrity() {
-  local zip_file_path="$1"
+  local backup_file_path="$1"
   local md5_file_path="$2"
   local sha256_file_path="$3"
 
@@ -489,7 +483,7 @@ aws_s3_verify_file_integrity() {
   log "INFO" "Prepare the command to stream the S3 file and calculate hashes"
   set +e
   log "INFO" "Execute the command and capture its exit status"
-  aws s3 cp "s3://${zip_file_path}" - |\
+  aws s3 cp "s3://${backup_file_path}" - |\
       tee \
         >(sha256sum |\
           awk '{print $1}' > /tmp/computed_sha256 &\
@@ -519,7 +513,6 @@ aws_s3_verify_file_integrity() {
   local computed_md5 computed_sha256
   read computed_md5 < /tmp/computed_md5
   read computed_sha256 < /tmp/computed_sha256
-  rm -f /tmp/computed_md5 /tmp/computed_sha256
 
   log "INFO" "Verify hashes"
   if [ "$computed_md5" != "$expected_md5" ] || [ "$computed_sha256" != "$expected_sha256" ]; then
@@ -531,6 +524,7 @@ aws_s3_verify_file_integrity() {
   fi
 
   log "INFO" "File hashes verified"
+  rm -f /tmp/computed_md5 /tmp/computed_sha256
   set -e
   return 0
 }
@@ -539,14 +533,6 @@ aws_s3_verify_file_integrity() {
 # -----------------------------------------------------------------------------
 # Backup & Upload helper functions
 # -----------------------------------------------------------------------------
-zip_prep() {
-  local zip_password=$1
-
-  parameters_validate "${zip_password}"
-
-  echo "zip -P \"${zip_password}\" - -"
-}
-
 perform_backup_and_upload() {
   local backup_filename_prefix=$1
 
@@ -554,27 +540,19 @@ perform_backup_and_upload() {
 
   local s3_bucket=$AWS_DEFAULT_BUCKET
 
-  local zip_password timestamp
-  zip_password=$(openssl rand -base64 12)
+  local backup_password timestamp
+  backup_password=$(openssl rand -base64 12)
   timestamp="$(date --utc +%Y-%m-%d-%H-%M-%S)-UTC"
 
-  local zip_filename="${backup_filename_prefix}-${timestamp}.sql.zip"
+  local backup_filename="${backup_filename_prefix}-${timestamp}.sql.zenc"
   local md5_filename="${backup_filename_prefix}-${timestamp}.sql.md5"
   local sha256_filename="${backup_filename_prefix}-${timestamp}.sql.sha256"
   local password_filename="${backup_filename_prefix}-${timestamp}.sql.pwd"
   local latest_backup_filename="${backup_filename_prefix}-latest-backup.txt"
 
-  local rds_dump_cmd
-  rds_dump_cmd=$(rds_dump_prep)
-  parameters_validate "${rds_dump_cmd}"
-
-  local zip_cmd
-  zip_cmd=$(zip_prep "${zip_password}")
-  parameters_validate "${zip_cmd}"
-
-  local aws_s3_copy_zip_file_cmd
-  aws_s3_copy_zip_file_cmd=$(aws_s3_copy_file_prep "$zip_filename" "${backup_filename_prefix}")
-  parameters_validate "${aws_s3_copy_zip_file_cmd}"
+  local aws_s3_copy_backup_file_cmd
+  aws_s3_copy_backup_file_cmd=$(aws_s3_copy_file_prep "$backup_filename" "${backup_filename_prefix}")
+  parameters_validate "${aws_s3_copy_backup_file_cmd}"
 
   local aws_s3_copy_md5_file_cmd
   aws_s3_copy_md5_file_cmd=$(aws_s3_copy_file_prep "$md5_filename" "${backup_filename_prefix}")
@@ -595,7 +573,8 @@ perform_backup_and_upload() {
   log "INFO" "Execute the command and capture its exit status"
   set +e
   pg_dump |\
-    zip -P "${zip_password}" - - |\
+    gzip |\
+    openssl enc -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
     tee \
       >(md5sum |\
         awk '{print $1}' |\
@@ -607,7 +586,7 @@ perform_backup_and_upload() {
         aws s3 cp - "s3://${s3_bucket}/${backup_filename_prefix}/${sha256_filename}" ;\
         echo $? > /tmp/sha256_status \
       ) |\
-    aws s3 cp - "s3://${s3_bucket}/${backup_filename_prefix}/${zip_filename}"
+    aws s3 cp - "s3://${s3_bucket}/${backup_filename_prefix}/${backup_filename}"
   local main_exit_status=$?
 
   log "INFO" "Wait for all subprocesses and check their exit statuses"
@@ -623,34 +602,34 @@ perform_backup_and_upload() {
   log "INFO" "Check if any of the backup uploads or integrity checks failed"
   if [ "$md5_exit_status" -ne 0 ] || [ "$sha256_exit_status" -ne 0 ] || [ "$main_exit_status" -ne 0 ]; then
       log "ERROR" "Backup upload failed."
-      aws_s3_safe_remove_file "${zip_filename}"
+      aws_s3_safe_remove_file "${backup_filename}"
       aws_s3_safe_remove_file "${md5_filename}"
       aws_s3_safe_remove_file "${sha256_filename}"
       set -e
       return 1
   fi
 
-  log "INFO" "Upload the ZIP password"
-  if ! echo -n "${zip_password}" |\
+  log "INFO" "Upload the backup password"
+  if ! echo -n "${backup_password}" |\
     eval "$aws_s3_copy_password_file_cmd"; then
     log "ERROR" "Password file upload failed."
     aws_s3_safe_remove_file "${password_filename}"
-    aws_s3_safe_remove_file "${zip_filename}"
+    aws_s3_safe_remove_file "${backup_filename}"
     aws_s3_safe_remove_file "${md5_filename}"
     aws_s3_safe_remove_file "${sha256_filename}"
     set -e
     return 1
   fi
 
-  local zip_file_path="${s3_bucket}/${backup_filename_prefix}/${zip_filename}"
+  local backup_file_path="${s3_bucket}/${backup_filename_prefix}/${backup_filename}"
   local md5_file_path="${s3_bucket}/${backup_filename_prefix}/${md5_filename}"
   local sha256_file_path="${s3_bucket}/${backup_filename_prefix}/${sha256_filename}"
   local password_file_path="${s3_bucket}/${backup_filename_prefix}/${password_filename}"
 
-  if ! aws_s3_verify_file_integrity "${zip_file_path}" "${md5_file_path}" "${sha256_file_path}"; then
+  if ! aws_s3_verify_file_integrity "${backup_file_path}" "${md5_file_path}" "${sha256_file_path}"; then
     log "ERROR" "Verification of file integrity check failed"
     aws_s3_safe_remove_file "${password_filename}"
-    aws_s3_safe_remove_file "${zip_filename}"
+    aws_s3_safe_remove_file "${backup_filename}"
     aws_s3_safe_remove_file "${md5_filename}"
     aws_s3_safe_remove_file "${sha256_filename}"
     set -e
@@ -658,7 +637,7 @@ perform_backup_and_upload() {
   fi
 
   log "INFO" "Update the latest backup file list"
-  if ! printf "%s\n%s\n%s\n%s" "${zip_file_path}" "${md5_file_path}" "${sha256_file_path}" "${password_file_path}" |\
+  if ! printf "%s\n%s\n%s\n%s" "${backup_file_path}" "${md5_file_path}" "${sha256_file_path}" "${password_file_path}" |\
     eval "${aws_s3_copy_latest_backup_file_cmd}"; then
     log "ERROR" "Latest backup file list upload failed."
     set -e
@@ -666,41 +645,75 @@ perform_backup_and_upload() {
   fi
   set -e
 }
+
 # -----------------------------------------------------------------------------
 
 function main() {
   local backup_filename_prefix=$1
   local rds_server=$2
   local aws_s3_server=$3
+  local duration=${4-86400}  # Default duration to 24 hours
 
   log "INFO" "Validate parameters and exports"
   parameters_validate "${backup_filename_prefix}"
   parameters_validate "${rds_server}"
   parameters_validate "${aws_s3_server}"
+  parameters_validate "${duration}"
 
   export_validate "VCAP_SERVICES"
 
   log "INFO" "Verify or install awscli"
-  run_script 'awscli_install.sh' '../../common/scripts/'
+  run_script 'awscli_install.sh' '../../common/scripts/' || {
+    log "ERROR" "Failed to install or verify awscli"
+    set -e
+    exit 1
+  }
+
   log "INFO" "Verify or install postgrescli"
-  run_script 'postgrescli_install.sh' '../../common/scripts/'
+  run_script 'postgrescli_install.sh' '../../common/scripts/' || {
+    log "ERROR" "Failed to install or verify postgrescli"
+    set -e
+    exit 1
+  }
 
   log "INFO" "add the bin dir for the new cli tools to PATH"
   add_to_path '/tmp/local/bin'
 
-  log "INFO" "check dependancies"
-  check_dependencies aws md5sum openssl pg_dump pg_isready sha256sum zip
+  log "INFO" "check dependencies"
+  check_dependencies aws md5sum openssl pg_dump pg_isready sha256sum gzip
 
   log "INFO" "collect and configure credentials"
-  rds_prep "${VCAP_SERVICES}" "${rds_server}"
-  aws_s3_prep "${VCAP_SERVICES}" "${aws_s3_server}"
+  rds_prep "${VCAP_SERVICES}" "${rds_server}" || {
+    log "ERROR" "Failed to prepare RDS credentials"
+    set -e
+    exit 1
+  }
+
+  aws_s3_prep "${VCAP_SERVICES}" "${aws_s3_server}" || {
+    log "ERROR" "Failed to prepare AWS S3 credentials"
+    set -e
+    exit 1
+  }
 
   log "INFO" "verify rds & s3 connectivity"
-  rds_test_connectivity
-  s3_test_connectivity
+  rds_test_connectivity || {
+    log "ERROR" "RDS connectivity test failed"
+    set -e
+    exit 1
+  }
 
-  log "INFO" "backup, upload, verfity db"
-  perform_backup_and_upload "${backup_filename_prefix}"
+  s3_test_connectivity || {
+    log "ERROR" "S3 connectivity test failed"
+    set -e
+    exit 1
+  }
+
+  log "INFO" "backup, upload, verify db"
+  perform_backup_and_upload "${backup_filename_prefix}" || {
+    log "ERROR" "Backup and upload process failed"
+    set -e
+    exit 1
+  }
 
   log "INFO" "clear the populated env vars"
   rds_clear

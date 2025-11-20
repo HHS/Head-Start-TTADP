@@ -2,9 +2,7 @@
 import '@testing-library/jest-dom';
 import {
   render,
-  screen,
 } from '@testing-library/react';
-import { SCOPE_IDS } from '@ttahub/common';
 import React from 'react';
 import PropTypes from 'prop-types';
 import fetchMock from 'fetch-mock';
@@ -26,6 +24,7 @@ describe('GoalForm', () => {
       id,
       isNew: id === 'new',
       goalIds: [123],
+      goalTemplateId: 1,
     };
 
     const hookForm = useForm({
@@ -54,6 +53,8 @@ describe('GoalForm', () => {
               roles={[]}
               topicOptions={[{ label: 'Coaching', value: 1 }]}
               reportId={1}
+              templateResponses={[]}
+              templatePrompts={[]}
             />
           </FormProvider>
         </UserContext.Provider>
@@ -113,8 +114,7 @@ describe('GoalForm', () => {
 
   it('fetches data for existing goals', async () => {
     const goalId = 123;
-    fetchMock.get(`/api/goals?reportId=1&goalIds=${goalId}`, [{
-      endDate: '',
+    fetchMock.get('/api/goals?reportId=1&goalTemplateId=1', [{
       status: '',
       value: goalId,
       label: 'Test',
@@ -125,50 +125,5 @@ describe('GoalForm', () => {
 
     renderGoalForm(goalId);
     expect(fetchMock.called()).toBe(true);
-  });
-
-  it('displays new goals properly', async () => {
-    const goalId = 'new';
-    renderGoalForm(goalId);
-    expect(fetchMock.called()).toBe(false);
-
-    const endDate = await screen.findByText(/anticipated close date/i);
-    expect(endDate).toBeVisible();
-  });
-
-  it('disables goal source when created via tr', async () => {
-    const trGoal = {
-      id: 1,
-      isNew: false,
-      goalIds: [123],
-      createdVia: 'tr',
-      source: 'Training event source',
-    };
-    const user = {
-      ...DEFAULT_USER,
-      permissions: [{ scopeId: SCOPE_IDS.ADMIN }],
-    };
-    renderGoalForm(1, trGoal, user);
-    // Expect to have the text "Training event source" in the goal source field.
-    expect(screen.getByText(/goal source/i)).toBeVisible();
-    expect(screen.getByText(/training event source/i)).toBeVisible();
-  });
-
-  it('enables goal source when created via is not tr', () => {
-    const trGoal = {
-      id: 1,
-      isNew: false,
-      goalIds: [123],
-      createdVia: 'activityReport',
-      source: 'Not training event',
-    };
-    const user = {
-      ...DEFAULT_USER,
-      permissions: [{ scopeId: SCOPE_IDS.ADMIN }],
-    };
-    renderGoalForm(1, trGoal, user);
-    // Expect the goal source to be disabled
-    const sourceSelect = screen.getByRole('combobox', { name: /goal source/i });
-    expect(sourceSelect).not.toBeDisabled();
   });
 });

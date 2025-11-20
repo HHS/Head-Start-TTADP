@@ -102,6 +102,12 @@ export const getRecipients = async (region) => {
   return recipients.json();
 };
 
+export const getRecipientsForExistingAR = async (reportId) => {
+  const url = join(activityReportUrl, `${reportId}`, 'activity-recipients');
+  const recipients = await get(url);
+  return recipients.json();
+};
+
 export const getGoals = async (grantIds) => {
   const params = grantIds.map((grantId) => `grantIds=${grantId}`);
   const url = join(activityReportUrl, 'goals', `?${params.join('&')}`);
@@ -119,12 +125,6 @@ export const saveObjectivesForReport = async (data) => {
   const url = join(activityReportUrl, 'objectives');
   const objectives = await post(url, data);
   return objectives.json();
-};
-
-export const getCollaborators = async (region) => {
-  const url = join('/', 'api', 'users', 'collaborators', `?region=${region}`);
-  const collaborators = await get(url);
-  return collaborators.json();
 };
 
 export const reviewReport = async (reportId, data) => {

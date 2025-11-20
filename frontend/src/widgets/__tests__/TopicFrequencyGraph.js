@@ -5,6 +5,7 @@ import {
   render,
   screen,
   act,
+  fireEvent,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -145,16 +146,22 @@ describe('Topic & Frequency Graph Widget', () => {
     ].reverse());
   });
 
+  it('shows accessibility/tabular data', async () => {
+    const data = [...TEST_DATA];
+    renderArGraphOverview({ data });
+
+    const tableButton = await screen.findByText('Display table');
+    expect(tableButton).toBeInTheDocument();
+    fireEvent.click(tableButton);
+    const graphButton = await screen.findByText('Display graph');
+    expect(graphButton).toBeInTheDocument();
+  });
+
   it('handles undefined data', async () => {
     const data = undefined;
     renderArGraphOverview({ data });
 
     expect(await screen.findByText('Number of Activity Reports by Topic')).toBeInTheDocument();
-  });
-
-  it('handles loading', async () => {
-    renderArGraphOverview({ loading: true });
-    expect(await screen.findByText('Loading')).toBeInTheDocument();
   });
 
   it('the sort control works', async () => {
@@ -164,6 +171,9 @@ describe('Topic & Frequency Graph Widget', () => {
     const aZ = screen.getByRole('button', { name: /select to view data from a to z\. select apply filters button to apply selection/i });
     act(() => userEvent.click(aZ));
     const apply = screen.getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
+
+    // Wait for graph to render (takes a sec because of dynamic imports)
+    await screen.findByText('Human Resources');
 
     // this won't change because we sort count and then alphabetically
     // and this is always last in that case
@@ -177,28 +187,11 @@ describe('Topic & Frequency Graph Widget', () => {
 
     act(() => userEvent.click(apply));
 
+    // Waits for screen to load
+    await screen.findByText('CLASS: Instructional Support');
+
     const point2 = Array.from(document.querySelectorAll('g.ytick')).pop();
     // eslint-disable-next-line no-underscore-dangle
     expect(point2.__data__.text).toBe('CLASS: Instructional Support');
-  });
-
-  it('handles switching display contexts', async () => {
-    renderArGraphOverview({ data: [...TEST_DATA] });
-    const button = await screen.findByRole('button', { name: /display Number of Activity Reports by Topic as table/i });
-    act(() => userEvent.click(button));
-
-    const firstRowHeader = await screen.findByRole('cell', {
-      name: /community and self-assessment/i,
-    });
-    expect(firstRowHeader).toBeInTheDocument();
-
-    const firstTableCell = await screen.findByRole('cell', { name: /155/i });
-    expect(firstTableCell).toBeInTheDocument();
-
-    const viewGraph = await screen.findByRole('button', { name: /display Number of Activity Reports by Topic as graph/i });
-    act(() => userEvent.click(viewGraph));
-
-    expect(firstRowHeader).not.toBeInTheDocument();
-    expect(firstTableCell).not.toBeInTheDocument();
   });
 });

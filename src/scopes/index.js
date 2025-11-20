@@ -2,8 +2,10 @@ import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
 import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
 import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
+import { collabReportFiltersToScopes as collabReport } from './collabReports';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
+import { getValidTopicsSet } from './utils';
 
 const models = {
   activityReport,
@@ -11,6 +13,7 @@ const models = {
   goal,
   trainingReport,
   communicationLog,
+  collabReport,
 };
 
 /**
@@ -19,9 +22,9 @@ const models = {
  *
  * an object roughly like this
  * {
- *   activityReport: SEQUELIZE OP,
- *   grant: SEQUELIZE OP,
- *   recipient: SEQUELIZE OP,
+ *   activityReport: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
+ *   grant: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
+ *   recipient: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
  * }
  *
  * options is right now only {
@@ -45,12 +48,46 @@ const models = {
  * @param {} options
  * @returns {obj} scopes
  */
-export default async function filtersToScopes(filters, options) {
+export default async function filtersToScopes(filters, options = {}) {
+  let validTopics;
+
+  const filterKeys = Object.keys(filters || {});
+  const usesTopics = filterKeys.some((k) => k.startsWith('topic.'));
+
+  if (usesTopics) {
+    validTopics = await getValidTopicsSet();
+  }
+
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
-      [model]: models[model](filters, options && options[model], options && options.userId),
+      [model]: models[model](filters, options[model], options.userId, validTopics),
     });
     return scopes;
   }, {});
 }
+
+/**
+ * Merges the provided includes with the required includes, ensuring no duplicates.
+ * It is considered duplicate if it has the same value for `as`.
+ *
+ * @param {Array} includes - The initial array of Sequelize includes.
+ * @param {Array} requiredIncludes - The array of required Sequelize includes
+ *                                   that must be present.
+ * @returns {Array} - The merged array of includes.
+ */
+export const mergeIncludes = (includes, requiredIncludes) => {
+  if (!includes || !includes.length || includes.filter(Boolean).length < 1) {
+    return requiredIncludes;
+  }
+
+  const outIncludes = [...includes];
+
+  requiredIncludes.forEach((requiredInclude) => {
+    if (!outIncludes.some((include) => include.as && include.as === requiredInclude.as)) {
+      outIncludes.push(requiredInclude);
+    }
+  });
+
+  return outIncludes;
+};

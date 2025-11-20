@@ -3,11 +3,11 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { useFormContext } from 'react-hook-form';
 import Submitter from './Submitter';
 import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
 import './index.scss';
-import { Accordion } from '../../../../components/Accordion';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
 
@@ -19,23 +19,26 @@ const ReviewSubmit = ({
   isApprover,
   isPendingApprover,
   reportCreator,
-  formData,
-  onResetToDraft,
   onSaveForm,
   pages,
   lastSaveTime,
 }) => {
-  const { additionalNotes, calculatedStatus } = formData;
+  const { watch, getValues } = useFormContext();
+  const additionalNotes = watch('additionalNotes');
+  const calculatedStatus = watch('calculatedStatus');
+  const userId = watch('userId');
+  const activityReportCollaborators = watch('activityReportCollaborators');
+
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [reviewed, updateReviewed] = useState(false);
   const [error, updateError] = useState();
 
   const { user } = useContext(UserContext);
 
-  const isCreator = user.id === formData.userId;
-  const isDraft = formData.calculatedStatus === REPORT_STATUSES.DRAFT;
-  const isCollaborator = formData.activityReportCollaborators
-  && formData.activityReportCollaborators.find((u) => u.userId === user.id);
+  const isCreator = user.id === userId;
+  const isDraft = calculatedStatus === REPORT_STATUSES.DRAFT;
+  const isCollaborator = activityReportCollaborators
+    && activityReportCollaborators.find((u) => u.userId === user.id);
 
   const creatorOrCollaborator = (isCreator || !!isCollaborator);
 
@@ -64,15 +67,6 @@ const ReviewSubmit = ({
     }
   };
 
-  const onReset = async () => {
-    try {
-      await onResetToDraft();
-      updateError();
-    } catch (e) {
-      updateError('Unable to reset Activity Report to draft');
-    }
-  };
-
   const editing = calculatedStatus === REPORT_STATUSES.DRAFT
     || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const items = editing ? reviewItems.map((ri) => ({
@@ -83,6 +77,8 @@ const ReviewSubmit = ({
     expanded: true,
   }));
 
+  const formData = getValues();
+
   return (
     <>
       <Helmet>
@@ -92,19 +88,15 @@ const ReviewSubmit = ({
       {(!isApprover || (isDraft && creatorOrCollaborator))
         && (
           <Submitter
+            formData={formData}
             availableApprovers={availableApprovers}
             pages={pages}
             onFormSubmit={onFormSubmit}
-            onResetToDraft={onReset}
-            formData={formData}
             error={error}
             onSaveForm={onSaveForm}
             lastSaveTime={lastSaveTime}
-          >
-            <>
-              <Accordion bordered={false} items={items} />
-            </>
-          </Submitter>
+            reviewItems={items || []}
+          />
         )}
       {(isApprover && !isDraft)
         && (
@@ -115,15 +107,10 @@ const ReviewSubmit = ({
             additionalNotes={additionalNotes}
             onFormReview={onFormReview}
             error={error}
-            formData={formData}
             isPendingApprover={isPendingApprover}
-            onResetToDraft={onReset}
             onFormSubmit={onFormSubmit}
-          >
-            <>
-              <Accordion bordered={false} items={items} />
-            </>
-          </Approver>
+            reviewItems={items || []}
+          />
         )}
     </>
   );
@@ -139,21 +126,11 @@ ReviewSubmit.propTypes = {
   ).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
-  onResetToDraft: PropTypes.func.isRequired,
   isApprover: PropTypes.bool.isRequired,
   isPendingApprover: PropTypes.bool.isRequired,
-  formData: PropTypes.shape({
-    additionalNotes: PropTypes.string,
-    calculatedStatus: PropTypes.string,
-    submissionStatus: PropTypes.string,
-    userId: PropTypes.number,
-    activityReportCollaborators: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-    })),
-  }).isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string.isRequired,
-    role: PropTypes.arrayOf(PropTypes.string).isRequired,
+    role: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
   reviewItems: PropTypes.arrayOf(
     PropTypes.shape({

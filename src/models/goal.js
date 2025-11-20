@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS, GOAL_SOURCES } = require('@ttahub/common');
+const { GOAL_SOURCES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeValidate,
@@ -7,8 +7,9 @@ const {
   afterCreate,
   afterUpdate,
   afterDestroy,
+  beforeCreate,
 } = require('./hooks/goal');
-const { GOAL_CREATED_VIA } = require('../constants');
+const { GOAL_CREATED_VIA, CREATION_METHOD } = require('../constants');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
@@ -59,8 +60,6 @@ export default (sequelize, DataTypes) => {
           mapsToParentGoalId: null,
         },
       });
-      Goal.hasMany(models.SimScoreGoalCache, { foreignKey: 'goal1', as: 'scoreOne' });
-      Goal.hasMany(models.SimScoreGoalCache, { foreignKey: 'goal2', as: 'scoreTwo' });
     }
   }
   Goal.init({
@@ -77,6 +76,13 @@ export default (sequelize, DataTypes) => {
       get() {
         const { id } = this;
         return `G-${id}`;
+      },
+    },
+    isCurated: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { goalTemplate } = this;
+        return goalTemplate?.creationMethod === CREATION_METHOD.CURATED;
       },
     },
     grantId: {
@@ -138,6 +144,21 @@ export default (sequelize, DataTypes) => {
     source: {
       type: DataTypes.ENUM(GOAL_SOURCES),
     },
+    isSourceEditable: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (this.goalTemplate && this.goalTemplate.source) {
+          return this.goalTemplate.source === null;
+        }
+
+        return true;
+      },
+    },
+    prestandard: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
   }, {
     sequelize,
     modelName: 'Goal',
@@ -145,6 +166,7 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),

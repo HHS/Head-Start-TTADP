@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
 import {
@@ -10,20 +10,16 @@ import { Link, useHistory } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
-import SelectPagination from '../SelectPagination';
-import { similarity } from '../../fetchers/goals';
+import PaginationCard from '../PaginationCard';
+import './GoalsCardsHeader.css';
 
 export default function GoalCardsHeader({
   title,
   count,
-  activePage,
-  offset,
-  perPage,
-  handlePageChange,
-  hidePagination,
   recipientId,
   regionId,
   hasActiveGrants,
+  hasMissingStandardGoals,
   sortConfig,
   requestSort,
   numberOfSelectedGoals,
@@ -31,47 +27,18 @@ export default function GoalCardsHeader({
   selectAllGoalCheckboxSelect,
   selectAllGoals,
   pageSelectedGoalIds,
-  perPageChange,
   pageGoalIds,
-  showRttapaValidation,
-  draftSelectedRttapa,
-  canMergeGoals,
-  shouldDisplayMergeSuccess,
-  dismissMergeSuccess,
+  activePage,
+  offset,
+  perPage,
+  handlePageChange,
+  perPageChange,
   allSelectedGoalIds,
-  goalBuckets,
 }) {
-  const [goalMergeGroups, setGoalMergeGroups] = useState([]);
   const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
-
-  useEffect(() => {
-    async function getSimilarGoals() {
-      const data = await similarity(regionId, recipientId);
-      /*
-      * expecting a response in the below format
-      * @returns {
-      *  goals: [{
-      *    name: string,
-      *    source: string,
-      *    status: string,
-      *    responsesForComparison: string,
-      *    ids: number[],
-      *  }],
-      *  ids: number[]
-      * }[]
-      */
-
-      setGoalMergeGroups(data.filter((g) => g.goals.length > 1));
-    }
-
-    if (canMergeGoals) {
-      getSimilarGoals();
-    }
-  }, [canMergeGoals, recipientId, regionId]);
-
-  const showAddNewButton = hasActiveGrants && hasButtonPermissions;
+  const showAddNewButton = hasActiveGrants && hasButtonPermissions && hasMissingStandardGoals;
   const onPrint = () => {
     // See if we have goals selected.
     let goalsToPrint = Object.keys(allSelectedGoalIds).filter(
@@ -82,38 +49,25 @@ export default function GoalCardsHeader({
     if (!goalsToPrint.length) {
       goalsToPrint = pageGoalIds;
     }
-    // Get all the goals and associated goals from the buckets.
-    goalsToPrint = goalBuckets.filter(
-      (bucket) => goalsToPrint.includes(bucket.id),
-    ).map((bucket) => bucket.goalIds).flat();
 
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
       sortConfig, selectedGoalIds: goalsToPrint,
     });
   };
-
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
     requestSort(sortBy, direction);
   };
 
-  const mergedGoals = (() => {
-    if (history.location && history.location.state) {
-      return history.location.state.mergedGoals;
-    }
-
-    return null;
-  })();
-
   const hasGoalsSelected = pageSelectedGoalIds ? pageSelectedGoalIds.length > 0 : false;
   const showClearAllAlert = numberOfSelectedGoals === count;
 
   return (
-    <div className="padding-x-3 position-relative">
-      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
-        <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
+    <div className="ttahub-goal-cards-header padding-x-3 position-relative">
+      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white margin-y-1 desktop:margin-0">
+        <h2 className="font-body-lg desktop:margin-left-2 margin-right-1 desktop:margin-y-3">{title}</h2>
         { showAddNewButton ? (
-          <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
+          <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 display-flex flex-row flex-align-center">
             <Link
               to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`}
               className="display-flex flex-justify usa-button"
@@ -127,7 +81,7 @@ export default function GoalCardsHeader({
           </span>
         ) : null }
       </div>
-      <div className="desktop:display-flex flex-justify bg-white">
+      <div className="ttahub-goal-cards-header--sort-and-pagination">
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
@@ -141,48 +95,23 @@ export default function GoalCardsHeader({
           >
             <option value="createdOn-desc">creation date (newest to oldest) </option>
             <option value="createdOn-asc">creation date (oldest to newest) </option>
-            <option value="goalStatus-asc">goal status (drafts first)</option>
+            <option value="goalStatus-asc">goal status (not started first)</option>
             <option value="goalStatus-desc">goal status (closed first) </option>
+            <option value="name-asc">goal (a-z)</option>
+            <option value="name-desc">goal (z-a)</option>
           </Dropdown>
         </div>
-        {!hidePagination && (
-        <div className="smart-hub--table-nav">
-          <SelectPagination
-            title="Goals"
-            offset={offset}
-            perPage={perPage}
-            activePage={activePage}
-            count={count}
-            handlePageChange={handlePageChange}
-            perPageChange={perPageChange}
-          />
-        </div>
-        )}
+        <PaginationCard
+          totalCount={count}
+          currentPage={activePage}
+          offset={offset}
+          perPage={perPage}
+          handlePageChange={handlePageChange}
+          accessibleLandmarkName="Goals pagination"
+          paginationClassName="padding-x-1 margin-0"
+          perPageChange={perPageChange}
+        />
       </div>
-      {(canMergeGoals && goalMergeGroups.length > 0) && (
-      <div className="usa-alert usa-alert--info" data-testid="alert">
-        <div className="usa-alert__body">
-          <div className="usa-alert__text">
-            <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
-            <ul className="usa-list">
-              {goalMergeGroups.map((group) => (
-                <li key={`mergeGroup${group.id}`}>
-                  <Link
-                    to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge/${group.id}`}
-                  >
-                    Review
-                    {' '}
-                    {group.goals.length}
-                    {' '}
-                    similar goals
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-      )}
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
       <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
         <Checkbox
@@ -222,26 +151,8 @@ export default function GoalCardsHeader({
         </Button>
       </div>
       <div>
-        {showRttapaValidation && (
-          <Alert type="error" className="margin-top-3">
-            <div>
-              { draftSelectedRttapa.length ? (
-                <p className="usa-prose margin-top-0">
-                  <strong>{draftSelectedRttapa.map((g) => (`G-${g}`)).join(', ')}</strong>
-                  {' '}
-                  {draftSelectedRttapa.length === 1 ? 'is a' : 'are'}
-                  {' '}
-                  draft
-                  {' '}
-                  {draftSelectedRttapa.length === 1 ? 'goal' : 'goals'}
-                  , and draft goals can&apos;t be added to an RTTAPA. Deselect any draft goals.
-                </p>
-              ) : null}
-            </div>
-          </Alert>
-        )}
         {
-          !showRttapaValidation && allGoalsChecked
+          allGoalsChecked
             ? (
               <Alert className="margin-top-3" type="info" slim>
                 {showClearAllAlert
@@ -260,29 +171,6 @@ export default function GoalCardsHeader({
             )
             : null
             }
-        {
-          (shouldDisplayMergeSuccess && mergedGoals)
-            ? (
-              <Alert className="margin-top-3" type="success">
-                Goal
-                {mergedGoals.length === 1 ? ' ' : 's '}
-                {' '}
-                {mergedGoals.map((g) => (`G-${g}`)).join(', ')}
-                {' '}
-                {mergedGoals.length === 1 ? 'has' : 'have'}
-                {' '}
-                been merged.
-                <button
-                  type="button"
-                  className="usa-button usa-button--unstyled margin-left-1"
-                  onClick={() => dismissMergeSuccess()}
-                >
-                  Reset goal sort order
-                </button>
-              </Alert>
-            )
-            : null
-            }
       </div>
     </div>
   );
@@ -290,15 +178,11 @@ export default function GoalCardsHeader({
 
 GoalCardsHeader.propTypes = {
   title: PropTypes.string.isRequired,
-  hidePagination: PropTypes.bool,
   count: PropTypes.number,
-  activePage: PropTypes.number,
-  offset: PropTypes.number,
-  perPage: PropTypes.number,
-  handlePageChange: PropTypes.func,
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
+  hasMissingStandardGoals: PropTypes.bool.isRequired,
   requestSort: PropTypes.func.isRequired,
   sortConfig: PropTypes.shape({
     sortBy: PropTypes.string,
@@ -310,33 +194,20 @@ GoalCardsHeader.propTypes = {
   allGoalsChecked: PropTypes.bool,
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
+  pageGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  activePage: PropTypes.number.isRequired,
+  offset: PropTypes.number.isRequired,
+  perPage: PropTypes.number.isRequired,
+  handlePageChange: PropTypes.func.isRequired,
   pageSelectedGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  perPageChange: PropTypes.func.isRequired,
-  pageGoalIds: PropTypes.oneOfType(
-    [PropTypes.arrayOf(PropTypes.number), PropTypes.number],
-  ).isRequired,
-  showRttapaValidation: PropTypes.bool.isRequired,
-  draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
-  canMergeGoals: PropTypes.bool.isRequired,
-  shouldDisplayMergeSuccess: PropTypes.bool,
-  dismissMergeSuccess: PropTypes.func.isRequired,
   allSelectedGoalIds: PropTypes.shape({ id: PropTypes.bool }).isRequired,
-  goalBuckets: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    goals: PropTypes.arrayOf(PropTypes.number),
-  })).isRequired,
+  perPageChange: PropTypes.func.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
-  hidePagination: false,
   allGoalsChecked: false,
   count: 0,
-  activePage: 0,
-  offset: 0,
-  perPage: 10,
-  handlePageChange: () => { },
-  selectAllGoalCheckboxSelect: () => { },
-  selectAllGoals: () => { },
+  selectAllGoalCheckboxSelect: () => {},
+  selectAllGoals: () => {},
   numberOfSelectedGoals: 0,
-  shouldDisplayMergeSuccess: false,
 };

@@ -2,6 +2,7 @@ import React, {
   useState,
   useEffect,
 } from 'react';
+import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   Dropdown,
@@ -13,10 +14,11 @@ import { getPossibleSessionParticipants, getGroupsForSession } from '../fetchers
 import FormItem from './FormItem';
 import MultiSelect from './MultiSelect';
 import GroupAlert from './GroupAlert';
+import { parseCheckboxEvent } from '../Constants';
 
 const placeholderText = '- Select -';
 
-const RecipientsWithGroups = () => {
+const RecipientsWithGroups = ({ regionId }) => {
   const {
     control,
     register,
@@ -24,12 +26,11 @@ const RecipientsWithGroups = () => {
     setValue,
   } = useFormContext();
 
-  // Recipients.
-  const regionId = watch('regionId');
   const watchFormRecipients = watch('recipients');
   const watchGroup = watch('recipientGroup');
 
   const [recipientOptions, setRecipientOptions] = useState();
+
   useEffect(() => {
     async function fetchRecipients() {
       if (!recipientOptions && regionId) {
@@ -121,7 +122,7 @@ const RecipientsWithGroups = () => {
   };
 
   const toggleUseGroup = (event) => {
-    const { target: { checked = null } = {} } = event;
+    const { checked } = parseCheckboxEvent(event);
     // Reset.
     resetGroup(false);
     setUseGroups(checked);
@@ -203,6 +204,10 @@ const RecipientsWithGroups = () => {
         }
     </>
   );
+};
+
+RecipientsWithGroups.propTypes = {
+  regionId: PropTypes.number.isRequired,
 };
 
 export default RecipientsWithGroups;

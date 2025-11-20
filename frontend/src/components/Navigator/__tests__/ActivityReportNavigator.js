@@ -8,11 +8,10 @@ import {
   render, screen, waitFor, within, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { useFormContext } from 'react-hook-form';
-import Navigator, {
+import { useFormContext, useForm } from 'react-hook-form';
+import ActivityReportNavigator, {
   getPrompts,
   getPromptErrors,
-  packageGoals,
   shouldUpdateFormData,
   formatEndDate,
 } from '../ActivityReportNavigator';
@@ -67,8 +66,8 @@ const defaultPages = [
     label: 'first page',
     review: false,
     render: (
-      _additionalData,
       _formData,
+      _additionalData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -91,9 +90,10 @@ const defaultPages = [
     path: 'second',
     label: 'second page',
     review: false,
+    isPageComplete: () => false,
     render: (
-      _additionalData,
       _formData,
+      _additionalData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -117,8 +117,8 @@ const defaultPages = [
     label: 'third page',
     review: false,
     render: (
-      _additionalData,
       _formData,
+      _additionalData,
       _reportId,
       _isAppLoading,
       onContinue,
@@ -170,60 +170,97 @@ const initialData = {
   'test-prompt': ['test'],
 };
 
-describe('Navigator', () => {
+describe('ActivityReportNavigator', () => {
   beforeAll(async () => {
     jest.useFakeTimers();
   });
 
-  // eslint-disable-next-line arrow-body-style
-  const renderNavigator = async (
+  // Wrapper component to create hookForm instance for tests
+  const NavigatorWrapper = ({
     currentPage = 'first',
     onSubmit = jest.fn(),
     onSave = jest.fn(),
     updatePage = jest.fn(),
-    updateForm = jest.fn(),
     pages = defaultPages,
     formData = initialData,
     onUpdateError = jest.fn(),
     editable = true,
-  ) => {
-    await act(() => waitFor(() => {
-      render(
-        <UserContext.Provider value={{ user }}>
-          <NetworkContext.Provider value={{
-            connectionActive: true,
-            localStorageAvailable: true,
+    autoSaveInterval = 500,
+    shouldAutoSave = true,
+  }) => {
+    const hookForm = useForm({
+      mode: 'onBlur',
+      defaultValues: formData,
+      shouldUnregister: false,
+    });
+
+    return (
+      <UserContext.Provider value={{ user }}>
+        <NetworkContext.Provider value={{
+          connectionActive: true,
+          localStorageAvailable: true,
+        }}
+        >
+          <AppLoadingContext.Provider value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
           }}
           >
-            <AppLoadingContext.Provider value={{
-              setIsAppLoading: jest.fn(),
-              setAppLoadingText: jest.fn(),
-              isAppLoading: false,
-            }}
-            >
-              <Navigator
-                draftSaver={jest.fn()}
-                editable={editable}
-                reportId={1}
-                submitted={false}
-                formData={formData}
-                updateFormData={updateForm}
-                onReview={() => {}}
-                isApprover={false}
-                defaultValues={{ first: '', second: '' }}
-                pages={pages}
-                currentPage={currentPage}
-                onFormSubmit={onSubmit}
-                updatePage={updatePage}
-                onSave={onSave}
-                updateErrorMessage={onUpdateError}
-                onResetToDraft={() => {}}
-                updateLastSaveTime={() => {}}
-                isPendingApprover={false}
-              />
-            </AppLoadingContext.Provider>
-          </NetworkContext.Provider>
-        </UserContext.Provider>,
+            <ActivityReportNavigator
+              draftSaver={jest.fn()}
+              editable={editable}
+              reportId={1}
+              submitted={false}
+              hookForm={hookForm}
+              onReview={() => {}}
+              isApprover={false}
+              pages={pages}
+              currentPage={currentPage}
+              onFormSubmit={onSubmit}
+              updatePage={updatePage}
+              onSave={onSave}
+              updateErrorMessage={onUpdateError}
+              onResetToDraft={() => {}}
+              updateLastSaveTime={() => {}}
+              isPendingApprover={false}
+              autoSaveInterval={autoSaveInterval}
+              shouldAutoSave={shouldAutoSave}
+              setShouldAutoSave={jest.fn()}
+            />
+          </AppLoadingContext.Provider>
+        </NetworkContext.Provider>
+      </UserContext.Provider>
+    );
+  };
+
+  // eslint-disable-next-line arrow-body-style
+  const renderNavigator = async ({
+    currentPage = 'first',
+    onSubmit = jest.fn(),
+    onSave = jest.fn(),
+    updatePage = jest.fn(),
+    pages = defaultPages,
+    formData = initialData,
+    onUpdateError = jest.fn(),
+    editable = true,
+    autoSaveInterval = 500,
+    shouldAutoSave = true,
+  } = {}) => {
+    await act(() => waitFor(() => {
+      render(
+        <NavigatorWrapper
+          currentPage={currentPage}
+          onSubmit={onSubmit}
+          onSave={onSave}
+          updatePage={updatePage}
+          pages={pages}
+          formData={formData}
+          onUpdateError={onUpdateError}
+          editable={editable}
+          autoSaveInterval={autoSaveInterval}
+          shouldAutoSave={shouldAutoSave}
+        />,
       );
     }));
   };
@@ -237,31 +274,16 @@ describe('Navigator', () => {
   });
 
   it('sets dirty forms as "in progress"', async () => {
-    await renderNavigator();
+    await renderNavigator({});
     const firstInput = screen.getByTestId('first');
     userEvent.click(firstInput);
     const first = await screen.findByRole('button', { name: 'first page In Progress' });
     await waitFor(() => expect(within(first).getByText('In Progress')).toBeVisible());
   });
 
-  it('doesn\'t allow saving if the form is not editable', async () => {
-    const onSubmit = jest.fn();
-    const onSave = jest.fn();
-    const updatePage = jest.fn();
-    const updateForm = jest.fn();
-    const onUpdateError = jest.fn();
+  it('does not allow saving if the form is not editable', async () => {
     const isEditable = false;
-    await renderNavigator(
-      'first',
-      onSubmit,
-      onSave,
-      updatePage,
-      updateForm,
-      defaultPages,
-      initialData,
-      onUpdateError,
-      isEditable,
-    );
+    await renderNavigator({ isEditable });
 
     fetchMock.restore();
     expect(fetchMock.called()).toBe(false);
@@ -270,9 +292,20 @@ describe('Navigator', () => {
     expect(fetchMock.called()).toBe(false);
   });
 
+  it('prevents autosaving if set to false', async () => {
+    const onSave = jest.fn();
+    await renderNavigator({ shouldAutoSave: false, onSave });
+
+    await act(() => waitFor(() => {
+      jest.advanceTimersByTime(800);
+    }));
+
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it('onContinue calls onSave with correct page position', async () => {
     const onSave = jest.fn();
-    await renderNavigator('second', () => {}, onSave);
+    await renderNavigator({ currentPage: 'second', onSave });
 
     // mark the form as dirty so that onSave is called
     userEvent.click(screen.getByTestId('second'));
@@ -292,14 +325,14 @@ describe('Navigator', () => {
 
   it('submits data when "continuing" from the review page', async () => {
     const onSubmit = jest.fn();
-    await renderNavigator('review', onSubmit);
+    await renderNavigator({ currentPage: 'review', onSubmit });
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
 
   it('onBack calls onUpdatePage', async () => {
     const updatePage = jest.fn();
-    await renderNavigator('third', () => {}, () => {}, updatePage);
+    await renderNavigator({ currentPage: 'third', updatePage });
     const button = await screen.findByRole('button', { name: 'Back' });
     userEvent.click(button);
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
@@ -307,13 +340,11 @@ describe('Navigator', () => {
 
   it('calls onSave on navigation', async () => {
     const updatePage = jest.fn();
-    const updateForm = jest.fn();
     const onSave = jest.fn();
-    await renderNavigator('second', jest.fn(), onSave, updatePage, updateForm);
+    await renderNavigator({ currentPage: 'second', onSave, updatePage });
 
     // mark the form as dirty so that onSave is called
     userEvent.click(screen.getByTestId('second'));
-
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
 
     await waitFor(() => expect(
@@ -334,11 +365,11 @@ describe('Navigator', () => {
       throw new Error();
     });
 
-    const updatePage = jest.fn();
-    const updateForm = jest.fn();
     const onUpdateError = jest.fn();
 
-    await renderNavigator('second', onSubmit, onSave, updatePage, updateForm, defaultPages, initialData, onUpdateError);
+    await renderNavigator({
+      currentPage: 'second', onSubmit, onSave, onUpdateError,
+    });
 
     // mark the form as dirty so that onSave is called
     await act(() => waitFor(() => {
@@ -353,23 +384,102 @@ describe('Navigator', () => {
     expect(onUpdateError).toHaveBeenCalled();
   });
 
-  it('runs the autosave not on the goals and objectives page', async () => {
+  it('runs the autosave', async () => {
     const onSave = jest.fn();
-    await renderNavigator('second', () => {}, onSave);
+    await renderNavigator({ currentPage: 'second', onSave });
 
     // mark the form as dirty
     const input = screen.getByTestId('second');
     userEvent.click(input);
 
-    jest.advanceTimersByTime(1000 * 60 * 2);
+    jest.advanceTimersByTime(800);
     expect(onSave).toHaveBeenCalled();
   });
 
   it('does not run the autosave when the form is clean', async () => {
     const onSave = jest.fn();
-    await renderNavigator('second', () => {}, onSave);
-    jest.advanceTimersByTime(1000 * 60 * 2);
-    expect(onSave).toHaveBeenCalledTimes(0);
+    await renderNavigator({ currentPage: 'second', onSave });
+    jest.advanceTimersByTime(800);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('navigates between pages and preserves form data', async () => {
+    const updatePage = jest.fn();
+    const onSave = jest.fn();
+    const updateForm = jest.fn();
+
+    await renderNavigator({
+      currentPage: 'first',
+      onSave,
+      updatePage,
+      updateForm,
+    });
+
+    // Fill out the first page
+    const firstInput = screen.getByTestId('first');
+    userEvent.click(firstInput);
+
+    // Click continue to go to the second page
+    userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+    // Verify updatePage was called to go to page 2
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
+
+    // Verify onSave was called with the correct data
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
+      {
+        ...initialData,
+        pageState: {
+          ...initialData.pageState, 1: IN_PROGRESS,
+        },
+        first: 'on',
+      },
+      false,
+    ));
+
+    // Reset mocks for further testing
+    onSave.mockClear();
+    updatePage.mockClear();
+
+    // Render the second page
+    await renderNavigator({
+      currentPage: 'second',
+      onSave,
+      updatePage,
+      updateForm,
+      formData: {
+        ...initialData,
+        pageState: {
+          ...initialData.pageState, 1: IN_PROGRESS,
+        },
+        first: 'on',
+      },
+    });
+
+    // Fill out the second page
+    const secondInput = screen.getByTestId('second');
+    userEvent.click(secondInput);
+
+    // Navigate back to the first page
+    userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    // Verify updatePage was called to go to page 1
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
+
+    // Verify onSave was called with the correct data including both pages
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
+      {
+        ...initialData,
+        pageState: {
+          ...initialData.pageState,
+          1: IN_PROGRESS,
+          2: IN_PROGRESS,
+        },
+        first: 'on',
+        second: 'on',
+      },
+      false,
+    ));
   });
 });
 
@@ -474,81 +584,5 @@ describe('getPromptErrors', () => {
     document.querySelector = jest.fn(() => null);
     const errors = {};
     expect(getPromptErrors(null, errors)).toBe(false);
-  });
-});
-
-describe('packageGoals', () => {
-  it('correctly formats goals with multiple recipients', () => {
-    const grantIds = [1, 2];
-    const packagedGoals = packageGoals(
-      [
-        {
-          name: 'goal name',
-          endDate: '09/01/2020',
-          prompts: [{ fieldName: 'prompt' }],
-        },
-      ],
-      {
-        name: 'recipient',
-        endDate: '09/01/2020',
-        isActivelyBeingEditing: true,
-      },
-      grantIds,
-      [{ fieldName: 'prompt2' }],
-    );
-
-    expect(packagedGoals).toEqual([
-      {
-        name: 'goal name',
-        endDate: '09/01/2020',
-        prompts: [],
-        grantIds,
-        isActivelyBeingEditing: false,
-      },
-      {
-        name: 'recipient',
-        endDate: '09/01/2020',
-        isActivelyBeingEditing: true,
-        grantIds,
-        prompts: [],
-      },
-    ]);
-  });
-
-  it('correctly formats goals for a single recipient', () => {
-    const grantIds = [1];
-    const packagedGoals = packageGoals(
-      [
-        {
-          name: 'goal name',
-          endDate: '09/01/2020',
-          prompts: [{ fieldName: 'prompt' }],
-        },
-      ],
-      {
-        name: 'recipient',
-        endDate: '09/01/2020',
-        isActivelyBeingEditing: true,
-      },
-      grantIds,
-      [{ fieldName: 'prompt2' }],
-    );
-
-    expect(packagedGoals).toEqual([
-      {
-        name: 'goal name',
-        endDate: '09/01/2020',
-        prompts: [{ fieldName: 'prompt' }],
-        grantIds,
-        isActivelyBeingEditing: false,
-      },
-      {
-        name: 'recipient',
-        endDate: '09/01/2020',
-        isActivelyBeingEditing: true,
-        grantIds,
-        prompts: [{ fieldName: 'prompt2' }],
-      },
-    ]);
   });
 });

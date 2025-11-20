@@ -12,9 +12,8 @@ import UserContext from '../../UserContext';
 const { ADMIN, READ_WRITE_TRAINING_REPORTS, READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
 describe('display with permissions', () => {
+  const history = createMemoryHistory();
   const renderDisplayWithPermission = (scopes, user, renderNotFound = false) => {
-    const history = createMemoryHistory();
-
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
@@ -65,13 +64,14 @@ describe('display with permissions', () => {
     expect(screen.getByText('This is a test')).toBeVisible();
   });
 
-  it('renders not found where appropriate', () => {
+  it('renders not found where appropriate', async () => {
     const user = {
       flags: [],
       permissions: [],
     };
     const renderNotFound = true;
+
     renderDisplayWithPermission([READ_WRITE_TRAINING_REPORTS], user, renderNotFound);
-    expect(screen.getByRole('link', { name: /home page/i })).toBeVisible();
+    expect(history.entries.pop().pathname).toBe('/something-went-wrong/404');
   });
 });

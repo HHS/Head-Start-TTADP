@@ -1,49 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { useFormContext } from 'react-hook-form';
 import Container from '../../../../../components/Container';
 import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
 import Approved from '../Approved';
-import Submitted from './Submitted';
 
 const Submitter = ({
   availableApprovers,
   onFormSubmit,
-  formData,
-  onResetToDraft,
   children,
   error,
   onSaveForm,
   pages,
   lastSaveTime,
+  reviewItems,
 }) => {
-  const {
-    additionalNotes,
-    id,
-    displayId,
-    calculatedStatus,
-    approvers,
-    creatorRole,
-  } = formData;
+  const { watch } = useFormContext();
+
+  const additionalNotes = watch('additionalNotes');
+  const id = watch('id');
+  const displayId = watch('displayId');
+  const calculatedStatus = watch('calculatedStatus');
+  const approvers = watch('approvers');
+  const creatorRole = watch('creatorRole');
+  const goalsAndObjectives = watch('goalsAndObjectives');
+  const activityRecipients = watch('activityRecipients');
+
   const draft = calculatedStatus === REPORT_STATUSES.DRAFT;
   const submitted = calculatedStatus === REPORT_STATUSES.SUBMITTED;
   const needsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const approved = calculatedStatus === REPORT_STATUSES.APPROVED;
-  const [approverStatusList, updateApproverStatusList] = useState([]);
 
-  useEffect(() => {
-    const updatedApprovers = approvers ? approvers.filter((a) => a.user) : [];
-    if (updatedApprovers) {
-      updateApproverStatusList(updatedApprovers);
-    }
-  }, [approvers, formData]);
-
-  const resetToDraft = async () => {
-    await onResetToDraft();
-  };
+  const approverStatusList = approvers ? approvers.filter((a) => a.user) : [];
 
   const getNeedsActionApprovingMangers = () => {
     const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
@@ -52,9 +44,6 @@ const Submitter = ({
     }
     return '';
   };
-
-  const totalApprovers = approvers ? approvers.length : 0;
-  const pendingApprovals = approvers ? approvers.filter((a) => a.status === null || a.status === 'needs_action').length : 0;
 
   const renderTopAlert = () => (
     <>
@@ -74,35 +63,111 @@ const Submitter = ({
           This report has been approved and is no longer editable
         </Alert>
       )}
-      {submitted && (
-        <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
-          <b>Report is not editable</b>
-          <br />
-          This report is no longer editable while it is waiting for manager approval&#40;s&#41;
-          <strong>{` (${pendingApprovals} of ${totalApprovers} reviews pending)`}</strong>
-          .
-          <br />
-          If you wish to update this report click &quot;Reset to Draft&quot; below to
-          move the report back to draft mode.
-        </Alert>
-      )}
     </>
   );
 
   const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
   const incompletePages = filtered.map((f) => f.label);
 
+  /*
+  grantsMissingMonitoring:
+  * This checks that if we only have a single monitoring goal selected,
+  * that all selected recipient/grants are associated with that goal.
+  * If not they either need to remove the recipient or add a standard goal.
+  */
+  const grantsMissingMonitoring = () => {
+    // 1. Determine if a monitoring goal is selected.
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+    // 2. If we only have a monitoring goal selected (no other goals).
+    if ((!goalsAndObjectives || goalsAndObjectives.length === 1) && hasMonitoringGoalSelected) {
+      // 3. Determine if any selected recipients are not applicable the the monitoring goal.
+      const missingGrants = activityRecipients.filter(
+        (recipient) => !hasMonitoringGoalSelected.grantIds.includes(recipient.activityRecipientId),
+      ).map((recipient) => recipient.activityRecipientId);
+
+      // 4. Get the names of the recipents/grants that are not applicable to this monitoring goal.
+      const grantNames = activityRecipients.filter(
+        (recipient) => missingGrants.includes(recipient.activityRecipientId),
+      ).map(
+        (recipient) => recipient.name,
+      );
+      return grantNames;
+    }
+    return [];
+  };
+
+  /*
+  grantsMissingCitations:
+    This returns grants that are missing citations,
+    that should have them on the monitoring goal.
+    This happens regardless of how many additional goals are selected.
+  */
+  const grantsMissingCitations = () => {
+    // 1. Determine if a monitoring goal is selected.
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+    if (hasMonitoringGoalSelected) {
+      // 2. Get all the grant ids off the SELECTED citations.
+      // The complexity in the reduce is because we need to parse the monitoringReferences (JSON).
+      const selectedCitationGrantIds = hasMonitoringGoalSelected.objectives.reduce(
+        (acc, objective) => {
+          const monitoringReferencesFlat = (objective.citations || []).map(
+            (citation) => citation.monitoringReferences,
+          ).flat();
+
+          const monitoringReferenceGrantIds = monitoringReferencesFlat.map(
+            (reference) => reference.grantId,
+          );
+
+          // Add the grant ids to the objective id in the accumulator.
+          acc[objective.id] = monitoringReferenceGrantIds;
+          return acc;
+        }, {},
+      );
+
+      // 3. Get the grants ids that are associated with this monitoring goal.
+      // We only save for the grants that require monitoring.
+      // The grantIds should only be for the applicable grants on this report.
+      const grantsThatRequireMonitoring = hasMonitoringGoalSelected.grantIds;
+
+      // 4. Check each objective and find any missing citations.
+      const grantsFoundMissingCitations = grantsThatRequireMonitoring.reduce(
+        (acc, grantId) => {
+          const objectiveIds = Object.keys(selectedCitationGrantIds);
+          const missingCitations = objectiveIds.filter(
+            (objectiveId) => !selectedCitationGrantIds[objectiveId].includes(grantId),
+          );
+          if (missingCitations.length > 0) {
+            acc.push(grantId);
+          }
+          return acc;
+        }, [],
+      );
+      const distinctGrantIdsMissing = [...new Set(grantsFoundMissingCitations)];
+
+      // 5. From activityRecipients get the name of the grants that match the activityRecipientId.
+      const grantNames = activityRecipients.filter(
+        (recipient) => distinctGrantIdsMissing.includes(recipient.activityRecipientId),
+      ).map(
+        (recipient) => recipient.name,
+      );
+      // 6. Return the names of the missing recipients/grants.
+      return grantNames;
+    }
+    return [];
+  };
+
   return (
     <>
       {renderTopAlert()}
       {children}
-      <Container skipTopPadding className="margin-top-2 padding-top-2" skipBottomPadding={!draft}>
+
+      <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding={!submitted && !draft} paddingY={0}>
         {error && (
-          <Alert noIcon className="margin-y-4" type="error">
-            <b>Error</b>
-            <br />
-            {error}
-          </Alert>
+        <Alert noIcon className="margin-y-4" type="error">
+          <b>Error</b>
+          <br />
+          {error}
+        </Alert>
         )}
         {draft
           && (
@@ -116,16 +181,9 @@ const Submitter = ({
               approverStatusList={approverStatusList}
               lastSaveTime={lastSaveTime}
               creatorRole={creatorRole}
-            />
-          )}
-        {submitted
-          && (
-            <Submitted
-              additionalNotes={additionalNotes}
-              resetToDraft={resetToDraft}
-              reportId={id}
-              displayId={displayId}
-              approverStatusList={approverStatusList}
+              grantsMissingMonitoring={grantsMissingMonitoring()}
+              grantsMissingCitations={grantsMissingCitations()}
+              reviewItems={reviewItems}
             />
           )}
         {needsAction
@@ -139,6 +197,9 @@ const Submitter = ({
               displayId={displayId}
               reportId={id}
               availableApprovers={availableApprovers}
+              reviewItems={reviewItems}
+              grantsMissingMonitoring={grantsMissingMonitoring()}
+              grantsMissingCitations={grantsMissingCitations()}
             />
           )}
         {approved
@@ -146,6 +207,7 @@ const Submitter = ({
             <Approved
               additionalNotes={additionalNotes}
               approverStatusList={approverStatusList}
+              reviewItems={reviewItems}
             />
           )}
       </Container>
@@ -154,7 +216,6 @@ const Submitter = ({
 };
 
 Submitter.propTypes = {
-  onResetToDraft: PropTypes.func.isRequired,
   error: PropTypes.string,
   children: PropTypes.node.isRequired,
   onSaveForm: PropTypes.func.isRequired,
@@ -168,20 +229,12 @@ Submitter.propTypes = {
     name: PropTypes.string,
   })).isRequired,
   onFormSubmit: PropTypes.func.isRequired,
-  formData: PropTypes.shape({
-    additionalNotes: PropTypes.string,
-    calculatedStatus: PropTypes.string,
-    creatorRole: PropTypes.string,
-    id: PropTypes.number,
-    displayId: PropTypes.string,
-    approvers: PropTypes.arrayOf(
-      PropTypes.shape({
-        status: PropTypes.string,
-      }),
-    ),
-  }).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
-
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    title: PropTypes.string,
+    content: PropTypes.node,
+  })).isRequired,
 };
 
 Submitter.defaultProps = {

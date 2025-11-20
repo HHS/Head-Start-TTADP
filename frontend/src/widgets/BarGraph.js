@@ -1,15 +1,29 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
-import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
+import NoResultsFound from '../components/NoResultsFound';
 import colors from '../colors';
 import './BarGraph.css';
 
-const Plot = createPlotlyComponent(Plotly);
-const BottomAxis = createPlotlyComponent(Plotly);
+let Plot = null;
+let BottomAxis = null;
 
-function BarGraph({ data }) {
+import('plotly.js-basic-dist')
+  .then((Plotly) => {
+    Plot = createPlotlyComponent(Plotly);
+    BottomAxis = createPlotlyComponent(Plotly);
+  });
+
+function BarGraph({
+  data,
+  xAxisConfig,
+  leftMargin,
+  topMargin,
+  barHeightMultiplier,
+  barGraphTopHeight,
+  widgetRef,
+}) {
   const parentRef = useRef(null);
   const [width, setWidth] = useState(850);
 
@@ -29,7 +43,7 @@ function BarGraph({ data }) {
 
     // removes the event listener when the component is unmounted
     return () => window.removeEventListener('resize', updateSize);
-  }, []);
+  }, [data]);
 
   if (!data || !Array.isArray(data)) {
     return null;
@@ -43,7 +57,8 @@ function BarGraph({ data }) {
     counts.push(dataPoint.count);
   });
 
-  const range = [Math.min(...counts), Math.max(...counts)];
+  // Always start the bar at 0 so smaller values aren't hidden.
+  const range = [0, Math.max(...counts) + 2];
 
   const trace = {
     type: 'bar',
@@ -54,12 +69,17 @@ function BarGraph({ data }) {
       color: colors.ttahubMediumBlue,
     },
     width: 0.75,
-    hovertemplate: '%{y}: %{x}<extra></extra>',
+    hovertemplate: '%{x}<extra></extra>',
+  };
+
+  const bottomPlotXaxisConfig = {
+    range,
+    ...xAxisConfig,
   };
 
   const layout = {
     bargap: 0.5,
-    height: 25 * data.length,
+    height: barHeightMultiplier * data.length,
     width,
     hoverlabel: {
       bgcolor: '#000',
@@ -73,9 +93,9 @@ function BarGraph({ data }) {
       color: colors.textInk,
     },
     margin: {
-      l: 320,
+      l: leftMargin,
       r: 0,
-      t: 0,
+      t: topMargin,
       b: 0,
     },
     xaxis: {
@@ -98,12 +118,16 @@ function BarGraph({ data }) {
     hovermode: 'none',
   };
 
+  if (data.length === 0) {
+    return <NoResultsFound />;
+  }
+
   return (
-    <>
+    <div ref={widgetRef}>
       <div className="ttahub-bar-graph maxh-mobile-lg overflow-y-scroll" ref={parentRef}>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <div className="ttahub-bar-graph--bars-top" tabIndex={0}>
-          <span className="sr-only">Use the arrow keys to scroll graph</span>
+        <div className="ttahub-bar-graph--bars-top" style={{ height: barGraphTopHeight }} tabIndex={0}>
+          <span className="usa-sr-only">Use the arrow keys to scroll graph</span>
           <Plot
             data={[trace]}
             layout={layout}
@@ -116,16 +140,14 @@ function BarGraph({ data }) {
           data={[{ mode: 'bar' }]}
           layout={{
             width,
-            height: 40,
+            height: 60,
             margin: {
-              l: 320,
+              l: leftMargin,
               t: 0,
               r: 0,
             },
             yaxis: { tickmode: 'array', tickvals: [] },
-            xaxis: {
-              range,
-            },
+            xaxis: bottomPlotXaxisConfig,
           }}
           config={{
             displayModeBar: false,
@@ -133,7 +155,7 @@ function BarGraph({ data }) {
           }}
         />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -144,10 +166,31 @@ BarGraph.propTypes = {
       count: PropTypes.number,
     }),
   ),
+  leftMargin: PropTypes.number,
+  topMargin: PropTypes.number,
+  barHeightMultiplier: PropTypes.number,
+  barGraphTopHeight: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]),
+  widgetRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  xAxisConfig: PropTypes.shape({
+    title: PropTypes.shape({
+      text: PropTypes.string,
+      standoff: PropTypes.number,
+    }),
+    ticksuffix: PropTypes.string,
+  }),
 };
 
 BarGraph.defaultProps = {
   data: [],
+  leftMargin: 320,
+  topMargin: 0,
+  barHeightMultiplier: 25,
+  barGraphTopHeight: 400,
+  widgetRef: { current: null },
+  xAxisConfig: {},
 };
 
 export default BarGraph;

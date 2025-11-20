@@ -9,7 +9,7 @@ import db, {
   Objective,
   Recipient,
 } from '../../models';
-import app from '../../app';
+// import app from '../../app';
 import { uploadFile } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
 import { FILE_STATUSES } from '../../constants';
@@ -18,6 +18,44 @@ import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { generateRedisConfig } from '../../lib/queue';
 import * as s3Queue from '../../services/s3Queue';
+
+jest.mock('../../middleware/sessionMiddleware', () => ({
+  __esModule: true,
+  default: (_req, _res, next) => next(),
+}));
+
+jest.mock('../../lib/redisClient', () => ({
+  __esModule: true,
+  getRedis: jest.fn(() => ({
+    on: jest.fn(),
+    quit: jest.fn(),
+  })),
+}));
+
+jest.mock('../../middleware/authMiddleware', () => ({
+  __esModule: true,
+  default: (_req, _res, next) => next(),
+  login: jest.fn(),
+  getAccessToken: jest.fn(),
+  getUserInfo: jest.fn(),
+  logoutOidc: jest.fn(),
+}));
+
+jest.mock('../../middleware/jwkKeyManager', () => ({
+  __esModule: true,
+  getPrivateJwk: jest.fn().mockResolvedValue({
+    kty: 'RSA',
+    kid: 'test',
+    n: 'test',
+    e: 'AQAB',
+  }),
+}));
+
+jest.mock('axios');
+jest.mock('smartsheet');
+
+/* eslint-disable global-require */
+const app = require('../../app').default || require('../../app');
 
 jest.mock('../../services/scanQueue', () => jest.fn());
 jest.mock('bull');

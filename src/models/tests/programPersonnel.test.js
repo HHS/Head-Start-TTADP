@@ -56,8 +56,8 @@ describe('ProgramPersonnel', () => {
       programType: 'HS',
       startYear: '2023',
       status: 'active',
-      startDate: '2023',
-      endDate: '2025',
+      startDate: new Date('01/01/2023'),
+      endDate: new Date('01/01/2025'),
     });
 
     ehsProgram = await Program.create({
@@ -67,8 +67,8 @@ describe('ProgramPersonnel', () => {
       programType: 'EHS',
       startYear: '2023',
       status: 'active',
-      startDate: '2023',
-      endDate: '2025',
+      startDate: new Date('01/01/2023'),
+      endDate: new Date('01/01/2025'),
     });
 
     weirdProgram = await Program.create({
@@ -78,8 +78,8 @@ describe('ProgramPersonnel', () => {
       programType: 'something-weird',
       startYear: '2023',
       status: 'active',
-      startDate: '2023',
-      endDate: '2025',
+      startDate: new Date('01/01/2023'),
+      endDate: new Date('01/01/2025'),
     });
 
     // Grant Personnel.

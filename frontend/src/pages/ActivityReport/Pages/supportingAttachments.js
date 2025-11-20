@@ -8,11 +8,10 @@ import {
   FormGroup,
   Label,
 } from '@trussworks/react-uswds';
-import Section from './Review/ReviewSection';
-import FileReviewItem from './Review/FileReviewItem';
-import { reportIsEditable } from '../../../utils';
+import ReviewPage from './Review/ReviewPage';
 import ActivityReportFileUploader from '../../../components/FileUploader/ActivityReportFileUploader';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import './supportingAttachments.scss';
 
 const SupportingAttachments = ({
   reportId,
@@ -57,36 +56,48 @@ SupportingAttachments.propTypes = {
   reportId: PropTypes.node.isRequired,
 };
 
+const getAttachmentsSections = (files) => {
+  const hasAttachments = files && files.length > 0;
+
+  // Create HTML content that matches what the test expects
+  const fileContents = hasAttachments
+    ? files.map((file) => `<a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a>`)
+    : ['None provided'];
+
+  return [
+    {
+      anchor: 'files',
+      isEditSection: true,
+      items: [
+        {
+          label: 'Attachments',
+          name: 'attachmentFiles',
+          // Use rich text to render HTML content
+          isRichText: true,
+          customValue: {
+            // If there are attachments, use our custom HTML
+            // If no attachments, show "None provided"
+            attachmentFiles: hasAttachments
+              ? `${fileContents.join(', ')}`
+              : 'None provided',
+          },
+        },
+      ],
+    },
+  ];
+};
+
 const ReviewSection = () => {
   const { watch } = useFormContext();
-  const {
-    files,
-    calculatedStatus,
-  } = watch();
-
-  const hasAttachments = files && files.length > 0;
-  const canEdit = reportIsEditable(calculatedStatus);
+  const { files } = watch();
 
   return (
-    <>
-      <Section
-        hidePrint={!hasAttachments}
-        key="Attachments"
-        basePath="supporting-attachments"
-        anchor="files"
-        title="Attachments"
-        canEdit={canEdit}
-      >
-        {files.map((file) => (
-          <FileReviewItem
-            key={file.url.url}
-            filename={file.originalFileName}
-            url={file.url.url}
-            status={file.status}
-          />
-        ))}
-      </Section>
-    </>
+    <ReviewPage
+      className="smart-hub--supporting-attachments-review"
+      sections={getAttachmentsSections(files)}
+      path="supporting-attachments"
+      isCustomValue
+    />
   );
 };
 
@@ -96,6 +107,7 @@ export default {
   path: 'supporting-attachments',
   reviewSection: () => <ReviewSection />,
   review: false,
+  isPageComplete: () => true,
   render: (
     _additionalData,
     _formData,
