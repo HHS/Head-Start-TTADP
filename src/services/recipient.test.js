@@ -549,6 +549,35 @@ describe('Recipient DB service', () => {
 
       const duplicateTemplateName = `duplicate standard goal ${faker.datatype.number()}`;
 
+      const curatedTemplates = await GoalTemplate.findAll({
+        where: {
+          creationMethod: CREATION_METHOD.CURATED,
+          standard: { [Op.ne]: 'Monitoring' },
+        },
+      });
+
+      await Promise.all(curatedTemplates.map((template) => Goal.create({
+        recipientId: recipientWithTemplatesWithSameName.id,
+        goalTemplateId: template.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: template.templateName,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: duplicateGrantOne.id,
+      })));
+
+      await Promise.all(curatedTemplates.map((template) => Goal.create({
+        recipientId: recipientWithTemplatesWithSameName.id,
+        goalTemplateId: template.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: template.templateName,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: duplicateGrantTwo.id,
+      })));
+
       duplicateGoalTemplateOne = await GoalTemplate.create({
         templateName: `${duplicateTemplateName}-${faker.datatype.number()}`,
         creationMethod: CREATION_METHOD.CURATED,
