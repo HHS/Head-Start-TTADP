@@ -203,6 +203,24 @@ describe('ReviewItem "None provided" tests', () => {
     expect(screen.getByText('None provided')).toBeInTheDocument();
   });
 
+  it('should NOT show "None provided" when value has formatted content with bullets and bold', () => {
+    const formattedContent = '<p>Here is some content:</p><ul><li><strong>Bold bullet 1</strong></li><li><strong>Bold bullet 2</strong></li></ul><p></p>';
+    useFormContext.mockReturnValue({
+      watch: jest.fn(() => formattedContent),
+    });
+
+    render(
+      <ReviewItem
+        label="Test Label"
+        name="testName"
+        path=""
+        isRichText
+      />,
+    );
+
+    expect(screen.queryByText('None provided')).not.toBeInTheDocument();
+  });
+
   it('should show "None provided" when values with path all resolve to undefined', () => {
     useFormContext.mockReturnValue({
       watch: jest.fn(() => [{ wrongKey: 'value' }, { alsoWrong: 'data' }]),
