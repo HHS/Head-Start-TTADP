@@ -4,6 +4,7 @@ import {
   render, screen,
 } from '@testing-library/react';
 import ObjectiveTitle from '../ObjectiveTitle';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('ObjectiveTitle', () => {
   it('shows the read only view', async () => {
@@ -14,7 +15,7 @@ describe('ObjectiveTitle', () => {
       title="Objective title"
       validateObjectiveTitle={jest.fn()}
       onChangeTitle={jest.fn()}
-      status="Complete"
+      status={OBJECTIVE_STATUS.COMPLETE}
     />);
 
     expect(await screen.findByText('Objective title')).toBeVisible();

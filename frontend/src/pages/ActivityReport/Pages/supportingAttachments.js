@@ -107,6 +107,7 @@ export default {
   path: 'supporting-attachments',
   reviewSection: () => <ReviewSection />,
   review: false,
+  isPageComplete: () => true,
   render: (
     _additionalData,
     _formData,

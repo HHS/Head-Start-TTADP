@@ -16,6 +16,7 @@ import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
 import GoalFormContext from '../../../../GoalFormContext';
+import { OBJECTIVE_STATUS } from '../../../../Constants';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
 
@@ -35,7 +36,7 @@ const defaultGoals = [{
     id: 1,
     title: 'title',
     ttaProvided: 'tta',
-    status: 'In Progress',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
     courses: [],
   }],
 }];
@@ -289,7 +290,7 @@ describe('goals objectives', () => {
           id: 1,
           title: 'title',
           ttaProvided: 'tta',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           courses: [],
         }],
       },
@@ -307,7 +308,7 @@ describe('goals objectives', () => {
           id: 1,
           title: 'title',
           ttaProvided: 'tta',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           courses: [],
         }],
       }];
@@ -371,7 +372,7 @@ describe('goals objectives', () => {
           id: 1,
           title: 'title',
           ttaProvided: 'tta',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           courses: [],
         }],
       }];
@@ -445,7 +446,7 @@ describe('goals objectives', () => {
             id: 1,
             title: 'title',
             ttaProvided: 'tta',
-            status: 'In Progress',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
@@ -469,7 +470,7 @@ describe('goals objectives', () => {
             id: 1,
             title: 'title',
             ttaProvided: 'tta',
-            status: 'In Progress',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
@@ -507,7 +508,7 @@ describe('goals objectives', () => {
           id: 1,
           title: 'title',
           ttaProvided: 'ttaProvided',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
           resources: [{ value: 'http://test1.gov' }, { value: 'http://test2.gov' }, { value: 'http://test3.gov' }],
           roles: ['Chief Inspector'],

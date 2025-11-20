@@ -2,8 +2,10 @@ import '@testing-library/jest-dom';
 import moment from 'moment';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import RecipientsWithOhsStandardFeiGoalWidget from '../RecipientsWithOhsStandardFeiGoalWidget';
 import UserContext from '../../UserContext';
+import { OBJECTIVE_STATUS } from '../../Constants';
 
 const renderRecipientsWithOhsStandardFeiGoalWidget = (data) => {
   render(
@@ -63,7 +65,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
             },
             {
               title: 'Goal_status',
-              value: 'In progress',
+              value: OBJECTIVE_STATUS.IN_PROGRESS,
             },
             {
               title: 'Root_cause',
@@ -88,7 +90,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
             },
             {
               title: 'Goal_status',
-              value: 'Not started',
+              value: GOAL_STATUS.NOT_STARTED,
             },
             {
               title: 'Root_cause',

@@ -20,7 +20,7 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
 import LegacyReport from './pages/LegacyReport';
-import isAdmin, { canSeeBehindFeatureFlag } from './permissions';
+import isAdmin from './permissions';
 import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
@@ -35,7 +35,6 @@ import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 import MyGroupsProvider from './components/MyGroupsProvider';
 import ScrollToTop from './components/ScrollToTop';
-import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
 import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
@@ -69,9 +68,9 @@ export default function Routes({
   notifications,
 }) {
   const admin = isAdmin(user);
-  const hasTrainingReportDashboard = canSeeBehindFeatureFlag(user, 'training_reports_dashboard');
 
   const locationRef = useLocation();
+  const isLogoutPage = locationRef.pathname === '/logout';
 
   const hideSideNav = (pathname) => {
     const paths = [
@@ -311,7 +310,6 @@ export default function Routes({
           path="/dashboards/regional-dashboard/activity-reports"
           render={({ match }) => (
             <AppWrapper
-              padded={!(hasTrainingReportDashboard)}
               authenticated
               logout={logout}
               hasAlerts={!!(alert)}
@@ -325,9 +323,7 @@ export default function Routes({
           path="/dashboards/regional-dashboard/:reportType(training-reports|all-reports)"
           render={({ match }) => (
             <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
-              <FeatureFlag flag="training_reports_dashboard" renderNotFound>
-                <RegionalDashboard match={match} />
-              </FeatureFlag>
+              <RegionalDashboard match={match} />
             </AppWrapper>
           )}
         />
@@ -354,17 +350,6 @@ export default function Routes({
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <Group match={match} />
-            </AppWrapper>
-          )}
-        />
-        <Route
-          exact
-          path="/regional-goal-dashboard"
-          render={() => (
-            <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="regional_goal_dashboard" renderNotFound>
-                <RegionalGoalDashboard user={user} />
-              </FeatureFlag>
             </AppWrapper>
           )}
         />
@@ -487,7 +472,7 @@ export default function Routes({
               ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
               : (
                 <AppWrapper padded={false} logout={logout}>
-                  <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                  <Unauthenticated loggedOut={isLogoutPage || loggedOut} timedOut={timedOut} />
                 </AppWrapper>
               )
             )}

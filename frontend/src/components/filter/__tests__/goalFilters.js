@@ -7,6 +7,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import {
   createDateFilter,
@@ -80,7 +81,7 @@ describe('goalFilters', () => {
       const apply = jest.fn();
       renderFilter(() => statusFilter.renderInput('1', 'test', [], apply));
       const statusInput = await screen.findByLabelText('Select status to filter by');
-      await selectEvent.select(statusInput, ['Not started']);
+      await selectEvent.select(statusInput, [GOAL_STATUS.NOT_STARTED]);
       expect(apply).toHaveBeenCalled();
     });
 

@@ -302,6 +302,13 @@ export const COLLAB_REPORT_DATA = {
   other: 'Other',
 };
 
+export const OBJECTIVE_STATUS = {
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  COMPLETE: 'Complete',
+};
+
 export const TRAINING_EVENT_ORGANIZER = {
   IST_TTA_VISIT: 'IST TTA/Visit',
   REGIONAL_PD_WITH_NATIONAL_CENTERS: 'Regional PD Event (with National Centers)',

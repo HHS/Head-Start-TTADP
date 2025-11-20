@@ -6,9 +6,7 @@ import {
   Alert,
   Button,
   TextInput,
-  Label,
   Dropdown,
-  Textarea,
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import Drawer from '../../Drawer';
@@ -23,6 +21,8 @@ import { mustBeQuarterHalfOrWhole, NOOP } from '../../../Constants';
 import MultiSelect from '../../MultiSelect';
 import { useLogContext } from '../components/LogContext';
 import CommunicationRecipients from '../components/CommunicationRecipients';
+import HookFormRichEditor from '../../HookFormRichEditor';
+import FormItemWithDrawerTriggerLabel from '../../FormItemWithDrawerTriggerLabel';
 
 const fields = Object.keys(defaultLogValues);
 
@@ -159,21 +159,11 @@ const Log = ({
         </FormItem>
       </div>
       <div className="margin-top-2">
-        <FormItem
-          label={(
-            <>
-              Purpose of communication
-              {' '}
-              <button
-                type="button"
-                className="usa-button usa-button--unstyled margin-left-1"
-                ref={purposeDrawerRef}
-              >
-                Get help choosing a purpose
-              </button>
-            </>
-          )}
+        <FormItemWithDrawerTriggerLabel
+          label="Purpose of communication"
           name="purpose"
+          drawerTriggerRef={purposeDrawerRef}
+          drawerTriggerLabel="Get help choosing a purpose"
         >
           <Dropdown
             required
@@ -185,7 +175,15 @@ const Log = ({
               <option key={`purposeoptions${option}`}>{option}</option>
             ))}
           </Dropdown>
-        </FormItem>
+        </FormItemWithDrawerTriggerLabel>
+        <Drawer
+          triggerRef={purposeDrawerRef}
+          stickyHeader
+          stickyFooter
+          title="Purpose of communication"
+        >
+          <ContentFromFeedByTag tagName="ttahub-commlog-purpose" />
+        </Drawer>
       </div>
       <div className="margin-top-2">
         <FormItem
@@ -205,31 +203,20 @@ const Log = ({
         </FormItem>
       </div>
       <div className="margin-top-2">
-        <Label htmlFor="notes">
-          Notes
-        </Label>
-        <Textarea
+        <FormItem
+          label="Notes"
           name="notes"
-          id="notes"
-          inputRef={register()}
-        />
+          required={false}
+        >
+          <HookFormRichEditor ariaLabel="Notes" name="notes" />
+        </FormItem>
       </div>
       <div className="margin-top-2">
-        <FormItem
-          label={(
-            <>
-              Result
-              {' '}
-              <button
-                type="button"
-                className="usa-button usa-button--unstyled margin-left-1"
-                ref={resultDrawerRef}
-              >
-                Get help choosing a result
-              </button>
-            </>
-          )}
+        <FormItemWithDrawerTriggerLabel
+          label="Result"
           name="result"
+          drawerTriggerRef={resultDrawerRef}
+          drawerTriggerLabel="Get help choosing a result"
           required={false}
         >
           <Dropdown
@@ -243,26 +230,16 @@ const Log = ({
               <option key={`resultOptions${option}`}>{option}</option>
             ))}
           </Dropdown>
-        </FormItem>
+        </FormItemWithDrawerTriggerLabel>
+        <Drawer
+          triggerRef={resultDrawerRef}
+          stickyHeader
+          stickyFooter
+          title="Result guidance"
+        >
+          <ContentFromFeedByTag tagName="ttahub-commlog-results" />
+        </Drawer>
       </div>
-
-      <Drawer
-        triggerRef={purposeDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="Purpose of communication"
-      >
-        <ContentFromFeedByTag tagName="ttahub-commlog-purpose" />
-      </Drawer>
-
-      <Drawer
-        triggerRef={resultDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="Result guidance"
-      >
-        <ContentFromFeedByTag tagName="ttahub-commlog-results" />
-      </Drawer>
     </>
   );
 };

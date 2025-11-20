@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable max-len */
 import React from 'react';
 import join from 'url-join';
@@ -15,6 +16,20 @@ import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
 import CommunicationLogForm from '../index';
 import { LogProvider } from '../../../../../components/CommunicationLog/components/LogContext';
+
+jest.mock('../../../../../components/RichEditor', () => function MockRichEditor({
+  ariaLabel,
+  value,
+  onChange,
+}) {
+  return (
+    <textarea
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+});
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;
@@ -123,6 +138,32 @@ describe('CommunicationLogForm', () => {
     expect(screen.getByText(/Little Lord Wigglytoes/i)).toBeInTheDocument();
   });
 
+  it('prefills notes when editing an existing log', async () => {
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
+    fetchMock.get(url, {
+      id: 0,
+      recipientId: '',
+      userId: '',
+      data: {
+        notes: '<p>Existing note</p>',
+        pageState: {
+          1: NOT_STARTED,
+          2: NOT_STARTED,
+          3: NOT_STARTED,
+          4: NOT_STARTED,
+        },
+      },
+      recipients: [],
+    });
+
+    await act(() => waitFor(() => {
+      renderTest('1', 'log');
+    }));
+
+    const notesField = await screen.findByLabelText(/notes/i);
+    expect(notesField.value).toBe('<p>Existing note</p>');
+  });
+
   it('handlers error fetching log by id', async () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
     fetchMock.get(url, 500);
@@ -183,16 +224,14 @@ describe('CommunicationLogForm', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
-    const purposeDropdown = within(purposeView).getByRole('combobox');
-    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
+    const purpose = screen.getByLabelText(/purpose of communication/i, { selector: 'select' });
+    userEvent.selectOptions(purpose, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const resultView = screen.getAllByText(/result/i)[0];
-    const resultDropdown = within(resultView).getByRole('combobox');
-    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
+    const result = screen.getByLabelText(/result/i, { selector: 'select' });
+    userEvent.selectOptions(result, COMMUNICATION_RESULTS[0]);
 
     const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}`;
     fetchMock.post(url, {
@@ -239,16 +278,14 @@ describe('CommunicationLogForm', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
-    const purposeDropdown = within(purposeView).getByRole('combobox');
-    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
+    const purpose = screen.getByLabelText(/purpose of communication/i, { selector: 'select' });
+    userEvent.selectOptions(purpose, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const resultView = screen.getAllByText(/result/i)[0];
-    const resultDropdown = within(resultView).getByRole('combobox');
-    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
+    const result = screen.getByLabelText(/result/i, { selector: 'select' });
+    userEvent.selectOptions(result, COMMUNICATION_RESULTS[0]);
 
     const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}`;
     fetchMock.post(url, 500);
@@ -275,7 +312,7 @@ describe('CommunicationLogForm', () => {
         method: 'Phone',
         purpose: 'General Check-In',
         duration: '1',
-        notes: 'This is a note',
+        notes: '<p>This is a note</p>',
         goals: [{ label: 'CQI and Data', value: '1' }],
         otherStaff: [{ label: 'A', value: '1' }],
         specialistNextSteps: [
@@ -327,7 +364,7 @@ describe('CommunicationLogForm', () => {
       files: [],
       data: {
         communicationDate: '11/01/2023',
-        notes: 'adsf',
+        notes: '<p>adsf</p>',
         method: 'Phone',
         result: 'New TTA accepted',
         purpose: "Program Specialist's site visit",
@@ -387,7 +424,7 @@ describe('CommunicationLogForm', () => {
       files: [],
       data: {
         communicationDate: '11/01/2023',
-        notes: 'adsf',
+        notes: '<p>adsf</p>',
         method: 'Phone',
         result: 'New TTA accepted',
         purpose: "Program Specialist's site visit",
@@ -445,7 +482,7 @@ describe('CommunicationLogForm', () => {
       files: [],
       data: {
         communicationDate: '11/01/2023',
-        notes: 'adsf',
+        notes: '<p>adsf</p>',
         method: 'Phone',
         result: 'New TTA accepted',
         purpose: "Program Specialist's site visit",

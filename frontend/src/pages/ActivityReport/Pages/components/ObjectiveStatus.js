@@ -2,13 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Label, Dropdown } from '@trussworks/react-uswds';
 import ObjectiveStatusSuspendReason from '../../../../components/ObjectiveStatusSuspendReason';
+import { OBJECTIVE_STATUS } from '../../../../Constants';
 
-const statuses = [
-  'Not Started',
-  'In Progress',
-  'Suspended',
-  'Complete',
-];
+const statuses = Object.values(OBJECTIVE_STATUS);
 
 export default function ObjectiveStatus({
   status,
@@ -19,10 +15,12 @@ export default function ObjectiveStatus({
   closeSuspendReason,
   currentStatus,
 }) {
-  const inProgressStatuses = ['In Progress', 'Suspended', 'Complete'];
+  const inProgressStatuses = [
+    OBJECTIVE_STATUS.IN_PROGRESS, OBJECTIVE_STATUS.SUSPENDED, OBJECTIVE_STATUS.COMPLETE,
+  ];
 
   const availableStatuses = currentStatus && inProgressStatuses.includes(currentStatus)
-    ? statuses.filter((s) => s !== 'Not Started')
+    ? statuses.filter((s) => s !== OBJECTIVE_STATUS.NOT_STARTED)
     : statuses;
 
   return (

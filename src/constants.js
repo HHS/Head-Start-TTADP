@@ -230,14 +230,7 @@ const MAINTENANCE_TYPE = {
 
 const FEATURE_FLAGS = [
   'anv_statistics',
-  'regional_goal_dashboard',
-  'closed_goal_merge_override',
-  'training_reports_dashboard',
   'quality_assurance_dashboard',
-  'manual_mark_goals_similar',
-  'monitoring_integration',
-  'multirecipient_communication_log',
-  'standard_goals_update',
   'collaboration_report',
 ];
 

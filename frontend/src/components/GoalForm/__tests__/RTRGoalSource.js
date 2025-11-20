@@ -1,5 +1,5 @@
 import React from 'react';
-import { GOAL_SOURCES } from '@ttahub/common';
+import { GOAL_SOURCES, GOAL_STATUS } from '@ttahub/common';
 import { render, screen } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
@@ -15,7 +15,7 @@ describe('RTRGoalSource', () => {
   const setSource = jest.fn();
   const error = <></>;
   const isOnApprovedReport = false;
-  const status = 'Not Started';
+  const status = GOAL_STATUS.NOT_STARTED;
   const userCanEdit = true;
   const validateGoalSource = jest.fn();
   const isCurated = false;
