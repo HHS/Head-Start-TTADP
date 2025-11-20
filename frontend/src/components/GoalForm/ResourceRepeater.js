@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { isValidResourceUrl } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,6 +26,16 @@ export default function ResourceRepeater({
   isLoading,
 }) {
   const [showNoResourcesError, setShowNoResourcesError] = useState(false);
+  const inputRef = useRef(null);
+
+  const checkShowNoResourcesError = () => {
+    if (inputRef.current) {
+      const empty = inputRef.current.value.trim() === '';
+      setShowNoResourcesError(empty);
+    } else {
+      setShowNoResourcesError(false);
+    }
+  };
 
   const addResource = () => {
     if (resources.some((r) => !r.value)) {
@@ -85,10 +95,14 @@ export default function ResourceRepeater({
                 </Label>
                 <URLInput
                   id={`resource-${i + 1}`}
-                  onBlur={validateResources}
+                  onBlur={() => {
+                    checkShowNoResourcesError();
+                    validateResources();
+                  }}
                   onChange={({ target: { value } }) => updateResource(value, i)}
                   value={r.value || ''}
                   disabled={isLoading}
+                  ref={inputRef}
                 />
                 { resources.length > 1 ? (
                   <Button unstyled type="button" onClick={() => removeResource(i)}>
