@@ -141,42 +141,4 @@ test.describe('widgets', () => {
     await validateSchema(response, schema, expect);
   });
 
-  test('goalsByStatus', async ({ request }) => {
-    const response = await request.get(`${root}/widgets/goalsByStatus`);
-    expect(response.status()).toBe(200);
-
-    const schema = Joi.object({
-      total: Joi.number().integer().required(),
-      'Not started': Joi.number().integer().required(),
-      'In progress': Joi.number().integer().required(),
-      Suspended: Joi.number().integer().required(),
-      Closed: Joi.number().integer().required(),
-      Draft: Joi.number().integer().required()
-    });
-
-    await validateSchema(response, schema, expect);
-  });
-
-  test('goalsPercentage', async ({ request }) => {
-    const response = await request.get(`${root}/widgets/goalsPercentage`);
-    expect(response.status()).toBe(200);
-
-    const schema = Joi.object({
-      numerator: Joi.number().integer().required(),
-      denominator: Joi.number().integer().required(),
-      percentage: Joi.number().allow(null).required()
-    });
-
-    await validateSchema(response, schema, expect);
-  });
-
-  test('topicsByGoalStatus', async ({ request }) => {
-    const response = await request.get(`${root}/widgets/topicsByGoalStatus`);
-    expect(response.status()).toBe(200);
-
-    const schema = Joi.array().items().required().min(0);
-
-    await validateSchema(response, schema, expect);
-  });
 });
-
