@@ -166,9 +166,9 @@ describe('sessionReportPilot hooks', () => {
       const mockSet = jest.fn();
       const mockInstanceWithData = {
         eventId: 1,
+        approverId: 123,
         data: {
           pocComplete: true,
-          approverId: 123,
           ownerComplete: true,
           otherField: 'value',
         },
@@ -188,7 +188,6 @@ describe('sessionReportPilot hooks', () => {
 
       expect(mockSet).toHaveBeenCalledWith('data', {
         pocComplete: true,
-        approverId: 123,
         ownerComplete: true,
         otherField: 'value',
         submitted: true,
