@@ -1,5 +1,13 @@
 import SCOPES from '../middleware/scopeConstants';
 import CommunicationLog from './communicationLog';
+import { auditLogger } from '../logger';
+
+jest.mock('../logger', () => ({
+  auditLogger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
 
 const createLog = ({ userId, recipientId = 1 }) => ({
   userId,
@@ -39,6 +47,10 @@ const admin = createUser({ admin: true });
 const noPerms = createUser({});
 
 describe('Communication Log policies', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('canCreateLog', () => {
     it('is true if the user has write permissions in the region', () => {
       const log = createLog({ userId: authorRegion1.id });
@@ -50,6 +62,20 @@ describe('Communication Log policies', () => {
       const log = createLog({ userId: authorRegion1.id });
       const policy = new CommunicationLog(authorRegion2, 1, log);
       expect(policy.canCreateLog()).toBe(false);
+    });
+
+    it('logs when a user without permissions attempts to create', () => {
+      const log = createLog({ userId: authorRegion1.id });
+      const policy = new CommunicationLog(noPerms, 1, log);
+      expect(policy.canCreateLog()).toBe(false);
+      expect(auditLogger.warn).toHaveBeenCalledWith(expect.stringContaining('create communication log'));
+    });
+
+    it('logs when an admin is creating', () => {
+      const log = createLog({ userId: authorRegion1.id });
+      const policy = new CommunicationLog(admin, 1, log);
+      expect(policy.canCreateLog()).toBe(true);
+      expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('create communication log'));
     });
   });
 
@@ -78,6 +104,7 @@ describe('Communication Log policies', () => {
       const log = createLog({ userId: authorRegion1.id });
       const policy = new CommunicationLog(admin, 1, log);
       expect(policy.canUpdateLog()).toBe(true);
+      expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('update communication log'));
     });
 
     it('is true if the user is the author', () => {
@@ -90,6 +117,7 @@ describe('Communication Log policies', () => {
       const log = createLog({ userId: authorRegion1.id });
       const policy = new CommunicationLog(authorRegion2, 1, log);
       expect(policy.canUpdateLog()).toBe(false);
+      expect(auditLogger.warn).toHaveBeenCalledWith(expect.stringContaining('update communication log'));
     });
   });
 
@@ -98,6 +126,7 @@ describe('Communication Log policies', () => {
       const log = createLog({ userId: authorRegion1.id });
       const policy = new CommunicationLog(admin, 1, log);
       expect(policy.canDeleteLog()).toBe(true);
+      expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('delete communication log'));
     });
 
     it('is true if the user is the author', () => {
@@ -110,6 +139,7 @@ describe('Communication Log policies', () => {
       const log = createLog({ userId: authorRegion1.id });
       const policy = new CommunicationLog(authorRegion2, 1, log);
       expect(policy.canDeleteLog()).toBe(false);
+      expect(auditLogger.warn).toHaveBeenCalledWith(expect.stringContaining('delete communication log'));
     });
   });
 
@@ -118,6 +148,7 @@ describe('Communication Log policies', () => {
       const log = createLog({ userId: authorRegion1.id });
       const policy = new CommunicationLog(admin, 1, log);
       expect(policy.canUploadFileToLog()).toBe(true);
+      expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('upload file to communication log'));
     });
 
     it('is true if the user is the author', () => {
@@ -130,6 +161,7 @@ describe('Communication Log policies', () => {
       const log = createLog({ userId: authorRegion1.id });
       const policy = new CommunicationLog(authorRegion2, 1, log);
       expect(policy.canUploadFileToLog()).toBe(false);
+      expect(auditLogger.warn).toHaveBeenCalledWith(expect.stringContaining('upload file to communication log'));
     });
   });
 

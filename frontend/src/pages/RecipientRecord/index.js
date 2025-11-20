@@ -21,7 +21,6 @@ import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import ViewGoalDetails from './pages/ViewStandardGoals';
 import Monitoring from './pages/Monitoring';
-import FeatureFlag from '../../components/FeatureFlag';
 import AppLoadingContext from '../../AppLoadingContext';
 import StandardGoalForm from '../StandardGoalForm';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
@@ -309,19 +308,17 @@ export default function RecipientRecord({ match, hasAlerts }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/monitoring/:currentPage([a-z\-]*)?"
           render={({ match: routerMatch }) => (
-            <FeatureFlag flag="monitoring_integration">
-              <PageWithHeading
-                regionId={regionId}
-                recipientId={recipientId}
-                recipientNameWithRegion={recipientNameWithRegion}
-                hasAlerts={hasAlerts}
-                backLink={<></>}
-              >
-                <Monitoring
-                  match={routerMatch}
-                />
-              </PageWithHeading>
-            </FeatureFlag>
+            <PageWithHeading
+              regionId={regionId}
+              recipientId={recipientId}
+              recipientNameWithRegion={recipientNameWithRegion}
+              hasAlerts={hasAlerts}
+              backLink={<></>}
+            >
+              <Monitoring
+                match={routerMatch}
+              />
+            </PageWithHeading>
           )}
         />
         <Route
