@@ -224,16 +224,14 @@ describe('CommunicationLogForm', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
-    const purposeDropdown = within(purposeView).getByRole('combobox');
-    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
+    const purpose = screen.getByLabelText(/purpose of communication/i, { selector: 'select' });
+    userEvent.selectOptions(purpose, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const resultView = screen.getAllByText(/result/i)[0];
-    const resultDropdown = within(resultView).getByRole('combobox');
-    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
+    const result = screen.getByLabelText(/result/i, { selector: 'select' });
+    userEvent.selectOptions(result, COMMUNICATION_RESULTS[0]);
 
     const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}`;
     fetchMock.post(url, {
@@ -280,16 +278,14 @@ describe('CommunicationLogForm', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
-    const purposeDropdown = within(purposeView).getByRole('combobox');
-    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
+    const purpose = screen.getByLabelText(/purpose of communication/i, { selector: 'select' });
+    userEvent.selectOptions(purpose, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const resultView = screen.getAllByText(/result/i)[0];
-    const resultDropdown = within(resultView).getByRole('combobox');
-    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
+    const result = screen.getByLabelText(/result/i, { selector: 'select' });
+    userEvent.selectOptions(result, COMMUNICATION_RESULTS[0]);
 
     const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}`;
     fetchMock.post(url, 500);
