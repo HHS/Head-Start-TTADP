@@ -71,6 +71,9 @@ const RecipientReviewSection = () => {
           label: 'TTA provided', name: 'ttaProvided', isRichText: true,
         },
         {
+          label: 'Support type', name: 'supportType',
+        },
+        {
           label: 'Objective status', name: 'status',
         },
       ],
