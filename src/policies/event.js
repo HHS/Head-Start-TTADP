@@ -154,11 +154,11 @@ export default class EventReport {
   }
 
   canEditAsSessionApprover() {
-    return this.session && this.session.data && this.session.data.submitted && this.isSessionApprover();
+    return !!(this.session && this.session.data && this.session.data.submitted && this.isSessionApprover());
   }
 
   canEditSession() {
-    return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc() || this.canEditAsSessionApprover;
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc() || this.canEditAsSessionApprover();
   }
 
   canUploadFile() {
