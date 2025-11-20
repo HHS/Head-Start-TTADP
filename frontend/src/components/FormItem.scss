@@ -1,5 +1,9 @@
 @use '../colors.scss' as *;
 
+.usa-form-group.ttahub-form-item * {
+  max-width: 500px;
+}
+
 .smart-hub--form-required {
   color: $error-dark;
 }
