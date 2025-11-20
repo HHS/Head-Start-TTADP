@@ -8,6 +8,7 @@ test('get /user', async ({ request }) => {
   const schema = Joi.object({
     id: Joi.number().required(),
     name: Joi.string().required(),
+    fullName: Joi.string().required(),
     hsesUserId: Joi.string().required(),
     hsesUsername: Joi.string().required(),
     hsesAuthorities: Joi.any().allow(null),

@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
 import fetchMock from 'fetch-mock';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import useGoalTemplates from '../useGoalTemplates';
 
 const mockTemplates = [
@@ -16,7 +17,7 @@ const mockTemplates = [
         id: 1,
         name: 'Goal 1',
         prestandard: false,
-        status: 'Not Started',
+        status: GOAL_STATUS.NOT_STARTED,
       },
     ],
   },
@@ -28,7 +29,7 @@ const mockTemplates = [
         id: 2,
         name: 'Goal 2',
         prestandard: true,
-        status: 'Not Started',
+        status: GOAL_STATUS.NOT_STARTED,
       },
     ],
   },
@@ -40,13 +41,13 @@ const mockTemplates = [
         id: 3,
         name: 'Goal 3',
         prestandard: true,
-        status: 'Not Started',
+        status: GOAL_STATUS.NOT_STARTED,
       },
       {
         id: 4,
         name: 'Goal 4',
         prestandard: true,
-        status: 'In Progress',
+        status: GOAL_STATUS.IN_PROGRESS,
       },
     ],
   },
@@ -58,13 +59,13 @@ const mockTemplates = [
         id: 5,
         name: 'Goal 5',
         prestandard: true,
-        status: 'Not Started',
+        status: GOAL_STATUS.NOT_STARTED,
       },
       {
         id: 6,
         name: 'Goal 6',
         prestandard: false,
-        status: 'Not Started',
+        status: GOAL_STATUS.NOT_STARTED,
       },
     ],
   },

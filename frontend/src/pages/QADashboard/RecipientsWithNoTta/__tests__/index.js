@@ -202,4 +202,42 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
       });
     });
   });
+
+  it('displays a dash when the last tta date is invalid or days since is negative', async () => {
+    const data = [
+      {
+        data_set: 'no_tta_widget',
+        records: '1',
+        data: [
+          {
+            total: 1,
+            'recipients without tta': 1,
+            '% recipients without tta': 100,
+          },
+        ],
+      },
+      {
+        data_set: 'no_tta_page',
+        records: '1',
+        data: [
+          {
+            'recipient id': 1,
+            'recipient name': 'Test Recipient Invalid',
+            'last tta': 'not-a-real-date',
+            'days since last tta': -5,
+          },
+        ],
+      },
+    ];
+    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page', data);
+    renderRecipientsWithNoTta();
+    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
+
+    await act(async () => {
+      await waitFor(async () => {
+        expect(screen.getByText(/test recipient invalid/i)).toBeInTheDocument();
+        expect(screen.queryAllByText('-').length).toBe(2);
+      });
+    });
+  });
 });

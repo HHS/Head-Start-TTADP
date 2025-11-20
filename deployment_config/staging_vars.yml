@@ -5,10 +5,11 @@ worker_instances: 1
 worker_memory: 512M
 app_disk_quota: 4GB
 LOG_LEVEL: info
-AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov
+AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov/oidc
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://tta-smarthub-staging.app.cloud.gov
 TTA_SMART_HUB_URI: https://tta-smarthub-staging.app.cloud.gov
+OIDC_AUTH_METHOD: "pkce"
 CLAMAV_ENDPOINT: https://clamapi-ttahub-dev.apps.internal:9443
 SEND_NOTIFICATIONS: "true"
 SUPPRESS_ERROR_LOGGING: "false"
@@ -25,7 +26,7 @@ cg_api: https://api.fr.cloud.gov
 cg_org: hhs-acf-ohs-tta
 
 AUTH_CLIENT_ID: ${STAGING_AUTH_CLIENT_ID}
-AUTH_CLIENT_SECRET: ${STAGING_AUTH_CLIENT_SECRET}
+PRIVATE_JWK_64: ""
 
 SESSION_SECRET: "${STAGING_SESSION_SECRET}"
 JWT_SECRET: "${STAGING_JWT_SECRET}"

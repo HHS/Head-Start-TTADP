@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import { useController } from 'react-hook-form';
@@ -66,7 +66,7 @@ export default function ConditionalFieldsForHookForm({
     setInitialValues(newPromptValues);
   }, [prompts, initialValues]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     // on mount, update the goal conditional fields
     // with the prompt data
 

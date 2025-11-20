@@ -3,8 +3,9 @@ import React from 'react';
 import {
   render, screen,
 } from '@testing-library/react';
-
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import PrintableGoal from '../PrintableGoal';
+import { OBJECTIVE_STATUS } from '../../../../../Constants';
 
 describe('PrintableGoal', () => {
   const renderPrintableGoal = (goal) => render(<PrintableGoal goal={goal} />);
@@ -37,7 +38,7 @@ describe('PrintableGoal', () => {
   it('displays objectives and topics', async () => {
     const goal = {
       id: 123,
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       goalNumbers: ['G-1'],
       name: 'Goal with objectives',
       grant: { number: 'Grant-1' },
@@ -46,7 +47,7 @@ describe('PrintableGoal', () => {
           id: 1,
           title: 'Objective 1',
           ttaProvided: 'TTA for objective 1',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           topics: ['Topic A', 'Topic B'],
           resources: [],
           files: [],
@@ -57,7 +58,7 @@ describe('PrintableGoal', () => {
           id: 2,
           title: 'Objective 2',
           ttaProvided: 'TTA for objective 2',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           topics: ['Topic B', 'Topic C'],
           resources: [],
           files: [],
@@ -68,7 +69,7 @@ describe('PrintableGoal', () => {
           id: 3,
           title: 'Objective 3 - No Topics',
           ttaProvided: 'TTA for objective 3',
-          status: 'Completed',
+          status: OBJECTIVE_STATUS.COMPLETE,
           resources: [],
           files: [],
           activityReports: [],
@@ -92,7 +93,7 @@ describe('PrintableGoal', () => {
   it('displays goal id when goalNumbers is missing', async () => {
     const goal = {
       id: 456,
-      status: 'Completed',
+      status: GOAL_STATUS.CLOSED,
       name: 'Goal without goalNumbers',
       grant: { number: 'Grant-2' },
       objectives: [],

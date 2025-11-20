@@ -3,7 +3,7 @@ import React from 'react';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
@@ -67,7 +67,7 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
         recipientName: 'Test Recipient 1',
         createdAt: '2021-09-01T13:05:17.944+00:00',
         goalId: 20628,
-        goalStatus: 'In progress',
+        goalStatus: GOAL_STATUS.IN_PROGRESS,
         grantNumber: '234234',
         rootCause: ['Community Partnership', 'Workforce'],
       },
@@ -76,7 +76,7 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
         recipientName: 'Test Recipient 2',
         createdAt: '2021-09-02T13:05:17.944+00:00',
         goalId: 359813,
-        goalStatus: 'Not started',
+        goalStatus: GOAL_STATUS.NOT_STARTED,
         grantNumber: '4234232',
         rootCause: ['Testing'],
       },
@@ -85,7 +85,7 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
         recipientName: 'Test Recipient 3',
         createdAt: '2021-09-03T13:05:17.944+00:00',
         goalId: 457825,
-        goalStatus: 'In progress',
+        goalStatus: GOAL_STATUS.IN_PROGRESS,
         grantNumber: '5678856',
         rootCause: ['Facilities'],
       },
@@ -198,10 +198,10 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
   });
 
   it('returns correct sort order from mapGoalStatusKey', () => {
-    expect(mapGoalStatusKey('Not Started')).toBe(4);
-    expect(mapGoalStatusKey('In Progress')).toBe(3);
-    expect(mapGoalStatusKey('Suspended')).toBe(2);
-    expect(mapGoalStatusKey('Closed')).toBe(1);
+    expect(mapGoalStatusKey(GOAL_STATUS.NOT_STARTED)).toBe(4);
+    expect(mapGoalStatusKey(GOAL_STATUS.IN_PROGRESS)).toBe(3);
+    expect(mapGoalStatusKey(GOAL_STATUS.SUSPENDED)).toBe(2);
+    expect(mapGoalStatusKey(GOAL_STATUS.CLOSED)).toBe(1);
     expect(mapGoalStatusKey('')).toBe(0);
   });
 });

@@ -9,7 +9,7 @@ If you run into issues, check the [troubleshooting](#troubleshooting) section.
 3. Install Yarn `npm install -g yarn`
 4. Install cross-env `npm install -g cross-env`
 5. Copy `.env.example` to `.env`.
-6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
+6. Change the `AUTH_CLIENT_ID` variable to value found in the team 1password account. If you don't have access to 1password, please ask in the acf-head-start-eng slack channel for access.
 7. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
 8. Run `yarn docker:start` to start the application.
    - The [frontend][frontend] will run on `localhost:3000`

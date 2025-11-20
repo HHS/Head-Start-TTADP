@@ -391,7 +391,7 @@ describe('GoalPicker', () => {
       await selectEvent.select(objectiveSelector, 'Create a new objective');
 
       // Open the citations dropdown.
-      const citationSelector = await screen.findByLabelText(/citation/i);
+      const citationSelector = await screen.findByRole('combobox', { name: /citation/i });
       await selectEvent.select(citationSelector, /test citation 1/i);
 
       // Check that the citation is displayed.

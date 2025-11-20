@@ -124,6 +124,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
           'data',
           'createdAt',
           'updatedAt',
+          'approverId',
           // eslint-disable-next-line @typescript-eslint/quotes
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
@@ -245,6 +246,7 @@ export async function findEventHelperBlob({
           'data',
           'createdAt',
           'updatedAt',
+          'approverId',
           // eslint-disable-next-line @typescript-eslint/quotes
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],

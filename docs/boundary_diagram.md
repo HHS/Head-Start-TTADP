@@ -25,6 +25,7 @@ Boundary(aws, "AWS GovCloud") {
         Container(worker_app, "<&layers> TTA Hub Worker Application", "NodeJS, Bull", "Perform background work and data processing")
         Container(similarity_api, "Similarity API", "Python", "AI application to identify similarity of text")
         Container(clamav, "File scanning API", "ClamAV", "Internal application for scanning user uploads\n\n docker: ajilaag/clamav-rest:20211026")
+        Container(www_jwks, ".well-known/jwks.json (JWKS)", "HTTP JSON", "Publishes public JWK (kid) for token client-auth verification")
       }
       Boundary(auto, "Automation") {
         Container(auto_prod_backup, "<&layers> Automation (Production backup)", "bash", "Streams database backup directly to s3(backup) in a password protected encrypted zip compressed format") #green
@@ -109,9 +110,16 @@ Rel(worker_app, clamav, "scans files", "https POST (9443)")
 Rel(worker_app, AWS_SES_SMTP_Server, "notifies users", "port 587")
 Rel(AWS_SES_SMTP_Server, AWS_SNS, "notifies admin")
 Rel(www_app, HSES_DATA, "retrieve Recipient data", "https GET (443)")
-Rel(www_app, HSES_AUTH, "authenticates user", "OAuth2")
+Rel(www_app, HSES_AUTH, "authenticates user", "OIDC (Auth Code + PKCE; client auth: private_key_jwt)")
+Rel(www_app, www_jwks, "serves", "https GET (443)")
+Rel(HSES_AUTH, www_jwks, "fetches public keys", "https GET (443)")
 Rel(personnel, HSES_DATA, "verify identity", "https GET/POST (443)")
-
+Rel(www_app, HSES_AUTH, "ends session (RP-initiated logout)", "OIDC end-session")
+note right of www_app
+- Local session cleared (cookie + server store)
+- Browser redirected to HSES end-session
+- Returns to post_logout_redirect_uri
+end note
 
 BiRel(worker_app, SFTP, "CLASS/Monitoring: collects file", "sftp readdir, createReadStream - SSH (22)")
 Rel(worker_app, www_s3, "CLASS/Monitoring: cache file", "vpc endpoint")

@@ -66,8 +66,8 @@ const RenderActivitySummary = ({
       <FormProvider {...hookForm}>
         {activitySummary.render(
           additionalData,
-          mockFormData,
-          1,
+          mockFormData, // formData (unused but required for signature)
+          1, // reportId
           false, // isAppLoading
           jest.fn(),
           jest.fn(),

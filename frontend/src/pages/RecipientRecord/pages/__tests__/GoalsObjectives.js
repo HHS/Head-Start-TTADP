@@ -3,7 +3,7 @@ import React from 'react';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -21,16 +21,16 @@ const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDat
 
 const defaultStatuses = {
   total: 0,
-  'Not started': 0,
-  'In progress': 0,
-  Closed: 0,
-  Suspended: 0,
+  [GOAL_STATUS.NOT_STARTED]: 0,
+  [GOAL_STATUS.IN_PROGRESS]: 0,
+  [GOAL_STATUS.CLOSED]: 0,
+  [GOAL_STATUS.SUSPENDED]: 0,
 };
 
 describe('Goals and Objectives', () => {
   const goals = [{
     id: 4598,
-    status: 'In Progress',
+    status: GOAL_STATUS.IN_PROGRESS,
     createdAt: '2021-06-15',
     name: 'This is goal text 1.',
     goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
@@ -48,7 +48,7 @@ describe('Goals and Objectives', () => {
 
   const noFilterGoals = [{
     id: 4599,
-    status: 'In Progress',
+    status: GOAL_STATUS.IN_PROGRESS,
     createdAt: '2021-06-15',
     name: 'This is goal text 1.',
     goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
@@ -65,7 +65,7 @@ describe('Goals and Objectives', () => {
   {
     id: 4600,
     ids: [4600],
-    status: 'Not Started',
+    status: GOAL_STATUS.NOT_STARTED,
     createdAt: '2021-07-15',
     name: 'This is goal text 2.',
     goalTopics: ['Program Planning and Services'],
@@ -84,7 +84,7 @@ describe('Goals and Objectives', () => {
     {
       id: 4601,
       ids: [4601],
-      status: 'Not Started',
+      status: GOAL_STATUS.NOT_STARTED,
       createdAt: '2021-07-15',
       name: 'This is goal text 2.',
       goalTopics: ['Program Planning and Services'],
@@ -166,7 +166,7 @@ describe('Goals and Objectives', () => {
     });
 
     // Filters Status.
-    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
+    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started';
     fetchMock.get(filterStatusUrl, {
       count: 1,
       goalRows: filterStatusGoals,
@@ -222,7 +222,7 @@ describe('Goals and Objectives', () => {
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
-    await selectEvent.select(statusSelect, ['Not started']);
+    await selectEvent.select(statusSelect, [GOAL_STATUS.NOT_STARTED]);
 
     const apply = await screen.findByRole('button', { name: /apply filters to goals/i });
     userEvent.click(apply);
@@ -238,7 +238,7 @@ describe('Goals and Objectives', () => {
     fetchMock.restore();
 
     // Default with 2 Rows.
-    let goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
+    let goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started';
     fetchMock.get(goalsUrl,
       {
         count: 11,
@@ -274,7 +274,7 @@ describe('Goals and Objectives', () => {
     act(() => renderGoalsAndObjectives());
 
     // Go to the next page.
-    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=10&limit=10&status.in[]=Not%20started';
+    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=10&limit=10&status.in[]=Not%20Started';
     fetchMock.get(goalsUrl,
       {
         count: 11,
@@ -306,9 +306,9 @@ describe('Goals and Objectives', () => {
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
-    await selectEvent.select(statusSelect, ['Closed']);
+    await selectEvent.select(statusSelect, [GOAL_STATUS.CLOSED]);
 
-    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started&status.in[]=Closed';
+    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started&status.in[]=Closed';
     fetchMock.get(goalsUrl,
       {
         count: 1,
@@ -351,7 +351,7 @@ describe('Goals and Objectives', () => {
     const response = [{
       id: 4598,
       ids: [4598],
-      status: 'Not Started',
+      status: GOAL_STATUS.NOT_STARTED,
       createdAt: '2021-06-15',
       name: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
@@ -460,7 +460,7 @@ describe('Goals and Objectives', () => {
     const goalToUse = {
       id: 1,
       ids: [1, 2],
-      status: 'Not Started',
+      status: GOAL_STATUS.NOT_STARTED,
       createdAt: '2021-06-15',
       name: '',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],

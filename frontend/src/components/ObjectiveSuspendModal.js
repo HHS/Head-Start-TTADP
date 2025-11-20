@@ -6,6 +6,7 @@ import {
   ErrorMessage,
 } from '@trussworks/react-uswds';
 import VanillaModal from './VanillaModal';
+import { OBJECTIVE_STATUS } from '../Constants';
 
 const SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
 
@@ -31,7 +32,7 @@ export default function ObjectiveSuspendModal({
     }
 
     // hey if we're here, we're suspendin'
-    onChangeStatus('Suspended');
+    onChangeStatus(OBJECTIVE_STATUS.SUSPENDED);
     modalRef.current.toggleModal();
   };
 

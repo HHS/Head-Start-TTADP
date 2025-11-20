@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
+import { OBJECTIVE_STATUS } from '../../../../Constants';
 
 export const NO_ERROR = <></>;
 export const ERROR_FORMAT = (message) => <span className="usa-error-message">{message}</span>;
@@ -15,7 +16,7 @@ export const NEW_OBJECTIVE = (isMonitoring = false) => ({
   resources: [],
   topics: [],
   roles: [],
-  status: 'Not Started',
+  status: OBJECTIVE_STATUS.NOT_STARTED,
   isNew: true,
   citations: isMonitoring ? [] : null, // Only required for monitoring goals.
   closeSuspendReason: null,

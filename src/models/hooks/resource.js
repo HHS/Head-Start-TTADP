@@ -26,8 +26,6 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 const afterCreate = async (sequelize, instance, options) => {
-  // TTAHUB-3102: Temporarily disable the resource scrape job (06/20/2024).
-  /*
   if (!instance.title) {
     // This is to resolve a recursive reference issue:
     // Service: /services/resourceQueue Imports: /lib/resource
@@ -38,7 +36,6 @@ const afterCreate = async (sequelize, instance, options) => {
     const { addGetResourceMetadataToQueue } = require('../../services/resourceQueue');
     addGetResourceMetadataToQueue(instance.id, instance.url);
   }
-  */
 };
 
 export {

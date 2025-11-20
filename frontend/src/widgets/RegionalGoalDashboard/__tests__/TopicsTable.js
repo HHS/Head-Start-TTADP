@@ -2,18 +2,27 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { TopicsTableWidget } from '../TopicsTable';
 
 const topicsData = [{
   topic: 'Coaching',
   statuses: {
-    Draft: 0, 'Not Started': 0, 'In Progress': 6, Suspended: 0, Closed: 10,
+    [GOAL_STATUS.DRAFT]: 0,
+    [GOAL_STATUS.NOT_STARTED]: 0,
+    [GOAL_STATUS.IN_PROGRESS]: 6,
+    [GOAL_STATUS.SUSPENDED]: 0,
+    [GOAL_STATUS.CLOSED]: 10,
   },
   total: 16,
 }, {
   topic: 'Safety Practices',
   statuses: {
-    Draft: 0, 'Not Started': 0, 'In Progress': 5, Suspended: 0, Closed: 0,
+    [GOAL_STATUS.DRAFT]: 0,
+    [GOAL_STATUS.NOT_STARTED]: 0,
+    [GOAL_STATUS.IN_PROGRESS]: 5,
+    [GOAL_STATUS.SUSPENDED]: 0,
+    [GOAL_STATUS.CLOSED]: 0,
   },
   total: 5,
 }];

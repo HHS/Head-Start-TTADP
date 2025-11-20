@@ -9,6 +9,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import { FormProvider, useForm } from 'react-hook-form';
 import { MemoryRouter } from 'react-router';
 import OtherEntityReviewSection from '../OtherEntityReviewSection';
+import { OBJECTIVE_STATUS } from '../../../../../Constants';
 
 describe('OtherEntityReviewSection', () => {
   const Review = () => {
@@ -22,7 +23,7 @@ describe('OtherEntityReviewSection', () => {
           resources: [],
           courses: [{ id: 1, name: 'Test Course' }],
           ttaProvided: '<p>TTA Provided</p>',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           files: [
             {
               url: {

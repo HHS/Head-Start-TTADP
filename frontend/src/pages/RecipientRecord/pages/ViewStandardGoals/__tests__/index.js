@@ -8,13 +8,13 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route } from 'react-router-dom';
-import { SCOPE_IDS } from '@ttahub/common/src/constants';
+import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import moment from 'moment';
 import ViewGoalDetails from '..';
 import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
-import { DATE_DISPLAY_FORMAT } from '../../../../../Constants';
+import { DATE_DISPLAY_FORMAT, OBJECTIVE_STATUS } from '../../../../../Constants';
 
 const formatDate = (date) => moment.utc(date).format(DATE_DISPLAY_FORMAT);
 
@@ -22,7 +22,7 @@ const mockGoalHistory = [
   {
     id: 1,
     name: 'Standard Goal Example',
-    status: 'In Progress',
+    status: GOAL_STATUS.IN_PROGRESS,
     createdAt: '2025-01-15T00:00:00.000Z',
     goalTemplateId: 1,
     grantId: 1,
@@ -46,7 +46,7 @@ const mockGoalHistory = [
       {
         id: 1,
         title: 'Implement new curriculum',
-        status: 'In Progress',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
         activityReportObjectives: [
           {
             activityReport: { id: 101, displayId: 'R-101' },
@@ -84,35 +84,35 @@ const mockGoalHistory = [
       {
         id: 2,
         title: 'Objective with no reports/topics/resources',
-        status: 'Not Started',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
         activityReportObjectives: [],
       },
       {
         id: 3,
         title: 'Objective with null reports',
-        status: 'Not Started',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
         activityReportObjectives: null,
       },
     ],
     // status changes out of order to test sorting, added 'Closed' status
     statusChanges: [
       {
-        id: 2, goalId: 1, userId: 1, oldStatus: 'Not Started', newStatus: 'In Progress', createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 2, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: 'Not Started', createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 3, goalId: 1, userId: 2, oldStatus: 'In Progress', newStatus: 'Suspended', createdAt: '2025-01-10T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        id: 3, goalId: 1, userId: 2, oldStatus: GOAL_STATUS.IN_PROGRESS, newStatus: GOAL_STATUS.SUSPENDED, createdAt: '2025-01-10T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
       },
       {
-        id: 4, goalId: 1, userId: 1, oldStatus: 'Suspended', newStatus: 'Complete', createdAt: '2025-01-12T00:00:00.000Z', user: null,
+        id: 4, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.SUSPENDED, newStatus: 'Complete', createdAt: '2025-01-12T00:00:00.000Z', user: null,
       },
       {
-        id: 6, goalId: 1, userId: 2, oldStatus: 'Complete', newStatus: 'Closed', createdAt: '2025-01-13T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        id: 6, goalId: 1, userId: 2, oldStatus: 'Complete', newStatus: GOAL_STATUS.CLOSED, createdAt: '2025-01-13T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
       },
       {
-        id: 5, goalId: 1, userId: 1, oldStatus: 'Closed', newStatus: 'Unknown Status', createdAt: '2025-01-14T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 5, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.CLOSED, newStatus: 'Unknown Status', createdAt: '2025-01-14T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
     ],
     responses: [
@@ -122,7 +122,7 @@ const mockGoalHistory = [
   {
     id: 2,
     name: 'Standard Goal Example - Old',
-    status: 'Closed',
+    status: GOAL_STATUS.CLOSED,
     createdAt: '2024-12-01T00:00:00.000Z',
     goalTemplateId: 1,
     grantId: 1,
@@ -131,7 +131,7 @@ const mockGoalHistory = [
     objectives: [],
     statusChanges: [
       {
-        id: 10, goalId: 2, userId: null, oldStatus: null, newStatus: 'Not Started', createdAt: '2024-12-01T00:00:00.000Z', user: null,
+        id: 10, goalId: 2, userId: null, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2024-12-01T00:00:00.000Z', user: null,
       },
     ],
     goalCollaborators: [],
@@ -140,14 +140,14 @@ const mockGoalHistory = [
   {
     id: 4,
     name: 'Goal with Creator No User',
-    status: 'Not Started',
+    status: GOAL_STATUS.NOT_STARTED,
     createdAt: '2024-11-01T00:00:00.000Z',
     goalTemplate: null,
     grant: null,
     objectives: [],
     statusChanges: [
       {
-        id: 11, goalId: 4, userId: null, oldStatus: null, newStatus: 'Not Started', createdAt: '2024-11-01T00:00:00.000Z', user: null,
+        id: 11, goalId: 4, userId: null, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2024-11-01T00:00:00.000Z', user: null,
       },
     ],
     goalCollaborators: [
@@ -163,7 +163,7 @@ const mockGoalHistory = [
   {
     id: 5,
     name: 'Goal with Creator, No Status Changes',
-    status: 'Not Started',
+    status: GOAL_STATUS.NOT_STARTED,
     createdAt: '2024-10-01T00:00:00.000Z',
     goalTemplate: null,
     grant: null,
@@ -500,7 +500,7 @@ describe('ViewGoalDetails', () => {
     const monitoringGoal = {
       id: 6,
       name: 'G-6',
-      status: 'Not Started',
+      status: GOAL_STATUS.NOT_STARTED,
       standard: 'Monitoring',
     };
 
@@ -517,17 +517,17 @@ describe('ViewGoalDetails', () => {
     const goalWithMissingAdded = {
       id: 7,
       name: 'Goal missing initial Not Started',
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       createdAt: '2025-02-01T00:00:00.000Z',
       goalTemplate: null,
       grant: null,
       objectives: [],
       statusChanges: [
         {
-          id: 70, goalId: 7, userId: 10, oldStatus: 'Not Started', newStatus: 'In Progress', createdAt: '2025-02-03T00:00:00.000Z', user: { name: 'Jane Doe', roles: [{ name: 'Program Specialist' }] },
+          id: 70, goalId: 7, userId: 10, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-02-03T00:00:00.000Z', user: { name: 'Jane Doe', roles: [{ name: 'Program Specialist' }] },
         },
         {
-          id: 71, goalId: 7, userId: 11, oldStatus: 'In Progress', newStatus: 'Complete', createdAt: '2025-02-10T00:00:00.000Z', user: { name: 'Another PS', roles: [{ name: 'Program Specialist' }] },
+          id: 71, goalId: 7, userId: 11, oldStatus: GOAL_STATUS.IN_PROGRESS, newStatus: 'Complete', createdAt: '2025-02-10T00:00:00.000Z', user: { name: 'Another PS', roles: [{ name: 'Program Specialist' }] },
         },
       ],
       goalCollaborators: [
@@ -564,7 +564,7 @@ describe('ViewGoalDetails', () => {
     const goalWithEmptyResources = {
       id: 8,
       name: 'Goal with no resources',
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       createdAt: '2025-03-01T00:00:00.000Z',
       goalTemplate: null,
       grant: null,
@@ -572,7 +572,7 @@ describe('ViewGoalDetails', () => {
         {
           id: 801,
           title: 'Objective with no resources',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           activityReportObjectives: [
             {
               activityReport: { id: 801, displayId: 'R-801' },
@@ -609,7 +609,7 @@ describe('ViewGoalDetails', () => {
     const goalWithOnlyCourses = {
       id: 9,
       name: 'Goal with only courses',
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       createdAt: '2025-03-01T00:00:00.000Z',
       goalTemplate: null,
       grant: null,
@@ -617,7 +617,7 @@ describe('ViewGoalDetails', () => {
         {
           id: 901,
           title: 'Objective with only courses',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           activityReportObjectives: [
             {
               activityReport: { id: 901, displayId: 'R-901' },
@@ -661,7 +661,7 @@ describe('ViewGoalDetails', () => {
     const goalWithOnlyLinks = {
       id: 10,
       name: 'Goal with only links',
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       createdAt: '2025-03-01T00:00:00.000Z',
       goalTemplate: null,
       grant: null,
@@ -669,7 +669,7 @@ describe('ViewGoalDetails', () => {
         {
           id: 1001,
           title: 'Objective with only links',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           activityReportObjectives: [
             {
               activityReport: { id: 1001, displayId: 'R-1001' },
@@ -711,7 +711,7 @@ describe('ViewGoalDetails', () => {
     const goalWithOnlyFiles = {
       id: 11,
       name: 'Goal with only files',
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       createdAt: '2025-03-01T00:00:00.000Z',
       goalTemplate: null,
       grant: null,
@@ -719,7 +719,7 @@ describe('ViewGoalDetails', () => {
         {
           id: 1101,
           title: 'Objective with only files',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
           activityReportObjectives: [
             {
               activityReport: { id: 1101, displayId: 'R-1101' },

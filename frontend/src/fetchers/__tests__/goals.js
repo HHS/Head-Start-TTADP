@@ -1,4 +1,5 @@
 import fetchMock from 'fetch-mock';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import {
   updateGoalStatus,
   missingDataForActivityReport,
@@ -27,7 +28,7 @@ describe('goals fetcher', () => {
       goalNumber: 'G-4598',
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     }]);
-    await updateGoalStatus([4598], 'In Progress');
+    await updateGoalStatus([4598], GOAL_STATUS.IN_PROGRESS);
     expect(fetchMock.called()).toBeTruthy();
   });
 

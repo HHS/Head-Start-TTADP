@@ -60,6 +60,29 @@ const hoursOfTrainingUrl = '/api/widgets/trHoursOfTrainingByNationalCenter';
 const trReasonListUrl = '/api/widgets/trReasonList';
 const overviewUrl = '/api/widgets/trOverview';
 const sessionsByTopicUrl = '/api/widgets/trSessionsByTopic';
+const standardGoalsListUrl = join('api', 'widgets', 'standardGoalsList');
+const standardGoalsListResponse = [];
+const feedItemUrl = '/api/feeds/item?tag=ttahub-qa-dash-filters';
+const feedItemResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>QA Dashboard Filters</title>
+  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+  <subtitle>Confluence Syndication Feed</subtitle>
+  <id>https://acf-ohs.atlassian.net/wiki</id>
+  <entry>
+    <title>QA Dashboard Filters</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <category term="ttahub-qa-dash-filters" />
+    <author>
+      <name>Anonymous Hub User</name>
+    </author>
+    <updated>2023-03-22T21:03:16Z</updated>
+    <published>2023-03-22T21:03:16Z</published>
+    <summary type="html">&lt;div class="feed"&gt;&lt;p&gt;Filter information&lt;/p&gt;&lt;/div&gt;</summary>
+    <dc:creator>Anonymous Hub User</dc:creator>
+    <dc:date>2023-03-22T21:03:16Z</dc:date>
+  </entry>
+</feed>`;
 
 describe('Regional Dashboard page', () => {
   beforeEach(async () => {
@@ -68,6 +91,8 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(totalHrsAndRecipientGraphUrl, totalHoursResponse);
     fetchMock.get(topicFrequencyGraphUrl, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10`, activityReportsResponse);
+    fetchMock.get(standardGoalsListUrl, standardGoalsListResponse);
+    fetchMock.get(feedItemUrl, feedItemResponse);
 
     fetchMock.get(overviewUrl, {
       numReports: '0',
@@ -116,6 +141,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${allRegions}&${lastThirtyDaysParams}`, activityReportsResponse);
+    fetchMock.get(`${standardGoalsListUrl}?${allRegions}&${lastThirtyDaysParams}`, standardGoalsListResponse);
 
     // Only Region 1.
     fetchMock.get(`${overViewUrl}?${regionInParams}`, overViewResponse);
@@ -123,6 +149,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}`, activityReportsResponse);
+    fetchMock.get(`${standardGoalsListUrl}?${regionInParams}`, standardGoalsListResponse);
 
     renderDashboard(user);
     let heading = await screen.findByText(/regional tta activity dashboard/i);

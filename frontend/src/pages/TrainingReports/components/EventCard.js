@@ -284,6 +284,7 @@ function EventCard({
           <SessionCard
             key={`session_${uuidv4()}`}
             eventId={idForLink}
+            eventOrganizer={data.eventOrganizer}
             session={s}
             expanded={reportsExpanded}
             isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
@@ -296,6 +297,27 @@ function EventCard({
             isCollaborator={isCollaborator}
           />
         ))}
+
+        <span>
+          <strong>
+            Scenario:
+            {' '}
+            {event.data.mockLabel}
+          </strong>
+          {' '}
+          /          Owner:
+          {' '}
+          {event.ownerId}
+          {' '}
+          / POC:
+          {' '}
+          {event.pocIds}
+          {' '}
+          / Collab:
+          {' '}
+          {event.collaboratorIds}
+        </span>
+
       </article>
 
     </>

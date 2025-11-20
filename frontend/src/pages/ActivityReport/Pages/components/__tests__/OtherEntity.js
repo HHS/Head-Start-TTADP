@@ -8,6 +8,7 @@ import fetchMock from 'fetch-mock';
 import { FormProvider, useForm } from 'react-hook-form';
 import OtherEntity from '../OtherEntity';
 import UserContext from '../../../../../UserContext';
+import { OBJECTIVE_STATUS } from '../../../../../Constants';
 
 let setError;
 
@@ -40,7 +41,7 @@ const objectives = [
   {
     title: 'title',
     ttaProvided: 'tta',
-    status: 'In Progress',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
     topics: [],
     resources: [],
     objectiveCreatedHere: true,
@@ -48,7 +49,7 @@ const objectives = [
   {
     title: 'title two',
     ttaProvided: 'tta two',
-    status: 'In Progress',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
     topics: [],
     resources: [],
     objectiveCreatedHere: true,

@@ -5,6 +5,8 @@ import db, {
   Recipient,
   CommunicationLog,
   CommunicationLogRecipient,
+  CommunicationLogFile,
+  File,
 } from '../models';
 import {
   logById,
@@ -133,8 +135,26 @@ describe('communicationLog services', () => {
   });
 
   it('deletes logs', async () => {
+    const file = await File.create({
+      originalFileName: 'test.txt',
+      key: 'test-key',
+      status: 'APPROVED',
+      fileSize: 1,
+    });
+    await CommunicationLogFile.create({
+      communicationLogId: log.id,
+      fileId: file.id,
+    });
     const result = await deleteLog(log.id);
     expect(result).toEqual(1);
+    const remainingFiles = await CommunicationLogFile.count({
+      where: { communicationLogId: log.id },
+    });
+    expect(remainingFiles).toEqual(0);
+    const remainingRecipients = await CommunicationLogRecipient.count({
+      where: { communicationLogId: log.id },
+    });
+    expect(remainingRecipients).toEqual(0);
   });
 
   describe('orderLogsBy', () => {

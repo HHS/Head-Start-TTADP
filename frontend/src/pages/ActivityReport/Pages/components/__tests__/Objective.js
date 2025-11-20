@@ -11,10 +11,12 @@ import React from 'react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import Objective from '../Objective';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import UserContext from '../../../../../UserContext';
 import { mockRSSData } from '../../../../../testHelpers';
+import { OBJECTIVE_STATUS } from '../../../../../Constants';
 
 const history = createMemoryHistory();
 
@@ -24,7 +26,7 @@ const defaultObjective = {
   topics: [],
   title: 'This is an objective title',
   ttaProvided: '<p><ul><li>What</li></ul></p>',
-  status: 'Not started',
+  status: OBJECTIVE_STATUS.NOT_STARTED,
   ids: [1],
   objectiveCreatedHere: true,
 };
@@ -111,7 +113,7 @@ const RenderObjective = ({
                   topics: [],
                   resources: [],
                   files: [],
-                  status: 'Not Started',
+                  status: OBJECTIVE_STATUS.NOT_STARTED,
                   title: '',
                   courses: [],
                   supportType: '',
@@ -125,7 +127,7 @@ const RenderObjective = ({
                   topics: [],
                   resources: [],
                   files: [],
-                  status: 'Complete',
+                  status: OBJECTIVE_STATUS.COMPLETE,
                   title: 'Existing objective',
                   objectiveCreatedHere: false,
                 }]}
@@ -142,8 +144,8 @@ const RenderObjective = ({
               errors={{}}
               onObjectiveChange={jest.fn()}
               onSaveDraft={jest.fn()}
-              parentGoal={{ status: 'In Progress' }}
-              initialObjectiveStatus="Not Started"
+              parentGoal={{ status: GOAL_STATUS.IN_PROGRESS }}
+              initialObjectiveStatus={OBJECTIVE_STATUS.NOT_STARTED}
               reportId={98123}
             />
           </AppLoadingContext.Provider>
@@ -200,7 +202,7 @@ describe('Objective', () => {
     const citationsButton = screen.getByRole('button', { name: /Citation/i });
     expect(citationsButton).toBeVisible();
 
-    const citationSelect = await screen.findByLabelText(/citation/i);
+    const citationSelect = await screen.findByRole('combobox', { name: /citation/i });
     await selectEvent.select(citationSelect, [/Citation 1/i]);
 
     expect(await screen.findByText(/Citation 1/i)).toBeVisible();
@@ -266,7 +268,7 @@ describe('Objective', () => {
     render(<RenderObjective />);
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
     const select = await screen.findByLabelText(/objective status/i);
-    userEvent.selectOptions(select, 'Suspended');
+    userEvent.selectOptions(select, OBJECTIVE_STATUS.SUSPENDED);
 
     const recipientRequestReason = await screen.findByLabelText(/Recipient request/i);
     userEvent.click(recipientRequestReason);
@@ -285,16 +287,16 @@ describe('Objective', () => {
     render(<RenderObjective />);
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
     const select = await screen.findByLabelText(/objective status/i);
-    userEvent.selectOptions(select, 'In Progress');
+    userEvent.selectOptions(select, OBJECTIVE_STATUS.IN_PROGRESS);
 
-    expect(await screen.findByLabelText(/objective status/i)).toHaveValue('In Progress');
+    expect(await screen.findByLabelText(/objective status/i)).toHaveValue(OBJECTIVE_STATUS.IN_PROGRESS);
   });
 
   it('when changing status to suspended, you can cancel', async () => {
     render(<RenderObjective />);
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
     const select = await screen.findByLabelText(/objective status/i);
-    userEvent.selectOptions(select, 'Suspended');
+    userEvent.selectOptions(select, OBJECTIVE_STATUS.SUSPENDED);
 
     const recipientRequestReason = await screen.findByLabelText(/Recipient request/i);
     userEvent.click(recipientRequestReason);
@@ -354,7 +356,7 @@ describe('Objective', () => {
     const citationsButton = screen.getByRole('button', { name: /Citation/i });
     expect(citationsButton).toBeVisible();
 
-    const citationSelect = await screen.findByLabelText(/citation/i);
+    const citationSelect = await screen.findByRole('combobox', { name: /citation/i });
     await selectEvent.select(citationSelect, [/Citation 1/i]);
 
     expect(await screen.findByText(/Citation 1/i)).toBeVisible();

@@ -5,7 +5,12 @@ import db from '../models';
 import { communicationLogToCsvRecord } from '../lib/transform';
 import { SORT_DIR, COMMUNICATION_LOG_LIMIT_MAX } from '../constants';
 
-const { sequelize, CommunicationLog, CommunicationLogRecipient } = db;
+const {
+  sequelize,
+  CommunicationLog,
+  CommunicationLogRecipient,
+  CommunicationLogFile,
+} = db;
 
 interface CommLogData {
   id: number;
@@ -339,10 +344,28 @@ const logsByRecipientAndScopes = async (
   ],
 );
 
-const deleteLog = async (id: number) => CommunicationLog.destroy({
-  where: {
-    id,
-  },
+const deleteLog = async (id: number) => sequelize.transaction(async (transaction) => {
+  await CommunicationLogFile.destroy({
+    where: {
+      communicationLogId: id,
+    },
+    individualHooks: true,
+    transaction,
+  });
+
+  await CommunicationLogRecipient.destroy({
+    where: {
+      communicationLogId: id,
+    },
+    transaction,
+  });
+
+  return CommunicationLog.destroy({
+    where: {
+      id,
+    },
+    transaction,
+  });
 });
 
 const updateLog = async (id: number, logData: CommLogData) => {

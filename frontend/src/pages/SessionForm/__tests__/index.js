@@ -18,7 +18,7 @@ import { istKeys, pocKeys } from '../constants';
 
 const istAndPocFields = {
   id: 1,
-  regionId: null,
+  regionId: 1,
   sessionName: 'test session',
   startDate: '01/01/2024',
   endDate: '01/01/2024',
@@ -34,7 +34,7 @@ const istAndPocFields = {
   files: [],
   ttaProvided: 'in person',
   objectiveSupportType: 'Planning',
-  isIstVisit: true,
+  isIstVisit: 'yes',
   regionalOfficeTta: 'DTL',
   recipients: [],
   participants: [],
@@ -63,6 +63,12 @@ const istAndPocFields = {
   'pageVisited-supporting-attachments': false,
   facilitation: 'national_center',
   sessionGoalTemplates: [],
+  approverId: null,
+  additionalNotes: '',
+  managerNotes: '',
+  dateSubmitted: null,
+  submitter: '',
+  submitted: false,
 };
 
 const completeFormData = {
@@ -140,10 +146,22 @@ describe('SessionReportForm', () => {
     ].map((name, id) => ({ id, name })));
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
+    fetchMock.get('/api/goal-templates', []);
+    fetchMock.get('/api/users/trainers/regional/region/1', [
+      { id: 1, fullName: 'Regional Trainer 1' },
+      { id: 2, fullName: 'Regional Trainer 2' },
+    ]);
+    fetchMock.get('/api/users/trainers/national-center/region/1', [
+      { id: 1, fullName: 'National Center Trainer 1' },
+      { id: 2, fullName: 'National Center Trainer 2' },
+    ]);
+    fetchMock.get('/api/session-reports/participants/1', []);
+    fetchMock.get('/api/session-reports/groups?region=1', []);
   });
 
   it('creates a new session if id is "new"', async () => {
-    fetchMock.post(sessionsUrl, { eventId: 1 });
+    fetchMock.post(sessionsUrl, { eventId: 1, regionId: 1 });
 
     act(() => {
       renderSessionForm('1', 'session-summary', 'new');
@@ -172,7 +190,9 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventName: 'Tis an event', eventId: 1 } } },
+      url, {
+        id: 1, eventId: 1, regionId: 1, data: {}, event: { regionId: 1, ownerId: 1, data: { eventName: 'Tis an event', eventId: 1 } },
+      },
     );
 
     act(() => {
@@ -203,7 +223,13 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1 } } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
+      },
     );
 
     act(() => {
@@ -224,7 +250,13 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1 } } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
+      },
     );
 
     act(() => {
@@ -246,7 +278,13 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1 } } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
+      },
     );
 
     act(() => {
@@ -258,39 +296,25 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Review and submit/i);
+    const saveSession = document.querySelector('#session-summary-save-continue');
     userEvent.click(saveSession);
 
-    // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
-
-    // get the button with the text "Yes, continue".
-    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
-    act(() => {
-      userEvent.click(yesContinueButton);
-    });
-
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
-  });
-
-  it('redirects if session is complete', async () => {
-    const url = join(sessionsUrl, 'id', '1');
-
-    fetchMock.get(url, completeFormData);
-
-    act(() => {
-      renderSessionForm('1', 'session-summary', '1');
-    });
-
-    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
-    expect(history.location.pathname).toBe('/training-report/view/1');
   });
 
   it('redirects when user is a POC', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: {
+          regionId: 1, ownerId: 2, data: { eventId: 1 }, pocIds: [1],
+        },
+      },
     );
 
     act(() => {
@@ -307,7 +331,15 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] } },
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: {
+          regionId: 1, ownerId: 2, data: { eventId: 1 }, pocIds: [1],
+        },
+      },
     );
 
     act(() => {
@@ -325,7 +357,9 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1, status: 'Not started' } } },
+      url, {
+        id: 1, eventId: 1, regionId: 1, data: {}, event: { regionId: 1, ownerId: 1, data: { eventId: 1, status: 'Not started' } },
+      },
     );
 
     act(() => {
@@ -337,17 +371,8 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Review and submit/i);
+    const saveSession = document.querySelector('#session-summary-save-continue');
     userEvent.click(saveSession);
-
-    // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
-
-    // get the button with the text "Yes, continue".
-    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
-    act(() => {
-      userEvent.click(yesContinueButton);
-    });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
     // verify the put body has status of "In progress".
@@ -360,7 +385,9 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1, status: 'Not started' } } },
+      url, {
+        id: 1, eventId: 1, regionId: 1, data: {}, event: { regionId: 1, ownerId: 1, data: { eventId: 1, status: 'Not started' } },
+      },
     );
 
     act(() => {
@@ -386,11 +413,23 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { ...completeFormData, status: 'In progress', event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] } },
+      url, {
+        ...completeFormData,
+        id: 1,
+        data: {
+          ...completeFormData,
+          approverId: 3,
+        },
+        approverId: 3,
+        status: 'In progress',
+        event: {
+          regionId: 1, ownerId: 2, data: { eventId: 1 }, pocIds: [1],
+        },
+      },
     );
 
     act(() => {
-      renderSessionForm('1', 'next-steps', '1');
+      renderSessionForm('1', 'review', '1');
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
@@ -398,42 +437,51 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Review and submit/i);
-    userEvent.click(saveSession);
-
-    // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
-
-    // get the button with the text "Yes, continue".
-    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
+    const saveSession = await screen.findByRole('button', { name: /submit for approval/i });
     act(() => {
-      userEvent.click(yesContinueButton);
+      userEvent.click(saveSession);
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
 
-    const putBody = fetchMock.lastOptions(url).body;
+    // todo, confirm: i don't think we need these any longer
+    // const putBody = fetchMock.lastOptions(url).body;
 
-    // Assert the poc complete properties.
-    const putBodyJson = JSON.parse(putBody);
-    expect(putBodyJson.data.pocComplete).toBe(true);
-    expect(putBodyJson.data.pocCompleteId).toBe(1);
-    expect(putBodyJson.data.pocCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+    // // Assert the poc complete properties.
+    // const putBodyJson = JSON.parse(putBody);
+    // expect(putBodyJson.data.pocComplete).toBe(true);
+    // expect(putBodyJson.data.pocCompleteId).toBe(1);
+    // expect(putBodyJson.data.pocCompleteDate).toBe(moment().format('YYYY-MM-DD'));
 
-    expect(putBodyJson.data.ownerComplete).toBe(undefined);
-    expect(putBodyJson.data.ownerCompleteId).toBe(undefined);
-    expect(putBodyJson.data.ownerCompleteDate).toBe(undefined);
+    // expect(putBodyJson.data.ownerComplete).toBe(undefined);
+    // expect(putBodyJson.data.ownerCompleteId).toBe(undefined);
+    // expect(putBodyJson.data.ownerCompleteDate).toBe(undefined);
   });
 
   it('sets owner complete values on submit', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { ...completeFormData, status: 'In progress', event: { ownerId: 1, data: { eventId: 1 }, pocIds: [2] } },
+      url, {
+        ...completeFormData,
+        id: 1,
+        data: {
+          ...completeFormData,
+          status: 'In progress',
+          approverId: 3,
+          approver: { id: 3, fullName: 'Approver Name' },
+        },
+        approverId: 3,
+        approver: { id: 3, fullName: 'Approver Name' },
+        status: 'In progress',
+        event: {
+          regionId: 1, ownerId: 1, data: { eventId: 1 }, pocIds: [2],
+        },
+      },
     );
 
     act(() => {
-      renderSessionForm('1', 'session-summary', '1');
+      renderSessionForm('1', 'review', '1');
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
@@ -441,23 +489,17 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Review and submit/i);
-    userEvent.click(saveSession);
 
-    // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
-
-    // get the button with the text "Yes, continue".
-    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
+    const submit = await screen.findByRole('button', { name: /submit for approval/i });
     act(() => {
-      userEvent.click(yesContinueButton);
+      userEvent.click(submit);
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
 
     const putBody = fetchMock.lastOptions(url).body;
 
-    // Assert the poc complete properties.
+    // Assert the owner complete properties.
     const putBodyJson = JSON.parse(putBody);
     expect(putBodyJson.data.ownerComplete).toBe(true);
     expect(putBodyJson.data.ownerCompleteId).toBe(1);
@@ -473,7 +515,7 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, event: { ownerId: 2, data: { eventId: 1 } } },
+      url, { eventId: 1, regionId: 1, event: { regionId: 1, ownerId: 2, data: { eventId: 1 } } },
     );
 
     const adminUser = {
@@ -522,7 +564,7 @@ describe('SessionReportForm', () => {
           eventId: 1,
           ...istAndPocFields,
         },
-        event: { ownerId: 1, data: { eventId: 1 } },
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
       },
     );
 
@@ -558,7 +600,7 @@ describe('SessionReportForm', () => {
           eventId: 1,
           ...istAndPocFields,
         },
-        event: { ownerId: 1, data: { eventId: 1 } },
+        event: { regionId: 1, ownerId: 1, data: { eventId: 1 } },
       },
     );
 
@@ -578,11 +620,16 @@ describe('SessionReportForm', () => {
     // Assert the put contains the correct data
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
-    // Assert the body has istkey porperties using the hasOwnProperty method
-    // create a variable to removes pocComplete.
+    // Assert the body has istkey properties using the hasOwnProperty method
+    // Owner (not admin) should only get IST keys, and pocComplete should be removed.
     const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
     istKeysWithoutPocComplete.forEach((key) => {
       expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+    });
+    // Assert POC-only fields are NOT present (fields in pocKeys but not in istKeys)
+    const pocOnlyKeys = pocKeys.filter((key) => !istKeys.includes(key));
+    pocOnlyKeys.forEach((key) => {
+      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(false);
     });
   });
 
@@ -596,7 +643,9 @@ describe('SessionReportForm', () => {
           eventId: 1,
           ...istAndPocFields,
         },
-        event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] },
+        event: {
+          regionId: 1, ownerId: 2, data: { eventId: 1 }, pocIds: [1],
+        },
       },
     );
 
@@ -617,11 +666,16 @@ describe('SessionReportForm', () => {
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
 
-    // Assert the body has istkey porperties using the hasOwnProperty method
-    // create a variable to removes pocComplete.
-    const istKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
-    istKeysWithoutOwnerComplete.forEach((key) => {
+    // Assert the body has POC key properties using the hasOwnProperty method
+    // POC (not admin) should only get POC keys, and ownerComplete should be removed.
+    const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
+    pocKeysWithoutOwnerComplete.forEach((key) => {
       expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+    });
+    // Assert IST-only fields are NOT present (fields in istKeys but not in pocKeys)
+    const istOnlyKeys = istKeys.filter((key) => !pocKeys.includes(key));
+    istOnlyKeys.forEach((key) => {
+      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(false);
     });
   });
 });

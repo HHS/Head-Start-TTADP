@@ -2,6 +2,7 @@ import {
   validateListOfResources,
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
+import { NOOP } from '../../../../Constants';
 
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
 export const GOAL_MISSING_OBJECTIVE = 'Select a TTA objective';
@@ -112,8 +113,8 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
   return false;
 };
 
-export const validateGoals = (goals, setError = () => {}) => {
-  if (goals.length < 1) {
+export const validateGoals = (goals, setError = NOOP) => {
+  if (!goals || goals.length < 1) {
     return GOALS_EMPTY;
   }
 
