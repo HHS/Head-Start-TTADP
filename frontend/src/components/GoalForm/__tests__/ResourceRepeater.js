@@ -104,6 +104,8 @@ describe('ResourceRepeater', () => {
     });
 
     expect(setResources).not.toHaveBeenCalled();
+    const noResourcesError = screen.getByText('A resource must be entered before adding another.');
+    expect(noResourcesError).toBeVisible();
     const urlInputs = document.querySelectorAll('input[type="url"]');
     expect(urlInputs.length).toBe(1);
   });
