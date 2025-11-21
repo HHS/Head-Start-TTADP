@@ -105,7 +105,7 @@ const maintainMonitoringData = async () => {
       ON zid = z.id
     WHERE t.id = z.id
       AND zid IS NULL
-      AND NULLIF(t.new_row_data - ''updatedAt'' - ''sourceUpdatedAt'',''{}'') IS NULL
+      AND NULLIF(t.new_row_data - ''updatedAt'' - ''sourceUpdatedAt'' - ''createTime'' - ''updateTime'',''{}'') IS NULL
     RETURNING t.id tid
     )
     SELECT * FROM del
