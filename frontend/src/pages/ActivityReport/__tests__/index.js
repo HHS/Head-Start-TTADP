@@ -40,6 +40,11 @@ describe('ActivityReport', () => {
   });
 
   beforeEach(() => {
+    // Reset history to prevent state leakage between tests
+    history.entries = [];
+    history.index = -1;
+    history.push('/');
+
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
     fetchMock.get('/api/activity-reports/1/activity-recipients', recipients);
     fetchMock.get('/api/activity-reports/groups?region=1', [{
@@ -232,7 +237,7 @@ describe('ActivityReport', () => {
       act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       alerts = await screen.findAllByTestId('alert');
-      expect(alerts.length).toBe(2);
+      expect(alerts.length).toBe(3);
       expect(alerts[0]).toHaveClass('alert-fade');
       expect(alerts[0]).toHaveTextContent('Autosaved on');
     });
@@ -414,6 +419,7 @@ describe('ActivityReport', () => {
           ],
           objectivesWithoutGoals: [],
           goalsAndObjectives: mockGoalsAndObjectives(false),
+          goalForEditing: null,
         });
 
         act(() => renderActivityReport(1, 'goals-objectives', false, 1));
@@ -519,9 +525,7 @@ describe('ActivityReport', () => {
       };
 
       fetchMock.get('/api/activity-reports/1', d);
-      act(() => {
-        renderActivityReport('1', 'review', true, 1);
-      });
+      renderActivityReport('1', 'review', true, 1);
 
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/submitted/1'));
     });
@@ -534,11 +538,10 @@ describe('ActivityReport', () => {
       };
 
       fetchMock.get('/api/activity-reports/1', d);
-      act(() => {
-        renderActivityReport('1', 'review', true, 1);
-      });
+      renderActivityReport('1', 'review', true, 1);
 
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/view/1'));
+      await waitFor(() => expect(history.location.pathname)
+        .toEqual('/activity-reports/view/1'));
     });
   });
 

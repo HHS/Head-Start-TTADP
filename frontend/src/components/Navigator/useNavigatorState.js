@@ -37,8 +37,14 @@ export default function useNavigatorState({
     const pageCompleteFunc = goalsAndObjectivesPage.isPageComplete;
     const isGoalsObjectivesPageComplete = pageCompleteFunc(getValues(), formState);
     const isCurrentPageGoalsObjectives = page.position === GOALS_AND_OBJECTIVES_POSITION;
+    const goalForEditing = getValues('goalForEditing');
 
-    if (isGoalsObjectivesPageComplete) {
+    // If a goal is being edited, the page CANNOT be complete regardless of current page
+    // This ensures the page state shows "In Progress" even
+    // after navigating away from goals-objectives
+    if (goalForEditing) {
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
+    } else if (isGoalsObjectivesPageComplete) {
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = COMPLETE;
     } else if (isCurrentPageGoalsObjectives && currentGoalsObjectivesPageState === COMPLETE) {
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
@@ -61,12 +67,17 @@ export default function useNavigatorState({
   const updateGoalsObjectivesPageState = useCallback((savedData) => {
     if (!goalsAndObjectivesPage || !savedData) return;
 
+    // If a goal is being edited, the page is always IN_PROGRESS regardless of validation
+    const hasGoalBeingEdited = savedData && savedData.goalForEditing;
+
     // Re-validate the goals and objectives page using saved data
     const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
       .isPageComplete(savedData, formState);
 
     // Desired state for the goals/objectives page
-    const desiredState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
+    // If a goal is being edited, force IN_PROGRESS state
+    const completionState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
+    const desiredState = hasGoalBeingEdited ? IN_PROGRESS : completionState;
 
     // Update RHF's pageState
     const mergedPageState = {

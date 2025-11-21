@@ -27,7 +27,13 @@ import {
   LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
-import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
+import {
+  convertGoalsToFormData,
+  convertReportToFormData,
+  findWhatsChanged,
+  packageGoals,
+  extractGoalIdsInOrder,
+} from './formDataHelpers';
 import {
   submitReport,
   saveReport,
@@ -503,8 +509,59 @@ function ActivityReport({
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
 
+        // Format the goals and objectives appropriately, as well as divide them
+        // by which one is open and which one is not
+        const { goalForEditing, goals } = convertGoalsToFormData(
+          savedReport.goalsAndObjectives,
+          savedReport.activityRecipients.map((r) => r.activityRecipientId),
+          savedReport.calculatedStatus,
+          savedReport.goalOrder,
+        );
+
+        // GOAL ORDER RECALCULATION: Ensure goalOrder is correct after backend returns goals
+        //
+        // WHY NEEDED: After saving to the backend, we need to recalculate goalOrder to ensure
+        // it matches the current state of goals (including any goals being edited in place).
+        //
+        // HOW IT WORKS:
+        // 1. Use packageGoals to reassemble all goals in their correct order
+        //    (including goalForEditing at its originalIndex position)
+        // 2. Calculate goalOrder from this correctly-ordered array
+        // 3. If goalOrder differs from what the backend has, save it immediately
+        //
+        // EXAMPLE: If user is editing goal 1 at position 0, and backend returns goals ordered
+        // by createdAt, we need to calculate the correct order [1, 2, 3] and save it.
+        const grantIds = savedReport.activityRecipients.map((r) => r.activityRecipientId);
+        const allGoalsInOrder = packageGoals(
+          goals,
+          goalForEditing,
+          grantIds,
+          goalForEditing?.prompts || [],
+          goalForEditing?.originalIndex,
+        );
+        const goalOrder = extractGoalIdsInOrder(allGoalsInOrder);
+
+        // If goalOrder changed from what backend has, persist the correct order immediately
+        if (JSON.stringify(goalOrder) !== JSON.stringify(savedReport.goalOrder)) {
+          await saveReport(
+            reportId.current,
+            { goalOrder },
+            {},
+          );
+        }
+
+        const reportData = {
+          ...savedReport,
+          goalForEditing,
+          goals,
+          goalOrder,
+        };
+
+        // Update ref with latest saved data
+        lastSavedDataRef.current = reportData;
+
         // Return saved data to Navigator so it can update RHF
-        return savedReport;
+        return reportData;
       }
       const updatedReport = await formatReportWithSaveBeforeConversion(
         data,

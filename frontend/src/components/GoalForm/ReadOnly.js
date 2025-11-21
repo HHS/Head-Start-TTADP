@@ -12,7 +12,7 @@ export default function ReadOnly({
   return (
     <>
       { createdGoals.map((goal, index) => (
-        <div key={`read-only-goal-${goal.goalTemplateId}`}>
+        <div key={`read-only-goal-${goal.id}`}>
           <ReadOnlyGoal
             onEdit={onEdit}
             onRemove={onRemove}
