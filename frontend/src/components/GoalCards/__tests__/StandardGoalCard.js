@@ -483,7 +483,10 @@ describe('StandardGoalCard', () => {
     history.push = jest.fn();
     userEvent.click(deleteButton);
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-    expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/rttapa', { message: 'Goal deleted successfully' });
+    expect(history.push).toHaveBeenCalledWith(
+      '/recipient-tta-records/1/region/1/rttapa',
+      { message: 'Goal deleted successfully', refreshRecipient: true },
+    );
     expect(document.querySelector('.smart-hub-border-base-error')).toBeNull();
   });
 
