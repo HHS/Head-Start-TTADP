@@ -22,6 +22,7 @@ import MultiSelect from '../../MultiSelect';
 import { useLogContext } from '../components/LogContext';
 import CommunicationRecipients from '../components/CommunicationRecipients';
 import HookFormRichEditor from '../../HookFormRichEditor';
+import FormItemWithDrawerTriggerLabel from '../../FormItemWithDrawerTriggerLabel';
 
 const fields = Object.keys(defaultLogValues);
 
@@ -158,21 +159,11 @@ const Log = ({
         </FormItem>
       </div>
       <div className="margin-top-2">
-        <FormItem
-          label={(
-            <>
-              Purpose of communication
-              {' '}
-              <button
-                type="button"
-                className="usa-button usa-button--unstyled margin-left-1"
-                ref={purposeDrawerRef}
-              >
-                Get help choosing a purpose
-              </button>
-            </>
-          )}
+        <FormItemWithDrawerTriggerLabel
+          label="Purpose of communication"
           name="purpose"
+          drawerTriggerRef={purposeDrawerRef}
+          drawerTriggerLabel="Get help choosing a purpose"
         >
           <Dropdown
             required
@@ -184,7 +175,7 @@ const Log = ({
               <option key={`purposeoptions${option}`}>{option}</option>
             ))}
           </Dropdown>
-        </FormItem>
+        </FormItemWithDrawerTriggerLabel>
         <Drawer
           triggerRef={purposeDrawerRef}
           stickyHeader
@@ -221,21 +212,11 @@ const Log = ({
         </FormItem>
       </div>
       <div className="margin-top-2">
-        <FormItem
-          label={(
-            <>
-              Result
-              {' '}
-              <button
-                type="button"
-                className="usa-button usa-button--unstyled margin-left-1"
-                ref={resultDrawerRef}
-              >
-                Get help choosing a result
-              </button>
-            </>
-          )}
+        <FormItemWithDrawerTriggerLabel
+          label="Result"
           name="result"
+          drawerTriggerRef={resultDrawerRef}
+          drawerTriggerLabel="Get help choosing a result"
           required={false}
         >
           <Dropdown
@@ -249,7 +230,7 @@ const Log = ({
               <option key={`resultOptions${option}`}>{option}</option>
             ))}
           </Dropdown>
-        </FormItem>
+        </FormItemWithDrawerTriggerLabel>
         <Drawer
           triggerRef={resultDrawerRef}
           stickyHeader

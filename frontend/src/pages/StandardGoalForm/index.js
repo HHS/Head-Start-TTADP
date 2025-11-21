@@ -98,7 +98,10 @@ export default function StandardGoalForm({ recipient }) {
         ...mapObjectivesAndRootCauses(data),
       });
 
-      history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`);
+      history.push(
+        `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`,
+        { refreshRecipient: true },
+      );
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);
