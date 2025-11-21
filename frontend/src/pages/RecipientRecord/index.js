@@ -24,10 +24,12 @@ import { GrantDataProvider } from './pages/GrantDataContext';
 import ViewGoalDetails from './pages/ViewStandardGoals';
 import Monitoring from './pages/Monitoring';
 import AppLoadingContext from '../../AppLoadingContext';
+import UserContext from '../../UserContext';
 import StandardGoalForm from '../StandardGoalForm';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
 import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
 import NewReportButton from '../../components/NewReportButton';
+import { canCreateCommunicationLog } from '../../permissions';
 
 export function PageWithHeading({
   children,
@@ -101,6 +103,9 @@ export default function RecipientRecord({ match, hasAlerts }) {
   const shouldRefreshRecipient = locationState?.refreshRecipient;
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { user } = useContext(UserContext);
+  const canCreateCommLog = canCreateCommunicationLog(user, parseInt(regionId, DECIMAL_BASE));
+
   const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
@@ -321,11 +326,13 @@ export default function RecipientRecord({ match, hasAlerts }) {
               <RecipientTabs region={regionId} recipientId={recipientId} />
               <div className="recipient-comm-log-header">
                 <h1 className="page-heading">{recipientNameWithRegion}</h1>
-                <div>
-                  <NewReportButton to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}>
-                    Add communication
-                  </NewReportButton>
-                </div>
+                {canCreateCommLog && (
+                  <div>
+                    <NewReportButton to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}>
+                      Add communication
+                    </NewReportButton>
+                  </div>
+                )}
               </div>
               <CommunicationLog
                 regionId={regionId}
