@@ -65,7 +65,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "20.19.3"
+    "node": "22.20.0"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true craco start --verbose",
