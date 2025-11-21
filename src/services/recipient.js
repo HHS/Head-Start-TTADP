@@ -265,26 +265,40 @@ export async function missingStandardGoals(recipient, grantScopes) {
 
   // Get all the grantIds from the recipient object.
   const grantIds = recipient.grants.filter((g) => g.status === 'Active').map((g) => g.id);
-  const distinctTemplateNames = new Set(goalTemplatesWithGoals.map((g) => g.templateName));
+  if (!grantIds.length) {
+    return [];
+  }
+
+  const templatesByName = goalTemplatesWithGoals.reduce((acc, template) => {
+    if (!acc[template.templateName]) {
+      acc[template.templateName] = [];
+    }
+
+    acc[template.templateName].push(template);
+    return acc;
+  }, {});
 
   // Make sure every distinct template name and grantId has a goal, return the missing ones.
   // Step 1: Initialize the result array
   const missingGoals = [];
 
   // Step 2: For each distinct template name
-  distinctTemplateNames.forEach((templateName) => {
-    // Step 3: Find the template object that matches this name
-    const template = goalTemplatesWithGoals.find((g) => g.templateName === templateName);
+  Object.entries(templatesByName).forEach(([templateName, templates]) => {
+    // Track all grant ids that already have this template name.
+    const grantIdsWithTemplate = new Set();
+    templates.forEach((template) => {
+      template.goals.forEach((goal) => {
+        if (goal.grantId) {
+          grantIdsWithTemplate.add(goal.grantId);
+        }
+      });
+    });
 
-    // Step 4: For each grant ID
+    // Step 4: For each grant ID make sure this template exists on that grant.
     grantIds.forEach((grantId) => {
-      // Step 5: Check if this combination of template and grant already has a goal
-      const hasGoal = template.goals.some((gl) => gl.grantId === grantId);
-
-      // Step 6: If no goal exists for this template and grant, add it to missing goals
-      if (!hasGoal) {
+      if (!grantIdsWithTemplate.has(grantId)) {
         missingGoals.push({
-          goalTemplateId: template?.id,
+          goalTemplateId: templates[0]?.id,
           templateName,
           grantId,
         });
