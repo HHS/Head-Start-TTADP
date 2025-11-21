@@ -113,7 +113,7 @@ function FormItem({
   const LabelType = fieldSetWrapper ? FieldSetWrapper : LabelWrapper;
 
   return (
-    <FormGroup className={formGroupClassName} error={fieldErrors}>
+    <FormGroup className={`tttahub-form-item ${formGroupClassName}`} error={fieldErrors}>
       {
         !label && (customLabel)
        }

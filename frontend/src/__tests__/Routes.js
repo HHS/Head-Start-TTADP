@@ -11,7 +11,6 @@ import MyGroupsProvider from '../components/MyGroupsProvider';
 
 const defaultFlags = [
   'quality_assurance_dashboard',
-  'regional_goal_dashboard',
   'resources_dashboard',
   'view_courses',
   'communication_log',
@@ -27,7 +26,6 @@ jest.mock('../pages/LegacyReport', () => () => <div>Legacy Report View</div>);
 jest.mock('../pages/RecipientRecord', () => () => <div>Recipient TTA Record</div>);
 jest.mock('../pages/RecipientSearch', () => () => <div>Recipient Search Page</div>);
 jest.mock('../pages/RegionalDashboard', () => () => <div>Regional Dashboard Page</div>);
-jest.mock('../pages/RegionalGoalDashboard', () => () => <div>Regional Goal Dashboard Page</div>);
 jest.mock('../pages/ResourcesDashboard', () => () => <div>Resources Dashboard Page</div>);
 jest.mock('../pages/CourseDashboard', () => () => <div>Course Dashboard Page</div>);
 jest.mock('../pages/TrainingReports', () => () => <div>Training Reports Page</div>);
@@ -64,9 +62,6 @@ jest.mock('../pages/Unauthenticated', () => () => <div>Unauthenticated Page</div
 jest.mock('../components/RequestPermissions', () => () => <div>Request Permissions Page</div>);
 
 function MockFeatureFlag({ flag, children, renderNotFound }) {
-  if (flag === 'regional_goal_dashboard' && !window.test_regional_goal_dashboard_flag) {
-    return renderNotFound ? <div>Regional Goal Dashboard Flag Not Found</div> : null;
-  }
   if (flag === 'quality_assurance_dashboard' && !window.test_quality_assurance_dashboard_flag) {
     return renderNotFound ? <div>QA Dashboard Flag Not Found</div> : null;
   }
@@ -110,7 +105,6 @@ const RenderRoutes = async (
 
   const user = { ...defaultUser, ...userOverrides };
 
-  window.test_regional_goal_dashboard_flag = user.flags.includes('regional_goal_dashboard');
   window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
 
   const defaultProps = {
@@ -173,7 +167,6 @@ describe('Routes', () => {
 
   afterEach(() => {
     fetchMock.restore();
-    delete window.test_regional_goal_dashboard_flag;
     delete window.test_quality_assurance_dashboard_flag;
   });
 
@@ -222,11 +215,6 @@ describe('Routes', () => {
   it('renders the Regional Dashboard page for "/dashboards/regional-dashboard/training-reports"', async () => {
     await RenderRoutes('/dashboards/regional-dashboard/training-reports');
     expect(await screen.findByText('Regional Dashboard Page')).toBeInTheDocument();
-  });
-
-  it('renders the Regional Goal Dashboard page for "/regional-goal-dashboard"', async () => {
-    await RenderRoutes('/regional-goal-dashboard');
-    expect(await screen.findByText('Regional Goal Dashboard Page')).toBeInTheDocument();
   });
 
   it('renders the Resources Dashboard page for "/dashboards/resources-dashboard"', async () => {
@@ -335,12 +323,6 @@ describe('Routes', () => {
   });
 
   // --- feature flag scenarios ---
-
-  it('does not render Regional Goal Dashboard if flag is off', async () => {
-    const flagsWithoutRegionalGoal = defaultFlags.filter((f) => f !== 'regional_goal_dashboard');
-    await RenderRoutes('/regional-goal-dashboard', true, { flags: flagsWithoutRegionalGoal });
-    expect(await screen.findByText('Regional Goal Dashboard Flag Not Found')).toBeInTheDocument();
-  });
 
   it('does not render QA Dashboard if flag is off', async () => {
     const flagsWithoutQA = defaultFlags.filter((f) => f !== 'quality_assurance_dashboard');

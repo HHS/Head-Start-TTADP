@@ -539,4 +539,57 @@ describe('RecipientReviewSection', () => {
 
     expect(await screen.findByText('Only Snapshot')).toBeInTheDocument();
   });
+
+  it('displays support type when present on objective', async () => {
+    const goalsWithSupportType = [{
+      id: 40,
+      name: 'Goal with Support Type',
+      goalNumbers: ['G-40'],
+      objectives: [{
+        id: 400,
+        title: 'Objective with Support Type',
+        ttaProvided: '<p>TTA Provided</p>',
+        supportType: 'Planning',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        citations: [],
+      }],
+    }];
+
+    RenderReviewSection(goalsWithSupportType);
+
+    expect(await screen.findByText('Objective with Support Type')).toBeInTheDocument();
+    expect(screen.getByText('Planning')).toBeInTheDocument();
+  });
+
+  it('displays "None provided" when support type is missing', async () => {
+    const goalsWithoutSupportType = [{
+      id: 50,
+      name: 'Goal without Support Type',
+      goalNumbers: ['G-50'],
+      objectives: [{
+        id: 500,
+        title: 'Objective without Support Type',
+        ttaProvided: '<p>TTA Provided</p>',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        citations: [],
+      }],
+    }];
+
+    RenderReviewSection(goalsWithoutSupportType);
+
+    expect(await screen.findByText('Objective without Support Type')).toBeInTheDocument();
+
+    // Find all "None provided" elements and verify at least one exists
+    // (there will be multiple for empty fields like topics, resources, etc.)
+    const noneProvidedElements = screen.getAllByText('None provided');
+    expect(noneProvidedElements.length).toBeGreaterThan(0);
+  });
 });
