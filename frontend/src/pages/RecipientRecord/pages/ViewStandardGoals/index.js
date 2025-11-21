@@ -22,7 +22,7 @@ import { Accordion } from '../../../../components/Accordion';
 import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
 import './index.scss';
 
-const GoalUserIdentifier = ({ goal }) => {
+export const GoalUserIdentifier = ({ goal }) => {
   if (goal.standard === 'Monitoring') {
     return ' by OHS';
   }
@@ -36,7 +36,7 @@ const GoalUserIdentifier = ({ goal }) => {
     : '';
 };
 
-const StatusActionTag = ({
+export const StatusActionTag = ({
   update, goalHistory, currentGoalIndex,
 }) => {
   const isReopened = (update.reason === 'Goal created' || update.reason === 'Active monitoring citations')
@@ -77,6 +77,29 @@ StatusActionTag.propTypes = {
     status: PropTypes.string,
   })).isRequired,
   currentGoalIndex: PropTypes.number.isRequired,
+};
+
+export const userDisplayFromStatus = (goal, update) => {
+  if (update && update.synthetic) {
+    return <GoalUserIdentifier goal={goal} />;
+  }
+
+  if (goal.standard === 'Monitoring'
+    && update.newStatus === GOAL_STATUS.NOT_STARTED
+    && update.reason === 'Active monitoring citations') {
+    return ' by OHS';
+  }
+
+  if (goal.standard === 'Monitoring'
+    && update.newStatus === 'Closed'
+    && update.reason === 'No active monitoring citations') {
+    return ' by OHS';
+  }
+
+  if (update.user) {
+    return ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}`;
+  }
+  return '';
 };
 
 export default function ViewGoalDetails({
@@ -227,24 +250,7 @@ export default function ViewGoalDetails({
 
     const objectives = goal.objectives || [];
 
-    const getUserByFromStatus = (update) => {
-      // For synthetic "Added" updates, fall back to goal-level identifier.
-      if (update && update.synthetic) {
-        return <GoalUserIdentifier goal={goal} />;
-      }
-      if (goal.standard === 'Monitoring' && update.newStatus === GOAL_STATUS.NOT_STARTED && update.reason === 'Active monitoring citations') {
-        return ' by OHS';
-      }
-
-      if (goal.standard === 'Monitoring' && update.newStatus === 'Closed' && update.reason === 'No active monitoring citations') {
-        return ' by OHS';
-      }
-
-      if (update.user) {
-        return ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}`;
-      }
-      return '';
-    };
+    const getUserByFromStatus = (update) => userDisplayFromStatus(goal, update);
     return {
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
