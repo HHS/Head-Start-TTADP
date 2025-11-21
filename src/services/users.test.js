@@ -15,6 +15,7 @@ import {
   getTrainingReportUsersByRegion,
   getUserNamesByIds,
   findAllUsersWithScope,
+  usersByRoles,
 } from './users';
 
 import SCOPES from '../middleware/scopeConstants';
@@ -514,6 +515,170 @@ describe('Users DB service', () => {
       expect(creators.includes(userIds[2])).toBeTruthy();
       expect(creators.includes(userIds[5])).toBeTruthy();
       expect(creators.length).toBe(2);
+    });
+  });
+
+  describe('usersByRoles', () => {
+    let user1;
+    let user2;
+    let user3;
+    let user4;
+    let role1;
+    let role2;
+
+    beforeAll(async () => {
+      // Create roles with high IDs to avoid conflicts
+      role1 = await Role.create({
+        id: faker.datatype.number({ min: 40000 }),
+        name: 'Wiggler',
+        fullName: 'Wiggler',
+        isSpecialist: true,
+      });
+
+      role2 = await Role.create({
+        id: faker.datatype.number({ min: 40000 }),
+        name: 'Waggler',
+        fullName: 'Waggler',
+        isSpecialist: true,
+      });
+
+      // User 1 - Health Specialist in region 1
+      user1 = await User.create({
+        id: faker.datatype.number({ min: 30000 }),
+        name: 'user1',
+        email: 'user1@test.gov',
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.UserRole.create({
+        userId: user1.id,
+        roleId: role1.id,
+      });
+
+      // User 2 - Health Specialist in region 2
+      user2 = await User.create({
+        id: faker.datatype.number({ min: 30000 }),
+        name: 'user2',
+        email: 'user2@test.gov',
+        homeRegionId: 2,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.UserRole.create({
+        userId: user2.id,
+        roleId: role1.id,
+      });
+
+      // User 3 - Early Childhood Specialist in region 1
+      user3 = await User.create({
+        id: faker.datatype.number({ min: 30000 }),
+        name: 'user3',
+        email: 'user3@test.gov',
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.UserRole.create({
+        userId: user3.id,
+        roleId: role2.id,
+      });
+
+      // User 4 - Early Childhood Specialist in region 2
+      user4 = await User.create({
+        id: faker.datatype.number({ min: 30000 }),
+        name: 'user4',
+        email: 'user4@test.gov',
+        homeRegionId: 2,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.UserRole.create({
+        userId: user4.id,
+        roleId: role2.id,
+      });
+    });
+
+    afterAll(async () => {
+      await db.UserRole.destroy({
+        where: {
+          userId: [user1.id, user2.id, user3.id, user4.id],
+        },
+      });
+
+      await User.destroy({
+        where: {
+          id: [user1.id, user2.id, user3.id, user4.id],
+        },
+      });
+
+      await Role.destroy({
+        where: {
+          id: [role1.id, role2.id],
+        },
+      });
+    });
+
+    it('returns users by role without region filter', async () => {
+      const results = await usersByRoles(['Wiggler']);
+      const resultIds = results.map((u) => u.id);
+
+      expect(resultIds).toContain(user1.id);
+      expect(resultIds).toContain(user2.id);
+      expect(resultIds).not.toContain(user3.id);
+      expect(resultIds).not.toContain(user4.id);
+      expect(results.length).toBe(2);
+    });
+
+    it('returns users by role with region filter', async () => {
+      const results = await usersByRoles(['Wiggler'], 1);
+      const resultIds = results.map((u) => u.id);
+
+      expect(resultIds).toContain(user1.id);
+      expect(resultIds).not.toContain(user2.id);
+      expect(resultIds).not.toContain(user3.id);
+      expect(resultIds).not.toContain(user4.id);
+      expect(results.length).toBe(1);
+    });
+
+    it('returns users by multiple roles', async () => {
+      const results = await usersByRoles(['Wiggler', 'Waggler']);
+      const resultIds = results.map((u) => u.id);
+
+      expect(resultIds).toContain(user1.id);
+      expect(resultIds).toContain(user2.id);
+      expect(resultIds).toContain(user3.id);
+      expect(resultIds).toContain(user4.id);
+      expect(results.length).toBe(4);
+    });
+
+    it('returns users by multiple roles with region filter', async () => {
+      const results = await usersByRoles(['Wiggler', 'Waggler'], 1);
+      const resultIds = results.map((u) => u.id);
+
+      expect(resultIds).toContain(user1.id);
+      expect(resultIds).not.toContain(user2.id);
+      expect(resultIds).toContain(user3.id);
+      expect(resultIds).not.toContain(user4.id);
+      expect(results.length).toBe(2);
+    });
+
+    it('returns empty array when no users match role', async () => {
+      const results = await usersByRoles(['Nonexistent Role']);
+      expect(results.length).toBe(0);
+    });
+
+    it('returns empty array when no users match role in region', async () => {
+      const results = await usersByRoles(['Wiggler'], 999);
+      expect(results.length).toBe(0);
     });
   });
 });

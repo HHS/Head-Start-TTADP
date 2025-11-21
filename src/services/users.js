@@ -31,6 +31,49 @@ export const userAttributes = [
   'fullName',
 ];
 
+export async function usersByRoles(roles = [], regionId = null) {
+  let permissionsWhere = {};
+
+  if (permissionsWhere) {
+    permissionsWhere = {
+      regionId,
+    };
+  }
+
+  return User.findAll({
+    where: {
+      ...(regionId ? {
+        homeRegionId: regionId,
+      } : {}),
+    },
+    attributes: [
+      'id',
+      'name',
+      'fullName',
+      'email',
+      'homeRegionId',
+    ],
+    include: [
+      {
+        attibutes: [
+          'id',
+          'name',
+          'fullName',
+        ],
+        model: Role,
+        as: 'roles',
+        required: true,
+        where: {
+          name: roles,
+        },
+      },
+    ],
+    order: [
+      [sequelize.fn('CONCAT', sequelize.col('User."name"'), sequelize.col('User."email"')), 'ASC'],
+    ],
+  });
+}
+
 export async function userById(userId, onlyActiveUsers = false) {
   let permissionInclude = {
     model: Permission,

@@ -11,6 +11,7 @@ import { auditLogger } from './logger';
 import { generateRedisConfig } from './lib/queue';
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
+Error.stackTraceLimit = 50;
 
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {

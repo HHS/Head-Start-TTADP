@@ -134,7 +134,6 @@ describe('eventSummary', () => {
 
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
       await selectEvent.select(screen.getByLabelText(/target populations/i), ['Expectant families']);
-      await selectEvent.select(screen.getByLabelText(/reasons/i), ['Complaint']);
       await selectEvent.select(screen.getByLabelText(/event organizer/i), 'IST TTA/Visit');
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
@@ -179,9 +178,6 @@ describe('eventSummary', () => {
 
       // Event Training Type.
       expect(await screen.findByRole('combobox', { name: /training type/i })).toBeInTheDocument();
-
-      // Event Reason.
-      expect(await screen.findByRole('combobox', { name: /reasons required complaint/i })).toBeInTheDocument();
 
       // Event Target Population.
       expect(await screen.findByRole('combobox', { name: /target populations addressed required target population1 target population2/i })).toBeInTheDocument();

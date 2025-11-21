@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { SUPPORT_TYPES } from '@ttahub/common';
@@ -19,6 +20,7 @@ import NetworkContext from '../../../../NetworkContext';
 import { NOT_STARTED } from '../../../../components/Navigator/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { mockRSSData } from '../../../../testHelpers';
+import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 
 const mockData = (files) => ({
   dataTransfer: {
@@ -77,9 +79,13 @@ describe('sessionSummary', () => {
       id: 1,
       ownerId: null,
       eventId: 'sdfgsdfg',
+      regionId: 1,
+      facilitation: 'regional_tta_staff',
       eventDisplayId: 'event-display-id',
+      event: {
+        regionId: 1,
+      },
       eventName: 'Event name',
-      regionId: 0,
       status: 'In progress',
       pageState: {
         1: NOT_STARTED,
@@ -93,8 +99,21 @@ describe('sessionSummary', () => {
       }],
     };
 
-    // eslint-disable-next-line react/prop-types
-    const RenderSessionSummary = ({ formValues = defaultFormValues, additionalData = { status: 'Not started' } }) => {
+    const defaultAdditionalData = {
+      status: 'Not started',
+      event: {
+        data: {
+          regionId: 1,
+          facilitation: 'regional_tta_staff',
+          eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+        },
+      },
+    };
+
+    const RenderSessionSummary = ({
+      formValues = defaultFormValues,
+      additionalData = defaultAdditionalData,
+    }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -134,15 +153,20 @@ describe('sessionSummary', () => {
         { id: 2, name: 'Complaint' },
       ]);
 
-      fetchMock.get('/api/national-center', {
-        centers: [
-          { id: 1, name: 'DTL' },
-          { id: 2, name: 'HBHS' },
-          { id: 3, name: 'PFCE' },
-          { id: 4, name: 'PFMO' },
-        ],
-        users: [],
-      });
+      fetchMock.get('/api/users/trainers/regional/region/1', [
+        { id: 1, fullName: 'Regional Trainer 1' },
+        { id: 2, fullName: 'Regional Trainer 2' },
+        { id: 3, fullName: 'Regional Trainer 3' },
+        { id: 4, fullName: 'Regional Trainer 4' },
+
+      ]);
+
+      fetchMock.get('/api/users/trainers/national-center/region/1', [
+        { id: 1, fullName: 'National Center Trainer 1' },
+        { id: 2, fullName: 'National Center Trainer 2' },
+        { id: 3, fullName: 'National Center Trainer 3' },
+        { id: 4, fullName: 'National Center Trainer 4' },
+      ]);
 
       fetchMock.get('/api/courses', [
         {
@@ -160,6 +184,9 @@ describe('sessionSummary', () => {
       ]);
 
       fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
+      fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+      fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
+      fetchMock.get('/api/goal-templates', []);
     });
 
     afterEach(async () => {
@@ -203,8 +230,8 @@ describe('sessionSummary', () => {
 
       await selectEvent.select(document.getElementById('objectiveTopics'), ['Complaint']);
 
-      const trainers = await screen.findByLabelText(/Who were the trainers for this session?/i);
-      await selectEvent.select(trainers, ['PFCE']);
+      const trainers = await screen.findByLabelText(/Who provided the TTA/i);
+      await selectEvent.select(trainers, ['Regional Trainer 1']);
 
       const resourceOne = await screen.findByLabelText(/resource 1/i);
       act(() => {
@@ -239,7 +266,7 @@ describe('sessionSummary', () => {
         userEvent.click(removeFile);
       });
 
-      const deleteUrl = '/api/files/s/undefined/2';
+      const deleteUrl = '/api/files/s/1/2';
       fetchMock.delete(deleteUrl, 200);
 
       const confirmDelete = await screen.findByRole('button', {
@@ -323,6 +350,78 @@ describe('sessionSummary', () => {
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
+    it('national center event facilitated by national center', async () => {
+      const additionalData = {
+        status: 'Not started',
+        facilitation: 'national_center',
+        event: {
+          data: {
+            regionId: 1,
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+      };
+
+      const formValues = {
+        ...defaultFormValues,
+        facilitation: 'national_center',
+      };
+
+      render(<RenderSessionSummary additionalData={additionalData} formValues={formValues} />);
+
+      const trainers = await screen.findByLabelText(/Who provided the TTA/i);
+      await selectEvent.select(trainers, ['National Center Trainer 4']);
+      expect(await screen.findByText('National Center Trainer 4')).toBeVisible();
+    });
+
+    it('national center event facilitated by regional tta staff', async () => {
+      const additionalData = {
+        status: 'Not started',
+        facilitation: 'regional_tta_staff',
+        event: {
+          data: {
+            regionId: 1,
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+      };
+
+      const formValues = {
+        ...defaultFormValues,
+        facilitation: 'regional_tta_staff',
+      };
+
+      render(<RenderSessionSummary additionalData={additionalData} formValues={formValues} />);
+
+      const trainers = await screen.findByLabelText(/Who provided the TTA/i);
+      await selectEvent.select(trainers, ['Regional Trainer 1']);
+      expect(await screen.findByText('Regional Trainer 1')).toBeVisible();
+    });
+
+    it('national center event facilitated by both', async () => {
+      const additionalData = {
+        status: 'Not started',
+        facilitation: 'both',
+        event: {
+          data: {
+            regionId: 1,
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+      };
+
+      const formValues = {
+        ...defaultFormValues,
+        facilitation: 'both',
+      };
+
+      render(<RenderSessionSummary additionalData={additionalData} formValues={formValues} />);
+
+      const trainers = await screen.findByLabelText(/Who provided the TTA/i);
+      await selectEvent.select(trainers, ['Regional Trainer 1']);
+      expect(await screen.findByText('Regional Trainer 1')).toBeVisible();
+    });
+
     it('handles errors uploading and deleting files', async () => {
       const { rerender } = render(<RenderSessionSummary />);
 
@@ -331,7 +430,7 @@ describe('sessionSummary', () => {
         userEvent.click(removeFile);
       });
 
-      const deleteUrl = '/api/files/s/undefined/2';
+      const deleteUrl = '/api/files/s/1/2';
       fetchMock.delete(deleteUrl, 500);
 
       const confirmDelete = await screen.findByRole('button', {
@@ -393,21 +492,6 @@ describe('sessionSummary', () => {
       });
 
       expect(yesOnTheFilesSir).toBeChecked();
-    });
-
-    it('shows an error if there was one fetching trainers', async () => {
-      fetchMock.restore();
-      fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
-      fetchMock.get('/api/topic', [
-        { id: 1, name: 'Behavioral Health' },
-        { id: 2, name: 'Complaint' },
-      ]);
-      fetchMock.get('/api/national-center', 500);
-      act(() => {
-        render(<RenderSessionSummary />);
-      });
-
-      expect(await screen.findByText(/There was an error fetching objective trainers/i)).toBeInTheDocument();
     });
 
     it('hides the save draft button if the session status is complete', async () => {
