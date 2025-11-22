@@ -49,7 +49,8 @@ describe('Quality Assurance Dashboard Overview Widget', () => {
     expect(await screen.findByText(/11%/)).toBeVisible();
     expect(await screen.findByText(/22%/)).toBeVisible();
     expect(await screen.findByText(/33.5%/)).toBeVisible();
-    expect(await screen.findByText(/One or more of the selected filters cannot be applied to this data./)).toBeVisible();
+    const ar = await screen.findAllByText(/One or more of the selected filters cannot be applied to this data./);
+    expect(ar[0]).toBeVisible();
   });
 
   it('shows no results message', async () => {

@@ -19,7 +19,7 @@ describe('FlagStatus', () => {
     expect(button).toBeInTheDocument();
 
     // verify the screen reader text exists within the button
-    const expectedText = `Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`;
+    const expectedText = `Reason for flag on goal ${goalNumbers} is monitoring.`;
     const screenReaderText = screen.getByText(expectedText);
     expect(screenReaderText).toBeInTheDocument();
     expect(screenReaderText).toHaveClass('usa-sr-only');
@@ -59,7 +59,7 @@ describe('FlagStatus', () => {
     expect(button).toBeInTheDocument();
 
     // verify the screen reader text exists within the button
-    const expectedText = `Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`;
+    const expectedText = `Reason for flag on goal ${goalNumbers} is monitoring.`;
     const screenReaderText = screen.getByText(expectedText);
     expect(screenReaderText).toBeInTheDocument();
     expect(screenReaderText).toHaveClass('usa-sr-only');

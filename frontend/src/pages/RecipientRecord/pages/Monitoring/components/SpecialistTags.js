@@ -13,7 +13,7 @@ export default function SpecialistTags({ specialists }) {
         <Tooltip
           displayText="Unavailable"
           screenReadDisplayText={false}
-          buttonLabel="reveal the full name of this user"
+          buttonLabel="User Unknown - Role Unavailable"
           tooltipText="Unknown"
           hideUnderline
           buttonClassName="display-flex"
@@ -32,7 +32,7 @@ export default function SpecialistTags({ specialists }) {
             <Tooltip
               displayText={specialist.roles[0] || 'Unavailable'}
               screenReadDisplayText={false}
-              buttonLabel="reveal the full name of this user"
+              buttonLabel={`System-generated - ${specialist.roles[0] || 'Role Unavailable'}`}
               tooltipText="System-generated"
               hideUnderline
               buttonClassName="display-flex"
@@ -64,7 +64,7 @@ export default function SpecialistTags({ specialists }) {
               <Tooltip
                 displayText={roleName}
                 screenReadDisplayText={false}
-                buttonLabel="reveal the full name of this user"
+                buttonLabel={`${specialist.name} - ${roleName}`}
                 tooltipText={specialist.name}
                 hideUnderline
                 buttonClassName="display-flex"
@@ -80,7 +80,7 @@ export default function SpecialistTags({ specialists }) {
             <Tooltip
               displayText="Unavailable"
               screenReadDisplayText={false}
-              buttonLabel="reveal the full name of this user"
+              buttonLabel={`${specialist.name} - Role Unavailable`}
               tooltipText={specialist.name}
               hideUnderline
               buttonClassName="display-flex"

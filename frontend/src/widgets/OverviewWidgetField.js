@@ -59,7 +59,7 @@ export function OverviewWidgetField({
           <Tooltip
             displayText={label1}
             screenReadDisplayText={false}
-            buttonLabel={`${tooltipText} click to visually reveal this information`}
+            buttonLabel={tooltipText}
             tooltipText={tooltipText}
           />
         ) : (

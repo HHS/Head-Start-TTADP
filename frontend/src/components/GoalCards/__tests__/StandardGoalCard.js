@@ -133,7 +133,7 @@ describe('StandardGoalCard', () => {
   it('shows the monitoring flag when the goal createdVia is monitoring', () => {
     renderStandardGoalCard({ }, { ...goal, standard: 'Monitoring' });
     const monitoringToolTip = screen.getByRole('button', {
-      name: /reason for flag on goal g-1 is monitoring\. click button to visually reveal this information\./i,
+      name: /reason for flag on goal g-1 is monitoring\./i,
     });
     expect(monitoringToolTip).toBeInTheDocument();
   });
@@ -157,8 +157,8 @@ describe('StandardGoalCard', () => {
     renderStandardGoalCard({}, goalWithStatusChanges);
     expect(screen.getByText(/started by/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/ECS/i)).toBeInTheDocument();
-    expect(screen.getByText(/GS/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/ECS/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/GS/i)[0]).toBeInTheDocument();
 
     const tooltips = screen.getAllByTestId('tooltip');
     expect(tooltips.length).toBe(2);
@@ -176,8 +176,8 @@ describe('StandardGoalCard', () => {
     renderStandardGoalCard({}, monitoringGoal);
     expect(screen.getByText(/started by/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/System-generated/i)).toBeInTheDocument();
-    expect(screen.getByText(/OHS/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/System-generated/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/OHS/i)[0]).toBeInTheDocument();
 
     const tooltips = screen.getAllByTestId('tooltip');
     const tooltip = tooltips.find((t) => t.classList.contains('ttahub-goal-card__entered-by-tooltip'));
@@ -197,8 +197,8 @@ describe('StandardGoalCard', () => {
     expect(screen.getByText(/started by/i)).toBeInTheDocument();
 
     // Should show system generated indicators
-    expect(screen.getByText(/System-generated/i)).toBeInTheDocument();
-    expect(screen.getByText(/OHS/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/System-generated/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/OHS/i)[0]).toBeInTheDocument();
 
     // Should not show user role tags when monitoring
     expect(screen.queryByText(/ECS/i)).not.toBeInTheDocument();

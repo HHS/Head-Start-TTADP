@@ -14,7 +14,7 @@ const FlagStatus = ({ reasons, goalNumbers }) => {
         <Tooltip
           displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />}
           screenReadDisplayText={false}
-          buttonLabel={`Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`}
+          buttonLabel={`Reason for flag on goal ${goalNumbers} is monitoring.`}
           tooltipText="Related to monitoring"
           hideUnderline
         />

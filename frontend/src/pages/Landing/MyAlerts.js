@@ -104,7 +104,7 @@ function ReportRow({
           <Tooltip
             displayText={creatorName}
             tooltipText={creatorName}
-            buttonLabel={`click to reveal: ${creatorName} `}
+            buttonLabel={creatorName}
             screenReadDisplayText={false}
           />
         )}
