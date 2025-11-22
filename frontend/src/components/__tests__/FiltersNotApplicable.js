@@ -19,6 +19,6 @@ describe('FiltersNotApplicable', () => {
     renderDropdown();
     expect(screen.getByText(/Filters not applied/i)).toBeVisible();
     expect(screen.getByRole('tooltip', { hidden: true })).toBeInTheDocument();
-    expect(screen.getByText(/One or more of the selected filters cannot be applied to this data./i)).toBeInTheDocument();
+    expect(screen.getAllByText(/One or more of the selected filters cannot be applied to this data./i)[0]).toBeInTheDocument();
   });
 });

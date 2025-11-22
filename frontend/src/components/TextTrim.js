@@ -37,7 +37,7 @@ export default function TextTrim({ text, position }) {
         <Tooltip
           displayText={text}
           tooltipText={text}
-          buttonLabel="click to reveal"
+          buttonLabel={text}
           className="text-trim-tooltip"
           maxWidth={containerWidth}
           position={position}

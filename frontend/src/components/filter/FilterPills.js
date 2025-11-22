@@ -82,7 +82,7 @@ export function Pill({
                 <Tooltip
                   displayText={queryShortValue}
                   screenReadDisplayText={false}
-                  buttonLabel={`${queryShortValue} click to visually reveal this information`}
+                  buttonLabel={queryValue}
                   tooltipText={queryValue}
                   hideUnderline
                 />

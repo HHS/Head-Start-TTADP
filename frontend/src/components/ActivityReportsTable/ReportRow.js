@@ -127,7 +127,7 @@ function ReportRow({
           <Tooltip
             displayText={creatorName}
             tooltipText={creatorName}
-            buttonLabel="click to reveal author name"
+            buttonLabel={creatorName}
           />
         ) : '' }
       </td>

@@ -15,7 +15,7 @@ const FiltersNotApplicable = () => (
     <Tooltip
       displayText={<FontAwesomeIcon icon={faQuestionCircle} color={colors.ttahubMediumBlue} size="lg" />}
       tooltipText="One or more of the selected filters cannot be applied to this data."
-      buttonLabel="Show filter information"
+      buttonLabel="One or more of the selected filters cannot be applied to this data."
       hideUnderline
       className="smart-hub--overview-tool-tip"
     />

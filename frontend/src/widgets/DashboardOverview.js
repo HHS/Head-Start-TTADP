@@ -33,7 +33,7 @@ export function Field({
           <Tooltip
             displayText={label}
             screenReadDisplayText={false}
-            buttonLabel={`${tooltipText} click to visually reveal this information`}
+            buttonLabel={tooltipText}
             tooltipText={tooltipText}
           />
         ) : label}

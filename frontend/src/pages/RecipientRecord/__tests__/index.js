@@ -200,10 +200,8 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/1/region/45/tta-history');
     act(() => renderRecipientRecord());
-    await waitFor(() => {
-      const ar = screen.getByText(/the number of approved activity reports\. click to visually reveal this information/i);
-      expect(ar).toBeInTheDocument();
-    });
+    const ar = await screen.findAllByText(/the number of approved activity reports\./i);
+    expect(ar[0]).toBeInTheDocument();
 
     const remove = screen.getByRole('button', {
       name: /this button removes the filter: date started \(ar\) is within/i,

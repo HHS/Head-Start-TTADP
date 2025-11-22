@@ -93,7 +93,7 @@ describe('Filter Pills', () => {
       ];
 
       renderFilterMenu(filters);
-      expect((await screen.findAllByText(/specialist 1, specialist 2, specialist 3\.\.\./i)).length).toBe(2);
+      expect((await screen.findAllByText(/specialist 1, specialist 2, specialist 3\.\.\./i)).length).toBe(1);
     });
 
     it('shows correct condition text for my reports filter', async () => {
