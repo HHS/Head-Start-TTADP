@@ -207,18 +207,14 @@ export async function getTrainingReportTrainersByRegion(req, res) {
     }
 
     res.json(await usersByRoles([
-      // all the specialist roles
-      'SPS',
+      // roles pulled from this answer in Slack:
+      // https://adhoc.slack.com/docs/T025UGMV9/F09LB5EQUN4?focus_section_id=temp:C:efWcf6d8bbdaef14ed6b85b02369
       'HS',
       'SS',
       'ECS',
       'GS',
-      'PS',
       'FES',
-
-      // plus some extras
       'TTAC',
-      'AA',
       'ECM',
       'GSM',
       'RPM',
