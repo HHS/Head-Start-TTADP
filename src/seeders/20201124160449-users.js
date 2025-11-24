@@ -65,6 +65,16 @@ const staticUserPermissions = [
   },
   {
     userId: 4,
+    regionId: 3,
+    scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 4,
+    regionId: 3,
+    scopeId: APPROVE_REPORTS,
+  },
+  {
+    userId: 4,
     regionId: 4,
     scopeId: READ_WRITE_REPORTS,
   },
@@ -181,7 +191,6 @@ const staticUsers = [
     homeRegionId: 3,
     lastLogin: moment().toISOString(),
   },
-
   {
     id: 6,
     hsesUserId: '6',
