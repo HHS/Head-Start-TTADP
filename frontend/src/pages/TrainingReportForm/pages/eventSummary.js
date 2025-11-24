@@ -49,7 +49,6 @@ targetPopulations.unshift(...firstThree);
 const eventOrganizerOptions = [
   TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
   TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
-  TRAINING_EVENT_ORGANIZER.IST_TTA_VISIT,
 ].map((option) => ({ value: option, label: option }));
 
 const EventSummary = ({
