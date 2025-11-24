@@ -164,6 +164,206 @@ describe('FormDataHelpers', () => {
       ]);
     });
 
+    it('inserts goal at original index when originalIndex is provided', () => {
+      const grantIds = [1];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            id: 1,
+            name: 'Goal A',
+            endDate: '09/01/2020',
+            prompts: [],
+            objectives: [],
+          },
+          {
+            ...baseGoal,
+            id: 3,
+            name: 'Goal C',
+            endDate: '09/01/2020',
+            prompts: [],
+            objectives: [],
+          },
+        ],
+        {
+          ...baseGoal,
+          id: 2,
+          name: 'Goal B (being edited)',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+          objectives: [],
+        },
+        grantIds,
+        [],
+        1, // originalIndex - should be inserted between Goal A and Goal C
+      );
+
+      expect(packagedGoals).toHaveLength(3);
+      expect(packagedGoals[0].name).toBe('Goal A');
+      expect(packagedGoals[1].name).toBe('Goal B (being edited)');
+      expect(packagedGoals[2].name).toBe('Goal C');
+    });
+
+    it('appends goal to end when originalIndex is null (new goal)', () => {
+      const grantIds = [1];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            id: 1,
+            name: 'Goal A',
+            endDate: '09/01/2020',
+            prompts: [],
+            objectives: [],
+          },
+          {
+            ...baseGoal,
+            id: 2,
+            name: 'Goal B',
+            endDate: '09/01/2020',
+            prompts: [],
+            objectives: [],
+          },
+        ],
+        {
+          ...baseGoal,
+          id: 3,
+          name: 'New Goal',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+          objectives: [],
+        },
+        grantIds,
+        [],
+        null, // no originalIndex - should append to end
+      );
+
+      expect(packagedGoals).toHaveLength(3);
+      expect(packagedGoals[0].name).toBe('Goal A');
+      expect(packagedGoals[1].name).toBe('Goal B');
+      expect(packagedGoals[2].name).toBe('New Goal');
+    });
+
+    it('inserts goal at beginning when originalIndex is 0', () => {
+      const grantIds = [1];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            id: 2,
+            name: 'Goal B',
+            endDate: '09/01/2020',
+            prompts: [],
+            objectives: [],
+          },
+          {
+            ...baseGoal,
+            id: 3,
+            name: 'Goal C',
+            endDate: '09/01/2020',
+            prompts: [],
+            objectives: [],
+          },
+        ],
+        {
+          ...baseGoal,
+          id: 1,
+          name: 'Goal A (was first)',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+          objectives: [],
+        },
+        grantIds,
+        [],
+        0, // should be inserted at beginning
+      );
+
+      expect(packagedGoals).toHaveLength(3);
+      expect(packagedGoals[0].name).toBe('Goal A (was first)');
+      expect(packagedGoals[1].name).toBe('Goal B');
+      expect(packagedGoals[2].name).toBe('Goal C');
+    });
+
+    it('appends goal when originalIndex exceeds array length', () => {
+      const grantIds = [1];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            id: 1,
+            name: 'Goal A',
+            endDate: '09/01/2020',
+            prompts: [],
+            objectives: [],
+          },
+        ],
+        {
+          ...baseGoal,
+          id: 2,
+          name: 'Goal B',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+          objectives: [],
+        },
+        grantIds,
+        [],
+        999, // index beyond array length
+      );
+
+      expect(packagedGoals).toHaveLength(2);
+      expect(packagedGoals[0].name).toBe('Goal A');
+      expect(packagedGoals[1].name).toBe('Goal B');
+    });
+
+    it('includes goal id in packaged goal for goalOrder calculation', () => {
+      const grantIds = [1];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            id: 2,
+            name: 'Goal B',
+            endDate: '09/01/2020',
+            prompts: [],
+            objectives: [],
+          },
+          {
+            ...baseGoal,
+            id: 3,
+            name: 'Goal C',
+            endDate: '09/01/2020',
+            prompts: [],
+            objectives: [],
+          },
+        ],
+        {
+          ...baseGoal,
+          id: 1,
+          name: 'Goal A (being edited)',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+          objectives: [],
+        },
+        grantIds,
+        [],
+        0, // Insert at beginning
+      );
+
+      // Goal should be inserted at index 0 with its ID preserved
+      expect(packagedGoals).toHaveLength(3);
+      expect(packagedGoals[0].id).toBe(1);
+      expect(packagedGoals[0].name).toBe('Goal A (being edited)');
+      expect(packagedGoals[0].isActivelyBeingEditing).toBe(true);
+      expect(packagedGoals[1].id).toBe(2);
+      expect(packagedGoals[2].id).toBe(3);
+
+      // Verify all goals have IDs for goalOrder calculation
+      packagedGoals.forEach((goal) => {
+        expect(goal.id).toBeDefined();
+        expect(typeof goal.id).toBe('number');
+      });
+    });
+
     it('correctly pacakges all objective fields', () => {
       const grantIds = [1];
       const packagedGoals = packageGoals(
@@ -320,6 +520,7 @@ describe('FormDataHelpers', () => {
         prompts: [],
         grantIds: [1, 2, 3],
         objectives: [],
+        originalIndex: 0,
         activityReportGoals: [
           { id: 1, isActivelyEdited: true },
         ],
@@ -370,6 +571,8 @@ describe('FormDataHelpers', () => {
       expect(goalForEditing).toEqual({
         id: 1,
         grantIds: [1, 2, 3],
+        objectives: undefined,
+        originalIndex: 0,
         activityReportGoals: [
           {
             id: 1,
@@ -521,6 +724,114 @@ describe('FormDataHelpers', () => {
       ]);
 
       expect(goalForEditing).toEqual(null);
+    });
+
+    it('uses goalOrder to sort goals and sets correct originalIndex for goalForEditing', () => {
+      // Simulate backend returning goals in createdAt order (wrong order)
+      const goalsFromBackend = [
+        {
+          id: 2,
+          name: 'Goal B',
+          activityReportGoals: [
+            {
+              id: 2,
+              isActivelyEdited: false,
+            },
+          ],
+          objectives: [],
+          prompts: [],
+        },
+        {
+          id: 3,
+          name: 'Goal C',
+          activityReportGoals: [
+            {
+              id: 3,
+              isActivelyEdited: false,
+            },
+          ],
+          objectives: [],
+          prompts: [],
+        },
+        {
+          id: 1,
+          name: 'Goal A',
+          activityReportGoals: [
+            {
+              id: 1,
+              isActivelyEdited: true, // This goal is being edited
+            },
+          ],
+          objectives: [],
+          prompts: [],
+        },
+      ];
+
+      // goalOrder specifies the correct order: Goal A should be first
+      const goalOrder = [1, 2, 3];
+
+      const { goals, goalForEditing } = convertGoalsToFormData(
+        goalsFromBackend,
+        [1, 2, 3],
+        REPORT_STATUSES.DRAFT,
+        goalOrder,
+      );
+
+      // goalForEditing should be Goal A with originalIndex 0 (first position)
+      expect(goalForEditing).toBeDefined();
+      expect(goalForEditing.id).toBe(1);
+      expect(goalForEditing.name).toBe('Goal A');
+      expect(goalForEditing.originalIndex).toBe(0);
+
+      // goals should contain the other goals in order
+      expect(goals).toHaveLength(2);
+      expect(goals[0].id).toBe(2);
+      expect(goals[0].name).toBe('Goal B');
+      expect(goals[1].id).toBe(3);
+      expect(goals[1].name).toBe('Goal C');
+    });
+
+    it('maintains goal order when editing middle goal', () => {
+      const goalsFromBackend = [
+        {
+          id: 1,
+          name: 'Goal A',
+          activityReportGoals: [{ id: 1, isActivelyEdited: false }],
+          objectives: [],
+          prompts: [],
+        },
+        {
+          id: 3,
+          name: 'Goal C',
+          activityReportGoals: [{ id: 3, isActivelyEdited: false }],
+          objectives: [],
+          prompts: [],
+        },
+        {
+          id: 2,
+          name: 'Goal B',
+          activityReportGoals: [{ id: 2, isActivelyEdited: true }],
+          objectives: [],
+          prompts: [],
+        },
+      ];
+
+      const goalOrder = [1, 2, 3]; // Correct order
+
+      const { goals, goalForEditing } = convertGoalsToFormData(
+        goalsFromBackend,
+        [1, 2, 3],
+        REPORT_STATUSES.DRAFT,
+        goalOrder,
+      );
+
+      // Goal B is being edited and should have originalIndex 1 (middle position)
+      expect(goalForEditing.id).toBe(2);
+      expect(goalForEditing.originalIndex).toBe(1);
+
+      // Other goals should be in correct order
+      expect(goals[0].id).toBe(1);
+      expect(goals[1].id).toBe(3);
     });
   });
 });
