@@ -122,7 +122,7 @@ describe('StandardGoalForm', () => {
 
   it('submits the form with valid data', async () => {
     fetchMock.post('/api/goal-templates/standard/1/grant/1', { everything: 'ok' });
-    const { setIsAppLoading } = renderStandardGoalForm();
+    const { setIsAppLoading, history } = renderStandardGoalForm();
 
     await waitFor(() => {
       expect(fetchMock.called('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true')).toBe(true);
@@ -141,6 +141,8 @@ describe('StandardGoalForm', () => {
     await waitFor(() => {
       expect(setIsAppLoading).toHaveBeenCalledWith(true);
       expect(fetchMock.called('/api/goal-templates/standard/1/grant/1')).toBe(true);
+      expect(history.location.pathname).toMatch(/\/recipient-tta-records\/1\/region\/1\/rttapa/);
+      expect(history.location.state.refreshRecipient).toBe(true);
     });
   });
 

@@ -49,7 +49,7 @@ const ReviewItem = ({
   // If we don't have a value set none provided.
   if ((!value && !values)
       || (Array.isArray(values) && !values.length)
-      || (value && typeof value === 'string' && value.includes('<p></p>'))) {
+      || (value && typeof value === 'string' && value.trim() === '<p></p>')) {
     values = [noneProvided];
     value = noneProvided;
   }
