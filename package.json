@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "20.19.3"
+    "node": "22.20.0"
   },
   "scripts": {
     "build": "tsc -p src",
@@ -108,7 +108,7 @@
     "updateCompletedEventReportPilots:local": "./node_modules/.bin/babel-node ./src/tools/updateCompletedEventReportPilotsCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish",
     "merge-coverage": "node ./src/tools/merge-coverage.js",
-    "check-coverage": "node -r esm ./src/tools/check-coverage.js --fail-on-uncovered=true",
+    "check-coverage": "node ./src/tools/check-coverage.js --fail-on-uncovered=true",
     "createMonitoringGoalsCLI": "node ./build/server/src/tools/createMonitoringGoalsCLI.js",
     "createMonitoringGoalsCLI:local": "tsx ./src/tools/createMonitoringGoalsCLI.js"
   },
