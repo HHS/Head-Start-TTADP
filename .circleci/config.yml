@@ -4,10 +4,10 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:20.19.3-browsers
+    - image: cimg/node:22.20.0-browsers
   docker-postgres-executor:
     docker:
-    - image: cimg/node:20.19.3-browsers
+    - image: cimg/node:22.20.0-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -360,7 +360,7 @@ jobs:
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
-            node -r esm ./tools/check-coverage.js \
+            node ./tools/check-coverage.js \
               --directory-filter=src/,tools/ \
               --fail-on-uncovered=false \
               --output-format=json,html
@@ -413,7 +413,7 @@ jobs:
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
-            node -r esm ./tools/check-coverage.js \
+            node ./tools/check-coverage.js \
               --coverage-file=../frontend/coverage/coverage-final.json \
               --artifact-dir=../frontend/coverage-artifacts \
               --directory-filter=frontend/ \
