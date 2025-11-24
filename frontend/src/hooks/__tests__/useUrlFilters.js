@@ -1,24 +1,22 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import useUrlFilters from '../useUrlFilters';
-import { mockWindowProperty } from '../../testHelpers';
 
 const UrlFilters = () => {
   const [filters] = useUrlFilters('test');
 
-  return (
-    <>
-      <pre id="filters">{JSON.stringify(filters)}</pre>
-    </>
-  );
+  return (<pre id="filters">{JSON.stringify(filters)}</pre>);
 };
 
-const renderUrlFilters = () => render(<UrlFilters />);
+const renderUrlFilters = () => render(
+  <MemoryRouter initialEntries={['/dashboards/regional-dashboard/activity-reports?topic.in[]=Behavioral%20%2F%20Mental%20Health%20%2F%20Trauma']}>
+    <UrlFilters />
+  </MemoryRouter>,
+);
 
 describe('useUrlFilters', () => {
-  mockWindowProperty('location', new URL('http://localhost:3000/dashboards/regional-dashboard/activity-reports?topic.in[]=Behavioral%20%2F%20Mental%20Health%20%2F%20Trauma'));
-
   it('saves state to local storage', async () => {
     renderUrlFilters();
 
