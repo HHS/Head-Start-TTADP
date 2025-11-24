@@ -14,6 +14,7 @@ import ExpanderButton from '../../../components/ExpanderButton';
 import SessionCard from './SessionCard';
 import Modal from '../../../components/Modal';
 import isAdmin from '../../../permissions';
+import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 import './EventCard.scss';
 
 function EventCard({
@@ -33,6 +34,9 @@ function EventCard({
     data,
     sessionReports,
   } = event;
+
+  const { eventOrganizer } = data;
+
   const [message, setMessage] = useState({
     text: '',
     type: 'error',
@@ -87,7 +91,11 @@ function EventCard({
     menuItems.push({
       label: 'Create session',
       onClick: () => {
-        history.push(`/training-report/${idForLink}/session/new/`);
+        let url = `/training-report/${idForLink}/session/new/`;
+        if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
+          url += 'choose-facilitation';
+        }
+        history.push(url);
       },
     });
   }

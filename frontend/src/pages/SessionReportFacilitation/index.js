@@ -67,7 +67,7 @@ export default function SessionReportFacilitation({ match }) {
       const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
 
       if (isCollaborator) {
-        history.push(TRAINING_REPORT_URL_IN_PROGRESS);
+        history.push(TRAINING_REPORT_URL_IN_PROGRESS); // TODO: add success message
         return;
       }
 
