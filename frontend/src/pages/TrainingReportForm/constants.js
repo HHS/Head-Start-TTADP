@@ -17,6 +17,7 @@ export const eventSummaryFields = {
   trainingType: 'Series',
   reasons: [],
   targetPopulations: [],
+  eventPartnership: '',
 };
 
 export const visionFields = {
