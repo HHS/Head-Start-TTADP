@@ -5,6 +5,7 @@ import FormItem from '../../../components/FormItem';
 import IncompletePages from '../../../components/IncompletePages';
 import { reviewSubmitComponentProps } from './constants';
 import useSessionStaff from '../../../hooks/useSessionStaff';
+import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 
 const path = 'submitter-session-report';
 
@@ -20,12 +21,26 @@ export default function Submit({
   const pageState = watch('pageState');
   const event = watch('event');
 
+  const facilitation = watch('facilitation');
+  let eventOrganizer = '';
+
+  if (event && event.data) {
+    eventOrganizer = event.data.eventOrganizer;
+  }
+
   const { trainerOptions: approvers } = useSessionStaff(event);
 
   const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
   // eslint-disable-next-line max-len
   const incompletePages = Object.values(pages).filter((page) => filtered.includes(page.position)).map(({ label }) => label);
   const hasIncompletePages = incompletePages.length > 0;
+
+  let approverOptions = approvers;
+
+  if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && facilitation === 'regional_tta_staff') {
+    // format approvers and flatten national and regional trainers into a single list
+    approverOptions = approvers.filter((approverGroup) => approverGroup.label === 'Regional trainers').map((group) => group.options).flat();
+  }
 
   return (
     <div data-testid="session-form-submit">
@@ -52,7 +67,7 @@ export default function Submit({
           required
         >
           <option disabled hidden value="">Select an approver</option>
-          {approvers.map((approver) => (
+          {approverOptions.map((approver) => (
             <option value={approver.id}>{approver.fullName}</option>
           ))}
         </Dropdown>
