@@ -366,6 +366,7 @@ describe('Recipient DB service', () => {
     let multiGrantRecipient;
     let recipientWithInactiveGrant;
     let recipientWithMonitoringGoal;
+    let recipientWithTemplatesWithSameName;
 
     let grant1;
     let grant2;
@@ -374,6 +375,11 @@ describe('Recipient DB service', () => {
     let grant5;
     let inactiveGrant;
     let monitoringGrant;
+    let duplicateGrantOne;
+    let duplicateGrantTwo;
+
+    let duplicateGoalTemplateOne;
+    let duplicateGoalTemplateTwo;
 
     afterAll(async () => {
       await Goal.destroy({
@@ -386,6 +392,8 @@ describe('Recipient DB service', () => {
             grant5?.id,
             inactiveGrant?.id,
             monitoringGrant?.id,
+            duplicateGrantOne?.id,
+            duplicateGrantTwo?.id,
           ].filter(Boolean),
         },
         individualHooks: true,
@@ -402,6 +410,8 @@ describe('Recipient DB service', () => {
             grant5?.id,
             inactiveGrant?.id,
             monitoringGrant?.id,
+            duplicateGrantOne?.id,
+            duplicateGrantTwo?.id,
           ].filter(Boolean),
         },
         individualHooks: true,
@@ -414,12 +424,24 @@ describe('Recipient DB service', () => {
         multiGrantRecipient?.id,
         recipientWithInactiveGrant?.id,
         recipientWithMonitoringGoal?.id,
+        recipientWithTemplatesWithSameName?.id,
       ].filter(Boolean);
 
       await Recipient.destroy({
         where: {
           id: recipientIds,
         },
+      });
+
+      await GoalTemplate.destroy({
+        where: {
+          id: [
+            duplicateGoalTemplateOne?.id,
+            duplicateGoalTemplateTwo?.id,
+          ].filter(Boolean),
+        },
+        individualHooks: true,
+        force: true,
       });
     });
 
@@ -493,6 +515,115 @@ describe('Recipient DB service', () => {
 
       // expect the missing goal grantId to be the second grant.
       expect(foundGoals[0].grantId).toBe(grant5.id);
+    });
+
+    it('does not count templates as missing when each grant uses a template that shares a name', async () => {
+      recipientWithTemplatesWithSameName = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: faker.datatype.string(),
+      });
+
+      duplicateGrantOne = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: recipientWithTemplatesWithSameName.id,
+        regionId: 1,
+        number: faker.datatype.string(),
+        programSpecialistName: 'Gus',
+        status: 'Active',
+        endDate: new Date(2024, 10, 2),
+        grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
+      });
+
+      duplicateGrantTwo = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: recipientWithTemplatesWithSameName.id,
+        regionId: 1,
+        number: faker.datatype.string(),
+        programSpecialistName: 'Gus',
+        status: 'Active',
+        endDate: new Date(2024, 10, 2),
+        grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
+      });
+
+      const duplicateTemplateName = `duplicate standard goal ${faker.datatype.number()}`;
+
+      const curatedTemplates = await GoalTemplate.findAll({
+        where: {
+          creationMethod: CREATION_METHOD.CURATED,
+          standard: { [Op.ne]: 'Monitoring' },
+        },
+      });
+
+      await Promise.all(curatedTemplates.map((template) => Goal.create({
+        recipientId: recipientWithTemplatesWithSameName.id,
+        goalTemplateId: template.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: template.templateName,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: duplicateGrantOne.id,
+      })));
+
+      await Promise.all(curatedTemplates.map((template) => Goal.create({
+        recipientId: recipientWithTemplatesWithSameName.id,
+        goalTemplateId: template.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: template.templateName,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: duplicateGrantTwo.id,
+      })));
+
+      duplicateGoalTemplateOne = await GoalTemplate.create({
+        templateName: `${duplicateTemplateName}-${faker.datatype.number()}`,
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      duplicateGoalTemplateTwo = await GoalTemplate.create({
+        templateName: `${duplicateTemplateName}-${faker.datatype.number()}`,
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      await duplicateGoalTemplateOne.update(
+        { templateName: duplicateTemplateName },
+        { hooks: false, individualHooks: false },
+      );
+
+      await duplicateGoalTemplateTwo.update(
+        { templateName: duplicateTemplateName },
+        { hooks: false, individualHooks: false },
+      );
+
+      await Goal.create({
+        recipientId: recipientWithTemplatesWithSameName.id,
+        goalTemplateId: duplicateGoalTemplateOne.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: duplicateTemplateName,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: duplicateGrantOne.id,
+      });
+
+      await Goal.create({
+        recipientId: recipientWithTemplatesWithSameName.id,
+        goalTemplateId: duplicateGoalTemplateTwo.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: duplicateTemplateName,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: duplicateGrantTwo.id,
+      });
+
+      const recipient = await recipientById(recipientWithTemplatesWithSameName.id, {});
+      const foundGoals = await missingStandardGoals(recipient, {});
+
+      expect(foundGoals).toEqual([]);
     });
 
     it('returns an empty array when no standard goals are missing', async () => {

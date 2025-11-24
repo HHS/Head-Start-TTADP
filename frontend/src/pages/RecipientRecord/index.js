@@ -4,7 +4,9 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { Switch, Route, useHistory } from 'react-router';
+import {
+  Switch, Route, useHistory, useLocation,
+} from 'react-router';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
@@ -90,7 +92,15 @@ PageWithHeading.defaultProps = {
 
 export default function RecipientRecord({ match, hasAlerts }) {
   const history = useHistory();
+  const location = useLocation();
+  const {
+    pathname,
+    search,
+    hash,
+    state: locationState,
+  } = location;
   const { recipientId, regionId } = match.params;
+  const shouldRefreshRecipient = locationState?.refreshRecipient;
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
@@ -126,15 +136,35 @@ export default function RecipientRecord({ match, hasAlerts }) {
       }
     }
 
-    // if this isn't here, then we refetch each time the URL changes (i.e., going from tab to tab)
-    if (recipientData.recipientName) {
+    // If this isn't here, then we refetch each time the URL changes (i.e., going from tab to tab)
+    if (recipientData.recipientName && !shouldRefreshRecipient) {
       return;
     }
 
     const id = parseInt(recipientId, DECIMAL_BASE);
     const region = parseInt(regionId, DECIMAL_BASE);
-    fetchRecipient(id, region);
-  }, [recipientData.recipientName, recipientId, match.params, regionId]);
+    fetchRecipient(id, region).then(() => {
+      if (shouldRefreshRecipient) {
+        const { refreshRecipient, ...restState } = locationState || {};
+        history.replace({
+          pathname,
+          search,
+          hash,
+          state: Object.keys(restState).length ? restState : undefined,
+        });
+      }
+    });
+  }, [
+    recipientData.recipientName,
+    recipientId,
+    match.params,
+    regionId,
+    shouldRefreshRecipient,
+    locationState,
+    pathname,
+    search,
+    hash,
+  ]);
 
   const { recipientName } = recipientData;
   const recipientNameWithRegion = `${recipientName} - Region ${regionId}`;
@@ -184,7 +214,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/print"
-          render={({ location }) => (
+          render={({ location: printLocation }) => (
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -207,7 +237,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 <PrintGoals
                   recipientId={recipientId}
                   regionId={regionId}
-                  location={location}
+                  location={printLocation}
                 />
               </FilterContext.Provider>
 
@@ -216,7 +246,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/rttapa"
-          render={({ location }) => (
+          render={({ location: goalsLocation }) => (
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -224,7 +254,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
               hasAlerts={hasAlerts}
             >
               <GoalsObjectives
-                location={location}
+                location={goalsLocation}
                 recipientId={recipientId}
                 regionId={regionId}
                 recipient={recipientData}

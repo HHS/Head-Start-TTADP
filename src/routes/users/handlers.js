@@ -9,6 +9,7 @@ import {
   setFlag,
   getTrainingReportUsersByRegion,
   getUserNamesByIds,
+  usersByRoles,
 } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { statesByGrantRegion } from '../../services/grant';
@@ -186,6 +187,62 @@ export async function getTrainingReportUsers(req, res) {
     }
 
     res.json(await getTrainingReportUsersByRegion(region, event));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getTrainingReportTrainersByRegion(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+
+    const authorization = new EventPolicy(user, {});
+    const { regionId } = req.params;
+
+    const region = parseInt(regionId, DECIMAL_BASE);
+
+    if (!authorization.canGetTrainingReportUsersInRegion(region)) {
+      res.sendStatus(403);
+      return;
+    }
+
+    res.json(await usersByRoles([
+      // all the specialist roles
+      'SPS',
+      'HS',
+      'SS',
+      'ECS',
+      'GS',
+      'PS',
+      'FES',
+
+      // plus some extras
+      'TTAC',
+      'AA',
+      'ECM',
+      'GSM',
+      'RPM',
+    ], region));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getTrainingReportNationalCenterUsers(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+
+    const authorization = new EventPolicy(user, {});
+    const { regionId } = req.params;
+
+    const region = parseInt(regionId, DECIMAL_BASE);
+
+    if (!authorization.canGetTrainingReportUsersInRegion(region)) {
+      res.sendStatus(403);
+      return;
+    }
+
+    res.json(await usersByRoles(['NC']));
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }

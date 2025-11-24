@@ -161,7 +161,7 @@ export default function Objectives({
             />
           );
         })}
-      {firstObjective || (fields.length === 1 && getValues(`${fieldArrayName}[0].title`) === '') ? null : <PlusButton text="Add new objective" onClick={onAddNew} /> }
+      {firstObjective || (fields.length === 1 && getValues(`${fieldArrayName}[0].title`) === '') ? null : <PlusButton className="margin-bottom-2" text="Add new objective" onClick={onAddNew} /> }
     </>
   );
 }
