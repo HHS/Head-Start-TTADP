@@ -65,8 +65,9 @@ export default function SessionReportFacilitation({ match }) {
       // since they'd be forwarded out otherwise (POC cannot create sessions)
 
       const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
+      const { facilitation } = data;
 
-      if (isCollaborator) {
+      if (isCollaborator && facilitation === 'both') {
         history.push(TRAINING_REPORT_URL_IN_PROGRESS); // TODO: add success message
         return;
       }
