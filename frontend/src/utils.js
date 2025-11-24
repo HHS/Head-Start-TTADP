@@ -101,10 +101,14 @@ export function expandFilters(filters) {
   const arr = [];
 
   filters.forEach((filter) => {
-    const { topic, query, condition } = filter;
+    const {
+      topic, query, condition, id,
+    } = filter;
     if (Array.isArray(query)) {
       query.forEach((q) => {
         arr.push({
+          id: `${id}-${q}`, // Create unique ID for each expanded filter
+          originalFilterId: id, // Store reference to original filter
           topic,
           condition,
           query: q,
@@ -128,7 +132,9 @@ export function decodeQueryParam(param) {
 
 export function queryStringToFilters(queryString) {
   const queries = queryString.split('&');
-  return queries.map((q) => {
+  const filterMap = new Map();
+
+  queries.forEach((q) => {
     const [topicAndCondition, query] = q.split('=');
     const [topic, searchCondition] = topicAndCondition.split('.');
 
@@ -147,17 +153,31 @@ export function queryStringToFilters(queryString) {
     const condition = queryKeys[index];
 
     if (topic && condition && query) {
-      return {
-        id: uuidv4(),
-        topic,
-        condition,
-        // we use is and is not for query parameters
-        query: condition === 'is not' || condition === 'is' ? [decodedQueryParam] : decodedQueryParam,
-      };
-    }
+      // Create a unique key for each topic-condition combination
+      const key = `${topic}-${condition}`;
 
-    return null;
-  }).filter((query) => query);
+      if (filterMap.has(key)) {
+        // Consolidate: add to existing filter's query array
+        const existing = filterMap.get(key);
+        if (Array.isArray(existing.query)) {
+          existing.query.push(decodedQueryParam);
+        } else {
+          existing.query = [existing.query, decodedQueryParam];
+        }
+      } else {
+        // Create new filter
+        filterMap.set(key, {
+          id: uuidv4(),
+          topic,
+          condition,
+          // we use is and is not for query parameters
+          query: condition === 'is not' || condition === 'is' ? [decodedQueryParam] : decodedQueryParam,
+        });
+      }
+    }
+  });
+
+  return Array.from(filterMap.values());
 }
 
 export function filtersToQueryString(filters, region) {

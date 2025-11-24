@@ -46,7 +46,9 @@ export default function FilterSpecialistSelect({
   // this is because we have a label that doesn't match the backend
   // value (i.e., the abbreviations appended at the end of the title aren't the values,
   // in our backend. so for this particular filter we need to maintain a special case
-  const selectedValues = query.map((selection) => {
+  // Defensive handling: ensure query is always an array (after filter expansion, may be single value)
+  const queryArray = [query].flat();
+  const selectedValues = queryArray.map((selection) => {
     const role = ROLES_MAP.find((r) => r.value === selection);
     if (role) {
       return role.label;

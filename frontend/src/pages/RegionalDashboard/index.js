@@ -17,6 +17,8 @@ import './index.css';
 import TabsNav from '../../components/TabsNav';
 import Dashboard from './components/Dashboard';
 import useDashboardFilterKey from '../../hooks/useDashboardFilterKey';
+import { MyGroupsContext } from '../../components/MyGroupsProvider';
+import Loader from '../../components/Loader';
 
 const pageConfig = () => ({
   'training-reports': {
@@ -56,6 +58,7 @@ const links = [
 
 export default function RegionalDashboard({ match }) {
   const { user } = useContext(UserContext);
+  const { isLoading: isLoadingGroups } = useContext(MyGroupsContext);
   const [resetPagination, setResetPagination] = useState(false);
 
   const { reportType } = match.params;
@@ -98,6 +101,20 @@ export default function RegionalDashboard({ match }) {
     }
     return config;
   }, [filterConfig, user]);
+
+  // Check if there are group filters present
+  const hasGroupFilters = useMemo(() => filters.some((filter) => filter.topic === 'group'), [filters]);
+
+  // Show loader if groups are loading and there are group filters
+  if (isLoadingGroups && hasGroupFilters) {
+    return (
+      <Loader
+        loading
+        loadingLabel="Loading groups"
+        text="Loading groups..."
+      />
+    );
+  }
 
   return (
     <div className="ttahub-dashboard">

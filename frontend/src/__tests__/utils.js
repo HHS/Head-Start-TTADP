@@ -6,6 +6,7 @@ import {
   formatDateRange,
   decodeQueryParam,
   isInternalGovernmentLink,
+  expandFilters,
 } from '../utils';
 
 describe('queryStringToFilters', () => {
@@ -16,6 +17,22 @@ describe('queryStringToFilters', () => {
     expect(filters.map((filter) => filter.topic).sort()).toStrictEqual(['region', 'startDate'].sort());
     expect(filters.map((filter) => filter.condition).sort()).toStrictEqual(['is', 'is within'].sort());
     expect(filters.map((filter) => filter.query).sort()).toStrictEqual([['14'], '2021/11/13-2021/12/13'].sort());
+  });
+
+  it('consolidates multiple values for the same topic and condition', () => {
+    const str = 'region.in[]=1&region.in[]=2&region.in[]=3&group.in[]=390';
+    const filters = queryStringToFilters(str);
+    expect(filters.length).toBe(2);
+
+    const regionFilter = filters.find((f) => f.topic === 'region');
+    expect(regionFilter).toBeDefined();
+    expect(regionFilter.condition).toBe('is');
+    expect(regionFilter.query).toEqual(['1', '2', '3']);
+
+    const groupFilter = filters.find((f) => f.topic === 'group');
+    expect(groupFilter).toBeDefined();
+    expect(groupFilter.condition).toBe('is');
+    expect(groupFilter.query).toEqual(['390']);
   });
 });
 
@@ -164,5 +181,124 @@ describe('formatDateRange', () => {
   it('returns a blank string if nothing is passed in', () => {
     const str = formatDateRange();
     expect(str).toBe('');
+  });
+});
+
+describe('expandFilters', () => {
+  it('expands filters with array queries into separate filter objects', () => {
+    const filters = [
+      {
+        id: 'test-id-1',
+        topic: 'region',
+        condition: 'is',
+        query: ['1', '2', '3'],
+      },
+    ];
+    const expanded = expandFilters(filters);
+
+    expect(expanded.length).toBe(3);
+    expect(expanded[0]).toEqual({
+      id: 'test-id-1-1',
+      originalFilterId: 'test-id-1',
+      topic: 'region',
+      condition: 'is',
+      query: '1',
+    });
+    expect(expanded[1]).toEqual({
+      id: 'test-id-1-2',
+      originalFilterId: 'test-id-1',
+      topic: 'region',
+      condition: 'is',
+      query: '2',
+    });
+    expect(expanded[2]).toEqual({
+      id: 'test-id-1-3',
+      originalFilterId: 'test-id-1',
+      topic: 'region',
+      condition: 'is',
+      query: '3',
+    });
+  });
+
+  it('passes through filters with non-array queries unchanged', () => {
+    const filters = [
+      {
+        id: 'test-id-2',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2021/11/13-2021/12/13',
+      },
+    ];
+    const expanded = expandFilters(filters);
+
+    expect(expanded.length).toBe(1);
+    expect(expanded[0]).toEqual(filters[0]);
+  });
+
+  it('handles mixed array and non-array filters', () => {
+    const filters = [
+      {
+        id: 'test-id-1',
+        topic: 'region',
+        condition: 'is',
+        query: ['1', '2'],
+      },
+      {
+        id: 'test-id-2',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2021/11/13-2021/12/13',
+      },
+      {
+        id: 'test-id-3',
+        topic: 'group',
+        condition: 'is',
+        query: ['390'],
+      },
+    ];
+    const expanded = expandFilters(filters);
+
+    expect(expanded.length).toBe(4);
+
+    // First two should be expanded regions
+    expect(expanded[0].topic).toBe('region');
+    expect(expanded[0].query).toBe('1');
+    expect(expanded[0].originalFilterId).toBe('test-id-1');
+    expect(expanded[1].topic).toBe('region');
+    expect(expanded[1].query).toBe('2');
+    expect(expanded[1].originalFilterId).toBe('test-id-1');
+
+    // Third should be unchanged date filter
+    expect(expanded[2]).toEqual(filters[1]);
+
+    // Fourth should be expanded group
+    expect(expanded[3].topic).toBe('group');
+    expect(expanded[3].query).toBe('390');
+    expect(expanded[3].originalFilterId).toBe('test-id-3');
+  });
+
+  it('creates unique IDs for each expanded filter', () => {
+    const filters = [
+      {
+        id: 'filter-abc',
+        topic: 'region',
+        condition: 'is',
+        query: ['10', '20', '30'],
+      },
+    ];
+    const expanded = expandFilters(filters);
+
+    const ids = expanded.map((f) => f.id);
+    expect(ids).toEqual(['filter-abc-10', 'filter-abc-20', 'filter-abc-30']);
+
+    // All IDs should be unique
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(3);
+  });
+
+  it('handles empty array', () => {
+    const filters = [];
+    const expanded = expandFilters(filters);
+    expect(expanded).toEqual([]);
   });
 });

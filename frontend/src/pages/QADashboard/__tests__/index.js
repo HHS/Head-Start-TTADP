@@ -16,6 +16,7 @@ import userEvent from '@testing-library/user-event';
 import QADashboard from '../index';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
+import MyGroupsProvider from '../../../components/MyGroupsProvider';
 
 const history = createMemoryHistory();
 const mockAnnounce = jest.fn();
@@ -200,6 +201,7 @@ const ROOT_CAUSE_FEI_GOALS_DATA = [
 
 describe('Resource Dashboard page', () => {
   beforeEach(() => {
+    fetchMock.get('/api/groups', []);
     // Mock Recipients with no TTA data.
     fetchMock.get(noTtaApi, RECIPIENTS_WITH_NO_TTA_DATA);
 
@@ -217,13 +219,15 @@ describe('Resource Dashboard page', () => {
 
   const renderQADashboard = (user = defaultUser) => {
     render(
-      <UserContext.Provider value={{ user }}>
-        <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
-          <Router history={history}>
-            <QADashboard user={user} />
-          </Router>
-        </AriaLiveContext.Provider>
-      </UserContext.Provider>,
+      <MyGroupsProvider authenticated>
+        <UserContext.Provider value={{ user }}>
+          <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
+            <Router history={history}>
+              <QADashboard user={user} />
+            </Router>
+          </AriaLiveContext.Provider>
+        </UserContext.Provider>
+      </MyGroupsProvider>,
     );
   };
 

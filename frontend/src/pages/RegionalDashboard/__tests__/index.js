@@ -13,6 +13,7 @@ import RegionalDashboard from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
+import MyGroupsProvider from '../../../components/MyGroupsProvider';
 
 const history = createMemoryHistory();
 
@@ -86,6 +87,7 @@ const feedItemResponse = `<?xml version="1.0" encoding="UTF-8"?>
 
 describe('Regional Dashboard page', () => {
   beforeEach(async () => {
+    fetchMock.get('/api/groups', []);
     fetchMock.get(overViewUrl, overViewResponse);
     fetchMock.get(reasonListUrl, reasonListResponse);
     fetchMock.get(totalHrsAndRecipientGraphUrl, totalHoursResponse);
@@ -113,13 +115,15 @@ describe('Regional Dashboard page', () => {
 
   const renderDashboard = (user, reportType = '') => {
     render(
-      <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
-        <UserContext.Provider value={{ user }}>
-          <Router history={history}>
-            <RegionalDashboard match={{ params: { reportType }, path: '', url: '' }} />
-          </Router>
-        </UserContext.Provider>
-      </AriaLiveContext.Provider>,
+      <MyGroupsProvider authenticated>
+        <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+          <UserContext.Provider value={{ user }}>
+            <Router history={history}>
+              <RegionalDashboard match={{ params: { reportType }, path: '', url: '' }} />
+            </Router>
+          </UserContext.Provider>
+        </AriaLiveContext.Provider>
+      </MyGroupsProvider>,
     );
   };
 

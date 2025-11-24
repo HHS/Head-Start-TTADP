@@ -13,6 +13,13 @@ const { sessionStorage } = window;
  */
 export default function useSession(key, initialValue) {
   const initial = useMemo(() => {
+    // If initialValue came from URL params (has length > 0), prioritize it
+    // This allows bookmarked URLs to override sessionStorage
+    if (initialValue && initialValue.length > 0) {
+      return initialValue;
+    }
+
+    // Otherwise, try sessionStorage
     try {
       const fromStorage = sessionStorage.getItem(key);
       if (fromStorage) {

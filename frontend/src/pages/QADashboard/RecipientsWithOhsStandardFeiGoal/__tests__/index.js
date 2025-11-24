@@ -10,6 +10,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import RecipientsWithOhsStandardFeiGoal, { mapGoalStatusKey } from '../index';
 import UserContext from '../../../../UserContext';
+import MyGroupsProvider from '../../../../components/MyGroupsProvider';
 import { mockRSSData } from '../../../../testHelpers';
 
 const history = createMemoryHistory();
@@ -95,11 +96,13 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
 
 const renderRecipientsWithOhsStandardFeiGoal = (user = defaultUser) => {
   render(
-    <Router history={history}>
-      <UserContext.Provider value={{ user }}>
-        <RecipientsWithOhsStandardFeiGoal />
-      </UserContext.Provider>
-    </Router>,
+    <MyGroupsProvider authenticated>
+      <Router history={history}>
+        <UserContext.Provider value={{ user }}>
+          <RecipientsWithOhsStandardFeiGoal />
+        </UserContext.Provider>
+      </Router>
+    </MyGroupsProvider>,
   );
 };
 
@@ -109,6 +112,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
   });
 
   beforeEach(() => {
+    fetchMock.get('/api/groups', []);
     fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-fei-goal', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-fei-filters', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-fei-root-causes', mockRSSData());

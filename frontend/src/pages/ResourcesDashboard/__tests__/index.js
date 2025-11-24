@@ -18,6 +18,7 @@ import fetchMock from 'fetch-mock';
 import ResourcesDashboard from '../index';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
+import MyGroupsProvider from '../../../components/MyGroupsProvider';
 import { formatDateRange } from '../../../utils';
 
 const history = createMemoryHistory();
@@ -310,17 +311,23 @@ const reportIdInParams = 'region.in[]=1&region.in[]=2&reportId.ctn[]=123';
 const reportPostUrl = '/api/activity-reports/reportsByManyIds';
 
 describe('Resource Dashboard page', () => {
+  beforeEach(() => {
+    fetchMock.get('/api/groups', []);
+  });
+
   afterEach(() => fetchMock.restore());
 
   const renderResourcesDashboard = (user) => {
     render(
-      <UserContext.Provider value={{ user }}>
-        <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
-          <Router history={history}>
-            <ResourcesDashboard user={user} />
-          </Router>
-        </AriaLiveContext.Provider>
-      </UserContext.Provider>,
+      <MyGroupsProvider authenticated>
+        <UserContext.Provider value={{ user }}>
+          <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
+            <Router history={history}>
+              <ResourcesDashboard user={user} />
+            </Router>
+          </AriaLiveContext.Provider>
+        </UserContext.Provider>
+      </MyGroupsProvider>,
     );
   };
 

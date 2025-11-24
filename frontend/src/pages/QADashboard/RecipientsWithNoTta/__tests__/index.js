@@ -10,6 +10,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import RecipientsWithNoTta from '../index';
 import UserContext from '../../../../UserContext';
+import MyGroupsProvider from '../../../../components/MyGroupsProvider';
 
 const history = createMemoryHistory();
 
@@ -83,15 +84,21 @@ const RecipientsWithNoTtaDataSSdi = [
 
 const renderRecipientsWithNoTta = (user = defaultUser) => {
   render(
-    <UserContext.Provider value={{ user }}>
-      <Router history={history}>
-        <RecipientsWithNoTta />
-      </Router>
-    </UserContext.Provider>,
+    <MyGroupsProvider authenticated>
+      <UserContext.Provider value={{ user }}>
+        <Router history={history}>
+          <RecipientsWithNoTta />
+        </Router>
+      </UserContext.Provider>
+    </MyGroupsProvider>,
   );
 };
 
 describe('Recipients With Ohs Standard Fei Goal', () => {
+  beforeEach(() => {
+    fetchMock.get('/api/groups', []);
+  });
+
   afterEach(() => fetchMock.restore());
 
   it('renders correctly without data', async () => {
