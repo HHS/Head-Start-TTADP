@@ -64,7 +64,7 @@ export default function SpecialistTags({ specialists }) {
               <Tooltip
                 displayText={roleName}
                 screenReadDisplayText={false}
-                buttonLabel={`${specialist.name} - ${roleName}`}
+                buttonLabel={`${specialist.name}`}
                 tooltipText={specialist.name}
                 hideUnderline
                 buttonClassName="display-flex"
