@@ -213,7 +213,10 @@ export default function StandardGoalCard({
           setDeleteError(false);
           setIsAppLoading(true);
           await deleteGoal(ids, regionId);
-          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, { message: 'Goal deleted successfully' });
+          history.push(
+            `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`,
+            { message: 'Goal deleted successfully', refreshRecipient: true },
+          );
         } catch (e) {
           setDeleteError(true);
         } finally {
