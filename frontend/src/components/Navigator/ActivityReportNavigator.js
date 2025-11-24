@@ -11,7 +11,7 @@ import { OBJECTIVE_RESOURCES, validateGoals, validatePrompts } from '../../pages
 import { saveGoalsForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
 import AppLoadingContext from '../../AppLoadingContext';
-import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport/formDataHelpers';
+import { convertGoalsToFormData, packageGoals, extractGoalIdsInOrder } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
 import useFormGrantData from '../../hooks/useFormGrantData';
@@ -225,12 +225,26 @@ const ActivityReportNavigator = ({
       goal,
       grantIds,
       prompts,
+      goalForEditing?.originalIndex,
     );
 
     try {
+      // First, set goals to the packaged goals array (with edited goal at correct position)
       setValue('goals', allGoals);
+
+      // Calculate and set goalOrder before getting all values
+      // This ensures goalOrder is included when we call getValues()
+      const goalOrder = extractGoalIdsInOrder(allGoals);
+
+      // Get all current values AFTER setting goalOrder
       const { status, ...values } = getValues();
-      const data = { ...values, pageState: newNavigatorState() };
+
+      // Explicitly include goalOrder in the data to be saved
+      const data = {
+        ...values,
+        goalOrder, // Explicitly add goalOrder
+        pageState: newNavigatorState(),
+      };
       const savedData = await onSave(data);
 
       // Update RHF with saved data
@@ -306,12 +320,32 @@ const ActivityReportNavigator = ({
       regionId: getValues('regionId'),
     };
 
+    // IN-PLACE EDITING: Package goals with the edited goal at its original position
     let allGoals = packageGoals(
       selectedGoals,
       goal,
       grantIds,
       prompts,
+      goalForEditing?.originalIndex,
     );
+
+    // GOAL ORDER PRESERVATION: Calculate goalOrder BEFORE sending to backend
+    //
+    // WHY THIS IS CRITICAL:
+    // - Backend ALWAYS returns goals ordered by activityReportGoals.createdAt
+    //   (when added to report)
+    // - But users want goals in the order they arranged them
+    // - We must calculate goalOrder NOW, before backend changes the order
+    //
+    // WHAT goalOrder IS:
+    // - An array of goal IDs in the correct display order:
+    //   [3, 1, 2] means goal 3 first, then 1, then 2
+    // - Saved to the backend so we can restore the correct order when fetching goals later
+    //
+    // TIMING MATTERS:
+    // - If we calculated goalOrder AFTER the API call, we'd capture the wrong order
+    //   (backend's createdAt order, not user's intended order)
+    const goalOrder = extractGoalIdsInOrder(allGoals);
 
     // save goal to api, come back with new ids for goal and objectives
     try {
@@ -339,14 +373,18 @@ const ActivityReportNavigator = ({
 
       const allowUpdateForm = shouldUpdateFormData(isAutoSave);
 
+      // GOAL ORDER RESTORATION: Use the goalOrder we calculated earlier to restore correct order
+      // Backend returned goals in createdAt order, but we pass goalOrder to sort them back
+      const currentFormData = getValues();
       const {
         goals, goalForEditing: newGoalForEditing,
-      } = convertGoalsToFormData(allGoals, grantIds);
+      } = convertGoalsToFormData(allGoals, grantIds, currentFormData.calculatedStatus, goalOrder);
 
       // Update RHF with new values (includes new IDs from API)
       if (allowUpdateForm) {
         setValue('goals', goals);
         setValue('goalForEditing', newGoalForEditing);
+        setValue('goalOrder', goalOrder);
         setValue(objectivesFieldArrayName, newGoalForEditing ? newGoalForEditing.objectives : null);
       }
 
@@ -433,12 +471,15 @@ const ActivityReportNavigator = ({
         },
         grantIds,
         prompts,
+        goalForEditing?.originalIndex,
       );
       // save report to API
+      // Note: onSave will calculate goalOrder from the goals returned by the API
       const { status, ...values } = getValues();
       const data = {
         ...values,
         goals: packagedGoals,
+        goalForEditing: null, // Explicitly clear goalForEditing since we just closed the form
         pageState: newNavigatorState(),
       };
       const savedData = await onSave(data);
