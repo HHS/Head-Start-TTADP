@@ -12,6 +12,7 @@ import moment from 'moment';
 import ActivityReport from './index';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
+import MyGroupsProvider from '../../components/MyGroupsProvider';
 
 export const history = createMemoryHistory();
 
@@ -79,23 +80,25 @@ export const ReportComponent = ({
   showLastUpdatedTime = null,
   userId = 1,
 }) => (
-  <Router history={history}>
-    <AppLoadingContext.Provider value={{
-      setIsAppLoading: jest.fn(),
-      setAppLoadingText: jest.fn(),
-    }}
-    >
-      <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
-        <ActivityReport
-          match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
-          location={{
-            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-          }}
-          region={1}
-        />
-      </UserContext.Provider>
-    </AppLoadingContext.Provider>
-  </Router>
+  <MyGroupsProvider authenticated>
+    <Router history={history}>
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
+      >
+        <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
+          <ActivityReport
+            match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
+            location={{
+              state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+            }}
+            region={1}
+          />
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
+    </Router>
+  </MyGroupsProvider>
 );
 
 export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {

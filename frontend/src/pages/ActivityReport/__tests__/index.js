@@ -40,6 +40,7 @@ describe('ActivityReport', () => {
   });
 
   beforeEach(() => {
+    fetchMock.get('/api/groups', []);
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
     fetchMock.get('/api/activity-reports/1/activity-recipients', recipients);
     fetchMock.get('/api/activity-reports/groups?region=1', [{

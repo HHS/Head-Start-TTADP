@@ -9,7 +9,8 @@ export const useDisplayGroups = (query) => {
   }
 
   return [query].flat().map((q) => {
-    const group = myGroups.find((g) => g.id === q);
+    // Use loose equality to handle string/number type mismatches
+    const group = myGroups.find((g) => g.id == q); // eslint-disable-line eqeqeq
     return group ? group.name : '';
   }).join(', ');
 };

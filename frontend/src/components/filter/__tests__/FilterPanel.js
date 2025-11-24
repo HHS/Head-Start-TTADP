@@ -252,4 +252,57 @@ describe('Filter Panel', () => {
     renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
     expect(screen.queryAllByText('Multiple recipient reports').length).toBe(2);
   });
+
+  it('Removing one region pill from multi-value filter leaves other regions', async () => {
+    const filters = [{
+      id: 'test-filter-1',
+      topic: 'region',
+      condition: 'is',
+      query: ['1', '2', '3'],
+    }];
+    const onRemovePill = jest.fn();
+    const onApplyFilters = jest.fn();
+    const userAllRegions = [1, 2, 3, 4];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+
+    // Verify all three region pills exist
+    expect(await screen.findByRole('button', { name: /this button removes the filter: region is 1/i })).toBeVisible();
+    expect(await screen.findByRole('button', { name: /this button removes the filter: region is 2/i })).toBeVisible();
+    expect(await screen.findByRole('button', { name: /this button removes the filter: region is 3/i })).toBeVisible();
+
+    // Remove one region pill
+    const regionPill = await screen.findByRole('button', { name: /this button removes the filter: region is 2/i });
+    userEvent.click(regionPill);
+
+    // Verify onApplyFilters was called with updated filter (regions 1 and 3 remaining)
+    expect(onApplyFilters).toHaveBeenCalledWith([{
+      id: 'test-filter-1',
+      topic: 'region',
+      condition: 'is',
+      query: ['1', '3'],
+    }], false);
+  });
+
+  it('Removing last value from multi-value filter removes entire filter', async () => {
+    const filters = [{
+      id: 'test-filter-1',
+      topic: 'region',
+      condition: 'is',
+      query: ['1'],
+    }];
+    const onRemovePill = jest.fn();
+    const onApplyFilters = jest.fn();
+    const userAllRegions = [1, 2];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+
+    // Verify region pill exists
+    expect(await screen.findByRole('button', { name: /this button removes the filter: region is 1/i })).toBeVisible();
+
+    // Remove the last region pill
+    const regionPill = await screen.findByRole('button', { name: /this button removes the filter: region is 1/i });
+    userEvent.click(regionPill);
+
+    // Verify onRemoveFilter was called with addBackAllRegions = true
+    expect(onRemovePill).toHaveBeenCalledWith('test-filter-1', true);
+  });
 });

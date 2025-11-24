@@ -13,6 +13,7 @@ import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { EVENT_STATUS } from '../constants';
 import AriaLiveContext from '../../../AriaLiveContext';
+import MyGroupsProvider from '../../../components/MyGroupsProvider';
 
 const mockAnnounce = jest.fn();
 
@@ -131,22 +132,24 @@ describe('TrainingReports', () => {
   const renderTrainingReports = (u, passedStatus = EVENT_STATUS.NOT_STARTED) => {
     const user = u || nonCentralOfficeUser;
     render(
-      <Router history={history}>
-        <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
-          <UserContext.Provider value={{ user }}>
-            <AppLoadingContext.Provider value={
-            {
-              setIsAppLoading: jest.fn(),
-              setAppLoadingText: jest.fn(),
-              isAppLoading: false,
+      <MyGroupsProvider authenticated>
+        <Router history={history}>
+          <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
+            <UserContext.Provider value={{ user }}>
+              <AppLoadingContext.Provider value={
+              {
+                setIsAppLoading: jest.fn(),
+                setAppLoadingText: jest.fn(),
+                isAppLoading: false,
+              }
             }
-          }
-            >
-              <TrainingReports match={{ params: { status: passedStatus }, path: '', url: '' }} />
-            </AppLoadingContext.Provider>
-          </UserContext.Provider>
-        </AriaLiveContext.Provider>
-      </Router>,
+              >
+                <TrainingReports match={{ params: { status: passedStatus }, path: '', url: '' }} />
+              </AppLoadingContext.Provider>
+            </UserContext.Provider>
+          </AriaLiveContext.Provider>
+        </Router>
+      </MyGroupsProvider>,
     );
   };
 
@@ -154,6 +157,8 @@ describe('TrainingReports', () => {
   const notStartedUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`);
 
   beforeEach(async () => {
+    fetchMock.get('/api/groups', []);
+    fetchMock.get('/api/events/alerts', []);
     fetchMock.get(notStartedUrl, notStartedEvents);
 
     // In progress.
@@ -447,20 +452,22 @@ describe('TrainingReports', () => {
     ];
 
     render(
-      <MemoryRouter initialEntries={pastLocations}>
-        <UserContext.Provider value={{ user }}>
-          <AppLoadingContext.Provider value={
-            {
-              setIsAppLoading: jest.fn(),
-              setAppLoadingText: jest.fn(),
-              isAppLoading: false,
+      <MyGroupsProvider authenticated>
+        <MemoryRouter initialEntries={pastLocations}>
+          <UserContext.Provider value={{ user }}>
+            <AppLoadingContext.Provider value={
+              {
+                setIsAppLoading: jest.fn(),
+                setAppLoadingText: jest.fn(),
+                isAppLoading: false,
+              }
             }
-          }
-          >
-            <TrainingReports match={{ params: { status: EVENT_STATUS.NOT_STARTED } }} />
-          </AppLoadingContext.Provider>
-        </UserContext.Provider>
-      </MemoryRouter>,
+            >
+              <TrainingReports match={{ params: { status: EVENT_STATUS.NOT_STARTED } }} />
+            </AppLoadingContext.Provider>
+          </UserContext.Provider>
+        </MemoryRouter>
+      </MyGroupsProvider>,
     );
 
     expect(await screen.findByText(/Successfully submitted report/i)).toBeVisible();

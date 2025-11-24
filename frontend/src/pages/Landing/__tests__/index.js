@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { SCOPE_IDS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
+import MyGroupsProvider from '../../../components/MyGroupsProvider';
 import Landing, { getAppliedRegion } from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports, overviewRegionOne } from '../mocks';
 import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
@@ -50,13 +51,15 @@ const renderLanding = (user, locationState = null) => {
     : ['/'];
 
   render(
-    <MemoryRouter initialEntries={initialEntries}>
-      <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
-        <UserContext.Provider value={{ user }}>
-          <Landing authenticated />
-        </UserContext.Provider>
-      </AriaLiveContext.Provider>
-    </MemoryRouter>,
+    <MyGroupsProvider authenticated>
+      <MemoryRouter initialEntries={initialEntries}>
+        <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
+          <UserContext.Provider value={{ user }}>
+            <Landing authenticated />
+          </UserContext.Provider>
+        </AriaLiveContext.Provider>
+      </MemoryRouter>
+    </MyGroupsProvider>,
   );
 };
 
@@ -69,6 +72,7 @@ describe('Landing Page', () => {
     removeItem: jest.fn(),
   });
   beforeEach(async () => {
+    fetchMock.get('/api/groups', []);
     fetchMock.get(base, response);
 
     fetchMock.get(baseAlerts, {
@@ -114,11 +118,13 @@ describe('Landing Page', () => {
     ];
 
     render(
-      <MemoryRouter initialEntries={pastLocations}>
-        <UserContext.Provider value={{ user }}>
-          <Landing authenticated user={user} />
-        </UserContext.Provider>
-      </MemoryRouter>,
+      <MyGroupsProvider authenticated>
+        <MemoryRouter initialEntries={pastLocations}>
+          <UserContext.Provider value={{ user }}>
+            <Landing authenticated user={user} />
+          </UserContext.Provider>
+        </MemoryRouter>
+      </MyGroupsProvider>,
     );
 
     const alert = await screen.findByRole('alert');

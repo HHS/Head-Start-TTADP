@@ -1,23 +1,51 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { isArray } from 'lodash';
 import FilterMenu from './FilterMenu';
 import FilterPills from './FilterPills';
 import { filterConfigProp, filterProp } from './props';
 import useSubFilters from '../../hooks/useSubFilters';
+import { MyGroupsContext } from '../MyGroupsProvider';
 
 const REGION = 'region';
+const GROUP = 'group';
 
-const determineRegionalFilters = (filters, allUserRegions) => {
-  const passedRegionFilters = filters.filter((f) => f.topic === REGION).map((r) => {
-    if (isArray(r.query)) {
-      return parseInt(r.query[0], 10);
+const determineRegionalFilters = (filters, allUserRegions, isLoadingGroups) => {
+  // Expand ONLY region filters so each region gets its own pill
+  // Other filters remain as-is with their array values
+  const expandedFilters = filters.flatMap((filter) => {
+    if (filter.topic === REGION && Array.isArray(filter.query)) {
+      // Expand region filters into separate filter objects
+      return filter.query.map((q) => ({
+        id: `${filter.id}-${q}`,
+        originalFilterId: filter.id,
+        topic: filter.topic,
+        condition: filter.condition,
+        query: q,
+      }));
     }
-    return r.query;
+    // Keep all other filters unchanged
+    return filter;
   });
 
-  const containsAllRegions = allUserRegions.every((region) => passedRegionFilters.includes(region));
-  return containsAllRegions ? filters.filter((f) => f.topic !== REGION) : filters;
+  // Extract all region values from the expanded filters
+  const passedRegionFilters = expandedFilters
+    .filter((f) => f.topic === REGION)
+    .map((r) => parseInt(r.query, 10));
+
+  // If all user regions are present, hide region filters entirely
+  const containsAllRegions = allUserRegions.every(
+    (region) => passedRegionFilters.includes(region),
+  );
+  let filtersToShow = containsAllRegions
+    ? expandedFilters.filter((f) => f.topic !== REGION)
+    : expandedFilters;
+
+  // Hide group filters while groups are loading
+  if (isLoadingGroups) {
+    filtersToShow = filtersToShow.filter((f) => f.topic !== GROUP);
+  }
+
+  return filtersToShow;
 };
 
 export default function FilterPanel({
@@ -30,17 +58,18 @@ export default function FilterPanel({
   manageRegions,
   allowedSubfilters,
 }) {
+  const { isLoading: isLoadingGroups } = useContext(MyGroupsContext);
   // eslint-disable-next-line max-len
-  const [filtersToShow, setFiltersToShow] = useState(determineRegionalFilters(filters, allUserRegions));
+  const [filtersToShow, setFiltersToShow] = useState(determineRegionalFilters(filters, allUserRegions, isLoadingGroups));
   const {
     subFilters,
     filteredFilterConfig,
   } = useSubFilters(filtersToShow, filterConfig, allowedSubfilters);
 
   useEffect(() => {
-    // Hide or Show Region Filters.
-    setFiltersToShow(determineRegionalFilters(filters, allUserRegions));
-  }, [filters, allUserRegions]);
+    // Hide or Show Region Filters, and hide Group filters while loading.
+    setFiltersToShow(determineRegionalFilters(filters, allUserRegions, isLoadingGroups));
+  }, [filters, allUserRegions, isLoadingGroups]);
 
   const onApply = (items) => {
     // Check for region filters.
@@ -49,12 +78,48 @@ export default function FilterPanel({
   };
 
   const onRemoveFilterPill = (id) => {
-    // Check if pill being removed is a region filter.
-    const pillToRemove = filters.find((f) => f.id === id);
-    const isRegionFilter = pillToRemove && pillToRemove.topic === 'region';
+    // Find the pill in the expanded filters
+    const expandedPill = filtersToShow.find((f) => f.id === id);
 
-    if (isRegionFilter) {
-      // Check if we removed the last region filter.
+    if (!expandedPill) {
+      return;
+    }
+
+    // Check if this is an expanded filter (has originalFilterId)
+    const originalFilterId = expandedPill.originalFilterId || id;
+
+    // Find the original filter
+    const originalFilter = filters.find((f) => f.id === originalFilterId);
+
+    if (!originalFilter) {
+      return;
+    }
+
+    const isRegionFilter = originalFilter.topic === 'region';
+
+    // If this was an expanded filter, we need to handle removing a single value
+    if (expandedPill.originalFilterId) {
+      // This is an expanded filter - remove just this value from the array
+      if (Array.isArray(originalFilter.query)) {
+        const updatedQuery = originalFilter.query.filter((q) => q !== expandedPill.query);
+
+        if (updatedQuery.length === 0) {
+          // Last value - remove the entire filter
+          const otherRegions = isRegionFilter
+            ? filters.filter((f) => f.id !== originalFilterId && f.topic === 'region')
+            : [];
+          onRemoveFilter(originalFilterId, isRegionFilter && otherRegions.length === 0);
+        } else {
+          // Still have values - update the filter with remaining values
+          const updatedFilter = { ...originalFilter, query: updatedQuery };
+          const updatedFilters = filters.map((f) => (
+            f.id === originalFilterId ? updatedFilter : f
+          ));
+          onApplyFilters(updatedFilters, false);
+        }
+      }
+    } else if (isRegionFilter) {
+      // Not an expanded filter - remove the entire filter
       const otherRegions = filters.filter((f) => f.id !== id && f.topic === 'region');
       onRemoveFilter(id, otherRegions.length === 0);
     } else {

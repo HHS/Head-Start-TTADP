@@ -76,7 +76,9 @@ export default function FilterSelect({
     onApply(selected.map((selection) => selection[key]));
   };
 
-  const showTruncated = selectedValues.length > 1;
+  // Ensure selectedValues is always an array
+  const selectedValuesArray = [selectedValues].flat();
+  const showTruncated = selectedValuesArray.length > 1;
 
   let coverAll = () => <></>;
 
@@ -85,7 +87,7 @@ export default function FilterSelect({
       let charCount = 0;
       let andMoreShown = false;
 
-      const truncated = selectedValues.map((selection, index) => {
+      const truncated = selectedValuesArray.map((selection, index) => {
         // if the "and x more tags" message has been shown
         if (andMoreShown) {
           return null;
@@ -109,10 +111,10 @@ export default function FilterSelect({
           <span key={selection} className="ttahub-filter-select--label flex-align-self-center">
             +
             {' '}
-            {selectedValues.length - index}
+            {selectedValuesArray.length - index}
             {' '}
             more tag
-            {selectedValues.length - index > 1 ? 's' : ''}
+            {selectedValuesArray.length - index > 1 ? 's' : ''}
           </span>
         );
       });
