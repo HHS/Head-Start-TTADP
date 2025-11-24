@@ -182,7 +182,7 @@ module.exports = {
       "pocIds"
     ) VALUES (
       1,
-      ARRAY[]::INTEGER[],
+      ARRAY[4]::INTEGER[],
       1,
       CAST('{"eventId":"R01-PD-24-1006","eventName":"Regional PD Event - Health and Safety","eventOrganizer":"Regional PD Event (with National Centers)","eventIntendedAudience":"recipients","trainingType":"Series","reasons":["Ongoing Quality Improvement","Planning/Coordination"],"targetPopulations":["Expectant families","Infants and Toddlers (ages birth to 3)","Preschool Children (ages 3-5)"],"vision":"Facilities and Safe Environments","creator":"harry@hogwarts.com","eventSubmitted":true,"status":"In progress","mockLabel":"Regional PD Event (with National Centers) User 5 is POC"}' AS JSONB),
       CAST('{"Event ID":"R01-PD-24-1006","Event Title":"Regional PD Event - Health and Safety","Event Organizer - Type of Event":"Regional PD Event (with National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Reason for Activity":"Ongoing Quality Improvement\\nPlanning/Coordination","Target Population(s)":"Expectant families\\nInfants and Toddlers (ages birth to 3)\\nPreschool Children (ages 3-5)","Overall Vision/Goal for the PD Event":"Facilities and Safe Environments","IST/Creator":"harry@hogwarts.com"}' AS JSONB),
