@@ -370,5 +370,30 @@ describe('S3', () => {
       });
       expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket: bucketName, Key });
     });
+
+    it('ignores empty s3 array in VCAP_SERVICES and falls back to env vars', () => {
+      const backupEnv = { ...process.env };
+      process.env.VCAP_SERVICES = JSON.stringify({ s3: [] });
+      process.env.S3_BUCKET = 'fallback-bucket';
+      process.env.AWS_ACCESS_KEY_ID = 'fallbackKeyId';
+      process.env.AWS_SECRET_ACCESS_KEY = 'fallbackSecret';
+      process.env.S3_ENDPOINT = 'fallback-endpoint';
+
+      const want = {
+        bucketName: process.env.S3_BUCKET,
+        s3Config: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          endpoint: process.env.S3_ENDPOINT,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          signatureVersion: 'v4',
+          s3ForcePathStyle: true,
+        },
+      };
+
+      const got = generateS3Config();
+      expect(got).toMatchObject(want);
+
+      process.env = backupEnv;
+    });
   });
 });
