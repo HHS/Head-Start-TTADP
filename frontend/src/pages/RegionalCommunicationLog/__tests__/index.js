@@ -155,13 +155,11 @@ describe('RegionalCommunicationLog', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
-    const purposeDropdown = within(purposeView).getByRole('combobox');
-    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
+    const purpose = screen.getByLabelText(/purpose of communication/i, { selector: 'select' });
+    userEvent.selectOptions(purpose, COMMUNICATION_PURPOSES[0]);
 
-    const resultView = screen.getAllByText(/result/i)[0];
-    const resultDropdown = within(resultView).getByRole('combobox');
-    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
+    const result = screen.getByLabelText(/result/i, { selector: 'select' });
+    userEvent.selectOptions(result, COMMUNICATION_RESULTS[0]);
 
     const saveButton = screen.getByRole('button', { name: 'Save and continue' });
     userEvent.click(saveButton);
@@ -195,13 +193,11 @@ describe('RegionalCommunicationLog', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
-    const purposeDropdown = within(purposeView).getByRole('combobox');
-    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
+    const purpose = screen.getByLabelText(/purpose of communication/i, { selector: 'select' });
+    userEvent.selectOptions(purpose, COMMUNICATION_PURPOSES[0]);
 
-    const resultView = screen.getAllByText(/result/i)[0];
-    const resultDropdown = within(resultView).getByRole('combobox');
-    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
+    const result = screen.getByLabelText(/result/i, { selector: 'select' });
+    userEvent.selectOptions(result, COMMUNICATION_RESULTS[0]);
 
     const saveButton = screen.getByRole('button', { name: 'Save and continue' });
     userEvent.click(saveButton);
