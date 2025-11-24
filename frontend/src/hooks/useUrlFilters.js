@@ -28,8 +28,6 @@ export default function useUrlFilters(defaultFilters) {
     const search = `?${filtersToQueryString(filters)}`;
     if (search === location.search) return;
     history.push({ ...location, search });
-    // eslint-disable-next-line no-console
-    console.log('History pushed', { ...location, search });
   };
 
   return [initialValue, updateUrl];
