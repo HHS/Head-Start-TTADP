@@ -70,11 +70,6 @@ const staticUserPermissions = [
   },
   {
     userId: 4,
-    regionId: 3,
-    scopeId: APPROVE_REPORTS,
-  },
-  {
-    userId: 4,
     regionId: 4,
     scopeId: READ_WRITE_REPORTS,
   },
