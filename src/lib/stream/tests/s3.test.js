@@ -14,7 +14,7 @@ jest.mock('@aws-sdk/lib-storage', () => {
 });
 
 // Mock logger used by the module under test
-jest.mock('../../logger', () => ({
+jest.mock('../../../logger', () => ({
   auditLogger: {
     error: jest.fn(),
   },
