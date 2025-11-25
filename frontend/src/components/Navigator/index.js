@@ -119,6 +119,8 @@ const Navigator = ({
     }
   }, autoSaveInterval);
 
+  const goalForEditing = watch('goalForEditing');
+
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
 
@@ -129,6 +131,17 @@ const Navigator = ({
       } else {
         stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
       }
+    }
+
+    // SPECIAL CASE: Goals and objectives page (position 2) should always show
+    // IN_PROGRESS if a goal is being edited, regardless of what pageState says
+    const GOALS_AND_OBJECTIVES_POSITION = 2;
+    const hasGoalBeingEdited = goalForEditing != null
+      && typeof goalForEditing === 'object'
+      && Object.keys(goalForEditing).length > 0;
+
+    if (p.position === GOALS_AND_OBJECTIVES_POSITION && hasGoalBeingEdited) {
+      stateOfPage = IN_PROGRESS;
     }
 
     const state = p.review ? formData[formDataStatusProp] : stateOfPage;
