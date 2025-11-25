@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { isArray } from 'lodash';
 import FilterMenu from './FilterMenu';
 import FilterPills from './FilterPills';
 import { filterConfigProp, filterProp } from './props';
 import useSubFilters from '../../hooks/useSubFilters';
+import { MyGroupsContext } from '../MyGroupsProvider';
 
 const REGION = 'region';
+const GROUP = 'group';
 
 const determineRegionalFilters = (filters, allUserRegions) => {
   const passedRegionFilters = filters.filter((f) => f.topic === REGION).map((r) => {
@@ -20,6 +22,18 @@ const determineRegionalFilters = (filters, allUserRegions) => {
   return containsAllRegions ? filters.filter((f) => f.topic !== REGION) : filters;
 };
 
+const determineFiltersToShow = (filters, allUserRegions, isLoadingGroups) => {
+  // First apply regional filter logic
+  let filtersToShow = determineRegionalFilters(filters, allUserRegions);
+
+  // Then hide group filters while groups are loading
+  if (isLoadingGroups) {
+    filtersToShow = filtersToShow.filter((f) => f.topic !== GROUP);
+  }
+
+  return filtersToShow;
+};
+
 export default function FilterPanel({
   onRemoveFilter,
   filters,
@@ -30,17 +44,21 @@ export default function FilterPanel({
   manageRegions,
   allowedSubfilters,
 }) {
+  const { isLoadingGroups = false } = useContext(MyGroupsContext);
+
   // eslint-disable-next-line max-len
-  const [filtersToShow, setFiltersToShow] = useState(determineRegionalFilters(filters, allUserRegions));
+  const [filtersToShow, setFiltersToShow] = useState(
+    determineFiltersToShow(filters, allUserRegions, isLoadingGroups),
+  );
   const {
     subFilters,
     filteredFilterConfig,
   } = useSubFilters(filtersToShow, filterConfig, allowedSubfilters);
 
   useEffect(() => {
-    // Hide or Show Region Filters.
-    setFiltersToShow(determineRegionalFilters(filters, allUserRegions));
-  }, [filters, allUserRegions]);
+    // Hide or Show Region and Group Filters based on loading state.
+    setFiltersToShow(determineFiltersToShow(filters, allUserRegions, isLoadingGroups));
+  }, [filters, allUserRegions, isLoadingGroups]);
 
   const onApply = (items) => {
     // Check for region filters.
