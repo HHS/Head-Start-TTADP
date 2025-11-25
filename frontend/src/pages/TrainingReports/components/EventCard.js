@@ -217,7 +217,6 @@ function EventCard({
 
   return (
     <>
-
       <article
         className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2 position-relative"
         data-testid="eventCard"
@@ -305,27 +304,6 @@ function EventCard({
             isCollaborator={isCollaborator}
           />
         ))}
-
-        <span>
-          <strong>
-            Scenario:
-            {' '}
-            {event.data.mockLabel}
-          </strong>
-          {' '}
-          /          Owner:
-          {' '}
-          {event.ownerId}
-          {' '}
-          / POC:
-          {' '}
-          {event.pocIds}
-          {' '}
-          / Collab:
-          {' '}
-          {event.collaboratorIds}
-        </span>
-
       </article>
 
     </>

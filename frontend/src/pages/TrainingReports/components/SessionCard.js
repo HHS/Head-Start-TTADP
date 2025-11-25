@@ -57,7 +57,7 @@ function SessionCard({
     pocComplete,
     ownerComplete,
     submitted,
-    facilitation,
+    // facilitation,  TODO: will need later
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -184,19 +184,6 @@ function SessionCard({
           {getSessionStatusIcon}
           {displaySessionStatus}
         </CardData>
-        <li>
-          <span>
-            Facilitation:
-            {' '}
-            { facilitation}
-            {' '}
-            / Submitted:
-            { submitted }
-            {' '}
-            / Approver ID:
-            { approverId }
-          </span>
-        </li>
       </ul>
     </div>
   );
