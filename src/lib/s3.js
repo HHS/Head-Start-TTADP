@@ -1,4 +1,12 @@
-import { S3Client } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  GetBucketVersioningCommand,
+  PutBucketVersioningCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { auditLogger } from '../logger';
 
 const generateS3Config = () => {
@@ -62,9 +70,7 @@ const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
     Bucket: bucket,
     Key: key,
   };
-  return (
-    (s3Client.deleteObject(params))
-  );
+  return s3Client.send(new DeleteObjectCommand(params));
 };
 
 const deleteFileFromS3Job = async (job, s3Client = s3) => {
@@ -92,18 +98,19 @@ const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   let params = {
     Bucket: bucket,
   };
-  const data = await s3Client.getBucketVersioning(params);
+
+  const data = await s3Client.send(new GetBucketVersioningCommand(params));
   if (!(data) || data.Status !== 'Enabled') {
     params = {
       Bucket: bucket,
       VersioningConfiguration: versioningConfiguration,
     };
-    return s3Client.putBucketVersioning(params);
+    return s3Client.send(new PutBucketVersioningCommand(params));
   }
   return data;
 };
 
-const downloadFile = (key, s3Client = s3, Bucket = bucketName) => {
+const downloadFile = async (key, s3Client = s3, Bucket = bucketName) => {
   if (!s3Client || !Bucket) {
     throw new Error('S3 is not configured.');
   }
@@ -111,12 +118,10 @@ const downloadFile = (key, s3Client = s3, Bucket = bucketName) => {
     Bucket,
     Key: key,
   };
-  return (
-    (s3Client.getObject(params))
-  );
+  return s3Client.send(new GetObjectCommand(params));
 };
 
-const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
+const getPresignedURL = async (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
   const url = { url: null, error: null };
   if (!s3Client || !Bucket) {
     url.error = new Error('S3 is not configured.');
@@ -128,7 +133,8 @@ const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360)
       Key,
       Expires,
     };
-    url.url = s3Client.getSignedUrl('getObject', params);
+    const command = new GetObjectCommand(params);
+    url.url = await getSignedUrl(s3Client, command, { expiresIn: Expires });
   } catch (error) {
     url.error = error;
   }
@@ -149,10 +155,7 @@ const uploadFile = async (buffer, name, type, s3Client = s3, Bucket = bucketName
   if (process.env.NODE_ENV === 'production') {
     await verifyVersioning(Bucket, s3Client);
   }
-
-  return (
-    (s3Client.upload(params))
-  );
+  return s3Client.send(new PutObjectCommand(params));
 };
 
 export {
