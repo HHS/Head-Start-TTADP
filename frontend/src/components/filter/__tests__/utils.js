@@ -6,7 +6,7 @@ import { fixQueryWhetherStringOrArray, useDisplayGroups } from '../utils';
 describe('useDisplayGroups', () => {
   it('returns empty string for empty or no query', () => {
     const wrapper = ({ children }) => (
-      <MyGroupsContext.Provider value={{ myGroups: [] }}>
+      <MyGroupsContext.Provider value={{ myGroups: [], isLoadingGroups: false }}>
         {children}
       </MyGroupsContext.Provider>
     );
@@ -14,15 +14,37 @@ describe('useDisplayGroups', () => {
     expect(result.current).toBe('');
   });
 
-  it('returns group names for valid queries', () => {
-    const myGroups = [{ id: '1', name: 'Group1' }, { id: '2', name: 'Group2' }];
+  it('returns empty string while loading', () => {
+    const myGroups = [{ id: 1, name: 'Group1' }];
     const wrapper = ({ children }) => (
-      <MyGroupsContext.Provider value={{ myGroups }}>
+      <MyGroupsContext.Provider value={{ myGroups, isLoadingGroups: true }}>
+        {children}
+      </MyGroupsContext.Provider>
+    );
+    const { result } = renderHook(() => useDisplayGroups('1'), { wrapper });
+    expect(result.current).toBe('');
+  });
+
+  it('returns group names for valid queries with number IDs', () => {
+    const myGroups = [{ id: 1, name: 'Group1' }, { id: 2, name: 'Group2' }];
+    const wrapper = ({ children }) => (
+      <MyGroupsContext.Provider value={{ myGroups, isLoadingGroups: false }}>
         {children}
       </MyGroupsContext.Provider>
     );
     const { result } = renderHook(() => useDisplayGroups('1'), { wrapper });
     expect(result.current).toBe('Group1');
+  });
+
+  it('returns group names for valid queries with string IDs', () => {
+    const myGroups = [{ id: 1, name: 'Group1' }, { id: 2, name: 'Group2' }];
+    const wrapper = ({ children }) => (
+      <MyGroupsContext.Provider value={{ myGroups, isLoadingGroups: false }}>
+        {children}
+      </MyGroupsContext.Provider>
+    );
+    const { result } = renderHook(() => useDisplayGroups(['2']), { wrapper });
+    expect(result.current).toBe('Group2');
   });
 });
 
