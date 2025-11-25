@@ -2,11 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES, LANGUAGES } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
-
 import { useFormContext } from 'react-hook-form';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   Button,
+  Checkbox,
   Radio,
 } from '@trussworks/react-uswds';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
@@ -22,77 +21,17 @@ import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
 
 const placeholderText = '- Select -';
 
-const ROLE_OPTIONS = [
-  'Admin. Assistant',
-  'COR',
-  'Early Childhood Manager',
-  'Early Childhood Specialist',
-  'Family Engagement Specialist',
-  'Grantee Specialist',
-  'Grantee Specialist Manager',
-  'Grants Management Specialist',
-  'Health Specialist',
-  'Program Specialist',
-  'Region Program Manager',
-  'Supervisory Program Specialist',
-  'System Specialist',
-  'TTAC',
-];
-
 const Participants = ({ formData }) => {
   const {
     control,
     register,
     watch,
-    setValue,
   } = useFormContext();
 
   const deliveryMethod = watch('deliveryMethod');
-  const isIstVisit = watch('isIstVisit') === 'yes';
-  const isNotIstVisit = watch('isIstVisit') === 'no';
 
   const regionId = watch('regionId');
   const eventRegionId = formData.event ? formData.event.regionId : null;
-
-  // handle existing sessions
-  useDeepCompareEffect(() => {
-    const {
-      istSelectionComplete,
-      recipients,
-      participants,
-      numberOfParticipantsInPerson,
-      numberOfParticipantsVirtually,
-      numberOfParticipants,
-    } = formData;
-
-    const formStarted = (
-      recipients && recipients.length
-    ) || (
-      participants && participants.length
-    ) || numberOfParticipantsInPerson
-    || numberOfParticipantsVirtually
-    || numberOfParticipants;
-
-    if (!istSelectionComplete && formStarted) {
-      setValue('isIstVisit', 'no');
-    }
-
-    if (!istSelectionComplete) {
-      setValue('istSelectionComplete', true);
-    }
-  }, [formData, setValue]);
-
-  // clear values between toggles
-  useDeepCompareEffect(() => {
-    if (isIstVisit) {
-      setValue('recipients', []);
-      setValue('participants', []);
-    }
-
-    if (isNotIstVisit) {
-      setValue('regionalOfficeTta', []);
-    }
-  }, [isIstVisit, isNotIstVisit, setValue]);
 
   return (
     <>
@@ -100,75 +39,56 @@ const Participants = ({ formData }) => {
         <title>Session Participants</title>
       </Helmet>
       <IndicatesRequiredField />
-      <FormItem
-        label="Is this an IST visit?"
-        name="isIstVisit"
-        fieldSetWrapper
-      >
-        <Radio
-          id="is-ist-visit-yes"
-          name="isIstVisit"
-          label="Yes"
-          value="yes"
-          className="smart-hub--report-checkbox"
-          inputRef={register({ required: 'Select one' })}
-        />
-
-        <Radio
-          id="is-ist-visit-no"
-          name="isIstVisit"
-          label="No"
-          value="no"
-          className="smart-hub--report-checkbox"
-          inputRef={register({ required: 'Select one' })}
-        />
-        <input type="hidden" name="istSelectionComplete" ref={register} />
-      </FormItem>
-
-      {isNotIstVisit && (
-        <>
-          <RecipientsWithGroups
-            regionId={regionId || eventRegionId}
-          />
-          <div className="margin-top-2">
-            <FormItem
-              label="Recipient participants"
-              name="participants"
-            >
-              <MultiSelect
-                name="participants"
-                control={control}
-                placeholderText={placeholderText}
-                options={
-              recipientParticipants
-                .map((participant) => ({ value: participant, label: participant }))
-                }
-                required="Select at least one participant"
-              />
-            </FormItem>
-          </div>
-        </>
-      )}
-
-      {isIstVisit && (
+      <RecipientsWithGroups
+        showTooltip="You can use a group to speed up selection, then remove recipients who did not attend."
+        regionId={regionId || eventRegionId}
+      />
       <div className="margin-top-2">
         <FormItem
-          label="Regional Office/TTA "
-          name="regionalOfficeTta"
+          label="Recipient participants"
+          name="participants"
         >
           <MultiSelect
-            name="regionalOfficeTta"
+            name="participants"
             control={control}
             placeholderText={placeholderText}
             options={
-              ROLE_OPTIONS
-                .map((role) => ({ value: role, label: role }))
-            }
-            required="Select at least one"
+              recipientParticipants
+                .map((participant) => ({ value: participant, label: participant }))
+                }
+            required="Select at least one participant"
           />
         </FormItem>
       </div>
-      )}
+
+      <div className="margin-top-2">
+        <FormItem
+          label="What type of TTA was provided?"
+          name="ttaType"
+          fieldSetWrapper
+        >
+          <Checkbox
+            id="training"
+            label="Training"
+            value="training"
+            name="ttaType"
+            className="smart-hub--report-checkbox"
+            inputRef={register({
+              required: 'Select at least one',
+            })}
+          />
+          <Checkbox
+            id="technical-assistance"
+            label="Technical Assistance"
+            value="technical-assistance"
+            name="ttaType"
+            className="smart-hub--report-checkbox"
+            inputRef={register({
+              required: 'Select at least one',
+            })}
+          />
+        </FormItem>
+      </div>
 
       <div className="margin-top-2">
         <FormItem

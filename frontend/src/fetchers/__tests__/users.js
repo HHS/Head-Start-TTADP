@@ -6,6 +6,8 @@ import {
   getActiveUsers,
   getTrainingReportUsers,
   getNamesByIds,
+  getRegionalTrainerOptions,
+  getNationalCenterTrainerOptions,
 } from '../users';
 
 const usersUrl = join('/', 'api', 'users');
@@ -59,6 +61,28 @@ describe('users fetcher', () => {
     );
 
     await getNamesByIds([1]);
+
+    expect(fetchMock.called(url)).toBe(true);
+  });
+
+  it('calls /api/users/trainers/national-center/region/1', async () => {
+    const url = join('/', 'api', 'users', 'trainers', 'national-center', 'region', '1');
+    fetchMock.once(
+      url, {},
+    );
+
+    await getNationalCenterTrainerOptions('1');
+
+    expect(fetchMock.called(url)).toBe(true);
+  });
+
+  it('calls /api/users/trainers/region/region/1', async () => {
+    const url = join('/', 'api', 'users', 'trainers', 'regional', 'region', '1');
+    fetchMock.once(
+      url, {},
+    );
+
+    await getRegionalTrainerOptions('1');
 
     expect(fetchMock.called(url)).toBe(true);
   });
