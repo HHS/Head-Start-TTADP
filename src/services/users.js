@@ -32,14 +32,6 @@ export const userAttributes = [
 ];
 
 export async function usersByRoles(roles = [], regionId = null) {
-  let permissionsWhere = {};
-
-  if (permissionsWhere) {
-    permissionsWhere = {
-      regionId,
-    };
-  }
-
   return User.findAll({
     where: {
       ...(regionId ? {
