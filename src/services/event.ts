@@ -719,7 +719,7 @@ const mappings: Record<string, string> = {
   'Overall Vision/Goal for the PD Event': 'vision',
   'Vision/Goal/Outcomes for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
-  'Reason(s) for PD': 'reasons',
+  // 'Reason(s) for PD': 'reasons', // TODO: Verify data should no longer be imported
   'Target Population(s)': 'targetPopulations',
   'Event Organizer - Type of Event': 'eventOrganizer',
   'IST Name:': 'istName',
@@ -728,7 +728,11 @@ const mappings: Record<string, string> = {
   'Additonal States Involved': 'additionalStates',
 };
 
-const toSplit = ['targetPopulations', 'reasons', 'additionalStates'];
+const toSplit = [
+  'targetPopulations',
+  // 'reasons',
+  'additionalStates',
+];
 
 const replacements: Record<string, string> = {
   'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
