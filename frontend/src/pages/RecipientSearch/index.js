@@ -22,6 +22,7 @@ import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndRe
 import { RECIPIENT_SEARCH_FILTER_CONFIG } from './constants';
 import { expandFilters } from '../../utils';
 import AppLoadingContext from '../../AppLoadingContext';
+import { MyGroupsContext } from '../../components/MyGroupsProvider';
 
 const DEFAULT_SORT = {
   sortBy: 'name',
@@ -51,6 +52,8 @@ function RecipientSearch({ user }) {
 
   const [results, setResults] = useState({ count: 0, rows: [] });
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { isLoadingGroups = false } = useContext(MyGroupsContext);
+  const [isLoadingRecipients, setIsLoadingRecipients] = useState(false);
 
   const { query, activePage, sortConfig } = queryAndSort;
 
@@ -110,7 +113,7 @@ function RecipientSearch({ user }) {
         return;
       }
 
-      setIsAppLoading(true);
+      setIsLoadingRecipients(true);
 
       try {
         const response = await searchRecipients(
@@ -122,7 +125,7 @@ function RecipientSearch({ user }) {
       } catch (err) {
         setResults({ count: 0, rows: [] });
       } finally {
-        setIsAppLoading(false);
+        setIsLoadingRecipients(false);
       }
     }
 
@@ -136,8 +139,12 @@ function RecipientSearch({ user }) {
     setQueryAndSort,
     filters,
     defaultSort,
-    setIsAppLoading,
   ]);
+
+  // Combine both loading states for the global app loading indicator
+  useEffect(() => {
+    setIsAppLoading(isLoadingRecipients || isLoadingGroups);
+  }, [isLoadingRecipients, isLoadingGroups, setIsAppLoading]);
 
   async function requestSort(sortBy) {
     const config = { ...sortConfig };
