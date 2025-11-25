@@ -178,7 +178,7 @@ export default function SessionForm({ match }) {
     applicationPages,
   } = useSessionFormRoleAndPages(formData);
 
-  const redirectPagePath = isPoc && !isAdminUser ? 'participants' : 'session-summary';
+  const redirectPagePath = applicationPages[0]?.path || null;
 
   useEffect(() => {
     if (!trainingReportId || !sessionId || !currentPage) {
@@ -244,7 +244,7 @@ export default function SessionForm({ match }) {
   useEffect(() => {
     // fetch event report data
     async function fetchSession() {
-      if (!currentPage || reportFetched || sessionId === 'new') {
+      if (reportFetched || sessionId === 'new') {
         return;
       }
       const viewTrUrl = `/training-report/view/${trainingReportId}`;
@@ -322,7 +322,7 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-  }, [currentPage, hookForm.reset, reportFetched, sessionId, history]);
+  }, [hookForm.reset, reportFetched, sessionId, history]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, applicationPages, currentPage);
@@ -338,7 +338,9 @@ export default function SessionForm({ match }) {
     history.push(newPath, state);
   };
 
-  if (!currentPage || ((isPoc && !isAdminUser) && currentPage === 'session-summary')) {
+  // Redirect if no page is specified, or if the specified page isn't available to this user
+  const pageExists = currentPage && applicationPages.some((p) => p.path === currentPage);
+  if (redirectPagePath && (!currentPage || !pageExists)) {
     return (
       <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`} />
     );
@@ -515,7 +517,7 @@ export default function SessionForm({ match }) {
       await updateSession(sessionId, {
         data: {
           ...roleData,
-          ...(isRegionalNoNationalCenters ? { pocComplete: true } : {}),
+          ...(isRegionalNoNationalCenters && roleData.pocComplete ? { pocComplete: true } : {}),
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
           dateSubmitted: moment().format('MM/DD/YYYY'), // date the session was submitted
           submitter: user.fullName, // user submitted the session for approval
@@ -538,6 +540,11 @@ export default function SessionForm({ match }) {
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   if (!reportFetched) {
+    return null;
+  }
+
+  // Don't render until we have valid pages for the user's role
+  if (applicationPages.length === 0) {
     return null;
   }
 
@@ -594,6 +601,7 @@ export default function SessionForm({ match }) {
               pages: applicationPages,
               isAdminUser,
               event,
+              approvers: [],
             }}
             formData={formData}
             pages={applicationPages}

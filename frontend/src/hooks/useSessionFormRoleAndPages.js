@@ -2,7 +2,6 @@
 import React, { useMemo, useContext } from 'react';
 import isAdmin from '../permissions';
 import pages from '../pages/SessionForm/pages';
-import sessionSummary from '../pages/SessionForm/pages/sessionSummary';
 import ReviewSubmitSession from '../pages/SessionForm/components/ReviewSubmit';
 import UserContext from '../UserContext';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
@@ -10,6 +9,11 @@ import { TRAINING_EVENT_ORGANIZER } from '../Constants';
 const createReviewPage = (applicationPages) => {
   // don't modify original array
   const lastPage = [...applicationPages].pop();
+
+  if (!lastPage) {
+    return null;
+  }
+
   const position = lastPage.position + 1;
 
   return {
@@ -53,7 +57,11 @@ const createReviewPage = (applicationPages) => {
 
 export default function useSessionFormRoleAndPages(formData) {
   const eventOrganizer = formData?.event?.data?.eventOrganizer || '';
+  const facilitation = formData?.facilitation || '';
+
   const isRegionalNoNationalCenters = useMemo(() => TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer, [eventOrganizer]);
+  const isRegionalWithNationalCenters = useMemo(() => TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS === eventOrganizer, [eventOrganizer]);
+  const facilitationIncludesRegion = useMemo(() => facilitation === 'regional_tta_staff' || facilitation === 'both', [facilitation]);
 
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
@@ -110,21 +118,42 @@ export default function useSessionFormRoleAndPages(formData) {
         pages.supportingAttachments,
         pages.nextSteps,
       ];
-    } else if (isPoc) {
+    } else if (isCollaborator && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
+      pagesWithReview = [
+        pages.sessionSummary,
+      ];
+    } else if (isPoc && isRegionalWithNationalCenters && facilitationIncludesRegion) {
+      pagesWithReview = [
+        pages.sessionSummary,
+        pages.participants,
+        pages.supportingAttachments,
+        pages.nextSteps,
+      ];
+    } else if (isPoc && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
       pagesWithReview = [
         pages.participants,
         pages.supportingAttachments,
         pages.nextSteps,
       ];
     } else {
-      pagesWithReview = [sessionSummary];
+      pagesWithReview = [];
     }
 
     const reviewPage = createReviewPage(pagesWithReview);
-    pagesWithReview.push(reviewPage);
-
+    // in the case of an empty array of pages...
+    if (reviewPage) {
+      pagesWithReview.push(reviewPage);
+    }
     return pagesWithReview;
-  }, [isAdminUser, isApprover, isCollaborator, isPoc, isRegionalNoNationalCenters]);
+  }, [
+    facilitationIncludesRegion,
+    isAdminUser,
+    isApprover,
+    isCollaborator,
+    isPoc,
+    isRegionalNoNationalCenters,
+    isRegionalWithNationalCenters,
+  ]);
 
   return {
     isPoc,
