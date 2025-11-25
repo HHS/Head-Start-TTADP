@@ -10,7 +10,8 @@ export const MyGroupsContext = createContext({});
 
 export default function MyGroupsProvider({ children, authenticated }) {
   const [myGroups, setMyGroups] = useState([]);
-  const [isLoadingGroups, setIsLoadingGroups] = useState(false);
+  // Initialize as true if authenticated, since we'll immediately start loading
+  const [isLoadingGroups, setIsLoadingGroups] = useState(authenticated);
 
   useEffect(() => {
     async function fetchMyGroups() {
