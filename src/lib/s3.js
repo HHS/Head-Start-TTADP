@@ -59,10 +59,10 @@ const generateS3Config = () => {
   };
 };
 
-const { bucketName, s3Config } = generateS3Config();
+const { defaultBucket, s3Config } = generateS3Config();
 const s3 = s3Config ? new S3Client(s3Config) : null;
 
-const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
+const deleteFileFromS3 = async (key, bucket = defaultBucket, s3Client = s3) => {
   if (!s3Client || !bucket) {
     throw new Error('S3 is not configured.');
   }
@@ -87,7 +87,7 @@ const deleteFileFromS3Job = async (job, s3Client = s3) => {
   }
 };
 
-const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
+const verifyVersioning = async (bucket = defaultBucket, s3Client = s3) => {
   if (!s3Client || !bucket) {
     throw new Error('S3 is not configured.');
   }
@@ -110,50 +110,46 @@ const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   return data;
 };
 
-const downloadFile = async (key, s3Client = s3, Bucket = bucketName) => {
-  if (!s3Client || !Bucket) {
+const downloadFile = async (key, s3Client = s3, bucketName = defaultBucket) => {
+  if (!s3Client || !bucketName) {
     throw new Error('S3 is not configured.');
   }
   const params = {
-    Bucket,
+    Bucket: bucketName,
     Key: key,
   };
   return s3Client.send(new GetObjectCommand(params));
 };
 
-const getPresignedURL = async (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
+const getPresignedURL = async (Key, Bucket = defaultBucket, s3Client = s3, Expires = 360) => {
   const url = { url: null, error: null };
   if (!s3Client || !Bucket) {
     url.error = new Error('S3 is not configured.');
     return url;
   }
   try {
-    const params = {
-      Bucket,
-      Key,
-      Expires,
-    };
-    const command = new GetObjectCommand(params);
+    const command = new GetObjectCommand({ Bucket, Key });
     url.url = await getSignedUrl(s3Client, command, { expiresIn: Expires });
   } catch (error) {
+    auditLogger.error(`Error generating presigned URL for key ${Key}: ${error.message}`);
     url.error = error;
   }
   return url;
 };
 
-const uploadFile = async (buffer, name, type, s3Client = s3, Bucket = bucketName) => {
-  if (!s3Client || !Bucket) {
+const uploadFile = async (buffer, name, type, s3Client = s3, bucketName = defaultBucket) => {
+  if (!s3Client || !bucketName) {
     throw new Error('S3 is not configured.');
   }
   const params = {
     Body: buffer,
-    Bucket,
+    Bucket: bucketName,
     ContentType: type.mime,
     Key: name,
   };
   // Only check for versioning if not using Minio
   if (process.env.NODE_ENV === 'production') {
-    await verifyVersioning(Bucket, s3Client);
+    await verifyVersioning(bucketName, s3Client);
   }
   return s3Client.send(new PutObjectCommand(params));
 };
