@@ -21,13 +21,12 @@ const generateS3Config = () => {
       return {
         bucketName: credentials.bucket,
         s3Config: {
-          credentials: {
-            accessKeyId: credentials.access_key_id,
-            secretAccessKey: credentials.secret_access_key,
-          },
+          accessKeyId: credentials.access_key_id,
+          secretAccessKey: credentials.secret_access_key,
           endpoint: credentials.fips_endpoint,
           region: credentials.region,
-          forcePathStyle: true,
+          signatureVersion: 'v4',
+          s3ForcePathStyle: true,
         },
       };
     }
@@ -46,8 +45,8 @@ const generateS3Config = () => {
       bucketName: S3_BUCKET,
       s3Config: {
         accessKeyId: AWS_ACCESS_KEY_ID,
-        endpoint: S3_ENDPOINT,
         secretAccessKey: AWS_SECRET_ACCESS_KEY,
+        endpoint: S3_ENDPOINT,
         signatureVersion: 'v4',
         s3ForcePathStyle: true,
       },
