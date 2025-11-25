@@ -125,7 +125,7 @@ module.exports = {
     SELECT
       id,
       1,
-      CAST('{"sessionName":"School Readiness Workshop - National Center","startDate":"2024-02-03","endDate":"2024-02-03","duration":4,"deliveryMethod":"in-person","context":"Specialized school readiness assessment","objective":"Master assessment techniques","numberOfParticipants":25,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":3,"facilitation":"national_center","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Assessment","Child Development"],"objectiveTrainers":["NCQTL"],"participants":["Teacher","Coach"]}' AS JSONB),
+      CAST('{"sessionName":"School Readiness Workshop - National Center","startDate":"2024-02-03","endDate":"2024-02-03","duration":4,"deliveryMethod":"in-person","context":"Specialized school readiness assessment","objective":"Master assessment techniques","numberOfParticipants":25,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"national_center","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Assessment","Child Development"],"objectiveTrainers":["NCQTL"],"participants":["Teacher","Coach"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -142,7 +142,7 @@ module.exports = {
     SELECT
       id,
       1,
-      CAST('{"sessionName":"School Readiness Workshop - Regional TTA","startDate":"2024-01-20","endDate":"2024-01-20","duration":4,"deliveryMethod":"virtual","context":"Building school readiness skills","objective":"Improve school readiness outcomes","numberOfParticipants":35,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":3,"facilitation":"regional_tta_staff","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Teaching Practices"],"objectiveTrainers":["Regional TTA Team"],"participants":["Teacher","Coach","Manager / Coordinator / Specialist"]}' AS JSONB),
+      CAST('{"sessionName":"School Readiness Workshop - Regional TTA","startDate":"2024-01-20","endDate":"2024-01-20","duration":4,"deliveryMethod":"virtual","context":"Building school readiness skills","objective":"Improve school readiness outcomes","numberOfParticipants":35,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"regional_tta_staff","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Teaching Practices"],"objectiveTrainers":["Regional TTA Team"],"participants":["Teacher","Coach","Manager / Coordinator / Specialist"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -159,7 +159,7 @@ module.exports = {
     SELECT
       id,
       1,
-      CAST('{"sessionName":"School Readiness Workshop - Both","startDate":"2024-01-27","endDate":"2024-01-27","duration":3.5,"deliveryMethod":"virtual","context":"Advanced school readiness strategies","objective":"Deepen school readiness implementation","numberOfParticipants":30,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":3,"facilitation":"both","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Curriculum Development"],"objectiveTrainers":["Regional TTA Team","NCQTL"],"participants":["Teacher","Coach","Education Manager"]}' AS JSONB),
+      CAST('{"sessionName":"School Readiness Workshop - Both","startDate":"2024-01-27","endDate":"2024-01-27","duration":3.5,"deliveryMethod":"virtual","context":"Advanced school readiness strategies","objective":"Deepen school readiness implementation","numberOfParticipants":30,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"both","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Curriculum Development"],"objectiveTrainers":["Regional TTA Team","NCQTL"],"participants":["Teacher","Coach","Education Manager"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
