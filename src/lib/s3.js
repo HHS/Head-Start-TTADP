@@ -62,6 +62,7 @@ const generateS3Config = () => {
 
 const { defaultBucket, s3Config } = generateS3Config();
 const s3 = s3Config ? new S3Client(s3Config) : null;
+auditLogger.info(`S3 Configuration: ${s3 ? 'S3 is configured.' : 'S3 is not configured.'}`);
 
 const deleteFileFromS3 = async (key, bucket = defaultBucket, s3Client = s3) => {
   if (!s3Client || !bucket) {
