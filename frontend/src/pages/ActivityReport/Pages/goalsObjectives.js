@@ -47,7 +47,7 @@ const Buttons = ({
   if (showSaveGoalsAndObjButton) {
     return (
       <>
-        <Button id="draft-goals-objectives-save-continue" className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>Save goal</Button>
+        <Button id="draft-goals-objectives-save-continue" className="margin-right-1 margin-bottom-2 margin-top-0" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>Save goal</Button>
         <Button id="draft-goals-objectives-save-draft" className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={() => onSaveDraft(false)}>Save draft</Button>
         <Button id="draft-goals-objectives-back" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(1); }}>Back</Button>
       </>
@@ -79,6 +79,11 @@ Buttons.propTypes = {
 
 const GoalsObjectives = ({
   reportId,
+  isAppLoading,
+  onContinue,
+  onSaveDraft,
+  onUpdatePage,
+  weAreAutoSaving,
 }) => {
   // NOTE: Temporary fix until we can figure out why mesh-kit is duplicating data
   // Check if this is the first time the user has opened the page,
@@ -113,6 +118,7 @@ const GoalsObjectives = ({
   const [fetchError, setFetchError] = useState(false);
   const [goalTemplates, setGoalTemplates] = useState([]);
   const [goalToRemove, setGoalToRemove] = useState(null);
+  const [editingGoalOriginalIndex, setEditingGoalOriginalIndex] = useState(null);
 
   const {
     field: {
@@ -162,6 +168,8 @@ const GoalsObjectives = ({
     toggleGoalForm(false);
     // An empty value here means that the Select dropdown will show its placeholder.
     setValue('goalForEditing', null);
+    // Clear the original index since we're creating a new goal
+    setEditingGoalOriginalIndex(null);
 
     // newGoal(grantIds) is still passed to the dropdown as part of the `options` prop,
     // so 'create a new goal' will still be an option.
@@ -191,6 +199,7 @@ const GoalsObjectives = ({
       setValue('goalForEditing', '');
       setValue('goalName', '');
       setValue('goalEndDate', '');
+      setEditingGoalOriginalIndex(null);
       toggleGoalForm(false);
 
       // Update the page state to reflect that there are no goals
@@ -239,25 +248,6 @@ const GoalsObjectives = ({
         return;
       }
     }
-    // clear out the existing value (we need to do this because without it
-    // certain objective fields don't clear out)
-    setValue('goalForEditing', null);
-    setValue('goalPrompts', []);
-
-    // make this goal the editable goal
-    setValue('goalForEditing', goal);
-    setValue('goalEndDate', goal.endDate);
-    setValue('goalName', goal.name);
-
-    toggleGoalForm(false);
-    setValue(
-      'pageState',
-      {
-        ...pageState,
-        [GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER]: IN_PROGRESS,
-      },
-    );
-
     // Deep copy to avoid shared references to nested arrays like goalIds
     let copyOfSelectedGoals = selectedGoals.map((g) => ({
       ...g,
@@ -269,14 +259,45 @@ const GoalsObjectives = ({
     // would like to use structuredClone here for brevity but it would require fighting jsdom
     // let copyOfSelectedGoals = selectedGoals.map((g) => structuredClone(g));
 
-    // add the goal that was being edited to the "selected goals"
+    // add the goal that was being edited back to the "selected goals" at its original position
     if (currentlyEditing) {
-      copyOfSelectedGoals.push(currentlyEditing);
+      const currentlyEditingOriginalIndex = currentlyEditing.originalIndex;
+      if (currentlyEditingOriginalIndex !== null && currentlyEditingOriginalIndex !== undefined) {
+        // Insert at the original position
+        const insertIndex = Math.min(currentlyEditingOriginalIndex, copyOfSelectedGoals.length);
+        copyOfSelectedGoals.splice(insertIndex, 0, currentlyEditing);
+      } else {
+        // Fallback to push if no original index (shouldn't happen, but safe)
+        copyOfSelectedGoals.push(currentlyEditing);
+      }
     }
+
+    // capture the original index of the goal we're about to edit
+    const originalIndex = copyOfSelectedGoals.findIndex((g) => g.id === goal.id);
+    setEditingGoalOriginalIndex(originalIndex);
 
     // remove the goal we are now editing from the "selected goals"
     copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
     onUpdateGoals(copyOfSelectedGoals);
+
+    // clear out the existing value (we need to do this because without it
+    // certain objective fields don't clear out)
+    setValue('goalForEditing', null);
+    setValue('goalPrompts', []);
+
+    // make this goal the editable goal, storing its original index
+    setValue('goalForEditing', { ...goal, originalIndex });
+    setValue('goalEndDate', goal.endDate);
+    setValue('goalName', goal.name);
+
+    toggleGoalForm(false);
+    setValue(
+      'pageState',
+      {
+        ...pageState,
+        [GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER]: IN_PROGRESS,
+      },
+    );
   }; // end onEdit
 
   // the read only component expects things a little differently
@@ -287,6 +308,32 @@ const GoalsObjectives = ({
     grants: [],
     goalIds: goal.goalIds ? [...goal.goalIds] : [],
   })); // would like to use structuredClone here for brevity but it would require fighting jsdom
+
+  // IN-PLACE EDITING: Split goals array to render the goal editing form at its original position
+  //
+  // WHY: When editing a goal, we want it to appear in-place at its original position in the list
+  // (not at the top or bottom of the page).
+  //
+  // HOW IT WORKS:
+  // 1. We split the goals array into two parts: goals before and goals after the editing position
+  // 2. We render: goalsBeforeEdit -> GoalPicker (editing form) -> goalsAfterEdit
+  // 3. This creates the visual effect that the goal is being edited "in place"
+  //
+  // CRITICAL FIX: Use goalForEditing.originalIndex from hook form (NOT local state)
+  // - Hook form state persists across navigation (saved to backend)
+  // - Local state (editingGoalOriginalIndex) resets when navigating away and returning
+  // - This was the root cause of goals appearing at the bottom after navigation
+  let goalsBeforeEdit = goalsForReview;
+  let goalsAfterEdit = [];
+
+  // Prefer goalForEditing.originalIndex (persists), fallback to local state (initial edit)
+  const originalIndexForSplit = goalForEditing?.originalIndex ?? editingGoalOriginalIndex;
+
+  if (!isGoalFormClosed && originalIndexForSplit !== null && originalIndexForSplit >= 0) {
+    // Split the array at the original index where the editing goal was
+    goalsBeforeEdit = goalsForReview.slice(0, originalIndexForSplit);
+    goalsAfterEdit = goalsForReview.slice(originalIndexForSplit);
+  }
 
   // Add a variable to determine if a recipient has been selected.
   const hasRecipient = activityRecipients && activityRecipients.length > 0;
@@ -356,21 +403,21 @@ const GoalsObjectives = ({
       */}
 
       {/**
-        * all goals for review
+        * goals before the editing goal
       */}
-      { goalsForReview.length ? (
+      { goalsBeforeEdit.length > 0 && (
         <ReadOnly
           onEdit={onEdit}
           onRemove={(goal) => {
             setGoalToRemove(goal);
             modalRef.current.toggleModal();
           }}
-          createdGoals={goalsForReview}
+          createdGoals={goalsBeforeEdit}
         />
-      ) : null }
+      ) }
 
       {/**
-        * conditionally show the goal picker
+        * conditionally show the goal picker (in-place at original position)
       */}
 
       {hasGrant && !isGoalFormClosed && startDateHasValue
@@ -384,27 +431,77 @@ const GoalsObjectives = ({
                 goalTemplates={goalTemplates}
               />
             </Fieldset>
+            {/**
+              * Render buttons right after the goal editing form
+            */}
+            <div className="margin-bottom-4">
+              <Buttons
+                isAppLoading={isAppLoading}
+                onContinue={onContinue}
+                onSaveDraft={onSaveDraft}
+                onUpdatePage={onUpdatePage}
+                weAreAutoSaving={weAreAutoSaving}
+              />
+            </div>
           </>
         ) : (
           null
         ) }
 
       {/**
+        * goals after the editing goal
+      */}
+      { goalsAfterEdit.length > 0 && (
+        <ReadOnly
+          onEdit={onEdit}
+          onRemove={(goal) => {
+            setGoalToRemove(goal);
+            modalRef.current.toggleModal();
+          }}
+          createdGoals={goalsAfterEdit}
+        />
+      ) }
+
+      {/**
         * we show the add new goal button if we are reviewing existing goals
         * and if the report HAS goals
         */}
-      {hasGrant && isGoalFormClosed
-        ? (
-          <PlusButton onClick={addNewGoal} className="ttahub-plus-button-no-margin-top" text="Add new goal" />
-        ) : (
-          null
-        ) }
+      {hasGrant && isGoalFormClosed && (
+        <PlusButton onClick={addNewGoal} className="ttahub-plus-button-no-margin-top" text="Add new goal" />
+      )}
+
+      {/**
+        * Show navigation buttons when not editing (goal form is closed)
+        * OR when we don't have the prerequisites to edit (no grant or no start date)
+        */}
+      {(isGoalFormClosed || !hasGrant || !startDateHasValue) && (
+        <Buttons
+          isAppLoading={isAppLoading}
+          onContinue={onContinue}
+          onSaveDraft={onSaveDraft}
+          onUpdatePage={onUpdatePage}
+          weAreAutoSaving={weAreAutoSaving}
+        />
+      )}
     </>
   );
 };
 
 GoalsObjectives.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  isAppLoading: PropTypes.bool,
+  onContinue: PropTypes.func,
+  onSaveDraft: PropTypes.func,
+  onUpdatePage: PropTypes.func,
+  weAreAutoSaving: PropTypes.bool,
+};
+
+GoalsObjectives.defaultProps = {
+  isAppLoading: false,
+  onContinue: null,
+  onSaveDraft: null,
+  onUpdatePage: null,
+  weAreAutoSaving: false,
 };
 
 const ReviewSection = () => (
@@ -445,15 +542,13 @@ export default {
     <>
       <GoalsObjectives
         reportId={reportId}
-      />
-      <DraftAlert />
-      <Buttons
         isAppLoading={isAppLoading || false}
         onContinue={onContinue}
         onSaveDraft={onSaveDraft}
         onUpdatePage={onUpdatePage}
         weAreAutoSaving={weAreAutoSaving}
       />
+      <DraftAlert />
     </>
   ),
 };
