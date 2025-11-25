@@ -47,7 +47,7 @@ export async function usersByRoles(roles = [], regionId = null) {
     ],
     include: [
       {
-        attibutes: [
+        attributes: [
           'id',
           'name',
           'fullName',
