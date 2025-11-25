@@ -33,6 +33,7 @@ import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHel
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 import NewActivityReportButton from '../../components/NewActivityReportButton';
 import LandingMessage from '../../components/LandingMessage';
+import { MyGroupsContext } from '../../components/MyGroupsProvider';
 import './index.scss';
 
 const FILTER_KEY = 'landing-filters';
@@ -47,6 +48,7 @@ export function getAppliedRegion(filters) {
 
 function Landing() {
   const { user } = useContext(UserContext);
+  const { isLoadingGroups = false } = useContext(MyGroupsContext);
 
   // Determine Default Region.
   const regions = allRegionsUserHasActivityReportPermissionTo(user);
@@ -268,7 +270,7 @@ function Landing() {
           )}
         </Grid>
         <MyAlerts
-          loading={alertsLoading}
+          loading={alertsLoading || isLoadingGroups}
           reports={reportAlerts}
           newBtn={hasReadWrite(user)}
           alertsSortConfig={alertsSortConfig}
