@@ -7,6 +7,7 @@ import {
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Upload } from '@aws-sdk/lib-storage';
 import { auditLogger } from '../logger';
 
 const generateS3Config = () => {
@@ -20,12 +21,13 @@ const generateS3Config = () => {
       return {
         bucketName: credentials.bucket,
         s3Config: {
-          accessKeyId: credentials.access_key_id,
+          credentials: {
+            accessKeyId: credentials.access_key_id,
+            secretAccessKey: credentials.secret_access_key,
+          },
           endpoint: credentials.fips_endpoint,
           region: credentials.region,
-          secretAccessKey: credentials.secret_access_key,
-          signatureVersion: 'v4',
-          s3ForcePathStyle: true,
+          forcePathStyle: true,
         },
       };
     }
@@ -118,7 +120,7 @@ const downloadFile = async (key, s3Client = s3, bucketName = defaultBucket) => {
     Bucket: bucketName,
     Key: key,
   };
-  return s3Client.send(new GetObjectCommand(params));
+  return s3Client.send(new GetObjectCommand(params)).done();
 };
 
 const getPresignedURL = async (Key, Bucket = defaultBucket, s3Client = s3, Expires = 360) => {
@@ -147,11 +149,14 @@ const uploadFile = async (buffer, name, type, s3Client = s3, bucketName = defaul
     ContentType: type.mime,
     Key: name,
   };
-  // Only check for versioning if not using Minio
+  // Only check for versioning if not running locally
   if (process.env.NODE_ENV === 'production') {
     await verifyVersioning(bucketName, s3Client);
   }
-  return s3Client.send(new PutObjectCommand(params));
+  return Upload({
+    client: s3Client,
+    params,
+  }).done();
 };
 
 export {
