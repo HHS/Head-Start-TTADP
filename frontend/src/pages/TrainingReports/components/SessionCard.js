@@ -1,9 +1,8 @@
-import React, { useRef, useContext } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Link } from 'react-router-dom';
 import { ModalToggleButton, Button } from '@trussworks/react-uswds';
-import UserContext from '../../../UserContext';
 import Modal from '../../../components/VanillaModal';
 import {
   InProgress,
@@ -12,7 +11,7 @@ import {
   Pencil,
   Trash,
 } from '../../../components/icons';
-import isAdmin from '../../../permissions';
+import useSessionCardPermissions from '../../../hooks/useSessionCardPermissions';
 import './SessionCard.scss';
 
 const CardData = ({ label, children }) => (
@@ -44,7 +43,6 @@ function SessionCard({
   eventOrganizer, //  TODO: Will leverage later
 }) {
   const modalRef = useRef();
-  const { approverId } = session;
   const {
     sessionName,
     startDate,
@@ -54,9 +52,6 @@ function SessionCard({
     objectiveTopics,
     objectiveTrainers,
     status,
-    pocComplete,
-    ownerComplete,
-    submitted,
     // facilitation,  TODO: will need later
   } = session.data;
 
@@ -70,11 +65,6 @@ function SessionCard({
     }
   };
 
-  const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
-  const { user } = useContext(UserContext);
-  const isAdminUser = isAdmin(user);
-  const isSessionApprover = user.id === approverId;
-
   const displaySessionStatus = getSessionDisplayStatusText();
 
   const getSessionStatusIcon = (() => {
@@ -86,34 +76,15 @@ function SessionCard({
     return <NoStatus />;
   })();
 
-  const showSessionEdit = () => {
-    if (submitted && !isSessionApprover) {
-      return false;
-    }
-
-    // If they are a POC and POC work is complete, they should not be able to edit the session.
-    if (isPoc && pocComplete && !isAdminUser) {
-      return false;
-    }
-
-    // eslint-disable-next-line max-len
-    // If they are the owner and owner work is complete, they should not be able to edit the session.
-    if (((isOwner || isCollaborator) && !isAdminUser) && ownerComplete) {
-      return false;
-    }
-
-    // First if both general poc and owner status is blocked make sure they are not and admin.
-    if (!isAdminUser && (!isWriteable || statusIsComplete)) {
-      return false;
-    }
-
-    // Admin can edit the session until the EVENT is complete.
-    if (isAdminUser && eventStatus === TRAINING_REPORT_STATUSES.COMPLETE) {
-      return false;
-    }
-
-    return true;
-  };
+  const { showSessionEdit } = useSessionCardPermissions({
+    session,
+    isPoc,
+    isOwner,
+    isCollaborator,
+    isWriteable,
+    eventStatus,
+    eventOrganizer,
+  });
 
   return (
     <div>
@@ -143,7 +114,7 @@ function SessionCard({
               {sessionName}
             </p>
             {
-            showSessionEdit()
+            showSessionEdit
               && (
                 <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
                   <Link to={`/training-report/${eventId}/session/${session.id}`} className="margin-right-4">

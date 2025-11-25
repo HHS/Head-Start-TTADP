@@ -20,6 +20,7 @@ describe('SessionCard', () => {
   const history = createMemoryHistory();
   const defaultSession = {
     id: 1,
+    approverId: 999,
     data: {
       regionId: 1,
       sessionName: 'This is my session title',
@@ -30,6 +31,10 @@ describe('SessionCard', () => {
       objectiveTopics: ['Topic 1', 'Topic 2'],
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
+      pocComplete: false,
+      ownerComplete: false,
+      submitted: false,
+      facilitation: 'national_centers',
     },
   };
 
@@ -83,6 +88,7 @@ describe('SessionCard', () => {
   it('hides edit link if session is complete', () => {
     renderSessionCard({
       id: 1,
+      approverId: 999,
       data: {
         ...defaultSession.data,
         pocComplete: true,
@@ -96,19 +102,27 @@ describe('SessionCard', () => {
   });
 
   it('shows the edit link with the correct permissions', () => {
-    renderSessionCard(defaultSession);
+    renderSessionCard(
+      defaultSession,
+      true,
+      TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      defaultUser,
+      false,
+      false,
+      true,
+    );
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/edit session/i)).toBeInTheDocument();
   });
 
   it('renders complete status', () => {
-    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Complete' } });
+    renderSessionCard({ id: 1, approverId: 999, data: { ...defaultSession.data, status: 'Complete' } });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/complete/i)).toBeInTheDocument();
   });
 
   it('renders needs status', () => {
-    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'blah' } });
+    renderSessionCard({ id: 1, approverId: 999, data: { ...defaultSession.data, status: 'blah' } });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/not started/i)).toBeInTheDocument();
   });
@@ -161,13 +175,14 @@ describe('SessionCard', () => {
 
     renderSessionCard({
       id: 1,
+      approverId: 999,
       data: {
         ...defaultSession.data,
         ownerId: 1,
         pocComplete: true,
         ownerComplete: true,
       },
-    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser);
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -190,6 +205,7 @@ describe('SessionCard', () => {
 
     renderSessionCard({
       id: 1,
+      approverId: 999,
       data: {
         ...defaultSession.data,
         ownerId: 3,
@@ -197,7 +213,7 @@ describe('SessionCard', () => {
         pocComplete: true,
         ownerComplete: true,
       },
-    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser);
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -212,7 +228,15 @@ describe('SessionCard', () => {
         scopeId: SCOPE_IDS.ADMIN,
       }],
     };
-    renderSessionCard(defaultSession, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, adminUser);
+    renderSessionCard(
+      defaultSession,
+      true,
+      TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      adminUser,
+      false,
+      false,
+      true,
+    );
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -221,6 +245,7 @@ describe('SessionCard', () => {
   it('hides the edit session button if the poc work is complete', () => {
     renderSessionCard({
       id: 1,
+      approverId: 999,
       data: {
         ...defaultSession.data,
         pocComplete: true,
@@ -235,6 +260,7 @@ describe('SessionCard', () => {
   it('hides the edit session button if the owner work is complete', () => {
     renderSessionCard({
       id: 1,
+      approverId: 999,
       data: {
         ...defaultSession.data,
         pocComplete: false,
@@ -249,6 +275,7 @@ describe('SessionCard', () => {
   it('hides the edit session button if the user is a collaborator and the owner work is complete', () => {
     renderSessionCard({
       id: 1,
+      approverId: 999,
       data: {
         ...defaultSession.data,
         pocComplete: false,
@@ -263,12 +290,13 @@ describe('SessionCard', () => {
   it('shows the edit session button if the owner work is not complete', () => {
     renderSessionCard({
       id: 1,
+      approverId: 999,
       data: {
         ...defaultSession.data,
         pocComplete: true,
         ownerComplete: false,
       },
-    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, true);
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -277,6 +305,7 @@ describe('SessionCard', () => {
   it('shows the edit session button if the poc work is not complete', () => {
     renderSessionCard({
       id: 1,
+      approverId: 999,
       data: {
         ...defaultSession.data,
         pocComplete: false,
@@ -291,6 +320,7 @@ describe('SessionCard', () => {
   it('shows the edit button if the user is a collaborator and the owner work is not complete', () => {
     renderSessionCard({
       id: 1,
+      approverId: 999,
       data: {
         ...defaultSession.data,
         pocComplete: false,
