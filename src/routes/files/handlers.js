@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
-import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
+import { uploadFile, deleteFileFromS3, getSignedDownloadUrl } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
 import {
   deleteFile,
@@ -513,7 +513,7 @@ const uploadHandler = async (req, res) => {
       metadata = await metadataFn(originalFilename, fileName, size);
       const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
       auditLogger.info(`${logContext.namespace}:uploadHandler Uploaded file ${originalFilename} as ${uploadedFile.Key}`);
-      const url = await getPresignedURL(uploadedFile.Key);
+      const url = await getSignedDownloadUrl(uploadedFile.Key);
       await updateStatus(metadata.id, UPLOADED);
       fileResponse.push({ ...metadata, url });
     } catch (err) {

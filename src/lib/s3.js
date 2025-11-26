@@ -4,11 +4,10 @@ import {
   PutBucketVersioningCommand,
   GetObjectCommand,
   DeleteObjectCommand,
-  PutObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
-import { logger, auditLogger } from '../logger';
+import { auditLogger } from '../logger';
 
 const generateS3Config = () => {
   // Take configuration from cloud.gov if it is available. If not, use env variables.
@@ -26,6 +25,7 @@ const generateS3Config = () => {
           endpoint: credentials.fips_endpoint,
           region: credentials.region,
           forcePathStyle: true,
+          logger: console,
         },
       };
     }
@@ -48,6 +48,7 @@ const generateS3Config = () => {
         endpoint: S3_ENDPOINT,
         region: process.env.AWS_REGION || 'us-gov-west-1',
         forcePathStyle: true,
+        logger: console,
       },
     };
   }
@@ -122,21 +123,21 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
   return client.send(new GetObjectCommand(params)).done();
 };
 
-const getPresignedURL = async (key, bucket = s3Bucket, client = s3Client, Expires = 360) => {
-  const url = { url: null, error: null };
+const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, Expires = 360) => {
+  const urlResponse = { url: null, error: null };
   if (!client || !bucket) {
-    url.error = new Error(`S3 not configured (${client}, ${bucket})`);
-    return url;
+    urlResponse.error = new Error(`S3 not configured (${client}, ${bucket})`);
+    return urlResponse;
   }
   try {
     const command = new GetObjectCommand({ Bucket: bucket, Key: key });
-    url.url = await getSignedUrl(client, command, { expiresIn: Expires });
-    auditLogger.info(`Generated presigned URL for key ${key}: ${url.url}`);
+    urlResponse.url = await getSignedUrl(client, command, { expiresIn: Expires });
+    auditLogger.info(`Generated presigned URL for key ${key}: ${urlResponse.url}`);
   } catch (error) {
     auditLogger.error(`Error generating presigned URL: ${error}`);
-    url.error = error;
+    urlResponse.error = error;
   }
-  return url;
+  return urlResponse;
 };
 
 const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Bucket) => {
@@ -164,7 +165,7 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
 export {
   s3Client,
   downloadFile,
-  getPresignedURL,
+  getSignedDownloadUrl,
   uploadFile,
   generateS3Config,
   verifyVersioning,
