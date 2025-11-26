@@ -4,6 +4,7 @@ import {
   PutBucketVersioningCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  PutObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
@@ -129,10 +130,10 @@ const getPresignedURL = async (key, bucket = s3Bucket, client = s3Client, Expire
     return url;
   }
   try {
-    const command = new GetObjectCommand({ bucket, key });
+    const command = new PutObjectCommand({ bucket, key });
     url.url = await getSignedUrl(client, command, { expiresIn: Expires });
   } catch (error) {
-    auditLogger.error(`Error generating presigned URL for key ${key}: ${error.message}`);
+    auditLogger.error(`Error generating presigned URL: ${error.message}`);
     url.error = error;
   }
   return url;
