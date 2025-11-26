@@ -33,7 +33,6 @@ describe('useSessionCardPermissions', () => {
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       pocComplete: false,
       ownerComplete: false,
-      submitted: false,
       facilitation: 'national_centers',
     },
   };
@@ -56,7 +55,8 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
-            submitted: true,
+            ownerComplete: true,
+            pocComplete: true,
           },
         },
       };
@@ -76,7 +76,8 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
-            submitted: true,
+            ownerComplete: true,
+            pocComplete: true,
           },
         },
       };
@@ -453,7 +454,8 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
-            submitted: true,
+            pocComplete: true,
+            ownerComplete: true,
           },
         },
       };

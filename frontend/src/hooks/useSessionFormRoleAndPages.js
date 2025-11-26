@@ -55,7 +55,8 @@ const createReviewPage = (applicationPages) => {
   };
 };
 
-export default function useSessionFormRoleAndPages(formData) {
+export default function useSessionFormRoleAndPages(hookForm) {
+  const formData = hookForm.watch();
   const eventOrganizer = formData?.event?.data?.eventOrganizer || '';
   const facilitation = formData?.facilitation || '';
 

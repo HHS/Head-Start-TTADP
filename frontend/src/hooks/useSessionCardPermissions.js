@@ -18,7 +18,6 @@ export default function useSessionCardPermissions({
     status,
     pocComplete,
     ownerComplete,
-    submitted,
     facilitation,
   } = session.data;
 
@@ -27,6 +26,7 @@ export default function useSessionCardPermissions({
   const isSessionApprover = user.id === approverId;
 
   const showSessionEdit = useMemo(() => {
+    const submitted = pocComplete && ownerComplete;
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
     // eslint-disable-next-line max-len
     const isRegionalNoNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
@@ -34,12 +34,12 @@ export default function useSessionCardPermissions({
     const isRegionalWithNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
     const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
 
-    if (submitted && !isSessionApprover) {
+    if (submitted && !isSessionApprover && !isAdminUser) {
       return false;
     }
 
     // owners do not edit sessions
-    if (isOwner) {
+    if (isOwner && !isAdminUser) {
       return false;
     }
 
@@ -50,7 +50,7 @@ export default function useSessionCardPermissions({
 
     // if the user is a POC and the event organizer is Regional TTA No National Centers,
     // they cannot edit sessions
-    if (isPoc && isRegionalNoNationalCenters) {
+    if (isPoc && isRegionalNoNationalCenters && !isAdminUser) {
       return false;
     }
 
@@ -60,8 +60,15 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    if (isCollaborator && isRegionalWithNationalCenters && facilitationIncludesRegion) {
+    if (isCollaborator
+      && isRegionalWithNationalCenters
+      && facilitationIncludesRegion
+      && !isAdminUser) {
       return false;
+    }
+
+    if (submitted && !statusIsComplete && isSessionApprover) {
+      return true;
     }
 
     // First if both general poc and owner status is blocked make sure they are not and admin.
@@ -79,7 +86,6 @@ export default function useSessionCardPermissions({
     status,
     eventOrganizer,
     facilitation,
-    submitted,
     isSessionApprover,
     isPoc,
     pocComplete,
