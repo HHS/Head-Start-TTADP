@@ -56,7 +56,7 @@ SupportingAttachments.propTypes = {
   reportId: PropTypes.node.isRequired,
 };
 
-const getAttachmentsSections = (files) => {
+export const getAttachmentsSections = (files) => {
   const hasAttachments = files && files.length > 0;
 
   // Create HTML content that matches what the test expects

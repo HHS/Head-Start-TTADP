@@ -5,6 +5,7 @@
 */
 import React, {
   useState, useEffect,
+  Fragment,
 } from 'react';
 import { REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
@@ -47,6 +48,7 @@ function SideNav({
   lastSaveTime,
   errorMessage,
   savedToStorageTime,
+  deadNavigation,
 }) {
   const [fade, updateFade] = useState(true);
 
@@ -54,11 +56,13 @@ function SideNav({
     updateFade(true);
   }, [lastSaveTime, errorMessage]);
 
+  const NavTag = deadNavigation ? 'span' : Button;
+
   const isMobile = useMediaQuery({ maxWidth: 1023 });
   const navItems = () => pages.map((page) => (
     <li key={page.label} id={`activityReportSideNav-${page.label.replace(/ /g, '-').toLowerCase()}`} className="smart-hub--navigator-item">
-      <Button
-        onClick={page.onNavigation}
+      <NavTag
+        onClick={deadNavigation ? null : page.onNavigation}
         unstyled
         className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
         role="button"
@@ -72,7 +76,7 @@ function SideNav({
               </Tag>
             )}
         </span>
-      </Button>
+      </NavTag>
     </li>
   ));
 
@@ -143,12 +147,14 @@ SideNav.propTypes = {
   errorMessage: PropTypes.string,
   lastSaveTime: PropTypes.instanceOf(moment),
   savedToStorageTime: PropTypes.string,
+  deadNavigation: PropTypes.bool,
 };
 
 SideNav.defaultProps = {
   lastSaveTime: undefined,
   errorMessage: undefined,
   savedToStorageTime: undefined,
+  deadNavigation: false,
 };
 
 export default SideNav;

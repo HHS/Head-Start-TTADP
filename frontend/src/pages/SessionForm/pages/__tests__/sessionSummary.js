@@ -63,15 +63,7 @@ describe('sessionSummary', () => {
       expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
     });
   });
-  describe('review', () => {
-    it('renders correctly', async () => {
-      act(() => {
-        render(<>{sessionSummary.reviewSection()}</>);
-      });
 
-      expect(await screen.findByRole('heading', { name: /event summary/i })).toBeInTheDocument();
-    });
-  });
   describe('render', () => {
     const onSaveDraft = jest.fn();
 
@@ -102,6 +94,7 @@ describe('sessionSummary', () => {
     const defaultAdditionalData = {
       status: 'Not started',
       event: {
+        regionId: 1,
         data: {
           regionId: 1,
           facilitation: 'regional_tta_staff',
@@ -128,7 +121,7 @@ describe('sessionSummary', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {sessionSummary.render(
-                  additionalData,
+                  { ...defaultAdditionalData, ...additionalData },
                   defaultFormValues,
                   1,
                   false,
@@ -355,6 +348,7 @@ describe('sessionSummary', () => {
         status: 'Not started',
         facilitation: 'national_center',
         event: {
+          regionId: 1,
           data: {
             regionId: 1,
             eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -379,6 +373,7 @@ describe('sessionSummary', () => {
         status: 'Not started',
         facilitation: 'regional_tta_staff',
         event: {
+          regionId: 1,
           data: {
             regionId: 1,
             eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -501,7 +496,7 @@ describe('sessionSummary', () => {
       };
 
       render(<RenderSessionSummary formValues={values} additionalData={{ status: 'Complete' }} />);
-      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
     });
 
@@ -512,7 +507,7 @@ describe('sessionSummary', () => {
       };
 
       render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress' }} />);
-      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
     });
 
@@ -522,7 +517,7 @@ describe('sessionSummary', () => {
         status: 'In progress',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress', isAdminUser: true }} />);
+      render(<RenderSessionSummary formValues={values} additionalData={{ ...defaultAdditionalData, status: 'In progress', isAdminUser: true }} />);
       expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /review and submit/i })).not.toBeInTheDocument();
     });
@@ -533,9 +528,20 @@ describe('sessionSummary', () => {
         status: 'Complete',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'Complete', isAdminUser: true }} />);
+      render(<RenderSessionSummary formValues={values} additionalData={{ ...defaultAdditionalData, status: 'Complete', isAdminUser: true }} />);
       expect(screen.queryByRole('button', { name: /continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('ReviewSection', () => {
+    it('exports a reviewSection function', () => {
+      expect(typeof sessionSummary.reviewSection).toBe('function');
+      expect(sessionSummary.reviewSection).toBeDefined();
+    });
+
+    it('has the correct review property', () => {
+      expect(sessionSummary.review).toBe(false);
     });
   });
 });

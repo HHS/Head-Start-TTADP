@@ -25,10 +25,10 @@ const namespace = 'SERVICE:EVENTS';
 
 const logContext = { namespace };
 
-export const getEventAuthorization = async (req, res, report) => {
+export const getEventAuthorization = async (req, res, report, session = null) => {
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
-  return new EventReport(user, report);
+  return new EventReport(user, report, session);
 };
 
 export const getByStatus = async (req, res) => {

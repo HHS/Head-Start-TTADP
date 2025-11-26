@@ -54,7 +54,7 @@ export const getHandler = async (req, res) => {
       return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' });
     }
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-    const eventAuth = await getEventAuthorization(req, res, event);
+    const eventAuth = await getEventAuthorization(req, res, event, session);
     if (!eventAuth.canEditSession()) {
       return res.sendStatus(403);
     }

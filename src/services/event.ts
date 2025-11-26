@@ -124,6 +124,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
           'data',
           'createdAt',
           'updatedAt',
+          'approverId',
           // eslint-disable-next-line @typescript-eslint/quotes
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
@@ -245,6 +246,7 @@ export async function findEventHelperBlob({
           'data',
           'createdAt',
           'updatedAt',
+          'approverId',
           // eslint-disable-next-line @typescript-eslint/quotes
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
@@ -717,14 +719,20 @@ const mappings: Record<string, string> = {
   'Overall Vision/Goal for the PD Event': 'vision',
   'Vision/Goal/Outcomes for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
-  'Reason(s) for PD': 'reasons',
+  // 'Reason(s) for PD': 'reasons', // TODO: Verify data should no longer be imported
   'Target Population(s)': 'targetPopulations',
   'Event Organizer - Type of Event': 'eventOrganizer',
   'IST Name:': 'istName',
   'IST Name': 'istName',
+  // TODO: Validate original CSV header for this field.
+  'Additonal States Involved': 'additionalStates',
 };
 
-const toSplit = ['targetPopulations', 'reasons'];
+const toSplit = [
+  'targetPopulations',
+  // 'reasons',
+  'additionalStates',
+];
 
 const replacements: Record<string, string> = {
   'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
@@ -920,6 +928,9 @@ export async function csvImport(buffer: Buffer) {
 
       // Target Populations, remove duplicates and invalid values.
       data.targetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS].includes(target));
+
+      // Additional States Involved, remove duplicates.
+      data.additionalStates = [...new Set(data.additionalStates as string[])]; // TODO: (maybe) create master list of states/outer pacific to validate against
 
       await db.EventReportPilot.create({
         collaboratorIds: collaborators,

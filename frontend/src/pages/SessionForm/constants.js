@@ -29,7 +29,7 @@ export const participantsFields = {
   deliveryMethod: '',
   numberOfParticipants: '',
   language: [],
-  isIstVisit: '',
+  ttaType: [],
 };
 
 export const nextStepsFields = {
@@ -52,6 +52,8 @@ export const defaultValues = {
   eventId: '',
   eventDisplayId: '',
   eventName: '',
+  approver: null,
+  submitted: false,
   status: 'In progress',
   pageState: {
     1: NOT_STARTED,
@@ -75,18 +77,26 @@ export const baseDefaultValues = {
     3: NOT_STARTED,
     4: NOT_STARTED,
   },
+  additionalNotes: '',
+  managerNotes: '',
+  approver: null,
+  dateSubmitted: '',
 };
 
 export const pageComplete = (
   hookForm,
   fields,
+  log = false,
 ) => fields.every((field) => {
   const val = hookForm.getValues(field);
 
   if (Array.isArray(val)) {
+    // eslint-disable-next-line no-console
+    if (log) console.log(field, val.length > 0);
     return val.length > 0;
   }
-
+  // eslint-disable-next-line no-console
+  if (log) console.log(field, !!(val));
   return !!(val);
 });
 
@@ -104,6 +114,12 @@ export const defaultKeys = [
   'pocComplete',
   'ownerComplete',
   'facilitation',
+  'additionalNotes',
+  'approverId',
+  'managerNotes',
+  'dateSubmitted',
+  'submitted',
+  'submitter',
 ];
 
 export const istKeys = [
@@ -132,6 +148,7 @@ export const pocKeys = [
   'regionalOfficeTta',
   'recipients',
   'participants',
+  'ttaType',
   'numberOfParticipants',
   'numberOfParticipantsInPerson',
   'numberOfParticipantsVirtually',
