@@ -8,7 +8,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
-import { auditLogger } from '../logger';
+import { logger, auditLogger } from '../logger';
 
 const generateS3Config = () => {
   // Take configuration from cloud.gov if it is available. If not, use env variables.
@@ -25,8 +25,7 @@ const generateS3Config = () => {
           secretAccessKey: credentials.secret_access_key,
           endpoint: credentials.fips_endpoint,
           region: credentials.region,
-          signatureVersion: 'v4',
-          s3ForcePathStyle: true,
+          forcePathStyle: true,
         },
       };
     }
@@ -48,8 +47,7 @@ const generateS3Config = () => {
         secretAccessKey: AWS_SECRET_ACCESS_KEY,
         endpoint: S3_ENDPOINT,
         region: process.env.AWS_REGION || 'us-gov-west-1',
-        signatureVersion: 'v4',
-        s3ForcePathStyle: true,
+        forcePathStyle: true,
       },
     };
   }
@@ -133,8 +131,9 @@ const getPresignedURL = async (key, bucket = s3Bucket, client = s3Client, Expire
   try {
     const command = new GetObjectCommand({ Bucket: bucket, Key: key });
     url.url = await getSignedUrl(client, command, { expiresIn: Expires });
+    logger.info(`Generated presigned URL for key ${key}: ${url.url}`);
   } catch (error) {
-    auditLogger.error(`Error generating presigned URL: ${error.message}`);
+    auditLogger.error(`Error generating presigned URL: ${error}`);
     url.error = error;
   }
   return url;
@@ -154,10 +153,12 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
   if (process.env.NODE_ENV === 'production') {
     await verifyVersioning(bucket, client);
   }
-  return new Upload({
+  const response = await new Upload({
     client,
     params,
   }).done();
+  logger.info(`File uploaded to S3: ${response.Key}`);
+  return response;
 };
 
 export {

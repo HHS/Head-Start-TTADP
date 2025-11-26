@@ -27,7 +27,7 @@ import CommunicationLogPolicy from '../../policies/communicationLog';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
-import { auditLogger } from '../../logger';
+import { auditLogger, logger } from '../../logger';
 import { FILE_STATUSES } from '../../constants';
 import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
@@ -512,6 +512,7 @@ const uploadHandler = async (req, res) => {
     try {
       metadata = await metadataFn(originalFilename, fileName, size);
       const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
+      logger.info(`${logContext.namespace}:uploadHandler Uploaded file ${originalFilename} as ${uploadedFile.Key}`);
       const url = await getPresignedURL(uploadedFile.Key);
       await updateStatus(metadata.id, UPLOADED);
       fileResponse.push({ ...metadata, url });

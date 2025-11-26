@@ -27,8 +27,7 @@ class S3Client {
         endpoint?: string, // Optional endpoint URL for custom S3 service
         region?: string, // Optional region for S3 service
         secretAccessKey?: string, // Optional secret access key for authentication
-        signatureVersion: string, // Signature version for API requests
-        s3ForcePathStyle: boolean, // Whether to use path-style or virtual-hosted style URLs
+        forcePathStyle: boolean, // Whether to use path-style or virtual-hosted style URLs
       }
     } = generateS3Config(), // Default configuration generator function
   ) {
