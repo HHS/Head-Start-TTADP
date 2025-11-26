@@ -19,7 +19,7 @@ const generateS3Config = () => {
     if (services.s3 && services.s3.length > 0) {
       const { credentials } = services.s3[0];
       return {
-        s3Bucket: credentials.bucket,
+        bucketName: credentials.bucket,
         s3Config: {
           accessKeyId: credentials.access_key_id,
           secretAccessKey: credentials.secret_access_key,
@@ -42,7 +42,7 @@ const generateS3Config = () => {
 
   if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
     return {
-      s3Bucket: S3_BUCKET,
+      bucketName: S3_BUCKET,
       s3Config: {
         accessKeyId: AWS_ACCESS_KEY_ID,
         secretAccessKey: AWS_SECRET_ACCESS_KEY,
@@ -55,7 +55,7 @@ const generateS3Config = () => {
 
   // Return null if S3 is not configured
   return {
-    s3Bucket: null,
+    bucketName: null,
     s3Config: null,
   };
 };
@@ -112,28 +112,28 @@ const verifyVersioning = async (bucket = s3Bucket, client = s3Client) => {
   return data;
 };
 
-const downloadFile = async (key, client = s3Client, bucketName = s3Bucket) => {
-  if (!client || !bucketName) {
+const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
+  if (!client || !bucket) {
     throw new Error('S3 is not configured.');
   }
   const params = {
-    Bucket: bucketName,
+    Bucket: bucket,
     Key: key,
   };
   return client.send(new GetObjectCommand(params)).done();
 };
 
-const getPresignedURL = async (Key, Bucket = s3Bucket, client = s3Client, Expires = 360) => {
+const getPresignedURL = async (key, bucket = s3Bucket, client = s3Client, Expires = 360) => {
   const url = { url: null, error: null };
-  if (!client || !Bucket) {
+  if (!client || !bucket) {
     url.error = new Error('S3 is not configured.');
     return url;
   }
   try {
-    const command = new GetObjectCommand({ Bucket, Key });
+    const command = new GetObjectCommand({ bucket, key });
     url.url = await getSignedUrl(client, command, { expiresIn: Expires });
   } catch (error) {
-    auditLogger.error(`Error generating presigned URL for key ${Key}: ${error.message}`);
+    auditLogger.error(`Error generating presigned URL for key ${key}: ${error.message}`);
     url.error = error;
   }
   return url;
