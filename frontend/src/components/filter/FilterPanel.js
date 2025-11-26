@@ -20,11 +20,6 @@ const determineRegionalFilters = (filters, allUserRegions) => {
   return containsAllRegions ? filters.filter((f) => f.topic !== REGION) : filters;
 };
 
-// Apply regional filter logic
-const determineFiltersToShow = (filters, allUserRegions) => (
-  determineRegionalFilters(filters, allUserRegions)
-);
-
 export default function FilterPanel({
   onRemoveFilter,
   filters,
@@ -37,7 +32,7 @@ export default function FilterPanel({
 }) {
   // eslint-disable-next-line max-len
   const [filtersToShow, setFiltersToShow] = useState(
-    determineFiltersToShow(filters, allUserRegions),
+    determineRegionalFilters(filters, allUserRegions),
   );
   const {
     subFilters,
@@ -46,7 +41,7 @@ export default function FilterPanel({
 
   useEffect(() => {
     // Hide or Show Region Filters.
-    setFiltersToShow(determineFiltersToShow(filters, allUserRegions));
+    setFiltersToShow(determineRegionalFilters(filters, allUserRegions));
   }, [filters, allUserRegions]);
 
   const onApply = (items) => {
