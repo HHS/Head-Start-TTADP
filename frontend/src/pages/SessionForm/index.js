@@ -176,7 +176,7 @@ export default function SessionForm({ match }) {
     isOwner,
     isApprover,
     applicationPages,
-  } = useSessionFormRoleAndPages(formData);
+  } = useSessionFormRoleAndPages(hookForm);
 
   const redirectPagePath = applicationPages[0]?.path || null;
 
@@ -297,12 +297,6 @@ export default function SessionForm({ match }) {
           return;
         }
 
-        // we push approvers to the review page
-        if (submitted && isApproverUser && !isNeedsAction && currentPage !== 'review') {
-          history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
-          return;
-        }
-
         resetFormData({
           reset: hookForm.reset,
           updatedSession: session,
@@ -312,6 +306,12 @@ export default function SessionForm({ match }) {
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
         });
+
+        // we push approvers to the review page
+        if (submitted && isApproverUser && !isNeedsAction && currentPage !== 'review') {
+          history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
+          return;
+        }
 
         reportId.current = session.id;
       } catch (e) {
