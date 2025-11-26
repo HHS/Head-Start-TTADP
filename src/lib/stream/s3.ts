@@ -24,7 +24,7 @@ class S3Client {
       s3Bucket: any, // The name of the S3 bucket
       s3Config: {
         accessKeyId?: string, // Optional access key ID for authentication
-        endpoint?: string, // Optional endpoint URL for custom S3 service
+        // endpoint?: string, // Optional endpoint URL for custom S3 service
         region?: string, // Optional region for S3 service
         secretAccessKey?: string, // Optional secret access key for authentication
         forcePathStyle: boolean, // Whether to use path-style or virtual-hosted style URLs

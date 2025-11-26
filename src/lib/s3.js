@@ -22,7 +22,7 @@ const generateS3Config = () => {
         s3Config: {
           accessKeyId: credentials.access_key_id,
           secretAccessKey: credentials.secret_access_key,
-          endpoint: credentials.fips_endpoint,
+          // endpoint: credentials.fips_endpoint,
           region: credentials.region,
           forcePathStyle: true,
           logger: console,
@@ -36,7 +36,7 @@ const generateS3Config = () => {
     S3_BUCKET,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
-    S3_ENDPOINT,
+    // S3_ENDPOINT,
   } = process.env;
 
   if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
@@ -45,7 +45,7 @@ const generateS3Config = () => {
       s3Config: {
         accessKeyId: AWS_ACCESS_KEY_ID,
         secretAccessKey: AWS_SECRET_ACCESS_KEY,
-        endpoint: S3_ENDPOINT,
+        // endpoint: S3_ENDPOINT,
         region: process.env.AWS_REGION || 'us-gov-west-1',
         forcePathStyle: true,
         logger: console,
