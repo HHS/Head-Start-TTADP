@@ -21,7 +21,7 @@ class S3Client {
   constructor(
     config: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bucketName: any, // The name of the S3 bucket
+      s3Bucket: any, // The name of the S3 bucket
       s3Config: {
         accessKeyId?: string, // Optional access key ID for authentication
         endpoint?: string, // Optional endpoint URL for custom S3 service
@@ -35,7 +35,7 @@ class S3Client {
     // Create an instance of AWS.S3 using the provided configuration
     this.client = new S3LibClient(config.s3Config);
     // Store the bucket name
-    this.bucketName = config.bucketName;
+    this.bucketName = config.s3Bucket;
   }
 
   /**
