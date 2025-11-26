@@ -21,7 +21,7 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
       label: 'TTA History',
     },
     {
-      to: `/recipient-tta-records/${recipientId}/region/${region}/monitoring/review`,
+      to: `/recipient-tta-records/${recipientId}/region/${region}/monitoring`,
       label: 'Monitoring',
     },
   ];
