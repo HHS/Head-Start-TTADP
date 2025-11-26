@@ -47,6 +47,7 @@ const generateS3Config = () => {
         accessKeyId: AWS_ACCESS_KEY_ID,
         secretAccessKey: AWS_SECRET_ACCESS_KEY,
         endpoint: S3_ENDPOINT,
+        region: process.env.AWS_REGION || 'us-gov-west-1',
         signatureVersion: 'v4',
         s3ForcePathStyle: true,
       },
@@ -130,7 +131,7 @@ const getPresignedURL = async (key, bucket = s3Bucket, client = s3Client, Expire
     return url;
   }
   try {
-    const command = new PutObjectCommand({ bucket, key });
+    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
     url.url = await getSignedUrl(client, command, { expiresIn: Expires });
   } catch (error) {
     auditLogger.error(`Error generating presigned URL: ${error.message}`);
@@ -153,7 +154,7 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
   if (process.env.NODE_ENV === 'production') {
     await verifyVersioning(bucket, client);
   }
-  return Upload({
+  return new Upload({
     client,
     params,
   }).done();
