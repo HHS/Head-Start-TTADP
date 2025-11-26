@@ -3,7 +3,6 @@ import {
   GetBucketVersioningCommand,
   PutBucketVersioningCommand,
   GetObjectCommand,
-  PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -19,7 +18,7 @@ const generateS3Config = () => {
     if (services.s3 && services.s3.length > 0) {
       const { credentials } = services.s3[0];
       return {
-        bucketName: credentials.bucket,
+        s3Bucket: credentials.bucket,
         s3Config: {
           accessKeyId: credentials.access_key_id,
           secretAccessKey: credentials.secret_access_key,
@@ -42,7 +41,7 @@ const generateS3Config = () => {
 
   if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
     return {
-      bucketName: S3_BUCKET,
+      s3Bucket: S3_BUCKET,
       s3Config: {
         accessKeyId: AWS_ACCESS_KEY_ID,
         secretAccessKey: AWS_SECRET_ACCESS_KEY,
@@ -55,7 +54,7 @@ const generateS3Config = () => {
 
   // Return null if S3 is not configured
   return {
-    bucketName: null,
+    s3Bucket: null,
     s3Config: null,
   };
 };
@@ -66,7 +65,7 @@ auditLogger.info(`S3 Init - Bucket: ${s3Bucket} Client: ${s3Client}`);
 
 const deleteFileFromS3 = async (key, bucket = s3Bucket, client = s3Client) => {
   if (!client || !bucket) {
-    throw new Error('S3 is not configured.');
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const params = {
     Bucket: bucket,
@@ -91,7 +90,7 @@ const deleteFileFromS3Job = async (job, client = s3Client) => {
 
 const verifyVersioning = async (bucket = s3Bucket, client = s3Client) => {
   if (!client || !bucket) {
-    throw new Error('S3 is not configured.');
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const versioningConfiguration = {
     MFADelete: 'Disabled',
@@ -114,7 +113,7 @@ const verifyVersioning = async (bucket = s3Bucket, client = s3Client) => {
 
 const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
   if (!client || !bucket) {
-    throw new Error('S3 is not configured.');
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const params = {
     Bucket: bucket,
@@ -126,7 +125,7 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
 const getPresignedURL = async (key, bucket = s3Bucket, client = s3Client, Expires = 360) => {
   const url = { url: null, error: null };
   if (!client || !bucket) {
-    url.error = new Error('S3 is not configured.');
+    url.error = new Error(`S3 not configured (${client}, ${bucket})`);
     return url;
   }
   try {
