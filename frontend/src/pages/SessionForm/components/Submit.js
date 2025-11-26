@@ -55,6 +55,7 @@ export default function Submit({
         </FormItem>
       )}
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
+      {!isPoc && (
       <FormItem
         label="Approving manager"
         name="approverId"
@@ -72,6 +73,7 @@ export default function Submit({
           ))}
         </Dropdown>
       </FormItem>
+      )}
 
       <div className="display-flex margin-top-4">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" onClick={onSubmit}>Submit for approval</Button>
