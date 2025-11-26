@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Grid,
@@ -11,7 +11,6 @@ import { filtersToQueryString } from '../../utils';
 import ReportsTable from './ReportsTable';
 import { REPORTS_PER_PAGE } from '../../Constants';
 import useSessionSort from '../../hooks/useSessionSort';
-import { MyGroupsContext } from '../MyGroupsProvider';
 import './index.css';
 
 function ActivityReportsTable({
@@ -21,7 +20,6 @@ function ActivityReportsTable({
   resetPagination,
   setResetPagination,
 }) {
-  const { isLoadingGroups = false } = useContext(MyGroupsContext);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -159,7 +157,7 @@ function ActivityReportsTable({
         reportsCount={reportsCount}
         tableCaption={tableCaption}
         exportIdPrefix={exportIdPrefix}
-        loading={loading || isLoadingGroups}
+        loading={loading}
         reports={reports}
         sortConfig={sortConfig}
         setSortConfig={setSortConfig}
