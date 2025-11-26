@@ -131,7 +131,7 @@ const getPresignedURL = async (key, bucket = s3Bucket, client = s3Client, Expire
   try {
     const command = new GetObjectCommand({ Bucket: bucket, Key: key });
     url.url = await getSignedUrl(client, command, { expiresIn: Expires });
-    logger.info(`Generated presigned URL for key ${key}: ${url.url}`);
+    auditLogger.info(`Generated presigned URL for key ${key}: ${url.url}`);
   } catch (error) {
     auditLogger.error(`Error generating presigned URL: ${error}`);
     url.error = error;
@@ -157,7 +157,7 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
     client,
     params,
   }).done();
-  logger.info(`File uploaded to S3: ${response.Key}`);
+  auditLogger.info(`File uploaded to S3: ${response.Key}`);
   return response;
 };
 
