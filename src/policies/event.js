@@ -153,12 +153,16 @@ export default class EventReport {
     return this.session && this.session.approverId === this.user.id;
   }
 
+  isSubmitted() {
+    return !!(this.session && this.session.data && this.session.data.pocComplete && this.session.data.ownerComplete);
+  }
+
   canEditAsSessionApprover() {
-    return !!(this.session && this.session.data && this.session.data.submitted && this.isSessionApprover());
+    return !!(this.session && this.session.data && this.isSubmitted() && this.isSessionApprover());
   }
 
   canEditSession() {
-    return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc() || this.canEditAsSessionApprover();
+    return !!(this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc() || this.canEditAsSessionApprover());
   }
 
   canUploadFile() {
