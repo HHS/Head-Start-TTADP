@@ -1,38 +1,39 @@
 import React, {
   createContext,
+  useContext,
   useEffect,
   useState,
 } from 'react';
 import PropTypes from 'prop-types';
 import { fetchGroups } from '../fetchers/groups';
+import AppLoadingContext from '../AppLoadingContext';
 
 export const MyGroupsContext = createContext({});
 
 export default function MyGroupsProvider({ children, authenticated }) {
   const [myGroups, setMyGroups] = useState([]);
-  // Initialize as true if authenticated, since we'll immediately start loading
-  const [isLoadingGroups, setIsLoadingGroups] = useState(authenticated);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   useEffect(() => {
     async function fetchMyGroups() {
-      setIsLoadingGroups(true);
+      setIsAppLoading(true);
       try {
         const groups = await fetchGroups();
         setMyGroups(groups);
       } catch (e) {
         setMyGroups([]);
       } finally {
-        setIsLoadingGroups(false);
+        setIsAppLoading(false);
       }
     }
 
     if (authenticated) {
       fetchMyGroups();
     }
-  }, [authenticated]);
+  }, [authenticated, setIsAppLoading]);
 
   return (
-    <MyGroupsContext.Provider value={{ myGroups, setMyGroups, isLoadingGroups }}>
+    <MyGroupsContext.Provider value={{ myGroups, setMyGroups }}>
       {children}
     </MyGroupsContext.Provider>
   );

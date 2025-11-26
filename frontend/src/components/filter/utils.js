@@ -2,15 +2,9 @@ import { useContext } from 'react';
 import { MyGroupsContext } from '../MyGroupsProvider';
 
 export const useDisplayGroups = (query) => {
-  const { myGroups, isLoadingGroups } = useContext(MyGroupsContext);
+  const { myGroups } = useContext(MyGroupsContext);
 
   if (!query || query.length === 0) {
-    return '';
-  }
-
-  // Don't show anything while groups are still loading
-  // This allows the page's existing loading indicator to remain visible
-  if (isLoadingGroups) {
     return '';
   }
 
