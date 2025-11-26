@@ -12,18 +12,22 @@ export const MyGroupsContext = createContext({});
 
 export default function MyGroupsProvider({ children, authenticated }) {
   const [myGroups, setMyGroups] = useState([]);
-  const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext) || {};
 
   useEffect(() => {
     async function fetchMyGroups() {
-      setIsAppLoading(true);
+      if (setIsAppLoading) {
+        setIsAppLoading(true);
+      }
       try {
         const groups = await fetchGroups();
         setMyGroups(groups);
       } catch (e) {
         setMyGroups([]);
       } finally {
-        setIsAppLoading(false);
+        if (setIsAppLoading) {
+          setIsAppLoading(false);
+        }
       }
     }
 
