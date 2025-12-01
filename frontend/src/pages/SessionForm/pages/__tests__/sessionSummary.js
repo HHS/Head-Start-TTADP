@@ -151,7 +151,6 @@ describe('sessionSummary', () => {
         { id: 2, fullName: 'Regional Trainer 2' },
         { id: 3, fullName: 'Regional Trainer 3' },
         { id: 4, fullName: 'Regional Trainer 4' },
-
       ]);
 
       fetchMock.get('/api/users/trainers/national-center/region/1', [
@@ -276,7 +275,7 @@ describe('sessionSummary', () => {
 
       // Select courses.
       let yesCourses = document.querySelector('#useIpdCourses-yes');
-      act(async () => {
+      await act(async () => {
         userEvent.click(yesCourses);
       });
 
@@ -286,7 +285,7 @@ describe('sessionSummary', () => {
       expect(await screen.findByText(/Sample Course 3/i)).toBeVisible();
 
       const noCourses = document.querySelector('#useIpdCourses-no');
-      act(async () => {
+      await act(async () => {
         userEvent.click(noCourses);
       });
 
@@ -294,7 +293,7 @@ describe('sessionSummary', () => {
       expect(await screen.findByText(/Sample Course 3/i)).not.toBeVisible();
 
       yesCourses = document.querySelector('#useIpdCourses-yes');
-      act(async () => {
+      await act(async () => {
         userEvent.click(yesCourses);
       });
       await selectEvent.select(courseSelect, ['Sample Course 1']);
@@ -398,8 +397,8 @@ describe('sessionSummary', () => {
         status: 'Not started',
         facilitation: 'both',
         event: {
+          regionId: 1,
           data: {
-            regionId: 1,
             eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
           },
         },
