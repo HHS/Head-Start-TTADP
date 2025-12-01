@@ -9,15 +9,15 @@ import ApproverStatusList from '../../ActivityReport/Pages/components/ApproverSt
 const path = 'needs-action-session-report';
 
 export default function NeedsAction({ onSubmit }) {
-  const { register, getValues } = useFormContext();
+  const { register, watch } = useFormContext();
 
-  const { approver, managerNotes, status } = getValues();
+  const { approver, managerNotes, status } = watch();
 
   const approverStatus = [
     {
       status,
       user: {
-        fullName: approver.fullName,
+        fullName: approver?.fullName || '',
       },
     },
   ];

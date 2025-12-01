@@ -268,7 +268,7 @@ const EventSummary = ({
                       controllerOnChange(s.map((option) => option.label));
                     }}
                     inputRef={register()}
-                    options={sortBy(ALL_STATES_FLATTENED || [], 'label')}
+                    options={sortBy(ALL_STATES_FLATTENED, 'label')}
                     onBlur={onBlur}
                     isMulti
                   />

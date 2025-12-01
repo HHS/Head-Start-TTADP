@@ -43,6 +43,7 @@ describe('eventSummary', () => {
       owner: {
         name: 'Owner-name-1',
       },
+      additionalStates: ['Arizona'],
     };
 
     const RenderEventSummary = ({
@@ -187,6 +188,23 @@ describe('eventSummary', () => {
       expect(await screen.findByRole('textbox', { name: /event vision required/i })).toBeInTheDocument();
     });
 
+    it('displays additional states', async () => {
+      const nonAdminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
+        ],
+      };
+
+      act(() => {
+        render(<RenderEventSummary
+          user={nonAdminUser}
+        />);
+      });
+
+      expect(await screen.findByText(/Arizona/i)).toBeInTheDocument();
+    });
+
     it('non admin users cant edit certain fields', async () => {
       const nonAdminUser = {
         ...defaultUser,
@@ -201,8 +219,8 @@ describe('eventSummary', () => {
       // Event Collaborator.
       expect(await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })).toBeInTheDocument();
 
-      // Nine additional read only fields.
-      expect(screen.queryAllByTestId('read-only-label').length).toBe(9);
+      // Ten additional read only fields.
+      expect(screen.queryAllByTestId('read-only-label').length).toBe(10);
     });
     it('handles null creators', async () => {
       const adminUser = {
