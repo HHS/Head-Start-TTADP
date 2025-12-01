@@ -40,3 +40,15 @@
 .smart-hub-sitenav a:visited {
   color: #fff;
 }
+
+/* Focus styles for site navigation links */
+
+.smart-hub-sitenav a:focus-visible {
+  outline: 0.25rem solid $blue-vivid-focus;
+  outline-offset: 2px;
+}
+
+/* Remove default focus outline for mouse clicks */
+.smart-hub-sitenav a:focus:not(:focus-visible) {
+  outline: none;
+}
