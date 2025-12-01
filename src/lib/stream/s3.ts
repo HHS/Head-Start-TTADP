@@ -14,7 +14,7 @@ import { generateS3Config } from '../s3';
 import { auditLogger } from '../../logger';
 
 class S3Client {
-  private client: S3LibClient; // Private property to store the AWS.S3 instance
+  private client: S3LibClient; // Private property to store the AWS S3 client instance
 
   private bucketName: string; // Private property to store the bucket name
 

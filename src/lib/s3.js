@@ -26,7 +26,6 @@ const generateS3Config = () => {
           },
           region: credentials.region,
           forcePathStyle: true,
-          logger: console,
         },
       };
     }
@@ -49,7 +48,6 @@ const generateS3Config = () => {
         },
         region: process.env.AWS_REGION || 'us-gov-west-1',
         forcePathStyle: true,
-        logger: console,
       },
     };
   }
