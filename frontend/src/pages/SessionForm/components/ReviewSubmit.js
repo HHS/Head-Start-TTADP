@@ -1,5 +1,4 @@
 /* eslint-disable max-len */
-/* eslint-disable no-unused-vars */
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
@@ -12,10 +11,7 @@ const ReviewSubmitSession = ({
   onReview,
   formData,
   error,
-  isPendingApprover,
-  availableApprovers,
   onUpdatePage,
-  onSaveForm,
   onSaveDraft,
   onSubmit,
   pages,
@@ -23,10 +19,6 @@ const ReviewSubmitSession = ({
 }) => {
   const {
     status,
-    submissionStatus,
-    submittedAt,
-    author,
-    userId,
     approverId,
     approver,
     submitted,
@@ -42,13 +34,6 @@ const ReviewSubmitSession = ({
   // or if the current user is an approver, whether or not
   // the report has been approved
 
-  // store some values for readability
-  const isCreator = userId === user.id;
-
-  // eslint-disable-next-line max-len
-  // const isCollaborator = collabReportSpecialists.some(({ specialistId }) => user.id === specialistId);
-  // const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
-  // const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
   const isNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
   const isApprover = Number(approverId) === user.id;
   const isPoc = (event?.pocIds || []).includes(user.id);
@@ -66,15 +51,10 @@ const ReviewSubmitSession = ({
         )}
 
         <Review
-          // author={author}
-          // approvers={approvers}
-          // isCreator={isCreator}
           isSubmitted={submitted}
-          // isApproved={isApproved}
           isNeedsAction={isNeedsAction}
           isApprover={isApprover}
           approver={approver}
-          // dateSubmitted={submittedAt}
           onFormReview={onReview}
           pages={reviewPages}
           reviewItems={reviewPages.map((p) => ({
@@ -82,13 +62,11 @@ const ReviewSubmitSession = ({
             title: p.label,
             content: p.reviewSection(),
           }))}
-          // onSaveForm={onSaveForm}
           onSaveDraft={onSaveDraft}
           onSubmit={onSubmit}
           onUpdatePage={onUpdatePage}
           reviewSubmitPagePosition={reviewSubmitPagePosition}
           isPoc={isPoc}
-          // isCollaborator={isCollaborator}
         />
 
       </Container>
@@ -98,16 +76,9 @@ const ReviewSubmitSession = ({
 
 ReviewSubmitSession.propTypes = {
   reviewSubmitPagePosition: PropTypes.number.isRequired,
-  availableApprovers: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number,
-      name: PropTypes.string,
-    }),
-  ).isRequired,
   onReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   error: PropTypes.string,
-  isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     event: PropTypes.shape({
       pocIds: PropTypes.arrayOf(PropTypes.number),
@@ -132,7 +103,6 @@ ReviewSubmitSession.propTypes = {
     id: PropTypes.number,
     displayId: PropTypes.string,
   }).isRequired,
-  onSaveForm: PropTypes.func.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   pages: PropTypes.arrayOf(PropTypes.shape({

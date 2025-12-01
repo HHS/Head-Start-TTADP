@@ -11,6 +11,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
+import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 import EventSummary from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
@@ -38,7 +39,7 @@ describe('eventSummary', () => {
       targetPopulations: ['target population1', 'target population2'],
       vision: 'This is a sample vision.',
       eventIntendedAudience: 'recipient',
-      eventOrganizer: 'Sample organizer',
+      eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
       owner: {
         name: 'Owner-name-1',
       },
@@ -134,7 +135,7 @@ describe('eventSummary', () => {
 
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
       await selectEvent.select(screen.getByLabelText(/target populations/i), ['Expectant families']);
-      await selectEvent.select(screen.getByLabelText(/event organizer/i), 'IST TTA/Visit');
+      await selectEvent.select(screen.getByLabelText(/event organizer/i), TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS);
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);

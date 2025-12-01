@@ -72,10 +72,10 @@ const determineKeyArray = ({
 const resetFormData = ({
   reset,
   updatedSession,
-  isPocFromSession = false,
-  isAdminUser = false,
-  isCollaborator = false,
-  isApprover = false,
+  isPocFromSession,
+  isAdminUser,
+  isCollaborator,
+  isApprover,
   eventOrganizer = '',
 }) => {
   const keyArray = determineKeyArray({

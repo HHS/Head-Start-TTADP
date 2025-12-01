@@ -1,12 +1,9 @@
 import React from 'react';
-// import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import { useHistory } from 'react-router';
 import { Alert } from '@trussworks/react-uswds';
-// import { REPORT_STATUSES } from '@ttahub/common';
 import { Accordion } from '../../../components/Accordion';
-// import UserContext from '../../../UserContext';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Submit from './Submit';
 import Approve from './Approve';
@@ -55,23 +52,13 @@ const Review = ({
   pages,
   isPoc,
   onFormReview,
-  // approverStatusList,
-
-  // availableApprovers,
-
-  // isCreator,
-  // isCollaborator,
   isApprover,
   approver,
   isSubmitted,
-  // onSaveForm,
   onUpdatePage,
   onSaveDraft,
   onSubmit,
   isNeedsAction,
-  // pendingApprovalCount,
-  // author,
-  // approvers,
   reviewSubmitPagePosition,
 }) => {
   let FormComponent = Submit;
@@ -85,20 +72,8 @@ const Review = ({
   }
 
   const { getValues } = useFormContext();
-  // const { user } = useContext(UserContext);
   const { id, eventId, submitter } = getValues();
   const history = useHistory();
-
-  // const otherManagerNotes = approverStatusList
-  //   ? approverStatusList.filter((a) => a.user.id !== user.id && a.note) : null;
-  // const thisApprovingManager = approverStatusList
-  //   ? approverStatusList.filter((a) => a.user.id === user.id) : null;
-  // const hasBeenReviewed = thisApprovingManager
-  //   && thisApprovingManager.length > 0
-  //   && thisApprovingManager[0].status !== null;
-  // const hasReviewNote = thisApprovingManager
-  //   && thisApprovingManager.length > 0
-  //   && thisApprovingManager[0].note;
 
   return (
     <>
@@ -149,20 +124,11 @@ const Review = ({
 Review.propTypes = {
   onFormReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
-  // dateSubmitted: PropTypes.string,
-  // approverStatusList: PropTypes.arrayOf(PropTypes.shape({
-  //   approver: PropTypes.string,
-  //   status: PropTypes.string,
-  // })),
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,
     review: PropTypes.bool,
     label: PropTypes.string,
   })).isRequired,
-  // availableApprovers: PropTypes.arrayOf(PropTypes.shape({
-  //   id: PropTypes.number,
-  //   name: PropTypes.string,
-  // })).isRequired,
   approver: PropTypes.shape({
     id: PropTypes.number,
     fullName: PropTypes.string,
@@ -172,13 +138,10 @@ Review.propTypes = {
     title: PropTypes.string.isRequired,
     content: PropTypes.node.isRequired,
   })).isRequired,
-  // isCollaborator: PropTypes.bool.isRequired,
-  // isCreator: PropTypes.bool.isRequired,
   isPoc: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
   isApprover: PropTypes.bool.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
-  // onSaveForm: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
   author: PropTypes.shape({
@@ -186,10 +149,5 @@ Review.propTypes = {
   }).isRequired,
   reviewSubmitPagePosition: PropTypes.number.isRequired,
 };
-
-// Review.defaultProps = {
-//   approverStatusList: [],
-//   dateSubmitted: null,
-// };
 
 export default Review;
