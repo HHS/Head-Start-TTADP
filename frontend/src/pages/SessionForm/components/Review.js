@@ -2,50 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import { useHistory } from 'react-router';
-import { Alert } from '@trussworks/react-uswds';
+import TopAlert from './TopAlert';
 import { Accordion } from '../../../components/Accordion';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Submit from './Submit';
 import Approve from './Approve';
 import NeedsAction from './NeedsAction';
-
-const TopAlert = ({
-  isNeedsAction,
-  approver,
-  submitter,
-}) => {
-  if (isNeedsAction) {
-    return (
-      <Alert type="error" noIcon slim className="margin-bottom-4 no-print">
-        {approver.fullName}
-        {' '}
-        has requested changes to this session.
-        {' '}
-        Please review any manager notes below and resubmit for approval.
-      </Alert>
-    );
-  }
-
-  return (
-    <Alert type="info" noIcon slim className="margin-bottom-4 no-print">
-      <>
-        {submitter}
-        {' '}
-        has requested approval for this session report.
-        {' '}
-        Please review all information, then select an approval status.
-      </>
-    </Alert>
-  );
-};
-
-TopAlert.propTypes = {
-  submitter: PropTypes.string.isRequired,
-  isNeedsAction: PropTypes.bool.isRequired,
-  approver: PropTypes.shape({
-    fullName: PropTypes.string,
-  }).isRequired,
-};
 
 const Review = ({
   reviewItems,
