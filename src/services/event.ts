@@ -732,7 +732,7 @@ const mappings: Record<string, string> = {
 
 const toSplit = [
   'targetPopulations',
-  // 'reasons',
+  'reasons',
   'additionalStates',
 ];
 

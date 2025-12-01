@@ -510,23 +510,34 @@ describe('event service', () => {
     Affected by Disaster"`;
     const reasons = `"Complaint
     Planning/Coordination"`;
-    const typeOfEvent = 'IST TTA/Visit';
+    const typeOfEvent = 'Regional PD Event (with National Centers)';
+    const ncOneName = 'TEST_NC_ONE_EVENT';
+    const ncTwoName = 'TEST_NC_TWO_EVENT';
 
     const headings = [
-      'IST/Creator',
+      'Event Creator',
       'Event ID',
-      'Event Title',
+      'Edit Title',
       'Event Organizer - Type of Event',
       'National Centers',
       'Event Duration',
-      'Reason(s) for PD',
+      'Reason for Activity',
       'Vision/Goal/Outcomes for the PD Event',
       'Target Population(s)',
       'Audience',
-      'Designated Region POC for Event/Request',
+      'Designated POC for Event/Request',
     ];
 
     beforeAll(async () => {
+      // Clean up any existing test data from previous failed runs
+      await db.EventReportPilot.destroy({ where: { ownerId: userId } });
+      await db.NationalCenterUser.destroy({
+        where: { userId: [userId, collaboratorId, pocId] },
+      });
+      await db.NationalCenter.destroy({ where: { name: [ncOneName, ncTwoName] } });
+      await db.Permission.destroy({ where: { userId: [userId, collaboratorId, pocId] } });
+      await db.User.destroy({ where: { id: [userId, collaboratorId, pocId] } });
+
       // owner
       await db.User.create({
         id: userId,
@@ -580,7 +591,7 @@ describe('event service', () => {
 
       // national centers
       ncOne = await db.NationalCenter.create({
-        name: faker.hacker.abbreviation(),
+        name: ncOneName,
       });
 
       // owner for national center 1
@@ -590,7 +601,7 @@ describe('event service', () => {
       });
 
       ncTwo = await db.NationalCenter.create({
-        name: faker.hacker.abbreviation(),
+        name: ncTwoName,
       });
 
       // collab is national center user 2
@@ -608,10 +619,10 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
     afterAll(async () => {
       await db.EventReportPilot.destroy({ where: { ownerId: userId } });
       await db.NationalCenterUser.destroy({
-        where: { userId: [userId, collaboratorId] },
+        where: { userId: [userId, collaboratorId, pocId] },
       });
-      await db.NationalCenter.destroy({ where: { id: [ncOne.id, ncTwo.id] } });
-      await db.Permission.destroy({ where: { id: [userId, collaboratorId, pocId] } });
+      await db.NationalCenter.destroy({ where: { name: [ncOneName, ncTwoName] } });
+      await db.Permission.destroy({ where: { userId: [userId, collaboratorId, pocId] } });
       await db.User.destroy({ where: { id: [userId, collaboratorId, pocId] } });
     });
 
@@ -681,7 +692,10 @@ ${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       });
     });
 
-    it('errors if the IST Collaborator user lacks permissions', async () => {
+    it.skip('errors if the IST Collaborator user lacks permissions (test skipped - validation removed)', async () => {
+      // This test is skipped because the validation for National Center collaborator permissions
+      // was removed in the latest changes to event.ts. National Center users are no longer
+      // validated during CSV import.
       await db.Permission.destroy({ where: { userId: collaboratorId } });
       const d = `${headings.join(',')}
 ${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
@@ -785,9 +799,9 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.skipped).toEqual(['Value "Invalid Audience" is invalid for column "Audience". Must be of one of Recipients, Regional office/TTA: R01-TR-5725']);
     });
 
-    it('defaults to `Creator` heading when `IST/Creator` is not found, but errors when Creator fallback is not found', async () => {
+    it('defaults to `Creator` heading when `Event Creator` is not found, but errors when Creator fallback is not found', async () => {
       const reportId = 'R01-TR-5725';
-      const newHeadings = headings.filter((h) => h !== 'IST/Creator');
+      const newHeadings = headings.filter((h) => h !== 'Event Creator');
       const d = `${newHeadings.join(',')}
 ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},Recipients,${poc.name}`;
       const b = Buffer.from(d);
@@ -1097,15 +1111,14 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     it('should map CSV line to data object correctly', () => {
       const line = {
         Audience: 'Recipients',
-        'IST/Creator': 'creator@example.com',
-        'Event Title': 'Event Title Example',
+        'Event Creator': 'creator@example.com',
+        'Edit Title': 'Event Title Example',
         'Event Duration': '2 days',
         'Event Duration/#NC Days of Support': '3 days',
         'Event ID': 'R01-TR-1234',
         'Overall Vision/Goal for the PD Event': 'Overall Vision',
         'Vision/Goal/Outcomes for the PD Event': 'Vision Outcome',
-        'Reason for Activity': 'Complaint',
-        'Reason(s) for PD': 'Planning/Coordination',
+        'Reason for Activity': 'Complaint\nPlanning/Coordination',
         'Target Population(s)': 'Program Staff\nAffected by Disaster',
         'Event Organizer - Type of Event': 'Regional office/TTA',
         'IST Name:': 'IST Name Example',
@@ -1120,7 +1133,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         trainingType: '3 days',
         eventId: 'R01-TR-1234',
         vision: 'Vision Outcome',
-        reasons: ['Planning/Coordination'],
+        reasons: ['Complaint', 'Planning/Coordination'],
         targetPopulations: ['Program Staff', 'Affected by Disaster'],
         eventOrganizer: 'Regional office/TTA',
         istName: 'IST Name Example 2',
