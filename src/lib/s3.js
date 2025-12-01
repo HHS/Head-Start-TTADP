@@ -8,6 +8,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
 import { auditLogger } from '../logger';
+import region from '../models/region';
 
 const generateS3Config = () => {
   // Take configuration from cloud.gov if it is available. If not, use env variables.
@@ -55,7 +56,7 @@ const generateS3Config = () => {
   // Return null if S3 is not configured
   return {
     s3Bucket: null,
-    s3Config: null,
+    s3Config: { region: 'us-gov-west-1' },
   };
 };
 
