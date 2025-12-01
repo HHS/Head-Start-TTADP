@@ -24,7 +24,6 @@ const generateS3Config = () => {
             accessKeyId: credentials.access_key_id,
             secretAccessKey: credentials.secret_access_key,
           },
-          // endpoint: credentials.fips_endpoint,
           region: credentials.region,
           forcePathStyle: true,
           logger: console,
@@ -38,7 +37,6 @@ const generateS3Config = () => {
     S3_BUCKET,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
-    // S3_ENDPOINT,
   } = process.env;
 
   if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
@@ -49,7 +47,6 @@ const generateS3Config = () => {
           accessKeyId: AWS_ACCESS_KEY_ID,
           secretAccessKey: AWS_SECRET_ACCESS_KEY,
         },
-        // endpoint: S3_ENDPOINT,
         region: process.env.AWS_REGION || 'us-gov-west-1',
         forcePathStyle: true,
         logger: console,
@@ -66,7 +63,6 @@ const generateS3Config = () => {
 
 const { s3Bucket, s3Config } = generateS3Config();
 const s3Client = s3Config ? new S3Client(s3Config) : null;
-auditLogger.info(`S3 Init - Bucket: ${s3Bucket} Client: ${s3Client}`);
 
 const deleteFileFromS3 = async (key, bucket = s3Bucket, client = s3Client) => {
   if (!client || !bucket) {

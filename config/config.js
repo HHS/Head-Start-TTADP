@@ -62,7 +62,7 @@ module.exports = {
     host: (process.env.POSTGRES_HOST || 'localhost'),
     port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
-    logging: singleLineLogger ? process.env.LOG_DB_QUERIES : false,
+    logging: singleLineLogger,
     logQueryParameters: true,
     minifyAliases: true,
     pool: {
