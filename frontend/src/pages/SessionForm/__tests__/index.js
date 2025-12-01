@@ -858,4 +858,79 @@ describe('SessionReportForm', () => {
       expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(false);
     });
   });
+
+  it('sets reportId.current when session is created', async () => {
+    fetchMock.post(sessionsUrl, {
+      id: 999,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
+        regionId: 1,
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
+
+    await act(async () => {
+      renderSessionForm('1', 'session-summary', 'new');
+    });
+
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
+
+    // Verify the form rendered with the created session
+    await waitFor(() => {
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    // The reportId.current should be set to the created session ID (999)
+    // We can verify this indirectly by checking that history.replace was called
+    // with the correct URL
+    expect(history.location.pathname).toContain('/session/999');
+  });
+
+  it('sets reportId.current when existing session is fetched', async () => {
+    jest.useFakeTimers();
+    const url = join(sessionsUrl, 'id', '777');
+
+    fetchMock.get(
+      url, {
+        id: 777,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: {
+          regionId: 1,
+          ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [1],
+          data: {
+            eventName: 'Unique Event Name 777',
+            eventId: 1,
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+          },
+        },
+      },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '777');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
+    jest.advanceTimersByTime(30000);
+
+    // The form should render successfully after fetching
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    // The reportId.current is set during the fetchSession useEffect at line 322
+    // We verify this indirectly by checking that the session pages render
+    // The Navigator component uses reportId to render, so if it renders, reportId is set
+    expect(screen.getAllByText(/Session summary/i).length).toBeGreaterThan(0);
+  });
 });
