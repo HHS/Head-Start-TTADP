@@ -349,9 +349,13 @@ export default function SessionForm({ match }) {
   const removeCompleteDataBaseOnRole = (roleData) => {
     const updatedRoleData = { ...roleData };
     if (!isAdminUser) {
-      if (isPoc) {
+      if (isPoc && roleData.facilitation === 'national_center') {
       // Remove ownerComplete as this is tracked from the owner.
         delete updatedRoleData.ownerComplete;
+      } else if (
+        isPoc && eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+      ) {
+        updatedRoleData.ownerComplete = true;
       } else {
         // Remove pocComplete as this is tracked from the POC.
         delete updatedRoleData.pocComplete;

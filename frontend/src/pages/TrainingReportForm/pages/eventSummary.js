@@ -250,6 +250,9 @@ const EventSummary = ({
               </ReadOnlyField>
             </>
           )}
+        <ReadOnlyField label="Additional states involved">
+          {data.additionalStates ? data.additionalStates.join(', ') : ''}
+        </ReadOnlyField>
         <div className="margin-y-3">
           <FormItem
             label="Is this event in partnership with a Head Start Association (HSA)? "
@@ -506,7 +509,7 @@ const EventSummary = ({
         ) : (
           <>
             <ReadOnlyField label="Training type">
-              Series
+              {data.trainingType || 'Series'}
             </ReadOnlyField>
             <ReadOnlyField label="Reasons">
               {getReadOnlyReasons(data.reasons)}
