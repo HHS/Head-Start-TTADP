@@ -630,15 +630,12 @@ describe('User handlers', () => {
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
       expect(usersByRoles).toHaveBeenCalledWith([
-        'SPS',
         'HS',
         'SS',
         'ECS',
         'GS',
-        'PS',
         'FES',
         'TTAC',
-        'AA',
         'ECM',
         'GSM',
         'RPM',
