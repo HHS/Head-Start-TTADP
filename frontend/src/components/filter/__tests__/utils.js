@@ -14,8 +14,8 @@ describe('useDisplayGroups', () => {
     expect(result.current).toBe('');
   });
 
-  it('returns group names for valid queries', () => {
-    const myGroups = [{ id: '1', name: 'Group1' }, { id: '2', name: 'Group2' }];
+  it('returns group names for valid queries with number IDs', () => {
+    const myGroups = [{ id: 1, name: 'Group1' }, { id: 2, name: 'Group2' }];
     const wrapper = ({ children }) => (
       <MyGroupsContext.Provider value={{ myGroups }}>
         {children}
@@ -23,6 +23,17 @@ describe('useDisplayGroups', () => {
     );
     const { result } = renderHook(() => useDisplayGroups('1'), { wrapper });
     expect(result.current).toBe('Group1');
+  });
+
+  it('returns group names for valid queries with string IDs', () => {
+    const myGroups = [{ id: 1, name: 'Group1' }, { id: 2, name: 'Group2' }];
+    const wrapper = ({ children }) => (
+      <MyGroupsContext.Provider value={{ myGroups }}>
+        {children}
+      </MyGroupsContext.Provider>
+    );
+    const { result } = renderHook(() => useDisplayGroups(['2']), { wrapper });
+    expect(result.current).toBe('Group2');
   });
 });
 
