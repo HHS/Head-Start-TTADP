@@ -3,7 +3,6 @@ import {
   GetBucketVersioningCommand,
   PutBucketVersioningCommand,
   GetObjectCommand,
-  PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -19,14 +18,14 @@ const generateS3Config = () => {
     if (services.s3 && services.s3.length > 0) {
       const { credentials } = services.s3[0];
       return {
-        bucketName: credentials.bucket,
+        s3Bucket: credentials.bucket,
         s3Config: {
-          accessKeyId: credentials.access_key_id,
-          secretAccessKey: credentials.secret_access_key,
-          endpoint: credentials.fips_endpoint,
+          credentials: {
+            accessKeyId: credentials.access_key_id,
+            secretAccessKey: credentials.secret_access_key,
+          },
           region: credentials.region,
-          signatureVersion: 'v4',
-          s3ForcePathStyle: true,
+          forcePathStyle: true,
         },
       };
     }
@@ -37,50 +36,50 @@ const generateS3Config = () => {
     S3_BUCKET,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
-    S3_ENDPOINT,
   } = process.env;
 
   if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
     return {
-      bucketName: S3_BUCKET,
+      s3Bucket: S3_BUCKET,
       s3Config: {
-        accessKeyId: AWS_ACCESS_KEY_ID,
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
-        endpoint: S3_ENDPOINT,
-        signatureVersion: 'v4',
-        s3ForcePathStyle: true,
+        credentials: {
+          accessKeyId: AWS_ACCESS_KEY_ID,
+          secretAccessKey: AWS_SECRET_ACCESS_KEY,
+        },
+        region: process.env.AWS_REGION || 'us-gov-west-1',
+        forcePathStyle: true,
       },
     };
   }
 
   // Return null if S3 is not configured
   return {
-    bucketName: null,
+    s3Bucket: null,
     s3Config: null,
   };
 };
 
-const { defaultBucket, s3Config } = generateS3Config();
-const s3 = s3Config ? new S3Client(s3Config) : null;
+const { s3Bucket, s3Config } = generateS3Config();
+const s3Client = s3Config ? new S3Client(s3Config) : null;
 
-const deleteFileFromS3 = async (key, bucket = defaultBucket, s3Client = s3) => {
-  if (!s3Client || !bucket) {
-    throw new Error('S3 is not configured.');
+const deleteFileFromS3 = async (key, bucket = s3Bucket, client = s3Client) => {
+  if (!client || !bucket) {
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const params = {
     Bucket: bucket,
     Key: key,
   };
-  return s3Client.send(new DeleteObjectCommand(params));
+  return client.send(new DeleteObjectCommand(params));
 };
 
-const deleteFileFromS3Job = async (job, s3Client = s3) => {
+const deleteFileFromS3Job = async (job, client = s3Client) => {
   const {
     fileId, fileKey, bucket,
   } = job.data;
   let res;
   try {
-    res = await deleteFileFromS3(fileKey, bucket, s3Client);
+    res = await deleteFileFromS3(fileKey, bucket, client);
     return ({ status: 200, data: { fileId, fileKey, res } });
   } catch (error) {
     auditLogger.error(`S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`);
@@ -88,9 +87,9 @@ const deleteFileFromS3Job = async (job, s3Client = s3) => {
   }
 };
 
-const verifyVersioning = async (bucket = defaultBucket, s3Client = s3) => {
-  if (!s3Client || !bucket) {
-    throw new Error('S3 is not configured.');
+const verifyVersioning = async (bucket = s3Bucket, client = s3Client) => {
+  if (!client || !bucket) {
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const versioningConfiguration = {
     MFADelete: 'Disabled',
@@ -100,68 +99,71 @@ const verifyVersioning = async (bucket = defaultBucket, s3Client = s3) => {
     Bucket: bucket,
   };
 
-  const data = await s3Client.send(new GetBucketVersioningCommand(params));
+  const data = await client.send(new GetBucketVersioningCommand(params));
   if (!(data) || data.Status !== 'Enabled') {
     params = {
       Bucket: bucket,
       VersioningConfiguration: versioningConfiguration,
     };
-    return s3Client.send(new PutBucketVersioningCommand(params));
+    return client.send(new PutBucketVersioningCommand(params));
   }
   return data;
 };
 
-const downloadFile = async (key, s3Client = s3, bucketName = defaultBucket) => {
-  if (!s3Client || !bucketName) {
-    throw new Error('S3 is not configured.');
+const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
+  if (!client || !bucket) {
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const params = {
-    Bucket: bucketName,
+    Bucket: bucket,
     Key: key,
   };
-  return s3Client.send(new GetObjectCommand(params)).done();
+  return client.send(new GetObjectCommand(params)).done();
 };
 
-const getPresignedURL = async (Key, Bucket = defaultBucket, s3Client = s3, Expires = 360) => {
-  const url = { url: null, error: null };
-  if (!s3Client || !Bucket) {
-    url.error = new Error('S3 is not configured.');
-    return url;
+const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, Expires = 360) => {
+  const urlResponse = { url: null, error: null };
+  if (!client || !bucket) {
+    urlResponse.error = new Error(`S3 not configured (${client}, ${bucket})`);
+    return urlResponse;
   }
   try {
-    const command = new GetObjectCommand({ Bucket, Key });
-    url.url = await getSignedUrl(s3Client, command, { expiresIn: Expires });
+    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+    urlResponse.url = await getSignedUrl(client, command, { expiresIn: Expires });
+    auditLogger.info(`Generated presigned URL for key ${key}: ${urlResponse.url}`);
   } catch (error) {
-    auditLogger.error(`Error generating presigned URL for key ${Key}: ${error.message}`);
-    url.error = error;
+    auditLogger.error(`Error generating presigned URL: ${error}`);
+    urlResponse.error = error;
   }
-  return url;
+  return urlResponse;
 };
 
-const uploadFile = async (buffer, name, type, s3Client = s3, bucketName = defaultBucket) => {
-  if (!s3Client || !bucketName) {
-    throw new Error('S3 is not configured.');
+const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Bucket) => {
+  if (!client || !bucket) {
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const params = {
     Body: buffer,
-    Bucket: bucketName,
+    Bucket: bucket,
     ContentType: type.mime,
     Key: name,
   };
   // Only check for versioning if not running locally
   if (process.env.NODE_ENV === 'production') {
-    await verifyVersioning(bucketName, s3Client);
+    await verifyVersioning(bucket, client);
   }
-  return Upload({
-    client: s3Client,
+  const response = await new Upload({
+    client,
     params,
   }).done();
+  auditLogger.info(`File uploaded to S3: ${response.Key}`);
+  return response;
 };
 
 export {
-  s3,
+  s3Client,
   downloadFile,
-  getPresignedURL,
+  getSignedDownloadUrl,
   uploadFile,
   generateS3Config,
   verifyVersioning,
