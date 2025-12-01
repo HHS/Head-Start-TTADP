@@ -1,4 +1,4 @@
-import { cast } from 'sequelize';
+import { cast, Op } from 'sequelize';
 import { Cast } from 'sequelize/types/utils';
 import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
@@ -202,8 +202,27 @@ export async function findSessionsByEventId(eventId): Promise<SessionReportShape
 
 export async function getPossibleSessionParticipants(
   regionId: number,
+  states?: string[],
 ) : Promise<{ id: number, name: string }[]> {
-  const where = { status: 'Active', regionId };
+  const where = {
+    status: 'Active',
+  } as {
+    status: string;
+    regionId?: number;
+    [Op.or]?: {
+      regionId?: number;
+      '$grants.stateCode$'?: string[];
+    }[];
+  };
+
+  if (states && states.length > 0) {
+    where[Op.or] = [
+      { regionId },
+      { '$grants.stateCode$': states },
+    ];
+  } else {
+    where.regionId = regionId;
+  }
 
   return db.Recipient.findAll({
     attributes: ['id', 'name'],
