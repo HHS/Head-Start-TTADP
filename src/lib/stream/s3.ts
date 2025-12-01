@@ -65,7 +65,13 @@ class S3Client {
           Key: key,
         }),
       );
-      return Readable.from(response.Body as unknown as Buffer);
+      if (!response.Body) {
+        throw new Error(`No body returned for key ${key}`);
+      }
+      if (response.Body instanceof Readable) {
+        return response.Body;
+      }
+      return Readable.from(response.Body as AsyncIterable<Uint8Array> | Iterable<Uint8Array>);
     } catch (error) {
       auditLogger.error('Error downloading file:', error);
       throw error;

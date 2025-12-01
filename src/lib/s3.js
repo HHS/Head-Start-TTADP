@@ -8,7 +8,6 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
 import { auditLogger } from '../logger';
-import region from '../models/region';
 
 const generateS3Config = () => {
   // Take configuration from cloud.gov if it is available. If not, use env variables.
@@ -119,7 +118,7 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
     Bucket: bucket,
     Key: key,
   };
-  return client.send(new GetObjectCommand(params)).done();
+  return client.send(new GetObjectCommand(params));
 };
 
 const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, Expires = 360) => {

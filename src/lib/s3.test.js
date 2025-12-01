@@ -1,118 +1,326 @@
-const { generateS3Config } = require('./s3');
-
 /* eslint-env jest */
+
+const ORIGINAL_ENV = { ...process.env };
+
+const loadModule = (env = {}) => {
+  jest.resetModules();
+  process.env = { ...ORIGINAL_ENV, ...env };
+
+  const recordedCommands = [];
+  const makeCommand = (name) => jest.fn((params) => {
+    const cmd = { name, params };
+    recordedCommands.push(cmd);
+    return cmd;
+  });
+
+  const sendMock = jest.fn();
+  const uploadDone = jest.fn().mockResolvedValue({ Key: 'uploaded-key' });
+  const UploadMock = jest.fn().mockImplementation(() => ({ done: uploadDone }));
+  const getSignedUrlMock = jest.fn();
+  const logger = { info: jest.fn(), error: jest.fn() };
+
+  jest.doMock('@aws-sdk/client-s3', () => ({
+    S3Client: jest.fn(() => ({ send: sendMock })),
+    GetBucketVersioningCommand: makeCommand('GetBucketVersioningCommand'),
+    PutBucketVersioningCommand: makeCommand('PutBucketVersioningCommand'),
+    GetObjectCommand: makeCommand('GetObjectCommand'),
+    DeleteObjectCommand: makeCommand('DeleteObjectCommand'),
+  }));
+
+  jest.doMock('@aws-sdk/lib-storage', () => ({ Upload: UploadMock }));
+  jest.doMock('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl: getSignedUrlMock }));
+  jest.doMock('../logger', () => ({ auditLogger: logger }));
+
+  // eslint-disable-next-line global-require
+  const mod = require('./s3');
+
+  return {
+    ...mod,
+    sendMock,
+    uploadDone,
+    UploadMock,
+    getSignedUrlMock,
+    recordedCommands,
+    logger,
+  };
+};
+
+afterEach(() => {
+  process.env = { ...ORIGINAL_ENV };
+  jest.resetModules();
+  jest.clearAllMocks();
+});
+
 describe('generateS3Config', () => {
-  const awsMock = { S3Client: jest.fn().mockImplementation(() => ({})) };
-
-  afterEach(() => {
-    // clean up env and module registry between tests
-    delete process.env.VCAP_SERVICES;
-    delete process.env.S3_BUCKET;
-    delete process.env.AWS_ACCESS_KEY_ID;
-    delete process.env.AWS_SECRET_ACCESS_KEY;
-    delete process.env.S3_ENDPOINT;
-    jest.resetModules();
-    jest.clearAllMocks();
-  });
-
-  test('reads credentials from VCAP_SERVICES.services.s3[0] and maps fields correctly', () => {
-    jest.resetModules();
-    process.env.VCAP_SERVICES = JSON.stringify({
-      s3: [
-        {
-          credentials: {
-            bucket: 'vcap-bucket',
-            access_key_id: 'VCAP_AK',
-            secret_access_key: 'VCAP_SK',
-            fips_endpoint: 'https://vcap-endpoint.example',
-            region: 'us-west-2',
-          },
-        },
-      ],
-    });
-
-    jest.doMock('@aws-sdk/client-s3', () => awsMock);
+  it('reads credentials from VCAP_SERVICES', () => {
+    const credentials = {
+      bucket: 'vcap-bucket',
+      access_key_id: 'VCAP_AK',
+      secret_access_key: 'VCAP_SK',
+      region: 'us-west-2',
+    };
+    const services = { s3: [{ credentials }] };
+    const { generateS3Config } = loadModule({ VCAP_SERVICES: JSON.stringify(services) });
 
     const cfg = generateS3Config();
     expect(cfg).toEqual({
-      bucketName: 'vcap-bucket',
+      s3Bucket: 'vcap-bucket',
       s3Config: {
-        accessKeyId: 'VCAP_AK',
-        endpoint: 'https://vcap-endpoint.example',
+        credentials: {
+          accessKeyId: 'VCAP_AK',
+          secretAccessKey: 'VCAP_SK',
+        },
         region: 'us-west-2',
-        secretAccessKey: 'VCAP_SK',
-        signatureVersion: 'v4',
-        s3ForcePathStyle: true,
+        forcePathStyle: true,
       },
     });
   });
 
-  test('prefers environment S3_* vars when VCAP_SERVICES not present', () => {
-    jest.resetModules();
-    delete process.env.VCAP_SERVICES;
-    process.env.S3_BUCKET = 'env-bucket';
-    process.env.AWS_ACCESS_KEY_ID = 'ENV_AK';
-    process.env.AWS_SECRET_ACCESS_KEY = 'ENV_SK';
-    process.env.S3_ENDPOINT = 'https://env-endpoint.example';
-
-    jest.doMock('@aws-sdk/client-s3', () => awsMock);
+  it('prefers environment variables when VCAP_SERVICES is not set', () => {
+    const env = {
+      S3_BUCKET: 'env-bucket',
+      AWS_ACCESS_KEY_ID: 'ENV_AK',
+      AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+      AWS_REGION: 'us-gov-east-1',
+    };
+    const { generateS3Config } = loadModule(env);
 
     const cfg = generateS3Config();
     expect(cfg).toEqual({
-      bucketName: 'env-bucket',
+      s3Bucket: 'env-bucket',
       s3Config: {
-        accessKeyId: 'ENV_AK',
-        endpoint: 'https://env-endpoint.example',
-        secretAccessKey: 'ENV_SK',
-        signatureVersion: 'v4',
-        s3ForcePathStyle: true,
+        credentials: {
+          accessKeyId: 'ENV_AK',
+          secretAccessKey: 'ENV_SK',
+        },
+        region: 'us-gov-east-1',
+        forcePathStyle: true,
       },
     });
   });
 
-  test('returns nulls when no S3 configuration is present', () => {
-    jest.resetModules();
-    delete process.env.VCAP_SERVICES;
-    delete process.env.S3_BUCKET;
-    delete process.env.AWS_ACCESS_KEY_ID;
-    delete process.env.AWS_SECRET_ACCESS_KEY;
-
-    jest.doMock('@aws-sdk/client-s3', () => awsMock);
+  it('returns defaults when no S3 configuration is present', () => {
+    const { generateS3Config } = loadModule();
 
     const cfg = generateS3Config();
-    expect(cfg).toEqual({ bucketName: null, s3Config: null });
+    expect(cfg).toEqual({ s3Bucket: null, s3Config: { region: 'us-gov-west-1' } });
   });
+});
 
-  test('uses the first s3 service entry (services.s3[0]) when multiple are present', () => {
-    jest.resetModules();
-    process.env.VCAP_SERVICES = JSON.stringify({
-      s3: [
-        {
-          credentials: {
-            bucket: 'first-bucket',
-            access_key_id: 'FIRST_AK',
-            secret_access_key: 'FIRST_SK',
-            fips_endpoint: 'https://first.example',
-            region: 'us-east-1',
-          },
-        },
-        {
-          credentials: {
-            bucket: 'second-bucket',
-            access_key_id: 'SECOND_AK',
-            secret_access_key: 'SECOND_SK',
-            fips_endpoint: 'https://second.example',
-            region: 'us-east-2',
-          },
-        },
-      ],
+describe('S3 helpers', () => {
+  describe('deleteFileFromS3', () => {
+    it('sends a DeleteObjectCommand with provided bucket and client', async () => {
+      const { deleteFileFromS3, recordedCommands } = loadModule();
+      const client = { send: jest.fn().mockResolvedValue('deleted') };
+
+      const res = await deleteFileFromS3('file.txt', 'bucket-one', client);
+
+      expect(res).toBe('deleted');
+      expect(recordedCommands[0]).toEqual({
+        name: 'DeleteObjectCommand',
+        params: { Bucket: 'bucket-one', Key: 'file.txt' },
+      });
+      expect(client.send).toHaveBeenCalledWith(recordedCommands[0]);
     });
 
-    jest.doMock('@aws-sdk/client-s3', () => awsMock);
+    it('throws when bucket/client configuration is missing', async () => {
+      const { deleteFileFromS3 } = loadModule();
 
-    const cfg = generateS3Config();
-    expect(cfg.bucketName).toBe('first-bucket');
-    expect(cfg.s3Config.accessKeyId).toBe('FIRST_AK');
-    expect(cfg.s3Config.secretAccessKey).toBe('FIRST_SK');
+      await expect(deleteFileFromS3('file.txt', null, null)).rejects.toThrow(/S3 not configured/);
+    });
+  });
+
+  describe('deleteFileFromS3Job', () => {
+    it('returns status 200 when deletion succeeds', async () => {
+      const { deleteFileFromS3Job } = loadModule();
+      const client = { send: jest.fn().mockResolvedValue({ statusCode: 204 }) };
+      const job = { data: { fileId: 1, fileKey: 'key.txt', bucket: 'bucket-one' } };
+
+      const res = await deleteFileFromS3Job(job, client);
+
+      expect(res).toEqual({
+        status: 200,
+        data: { fileId: 1, fileKey: 'key.txt', res: { statusCode: 204 } },
+      });
+      expect(client.send).toHaveBeenCalled();
+    });
+
+    it('logs and returns error metadata when deletion fails', async () => {
+      const error = new Error('boom');
+      const { deleteFileFromS3Job, logger } = loadModule();
+      const client = { send: jest.fn().mockRejectedValue(error) };
+      const job = { data: { fileId: 2, fileKey: 'missing.txt', bucket: 'bucket-one' } };
+
+      const res = await deleteFileFromS3Job(job, client);
+
+      expect(logger.error).toHaveBeenCalledWith("S3 Queue Error: Unable to DELETE file '2' for key 'missing.txt': boom");
+      expect(res).toEqual({ data: job.data, status: 500, res: undefined });
+    });
+  });
+
+  describe('verifyVersioning', () => {
+    it('enables versioning when it is not already enabled', async () => {
+      const { verifyVersioning, recordedCommands } = loadModule();
+      const client = {
+        send: jest.fn()
+          .mockResolvedValueOnce({ Status: 'Suspended' })
+          .mockResolvedValueOnce({}),
+      };
+
+      await verifyVersioning('bucket-one', client);
+
+      expect(client.send).toHaveBeenCalledTimes(2);
+      expect(recordedCommands[0]).toEqual({
+        name: 'GetBucketVersioningCommand',
+        params: { Bucket: 'bucket-one' },
+      });
+      expect(recordedCommands[1]).toEqual({
+        name: 'PutBucketVersioningCommand',
+        params: {
+          Bucket: 'bucket-one',
+          VersioningConfiguration: { MFADelete: 'Disabled', Status: 'Enabled' },
+        },
+      });
+    });
+
+    it('returns existing configuration when already enabled', async () => {
+      const { verifyVersioning, recordedCommands } = loadModule();
+      const client = { send: jest.fn().mockResolvedValue({ Status: 'Enabled' }) };
+
+      const res = await verifyVersioning('bucket-one', client);
+
+      expect(res).toEqual({ Status: 'Enabled' });
+      expect(client.send).toHaveBeenCalledTimes(1);
+      expect(recordedCommands[0]).toEqual({
+        name: 'GetBucketVersioningCommand',
+        params: { Bucket: 'bucket-one' },
+      });
+    });
+  });
+
+  describe('downloadFile', () => {
+    it('calls done() on the GetObject response', async () => {
+      const { downloadFile, recordedCommands } = loadModule();
+      const response = { Body: Buffer.from('abc'), ContentType: 'text/plain' };
+      const client = { send: jest.fn().mockResolvedValue(response) };
+
+      const res = await downloadFile('file.txt', client, 'bucket-one');
+
+      expect(res).toBe(response);
+      expect(recordedCommands[0]).toEqual({
+        name: 'GetObjectCommand',
+        params: { Bucket: 'bucket-one', Key: 'file.txt' },
+      });
+      expect(client.send).toHaveBeenCalledWith(recordedCommands[0]);
+    });
+
+    it('throws when not configured', async () => {
+      const { downloadFile } = loadModule();
+
+      await expect(downloadFile('file.txt', null, null)).rejects.toThrow(/S3 not configured/);
+    });
+  });
+
+  describe('getSignedDownloadUrl', () => {
+    it('returns an error when not configured', async () => {
+      const { getSignedDownloadUrl } = loadModule();
+
+      const res = await getSignedDownloadUrl('file.txt', null, null);
+
+      expect(res.url).toBeNull();
+      expect(res.error).toBeInstanceOf(Error);
+    });
+
+    it('creates a signed URL for the requested object', async () => {
+      const {
+        getSignedDownloadUrl, getSignedUrlMock, recordedCommands, logger,
+      } = loadModule();
+      const client = { send: jest.fn() };
+      getSignedUrlMock.mockResolvedValue('signed-url');
+
+      const res = await getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
+
+      expect(res).toEqual({ url: 'signed-url', error: null });
+      expect(getSignedUrlMock).toHaveBeenCalledWith(
+        client,
+        recordedCommands[0],
+        { expiresIn: 120 },
+      );
+      expect(recordedCommands[0]).toEqual({
+        name: 'GetObjectCommand',
+        params: { Bucket: 'bucket-one', Key: 'file.txt' },
+      });
+      expect(logger.info).toHaveBeenCalled();
+    });
+
+    it('logs and returns the error when presigning fails', async () => {
+      const {
+        getSignedDownloadUrl, getSignedUrlMock, logger,
+      } = loadModule();
+      const client = { send: jest.fn() };
+      const err = new Error('presign failed');
+      getSignedUrlMock.mockRejectedValue(err);
+
+      const res = await getSignedDownloadUrl('file.txt', 'bucket-one', client);
+
+      expect(logger.error).toHaveBeenCalledWith(`Error generating presigned URL: ${err}`);
+      expect(res.url).toBeNull();
+      expect(res.error).toBe(err);
+    });
+  });
+
+  describe('uploadFile', () => {
+    it('enables versioning in production before uploading', async () => {
+      const {
+        uploadFile, UploadMock, uploadDone, recordedCommands,
+      } = loadModule({ NODE_ENV: 'production' });
+      UploadMock.mockImplementation(() => ({ done: uploadDone }));
+      const client = {
+        send: jest.fn()
+          .mockResolvedValueOnce({ Status: 'Suspended' })
+          .mockResolvedValueOnce({}),
+      };
+      const buffer = Buffer.from('data');
+      const type = { mime: 'text/plain' };
+
+      await uploadFile(buffer, 'file.txt', type, client, 'bucket-one');
+
+      expect(client.send).toHaveBeenCalledTimes(2);
+      expect(recordedCommands[0]).toEqual({
+        name: 'GetBucketVersioningCommand',
+        params: { Bucket: 'bucket-one' },
+      });
+      expect(recordedCommands[1]).toEqual({
+        name: 'PutBucketVersioningCommand',
+        params: {
+          Bucket: 'bucket-one',
+          VersioningConfiguration: { MFADelete: 'Disabled', Status: 'Enabled' },
+        },
+      });
+      expect(UploadMock).toHaveBeenCalledWith({
+        client,
+        params: {
+          Body: buffer,
+          Bucket: 'bucket-one',
+          ContentType: 'text/plain',
+          Key: 'file.txt',
+        },
+      });
+      expect(uploadDone).toHaveBeenCalled();
+    });
+
+    it('skips versioning outside production', async () => {
+      const { uploadFile, UploadMock, uploadDone } = loadModule({ NODE_ENV: 'test' });
+      UploadMock.mockImplementation(() => ({ done: uploadDone }));
+      const client = { send: jest.fn() };
+      const buffer = Buffer.from('data');
+      const type = { mime: 'text/plain' };
+
+      await uploadFile(buffer, 'file.txt', type, client, 'bucket-one');
+
+      expect(client.send).not.toHaveBeenCalled();
+      expect(UploadMock).toHaveBeenCalled();
+      expect(uploadDone).toHaveBeenCalled();
+    });
   });
 });
