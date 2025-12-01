@@ -45,7 +45,7 @@ export default function useSessionStaff(event) {
         trainerOptions = nationalCenterTrainers;
       }
 
-      if (facilitation === 'regional_tta_staff') {
+      if (facilitation === 'regional_tta_staff' || facilitation === 'both') {
         optionsForValue = [...nationalCenterTrainers, ...regionalTrainers];
         trainerOptions = [
           {

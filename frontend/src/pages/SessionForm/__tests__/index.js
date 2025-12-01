@@ -69,6 +69,7 @@ const istAndPocFields = {
   dateSubmitted: null,
   submitter: '',
   submitted: false,
+  additionalStates: [],
 };
 
 const completeFormData = {
