@@ -9,6 +9,7 @@ import {
   TARGET_POPULATIONS,
   EVENT_TARGET_POPULATIONS,
   TRAINING_REPORT_STATUSES,
+  ALL_STATES_FLATTENED,
 } from '@ttahub/common';
 import { useFormContext, Controller } from 'react-hook-form';
 import {
@@ -20,6 +21,7 @@ import {
   Button,
   Textarea,
 } from '@trussworks/react-uswds';
+import { sortBy } from 'lodash';
 import MultiSelect from '../../../components/MultiSelect';
 import FormItem from '../../../components/FormItem';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
@@ -235,6 +237,47 @@ const EventSummary = ({
                 ))}
               </Dropdown>
             </div>
+
+            <div className="margin-top-2" data-testid="additional-states">
+              <Label htmlFor="additionalStates">
+                Addtional states involved
+              </Label>
+              <Controller
+                render={({ onChange: controllerOnChange, value: states, onBlur }) => (
+                  <Select
+                    value={
+                      // ALL_STATES_FLATTENED is an array of objects with value and label properties
+                      // value is what we're matching against, however it looks like
+                      // "Massachusetts (MA)" instead of just "Massachusetts",
+                      // which is what is imported (and stored in states)
+                      ALL_STATES_FLATTENED.filter((option) => {
+                        if (!states || states.length === 0) {
+                          return false;
+                        }
+                        return states.some((s) => option.label.includes(s));
+                      })
+                    }
+                    inputId="additionalStates"
+                    name="additionalStates"
+                    className="usa-select"
+                    styles={selectOptionsReset}
+                    components={{
+                      DropdownIndicator: null,
+                    }}
+                    onChange={(s) => {
+                      controllerOnChange(s.map((option) => option.label));
+                    }}
+                    inputRef={register()}
+                    options={sortBy(ALL_STATES_FLATTENED || [], 'label')}
+                    onBlur={onBlur}
+                    isMulti
+                  />
+                )}
+                control={control}
+                name="additionalStates"
+                defaultValue=""
+              />
+            </div>
           </>
         )
           : (
@@ -248,11 +291,12 @@ const EventSummary = ({
               <ReadOnlyField label="Event organizer">
                 {data.eventOrganizer}
               </ReadOnlyField>
+              <ReadOnlyField label="Additional states involved">
+                {data.additionalStates ? data.additionalStates.join(', ') : ''}
+              </ReadOnlyField>
             </>
           )}
-        <ReadOnlyField label="Additional states involved">
-          {data.additionalStates ? data.additionalStates.join(', ') : ''}
-        </ReadOnlyField>
+
         <div className="margin-y-3">
           <FormItem
             label="Is this event in partnership with a Head Start Association (HSA)? "

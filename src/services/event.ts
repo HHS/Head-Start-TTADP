@@ -851,7 +851,7 @@ export async function csvImport(buffer: Buffer) {
 
       // Validate audience else skip.
       if (!EVENT_AUDIENCE.includes(cleanLine.Audience)) {
-        skipped.push(`Value "${cleanLine.Audience}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`);
+        skipped.push(`Value "${cleanLine.Audience || ''}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`);
         return false;
       }
 
@@ -893,6 +893,12 @@ export async function csvImport(buffer: Buffer) {
           }
           pocs.push(poc.id);
         }
+      }
+
+      const organizer = cleanLine['Event Organizer - Type of Event'];
+      if (!['Regional PD Event (with National Centers)', 'Regional TTA Hosted Event (no National Centers)'].includes(organizer)) {
+        errors.push(`Event Organizer "${organizer}" is not valid for import: ${eventId}. Valid options are "Regional PD Event (with National Centers)" or "Regional TTA Hosted Event (no National Centers)"`);
+        return false;
       }
 
       const data = mapLineToData(cleanLine);

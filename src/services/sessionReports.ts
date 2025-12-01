@@ -138,7 +138,10 @@ export async function createSession(request) {
 
   const created = await SessionReportPilot.create({
     eventId: event.id,
-    data: cast(JSON.stringify(data), 'jsonb'),
+    data: cast(JSON.stringify({
+      ...data,
+      additionalStates: event.data.additionalStates || [],
+    }), 'jsonb'),
   }, {
     individualHooks: true,
   });

@@ -33,6 +33,7 @@ const Participants = ({ formData }) => {
 
   const regionId = watch('regionId');
   const eventRegionId = formData.event ? formData.event.regionId : null;
+  const states = formData.additionalStates || [];
 
   return (
     <>
@@ -41,6 +42,7 @@ const Participants = ({ formData }) => {
       </Helmet>
       <IndicatesRequiredField />
       <RecipientsWithGroups
+        states={states}
         showTooltip="You can use a group to speed up selection, then remove recipients who did not attend."
         regionId={regionId || eventRegionId}
       />
@@ -158,6 +160,7 @@ Participants.propTypes = {
     recipients: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
     })),
+    additionalStates: PropTypes.arrayOf(PropTypes.string),
     regionId: PropTypes.number,
     istSelectionComplete: PropTypes.bool,
     event: PropTypes.shape({
