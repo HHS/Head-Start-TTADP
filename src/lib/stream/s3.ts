@@ -2,6 +2,7 @@ import { Upload } from '@aws-sdk/lib-storage';
 import { Readable } from 'stream';
 import {
   S3Client as S3LibClient,
+  S3ClientConfig,
   GetObjectCommand,
   HeadObjectCommand,
   HeadObjectCommandOutput,
@@ -16,18 +17,12 @@ import { auditLogger } from '../../logger';
 class S3Client {
   private client: S3LibClient; // Private property to store the AWS S3 client instance
 
-  private bucketName: string; // Private property to store the bucket name
+  private bucketName: string | null; // Private property to store the bucket name
 
   constructor(
     config: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      s3Bucket: any, // The name of the S3 bucket
-      s3Config: {
-        accessKeyId?: string, // Optional access key ID for authentication
-        secretAccessKey?: string, // Optional secret access key for authentication
-        region?: string, // Optional region for S3 service
-        forcePathStyle: boolean, // Whether to use path-style or virtual-hosted style URLs
-      }
+      s3Bucket: string | null;
+      s3Config: S3ClientConfig;
     } = generateS3Config(), // Default configuration generator function
   ) {
     // Create an instance of AWS.S3 using the provided configuration
