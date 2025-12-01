@@ -692,24 +692,6 @@ ${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       });
     });
 
-    it.skip('errors if the IST Collaborator user lacks permissions (test skipped - validation removed)', async () => {
-      // This test is skipped because the validation for National Center collaborator permissions
-      // was removed in the latest changes to event.ts. National Center users are no longer
-      // validated during CSV import.
-      await db.Permission.destroy({ where: { userId: collaboratorId } });
-      const d = `${headings.join(',')}
-${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
-      const b = Buffer.from(d);
-      const result = await csvImport(b);
-      expect(result.count).toEqual(0);
-      expect(result.errors).toEqual([`User ${collaborator.name} does not have permission to write in region ${regionId}`]);
-      await db.Permission.create({
-        userId: collaboratorId,
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
-      });
-    });
-
     it('skips rows that don\'t start with the correct prefix', async () => {
       const dataToTest = `${headings.join(',')}
 ${email},01-TR-4256,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
