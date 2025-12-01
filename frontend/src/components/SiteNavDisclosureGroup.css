@@ -6,19 +6,8 @@
 .ttahub-site-nav--disclosure-group summary {
   box-sizing: border-box;
   cursor: pointer;
-  list-style: none;
-  width: 100%;
-}
-
-/* Focus styles for keyboard navigation */
-.ttahub-site-nav--disclosure-group summary:focus-visible {
-  outline: 0.25rem solid #2491FF; /* $blue-vivid-focus */
-  outline-offset: 2px;
-}
-
-/* Remove default focus outline for mouse clicks */
-.ttahub-site-nav--disclosure-group summary:focus:not(:focus-visible) {
-  outline: none;
+  list-style: none;    
+  width: 100%; 
 }
 
 /**
