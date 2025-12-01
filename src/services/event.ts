@@ -710,13 +710,16 @@ const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(B
 
 const mappings: Record<string, string> = {
   Audience: 'eventIntendedAudience',
-  'IST/Creator': 'creator',
-  'Event Title': 'eventName',
+  // 'IST/Creator': 'creator',
+  'Event Creator': 'creator',
+  // 'Event Title': 'eventName',
+  'Edit Title': 'eventName',
   'Event Duration': 'trainingType',
   'Event Duration/#NC Days of Support': 'trainingType',
   'Event Duration/# NC Days of Support': 'trainingType',
   'Event ID': 'eventId',
   'Overall Vision/Goal for the PD Event': 'vision',
+  'Event Approach': 'trainingType',
   'Vision/Goal/Outcomes for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
   // 'Reason(s) for PD': 'reasons', // TODO: Verify data should no longer be imported
@@ -724,8 +727,7 @@ const mappings: Record<string, string> = {
   'Event Organizer - Type of Event': 'eventOrganizer',
   'IST Name:': 'istName',
   'IST Name': 'istName',
-  // TODO: Validate original CSV header for this field.
-  'Additonal States Involved': 'additionalStates',
+  'State/Territory Invited': 'additionalStates',
 };
 
 const toSplit = [
@@ -855,12 +857,12 @@ export async function csvImport(buffer: Buffer) {
 
       const regionId = Number(eventId.split('-')[0].replace(/\D/g, '').replace(/^0+/, ''));
 
-      const creator = cleanLine['IST/Creator'] || cleanLine.Creator;
+      const creator = cleanLine['IST/Creator'] || cleanLine.Creator || cleanLine['Event Creator'];
       if (!creator) {
         errors.push(`No creator listed on import for ${eventId}`);
         return false;
       }
-      let owner;
+      let owner: { name: string; id: number; };
       if (creator) {
         owner = await checkUserExistsByEmail(creator);
 
@@ -874,11 +876,10 @@ export async function csvImport(buffer: Buffer) {
         }
       }
 
-      const collaborators = [];
       const pocs = [];
 
-      if (cleanLine['Designated Region POC for Event/Request']) {
-        const pocNames = cleanLine['Designated Region POC for Event/Request'].split('/').map((name) => name.trim());
+      if (cleanLine['Designated POC for Event/Request']) {
+        const pocNames = cleanLine['Designated POC for Event/Request'].split('/').map((name) => name.trim());
         // eslint-disable-next-line no-restricted-syntax
         for await (const pocName of pocNames) {
           const poc = await checkUserExistsByName(pocName);
@@ -892,28 +893,6 @@ export async function csvImport(buffer: Buffer) {
           }
           pocs.push(poc.id);
         }
-      }
-
-      if (cleanLine['National Centers']) {
-        const nationalCenterNames = cleanLine['National Centers'].split('\n').map((name) => name.trim());
-        // eslint-disable-next-line no-restricted-syntax
-        for await (const center of nationalCenterNames) {
-          const collaborator = await checkUserExistsByNationalCenter(center);
-          const policy = new EventReport(collaborator, {
-            regionId,
-          });
-
-          if (!policy.canWriteInRegion()) {
-            errors.push(`User ${collaborator.name} does not have permission to write in region ${regionId}`);
-            return false;
-          }
-          collaborators.push(collaborator.id);
-        }
-      }
-
-      if (!collaborators.length) {
-        errors.push(`No collaborators found for ${eventId}`);
-        return false;
       }
 
       const data = mapLineToData(cleanLine);
@@ -933,7 +912,7 @@ export async function csvImport(buffer: Buffer) {
       data.additionalStates = [...new Set(data.additionalStates as string[])]; // TODO: (maybe) create master list of states/outer pacific to validate against
 
       await db.EventReportPilot.create({
-        collaboratorIds: collaborators,
+        collaboratorIds: [],
         ownerId: owner.id,
         regionId,
         pocIds: pocs,
