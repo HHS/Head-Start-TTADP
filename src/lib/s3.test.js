@@ -13,14 +13,14 @@ const loadModule = (env = {}) => {
     return cmd;
   });
 
-  const sendMock = jest.fn();
+  const mockSend = jest.fn();
   const uploadDone = jest.fn().mockResolvedValue({ Key: 'uploaded-key' });
   const UploadMock = jest.fn().mockImplementation(() => ({ done: uploadDone }));
   const getSignedUrlMock = jest.fn();
   const logger = { info: jest.fn(), error: jest.fn() };
 
   jest.doMock('@aws-sdk/client-s3', () => ({
-    S3Client: jest.fn(() => ({ send: sendMock })),
+    S3Client: jest.fn(() => ({ send: mockSend })),
     GetBucketVersioningCommand: makeCommand('GetBucketVersioningCommand'),
     PutBucketVersioningCommand: makeCommand('PutBucketVersioningCommand'),
     GetObjectCommand: makeCommand('GetObjectCommand'),
@@ -36,7 +36,7 @@ const loadModule = (env = {}) => {
 
   return {
     ...mod,
-    sendMock,
+    sendMock: mockSend,
     uploadDone,
     UploadMock,
     getSignedUrlMock,

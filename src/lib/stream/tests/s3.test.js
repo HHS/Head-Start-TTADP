@@ -3,7 +3,7 @@ import { Upload } from '@aws-sdk/lib-storage';
 import S3Client from '../s3';
 import { auditLogger } from '../../../logger';
 
-const sendMock = jest.fn();
+const mockSend = jest.fn();
 const commandCalls = [];
 
 // Mock AWS SDK client and commands used by stream S3 wrapper
@@ -15,7 +15,7 @@ jest.mock('@aws-sdk/client-s3', () => {
   });
 
   return {
-    S3Client: jest.fn(() => ({ send: sendMock })),
+    S3Client: jest.fn(() => ({ send: mockSend })),
     GetObjectCommand: makeCommand('GetObjectCommand'),
     HeadObjectCommand: makeCommand('HeadObjectCommand'),
     DeleteObjectCommand: makeCommand('DeleteObjectCommand'),
@@ -53,7 +53,7 @@ describe('S3Client', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    sendMock.mockReset();
+    mockSend.mockReset();
     commandCalls.length = 0;
   });
 
@@ -86,13 +86,13 @@ describe('S3Client', () => {
   describe('downloadFileAsStream', () => {
     it('returns a readable stream with the object body', async () => {
       const body = Buffer.from('downloaded-content');
-      sendMock.mockResolvedValue({ Body: body });
+      mockSend.mockResolvedValue({ Body: body });
 
       const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
       const stream = await client.downloadFileAsStream('file.txt');
       const text = await streamToString(stream);
 
-      expect(sendMock).toHaveBeenCalledWith(commandCalls[0]);
+      expect(mockSend).toHaveBeenCalledWith(commandCalls[0]);
       expect(commandCalls[0]).toEqual({
         name: 'GetObjectCommand',
         params: { Bucket: BUCKET, Key: 'file.txt' },
@@ -102,7 +102,7 @@ describe('S3Client', () => {
 
     it('logs and rethrows when getObject fails', async () => {
       const error = new Error('not found');
-      sendMock.mockRejectedValue(error);
+      mockSend.mockRejectedValue(error);
 
       const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
 
@@ -114,7 +114,7 @@ describe('S3Client', () => {
   describe('getFileMetadata', () => {
     it('returns headObject response', async () => {
       const meta = { ContentLength: 42 };
-      sendMock.mockResolvedValue(meta);
+      mockSend.mockResolvedValue(meta);
 
       const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
       const response = await client.getFileMetadata('file.txt');
@@ -128,7 +128,7 @@ describe('S3Client', () => {
 
     it('logs and rethrows when headObject fails', async () => {
       const error = new Error('head failed');
-      sendMock.mockRejectedValue(error);
+      mockSend.mockRejectedValue(error);
 
       const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
 
@@ -139,7 +139,7 @@ describe('S3Client', () => {
 
   describe('deleteFile', () => {
     it('calls deleteObject and resolves', async () => {
-      sendMock.mockResolvedValue({ status: 'ok' });
+      mockSend.mockResolvedValue({ status: 'ok' });
 
       const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
       await expect(client.deleteFile('file.txt')).resolves.toEqual({ status: 'ok' });
@@ -151,7 +151,7 @@ describe('S3Client', () => {
 
     it('logs and rethrows when deleteObject fails', async () => {
       const error = new Error('delete failed');
-      sendMock.mockRejectedValue(error);
+      mockSend.mockRejectedValue(error);
 
       const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
 
@@ -163,7 +163,7 @@ describe('S3Client', () => {
   describe('listFiles', () => {
     it('returns listObjectsV2 response', async () => {
       const list = { Contents: [{ Key: 'a' }, { Key: 'b' }] };
-      sendMock.mockResolvedValue(list);
+      mockSend.mockResolvedValue(list);
 
       const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
       const response = await client.listFiles();
@@ -177,7 +177,7 @@ describe('S3Client', () => {
 
     it('logs and rethrows when listObjectsV2 fails', async () => {
       const error = new Error('list failed');
-      sendMock.mockRejectedValue(error);
+      mockSend.mockRejectedValue(error);
 
       const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
 
