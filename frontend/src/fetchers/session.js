@@ -46,8 +46,11 @@ export const deleteSessionObjectiveFile = async (sessionId, fileId) => {
   return response.status;
 };
 
-export const getPossibleSessionParticipants = async (regionId) => {
-  const response = await get(join(sessionsUrl, 'participants', String(regionId)));
+export const getPossibleSessionParticipants = async (regionId, stateCodes) => {
+  const url = join(sessionsUrl, 'participants', String(regionId));
+  const params = new URLSearchParams();
+  stateCodes.forEach((code) => params.append('states', code));
+  const response = await get(`${url}?${params.toString()}`);
   return response.json();
 };
 

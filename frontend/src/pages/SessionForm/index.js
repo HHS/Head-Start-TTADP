@@ -201,9 +201,15 @@ export default function SessionForm({ match }) {
   }, [reportFetched, setIsAppLoading]);
 
   useEffect(() => {
+    if (reportFetched && sessionId !== 'new' && !currentPage && sessionId && redirectPagePath) {
+      history.replace(`/training-report/${trainingReportId}/session/${sessionId}/${redirectPagePath}`);
+    }
+  }, [reportFetched, sessionId, currentPage, history, trainingReportId, redirectPagePath]);
+
+  useEffect(() => {
     // create a new session
     async function createNewSession() {
-      if (!trainingReportId || !currentPage || sessionId !== 'new' || reportFetched) {
+      if (!trainingReportId || sessionId !== 'new' || reportFetched) {
         return;
       }
 
@@ -227,7 +233,7 @@ export default function SessionForm({ match }) {
           isApprover: isApproverUser,
         });
         reportId.current = session.id;
-        history.replace(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
+        history.replace(`/training-report/${trainingReportId}/session/${session.id}`);
       } catch (e) {
         setError('Error creating session');
       } finally {
@@ -239,7 +245,7 @@ export default function SessionForm({ match }) {
     }
 
     createNewSession();
-  }, [currentPage, history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
+  }, [history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
 
   useEffect(() => {
     // fetch event report data

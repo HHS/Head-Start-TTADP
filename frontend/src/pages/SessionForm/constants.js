@@ -120,6 +120,7 @@ export const defaultKeys = [
   'dateSubmitted',
   'submitted',
   'submitter',
+  'additionalStates',
 ];
 
 export const istKeys = [
