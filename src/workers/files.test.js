@@ -1,6 +1,6 @@
 import axios from 'axios';
 import processFile from './files';
-import { s3 } from '../lib/s3';
+import { s3Client } from '../lib/s3';
 import { File } from '../models';
 import { FILE_STATUSES } from '../constants';
 
@@ -14,7 +14,7 @@ const s3Return = {
   Body: Buffer.from('Hello World!'),
 };
 
-const mockS3 = jest.spyOn(s3, 'getObject').mockImplementation(() => ({ promise: () => Promise.resolve(s3Return) }));
+const mockS3 = jest.spyOn(s3Client, 'getObject').mockImplementation(() => ({ promise: () => Promise.resolve(s3Return) }));
 
 const mockAxios = jest.spyOn(axios, 'post').mockImplementation(() => Promise.resolve());
 const axiosCleanResponse = { status: 200, data: { Status: 'OK', Description: '' } };
