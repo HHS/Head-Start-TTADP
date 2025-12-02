@@ -142,7 +142,7 @@ const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, E
   try {
     const command = new GetObjectCommand({ Bucket: bucket, Key: key });
     urlResponse.url = await getSignedUrl(client, command, { expiresIn: Expires });
-    auditLogger.info(`Generated presigned URL for key ${key}: ${urlResponse.url}`);
+    auditLogger.info(`Generated presigned URL for key ${key}`);
   } catch (error) {
     auditLogger.error(`Error generating presigned URL: ${error}`);
     urlResponse.error = error;
