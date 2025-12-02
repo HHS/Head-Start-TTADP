@@ -1,3 +1,5 @@
+@import '../colors';
+
 /** hide the left arrows on safari **/
 .ttahub-site-nav--disclosure-group summary::-webkit-details-marker {
   display: none;
@@ -12,7 +14,7 @@
 
 /* Focus styles for keyboard navigation */
 .ttahub-site-nav--disclosure-group summary:focus-visible {
-  outline: 0.25rem solid #2491FF; /* $blue-vivid-focus */
+  outline: 0.25rem solid $blue-vivid-focus;
   outline-offset: 2px;
 }
 
@@ -22,7 +24,7 @@
 }
 
 /**
-  Jump through hoops to preserve the spacing 
+  Jump through hoops to preserve the spacing
   when the details are open or closed
 **/
 .ttahub-site-nav--disclosure-group{
@@ -30,7 +32,7 @@
   padding-top: 0.5rem;
 }
 
-.ttahub-site-nav--disclosure-group:not([open]) {    
+.ttahub-site-nav--disclosure-group:not([open]) {
   margin-bottom: 0.5rem;
   padding-bottom: 0.5rem;
 }
@@ -38,7 +40,7 @@
 .ttahub-site-nav--disclosure-group[open] summary {
   padding-bottom: 0.5rem;
 }
- 
+
 /**
 Active page styles
 **/
@@ -63,4 +65,3 @@ when the menu is closed, show the minus
 .ttahub-site-nav--disclosure-group__close {
   display: none;
 }
-
