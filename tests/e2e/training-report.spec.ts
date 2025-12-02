@@ -94,6 +94,9 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByTestId('form').getByText('Training').click();
   await blur(page);
 
+  await page.getByText('In Person').click();
+  await blur(page);
+
   await page.getByText(/Language used/i).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
@@ -131,12 +134,17 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.waitForLoadState('networkidle'); // wait for navigation to complete
   await page.getByRole('button', { name: 'Review and submit' }).click();
 
-  // Click the modal 'Yes, and continue' button.
-  await page.getByRole('button', { name: 'Yes, continue' }).click();
+  await page.waitForLoadState('networkidle'); // waiting for form submission to complete
+  await page.getByRole('button', { name: 'Submit for approval' }).click();
 
-  // Verify the session is now complete.
+  await page.waitForLoadState('networkidle'); // waiting for navigation to complete
+
+  // verify session data entry
   await page.getByLabel('View sessions for event R01-PD-23-').click();
-  await page.getByText('Status Complete').click();
+  expect(page.getByText('Session dates 01/02/2023 - 02/02/')).toBeTruthy();
+  expect(page.getByText('Session objective Objective')).toBeTruthy();
+  expect(page.getByText('Session objective Objective')).toBeTruthy();
+  expect(page.getByText('Topics Behavioral / Mental')).toBeTruthy();
 
   // view/print event
   await page.getByRole('button', { name: 'Actions for event R01-PD-23-1037' }).click();
