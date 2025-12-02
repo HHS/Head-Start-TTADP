@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router';
@@ -17,6 +17,7 @@ import { createSession } from '../../fetchers/session';
 import { eventById } from '../../fetchers/event';
 import { ROUTES } from '../../Constants';
 import UserContext from '../../UserContext';
+import isAdmin from '../../permissions';
 
 const TRAINING_REPORT_URL_NOT_STARTED = '/training-reports/not-started';
 const TRAINING_REPORT_URL_IN_PROGRESS = '/training-reports/in-progress';
@@ -32,6 +33,7 @@ export default function SessionReportFacilitation({ match }) {
   });
 
   const { user } = useContext(UserContext);
+  const isAdminUser = useMemo(() => isAdmin(user), [user]);
 
   const { data: trainingReport, error, statusCode } = useFetch(
     null,
@@ -71,7 +73,7 @@ export default function SessionReportFacilitation({ match }) {
       const facilitationIncludesRegion = facilitation === 'both' || facilitation === 'regional_tta_staff';
       const collaboratorWithRegionalFacilitation = isCollaborator && facilitationIncludesRegion;
 
-      if (collaboratorWithRegionalFacilitation || isOwner) {
+      if (!isAdminUser && (collaboratorWithRegionalFacilitation || isOwner)) {
         history.push(TRAINING_REPORT_URL_IN_PROGRESS, { message: 'Session created successfully' });
         return;
       }
