@@ -4,10 +4,20 @@ import {
   PutBucketVersioningCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  PutObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
-import { auditLogger } from '../logger';
+import { auditLogger, logger } from '../logger';
+
+const awsLogger = {
+  // only log errors
+  error: (message, ...args) => logger.error(message, ...args),
+  warn: () => {},
+  info: () => {},
+  debug: () => {},
+  trace: () => {},
+};
 
 const generateS3Config = () => {
   // Take configuration from cloud.gov if it is available. If not, use env variables.
@@ -18,14 +28,14 @@ const generateS3Config = () => {
     if (services.s3 && services.s3.length > 0) {
       const { credentials } = services.s3[0];
       return {
-        s3Bucket: credentials.bucket,
         s3Config: {
+          region: credentials.region,
+          forcePathStyle: true,
+          logger: awsLogger,
           credentials: {
             accessKeyId: credentials.access_key_id,
             secretAccessKey: credentials.secret_access_key,
           },
-          region: credentials.region,
-          forcePathStyle: true,
         },
       };
     }
@@ -42,12 +52,13 @@ const generateS3Config = () => {
     return {
       s3Bucket: S3_BUCKET,
       s3Config: {
+        region: process.env.AWS_REGION || 'us-gov-west-1',
+        forcePathStyle: true,
+        logger: awsLogger,
         credentials: {
           accessKeyId: AWS_ACCESS_KEY_ID,
           secretAccessKey: AWS_SECRET_ACCESS_KEY,
         },
-        region: process.env.AWS_REGION || 'us-gov-west-1',
-        forcePathStyle: true,
       },
     };
   }
@@ -139,6 +150,7 @@ const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, E
 };
 
 const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Bucket) => {
+  // max size of 5gb, if needing to upload larger files, refactor to lib-storage multi-part upload
   if (!client || !bucket) {
     throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
@@ -152,10 +164,7 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
   if (process.env.NODE_ENV === 'production') {
     await verifyVersioning(bucket, client);
   }
-  const response = await new Upload({
-    client,
-    params,
-  }).done();
+  const response = await client.send(new PutObjectCommand({ client, params }));
   auditLogger.info(`File uploaded to S3: ${response.Key}`);
   return response;
 };
