@@ -65,10 +65,14 @@ export default function SessionReportFacilitation({ match }) {
       // since they'd be forwarded out otherwise (POC cannot create sessions)
 
       const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
+      const isOwner = trainingReport.owner.id === user.id;
       const { facilitation } = data;
 
-      if (isCollaborator && facilitation === 'both') {
-        history.push(TRAINING_REPORT_URL_IN_PROGRESS); // TODO: add success message
+      const facilitationIncludesRegion = facilitation === 'both' || facilitation === 'regional_tta_staff';
+      const collaboratorWithRegionalFacilitation = isCollaborator && facilitationIncludesRegion;
+
+      if (collaboratorWithRegionalFacilitation || isOwner) {
+        history.push(TRAINING_REPORT_URL_IN_PROGRESS, { message: 'Session created successfully' });
         return;
       }
 

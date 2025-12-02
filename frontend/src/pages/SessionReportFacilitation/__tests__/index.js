@@ -214,7 +214,7 @@ describe('SessionReportFacilitation', () => {
         collaboratorIds: [1],
       });
     });
-    it('submits form', async () => {
+    it('submits form with both', async () => {
       renderComponent();
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
@@ -238,7 +238,61 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('both');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS);
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
+      });
+    });
+    it('submits form with regional tta', async () => {
+      renderComponent();
+      await waitFor(() => {
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
+      });
+      const sessionResponse = { id: 3 };
+      fetchMock.post('/api/session-reports', sessionResponse);
+      const spy = jest.spyOn(history, 'push');
+
+      const regionalRadio = screen.getByLabelText('Regional TTA staff');
+      userEvent.click(regionalRadio);
+
+      const submitButton = screen.getByRole('button', { name: 'Create session' });
+      userEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
+      });
+
+      const [, options] = fetchMock.lastCall('/api/session-reports');
+      const requestBody = JSON.parse(options.body);
+      expect(requestBody.data.facilitation).toBe('regional_tta_staff');
+
+      await waitFor(() => {
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
+      });
+    });
+    it('submits form with national center', async () => {
+      renderComponent();
+      await waitFor(() => {
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
+      });
+      const sessionResponse = { id: 3, eventId: 1 };
+      fetchMock.post('/api/session-reports', sessionResponse);
+      const spy = jest.spyOn(history, 'push');
+
+      const nationalCenterRadio = screen.getByLabelText('National Center');
+      userEvent.click(nationalCenterRadio);
+
+      const submitButton = screen.getByRole('button', { name: 'Create session' });
+      userEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
+      });
+
+      const [, options] = fetchMock.lastCall('/api/session-reports');
+      const requestBody = JSON.parse(options.body);
+      expect(requestBody.data.facilitation).toBe('national_center');
+
+      await waitFor(() => {
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3');
       });
     });
   });
@@ -272,7 +326,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('national_center');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/1');
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
       });
     });
 
@@ -300,7 +354,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('regional_tta_staff');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/2');
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
       });
     });
 
@@ -328,7 +382,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('both');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3');
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
       });
     });
 
