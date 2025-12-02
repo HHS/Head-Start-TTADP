@@ -233,6 +233,12 @@ export default function SessionForm({ match }) {
           isApprover: isApproverUser,
         });
         reportId.current = session.id;
+
+        if (session.event.ownerId === user.id && !isAdminUser) {
+          history.push('/training-reports/in-progress', { message: 'Session created successfully' });
+          return;
+        }
+
         history.replace(`/training-report/${trainingReportId}/session/${session.id}`);
       } catch (e) {
         setError('Error creating session');
