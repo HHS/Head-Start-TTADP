@@ -1375,4 +1375,96 @@ describe('SessionReportForm', () => {
       expect(historySpy).not.toHaveBeenCalled();
     });
   });
+
+  describe('redirect to view page', () => {
+    it('redirects POC user to view page for regional event with no national centers', async () => {
+      const url = join(sessionsUrl, 'id', '2');
+      const historySpy = jest.spyOn(history, 'push');
+
+      fetchMock.get(url, {
+        id: 2,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          sessionName: 'Regional Event Session',
+          submitted: false,
+          status: 'In progress',
+        },
+        event: {
+          id: 1,
+          regionId: 1,
+          ownerId: 2,
+          pocIds: [1],
+          collaboratorIds: [],
+          data: {
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+          },
+        },
+      });
+
+      const pocUser = {
+        user: {
+          id: 1,
+          permissions: [{
+            userId: 1,
+            regionId: 1,
+            scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+          }],
+          name: 'POC User',
+        },
+      };
+
+      act(() => {
+        renderSessionForm('1', undefined, '2', pocUser);
+      });
+
+      await waitFor(() => expect(fetchMock.called(url)).toBe(true));
+      await waitFor(() => expect(historySpy).toHaveBeenCalledWith('/training-report/view/1'));
+    });
+
+    it('redirects form user to view page when session is complete', async () => {
+      const url = join(sessionsUrl, 'id', '3');
+      const historySpy = jest.spyOn(history, 'push');
+
+      fetchMock.get(url, {
+        id: 3,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          sessionName: 'Complete Session',
+          submitted: true,
+          status: 'Complete',
+        },
+        event: {
+          id: 1,
+          regionId: 1,
+          ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [],
+          data: {
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+          },
+        },
+      });
+
+      const ownerUser = {
+        user: {
+          id: 1,
+          permissions: [{
+            userId: 1,
+            regionId: 1,
+            scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+          }],
+          name: 'Owner User',
+        },
+      };
+
+      act(() => {
+        renderSessionForm('1', undefined, '3', ownerUser);
+      });
+
+      await waitFor(() => expect(fetchMock.called(url)).toBe(true));
+      await waitFor(() => expect(historySpy).toHaveBeenCalledWith('/training-report/view/1'));
+    });
+  });
 });

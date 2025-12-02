@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
@@ -342,6 +343,56 @@ describe('sessionSummary', () => {
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
+    it('shows validation error when iPD courses is yes but no courses selected', async () => {
+      render(<RenderSessionSummary />);
+
+      const yesCourses = document.querySelector('#useIpdCourses-yes');
+      await act(async () => {
+        userEvent.click(yesCourses);
+      });
+
+      const courseSelect = await screen.findByLabelText(/iPD course name/i);
+
+      await act(async () => {
+        userEvent.click(courseSelect);
+        fireEvent.blur(courseSelect);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Select at least one course')).toBeInTheDocument();
+      });
+    });
+
+    it('shows validation error when no topic selected', async () => {
+      render(<RenderSessionSummary />);
+
+      const topicSelect = document.querySelector('#objectiveTopics');
+
+      await act(async () => {
+        userEvent.click(topicSelect);
+        fireEvent.blur(topicSelect);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Select at least one topic')).toBeInTheDocument();
+      });
+    });
+
+    it('shows validation error when no trainer selected', async () => {
+      render(<RenderSessionSummary />);
+
+      const trainerSelect = await screen.findByLabelText(/Who provided the TTA/i);
+
+      await act(async () => {
+        userEvent.click(trainerSelect);
+        fireEvent.blur(trainerSelect);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Select at least one trainer')).toBeInTheDocument();
+      });
+    });
+
     it('national center event facilitated by national center', async () => {
       const additionalData = {
         status: 'Not started',
@@ -541,6 +592,154 @@ describe('sessionSummary', () => {
 
     it('has the correct review property', () => {
       expect(sessionSummary.review).toBe(false);
+    });
+
+    it('renders file links when files have URLs', async () => {
+      const TestComponent = () => {
+        const formValues = {
+          recipients: [],
+          files: [{
+            originalFileName: 'test-file.pdf',
+            id: 1,
+            url: { url: 'https://example.com/file.pdf' },
+          }],
+        };
+
+        const hookForm = useForm({
+          mode: 'onBlur',
+          defaultValues: formValues,
+        });
+
+        return (
+          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.reviewSection()}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </AppLoadingContext.Provider>
+        );
+      };
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const fileLink = screen.getByText('test-file.pdf');
+        expect(fileLink).toBeInTheDocument();
+        expect(fileLink.tagName).toBe('A');
+        expect(fileLink).toHaveAttribute('href', 'https://example.com/file.pdf');
+      });
+    });
+
+    it('renders file names without links when files have no URLs', async () => {
+      const TestComponent = () => {
+        const formValues = {
+          recipients: [],
+          files: [{
+            originalFileName: 'test-file-no-url.pdf',
+            id: 2,
+          }],
+        };
+
+        const hookForm = useForm({
+          mode: 'onBlur',
+          defaultValues: formValues,
+        });
+
+        return (
+          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.reviewSection()}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </AppLoadingContext.Provider>
+        );
+      };
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const fileName = screen.getByText('test-file-no-url.pdf');
+        expect(fileName).toBeInTheDocument();
+      });
+    });
+
+    it('renders resource links', async () => {
+      const TestComponent = () => {
+        const formValues = {
+          recipients: [],
+          objectiveResources: [{ value: 'https://example.com/resource' }],
+          // files not populated to test the defensive check in the Review section
+        };
+
+        const hookForm = useForm({
+          mode: 'onBlur',
+          defaultValues: formValues,
+        });
+
+        return (
+          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.reviewSection()}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </AppLoadingContext.Provider>
+        );
+      };
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        const resourceLink = screen.getByText('https://example.com/resource');
+        expect(resourceLink).toBeInTheDocument();
+        expect(resourceLink.tagName).toBe('A');
+        expect(resourceLink).toHaveAttribute('href', 'https://example.com/resource');
+      });
+    });
+
+    it('maps course objects to course names', async () => {
+      const TestComponent = () => {
+        const formValues = {
+          recipients: [],
+          courses: [
+            { id: 1, name: 'Course One' },
+            { id: 2, name: 'Course Two' },
+          ],
+          files: [],
+        };
+
+        const hookForm = useForm({
+          mode: 'onBlur',
+          defaultValues: formValues,
+        });
+
+        return (
+          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.reviewSection()}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </AppLoadingContext.Provider>
+        );
+      };
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Course One/i)).toBeInTheDocument();
+        expect(screen.getByText(/Course Two/i)).toBeInTheDocument();
+      });
     });
   });
 });

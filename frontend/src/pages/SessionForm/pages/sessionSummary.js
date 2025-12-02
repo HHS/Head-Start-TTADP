@@ -708,7 +708,7 @@ const path = 'session-summary';
 const position = 1;
 
 const ReviewSection = () => {
-  const { getValues } = useFormContext();
+  const { watch } = useFormContext();
 
   const {
     sessionName,
@@ -726,10 +726,10 @@ const ReviewSection = () => {
     files,
     ttaProvided,
     objectiveSupportType,
-  } = getValues();
+  } = watch();
 
   // eslint-disable-next-line max-len
-  const objectiveFiles = files.map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
+  const objectiveFiles = (files || []).map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
   const resources = (objectiveResources || []).map((r) => <Link href={r.value}>{r.value}</Link>);
 
   const sections = [
