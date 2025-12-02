@@ -316,6 +316,46 @@ describe('participants', () => {
         expect(useGroupCheckbox).toBeChecked();
       });
     });
+
+    it('uses event regionId when form regionId is not provided', async () => {
+      const formValues = {
+        id: 1,
+        ownerId: null,
+        eventId: 'test-event',
+        eventDisplayId: 'event-display-id',
+        eventName: 'Event name',
+        regionId: undefined,
+        status: 'In progress',
+        isIstVisit: 'no',
+        recipients: [],
+        pageState: {
+          1: NOT_STARTED,
+          2: NOT_STARTED,
+        },
+        event: {
+          regionId: 2,
+        },
+      };
+
+      const additionalData = {
+        status: 'In progress',
+      };
+
+      const participantsUrlRegion2 = join(sessionsUrl, 'participants', '2');
+      fetchMock.get(participantsUrlRegion2, []);
+
+      const groupsUrlRegion2 = join(sessionsUrl, 'groups', '?region=2');
+      fetchMock.get(groupsUrlRegion2, []);
+
+      act(() => {
+        render(<RenderParticipants formValues={formValues} additionalData={additionalData} />);
+      });
+
+      await waitFor(() => {
+        expect(fetchMock.called(groupsUrlRegion2)).toBe(true);
+        expect(fetchMock.called(participantsUrlRegion2)).toBe(true);
+      });
+    });
   });
 
   describe('ReviewSection', () => {
