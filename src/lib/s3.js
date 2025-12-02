@@ -28,6 +28,7 @@ const generateS3Config = () => {
     if (services.s3 && services.s3.length > 0) {
       const { credentials } = services.s3[0];
       return {
+        s3Bucket: credentials.bucket,
         s3Config: {
           region: credentials.region,
           forcePathStyle: true,
