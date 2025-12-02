@@ -867,7 +867,7 @@ describe('SessionReportForm', () => {
       data: {},
       event: {
         regionId: 1,
-        ownerId: 1,
+        ownerId: 2,
         pocIds: [],
         collaboratorIds: [1],
         data: {
@@ -876,6 +876,8 @@ describe('SessionReportForm', () => {
         },
       },
     });
+
+    const spy = jest.spyOn(history, 'replace');
 
     await act(async () => {
       renderSessionForm('1', 'session-summary', 'new');
@@ -887,6 +889,47 @@ describe('SessionReportForm', () => {
     await waitFor(() => {
       expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
     }, { timeout: 3000 });
+
+    expect(spy).toHaveBeenCalled();
+
+    // The reportId.current should be set to the created session ID (999)
+    // We can verify this indirectly by checking that history.replace was called
+    // with the correct URL
+    expect(history.location.pathname).toContain('/session/999');
+  });
+
+  it('redirects when event owner creates session', async () => {
+    fetchMock.post(sessionsUrl, {
+      id: 999,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
+
+    const spy = jest.spyOn(history, 'replace');
+
+    await act(async () => {
+      renderSessionForm('1', 'session-summary', 'new');
+    });
+
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
+
+    // Verify the form rendered with the created session
+    await waitFor(() => {
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    expect(spy).toHaveBeenCalled();
 
     // The reportId.current should be set to the created session ID (999)
     // We can verify this indirectly by checking that history.replace was called
