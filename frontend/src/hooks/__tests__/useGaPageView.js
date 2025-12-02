@@ -22,14 +22,14 @@ describe('useGaPageView', () => {
 
     expect(window.dataLayer).toHaveLength(1);
     expect(window.dataLayer[0].event).toBe(CONTENT_GROUP_EVENT);
-    expect(window.dataLayer[0]['Content Group']).toBe('/test-path');
+    expect(window.dataLayer[0].content_group).toBe('/test-path');
   });
 
   test('should push new event when pathname changes', () => {
     const { rerender } = renderHook(() => useGaPageView());
 
     expect(window.dataLayer).toHaveLength(1);
-    expect(window.dataLayer[0]['Content Group']).toBe('/test-path');
+    expect(window.dataLayer[0].content_group).toBe('/test-path');
 
     // Simulate pathname change
     useLocation.mockReturnValue({ pathname: '/new-path' });
@@ -37,7 +37,7 @@ describe('useGaPageView', () => {
 
     expect(window.dataLayer).toHaveLength(2);
     expect(window.dataLayer[1].event).toBe(CONTENT_GROUP_EVENT);
-    expect(window.dataLayer[1]['Content Group']).toBe('/new-path');
+    expect(window.dataLayer[1].content_group).toBe('/new-path');
   });
 
   test('should not push event if dataLayer is missing', () => {
