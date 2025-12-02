@@ -19,7 +19,11 @@ const SessionFilters = () => {
   );
 };
 
-const renderSessionFilters = () => render(<MemoryRouter><SessionFilters /></MemoryRouter>);
+const renderSessionFilters = () => render(
+  <MemoryRouter>
+    <SessionFilters />
+  </MemoryRouter>,
+);
 
 describe('useSession', () => {
   const setItem = jest.fn();

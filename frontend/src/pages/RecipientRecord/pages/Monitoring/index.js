@@ -91,8 +91,8 @@ export default function Monitoring({
         <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
           <h2>TTA provided against monitoring citations</h2>
         </div>
+        <Tabs tabs={LINKS} ariaLabel="Monitoring navigation" prefix={linkPrefix} />
       </div>
-      <Tabs tabs={LINKS} ariaLabel="Monitoring navigation" prefix={linkPrefix} />
       <div className="padding-x-3 padding-y-2">
         {currentPage === MONITORING_PAGES.REVIEW && (
           <ReviewCards data={byReview} regionId={Number(regionId)} />
