@@ -976,4 +976,403 @@ describe('SessionReportForm', () => {
     // The Navigator component uses reportId to render, so if it renders, reportId is set
     expect(screen.getAllByText(/Session summary/i).length).toBeGreaterThan(0);
   });
+
+  it('redirects to first available page when no currentPage is specified', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    const spy = jest.spyOn(history, 'replace');
+
+    fetchMock.get(
+      url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {},
+        event: {
+          regionId: 1,
+          ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [1],
+          data: {
+            eventId: 1,
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+          },
+        },
+      },
+    );
+
+    const adminUser = {
+      user: {
+        id: 1,
+        permissions: [{
+          userId: 1,
+          regionId: 1,
+          scopeId: SCOPE_IDS.ADMIN,
+        }],
+        name: 'Ted User',
+      },
+    };
+
+    act(() => {
+      // Render without a currentPage (undefined)
+      renderSessionForm('1', undefined, '1', adminUser);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
+
+    // Wait for the redirect to be called
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+
+    // Verify the redirect was called with the correct path
+    // For an admin user with Regional TTA event organizer, the first page is 'session-summary'
+    expect(spy).toHaveBeenCalledWith('/training-report/1/session/1/session-summary');
+  });
+
+  describe('onReview approval workflow', () => {
+    it('successfully approves session when approvalStatus is "approved"', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+      const historySpy = jest.spyOn(history, 'push');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            sessionName: 'Test Session',
+            duration: 2,
+            startDate: '01/01/2024',
+            endDate: '01/01/2024',
+            context: 'Test context',
+            objective: 'Test objective',
+            objectiveTopics: ['Topic 1'],
+            objectiveTrainers: ['DTL'],
+            numberOfParticipants: 10,
+            deliveryMethod: 'In-person',
+            status: 'In progress',
+            submitted: true,
+            approvalStatus: 'approved',
+            managerNotes: 'Looks good',
+            dateSubmitted: '01/15/2024',
+            submitter: 'Test Submitter',
+          },
+          approverId: 1,
+          approver: { id: 1, fullName: 'Test Approver' },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+            },
+          },
+        },
+      );
+
+      const adminUser = {
+        user: {
+          id: 1,
+          permissions: [{
+            userId: 1,
+            regionId: 1,
+            scopeId: SCOPE_IDS.ADMIN,
+          }],
+          name: 'Ted User',
+        },
+      };
+
+      act(() => {
+        renderSessionForm('1', 'review', '1', adminUser);
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      // Mock the PUT request
+      fetchMock.put(url, { id: 1, eventId: 1 });
+
+      // Find and click the submit button using the specific ID
+      const submitButton = document.querySelector('#approver-session-report-save-continue');
+      act(() => {
+        userEvent.click(submitButton);
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+      // Verify the PUT request body has status: 'Complete'
+      const putBody = fetchMock.lastOptions(url).body;
+      const putBodyJson = JSON.parse(putBody);
+      expect(putBodyJson.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
+      expect(putBodyJson.data.approvalStatus).toBeUndefined(); // Should be destructured out
+
+      // Verify navigation with success message
+      await waitFor(() => expect(historySpy).toHaveBeenCalled());
+      expect(historySpy).toHaveBeenCalledWith('/training-reports/in-progress', {
+        message: 'You successfully submitted the session.',
+      });
+
+      // Verify no error message is displayed
+      expect(screen.queryByText(/There was an error saving the session/i)).not.toBeInTheDocument();
+    });
+
+    it('successfully submits session review regardless of approval status', async () => {
+      const url = join(sessionsUrl, 'id', '2');
+      const historySpy = jest.spyOn(history, 'push');
+
+      fetchMock.get(
+        url, {
+          id: 2,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            sessionName: 'Test Session Needs Action',
+            duration: 2,
+            startDate: '01/01/2024',
+            endDate: '01/01/2024',
+            context: 'Test context',
+            objective: 'Test objective',
+            objectiveTopics: ['Topic 1'],
+            objectiveTrainers: ['DTL'],
+            numberOfParticipants: 10,
+            deliveryMethod: 'In-person',
+            status: 'In progress',
+            submitted: true,
+            approvalStatus: 'needs_action',
+            managerNotes: 'Please revise',
+            dateSubmitted: '01/15/2024',
+            submitter: 'Test Submitter',
+          },
+          approverId: 1,
+          approver: { id: 1, fullName: 'Test Approver' },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+            },
+          },
+        },
+      );
+
+      const adminUser = {
+        user: {
+          id: 1,
+          permissions: [{
+            userId: 1,
+            regionId: 1,
+            scopeId: SCOPE_IDS.ADMIN,
+          }],
+          name: 'Ted User',
+        },
+      };
+
+      act(() => {
+        renderSessionForm('1', 'review', '2', adminUser);
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      // Wait for the specific session data to be loaded (unique to this test)
+      await waitFor(() => {
+        expect(screen.getByText('Test Session Needs Action')).toBeInTheDocument();
+      });
+
+      // Mock the PUT request
+      fetchMock.put(url, { id: 2, eventId: 1 });
+
+      // Find and click the submit button using the specific ID
+      const submitButton = document.querySelector('#approver-session-report-save-continue');
+      act(() => {
+        userEvent.click(submitButton);
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+      const calls = fetchMock.calls(url, { method: 'put' });
+      expect(calls.length).toBeGreaterThan(0);
+
+      // Verify navigation with success message
+      await waitFor(() => expect(historySpy).toHaveBeenCalled());
+      expect(historySpy).toHaveBeenCalledWith('/training-reports/in-progress', {
+        message: 'You successfully submitted the session.',
+      });
+    });
+
+    it('does not call updateSession when approvalStatus is empty or invalid', async () => {
+      const url = join(sessionsUrl, 'id', '3');
+      const historySpy = jest.spyOn(history, 'push');
+
+      fetchMock.get(
+        url, {
+          id: 3,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            sessionName: 'Test Session No Status',
+            duration: 2,
+            startDate: '01/01/2024',
+            endDate: '01/01/2024',
+            context: 'Test context',
+            objective: 'Test objective',
+            objectiveTopics: ['Topic 1'],
+            objectiveTrainers: ['DTL'],
+            numberOfParticipants: 10,
+            deliveryMethod: 'In-person',
+            status: 'In progress',
+            submitted: true,
+            approvalStatus: '', // Empty status
+            managerNotes: '',
+            dateSubmitted: '01/15/2024',
+            submitter: 'Test Submitter',
+          },
+          approverId: 1,
+          approver: { id: 1, fullName: 'Test Approver' },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+            },
+          },
+        },
+      );
+
+      const adminUser = {
+        user: {
+          id: 1,
+          permissions: [{
+            userId: 1,
+            regionId: 1,
+            scopeId: SCOPE_IDS.ADMIN,
+          }],
+          name: 'Ted User',
+        },
+      };
+
+      act(() => {
+        renderSessionForm('1', 'review', '3', adminUser);
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      // DO NOT mock PUT request - we want to verify it's not called
+
+      // Find and click the submit button using the specific ID
+      const submitButton = document.querySelector('#approver-session-report-save-continue');
+      act(() => {
+        userEvent.click(submitButton);
+      });
+
+      // Wait a bit to ensure PUT is not called
+      await new Promise((resolve) => { setTimeout(resolve, 500); });
+
+      // Verify PUT was NOT called (early return in onReview)
+      expect(fetchMock.called(url, { method: 'put' })).toBe(false);
+
+      // Verify no navigation occurred
+      expect(historySpy).not.toHaveBeenCalled();
+    });
+
+    it('displays error message when updateSession fails', async () => {
+      const url = join(sessionsUrl, 'id', '4');
+      const historySpy = jest.spyOn(history, 'push');
+
+      fetchMock.get(
+        url, {
+          id: 4,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            sessionName: 'Test Session Error',
+            duration: 2,
+            startDate: '01/01/2024',
+            endDate: '01/01/2024',
+            context: 'Test context',
+            objective: 'Test objective',
+            objectiveTopics: ['Topic 1'],
+            objectiveTrainers: ['DTL'],
+            numberOfParticipants: 10,
+            deliveryMethod: 'In-person',
+            status: 'In progress',
+            submitted: true,
+            approvalStatus: 'approved',
+            managerNotes: 'Looks good',
+            dateSubmitted: '01/15/2024',
+            submitter: 'Test Submitter',
+          },
+          approverId: 1,
+          approver: { id: 1, fullName: 'Test Approver' },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+            },
+          },
+        },
+      );
+
+      const adminUser = {
+        user: {
+          id: 1,
+          permissions: [{
+            userId: 1,
+            regionId: 1,
+            scopeId: SCOPE_IDS.ADMIN,
+          }],
+          name: 'Ted User',
+        },
+      };
+
+      act(() => {
+        renderSessionForm('1', 'review', '4', adminUser);
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      // Mock the PUT request to fail with 500 error
+      fetchMock.put(url, 500);
+
+      // Find and click the submit button using the specific ID
+      const submitButton = document.querySelector('#approver-session-report-save-continue');
+      act(() => {
+        userEvent.click(submitButton);
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+      // Verify error message is displayed
+      await waitFor(() => {
+        expect(screen.getByText(/There was an error saving the session report/i)).toBeInTheDocument();
+      });
+
+      // Verify no navigation occurred
+      expect(historySpy).not.toHaveBeenCalled();
+    });
+  });
 });
