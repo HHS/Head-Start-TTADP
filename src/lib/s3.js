@@ -12,10 +12,10 @@ import { auditLogger, logger } from '../logger';
 const awsLogger = {
   // only log errors
   error: (message, ...args) => logger.error(message, ...args),
-  warn: () => {},
-  info: () => {},
-  debug: () => {},
-  trace: () => {},
+  warn: () => { },
+  info: () => { },
+  debug: () => { },
+  trace: () => { },
 };
 
 const generateS3Config = () => {
@@ -31,7 +31,6 @@ const generateS3Config = () => {
         s3Config: {
           region: credentials.region,
           forcePathStyle: true,
-          logger: awsLogger,
           credentials: {
             accessKeyId: credentials.access_key_id,
             secretAccessKey: credentials.secret_access_key,
@@ -54,7 +53,6 @@ const generateS3Config = () => {
       s3Config: {
         region: process.env.AWS_REGION || 'us-gov-west-1',
         forcePathStyle: true,
-        logger: awsLogger,
         credentials: {
           accessKeyId: AWS_ACCESS_KEY_ID,
           secretAccessKey: AWS_SECRET_ACCESS_KEY,
@@ -72,6 +70,7 @@ const generateS3Config = () => {
 
 const { s3Bucket, s3Config } = generateS3Config();
 const s3Client = s3Config ? new S3Client(s3Config) : null;
+if (s3Client) { s3Client.config.logger = awsLogger; }
 
 const deleteFileFromS3 = async (key, bucket = s3Bucket, client = s3Client) => {
   if (!client || !bucket) {
