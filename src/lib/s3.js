@@ -31,6 +31,7 @@ const generateS3Config = () => {
         s3Bucket: credentials.bucket,
         s3Config: {
           region: credentials.region,
+          endpoint: credentials.endpoint,
           forcePathStyle: true,
           logger: awsLogger,
           credentials: {
@@ -45,6 +46,7 @@ const generateS3Config = () => {
   // Check for the presence of S3-related environment variables
   const {
     S3_BUCKET,
+    S3_ENDPOINT,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
   } = process.env;
@@ -55,6 +57,7 @@ const generateS3Config = () => {
       s3Config: {
         region: process.env.AWS_REGION || 'us-gov-west-1',
         forcePathStyle: true,
+        endpoint: S3_ENDPOINT,
         logger: awsLogger,
         credentials: {
           accessKeyId: AWS_ACCESS_KEY_ID,
