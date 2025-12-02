@@ -151,7 +151,6 @@ const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, E
 };
 
 const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Bucket) => {
-  // max size of 5gb, if needing to upload larger files, refactor to lib-storage multi-part upload
   if (!client || !bucket) {
     throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
@@ -166,7 +165,6 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
     await verifyVersioning(bucket, client);
   }
   const response = await new Upload({ client, params }).done();
-  // const response = await client.send(new PutObjectCommand({ client, params }));
   auditLogger.info(`File uploaded to S3: ${response.Key}`);
   return response;
 };
