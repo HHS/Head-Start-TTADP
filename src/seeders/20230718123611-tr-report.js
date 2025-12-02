@@ -21,7 +21,8 @@ module.exports = {
       },
       {
         userId: 5,
-        regionId: 3,
+        regionId: 1,
+        // regionId: 3,
         scopeId: READ_WRITE_TRAINING_REPORTS,
       },
       {
