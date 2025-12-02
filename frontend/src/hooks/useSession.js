@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import useSessionStorage from './useSessionStorage';
 
 const { sessionStorage } = window;
@@ -12,7 +13,16 @@ const { sessionStorage } = window;
  * @returns {[ Object[], Function ]}
  */
 export default function useSession(key, initialValue) {
+  const location = useLocation();
+
   const initial = useMemo(() => {
+    // If URL has query parameters, prioritize them over session storage
+    // This ensures bookmarks with filters always work correctly
+    const hasUrlParams = location.search && location.search.length > 1;
+    if (hasUrlParams && initialValue && initialValue.length > 0) {
+      return initialValue;
+    }
+
     try {
       const fromStorage = sessionStorage.getItem(key);
       if (fromStorage) {
@@ -24,7 +34,7 @@ export default function useSession(key, initialValue) {
     }
 
     return initialValue;
-  }, [initialValue, key]);
+  }, [initialValue, key, location.search]);
 
   const [filters, setFilters] = useSessionStorage(key, initial);
 

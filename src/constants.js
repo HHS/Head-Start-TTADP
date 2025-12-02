@@ -231,7 +231,6 @@ const MAINTENANCE_TYPE = {
 
 const FEATURE_FLAGS = [
   'anv_statistics',
-  'regional_goal_dashboard',
   'quality_assurance_dashboard',
   'collaboration_report',
 ];

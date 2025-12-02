@@ -1,5 +1,6 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
+import { MemoryRouter } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common/src/constants';
 import useFilters from '../useFilters';
 import AriaLiveContext from '../../AriaLiveContext';
@@ -10,9 +11,11 @@ describe('useFilters', () => {
   const manageRegions = false;
 
   const wrapper = ({ children }) => (
-    <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
-      {children}
-    </AriaLiveContext.Provider>
+    <MemoryRouter>
+      <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+        {children}
+      </AriaLiveContext.Provider>
+    </MemoryRouter>
   );
 
   it('handles general use', () => {
