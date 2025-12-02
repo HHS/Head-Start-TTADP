@@ -623,7 +623,6 @@ export default function SessionForm({ match }) {
             pages={applicationPages}
             onFormSubmit={onFormSubmit}
             onSave={onSave}
-            onResetToDraft={() => {}}
             isApprover={false}
             isPendingApprover={false}
             onReview={onReview}
