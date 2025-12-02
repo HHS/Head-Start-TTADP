@@ -517,7 +517,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                   controllerOnChange(s.map((o) => o.name));
                 }}
                 inputRef={register({ required: 'Select at least one trainer' })}
-                options={trainerOptions || []}
+                options={trainerOptions}
                 getOptionLabel={(option) => option.fullName}
                 getOptionValue={(option) => option.id}
                 isMulti
