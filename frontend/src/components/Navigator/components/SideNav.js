@@ -4,8 +4,8 @@
   defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
 import React, {
-  useState, useEffect,
-  Fragment,
+  useState,
+  useEffect,
 } from 'react';
 import { REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
