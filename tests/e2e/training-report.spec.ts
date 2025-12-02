@@ -111,9 +111,11 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   // supporting attachments.
+  await page.waitForLoadState('networkidle'); // wait for navigation to complete
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   // next steps
+  await page.waitForLoadState('networkidle'); // wait for navigation to complete
   await page.getByTestId('specialistNextSteps-input').fill('Next step');
   await page.getByTestId('recipientNextSteps-input').fill('test ');
   await page.getByLabel('When do you anticipate completing step 1? *').fill('07/02/2023');
