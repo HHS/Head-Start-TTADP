@@ -31,7 +31,6 @@ const generateS3Config = () => {
         s3Bucket: credentials.bucket,
         s3Config: {
           region: credentials.region,
-          endpoint: credentials.fips_endpoint,
           forcePathStyle: true,
           logger: awsLogger,
           credentials: {
@@ -46,18 +45,16 @@ const generateS3Config = () => {
   // Check for the presence of S3-related environment variables
   const {
     S3_BUCKET,
-    S3_ENDPOINT,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
   } = process.env;
 
-  if (S3_BUCKET && S3_ENDPOINT && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
     return {
       s3Bucket: S3_BUCKET,
       s3Config: {
         region: process.env.AWS_REGION || 'us-gov-west-1',
         forcePathStyle: true,
-        endpoint: S3_ENDPOINT,
         logger: awsLogger,
         credentials: {
           accessKeyId: AWS_ACCESS_KEY_ID,
@@ -168,7 +165,8 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
   if (process.env.NODE_ENV === 'production') {
     await verifyVersioning(bucket, client);
   }
-  const response = await client.send(new PutObjectCommand({ client, params }));
+  const response = await new Upload({ client, params }).done();
+  // const response = await client.send(new PutObjectCommand({ client, params }));
   auditLogger.info(`File uploaded to S3: ${response.Key}`);
   return response;
 };
