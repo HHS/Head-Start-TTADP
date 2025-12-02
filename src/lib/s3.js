@@ -31,7 +31,7 @@ const generateS3Config = () => {
         s3Bucket: credentials.bucket,
         s3Config: {
           region: credentials.region,
-          endpoint: credentials.endpoint,
+          endpoint: credentials.fips_endpoint,
           forcePathStyle: true,
           logger: awsLogger,
           credentials: {
@@ -51,7 +51,7 @@ const generateS3Config = () => {
     AWS_SECRET_ACCESS_KEY,
   } = process.env;
 
-  if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  if (S3_BUCKET && S3_ENDPOINT && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
     return {
       s3Bucket: S3_BUCKET,
       s3Config: {
