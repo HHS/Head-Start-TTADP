@@ -3,11 +3,11 @@
 import { errorLogger } from '../logger';
 
 const ORIGINAL_ENV = { ...process.env };
+const mockedLogger = { info: jest.fn(), error: jest.fn() };
 
 const loadModule = (env = {}) => {
   jest.resetModules();
   process.env = { ...ORIGINAL_ENV, ...env };
-
   const recordedCommands = [];
   const makeCommand = (name) => jest.fn((params) => {
     const cmd = { name, params };
@@ -16,10 +16,9 @@ const loadModule = (env = {}) => {
   });
 
   const mockSend = jest.fn();
-  const uploadDone = jest.fn().mockResolvedValue({ Key: 'uploaded-key' });
-  const UploadMock = jest.fn().mockImplementation(() => ({ done: uploadDone }));
-  const getSignedUrlMock = jest.fn();
-  const logger = { info: jest.fn(), error: jest.fn() };
+  const mockDone = jest.fn().mockResolvedValue({ Key: 'uploaded-key' });
+  const mockUpload = jest.fn().mockImplementation(() => ({ done: mockDone }));
+  const mockGetSignedUrl = jest.fn();
 
   jest.doMock('@aws-sdk/client-s3', () => ({
     S3Client: jest.fn(() => ({ send: mockSend })),
@@ -29,20 +28,18 @@ const loadModule = (env = {}) => {
     DeleteObjectCommand: makeCommand('DeleteObjectCommand'),
   }));
 
-  jest.doMock('@aws-sdk/lib-storage', () => ({ Upload: UploadMock }));
-  jest.doMock('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl: getSignedUrlMock }));
-
-  // eslint-disable-next-line global-require
+  jest.doMock('@aws-sdk/lib-storage', () => ({ Upload: mockUpload }));
+  jest.doMock('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl: mockGetSignedUrl }));
+  /* eslint-disable global-require */
   const mod = require('./s3');
 
   return {
     ...mod,
-    sendMock: mockSend,
-    uploadDone,
-    UploadMock,
-    getSignedUrlMock,
+    mockSend,
+    mockDone,
+    mockUpload,
+    mockGetSignedUrl,
     recordedCommands,
-    logger,
   };
 };
 
@@ -58,21 +55,22 @@ describe('generateS3Config', () => {
       bucket: 'vcap-bucket',
       access_key_id: 'VCAP_AK',
       secret_access_key: 'VCAP_SK',
-      region: 'us-west-2',
+      region: 'us-gov-west-1',
+      logger: mockedLogger,
     };
     const services = { s3: [{ credentials }] };
     const { generateS3Config } = loadModule({ VCAP_SERVICES: JSON.stringify(services) });
 
     const cfg = generateS3Config();
-    expect(cfg).toEqual({
+    expect(cfg).toStrictEqual({
       s3Bucket: 'vcap-bucket',
       s3Config: {
         credentials: {
           accessKeyId: 'VCAP_AK',
           secretAccessKey: 'VCAP_SK',
         },
-        logger: errorLogger,
-        region: 'us-west-2',
+        logger: mockedLogger,
+        region: 'us-gov-west-1',
         forcePathStyle: true,
       },
     });
@@ -83,7 +81,7 @@ describe('generateS3Config', () => {
       S3_BUCKET: 'env-bucket',
       AWS_ACCESS_KEY_ID: 'ENV_AK',
       AWS_SECRET_ACCESS_KEY: 'ENV_SK',
-      AWS_REGION: 'us-gov-east-1',
+      AWS_REGION: 'us-gov-west-1',
     };
     const { generateS3Config } = loadModule(env);
 
@@ -96,7 +94,7 @@ describe('generateS3Config', () => {
           secretAccessKey: 'ENV_SK',
         },
         logger: errorLogger,
-        region: 'us-gov-east-1',
+        region: 'us-gov-west-1',
         forcePathStyle: true,
       },
     });
@@ -104,7 +102,6 @@ describe('generateS3Config', () => {
 
   it('returns defaults when no S3 configuration is present', () => {
     const { generateS3Config } = loadModule();
-
     const cfg = generateS3Config();
     expect(cfg).toEqual({ s3Bucket: null, s3Config: { region: 'us-gov-west-1' } });
   });
@@ -275,9 +272,9 @@ describe('S3 helpers', () => {
   describe('uploadFile', () => {
     it('enables versioning in production before uploading', async () => {
       const {
-        uploadFile, UploadMock, uploadDone, recordedCommands,
+        uploadFile, mockUpload, mockDone, recordedCommands,
       } = loadModule({ NODE_ENV: 'production' });
-      UploadMock.mockImplementation(() => ({ done: uploadDone }));
+      mockUpload.mockImplementation(() => ({ done: mockDone }));
       const client = {
         send: jest.fn()
           .mockResolvedValueOnce({ Status: 'Suspended' })
@@ -300,7 +297,7 @@ describe('S3 helpers', () => {
           VersioningConfiguration: { MFADelete: 'Disabled', Status: 'Enabled' },
         },
       });
-      expect(UploadMock).toHaveBeenCalledWith({
+      expect(mockUpload).toHaveBeenCalledWith({
         client,
         params: {
           Body: buffer,
@@ -309,12 +306,12 @@ describe('S3 helpers', () => {
           Key: 'file.txt',
         },
       });
-      expect(uploadDone).toHaveBeenCalled();
+      expect(mockDone).toHaveBeenCalled();
     });
 
     it('skips versioning outside production', async () => {
-      const { uploadFile, UploadMock, uploadDone } = loadModule({ NODE_ENV: 'test' });
-      UploadMock.mockImplementation(() => ({ done: uploadDone }));
+      const { uploadFile, mockUpload, mockDone } = loadModule({ NODE_ENV: 'test' });
+      mockUpload.mockImplementation(() => ({ done: mockDone }));
       const client = { send: jest.fn() };
       const buffer = Buffer.from('data');
       const type = { mime: 'text/plain' };
@@ -322,8 +319,8 @@ describe('S3 helpers', () => {
       await uploadFile(buffer, 'file.txt', type, client, 'bucket-one');
 
       expect(client.send).not.toHaveBeenCalled();
-      expect(UploadMock).toHaveBeenCalled();
-      expect(uploadDone).toHaveBeenCalled();
+      expect(mockUpload).toHaveBeenCalled();
+      expect(mockDone).toHaveBeenCalled();
     });
   });
 });
