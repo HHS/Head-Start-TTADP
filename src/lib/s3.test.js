@@ -1,9 +1,6 @@
 /* eslint-env jest */
 
-import { errorLogger } from '../logger';
-
 const ORIGINAL_ENV = { ...process.env };
-const mockedLogger = { info: jest.fn(), error: jest.fn() };
 
 const loadModule = (env = {}) => {
   jest.resetModules();
@@ -19,6 +16,10 @@ const loadModule = (env = {}) => {
   const mockDone = jest.fn().mockResolvedValue({ Key: 'uploaded-key' });
   const mockUpload = jest.fn().mockImplementation(() => ({ done: mockDone }));
   const mockGetSignedUrl = jest.fn();
+  const mockAuditLogger = { info: jest.fn(), error: jest.fn() };
+  const mockErrorLogger = {
+    error: jest.fn(), warn: jest.fn(), info: jest.fn(), debug: jest.fn(), trace: jest.fn(),
+  };
 
   jest.doMock('@aws-sdk/client-s3', () => ({
     S3Client: jest.fn(() => ({ send: mockSend })),
@@ -30,6 +31,7 @@ const loadModule = (env = {}) => {
 
   jest.doMock('@aws-sdk/lib-storage', () => ({ Upload: mockUpload }));
   jest.doMock('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl: mockGetSignedUrl }));
+  jest.doMock('../logger', () => ({ auditLogger: mockAuditLogger, errorLogger: mockErrorLogger }));
   /* eslint-disable global-require */
   const mod = require('./s3');
 
@@ -40,6 +42,8 @@ const loadModule = (env = {}) => {
     mockUpload,
     mockGetSignedUrl,
     recordedCommands,
+    mockAuditLogger,
+    mockErrorLogger,
   };
 };
 
@@ -56,10 +60,11 @@ describe('generateS3Config', () => {
       access_key_id: 'VCAP_AK',
       secret_access_key: 'VCAP_SK',
       region: 'us-gov-west-1',
-      logger: mockedLogger,
     };
     const services = { s3: [{ credentials }] };
-    const { generateS3Config } = loadModule({ VCAP_SERVICES: JSON.stringify(services) });
+    const { generateS3Config, mockErrorLogger } = loadModule({
+      VCAP_SERVICES: JSON.stringify(services),
+    });
 
     const cfg = generateS3Config();
     expect(cfg).toStrictEqual({
@@ -69,7 +74,7 @@ describe('generateS3Config', () => {
           accessKeyId: 'VCAP_AK',
           secretAccessKey: 'VCAP_SK',
         },
-        logger: mockedLogger,
+        logger: mockErrorLogger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
@@ -83,7 +88,7 @@ describe('generateS3Config', () => {
       AWS_SECRET_ACCESS_KEY: 'ENV_SK',
       AWS_REGION: 'us-gov-west-1',
     };
-    const { generateS3Config } = loadModule(env);
+    const { generateS3Config, mockErrorLogger } = loadModule(env);
 
     const cfg = generateS3Config();
     expect(cfg).toEqual({
@@ -93,7 +98,7 @@ describe('generateS3Config', () => {
           accessKeyId: 'ENV_AK',
           secretAccessKey: 'ENV_SK',
         },
-        logger: errorLogger,
+        logger: mockErrorLogger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
@@ -147,13 +152,13 @@ describe('S3 helpers', () => {
 
     it('logs and returns error metadata when deletion fails', async () => {
       const error = new Error('boom');
-      const { deleteFileFromS3Job, logger } = loadModule();
+      const { deleteFileFromS3Job, mockAuditLogger } = loadModule();
       const client = { send: jest.fn().mockRejectedValue(error) };
       const job = { data: { fileId: 2, fileKey: 'missing.txt', bucket: 'bucket-one' } };
 
       const res = await deleteFileFromS3Job(job, client);
 
-      expect(logger.error).toHaveBeenCalledWith("S3 Queue Error: Unable to DELETE file '2' for key 'missing.txt': boom");
+      expect(mockAuditLogger.error).toHaveBeenCalledWith("S3 Queue Error: Unable to DELETE file '2' for key 'missing.txt': boom");
       expect(res).toEqual({ data: job.data, status: 500, res: undefined });
     });
   });
@@ -199,7 +204,7 @@ describe('S3 helpers', () => {
   });
 
   describe('downloadFile', () => {
-    it('calls done() on the GetObject response', async () => {
+    it('returns the GetObject response', async () => {
       const { downloadFile, recordedCommands } = loadModule();
       const response = { Body: Buffer.from('abc'), ContentType: 'text/plain' };
       const client = { send: jest.fn().mockResolvedValue(response) };
@@ -233,7 +238,7 @@ describe('S3 helpers', () => {
 
     it('creates a signed URL for the requested object', async () => {
       const {
-        getSignedDownloadUrl, getSignedUrlMock, recordedCommands, logger,
+        getSignedDownloadUrl, getSignedUrlMock, recordedCommands, mockAuditLogger,
       } = loadModule();
       const client = { send: jest.fn() };
       getSignedUrlMock.mockResolvedValue('signed-url');
@@ -250,12 +255,12 @@ describe('S3 helpers', () => {
         name: 'GetObjectCommand',
         params: { Bucket: 'bucket-one', Key: 'file.txt' },
       });
-      expect(logger.info).toHaveBeenCalled();
+      expect(mockAuditLogger.info).toHaveBeenCalled();
     });
 
     it('logs and returns the error when presigning fails', async () => {
       const {
-        getSignedDownloadUrl, getSignedUrlMock, logger,
+        getSignedDownloadUrl, getSignedUrlMock, mockAuditLogger,
       } = loadModule();
       const client = { send: jest.fn() };
       const err = new Error('presign failed');
@@ -263,7 +268,7 @@ describe('S3 helpers', () => {
 
       const res = await getSignedDownloadUrl('file.txt', 'bucket-one', client);
 
-      expect(logger.error).toHaveBeenCalledWith(`Error generating presigned URL: ${err}`);
+      expect(mockAuditLogger.error).toHaveBeenCalledWith(`Error generating presigned URL: ${err}`);
       expect(res.url).toBeNull();
       expect(res.error).toBe(err);
     });
