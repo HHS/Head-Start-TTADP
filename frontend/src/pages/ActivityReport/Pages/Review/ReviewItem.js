@@ -90,6 +90,7 @@ const ReviewItem = ({
             readOnly
             toolbarHidden
             defaultEditorState={getEditorState(v)}
+            ariaLabel={label}
           />
         );
       }
