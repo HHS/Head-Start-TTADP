@@ -14,7 +14,7 @@ export default function useGaPageView() {
       if (window.dataLayer && Array.isArray(window.dataLayer)) {
         const event = {
           event: CONTENT_GROUP_EVENT,
-          'Content Group': location.pathname,
+          content_group: location.pathname,
         };
 
         window.dataLayer.push(event);
