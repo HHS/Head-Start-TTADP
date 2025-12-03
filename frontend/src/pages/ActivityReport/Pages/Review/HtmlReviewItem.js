@@ -20,7 +20,7 @@ const HtmlReviewItem = ({ label, name }) => {
     values = [value];
   }
 
-  values = values.map((v) => {
+  values = values.map((v, index) => {
     // eslint-disable-next-line no-param-reassign
     if (v === '<p></p>' || v === '') v = 'None provided';
     const defaultEditorState = getEditorState(v || 'None provided');
@@ -29,6 +29,7 @@ const HtmlReviewItem = ({ label, name }) => {
         readOnly
         toolbarHidden
         defaultEditorState={defaultEditorState}
+        ariaLabel={values.length > 1 ? `${label} ${index + 1}` : label}
       />
     );
   });
