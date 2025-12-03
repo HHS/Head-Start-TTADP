@@ -7,16 +7,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
-import { auditLogger, logger } from '../logger';
-
-const awsLogger = {
-  // only log errors
-  error: (message, ...args) => logger.error(message, ...args),
-  warn: () => { },
-  info: () => { },
-  debug: () => { },
-  trace: () => { },
-};
+import { auditLogger, errorLogger } from '../logger';
 
 const generateS3Config = () => {
   // Take configuration from cloud.gov if it is available. If not, use env variables.
@@ -31,6 +22,7 @@ const generateS3Config = () => {
         s3Config: {
           region: credentials.region,
           forcePathStyle: true,
+          logger: errorLogger,
           credentials: {
             accessKeyId: credentials.access_key_id,
             secretAccessKey: credentials.secret_access_key,
@@ -53,6 +45,7 @@ const generateS3Config = () => {
       s3Config: {
         region: process.env.AWS_REGION || 'us-gov-west-1',
         forcePathStyle: true,
+        logger: errorLogger,
         credentials: {
           accessKeyId: AWS_ACCESS_KEY_ID,
           secretAccessKey: AWS_SECRET_ACCESS_KEY,
@@ -70,7 +63,6 @@ const generateS3Config = () => {
 
 const { s3Bucket, s3Config } = generateS3Config();
 const s3Client = s3Config ? new S3Client(s3Config) : null;
-if (s3Client) { s3Client.config.logger = awsLogger; }
 
 const deleteFileFromS3 = async (key, bucket = s3Bucket, client = s3Client) => {
   if (!client || !bucket) {

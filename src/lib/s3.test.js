@@ -1,5 +1,7 @@
 /* eslint-env jest */
 
+import { errorLogger } from '../logger';
+
 const ORIGINAL_ENV = { ...process.env };
 
 const loadModule = (env = {}) => {
@@ -70,6 +72,7 @@ describe('generateS3Config', () => {
           accessKeyId: 'VCAP_AK',
           secretAccessKey: 'VCAP_SK',
         },
+        logger: errorLogger,
         region: 'us-west-2',
         forcePathStyle: true,
       },
@@ -93,6 +96,7 @@ describe('generateS3Config', () => {
           accessKeyId: 'ENV_AK',
           secretAccessKey: 'ENV_SK',
         },
+        logger: errorLogger,
         region: 'us-gov-east-1',
         forcePathStyle: true,
       },
