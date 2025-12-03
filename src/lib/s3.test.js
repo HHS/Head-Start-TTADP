@@ -206,14 +206,21 @@ describe('S3 helpers', () => {
   });
 
   describe('downloadFile', () => {
-    it('returns the GetObject response', async () => {
+    it('buffers the GetObject Body stream before returning', async () => {
       const { downloadFile, recordedCommands } = loadModule();
-      const response = { Body: Buffer.from('abc'), ContentType: 'text/plain' };
+      const body = {
+        transformToByteArray: jest.fn().mockResolvedValue(
+          new Uint8Array([97, 98, 99]),
+        ),
+      };
+      const response = { Body: body, ContentType: 'text/plain' };
       const client = { send: jest.fn().mockResolvedValue(response) };
 
       const res = await downloadFile('file.txt', client, 'bucket-one');
 
       expect(res).toBe(response);
+      expect(res.Body).toEqual(Buffer.from('abc'));
+      expect(body.transformToByteArray).toHaveBeenCalled();
       expect(recordedCommands[0]).toEqual({
         name: 'GetObjectCommand',
         params: { Bucket: 'bucket-one', Key: 'file.txt' },
@@ -270,7 +277,7 @@ describe('S3 helpers', () => {
 
       const res = await getSignedDownloadUrl('file.txt', 'bucket-one', client);
 
-      expect(mockAuditLogger.error).toHaveBeenCalledWith(`Error generating presigned URL: ${err}`);
+      expect(mockAuditLogger.error).toHaveBeenCalledWith(`${err.message}`);
       expect(res.url).toBeNull();
       expect(res.error).toBe(err);
     });

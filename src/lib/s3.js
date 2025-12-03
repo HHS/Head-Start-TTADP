@@ -123,7 +123,12 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
     Bucket: bucket,
     Key: key,
   };
-  return client.send(new GetObjectCommand(params));
+  const res = await client.send(new GetObjectCommand(params));
+  if (res.Body) {
+    const byteChunks = await res.Body.transformToByteArray();
+    res.Body = Buffer.from(byteChunks);
+  }
+  return res;
 };
 
 const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, expires = 360) => {
@@ -138,9 +143,8 @@ const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, e
     url.url = await getSignedUrl(client, command, { expiresIn: expires });
     auditLogger.info(`Generated signed download URL for key ${key}`);
   } catch (error) {
-    const msg = `Error generating presigned URL: ${error.message}`;
-    auditLogger.error(msg);
-    url.error = new Error(msg);
+    auditLogger.error(error.message);
+    url.error = error;
   }
   return url;
 };
