@@ -66,10 +66,10 @@ const requestLogger = expressWinston.logger({
 const errorLogger = {
   // only log errors
   error: (message, ...args) => logger.error(message, ...args),
-  warn: () => { },
-  info: () => { },
-  debug: () => { },
-  trace: () => { },
+  warn: () => {},
+  info: () => {},
+  debug: () => {},
+  trace: () => {},
 };
 
 export {
