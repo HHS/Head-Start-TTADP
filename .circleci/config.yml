@@ -301,12 +301,18 @@ jobs:
           cd frontend
           chmod 744 ../tools/run-yarn-audit.js
           ../tools/run-yarn-audit.js;
+    - run:
+        name: Build frontend assets
+        command: yarn --cwd frontend run build
     - store_artifacts:
         path: reports
         destination: backend-lint.xml
     - store_artifacts:
         path: frontend/reports
         destination: frontend-lint.xml
+    - run:
+        name: Trim workspace (remove node_modules)
+        command: rm -rf node_modules frontend/node_modules packages/common/node_modules
     - persist_to_workspace:
         root: .
         paths:
@@ -320,6 +326,10 @@ jobs:
     steps:
     - attach_workspace:
         at: .
+    - restore_cache:
+        keys:
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - run:
         name: Add GitHub to known_hosts
         command: |
@@ -395,6 +405,10 @@ jobs:
     steps:
     - attach_workspace:
         at: .
+    - restore_cache:
+        keys:
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - run:
         name: Audit checksums of color files
         command: |
@@ -414,8 +428,8 @@ jobs:
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
             node ./tools/check-coverage.js \
-              --coverage-file=../frontend/coverage/coverage-final.json \
-              --artifact-dir=../frontend/coverage-artifacts \
+              --coverage-file=frontend/coverage/coverage-final.json \
+              --artifact-dir=frontend/coverage-artifacts \
               --directory-filter=frontend/ \
               --fail-on-uncovered=false \
               --output-format=json,html
@@ -466,6 +480,10 @@ jobs:
     steps:
     - attach_workspace:
         at: .
+    - restore_cache:
+        keys:
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - run:
         name: Start up local services
         command: ./bin/prod-style-server
@@ -491,12 +509,13 @@ jobs:
     - checkout
     - attach_workspace:
         at: .
+    - restore_cache:
+        keys:
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - set_env_vars:
         target_env: << parameters.target_env >>
     - install_cf_tools
-    - run:
-        name: Build backend assets
-        command: yarn build
     - when:
         condition:
           equal: [ << parameters.target_env >>, prod ]
@@ -504,9 +523,6 @@ jobs:
         - run:
             name: Create production robots.txt
             command: ./bin/robot-factory
-    - run:
-        name: Build frontend assets
-        command: yarn --cwd frontend run build
     - cf_deploy:
         target_env: << parameters.target_env >>
     - write_envs:
@@ -733,16 +749,28 @@ commands:
   install_cf_tools:
     description: "Install Cloud Foundry CLI"
     steps:
+    - restore_cache:
+        keys:
+        - v1-cf8-cli
     - run:
         name: Install CF tools
         command: |
-          # Install Cloud Foundry CLI
-          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-          echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
-          sudo apt-get update
-          sudo apt-get install -y cf8-cli
+          set -euo pipefail
+          CF_DIR="${HOME}/cf-cli"
+          CF_VERSION="${CF_VERSION:-8.7.10}"
+          if [ ! -x "${CF_DIR}/cf" ]; then
+            mkdir -p "${CF_DIR}"
+            curl -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=${CF_VERSION}&source=github" | tar -xz -C "${CF_DIR}"
+          fi
+          export PATH="${CF_DIR}:${CF_DIR}/bin:${PATH}"
+          echo "export PATH=${CF_DIR}:${CF_DIR}/bin:${PATH}" >> "$BASH_ENV"
           # Install plugin needed for connect-to-service
           cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+    - save_cache:
+        key: v1-cf8-cli
+        paths:
+        - ~/cf-cli
+        - ~/.cf/plugins
 
   run_e2e_test:
     parameters:
@@ -753,6 +781,10 @@ commands:
     steps:
     - attach_workspace:
         at: .
+    - restore_cache:
+        keys:
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - run:
         name: Start backend (8080) & watch logs
         command: |
@@ -791,8 +823,8 @@ commands:
         command: |
           ./bin/ping-server 3000 # frontend
           ./bin/ping-server 9999 localhost "/testingonly" # testonly
-          #./bin/ping-server 8080 localhost "/health" # backend
-          sleep 30s # there is no way to check backend health without auth
+          ./bin/ping-server 8080 localhost # backend (BYPASS_AUTH=true in startup)
+          sleep 20s
     - run:
         name: << parameters.cmd >>
         command: |
