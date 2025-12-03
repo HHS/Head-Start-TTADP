@@ -3,21 +3,22 @@ const { addDeleteFileToQueue } = require('../../services/s3Queue');
 const { getSignedDownloadUrl } = require('../../lib/s3');
 
 const setUrl = async (instance) => {
-  const url = await getSignedDownloadUrl(instance.key);
-  instance.setDataValue('url', url.url);
+  const signedUrl = await getSignedDownloadUrl(instance.key);
+  instance.setDataValue('url', signedUrl);
 };
 
 const afterCreate = async (_sequelize, instance) => {
-  setUrl(instance);
+  await setUrl(instance);
 };
 
 const afterFind = async (_sequelize, instance) => {
+  if (!instance) {
+    return;
+  }
   if (Array.isArray(instance)) {
-    instance.forEach((each) => {
-      setUrl(each);
-    });
+    await Promise.all(instance.map((each) => setUrl(each)));
   } else {
-    setUrl(instance);
+    await setUrl(instance);
   }
 };
 
