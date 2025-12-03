@@ -127,19 +127,21 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
 };
 
 const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, expires = 360) => {
+  const url = { url: null, error: null };
   if (!client || !bucket) {
-    throw new Error(`S3 not configured (${client}, ${bucket})`);
+    url.error = new Error(`S3 not configured (${client}, ${bucket})`);
   }
 
   const command = new GetObjectCommand({ Bucket: bucket, Key: key });
   try {
-    const url = await getSignedUrl(client, command, { expiresIn: expires });
+    url.url = await getSignedUrl(client, command, { expiresIn: expires });
     auditLogger.info(`Generated signed download URL for key ${key}`);
-    return url;
   } catch (error) {
-    auditLogger.error(`Error generating signed download URL for key ${key}: ${error.message}`);
-    throw error;
+    const msg = `Error generating signed download URL for key ${key}: ${error.message}`;
+    auditLogger.error(msg);
+    url.error = new Error(msg);
   }
+  return url;
 };
 
 const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Bucket) => {
