@@ -59,6 +59,7 @@ describe('generateS3Config', () => {
       bucket: 'vcap-bucket',
       access_key_id: 'VCAP_AK',
       secret_access_key: 'VCAP_SK',
+      fips_endpoint: 'https://s3.example.com',
       region: 'us-gov-west-1',
     };
     const services = { s3: [{ credentials }] };
@@ -74,6 +75,7 @@ describe('generateS3Config', () => {
           accessKeyId: 'VCAP_AK',
           secretAccessKey: 'VCAP_SK',
         },
+        endpoint: 'https://s3.example.com',
         logger: mockErrorLogger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
@@ -238,15 +240,15 @@ describe('S3 helpers', () => {
 
     it('creates a signed URL for the requested object', async () => {
       const {
-        getSignedDownloadUrl, getSignedUrlMock, recordedCommands, mockAuditLogger,
+        getSignedDownloadUrl, mockGetSignedUrl, recordedCommands, mockAuditLogger,
       } = loadModule();
       const client = { send: jest.fn() };
-      getSignedUrlMock.mockResolvedValue('signed-url');
+      mockGetSignedUrl.mockResolvedValue('signed-url');
 
       const res = await getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
 
       expect(res).toEqual({ url: 'signed-url', error: null });
-      expect(getSignedUrlMock).toHaveBeenCalledWith(
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(
         client,
         recordedCommands[0],
         { expiresIn: 120 },
@@ -260,11 +262,11 @@ describe('S3 helpers', () => {
 
     it('logs and returns the error when presigning fails', async () => {
       const {
-        getSignedDownloadUrl, getSignedUrlMock, mockAuditLogger,
+        getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger,
       } = loadModule();
       const client = { send: jest.fn() };
       const err = new Error('presign failed');
-      getSignedUrlMock.mockRejectedValue(err);
+      mockGetSignedUrl.mockRejectedValue(err);
 
       const res = await getSignedDownloadUrl('file.txt', 'bucket-one', client);
 
