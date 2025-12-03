@@ -78,8 +78,7 @@ export default (sequelize, DataTypes) => {
     url: {
       type: DataTypes.VIRTUAL,
       get() {
-        const url = getSignedDownloadUrl(this.key);
-        return url;
+        getSignedDownloadUrl(this.key).then((url) => url);
       },
     },
   }, {
