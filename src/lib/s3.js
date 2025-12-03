@@ -123,21 +123,24 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
   return client.send(new GetObjectCommand(params));
 };
 
-const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, Expires = 360) => {
-  const urlResponse = { url: null, error: null };
+const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, Expires = 360) => {
   if (!client || !bucket) {
-    urlResponse.error = new Error(`S3 not configured (${client}, ${bucket})`);
-    return urlResponse;
+    return Promise.resolve({
+      url: null,
+      error: new Error(`S3 not configured (${client}, ${bucket})`),
+    });
   }
-  try {
-    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
-    urlResponse.url = await getSignedUrl(client, command, { expiresIn: Expires });
-    auditLogger.info(`Generated presigned URL for key ${key}`);
-  } catch (error) {
-    auditLogger.error(`Error generating presigned URL: ${error}`);
-    urlResponse.error = error;
-  }
-  return urlResponse;
+
+  const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+  return getSignedUrl(client, command, { expiresIn: Expires })
+    .then((url) => {
+      auditLogger.info(`Generated presigned URL for key ${key}`);
+      return { url, error: null };
+    })
+    .catch((error) => {
+      auditLogger.error(`Error generating presigned URL: ${error}`);
+      return { url: null, error };
+    });
 };
 
 const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Bucket) => {
