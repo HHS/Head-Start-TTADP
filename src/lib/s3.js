@@ -130,6 +130,7 @@ const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, e
   const url = { url: null, error: null };
   if (!client || !bucket) {
     url.error = new Error(`S3 not configured (${client}, ${bucket})`);
+    return url;
   }
 
   const command = new GetObjectCommand({ Bucket: bucket, Key: key });
@@ -137,7 +138,7 @@ const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, e
     url.url = await getSignedUrl(client, command, { expiresIn: expires });
     auditLogger.info(`Generated signed download URL for key ${key}`);
   } catch (error) {
-    const msg = `Error generating signed download URL for key ${key}: ${error.message}`;
+    const msg = `Error generating presigned URL: ${error.message}`;
     auditLogger.error(msg);
     url.error = new Error(msg);
   }
