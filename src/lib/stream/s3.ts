@@ -12,7 +12,7 @@ import {
   ListObjectsV2CommandOutput,
 } from '@aws-sdk/client-s3';
 import { generateS3Config } from '../s3';
-import { auditLogger, logger } from '../../logger';
+import { auditLogger } from '../../logger';
 
 class S3Client {
   private client: S3LibClient; // Private property to store the AWS S3 client instance

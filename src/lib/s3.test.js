@@ -59,7 +59,6 @@ describe('generateS3Config', () => {
       bucket: 'vcap-bucket',
       access_key_id: 'VCAP_AK',
       secret_access_key: 'VCAP_SK',
-      fips_endpoint: 'https://s3.example.com',
       region: 'us-gov-west-1',
     };
     const services = { s3: [{ credentials }] };
@@ -75,7 +74,6 @@ describe('generateS3Config', () => {
           accessKeyId: 'VCAP_AK',
           secretAccessKey: 'VCAP_SK',
         },
-        endpoint: 'https://s3.example.com',
         logger: mockErrorLogger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
