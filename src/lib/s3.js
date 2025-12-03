@@ -126,24 +126,20 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
   return client.send(new GetObjectCommand(params));
 };
 
-const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, Expires = 360) => {
+const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, expires = 360) => {
   if (!client || !bucket) {
-    return Promise.resolve({
-      url: null,
-      error: new Error(`S3 not configured (${client}, ${bucket})`),
-    });
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
 
   const command = new GetObjectCommand({ Bucket: bucket, Key: key });
-  return getSignedUrl(client, command, { expiresIn: Expires })
-    .then((url) => {
-      auditLogger.info(`Generated presigned URL for key ${key}`);
-      return { url, error: null };
-    })
-    .catch((error) => {
-      auditLogger.error(`Error generating presigned URL: ${error}`);
-      return { url: null, error };
-    });
+  try {
+    const url = await getSignedUrl(client, command, { expiresIn: expires });
+    auditLogger.info(`Generated signed download URL for key ${key}`);
+    return url;
+  } catch (error) {
+    auditLogger.error(`Error generating signed download URL for key ${key}: ${error.message}`);
+    throw error;
+  }
 };
 
 const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Bucket) => {
