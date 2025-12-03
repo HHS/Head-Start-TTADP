@@ -31,7 +31,6 @@ const loadModule = (env = {}) => {
 
   jest.doMock('@aws-sdk/lib-storage', () => ({ Upload: UploadMock }));
   jest.doMock('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl: getSignedUrlMock }));
-  jest.doMock('../logger', () => ({ auditLogger: logger }));
 
   // eslint-disable-next-line global-require
   const mod = require('./s3');
