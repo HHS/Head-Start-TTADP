@@ -564,9 +564,12 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
       grant.grantSpecialistName,
       grant.grantSpecialistEmail,
     );
-    // Generate a new grant number with a random animal type and trailing ID
+    // Generate a new grant number with preserved region digits,
+    // a random animal type, and the original trailing ID
+    const regionPrefixMatch = grant.number ? grant.number.match(/^\d{2}/) : null;
+    const regionPrefix = regionPrefixMatch ? regionPrefixMatch[0] : '00';
     const trailingNumber = grant.id;
-    const newGrantNumber = `0${faker.datatype.number({ min: 1, max: 9 })}${faker.animal.type()}0${trailingNumber}`;
+    const newGrantNumber = `${regionPrefix}${faker.animal.type()}0${trailingNumber}`;
     return {
       id: grant.id,
       number: newGrantNumber,
