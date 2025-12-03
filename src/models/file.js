@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { getSignedDownloadUrl } = require('../lib/s3');
-const { afterDestroy } = require('./hooks/file');
+const { afterCreate, afterFind, afterDestroy } = require('./hooks/file');
 
 export default (sequelize, DataTypes) => {
   class File extends Model {
@@ -78,13 +78,15 @@ export default (sequelize, DataTypes) => {
     url: {
       type: DataTypes.VIRTUAL,
       get() {
-        getSignedDownloadUrl(this.key).then((url) => url);
+        return getSignedDownloadUrl(this.key);
       },
     },
   }, {
     sequelize,
     modelName: 'File',
     hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterFind: async (instances, options) => afterFind(sequelize, instances, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });
