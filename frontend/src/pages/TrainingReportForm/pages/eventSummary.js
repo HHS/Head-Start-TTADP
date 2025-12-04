@@ -470,7 +470,7 @@ const EventSummary = ({
           )}
         </div>
 
-        <div className="margin-top-2 margin-bottom-3">
+        <div className="margin-top-2 margin-bottom-3 maxw-mobile">
           <FormItem
             label="Event start date"
             name="startDate"
@@ -577,8 +577,8 @@ const EventSummary = ({
           </>
         )}
         <div className="display-flex margin-top-4">
-          <Button id="review-and-submit" className="usa-button--no-margin margin-right-1" type="button" disabled={isAppLoading} onClick={() => showSubmitModal()}>Review and submit</Button>
-          <Button id="save-draft" className="usa-button--no-margin usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveDraft()}>Save draft</Button>
+          <Button id="review-and-submit" className="usa-button--no-margin-top margin-right-1" type="button" disabled={isAppLoading} onClick={() => showSubmitModal()}>Review and submit</Button>
+          <Button id="save-draft" className="usa-button--no-margin-top usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveDraft()}>Save draft</Button>
         </div>
       </div>
     </div>
