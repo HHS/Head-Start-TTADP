@@ -5,11 +5,15 @@ import { query } from '../utils/common';
 test.beforeAll(async ({ request }) => {
   // Set user to a temporary admin.
   await query(request, 'insert into "Permissions" ("userId", "regionId", "scopeId") values (5, 1, 2);')
+  // ensure there is a national center user
+  await query(request, 'insert into "UserRoles" ("userId", "roleId", "createdAt", "updatedAt") values (10, 17, NOW(), NOW());')
 });
 
 test.afterAll(async ({ request }) => {
   // Remove the temporary admin.
   await query(request, 'delete from "Permissions" where "userId" = 5 AND "regionId" = 1 AND "scopeId" = 2;')
+  // remove nc user role from #10 so it doesn't corrupt any other tests
+  await query(request, 'delete from "UserRoles" where "userId" = 10 AND "roleId" = 17;')
 });
 
 test('can fill out and complete a training and session report', async ({ page}) => {
