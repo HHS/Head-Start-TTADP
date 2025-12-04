@@ -53,6 +53,9 @@ export default function Objectives({
     setTimeout(() => {
       const allValues = getValues();
       const fieldArrayGoals = allValues.goalForEditing || [];
+
+      if (!fieldArrayGoals.objectives) return;
+
       const newIndex = fieldArrayGoals.objectives.length - 1;
       const newObjectiveTitleField = document.getElementById(
         `goalForEditing.objectives[${newIndex}].title`,
