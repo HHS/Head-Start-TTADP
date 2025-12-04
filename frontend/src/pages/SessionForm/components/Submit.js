@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
 import IncompletePages from '../../../components/IncompletePages';
 import { reviewSubmitComponentProps } from './constants';
-import useSessionStaff from '../../../hooks/useSessionStaff';
+import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 
 const path = 'submitter-session-report';
@@ -28,7 +28,7 @@ export default function Submit({
     eventOrganizer = event.data.eventOrganizer;
   }
 
-  const { trainerOptions: approvers } = useSessionStaff(event);
+  const { trainerOptions: approvers } = useEventAndSessionStaff(event);
 
   const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
   // eslint-disable-next-line max-len

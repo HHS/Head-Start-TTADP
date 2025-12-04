@@ -4,15 +4,22 @@ import useFetch from './useFetch';
 import { getRegionalTrainerOptions, getNationalCenterTrainerOptions } from '../fetchers/users';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
 
-export default function useSessionStaff(event) {
-  let eventOrganizer = '';
+export default function useEventAndSessionStaff(event, isEvent = false) {
   const { watch } = useFormContext();
 
   const facilitation = watch('facilitation');
 
-  if (event && event.data) {
-    eventOrganizer = event.data.eventOrganizer;
-  }
+  const eventOrganizer = useMemo(() => {
+    if (event && event.data && event.data.eventOrganizer) {
+      return event.data.eventOrganizer;
+    }
+
+    if (event && event.eventOrganizer) {
+      return event.eventOrganizer;
+    }
+
+    return '';
+  }, [event]);
 
   const {
     data: regionalTrainers,
@@ -40,7 +47,7 @@ export default function useSessionStaff(event) {
     }
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
-      if (facilitation === 'national_center') {
+      if (facilitation === 'national_center' || isEvent) {
         optionsForValue = nationalCenterTrainers;
         trainerOptions = nationalCenterTrainers;
       }
@@ -64,5 +71,5 @@ export default function useSessionStaff(event) {
       trainerOptions,
       optionsForValue,
     };
-  }, [eventOrganizer, facilitation, nationalCenterTrainers, regionalTrainers]);
+  }, [eventOrganizer, facilitation, isEvent, nationalCenterTrainers, regionalTrainers]);
 }

@@ -32,6 +32,7 @@ import Req from '../../../components/Req';
 import UserContext from '../../../UserContext';
 import isAdmin from '../../../permissions';
 import { EVENT_PARTNERSHIP, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
+import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 
 // Get the first three values in TARGET_POPULATIONS.
 const tgtPop = [...TARGET_POPULATIONS];
@@ -73,6 +74,8 @@ const EventSummary = ({
   const endDate = watch('endDate');
   const eventOrganizer = watch('eventOrganizer');
 
+  const { trainerOptions, optionsForValue } = useEventAndSessionStaff(data, true);
+
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
 
@@ -94,7 +97,7 @@ const EventSummary = ({
   const { user } = useContext(UserContext);
 
   const hasAdminRights = isAdmin(user);
-  const { users: { collaborators, pointOfContact, creators } } = additionalData;
+  const { users: { pointOfContact, creators } } = additionalData;
   const adminCanEdit = hasAdminRights && (status !== TRAINING_REPORT_STATUSES.COMPLETE);
   const ownerName = owner && owner.name ? owner.name : '';
 
@@ -340,8 +343,8 @@ const EventSummary = ({
               render={({ onChange: controllerOnChange, value, onBlur }) => (
                 <Select
                   isMulti
-                  value={collaborators.filter((collaborator) => (
-                    value.includes(collaborator.id)
+                  value={(optionsForValue).filter((option) => (
+                    value.includes(option.name)
                   ))}
                   inputId="collaboratorIds"
                   name="collaboratorIds"
@@ -355,9 +358,9 @@ const EventSummary = ({
                   }}
                   onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
-                  getOptionLabel={(option) => option.nameWithNationalCenters}
+                  options={trainerOptions}
+                  getOptionLabel={(option) => option.fullName}
                   getOptionValue={(option) => option.id}
-                  options={collaborators}
                   required
                 />
               )}

@@ -73,6 +73,10 @@ describe('TrainingReportForm', () => {
       collaborators: [],
       creators: [],
     });
+
+    // Fetch mocks for trainer endpoints used by EventSummary via useEventAndSessionStaff
+    fetchMock.get('/api/users/trainers/regional/region/1', []);
+    fetchMock.get('/api/users/trainers/national-center/region/1', []);
   });
 
   it('renders training report form', async () => {
