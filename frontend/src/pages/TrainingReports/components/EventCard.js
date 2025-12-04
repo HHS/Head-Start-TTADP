@@ -7,7 +7,6 @@ import { Link, useHistory } from 'react-router-dom';
 import { completeEvent, resumeEvent, suspendEvent } from '../../../fetchers/event';
 import UserContext from '../../../UserContext';
 import { eventPropTypes } from '../constants';
-import TooltipList from '../../../components/TooltipList';
 import ContextMenu from '../../../components/ContextMenu';
 import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
@@ -244,10 +243,6 @@ function EventCard({
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__organizer padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Event organizer</p>
             <p className="usa-prose margin-y-0">{data.eventOrganizer}</p>
-          </div>
-          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__reason padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Reason</p>
-            <TooltipList list={data.reasons ? data.reasons : []} cardType="event" listType="reasons" />
           </div>
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
             <p className="usa-prose text-bold  margin-y-0">Event start date</p>
