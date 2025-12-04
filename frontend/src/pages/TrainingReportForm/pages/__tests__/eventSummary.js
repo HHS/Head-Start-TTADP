@@ -46,16 +46,19 @@ describe('eventSummary', () => {
       additionalStates: ['Arizona'],
     };
 
+    const defaultCreators = [
+      { id: 1, name: 'IST 1', nameWithNationalCenters: 'IST 1' },
+      { id: 2, name: 'IST 2', nameWithNationalCenters: 'IST 2' },
+    ];
+
     const RenderEventSummary = ({
       user = defaultUser,
-      creators = [
-        { id: 1, name: 'IST 1', nameWithNationalCenters: 'IST 1' },
-        { id: 2, name: 'IST 2', nameWithNationalCenters: 'IST 2' },
-      ],
+      creators = defaultCreators,
+      defaultValues = defaultFormValues,
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
-        defaultValues: defaultFormValues,
+        defaultValues,
       });
 
       const additionalData = {
@@ -237,6 +240,30 @@ describe('eventSummary', () => {
 
       // Event creator.
       expect(creator).toBeInTheDocument();
+    });
+
+    it('hides poc readonly field when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
+      const nonAdminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
+        ],
+      };
+
+      const defaultValues = {
+        ...defaultFormValues,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      act(() => {
+        render(<RenderEventSummary user={nonAdminUser} defaultValues={defaultValues} />);
+      });
+
+      // Confirm the POC readonly field is NOT in the document
+      expect(screen.queryByText(/Event region point of contact/i)).not.toBeInTheDocument();
+
+      // Confirm the intended audience readonly field is still present
+      expect(await screen.findByText(/Event intended audience/i)).toBeInTheDocument();
     });
   });
 });
