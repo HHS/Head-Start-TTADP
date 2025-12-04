@@ -28,6 +28,7 @@ import BackLink from '../../components/BackLink';
 import AppLoadingContext from '../../AppLoadingContext';
 import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
 import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
+import './index.css';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -591,20 +592,16 @@ export default function SessionForm({ match }) {
       </BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
-          <div className="margin-y-2">
-            <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
+          <div className="margin-top-2 margin-bottom-4">
+            <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0 margin-bottom-1">
               Training report - Session
             </h1>
-            {
-              formData && formData.event && (
-                <div className="lead-paragraph">
-                  {formData.event.data.eventId}
-                  :
-                  {' '}
-                  {formData.eventName}
-                </div>
-              )
-            }
+            <div className="lead-paragraph">
+              {formData.eventId}
+              :
+              {' '}
+              {formData.eventName}
+            </div>
           </div>
         </Grid>
       </Grid>

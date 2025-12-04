@@ -245,7 +245,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      <div>
+      <div className="maxw-mobile">
         <FormItem
           label="Session start date"
           name="startDate"
@@ -790,20 +790,20 @@ export default {
     _onUpdatePage,
     _weAreAutoSaving,
     datePickerKey,
-    onFormSubmit,
+    _onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
       <SessionSummary datePickerKey={datePickerKey} event={additionalData.event} />
       <Alert />
-      <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+      <div className="ttahub-form-button-group display-flex">
+        <Button id={`${path}-save-continue`} className="margin-right-1 usa-button--no-margin-top" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
         {
           // if status is 'Completed' then don't show the save draft button.
           additionalData
           && additionalData.status
           && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
-            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+            <Button id={`${path}-save-draft`} className="usa-button--outline usa-button--no-margin-top " type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
           )
         }
       </div>

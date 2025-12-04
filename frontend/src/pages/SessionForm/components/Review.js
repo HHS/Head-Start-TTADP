@@ -42,6 +42,11 @@ const Review = ({
       <h2 className="font-family-serif">Review and submit</h2>
 
       <IndicatesRequiredField />
+
+      {(!isApprover && !isNeedsAction) && (
+        <p className="usa-prose margin-top-2 margin-bottom-4">Review the information in each section before submitting for approval. Once submitted, you will no longer be able to edit the report.</p>
+      )}
+
       {isSubmitted && (
       <TopAlert
         isNeedsAction={isNeedsAction}
