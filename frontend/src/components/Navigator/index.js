@@ -190,7 +190,7 @@ const Navigator = ({
       </Grid>
       )}
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <div id="navigator-form">
+        <div id="navigator-form" className="navigator-form">
           {page.review && page.render(
             formData,
             onFormSubmit,
