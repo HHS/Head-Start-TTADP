@@ -11,6 +11,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
 import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 import EventSummary from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
@@ -27,10 +28,19 @@ const defaultUser = {
 };
 
 describe('eventSummary', () => {
+  beforeEach(() => {
+    fetchMock.restore();
+    fetchMock.get('/api/users/trainers/regional/region/1', []);
+    fetchMock.get('/api/users/trainers/national-center/region/1', [{
+      id: 2,
+      fullName: 'Tedwina User',
+    }]);
+  });
   describe('render', () => {
     const onSaveDraft = jest.fn();
 
     const defaultFormValues = {
+      regionId: 1,
       eventId: 'Event-id-1',
       eventName: 'Event-name-1',
       ownerName: 'Owner-name-1',

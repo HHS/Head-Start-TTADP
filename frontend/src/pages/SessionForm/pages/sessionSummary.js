@@ -54,7 +54,7 @@ import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { mustBeQuarterHalfOrWhole } from '../../../Constants';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
-import useSessionStaff from '../../../hooks/useSessionStaff';
+import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -76,7 +76,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
   const id = watch('id');
 
-  const { trainerOptions, optionsForValue } = useSessionStaff(event);
+  const { trainerOptions, optionsForValue } = useEventAndSessionStaff(event);
 
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
