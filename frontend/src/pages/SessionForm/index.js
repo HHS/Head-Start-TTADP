@@ -196,12 +196,18 @@ export default function SessionForm({ match }) {
   usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
   useEffect(() => {
+    // if report isn't or created fetched, the app should be loading
+    // (Report fetched is set in the use effect that fetches the report)
     const loading = !reportFetched;
     setIsAppLoading(loading);
   }, [reportFetched, setIsAppLoading]);
 
   useEffect(() => {
-    if (reportFetched && sessionId !== 'new' && !currentPage && sessionId && redirectPagePath) {
+    // once report is fetched (in the use effect that fetches the report)
+    // -- or created
+    // we check to see if we have a session ID and aren't on a form page
+    // if we aren't, redirect to the first form page
+    if (reportFetched && sessionId && sessionId !== 'new' && !currentPage && redirectPagePath) {
       history.replace(`/training-report/${trainingReportId}/session/${sessionId}/${redirectPagePath}`);
     }
   }, [reportFetched, sessionId, currentPage, history, trainingReportId, redirectPagePath]);
@@ -254,7 +260,7 @@ export default function SessionForm({ match }) {
   }, [history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
 
   useEffect(() => {
-    // fetch event report data
+    // fetch session data
     async function fetchSession() {
       if (reportFetched || sessionId === 'new') {
         return;
