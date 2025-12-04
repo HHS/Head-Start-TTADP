@@ -23,7 +23,6 @@ describe('EventCard', () => {
       eventName: 'This is my event title',
       eventId: 'TR-R01-1234',
       eventOrganizer: 'This is my event organizer',
-      reasons: ['New Program/Option', 'New Staff/Turnover'],
       startDate: '01/02/2021',
       endDate: null,
     },
@@ -92,7 +91,6 @@ describe('EventCard', () => {
     expect(screen.getByText('This is my event organizer')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('---')).toBeInTheDocument();
-    expect(screen.queryAllByText('New Program/Option').length).toBe(2);
   });
 
   it('displays sessions', () => {

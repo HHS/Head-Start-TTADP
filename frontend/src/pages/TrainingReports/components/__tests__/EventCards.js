@@ -17,7 +17,6 @@ describe('EventCards', () => {
       eventName: 'Sample event 1',
       eventId: 'Sample event ID 1',
       eventOrganizer: 'Sample event organizer 1',
-      reasons: ['New Program/Option'],
       startDate: '01/02/2021',
       endDate: '01/03/2021',
     },
@@ -32,7 +31,6 @@ describe('EventCards', () => {
       eventName: 'Sample event 2',
       eventId: 'Sample event ID 2',
       eventOrganizer: 'Sample event organizer 2',
-      reasons: ['New Staff/Turnover'],
       startDate: '02/02/2021',
       endDate: '02/03/2021',
     },
@@ -100,14 +98,12 @@ describe('EventCards', () => {
     expect(screen.getByText('Sample event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
-    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     expect(screen.getByText('Sample event 2')).toBeInTheDocument();
     expect(screen.getByText('Sample event ID 2')).toBeInTheDocument();
     expect(screen.getByText('Sample event organizer 2')).toBeInTheDocument();
     expect(screen.getByText('02/02/2021')).toBeInTheDocument();
     expect(screen.getByText('02/03/2021')).toBeInTheDocument();
-    expect(screen.queryAllByText('New Staff/Turnover').length).toBe(1);
 
     expect(screen.getByText('Sample event 3')).toBeInTheDocument();
     expect(screen.getByText('Sample event ID 3')).toBeInTheDocument();
@@ -152,7 +148,6 @@ describe('EventCards', () => {
         eventName: 'Collab Event 1',
         eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
-        reasons: ['New Program/Option'],
         startDate: '01/02/2021',
         endDate: '01/03/2021',
       },
@@ -168,7 +163,6 @@ describe('EventCards', () => {
         eventName: 'Region event 2',
         eventId: 'TR-R02-1235',
         eventOrganizer: 'Sample Region event organizer 2',
-        reasons: ['New Staff/Turnover'],
         startDate: '02/02/2021',
         endDate: '02/03/2021',
       },
@@ -195,7 +189,6 @@ describe('EventCards', () => {
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
-    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Region Event.
     expect(screen.getByText('Region event 2')).toBeInTheDocument();
@@ -203,7 +196,6 @@ describe('EventCards', () => {
     expect(screen.getByText('Sample Region event organizer 2')).toBeInTheDocument();
     expect(screen.getByText('02/02/2021')).toBeInTheDocument();
     expect(screen.getByText('02/03/2021')).toBeInTheDocument();
-    expect(screen.queryAllByText('New Staff/Turnover').length).toBe(1);
 
     // Show correct actions for collaborator event.
     let button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
@@ -232,7 +224,6 @@ describe('EventCards', () => {
         eventName: 'Collab Event 1',
         eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
-        reasons: ['New Program/Option'],
         startDate: '01/02/2021',
         endDate: '01/03/2021',
       },
@@ -259,7 +250,6 @@ describe('EventCards', () => {
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
-    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
     const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
@@ -281,7 +271,6 @@ describe('EventCards', () => {
         eventName: 'Collab Event 1',
         eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
-        reasons: ['New Program/Option'],
         startDate: '01/02/2021',
         endDate: '01/03/2021',
       },
@@ -308,7 +297,6 @@ describe('EventCards', () => {
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
-    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
     const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
@@ -330,7 +318,6 @@ describe('EventCards', () => {
         eventName: 'Collab Event 1',
         eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
-        reasons: ['New Program/Option'],
         startDate: '01/02/2021',
         endDate: '01/03/2021',
       },
@@ -357,7 +344,6 @@ describe('EventCards', () => {
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
-    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
     const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
@@ -381,7 +367,6 @@ describe('EventCards', () => {
         eventName: 'Collab Event 1',
         eventId: '-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
-        reasons: ['New Program/Option'],
         startDate: '01/02/2021',
         endDate: '01/03/2021',
         status: 'Not started',
@@ -414,7 +399,6 @@ describe('EventCards', () => {
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
-    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
     const button = screen.getByRole('button', { name: /actions for event -1234/i });
