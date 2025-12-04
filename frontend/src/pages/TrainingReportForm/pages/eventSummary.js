@@ -131,173 +131,175 @@ const EventSummary = ({
   };
 
   return (
-    <div className="bg-white radius-md shadow-2 padding-bottom-3">
-      <div className="padding-x-3">
+    <div className="bg-white radius-md shadow-2">
+      <div className="padding-x-4 padding-y-5">
         <Helmet>
           <title>Event Summary</title>
         </Helmet>
-        <div className="padding-top-2">
-          <h2>Event summary</h2>
-        </div>
+        <h2 className="font-serif-xl margin-0">Event summary</h2>
         <IndicatesRequiredField />
-        {adminCanEdit ? (
-          <>
-            <div className="margin-top-2">
-              <FormItem
-                label="Event id "
-                name="eventId"
-                htmlFor="eventId"
-                required
-              >
-                <TextInput
-                  id="eventId"
-                  name="eventId"
-                  type="text"
-                  required
-                  inputRef={register({ required: 'Enter event id' })}
-                />
-              </FormItem>
-            </div>
-            <div className="margin-top-2">
-              <FormItem
-                label="Event name "
-                name="eventName"
-                htmlFor="eventName"
-                required
-              >
-                <TextInput
-                  id="eventName"
-                  name="eventName"
-                  type="text"
-                  required
-                  inputRef={register({ required: 'Enter event name' })}
-                />
-              </FormItem>
-            </div>
-            <div className="margin-top-2" data-testid="creator-select">
-              <Label htmlFor="ownerId">
-                Event creator
-                <Req />
-              </Label>
-              <Controller
-                render={({ onChange: controllerOnChange, value: id, onBlur }) => (
-                  <Select
-                    value={(creators || []).find((option) => option.id === id)}
-                    inputId="ownerId"
-                    name="ownerId"
-                    className="usa-select"
-                    styles={selectOptionsReset}
-                    components={{
-                      DropdownIndicator: null,
-                    }}
-                    onChange={(s) => {
-                      controllerOnChange(s.id);
-                    }}
-                    inputRef={register({ required: 'Select an event creator' })}
-                    options={creators || []}
-                    getOptionLabel={(option) => option.nameWithNationalCenters}
-                    getOptionValue={(option) => option.id}
-                    onBlur={onBlur}
-                    required
-                  />
-                )}
-                control={control}
-                rules={{
-                  validate: (value) => {
-                    if (!value || value.length === 0) {
-                      return 'Select an event organizer';
-                    }
-                    return true;
-                  },
-                }}
-                name="ownerId"
-                defaultValue=""
-              />
-            </div>
-
-            <div className="margin-top-2">
-              <Label htmlFor="eventOrganizer">
-                Event organizer
-                <Req />
-              </Label>
-              <Dropdown
-                required
-                id="eventOrganizer"
-                name="eventOrganizer"
-                inputRef={register({ required: 'Select an event organizer' })}
-              >
-                {eventOrganizerOptions.map((option) => (
-                  <option
-                    key={option.value}
-                    value={option.value}
-                    selected={option.value === data.eventOrganizer}
-                  >
-                    {option.label}
-                  </option>
-                ))}
-              </Dropdown>
-            </div>
-
-            <div className="margin-top-2" data-testid="additional-states">
-              <Label htmlFor="additionalStates">
-                Addtional states involved
-              </Label>
-              <Controller
-                render={({ onChange: controllerOnChange, value: states, onBlur }) => (
-                  <Select
-                    value={
-                      // ALL_STATES_FLATTENED is an array of objects with value and label properties
-                      // value is what we're matching against, however it looks like
-                      // "Massachusetts (MA)" instead of just "Massachusetts",
-                      // which is what is imported (and stored in states)
-                      ALL_STATES_FLATTENED.filter((option) => {
-                        if (!states || states.length === 0) {
-                          return false;
-                        }
-                        return states.some((s) => option.label.includes(s));
-                      })
-                    }
-                    inputId="additionalStates"
-                    name="additionalStates"
-                    className="usa-select"
-                    styles={selectOptionsReset}
-                    components={{
-                      DropdownIndicator: null,
-                    }}
-                    onChange={(s) => {
-                      controllerOnChange(s.map((option) => option.label));
-                    }}
-                    inputRef={register()}
-                    options={sortBy(ALL_STATES_FLATTENED, 'label')}
-                    onBlur={onBlur}
-                    isMulti
-                  />
-                )}
-                control={control}
-                name="additionalStates"
-                defaultValue=""
-              />
-            </div>
-          </>
-        )
-          : (
+        <div className={adminCanEdit ? 'margin-top-2' : 'margin-top-3 margin-bottom-3'}>
+          {adminCanEdit ? (
             <>
-              <ReadOnlyField label="Event name">
-                {eventName}
-              </ReadOnlyField>
-              <ReadOnlyField label="Event creator">
-                {ownerName}
-              </ReadOnlyField>
-              <ReadOnlyField label="Event organizer">
-                {data.eventOrganizer}
-              </ReadOnlyField>
-              <ReadOnlyField label="Additional states involved">
-                {data.additionalStates ? data.additionalStates.join(', ') : ''}
-              </ReadOnlyField>
-            </>
-          )}
+              <div className="margin-top-3">
+                <FormItem
+                  label="Event id "
+                  name="eventId"
+                  htmlFor="eventId"
+                  required
+                >
+                  <TextInput
+                    id="eventId"
+                    name="eventId"
+                    type="text"
+                    required
+                    inputRef={register({ required: 'Enter event id' })}
+                  />
+                </FormItem>
+              </div>
+              <div className="margin-top-3">
+                <FormItem
+                  label="Event name "
+                  name="eventName"
+                  htmlFor="eventName"
+                  required
+                >
+                  <TextInput
+                    id="eventName"
+                    name="eventName"
+                    type="text"
+                    required
+                    inputRef={register({ required: 'Enter event name' })}
+                  />
+                </FormItem>
+              </div>
+              <div className="margin-top-3" data-testid="creator-select">
+                <Label htmlFor="ownerId">
+                  Event creator
+                  <Req />
+                </Label>
+                <Controller
+                  render={({ onChange: controllerOnChange, value: id, onBlur }) => (
+                    <Select
+                      value={(creators || []).find((option) => option.id === id)}
+                      inputId="ownerId"
+                      name="ownerId"
+                      className="usa-select"
+                      styles={selectOptionsReset}
+                      components={{
+                        DropdownIndicator: null,
+                      }}
+                      onChange={(s) => {
+                        controllerOnChange(s.id);
+                      }}
+                      inputRef={register({ required: 'Select an event creator' })}
+                      options={creators || []}
+                      getOptionLabel={(option) => option.nameWithNationalCenters}
+                      getOptionValue={(option) => option.id}
+                      onBlur={onBlur}
+                      required
+                    />
+                  )}
+                  control={control}
+                  rules={{
+                    validate: (value) => {
+                      if (!value || value.length === 0) {
+                        return 'Select an event organizer';
+                      }
+                      return true;
+                    },
+                  }}
+                  name="ownerId"
+                  defaultValue=""
+                />
+              </div>
 
-        <div className="margin-y-3">
+              <div className="margin-top-3">
+                <Label htmlFor="eventOrganizer">
+                  Event organizer
+                  <Req />
+                </Label>
+                <Dropdown
+                  required
+                  id="eventOrganizer"
+                  name="eventOrganizer"
+                  inputRef={register({ required: 'Select an event organizer' })}
+                >
+                  {eventOrganizerOptions.map((option) => (
+                    <option
+                      key={option.value}
+                      value={option.value}
+                      selected={option.value === data.eventOrganizer}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
+                </Dropdown>
+              </div>
+
+              <div className="margin-top-3" data-testid="additional-states">
+                <Label htmlFor="additionalStates">
+                  Addtional states involved
+                </Label>
+                <Controller
+                  render={({ onChange: controllerOnChange, value: states, onBlur }) => (
+                    <Select
+                      value={
+                        // ALL_STATES_FLATTENED is array of objects
+                        // with value and label properties.
+                        // Matches against "Massachusetts (MA)"
+                        // instead of "Massachusetts"
+                        ALL_STATES_FLATTENED.filter((option) => {
+                          if (!states || states.length === 0) {
+                            return false;
+                          }
+                          return states.some(
+                            (s) => option.label.includes(s),
+                          );
+                        })
+                      }
+                      inputId="additionalStates"
+                      name="additionalStates"
+                      className="usa-select"
+                      styles={selectOptionsReset}
+                      components={{
+                        DropdownIndicator: null,
+                      }}
+                      onChange={(s) => {
+                        controllerOnChange(s.map((option) => option.label));
+                      }}
+                      inputRef={register()}
+                      options={sortBy(ALL_STATES_FLATTENED, 'label')}
+                      onBlur={onBlur}
+                      isMulti
+                    />
+                  )}
+                  control={control}
+                  name="additionalStates"
+                  defaultValue=""
+                />
+              </div>
+            </>
+          )
+            : (
+              <>
+                <ReadOnlyField label="Event name">
+                  {eventName}
+                </ReadOnlyField>
+                <ReadOnlyField label="Event creator">
+                  {ownerName}
+                </ReadOnlyField>
+                <ReadOnlyField label="Event organizer">
+                  {data.eventOrganizer}
+                </ReadOnlyField>
+                <ReadOnlyField label="Additional states involved">
+                  {data.additionalStates ? data.additionalStates.join(', ') : ''}
+                </ReadOnlyField>
+              </>
+            )}
+        </div>
+
+        <div className="margin-top-3">
           <FormItem
             label="Is this event in partnership with a Head Start Association (HSA)? "
             name="eventPartnership"
@@ -327,7 +329,7 @@ const EventSummary = ({
             />
           </FormItem>
         </div>
-        <div className="margin-top-2" data-testid="collaborator-select">
+        <div className="margin-top-3" data-testid="collaborator-select">
           <FormItem
             label="Event collaborators "
             name="collaboratorIds"
@@ -373,94 +375,102 @@ const EventSummary = ({
 
           </FormItem>
         </div>
-        { adminCanEdit ? (
-          <>
-            <div className="margin-top-2">
-              <FormItem
-                label="Event region point of contact "
-                name="pocIds"
-                required
-              >
-
-                <Controller
-                  render={({ onChange: controllerOnChange, value, onBlur }) => (
-                    <Select
-                      value={pointOfContact.filter((option) => (
-                        value.includes(option.id)
-                      ))}
-                      inputId="pocIds"
-                      name="pocIds"
-                      className="usa-select"
-                      styles={selectOptionsReset}
-                      components={{
-                        DropdownIndicator: null,
-                      }}
-                      onChange={(s) => {
-                        controllerOnChange(s.map((option) => option.id));
-                      }}
-                      inputRef={register({ required: 'Select at least one event region point of contact' })}
-                      getOptionLabel={(option) => option.fullName}
-                      getOptionValue={(option) => option.id}
-                      options={pointOfContact}
-                      onBlur={onBlur}
-                      required
-                      isMulti
-                    />
-                  )}
-                  control={control}
-                  rules={{
-                    validate: (value) => {
-                      if (!value || value.length === 0) {
-                        return 'Select at least one event region point of contact';
-                      }
-                      return true;
-                    },
-                  }}
-                  name="pocIds"
-                  defaultValue={[]}
-                />
-              </FormItem>
-            </div>
-            <Fieldset>
+        <div className={adminCanEdit ? 'margin-top-2' : 'margin-top-2 margin-bottom-3'}>
+          { adminCanEdit ? (
+            <>
               <div className="margin-top-2">
                 <FormItem
-                  label="Event intended audience"
-                  name="eventIntendedAudience"
-                  fieldSetWrapper
+                  label="Event region point of contact "
+                  name="pocIds"
+                  required
                 >
-                  <Radio
-                    id="category-recipients"
-                    name="eventIntendedAudience"
-                    label="Recipients"
-                    value="recipients"
-                    className="smart-hub--report-checkbox"
-                    inputRef={register({ required: 'Select one' })}
-                    required
-                  />
-                  <Radio
-                    id="category-regionalOffice"
-                    name="eventIntendedAudience"
-                    label="Regional office/TTA"
-                    value="regiona-office-tta"
-                    className="smart-hub--report-checkbox"
-                    inputRef={register({ required: 'Select one' })}
+
+                  <Controller
+                    render={({ onChange: controllerOnChange, value, onBlur }) => (
+                      <Select
+                        value={pointOfContact.filter((option) => (
+                          value.includes(option.id)
+                        ))}
+                        inputId="pocIds"
+                        name="pocIds"
+                        className="usa-select"
+                        styles={selectOptionsReset}
+                        components={{
+                          DropdownIndicator: null,
+                        }}
+                        onChange={(s) => {
+                          controllerOnChange(s.map((option) => option.id));
+                        }}
+                        inputRef={register({
+                          required:
+                            'Select at least one event region point of contact',
+                        })}
+                        getOptionLabel={(option) => option.fullName}
+                        getOptionValue={(option) => option.id}
+                        options={pointOfContact}
+                        onBlur={onBlur}
+                        required
+                        isMulti
+                      />
+                    )}
+                    control={control}
+                    rules={{
+                      validate: (value) => {
+                        if (!value || value.length === 0) {
+                          return (
+                            'Select at least one event region '
+                            + 'point of contact'
+                          );
+                        }
+                        return true;
+                      },
+                    }}
+                    name="pocIds"
+                    defaultValue={[]}
                   />
                 </FormItem>
               </div>
-            </Fieldset>
-          </>
-        ) : (
-          <>
-            <ReadOnlyField label="Event region point of contact">
-              {getPointOfContacts(data.pocIds)}
-            </ReadOnlyField>
-            <ReadOnlyField label="Event intended audience">
-              {getIntendedAudience(data.eventIntendedAudience)}
-            </ReadOnlyField>
-          </>
-        )}
+              <Fieldset>
+                <div className="margin-top-3">
+                  <FormItem
+                    label="Event intended audience"
+                    name="eventIntendedAudience"
+                    fieldSetWrapper
+                  >
+                    <Radio
+                      id="category-recipients"
+                      name="eventIntendedAudience"
+                      label="Recipients"
+                      value="recipients"
+                      className="smart-hub--report-checkbox"
+                      inputRef={register({ required: 'Select one' })}
+                      required
+                    />
+                    <Radio
+                      id="category-regionalOffice"
+                      name="eventIntendedAudience"
+                      label="Regional office/TTA"
+                      value="regiona-office-tta"
+                      className="smart-hub--report-checkbox"
+                      inputRef={register({ required: 'Select one' })}
+                    />
+                  </FormItem>
+                </div>
+              </Fieldset>
+            </>
+          ) : (
+            <div className="margin-top-3">
+              <ReadOnlyField label="Event region point of contact">
+                {getPointOfContacts(data.pocIds)}
+              </ReadOnlyField>
+              <ReadOnlyField label="Event intended audience">
+                {getIntendedAudience(data.eventIntendedAudience)}
+              </ReadOnlyField>
+            </div>
+          )}
+        </div>
 
-        <div className="margin-top-2">
+        <div className="margin-top-2 margin-bottom-3">
           <FormItem
             label="Event start date"
             name="startDate"
@@ -566,9 +576,9 @@ const EventSummary = ({
             </ReadOnlyField>
           </>
         )}
-        <div className="display-flex">
-          <Button id="review-and-submit" className="margin-right-1" type="button" disabled={isAppLoading} onClick={() => showSubmitModal()}>Review and submit</Button>
-          <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveDraft()}>Save draft</Button>
+        <div className="display-flex margin-top-4">
+          <Button id="review-and-submit" className="usa-button--no-margin margin-right-1" type="button" disabled={isAppLoading} onClick={() => showSubmitModal()}>Review and submit</Button>
+          <Button id="save-draft" className="usa-button--no-margin usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveDraft()}>Save draft</Button>
         </div>
       </div>
     </div>
