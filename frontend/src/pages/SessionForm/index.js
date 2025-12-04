@@ -430,7 +430,12 @@ export default function SessionForm({ match }) {
 
   const onSaveAndContinue = async () => {
     if (formData.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-      await onSave();
+      try {
+        setError('');
+        await onSave();
+      } catch (e) {
+        setError('There was an error saving the session report');
+      }
       updateShowSavedDraft(false);
     }
     const whereWeAre = applicationPages.find((p) => p.path === currentPage);
