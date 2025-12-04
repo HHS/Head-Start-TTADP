@@ -39,8 +39,7 @@ function SessionCard({
   isPoc,
   isOwner,
   isCollaborator,
-  // eslint-disable-next-line no-unused-vars
-  eventOrganizer, //  TODO: Will leverage later
+  eventOrganizer,
 }) {
   const modalRef = useRef();
   const {
