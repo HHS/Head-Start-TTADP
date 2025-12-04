@@ -365,6 +365,22 @@ export default function SessionForm({ match }) {
     );
   }
 
+  /**
+   * Removes or modifies completion tracking fields based on the current user's role.
+   * This enforces role-based access control by preventing users from modifying
+   * completion fields they are not authorized to edit.
+   *
+   * Behavior:
+   * - Admin users can modify all completion fields (no changes made)
+   * - POCs with national center facilitation: removes ownerComplete (tracked by owner)
+   * - POCs in regional PD with national centers events: sets ownerComplete to true
+   * - All other non-admin users: removes pocComplete (tracked by POC)
+   *
+   * @param {Object} roleData - The role-based session data object potentially containing
+   *                             ownerComplete and pocComplete properties
+   * @returns {Object} A shallow copy of roleData with completion fields removed or
+   *                    modified based on the user's role
+   */
   const removeCompleteDataBaseOnRole = (roleData) => {
     const updatedRoleData = { ...roleData };
     if (!isAdminUser) {
