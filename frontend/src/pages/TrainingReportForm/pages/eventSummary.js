@@ -71,6 +71,7 @@ const EventSummary = ({
   const data = getValues();
   const startDate = watch('startDate');
   const endDate = watch('endDate');
+  const eventOrganizer = watch('eventOrganizer');
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
@@ -460,9 +461,11 @@ const EventSummary = ({
             </>
           ) : (
             <div className="margin-top-3">
+              {eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && (
               <ReadOnlyField label="Event region point of contact">
                 {getPointOfContacts(data.pocIds)}
               </ReadOnlyField>
+              )}
               <ReadOnlyField label="Event intended audience">
                 {getIntendedAudience(data.eventIntendedAudience)}
               </ReadOnlyField>
