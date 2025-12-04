@@ -344,7 +344,7 @@ const EventSummary = ({
                 <Select
                   isMulti
                   value={(optionsForValue).filter((option) => (
-                    value.includes(option.name)
+                    value.includes(option.id)
                   ))}
                   inputId="collaboratorIds"
                   name="collaboratorIds"
