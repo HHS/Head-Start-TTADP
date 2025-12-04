@@ -26,7 +26,7 @@ export default function useSessionCardPermissions({
   const isSessionApprover = user.id === approverId;
 
   const showSessionEdit = useMemo(() => {
-    const submitted = pocComplete && ownerComplete;
+    const submitted = !!(pocComplete && ownerComplete && approverId);
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
     // eslint-disable-next-line max-len
     const isRegionalNoNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
@@ -94,6 +94,7 @@ export default function useSessionCardPermissions({
     isWriteable,
     eventStatus,
     isOwner,
+    approverId,
   ]);
 
   return {
