@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useFormContext } from 'react-hook-form';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import Review from './Review';
@@ -26,6 +27,21 @@ const ReviewSubmitSession = ({
   } = formData;
 
   const { user } = useContext(UserContext);
+  const { register, watch, setValue } = useFormContext();
+
+  const pocComplete = watch('pocComplete');
+  const ownerComplete = watch('ownerComplete');
+  const reviewStatus = watch('reviewStatus');
+
+  useEffect(() => {
+    // This useEffect maintains the value of the hidden input "reviewStatus"
+
+    const submissionStatus = !!(pocComplete && ownerComplete && approverId);
+
+    if (submissionStatus && reviewStatus !== REPORT_STATUSES.SUBMITTED) {
+      setValue('reviewStatus', REPORT_STATUSES.SUBMITTED);
+    }
+  }, [approverId, ownerComplete, pocComplete, reviewStatus, setValue]);
 
   // The logic for redirecting users has been hoisted all the way up the
   // fetch at the top level CollaborationForm/index.js file
@@ -49,6 +65,8 @@ const ReviewSubmitSession = ({
             {error}
           </Alert>
         )}
+
+        <input type="hidden" name="reviewStatus" id="reviewStatus" ref={register()} />
 
         <Review
           isSubmitted={submitted}

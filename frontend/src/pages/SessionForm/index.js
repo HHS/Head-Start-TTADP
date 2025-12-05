@@ -657,7 +657,7 @@ export default function SessionForm({ match }) {
             onSaveAndContinue={onSaveAndContinue}
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
-            formDataStatusProp="status"
+            formDataStatusProp="reviewStatus"
           />
         </FormProvider>
       </NetworkContext.Provider>
