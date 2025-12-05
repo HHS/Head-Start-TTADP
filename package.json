@@ -350,7 +350,7 @@
     "cheerio": "^1.1.2",
     "client-oauth2": "^4.3.3",
     "cls-hooked": "^4.2.2",
-    "connect-redis": "6",
+    "connect-redis": "8",
     "cookie-session": "^2.0.0",
     "core-js": "^3.46.0",
     "cron": "1.8.3",
