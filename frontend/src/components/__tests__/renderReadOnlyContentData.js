@@ -32,15 +32,20 @@ describe('renderReadOnlyContentData', () => {
       expect(editorWrapper).not.toBeInTheDocument();
     });
 
-    it('renders HTML content using Draft.js Editor', async () => {
+    it('renders HTML content using DOMPurify', async () => {
       const htmlContent = '<p>This is <strong>HTML</strong> content</p>';
       const heading = 'TTA provided';
 
       const { container } = render(renderEditor(heading, htmlContent));
 
-      // Should use Draft.js Editor (has rdw classes)
-      const editorMain = container.querySelector('.rdw-editor-main');
-      expect(editorMain).toBeInTheDocument();
+      // Should render sanitized HTML in a div with aria-label
+      const contentDiv = container.querySelector('div[aria-label="TTA provided"]');
+      expect(contentDiv).toBeInTheDocument();
+
+      // Should contain the sanitized HTML content
+      expect(contentDiv.innerHTML).toContain('This is');
+      expect(contentDiv.innerHTML).toContain('<strong>HTML</strong>');
+      expect(contentDiv.innerHTML).toContain('content');
     });
 
     it('handles empty string as plain text', async () => {
