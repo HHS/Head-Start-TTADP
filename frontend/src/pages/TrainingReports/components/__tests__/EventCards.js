@@ -403,7 +403,7 @@ describe('EventCards', () => {
     // Show correct actions for collaborator event.
     const button = screen.getByRole('button', { name: /actions for event -1234/i });
     userEvent.click(button);
-    expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();

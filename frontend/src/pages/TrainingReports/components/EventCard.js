@@ -54,7 +54,7 @@ function EventCard({
 
   const canEditEvent = ((isOwner && !eventSubmitted && isNotCompleteOrSuspended)
     || (hasAdminRights && isNotCompleteOrSuspended));
-  const canCreateSession = isNotCompleteOrSuspended && isOwnerOrCollaborator;
+  const canCreateSession = (isNotCompleteOrSuspended && isOwnerOrCollaborator) || hasAdminRights;
   const canDeleteEvent = hasAdminRights && (data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
   || data.status === TRAINING_REPORT_STATUSES.SUSPENDED);
   const menuItems = [];
