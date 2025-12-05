@@ -9,6 +9,8 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
 import { auditLogger, errorLogger } from '../logger';
 
+const DEFAULT_REGION = 'us-gov-west-1';
+
 const generateS3Config = () => {
   // Take configuration from cloud.gov if it is available. If not, use env variables.
   if (process.env.VCAP_SERVICES) {
@@ -43,7 +45,7 @@ const generateS3Config = () => {
     return {
       s3Bucket: S3_BUCKET,
       s3Config: {
-        region: process.env.AWS_REGION || 'us-gov-west-1',
+        region: process.env.AWS_REGION || DEFAULT_REGION,
         forcePathStyle: true,
         logger: errorLogger,
         credentials: {
@@ -57,7 +59,7 @@ const generateS3Config = () => {
   // Return null if S3 is not configured
   return {
     s3Bucket: null,
-    s3Config: { region: 'us-gov-west-1' },
+    s3Config: { region: DEFAULT_REGION },
   };
 };
 
