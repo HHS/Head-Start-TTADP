@@ -46,6 +46,6 @@ describe('changeStatus', () => {
   });
 
   it('handles unknown ids', async () => {
-    await expect(changeReportStatus('-1', 'deleted')).resolves.not.toThrowError();
+    await expect(changeReportStatus('-1', 'deleted')).resolves.not.toThrow();
   });
 });

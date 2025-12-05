@@ -143,7 +143,7 @@ describe('enum', () => {
       // Call the function to validate and set enum values
       expect(() => {
         validateChangedOrSetEnums(db.sequelize, instance);
-      }).toThrowError("Invalid value of 'invalid' passed for status");
+      }).toThrow("Invalid value of 'invalid' passed for status");
     });
   });
 });
