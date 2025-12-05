@@ -5,7 +5,7 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TRAINING_REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -18,6 +18,7 @@ import { istKeys, pocKeys } from '../constants';
 
 const istAndPocFields = {
   id: 1,
+  reviewStatus: REPORT_STATUSES.DRAFT,
   regionId: 1,
   sessionName: 'test session',
   startDate: '01/01/2024',

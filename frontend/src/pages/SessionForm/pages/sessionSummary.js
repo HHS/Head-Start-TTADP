@@ -75,14 +75,13 @@ const SessionSummary = ({ datePickerKey, event }) => {
   } = useFormContext();
 
   const id = watch('id');
+  const startDate = watch('startDate');
+  const endDate = watch('endDate');
+  const courses = watch('courses');
 
   const { trainerOptions, optionsForValue } = useEventAndSessionStaff(event);
 
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
-
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
-  const courses = watch('courses');
 
   const topicsDrawerTriggerRef = useRef(null);
   const goalDrawerTriggerRef = useRef(null);
@@ -90,7 +89,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
-
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
 
@@ -329,15 +327,11 @@ const SessionSummary = ({ datePickerKey, event }) => {
       <FormItem
         label="Session context "
         name="context"
-        required
       >
         <Textarea
           id="context"
           name="context"
-          inputRef={register({
-            required: 'Describe the session context',
-          })}
-          required
+          inputRef={register()}
         />
       </FormItem>
 

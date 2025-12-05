@@ -1,5 +1,6 @@
 import { cast, Op } from 'sequelize';
 import { Cast } from 'sequelize/types/utils';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
@@ -140,6 +141,7 @@ export async function createSession(request) {
     eventId: event.id,
     data: cast(JSON.stringify({
       ...data,
+      reviewStatus: REPORT_STATUSES.DRAFT,
       additionalStates: event.data.additionalStates || [],
     }), 'jsonb'),
   }, {

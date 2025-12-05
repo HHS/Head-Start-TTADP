@@ -6,7 +6,6 @@ export const NO_ERROR = <></>;
 export const sessionSummaryRequiredFields = {
   sessionName: '',
   duration: '',
-  context: '',
   objective: '',
   objectiveTopics: [],
   objectiveTrainers: [],
@@ -23,6 +22,7 @@ export const sessionSummaryFields = {
   objectiveResources: [],
   courses: [],
   files: [],
+  context: '',
 };
 
 export const participantsFields = {
@@ -116,6 +116,7 @@ export const defaultKeys = [
   'submitted',
   'submitter',
   'additionalStates',
+  'reviewStatus',
 ];
 
 export const istKeys = [
