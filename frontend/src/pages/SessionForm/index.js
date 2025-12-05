@@ -616,7 +616,7 @@ export default function SessionForm({ match }) {
               {formData.eventId}
               :
               {' '}
-              {formData.eventName}
+              {formData.sessionName}
             </div>
           </div>
         </Grid>
