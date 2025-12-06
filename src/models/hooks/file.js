@@ -7,6 +7,27 @@ const setUrl = async (instance) => {
   instance.setDataValue('url', urlObject);
 };
 
+const setUrlOnFiles = async (sequelize, instance) => {
+  // recursively check the result of a query for File instances and set the url
+  // url is a virtual field which must be populated async
+  if (!instance) return;
+
+  if (instance instanceof sequelize.models.File) {
+    setUrl(instance);
+    return;
+  }
+
+  if (instance.dataValues) {
+    await Promise.all(Object.values(instance.dataValues).map(async (value) => {
+      if (Array.isArray(value)) {
+        await Promise.all(value.map(setUrlOnFiles));
+      } else if (value && typeof value === 'object') {
+        await setUrlOnFiles(value);
+      }
+    }));
+  }
+};
+
 const afterCreate = async (_sequelize, instance) => {
   await setUrl(instance);
 };
@@ -15,15 +36,8 @@ const afterUpdate = async (_sequelize, instance) => {
   await setUrl(instance);
 };
 
-const afterFind = async (_sequelize, instance) => {
-  if (!instance) {
-    return;
-  }
-  if (Array.isArray(instance)) {
-    await Promise.all(instance.map((each) => setUrl(each)));
-  } else {
-    await setUrl(instance);
-  }
+const afterFind = async (sequelize, instance) => {
+  await setUrlOnFiles(sequelize, instance);
 };
 
 const afterDestroy = async (_sequelize, instance) => {
@@ -32,6 +46,7 @@ const afterDestroy = async (_sequelize, instance) => {
 };
 
 export {
+  setUrlOnFiles,
   afterCreate,
   afterUpdate,
   afterFind,

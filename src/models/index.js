@@ -11,6 +11,7 @@ const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require('../../config/config')[env];
 const audit = require('./auditModelGenerator');
+const attachGlobalHooks = require('./hooks/globalHooks');
 const { auditLogger } = require('../logger');
 
 Sequelize.useCLS(namespace);
@@ -24,6 +25,7 @@ if (config.use_env_variable) {
 }
 
 audit.attachHooksForAuditing(sequelize);
+attachGlobalHooks(sequelize);
 
 function isConnectionOpen() {
   const { pool } = sequelize.connectionManager;
