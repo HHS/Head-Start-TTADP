@@ -137,21 +137,23 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
     return url;
   }
 
-  const opts = {
-    service: 's3',
-    host: `${s3Bucket}.s3.${s3Config.region}.amazonaws.com`,
-    path: `${key}`,
-    region: s3Config.region,
-    headers: { 'X-Amz-Expires': expires },
-    signQuery: true,
-  };
   const creds = {
     accessKeyId: s3Config.credentials.accessKeyId,
     secretAccessKey: s3Config.credentials.secretAccessKey,
   };
+
+  const opts = {
+    service: 's3',
+    host: `${s3Bucket}.s3.${s3Config.region}.amazonaws.com`,
+    path: `/${key}`,
+    region: s3Config.region,
+    expires,
+    signQuery: true,
+  };
+
   try {
     const result = sign(opts, creds);
-    url.url = `https://${result.host}/${result.path}`;
+    url.url = `https://${result.host}${result.path}`;
     auditLogger.info(`Generated signed download URL for key ${key}`);
   } catch (error) {
     auditLogger.error(`Failed to generate: ${error.message}`);
