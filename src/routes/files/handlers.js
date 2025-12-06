@@ -513,7 +513,7 @@ const uploadHandler = async (req, res) => {
       metadata = await metadataFn(originalFilename, fileName, size);
       const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
       auditLogger.info(`${logContext.namespace}:uploadHandler Uploaded file ${originalFilename} as ${uploadedFile.Key}`);
-      const url = await getSignedDownloadUrl(uploadedFile.Key);
+      const url = getSignedDownloadUrl(uploadedFile.Key);
       await updateStatus(metadata.id, UPLOADED);
       fileResponse.push({ ...metadata, url });
     } catch (err) {
