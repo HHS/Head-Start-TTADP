@@ -138,8 +138,10 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
   }
 
   const opts = {
+    service: 's3',
     host: `${s3Bucket}.s3.${s3Config.region}.amazonaws.com`,
     path: `/${encodeURIComponent(key)}`,
+    region: s3Config.region,
     headers: { 'X-Amz-Expires': expires },
     signQuery: true,
   };
