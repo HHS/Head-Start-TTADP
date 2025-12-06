@@ -301,6 +301,9 @@ jobs:
           cd frontend
           chmod 744 ../tools/run-yarn-audit.js
           ../tools/run-yarn-audit.js;
+    - run:
+        name: Build frontend assets
+        command: yarn --cwd frontend run build
     - store_artifacts:
         path: reports
         destination: backend-lint.xml
