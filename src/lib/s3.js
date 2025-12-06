@@ -124,8 +124,7 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
   };
   const res = await client.send(new GetObjectCommand(params));
   if (res.Body) {
-    const byteChunks = await res.Body.transformToByteArray();
-    res.Body = Buffer.from(byteChunks);
+    res.Body = Buffer.from(await res.Body.transformToByteArray());
   }
   return res;
 };

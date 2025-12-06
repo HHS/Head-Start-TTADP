@@ -3,11 +3,15 @@ const { addDeleteFileToQueue } = require('../../services/s3Queue');
 const { getSignedDownloadUrl } = require('../../lib/s3');
 
 const setUrl = async (instance) => {
-  const signedUrl = await getSignedDownloadUrl(instance.key);
-  instance.setDataValue('url', signedUrl);
+  const urlObject = await getSignedDownloadUrl(instance.key);
+  instance.setDataValue('url', urlObject);
 };
 
 const afterCreate = async (_sequelize, instance) => {
+  await setUrl(instance);
+};
+
+const afterUpdate = async (_sequelize, instance) => {
   await setUrl(instance);
 };
 
@@ -29,6 +33,7 @@ const afterDestroy = async (_sequelize, instance) => {
 
 export {
   afterCreate,
+  afterUpdate,
   afterFind,
   afterDestroy,
 };
