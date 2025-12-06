@@ -494,9 +494,6 @@ jobs:
     - set_env_vars:
         target_env: << parameters.target_env >>
     - install_cf_tools
-    - run:
-        name: Build backend assets
-        command: yarn build
     - when:
         condition:
           equal: [ << parameters.target_env >>, prod ]
@@ -504,9 +501,6 @@ jobs:
         - run:
             name: Create production robots.txt
             command: ./bin/robot-factory
-    - run:
-        name: Build frontend assets
-        command: yarn --cwd frontend run build
     - cf_deploy:
         target_env: << parameters.target_env >>
     - write_envs:
