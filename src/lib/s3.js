@@ -138,7 +138,7 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
   }
 
   const opts = {
-    host: `${s3Config.bucket}.s3.${s3Config.region}.amazonaws.com`,
+    host: `${bucket}.s3.${s3Config.region}.amazonaws.com`,
     path: `${bucket}/${key}/?X-Amz-Expires=${expires}`,
     signQuery: true,
   };
