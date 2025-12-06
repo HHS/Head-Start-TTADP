@@ -77,13 +77,14 @@ export default (sequelize, DataTypes) => {
     },
     url: {
       type: DataTypes.VIRTUAL,
+      get() {
+        return getSignedDownloadUrl(this.key);
+      },
     },
   }, {
     sequelize,
     modelName: 'File',
     hooks: {
-      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
-      afterFind: async (instances, options) => afterFind(sequelize, instances, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });

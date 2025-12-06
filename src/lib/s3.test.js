@@ -237,7 +237,7 @@ describe('S3 helpers', () => {
     it('returns an error when not configured', async () => {
       const { getSignedDownloadUrl } = loadModule();
 
-      const res = await getSignedDownloadUrl('file.txt', null, null);
+      const res = getSignedDownloadUrl('file.txt', null, null);
 
       expect(res.url).toBeNull();
       expect(res.error).toBeInstanceOf(Error);
@@ -250,7 +250,7 @@ describe('S3 helpers', () => {
       const client = { send: jest.fn() };
       mockGetSignedUrl.mockResolvedValue('signed-url');
 
-      const res = await getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
+      const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
 
       expect(res).toEqual({ url: 'signed-url', error: null });
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
@@ -273,7 +273,7 @@ describe('S3 helpers', () => {
       const err = new Error('presign failed');
       mockGetSignedUrl.mockRejectedValue(err);
 
-      const res = await getSignedDownloadUrl('file.txt', 'bucket-one', client);
+      const res = getSignedDownloadUrl('file.txt', 'bucket-one', client);
 
       expect(mockAuditLogger.error).toHaveBeenCalledWith(`${err.message}`);
       expect(res.url).toBeNull();

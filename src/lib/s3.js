@@ -5,7 +5,7 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { sign } from 'aws4';
 import { Upload } from '@aws-sdk/lib-storage';
 import { auditLogger, errorLogger } from '../logger';
 
@@ -130,19 +130,27 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
   return res;
 };
 
-const getSignedDownloadUrl = async (key, bucket = s3Bucket, client = s3Client, expires = 360) => {
+const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires = 360) => {
   const url = { url: null, error: null };
   if (!client || !bucket) {
     url.error = new Error(`S3 not configured (${client}, ${bucket})`);
     return url;
   }
 
-  const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+  const opts = {
+    host: `${s3Config.bucket}.s3.${s3Config.region}.amazonaws.com`,
+    path: `${bucket}/${key}/?X-Amz-Expires=${expires}`,
+    signQuery: true,
+  };
   try {
-    url.url = await getSignedUrl(client, command, { expiresIn: expires });
+    const result = sign(opts, {
+      accessKeyId: s3Config.AWS_ACCESS_KEY_ID,
+      secretAccessKey: s3Config.secretAccessKey,
+    });
+    url.url = `https://${result.host}/${result.path}`;
     auditLogger.info(`Generated signed download URL for key ${key}`);
   } catch (error) {
-    auditLogger.error(error.message);
+    auditLogger.error(`Failed to generate: ${error.message}`);
     url.error = error;
   }
   return url;
