@@ -11,6 +11,8 @@ import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 import EventSummary from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
@@ -26,10 +28,19 @@ const defaultUser = {
 };
 
 describe('eventSummary', () => {
+  beforeEach(() => {
+    fetchMock.restore();
+    fetchMock.get('/api/users/trainers/regional/region/1', []);
+    fetchMock.get('/api/users/trainers/national-center/region/1', [{
+      id: 2,
+      fullName: 'Tedwina User',
+    }]);
+  });
   describe('render', () => {
     const onSaveDraft = jest.fn();
 
     const defaultFormValues = {
+      regionId: 1,
       eventId: 'Event-id-1',
       eventName: 'Event-name-1',
       ownerName: 'Owner-name-1',
@@ -38,22 +49,26 @@ describe('eventSummary', () => {
       targetPopulations: ['target population1', 'target population2'],
       vision: 'This is a sample vision.',
       eventIntendedAudience: 'recipient',
-      eventOrganizer: 'Sample organizer',
+      eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
       owner: {
         name: 'Owner-name-1',
       },
+      additionalStates: ['Arizona'],
     };
+
+    const defaultCreators = [
+      { id: 1, name: 'IST 1', nameWithNationalCenters: 'IST 1' },
+      { id: 2, name: 'IST 2', nameWithNationalCenters: 'IST 2' },
+    ];
 
     const RenderEventSummary = ({
       user = defaultUser,
-      creators = [
-        { id: 1, name: 'IST 1', nameWithNationalCenters: 'IST 1' },
-        { id: 2, name: 'IST 2', nameWithNationalCenters: 'IST 2' },
-      ],
+      creators = defaultCreators,
+      defaultValues = defaultFormValues,
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
-        defaultValues: defaultFormValues,
+        defaultValues,
       });
 
       const additionalData = {
@@ -134,7 +149,7 @@ describe('eventSummary', () => {
 
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
       await selectEvent.select(screen.getByLabelText(/target populations/i), ['Expectant families']);
-      await selectEvent.select(screen.getByLabelText(/event organizer/i), 'IST TTA/Visit');
+      await selectEvent.select(screen.getByLabelText(/event organizer/i), TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS);
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
@@ -186,6 +201,23 @@ describe('eventSummary', () => {
       expect(await screen.findByRole('textbox', { name: /event vision required/i })).toBeInTheDocument();
     });
 
+    it('displays additional states', async () => {
+      const nonAdminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
+        ],
+      };
+
+      act(() => {
+        render(<RenderEventSummary
+          user={nonAdminUser}
+        />);
+      });
+
+      expect(await screen.findByText(/Arizona/i)).toBeInTheDocument();
+    });
+
     it('non admin users cant edit certain fields', async () => {
       const nonAdminUser = {
         ...defaultUser,
@@ -200,8 +232,8 @@ describe('eventSummary', () => {
       // Event Collaborator.
       expect(await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })).toBeInTheDocument();
 
-      // Nine additional read only fields.
-      expect(screen.queryAllByTestId('read-only-label').length).toBe(9);
+      // Ten additional read only fields.
+      expect(screen.queryAllByTestId('read-only-label').length).toBe(10);
     });
     it('handles null creators', async () => {
       const adminUser = {
@@ -218,6 +250,30 @@ describe('eventSummary', () => {
 
       // Event creator.
       expect(creator).toBeInTheDocument();
+    });
+
+    it('hides poc readonly field when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
+      const nonAdminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
+        ],
+      };
+
+      const defaultValues = {
+        ...defaultFormValues,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      act(() => {
+        render(<RenderEventSummary user={nonAdminUser} defaultValues={defaultValues} />);
+      });
+
+      // Confirm the POC readonly field is NOT in the document
+      expect(screen.queryByText(/Event region point of contact/i)).not.toBeInTheDocument();
+
+      // Confirm the intended audience readonly field is still present
+      expect(await screen.findByText(/Event intended audience/i)).toBeInTheDocument();
     });
   });
 });

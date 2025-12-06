@@ -1,9 +1,8 @@
-import React, { useRef, useContext } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Link } from 'react-router-dom';
 import { ModalToggleButton, Button } from '@trussworks/react-uswds';
-import UserContext from '../../../UserContext';
 import Modal from '../../../components/VanillaModal';
 import {
   InProgress,
@@ -12,7 +11,7 @@ import {
   Pencil,
   Trash,
 } from '../../../components/icons';
-import isAdmin from '../../../permissions';
+import useSessionCardPermissions from '../../../hooks/useSessionCardPermissions';
 import './SessionCard.scss';
 
 const CardData = ({ label, children }) => (
@@ -40,6 +39,7 @@ function SessionCard({
   isPoc,
   isOwner,
   isCollaborator,
+  eventOrganizer,
 }) {
   const modalRef = useRef();
   const {
@@ -51,8 +51,7 @@ function SessionCard({
     objectiveTopics,
     objectiveTrainers,
     status,
-    pocComplete,
-    ownerComplete,
+    // facilitation,  TODO: will need later
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -65,10 +64,6 @@ function SessionCard({
     }
   };
 
-  const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
-  const { user } = useContext(UserContext);
-  const isAdminUser = isAdmin(user);
-
   const displaySessionStatus = getSessionDisplayStatusText();
 
   const getSessionStatusIcon = (() => {
@@ -80,58 +75,45 @@ function SessionCard({
     return <NoStatus />;
   })();
 
-  const showSessionEdit = () => {
-    // If they are a POC and POC work is complete, they should not be able to edit the session.
-    if (isPoc && pocComplete && !isAdminUser) {
-      return false;
-    }
-
-    // eslint-disable-next-line max-len
-    // If they are the owner and owner work is complete, they should not be able to edit the session.
-    if (((isOwner || isCollaborator) && !isAdminUser) && ownerComplete) {
-      return false;
-    }
-
-    // First if both general poc and owner status is blocked make sure they are not and admin.
-    if (!isAdminUser && (!isWriteable || statusIsComplete)) {
-      return false;
-    }
-
-    // Admin can edit the session until the EVENT is complete.
-    if (isAdminUser && eventStatus === TRAINING_REPORT_STATUSES.COMPLETE) {
-      return false;
-    }
-
-    return true;
-  };
+  const { showSessionEdit } = useSessionCardPermissions({
+    session,
+    isPoc,
+    isOwner,
+    isCollaborator,
+    isWriteable,
+    eventStatus,
+    eventOrganizer,
+  });
 
   return (
-    <ul className="ttahub-session-card__session-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
-      { expanded ? (
-        <Modal
-          modalRef={modalRef}
-          heading="Are you sure you want to delete this session?"
-        >
-          <p>Any information you entered will be lost.</p>
-          <ModalToggleButton closer modalRef={modalRef} data-focus="true" className="margin-right-1">Cancel</ModalToggleButton>
-          <Button
-            type="button"
-            className="usa-button--subtle"
-            onClick={() => {
-              onRemoveSession(session);
-            }}
+    <div>
+      <ul className="ttahub-session-card__session-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
+
+        { expanded ? (
+          <Modal
+            modalRef={modalRef}
+            heading="Are you sure you want to delete this session?"
           >
-            Delete
-          </Button>
-        </Modal>
-      ) : null }
-      <CardData label="Session name">
-        <div className="desktop:display-flex">
-          <p className="usa-prose desktop:margin-y-0 margin-top-0 margin-bottom-1 margin-right-2">
-            {sessionName}
-          </p>
-          {
-            showSessionEdit()
+            <p>Any information you entered will be lost.</p>
+            <ModalToggleButton closer modalRef={modalRef} data-focus="true" className="margin-right-1">Cancel</ModalToggleButton>
+            <Button
+              type="button"
+              className="usa-button--subtle"
+              onClick={() => {
+                onRemoveSession(session);
+              }}
+            >
+              Delete
+            </Button>
+          </Modal>
+        ) : null }
+        <CardData label="Session name">
+          <div className="desktop:display-flex">
+            <p className="usa-prose desktop:margin-y-0 margin-top-0 margin-bottom-1 margin-right-2">
+              {sessionName}
+            </p>
+            {
+            showSessionEdit
               && (
                 <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
                   <Link to={`/training-report/${eventId}/session/${session.id}`} className="margin-right-4">
@@ -145,40 +127,42 @@ function SessionCard({
                 </div>
               )
           }
-        </div>
-      </CardData>
+          </div>
+        </CardData>
 
-      <CardData label="Session dates">
-        {`${startDate || ''} - ${endDate || ''}`}
-      </CardData>
+        <CardData label="Session dates">
+          {`${startDate || ''} - ${endDate || ''}`}
+        </CardData>
 
-      <CardData label="Session objective">
-        {objective}
-      </CardData>
+        <CardData label="Session objective">
+          {objective}
+        </CardData>
 
-      <CardData label="Support type">
-        {objectiveSupportType}
-      </CardData>
+        <CardData label="Support type">
+          {objectiveSupportType}
+        </CardData>
 
-      <CardData label="Topics">
-        {objectiveTopics && objectiveTopics.length > 0 ? objectiveTopics.join(', ') : ''}
-      </CardData>
+        <CardData label="Topics">
+          {objectiveTopics && objectiveTopics.length > 0 ? objectiveTopics.join(', ') : ''}
+        </CardData>
 
-      <CardData label="Trainers">
-        {objectiveTrainers && objectiveTrainers.length > 0 ? objectiveTrainers.join(', ') : ''}
-      </CardData>
+        <CardData label="Trainers">
+          {objectiveTrainers && objectiveTrainers.length > 0 ? objectiveTrainers.join(', ') : ''}
+        </CardData>
 
-      <CardData label="Status">
-        {getSessionStatusIcon}
-        {displaySessionStatus}
-      </CardData>
-    </ul>
+        <CardData label="Status">
+          {getSessionStatusIcon}
+          {displaySessionStatus}
+        </CardData>
+      </ul>
+    </div>
   );
 }
 
 export const sessionPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   data: PropTypes.shape({
+    facilitation: PropTypes.string.isRequired,
     regionId: PropTypes.number.isRequired,
     sessionName: PropTypes.string.isRequired,
     startDate: PropTypes.string.isRequired,
@@ -193,8 +177,10 @@ export const sessionPropTypes = PropTypes.shape({
       'Needs status',
     ]),
     pocComplete: PropTypes.bool.isRequired,
+    submitted: PropTypes.bool,
     ownerComplete: PropTypes.bool.isRequired,
   }).isRequired,
+  approverId: PropTypes.number,
 });
 SessionCard.propTypes = {
   eventId: PropTypes.number.isRequired,
@@ -206,5 +192,6 @@ SessionCard.propTypes = {
   isPoc: PropTypes.bool.isRequired,
   isOwner: PropTypes.bool.isRequired,
   isCollaborator: PropTypes.bool.isRequired,
+  eventOrganizer: PropTypes.string.isRequired,
 };
 export default SessionCard;

@@ -18,6 +18,7 @@ import { recipientParticipants } from '../../ActivityReport/constants'; // TODO 
 import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
 import FormItem from '../../../components/FormItem';
 import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 
 const placeholderText = '- Select -';
 
@@ -32,6 +33,7 @@ const Participants = ({ formData }) => {
 
   const regionId = watch('regionId');
   const eventRegionId = formData.event ? formData.event.regionId : null;
+  const states = formData.additionalStates || [];
 
   return (
     <>
@@ -40,6 +42,7 @@ const Participants = ({ formData }) => {
       </Helmet>
       <IndicatesRequiredField />
       <RecipientsWithGroups
+        states={states}
         showTooltip="You can use a group to speed up selection, then remove recipients who did not attend."
         regionId={regionId || eventRegionId}
       />
@@ -157,6 +160,7 @@ Participants.propTypes = {
     recipients: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
     })),
+    additionalStates: PropTypes.arrayOf(PropTypes.string),
     regionId: PropTypes.number,
     istSelectionComplete: PropTypes.bool,
     event: PropTypes.shape({
@@ -182,20 +186,42 @@ const fields = Object.keys(participantsFields);
 const path = 'participants';
 const position = 2;
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
-export const isPageComplete = (hookForm) => {
-  const { isIstVisit } = hookForm.getValues();
+const ReviewSection = () => {
+  const { getValues } = useFormContext();
 
-  if (isIstVisit === 'yes') {
-    return pageComplete(hookForm, [...fields, 'regionalOfficeTta'], true);
-  }
+  const {
+    recipients,
+    participants,
+    deliveryMethod,
+    numberOfParticipants,
+    numberOfParticipantsInPerson,
+    numberOfParticipantsVirtually,
+    language,
+  } = getValues();
 
-  if (isIstVisit === 'no') {
-    return pageComplete(hookForm, [...fields, 'recipients', 'participants']);
-  }
+  const sections = [
+    {
+      anchor: 'participants',
+      items: [
+        { label: 'Recipients', name: 'recipients', customValue: { recipients: recipients?.map((r) => r.label).join(', ') || '' } },
+        { label: 'Recipient participants', name: 'participants', customValue: { participants } },
+        { label: 'TTA type', name: 'ttaType', customValue: { ttaType: '' } }, // todo: revisit with changes to participants page
+        { label: 'Delivery method', name: 'deliveryMethod', customValue: { deliveryMethod } },
+        ...(deliveryMethod === 'hybrid' ? [
+          { label: 'Number of participants attending in person', name: 'numberOfParticipantsInPerson', customValue: { numberOfParticipantsInPerson } },
+          { label: 'Number of participants attending virtually', name: 'numberOfParticipantsVirtually', customValue: { numberOfParticipantsVirtually } },
+        ] : [
+          { label: 'Number of participants', name: 'numberOfParticipants', customValue: { numberOfParticipants } },
+        ]),
+        { label: 'Language used', name: 'language', customValue: { language } },
+      ],
+    },
+  ];
 
-  return pageComplete(hookForm, fields);
+  return <ReviewPage sections={sections} path={path} isCustomValue />;
 };
+
+export const isPageComplete = (hookForm) => pageComplete(hookForm, [...fields, 'recipients', 'participants']);
 
 export default {
   position,

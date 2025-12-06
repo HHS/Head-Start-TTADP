@@ -45,6 +45,7 @@ export type EventShape = {
     eventId: string;
     eventName: string;
     eventSubmitted: boolean;
+    additionalStates: string[];
   };
   updatedAt: string;
   sessionReports: SessionShape[];

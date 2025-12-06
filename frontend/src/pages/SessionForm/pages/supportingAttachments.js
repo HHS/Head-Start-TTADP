@@ -1,16 +1,33 @@
 import React from 'react';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { useFormContext } from 'react-hook-form';
 import { Button } from '@trussworks/react-uswds';
 import { deleteSessionSupportingAttachment } from '../../../fetchers/File';
 import { pageComplete, supportingAttachmentsVisitedField } from '../constants';
 import SupportingAttachmentsSessionOrCommunication from '../../../components/SupportAttachmentsSessionOrCommunication';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
+import { getAttachmentsSections } from '../../ActivityReport/Pages/supportingAttachments';
 
 const path = 'supporting-attachments';
 const position = 3;
 const fields = [supportingAttachmentsVisitedField];
 
-const ReviewSection = () => <></>;
+const ReviewSection = () => {
+  const { getValues } = useFormContext();
+
+  const { supportingAttachments } = getValues();
+
+  return (
+    <ReviewPage
+      className="smart-hub--supporting-attachments-review"
+      sections={getAttachmentsSections(supportingAttachments)}
+      path="supporting-attachments"
+      isCustomValue
+    />
+  );
+};
+
 export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
