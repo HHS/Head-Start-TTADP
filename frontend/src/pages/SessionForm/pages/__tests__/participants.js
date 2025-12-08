@@ -51,14 +51,194 @@ function mockRecipients(howMany) {
 
 describe('participants', () => {
   describe('isPageComplete', () => {
-    it('returns true if form state is valid', () => {
-      expect(isPageComplete({
-        getValues: jest.fn(() => ({ recipients: [1], participants: [1], language: ['Mermish'] })),
-      })).toBe(true);
+    // Helper functions to create valid test data
+    const createValidBaseFields = () => ({
+      deliveryMethod: 'virtual',
+      language: ['English'],
+      ttaType: ['training'],
+      recipients: [{ id: 1, label: 'Recipient 1' }],
+      participants: ['Home Visitor'],
     });
 
-    it('returns false otherwise', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
+    const createValidVirtualData = () => ({
+      ...createValidBaseFields(),
+      deliveryMethod: 'virtual',
+      numberOfParticipants: 10,
+    });
+
+    const createValidInPersonData = () => ({
+      ...createValidBaseFields(),
+      deliveryMethod: 'in-person',
+      numberOfParticipants: 15,
+    });
+
+    const createValidHybridData = () => ({
+      ...createValidBaseFields(),
+      deliveryMethod: 'hybrid',
+      numberOfParticipantsInPerson: 8,
+      numberOfParticipantsVirtually: 7,
+    });
+
+    describe('virtual delivery', () => {
+      it('returns true when all required fields are present', () => {
+        const data = createValidVirtualData();
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(true);
+      });
+
+      it('returns false when numberOfParticipants is missing', () => {
+        const data = createValidVirtualData();
+        delete data.numberOfParticipants;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when hybrid fields are present instead', () => {
+        const data = createValidVirtualData();
+        delete data.numberOfParticipants;
+        data.numberOfParticipantsInPerson = 5;
+        data.numberOfParticipantsVirtually = 5;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+    });
+
+    describe('in-person delivery', () => {
+      it('returns true when all required fields are present', () => {
+        const data = createValidInPersonData();
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(true);
+      });
+
+      it('returns false when numberOfParticipants is missing', () => {
+        const data = createValidInPersonData();
+        delete data.numberOfParticipants;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+    });
+
+    describe('hybrid delivery', () => {
+      it('returns true when all required fields including both hybrid participant counts are present', () => {
+        const data = createValidHybridData();
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(true);
+      });
+
+      it('returns false when numberOfParticipantsInPerson is missing', () => {
+        const data = createValidHybridData();
+        delete data.numberOfParticipantsInPerson;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when numberOfParticipantsVirtually is missing', () => {
+        const data = createValidHybridData();
+        delete data.numberOfParticipantsVirtually;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when both hybrid participant counts are missing', () => {
+        const data = createValidHybridData();
+        delete data.numberOfParticipantsInPerson;
+        delete data.numberOfParticipantsVirtually;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when numberOfParticipants is present instead of hybrid fields', () => {
+        const data = createValidHybridData();
+        delete data.numberOfParticipantsInPerson;
+        delete data.numberOfParticipantsVirtually;
+        data.numberOfParticipants = 10;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+    });
+
+    describe('base field validation', () => {
+      it('returns false when deliveryMethod is missing', () => {
+        const data = createValidVirtualData();
+        delete data.deliveryMethod;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when language is missing', () => {
+        const data = createValidVirtualData();
+        delete data.language;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when language is empty array', () => {
+        const data = createValidVirtualData();
+        data.language = [];
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when ttaType is missing', () => {
+        const data = createValidVirtualData();
+        delete data.ttaType;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when ttaType is empty array', () => {
+        const data = createValidVirtualData();
+        data.ttaType = [];
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when recipients is missing', () => {
+        const data = createValidVirtualData();
+        delete data.recipients;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when recipients is empty array', () => {
+        const data = createValidVirtualData();
+        data.recipients = [];
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when participants is missing', () => {
+        const data = createValidVirtualData();
+        delete data.participants;
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
+
+      it('returns false when participants is empty array', () => {
+        const data = createValidVirtualData();
+        data.participants = [];
+        expect(isPageComplete({
+          getValues: jest.fn(() => data),
+        })).toBe(false);
+      });
     });
   });
 

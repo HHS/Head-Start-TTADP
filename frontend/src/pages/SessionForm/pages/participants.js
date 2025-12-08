@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES, LANGUAGES } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
@@ -12,7 +12,6 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
 import {
   participantsFields,
-  pageComplete,
 } from '../constants';
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
@@ -27,6 +26,7 @@ const Participants = ({ formData }) => {
     control,
     register,
     watch,
+    setValue,
   } = useFormContext();
 
   const deliveryMethod = watch('deliveryMethod');
@@ -34,6 +34,15 @@ const Participants = ({ formData }) => {
   const regionId = watch('regionId');
   const eventRegionId = formData.event ? formData.event.regionId : null;
   const states = formData.additionalStates || [];
+
+  useEffect(() => {
+    if (deliveryMethod === 'hybrid') {
+      setValue('numberOfParticipants', '');
+    } else {
+      setValue('numberOfParticipantsVirtually', '');
+      setValue('numberOfParticipantsInPerson', '');
+    }
+  }, [deliveryMethod, setValue]);
 
   return (
     <>
@@ -221,7 +230,36 @@ const ReviewSection = () => {
   return <ReviewPage sections={sections} path={path} isCustomValue />;
 };
 
-export const isPageComplete = (hookForm) => pageComplete(hookForm, [...fields, 'recipients', 'participants']);
+export const isPageComplete = (hookForm) => {
+  const values = hookForm.getValues();
+  const { deliveryMethod } = values;
+
+  // Base fields that are always required
+  const baseFields = ['deliveryMethod', 'language', 'ttaType', 'recipients', 'participants'];
+  const baseComplete = baseFields.every((field) => {
+    const val = values[field];
+    if (Array.isArray(val)) {
+      return val.length > 0;
+    }
+    return !!(val);
+  });
+
+  if (!baseComplete) {
+    return false;
+  }
+
+  // Conditional validation based on delivery method
+  if (deliveryMethod === 'hybrid') {
+    // Both hybrid fields must be present and valid
+    const inPerson = values.numberOfParticipantsInPerson;
+    const virtually = values.numberOfParticipantsVirtually;
+    return !!(inPerson) && !!(virtually);
+  }
+
+  // For virtual or in-person, check numberOfParticipants
+  const participants = values.numberOfParticipants;
+  return !!(participants);
+};
 
 export default {
   position,
