@@ -721,6 +721,7 @@ const mappings: Record<string, string> = {
   'Overall Vision/Goal for the PD Event': 'vision',
   'Event Approach': 'trainingType',
   'Vision/Goal/Outcomes for the PD Event': 'vision',
+  'Vision/Outcomes for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
   // 'Reason(s) for PD': 'reasons', // TODO: Verify data should no longer be imported
   'Target Population(s)': 'targetPopulations',
