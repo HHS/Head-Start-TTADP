@@ -53,6 +53,8 @@ export const defaultValues = {
   eventDisplayId: '',
   eventName: '',
   approver: null,
+  approverId: '',
+  approvalStatus: '',
   submitted: false,
   status: 'In progress',
   pageState: {
@@ -117,6 +119,7 @@ export const defaultKeys = [
   'submitter',
   'additionalStates',
   'reviewStatus',
+  'approvalStatus',
 ];
 
 export const istKeys = [
