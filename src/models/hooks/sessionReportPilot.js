@@ -6,21 +6,6 @@ const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 const safeParse = require('../helpers/safeParse');
 
-const markSessionSubmitted = async (sequelize, instance) => {
-  const data = safeParse(instance);
-
-  const { approverId } = instance;
-  const {
-    pocComplete,
-    ownerComplete,
-  } = data;
-
-  instance.set('data', {
-    ...data,
-    submitted: !!(pocComplete && approverId && ownerComplete),
-  });
-};
-
 const preventChangesIfEventComplete = async (sequelize, instance, options) => {
   let event;
   try {
@@ -107,7 +92,6 @@ const beforeCreate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
-  await markSessionSubmitted(sequelize, instance);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {

@@ -391,6 +391,10 @@ export default function SessionForm({ match }) {
         isPoc && eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
       ) {
         updatedRoleData.ownerComplete = true;
+      } else if (
+        eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
+      ) {
+        updatedRoleData.pocComplete = true;
       } else {
         // Remove pocComplete as this is tracked from the POC.
         delete updatedRoleData.pocComplete;

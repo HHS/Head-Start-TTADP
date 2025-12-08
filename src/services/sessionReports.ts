@@ -4,6 +4,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
+import { auditLogger } from '../logger';
 
 const {
   SessionReportPilot,
@@ -182,6 +183,9 @@ export async function updateSession(id: number, request) {
   if (approverId) {
     update.approverId = Number(approverId);
   }
+
+  // auditLogger.info({ update, newData, existingData });
+  // console.log({ update, newData, existingData });
 
   await SessionReportPilot.update(
     update,

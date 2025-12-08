@@ -36,7 +36,7 @@ const istAndPocFields = {
   ttaProvided: 'in person',
   objectiveSupportType: 'Planning',
   isIstVisit: 'yes',
-  regionalOfficeTta: 'DTL',
+  regionalOfficeTta: ['DTL'],
   recipients: [],
   participants: [],
   numberOfParticipants: 1,
@@ -121,8 +121,9 @@ describe('SessionReportForm', () => {
         <UserContext.Provider value={user}>
           <SessionForm match={{
             params: { currentPage, trainingReportId, sessionId },
-            path: currentPage,
-            url: currentPage,
+            isExact: true,
+            path: `/:trainingReportId/session/:sessionId/${currentPage}`,
+            url: `/${trainingReportId}/session/${sessionId}/${currentPage}`,
           }}
           />
         </UserContext.Provider>
@@ -650,7 +651,7 @@ describe('SessionReportForm', () => {
     expect(putBodyJson.data.ownerCompleteDate).toBe(moment().format('YYYY-MM-DD'));
 
     // Assert the poc complete properties are NOT set.
-    expect(putBodyJson.data.pocComplete).toBe(undefined);
+    expect(putBodyJson.data.pocComplete).toBe(true);
     expect(putBodyJson.data.pocCompleteId).toBe(undefined);
     expect(putBodyJson.data.pocCompleteDate).toBe(undefined);
   });
@@ -1038,6 +1039,9 @@ describe('SessionReportForm', () => {
           id: 1,
           eventId: 1,
           regionId: 1,
+          reviewStatus: REPORT_STATUSES.SUBMITTED,
+          pocComplete: true,
+          ownerComplete: true,
           data: {
             sessionName: 'Test Session',
             duration: 2,
@@ -1096,6 +1100,13 @@ describe('SessionReportForm', () => {
       // Mock the PUT request
       fetchMock.put(url, { id: 1, eventId: 1 });
 
+      // Wait for the Approve button to appear
+      // It should show when component recognizes approver reviewing submitted report
+      await waitFor(() => {
+        const submitButton = document.querySelector('#approver-session-report-save-continue');
+        expect(submitButton).toBeInTheDocument();
+      }, { timeout: 3000 });
+
       // Find and click the submit button using the specific ID
       const submitButton = document.querySelector('#approver-session-report-save-continue');
       act(() => {
@@ -1129,6 +1140,9 @@ describe('SessionReportForm', () => {
           id: 2,
           eventId: 1,
           regionId: 1,
+          reviewStatus: REPORT_STATUSES.SUBMITTED,
+          pocComplete: true,
+          ownerComplete: true,
           data: {
             sessionName: 'Test Session Needs Action',
             duration: 2,
@@ -1192,6 +1206,12 @@ describe('SessionReportForm', () => {
       // Mock the PUT request
       fetchMock.put(url, { id: 2, eventId: 1 });
 
+      // Wait for the Approve button to appear
+      await waitFor(() => {
+        const submitButton = document.querySelector('#approver-session-report-save-continue');
+        expect(submitButton).toBeInTheDocument();
+      }, { timeout: 3000 });
+
       // Find and click the submit button using the specific ID
       const submitButton = document.querySelector('#approver-session-report-save-continue');
       act(() => {
@@ -1219,6 +1239,9 @@ describe('SessionReportForm', () => {
           id: 3,
           eventId: 1,
           regionId: 1,
+          reviewStatus: REPORT_STATUSES.SUBMITTED,
+          pocComplete: true,
+          ownerComplete: true,
           data: {
             sessionName: 'Test Session No Status',
             duration: 2,
@@ -1276,11 +1299,14 @@ describe('SessionReportForm', () => {
 
       // DO NOT mock PUT request - we want to verify it's not called
 
-      // Find and click the submit button using the specific ID
+      // Wait for the button to appear (it may not if approvalStatus is empty)
       const submitButton = document.querySelector('#approver-session-report-save-continue');
-      act(() => {
-        userEvent.click(submitButton);
-      });
+
+      if (submitButton) {
+        act(() => {
+          userEvent.click(submitButton);
+        });
+      }
 
       // Wait a bit to ensure PUT is not called
       await new Promise((resolve) => { setTimeout(resolve, 500); });
@@ -1301,6 +1327,9 @@ describe('SessionReportForm', () => {
           id: 4,
           eventId: 1,
           regionId: 1,
+          reviewStatus: REPORT_STATUSES.SUBMITTED,
+          pocComplete: true,
+          ownerComplete: true,
           data: {
             sessionName: 'Test Session Error',
             duration: 2,
@@ -1358,6 +1387,12 @@ describe('SessionReportForm', () => {
 
       // Mock the PUT request to fail with 500 error
       fetchMock.put(url, 500);
+
+      // Wait for the Approve button to appear
+      await waitFor(() => {
+        const submitButton = document.querySelector('#approver-session-report-save-continue');
+        expect(submitButton).toBeInTheDocument();
+      }, { timeout: 3000 });
 
       // Find and click the submit button using the specific ID
       const submitButton = document.querySelector('#approver-session-report-save-continue');

@@ -25,7 +25,7 @@ const Review = ({
 }) => {
   let FormComponent = Submit;
 
-  if (isApprover && !isNeedsAction) {
+  if (isApprover && isSubmitted && !isNeedsAction) {
     FormComponent = Approve;
   }
 
