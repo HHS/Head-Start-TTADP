@@ -191,9 +191,7 @@ describe('S3 helpers', () => {
     it('returns existing configuration when already enabled', async () => {
       const { verifyVersioning, recordedCommands } = loadModule();
       const client = { send: jest.fn().mockResolvedValue({ Status: 'Enabled' }) };
-
       const res = await verifyVersioning('bucket-one', client);
-
       expect(res).toEqual({ Status: 'Enabled' });
       expect(client.send).toHaveBeenCalledTimes(1);
       expect(recordedCommands[0]).toEqual({
@@ -213,9 +211,7 @@ describe('S3 helpers', () => {
       };
       const response = { Body: body, ContentType: 'text/plain' };
       const client = { send: jest.fn().mockResolvedValue(response) };
-
       const res = await downloadFile('file.txt', client, 'bucket-one');
-
       expect(res).toBe(response);
       expect(res.Body).toEqual(Buffer.from('abc'));
       expect(body.transformToByteArray).toHaveBeenCalled();
@@ -236,22 +232,25 @@ describe('S3 helpers', () => {
   describe('getSignedDownloadUrl', () => {
     it('returns an error when not configured', async () => {
       const { getSignedDownloadUrl } = loadModule();
-
       const res = getSignedDownloadUrl('file.txt', null, null);
-
       expect(res.url).toBeNull();
       expect(res.error).toBeInstanceOf(Error);
     });
 
     it('creates a signed URL for the requested object', async () => {
+      const env = {
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+      };
       const {
-        getSignedDownloadUrl, mockGetSignedUrl, recordedCommands, mockAuditLogger,
-      } = loadModule();
+        getSignedDownloadUrl,
+        mockGetSignedUrl,
+        recordedCommands,
+        mockAuditLogger,
+      } = loadModule(env);
       const client = { send: jest.fn() };
       mockGetSignedUrl.mockResolvedValue('signed-url');
-
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
-
       expect(res).toEqual({ url: 'signed-url', error: null });
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         client,
@@ -266,15 +265,17 @@ describe('S3 helpers', () => {
     });
 
     it('logs and returns the error when presigning fails', async () => {
+      const env = {
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+      };
       const {
         getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger,
-      } = loadModule();
+      } = loadModule(env);
       const client = { send: jest.fn() };
       const err = new Error('presign failed');
       mockGetSignedUrl.mockRejectedValue(err);
-
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client);
-
       expect(mockAuditLogger.error).toHaveBeenCalledWith(`${err.message}`);
       expect(res.url).toBeNull();
       expect(res.error).toBe(err);
