@@ -1,4 +1,4 @@
-.smart-hub-training-report--session .navigator-form .usa-form *:not([class^="maxw-"]) {
+.smart-hub-training-report--session .navigator-form .usa-form *:not([class*="maxw-"]) {
     max-width: 525px;
 }
 .smart-hub-training-report--session [aria-hidden="false"]:has(.usa-alert) + .ttahub-form-button-group {
