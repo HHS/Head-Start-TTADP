@@ -390,6 +390,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 name="sessionGoalTemplates"
                 className="usa-select"
                 styles={selectOptionsReset}
+                closeMenuOnSelect={false}
                 components={{
                   DropdownIndicator: null,
                 }}
@@ -469,6 +470,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 getOptionLabel={(option) => option.name}
                 getOptionValue={(option) => option.id}
                 options={topicOptions || []}
+                closeMenuOnSelect={false}
                 isMulti
                 required
               />
