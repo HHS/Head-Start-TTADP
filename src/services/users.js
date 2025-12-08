@@ -59,6 +59,15 @@ export async function usersByRoles(roles = [], regionId = null) {
           name: roles,
         },
       },
+      {
+        model: Permission,
+        as: 'permissions',
+        attributes: ['scopeId'],
+        where: {
+          scopeId: SCOPES.SITE_ACCESS,
+        },
+        required: true,
+      },
     ],
     order: [
       [sequelize.fn('CONCAT', sequelize.col('User."name"'), sequelize.col('User."email"')), 'ASC'],
