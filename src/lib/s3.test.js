@@ -117,9 +117,7 @@ describe('S3 helpers', () => {
     it('sends a DeleteObjectCommand with provided bucket and client', async () => {
       const { deleteFileFromS3, recordedCommands } = loadModule();
       const client = { send: jest.fn().mockResolvedValue('deleted') };
-
       const res = await deleteFileFromS3('file.txt', 'bucket-one', client);
-
       expect(res).toBe('deleted');
       expect(recordedCommands[0]).toEqual({
         name: 'DeleteObjectCommand',
@@ -140,9 +138,7 @@ describe('S3 helpers', () => {
       const { deleteFileFromS3Job } = loadModule();
       const client = { send: jest.fn().mockResolvedValue({ statusCode: 204 }) };
       const job = { data: { fileId: 1, fileKey: 'key.txt', bucket: 'bucket-one' } };
-
       const res = await deleteFileFromS3Job(job, client);
-
       expect(res).toEqual({
         status: 200,
         data: { fileId: 1, fileKey: 'key.txt', res: { statusCode: 204 } },
@@ -155,9 +151,7 @@ describe('S3 helpers', () => {
       const { deleteFileFromS3Job, mockAuditLogger } = loadModule();
       const client = { send: jest.fn().mockRejectedValue(error) };
       const job = { data: { fileId: 2, fileKey: 'missing.txt', bucket: 'bucket-one' } };
-
       const res = await deleteFileFromS3Job(job, client);
-
       expect(mockAuditLogger.error).toHaveBeenCalledWith("S3 Queue Error: Unable to DELETE file '2' for key 'missing.txt': boom");
       expect(res).toEqual({ data: job.data, status: 500, res: undefined });
     });
@@ -171,9 +165,7 @@ describe('S3 helpers', () => {
           .mockResolvedValueOnce({ Status: 'Suspended' })
           .mockResolvedValueOnce({}),
       };
-
       await verifyVersioning('bucket-one', client);
-
       expect(client.send).toHaveBeenCalledTimes(2);
       expect(recordedCommands[0]).toEqual({
         name: 'GetBucketVersioningCommand',
@@ -239,8 +231,10 @@ describe('S3 helpers', () => {
 
     it('creates a signed URL for the requested object', async () => {
       const env = {
+        S3_BUCKET: 'env-bucket',
         AWS_ACCESS_KEY_ID: 'ENV_AK',
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
       };
       const {
         getSignedDownloadUrl,
@@ -266,8 +260,10 @@ describe('S3 helpers', () => {
 
     it('logs and returns the error when presigning fails', async () => {
       const env = {
+        S3_BUCKET: 'env-bucket',
         AWS_ACCESS_KEY_ID: 'ENV_AK',
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
       };
       const {
         getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger,
@@ -328,9 +324,7 @@ describe('S3 helpers', () => {
       const client = { send: jest.fn() };
       const buffer = Buffer.from('data');
       const type = { mime: 'text/plain' };
-
       await uploadFile(buffer, 'file.txt', type, client, 'bucket-one');
-
       expect(client.send).not.toHaveBeenCalled();
       expect(mockUpload).toHaveBeenCalled();
       expect(mockDone).toHaveBeenCalled();
