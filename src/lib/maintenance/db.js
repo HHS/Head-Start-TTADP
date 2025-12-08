@@ -413,22 +413,30 @@ SELECT
  */
 const correctArFlags = async (triggeredById = null) => maintenanceCommand(
   async (logMessages, logBenchmarks) => {
-    // Run the correction SQL
-    await sequelize.query(CORRECT_AR_FLAGS_SQL, {
-      logging: (message, timingMs) => {
-        logMessages.push(message);
-        logBenchmarks.push(timingMs);
-      },
-      benchmark: true,
-    });
+    // Use a transaction to ensure both queries use the same connection
+    // This is necessary because TEMP tables are session-specific in PostgreSQL
+    const counts = await sequelize.transaction(async (transaction) => {
+      // Run the correction SQL
+      await sequelize.query(CORRECT_AR_FLAGS_SQL, {
+        transaction,
+        logging: (message, timingMs) => {
+          logMessages.push(message);
+          logBenchmarks.push(timingMs);
+        },
+        benchmark: true,
+      });
 
-    // Query the temp tables for counts before they're dropped at end of session
-    const [[counts]] = await sequelize.query(CORRECT_AR_FLAGS_COUNTS_SQL, {
-      logging: (message, timingMs) => {
-        logMessages.push(message);
-        logBenchmarks.push(timingMs);
-      },
-      benchmark: true,
+      // Query the temp tables for counts before they're dropped at end of session
+      const [[result]] = await sequelize.query(CORRECT_AR_FLAGS_COUNTS_SQL, {
+        transaction,
+        logging: (message, timingMs) => {
+          logMessages.push(message);
+          logBenchmarks.push(timingMs);
+        },
+        benchmark: true,
+      });
+
+      return result;
     });
 
     return {
@@ -710,6 +718,7 @@ module.exports = {
   tableMaintenanceCommand,
   vacuumTable,
   reindexTable,
+  correctArFlags,
   vacuumTables,
   reindexTables,
   dailyMaintenance,
