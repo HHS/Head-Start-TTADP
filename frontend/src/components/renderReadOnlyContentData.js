@@ -39,7 +39,7 @@ export function renderEditor(heading, data) {
   });
 
   return (
-    <div aria-label={typeof heading === 'string' ? heading : 'Content'}>
+    <div className="parsed-html-content" aria-label={typeof heading === 'string' ? heading : 'Content'}>
       {parse(sanitized)}
     </div>
   );
