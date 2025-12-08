@@ -96,7 +96,7 @@ export const createHandler = async (req, res) => {
     const event = await findEventBySmartsheetIdSuffix(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const auth = await getEventAuthorization(req, res, event);
-    if (!auth.canCreateSession()) { return res.sendStatus(403); }
+    if (!auth.canCreateSession()) { return res.sendStatus(httpCodes.FORBIDDEN); }
 
     const session = await createSession({
       eventId: event.id,

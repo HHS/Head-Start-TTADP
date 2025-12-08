@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router';
@@ -41,21 +41,23 @@ export default function SessionReportFacilitation({ match }) {
     [trainingReportId],
   );
 
+  useEffect(() => {
+    const trUsers = [
+      ...(trainingReport?.collaboratorIds || []),
+      trainingReport?.owner.id || null,
+    ];
+
+    if (!isAdminUser && !trUsers.includes(user.id)) {
+      history.replace(`${ROUTES.SOMETHING_WENT_WRONG}/401`);
+    }
+  }, [history, isAdminUser, trainingReport, user.id]);
+
   if (error) {
-    history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
+    history.replace(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
   }
 
   if (!trainingReport) {
     return 'Loading...';
-  }
-
-  const trUsers = [
-    ...trainingReport.collaboratorIds,
-    trainingReport.owner.id,
-  ];
-
-  if (!trUsers.includes(user.id)) {
-    history.push(`${ROUTES.SOMETHING_WENT_WRONG}/401`);
   }
 
   const { register, handleSubmit, errors } = hookForm;

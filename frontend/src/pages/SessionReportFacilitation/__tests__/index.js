@@ -102,7 +102,7 @@ describe('SessionReportFacilitation', () => {
 
   describe('Error handling', () => {
     it('redirects to error page on fetch failure', async () => {
-      const spy = jest.spyOn(history, 'push');
+      const spy = jest.spyOn(history, 'replace');
       fetchMock.get(`/api/events/id/${trainingReportId}`, 500);
 
       renderComponent();
@@ -113,7 +113,7 @@ describe('SessionReportFacilitation', () => {
     });
 
     it('redirects to error page on 404', async () => {
-      const spy = jest.spyOn(history, 'push');
+      const spy = jest.spyOn(history, 'replace');
       fetchMock.get(`/api/events/id/${trainingReportId}`, 404);
 
       renderComponent();
@@ -197,12 +197,11 @@ describe('SessionReportFacilitation', () => {
       });
     });
     it('redirects', async () => {
+      const spy = jest.spyOn(history, 'replace');
       renderComponent();
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-
-      const spy = jest.spyOn(history, 'push');
 
       await waitFor(() => {
         expect(spy).toHaveBeenCalledWith('/something-went-wrong/401');
