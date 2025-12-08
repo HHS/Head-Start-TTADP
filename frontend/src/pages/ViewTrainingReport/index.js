@@ -231,8 +231,6 @@ export default function ViewTrainingReport({ match }) {
     striped: true,
   }] : [];
 
-  console.log(eventSummary);
-
   const isIstVisit = (session) => {
     if (session.data.isIstVisit === 'yes' || (session.data.regionalOfficeTta && session.data.regionalOfficeTta.length > 0)) {
       return true;
