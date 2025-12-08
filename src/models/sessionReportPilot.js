@@ -75,6 +75,17 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.JSONB,
       allowNull: false,
     },
+    submitted: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return !!(
+          this.approverId
+          && this.data
+          && this.data.pocComplete
+          && this.data.ownerComplete
+        );
+      },
+    },
   }, {
     sequelize,
     modelName: 'SessionReportPilot',

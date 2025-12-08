@@ -8,4 +8,5 @@ export type SessionReportShape = {
   event: unknown;
   approverId: number | null;
   approver: { id: number } | null;
+  submitted: boolean;
 };
