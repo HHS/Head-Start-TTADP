@@ -23,7 +23,7 @@ export default function useSessionCardPermissions({
 
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
-  const isSessionApprover = user.id === approverId;
+  const isSessionApprover = user.id === Number(approverId);
 
   const showSessionEdit = useMemo(() => {
     const submitted = !!(pocComplete && ownerComplete && approverId);

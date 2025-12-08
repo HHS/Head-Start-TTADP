@@ -24,7 +24,7 @@ export default function Approve({ onFormReview }) {
     {
       status,
       user: {
-        fullName: approver.fullName,
+        fullName: approver?.fullName || '',
       },
     },
   ];

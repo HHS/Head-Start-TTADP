@@ -22,7 +22,6 @@ const ReviewSubmitSession = ({
     status,
     approverId,
     approver,
-    submitted,
     event,
   } = formData;
 
@@ -35,7 +34,6 @@ const ReviewSubmitSession = ({
 
   useEffect(() => {
     // This useEffect maintains the value of the hidden input "reviewStatus"
-
     const submissionStatus = !!(pocComplete && ownerComplete && approverId);
 
     if (submissionStatus && reviewStatus !== REPORT_STATUSES.SUBMITTED) {
@@ -69,7 +67,7 @@ const ReviewSubmitSession = ({
         <input type="hidden" name="reviewStatus" id="reviewStatus" ref={register()} />
 
         <Review
-          isSubmitted={submitted}
+          isSubmitted={reviewStatus === REPORT_STATUSES.SUBMITTED}
           isNeedsAction={isNeedsAction}
           isApprover={isApprover}
           approver={approver}
