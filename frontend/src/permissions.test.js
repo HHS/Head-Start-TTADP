@@ -199,4 +199,40 @@ describe('canCreateCommunicationLog', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('region 14 exclusion', () => {
+    it('should return false for region 14 even with READ_WRITE_ACTIVITY_REPORTS permission', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 14),
+      ]);
+
+      const result = canCreateCommunicationLog(user, 14);
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false for admin with READ_WRITE_ACTIVITY_REPORTS permission in region 14', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.ADMIN, 14),
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 14),
+      ]);
+
+      const result = canCreateCommunicationLog(user, 14);
+
+      expect(result).toBe(false);
+    });
+
+    it('should allow other regions when user also has region 14 permission', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 1),
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 14),
+      ]);
+
+      const resultForRegion1 = canCreateCommunicationLog(user, 1);
+      const resultForRegion14 = canCreateCommunicationLog(user, 14);
+
+      expect(resultForRegion1).toBe(true);
+      expect(resultForRegion14).toBe(false);
+    });
+  });
 });
