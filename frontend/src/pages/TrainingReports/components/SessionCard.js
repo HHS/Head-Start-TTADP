@@ -51,7 +51,7 @@ function SessionCard({
     objectiveTopics,
     objectiveTrainers,
     status,
-    // facilitation,  TODO: will need later
+    facilitation,
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -136,6 +136,11 @@ function SessionCard({
 
         <CardData label="Session objective">
           {objective}
+        </CardData>
+
+        {/* TODO: this is just for debugging/testing, delete before release */}
+        <CardData label="Facilitation">
+          {facilitation}
         </CardData>
 
         <CardData label="Support type">
