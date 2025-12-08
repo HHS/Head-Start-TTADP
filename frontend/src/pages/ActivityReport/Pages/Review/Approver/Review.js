@@ -65,7 +65,12 @@ const Review = ({
         <p>
           <span className="text-bold">Creator notes</span>
         </p>
-        <Editor readOnly toolbarHidden defaultEditorState={defaultEditorState} />
+        <Editor
+          readOnly
+          toolbarHidden
+          defaultEditorState={defaultEditorState}
+          ariaLabel="Creator notes"
+        />
       </div>
       {
         otherManagerNotes && otherManagerNotes.length > 0 && (
