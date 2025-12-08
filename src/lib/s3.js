@@ -138,8 +138,8 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
   }
 
   const creds = {
-    accessKeyId: s3Config.credentials.accessKeyId,
-    secretAccessKey: s3Config.credentials.secretAccessKey,
+    accessKeyId: client.credentials.AWS_ACCESS_KEY_ID,
+    secretAccessKey: client.credentials.secretAccessKey,
   };
 
   const opts = {
