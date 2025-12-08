@@ -120,7 +120,6 @@ export const Accordion = ({
     <div
       className={classes}
       data-testid="accordion"
-      data-allow-multiple={multiselectable || false}
     >
       {items.map((item) => (
         <AccordionItem
