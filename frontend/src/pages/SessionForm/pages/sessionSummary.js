@@ -327,6 +327,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       <FormItem
         label="Session context "
         name="context"
+        required={false}
       >
         <Textarea
           id="context"
