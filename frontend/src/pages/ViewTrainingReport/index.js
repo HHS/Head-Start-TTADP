@@ -17,6 +17,7 @@ import ReadOnlyContent from '../../components/ReadOnlyContent';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import './index.css';
 import UserContext from '../../UserContext';
+import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 
 export const formatOwnerName = (event) => {
   try {
@@ -126,7 +127,11 @@ export default function ViewTrainingReport({ match }) {
 
   useEffect(() => {
     async function fetchPoc() {
-      if (event && event.pocIds && event.pocIds.length) {
+      if (
+        event
+        && event.pocIds
+        && event.pocIds.length
+      ) {
         try {
           const pocs = await getNamesByIds(event.pocIds);
           setEventPoc(pocs);
@@ -199,15 +204,22 @@ export default function ViewTrainingReport({ match }) {
     }
   };
 
+  const organizerIsNoNationalCenters = (
+    (event?.data?.eventOrganizer || '') === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
+  );
+
   const eventSummary = event && event.data ? [{
     heading: 'Event Summary',
     data: {
       'Event name': event.data.eventName,
       'Event creator': ownerName,
       Region: String(event.regionId),
+
       'Event organizer': event.data.eventOrganizer,
       'Event collaborators': eventCollaborators,
-      'Regional point of contact': eventPoc,
+      ...(
+        !organizerIsNoNationalCenters ? { 'Regional point of contact': eventPoc } : {}
+      ),
       'Intended audience': event.data.audience,
       'Start date': event.data.startDate,
       'End date': event.data.endDate,
@@ -218,6 +230,8 @@ export default function ViewTrainingReport({ match }) {
     },
     striped: true,
   }] : [];
+
+  console.log(eventSummary);
 
   const isIstVisit = (session) => {
     if (session.data.isIstVisit === 'yes' || (session.data.regionalOfficeTta && session.data.regionalOfficeTta.length > 0)) {
