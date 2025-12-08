@@ -202,8 +202,7 @@ const canEditOrCreateSessionReports = (user, region) => {
 
 /**
  * Check if user can create communication logs in a specific region.
- * Requires READ_WRITE_ACTIVITY_REPORTS (scopeId 3) permission for the region,
- * or ADMIN permission (scopeId 2).
+ * Requires READ_WRITE_ACTIVITY_REPORTS (scopeId 3) permission for the region.
  * @param {object} user - user object
  * @param {number} regionId - region id
  * @returns {boolean} - True if the user can create communication logs in the region
@@ -211,10 +210,6 @@ const canEditOrCreateSessionReports = (user, region) => {
 const canCreateCommunicationLog = (user, regionId) => {
   if (!user || !regionId) {
     return false;
-  }
-
-  if (isAdmin(user)) {
-    return true;
   }
 
   const { permissions } = user;
