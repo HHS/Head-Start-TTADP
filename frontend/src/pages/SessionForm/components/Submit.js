@@ -67,9 +67,9 @@ export default function Submit({
           inputRef={register()}
           required
         >
-          <option disabled hidden value="">Select an approver</option>
+          <option disabled selected value="">Select an approver</option>
           {approverOptions.map((approver) => (
-            <option value={approver.id}>{approver.fullName}</option>
+            <option key={approver.id} value={approver.id}>{approver.fullName}</option>
           ))}
         </Dropdown>
       </FormItem>

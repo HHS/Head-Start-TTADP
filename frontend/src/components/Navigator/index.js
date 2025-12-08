@@ -26,6 +26,7 @@ import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import AppLoadingContext from '../../AppLoadingContext';
+import { NOOP } from '../../Constants';
 
 const Navigator = ({
   formData,
@@ -305,7 +306,7 @@ Navigator.defaultProps = {
   datePickerKey: '',
   formDataStatusProp: 'calculatedStatus',
   shouldAutoSave: true,
-  setShouldAutoSave: () => {},
+  setShouldAutoSave: NOOP,
   preFlightForNavigation: () => Promise.resolve(true),
   hideSideNav: false,
 };
