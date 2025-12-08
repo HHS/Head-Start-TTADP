@@ -277,7 +277,7 @@ export default function SessionForm({ match }) {
          */
 
         // is it submitted?
-        const { data: { submitted }, approverId } = session;
+        const { approverId, submitted } = session;
         const isApproverUser = user.id === Number(approverId);
 
         const isNeedsAction = session.data.status === REPORT_STATUSES.NEEDS_ACTION;
