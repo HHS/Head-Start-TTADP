@@ -42,9 +42,13 @@ export default function SessionReportFacilitation({ match }) {
   );
 
   useEffect(() => {
+    if (!trainingReport) {
+      return;
+    }
+
     const trUsers = [
-      ...(trainingReport?.collaboratorIds || []),
-      trainingReport?.owner.id || null,
+      ...trainingReport.collaboratorIds,
+      trainingReport.owner.id,
     ];
 
     if (!isAdminUser && !trUsers.includes(user.id)) {
