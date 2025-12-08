@@ -137,15 +137,14 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
     return url;
   }
 
-  const cfg = generateS3Config();
   const creds = {
-    accessKeyId: cfg.credentials.accessKeyId,
-    secretAccessKey: cfg.credentials.secretAccessKey,
+    accessKeyId: s3Config.credentials.accessKeyId,
+    secretAccessKey: s3Config.credentials.secretAccessKey,
   };
 
   const opts = {
     service: 's3',
-    host: `${s3Bucket}.s3.${cfg.region}.amazonaws.com`,
+    host: `${s3Bucket}.s3.${s3Config.region}.amazonaws.com`,
     path: `/${key}`,
     region: s3Config.region,
     expires,
