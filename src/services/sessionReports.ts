@@ -184,9 +184,6 @@ export async function updateSession(id: number, request) {
     update.approverId = Number(approverId);
   }
 
-  // auditLogger.info({ update, newData, existingData });
-  // console.log({ update, newData, existingData });
-
   await SessionReportPilot.update(
     update,
     {
