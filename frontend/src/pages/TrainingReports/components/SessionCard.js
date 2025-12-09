@@ -1,18 +1,21 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { Link } from 'react-router-dom';
 import { ModalToggleButton, Button } from '@trussworks/react-uswds';
 import Modal from '../../../components/VanillaModal';
 import {
   InProgress,
   Closed,
+  NeedsActionIcon,
   NoStatus,
   Pencil,
   Trash,
 } from '../../../components/icons';
 import useSessionCardPermissions from '../../../hooks/useSessionCardPermissions';
 import './SessionCard.scss';
+
+const FRIENDLY_NEEDS_ACTION = 'Needs action';
 
 const CardData = ({ label, children }) => (
   <li className="ttahub-session-card__card-data desktop:padding-bottom-05 flex-align-start padding-bottom-1">
@@ -59,6 +62,8 @@ function SessionCard({
       case TRAINING_REPORT_STATUSES.IN_PROGRESS:
       case TRAINING_REPORT_STATUSES.COMPLETE:
         return status;
+      case REPORT_STATUSES.NEEDS_ACTION:
+        return FRIENDLY_NEEDS_ACTION;
       default:
         return TRAINING_REPORT_STATUSES.NOT_STARTED;
     }
@@ -67,9 +72,14 @@ function SessionCard({
   const displaySessionStatus = getSessionDisplayStatusText();
 
   const getSessionStatusIcon = (() => {
+    if (displaySessionStatus === FRIENDLY_NEEDS_ACTION) {
+      return <NeedsActionIcon />;
+    }
     if (displaySessionStatus === TRAINING_REPORT_STATUSES.IN_PROGRESS) {
       return <InProgress />;
-    } if (displaySessionStatus === TRAINING_REPORT_STATUSES.COMPLETE) {
+    }
+
+    if (displaySessionStatus === TRAINING_REPORT_STATUSES.COMPLETE) {
       return <Closed />;
     }
     return <NoStatus />;

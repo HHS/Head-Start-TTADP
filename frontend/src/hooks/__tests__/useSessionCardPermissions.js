@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-hooks';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
+import { TRAINING_REPORT_STATUSES, REPORT_STATUSES } from '@ttahub/common/src/constants';
 import React from 'react';
 import UserContext from '../../UserContext';
 import useSessionCardPermissions from '../useSessionCardPermissions';
@@ -85,6 +85,96 @@ describe('useSessionCardPermissions', () => {
       const { result } = renderHook(() => useSessionCardPermissions(props), {
         wrapper,
         initialProps: { user: mockSessionApprover },
+      });
+
+      expect(result.current.showSessionEdit).toBe(true);
+    });
+
+    it('returns true when session is submitted with NEEDS_ACTION status and user is POC', () => {
+      const props = {
+        ...baseProps,
+        isPoc: true,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            status: REPORT_STATUSES.NEEDS_ACTION,
+            ownerComplete: true,
+            pocComplete: true,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(true);
+    });
+
+    it('returns true when session is submitted with NEEDS_ACTION status and user is collaborator', () => {
+      const props = {
+        ...baseProps,
+        isCollaborator: true,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            status: REPORT_STATUSES.NEEDS_ACTION,
+            ownerComplete: true,
+            pocComplete: true,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(true);
+    });
+
+    it('returns false when session is submitted with NEEDS_ACTION status and user is approver', () => {
+      const props = {
+        ...baseProps,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            status: REPORT_STATUSES.NEEDS_ACTION,
+            ownerComplete: true,
+            pocComplete: true,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockSessionApprover },
+      });
+
+      expect(result.current.showSessionEdit).toBe(false);
+    });
+
+    it('returns true when admin and session is submitted with NEEDS_ACTION status', () => {
+      const props = {
+        ...baseProps,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            status: REPORT_STATUSES.NEEDS_ACTION,
+            ownerComplete: true,
+            pocComplete: true,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockAdminUser },
       });
 
       expect(result.current.showSessionEdit).toBe(true);

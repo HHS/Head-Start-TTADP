@@ -1,5 +1,5 @@
 import { useContext, useMemo } from 'react';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
@@ -28,6 +28,7 @@ export default function useSessionCardPermissions({
   const showSessionEdit = useMemo(() => {
     const submitted = !!(pocComplete && ownerComplete && approverId);
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
+    const statusIsNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
     // eslint-disable-next-line max-len
     const isRegionalNoNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
     // eslint-disable-next-line max-len
@@ -38,7 +39,8 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    if (submitted && !isSessionApprover && !isAdminUser) {
+    // If status is NEEDS_ACTION, approver has returned it for editing - allow regular editors
+    if (submitted && !statusIsNeedsAction && !isSessionApprover && !isAdminUser) {
       return false;
     }
 
@@ -47,8 +49,9 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    // If they are a POC and POC work is complete, they should not be able to edit the session.
-    if (isPoc && pocComplete && !isAdminUser) {
+    // If they are a POC and POC work is complete, they should not be able to edit the session
+    // unless the approver has returned it for editing (NEEDS_ACTION)
+    if (isPoc && pocComplete && !statusIsNeedsAction && !isAdminUser) {
       return false;
     }
 
@@ -60,7 +63,7 @@ export default function useSessionCardPermissions({
 
     // eslint-disable-next-line max-len
     // If they are the collaborator, they should not be able to edit the session.
-    if (isCollaborator && !isAdminUser && ownerComplete) {
+    if (isCollaborator && !isAdminUser && ownerComplete && !statusIsNeedsAction) {
       return false;
     }
 
@@ -71,6 +74,12 @@ export default function useSessionCardPermissions({
       return false;
     }
 
+    // Approver cannot edit if they've returned it (NEEDS_ACTION)
+    if (submitted && statusIsNeedsAction && isSessionApprover && !isAdminUser) {
+      return false;
+    }
+
+    // Approver can edit if submitted and not complete
     if (submitted && !statusIsComplete && isSessionApprover) {
       return true;
     }
