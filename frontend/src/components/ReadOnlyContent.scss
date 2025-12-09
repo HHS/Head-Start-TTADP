@@ -4,6 +4,16 @@
     .public-DraftStyleDefault-block {
         margin: 0;
     }
+
+    // Remove extra spacing from parsed HTML content
+    .ttahub-read-only-content-section--heading--section-row-data .parsed-html-content {
+        margin: 0;
+
+        // Remove margins from child elements to match padding of other fields
+        > * {
+            margin: 0;
+        }
+    }
 }
 
 // "Special handling" for last-of elements within read-only-section-containers
