@@ -4,6 +4,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "../build/server",
+    "skipLibCheck": true,
     "incremental": true,
     "resolveJsonModule": true, 
     "noErrorTruncation": true,
@@ -11,7 +12,6 @@
     "declaration": false,
     "allowJs": true,
     "removeComments": true,
-    "skipLibCheck": true
   },
   "include": [
     "./**/*.js",
