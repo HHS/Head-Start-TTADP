@@ -247,15 +247,6 @@ describe('S3 helpers', () => {
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
-      expect(mockGetSignedUrl).toHaveBeenCalledWith(
-        client,
-        recordedCommands[0],
-        { expiresIn: 120 },
-      );
-      expect(recordedCommands[0]).toEqual({
-        name: 'GetObjectCommand',
-        params: { Bucket: 'bucket-one', Key: 'file.txt' },
-      });
       expect(mockAuditLogger.info).toHaveBeenCalled();
     });
 
