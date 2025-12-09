@@ -177,6 +177,7 @@ export default function SessionForm({ match }) {
     isOwner,
     isApprover,
     applicationPages,
+    isSessionNavigationDead,
   } = useSessionFormRoleAndPages(hookForm);
 
   const redirectPagePath = applicationPages[0]?.path || null;
@@ -629,7 +630,7 @@ export default function SessionForm({ match }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
-            deadNavigation={isApprover && !isAdminUser}
+            deadNavigation={isSessionNavigationDead}
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
             key={currentPage}

@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import React, { useMemo, useContext } from 'react';
+import useSessionDeadNavigation from './useSessionDeadNavigation';
 import isAdmin from '../permissions';
 import pages from '../pages/SessionForm/pages';
 import ReviewSubmitSession from '../pages/SessionForm/components/ReviewSubmit';
@@ -156,6 +157,15 @@ export default function useSessionFormRoleAndPages(hookForm) {
     isRegionalWithNationalCenters,
   ]);
 
+  const { isSessionNavigationDead } = useSessionDeadNavigation({
+    isAdminUser,
+    isPoc,
+    isCollaborator,
+    isOwner,
+    isApprover,
+    isSubmitted: formData.submitted,
+  });
+
   return {
     isPoc,
     isAdminUser,
@@ -163,5 +173,6 @@ export default function useSessionFormRoleAndPages(hookForm) {
     isOwner,
     isApprover,
     applicationPages,
+    isSessionNavigationDead,
   };
 }

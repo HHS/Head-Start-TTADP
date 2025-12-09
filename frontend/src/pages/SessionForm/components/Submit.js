@@ -67,7 +67,7 @@ export default function Submit({
           inputRef={register()}
           required
         >
-          <option disabled selected value="">Select an approver</option>
+          <option selected value="">Select an approver</option>
           {approverOptions.map((approver) => (
             <option key={approver.id} value={approver.id}>{approver.fullName}</option>
           ))}

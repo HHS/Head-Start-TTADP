@@ -56,7 +56,7 @@ export default function Approve({ onFormReview }) {
           name="approvalStatus"
           inputRef={register({ required: true })}
         >
-          <option value="" disabled selected>- Select -</option>
+          <option value="" selected>- Select -</option>
           {Object.values(APPROVER_STATUSES).map((reportStatus) => (
             <option key={reportStatus} value={reportStatus}>{startCase(reportStatus)}</option>
           ))}
