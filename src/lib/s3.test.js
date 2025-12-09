@@ -269,12 +269,12 @@ describe('S3 helpers', () => {
         getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger,
       } = loadModule(env);
       const client = { send: jest.fn() };
-      const err = new Error('presign failed');
-      mockGetSignedUrl.mockRejectedValue(err);
+      const fakeErr = new Error('presign failed');
+      mockGetSignedUrl.mockImplementationOnce(() => { throw fakeErr; });
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client);
-      expect(mockAuditLogger.error).toHaveBeenCalledWith(`${err.message}`);
+      expect(mockAuditLogger.error).toHaveBeenCalledWith(`${fakeErr.message}`);
       expect(res.url).toBeNull();
-      expect(res.error).toBe(err);
+      expect(res.error).toBe(fakeErr);
     });
   });
 
