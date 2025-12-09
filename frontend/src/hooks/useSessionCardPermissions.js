@@ -34,6 +34,10 @@ export default function useSessionCardPermissions({
     const isRegionalWithNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
     const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
 
+    if (statusIsComplete && !isAdminUser) {
+      return false;
+    }
+
     if (submitted && !isSessionApprover && !isAdminUser) {
       return false;
     }
