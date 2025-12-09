@@ -301,7 +301,7 @@ export default function SessionForm({ match }) {
         // eslint-disable-next-line max-len
         const isFormUser = (isPocFromSession || isOwnerFromSession || isCollaboratorFromSession) && !isAdminUser;
 
-        const submittedFormUser = submitted && isFormUser && !isNeedsAction;
+        const submittedFormUser = submitted && isFormUser && !isNeedsAction && !isApproverUser;
         const completeSessionFormUser = sessionComplete && (isFormUser || isApproverUser);
 
         // when do we redirect to the "View" page?

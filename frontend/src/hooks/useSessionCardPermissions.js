@@ -39,7 +39,7 @@ export default function useSessionCardPermissions({
     }
 
     // owners do not edit sessions
-    if (isOwner && !isAdminUser) {
+    if (isOwner && !isSessionApprover && !isAdminUser) {
       return false;
     }
 
