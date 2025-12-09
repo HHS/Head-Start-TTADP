@@ -243,9 +243,10 @@ describe('S3 helpers', () => {
         mockAuditLogger,
       } = loadModule(env);
       const client = { send: jest.fn() };
-      mockGetSignedUrl.mockResolvedValue('signed-url');
+      const result = { host: 'test.amazonaws.com', path: '/file.txt' };
+      mockGetSignedUrl.mockResolvedValue();
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
-      expect(res).toEqual({ url: 'signed-url', error: null });
+      expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         client,
         recordedCommands[0],
@@ -269,7 +270,7 @@ describe('S3 helpers', () => {
         getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger,
       } = loadModule(env);
       const client = { send: jest.fn() };
-      const fakeErr = new Error('presign failed');
+      const fakeErr = new Error('Failed to generate: presign failed');
       mockGetSignedUrl.mockImplementationOnce(() => { throw fakeErr; });
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client);
       expect(mockAuditLogger.error).toHaveBeenCalledWith(`${fakeErr.message}`);
