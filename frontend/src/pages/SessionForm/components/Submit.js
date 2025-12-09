@@ -37,14 +37,18 @@ export default function Submit({
 
   let approverOptions = approvers;
 
-  if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && facilitation === 'regional_tta_staff') {
+  if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && (facilitation === 'regional_tta_staff' || facilitation === 'both')) {
     // format approvers and flatten national and regional trainers into a single list
     approverOptions = approvers.filter((approverGroup) => approverGroup.label === 'Regional trainers').map((group) => group.options).flat();
   }
 
+  // POCs can select approver when facilitation includes regional staff
+  const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
+  const canSelectApprover = !isPoc || (isPoc && facilitationIncludesRegion);
+
   return (
     <div data-testid="session-form-submit">
-      {!isPoc && (
+      {canSelectApprover && (
 
         <FormItem
           label="Creator notes"
@@ -55,7 +59,7 @@ export default function Submit({
         </FormItem>
       )}
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
-      {!isPoc && (
+      {canSelectApprover && (
       <FormItem
         label="Approving manager"
         name="approverId"
