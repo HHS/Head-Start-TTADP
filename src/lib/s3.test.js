@@ -244,7 +244,7 @@ describe('S3 helpers', () => {
       } = loadModule(env);
       const client = { send: jest.fn() };
       const result = { host: 'test.amazonaws.com', path: '/file.txt' };
-      mockGetSignedUrl.mockReturnThis(result);
+      mockGetSignedUrl.mockImplementation(result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
