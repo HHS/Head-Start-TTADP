@@ -124,12 +124,10 @@ const createMonitoringGoals = async () => {
         ON mr."statusId" = mrs."statusId"
       JOIN "MonitoringFindingHistories" mfh
         ON mr."reviewId" = mfh."reviewId"
-      JOIN "MonitoringFindings" mf
-        ON mfh."findingId" = mf."findingId"
-      JOIN "MonitoringFindingStatuses" mfs
-        ON mf."statusId" = mfs."statusId"
+      JOIN open_citations
+        ON mfh."findingId" = fid
       JOIN "MonitoringFindingGrants" mfg
-        ON mf."findingId" = mfg."findingId"
+        ON fid = mfg."findingId"
         AND mrg."granteeId" = mfg."granteeId"
       LEFT JOIN "Goals" g
         ON (
@@ -144,8 +142,6 @@ const createMonitoringGoals = async () => {
         ON grta."activeGrantId" = gr2.id
         AND gr."recipientId" = gr2."recipientId"
       WHERE NOT gr2.cdi
-        AND mrs."name" = 'Complete'
-        AND mfs."name" = 'Active'
         AND mr."reportDeliveryDate" BETWEEN '${cutOffDate}' AND NOW()
         AND mr."reviewType" IN (
           'AIAN-DEF',
