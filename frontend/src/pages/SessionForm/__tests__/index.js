@@ -1503,4 +1503,433 @@ describe('SessionReportForm', () => {
       await waitFor(() => expect(historySpy).toHaveBeenCalledWith('/training-report/view/1'));
     });
   });
+
+  describe('POC with facilitation="both" can load and save IST fields', () => {
+    it('POC loads existing IST data when facilitation is "both"', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            ...istAndPocFields,
+            facilitation: 'both',
+            sessionName: 'Existing Session Name',
+            objective: 'Existing Objective',
+            startDate: '01/01/2024',
+            duration: 2,
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [1],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+      // Verify IST fields are loaded and visible
+      await waitFor(() => {
+        const sessionNameInput = screen.getByLabelText(/Session name/i);
+        expect(sessionNameInput.value).toBe('Existing Session Name');
+      });
+    });
+
+    it('POC can save IST fields when facilitation is "both"', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            ...istAndPocFields,
+            facilitation: 'both',
+            sessionName: 'Test Session',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [1],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+      fetchMock.put(url, { id: 1, eventId: 1, data: { ...istAndPocFields, facilitation: 'both' } });
+      const saveSession = screen.getByText(/Save draft/i);
+      userEvent.click(saveSession);
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+      // Assert the put contains both IST and POC keys
+      const putBody = fetchMock.lastOptions(url).body;
+      const putBodyJson = JSON.parse(putBody);
+
+      // Verify IST keys are included
+      const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
+      istKeysWithoutPocComplete.forEach((key) => {
+        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+      });
+
+      // Verify POC keys are included
+      const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
+      pocKeysWithoutOwnerComplete.forEach((key) => {
+        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+      });
+    });
+
+    it('POC loads existing IST data when facilitation is "regional_tta_staff"', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            ...istAndPocFields,
+            facilitation: 'regional_tta_staff',
+            sessionName: 'Regional TTA Session',
+            objective: 'Regional Objective',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [1],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+      // Verify IST fields are loaded and visible
+      await waitFor(() => {
+        const sessionNameInput = screen.getByLabelText(/Session name/i);
+        expect(sessionNameInput.value).toBe('Regional TTA Session');
+      });
+    });
+
+    it('POC can save IST fields when facilitation is "regional_tta_staff"', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            ...istAndPocFields,
+            facilitation: 'regional_tta_staff',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [1],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+      fetchMock.put(url, { id: 1, eventId: 1, data: { ...istAndPocFields, facilitation: 'regional_tta_staff' } });
+      const saveSession = screen.getByText(/Save draft/i);
+      userEvent.click(saveSession);
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+      // Assert the put contains both IST and POC keys
+      const putBody = fetchMock.lastOptions(url).body;
+      const putBodyJson = JSON.parse(putBody);
+
+      // Verify both IST and POC keys are included
+      const allKeys = [...istKeys, ...pocKeys];
+      const allKeysWithoutComplete = allKeys.filter((key) => key !== 'pocComplete' && key !== 'ownerComplete');
+      allKeysWithoutComplete.forEach((key) => {
+        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+      });
+    });
+
+    it('POC still gets POC-only fields when facilitation is "national_center"', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            ...istAndPocFields,
+            facilitation: 'national_center',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [1],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'participants', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+      fetchMock.put(url, { id: 1, eventId: 1, data: { ...istAndPocFields, facilitation: 'national_center' } });
+      const saveSession = screen.getByText(/Save draft/i);
+      userEvent.click(saveSession);
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+      // Assert the put contains ONLY POC keys (not IST keys)
+      const putBody = fetchMock.lastOptions(url).body;
+      const putBodyJson = JSON.parse(putBody);
+
+      // Verify POC keys are included
+      const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
+      pocKeysWithoutOwnerComplete.forEach((key) => {
+        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+      });
+
+      // Verify IST-only keys are NOT included
+      const istOnlyKeys = istKeys.filter((key) => !pocKeys.includes(key));
+      istOnlyKeys.forEach((key) => {
+        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(false);
+      });
+    });
+
+    it('Collaborator on REGIONAL_TTA_NO_NATIONAL_CENTERS event gets both key sets', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            ...istAndPocFields,
+            facilitation: 'both',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [1],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+      fetchMock.put(url, { id: 1, eventId: 1, data: { ...istAndPocFields, facilitation: 'both' } });
+      const saveSession = screen.getByText(/Save draft/i);
+      userEvent.click(saveSession);
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+      // Assert the put contains both IST and POC keys
+      const putBody = fetchMock.lastOptions(url).body;
+      const putBodyJson = JSON.parse(putBody);
+
+      const allKeys = [...istKeys, ...pocKeys];
+      allKeys.forEach((key) => {
+        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+      });
+    });
+  });
+
+  describe('POC can select approver when facilitation includes region', () => {
+    it('POC can see approver dropdown when facilitation is "both"', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            ...istAndPocFields,
+            facilitation: 'both',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [1],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'review', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+      // Verify POC can see the approver dropdown
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Approving manager/i)).toBeInTheDocument();
+      });
+
+      // Verify POC can see creator notes
+      expect(screen.getByLabelText(/Creator notes/i)).toBeInTheDocument();
+    });
+
+    it('POC can see approver dropdown when facilitation is "regional_tta_staff"', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            ...istAndPocFields,
+            facilitation: 'regional_tta_staff',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [1],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'review', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+      // Verify POC can see the approver dropdown
+      await waitFor(() => {
+        expect(screen.getByLabelText(/Approving manager/i)).toBeInTheDocument();
+      });
+
+      // Verify POC can see creator notes
+      expect(screen.getByLabelText(/Creator notes/i)).toBeInTheDocument();
+    });
+
+    it('POC cannot see approver dropdown when facilitation is "national_center"', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            ...istAndPocFields,
+            facilitation: 'national_center',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [1],
+            collaboratorIds: [],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'review', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+      // Verify POC cannot see the approver dropdown (should not exist)
+      await waitFor(() => {
+        expect(screen.queryByLabelText(/Approving manager/i)).not.toBeInTheDocument();
+      });
+
+      // Verify POC cannot see creator notes
+      expect(screen.queryByLabelText(/Creator notes/i)).not.toBeInTheDocument();
+    });
+  });
 });

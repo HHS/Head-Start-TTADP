@@ -46,12 +46,17 @@ const determineKeyArray = ({
   isCollaborator,
   eventOrganizer,
   isApprover,
+  facilitation = '',
 }) => {
   // eslint-disable-next-line max-len
   const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
 
+  const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
+
   let keyArray;
   if (isAdminUser || (isCollaborator && isRegionalNoNationalCenters) || isApprover) {
+    keyArray = [...istKeys, ...pocKeys];
+  } else if (isPoc && facilitationIncludesRegion) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc) {
     keyArray = pocKeys;
@@ -85,6 +90,7 @@ const resetFormData = ({
     isCollaborator,
     eventOrganizer,
     isApprover,
+    facilitation: updatedSession?.data?.facilitation || '',
   });
 
   const {
@@ -422,6 +428,7 @@ export default function SessionForm({ match }) {
           eventOrganizer,
           isCollaborator,
           isApprover,
+          facilitation: data?.facilitation || '',
         });
         let roleData = reduceDataToMatchKeys(keyArray, data);
 
@@ -542,6 +549,7 @@ export default function SessionForm({ match }) {
         eventOrganizer,
         isCollaborator,
         isApprover,
+        facilitation: data?.facilitation || '',
       });
       let roleData = reduceDataToMatchKeys(keyArray, data);
 
