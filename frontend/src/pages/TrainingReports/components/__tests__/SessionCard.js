@@ -28,7 +28,7 @@ describe('SessionCard', () => {
       endDate: '01/03/2021',
       objective: 'This is my session objective',
       objectiveSupportType: SUPPORT_TYPES[2],
-      objectiveTopics: ['Topic 1', 'Topic 2'],
+      sessionGoalTemplates: ['FEI', 'CQI and Data'],
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
       pocComplete: false,
@@ -73,7 +73,7 @@ describe('SessionCard', () => {
     expect(screen.getByText(/01\/02\/2021 - 01\/03\/2021/i)).toBeInTheDocument();
     expect(screen.getByText('This is my session objective')).toBeInTheDocument();
     expect(screen.getByText(SUPPORT_TYPES[2])).toBeInTheDocument();
-    expect(screen.getByText(/Topic 1, Topic 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/FEI, CQI and Data/i)).toBeInTheDocument();
 
     expect(screen.getByText(/trainer 1, trainer 2/i)).toBeInTheDocument();
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
@@ -127,20 +127,37 @@ describe('SessionCard', () => {
     expect(screen.getByText(/not started/i)).toBeInTheDocument();
   });
 
-  it('correctly renders with missing data', () => {
+  it('correctly renders with empty data', () => {
     renderSessionCard({
       ...defaultSession,
       data: {
         ...defaultSession.data,
         startDate: null,
         endDate: null,
-        objectiveTopics: [],
         objectiveTrainers: [],
+        sessionGoalTemplates: [],
       },
     });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/-/i)).toBeInTheDocument();
-    expect(screen.getByText(/topics/i)).toBeInTheDocument();
+    expect(screen.getByText(/supporting goals/i)).toBeInTheDocument();
+    expect(screen.getByText(/trainers/i)).toBeInTheDocument();
+  });
+
+  it('correctly renders with null data', () => {
+    renderSessionCard({
+      ...defaultSession,
+      data: {
+        ...defaultSession.data,
+        startDate: null,
+        endDate: null,
+        objectiveTrainers: null,
+        sessionGoalTemplates: null,
+      },
+    });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByText(/-/i)).toBeInTheDocument();
+    expect(screen.getByText(/supporting goals/i)).toBeInTheDocument();
     expect(screen.getByText(/trainers/i)).toBeInTheDocument();
   });
 
