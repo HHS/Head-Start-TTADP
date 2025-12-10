@@ -904,7 +904,8 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
       // Should return all recipients, not just 10
-      expect(result.recipients.length).toBeGreaterThanOrEqual(6); // We created at least 6 test recipients
+      // We created at least 6 test recipients
+      expect(result.recipients.length).toBeGreaterThanOrEqual(6);
     });
 
     it('works with no region ID specified (uses userRegions)', async () => {
