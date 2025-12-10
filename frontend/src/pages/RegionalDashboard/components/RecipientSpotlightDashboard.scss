@@ -1,0 +1,17 @@
+/* Custom styling for Recipient Spotlight Dashboard overview widget */
+
+.recipient-spotlight-overview {
+  max-width: 337px;
+
+  /* Percentage text - 16px */
+  .smart-hub--dashboard-overview-widget-field-label {
+    > div > span.text-bold {
+      font-size: 16px;
+    }
+
+    /* X of Y count text - 14px */
+    > span:last-of-type {
+      font-size: 14px;
+    }
+  }
+}

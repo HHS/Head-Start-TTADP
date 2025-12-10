@@ -21,8 +21,12 @@ describe('recipientSpotlight handlers', () => {
     const mockUserRegions = [1, 9];
     const mockScopes = { someScope: 'value' };
     const mockRecipientSpotlightData = {
-      indicators: [{ id: 1, name: 'Indicator 1' }],
-      count: 1,
+      recipients: [{ id: 1, name: 'Indicator 1' }],
+      overview: {
+        numRecipients: '0',
+        totalRecipients: '0',
+        recipientPercentage: '0%',
+      },
     };
 
     beforeEach(() => {
@@ -68,6 +72,7 @@ describe('recipientSpotlight handlers', () => {
         'asc',
         '0',
         mockUserRegions,
+        undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -89,6 +94,7 @@ describe('recipientSpotlight handlers', () => {
         'asc',
         '0',
         mockUserRegions,
+        undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -135,6 +141,7 @@ describe('recipientSpotlight handlers', () => {
         'desc',
         '10',
         mockUserRegions,
+        undefined,
       );
     });
 
@@ -155,6 +162,7 @@ describe('recipientSpotlight handlers', () => {
         undefined,
         '0',
         mockUserRegions,
+        undefined,
       );
     });
   });

@@ -20,7 +20,7 @@ getRecipientSpotLight():
 export async function getRecipientSpotLight(req, res) {
   try {
     const {
-      recipientId, regionId, sortBy, direction, offset,
+      recipientId, regionId, sortBy, direction, offset, limit,
     } = req.query;
 
     const userId = await currentUserId(req, res);
@@ -38,6 +38,7 @@ export async function getRecipientSpotLight(req, res) {
       direction,
       offset,
       userRegions,
+      limit,
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);
