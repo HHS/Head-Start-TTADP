@@ -33,6 +33,7 @@ function renderEditor(heading, data) {
       toolbarHidden
       defaultEditorState={defaultEditorState}
       wrapperId={wrapperId}
+      ariaLabel={typeof heading === 'string' ? heading : 'Content'}
     />
   );
 }
