@@ -265,6 +265,26 @@ describe('Regional Dashboard page', () => {
     expect(heading).toBeVisible();
   });
 
+  it('navigates to /recipient-spotlight', async () => {
+    const user = {
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
+    fetchMock.get(`${reasonListUrl}?${regionInParams}&${lastThirtyDaysParams}`, reasonListResponse);
+    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
+    fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
+    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
+
+    renderDashboard(user, 'recipient-spotlight');
+    const heading = await screen.findByText(/regional dashboard - recipient spotlight/i);
+    expect(heading).toBeVisible();
+  });
+
   it('hides specialist name filter if user can approve reports', async () => {
     fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse);
     fetchMock.get('/api/widgets/reasonList?region.in[]=1&region.in[]=2', reasonListResponse);

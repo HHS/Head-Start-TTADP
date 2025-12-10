@@ -27,6 +27,10 @@ const pageConfig = () => ({
     h1Text: 'Regional dashboard - All reports',
     showFilters: false,
   },
+  'recipient-spotlight': {
+    h1Text: 'Regional dashboard - Recipient spotlight',
+    showFilters: false,
+  },
   'activity-reports': {
     h1Text: 'Regional dashboard - Activity Reports',
     showFilters: true,
@@ -45,6 +49,10 @@ const links = [
   {
     to: '/dashboards/regional-dashboard/training-reports',
     label: 'Training Reports',
+  },
+  {
+    to: '/dashboards/regional-dashboard/recipient-spotlight',
+    label: 'Recipient spotlight',
   },
   /*
   {
