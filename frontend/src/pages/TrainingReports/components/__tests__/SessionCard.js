@@ -160,7 +160,6 @@ describe('SessionCard', () => {
     expect(screen.getByText(/supporting goals/i)).toBeInTheDocument();
     expect(screen.getByText(/trainers/i)).toBeInTheDocument();
   });
-
   it('hides the edit session links when the event is complete for admin', () => {
     const adminUser = {
       id: 1,
