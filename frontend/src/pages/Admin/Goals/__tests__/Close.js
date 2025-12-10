@@ -9,6 +9,7 @@ import selectEvent from 'react-select-event';
 import join from 'url-join';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import Close from '../Close';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
@@ -179,17 +180,17 @@ describe('Close', () => {
     });
 
     fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, [{
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       name: 'Hey hey hey hey hey',
       goalIds: [1],
       grantIds: [2],
     }, {
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       name: 'Hey hey hey hey hey',
       goalIds: [2],
       grantIds: [4],
     }, {
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       name: 'Hey hey hey hey hey 2',
       goalIds: [3],
       grantIds: [4],
@@ -273,17 +274,17 @@ describe('Close', () => {
     });
 
     fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, [{
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       name: 'Hey hey hey hey hey',
       goalIds: [1],
       grantIds: [2],
     }, {
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       name: 'Hey hey hey hey hey',
       goalIds: [2],
       grantIds: [4],
     }, {
-      status: 'In Progress',
+      status: GOAL_STATUS.IN_PROGRESS,
       name: 'Hey hey hey hey hey 2',
       goalIds: [3],
       grantIds: [4],

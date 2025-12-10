@@ -22,7 +22,7 @@ import { Accordion } from '../../../../components/Accordion';
 import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
 import './index.scss';
 
-const GoalUserIdentifier = ({ goal }) => {
+export const GoalUserIdentifier = ({ goal }) => {
   if (goal.standard === 'Monitoring') {
     return ' by OHS';
   }
@@ -36,7 +36,7 @@ const GoalUserIdentifier = ({ goal }) => {
     : '';
 };
 
-const StatusActionTag = ({
+export const StatusActionTag = ({
   update, goalHistory, currentGoalIndex,
 }) => {
   const isReopened = (update.reason === 'Goal created' || update.reason === 'Active monitoring citations')
@@ -47,13 +47,13 @@ const StatusActionTag = ({
   }
 
   switch (update.newStatus) {
-    case 'Not Started':
+    case GOAL_STATUS.NOT_STARTED:
       return <span>Added on</span>;
-    case 'In Progress':
+    case GOAL_STATUS.IN_PROGRESS:
       return <span>Started on</span>;
-    case 'Suspended':
+    case GOAL_STATUS.SUSPENDED:
       return <span>Suspended on</span>;
-    case 'Closed':
+    case GOAL_STATUS.CLOSED:
       return <span>Closed on</span>;
     case 'Complete':
       return <span>Completed on</span>;
@@ -77,6 +77,29 @@ StatusActionTag.propTypes = {
     status: PropTypes.string,
   })).isRequired,
   currentGoalIndex: PropTypes.number.isRequired,
+};
+
+export const userDisplayFromStatus = (goal, update) => {
+  if (update && update.synthetic) {
+    return <GoalUserIdentifier goal={goal} />;
+  }
+
+  if (goal.standard === 'Monitoring'
+    && update.newStatus === GOAL_STATUS.NOT_STARTED
+    && update.reason === 'Active monitoring citations') {
+    return ' by OHS';
+  }
+
+  if (goal.standard === 'Monitoring'
+    && update.newStatus === 'Closed'
+    && update.reason === 'No active monitoring citations') {
+    return ' by OHS';
+  }
+
+  if (update.user) {
+    return ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}`;
+  }
+  return '';
 };
 
 export default function ViewGoalDetails({
@@ -227,24 +250,7 @@ export default function ViewGoalDetails({
 
     const objectives = goal.objectives || [];
 
-    const getUserByFromStatus = (update) => {
-      // For synthetic "Added" updates, fall back to goal-level identifier.
-      if (update && update.synthetic) {
-        return <GoalUserIdentifier goal={goal} />;
-      }
-      if (goal.standard === 'Monitoring' && update.newStatus === 'Not Started' && update.reason === 'Active monitoring citations') {
-        return ' by OHS';
-      }
-
-      if (goal.standard === 'Monitoring' && update.newStatus === 'Closed' && update.reason === 'No active monitoring citations') {
-        return ' by OHS';
-      }
-
-      if (update.user) {
-        return ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}`;
-      }
-      return '';
-    };
+    const getUserByFromStatus = (update) => userDisplayFromStatus(goal, update);
     return {
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
@@ -289,7 +295,7 @@ export default function ViewGoalDetails({
                 <ul className="usa-list" aria-label="Goal status updates">
                   <li>
                     <strong>
-                      {goal.status === 'Not Started' ? 'Added' : `${goal.status}`}
+                      {goal.status === GOAL_STATUS.NOT_STARTED ? 'Added' : `${goal.status}`}
                     </strong>
                     {' '}
                     on

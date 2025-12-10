@@ -1,10 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { OBJECTIVE_STATUS } from '../Constants';
 
 export default function ObjectiveStatusSuspendReason({
   status, closeSuspendReason, closeSuspendContext,
 }) {
-  if (status === 'Suspended' && closeSuspendReason) {
+  if (status === OBJECTIVE_STATUS.SUSPENDED && closeSuspendReason) {
     return (
       <>
         <p className="usa-prose margin-bottom-0 text-bold">

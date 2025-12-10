@@ -4,10 +4,10 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:20.19.3-browsers
+    - image: cimg/node:22.20.0-browsers
   docker-postgres-executor:
     docker:
-    - image: cimg/node:20.19.3-browsers
+    - image: cimg/node:22.20.0-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -52,7 +52,7 @@ workflows:
     # It will build the app, run all tests, then deploy if the branch matches
     # autodeploy: main->staging, production->prod
     when: pipeline.parameters.action == "build_test_deploy"
-    max_auto_reruns: 3
+    max_auto_reruns: 2
     jobs:
     - build_and_lint
     - checkpoint:
@@ -152,7 +152,6 @@ workflows:
     # backup temp db to snapshot
     # restore temp snapshot to lower env dbs
     # run migrations
-    max_auto_reruns: 3
     triggers:
     - schedule:
         cron: "0 4 * * *" # 4AM UTC = 12AM EST
@@ -243,8 +242,7 @@ workflows:
   clear_build_cache:
     when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
     jobs:
-    - clear_cache_job:
-        target_env: << pipeline.parameters.target_env >> 
+    - clear_cache_job
 
   clear_buildcache_cron:
     # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
@@ -257,22 +255,7 @@ workflows:
             only:
             - main
     jobs:
-    - clear_cache_job:
-        target_env: "tta-smarthub-prod" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-staging"
-    - clear_cache_job:
-        target_env: "tta-automation"
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-blue" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-green" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-red" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-gold" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-pink"
+    - clear_cache_job
         
 
 # ----------------- Jobs -----------------
@@ -377,7 +360,7 @@ jobs:
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
-            node -r esm ./tools/check-coverage.js \
+            node ./tools/check-coverage.js \
               --directory-filter=src/,tools/ \
               --fail-on-uncovered=false \
               --output-format=json,html
@@ -430,7 +413,7 @@ jobs:
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
-            node -r esm ./tools/check-coverage.js \
+            node ./tools/check-coverage.js \
               --coverage-file=../frontend/coverage/coverage-final.json \
               --artifact-dir=../frontend/coverage-artifacts \
               --directory-filter=frontend/ \
@@ -654,6 +637,8 @@ jobs:
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
+        when: always
+        name: Create monitoring updates summary
         command: |
           if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
             echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
@@ -664,6 +649,7 @@ jobs:
             goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
             echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
           fi
+          echo $(grep -o "Error.*" cmd_log.txt | tail -n 1) >> monitoring-updates.txt
           cat monitoring-updates.txt
     - when:
         condition:
@@ -675,22 +661,33 @@ jobs:
 
   clear_cache_job:
     executor: docker-executor
-    parameters:
-      target_env:
-        type: string
     steps:
     - checkout
     - install_cf_tools
-    - cf_login:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Clear build cache
-        command: |
-          app_name="tta-smarthub-<< parameters.target_env >>"
-          echo "Clearing build cache for ${app_name}"
-          app_guid=$(cf app --guid ${app_name})
-          cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
-          echo "Build cache cleared"
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-blue
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-red
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-green
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-pink
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-gold
+    - cf_cache_clear:
+        space: staging
+        target_app: tta-smarthub-staging
+    - cf_cache_clear:
+        space: prod
+        target_app: tta-automation
+    - cf_cache_clear:
+        space: prod
+        target_app: tta-smarthub-prod
 
 # ----------------- Commands -----------------
 
@@ -885,6 +882,25 @@ commands:
             -o ${cg_org} \
             -s ${cg_space}
 
+  cf_cache_clear:
+    description: "Clear the build cache for a given app"
+    parameters:
+      space:
+        type: string
+      target_app:
+        type: string
+    steps:
+    - cf_login:
+        target_env: << parameters.space >>
+    - run:
+        name: Clear build cache (<< parameters.target_app >>)
+        command: |
+          app_name=<< parameters.target_app >>
+          app_guid=$(cf app --guid ${app_name})
+          echo "Clearing build cache for ${app_name} (${app_guid})"
+          cf curl -f -i -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+          echo "Build cache cleared"
+
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials and push application using deployment configuration file."
     parameters:
@@ -921,42 +937,41 @@ commands:
         type: string
     steps:
     - restore_cache:
-        key: 'environment-owners'
+        key: env-owners-
     - run:
         name: Write owner into file
         command: |
           mkdir -p environments
           current_env="<< parameters.target_env >>"
-          touch msg.txt
-          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then
-            exit 0;
-          fi
-          if [ -f ./environments/${current_env} ]; then
-            old_owner=$(cat ./environments/${current_env})
-            new_owner="${CIRCLE_USERNAME}"
-            if [ "${old_owner}" != "${new_owner}" ]; then
-              echo "owner changed from ${old_owner}->${new_owner}"
-              echo "${new_owner}" > environments/${current_env}
-              msg = ""
-              cd environments
-              for file in *; do
-                if [ ! -d ${file} ]; then
-                  msg="${file}: $(cat ${file})\n${msg}"
-                fi;
-              done
-              cd ..
-              ./bin/notify-slack.sh \
-                "Environment owner changed: \`\`\`${msg}\`\`\`" \
-                "tm-test"
-                ${SLACK_BOT_TOKEN}
-            else
-              echo "owner not changed: ${old_owner}=${new_owner}"
-            fi
-          else
-            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
-          fi
+
+          cd environments
+          ls -la
+          echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > ${current_env}
+          data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
+          for file in *; do
+            cat ${file}
+            if [ ! -d ${file} ]; then
+              data="${data}$(cat ${file})\n"
+            fi;
+          done
+
+          curl -w "\n%{http_code}\n" --fail-with-body -X POST \
+          https://slack.com/api/canvases.edit \
+          -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data '{
+            "canvas_id": "F09459NAEKB",
+            "changes": [{
+              "operation": "replace",
+              "document_content": {
+                "type": "markdown",
+                "markdown": "'"$data"'"
+              },
+            }],
+          }'
+
     - save_cache:
-        key: 'environment-owners'
+        key: env-owners-{{ epoch }}
         paths:
         - environments
 
@@ -1414,9 +1429,13 @@ commands:
     - run:
         name: Post Slack Message
         command: |
-          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-            -H 'Content-type: application/json;charset=utf-8' \
-            --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+          if [ -f /tmp/message_file.json ]; then
+            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+          else
+            echo "Skipping Slack notification because /tmp/message_file.json was not generated."
+          fi
 
   no-op:
     # placeholder command for no-op jobs

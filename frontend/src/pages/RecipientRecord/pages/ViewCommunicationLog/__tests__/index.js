@@ -73,7 +73,7 @@ describe('ViewCommunicationForm', () => {
         method: 'Phone',
         purpose: 'Monitoring',
         duration: '1',
-        notes: 'This is a note',
+        notes: '<p>This is a note</p>',
         specialistNextSteps: [
           {
             note: 'next step 1',
@@ -144,7 +144,7 @@ describe('ViewCommunicationForm', () => {
         method: 'Phone',
         purpose: 'Monitoring',
         duration: '1',
-        notes: 'This is a note',
+        notes: '<p>This is a note</p>',
         specialistNextSteps: [
           {
             note: 'next step 1',
@@ -190,6 +190,50 @@ describe('ViewCommunicationForm', () => {
     expect(edit).toHaveAttribute('href', '/communication-log/region/1/log/1/log');
   });
 
+  it('hides notes section when empty', async () => {
+    const formData = {
+      id: 1,
+      recipients: [{
+        id: 1,
+        name: 'Little Lord Wigglytoes',
+      }],
+      userId: '1',
+      updatedAt: new Date(),
+      author: {
+        id: 1,
+        name: 'Ted User',
+      },
+      data: {
+        communicationDate: '11/01/2023',
+        result: 'Next Steps identified',
+        method: 'Phone',
+        purpose: 'Monitoring',
+        duration: '1',
+        notes: '',
+        specialistNextSteps: [],
+        recipientNextSteps: [],
+        pageState: {
+          1: COMPLETE,
+          2: NOT_STARTED,
+          3: NOT_STARTED,
+        },
+        otherStaff: [],
+        goals: [],
+      },
+      files: [],
+    };
+
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
+    fetchMock.get(url, formData);
+
+    await act(() => waitFor(() => {
+      renderTest();
+    }));
+
+    expect(await screen.findByText('Little Lord Wigglytoes')).toBeInTheDocument();
+    expect(screen.queryByText('Notes')).toBeNull();
+  });
+
   it('shows error message', async () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
     const spy = jest.spyOn(history, 'push');
@@ -223,7 +267,7 @@ describe('ViewCommunicationForm', () => {
         method: 'Phone',
         purpose: 'Monitoring',
         duration: '1',
-        notes: 'This is a note',
+        notes: '<p>This is a note</p>',
         specialistNextSteps: [
           {
             note: 'next step 1',

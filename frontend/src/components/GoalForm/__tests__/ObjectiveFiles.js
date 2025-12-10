@@ -3,7 +3,7 @@ import React from 'react';
 import {
   render, screen,
 } from '@testing-library/react';
-
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import userEvent from '@testing-library/user-event';
 import ObjectiveFiles from '../ObjectiveFiles';
 
@@ -22,7 +22,7 @@ describe('ObjectiveFiles', () => {
       inputName="objectiveFiles"
       onBlur={jest.fn()}
       onUploadFiles={jest.fn()}
-      goalStatus="In Progress"
+      goalStatus={GOAL_STATUS.IN_PROGRESS}
       userCanEdit
       selectedObjectiveId={1}
     />);
@@ -41,7 +41,7 @@ describe('ObjectiveFiles', () => {
       inputName="objectiveFiles"
       onBlur={jest.fn()}
       status="Draft"
-      goalStatus="In Progress"
+      goalStatus={GOAL_STATUS.IN_PROGRESS}
       userCanEdit
       selectedObjectiveId={1}
     />);
@@ -72,7 +72,7 @@ describe('ObjectiveFiles', () => {
       inputName="objectiveFiles"
       onBlur={jest.fn()}
       status="Draft"
-      goalStatus="In Progress"
+      goalStatus={GOAL_STATUS.IN_PROGRESS}
       userCanEdit
       selectedObjectiveId={1}
     />);
@@ -90,7 +90,7 @@ describe('ObjectiveFiles', () => {
       inputName="objectiveFiles"
       onBlur={jest.fn()}
       status="Draft"
-      goalStatus="In Progress"
+      goalStatus={GOAL_STATUS.IN_PROGRESS}
       userCanEdit
       selectedObjectiveId="new-0"
     />);

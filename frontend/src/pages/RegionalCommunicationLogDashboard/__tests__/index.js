@@ -1,7 +1,7 @@
 import React from 'react';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-import { MemoryRouter, Route, useHistory } from 'react-router';
+import { MemoryRouter, Route } from 'react-router';
 import {
   render, waitFor, screen, act,
 } from '@testing-library/react';
@@ -10,11 +10,6 @@ import { SCOPE_IDS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import RegionalCommunicationLog from '..';
 import AppLoadingContext from '../../../AppLoadingContext';
-
-jest.mock('react-router', () => ({
-  ...jest.requireActual('react-router'),
-  useHistory: jest.fn(),
-}));
 
 describe('RegionalCommunicationLogDashboard', () => {
   const userCentralOffice = {
@@ -162,7 +157,7 @@ describe('RegionalCommunicationLogDashboard', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
 
-    const actions = screen.getByRole('button', { name: 'Actions for Communication Log' });
+    const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
     act(() => userEvent.click(actions));
 
     await waitFor(() => expect(screen.getByRole('menuitem', { name: /view/i })).toBeInTheDocument());
@@ -185,15 +180,41 @@ describe('RegionalCommunicationLogDashboard', () => {
     await waitFor(() => expect(fetchMock.called(deleteURL)).toBe(true));
   });
 
+  it('handles delete error', async () => {
+    act(() => renderComm(userCentralOffice, '/communication-log'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
+
+    const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
+    act(() => userEvent.click(actions));
+
+    // click delete
+    const deleteMenuItemButton = screen.getAllByRole('button', { name: /delete/i })[0];
+    act(() => userEvent.click(deleteMenuItemButton));
+
+    // handle modal
+    await waitFor(() => expect(screen.getByRole('heading', { name: /are you sure you want to delete this log\?/i })).toBeInTheDocument());
+    const confirmDeleteButton = await screen.findByRole('button', { name: /confirm delete and reload page/i });
+    expect(confirmDeleteButton).toBeVisible();
+
+    const deleteURL = '/api/communication-logs/log/1';
+    fetchMock.delete(deleteURL, 500);
+
+    // confirm delete
+    act(() => userEvent.click(confirmDeleteButton));
+    await waitFor(() => expect(fetchMock.called(deleteURL)).toBe(true));
+  });
+
   it('has an actions menu with View and Delete - can View', async () => {
     const push = jest.fn();
-    useHistory.mockReturnValue({ push });
+    // eslint-disable-next-line global-require
+    jest.spyOn(require('react-router'), 'useHistory').mockReturnValue({ push });
 
     act(() => renderComm(userCentralOffice, '/communication-log'));
     await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
 
-    const actions = screen.getByRole('button', { name: 'Actions for Communication Log' });
+    const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
     act(() => userEvent.click(actions));
 
     await waitFor(() => expect(screen.getAllByRole('button', { name: /view/i })[0]).toBeInTheDocument());
@@ -217,7 +238,7 @@ describe('RegionalCommunicationLogDashboard', () => {
     act(() => userEvent.selectOptions(lastCondition, 'is'));
 
     const select = screen.getByRole('combobox', { name: /date/i });
-    await userEvent.click(select);
+    userEvent.click(select);
     act(() => userEvent.selectOptions(select, 'Year to date'));
 
     const filterURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&communicationDate.in[]=${currentYear}%2F01%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;

@@ -28,7 +28,51 @@ export const userAttributes = [
   'lastLogin',
   'flags',
   'createdAt',
+  'fullName',
 ];
+
+export async function usersByRoles(roles = [], regionId = null) {
+  let permissionsWhere = {};
+
+  if (permissionsWhere) {
+    permissionsWhere = {
+      regionId,
+    };
+  }
+
+  return User.findAll({
+    where: {
+      ...(regionId ? {
+        homeRegionId: regionId,
+      } : {}),
+    },
+    attributes: [
+      'id',
+      'name',
+      'fullName',
+      'email',
+      'homeRegionId',
+    ],
+    include: [
+      {
+        attibutes: [
+          'id',
+          'name',
+          'fullName',
+        ],
+        model: Role,
+        as: 'roles',
+        required: true,
+        where: {
+          name: roles,
+        },
+      },
+    ],
+    order: [
+      [sequelize.fn('CONCAT', sequelize.col('User."name"'), sequelize.col('User."email"')), 'ASC'],
+    ],
+  });
+}
 
 export async function userById(userId, onlyActiveUsers = false) {
   let permissionInclude = {
@@ -469,6 +513,15 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
     },
     include: [
       {
+        model: Role,
+        as: 'roles',
+        attributes: [
+          'fullName',
+          'name',
+          'id',
+        ],
+      },
+      {
         model: NationalCenter,
         as: 'nationalCenters',
       },
@@ -539,14 +592,20 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
 
 export async function getUserNamesByIds(ids) {
   const users = await User.findAll({
-    attributes: ['id', 'name'],
+    attributes: ['id', 'name', 'fullName'],
+    include: [
+      {
+        model: Role,
+        as: 'roles',
+        attributes: ['id', 'name', 'fullName'],
+      },
+    ],
     where: {
       id: ids,
     },
-    raw: true,
   });
 
-  return users.map((u) => u.name);
+  return users.map((u) => u.fullName);
 }
 
 export async function findAllUsersWithScope(scope) {

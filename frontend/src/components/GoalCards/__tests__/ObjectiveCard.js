@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
@@ -10,6 +10,7 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import ObjectiveCard from '../ObjectiveCard';
 import UserContext from '../../../UserContext';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('ObjectiveCard', () => {
   const history = createMemoryHistory();
@@ -33,7 +34,7 @@ describe('ObjectiveCard', () => {
           <ObjectiveCard
             objective={objectiveToRender}
             regionId={1}
-            goalStatus="In Progress"
+            goalStatus={GOAL_STATUS.IN_PROGRESS}
             objectivesExpanded
             dispatchStatusChange={dispatchStatusChange}
             isMonitoringGoal={isMonitoringGoal}
@@ -51,7 +52,7 @@ describe('ObjectiveCard', () => {
     ids: [123],
     title: 'This is an objective',
     endDate: '2020-01-01',
-    status: 'In Progress',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
     grantNumbers: ['grant1', 'grant2'],
     topics: [{ name: 'Topic 1' }],
     citations: [],
@@ -78,7 +79,7 @@ describe('ObjectiveCard', () => {
     ids: [456],
     title: 'Objective without topics',
     endDate: '2022-02-02',
-    status: 'Not Started',
+    status: OBJECTIVE_STATUS.NOT_STARTED,
     citations: [],
     activityReports: [],
     supportType: 'Technical Assistance',
@@ -122,8 +123,8 @@ describe('ObjectiveCard', () => {
     const dispatchStatusChange = jest.fn();
     renderObjectiveCard(objectiveNoStatus, dispatchStatusChange);
     expect(screen.getByText('Objective without status')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /change status for objective objective without status/i })).toHaveTextContent('Not started'); // Fixed capitalization
-    expect(dispatchStatusChange).toHaveBeenCalledWith([789], 'Not Started');
+    expect(screen.getByRole('button', { name: /change status for objective objective without status/i })).toHaveTextContent(OBJECTIVE_STATUS.NOT_STARTED); // Fixed capitalization
+    expect(dispatchStatusChange).toHaveBeenCalledWith([789], OBJECTIVE_STATUS.NOT_STARTED);
   });
 
   it('updates objective status', async () => {
@@ -137,8 +138,8 @@ describe('ObjectiveCard', () => {
       userEvent.click(changeButton);
     });
 
-    expect(dispatchStatusChange).toHaveBeenCalledWith([123], 'In Progress');
-    fetchMock.put('/api/objectives/status', { ids: [123], status: 'Complete' });
+    expect(dispatchStatusChange).toHaveBeenCalledWith([123], OBJECTIVE_STATUS.IN_PROGRESS);
+    fetchMock.put('/api/objectives/status', { ids: [123], status: OBJECTIVE_STATUS.COMPLETE });
 
     const completeButton = await screen.findByRole('button', { name: /complete/i });
     await act(async () => {
@@ -147,7 +148,7 @@ describe('ObjectiveCard', () => {
 
     expect(fetchMock.called('/api/objectives/status')).toBe(true);
     await waitFor(() => {
-      expect(dispatchStatusChange).toHaveBeenCalledWith([123], 'Complete');
+      expect(dispatchStatusChange).toHaveBeenCalledWith([123], OBJECTIVE_STATUS.COMPLETE);
     });
   });
 
@@ -162,7 +163,7 @@ describe('ObjectiveCard', () => {
       userEvent.click(changeButton);
     });
 
-    expect(dispatchStatusChange).toHaveBeenCalledWith([123], 'In Progress');
+    expect(dispatchStatusChange).toHaveBeenCalledWith([123], OBJECTIVE_STATUS.IN_PROGRESS);
     fetchMock.put('/api/objectives/status', 500);
 
     const completeButton = await screen.findByRole('button', { name: /complete/i });
@@ -172,7 +173,7 @@ describe('ObjectiveCard', () => {
 
     expect(fetchMock.called('/api/objectives/status')).toBe(true);
     await waitFor(() => {
-      expect(dispatchStatusChange).not.toHaveBeenCalledWith([123], 'Complete');
+      expect(dispatchStatusChange).not.toHaveBeenCalledWith([123], OBJECTIVE_STATUS.COMPLETE);
       expect(screen.getByText(/error updating the status/i)).toBeInTheDocument();
     });
   });
@@ -210,8 +211,8 @@ describe('ObjectiveCard', () => {
       userEvent.click(changeButton);
     });
 
-    expect(dispatchStatusChange).toHaveBeenCalledWith([123], 'In Progress');
-    fetchMock.put('/api/objectives/status', { ids: [123], status: 'Suspended' });
+    expect(dispatchStatusChange).toHaveBeenCalledWith([123], OBJECTIVE_STATUS.IN_PROGRESS);
+    fetchMock.put('/api/objectives/status', { ids: [123], status: OBJECTIVE_STATUS.SUSPENDED });
 
     const suspendButton = await screen.findByRole('button', { name: /Suspended/i });
     act(() => {
@@ -240,7 +241,7 @@ describe('ObjectiveCard', () => {
     expect(body.closeSuspendReason).toBe('Regional Office request');
 
     await waitFor(() => {
-      expect(dispatchStatusChange).toHaveBeenCalledWith([123], 'Suspended');
+      expect(dispatchStatusChange).toHaveBeenCalledWith([123], OBJECTIVE_STATUS.SUSPENDED);
     });
   });
 

@@ -296,9 +296,11 @@ describe('resource worker tests', () => {
     expect(mockAxios).toBeCalledWith(
       'http://www.headstart.gov/activity-reports?region.in[]=1&_format=json',
       {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
         maxRedirects: 25,
         responseEncoding: 'utf8',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        },
       },
     );
 
@@ -375,9 +377,11 @@ describe('resource worker tests', () => {
     expect(mockAxios).toBeCalledWith(
       'http://www.headstart.gov/section?_format=json',
       {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
         maxRedirects: 25,
         responseEncoding: 'utf8',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        },
       },
     );
 

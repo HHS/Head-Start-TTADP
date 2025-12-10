@@ -4,6 +4,7 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import FindingWithinReview from '../FindingWithinReview';
 import UserContext from '../../../../../../UserContext';
+import { OBJECTIVE_STATUS } from '../../../../../../Constants';
 
 describe('FindingWithinReview', () => {
   const mockFinding = {
@@ -25,7 +26,7 @@ describe('FindingWithinReview', () => {
           },
         ],
         endDate: '2023-11-30',
-        status: 'In Progress',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: 'Objective 1',
         topics: ['Topic 1', 'Topic 2'],
       },
