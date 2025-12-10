@@ -1258,7 +1258,6 @@ class Users{
 }
 
 enum enum_Users_flags {
- anv_statistics
  collaboration_report
  quality_assurance_dashboard
 }
