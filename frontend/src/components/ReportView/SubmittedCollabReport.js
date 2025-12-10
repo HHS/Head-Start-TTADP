@@ -8,6 +8,7 @@ import {
   STATES,
   COLLAB_REPORT_REASONS,
   COLLAB_REPORT_DATA,
+  COLLAB_REPORT_CONDUCT_METHODS,
 } from '../../Constants';
 import ReadOnlyContent from '../ReadOnlyContent';
 
@@ -68,6 +69,9 @@ export default function SubmittedCollabReport({ report }) {
 
   const creator = author?.fullName || 'Unknown';
 
+  const formattedMethod = COLLAB_REPORT_CONDUCT_METHODS.filter((m) => (
+    m.value === report.conductMethod
+  ))[0]?.label || '';
   const formattedStates = statesInvolved?.map((activityStateCode) => STATES[activityStateCode] || '').join(', ') || '';
   const formattedReasons = reportReasons?.map((reasonId) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ');
   const formattedGoals = reportGoals?.map((goal) => goal?.goalTemplate?.standard || '').join(', ');
@@ -161,6 +165,7 @@ export default function SubmittedCollabReport({ report }) {
                 'Activity type': activityType,
                 ...(isStateActivity ? { 'States involved': formattedStates } : {}
                 ),
+                'Activity method': formattedMethod,
                 'Activity description': description,
               },
               striped: false,
@@ -210,7 +215,7 @@ SubmittedCollabReport.propTypes = {
     calculatedStatus: PropTypes.string,
     duration: PropTypes.number,
     isStateActivity: PropTypes.bool,
-    conductMethod: PropTypes.arrayOf(PropTypes.string),
+    conductMethod: PropTypes.string,
     description: PropTypes.string,
     createdAt: PropTypes.string,
     updatedAt: PropTypes.string,
