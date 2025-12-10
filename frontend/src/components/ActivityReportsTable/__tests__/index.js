@@ -408,7 +408,7 @@ describe('ActivityReportsTable', () => {
       );
 
       act(() => fireEvent.click(columnHeader));
-      await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/Behavioral \/ Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1$/i));
+      await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent('Behavioral / Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1Behavioral / Mental HealthCLASS: Instructional Support'));
     });
 
     it('clicking Creator column header will sort by author', async () => {
