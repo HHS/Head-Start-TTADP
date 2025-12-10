@@ -51,10 +51,9 @@ function SessionCard({
     endDate,
     objective,
     objectiveSupportType,
-    objectiveTopics,
     objectiveTrainers,
     status,
-    facilitation,
+    sessionGoalTemplates,
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -148,17 +147,12 @@ function SessionCard({
           {objective}
         </CardData>
 
-        {/* TODO: this is just for debugging/testing, delete before release */}
-        <CardData label="Facilitation">
-          {facilitation}
-        </CardData>
-
         <CardData label="Support type">
           {objectiveSupportType}
         </CardData>
 
-        <CardData label="Topics">
-          {objectiveTopics && objectiveTopics.length > 0 ? objectiveTopics.join(', ') : ''}
+        <CardData label="Supporting goals">
+          {sessionGoalTemplates && sessionGoalTemplates.length > 0 ? sessionGoalTemplates.join(', ') : ''}
         </CardData>
 
         <CardData label="Trainers">
@@ -184,7 +178,7 @@ export const sessionPropTypes = PropTypes.shape({
     endDate: PropTypes.string.isRequired,
     objective: PropTypes.string.isRequired,
     objectiveSupportType: PropTypes.string.isRequired,
-    objectiveTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
+    sessionGoalTemplates: PropTypes.arrayOf(PropTypes.string).isRequired,
     objectiveTrainers: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.oneOf([
       'In progress',
