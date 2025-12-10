@@ -127,7 +127,7 @@ export default function useSessionCardPermissions({
       if (isRegionalNoNationalCenters) {
         return false;
       }
-      if (isRegionalWithNationalCenters && facilitation === 'national_centers') {
+      if (isRegionalWithNationalCenters && facilitation === 'national_center') {
         return false;
       }
     }
