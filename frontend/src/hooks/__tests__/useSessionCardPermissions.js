@@ -711,7 +711,7 @@ describe('useSessionCardPermissions', () => {
             ...baseSession,
             data: {
               ...baseSession.data,
-              facilitation: 'national_centers',
+              facilitation: 'national_center',
             },
           },
         };
