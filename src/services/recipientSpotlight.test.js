@@ -588,11 +588,12 @@ describe('recipientSpotlight service', () => {
       );
 
       expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
 
       // Check each recipient item if we have any results
-      for (let i = 0; i < result.length; i += 1) {
-        const item = result[i];
+      for (let i = 0; i < result.recipients.length; i += 1) {
+        const item = result.recipients[i];
         expect(item).toHaveProperty('recipientId');
         expect(item).toHaveProperty('regionId');
         expect(item).toHaveProperty('recipientName');
@@ -619,10 +620,11 @@ describe('recipientSpotlight service', () => {
       );
 
       expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBe(1);
-      expect(result[0].recipientId).toBe(normalRecipient.id);
-      expect(result[0].recipientName).toBe('Normal Recipient');
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      expect(result.recipients.length).toBe(1);
+      expect(result.recipients[0].recipientId).toBe(normalRecipient.id);
+      expect(result.recipients[0].recipientName).toBe('Normal Recipient');
     });
 
     it('identifies child incidents correctly', async () => {
@@ -637,8 +639,9 @@ describe('recipientSpotlight service', () => {
         [REGION_ID],
       );
       expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result[0].childIncidents).toBe(true);
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      expect(result.recipients[0].childIncidents).toBe(true);
     });
 
     it('identifies deficiencies correctly', async () => {
@@ -653,8 +656,9 @@ describe('recipientSpotlight service', () => {
       );
 
       expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result[0].deficiency).toBe(true);
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      expect(result.recipients[0].deficiency).toBe(true);
     });
 
     it('identifies new recipients correctly', async () => {
@@ -669,8 +673,9 @@ describe('recipientSpotlight service', () => {
       );
 
       expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result[0].newRecipients).toBe(true);
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      expect(result.recipients[0].newRecipients).toBe(true);
     });
 
     it('identifies new staff correctly', async () => {
@@ -685,8 +690,9 @@ describe('recipientSpotlight service', () => {
       );
 
       expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result[0].newStaff).toBe(true);
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      expect(result.recipients[0].newStaff).toBe(true);
     });
 
     it('identifies no TTA correctly', async () => {
@@ -701,8 +707,9 @@ describe('recipientSpotlight service', () => {
       );
 
       expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result[0].noTTA).toBe(true);
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      expect(result.recipients[0].noTTA).toBe(true);
     });
 
     it('handles pagination correctly', async () => {
@@ -729,19 +736,21 @@ describe('recipientSpotlight service', () => {
       );
 
       expect(firstPage).toBeDefined();
+      expect(firstPage.recipients).toBeDefined();
       expect(secondPage).toBeDefined();
+      expect(secondPage.recipients).toBeDefined();
 
       // Verify pagination is working
-      expect(firstPage.length).toBeGreaterThanOrEqual(0);
-      expect(secondPage.length).toBeGreaterThanOrEqual(0);
+      expect(firstPage.recipients.length).toBeGreaterThanOrEqual(0);
+      expect(secondPage.recipients.length).toBeGreaterThanOrEqual(0);
 
       // Skip the comparison if we don't have enough data
-      if (firstPage.length === 0 || secondPage.length === 0) {
+      if (firstPage.recipients.length === 0 || secondPage.recipients.length === 0) {
         return;
       }
 
       // First and second page should have different recipients
-      expect(firstPage[0].recipientId).not.toBe(secondPage[0].recipientId);
+      expect(firstPage.recipients[0].recipientId).not.toBe(secondPage.recipients[0].recipientId);
     });
 
     it('handles sorting correctly', async () => {
@@ -849,9 +858,97 @@ describe('recipientSpotlight service', () => {
       );
 
       expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result[0].DRS).toBe(false);
-      expect(result[0].FEI).toBe(false);
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      expect(result.recipients[0].DRS).toBe(false);
+      expect(result.recipients[0].FEI).toBe(false);
+    });
+
+    it('returns object with recipients and overview properties', async () => {
+      const result = await getRecipientSpotlightIndicators(
+        null, // no specific recipient
+        REGION_ID,
+        SCOPES.adminRead,
+        'recipientName',
+        'ASC',
+        0,
+        [REGION_ID],
+        10,
+      );
+
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('recipients');
+      expect(result).toHaveProperty('overview');
+      expect(Array.isArray(result.recipients)).toBe(true);
+      expect(result.overview).toHaveProperty('numRecipients');
+      expect(result.overview).toHaveProperty('totalRecipients');
+      expect(result.overview).toHaveProperty('recipientPercentage');
+      expect(typeof result.overview.numRecipients).toBe('string');
+      expect(typeof result.overview.totalRecipients).toBe('string');
+      expect(typeof result.overview.recipientPercentage).toBe('string');
+    });
+
+    it('handles no limit parameter (gets all recipients)', async () => {
+      const result = await getRecipientSpotlightIndicators(
+        null, // no specific recipient
+        REGION_ID,
+        SCOPES.adminRead,
+        'recipientName',
+        'ASC',
+        0,
+        [REGION_ID],
+        undefined, // no limit
+      );
+
+      expect(result).toBeDefined();
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      // Should return all recipients, not just 10
+      expect(result.recipients.length).toBeGreaterThanOrEqual(6); // We created at least 6 test recipients
+    });
+
+    it('works with no region ID specified (uses userRegions)', async () => {
+      const result = await getRecipientSpotlightIndicators(
+        null, // no specific recipient
+        null, // no regionId - should use userRegions
+        SCOPES.adminRead,
+        'recipientName',
+        'ASC',
+        0,
+        [REGION_ID], // userRegions provides the region filter
+        10,
+      );
+
+      expect(result).toBeDefined();
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      // All recipients should be from the userRegions
+      result.recipients.forEach((recipient) => {
+        expect([REGION_ID]).toContain(recipient.regionId);
+      });
+    });
+
+    it('works with empty grant list (queries all grants)', async () => {
+      // Create a scope that returns no grants initially
+      const emptyGrantScope = { grant: { id: { [db.Sequelize.Op.eq]: -999 } } };
+
+      const result = await getRecipientSpotlightIndicators(
+        null,
+        REGION_ID,
+        emptyGrantScope,
+        'recipientName',
+        'ASC',
+        0,
+        [REGION_ID],
+        10,
+      );
+
+      expect(result).toBeDefined();
+      expect(result.recipients).toBeDefined();
+      expect(result.overview).toBeDefined();
+      // With scope that matches no grants, recipients should still be returned
+      // (the query uses TRUE when no grant IDs)
+      expect(Array.isArray(result.recipients)).toBe(true);
     });
   });
 });

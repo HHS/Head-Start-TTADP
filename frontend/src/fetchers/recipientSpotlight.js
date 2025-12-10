@@ -5,7 +5,8 @@ import { get } from './index';
 const recipientUrl = join('/', 'api', 'recipient-spotlight');
 
 export const getRecipientSpotlight = async (recipientId, regionId, sortBy = 'recipientName', sortDir = 'desc', offset = 0, filters, limit = 10) => {
-  const queryString = `?recipientId=${recipientId}&regionId=${regionId}&sortBy=${sortBy}&direction=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`;
+  const limitParam = limit !== undefined ? `&limit=${limit}` : '';
+  const queryString = `?recipientId=${recipientId}&regionId=${regionId}&sortBy=${sortBy}&direction=${sortDir}&offset=${offset}${limitParam}${filters ? `&${filters}` : ''}`;
   const spotlight = await get(`${recipientUrl}${queryString}`);
   return spotlight.json();
 };
