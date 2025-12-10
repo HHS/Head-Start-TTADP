@@ -49,39 +49,6 @@ describe('canCreateCommunicationLog', () => {
     });
   });
 
-  describe('when user has ADMIN permission', () => {
-    it('should return true regardless of region', () => {
-      const user = createMockUser([
-        createPermission(SCOPE_IDS.ADMIN, 1),
-      ]);
-
-      const result = canCreateCommunicationLog(user, 5);
-
-      expect(result).toBe(true);
-    });
-
-    it('should return true even when user has no regional permissions', () => {
-      const user = createMockUser([
-        createPermission(SCOPE_IDS.ADMIN, 1),
-      ]);
-
-      const result = canCreateCommunicationLog(user, 1);
-
-      expect(result).toBe(true);
-    });
-
-    it('should return true when user has both ADMIN and regional permissions', () => {
-      const user = createMockUser([
-        createPermission(SCOPE_IDS.ADMIN, 1),
-        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 2),
-      ]);
-
-      const result = canCreateCommunicationLog(user, 3);
-
-      expect(result).toBe(true);
-    });
-  });
-
   describe('when user has only READ_ACTIVITY_REPORTS permission', () => {
     it('should return false', () => {
       const user = createMockUser([
@@ -184,6 +151,88 @@ describe('canCreateCommunicationLog', () => {
       const result = canCreateCommunicationLog(user, undefined);
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('when user is an admin', () => {
+    it('should return true when admin has READ_WRITE_ACTIVITY_REPORTS permission in the region', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.ADMIN, 1),
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 1),
+      ]);
+
+      const result = canCreateCommunicationLog(user, 1);
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when admin does not have READ_WRITE_ACTIVITY_REPORTS permission in the region', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.ADMIN, 1),
+      ]);
+
+      const result = canCreateCommunicationLog(user, 1);
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when admin has READ_WRITE_ACTIVITY_REPORTS in a different region', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.ADMIN, 1),
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 2),
+      ]);
+
+      const result = canCreateCommunicationLog(user, 1);
+
+      expect(result).toBe(false);
+    });
+
+    it('should return true when admin has READ_WRITE_ACTIVITY_REPORTS in multiple regions including the specified one', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.ADMIN, 1),
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 1),
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 2),
+      ]);
+
+      const result = canCreateCommunicationLog(user, 1);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('region 14 exclusion', () => {
+    it('should return false for region 14 even with READ_WRITE_ACTIVITY_REPORTS permission', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 14),
+      ]);
+
+      const result = canCreateCommunicationLog(user, 14);
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false for admin with READ_WRITE_ACTIVITY_REPORTS permission in region 14', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.ADMIN, 14),
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 14),
+      ]);
+
+      const result = canCreateCommunicationLog(user, 14);
+
+      expect(result).toBe(false);
+    });
+
+    it('should allow other regions when user also has region 14 permission', () => {
+      const user = createMockUser([
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 1),
+        createPermission(SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, 14),
+      ]);
+
+      const resultForRegion1 = canCreateCommunicationLog(user, 1);
+      const resultForRegion14 = canCreateCommunicationLog(user, 14);
+
+      expect(resultForRegion1).toBe(true);
+      expect(resultForRegion14).toBe(false);
     });
   });
 });

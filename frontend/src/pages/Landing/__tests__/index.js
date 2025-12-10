@@ -221,7 +221,7 @@ describe('Landing Page', () => {
     expect(collaborators.textContent).toContain('Hermione Granger, SS');
     expect(collaborators.firstChild).toHaveClass('smart-hub-tooltip');
     expect(collaborators.firstChild.children.length).toBe(2);
-    const truncated = collaborators.firstChild.children[1].firstChild.firstChild.firstChild;
+    const truncated = collaborators.querySelector('.smart-hub-tooltip--truncated');
     expect(truncated).toHaveClass('smart-hub-tooltip--truncated');
     expect(truncated).toHaveTextContent('Orange, GS');
   });
