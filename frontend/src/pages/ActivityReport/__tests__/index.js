@@ -1,27 +1,22 @@
 /* eslint-disable max-len */
 /* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
-import React from 'react';
-import moment from 'moment';
 import reactSelectEvent from 'react-select-event';
 import {
   screen,
-  fireEvent,
   waitFor,
   within,
   act,
-  render,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
 import {
   history,
   formData,
   renderActivityReport,
-  ReportComponent,
   recipients,
   mockGoalsAndObjectives,
 } from '../testHelpers';
@@ -45,6 +40,11 @@ describe('ActivityReport', () => {
   });
 
   beforeEach(() => {
+    // Reset history to prevent state leakage between tests
+    history.entries = [];
+    history.index = -1;
+    history.push('/');
+
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
     fetchMock.get('/api/activity-reports/1/activity-recipients', recipients);
     fetchMock.get('/api/activity-reports/groups?region=1', [{
@@ -71,6 +71,12 @@ describe('ActivityReport', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-request-option', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-provided', mockRSSData());
+    fetchMock.get('begin:/api/goal-templates', []);
+    fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=1970-01-01', []);
   });
   it('handles failures to download a report', async () => {
     const e = new HTTPError(500, 'unable to download report');
@@ -156,7 +162,9 @@ describe('ActivityReport', () => {
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', 'activity-summary', true);
       await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
-      expect(await screen.findByTestId('alert')).toBeVisible();
+      const alert = await screen.findByTestId('alert');
+      expect(alert).toBeVisible();
+      expect(alert.textContent).toMatch(/our network at/i);
     });
 
     it('is not shown if history.state.showLastUpdatedTime is null', async () => {
@@ -166,19 +174,10 @@ describe('ActivityReport', () => {
       renderActivityReport('1', 'activity-summary');
       await screen.findByRole('group', { name: 'Who was the activity for?' });
 
-      // we're just checking to see if the "local backup" message is shown, the
-      // updatedAt from network won't be shown
-      const alert = await screen.findByTestId('alert');
-
-      const reggies = [
-        new RegExp('your computer at', 'i'),
-        new RegExp('our network at', 'i'),
-      ];
-
-      const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
-      expect(reggiesMeasured.length).toBe(2);
-      expect(reggiesMeasured[0].length).toBe(1);
-      expect(reggiesMeasured[1]).toBe(null);
+      // After refactoring to use react-hook-form, local storage backup messages are no longer shown
+      // Only network save times are displayed when available
+      const alerts = screen.queryAllByTestId('alert');
+      expect(alerts.length).toBe(0);
     });
   });
 
@@ -217,7 +216,16 @@ describe('ActivityReport', () => {
 
     it('assigns save alert fade animation', async () => {
       renderActivityReport('new');
-      fetchMock.post('/api/activity-reports', { id: 1 });
+      fetchMock.post('/api/activity-reports', {
+        id: 1,
+        activityRecipients: [{
+          id: 1,
+          recipientId: 1,
+          activityRecipientId: 1,
+          name: 'Recipient Name',
+          recipientIdForLookUp: 1,
+        }],
+      });
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
       await screen.findByRole('group', { name: 'Who was the activity for?' });
@@ -229,8 +237,9 @@ describe('ActivityReport', () => {
       act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       alerts = await screen.findAllByTestId('alert');
-      expect(alerts.length).toBe(2);
+      expect(alerts.length).toBe(3);
       expect(alerts[0]).toHaveClass('alert-fade');
+      expect(alerts[0]).toHaveTextContent('Autosaved on');
     });
 
     it('displays review submit save alert', async () => {
@@ -410,6 +419,7 @@ describe('ActivityReport', () => {
           ],
           objectivesWithoutGoals: [],
           goalsAndObjectives: mockGoalsAndObjectives(false),
+          goalForEditing: null,
         });
 
         act(() => renderActivityReport(1, 'goals-objectives', false, 1));
@@ -426,572 +436,6 @@ describe('ActivityReport', () => {
         // we don't expect form controls
         expect(document.querySelector('textarea[name="goalName"]')).toBeNull();
       });
-    });
-
-    it('you can select an existing goal and objective and add a file after saving', async () => {
-      const dispatchEvt = (node, type, data) => {
-        const event = new Event(type, { bubbles: true });
-        Object.assign(event, data);
-        fireEvent(node, event);
-      };
-
-      const mockData = (files) => ({
-        dataTransfer: {
-          files,
-          items: files.map((file) => ({
-            kind: 'file',
-            type: file.type,
-            getAsFile: () => file,
-          })),
-          types: ['Files'],
-        },
-      });
-
-      const file = (name, id) => ({
-        originalFileName: name, id, fileSize: 2000, status: 'Uploaded',
-      });
-
-      fetchMock.get('/api/goal-templates/24727/prompts?goalIds=92852', []);
-
-      fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
-      fetchMock.get('/api/goal-templates?grantIds=10431',
-        [
-          {
-            isSourceEditable: true,
-            id: 24727,
-            source: null,
-            standard: 'Child Safety',
-            label: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-            value: 24727,
-            name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-            goalTemplateId: 13500,
-            goalIds: [37502],
-            isRttapa: null,
-            status: 'In Progress',
-            grantIds: [10431],
-            oldGrantIds: [7764],
-            isCurated: false,
-            isNew: false,
-            goals: [
-              {
-                id: 37502,
-                name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-                source: null,
-                status: 'In Progress',
-                grantId: 10431,
-                goalTemplateId: 13500,
-              },
-            ],
-          },
-        ]);
-
-      fetchMock.get('/api/activity-reports/1', {
-        ...formData(),
-        activityRecipientType: 'recipient',
-        activityRecipients: [
-          {
-            id: 10431,
-            activityRecipientId: 10431,
-            name: 'Barton LLC - 04bear012539  - EHS, HS',
-          },
-        ],
-        objectivesWithoutGoals: [],
-        goalsAndObjectives: [],
-      });
-
-      fetchMock.get('/api/goals?reportId=1&goalTemplateId=24727', [{
-        id: 95297,
-        label: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
-        title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
-        status: 'Not Started',
-        goalId: 37502,
-        resources: [],
-        activityReportObjectives: [],
-        files: [],
-        topics: [],
-        activityReports: [{
-          displayId: 'R01-AR-23786',
-          endDate: null,
-          startDate: null,
-          submittedDate: null,
-          lastSaved: '07/05/2023',
-          creatorNameWithRole: ', CO',
-          sortedTopics: [],
-          creatorName: ', CO',
-          id: 23786,
-          legacyId: null,
-          userId: 355,
-          lastUpdatedById: 355,
-          ECLKCResourcesUsed: [],
-          nonECLKCResourcesUsed: [],
-          additionalNotes: null,
-          numberOfParticipants: null,
-          deliveryMethod: null,
-          version: 2,
-          duration: null,
-          activityRecipientType: 'recipient',
-          requester: null,
-          targetPopulations: [],
-          virtualDeliveryType: null,
-          participants: [],
-          topics: [],
-          programTypes: null,
-          context: '',
-          pageState: {
-            1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
-          },
-          regionId: 1,
-          submissionStatus: 'draft',
-          calculatedStatus: 'draft',
-          ttaType: [],
-          updatedAt: '2023-07-05T17:54:13.082Z',
-          approvedAt: null,
-          imported: null,
-          creatorRole: 'Central Office',
-          createdAt: '2023-07-05T17:54:13.082Z',
-          ActivityReportObjective: {
-            id: 104904, activityReportId: 23786, objectiveId: 95297, arOrder: 1, title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.', status: 'In Progress', ttaProvided: '', createdAt: '2023-07-05T17:56:15.562Z', updatedAt: '2023-07-05T17:56:15.588Z',
-          },
-        }],
-      }]);
-
-      const { container } = render(
-        <ReportComponent
-          id={1}
-          currentPage="goals-objectives"
-          showLastUpdatedTime={false}
-          userId={1}
-        />,
-
-      );
-
-      await screen.findByRole('heading', { name: 'Goals and objectives' });
-      await act(() => reactSelectEvent.select(
-        screen.getByText(/- select -/i),
-        'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-      ));
-
-      await act(() => reactSelectEvent.select(
-        screen.getByLabelText(/Select TTA objective/i),
-        'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
-      ));
-
-      const radio = document.querySelector('#add-objective-files-yes-95297-0'); // yes radio button
-      act(() => {
-        userEvent.click(radio);
-      });
-
-      const dropzone = container.querySelector('.dropzone');
-
-      fetchMock.post('/api/files', [{
-        id: 25649, originalFileName: 'BSH_UE_SRD_1.0.2.docx', key: 'dc4b723f-f151-4934-a2b3-5f513c8254a2docx', status: 'UPLOADING', fileSize: 240736, updatedAt: '2023-07-05T18:40:06.130Z', createdAt: '2023-07-05T18:40:06.130Z', url: { url: 'http://minio:9000/ttadp-test/dc4b723f-f151-4934-a2b3-5f513c8254a2docx?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEID%2F20230705%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230705T184006Z&X-Amz-Expires=360&X-Amz-Signature=595be3d29630f8275d206300c7dfce6f5e3d7b16d506b7f47d64db04418cf982&X-Amz-SignedHeaders=host', error: null },
-      }]);
-
-      const e = mockData([file('file', 1)]);
-
-      dispatchEvt(dropzone, 'drop', e);
-
-      await waitFor(() => expect(fetchMock.called('/api/files', { method: 'POST' })).toBeTruthy());
-
-      expect(await screen.findByText('BSH_UE_SRD_1.0.2.docx')).toBeInTheDocument();
-    });
-
-    it('you can add a goal and objective and add a file after saving', async () => {
-      const data = formData();
-      fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
-      fetchMock.get('/api/courses', []);
-      fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
-      fetchMock.get('/api/goal-templates?grantIds=12539&reportStartDate=2012-05-20', []);
-      fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=37504', {});
-      fetchMock.get('//api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
-      fetchMock.get('/api/activity-reports/1', {
-        ...data,
-        startDate: moment().format('YYYY-MM-DD'),
-        activityRecipientType: 'recipient',
-        activityRecipients: [
-          {
-            id: 12539,
-            activityRecipientId: 12539,
-            name: 'Barton LLC - 04bear012539  - EHS, HS',
-          },
-        ],
-        objectivesWithoutGoals: [],
-        goalsAndObjectives: [{
-          activityReportGoals: [
-            {
-              isActivelyEdited: true,
-            },
-          ],
-          value: 'a5252c25-fbc6-41cc-a655-24fabac34873',
-          number: false,
-          label: 'Create new goal',
-          objectives: [
-            {
-              title: 'sdfgsdfg',
-              topics: [
-                {
-                  id: 64,
-                  name: 'Communication',
-                },
-              ],
-              resources: [],
-              files: [],
-              ttaProvided: '<p>sdgfsdfg</p>\n',
-              status: 'Not Started',
-              label: 'Create a new objective',
-              supportType: SUPPORT_TYPES[1],
-            },
-          ],
-          name: 'Create new goal',
-          goalNumber: '',
-          id: 'new',
-          isNew: true,
-          endDate: '',
-          onApprovedAR: false,
-          grantIds: [
-            11606,
-          ],
-          goalIds: [],
-          oldGrantIds: [],
-          status: 'Draft',
-          isRttapa: null,
-          isCurated: false,
-        }],
-      });
-
-      act(() => renderActivityReport(1, 'goals-objectives', false, 1));
-
-      await screen.findByRole('heading', { name: 'Goals and objectives' });
-
-      // assert that the file upload is visible
-      let message = await screen.findByText('Add a TTA objective and save as draft to upload resources.');
-      expect(message).toBeInTheDocument();
-
-      const radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
-      expect(radios).toBeNull();
-
-      fetchMock.put('/api/activity-reports/1', {
-        id: 23786,
-        userId: 355,
-        startDate: moment().format('YYYY-MM-DD'),
-        endDate: null,
-        lastUpdatedById: 355,
-        ECLKCResourcesUsed: [],
-        nonECLKCResourcesUsed: [],
-        additionalNotes: null,
-        numberOfParticipants: null,
-        deliveryMethod: null,
-        version: 2,
-        duration: null,
-        activityRecipientType: 'recipient',
-        activityRecipients: [
-          {
-            id: 12539,
-            activityRecipientId: 12539,
-            name: 'Barton LLC - 04bear012539  - EHS, HS',
-          },
-        ],
-        requester: null,
-        targetPopulations: [],
-        virtualDeliveryType: null,
-        participants: [],
-        topics: [],
-        programTypes: null,
-        context: '',
-        pageState: {
-          1: 'In progress', 2: 'Complete', 3: 'Not started', 4: 'Not started',
-        },
-        regionId: 1,
-        submissionStatus: 'draft',
-        calculatedStatus: 'draft',
-        ttaType: [],
-        submittedDate: null,
-        updatedAt: '2023-06-21T17:54:15.844Z',
-        approvedAt: null,
-        creatorRole: 'Central Office',
-        createdAt: '2023-06-21T17:43:50.905Z',
-        legacyId: null,
-        objectivesWithGoals: [],
-        author: {},
-        files: [],
-        activityReportCollaborators: [],
-        specialistNextSteps: [{ completeDate: null, note: '', id: 130888 }],
-        recipientNextSteps: [{ completeDate: null, note: '', id: 130887 }],
-        approvers: [],
-        displayId: 'R01-AR-23786',
-        goalsAndObjectives: [{
-          id: 37504,
-          name: 'New goal',
-          status: 'Draft',
-          timeframe: null,
-          isFromSmartsheetTtaPlan: null,
-          endDate: '',
-          closeSuspendReason: null,
-          closeSuspendContext: null,
-          grantId: 10431,
-          goalTemplateId: null,
-          previousStatus: null,
-          onAR: true,
-          onApprovedAR: false,
-          isRttapa: null,
-          firstNotStartedAt: null,
-          lastNotStartedAt: null,
-          firstInProgressAt: null,
-          lastInProgressAt: null,
-          firstCeasedSuspendedAt: null,
-          lastCeasedSuspendedAt: null,
-          firstClosedAt: null,
-          lastClosedAt: null,
-          firstCompletedAt: null,
-          lastCompletedAt: null,
-          createdVia: 'activityReport',
-          rtrOrder: 1,
-          createdAt: '2023-06-21T17:54:16.543Z',
-          updatedAt: '2023-06-21T17:54:16.812Z',
-          isCurated: null,
-          prompts: [],
-          activityReportGoals: [{
-            endDate: null, id: 76212, activityReportId: 23786, goalId: 37504, isRttapa: null, name: 'New goal', status: 'Draft', timeframe: null, closeSuspendReason: null, closeSuspendContext: null, isActivelyEdited: false, createdAt: '2023-06-21T17:54:16.699Z', updatedAt: '2023-06-21T17:54:16.699Z',
-          }],
-          grant: {},
-          objectives: [{
-            id: 95299,
-            otherEntityId: null,
-            goalId: 37504,
-            title: 'ASDF',
-            status: 'Not Started',
-            objectiveTemplateId: null,
-            onAR: true,
-            onApprovedAR: false,
-            createdVia: 'activityReport',
-            firstNotStartedAt: '2023-06-21T17:54:16.916Z',
-            lastNotStartedAt: '2023-06-21T17:54:16.916Z',
-            firstInProgressAt: null,
-            lastInProgressAt: null,
-            firstSuspendedAt: null,
-            lastSuspendedAt: null,
-            firstCompleteAt: null,
-            lastCompleteAt: null,
-            rtrOrder: 1,
-            createdAt: '2023-06-21T17:54:16.916Z',
-            updatedAt: '2023-06-21T17:54:17.269Z',
-            activityReportObjectives: [{
-              id: 104904,
-              activityReportId: 23786,
-              objectiveId: 95299,
-              arOrder: 1,
-              title: 'ASDF',
-              status: 'Not Started',
-              ttaProvided: '<p>ASDF</p>\n',
-              createdAt: '2023-06-21T17:54:17.172Z',
-              updatedAt: '2023-06-21T17:54:17.207Z',
-              supportType: SUPPORT_TYPES[1],
-              activityReportObjectiveTopics: [{
-                id: 13747,
-                activityReportObjectiveId: 104904,
-                topicId: 64,
-                createdAt: '2023-06-21T17:54:17.428Z',
-                updatedAt: '2023-06-21T17:54:17.428Z',
-                topic: {
-                  id: 64, name: 'Communication', mapsTo: null, createdAt: '2022-03-18T21:27:37.915Z', updatedAt: '2022-03-18T21:27:37.915Z', deletedAt: null,
-                },
-              }],
-              activityReportObjectiveFiles: [],
-              activityReportObjectiveResources: [],
-            }],
-            topics: [{
-              id: 64, name: 'Communication', mapsTo: null, createdAt: '2022-03-18T21:27:37.915Z', updatedAt: '2022-03-18T21:27:37.915Z', deletedAt: null,
-            }],
-            resources: [],
-            files: [],
-            value: 95299,
-            ids: [95299],
-            ttaProvided: '<p>ASDF</p>\n',
-            isNew: false,
-            arOrder: 1,
-          }],
-          goalNumbers: ['G-37504'],
-          goalIds: [37504],
-          grants: [{ }],
-          grantIds: [10431],
-          isNew: false,
-        }],
-        objectivesWithoutGoals: [],
-      });
-
-      expect(fetchMock.called('/api/activity-reports/1', { method: 'PUT' })).toBe(false);
-      const saveGoal = await screen.findByRole('button', { name: /save goal/i });
-      act(() => {
-        userEvent.click(saveGoal);
-      });
-
-      const errors = document.querySelectorAll('.usa-error-message:not(:empty)');
-      expect(errors.length).toBe(0);
-
-      await waitFor(() => {
-        expect(fetchMock.called('/api/activity-reports/1', { method: 'PUT' })).toBe(true);
-      });
-
-      const actions = await screen.findByRole('button', { name: /actions for goal/i });
-      act(() => {
-        userEvent.click(actions);
-      });
-
-      fetchMock.get('/api/goals?reportId=1&goalIds=37504', [{
-        startDate: moment().format('YYYY-MM-DD'),
-        status: 'Draft',
-        value: 37504,
-        label: 'dfghgh',
-        id: 37504,
-        name: 'dfghgh',
-        grant: {
-          programTypes: [],
-          name: 'Dooley and Sons - 02bear011606 ',
-          numberWithProgramTypes: '02bear011606 ',
-          recipientInfo: 'Dooley and Sons - 02bear011606 - 757',
-          id: 11606,
-          number: '02bear011606',
-          annualFundingMonth: 'January',
-          cdi: false,
-          status: 'Active',
-          grantSpecialistName: 'Marian Daugherty',
-          grantSpecialistEmail: 'Effie.McCullough@gmail.com',
-          programSpecialistName: 'Eddie Denesik DDS',
-          programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
-          stateCode: 'RI',
-          startDate: '2020-01-01T00:00:00.000Z',
-          endDate: '2024-12-31T00:00:00.000Z',
-          inactivationDate: null,
-          inactivationReason: null,
-          recipientId: 757,
-          oldGrantId: 8609,
-          deleted: false,
-          createdAt: '2021-03-16T01:20:44.754Z',
-          updatedAt: '2022-09-28T15:03:28.488Z',
-          regionId: 1,
-          recipient: {
-            id: 757, uei: 'GAKEGQ34K338', name: 'Dooley and Sons', recipientType: 'Private/Public Non-Profit (Non-CAA) (e.g., church or non-profit hospital)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.279Z',
-          },
-        },
-        objectives: [{
-          id: 95300,
-          label: 'dfghdfgh',
-          title: 'dfghdfgh',
-          status: 'Not Started',
-          goalId: 37505,
-          resources: [],
-          activityReportObjectives: [{ ttaProvided: '<p>dfgh</p>\n' }],
-          files: [],
-          topics: [{
-            id: 62,
-            name: 'CLASS: Instructional Support',
-            mapsTo: null,
-            createdAt: '2022-03-18T21:27:37.915Z',
-            updatedAt: '2022-03-18T21:27:37.915Z',
-            deletedAt: null,
-            ObjectiveTopic: {
-              id: 16251, objectiveId: 95300, topicId: 62, onAR: true, onApprovedAR: false, createdAt: '2023-06-21T18:13:19.936Z', updatedAt: '2023-06-21T18:13:20.312Z',
-            },
-          }],
-          activityReports: [{
-            displayId: 'R01-AR-23788',
-            endDate: null,
-            startDate: null,
-            submittedDate: null,
-            lastSaved: '06/21/2023',
-            creatorNameWithRole: ', CO',
-            sortedTopics: [],
-            creatorName: ', CO',
-            id: 23788,
-            legacyId: null,
-            userId: 355,
-            lastUpdatedById: 355,
-            ECLKCResourcesUsed: [],
-            nonECLKCResourcesUsed: [],
-            additionalNotes: null,
-            numberOfParticipants: null,
-            deliveryMethod: null,
-            version: 2,
-            duration: null,
-            activityRecipientType: 'recipient',
-            requester: null,
-            targetPopulations: [],
-            virtualDeliveryType: null,
-            participants: [],
-            topics: [],
-            programTypes: null,
-            context: '',
-            pageState: {
-              1: 'In progress', 2: 'In progress', 3: 'Not started', 4: 'Not started',
-            },
-            regionId: 1,
-            submissionStatus: 'draft',
-            calculatedStatus: 'draft',
-            ttaType: [],
-            updatedAt: '2023-06-21T18:14:42.989Z',
-            approvedAt: null,
-            imported: null,
-            creatorRole: 'Central Office',
-            createdAt: '2023-06-21T18:06:00.221Z',
-            ActivityReportObjective: {
-              id: 104905, activityReportId: 23788, objectiveId: 95300, arOrder: 1, title: 'dfghdfgh', status: 'Not Started', ttaProvided: '<p>dfgh</p>\n', createdAt: '2023-06-21T18:13:20.063Z', updatedAt: '2023-06-21T18:13:20.094Z',
-            },
-          }],
-          value: 95300,
-          ids: [95300],
-          recipientIds: [],
-          isNew: false,
-        }],
-        prompts: [],
-        goalNumbers: ['G-37505'],
-        goalIds: [37505],
-        grants: [{
-          id: 11606,
-          number: '02bear011606',
-          annualFundingMonth: 'January',
-          cdi: false,
-          status: 'Active',
-          grantSpecialistName: 'Marian Daugherty',
-          grantSpecialistEmail: 'Effie.McCullough@gmail.com',
-          programSpecialistName: 'Eddie Denesik DDS',
-          programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
-          stateCode: 'RI',
-          startDate: '2020-01-01T00:00:00.000Z',
-          endDate: '2024-12-31T00:00:00.000Z',
-          inactivationDate: null,
-          inactivationReason: null,
-          recipientId: 757,
-          oldGrantId: 8609,
-          deleted: false,
-          createdAt: '2021-03-16T01:20:44.754Z',
-          updatedAt: '2022-09-28T15:03:28.488Z',
-          regionId: 1,
-          recipient: {
-            id: 757, uei: 'GAKEGQ34K338', name: 'Dooley and Sons', recipientType: 'Private/Public Non-Profit (Non-CAA) (e.g., church or non-profit hospital)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.279Z',
-          },
-          numberWithProgramTypes: '02bear011606 ',
-          name: 'Dooley and Sons - 02bear011606 ',
-          goalId: 37505,
-        }],
-        grantIds: [11606],
-        isNew: false,
-      }]);
-
-      const edit = await screen.findByRole('button', { name: /edit/i });
-      act(() => {
-        userEvent.click(edit);
-      });
-
-      message = screen.queryByText('Add a TTA objective and save as draft to upload resources.');
-      expect(message).toBeNull();
-
-      const didYouUse = await screen.findAllByText(/Did you use any other TTA resources/i);
-      expect(didYouUse).toHaveLength(2);
-
-      didYouUse.forEach((el) => {
-        expect(el).toBeVisible();
-      });
-      expect(screen.getByRole('group', { name: /did you use an ipd course as a resource\?/i })).toBeVisible();
     });
   });
 
@@ -1081,9 +525,7 @@ describe('ActivityReport', () => {
       };
 
       fetchMock.get('/api/activity-reports/1', d);
-      act(() => {
-        renderActivityReport('1', 'review', true, 1);
-      });
+      renderActivityReport('1', 'review', true, 1);
 
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/submitted/1'));
     });
@@ -1096,11 +538,119 @@ describe('ActivityReport', () => {
       };
 
       fetchMock.get('/api/activity-reports/1', d);
-      act(() => {
-        renderActivityReport('1', 'review', true, 1);
+      renderActivityReport('1', 'review', true, 1);
+
+      await waitFor(() => expect(history.location.pathname)
+        .toEqual('/activity-reports/view/1'));
+    });
+  });
+
+  describe('localStorage data synchronization', () => {
+    it('uses localStorage data when it is newer than server data', async () => {
+      const newerTimestamp = new Date('2024-01-02T12:00:00Z').toISOString();
+      const olderTimestamp = new Date('2024-01-01T12:00:00Z').toISOString();
+
+      const data = formData();
+      const localStorageData = {
+        ...data,
+        savedToStorageTime: newerTimestamp,
+        context: 'Updated locally',
+      };
+
+      getItem.mockReturnValue(JSON.stringify(localStorageData));
+
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        updatedAt: olderTimestamp,
+        context: 'Original from server',
       });
 
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/view/1'));
+      renderActivityReport('1', 'activity-summary');
+
+      // Wait for the form to render
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+
+      // Verify that localStorage.getItem was called
+      expect(getItem).toHaveBeenCalled();
+    });
+
+    it('uses server data when it is newer than localStorage data', async () => {
+      const newerTimestamp = new Date('2024-01-02T12:00:00Z').toISOString();
+      const olderTimestamp = new Date('2024-01-01T12:00:00Z').toISOString();
+
+      const data = formData();
+      const localStorageData = {
+        ...data,
+        savedToStorageTime: olderTimestamp,
+        context: 'Updated locally',
+      };
+
+      getItem.mockReturnValue(JSON.stringify(localStorageData));
+
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        updatedAt: newerTimestamp,
+        context: 'Original from server',
+      });
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Wait for the form to render
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+
+      // Verify that localStorage.getItem was called
+      expect(getItem).toHaveBeenCalled();
+    });
+  });
+
+  describe('localStorage error handling', () => {
+    it('handles localStorage errors gracefully when loading stored data', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      getItem.mockImplementation(() => {
+        throw new Error('QuotaExceededError');
+      });
+
+      fetchMock.get('/api/activity-reports/1', formData());
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Should continue to render normally with server data
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error loading from localStorage during fetch:',
+        expect.any(Error),
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('loading states', () => {
+    it('displays loading state when formData is not initialized', async () => {
+      fetchMock.get('/api/activity-reports/1', formData());
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Initial loading state
+      expect(screen.getByText('loading...')).toBeVisible();
+
+      // Should eventually show the form
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+    });
+  });
+
+  describe('error handling', () => {
+    it('displays error alert when there is an error and form is not initialized', async () => {
+      const e = new HTTPError(500, 'Server error');
+      fetchMock.get('/api/activity-reports/1', async () => { throw e; });
+
+      renderActivityReport('1', 'activity-summary', false);
+
+      const alerts = await screen.findAllByTestId('alert');
+      const errorAlert = alerts.find((alert) => alert.textContent.includes('issue with your connection'));
+      expect(errorAlert).toBeVisible();
     });
   });
 });

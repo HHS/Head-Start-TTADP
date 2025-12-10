@@ -36,55 +36,55 @@ let realRecipients = [];
 // name, username, user ID, and email
 const hsesUsers = [
   {
-    name: 'Adam Levin', hsesUsername: 'test.tta.adam', hsesUserId: '50783', email: 'adam.levin@adhocteam.us',
+    name: 'Adam tta', hsesUsername: 'test.tta.adam', hsesUserId: '50783', email: 'adam.levin@adhocteam.us',
   },
   {
-    name: 'Krys Wisnaskas', hsesUsername: 'test.tta.krys', hsesUserId: '50491', email: 'krystyna@adhocteam.us',
+    name: 'Krys tta', hsesUsername: 'test.tta.krys', hsesUserId: '50491', email: 'krystyna@adhocteam.us',
   },
   {
-    name: 'Tom Smith', hsesUsername: 'test.tta.tom', hsesUserId: '56789', email: 'tom.meagher@adhocteam.us',
+    name: 'Tom tta', hsesUsername: 'test.tta.tom', hsesUserId: '56789', email: 'tom.meagher@adhocteam.us',
   },
   {
-    name: 'Kelly Born', hsesUsername: 'test.tta.kelly', hsesUserId: '51113', email: 'kelly.born@adhocteam.us',
+    name: 'Kelly tta', hsesUsername: 'test.tta.kelly', hsesUserId: '51113', email: 'kelly.born@adhocteam.us',
   },
   {
-    name: 'Lauren Rodriguez', hsesUsername: 'test.tta.lauren', hsesUserId: '51130', email: 'lauren.rodriguez@adhocteam.us',
+    name: 'Lauren tta', hsesUsername: 'test.tta.lauren', hsesUserId: '51130', email: 'lauren.rodriguez@adhocteam.us',
   },
   {
-    name: 'Maria Puhl', hsesUsername: 'test.tta.maria', hsesUserId: '51298', email: 'maria.puhl@adhocteam.us',
+    name: 'Maria tta', hsesUsername: 'test.tta.maria', hsesUserId: '51298', email: 'maria.puhl@adhocteam.us',
   },
   {
-    name: 'Nathan Powell', hsesUsername: 'test.tta.nathan', hsesUserId: '51379', email: 'nathan.powell@adhocteam.us',
+    name: 'Nathan tta', hsesUsername: 'test.tta.nathan', hsesUserId: '51379', email: 'nathan.powell@adhocteam.us',
   },
   {
-    name: 'Andrew Smith', hsesUsername: 'test.tta.andrew', hsesUserId: '59644', email: 'andrew.steele@adhocteam.us',
+    name: 'Andrew tta', hsesUsername: 'test.tta.andrew', hsesUserId: '56944', email: 'andrew.steele@adhocteam.us',
   },
   {
-    name: 'C\'era Oliveira-Norris', hsesUsername: 'test.tta.c\'era', hsesUserId: '52075', email: 'c\'era.oliveira-norris@adhocteam.us',
+    name: 'C\'era tta', hsesUsername: 'test.tta.c\'era', hsesUserId: '52075', email: 'c\'era.oliveira-norris@adhocteam.us',
   },
   {
-    name: 'Crystal George', hsesUsername: 'test.tta.crystal', hsesUserId: '52057', email: 'crystal.george@adhocteam.us',
+    name: 'Crystal tta', hsesUsername: 'test.tta.crystal', hsesUserId: '52057', email: 'crystal.george@adhocteam.us',
   },
   {
-    name: 'Matt Smith', hsesUsername: 'test.tta.matt', hsesUserId: '50832', email: 'matt.bevilacqua@adhocteam.us',
+    name: 'Matt tta', hsesUsername: 'test.tta.matt', hsesUserId: '50832', email: 'matt.bevilacqua@adhocteam.us',
   },
   {
-    name: 'Heather Smith', hsesUsername: 'test.tta.heather', hsesUserId: '52456', email: 'no-send_smith92@yahoo.com',
+    name: 'Heather tta', hsesUsername: 'test.tta.heather', hsesUserId: '52456', email: 'no-send_smith92@yahoo.com',
   },
   {
-    name: 'Tammy Smith', hsesUsername: 'test.tta.tammy', hsesUserId: '53719', email: 'no-send_smith93@yahoo.com',
+    name: 'Tammy tta', hsesUsername: 'test.tta.tammy', hsesUserId: '53719', email: 'no-send_smith93@yahoo.com',
   },
   {
-    name: 'Dana Smith', hsesUsername: 'test.tta.dana', hsesUserId: '54970', email: 'no-send_smith94@yahoo.com',
+    name: 'Dana tta', hsesUsername: 'test.tta.dana', hsesUserId: '54970', email: 'no-send_smith94@yahoo.com',
   },
   {
-    name: 'Fletcher Smith', hsesUsername: 'test.tta.fletcher', hsesUserId: '55815', email: 'no-send_smith95@yahoo.com',
+    name: 'Fletcher tta', hsesUsername: 'test.tta.fletcher', hsesUserId: '55815', email: 'no-send_smith95@yahoo.com',
   },
   {
-    name: 'Corinne Smith', hsesUsername: 'test.tta.corinne', hsesUserId: '55228', email: 'no-send_smith96@yahoo.com',
+    name: 'Corinne tta', hsesUsername: 'test.tta.corinne', hsesUserId: '55228', email: 'no-send_smith96@yahoo.com',
   },
   {
-    name: 'Does Notexist', hsesUsername: 'test.tta.doesnotexist', hsesUserId: '31337', email: 'does.notexist@adhocteam.us',
+    name: 'Does tta', hsesUsername: 'test.tta.doesnotexist', hsesUserId: '31337', email: 'does.notexist@adhocteam.us',
   },
 ];
 
@@ -99,30 +99,33 @@ const generateFakeEmail = () => 'no-send_'.concat(faker.internet.email());
 // Function to create a PL/pgSQL function in the PostgreSQL database that processes HTML content by
 // replacing words with randomly generated words
 const processHtmlCreate = async () => sequelize.query(/* sql */`
-  CREATE OR REPLACE FUNCTION "processHtml"(input TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
+  CREATE OR REPLACE FUNCTION "processHtml"(input TEXT)
+  RETURNS TEXT
+  LANGUAGE plpgsql AS $$
   DECLARE
-      result TEXT;
-      new_word TEXT;
+    tokens TEXT[];
+    i INT;
   BEGIN
-      IF input IS NULL OR input = '' THEN
-          RETURN input;
+    IF input IS NULL OR input = '' THEN
+      RETURN input;
+    END IF;
+
+    -- Tokenize into words OR non-words, preserving separators.
+    -- [[:alnum:]] = letters+digits, [^[:alnum:]] = everything else
+    tokens := ARRAY(
+      SELECT m[1]
+      FROM regexp_matches(input, '([[:alnum:]]+|[^[:alnum:]]+)', 'g') AS m
+    );
+
+    -- Replace each "word" token with a random lorem-ish word
+    FOR i IN array_lower(tokens,1)..array_upper(tokens,1) LOOP
+      IF tokens[i] ~ '^[[:alnum:]]+$' THEN
+        tokens[i] := (ARRAY['Lorem','ipsum','dolor','sit','amet','consectetur'])
+                      [floor(random()*6 + 1)::int];
       END IF;
+    END LOOP;
 
-      -- Replace each word in the input with a random word from a predefined list
-      result := regexp_replace(
-          input,
-          chr(92) || 'w+',  -- Match words using a regular expression
-          (
-              SELECT string_agg(word, ' ')
-              FROM (
-                  SELECT (ARRAY['Lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur'])[floor(random() * 6 + 1)::int] AS word
-                  FROM generate_series(1, regexp_count(input, chr(92) || 'w+'))
-              ) AS subquery
-          ),
-          'g'  -- Global flag to replace all occurrences
-      );
-
-      RETURN result;
+    RETURN array_to_string(tokens, '');
   END $$;
 `);
 
@@ -344,7 +347,7 @@ const convertRecipientNameAndNumberDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "convertRecipientNameAndNumber"(TEXT);
 `);
 
-const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
+export const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
   CREATE OR REPLACE FUNCTION "convertGrantNumber"(grant_number TEXT, grant_id INT) 
   RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -386,7 +389,7 @@ const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
   END $$;
 `);
 
-const convertGrantNumberDrop = async () => sequelize.query(/* sql */`
+export const convertGrantNumberDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "convertGrantNumber"(TEXT, INT);
 `);
 
@@ -561,9 +564,12 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
       grant.grantSpecialistName,
       grant.grantSpecialistEmail,
     );
-    // Generate a new grant number with a random animal type and trailing ID
+    // Generate a new grant number with preserved region digits,
+    // a random animal type, and the original trailing ID
+    const regionPrefixMatch = grant.number ? grant.number.match(/^\d{2}/) : null;
+    const regionPrefix = regionPrefixMatch ? regionPrefixMatch[0] : '00';
     const trailingNumber = grant.id;
-    const newGrantNumber = `0${faker.datatype.number({ min: 1, max: 9 })}${faker.animal.type()}0${trailingNumber}`;
+    const newGrantNumber = `${regionPrefix}${faker.animal.type()}0${trailingNumber}`;
     return {
       id: grant.id,
       number: newGrantNumber,
@@ -1031,6 +1037,39 @@ export const processTraningReports = async (where = '') => {
   `);
 };
 
+// anonymize grantNumber inside ActivityReportObjectiveCitations.monitoringReferences
+export const processMonitoringReferences = async (where = '') => sequelize.query(/* sql */`
+  UPDATE "ActivityReportObjectiveCitations" aroc
+  SET "monitoringReferences" = COALESCE(
+    (
+      SELECT jsonb_agg(
+        CASE
+          WHEN ref ? 'grantNumber' THEN
+            jsonb_set(
+              ref,
+              '{grantNumber}',
+              to_jsonb(
+                "convertGrantNumber"(
+                  ref ->> 'grantNumber',
+                  COALESCE(
+                    NULLIF(ref ->> 'originalGrantId', '')::int,
+                    NULLIF(ref ->> 'grantId', '')::int
+                  )
+                )
+              ),
+              true
+            )
+          ELSE ref
+        END
+      )
+      FROM jsonb_array_elements(aroc."monitoringReferences") AS ref
+    ),
+    aroc."monitoringReferences"
+  )
+  WHERE aroc."monitoringReferences" IS NOT NULL
+  ${where};
+`);
+
 /* Main function to orchestrate the entire anonymization process, including creating and dropping
 * database functions, hiding users, recipients, and grants, processing activity reports and files,
 * and truncating audit tables
@@ -1073,6 +1112,8 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
 
   // Bootstrap HSES users and assign permissions
   await bootstrapUsers();
+
+  await processMonitoringReferences();
 
   // Delete all records from the RequestErrors table
   await RequestErrors.destroy({

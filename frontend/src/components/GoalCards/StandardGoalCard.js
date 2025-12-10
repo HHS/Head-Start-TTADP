@@ -51,7 +51,8 @@ export default function StandardGoalCard({
     createdAt,
   } = goal;
 
-  const lastStatusChange = statusChanges[statusChanges.length - 1] || { oldStatus: 'Not Started' };
+  const lastStatusChange = statusChanges[statusChanges.length - 1]
+    || { oldStatus: GOAL_STATUS.NOT_STARTED };
   const previousStatus = lastStatusChange.oldStatus;
 
   const isMonitoringGoal = standard === 'Monitoring';
@@ -137,7 +138,7 @@ export default function StandardGoalCard({
     setInvalidStatusChangeAttempted(false);
 
     // check if the new status requires a reason modal
-    if (['Closed', 'Suspended'].includes(newStatus)) {
+    if ([GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED].includes(newStatus)) {
       setTargetStatusForModal(newStatus);
       setResetModalValues(!resetModalValues);
       closeSuspendModalRef.current.toggleModal(true);
@@ -175,7 +176,8 @@ export default function StandardGoalCard({
         history.push(editLink);
       },
     });
-  } else if (localStatus === 'Closed' && !isPreStandard && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
+  } else if (localStatus === GOAL_STATUS.CLOSED
+    && !isPreStandard && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
     // For monitoring goals, only admins can reopen
     menuItems.push({
       label: 'Reopen',
@@ -202,7 +204,8 @@ export default function StandardGoalCard({
       && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE)));
   })();
 
-  if (canDeleteQualifiedGoals && !onAR && !isPreStandard && ['Draft', 'Not Started'].includes(localStatus)) {
+  if (canDeleteQualifiedGoals && !onAR && !isPreStandard
+    && [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED].includes(localStatus)) {
     menuItems.push({
       label: 'Delete',
       onClick: async () => {
@@ -210,7 +213,10 @@ export default function StandardGoalCard({
           setDeleteError(false);
           setIsAppLoading(true);
           await deleteGoal(ids, regionId);
-          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, { message: 'Goal deleted successfully' });
+          history.push(
+            `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`,
+            { message: 'Goal deleted successfully', refreshRecipient: true },
+          );
         } catch (e) {
           setDeleteError(true);
         } finally {
@@ -227,13 +233,13 @@ export default function StandardGoalCard({
     }
 
     switch (localStatus) {
-      case 'Not Started':
+      case GOAL_STATUS.NOT_STARTED:
         return 'Added on';
-      case 'In Progress':
+      case GOAL_STATUS.IN_PROGRESS:
         return 'Started on';
-      case 'Suspended':
+      case GOAL_STATUS.SUSPENDED:
         return 'Suspended on';
-      case 'Closed':
+      case GOAL_STATUS.CLOSED:
         return 'Closed on';
       default:
         return 'Added on'; // Default or Draft status
@@ -247,13 +253,13 @@ export default function StandardGoalCard({
     }
 
     switch (localStatus) {
-      case 'Not Started':
+      case GOAL_STATUS.NOT_STARTED:
         return 'Added by';
-      case 'In Progress':
+      case GOAL_STATUS.IN_PROGRESS:
         return 'Started by';
-      case 'Suspended':
+      case GOAL_STATUS.SUSPENDED:
         return 'Suspended by';
-      case 'Closed':
+      case GOAL_STATUS.CLOSED:
         return 'Closed by';
       default:
         return 'Added by'; // Default or Draft status

@@ -8,6 +8,7 @@ import fetchMock from 'fetch-mock';
 import ObjectiveForm from '../ObjectiveForm';
 import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 const [objectiveTextError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -27,7 +28,7 @@ describe('ObjectiveForm', () => {
       { key: 'gee-whix', value: '' },
     ],
     id: 123,
-    status: 'Not started',
+    status: OBJECTIVE_STATUS.NOT_STARTED,
     supportType: 'Maintaining',
   };
 
@@ -92,7 +93,7 @@ describe('ObjectiveForm', () => {
       resources: [
         { key: 'gee-whix', value: '' },
       ],
-      status: 'Not started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
     };
 
     const removeObjective = jest.fn();

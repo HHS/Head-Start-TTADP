@@ -996,6 +996,26 @@ describe('resource', () => {
             destroy: [{ genericId: 1, resourceIds: [2, 3, 4, 5] }],
           });
       });
+      it('normalizes non-array sourceFields before processing', () => {
+        currentResources[0].sourceFields = null;
+        incomingResources[2].sourceFields = 'd';
+
+        const result = filterResourcesForSync(
+          incomingResources,
+          currentResources,
+        );
+
+        expect(result.update).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            resourceId: 2,
+            sourceFields: ['b', 'c'],
+          }),
+          expect.objectContaining({
+            resourceId: 3,
+            sourceFields: ['d'],
+          }),
+        ]));
+      });
       it('expected usage, empty currentResources', () => {
         currentResources = [];
         expect(filterResourcesForSync(
@@ -1144,17 +1164,17 @@ describe('resource', () => {
   describe('ActivityReports Resource Processing', () => {
     describe('calculateIsAutoDetectedForActivityReport', () => {
       let sourceFields;
-      it('expected usage, single', () => {
+      it('returns false when context changes', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT];
-        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
       });
-      it('expected usage, multiple', () => {
+      it('returns false when context and notes change', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.NOTES];
-        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
       });
-      it('expected usage, multiple with only once auto-detected', () => {
+      it('returns false when mixed with ECLKC', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.ECLKC];
-        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.REPORT.ECLKC];
@@ -1276,8 +1296,8 @@ describe('resource', () => {
             {
               activityReportId: 9999,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC, SOURCE_FIELD.REPORT.CONTEXT],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC, SOURCE_FIELD.REPORT.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           destroy: [],
@@ -1293,7 +1313,7 @@ describe('resource', () => {
         expect(arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
           .toEqual(2);
         expect(arResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(true);
+          .toEqual(false);
       });
       it('expected usage, delete', async () => {
         let data = {
@@ -1387,7 +1407,7 @@ describe('resource', () => {
               activityReportId: 9999,
               resourceId: resources[0].id,
               sourceFields: [SOURCE_FIELD.REPORT.NONECLKC, SOURCE_FIELD.REPORT.CONTEXT],
-              isAutoDetected: true,
+              isAutoDetected: false,
             },
           ],
           destroy: [
@@ -1411,7 +1431,7 @@ describe('resource', () => {
           .find((r) => r.dataValues.resourceId === resources[0].id).dataValues.sourceFields.length)
           .toEqual(2);
         expect(arResources.find((r) => r.dataValues.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(true);
+          .toEqual(false);
       });
     });
     describe('processActivityReportForResourcesById', () => {
@@ -1471,16 +1491,7 @@ describe('resource', () => {
       it('expected usage, empty urls', async () => {
         const arResources = await processActivityReportForResourcesById(activityReport.id, []);
 
-        expect(arResources.length).toEqual(1);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
-          ].sort());
+        expect(arResources.length).toEqual(0);
       });
       it('expected usage, with urls', async () => {
         const arResources = await processActivityReportForResourcesById(
@@ -1488,80 +1499,39 @@ describe('resource', () => {
           urls,
         );
         expect(arResources.length).toEqual(4);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
-            SOURCE_FIELD.REPORT.RESOURCE,
-          ].sort());
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.RESOURCE,
-          ].sort());
+        arResources.forEach((resource) => {
+          expect(resource.dataValues.sourceFields.sort())
+            .toEqual([SOURCE_FIELD.REPORT.RESOURCE]);
+        });
       });
       it('expected usage, add and remove urls', async () => {
         let arResources = await processActivityReportForResourcesById(
           activityReport.id,
           [],
         );
-        expect(arResources.length).toEqual(1);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
-          ].sort());
+        expect(arResources.length).toEqual(0);
         arResources = await processActivityReportForResourcesById(
           activityReport.id,
           [urls[0]],
         );
         expect(arResources.length).toEqual(1);
         expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
           .find((r) => r.dataValues.resource.dataValues.url === urls[0])
           .dataValues.sourceFields.sort())
           .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
             SOURCE_FIELD.REPORT.RESOURCE,
-          ].sort());
+          ]);
 
         arResources = await processActivityReportForResourcesById(
           activityReport.id,
           [urls[1]],
         );
-        expect(arResources.length).toEqual(2);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
-          ].sort());
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
+        expect(arResources.length).toEqual(1);
+        expect(arResources[0].dataValues.resource.dataValues.url).toEqual(urls[1]);
+        expect(arResources[0].dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.RESOURCE,
-          ].sort());
+          ]);
 
         arResources = await processActivityReportForResourcesById(
           activityReport.id,
@@ -1569,15 +1539,11 @@ describe('resource', () => {
         );
         expect(arResources.length).toEqual(4);
         expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources
           .find((r) => r.dataValues.resource.dataValues.url === urls[0])
           .dataValues.sourceFields.sort())
           .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
             SOURCE_FIELD.REPORT.RESOURCE,
-          ].sort());
+          ]);
         expect(arResources
           .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
@@ -1586,31 +1552,26 @@ describe('resource', () => {
           .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.RESOURCE,
-          ].sort());
+          ]);
 
         arResources = await processActivityReportForResourcesById(
           activityReport.id,
           [],
         );
-        expect(arResources.length).toEqual(1);
-        expect(arResources[0].resource.dataValues.url).toEqual(urls[0]);
-        expect(arResources[0].dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.CONTEXT,
-          ].sort());
+        expect(arResources.length).toEqual(0);
       });
     });
   });
   describe('NextSteps Resource Processing', () => {
     describe('calculateIsAutoDetectedForNextSteps', () => {
       let sourceFields;
-      it('expected usage, single', () => {
+      it('returns false for note fields', () => {
         sourceFields = [SOURCE_FIELD.NEXTSTEPS.NOTE];
-        expect(calculateIsAutoDetectedForNextStep(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForNextStep(sourceFields)).toEqual(false);
       });
-      it('expected usage, multiple with only once auto-detected', () => {
+      it('returns false when note and resource are present', () => {
         sourceFields = [SOURCE_FIELD.NEXTSTEPS.NOTE, SOURCE_FIELD.NEXTSTEPS.RESOURCE];
-        expect(calculateIsAutoDetectedForNextStep(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForNextStep(sourceFields)).toEqual(false);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.NEXTSTEPS.RESOURCE];
@@ -1668,26 +1629,26 @@ describe('resource', () => {
             {
               nextStepId: nextStep.id,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[1].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[2].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[3].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           update: [],
@@ -1711,26 +1672,26 @@ describe('resource', () => {
             {
               nextStepId: nextStep.id,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[1].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[2].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[3].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           update: [],
@@ -1743,8 +1704,8 @@ describe('resource', () => {
             {
               nextStepId: nextStep.id,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE, SOURCE_FIELD.NEXTSTEPS.RESOURCE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           destroy: [],
@@ -1756,8 +1717,8 @@ describe('resource', () => {
             { model: Resource, as: 'resource' },
           ],
         });
-        expect(nsResources[0].dataValues.sourceFields.length).toEqual(2);
-        expect(nsResources[0].isAutoDetected).toEqual(true);
+        expect(nsResources[0].dataValues.sourceFields.length).toEqual(1);
+        expect(nsResources[0].isAutoDetected).toEqual(false);
       });
       it('expected usage, delete', async () => {
         let data = {
@@ -1765,26 +1726,26 @@ describe('resource', () => {
             {
               nextStepId: nextStep.id,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[1].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[2].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[3].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           update: [],
@@ -1816,20 +1777,20 @@ describe('resource', () => {
             {
               nextStepId: nextStep.id,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[1].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
             {
               nextStepId: nextStep.id,
               resourceId: resources[2].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           update: [],
@@ -1841,16 +1802,16 @@ describe('resource', () => {
             {
               nextStepId: nextStep.id,
               resourceId: resources[3].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           update: [
             {
               nextStepId: nextStep.id,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE, SOURCE_FIELD.NEXTSTEPS.RESOURCE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           destroy: [
@@ -1871,8 +1832,8 @@ describe('resource', () => {
         expect(nsResources.map((r) => r.resourceId)).toContain(resources[3].id);
         expect(nsResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
         expect(nsResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
-          .toEqual(2);
-        expect(nsResources[0].isAutoDetected).toEqual(true);
+          .toEqual(1);
+        expect(nsResources[0].isAutoDetected).toEqual(false);
       });
     });
     describe('processNextStepForResourcesById', () => {
@@ -1916,16 +1877,7 @@ describe('resource', () => {
       });
       it('expected usage, empty urls', async () => {
         const nsResources = await processNextStepForResourcesById(nextStep.id, []);
-        expect(nsResources.length).toEqual(1);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.NEXTSTEPS.NOTE,
-          ].sort());
+        expect(nsResources.length).toEqual(0);
       });
       it('expected usage, with urls', async () => {
         const nsResources = await processNextStepForResourcesById(
@@ -1933,128 +1885,60 @@ describe('resource', () => {
           urls,
         );
         expect(nsResources.length).toEqual(4);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.NEXTSTEPS.NOTE,
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
+        nsResources.forEach((resource) => {
+          expect(resource.dataValues.sourceFields.sort())
+            .toEqual([SOURCE_FIELD.NEXTSTEPS.RESOURCE]);
+        });
       });
       it('expected usage, add and remove urls', async () => {
         let nsResources = await processNextStepForResourcesById(
           nextStep.id,
           [],
         );
-        expect(nsResources.length).toEqual(1);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.NEXTSTEPS.NOTE,
-          ].sort());
+        expect(nsResources.length).toEqual(0);
+
         nsResources = await processNextStepForResourcesById(
           nextStep.id,
           [urls[0]],
         );
         expect(nsResources.length).toEqual(1);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.NEXTSTEPS.NOTE,
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
+        expect(nsResources[0].dataValues.sourceFields).toEqual([SOURCE_FIELD.NEXTSTEPS.RESOURCE]);
+
         nsResources = await processNextStepForResourcesById(
           nextStep.id,
           [urls[1]],
         );
-        expect(nsResources.length).toEqual(2);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.NEXTSTEPS.NOTE,
-          ].sort());
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
+        expect(nsResources.length).toEqual(1);
+        expect(nsResources[0].dataValues.sourceFields).toEqual([SOURCE_FIELD.NEXTSTEPS.RESOURCE]);
+        expect(nsResources[0].resource.dataValues.url).toEqual(urls[1]);
 
         nsResources = await processNextStepForResourcesById(
           nextStep.id,
           urls,
         );
         expect(nsResources.length).toEqual(4);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.NEXTSTEPS.NOTE,
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(nsResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
+        nsResources.forEach((resource) => {
+          expect(resource.dataValues.sourceFields).toEqual([SOURCE_FIELD.NEXTSTEPS.RESOURCE]);
+        });
 
         nsResources = await processNextStepForResourcesById(
           nextStep.id,
           [],
         );
-        expect(nsResources.length).toEqual(1);
-        expect(nsResources[0].resource.dataValues.url).toEqual(urls[0]);
-        expect(nsResources[0].dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.NEXTSTEPS.NOTE,
-          ].sort());
+        expect(nsResources.length).toEqual(0);
       });
     });
   });
   describe('Goal Resource processing', () => {
     describe('calculateIsAutoDetectedForGoal', () => {
       let sourceFields;
-      it('expected usage, single', () => {
+      it('returns false for goal name', () => {
         sourceFields = [SOURCE_FIELD.GOAL.NAME];
-        expect(calculateIsAutoDetectedForGoal(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForGoal(sourceFields)).toEqual(false);
       });
-      it('expected usage, multiple with only once auto-detected', () => {
+      it('returns false when name and resource change', () => {
         sourceFields = [SOURCE_FIELD.GOAL.NAME, SOURCE_FIELD.GOAL.RESOURCE];
-        expect(calculateIsAutoDetectedForGoal(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForGoal(sourceFields)).toEqual(false);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.GOAL.RESOURCE];
@@ -2188,8 +2072,8 @@ describe('resource', () => {
             {
               goalId: goal.id,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.GOAL.NAME, SOURCE_FIELD.GOAL.RESOURCE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           destroy: [],
@@ -2201,8 +2085,8 @@ describe('resource', () => {
             { model: Resource, as: 'resource' },
           ],
         });
-        expect(gResources[0].dataValues.sourceFields.length).toEqual(2);
-        expect(gResources[0].isAutoDetected).toEqual(true);
+        expect(gResources[0].dataValues.sourceFields.length).toEqual(1);
+        expect(gResources[0].isAutoDetected).toEqual(false);
       });
       it('expected usage, delete', async () => {
         let data = {
@@ -2294,8 +2178,8 @@ describe('resource', () => {
             {
               goalId: goal.id,
               resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.GOAL.NAME, SOURCE_FIELD.GOAL.RESOURCE],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           destroy: [
@@ -2316,9 +2200,9 @@ describe('resource', () => {
         expect(gResources.map((r) => r.resourceId)).toContain(resources[3].id);
         expect(gResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
         expect(gResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
-          .toEqual(2);
+          .toEqual(1);
         expect(gResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(true);
+          .toEqual(false);
       });
     });
     describe('processGoalForResourcesById', () => {
@@ -2365,16 +2249,7 @@ describe('resource', () => {
       });
       it('expected usage, empty urls', async () => {
         const gResources = await processGoalForResourcesById(goal.id, []);
-        expect(gResources.length).toEqual(1);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.NAME,
-          ].sort());
+        expect(gResources.length).toEqual(0);
       });
       it('expected usage, with urls', async () => {
         const gResources = await processGoalForResourcesById(
@@ -2382,136 +2257,65 @@ describe('resource', () => {
           urls,
         );
         expect(gResources.length).toEqual(4);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.NAME,
-            SOURCE_FIELD.GOAL.RESOURCE,
-          ].sort());
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.RESOURCE,
-          ].sort());
+        gResources.forEach((resource) => {
+          expect(resource.dataValues.sourceFields).toEqual([SOURCE_FIELD.GOAL.RESOURCE]);
+        });
       });
       it('expected usage, add and remove urls', async () => {
         let gResources = await processGoalForResourcesById(
           goal.id,
           [],
         );
-        expect(gResources.length).toEqual(1);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.NAME,
-          ].sort());
+        expect(gResources.length).toEqual(0);
         gResources = await processGoalForResourcesById(
           goal.id,
           [urls[0]],
         );
         expect(gResources.length).toEqual(1);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.NAME,
-            SOURCE_FIELD.GOAL.RESOURCE,
-          ].sort());
+        expect(gResources[0].dataValues.sourceFields).toEqual([SOURCE_FIELD.GOAL.RESOURCE]);
 
         gResources = await processGoalForResourcesById(
           goal.id,
           [urls[1]],
         );
-        expect(gResources.length).toEqual(2);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.NAME,
-          ].sort());
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.RESOURCE,
-          ].sort());
+        expect(gResources.length).toEqual(1);
+        expect(gResources[0].resource.dataValues.url).toEqual(urls[1]);
+        expect(gResources[0].dataValues.sourceFields).toEqual([SOURCE_FIELD.GOAL.RESOURCE]);
 
         gResources = await processGoalForResourcesById(
           goal.id,
           urls,
         );
         expect(gResources.length).toEqual(4);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.NAME,
-            SOURCE_FIELD.GOAL.RESOURCE,
-          ].sort());
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(gResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.RESOURCE,
-          ].sort());
+        gResources.forEach((resource) => {
+          expect(resource.dataValues.sourceFields).toEqual([SOURCE_FIELD.GOAL.RESOURCE]);
+        });
 
         gResources = await processGoalForResourcesById(
           goal.id,
           [],
         );
-        expect(gResources.length).toEqual(1);
-        expect(gResources[0].resource.dataValues.url).toEqual(urls[0]);
-        expect(gResources[0].dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.GOAL.NAME,
-          ].sort());
+        expect(gResources.length).toEqual(0);
       });
     });
   });
   describe('ActivityReportObjective Resource Processing', () => {
     describe('calculateIsAutoDetectedForActivityReportObjective', () => {
       let sourceFields;
-      it('expected usage, single', () => {
+      it('returns false when only title changes', () => {
         sourceFields = [SOURCE_FIELD.REPORTOBJECTIVE.TITLE];
-        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(false);
       });
-      it('expected usage, multiple', () => {
+      it('returns false when title and tta provided change', () => {
         sourceFields = [
           SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
           SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
         ];
-        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(false);
       });
-      it('expected usage, multiple with only once auto-detected', () => {
+      it('returns false when title and resource change', () => {
         sourceFields = [SOURCE_FIELD.REPORTOBJECTIVE.TITLE, SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE];
-        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(false);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE];
@@ -2672,11 +2476,8 @@ describe('resource', () => {
             {
               activityReportObjectiveId: reportObjective.id,
               resourceId: resources[0].id,
-              sourceFields: [
-                SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
-                SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
-              ],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           destroy: [],
@@ -2688,8 +2489,8 @@ describe('resource', () => {
             { model: Resource, as: 'resource' },
           ],
         });
-        expect(oResources[0].dataValues.sourceFields.length).toEqual(2);
-        expect(oResources[0].isAutoDetected).toEqual(true);
+        expect(oResources[0].dataValues.sourceFields.length).toEqual(1);
+        expect(oResources[0].isAutoDetected).toEqual(false);
       });
       it('expected usage, delete', async () => {
         let data = {
@@ -2781,11 +2582,8 @@ describe('resource', () => {
             {
               activityReportObjectiveId: reportObjective.id,
               resourceId: resources[0].id,
-              sourceFields: [
-                SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
-                SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
-              ],
-              isAutoDetected: true,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
             },
           ],
           destroy: [
@@ -2806,9 +2604,9 @@ describe('resource', () => {
         expect(oResources.map((r) => r.resourceId)).toContain(resources[3].id);
         expect(oResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
         expect(oResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
-          .toEqual(2);
+          .toEqual(1);
         expect(oResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(true);
+          .toEqual(false);
       });
     });
     describe('processActivityReportObjectiveForResourcesById', () => {
@@ -2885,17 +2683,7 @@ describe('resource', () => {
           reportObjective.id,
           [],
         );
-        expect(oResources.length).toEqual(1);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
-            SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
-          ].sort());
+        expect(oResources.length).toEqual(0);
       });
       it('expected usage, with urls', async () => {
         const oResources = await processActivityReportObjectiveForResourcesById(
@@ -2903,122 +2691,50 @@ describe('resource', () => {
           urls,
         );
         expect(oResources.length).toEqual(4);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
-            SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
-            SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
-          ].sort());
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
-          ].sort());
+        oResources.forEach((resource) => {
+          expect(resource.dataValues.sourceFields).toEqual([SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE]);
+        });
       });
       it('expected usage, add and remove urls', async () => {
         let oResources = await processActivityReportObjectiveForResourcesById(
           reportObjective.id,
           [],
         );
-        expect(oResources.length).toEqual(1);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
-            SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
-          ].sort());
+        expect(oResources.length).toEqual(0);
+
         oResources = await processActivityReportObjectiveForResourcesById(
           reportObjective.id,
           [urls[0]],
         );
         expect(oResources.length).toEqual(1);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
-            SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
-            SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
-          ].sort());
+        expect(oResources[0].dataValues.sourceFields).toEqual([
+          SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
+        ]);
 
         oResources = await processActivityReportObjectiveForResourcesById(
           reportObjective.id,
           [urls[1]],
         );
-        expect(oResources.length).toEqual(2);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
-            SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
-          ].sort());
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
-          ].sort());
+        expect(oResources.length).toEqual(1);
+        expect(oResources[0].resource.dataValues.url).toEqual(urls[1]);
+        expect(oResources[0].dataValues.sourceFields).toEqual([
+          SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
+        ]);
 
         oResources = await processActivityReportObjectiveForResourcesById(
           reportObjective.id,
           urls,
         );
         expect(oResources.length).toEqual(4);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
-            SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
-            SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
-          ].sort());
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
-          ].sort());
+        oResources.forEach((resource) => {
+          expect(resource.dataValues.sourceFields).toEqual([SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE]);
+        });
 
         oResources = await processActivityReportObjectiveForResourcesById(
           reportObjective.id,
           [],
         );
-        expect(oResources.length).toEqual(1);
-        expect(oResources[0].resource.dataValues.url).toEqual(urls[0]);
-        expect(oResources[0].dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
-            SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
-          ].sort());
+        expect(oResources.length).toEqual(0);
       });
     });
   });
