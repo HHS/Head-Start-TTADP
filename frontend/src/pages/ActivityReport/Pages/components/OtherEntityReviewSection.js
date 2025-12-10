@@ -67,6 +67,7 @@ const OtherEntityReviewSection = () => {
                 readOnly
                 toolbarHidden
                 defaultEditorState={getEditorState(objective.ttaProvided)}
+                ariaLabel="TTA provided"
               />
             </div>
             {objective.supportType && (

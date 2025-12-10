@@ -3,11 +3,8 @@ import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import {
-  Label, FormGroup, ErrorMessage, Fieldset, Tooltip,
+  Label, FormGroup, ErrorMessage, Fieldset,
 } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import colors from '../colors';
 import Req from './Req';
 import QuestionTooltip from './QuestionTooltip';
 import './FormItem.scss';
@@ -47,7 +44,7 @@ function LabelWrapper({
           {toolTipText && (
             <QuestionTooltip
               text={toolTipText}
-              className="margin-left-0"
+              customClass="margin-left-0"
             />
           )}
         </div>
@@ -88,10 +85,6 @@ function FormItem({
 }) {
   const { formState: { errors } } = useFormContext();
 
-  // eslint-disable-next-line max-len, no-shadow, react/jsx-props-no-spreading
-  const CustomTooltipElement = ({ children, ...tooltipProps }, ref) => (<span ref={ref} {...tooltipProps}>{children}</span>);
-  const CustomTooltip = React.forwardRef(CustomTooltipElement);
-
   const fieldErrors = errors[name];
   const labelWithRequiredTag = (
     <>
@@ -103,9 +96,10 @@ function FormItem({
         </>
       )}
       {toolTipText && !htmlFor && (
-      <Tooltip asCustom={CustomTooltip} label={toolTipText}>
-        <FontAwesomeIcon className="margin-right-1 no-print" data-testid="info-tooltip-icon" color={colors.ttahubMediumBlue} icon={faQuestionCircle} />
-      </Tooltip>
+      <QuestionTooltip
+        text={toolTipText}
+        customClass="margin-right-1 no-print"
+      />
       )}
     </>
   );
