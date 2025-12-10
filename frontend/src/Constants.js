@@ -301,3 +301,22 @@ export const COLLAB_REPORT_DATA = {
   tta_hub: 'TTA Hub',
   other: 'Other',
 };
+
+export const OBJECTIVE_STATUS = {
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  COMPLETE: 'Complete',
+};
+
+export const TRAINING_EVENT_ORGANIZER = {
+  IST_TTA_VISIT: 'IST TTA/Visit',
+  REGIONAL_PD_WITH_NATIONAL_CENTERS: 'Regional PD Event (with National Centers)',
+  REGIONAL_TTA_NO_NATIONAL_CENTERS: 'Regional TTA Hosted Event (no National Centers)',
+};
+
+export const EVENT_PARTNERSHIP = {
+  REGIONAL_HSA: 'regional_hsa',
+  STATE_HSA: 'state_hsa',
+  NO: 'no',
+};

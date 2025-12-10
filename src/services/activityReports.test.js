@@ -396,6 +396,12 @@ describe('Activity report service', () => {
         roleId: cor.id,
       });
 
+      await Permission.create({
+        userId: mockUserTwo.id,
+        regionId: 1,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      });
+
       await Grant.create({
         id: RECIPIENT_ID,
         number: 1,
@@ -1345,6 +1351,18 @@ describe('Activity report service', () => {
           {},
           0,
           [approvedReport.id],
+        );
+        const ids = rows.map((row) => row.id);
+        expect(ids.length).toEqual(1);
+        expect(ids).toContain(approvedReport.id);
+      });
+
+      it('coerces single report id params into an array', async () => {
+        const rows = await getAllDownloadableActivityReports(
+          '14',
+          {},
+          0,
+          `${approvedReport.id}`,
         );
         const ids = rows.map((row) => row.id);
         expect(ids.length).toEqual(1);

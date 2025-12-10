@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import {
   render, screen, fireEvent,
 } from '@testing-library/react';
-import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '@ttahub/common';
+import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS, GOAL_STATUS } from '@ttahub/common';
 import { ModalToggleButton } from '@trussworks/react-uswds';
 import userEvent from '@testing-library/user-event';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
@@ -13,7 +13,7 @@ describe('Close Suspend Goal Reason', () => {
   const ModalComponent = (
     {
       goalIds = [1],
-      newStatus = 'Closed',
+      newStatus = GOAL_STATUS.CLOSED,
       onSubmit = () => { },
       resetValues = false,
     },
@@ -128,7 +128,7 @@ describe('Close Suspend Goal Reason', () => {
   });
 
   it('correctly shows suspend radio options', async () => {
-    render(<ModalComponent newStatus="Ceased/Suspended" />);
+    render(<ModalComponent newStatus={GOAL_STATUS.SUSPENDED} />);
 
     // Open modal.
     const button = await screen.findByText('Open');
@@ -148,7 +148,7 @@ describe('Close Suspend Goal Reason', () => {
   });
 
   it('correctly updates context text', async () => {
-    render(<ModalComponent newStatus="Ceased/Suspended" />);
+    render(<ModalComponent newStatus={GOAL_STATUS.SUSPENDED} />);
 
     // Open modal.
     const button = await screen.findByText('Open');

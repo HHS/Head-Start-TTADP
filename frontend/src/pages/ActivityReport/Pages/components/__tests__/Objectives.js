@@ -7,9 +7,11 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import Objectives from '../Objectives';
 import UserContext from '../../../../../UserContext';
+import { OBJECTIVE_STATUS } from '../../../../../Constants';
 
 // eslint-disable-next-line react/prop-types
 const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] }) => {
@@ -19,7 +21,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
     goalForEditing = {
       id: goalId,
       objectives: [],
-      status: 'Not Started',
+      status: GOAL_STATUS.NOT_STARTED,
     };
   }
 
@@ -57,7 +59,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
           topicOptions={topicOptions}
           goalId={goalId}
           noObjectiveError={<></>}
-          goalStatus="In Progress"
+          goalStatus={GOAL_STATUS.IN_PROGRESS}
           reportId={12}
           onSaveDraft={jest.fn()}
           objectiveOptionsLoaded
@@ -97,7 +99,7 @@ describe('Objectives', () => {
       onApprovedAR: false,
       resources: [],
       topics: [],
-      status: 'Not Started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
       id: 3,
       objectiveCreatedHere: false,
     },
@@ -111,7 +113,7 @@ describe('Objectives', () => {
       onApprovedAR: false,
       resources: [],
       topics: [],
-      status: 'Not Started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
       objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -141,7 +143,7 @@ describe('Objectives', () => {
       onApprovedAR: false,
       resources: [],
       topics: [],
-      status: 'In Progress',
+      status: OBJECTIVE_STATUS.IN_PROGRESS,
       id: 3,
       objectiveCreatedHere: false,
     },
@@ -155,7 +157,7 @@ describe('Objectives', () => {
       onApprovedAR: false,
       resources: [],
       topics: [],
-      status: 'Not Started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
       objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -180,7 +182,7 @@ describe('Objectives', () => {
     // Attempt to select objective 1 now available.
     select = await screen.findByLabelText(/Select TTA objective/i);
     await selectEvent.select(select, ['Test objective 1']);
-    expect(await screen.findByText('In Progress')).toBeVisible();
+    expect(await screen.findByText(OBJECTIVE_STATUS.IN_PROGRESS)).toBeVisible();
   });
 
   it('the button adds a new objective', async () => {
@@ -193,7 +195,7 @@ describe('Objectives', () => {
       onApprovedAR: false,
       resources: [],
       topics: [],
-      status: 'Not Started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
       objectiveCreatedHere: true,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -213,7 +215,7 @@ describe('Objectives', () => {
       onApprovedAR: false,
       resources: [],
       topics: [],
-      status: 'Not Started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
       objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -248,7 +250,7 @@ describe('Objectives', () => {
       onApprovedAR: false,
       resources: [],
       topics: [],
-      status: 'Not Started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
       objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);
@@ -269,7 +271,7 @@ describe('Objectives', () => {
       onApprovedAR: false,
       resources: [],
       topics: [],
-      status: 'Not Started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
       id: 3,
       objectiveCreatedHere: false,
     }];
@@ -282,7 +284,7 @@ describe('Objectives', () => {
     const statusLabel = await screen.findByText(/objective status/i);
     const statusSelect = statusLabel.parentElement.querySelector('select');
     expect(statusSelect).toBeInTheDocument();
-    await selectEvent.select(statusSelect, ['Suspended']);
+    await selectEvent.select(statusSelect, [OBJECTIVE_STATUS.SUSPENDED]);
 
     // Wait for the modal to appear.
     const modal = await screen.findByRole('dialog', { name: /why are you suspending this objective/i });
@@ -297,7 +299,7 @@ describe('Objectives', () => {
     expect(errorMessage).toBeVisible();
   });
 
-  it('automatically selects the create a new objecitve option when there are no objective options', async () => {
+  it('automatically selects the create a new objective option when there are no objective options', async () => {
     const objectiveOptions = [];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     expect(screen.getByText(/create a new objective/i)).toBeVisible();

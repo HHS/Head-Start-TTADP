@@ -223,6 +223,7 @@ const MAINTENANCE_TYPE = {
   VACUUM_TABLES: 'VACUUM TABLES',
   REINDEX_TABLES: 'REINDEX TABLES',
   DAILY_DB_MAINTENANCE: 'DAILY DB MAINTENANCE',
+  CORRECT_AR_FLAGS: 'CORRECT AR FLAGS',
   CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
   IMPORT_DOWNLOAD: 'IMPORT_DOWNLOAD',
   IMPORT_PROCESS: 'IMPORT_PROCESS',
@@ -230,14 +231,7 @@ const MAINTENANCE_TYPE = {
 
 const FEATURE_FLAGS = [
   'anv_statistics',
-  'regional_goal_dashboard',
-  'closed_goal_merge_override',
-  'training_reports_dashboard',
   'quality_assurance_dashboard',
-  'manual_mark_goals_similar',
-  'monitoring_integration',
-  'multirecipient_communication_log',
-  'standard_goals_update',
   'collaboration_report',
 ];
 

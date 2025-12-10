@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import RenderReviewCitations from '../../pages/ActivityReport/Pages/components/RenderReviewCitations';
 import { getEditorState } from '../../utils';
+import { OBJECTIVE_STATUS } from '../../Constants';
 
 function renderEditor(heading, data) {
   /**
@@ -32,6 +33,7 @@ function renderEditor(heading, data) {
       toolbarHidden
       defaultEditorState={defaultEditorState}
       wrapperId={wrapperId}
+      ariaLabel={typeof heading === 'string' ? heading : 'Content'}
     />
   );
 }
@@ -234,7 +236,7 @@ export function addObjectiveSectionsToArray(
         'TTA provided': objective.ttaProvided,
         'Support type': objective.supportType,
         'Objective status': objective.status,
-        ...(objective.status === 'Suspended' ? {
+        ...(objective.status === OBJECTIVE_STATUS.SUSPENDED ? {
           'Reason suspended': (
             objective.closeSuspendReason || ''
           ) + (` - ${objective.closeSuspendContext}` || ''),

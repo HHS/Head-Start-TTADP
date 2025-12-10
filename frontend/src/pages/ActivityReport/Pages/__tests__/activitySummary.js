@@ -6,7 +6,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
 import NetworkContext from '../../../../NetworkContext';
-import activitySummary, { isPageComplete } from '../activitySummary';
+import activitySummary, {
+  isPageComplete,
+  citationsDiffer,
+  checkRecipientsAndGoals,
+} from '../activitySummary';
 import { getGoalTemplates } from '../../../../fetchers/goalTemplates';
 import { fetchCitationsByGrant } from '../../../../fetchers/citations';
 
@@ -66,8 +70,8 @@ const RenderActivitySummary = ({
       <FormProvider {...hookForm}>
         {activitySummary.render(
           additionalData,
-          mockFormData,
-          1,
+          mockFormData, // formData (unused but required for signature)
+          1, // reportId
           false, // isAppLoading
           jest.fn(),
           jest.fn(),
@@ -384,5 +388,77 @@ describe('isPageComplete', () => {
       numberOfParticipantsVirtually: null,
     }, { isValid: false });
     expect(result).toBe(false);
+  });
+});
+
+describe('citationsDiffer', () => {
+  it('returns false when no existing goals have different citations', () => {
+    const existingGoals = [
+      {
+        objectives: [
+          {
+            citations: [
+              { citation: 'ABC' },
+              { citation: 'DEF' },
+            ],
+          },
+        ],
+      },
+    ];
+    const fetchedCitations = [
+      { citation: 'ABC' },
+      { citation: 'DEF' },
+    ];
+    expect(citationsDiffer(existingGoals, fetchedCitations)).toBe(false);
+  });
+
+  it('returns true when existing goals have different citations', () => {
+    const existingGoals = [
+      {
+        objectives: [
+          {
+            citations: [
+              { citation: 'XYZ' },
+            ],
+          },
+        ],
+      },
+    ];
+    const fetchedCitations = [
+      { citation: 'ABC' },
+    ];
+    expect(citationsDiffer(existingGoals, fetchedCitations)).toBe(true);
+  });
+});
+
+describe('checkRecipientsAndGoals', () => {
+  it('returns EMPTY_RECIPIENTS_WITH_GOALS when no recipients but has goals', () => {
+    const data = {
+      goalsAndObjectives: [{ id: 1 }],
+      activityRecipients: [],
+      goalTemplates: [],
+      citationsByGrant: [],
+    };
+    expect(checkRecipientsAndGoals(data, false)).toBe('EMPTY_RECIPIENTS_WITH_GOALS');
+  });
+
+  it('returns MISSING_MONITORING_GOAL when monitoring goals exist but no monitoring goal templates', () => {
+    const data = {
+      goalsAndObjectives: [{ name: '(monitoring) goal' }],
+      activityRecipients: [{ id: 1 }],
+      goalTemplates: [{ standard: 'Other' }],
+      citationsByGrant: [],
+    };
+    expect(checkRecipientsAndGoals(data, true)).toBe('MISSING_MONITORING_GOAL');
+  });
+
+  it('returns null when no modal is needed', () => {
+    const data = {
+      goalsAndObjectives: [],
+      activityRecipients: [{ id: 1 }],
+      goalTemplates: [],
+      citationsByGrant: [],
+    };
+    expect(checkRecipientsAndGoals(data, false)).toBe(null);
   });
 });

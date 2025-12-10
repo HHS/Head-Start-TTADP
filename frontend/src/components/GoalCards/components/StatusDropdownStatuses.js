@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import colors from '../../../colors';
 import {
   InProgress,
@@ -12,26 +13,26 @@ import {
 
 const STATUSES = {
   'In progress': {
-    display: 'In progress',
+    display: GOAL_STATUS.IN_PROGRESS,
     color: colors.ttahubMediumBlue,
     icon: <InProgress />,
     IconWithProps: (props) => <InProgress {...props} />,
   },
   'In Progress': {
-    display: 'In progress',
+    display: GOAL_STATUS.IN_PROGRESS,
     color: colors.ttahubMediumBlue,
     icon: <InProgress />,
     IconWithProps: (props) => <InProgress {...props} />,
   },
   Closed: {
-    display: 'Closed',
+    display: GOAL_STATUS.CLOSED,
     color: colors.success,
     icon: <Closed />,
     IconWithProps: (props) => <Closed {...props} />,
   },
   // my database has "completed" goals in it, not sure why so leaving it in case of breakage
   Completed: {
-    display: 'Closed',
+    display: GOAL_STATUS.CLOSED,
     color: colors.success,
     icon: <Closed />,
     IconWithProps: (props) => <Closed {...props} />,
@@ -43,19 +44,19 @@ const STATUSES = {
     IconWithProps: (props) => <Closed {...props} />,
   },
   Draft: {
-    display: 'Draft',
+    display: GOAL_STATUS.DRAFT,
     color: colors.ttahubBlue,
     icon: <Draft />,
     IconWithProps: (props) => <Draft {...props} />,
   },
   'Not Started': {
-    display: 'Not started',
+    display: GOAL_STATUS.NOT_STARTED,
     color: colors.warning,
     icon: <NotStarted />,
     IconWithProps: (props) => <NotStarted {...props} />,
   },
   Suspended: {
-    display: 'Suspended',
+    display: GOAL_STATUS.SUSPENDED,
     color: colors.errorDark,
     icon: <Paused />,
     IconWithProps: (props) => <Paused {...props} />,

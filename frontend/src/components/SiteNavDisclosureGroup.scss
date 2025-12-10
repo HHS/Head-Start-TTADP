@@ -1,0 +1,67 @@
+@import '../colors';
+
+/** hide the left arrows on safari **/
+.ttahub-site-nav--disclosure-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.ttahub-site-nav--disclosure-group summary {
+  box-sizing: border-box;
+  cursor: pointer;
+  list-style: none;
+  width: 100%;
+}
+
+/* Focus styles for keyboard navigation */
+.ttahub-site-nav--disclosure-group summary:focus-visible {
+  outline: 0.25rem solid $blue-vivid-focus;
+  outline-offset: 2px;
+}
+
+/* Remove default focus outline for mouse clicks */
+.ttahub-site-nav--disclosure-group summary:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/**
+  Jump through hoops to preserve the spacing
+  when the details are open or closed
+**/
+.ttahub-site-nav--disclosure-group{
+  padding-bottom: 0;
+  padding-top: 0.5rem;
+}
+
+.ttahub-site-nav--disclosure-group:not([open]) {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.ttahub-site-nav--disclosure-group[open] summary {
+  padding-bottom: 0.5rem;
+}
+
+/**
+Active page styles
+**/
+.ttahub-site-nav--disclosure-group:has([aria-current="page"]) summary {
+  border-color: white;
+  font-weight: bold;
+}
+
+
+/**
+when the menu is open, show the plus
+**/
+.ttahub-site-nav--disclosure-group__open,
+.ttahub-site-nav--disclosure-group[open] .ttahub-site-nav--disclosure-group__close {
+  display: block;
+}
+
+/**
+when the menu is closed, show the minus
+**/
+.ttahub-site-nav--disclosure-group[open] .ttahub-site-nav--disclosure-group__open,
+.ttahub-site-nav--disclosure-group__close {
+  display: none;
+}

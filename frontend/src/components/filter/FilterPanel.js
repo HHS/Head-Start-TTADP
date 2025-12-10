@@ -31,7 +31,9 @@ export default function FilterPanel({
   allowedSubfilters,
 }) {
   // eslint-disable-next-line max-len
-  const [filtersToShow, setFiltersToShow] = useState(determineRegionalFilters(filters, allUserRegions));
+  const [filtersToShow, setFiltersToShow] = useState(
+    determineRegionalFilters(filters, allUserRegions),
+  );
   const {
     subFilters,
     filteredFilterConfig,

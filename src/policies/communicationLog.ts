@@ -1,4 +1,5 @@
 import SCOPES from '../middleware/scopeConstants';
+import { auditLogger } from '../logger';
 
 interface UserType {
   id: number;
@@ -27,10 +28,22 @@ export default class CommunicationLog {
   }
 
   canCreateLog() {
-    return this.user.permissions.some((permission) => (
+    const hasWritePermission = this.user.permissions.some((permission) => (
       permission.regionId === this.regionId
       && permission.scopeId === SCOPES.READ_WRITE_REPORTS
-    )) || this.isAdmin();
+    ));
+
+    if (hasWritePermission) {
+      return true;
+    }
+
+    if (this.isAdmin()) {
+      this.logAdminAction('create communication log');
+      return true;
+    }
+
+    this.logUnauthorizedAttempt('create communication log', 'user lacks write permissions in region');
+    return false;
   }
 
   canReadLog() {
@@ -41,20 +54,58 @@ export default class CommunicationLog {
   }
 
   canUpdateLog() {
-    return this.user.id === this.log.userId || this.isAdmin();
+    if (this.isAdmin()) {
+      this.logAdminAction('update communication log');
+      return true;
+    }
+
+    if (this.user.id === this.log.userId) {
+      return true;
+    }
+
+    this.logUnauthorizedAttempt('update communication log', 'user is not the creator');
+    return false;
   }
 
   canDeleteLog() {
-    return this.canUpdateLog();
+    if (this.isAdmin()) {
+      this.logAdminAction('delete communication log');
+      return true;
+    }
+
+    if (this.user.id === this.log.userId) {
+      return true;
+    }
+
+    this.logUnauthorizedAttempt('delete communication log', 'user is not the creator');
+    return false;
   }
 
   canUploadFileToLog() {
-    return this.canUpdateLog();
+    if (this.isAdmin()) {
+      this.logAdminAction('upload file to communication log');
+      return true;
+    }
+
+    if (this.user.id === this.log.userId) {
+      return true;
+    }
+
+    this.logUnauthorizedAttempt('upload file to communication log', 'user is not the creator');
+    return false;
   }
 
   isAdmin() {
     return this.user.permissions.some((permission) => (
       permission.scopeId === SCOPES.ADMIN
     ));
+  }
+
+  private logAdminAction(action: string) {
+    auditLogger.info(`Communication log admin override: userId=${this.user.id}, action=${action}, regionId=${this.regionId}, recipientId=${this.log.recipientId}`);
+  }
+
+  private logUnauthorizedAttempt(action: string, reason: string) {
+    auditLogger.warn(`Communication log unauthorized attempt: userId=${this.user.id}, action=${action}, regionId=${this.regionId}, recipientId=${this.log.recipientId}, reason=${reason}`);
   }
 }

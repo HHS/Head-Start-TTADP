@@ -1259,15 +1259,8 @@ class Users{
 
 enum enum_Users_flags {
  anv_statistics
- closed_goal_merge_override
  collaboration_report
- manual_mark_goals_similar
- monitoring_integration
- multirecipient_communication_log
  quality_assurance_dashboard
- regional_goal_dashboard
- standard_goals_update
- training_reports_dashboard
 }
 
 enum_Users_flags <|-- Users

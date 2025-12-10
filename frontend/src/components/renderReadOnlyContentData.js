@@ -1,7 +1,18 @@
 import React from 'react';
-import { Editor } from 'react-draft-wysiwyg';
+import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
 import { v4 as uuidv4 } from 'uuid';
-import { getEditorState } from '../utils';
+
+/**
+ * Checks if a string contains HTML tags
+ * @param {*} str - The string to check
+ * @returns {boolean} - True if plain text (no HTML tags), false otherwise
+ */
+function isPlainText(str) {
+  if (typeof str !== 'string') return false;
+  // Check if string contains HTML tags
+  return !/<[a-z][\s\S]*>/i.test(str);
+}
 
 export function renderEditor(heading, data) {
   /**
@@ -11,26 +22,26 @@ export function renderEditor(heading, data) {
     return data;
   }
 
-  let wrapperId = '';
-
-  if (typeof heading === 'string') {
-    wrapperId = `${heading.toLowerCase().replace(' ', '-')}-${uuidv4()}`;
-  } else {
-    wrapperId = uuidv4();
+  /**
+     * if it's plain text with no HTML tags, render directly
+     * this avoids unnecessary processing and removes aria-label="rdw-wrapper"
+     */
+  if (isPlainText(data)) {
+    return <span data-text="true">{data}</span>;
   }
 
   /**
-     * otherwise, we render the contents via react-draft
+     * for rich HTML content, sanitize with DOMPurify and convert to React elements
      */
-  const defaultEditorState = getEditorState(data || '');
+  const sanitized = DOMPurify.sanitize(data || '', {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'span', 'div'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+  });
 
   return (
-    <Editor
-      readOnly
-      toolbarHidden
-      defaultEditorState={defaultEditorState}
-      wrapperId={wrapperId}
-    />
+    <div className="parsed-html-content" aria-label={typeof heading === 'string' ? heading : 'Content'}>
+      {parse(sanitized)}
+    </div>
   );
 }
 
