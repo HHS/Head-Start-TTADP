@@ -36,7 +36,6 @@ export default function Tooltip({
 
   return (
     <span className={cssClasses} data-testid="tooltip">
-      <div role="tooltip" aria-hidden="true" className={`usa-tooltip__body usa-tooltip__body--${position}`}>{tooltipText}</div>
       <button type="button" className={`usa-button usa-button--unstyled ${buttonClassName}`} onClick={onClick}>
         <span className="smart-hub--ellipsis" style={{ maxWidth: `${maxWidth}px` }}>
           <span ref={textRef} aria-hidden={!screenReadDisplayText}>
@@ -62,6 +61,7 @@ export default function Tooltip({
           {buttonLabel}
         </span>
       </button>
+      <div role="tooltip" aria-hidden={!showTooltip} className={`usa-tooltip__body usa-tooltip__body--${position}`}>{tooltipText}</div>
     </span>
   );
 }
