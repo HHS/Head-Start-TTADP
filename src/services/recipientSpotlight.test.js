@@ -8,6 +8,27 @@ const SCOPES = {
   adminRead: { grant: { id: { [db.Sequelize.Op.ne]: null } } },
 };
 
+// Helper function to create scopes with region filter
+const createScopesWithRegion = (regionId) => ({
+  grant: {
+    [db.Sequelize.Op.and]: [
+      { id: { [db.Sequelize.Op.ne]: null } },
+      { regionId: { [db.Sequelize.Op.in]: [regionId] } },
+    ],
+  },
+});
+
+// Helper function to create scopes with recipient and region filter
+const createScopesWithRecipientAndRegion = (recipientId, regionId) => ({
+  grant: {
+    [db.Sequelize.Op.and]: [
+      { id: { [db.Sequelize.Op.ne]: null } },
+      { recipientId: { [db.Sequelize.Op.in]: [recipientId] } },
+      { regionId: { [db.Sequelize.Op.in]: [regionId] } },
+    ],
+  },
+});
+
 const {
   sequelize,
   Grant,
@@ -577,14 +598,12 @@ describe('recipientSpotlight service', () => {
 
   describe('getRecipientSpotlightIndicators', () => {
     it('returns all recipients when no recipientId is provided', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        null,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -609,14 +628,12 @@ describe('recipientSpotlight service', () => {
     });
 
     it('returns a specific recipient when recipientId is provided', async () => {
+      const scopes = createScopesWithRecipientAndRegion(normalRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        normalRecipient.id,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -628,15 +645,12 @@ describe('recipientSpotlight service', () => {
     });
 
     it('identifies child incidents correctly', async () => {
-      // Add debugging to see what's in the database
+      const scopes = createScopesWithRecipientAndRegion(childIncidentsRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        childIncidentsRecipient.id,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
       );
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
@@ -645,14 +659,12 @@ describe('recipientSpotlight service', () => {
     });
 
     it('identifies deficiencies correctly', async () => {
+      const scopes = createScopesWithRecipientAndRegion(deficiencyRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        deficiencyRecipient.id,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -662,14 +674,12 @@ describe('recipientSpotlight service', () => {
     });
 
     it('identifies new recipients correctly', async () => {
+      const scopes = createScopesWithRecipientAndRegion(newRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        newRecipient.id,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -679,14 +689,12 @@ describe('recipientSpotlight service', () => {
     });
 
     it('identifies new staff correctly', async () => {
+      const scopes = createScopesWithRecipientAndRegion(newStaffRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        newStaffRecipient.id,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -696,14 +704,12 @@ describe('recipientSpotlight service', () => {
     });
 
     it('identifies no TTA correctly', async () => {
+      const scopes = createScopesWithRecipientAndRegion(noTTARecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        noTTARecipient.id,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -713,26 +719,22 @@ describe('recipientSpotlight service', () => {
     });
 
     it('handles pagination correctly', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+
       // Test with offset 0, limit 2
       const firstPage = await getRecipientSpotlightIndicators(
-        null,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
       );
 
       // Test with offset 2, limit 2
       const secondPage = await getRecipientSpotlightIndicators(
-        null,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         2,
-        [REGION_ID],
       );
 
       expect(firstPage).toBeDefined();
@@ -790,26 +792,22 @@ describe('recipientSpotlight service', () => {
       });
 
       try {
+        const scopes = createScopesWithRegion(REGION_ID);
+
         // Test ascending order
         const ascResult = await getRecipientSpotlightIndicators(
-          null,
-          REGION_ID,
-          SCOPES.adminRead,
+          scopes,
           'recipientName',
           'ASC',
           0,
-          [REGION_ID],
         );
 
         // Test descending order
         const descResult = await getRecipientSpotlightIndicators(
-          null,
-          REGION_ID,
-          SCOPES.adminRead,
+          scopes,
           'recipientName',
           'DESC',
           0,
-          [REGION_ID],
         );
 
         expect(ascResult).toBeDefined();
@@ -847,14 +845,12 @@ describe('recipientSpotlight service', () => {
     });
 
     it('confirms DRS and FEI are set to false for MVP', async () => {
+      const scopes = createScopesWithRecipientAndRegion(normalRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        normalRecipient.id,
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -865,14 +861,12 @@ describe('recipientSpotlight service', () => {
     });
 
     it('returns object with recipients and overview properties', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        null, // no specific recipient
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
         10,
       );
 
@@ -889,14 +883,12 @@ describe('recipientSpotlight service', () => {
     });
 
     it('handles no limit parameter (gets all recipients)', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
       const result = await getRecipientSpotlightIndicators(
-        null, // no specific recipient
-        REGION_ID,
-        SCOPES.adminRead,
+        scopes,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
         undefined, // no limit
       );
 
@@ -909,24 +901,18 @@ describe('recipientSpotlight service', () => {
     });
 
     it('works with no region ID specified (uses userRegions)', async () => {
+      // Test without region filtering in scopes - should return all
       const result = await getRecipientSpotlightIndicators(
-        null, // no specific recipient
-        null, // no regionId - should use userRegions
         SCOPES.adminRead,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID], // userRegions provides the region filter
         10,
       );
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
-      // All recipients should be from the userRegions
-      result.recipients.forEach((recipient) => {
-        expect([REGION_ID]).toContain(recipient.regionId);
-      });
     });
 
     it('works with empty grant list (queries all grants)', async () => {
@@ -934,13 +920,10 @@ describe('recipientSpotlight service', () => {
       const emptyGrantScope = { grant: { id: { [db.Sequelize.Op.eq]: -999 } } };
 
       const result = await getRecipientSpotlightIndicators(
-        null,
-        REGION_ID,
         emptyGrantScope,
         'recipientName',
         'ASC',
         0,
-        [REGION_ID],
         10,
       );
 

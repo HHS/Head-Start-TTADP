@@ -6,20 +6,16 @@ import {
 
 /* eslint-disable import/prefer-default-export */
 export async function getRecipientSpotlightIndicators(
-  recipientId,
-  regionId,
   scopes,
   sortBy,
   direction,
   offset,
-  userRegions,
   limit,
 ) {
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   const grantsWhere = {
     [Op.and]: [
       scopes.grant,
-      regionId ? { regionId } : {},
       {
         [Op.or]: [
           { status: 'Active' },
@@ -33,11 +29,6 @@ export async function getRecipientSpotlightIndicators(
       },
     ],
   };
-
-  // We may or may not have a recipientId but we should always have a regionId.
-  if (recipientId) {
-    grantsWhere[Op.and].push({ recipientId });
-  }
 
   // Get a list of grant ids using the scopes.
   const grantIds = await Grant.findAll({
@@ -89,9 +80,6 @@ export async function getRecipientSpotlightIndicators(
       FROM "Recipients" r
       JOIN "Grants" g ON r.id = g."recipientId"
       WHERE ${grantIdFilter}
-      ${recipientId ? `AND r.id = ${recipientId}` : ''}
-      ${regionId ? `AND g."regionId" = ${regionId}` : ''}
-      ${!recipientId && userRegions && userRegions.length > 0 ? `AND g."regionId" IN (${userRegions.join(',')})` : ''}
     ),
     
     -- 1. Child Incidents: Grants with more than one RAN citation in the last 12 months

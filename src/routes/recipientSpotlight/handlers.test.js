@@ -1,13 +1,11 @@
 import { getRecipientSpotLight } from './handlers';
 import filtersToScopes from '../../scopes';
 import { currentUserId } from '../../services/currentUser';
-import { getUserReadRegions } from '../../services/accessValidation';
 import handleErrors from '../../lib/apiErrorHandler';
 import { getRecipientSpotlightIndicators } from '../../services/recipientSpotlight';
 
 jest.mock('../../scopes');
 jest.mock('../../services/currentUser');
-jest.mock('../../services/accessValidation');
 jest.mock('../../lib/apiErrorHandler');
 jest.mock('../../services/recipientSpotlight');
 
@@ -18,7 +16,6 @@ describe('recipientSpotlight handlers', () => {
     let req;
     let res;
     const mockUserId = 123;
-    const mockUserRegions = [1, 9];
     const mockScopes = { someScope: 'value' };
     const mockRecipientSpotlightData = {
       recipients: [{ id: 1, name: 'Indicator 1' }],
@@ -32,8 +29,8 @@ describe('recipientSpotlight handlers', () => {
     beforeEach(() => {
       req = {
         query: {
-          recipientId: '456',
-          regionId: '1',
+          'recipientId.in': '456',
+          'region.in': '1',
           sortBy: 'name',
           direction: 'asc',
           offset: '0',
@@ -46,7 +43,6 @@ describe('recipientSpotlight handlers', () => {
       };
 
       currentUserId.mockResolvedValue(mockUserId);
-      getUserReadRegions.mockResolvedValue(mockUserRegions);
       filtersToScopes.mockResolvedValue({ grant: mockScopes });
       getRecipientSpotlightIndicators.mockResolvedValue(mockRecipientSpotlightData);
     });
@@ -59,19 +55,15 @@ describe('recipientSpotlight handlers', () => {
       await getRecipientSpotLight(req, res);
 
       expect(currentUserId).toHaveBeenCalledWith(req, res);
-      expect(getUserReadRegions).toHaveBeenCalledWith(mockUserId);
       expect(filtersToScopes).toHaveBeenCalledWith(
         req.query,
         { userId: mockUserId },
       );
       expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
-        '456',
-        '1',
         mockScopes,
         'name',
         'asc',
         '0',
-        mockUserRegions,
         undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
@@ -87,13 +79,10 @@ describe('recipientSpotlight handlers', () => {
       await getRecipientSpotLight(req, res);
 
       expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
-        undefined,
-        undefined,
         mockScopes,
         'name',
         'asc',
         '0',
-        mockUserRegions,
         undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
@@ -124,8 +113,8 @@ describe('recipientSpotlight handlers', () => {
 
     it('should pass different sort and direction parameters correctly', async () => {
       req.query = {
-        recipientId: '456',
-        regionId: '1',
+        'recipientId.in': '456',
+        'region.in': '1',
         sortBy: 'date',
         direction: 'desc',
         offset: '10',
@@ -134,34 +123,28 @@ describe('recipientSpotlight handlers', () => {
       await getRecipientSpotLight(req, res);
 
       expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
-        '456',
-        '1',
         mockScopes,
         'date',
         'desc',
         '10',
-        mockUserRegions,
         undefined,
       );
     });
 
     it('should handle missing sort parameters', async () => {
       req.query = {
-        recipientId: '456',
-        regionId: '1',
+        'recipientId.in': '456',
+        'region.in': '1',
         offset: '0',
       };
 
       await getRecipientSpotLight(req, res);
 
       expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
-        '456',
-        '1',
         mockScopes,
         undefined,
         undefined,
         '0',
-        mockUserRegions,
         undefined,
       );
     });
