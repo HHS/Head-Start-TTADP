@@ -32,14 +32,6 @@ export const userAttributes = [
 ];
 
 export async function usersByRoles(roles = [], regionId = null) {
-  let permissionsWhere = {};
-
-  if (permissionsWhere) {
-    permissionsWhere = {
-      regionId,
-    };
-  }
-
   return User.findAll({
     where: {
       ...(regionId ? {
@@ -55,7 +47,7 @@ export async function usersByRoles(roles = [], regionId = null) {
     ],
     include: [
       {
-        attibutes: [
+        attributes: [
           'id',
           'name',
           'fullName',
@@ -66,6 +58,15 @@ export async function usersByRoles(roles = [], regionId = null) {
         where: {
           name: roles,
         },
+      },
+      {
+        model: Permission,
+        as: 'permissions',
+        attributes: ['scopeId'],
+        where: {
+          scopeId: SCOPES.SITE_ACCESS,
+        },
+        required: true,
       },
     ],
     order: [
@@ -515,11 +516,7 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
       {
         model: Role,
         as: 'roles',
-        attributes: [
-          'fullName',
-          'name',
-          'id',
-        ],
+        attributes: ['id', 'name', 'fullName'],
       },
       {
         model: NationalCenter,

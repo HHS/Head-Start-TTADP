@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -21,6 +22,7 @@ const placeholderText = '- Select -';
 
 const RecipientsWithGroups = ({
   regionId,
+  states,
   showTooltip,
 }) => {
   const {
@@ -35,15 +37,22 @@ const RecipientsWithGroups = ({
 
   const [recipientOptions, setRecipientOptions] = useState();
 
+  // states is an array like "Colorado (CO)", "Arizona (AZ)", "Oregon (OR)"
+  const stateCodes = useMemo(() => states.map((state) => {
+    const match = state.match(/\(([^)]+)\)/);
+    return match ? match[1] : null;
+  }).filter((code) => code !== null),
+  [states]);
+
   useEffect(() => {
     async function fetchRecipients() {
       if (!recipientOptions && regionId) {
-        const data = await getPossibleSessionParticipants(regionId);
+        const data = await getPossibleSessionParticipants(regionId, stateCodes);
         setRecipientOptions(data);
       }
     }
     fetchRecipients();
-  }, [recipientOptions, regionId]);
+  }, [recipientOptions, regionId, stateCodes]);
 
   const options = (recipientOptions || []).map((recipient) => ({
     label: recipient.name,
@@ -217,6 +226,7 @@ const RecipientsWithGroups = ({
 
 RecipientsWithGroups.propTypes = {
   regionId: PropTypes.number.isRequired,
+  states: PropTypes.arrayOf(PropTypes.string),
   showTooltip: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.string,
@@ -225,6 +235,7 @@ RecipientsWithGroups.propTypes = {
 
 RecipientsWithGroups.defaultProps = {
   showTooltip: false,
+  states: [],
 };
 
 export default RecipientsWithGroups;
