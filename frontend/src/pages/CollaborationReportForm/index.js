@@ -292,7 +292,6 @@ function CollaborationReport({ match, location }) {
             version: 2,
           };
         }
-        console.log('report:', report);
 
         let collaborators = [];
         let approvers = [];
@@ -472,7 +471,6 @@ function CollaborationReport({ match, location }) {
 
         // Process participants, dataUsed, and goals to extract values
         const fieldsToSave = convertFormDataToReport(fields);
-        console.log('formData.regionId:', formData.regionId);
         const savedReport = await createReport({
           ...fieldsToSave,
           regionId: formData.regionId,
