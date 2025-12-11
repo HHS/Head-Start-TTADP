@@ -22,15 +22,8 @@ export type SessionShape = {
     nextSteps: { completeDate: string, note: string }[];
     pocComplete: boolean;
     ownerComplete: boolean;
+    objectiveTrainers: string[];
   };
-  trainers?: Array<{
-    id: number;
-    name: string;
-    nationalCenters?: Array<{
-      id: number;
-      name: string;
-    }>;
-  }>;
   createdAt?: string;
   updatedAt?: string;
 };

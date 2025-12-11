@@ -871,7 +871,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
 
   describe('filterEventsByStatus', () => {
     const userId = 123;
-    const event = {
+    const baseEventData = {
       id: 1,
       ownerId: userId,
       pocIds: [456],
@@ -880,6 +880,10 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       data: { status: TRS.NOT_STARTED },
       sessionReports: [],
     };
+    const event = {
+      ...baseEventData,
+      toJSON: () => baseEventData,
+    };
 
     it('should return events for POC, owner, or collaborator when status is null', async () => {
       const events = [event];
@@ -887,7 +891,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       const filteredEvents = await filterEventsByStatus(events, null, userId);
 
       expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toEqual(event);
+      expect(filteredEvents[0]).toMatchObject(baseEventData);
     });
 
     it('should NOT return NOT_STARTED events for collaborator (changed behavior)', async () => {
@@ -905,7 +909,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       const filteredEvents = await filterEventsByStatus(events, null, userId);
 
       expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toEqual(event);
+      expect(filteredEvents[0]).toMatchObject(baseEventData);
     });
 
     it('should return events for admin without filtering', async () => {
@@ -914,17 +918,25 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       const filteredEvents = await filterEventsByStatus(events, TRS.NOT_STARTED, userId, true);
 
       expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toEqual(event);
+      expect(filteredEvents[0]).toMatchObject(baseEventData);
     });
 
     it('should return events with all sessions for owner, collaborator, or POC when status is IN_PROGRESS', async () => {
-      const inProgressEvent = {
-        ...event,
+      const inProgressEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.IN_PROGRESS },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const inProgressEvent = {
+        ...inProgressEventData,
+        toJSON: () => inProgressEventData,
       };
       const events = [inProgressEvent];
 
@@ -935,13 +947,21 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
 
     it('should return events with all sessions for collaborator when status is IN_PROGRESS', async () => {
-      const inProgressEvent = {
-        ...event,
+      const inProgressEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.IN_PROGRESS },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const inProgressEvent = {
+        ...inProgressEventData,
+        toJSON: () => inProgressEventData,
       };
       const events = [inProgressEvent];
 
@@ -952,13 +972,21 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
 
     it('should return events with all sessions for POC when status is IN_PROGRESS', async () => {
-      const inProgressEvent = {
-        ...event,
+      const inProgressEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.IN_PROGRESS },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const inProgressEvent = {
+        ...inProgressEventData,
+        toJSON: () => inProgressEventData,
       };
       const events = [inProgressEvent];
 
@@ -969,13 +997,21 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
 
     it('should return events with only complete sessions for non-owner, non-collaborator, non-POC when status is IN_PROGRESS', async () => {
-      const inProgressEvent = {
-        ...event,
+      const inProgressEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.IN_PROGRESS },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const inProgressEvent = {
+        ...inProgressEventData,
+        toJSON: () => inProgressEventData,
       };
       const events = [inProgressEvent];
 
@@ -987,13 +1023,21 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
 
     it('should return events for all users when status is COMPLETE', async () => {
-      const completeEvent = {
-        ...event,
+      const completeEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.COMPLETE },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const completeEvent = {
+        ...completeEventData,
+        toJSON: () => completeEventData,
       };
       const events = [completeEvent];
 
@@ -1004,13 +1048,21 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
 
     it('should return events for all users when status is SUSPENDED', async () => {
-      const suspendedEvent = {
-        ...event,
+      const suspendedEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.SUSPENDED },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const suspendedEvent = {
+        ...suspendedEventData,
+        toJSON: () => suspendedEventData,
       };
       const events = [suspendedEvent];
 
