@@ -22,8 +22,6 @@ export default function RecipientSpotlightDashboard({
       const filters = filtersToQueryString(filtersToApply);
 
       return getRecipientSpotlight(
-        '', // recipientId - empty for all recipients
-        '', // regionId - empty, region is in filters
         'recipientName',
         'asc',
         0,

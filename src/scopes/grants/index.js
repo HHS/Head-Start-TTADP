@@ -4,6 +4,7 @@ import { map, pickBy } from 'lodash';
 import { activeBefore, activeAfter, activeWithinDates } from './activeWithin';
 import { withRegion, withoutRegion } from './region';
 import { withRecipientName, withoutRecipientName } from './recipient';
+import { withRecipientId, withoutRecipientId } from './recipientId';
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withProgramTypes, withoutProgramTypes } from './programType';
 import { withStateCode } from './stateCode';
@@ -18,6 +19,10 @@ export const topicToQuery = {
   recipient: {
     ctn: (query) => withRecipientName(query),
     nctn: (query) => withoutRecipientName(query),
+  },
+  recipientId: {
+    in: (query) => withRecipientId(query),
+    nin: (query) => withoutRecipientId(query),
   },
   programSpecialist: {
     ctn: (query) => withProgramSpecialist(query),
