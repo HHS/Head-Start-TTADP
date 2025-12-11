@@ -1,55 +1,44 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import useDeepCompareEffect from 'use-deep-compare-effect';
+import { Grid, GridContainer } from '@trussworks/react-uswds';
 import { DashboardOverviewWidget } from '../../../widgets/DashboardOverview';
 import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import { filtersToQueryString } from '../../../utils';
-import './RecipientSpotlightDashboard.scss';
+import useFetch from '../../../hooks/useFetch';
+
+const DEFAULT_OVERVIEW_DATA = {
+  numRecipients: '0',
+  totalRecipients: '0',
+  recipientPercentage: '0%',
+};
 
 export default function RecipientSpotlightDashboard({
   filtersToApply,
 }) {
-  const [overviewData, setOverviewData] = useState({
-    numRecipients: '0',
-    totalRecipients: '0',
-    recipientPercentage: '0%',
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { data, error, loading } = useFetch(
+    { overview: DEFAULT_OVERVIEW_DATA },
+    async () => {
+      const filters = filtersToQueryString(filtersToApply);
+      // Extract region from filters if available
+      const regionMatch = filters.match(/region\.in\[\]=(\d+)/);
+      const regionId = regionMatch ? regionMatch[1] : '';
 
-  useDeepCompareEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const filters = filtersToQueryString(filtersToApply);
-        // Extract region from filters if available
-        const regionMatch = filters.match(/region\.in\[\]=(\d+)/);
-        const regionId = regionMatch ? regionMatch[1] : '';
+      return getRecipientSpotlight(
+        '', // recipientId - empty for all recipients
+        regionId,
+        'recipientName',
+        'asc',
+        0,
+        filters,
+        undefined, // no limit - get all recipients
+      );
+    },
+    [filtersToApply],
+    'Unable to load overview data',
+  );
 
-        const data = await getRecipientSpotlight(
-          '', // recipientId - empty for all recipients
-          regionId,
-          'recipientName',
-          'asc',
-          0,
-          filters,
-          undefined, // no limit - get all recipients
-        );
-
-        if (data && data.overview) {
-          setOverviewData(data.overview);
-        }
-        setError('');
-      } catch (e) {
-        setError('Unable to load overview data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [filtersToApply]);
+  const overviewData = data?.overview || DEFAULT_OVERVIEW_DATA;
 
   return (
     <>
@@ -57,22 +46,24 @@ export default function RecipientSpotlightDashboard({
         <title>Regional Dashboard - Recipient spotlight</title>
       </Helmet>
 
-      {error && (
-        <div className="usa-alert usa-alert--error margin-bottom-3">
-          <div className="usa-alert__body">
-            <p className="usa-alert__text">{error}</p>
+      <GridContainer className="margin-0 padding-0">
+        {error && (
+          <div className="usa-alert usa-alert--error margin-bottom-3">
+            <div className="usa-alert__body">
+              <p className="usa-alert__text">{error}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="recipient-spotlight-overview">
-        <DashboardOverviewWidget
-          data={overviewData}
-          loading={loading}
-          fields={['Recipients with priority indicators']}
-          showTooltips
-        />
-      </div>
+        <Grid desktop={{ col: 4 }} tablet={{ col: 6 }} mobileLg={{ col: 12 }} className="maxw-mobile">
+          <DashboardOverviewWidget
+            data={overviewData}
+            loading={loading}
+            fields={['Recipients with priority indicators']}
+            showTooltips
+          />
+        </Grid>
+      </GridContainer>
     </>
   );
 }
