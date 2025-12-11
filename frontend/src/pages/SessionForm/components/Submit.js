@@ -81,7 +81,7 @@ export default function Submit({
         <Dropdown
           id="approverId"
           name="approverId"
-          inputRef={register()}
+          inputRef={register({ required: 'Select an approver' })}
           required
         >
           <option selected value="">Select an approver</option>

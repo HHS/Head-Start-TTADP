@@ -142,6 +142,9 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.waitForLoadState('networkidle'); // wait for navigation to complete
   await page.getByRole('button', { name: 'Review and submit' }).click();
 
+  await page.waitForLoadState('networkidle');
+  await page.getByTestId('Select').selectOption('Larry Botter, ECM');
+
   await page.waitForLoadState('networkidle'); // waiting for form submission to complete
   await page.getByRole('button', { name: 'Submit for approval' }).click();
 

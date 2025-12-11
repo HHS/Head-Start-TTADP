@@ -34,6 +34,11 @@ module.exports = {
         regionId: 3,
         scopeId: READ_WRITE_TRAINING_REPORTS,
       },
+      {
+        userId: 6,
+        regionId: 1,
+        scopeId: READ_WRITE_TRAINING_REPORTS,
+      },
     ];
 
     const collaboratorTrainingReports = [
