@@ -411,11 +411,11 @@ export const isPageComplete = (hookForm) => {
     // strings
     name,
     description,
+    conductMethod,
 
     // arrays
     reportReasons,
     statesInvolved,
-    conductMethod,
 
     // numbers
     duration,
