@@ -34,11 +34,12 @@ function NoResultsFound({ customMessage, hideFilterHelp }) {
 }
 
 NoResultsFound.propTypes = {
-  customMessage: PropTypes.number.isRequired,
-  hideFilterHelp: PropTypes.number,
+  customMessage: PropTypes.string,
+  hideFilterHelp: PropTypes.bool,
 };
 
 NoResultsFound.defaultProps = {
+  customMessage: '',
   hideFilterHelp: false,
 };
 

@@ -6,43 +6,71 @@ import {
 import fetchMock from 'fetch-mock';
 import RecipientSpotlight from '../RecipientSpotlight';
 
-// Sample data for tests
-const mockSpotlightData = [
-  {
+// Sample data for tests (wrapped in recipients array to match new API format)
+const mockSpotlightData = {
+  recipients: [
+    {
+      recipientId: 1,
+      regionId: 1,
+      recipientName: 'Recipient A',
+      grantIds: [1, 2, 3],
+      childIncidents: true,
+      deficiency: false,
+      newRecipients: true,
+      newStaff: false,
+      noTTA: true,
+      DRS: false,
+      FEI: false,
+    },
+  ],
+  overview: {
+    numRecipients: '1',
+    totalRecipients: '1',
+    recipientPercentage: '100%',
+  },
+};
+
+// Mock data with all indicators set to false
+const noIndicatorsMockData = {
+  recipients: [{
     recipientId: 1,
     regionId: 1,
     recipientName: 'Recipient A',
     grantIds: [1, 2, 3],
-    childIncidents: true,
+    childIncidents: false,
     deficiency: false,
-    newRecipients: true,
+    newRecipients: false,
     newStaff: false,
-    noTTA: true,
+    noTTA: false,
     DRS: false,
     FEI: false,
+  }],
+  overview: {
+    numRecipients: '0',
+    totalRecipients: '1',
+    recipientPercentage: '0%',
   },
-];
-
-// Mock data with all indicators set to false
-const noIndicatorsMockData = [{
-  recipientId: 1,
-  regionId: 1,
-  recipientName: 'Recipient A',
-  grantIds: [1, 2, 3],
-  childIncidents: false,
-  deficiency: false,
-  newRecipients: false,
-  newStaff: false,
-  noTTA: false,
-  DRS: false,
-  FEI: false,
-}];
+};
 
 // Mock empty response
-const emptyMockSpotlightData = [{}];
+const emptyMockSpotlightData = {
+  recipients: [{}],
+  overview: {
+    numRecipients: '0',
+    totalRecipients: '0',
+    recipientPercentage: '0%',
+  },
+};
 
 // Completely empty response (no results)
-const noResultsMockData = [];
+const noResultsMockData = {
+  recipients: [],
+  overview: {
+    numRecipients: '0',
+    totalRecipients: '0',
+    recipientPercentage: '0%',
+  },
+};
 
 describe('RecipientSpotlight', () => {
   const renderRecipientSpotlight = (recipientId = 1, regionId = 1) => {
@@ -65,8 +93,8 @@ describe('RecipientSpotlight', () => {
   });
 
   it('shows recipient may need prioritized attention when indicators are present', async () => {
-    // Mock the API endpoint directly
-    const spotlightUrl = '/api/recipient-spotlight?recipientId=1&regionId=1&sortBy=recipientName&direction=desc&offset=0&limit=10';
+    // Mock the API endpoint directly with new filter format
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight();
@@ -79,7 +107,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('shows "No priority indicators identified" when no indicators are present', async () => {
-    const spotlightUrl = '/api/recipient-spotlight?recipientId=1&regionId=1&sortBy=recipientName&direction=desc&offset=0&limit=10';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, noIndicatorsMockData);
 
     renderRecipientSpotlight();
@@ -92,7 +120,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('displays the correct number of indicators with their states', async () => {
-    const spotlightUrl = '/api/recipient-spotlight?recipientId=1&regionId=1&sortBy=recipientName&direction=desc&offset=0&limit=10';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight();
@@ -115,7 +143,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('handles API error gracefully with NoResultsFound', async () => {
-    const spotlightUrl = '/api/recipient-spotlight?recipientId=1&regionId=1&sortBy=recipientName&direction=desc&offset=0&limit=10';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, 500);
 
     renderRecipientSpotlight();
@@ -133,7 +161,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('handles empty response object gracefully with NoResultsFound', async () => {
-    const spotlightUrl = '/api/recipient-spotlight?recipientId=1&regionId=1&sortBy=recipientName&direction=desc&offset=0&limit=10';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, emptyMockSpotlightData);
 
     renderRecipientSpotlight();
@@ -153,7 +181,7 @@ describe('RecipientSpotlight', () => {
   it('makes API call with correct parameters for different IDs', async () => {
     const recipientId = 5;
     const regionId = 10;
-    const spotlightUrl = `/api/recipient-spotlight?recipientId=${recipientId}&regionId=${regionId}&sortBy=recipientName&direction=desc&offset=0&limit=10`;
+    const spotlightUrl = `/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=${recipientId}&region.in=${regionId}`;
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight(recipientId, regionId);
@@ -165,7 +193,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('displays indicator descriptions correctly', async () => {
-    const spotlightUrl = '/api/recipient-spotlight?recipientId=1&regionId=1&sortBy=recipientName&direction=desc&offset=0&limit=10';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight();
@@ -180,7 +208,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('displays NoResultsFound component when API returns empty array', async () => {
-    const spotlightUrl = '/api/recipient-spotlight?recipientId=1&regionId=1&sortBy=recipientName&direction=desc&offset=0&limit=10';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, noResultsMockData);
 
     renderRecipientSpotlight();
@@ -198,7 +226,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('displays NoResultsFound component when API call fails with error', async () => {
-    const spotlightUrl = '/api/recipient-spotlight?recipientId=1&regionId=1&sortBy=recipientName&direction=desc&offset=0&limit=10';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, { throws: new Error('API error') });
 
     renderRecipientSpotlight();
@@ -216,7 +244,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('sets aria-hidden correctly based on indicator values', async () => {
-    const spotlightUrl = '/api/recipient-spotlight?recipientId=1&regionId=1&sortBy=recipientName&direction=desc&offset=0&limit=10';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&limit=10&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight();
