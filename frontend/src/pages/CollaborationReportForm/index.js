@@ -137,7 +137,8 @@ export const convertFormDataToReport = (data) => {
     ...rest
   } = data;
 
-  const conductMethodValues = conductMethod || null;
+  const conductMethodValues = Array.isArray(conductMethod)
+    ? conductMethod[0] : conductMethod || null;
   const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => s.value) : [];
   const participantValues = participants ? participants.map((p) => p.value) : [];
   const dataUsedValues = dataUsed ? dataUsed.map((d) => d.value) : [];
@@ -292,7 +293,6 @@ function CollaborationReport({ match, location }) {
             version: 2,
           };
         }
-        console.log('report:', report);
 
         let collaborators = [];
         let approvers = [];
@@ -472,7 +472,6 @@ function CollaborationReport({ match, location }) {
 
         // Process participants, dataUsed, and goals to extract values
         const fieldsToSave = convertFormDataToReport(fields);
-        console.log('formData.regionId:', formData.regionId);
         const savedReport = await createReport({
           ...fieldsToSave,
           regionId: formData.regionId,

@@ -411,11 +411,11 @@ export const isPageComplete = (hookForm) => {
     // strings
     name,
     description,
+    conductMethod,
 
     // arrays
     reportReasons,
     statesInvolved,
-    conductMethod,
 
     // numbers
     duration,
@@ -431,6 +431,7 @@ export const isPageComplete = (hookForm) => {
   const stringsToValidate = [
     name,
     description,
+    conductMethod,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
@@ -439,7 +440,6 @@ export const isPageComplete = (hookForm) => {
 
   const arraysToValidate = [
     reportReasons,
-    conductMethod,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {
