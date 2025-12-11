@@ -3,11 +3,13 @@ import filtersToScopes from '../../scopes';
 import { currentUserId } from '../../services/currentUser';
 import handleErrors from '../../lib/apiErrorHandler';
 import { getRecipientSpotlightIndicators } from '../../services/recipientSpotlight';
+import { getUserReadRegions } from '../../services/accessValidation';
 
 jest.mock('../../scopes');
 jest.mock('../../services/currentUser');
 jest.mock('../../lib/apiErrorHandler');
 jest.mock('../../services/recipientSpotlight');
+jest.mock('../../services/accessValidation');
 
 const namespace = 'SERVICE:RECIPIENT_SPOTLIGHT';
 
@@ -43,6 +45,7 @@ describe('recipientSpotlight handlers', () => {
       };
 
       currentUserId.mockResolvedValue(mockUserId);
+      getUserReadRegions.mockResolvedValue([1, 2, 3]); // User has access to regions 1, 2, 3
       filtersToScopes.mockResolvedValue({ grant: mockScopes });
       getRecipientSpotlightIndicators.mockResolvedValue(mockRecipientSpotlightData);
     });
@@ -69,8 +72,9 @@ describe('recipientSpotlight handlers', () => {
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
 
-    it('should work with optional recipientId and regionId params omitted', async () => {
+    it('should work with optional recipientId param omitted but region provided', async () => {
       req.query = {
+        'region.in': '1',
         sortBy: 'name',
         direction: 'asc',
         offset: '0',
@@ -147,6 +151,69 @@ describe('recipientSpotlight handlers', () => {
         '0',
         undefined,
       );
+    });
+
+    it('should return 403 FORBIDDEN when user tries to access a region they do not have permission for', async () => {
+      req.query = {
+        'region.in': '5', // User does not have access to region 5
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 FORBIDDEN when user tries to access multiple regions and one is unauthorized', async () => {
+      req.query = {
+        'region.in': ['1', '5'], // User has access to region 1 but not region 5
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 FORBIDDEN when no region is specified in the request', async () => {
+      req.query = {
+        'recipientId.in': '456',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+    });
+
+    it('should allow access when user requests multiple regions they have access to', async () => {
+      req.query = {
+        'region.in': ['1', '2'], // User has access to both regions 1 and 2
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.sendStatus).not.toHaveBeenCalledWith(403);
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+    });
+
+    it('should call getUserReadRegions with the correct userId', async () => {
+      await getRecipientSpotLight(req, res);
+
+      expect(getUserReadRegions).toHaveBeenCalledWith(mockUserId);
     });
   });
 });

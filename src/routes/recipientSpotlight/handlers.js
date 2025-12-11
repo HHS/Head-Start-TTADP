@@ -1,8 +1,11 @@
 /* eslint-disable import/prefer-default-export */
+import httpCodes from 'http-codes';
+import { DECIMAL_BASE } from '@ttahub/common';
 import filtersToScopes from '../../scopes';
 import { currentUserId } from '../../services/currentUser';
 import handleErrors from '../../lib/apiErrorHandler';
 import { getRecipientSpotlightIndicators } from '../../services/recipientSpotlight';
+import { getUserReadRegions } from '../../services/accessValidation';
 
 const namespace = 'SERVICE:RECIPIENT_SPOTLIGHT';
 
@@ -23,6 +26,33 @@ export async function getRecipientSpotLight(req, res) {
     } = req.query;
 
     const userId = await currentUserId(req, res);
+
+    // Get user's read regions
+    const userReadRegions = await getUserReadRegions(userId);
+
+    // Extract requested regions from query
+    const requestedRegions = req.query['region.in'];
+
+    // Check if user has access to requested regions
+    if (requestedRegions) {
+      // Ensure requestedRegions is an array
+      const regionsArray = Array.isArray(requestedRegions) ? requestedRegions : [requestedRegions];
+
+      // Check if all requested regions are in user's allowed regions
+      const hasAccess = regionsArray.every(
+        (region) => userReadRegions.includes(parseInt(region, DECIMAL_BASE)),
+      );
+
+      if (!hasAccess) {
+        res.sendStatus(httpCodes.FORBIDDEN);
+        return;
+      }
+    } else {
+      // No regions requested - return forbidden
+      // User must explicitly request regions they have access to
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
 
     const { grant: scopes } = await filtersToScopes(
       req.query,
