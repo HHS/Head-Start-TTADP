@@ -131,22 +131,6 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
         order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
-        include: [
-          {
-            model: User,
-            as: 'trainers',
-            attributes: ['id', 'name'],
-            through: { attributes: [] }, // Exclude junction table
-            include: [
-              {
-                model: db.NationalCenter,
-                as: 'nationalCenters',
-                attributes: ['id', 'name'],
-                through: { attributes: [] },
-              },
-            ],
-          },
-        ],
       },
     ],
   };
@@ -267,22 +251,6 @@ export async function findEventHelperBlob({
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
         order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
-        include: [
-          {
-            model: User,
-            as: 'trainers',
-            attributes: ['id', 'name'],
-            through: { attributes: [] }, // Exclude junction table
-            include: [
-              {
-                model: db.NationalCenter,
-                as: 'nationalCenters',
-                attributes: ['id', 'name'],
-                through: { attributes: [] },
-              },
-            ],
-          },
-        ],
       },
     ],
     where,
