@@ -814,15 +814,15 @@ describe('recipientSpotlight service', () => {
 
         expect(ascResult).toBeDefined();
         expect(descResult).toBeDefined();
-        expect(ascResult.length).toBeGreaterThan(0);
-        expect(descResult.length).toBeGreaterThan(0);
+        expect(ascResult.recipients.length).toBeGreaterThan(0);
+        expect(descResult.recipients.length).toBeGreaterThan(0);
 
         // Find our test recipients in the results
-        const ascTestRecipients = ascResult.filter(
+        const ascTestRecipients = ascResult.recipients.filter(
           (r) => r.recipientName.includes('Test Recipient'),
         );
 
-        const descTestRecipients = descResult.filter(
+        const descTestRecipients = descResult.recipients.filter(
           (r) => r.recipientName.includes('Test Recipient'),
         );
 
