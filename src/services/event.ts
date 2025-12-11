@@ -131,6 +131,22 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
         order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
+        include: [
+          {
+            model: User,
+            as: 'trainers',
+            attributes: ['id', 'name'],
+            through: { attributes: [] }, // Exclude junction table
+            include: [
+              {
+                model: db.NationalCenter,
+                as: 'nationalCenters',
+                attributes: ['id', 'name'],
+                through: { attributes: [] },
+              },
+            ],
+          },
+        ],
       },
     ],
   };
@@ -251,6 +267,22 @@ export async function findEventHelperBlob({
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
         order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
+        include: [
+          {
+            model: User,
+            as: 'trainers',
+            attributes: ['id', 'name'],
+            through: { attributes: [] }, // Exclude junction table
+            include: [
+              {
+                model: db.NationalCenter,
+                as: 'nationalCenters',
+                attributes: ['id', 'name'],
+                through: { attributes: [] },
+              },
+            ],
+          },
+        ],
       },
     ],
     where,
@@ -597,6 +629,73 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
 }
 
 /**
+ * Determine if a POC can see sessions based on event organizer type
+ * @param event - The event
+ * @returns boolean - true if POC can see sessions
+ */
+const pocCanSeeSessionsForEvent = (event: EventShape): boolean => {
+  const organizerType = event.data?.eventOrganizer;
+
+  // POCs can NOT see sessions for "Regional TTA Hosted Event (no National Centers)"
+  if (organizerType === 'Regional TTA Hosted Event (no National Centers)') {
+    return false;
+  }
+
+  // POCs CAN see sessions for "Regional PD Event (with National Centers)"
+  // regardless of trainer type
+  if (organizerType === 'Regional PD Event (with National Centers)') {
+    return true;
+  }
+
+  // Default: allow POC to see sessions (defensive)
+  return true;
+};
+
+/**
+ * Check if user can view a specific session based on their role and session status
+ * @param session - The session
+ * @param event - The event containing the session
+ * @param userId - The user ID
+ * @param isOwner - Is user the event owner
+ * @param isCollaborator - Is user an event collaborator
+ * @param isPoc - Is user an event POC
+ * @returns boolean - true if user can view the session
+ */
+const canUserViewSession = (
+  session: SessionShape,
+  event: EventShape,
+  userId: number,
+  isOwner: boolean,
+  isCollaborator: boolean,
+  isPoc: boolean,
+): boolean => {
+  const sessionStatus = session.data?.status;
+
+  // Owner and collaborators always see all sessions
+  if (isOwner || isCollaborator) {
+    return true;
+  }
+
+  // POC visibility depends on event organizer type
+  if (isPoc) {
+    // Check if POC can see sessions for this event type
+    if (!pocCanSeeSessionsForEvent(event)) {
+      return false; // POC cannot see any sessions for this event type
+    }
+    // POC can see sessions for this event type
+    return true;
+  }
+
+  // Approver can only see COMPLETE sessions
+  if (session.approverId === userId) {
+    return sessionStatus === TRS.COMPLETE;
+  }
+
+  // Regional users (everyone else) can only see COMPLETE sessions
+  return sessionStatus === TRS.COMPLETE;
+};
+
+/**
  *
  * remember, regional filtering is done in the previous step
  * so all we need to do here is a last cleanup of the data by status
@@ -607,7 +706,7 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
  * @returns
  */
 export async function filterEventsByStatus(events: EventShape[], status: string, userId: number, isAdmin = false) : Promise<EventShape[]> {
-  // do not filter if admin
+  // Admins see everything
   if (isAdmin) return events;
 
   switch (status) {
@@ -615,57 +714,52 @@ export async function filterEventsByStatus(events: EventShape[], status: string,
     case null:
       /**
        * Not started events
-       * You see them if
-       * - You are the POC, owner, or collaborator
+       * Visible only to owner or POC
+       * Collaborators CANNOT see NOT_STARTED events (changed from previous behavior)
        */
       return events.filter((event) => {
-        // pocIds is nullable
-        if (event.pocIds && event.pocIds.includes(userId)) {
-          return true;
-        }
-
-        if (event.collaboratorIds.includes(userId)) {
-          return true;
-        }
-
+        // Owner can see
         if (event.ownerId === userId) {
           return true;
         }
 
+        // POC can see
+        if (event.pocIds && event.pocIds.includes(userId)) {
+          return true;
+        }
+
+        // Collaborators CANNOT see NOT_STARTED events
         return false;
       });
+
     case TRS.IN_PROGRESS:
       /**
        * In progress events
-       * You see all of them with regional permissions
-       * but you may not see all sessions
-       *
+       * All regional users see the event, but session visibility varies by role
        */
-
       return events.map((event) => {
-        // if you are owner, collaborator or poc, you see all sessions
-        if (event.ownerId === userId) {
-          return event;
-        }
+        const isOwner = event.ownerId === userId;
+        const isCollaborator = event.collaboratorIds.includes(userId);
+        const isPoc = event.pocIds && event.pocIds.includes(userId);
 
-        if (event.collaboratorIds.includes(userId)) {
-          return event;
-        }
+        // Filter sessions based on user role and event organizer type
+        const filteredSessions = event.sessionReports.filter((session) => canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc));
 
-        if (event.pocIds && event.pocIds.includes(userId)) {
-          return event;
-        }
-
-        // otherwise, you only see sessions that are "complete"
-        const e = event;
-        e.sessionReports = e.sessionReports.filter((session) => session.data.status === TRS.COMPLETE);
-
-        return e;
+        return {
+          // I am going to ts-ignore this to avoid implementing a new type
+          // to represent the sequelize model vs the data shape as
+          // that would require a snipe hunt through the TR services
+          // @ts-ignore
+          ...event.toJSON(),
+          sessionReports: filteredSessions,
+        };
       });
+
     case TRS.COMPLETE:
     case TRS.SUSPENDED:
-      // everyone with regional permissions can see all sessions
+      // Everyone with regional permissions sees all events and all sessions
       return events;
+
     default:
       return [];
   }
