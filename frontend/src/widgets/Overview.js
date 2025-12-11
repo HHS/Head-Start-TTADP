@@ -50,7 +50,6 @@ export function OverviewWidget({
       </Grid>
       <Grid row className="smart-hub--overview-data">
         <Field label="Grants served" data={data.numGrants} />
-        <Field label="Other entities served" data={data.numOtherEntities} />
         <Field label="Activity reports" data={data.numReports} />
         <Field label="Participants" data={data.numParticipants} />
         <Field label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />
