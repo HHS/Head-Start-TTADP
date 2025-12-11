@@ -5,6 +5,7 @@ import {
 } from '@testing-library/react';
 import RecipientSpotlightDashboard from '../RecipientSpotlightDashboard';
 import { getRecipientSpotlight } from '../../../../fetchers/recipientSpotlight';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 jest.mock('../../../../fetchers/recipientSpotlight');
 
@@ -30,7 +31,11 @@ describe('Recipient spotlight Dashboard page', () => {
 
   const renderTest = (props = {}) => {
     const mergedProps = { ...defaultProps, ...props };
-    render(<RecipientSpotlightDashboard filtersToApply={mergedProps.filtersToApply} />);
+    render(
+      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+        <RecipientSpotlightDashboard filtersToApply={mergedProps.filtersToApply} />
+      </AppLoadingContext.Provider>,
+    );
   };
 
   it('renders without crashing', async () => {
