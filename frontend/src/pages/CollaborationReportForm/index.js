@@ -137,7 +137,8 @@ export const convertFormDataToReport = (data) => {
     ...rest
   } = data;
 
-  const conductMethodValues = conductMethod || null;
+  const conductMethodValues = Array.isArray(conductMethod)
+    ? conductMethod[0] : conductMethod || null;
   const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => s.value) : [];
   const participantValues = participants ? participants.map((p) => p.value) : [];
   const dataUsedValues = dataUsed ? dataUsed.map((d) => d.value) : [];
