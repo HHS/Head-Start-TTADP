@@ -7,13 +7,13 @@ import { Link, useHistory } from 'react-router-dom';
 import { completeEvent, resumeEvent, suspendEvent } from '../../../fetchers/event';
 import UserContext from '../../../UserContext';
 import { eventPropTypes } from '../constants';
-import TooltipList from '../../../components/TooltipList';
 import ContextMenu from '../../../components/ContextMenu';
 import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
 import SessionCard from './SessionCard';
 import Modal from '../../../components/Modal';
 import isAdmin from '../../../permissions';
+import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 import './EventCard.scss';
 
 function EventCard({
@@ -33,6 +33,9 @@ function EventCard({
     data,
     sessionReports,
   } = event;
+
+  const { eventOrganizer } = data;
+
   const [message, setMessage] = useState({
     text: '',
     type: 'error',
@@ -51,7 +54,7 @@ function EventCard({
 
   const canEditEvent = ((isOwner && !eventSubmitted && isNotCompleteOrSuspended)
     || (hasAdminRights && isNotCompleteOrSuspended));
-  const canCreateSession = isNotCompleteOrSuspended && isOwnerOrCollaborator;
+  const canCreateSession = (isNotCompleteOrSuspended && isOwnerOrCollaborator) || hasAdminRights;
   const canDeleteEvent = hasAdminRights && (data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
   || data.status === TRAINING_REPORT_STATUSES.SUSPENDED);
   const menuItems = [];
@@ -87,7 +90,11 @@ function EventCard({
     menuItems.push({
       label: 'Create session',
       onClick: () => {
-        history.push(`/training-report/${idForLink}/session/new/`);
+        let url = `/training-report/${idForLink}/session/new/`;
+        if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
+          url += 'choose-facilitation';
+        }
+        history.push(url);
       },
     });
   }
@@ -209,7 +216,6 @@ function EventCard({
 
   return (
     <>
-
       <article
         className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2 position-relative"
         data-testid="eventCard"
@@ -237,10 +243,6 @@ function EventCard({
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__organizer padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Event organizer</p>
             <p className="usa-prose margin-y-0">{data.eventOrganizer}</p>
-          </div>
-          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__reason padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Reason</p>
-            <TooltipList list={data.reasons ? data.reasons : []} cardType="event" listType="reasons" />
           </div>
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
             <p className="usa-prose text-bold  margin-y-0">Event start date</p>
@@ -284,6 +286,7 @@ function EventCard({
           <SessionCard
             key={`session_${uuidv4()}`}
             eventId={idForLink}
+            eventOrganizer={data.eventOrganizer}
             session={s}
             expanded={reportsExpanded}
             isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
