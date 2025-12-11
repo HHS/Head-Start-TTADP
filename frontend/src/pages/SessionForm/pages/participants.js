@@ -20,6 +20,10 @@ import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 
 const placeholderText = '- Select -';
+const TTA_TYPE_LABEL_MAP = {
+  training: 'Training',
+  'technical-assistance': 'Technical Assistance',
+};
 
 const Participants = ({ formData }) => {
   const {
@@ -206,7 +210,10 @@ const ReviewSection = () => {
     numberOfParticipantsInPerson,
     numberOfParticipantsVirtually,
     language,
+    ttaType,
   } = getValues();
+
+  const tta = ttaType.map((t) => TTA_TYPE_LABEL_MAP[t] || '').join(', ');
 
   const sections = [
     {
@@ -214,7 +221,7 @@ const ReviewSection = () => {
       items: [
         { label: 'Recipients', name: 'recipients', customValue: { recipients: recipients?.map((r) => r.label).join(', ') || '' } },
         { label: 'Recipient participants', name: 'participants', customValue: { participants } },
-        { label: 'TTA type', name: 'ttaType', customValue: { ttaType: '' } }, // todo: revisit with changes to participants page
+        { label: 'TTA type', name: 'ttaType', customValue: { ttaType: tta } },
         { label: 'Delivery method', name: 'deliveryMethod', customValue: { deliveryMethod } },
         ...(deliveryMethod === 'hybrid' ? [
           { label: 'Number of participants attending in person', name: 'numberOfParticipantsInPerson', customValue: { numberOfParticipantsInPerson } },
