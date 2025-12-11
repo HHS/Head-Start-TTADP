@@ -638,7 +638,6 @@ describe('User handlers', () => {
         'TTAC',
         'ECM',
         'GSM',
-        'RPM',
       ], 1);
       expect(res.json).toHaveBeenCalledWith(mockTrainers);
     });

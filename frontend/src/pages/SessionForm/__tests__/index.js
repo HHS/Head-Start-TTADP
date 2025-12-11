@@ -152,12 +152,12 @@ describe('SessionReportForm', () => {
     fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
     fetchMock.get('/api/goal-templates', []);
     fetchMock.get('/api/users/trainers/regional/region/1', [
-      { id: 1, fullName: 'Regional Trainer 1' },
-      { id: 2, fullName: 'Regional Trainer 2' },
+      { id: 1, fullName: 'Regional Trainer 1', roles: ['ECM'] },
+      { id: 2, fullName: 'Regional Trainer 2', roles: ['ECM'] },
     ]);
     fetchMock.get('/api/users/trainers/national-center/region/1', [
-      { id: 1, fullName: 'National Center Trainer 1' },
-      { id: 2, fullName: 'National Center Trainer 2' },
+      { id: 1, fullName: 'National Center Trainer 1', roles: ['NC'] },
+      { id: 2, fullName: 'National Center Trainer 2', roles: ['NC'] },
     ]);
     fetchMock.get('/api/session-reports/participants/1', []);
     fetchMock.get('/api/session-reports/groups?region=1', []);
