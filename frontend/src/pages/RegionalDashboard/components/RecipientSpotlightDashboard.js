@@ -16,17 +16,14 @@ const DEFAULT_OVERVIEW_DATA = {
 export default function RecipientSpotlightDashboard({
   filtersToApply,
 }) {
-  const { data, error, loading } = useFetch(
+  const { data, error } = useFetch(
     { overview: DEFAULT_OVERVIEW_DATA },
     async () => {
       const filters = filtersToQueryString(filtersToApply);
-      // Extract region from filters if available
-      const regionMatch = filters.match(/region\.in\[\]=(\d+)/);
-      const regionId = regionMatch ? regionMatch[1] : '';
 
       return getRecipientSpotlight(
         '', // recipientId - empty for all recipients
-        regionId,
+        '', // regionId - empty, region is in filters
         'recipientName',
         'asc',
         0,
@@ -36,6 +33,7 @@ export default function RecipientSpotlightDashboard({
     },
     [filtersToApply],
     'Unable to load overview data',
+    true, // useAppLoading
   );
 
   const overviewData = data?.overview || DEFAULT_OVERVIEW_DATA;
@@ -45,7 +43,6 @@ export default function RecipientSpotlightDashboard({
       <Helmet>
         <title>Regional Dashboard - Recipient spotlight</title>
       </Helmet>
-
       <GridContainer className="margin-0 padding-0">
         {error && (
           <div className="usa-alert usa-alert--error margin-bottom-3">
@@ -54,14 +51,15 @@ export default function RecipientSpotlightDashboard({
             </div>
           </div>
         )}
-
-        <Grid desktop={{ col: 4 }} tablet={{ col: 6 }} mobileLg={{ col: 12 }} className="maxw-mobile">
+        <div className="maxw-mobile">
           <DashboardOverviewWidget
             data={overviewData}
-            loading={loading}
             fields={['Recipients with priority indicators']}
             showTooltips
           />
+        </div>
+        <Grid row>
+          <p>Place holder for spotlight cards.</p>
         </Grid>
       </GridContainer>
     </>
