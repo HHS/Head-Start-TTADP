@@ -22,7 +22,7 @@ const Status = ({ statusKey }) => {
 
   const { IconWithProps } = data;
   return (
-    <div className="ttahub-read-only-content-section--heading--section-row-status display-flex flex-align-center margin-left-4">
+    <div className="ttahub-read-only-content-section--heading--section-row-status display-flex flex-align-center margin-left-4 margin-bottom-3">
       <IconWithProps size="xl" />
       <p className="ttahub-read-only-content-section--heading--section-row-status-text margin-0 text-bold font-sans-md">{data.display}</p>
     </div>

@@ -17,7 +17,9 @@ import ReadOnlyContent from '../../components/ReadOnlyContent';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import './index.css';
 import UserContext from '../../UserContext';
-import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
+import { EVENT_PARTNERSHIP, TRAINING_EVENT_ORGANIZER } from '../../Constants';
+
+const FORBIDDEN = 403;
 
 export const formatOwnerName = (event) => {
   try {
@@ -46,6 +48,19 @@ export const formatOwnerName = (event) => {
   }
 };
 
+export const translateEventPartnership = (eventPartnership) => {
+  switch (eventPartnership) {
+    case EVENT_PARTNERSHIP.REGIONAL_HSA:
+      return 'Yes, Regional HSA';
+    case EVENT_PARTNERSHIP.STATE_HSA:
+      return 'Yes, State HSA';
+    case EVENT_PARTNERSHIP.NO:
+      return 'No';
+    default:
+      return '';
+  }
+};
+
 const formatNextSteps = (nextSteps, heading, striped) => {
   const data = nextSteps.reduce((acc, step, index) => ({
     ...acc,
@@ -60,7 +75,14 @@ const formatNextSteps = (nextSteps, heading, striped) => {
   };
 };
 
-const FORBIDDEN = 403;
+const formatSupportingGoals = (sessionGoalTemplates) => {
+  if (!sessionGoalTemplates || sessionGoalTemplates.length === 0) {
+    return 'None';
+  }
+  return sessionGoalTemplates.map((goal) => goal.label || goal).join(', ');
+};
+
+const handleArrayJoin = (arr, join = ', ', alt = 'None') => (arr && arr.length ? arr.join(join) : alt);
 
 export default function ViewTrainingReport({ match }) {
   const [event, setEvent] = useState(null);
@@ -213,43 +235,28 @@ export default function ViewTrainingReport({ match }) {
     data: {
       'Event name': event.data.eventName,
       'Event creator': ownerName,
-      Region: String(event.regionId),
-
+      Region: `Region ${String(event.regionId)}`,
       'Event organizer': event.data.eventOrganizer,
-      'Event collaborators': eventCollaborators,
+      'In partnership with HSA': translateEventPartnership(event.data.eventPartnership),
+      'Event collaborators': handleArrayJoin(eventCollaborators),
       ...(
-        !organizerIsNoNationalCenters ? { 'Regional point of contact': eventPoc } : {}
+        !organizerIsNoNationalCenters ? { 'Regional point of contact': handleArrayJoin(eventPoc) } : {}
       ),
       'Intended audience': event.data.audience,
       'Start date': event.data.startDate,
       'End date': event.data.endDate,
       'Training type': event.data['Event Duration/# NC Days of Support'],
       Reasons: event.data.reasons,
-      'Target populations': event.data.targetPopulations,
+      'Target populations': handleArrayJoin(event.data.targetPopulations),
       Vision: event.data.vision,
     },
     striped: true,
   }] : [];
 
-  const isIstVisit = (session) => {
-    if (session.data.isIstVisit === 'yes' || (session.data.regionalOfficeTta && session.data.regionalOfficeTta.length > 0)) {
-      return true;
-    }
-    return false;
-  };
-
-  const generateIstOfficeOrRecipientProperties = (session) => {
-    if (isIstVisit(session)) {
-      return {
-        'Regional Office/TTA': session.data.regionalOfficeTta.join(', '),
-      };
-    }
-
-    return {
-      Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
-      'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
-    };
-  };
+  const generateIstOfficeOrRecipientProperties = (session) => ({
+    Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join('; ') : '',
+    'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
+  });
 
   const generateNumberOfParticipants = (session) => {
     // In person or virtual.
@@ -287,23 +294,24 @@ export default function ViewTrainingReport({ match }) {
         heading: 'Objective summary',
         data: {
           'Session objective': session.data.objective,
-          Topics: session.data.objectiveTopics,
-          Trainers: session.data.objectiveTrainers,
-          'Resource links': session.data.objectiveResources && session.data.objectiveResources.filter((r) => r.value).length ? session.data.objectiveResources.map((o) => o.value) : 'None',
+          'Supporting goals': formatSupportingGoals(session.data.sessionGoalTemplates),
+          Topics: handleArrayJoin(session.data.objectiveTopics),
+          'Trainers/NCs': handleArrayJoin(session.data.objectiveTrainers),
           'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name) : 'None',
+          'Resource links': session.data.objectiveResources && session.data.objectiveResources.filter((r) => r.value).length ? session.data.objectiveResources.map((o) => o.value) : 'None',
           'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None',
+          'TTA provided': session.data.ttaProvided,
           'Support type': session.data.objectiveSupportType,
         },
       }, {
         heading: 'Participants',
         striped: true,
         data: {
-          'IST visit': isIstVisit(session) ? 'Yes' : 'No',
           ...generateIstOfficeOrRecipientProperties(session),
+          'TTA type': handleArrayJoin(session.data.ttaType),
           'Delivery method': capitalize(session.data.deliveryMethod || ''),
           ...generateNumberOfParticipants(session),
           'Language used': session.data.language ? session.data.language.join(', ') : [],
-          'TTA provided': session.data.ttaProvided,
         },
       },
       formatNextSteps(session.data.specialistNextSteps || [], 'Specialist\'s next steps', false),
@@ -342,7 +350,7 @@ export default function ViewTrainingReport({ match }) {
           {alertMessage.message}
         </Alert>
         )}
-        <h1 className="landing">{pageTitle}</h1>
+        <h1 className="landing margin-0 margin-bottom-4">{pageTitle}</h1>
         <ReadOnlyContent
           title="Event"
           sections={eventSummary}

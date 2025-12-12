@@ -14,7 +14,7 @@ export default function TabsNav({ backLink, links, ariaLabel }) {
 
   return (
     <>
-      <div className="ttahub-tabs-nav no-print">
+      <div className="ttahub-tabs-nav no-print z-100 position-sticky">
         <nav className="ttahub-tabs-nav_nav bg-white" aria-label={ariaLabel}>
           <ul className="display-flex margin-0 margin-bottom-5 padding-0">
             {links.map((link) => (
