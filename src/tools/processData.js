@@ -11,13 +11,20 @@ import {
   RequestErrors,
   sequelize,
 } from '../models';
+import SCOPES from '../middleware/scopeConstants';
 
 // Define constants representing different permission scopes that can be assigned to users
-const SITE_ACCESS = 1;
-const ADMIN = 2;
-const READ_WRITE_REPORTS = 3;
-const READ_REPORTS = 4;
-const APPROVE_REPORTS = 5;
+const {
+  SITE_ACCESS,
+  ADMIN,
+  READ_WRITE_REPORTS,
+  READ_REPORTS,
+  APPROVE_REPORTS,
+} = SCOPES;
+
+const REGIONS = Array.from({ length: 14 }, (_, index) => index + 1);
+const ALL_SCOPE_IDS = Object.values(SCOPES);
+const ALL_SCOPE_IDS_EXCEPT_ADMIN = ALL_SCOPE_IDS.filter((scopeId) => scopeId !== ADMIN);
 
 /**
  * The processData script is responsible for anonymizing sensitive user data, including names,
@@ -72,10 +79,7 @@ const hsesUsers = [
     name: 'Heather tta', hsesUsername: 'test.tta.heather', hsesUserId: '52456', email: 'no-send_smith92@yahoo.com',
   },
   {
-    name: 'Tammy tta', hsesUsername: 'test.tta.tammy', hsesUserId: '53719', email: 'no-send_smith93@yahoo.com',
-  },
-  {
-    name: 'Dana tta', hsesUsername: 'test.tta.dana', hsesUserId: '54970', email: 'no-send_smith94@yahoo.com',
+    name: 'Patrick tta', hsesUsername: 'test.tta.patrick', hsesUserId: '53137', email: 'no-send_smith94@yahoo.com',
   },
   {
     name: 'Fletcher tta', hsesUsername: 'test.tta.fletcher', hsesUserId: '55815', email: 'no-send_smith95@yahoo.com',
@@ -698,6 +702,14 @@ const givePermissions = (id) => {
   return permissionsArray;
 };
 
+const giveAllPermissionsExceptAdmin = (id) => ALL_SCOPE_IDS_EXCEPT_ADMIN
+  .flatMap((scopeId) => REGIONS
+    .map((regionId) => ({
+      userId: id,
+      scopeId,
+      regionId,
+    })));
+
 // Function to bootstrap HSES users into the system by either creating or updating them, and
 // assigning appropriate permissions
 export const bootstrapUsers = async () => {
@@ -717,7 +729,9 @@ export const bootstrapUsers = async () => {
       // If the user already exists, update their details
       userPromises.push(user.update(newUser, { individualHooks: true }));
       // Assign permissions to the user
-      for (const permission of givePermissions(id)) {
+      for (const permission of (hsesUser.hsesUsername === 'test.tta.patrick'
+        ? giveAllPermissionsExceptAdmin(id)
+        : givePermissions(id))) {
         userPromises.push(Permission.findOrCreate({ where: permission }));
       }
     } else {
@@ -725,7 +739,9 @@ export const bootstrapUsers = async () => {
       const createdUser = await User.create(newUser);
       if (createdUser) {
         // Assign permissions to the newly created user
-        for (const permission of givePermissions(createdUser.id)) {
+        for (const permission of (hsesUser.hsesUsername === 'test.tta.patrick'
+          ? giveAllPermissionsExceptAdmin(createdUser.id)
+          : givePermissions(createdUser.id))) {
           userPromises.push(Permission.findOrCreate({ where: permission }));
         }
       }
