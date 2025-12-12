@@ -171,7 +171,7 @@ export default function StandardGoalCard({
    * Checks if the current user created the goal by finding the 'Creation' context
    * status change and comparing the userId.
    * @param {object} goal - The goal object with statusChanges array
-   * @param {object} user - The current user object with id property
+   * @param {object} userObj - The current user object with id property
    * @returns {boolean} - True if user created the goal, false otherwise
    */
   const isGoalCreator = (goalObj, userObj) => {
