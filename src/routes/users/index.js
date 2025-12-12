@@ -4,7 +4,6 @@ import {
   getPossibleStateCodes,
   requestVerificationEmail,
   verifyEmailToken,
-  getUserStatistics,
   getActiveUsers,
   setFeatureFlag,
   getFeatureFlags,
@@ -23,7 +22,6 @@ const router = express.Router();
  */
 router.get('/collaborators', transactionWrapper(getPossibleCollaborators));
 router.get('/stateCodes', transactionWrapper(getPossibleStateCodes));
-router.get('/statistics', transactionWrapper(getUserStatistics));
 router.get('/active-users', transactionWrapper(getActiveUsers));
 router.get('/training-report-users', transactionWrapper(getTrainingReportUsers));
 router.get('/trainers/regional/region/:regionId', checkRegionIdParam, transactionWrapper(getTrainingReportTrainersByRegion));
