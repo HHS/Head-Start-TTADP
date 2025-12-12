@@ -81,6 +81,7 @@ export default function Submit({
         <Dropdown
           id="approverId"
           name="approverId"
+          data-testid="approver"
           inputRef={register({ required: 'Select an approver' })}
           required
         >
