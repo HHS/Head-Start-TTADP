@@ -4,6 +4,7 @@ import { GridContainer } from '@trussworks/react-uswds';
 import ActivityReportDashboard from './ActivityReportDashboard';
 import TrainingReportDashboard from './TrainingReportDashboard';
 import AllReports from './AllReports';
+import RecipientSpotlightDashboard from './RecipientSpotlightDashboard';
 import { expandFilters } from '../../../utils';
 
 export default function Dashboard({
@@ -22,6 +23,9 @@ export default function Dashboard({
       break;
     case 'all-reports':
       DashboardComponent = AllReports;
+      break;
+    case 'recipient-spotlight':
+      DashboardComponent = RecipientSpotlightDashboard;
       break;
     default:
       break;
