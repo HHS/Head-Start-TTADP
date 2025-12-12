@@ -58,7 +58,7 @@ export default function SubmittedCollabReport({ report }) {
   const formattedApprovedAt = moment(approvedAt).format(DATE_DISPLAY_FORMAT);
 
   // Process collaborating specialists
-  const collaboratingSpecialists = collabReportSpecialists.length
+  const collaboratingSpecialists = collabReportSpecialists?.length
     ? collabReportSpecialists.map((cs) => cs.specialist?.fullName || cs.specialist?.name).filter(Boolean).join(', ')
     : 'None provided';
 
