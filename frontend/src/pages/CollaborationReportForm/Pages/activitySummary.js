@@ -411,11 +411,11 @@ export const isPageComplete = (hookForm) => {
     // strings
     name,
     description,
+    conductMethod,
 
     // arrays
     reportReasons,
     statesInvolved,
-    conductMethod,
 
     // numbers
     duration,
@@ -431,6 +431,7 @@ export const isPageComplete = (hookForm) => {
   const stringsToValidate = [
     name,
     description,
+    conductMethod,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
@@ -439,7 +440,6 @@ export const isPageComplete = (hookForm) => {
 
   const arraysToValidate = [
     reportReasons,
-    conductMethod,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {
@@ -502,8 +502,8 @@ const ReviewSection = () => {
       anchor: 'reasons',
       items: [
         { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') || '' } },
-        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity ? 'State' : 'Regional' } },
-        ...(isStateActivity ? [
+        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity === 'true' ? 'State' : 'Regional' } },
+        ...(isStateActivity === 'true' ? [
           { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s] || '').join(', ') || '' } },
         ] : []),
         {

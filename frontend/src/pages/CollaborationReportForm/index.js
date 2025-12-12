@@ -137,7 +137,8 @@ export const convertFormDataToReport = (data) => {
     ...rest
   } = data;
 
-  const conductMethodValues = conductMethod || null;
+  const conductMethodValues = Array.isArray(conductMethod)
+    ? conductMethod[0] : conductMethod || null;
   const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => s.value) : [];
   const participantValues = participants ? participants.map((p) => p.value) : [];
   const dataUsedValues = dataUsed ? dataUsed.map((d) => d.value) : [];
@@ -242,6 +243,7 @@ function CollaborationReport({ match, location }) {
       try {
         updateLoading(true);
         reportId.current = collabReportId;
+        const regionId = getRegionWithReadWrite(user);
 
         if (collabReportId !== 'new') {
           let fetchedReport;
@@ -286,8 +288,8 @@ function CollaborationReport({ match, location }) {
             ...defaultValues,
             creatorRole: userHasOneRole ? user.roles[0].fullName : null,
             pageState: defaultPageState,
+            regionId,
             userId: user.id,
-            regionId: getRegionWithReadWrite(user),
             version: 2,
           };
         }
@@ -344,9 +346,9 @@ function CollaborationReport({ match, location }) {
 
         // Update form data.
         if (shouldUpdateFromNetwork && collabReportId !== 'new') {
-          updateFormData({ ...formData, ...report }, true);
+          updateFormData({ ...formData, ...report, regionId }, true);
         } else {
-          updateFormData({ ...report, ...formData }, true);
+          updateFormData({ ...report, ...formData, regionId }, true);
         }
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
@@ -470,7 +472,6 @@ function CollaborationReport({ match, location }) {
 
         // Process participants, dataUsed, and goals to extract values
         const fieldsToSave = convertFormDataToReport(fields);
-
         const savedReport = await createReport({
           ...fieldsToSave,
           regionId: formData.regionId,
