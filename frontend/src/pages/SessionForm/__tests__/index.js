@@ -152,12 +152,14 @@ describe('SessionReportForm', () => {
     fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
     fetchMock.get('/api/goal-templates', []);
     fetchMock.get('/api/users/trainers/regional/region/1', [
-      { id: 1, fullName: 'Regional Trainer 1', roles: ['ECM'] },
-      { id: 2, fullName: 'Regional Trainer 2', roles: ['ECM'] },
+      { id: 1, fullName: 'Regional Trainer 1', roles: [{ name: 'ECM' }] },
+      { id: 2, fullName: 'Regional Trainer 2', roles: [{ name: 'ECM' }] },
+      { id: 3, fullName: 'Approver Name', roles: [{ name: 'ECM' }, { name: 'NC' }] },
     ]);
     fetchMock.get('/api/users/trainers/national-center/region/1', [
-      { id: 1, fullName: 'National Center Trainer 1', roles: ['NC'] },
-      { id: 2, fullName: 'National Center Trainer 2', roles: ['NC'] },
+      { id: 1, fullName: 'National Center Trainer 1', roles: [{ name: 'ECM' }] },
+      { id: 2, fullName: 'National Center Trainer 2', roles: [{ name: 'ECM' }] },
+      { id: 3, fullName: 'Approver Name', roles: [{ name: 'ECM' }, { name: 'NC' }] },
     ]);
     fetchMock.get('/api/session-reports/participants/1', []);
     fetchMock.get('/api/session-reports/groups?region=1', []);
@@ -569,6 +571,9 @@ describe('SessionReportForm', () => {
     }, { timeout: 3000 });
 
     fetchMock.put(url, { eventId: 1 });
+
+    const approverDropdown = await screen.findByTestId('approver');
+    userEvent.selectOptions(approverDropdown, '3');
     const saveSession = await screen.findByRole('button', { name: /submit for approval/i });
     act(() => {
       userEvent.click(saveSession);
@@ -634,6 +639,9 @@ describe('SessionReportForm', () => {
     }, { timeout: 3000 });
 
     fetchMock.put(url, { eventId: 1 });
+
+    const approverDropdown = await screen.findByTestId('approver');
+    userEvent.selectOptions(approverDropdown, '3');
 
     const submit = await screen.findByRole('button', { name: /submit for approval/i });
     act(() => {
