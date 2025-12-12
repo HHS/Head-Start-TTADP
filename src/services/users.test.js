@@ -384,20 +384,20 @@ describe('Users DB service', () => {
     });
 
     it('adds a flag to users that do not have the flag', async () => {
-      const result = await setFlag('anv_statistics', true);
+      const result = await setFlag('quality_assurance_dashboard', true);
       expect(result[1] > 3).toEqual(true);
       const user = await User.findOne({ where: { id: 50 } });
-      expect(user.flags[0]).toBe('anv_statistics');
+      expect(user.flags[0]).toBe('quality_assurance_dashboard');
     });
     it('removes a flag from users that have the flag', async () => {
-      await setFlag('anv_statistics', true);
-      const result = await setFlag('anv_statistics', false);
+      await setFlag('quality_assurance_dashboard', true);
+      const result = await setFlag('quality_assurance_dashboard', false);
       expect(result[1] > 3).toEqual(true);
       const user = await User.findOne({ where: { id: 50 } });
       expect(user.flags[0]).toBe(undefined);
     });
     it('does not set a flag for users without permissions', async () => {
-      await setFlag('anv_statistics', true);
+      await setFlag('quality_assurance_dashboard', true);
       const user = await User.findOne({ where: { id: 53 } });
       expect(user.flags[0]).toBe(undefined);
     });
