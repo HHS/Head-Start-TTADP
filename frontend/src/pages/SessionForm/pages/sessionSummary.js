@@ -500,7 +500,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
                 value={(optionsForValue).filter((option) => (
-                  value.includes(option.name)
+                  value.includes(option.fullName)
                 ))}
                 inputId="objectiveTrainers"
                 name="objectiveTrainers"
@@ -511,7 +511,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                   DropdownIndicator: null,
                 }}
                 onChange={(s) => {
-                  controllerOnChange(s.map((o) => o.name));
+                  controllerOnChange(s.map((o) => o.fullName));
                 }}
                 inputRef={register({ required: 'Select at least one trainer' })}
                 options={trainerOptions}

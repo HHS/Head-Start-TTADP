@@ -194,7 +194,6 @@ export async function getTrainingReportTrainersByRegion(req, res) {
       'TTAC',
       'ECM',
       'GSM',
-      'RPM',
     ], region));
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });

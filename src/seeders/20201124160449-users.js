@@ -193,7 +193,7 @@ const staticUsers = [
     hsesUsername: 'larry@hogwarts.com',
     name: 'Larry Botter',
     phoneNumber: '555-555-5553',
-    homeRegionId: 3,
+    homeRegionId: 1,
     lastLogin: moment().toISOString(),
   },
 ];
@@ -390,7 +390,7 @@ module.exports = {
       },
       {
         userId: 6,
-        roleId: 5,
+        roleId: 10,
         createdAt: moment().toISOString(),
         updatedAt: moment().toISOString(),
       },

@@ -152,12 +152,14 @@ describe('SessionReportForm', () => {
     fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
     fetchMock.get('/api/goal-templates', []);
     fetchMock.get('/api/users/trainers/regional/region/1', [
-      { id: 1, fullName: 'Regional Trainer 1' },
-      { id: 2, fullName: 'Regional Trainer 2' },
+      { id: 1, fullName: 'Regional Trainer 1', roles: [{ name: 'ECM' }] },
+      { id: 2, fullName: 'Regional Trainer 2', roles: [{ name: 'ECM' }] },
+      { id: 3, fullName: 'Approver Name', roles: [{ name: 'ECM' }, { name: 'NC' }] },
     ]);
     fetchMock.get('/api/users/trainers/national-center/region/1', [
-      { id: 1, fullName: 'National Center Trainer 1' },
-      { id: 2, fullName: 'National Center Trainer 2' },
+      { id: 1, fullName: 'National Center Trainer 1', roles: [{ name: 'ECM' }] },
+      { id: 2, fullName: 'National Center Trainer 2', roles: [{ name: 'ECM' }] },
+      { id: 3, fullName: 'Approver Name', roles: [{ name: 'ECM' }, { name: 'NC' }] },
     ]);
     fetchMock.get('/api/session-reports/participants/1', []);
     fetchMock.get('/api/session-reports/groups?region=1', []);
@@ -540,8 +542,27 @@ describe('SessionReportForm', () => {
           objectiveTrainers: ['DTL'],
           numberOfParticipants: 1,
           deliveryMethod: 'In-person',
+          language: ['English'],
+          ttaType: ['training'],
+          recipients: [1],
+          participants: [1],
+          ttaProvided: 'test tta provided',
+          objectiveSupportType: 'Planning',
+          regionId: 1,
+          specialistNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+          recipientNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+          startDate: '01/01/2024',
+          endDate: '01/01/2024',
+          'pageVisited-supporting-attachments': true,
+          pageState: {
+            1: COMPLETE,
+            2: COMPLETE,
+            3: COMPLETE,
+            4: COMPLETE,
+          },
         },
         facilitation: 'regional_tta_staff',
+        author: { id: 1, fullName: 'Ted User' },
         approverId: 3,
         approver: { id: 3, fullName: 'Approver Name' },
         status: 'In progress',
@@ -569,6 +590,9 @@ describe('SessionReportForm', () => {
     }, { timeout: 3000 });
 
     fetchMock.put(url, { eventId: 1 });
+
+    const approverDropdown = await screen.findByTestId('approver');
+    userEvent.selectOptions(approverDropdown, '3');
     const saveSession = await screen.findByRole('button', { name: /submit for approval/i });
     act(() => {
       userEvent.click(saveSession);
@@ -606,7 +630,26 @@ describe('SessionReportForm', () => {
           objectiveTrainers: ['DTL'],
           numberOfParticipants: 1,
           deliveryMethod: 'In-person',
+          language: ['English'],
+          ttaType: ['training'],
+          recipients: [1],
+          participants: [1],
+          ttaProvided: 'test tta provided',
+          objectiveSupportType: 'Planning',
+          regionId: 1,
+          specialistNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+          recipientNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+          startDate: '01/01/2024',
+          endDate: '01/01/2024',
+          'pageVisited-supporting-attachments': true,
+          pageState: {
+            1: COMPLETE,
+            2: COMPLETE,
+            3: COMPLETE,
+            4: COMPLETE,
+          },
         },
+        author: { id: 1, fullName: 'Ted User' },
         approverId: 3,
         approver: { id: 3, fullName: 'Approver Name' },
         status: 'In progress',
@@ -634,6 +677,9 @@ describe('SessionReportForm', () => {
     }, { timeout: 3000 });
 
     fetchMock.put(url, { eventId: 1 });
+
+    const approverDropdown = await screen.findByTestId('approver');
+    userEvent.selectOptions(approverDropdown, '3');
 
     const submit = await screen.findByRole('button', { name: /submit for approval/i });
     act(() => {
