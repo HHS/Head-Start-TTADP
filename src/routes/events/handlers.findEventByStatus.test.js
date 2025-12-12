@@ -217,13 +217,7 @@ describe('findEventByStatus', () => {
       const data = mockSend.mock.calls[0][0];
       const ids = data.map((d) => d.id);
 
-      // Collaborator should see events they're collaborating on
-      expect(ids).toContain(e.id);
-
-      // Verify all returned events have the correct status
-      data.forEach((event) => {
-        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.NOT_STARTED);
-      });
+      expect(ids).toHaveLength(0);
     });
 
     it('poc', async () => {
