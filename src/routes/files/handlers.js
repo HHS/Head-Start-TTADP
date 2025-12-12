@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
-import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
+import { uploadFile, deleteFileFromS3, getSignedDownloadUrl } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
 import {
   deleteFile,
@@ -27,7 +27,7 @@ import CommunicationLogPolicy from '../../policies/communicationLog';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
-import { auditLogger } from '../../logger';
+import { auditLogger, logger } from '../../logger';
 import { FILE_STATUSES } from '../../constants';
 import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
@@ -512,7 +512,8 @@ const uploadHandler = async (req, res) => {
     try {
       metadata = await metadataFn(originalFilename, fileName, size);
       const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
-      const url = getPresignedURL(uploadedFile.Key);
+      auditLogger.info(`${logContext.namespace}:uploadHandler Uploaded file ${originalFilename} as ${uploadedFile.Key}`);
+      const url = getSignedDownloadUrl(uploadedFile.Key);
       await updateStatus(metadata.id, UPLOADED);
       fileResponse.push({ ...metadata, url });
     } catch (err) {
