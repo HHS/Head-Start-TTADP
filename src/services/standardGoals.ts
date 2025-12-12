@@ -864,7 +864,7 @@ export async function standardGoalsForRecipient(
     }
     : {};
   const goalRows = await Goal.findAll({
-    attributes: ['id', 'name', 'status', 'createdAt', 'goalTemplateId', 'prestandard',
+    attributes: ['id', 'name', 'status', 'createdAt', 'goalTemplateId', 'prestandard', 'onAR', 'onApprovedAR',
       // The underlying sort expect the status_sort column to be the first column _0.
       [sequelize.literal(`
         CASE

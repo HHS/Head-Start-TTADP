@@ -26,6 +26,7 @@ import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import AppLoadingContext from '../../AppLoadingContext';
+import { NOOP } from '../../Constants';
 
 const Navigator = ({
   formData,
@@ -54,6 +55,7 @@ const Navigator = ({
   setShouldAutoSave,
   preFlightForNavigation,
   hideSideNav,
+  deadNavigation,
 }) => {
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -98,6 +100,7 @@ const Navigator = ({
       onSaveAndContinue();
       return;
     }
+
     setSavingLoadScreen();
     onUpdatePage(page.position + 1);
   };
@@ -183,11 +186,12 @@ const Navigator = ({
           lastSaveTime={lastSaveTime}
           errorMessage={errorMessage}
           savedToStorageTime={savedToStorageTime}
+          deadNavigation={deadNavigation}
         />
       </Grid>
       )}
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <div id="navigator-form">
+        <div id="navigator-form" className="navigator-form">
           {page.review && page.render(
             formData,
             onFormSubmit,
@@ -283,9 +287,11 @@ Navigator.propTypes = {
   setShouldAutoSave: PropTypes.func,
   preFlightForNavigation: PropTypes.func,
   hideSideNav: PropTypes.bool,
+  deadNavigation: PropTypes.bool,
 };
 
 Navigator.defaultProps = {
+  deadNavigation: false,
   onSaveAndContinue: null,
   showSavedDraft: false,
   additionalData: {},
@@ -300,7 +306,7 @@ Navigator.defaultProps = {
   datePickerKey: '',
   formDataStatusProp: 'calculatedStatus',
   shouldAutoSave: true,
-  setShouldAutoSave: () => {},
+  setShouldAutoSave: NOOP,
   preFlightForNavigation: () => Promise.resolve(true),
   hideSideNav: false,
 };

@@ -1,7 +1,10 @@
-import { cast } from 'sequelize';
+import { cast, Op } from 'sequelize';
+import { Cast } from 'sequelize/types/utils';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
+import { auditLogger } from '../logger';
 
 const {
   SessionReportPilot,
@@ -49,6 +52,8 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       'eventId',
       'data',
       'updatedAt',
+      'approverId',
+      'submitted',
       // eslint-disable-next-line @typescript-eslint/quotes
       [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
     ],
@@ -66,6 +71,23 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       {
         model: db.File,
         as: 'supportingAttachments',
+      },
+      {
+        model: db.User,
+        as: 'approver',
+        attributes: [
+          'fullName',
+          'name',
+        ],
+        include: [
+          {
+            model: db.Role,
+            as: 'roles',
+            attributes: [
+              'name',
+            ],
+          },
+        ],
       },
     ],
   };
@@ -101,6 +123,9 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     supportingAttachments: session?.supportingAttachments ?? [],
     updatedAt: session?.updatedAt,
     event: session?.event,
+    approverId: session?.approverId ?? null,
+    approver: session?.approver ?? null,
+    submitted: session?.submitted ?? false,
   };
 }
 
@@ -117,7 +142,11 @@ export async function createSession(request) {
 
   const created = await SessionReportPilot.create({
     eventId: event.id,
-    data: cast(JSON.stringify(data), 'jsonb'),
+    data: cast(JSON.stringify({
+      ...data,
+      reviewStatus: REPORT_STATUSES.DRAFT,
+      additionalStates: event.data.additionalStates || [],
+    }), 'jsonb'),
   }, {
     individualHooks: true,
   });
@@ -125,7 +154,7 @@ export async function createSession(request) {
   return findSessionHelper({ id: created.dataValues.id }) as Promise<SessionReportShape>;
 }
 
-export async function updateSession(id, request) {
+export async function updateSession(id: number, request) {
   const session = await SessionReportPilot.findOne({
     where: { id },
   });
@@ -136,7 +165,7 @@ export async function updateSession(id, request) {
 
   validateFields(request, ['eventId', 'data']);
 
-  const { eventId, data } = request;
+  const { eventId, data: { approverId, ...data } } = request;
 
   // Combine existing session data with new data.
   const existingData = session.data;
@@ -144,11 +173,21 @@ export async function updateSession(id, request) {
 
   const event = await findEventBySmartsheetIdSuffix(eventId);
 
+  const update = {
+    eventId: event.id,
+    data: cast(JSON.stringify(newData), 'jsonb'),
+  } as {
+    eventId: number;
+    approverId?: number;
+    data: Cast;
+  };
+
+  if (approverId) {
+    update.approverId = Number(approverId);
+  }
+
   await SessionReportPilot.update(
-    {
-      eventId: event.id,
-      data: cast(JSON.stringify(newData), 'jsonb'),
-    },
+    update,
     {
       where: { id },
       individualHooks: true,
@@ -168,8 +207,27 @@ export async function findSessionsByEventId(eventId): Promise<SessionReportShape
 
 export async function getPossibleSessionParticipants(
   regionId: number,
+  states?: string[],
 ) : Promise<{ id: number, name: string }[]> {
-  const where = { status: 'Active', regionId };
+  const where = {
+    status: 'Active',
+  } as {
+    status: string;
+    regionId?: number;
+    [Op.or]?: {
+      regionId?: number;
+      '$grants.stateCode$'?: string[];
+    }[];
+  };
+
+  if (states && states.length > 0) {
+    where[Op.or] = [
+      { regionId },
+      { '$grants.stateCode$': states },
+    ];
+  } else {
+    where.regionId = regionId;
+  }
 
   return db.Recipient.findAll({
     attributes: ['id', 'name'],

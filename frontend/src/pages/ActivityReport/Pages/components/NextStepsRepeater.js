@@ -175,7 +175,7 @@ export default function NextStepsRepeater({
                 ? <ErrorMessage>Enter a valid date</ErrorMessage>
                 : null}
               <div
-                className={showCompleteDateError(errors, name, index) ? 'blank-next-step-date' : ''}
+                className={showCompleteDateError(errors, name, index) ? 'blank-next-step-date maxw-mobile' : 'maxw-mobile'}
               >
                 <ControlledDatePicker
                   inputId={`${stepType}-next-step-date-${index + 1}`}
