@@ -531,12 +531,6 @@ export default function SessionForm({ match }) {
 
   const onFormSubmit = async () => {
     try {
-      const valid = await hookForm.trigger();
-
-      if (!valid) {
-        return;
-      }
-
       // reset the error message
       setError('');
       setIsAppLoading(true);
