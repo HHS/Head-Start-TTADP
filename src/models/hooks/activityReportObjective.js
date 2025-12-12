@@ -33,7 +33,6 @@ const recalculateOnAR = async (sequelize, instance, options) => {
         LEFT JOIN "ActivityReportObjectives" aro
         ON o.id = aro."objectiveId"
         WHERE o."id" = ${instance.objectiveId}
-        AND aro.id != ${instance.id}
         GROUP BY o."id"
       )
     UPDATE "Objectives" o
@@ -69,6 +68,7 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
 
 const afterCreate = async (sequelize, instance, options) => {
   await autoPopulateLinker(sequelize, instance, options);
+  await recalculateOnAR(sequelize, instance, options);
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
