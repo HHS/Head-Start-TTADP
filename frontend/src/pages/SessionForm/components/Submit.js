@@ -22,7 +22,7 @@ export default function Submit({
   pages,
   isPoc,
 }) {
-  const { register, watch } = useFormContext();
+  const { register, watch, trigger } = useFormContext();
   const pageState = watch('pageState');
   const event = watch('event');
 
@@ -59,6 +59,16 @@ export default function Submit({
   const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
   const canSelectApprover = !isPoc || (isPoc && facilitationIncludesRegion);
 
+  const onFormSubmit = async () => {
+    const valid = await trigger();
+
+    if (!valid || hasIncompletePages) {
+      return;
+    }
+
+    await onSubmit();
+  };
+
   return (
     <div data-testid="session-form-submit">
       {canSelectApprover && (
@@ -82,10 +92,12 @@ export default function Submit({
           id="approverId"
           name="approverId"
           data-testid="approver"
-          inputRef={register({ required: 'Select an approver' })}
+          inputRef={register({
+            required: 'Select an approver',
+          })}
           required
         >
-          <option selected value="">Select an approver</option>
+          <option value="">Select an approver</option>
           {approverOptions.map((approver) => (
             <option key={approver.id} value={approver.id}>{approver.fullName}</option>
           ))}
@@ -94,7 +106,7 @@ export default function Submit({
       )}
 
       <div className="display-flex margin-top-4">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" onClick={onSubmit}>Submit for approval</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" onClick={onFormSubmit}>Submit for approval</Button>
         <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" onClick={onSaveDraft}>Save draft</Button>
         <Button id={`${path}-back`} outline type="button" onClick={() => { onUpdatePage(reviewSubmitPagePosition - 1); }}>Back</Button>
       </div>
