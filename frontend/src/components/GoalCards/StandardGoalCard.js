@@ -166,6 +166,23 @@ export default function StandardGoalCard({
 
   const contextMenuLabel = `Actions for goal ${id}`;
   const menuItems = [];
+
+  /**
+   * Checks if the current user created the goal by finding the 'Creation' context
+   * status change and comparing the userId.
+   * @param {object} goal - The goal object with statusChanges array
+   * @param {object} user - The current user object with id property
+   * @returns {boolean} - True if user created the goal, false otherwise
+   */
+  const isGoalCreator = (goalObj, userObj) => {
+    if (!userObj?.id || !goalObj?.statusChanges?.length) {
+      return false;
+    }
+
+    const creationChange = goalObj.statusChanges.find((sc) => sc.context === 'Creation');
+    return creationChange?.userId === userObj.id;
+  };
+
   // For monitoring goals, only admins can delete
   const hasAdminPermissions = isAdmin(user);
   const editableStatuses = [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS];
@@ -195,13 +212,23 @@ export default function StandardGoalCard({
   });
 
   const canDeleteQualifiedGoals = (() => {
+    // Admin can delete any goal (unless on AR or prestandard - checked at line 226)
     if (isAdmin(user)) {
       return true;
     }
 
-    return (
-      !isMonitoringGoal
-      && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE)));
+    // Existing permission: Non-monitoring goals can be deleted by approvers
+    const canDeleteAsApprover = !isMonitoringGoal
+      && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
+
+    // New permission: Goal creator can delete their own NOT_STARTED goals if they have
+    // write permissions in the region
+    const canDeleteAsCreator = !isMonitoringGoal
+      && localStatus === GOAL_STATUS.NOT_STARTED
+      && canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE))
+      && isGoalCreator(goal, user);
+
+    return canDeleteAsApprover || canDeleteAsCreator;
   })();
 
   if (canDeleteQualifiedGoals && !onAR && !isPreStandard
