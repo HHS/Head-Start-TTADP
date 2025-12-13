@@ -23,23 +23,12 @@ const FORBIDDEN = 403;
 
 export const formatOwnerName = (event) => {
   try {
-    if (event && event.owner && event.owner.nameWithNationalCenters) {
-      return event.owner.nameWithNationalCenters;
+    if (event && event.owner && event.owner.fullName) {
+      return event.owner.fullName;
     }
 
-    if (event && event.data && event.data.owner) {
-      if (event.eventReportPilotNationalCenterUsers) {
-        const user = event.eventReportPilotNationalCenterUsers
-          .find((erpnc) => erpnc.userId === event.data.owner.id);
-
-        if (user) {
-          return `${user.userName}, ${user.nationalCenterName}`;
-        }
-      }
-
-      if (event.data.owner.name) {
-        return event.data.owner.name;
-      }
+    if (event.data.owner.name) {
+      return event.data.owner.name;
     }
 
     return '';
