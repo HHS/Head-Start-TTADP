@@ -155,12 +155,12 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
           'name',
           'email',
           'id',
-          'nameWithNationalCenters',
+          'fullName',
         ],
         include: [
           {
-            model: db.NationalCenter,
-            as: 'nationalCenters',
+            model: db.Role,
+            as: 'roles',
           },
         ],
       });
@@ -307,14 +307,14 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
         where: { id: ownerId },
         attributes: [
           'id',
-          'nameWithNationalCenters',
+          'fullName',
           'email',
           'name',
         ],
         include: [
           {
-            model: db.NationalCenter,
-            as: 'nationalCenters',
+            model: db.Role,
+            as: 'roles',
           },
         ],
       },
@@ -835,8 +835,8 @@ export const checkUserExists = async (key:'email' | 'name', value: string) => {
         as: 'permissions',
       },
       {
-        model: db.NationalCenter,
-        as: 'nationalCenters',
+        model: db.Roles,
+        as: 'roles',
       },
     ],
   });
