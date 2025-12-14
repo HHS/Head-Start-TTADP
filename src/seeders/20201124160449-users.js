@@ -118,6 +118,36 @@ const staticUserPermissions = [
     regionId: 3,
     scopeId: READ_WRITE_REPORTS,
   },
+  {
+    userId: 7,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 7,
+    regionId: 1,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 7,
+    regionId: 3,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 8,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 8,
+    regionId: 1,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 8,
+    regionId: 3,
+    scopeId: READ_REPORTS,
+  },
 ];
 
 const hsesUsernames = [
@@ -193,6 +223,36 @@ const staticUsers = [
     hsesUsername: 'larry@hogwarts.com',
     name: 'Larry Botter',
     phoneNumber: '555-555-5553',
+    homeRegionId: 3,
+    lastLogin: moment().toISOString(),
+  },
+  {
+    id: 7,
+    hsesUserId: '7',
+    email: 'christopher@chrestomanci.com',
+    hsesUsername: 'christopher@chrestomanci.com',
+    name: 'Christopher Chant',
+    phoneNumber: '555-555-5554',
+    homeRegionId: 3,
+    lastLogin: moment().toISOString(),
+  },
+  {
+    id: 8,
+    hsesUserId: '8',
+    email: 'luz@hexside.com',
+    hsesUsername: 'luz@hexside.com',
+    name: 'Luz Noceda',
+    phoneNumber: '555-555-5555',
+    homeRegionId: 3,
+    lastLogin: moment().toISOString(),
+  },
+  {
+    id: 9,
+    hsesUserId: '9',
+    email: 'rose@piranesi.com',
+    hsesUsername: 'rose@piranesi.com',
+    name: 'Piranesi',
+    phoneNumber: '555-555-5555',
     homeRegionId: 3,
     lastLogin: moment().toISOString(),
   },
@@ -391,6 +451,18 @@ module.exports = {
       {
         userId: 6,
         roleId: 5,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      {
+        userId: 8,
+        roleId: 17,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      {
+        userId: 9,
+        roleId: 10,
         createdAt: moment().toISOString(),
         updatedAt: moment().toISOString(),
       },
