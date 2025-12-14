@@ -24,6 +24,7 @@ export type SessionShape = {
     ownerComplete: boolean;
     objectiveTrainers: string[];
   };
+  submitted?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };

@@ -247,6 +247,7 @@ export async function findEventHelperBlob({
           'createdAt',
           'updatedAt',
           'approverId',
+          'submitted',
           // eslint-disable-next-line @typescript-eslint/quotes
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
@@ -654,9 +655,10 @@ const canUserViewSession = (
     return true;
   }
 
-  // Approver can only see COMPLETE sessions
-  if (session.approverId === userId) {
-    return sessionStatus === TRS.COMPLETE;
+  if (session.approverId === userId && session.submitted) {
+    // approvers can see all sessions but shouldn't see the edit link on the session card if the session is not "submitted"
+    // (and hasn't been returned for edits, I.E. needs_action)
+    return true;
   }
 
   // Regional users (everyone else) can only see COMPLETE sessions
@@ -683,7 +685,8 @@ export async function filterEventsByStatus(events: EventShape[], status: string,
       /**
        * Not started events
        * Visible only to owner or POC
-       * Collaborators CANNOT see NOT_STARTED events (changed from previous behavior)
+       * 12/14/25
+       * - Collaborators CANNOT see NOT_STARTED events (changed from previous behavior)
        */
       return events.filter((event) => {
         // Owner can see
@@ -703,12 +706,19 @@ export async function filterEventsByStatus(events: EventShape[], status: string,
     case TRS.IN_PROGRESS:
       /**
        * In progress events
-       * All regional users see the event, but session visibility varies by role
+       * Only form users see the event, session visibility varies by role
        */
       return events.map((event) => {
         const isOwner = event.ownerId === userId;
         const isCollaborator = event.collaboratorIds.includes(userId);
         const isPoc = event.pocIds && event.pocIds.includes(userId);
+        const isApproverWithSubmittedSession = event.sessionReports.some((session) => session.approverId === userId && session.submitted);
+
+        if (!isOwner && !isCollaborator && !isPoc && !isApproverWithSubmittedSession) {
+          // User has no role in this event, return nothing, to be filtered out
+          // in the next array loop
+          return null;
+        }
 
         // Filter sessions based on user role and event organizer type
         const filteredSessions = event.sessionReports.filter((session) => canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc));
@@ -721,7 +731,7 @@ export async function filterEventsByStatus(events: EventShape[], status: string,
           ...event.toJSON(),
           sessionReports: filteredSessions,
         };
-      });
+      }).filter((event) => Boolean(event)) as EventShape[];
 
     case TRS.COMPLETE:
     case TRS.SUSPENDED:
