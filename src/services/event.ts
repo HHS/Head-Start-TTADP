@@ -125,6 +125,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
           'createdAt',
           'updatedAt',
           'approverId',
+          'submitted',
           // eslint-disable-next-line @typescript-eslint/quotes
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
@@ -664,6 +665,33 @@ const canUserViewSession = (
   // Regional users (everyone else) can only see COMPLETE sessions
   return sessionStatus === TRS.COMPLETE;
 };
+
+/**
+ * Filter sessions in a single event based on user role and visibility rules
+ * @param event - The event containing sessions
+ * @param userId - The user ID
+ * @param isAdmin - Whether the user is an admin
+ * @returns EventShape with filtered sessions
+ */
+export function filterEventSessions(
+  event: EventShape,
+  userId: number,
+  isAdmin = false,
+): EventShape {
+  // Admins see everything
+  if (isAdmin) return event;
+
+  const isOwner = event.ownerId === userId;
+  const isCollaborator = event.collaboratorIds.includes(userId);
+  const isPoc = event.pocIds && event.pocIds.includes(userId);
+
+  const filteredSessions = event.sessionReports.filter((session) => canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc));
+
+  return {
+    ...event,
+    sessionReports: filteredSessions,
+  };
+}
 
 /**
  *
