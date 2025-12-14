@@ -11,6 +11,11 @@ module.exports = {
   async up(queryInterface) {
     const readWriteTrainingReports = [
       {
+        userId: 1, // Hermoine Granger - Admin
+        regionId: 3,
+        scopeId: READ_WRITE_TRAINING_REPORTS,
+      },
+      {
         userId: 5, // Cucumber User - Creator/Owner
         regionId: 3,
         scopeId: READ_WRITE_TRAINING_REPORTS,
@@ -30,14 +35,6 @@ module.exports = {
       },
     ];
 
-    const regionalViewerPermissions = [
-      {
-        userId: 9, // Piranesi - Regional Viewer (read-only)
-        regionId: 3,
-        scopeId: READ_REPORTS,
-      },
-    ];
-
     const readReportsPermissions = [
       {
         userId: 5, // Cucumber User - Creator/Owner
@@ -53,7 +50,6 @@ module.exports = {
 
     await queryInterface.bulkInsert('Permissions', readWriteTrainingReports, {});
     await queryInterface.bulkInsert('Permissions', pocTrainingReports, {});
-    await queryInterface.bulkInsert('Permissions', regionalViewerPermissions, {});
     await queryInterface.bulkInsert('Permissions', readReportsPermissions, {});
 
     await queryInterface.sequelize.query(`
