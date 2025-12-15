@@ -996,32 +996,6 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       expect(filteredEvents[0].sessionReports).toHaveLength(2);
     });
 
-    it('should return events with only complete sessions for non-owner, non-collaborator, non-POC when status is IN_PROGRESS', async () => {
-      const inProgressEventData = {
-        id: 1,
-        ownerId: userId,
-        pocIds: [456],
-        collaboratorIds: [789],
-        regionId: 1,
-        data: { status: TRS.IN_PROGRESS },
-        sessionReports: [
-          { id: 1, data: { status: TRS.COMPLETE } },
-          { id: 2, data: { status: TRS.IN_PROGRESS } },
-        ],
-      };
-      const inProgressEvent = {
-        ...inProgressEventData,
-        toJSON: () => inProgressEventData,
-      };
-      const events = [inProgressEvent];
-
-      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 999);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0].sessionReports).toHaveLength(1);
-      expect(filteredEvents[0].sessionReports[0].data.status).toBe(TRS.COMPLETE);
-    });
-
     it('should return events for all users when status is COMPLETE', async () => {
       const completeEventData = {
         id: 1,
@@ -1332,7 +1306,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
-      it('Approver sees only COMPLETE sessions', async () => {
+      it('Approver sees only sessions that have been submitted', async () => {
         const events = await findEventsByStatus(
           TRS.IN_PROGRESS,
           [ownerId],
@@ -1343,12 +1317,10 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           false, // isAdmin
         );
 
-        expect(events).toHaveLength(1);
-        expect(events[0].sessionReports).toHaveLength(1);
-        expect(events[0].sessionReports[0].data.status).toBe(TRS.COMPLETE);
+        expect(events).toHaveLength(0);
       });
 
-      it('Regional user sees only COMPLETE sessions', async () => {
+      it('Regional user does not see in progress events', async () => {
         const events = await findEventsByStatus(
           TRS.IN_PROGRESS,
           [ownerId],
@@ -1359,9 +1331,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           false, // isAdmin
         );
 
-        expect(events).toHaveLength(1);
-        expect(events[0].sessionReports).toHaveLength(1);
-        expect(events[0].sessionReports[0].data.status).toBe(TRS.COMPLETE);
+        expect(events).toHaveLength(0);
       });
 
       it('Administrator sees all sessions', async () => {
@@ -1495,7 +1465,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
-      it('Approver sees only COMPLETE sessions', async () => {
+      it('Approver does not see in progress events (with no submitted sessions)', async () => {
         const events = await findEventsByStatus(
           TRS.IN_PROGRESS,
           [ownerId],
@@ -1506,12 +1476,10 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           false, // isAdmin
         );
 
-        expect(events).toHaveLength(1);
-        expect(events[0].sessionReports).toHaveLength(1);
-        expect(events[0].sessionReports[0].data.status).toBe(TRS.COMPLETE);
+        expect(events).toHaveLength(0);
       });
 
-      it('Regional user sees only COMPLETE sessions', async () => {
+      it('Regional user does not see in progress events', async () => {
         const events = await findEventsByStatus(
           TRS.IN_PROGRESS,
           [ownerId],
@@ -1522,9 +1490,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           false, // isAdmin
         );
 
-        expect(events).toHaveLength(1);
-        expect(events[0].sessionReports).toHaveLength(1);
-        expect(events[0].sessionReports[0].data.status).toBe(TRS.COMPLETE);
+        expect(events).toHaveLength(0);
       });
 
       it('Administrator sees all sessions', async () => {

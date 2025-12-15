@@ -873,7 +873,7 @@ export const checkUserExists = async (key:'email' | 'name', value: string) => {
         as: 'permissions',
       },
       {
-        model: db.Roles,
+        model: db.Role,
         as: 'roles',
       },
     ],
@@ -1034,6 +1034,9 @@ export async function csvImport(buffer: Buffer) {
         errors.push(message);
       } else if (error.message.startsWith('Event')) {
         skipped.push(line['Event ID']);
+      } else {
+        // Push other errors to errors array
+        errors.push(message);
       }
       return false;
     }
