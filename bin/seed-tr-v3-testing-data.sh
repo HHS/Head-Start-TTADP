@@ -5,6 +5,9 @@
 
 set -e  # Exit on error
 
+# run the load-test-db.sh script to ensure the database is ready
+sh ./bin/load-test-db
+
 # Get database connection info from environment or use defaults
 DB_HOST=${POSTGRES_HOST:-localhost}
 DB_PORT=${POSTGRES_PORT:-5432}
