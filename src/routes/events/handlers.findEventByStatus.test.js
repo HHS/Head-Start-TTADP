@@ -400,9 +400,9 @@ describe('findEventByStatus', () => {
       const data = mockSend.mock.calls[0][0];
       const ids = data.map((d) => d.id);
 
-      // Owner should see both test events
+      // Owner should see only their own event (e), not e2 (regional access only)
       expect(ids).toContain(e.id);
-      expect(ids).toContain(e2.id);
+      expect(ids).not.toContain(e2.id);
 
       // Verify all returned events have the correct status
       data.forEach((event) => {
@@ -412,10 +412,6 @@ describe('findEventByStatus', () => {
       // Owner sees all sessions for their event (e)
       const ownerEvent = data.find((d) => d.id === e.id);
       expect(ownerEvent.sessionReports.length).toBe(2);
-
-      // Owner sees only complete sessions for other events (e2)
-      const otherEvent = data.find((d) => d.id === e2.id);
-      expect(otherEvent.sessionReports.length).toBe(0);
     });
 
     it('collab', async () => {
@@ -434,9 +430,9 @@ describe('findEventByStatus', () => {
       const data = mockSend.mock.calls[0][0];
       const ids = data.map((d) => d.id);
 
-      // Collaborator should see both test events
+      // Collaborator should see only their event (e), not e2 (regional access only)
       expect(ids).toContain(e.id);
-      expect(ids).toContain(e2.id);
+      expect(ids).not.toContain(e2.id);
 
       // Verify all returned events have the correct status
       data.forEach((event) => {
@@ -464,9 +460,9 @@ describe('findEventByStatus', () => {
       const data = mockSend.mock.calls[0][0];
       const ids = data.map((d) => d.id);
 
-      // POC should see both test events
+      // POC should see only their event (e), not e2 (regional access only)
       expect(ids).toContain(e.id);
-      expect(ids).toContain(e2.id);
+      expect(ids).not.toContain(e2.id);
 
       // Verify all returned events have the correct status
       data.forEach((event) => {
@@ -494,8 +490,8 @@ describe('findEventByStatus', () => {
       const data = mockSend.mock.calls[0][0];
       const ids = data.map((d) => d.id);
 
-      // otherWrite should see both test events (regional permissions)
-      expect(ids).toContain(e.id);
+      // otherWrite should see only their own event (e2), not e (no direct role)
+      expect(ids).not.toContain(e.id);
       expect(ids).toContain(e2.id);
 
       // Verify all returned events have the correct status
@@ -506,10 +502,6 @@ describe('findEventByStatus', () => {
       // otherWrite sees all sessions for their own event (e2)
       const ownEvent = data.find((d) => d.id === e2.id);
       expect(ownEvent.sessionReports.length).toBe(0);
-
-      // otherWrite sees only complete sessions for event e (not owner/collab/poc)
-      const otherEvent = data.find((d) => d.id === e.id);
-      expect(otherEvent.sessionReports.length).toBe(1);
     });
 
     it('otherRead', async () => {
@@ -528,18 +520,14 @@ describe('findEventByStatus', () => {
       const data = mockSend.mock.calls[0][0];
       const ids = data.map((d) => d.id);
 
-      // otherRead should see both test events (regional permissions)
-      expect(ids).toContain(e.id);
-      expect(ids).toContain(e2.id);
+      // otherRead should not see test events (regional access only, no direct role)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
 
       // Verify all returned events have the correct status
       data.forEach((event) => {
         expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
       });
-
-      // otherRead sees only complete sessions (not owner/collab/poc)
-      const event1 = data.find((d) => d.id === e.id);
-      expect(event1.sessionReports.length).toBe(1);
     });
 
     it('otherPoc', async () => {
@@ -558,18 +546,14 @@ describe('findEventByStatus', () => {
       const data = mockSend.mock.calls[0][0];
       const ids = data.map((d) => d.id);
 
-      // otherPoc should see both test events (regional permissions)
-      expect(ids).toContain(e.id);
-      expect(ids).toContain(e2.id);
+      // otherPoc should not see test events (regional access only, no direct role)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
 
       // Verify all returned events have the correct status
       data.forEach((event) => {
         expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
       });
-
-      // otherPoc sees only complete sessions (not poc for event e)
-      const event1 = data.find((d) => d.id === e.id);
-      expect(event1.sessionReports.length).toBe(1);
     });
 
     it('seesNone', async () => {
