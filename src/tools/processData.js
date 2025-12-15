@@ -22,7 +22,7 @@ const {
   APPROVE_REPORTS,
 } = SCOPES;
 
-const REGIONS = Array.from({ length: 14 }, (_, index) => index + 1);
+const REGIONS = Array.from({ length: 12 }, (_, index) => index + 1);
 const ALL_SCOPE_IDS = Object.values(SCOPES);
 const ALL_SCOPE_IDS_EXCEPT_ADMIN = ALL_SCOPE_IDS.filter((scopeId) => scopeId !== ADMIN);
 
