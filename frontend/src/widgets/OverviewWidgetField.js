@@ -25,6 +25,7 @@ export function OverviewWidgetField({
   filterApplicable,
   iconSize,
   showNoResults,
+  maxToolTipWidth,
 }) {
   const drawerTriggerRef = useRef(null);
   const noData = data === '0%';
@@ -61,6 +62,7 @@ export function OverviewWidgetField({
             screenReadDisplayText={false}
             buttonLabel={`${tooltipText} click to visually reveal this information`}
             tooltipText={tooltipText}
+            maxWidth={maxToolTipWidth}
           />
         ) : (
           <span className="margin-top-1">{label1}</span>
@@ -102,6 +104,7 @@ OverviewWidgetField.propTypes = {
   filterApplicable: PropTypes.bool,
   iconSize: PropTypes.string,
   showNoResults: PropTypes.bool,
+  maxToolTipWidth: PropTypes.number,
 };
 
 OverviewWidgetField.defaultProps = {
@@ -112,6 +115,7 @@ OverviewWidgetField.defaultProps = {
   filterApplicable: true,
   iconSize: 'sm',
   showNoResults: false,
+  maxToolTipWidth: null,
 };
 
 export default OverviewWidgetField;

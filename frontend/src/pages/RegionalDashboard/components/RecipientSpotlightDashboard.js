@@ -49,15 +49,29 @@ export default function RecipientSpotlightDashboard({
             </div>
           </div>
         )}
-        <div className="maxw-mobile">
-          <DashboardOverviewWidget
-            data={overviewData}
-            fields={['Recipients with priority indicators']}
-            showTooltips
-          />
-        </div>
+        <Grid row gap>
+          <Grid col={3}>
+            <DashboardOverviewWidget
+              data={overviewData}
+              fields={['Recipients with priority indicators']}
+              showTooltips
+              maxToolTipWidth={220}
+            />
+          </Grid>
+          <Grid col={3}>
+            {/* Empty cell */}
+          </Grid>
+          <Grid col={3}>
+            {/* Empty cell */}
+          </Grid>
+          <Grid col={3}>
+            {/* Empty cell */}
+          </Grid>
+        </Grid>
         <Grid row>
-          <p>Place holder for spotlight cards.</p>
+          <Grid col={12}>
+            <p>Place holder for spotlight cards table.</p>
+          </Grid>
         </Grid>
       </GridContainer>
     </>
