@@ -13,6 +13,7 @@ import { draftObject } from './testHelpers';
 import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { beforeDestroy } from './activityReportObjective';
 import { processActivityReportObjectiveForResourcesById } from '../../services/resource';
+import { removeActivityReportObjectivesFromReport } from '../../services/standardGoals';
 
 describe('activityReportObjective hooks', () => {
   let ar;
@@ -216,6 +217,34 @@ describe('activityReportObjective hooks', () => {
       // Clean up
       await testAro2.destroy();
       await ar2.destroy();
+      await testObjective.destroy({ force: true });
+    });
+
+    it('should set onAR to false when using removeActivityReportObjectivesFromReport', async () => {
+      // Create a new objective
+      const testObjective = await Objective.create({
+        title: 'test objective for removal via service',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      });
+
+      // Create an ActivityReportObjective
+      const testAro = await ActivityReportObjective.create({
+        activityReportId: ar.id,
+        objectiveId: testObjective.id,
+      });
+
+      // Verify onAR is true
+      let obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(true);
+
+      // Remove the objective using the service function (mimics save draft flow)
+      await removeActivityReportObjectivesFromReport(ar.id, [testObjective.id]);
+
+      // Verify onAR is now false
+      obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(false);
+
+      // Clean up
       await testObjective.destroy({ force: true });
     });
   });
