@@ -1,11 +1,12 @@
-import React from 'react';
-import { Button, Dropdown, Textarea } from '@trussworks/react-uswds';
+import React, { useEffect } from 'react';
+import { Button, Textarea } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
 import IncompletePages from '../../../components/IncompletePages';
 import { reviewSubmitComponentProps } from './constants';
 import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
+import SingleApproverSelect from '../../../components/SingleApproverSelect';
 
 const path = 'submitter-session-report';
 
@@ -25,13 +26,18 @@ export default function Submit({
   const { register, watch, trigger } = useFormContext();
   const pageState = watch('pageState');
   const event = watch('event');
-
+  const approver = watch('approver');
   const facilitation = watch('facilitation');
+
   let eventOrganizer = '';
 
   if (event && event.data) {
     eventOrganizer = event.data.eventOrganizer;
   }
+
+  useEffect(() => {
+    // console.log({ approver });
+  }, [approver]);
 
   const { trainerOptions: approvers } = useEventAndSessionStaff(event);
 
@@ -85,23 +91,12 @@ export default function Submit({
       {canSelectApprover && (
       <FormItem
         label="Approving manager"
-        name="approverId"
-        required
+        name="approver"
       >
-        <Dropdown
-          id="approverId"
+        <SingleApproverSelect
           name="approverId"
-          data-testid="approver"
-          inputRef={register({
-            required: 'Select an approver',
-          })}
-          required
-        >
-          <option value="">Select an approver</option>
-          {approverOptions.map((approver) => (
-            <option key={approver.id} value={approver.id}>{approver.fullName}</option>
-          ))}
-        </Dropdown>
+          options={approverOptions}
+        />
       </FormItem>
       )}
 
