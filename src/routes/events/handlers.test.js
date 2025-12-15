@@ -36,6 +36,56 @@ jest.mock('../../services/event', () => ({
   destroyEvent: jest.fn(),
   findEventsByStatus: jest.fn(),
   getTrainingReportAlertsForUser: jest.fn(),
+  filterEventSessions: jest.fn((event, userId, isAdmin) => {
+    // If admin, return all sessions
+    if (isAdmin) return event;
+
+    const isOwner = event.ownerId === userId;
+    const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(userId);
+    const isPoc = event.pocIds && event.pocIds.includes(userId);
+
+    // Helper to check if POC can see sessions for event type (must be inside the mock)
+    const pocCanSeeSessionsForEvent = (evt) => {
+      const eventOrganizer = evt.data?.eventOrganizer;
+      // POC can see sessions for "Regional PD Event (with National Centers)"
+      // POC cannot see sessions for "Regional TTA Hosted Event (no National Centers)"
+      return eventOrganizer === 'Regional PD Event (with National Centers)';
+    };
+
+    // Filter sessions based on user role
+    const filteredSessions = event.sessionReports ? event.sessionReports.filter((session) => {
+      const sessionStatus = session.data?.status;
+
+      // Owner and collaborators always see all sessions
+      if (isOwner || isCollaborator) {
+        return true;
+      }
+
+      // POC visibility depends on event organizer type
+      if (isPoc) {
+        // Check if POC can see sessions for this event type
+        if (!pocCanSeeSessionsForEvent(event)) {
+          return false; // POC cannot see any sessions for this event type
+        }
+        // POC can see sessions for this event type
+        return true;
+      }
+
+      if (session.approverId === userId && session.submitted) {
+        // approvers can see all sessions but shouldn't see the edit link on the session card if the session is not "submitted"
+        return true;
+      }
+
+      // Regional users (everyone else) can only see COMPLETE sessions
+      // Use string literal instead of constant to avoid jest.mock scope issues
+      return sessionStatus === 'Complete';
+    }) : [];
+
+    return {
+      ...event,
+      sessionReports: filteredSessions,
+    };
+  }),
 }));
 
 const mockEvent = {
@@ -77,8 +127,10 @@ describe('event handlers', () => {
       findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       EventReport.mockImplementation(() => ({
         canRead: () => true,
+        isPoc: () => false,
+        isAdmin: () => false,
       }));
-      await getHandler({ params: { eventId: 99_999 }, query: {} }, mockResponse);
+      await getHandler({ params: { eventId: 99_999 }, query: {}, session: { userId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
@@ -86,8 +138,10 @@ describe('event handlers', () => {
       findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       EventReport.mockImplementation(() => ({
         canRead: () => true,
+        isPoc: () => false,
+        isAdmin: () => false,
       }));
-      await getHandler({ params: { eventId: 99_999 }, query: { readOnly: true } }, mockResponse);
+      await getHandler({ params: { eventId: 99_999 }, query: { readOnly: true }, session: { userId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
@@ -161,8 +215,10 @@ describe('event handlers', () => {
       findEventBySmartsheetIdSuffix.mockResolvedValue(completedEvent);
       EventReport.mockImplementation(() => ({
         canRead: () => true,
+        isPoc: () => false,
+        isAdmin: () => false,
       }));
-      await getHandler({ params: { eventId: 99_999 }, query: { readOnly: true } }, mockResponse);
+      await getHandler({ params: { eventId: 99_999 }, query: { readOnly: true }, session: { userId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });
@@ -226,6 +282,7 @@ describe('event handlers', () => {
         ...mockEvent,
         ownerId: 1,
         pocIds: [99_999],
+        collaboratorIds: [], // POC only, not a collaborator
         data: {
           ...mockEvent.data,
           eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
@@ -374,6 +431,8 @@ describe('event handlers', () => {
           ...mockEvent,
           id: 1,
           ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [], // Regional user only, no direct role
           sessionReports: [
             { id: 1, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' } },
             { id: 2, data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' } },
@@ -383,6 +442,8 @@ describe('event handlers', () => {
           ...mockEvent,
           id: 2,
           ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [], // Regional user only, no direct role
           sessionReports: [
             { id: 3, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 3' } },
           ],
