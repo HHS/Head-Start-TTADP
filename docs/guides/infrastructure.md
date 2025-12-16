@@ -10,7 +10,7 @@
 
 - Application consists of a Node.js backend and React frontend.
 - PostgreSQL is used extensively for persistant data storage.
-- Redis handles cacheing and some realtime presence features
+- Redis handles caching and some realtime presence features
 - AWS S3 is used for DB backups and some external data exchange
 
 ## Environments
