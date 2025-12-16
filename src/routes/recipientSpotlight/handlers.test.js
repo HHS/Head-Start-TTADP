@@ -215,5 +215,67 @@ describe('recipientSpotlight handlers', () => {
 
       expect(getUserReadRegions).toHaveBeenCalledWith(mockUserId);
     });
+
+    it('should handle region.in[] array notation from filtersToQueryString', async () => {
+      req.query = {
+        'region.in[]': '1', // Array notation with brackets (from filtersToQueryString)
+        sortBy: 'recipientName',
+        direction: 'asc',
+        offset: '0',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+      expect(res.sendStatus).not.toHaveBeenCalledWith(403);
+      expect(res.sendStatus).not.toHaveBeenCalledWith(404);
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalled();
+    });
+
+    it('should still handle region.in without brackets for backward compatibility', async () => {
+      req.query = {
+        'region.in': '2', // Without brackets (manual construction)
+        sortBy: 'recipientName',
+        direction: 'asc',
+        offset: '0',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+      expect(res.sendStatus).not.toHaveBeenCalledWith(403);
+      expect(res.sendStatus).not.toHaveBeenCalledWith(404);
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalled();
+    });
+
+    it('should handle region.in[] with multiple regions', async () => {
+      req.query = {
+        'region.in[]': ['1', '2'], // Multiple regions with array notation
+        sortBy: 'recipientName',
+        direction: 'asc',
+        offset: '0',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+      expect(res.sendStatus).not.toHaveBeenCalledWith(403);
+      expect(res.sendStatus).not.toHaveBeenCalledWith(404);
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalled();
+    });
+
+    it('should return 403 when region.in[] contains unauthorized region', async () => {
+      req.query = {
+        'region.in[]': '5', // Region 5 not in user's allowed regions [1, 2, 3]
+        sortBy: 'recipientName',
+        direction: 'asc',
+        offset: '0',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+    });
   });
 });
