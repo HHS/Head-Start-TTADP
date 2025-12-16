@@ -57,7 +57,7 @@ const getNextStepsSections = (steps) => {
 
   return [
     {
-      isEditSection: true,
+      isEditSection: false,
       anchor: 'next-steps',
       items: [...nextStepItems.flatMap((item) => item)],
     },
