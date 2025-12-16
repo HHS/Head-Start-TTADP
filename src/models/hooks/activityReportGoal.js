@@ -39,7 +39,6 @@ const recalculateOnAR = async (sequelize, instance, options) => {
         LEFT JOIN "ActivityReportGoals" arg
         ON g.id = arg."goalId"
         WHERE g."id" = ${instance.goalId}
-        AND arg.id != ${instance.id}
         GROUP BY g."id"
       )
     UPDATE "Goals" g
@@ -76,6 +75,7 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await autoPopulateLinker(sequelize, instance, options);
+  await recalculateOnAR(sequelize, instance, options);
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
