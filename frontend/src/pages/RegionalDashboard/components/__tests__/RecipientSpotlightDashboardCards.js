@@ -76,7 +76,12 @@ describe('RecipientSpotlightDashboardCards', () => {
       },
     ];
 
-    const { container } = render(<RecipientSpotlightDashboardCards recipients={recipients} loading={false} />);
+    const { container } = render(
+      <RecipientSpotlightDashboardCards
+        recipients={recipients}
+        loading={false}
+      />,
+    );
 
     expect(container.querySelector('.usa-table-container--scrollable')).toBeInTheDocument();
   });
