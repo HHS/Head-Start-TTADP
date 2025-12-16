@@ -6,6 +6,7 @@ import { DashboardOverviewWidget } from '../../../widgets/DashboardOverview';
 import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import { filtersToQueryString } from '../../../utils';
 import useFetch from '../../../hooks/useFetch';
+import './RecipientSpotlightDashboard.scss';
 
 const DEFAULT_OVERVIEW_DATA = {
   numRecipients: '0',
@@ -42,7 +43,7 @@ export default function RecipientSpotlightDashboard({
       <Helmet>
         <title>Regional Dashboard - Recipient spotlight</title>
       </Helmet>
-      <GridContainer className="margin-0 padding-0">
+      <GridContainer className="smart-hub--recipient-spotlight-dashboard margin-0 padding-0">
         {error && (
           <div className="usa-alert usa-alert--error margin-bottom-3">
             <div className="usa-alert__body">
@@ -58,15 +59,6 @@ export default function RecipientSpotlightDashboard({
               showTooltips
               maxToolTipWidth={220}
             />
-          </Grid>
-          <Grid col={3}>
-            {/* Empty cell */}
-          </Grid>
-          <Grid col={3}>
-            {/* Empty cell */}
-          </Grid>
-          <Grid col={3}>
-            {/* Empty cell */}
           </Grid>
         </Grid>
         <Grid row>
