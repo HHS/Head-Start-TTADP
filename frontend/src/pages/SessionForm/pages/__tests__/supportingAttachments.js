@@ -105,4 +105,15 @@ describe('supportingAttachments', () => {
       expect(await screen.findByText(/continue/i)).toBeVisible();
     });
   });
+
+  describe('ReviewSection', () => {
+    it('exports a reviewSection function', () => {
+      expect(typeof supportingAttachments.reviewSection).toBe('function');
+      expect(supportingAttachments.reviewSection).toBeDefined();
+    });
+
+    it('has the correct review property', () => {
+      expect(supportingAttachments.review).toBe(false);
+    });
+  });
 });

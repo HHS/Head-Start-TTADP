@@ -38,32 +38,6 @@ test.describe('get /users/stateCodes', () => {
   });
 });
 
-test.describe('get /users/statistics', () => {
-  test('200', async ({ request }) => {
-    const response = await request.get(`${root}/users/statistics`);
-    const schema = Joi.object({
-      daysSinceJoined: Joi.string().required(),
-      arsCreated: Joi.string().required(),
-      arsCollaboratedOn: Joi.string().required(),
-      ttaProvided: Joi.string().required(),
-      recipientsReached: Joi.string().required(),
-      grantsServed: Joi.string().required(),
-      participantsReached: Joi.string().required(),
-      goalsApproved: Joi.string().required(),
-      objectivesApproved: Joi.string().required(),
-    });
-    expect(response.status()).toBe(200);
-    await validateSchema(response, schema, expect);
-  });
-  test('403', async ({ request }) => {
-    const response = await request.get(
-      `${root}/users/statistics`,
-      { headers: { 'playwright-user-id': '2' } }, // has no home region
-    );
-    expect(response.status()).toBe(403);
-  });
-});
-
 test.describe('get /users/active-users', () => {
   test('403', async ({ request }) => {
     const response = await request.get(`${root}/users/active-users`);

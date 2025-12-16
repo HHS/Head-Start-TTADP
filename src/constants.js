@@ -230,7 +230,6 @@ const MAINTENANCE_TYPE = {
 };
 
 const FEATURE_FLAGS = [
-  'anv_statistics',
   'quality_assurance_dashboard',
   'collaboration_report',
 ];

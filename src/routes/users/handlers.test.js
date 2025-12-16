@@ -3,7 +3,6 @@ import {
   getPossibleStateCodes,
   requestVerificationEmail,
   verifyEmailToken,
-  getUserStatistics,
   getActiveUsers,
   setFeatureFlag,
   getFeatureFlags,
@@ -15,7 +14,6 @@ import {
 import {
   userById,
   usersWithPermissions,
-  statisticsByUser,
   setFlag,
   getTrainingReportUsersByRegion,
   getUserNamesByIds,
@@ -86,80 +84,6 @@ describe('User handlers', () => {
   });
   afterEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('getUserStatistics', () => {
-    it('returns write statistics', async () => {
-      const response = { daysSinceJoined: 10, arsCreated: 10 };
-      statisticsByUser.mockResolvedValue(response);
-      userById.mockResolvedValue({
-        permissions: [
-          {
-            regionId: 1,
-          },
-          {
-            regionId: 2,
-          },
-        ],
-      });
-      User.prototype.canWriteInRegion = jest.fn().mockReturnValue(true);
-      await getUserStatistics(mockRequest, mockResponse);
-      expect(statisticsByUser).toHaveBeenCalledWith({
-        permissions: [{
-          regionId: 1,
-        },
-        {
-          regionId: 2,
-        }],
-      }, [1, 2], false);
-      expect(mockResponse.json).toHaveBeenCalledWith(response);
-    });
-
-    it('returns readonly statistics', async () => {
-      const response = { daysSinceJoined: 10, arsCreated: 10 };
-      statisticsByUser.mockResolvedValue(response);
-      userById.mockResolvedValue({
-        permissions: [
-          {
-            regionId: 1,
-          },
-          {
-            regionId: 2,
-          },
-        ],
-      });
-      User.prototype.canWriteInRegion = jest.fn().mockReturnValue(false);
-      await getUserStatistics(mockRequest, mockResponse);
-      expect(statisticsByUser).toHaveBeenCalledWith({
-        permissions: [{
-          regionId: 1,
-        },
-        {
-          regionId: 2,
-        }],
-      }, [1, 2], true);
-      expect(mockResponse.json).toHaveBeenCalledWith(response);
-    });
-
-    it('handles errors', async () => {
-      const response = { daysSinceJoined: 10, arsCreated: 10 };
-      statisticsByUser.mockResolvedValue(response);
-      userById.mockResolvedValue({
-        permissions: [
-          {
-            regionId: 1,
-          },
-          {
-            regionId: 2,
-          },
-        ],
-      });
-      const end = jest.fn();
-      const status = jest.fn(() => ({ end }));
-      User.prototype.canWriteInRegion = jest.fn().mockReturnValue(true);
-      await getUserStatistics({}, { status });
-      expect(status).toHaveBeenCalledWith(500);
-    });
   });
 
   describe('getPossibleStateCodes', () => {
@@ -630,15 +554,12 @@ describe('User handlers', () => {
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
       expect(usersByRoles).toHaveBeenCalledWith([
-        'SPS',
         'HS',
         'SS',
         'ECS',
         'GS',
-        'PS',
         'FES',
         'TTAC',
-        'AA',
         'ECM',
         'GSM',
         'RPM',

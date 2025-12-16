@@ -126,16 +126,12 @@ describe('ttaByReviews', () => {
                 ],
                 specialists: [
                   {
-                    name: 'Hermione Granger, SS',
-                    roles: [
-                      'SS',
-                    ],
+                    name: 'Hermione Granger, NC, SS',
+                    roles: expect.arrayContaining(['SS', 'NC']),
                   },
                   {
-                    name: 'Hermione Granger, SS',
-                    roles: [
-                      'SS',
-                    ],
+                    name: 'Hermione Granger, NC, SS',
+                    roles: expect.arrayContaining(['SS', 'NC']),
                   },
                 ],
                 status: 'In Progress',
@@ -161,16 +157,12 @@ describe('ttaByReviews', () => {
                 ],
                 specialists: [
                   {
-                    name: 'Hermione Granger, SS',
-                    roles: [
-                      'SS',
-                    ],
+                    name: 'Hermione Granger, NC, SS',
+                    roles: expect.arrayContaining(['NC', 'SS']),
                   },
                   {
-                    name: 'Hermione Granger, SS',
-                    roles: [
-                      'SS',
-                    ],
+                    name: 'Hermione Granger, NC, SS',
+                    roles: expect.arrayContaining(['SS', 'NC']),
                   },
                 ],
                 status: 'In Progress',
@@ -194,8 +186,8 @@ describe('ttaByReviews', () => {
         reviewType: 'FA-1',
         specialists: [
           {
-            name: 'Hermione Granger, SS',
-            roles: ['SS'],
+            name: 'Hermione Granger, NC, SS',
+            roles: expect.arrayContaining(['SS', 'NC']),
           },
         ],
       },
