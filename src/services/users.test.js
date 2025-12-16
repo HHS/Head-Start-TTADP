@@ -384,20 +384,20 @@ describe('Users DB service', () => {
     });
 
     it('adds a flag to users that do not have the flag', async () => {
-      const result = await setFlag('anv_statistics', true);
+      const result = await setFlag('quality_assurance_dashboard', true);
       expect(result[1] > 3).toEqual(true);
       const user = await User.findOne({ where: { id: 50 } });
-      expect(user.flags[0]).toBe('anv_statistics');
+      expect(user.flags[0]).toBe('quality_assurance_dashboard');
     });
     it('removes a flag from users that have the flag', async () => {
-      await setFlag('anv_statistics', true);
-      const result = await setFlag('anv_statistics', false);
+      await setFlag('quality_assurance_dashboard', true);
+      const result = await setFlag('quality_assurance_dashboard', false);
       expect(result[1] > 3).toEqual(true);
       const user = await User.findOne({ where: { id: 50 } });
       expect(user.flags[0]).toBe(undefined);
     });
     it('does not set a flag for users without permissions', async () => {
-      await setFlag('anv_statistics', true);
+      await setFlag('quality_assurance_dashboard', true);
       const user = await User.findOne({ where: { id: 53 } });
       expect(user.flags[0]).toBe(undefined);
     });
@@ -601,6 +601,14 @@ describe('Users DB service', () => {
         lastLogin: new Date(),
       });
 
+      await Permission.bulkCreate([
+        user1, user2, user3, user4,
+      ].map((u) => ({
+        scopeId: SCOPES.SITE_ACCESS,
+        userId: u.id,
+        regionId: 14,
+      })));
+
       await db.UserRole.create({
         userId: user4.id,
         roleId: role2.id,
@@ -609,6 +617,12 @@ describe('Users DB service', () => {
 
     afterAll(async () => {
       await db.UserRole.destroy({
+        where: {
+          userId: [user1.id, user2.id, user3.id, user4.id],
+        },
+      });
+
+      await Permission.destroy({
         where: {
           userId: [user1.id, user2.id, user3.id, user4.id],
         },
@@ -669,6 +683,29 @@ describe('Users DB service', () => {
       expect(resultIds).toContain(user3.id);
       expect(resultIds).not.toContain(user4.id);
       expect(results.length).toBe(2);
+    });
+
+    it('only returns users with site access', async () => {
+      await Permission.destroy({
+        where: {
+          userId: user2.id,
+          scopeId: SCOPES.SITE_ACCESS,
+        },
+      });
+      const results = await usersByRoles(['Waggler']);
+      const resultIds = results.map((u) => u.id);
+
+      expect(resultIds).not.toContain(user1.id);
+      expect(resultIds).not.toContain(user2.id);
+      expect(resultIds).toContain(user3.id);
+      expect(resultIds).toContain(user4.id);
+      expect(results.length).toBe(2);
+
+      await Permission.create({
+        userId: user2.id,
+        regionId: 14,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
     });
 
     it('returns empty array when no users match role', async () => {

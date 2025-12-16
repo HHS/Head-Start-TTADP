@@ -64,7 +64,7 @@ NextSteps.propTypes = {};
 
 NextSteps.defaultProps = {};
 
-const getNextStepsSections = (specialistNextSteps, recipientNextSteps) => {
+export const getNextStepsSections = (specialistNextSteps, recipientNextSteps) => {
   const specialistItems = (specialistNextSteps || []).map((step, index) => ([
     {
       label: `Step ${index + 1}`,

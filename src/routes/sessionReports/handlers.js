@@ -15,7 +15,6 @@ import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
-import SCOPES from '../../middleware/scopeConstants';
 
 const namespace = 'SERVICE:SESSIONREPORTS';
 
@@ -54,7 +53,7 @@ export const getHandler = async (req, res) => {
       return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' });
     }
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-    const eventAuth = await getEventAuthorization(req, res, event);
+    const eventAuth = await getEventAuthorization(req, res, event, session);
     if (!eventAuth.canEditSession()) {
       return res.sendStatus(403);
     }
@@ -97,7 +96,7 @@ export const createHandler = async (req, res) => {
     const event = await findEventBySmartsheetIdSuffix(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const auth = await getEventAuthorization(req, res, event);
-    if (!auth.canCreateSession()) { return res.sendStatus(403); }
+    if (!auth.canCreateSession()) { return res.sendStatus(httpCodes.FORBIDDEN); }
 
     const session = await createSession({
       eventId: event.id,
@@ -134,9 +133,11 @@ export const updateHandler = async (req, res) => {
 
     // Authorization is through the associated event
     const event = await findEventBySmartsheetIdSuffix(eventId);
+    const session = await findSessionById(id);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-    const eventAuth = await getEventAuthorization(req, res, event);
-    if (!eventAuth.canEditSession()) { return res.sendStatus(403); }
+    const eventAuth = await getEventAuthorization(req, res, event, session);
+
+    if (!eventAuth.canEditSession()) { return res.sendStatus(httpCodes.FORBIDDEN); }
 
     const updatedSession = await updateSession(id, req.body);
     return res.status(httpCodes.CREATED).send(updatedSession);

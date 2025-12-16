@@ -1,4 +1,5 @@
 import join from 'url-join';
+import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import {
   get, post, put, destroy,
 } from './index';
@@ -7,7 +8,14 @@ import { uploadFile } from './File';
 const sessionsUrl = join('/', 'api', 'session-reports');
 
 export const createSession = async (eventId, data = {}) => {
-  const response = await post(sessionsUrl, { eventId, data: { status: 'In progress', ...data } });
+  const response = await post(sessionsUrl, {
+    eventId,
+    data: {
+      reviewStatus: REPORT_STATUSES.DRAFT,
+      status: 'In progress',
+      ...data,
+    },
+  });
   return response.json();
 };
 
@@ -46,8 +54,11 @@ export const deleteSessionObjectiveFile = async (sessionId, fileId) => {
   return response.status;
 };
 
-export const getPossibleSessionParticipants = async (regionId) => {
-  const response = await get(join(sessionsUrl, 'participants', String(regionId)));
+export const getPossibleSessionParticipants = async (regionId, stateCodes = []) => {
+  const url = join(sessionsUrl, 'participants', String(regionId));
+  const params = new URLSearchParams();
+  stateCodes.forEach((code) => params.append('states', code));
+  const response = await get(`${url}?${params.toString()}`);
   return response.json();
 };
 

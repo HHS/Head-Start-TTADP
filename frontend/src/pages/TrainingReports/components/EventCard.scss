@@ -3,7 +3,6 @@
 $min-width-title-column: 200px;
 $min-width-id-column: 107px;
 $min-width-organizer-column: 150px;
-$min-width-reason-column: 160px;
 $min-width-date-column: 115px;
 $min-width-menu-column: 20px;
 
@@ -25,16 +24,6 @@ $min-width-menu-column: 20px;
   margin-bottom: 16px;
 }
 
-// Hide tool tip button.
-.ttahub-event-card__event-reason-tool-tip {
-  display: none;
-}
-
-// Show tool tip csv.
-.ttahub-event-card__event-reason-csv {
-  display: block;
-}
-
 @container ttahub-event-card (min-width: 710px) {
   .ttahub-event-card__row {
     display: flex;
@@ -50,8 +39,7 @@ $min-width-menu-column: 20px;
     margin-bottom: 16px;
   }
 
-  .ttahub-event-card__event-column__title,
-  .ttahub-event-card__event-column__reason {
+  .ttahub-event-card__event-column__title {
     width: 40%;
   }
 
@@ -88,19 +76,6 @@ $min-width-menu-column: 20px;
     flex-basis: clamp($min-width-organizer-column, 15%, 100%);
   }
 
-  // Event Reason.
-  .ttahub-event-card__event-column__reason {
-    flex-basis: clamp($min-width-reason-column, 20%, 100%);
-  }
-
-  // Reason overflow.
-  .ttahub-event-card__event-column__reason p {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    max-width: 200px;
-  }
-
   // Event Date.
   .ttahub-event-card__event-column__date {
     flex-basis: clamp($min-width-date-column, 12.5%, 100%);
@@ -109,15 +84,5 @@ $min-width-menu-column: 20px;
   // Event Context Menu.
   .ttahub-event-card__event-column__menu {
     flex-basis: clamp($min-width-menu-column, 2%, 100%);
-  }
-
-  // Show tool tip button.
-  .ttahub-event-card__event-reason-tool-tip {
-    display: block;
-  }
-
-  // Hide CSV tool tip list.
-  .ttahub-event-card__event-reason-csv {
-    display: none;
   }
 }
