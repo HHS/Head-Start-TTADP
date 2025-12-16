@@ -1,4 +1,13 @@
+@import '../../../colors';
 
 .smart-hub--recipient-spotlight-dashboard .smart-hub--dashboard-overview-container > div {
     min-width: 300px;
+}
+
+.recipient-spotlight-header {
+    border-bottom: 1px solid $base-lighter;
+}
+
+.ttahub-recipient-spotlight-table .smart-hub--no-results-found {
+    padding: 40px 24px 80px;
 }

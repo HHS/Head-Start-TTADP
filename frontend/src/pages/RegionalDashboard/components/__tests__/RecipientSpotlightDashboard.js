@@ -73,4 +73,82 @@ describe('Recipient spotlight Dashboard page', () => {
       expect(screen.getByText(/Unable to load overview data/i)).toBeInTheDocument();
     });
   });
+
+  it('shows NoResultsFound when there are no recipients with priority indicators', async () => {
+    getRecipientSpotlight.mockResolvedValue({
+      recipients: [],
+      overview: {
+        numRecipients: '0',
+        totalRecipients: '100',
+        recipientPercentage: '0%',
+      },
+    });
+
+    renderTest();
+
+    await waitFor(() => {
+      expect(screen.getByText('No results found.')).toBeInTheDocument();
+      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+    });
+  });
+
+  it('shows NoResultsFound when recipients exist but have no priority indicators', async () => {
+    getRecipientSpotlight.mockResolvedValue({
+      recipients: [
+        {
+          recipientId: 1,
+          recipientName: 'Test Recipient',
+          childIncidents: false,
+          deficiency: false,
+          newRecipients: false,
+          newStaff: false,
+          noTTA: false,
+          DRS: false,
+          FEI: false,
+        },
+      ],
+      overview: {
+        numRecipients: '0',
+        totalRecipients: '100',
+        recipientPercentage: '0%',
+      },
+    });
+
+    renderTest();
+
+    await waitFor(() => {
+      expect(screen.getByText('No results found.')).toBeInTheDocument();
+      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show NoResultsFound when recipients with priority indicators exist', async () => {
+    getRecipientSpotlight.mockResolvedValue({
+      recipients: [
+        {
+          recipientId: 1,
+          recipientName: 'Test Recipient',
+          childIncidents: true,
+          deficiency: false,
+          newRecipients: false,
+          newStaff: false,
+          noTTA: false,
+          DRS: false,
+          FEI: false,
+        },
+      ],
+      overview: {
+        numRecipients: '1',
+        totalRecipients: '100',
+        recipientPercentage: '1%',
+      },
+    });
+
+    renderTest();
+
+    await waitFor(() => {
+      expect(screen.queryByText('No results found.')).not.toBeInTheDocument();
+      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+    });
+  });
 });
