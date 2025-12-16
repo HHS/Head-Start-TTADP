@@ -75,6 +75,7 @@ export async function removeObjectivesFromReport(objectivesToRemove, reportId) {
     where: {
       id: objectivesToDefinitelyDestroy.map((o) => o.id),
     },
+    individualHooks: true, // We need this to ensure onAR is updated.
   });
 }
 
@@ -308,6 +309,7 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
       where: {
         id: unusedGoals.map((g) => g.id),
       },
+      individualHooks: true,
     });
   }
 
