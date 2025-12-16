@@ -75,6 +75,7 @@ export async function removeObjectivesFromReport(objectivesToRemove, reportId) {
     where: {
       id: objectivesToDefinitelyDestroy.map((o) => o.id),
     },
+    individualHooks: true, // We need this to ensure onAR is updated.
   });
 }
 
@@ -308,6 +309,7 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
       where: {
         id: unusedGoals.map((g) => g.id),
       },
+      individualHooks: true,
     });
   }
 
@@ -864,7 +866,7 @@ export async function standardGoalsForRecipient(
     }
     : {};
   const goalRows = await Goal.findAll({
-    attributes: ['id', 'name', 'status', 'createdAt', 'goalTemplateId', 'prestandard',
+    attributes: ['id', 'name', 'status', 'createdAt', 'goalTemplateId', 'prestandard', 'onAR', 'onApprovedAR',
       // The underlying sort expect the status_sort column to be the first column _0.
       [sequelize.literal(`
         CASE

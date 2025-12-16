@@ -51,8 +51,8 @@ const notStartedEvents = [{
 
 const inProgressEvents = [{
   id: 3,
-  ownerId: 1,
-  collaboratorIds: [],
+  ownerId: 999,
+  collaboratorIds: [1],
   pocIds: [],
   regionId: 2,
   data: {
@@ -67,6 +67,7 @@ const inProgressEvents = [{
     id: 1,
     eventId: 3,
     regionId: 2,
+    approverId: 999,
     data: {
       regionId: 2,
       sessionName: 'This is my session title',
@@ -77,6 +78,10 @@ const inProgressEvents = [{
       objectiveTopics: ['Topic 1', 'Topic 2'],
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
+      pocComplete: false,
+      ownerComplete: false,
+      submitted: false,
+      facilitation: 'national_centers',
     },
   }],
 }];

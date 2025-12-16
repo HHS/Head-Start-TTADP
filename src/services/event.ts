@@ -124,6 +124,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
           'data',
           'createdAt',
           'updatedAt',
+          'approverId',
           // eslint-disable-next-line @typescript-eslint/quotes
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
@@ -245,6 +246,7 @@ export async function findEventHelperBlob({
           'data',
           'createdAt',
           'updatedAt',
+          'approverId',
           // eslint-disable-next-line @typescript-eslint/quotes
           [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
@@ -708,23 +710,32 @@ const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(B
 
 const mappings: Record<string, string> = {
   Audience: 'eventIntendedAudience',
-  'IST/Creator': 'creator',
-  'Event Title': 'eventName',
+  // 'IST/Creator': 'creator',
+  'Event Creator': 'creator',
+  // 'Event Title': 'eventName',
+  'Edit Title': 'eventName',
   'Event Duration': 'trainingType',
   'Event Duration/#NC Days of Support': 'trainingType',
   'Event Duration/# NC Days of Support': 'trainingType',
   'Event ID': 'eventId',
   'Overall Vision/Goal for the PD Event': 'vision',
+  'Event Approach': 'trainingType',
   'Vision/Goal/Outcomes for the PD Event': 'vision',
+  'Vision/Outcomes for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
-  'Reason(s) for PD': 'reasons',
+  // 'Reason(s) for PD': 'reasons', // TODO: Verify data should no longer be imported
   'Target Population(s)': 'targetPopulations',
   'Event Organizer - Type of Event': 'eventOrganizer',
   'IST Name:': 'istName',
   'IST Name': 'istName',
+  'State/Territory Invited': 'additionalStates',
 };
 
-const toSplit = ['targetPopulations', 'reasons'];
+const toSplit = [
+  'targetPopulations',
+  'reasons',
+  'additionalStates',
+];
 
 const replacements: Record<string, string> = {
   'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
@@ -841,18 +852,18 @@ export async function csvImport(buffer: Buffer) {
 
       // Validate audience else skip.
       if (!EVENT_AUDIENCE.includes(cleanLine.Audience)) {
-        skipped.push(`Value "${cleanLine.Audience}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`);
+        skipped.push(`Value "${cleanLine.Audience || ''}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`);
         return false;
       }
 
       const regionId = Number(eventId.split('-')[0].replace(/\D/g, '').replace(/^0+/, ''));
 
-      const creator = cleanLine['IST/Creator'] || cleanLine.Creator;
+      const creator = cleanLine['IST/Creator'] || cleanLine.Creator || cleanLine['Event Creator'];
       if (!creator) {
         errors.push(`No creator listed on import for ${eventId}`);
         return false;
       }
-      let owner;
+      let owner: { name: string; id: number; };
       if (creator) {
         owner = await checkUserExistsByEmail(creator);
 
@@ -866,11 +877,10 @@ export async function csvImport(buffer: Buffer) {
         }
       }
 
-      const collaborators = [];
       const pocs = [];
 
-      if (cleanLine['Designated Region POC for Event/Request']) {
-        const pocNames = cleanLine['Designated Region POC for Event/Request'].split('/').map((name) => name.trim());
+      if (cleanLine['Designated POC for Event/Request']) {
+        const pocNames = cleanLine['Designated POC for Event/Request'].split('/').map((name) => name.trim());
         // eslint-disable-next-line no-restricted-syntax
         for await (const pocName of pocNames) {
           const poc = await checkUserExistsByName(pocName);
@@ -886,25 +896,9 @@ export async function csvImport(buffer: Buffer) {
         }
       }
 
-      if (cleanLine['National Centers']) {
-        const nationalCenterNames = cleanLine['National Centers'].split('\n').map((name) => name.trim());
-        // eslint-disable-next-line no-restricted-syntax
-        for await (const center of nationalCenterNames) {
-          const collaborator = await checkUserExistsByNationalCenter(center);
-          const policy = new EventReport(collaborator, {
-            regionId,
-          });
-
-          if (!policy.canWriteInRegion()) {
-            errors.push(`User ${collaborator.name} does not have permission to write in region ${regionId}`);
-            return false;
-          }
-          collaborators.push(collaborator.id);
-        }
-      }
-
-      if (!collaborators.length) {
-        errors.push(`No collaborators found for ${eventId}`);
+      const organizer = cleanLine['Event Organizer - Type of Event'];
+      if (!['Regional PD Event (with National Centers)', 'Regional TTA Hosted Event (no National Centers)'].includes(organizer)) {
+        errors.push(`Event Organizer "${organizer}" is not valid for import: ${eventId}. Valid options are "Regional PD Event (with National Centers)" or "Regional TTA Hosted Event (no National Centers)"`);
         return false;
       }
 
@@ -921,8 +915,11 @@ export async function csvImport(buffer: Buffer) {
       // Target Populations, remove duplicates and invalid values.
       data.targetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS].includes(target));
 
+      // Additional States Involved, remove duplicates.
+      data.additionalStates = [...new Set(data.additionalStates as string[])]; // TODO: (maybe) create master list of states/outer pacific to validate against
+
       await db.EventReportPilot.create({
-        collaboratorIds: collaborators,
+        collaboratorIds: [],
         ownerId: owner.id,
         regionId,
         pocIds: pocs,
