@@ -13,6 +13,7 @@ import { draftObject } from './testHelpers';
 import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { beforeDestroy } from './activityReportObjective';
 import { processActivityReportObjectiveForResourcesById } from '../../services/resource';
+import { removeActivityReportObjectivesFromReport } from '../../services/standardGoals';
 
 describe('activityReportObjective hooks', () => {
   let ar;
@@ -124,6 +125,127 @@ describe('activityReportObjective hooks', () => {
       expect(aroResources.length).toBe(0);
       expect(aroTopics.length).toBe(0);
       expect(transaction.finished).toBe('commit');
+    });
+  });
+
+  describe('onAR field updates', () => {
+    it('should set onAR to true when objective is added to a report', async () => {
+      // Create a new objective
+      const testObjective = await Objective.create({
+        title: 'test objective for onAR',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      });
+
+      // Verify onAR is false initially
+      let obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(false);
+
+      // Create an ActivityReportObjective
+      const testAro = await ActivityReportObjective.create({
+        activityReportId: ar.id,
+        objectiveId: testObjective.id,
+      });
+
+      // Verify onAR is now true
+      obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(true);
+
+      // Clean up
+      await testAro.destroy();
+      await testObjective.destroy({ force: true });
+    });
+
+    it('should set onAR to false when objective is removed from all reports', async () => {
+      // Create a new objective
+      const testObjective = await Objective.create({
+        title: 'test objective for onAR removal',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      });
+
+      // Create an ActivityReportObjective
+      const testAro = await ActivityReportObjective.create({
+        activityReportId: ar.id,
+        objectiveId: testObjective.id,
+      });
+
+      // Verify onAR is true
+      let obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(true);
+
+      // Destroy the ActivityReportObjective
+      await testAro.destroy();
+
+      // Verify onAR is now false
+      obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(false);
+
+      // Clean up
+      await testObjective.destroy({ force: true });
+    });
+
+    it('should keep onAR true when objective is on multiple reports and one is removed', async () => {
+      // Create a new objective and a second activity report
+      const testObjective = await Objective.create({
+        title: 'test objective for multiple reports',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      });
+
+      const ar2 = await ActivityReport.create({ ...draftObject });
+
+      // Create two ActivityReportObjectives
+      const testAro1 = await ActivityReportObjective.create({
+        activityReportId: ar.id,
+        objectiveId: testObjective.id,
+      });
+
+      const testAro2 = await ActivityReportObjective.create({
+        activityReportId: ar2.id,
+        objectiveId: testObjective.id,
+      });
+
+      // Verify onAR is true
+      let obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(true);
+
+      // Destroy one ActivityReportObjective
+      await testAro1.destroy();
+
+      // Verify onAR is still true
+      obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(true);
+
+      // Clean up
+      await testAro2.destroy();
+      await ar2.destroy();
+      await testObjective.destroy({ force: true });
+    });
+
+    it('should set onAR to false when using removeActivityReportObjectivesFromReport', async () => {
+      // Create a new objective
+      const testObjective = await Objective.create({
+        title: 'test objective for removal via service',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      });
+
+      // Create an ActivityReportObjective
+      const testAro = await ActivityReportObjective.create({
+        activityReportId: ar.id,
+        objectiveId: testObjective.id,
+      });
+
+      // Verify onAR is true
+      let obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(true);
+
+      // Remove the objective using the service function (mimics save draft flow)
+      await removeActivityReportObjectivesFromReport(ar.id, [testObjective.id]);
+
+      // Verify onAR is now false
+      obj = await Objective.findByPk(testObjective.id);
+      expect(obj.onAR).toBe(false);
+
+      // Clean up
+      await testObjective.destroy({ force: true });
     });
   });
 });
