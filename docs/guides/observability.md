@@ -8,6 +8,7 @@ Login to [New Relic here](https://one.newrelic.com), contact team lead for acces
 * First place to look for information on the site is the APM section (far left).  Here you can see an overview of overall site performance, as well as dig into detailed traces for errors or long-running transactions.
 * Health checks are configured under the Synthetic Monitoring section.  Here you can review or change configuration of the HTTP/ping checks for the site.
 * Alerts connect data to notifications.  In order to get notified of an event, create an alert targeting a particular data source (or create the alert directly from another graph/source), then connect it to an "alert policy".  The alert policy defines where the alert will be sent, such as Slack, email, etc.
+* It's also possible to view and query logs captured in New Relic, such as [here](https://onenr.io/0BR6L4MqpQO)
 
 ## Logging
 
