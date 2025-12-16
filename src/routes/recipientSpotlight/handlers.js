@@ -31,7 +31,10 @@ export async function getRecipientSpotLight(req, res) {
     const userReadRegions = await getUserReadRegions(userId);
 
     // Extract requested regions from query
-    const requestedRegions = req.query['region.in'];
+    // Support both region.in and region.in[] formats
+    // region.in[] is produced by filtersToQueryString (standard filter system)
+    // region.in is used by manual filter construction (RecipientSpotlight component)
+    const requestedRegions = req.query['region.in[]'] || req.query['region.in'];
 
     // Check if user has access to requested regions
     if (requestedRegions) {
