@@ -67,19 +67,23 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
   useEffect(() => {
     async function fetchRecipientSpotlight() {
       try {
+        const filters = `recipientId.in=${recipientId}&region.in=${regionId}`;
         const response = await getRecipientSpotlight(
-          String(recipientId),
-          String(regionId),
+          'recipientName',
+          'asc',
+          0,
+          filters,
         );
 
         // Check if response is valid and has meaningful data (more than just an empty object)
         const hasValidData = response
-          && response.length > 0
-          && response[0]
-          && Object.keys(response[0]).length > 1;
+          && response.recipients
+          && response.recipients.length > 0
+          && response.recipients[0]
+          && Object.keys(response.recipients[0]).length > 1;
 
         if (hasValidData) {
-          setSpotlightData(mappedData(response[0]));
+          setSpotlightData(mappedData(response.recipients[0]));
           setHasResults(true);
         } else {
           setSpotlightData([]);
