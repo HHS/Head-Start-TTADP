@@ -12,7 +12,6 @@ export async function getRecipientSpotlightIndicators(
   offset,
   limit,
 ) {
-
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   const grantsWhere = {
     [Op.and]: [
