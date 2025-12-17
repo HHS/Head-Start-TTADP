@@ -154,19 +154,19 @@ workflows:
             only:
             - main
     jobs:
-      deploy_job:
+    - deploy_job:
         name: reset (dev-blue)
         target_env: "dev-blue"
-      deploy_job:
+    - deploy_job:
         name: reset (dev-green)
         target_env: "dev-green"
-      deploy_job:
+    - deploy_job:
         name: reset (dev-red)
         target_env: "dev-red"
-      deploy_job:
+    - deploy_job:
         name: reset (dev-pink)
         target_env: "dev-pink"
-      deploy_job:
+    - deploy_job:
         name: reset (dev-gold)
         target_env: "dev-gold"
 
