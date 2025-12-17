@@ -24,18 +24,19 @@ psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" <<'SQL'
 -- PERMISSIONS SETUP
 -- ========================================
 
--- READ_WRITE_TRAINING_REPORTS = 5
+
+-- READ_WRITE_TRAINING_REPORTS
 INSERT INTO "Permissions" ("userId", "regionId", "scopeId", "createdAt", "updatedAt")
 VALUES
-  (1, 3, 5, NOW(), NOW()),  -- Hermoine Granger - Admin
-  (5, 3, 5, NOW(), NOW()),  -- Cucumber User - Creator/Owner
-  (4, 3, 5, NOW(), NOW())   -- Ron Weasley - Collaborator
+  (1, 3, 7, NOW(), NOW()),  -- Hermoine Granger - Admin
+  (5, 3, 7, NOW(), NOW()),  -- Cucumber User - Creator/Owner
+  (4, 3, 7, NOW(), NOW())   -- Ron Weasley - Collaborator
 ON CONFLICT ("userId", "regionId", "scopeId") DO NOTHING;
 
--- POC_TRAINING_REPORTS = 6
+-- POC_TRAINING_REPORTS
 INSERT INTO "Permissions" ("userId", "regionId", "scopeId", "createdAt", "updatedAt")
 VALUES
-  (6, 3, 6, NOW(), NOW())   -- Larry Botter - POC
+  (6, 3, 8, NOW(), NOW())   -- Larry Botter - POC
 ON CONFLICT ("userId", "regionId", "scopeId") DO NOTHING;
 
 -- READ_REPORTS = 1
