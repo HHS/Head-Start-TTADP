@@ -32,7 +32,7 @@ describe('SessionCard', () => {
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
       pocComplete: false,
-      ownerComplete: false,
+      collabComplete: false,
       submitted: false,
       facilitation: 'national_centers',
     },
@@ -92,7 +92,7 @@ describe('SessionCard', () => {
       data: {
         ...defaultSession.data,
         pocComplete: true,
-        ownerComplete: true,
+        collabComplete: true,
         status: 'Complete',
       },
     });
@@ -158,7 +158,7 @@ describe('SessionCard', () => {
     expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
   });
 
-  it('shows the edit session link when the user is an admin and creator and pocComplete and ownerComplete are true', () => {
+  it('shows the edit session link when the user is an admin and creator and pocComplete and collabComplete are true', () => {
     const superUser = {
       id: 1,
       homeRegionId: 1,
@@ -180,7 +180,7 @@ describe('SessionCard', () => {
         ...defaultSession.data,
         ownerId: 1,
         pocComplete: true,
-        ownerComplete: true,
+        collabComplete: true,
       },
     }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
@@ -188,7 +188,7 @@ describe('SessionCard', () => {
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('shows the edit session link when the user is an admin and poc and pocComplete and ownerComplete are true', () => {
+  it('shows the edit session link when the user is an admin and poc and pocComplete and collabComplete are true', () => {
     const superUser = {
       id: 1,
       homeRegionId: 1,
@@ -211,7 +211,7 @@ describe('SessionCard', () => {
         ownerId: 3,
         pocIds: [1],
         pocComplete: true,
-        ownerComplete: true,
+        collabComplete: true,
       },
     }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
@@ -249,7 +249,7 @@ describe('SessionCard', () => {
       data: {
         ...defaultSession.data,
         pocComplete: true,
-        ownerComplete: false,
+        collabComplete: false,
       },
     }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
@@ -264,7 +264,7 @@ describe('SessionCard', () => {
       data: {
         ...defaultSession.data,
         pocComplete: false,
-        ownerComplete: true,
+        collabComplete: true,
       },
     }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
@@ -279,7 +279,7 @@ describe('SessionCard', () => {
       data: {
         ...defaultSession.data,
         pocComplete: false,
-        ownerComplete: true,
+        collabComplete: true,
       },
     }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
@@ -294,7 +294,7 @@ describe('SessionCard', () => {
       data: {
         ...defaultSession.data,
         pocComplete: true,
-        ownerComplete: false,
+        collabComplete: false,
       },
     }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
@@ -309,7 +309,7 @@ describe('SessionCard', () => {
       data: {
         ...defaultSession.data,
         pocComplete: false,
-        ownerComplete: true,
+        collabComplete: true,
       },
     }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
@@ -324,7 +324,7 @@ describe('SessionCard', () => {
       data: {
         ...defaultSession.data,
         pocComplete: false,
-        ownerComplete: false,
+        collabComplete: false,
       },
     }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
