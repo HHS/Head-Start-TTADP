@@ -25,7 +25,7 @@ export default function RecipientSpotlightDashboardCards({
             These are the recipients that currently have at least one priority indicator.
           </p>
         </div>
-        {recipients && recipients.length === 0 ? (
+        {recipients && recipients.length > 0 ? (
           <div className="usa-table-container--scrollable">
             {/* Placeholder for future table/cards implementation */}
           </div>

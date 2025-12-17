@@ -22,11 +22,6 @@ export default function RecipientSpotlightDashboard({
     { overview: DEFAULT_OVERVIEW_DATA },
     async () => {
       const filters = filtersToQueryString(filtersToApply);
-      // eslint-disable-next-line no-console
-      console.log('[RecipientSpotlightDashboard] Fetching with filters:', filters);
-      // eslint-disable-next-line no-console
-      console.log('[RecipientSpotlightDashboard] CODE DEPLOYED: Passing null for limit');
-
       return getRecipientSpotlight(
         'recipientName',
         'asc',
