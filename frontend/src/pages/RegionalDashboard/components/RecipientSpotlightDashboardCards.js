@@ -14,7 +14,7 @@ export default function RecipientSpotlightDashboardCards({
       paddingY={1}
       loading={loading}
       loadingLabel="Recipient spotlight loading"
-      className="ttahub-recipient-spotlight-container height-full"
+      className="maxw-widescreen ttahub-recipient-spotlight-container height-full"
     >
       <div className="ttahub-recipient-spotlight-table inline-size-auto maxw-full height-full">
         <div className="padding-3 recipient-spotlight-header">
