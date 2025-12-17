@@ -27,16 +27,13 @@ export default function RecipientSpotlightDashboard({
       // eslint-disable-next-line no-console
       console.log('[RecipientSpotlightDashboard] CODE DEPLOYED: Passing null for limit');
 
-      const result = await getRecipientSpotlight(
+      return getRecipientSpotlight(
         'recipientName',
         'asc',
         0,
         filters,
         null, // no limit - get all recipients
       );
-      // eslint-disable-next-line no-console
-      console.log('[RecipientSpotlightDashboard] Result received:', result);
-      return result;
     },
     [filtersToApply],
     'Unable to load overview data',
