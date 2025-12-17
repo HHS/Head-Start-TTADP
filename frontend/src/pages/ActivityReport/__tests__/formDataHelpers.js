@@ -555,6 +555,50 @@ describe('FormDataHelpers', () => {
 
       expect(goalForEditing.objectives[0].useIpdCourses).toBe(true);
     });
+    it('defaults useFiles to true when files exist and flag is undefined', () => {
+      const { goalForEditing } = convertGoalsToFormData(
+        [{
+          id: 1,
+          name: 'Goal',
+          objectives: [{
+            id: 10,
+            title: 'Objective',
+            files: [{}],
+          }],
+          activityReportGoals: [
+            { id: 1, isActivelyEdited: true },
+          ],
+          prompts: [],
+        }],
+        [1],
+        REPORT_STATUSES.DRAFT,
+      );
+
+      expect(goalForEditing.objectives[0].useFiles).toBe(true);
+    });
+    it('defaults flags to false when no files or courses exist', () => {
+      const { goalForEditing } = convertGoalsToFormData(
+        [{
+          id: 1,
+          name: 'Goal',
+          objectives: [{
+            id: 10,
+            title: 'Objective',
+            files: [],
+            courses: [],
+          }],
+          activityReportGoals: [
+            { id: 1, isActivelyEdited: true },
+          ],
+          prompts: [],
+        }],
+        [1],
+        REPORT_STATUSES.DRAFT,
+      );
+
+      expect(goalForEditing.objectives[0].useFiles).toBe(false);
+      expect(goalForEditing.objectives[0].useIpdCourses).toBe(false);
+    });
     it('only returns one goalForEditing (even if more than one activityreportgoal has isActivelyEditing: true', () => {
       const { goals, goalForEditing } = convertGoalsToFormData(
         [
