@@ -385,7 +385,7 @@ function CollaborationReport({ match, location }) {
 
         updateError();
       } catch (e) {
-        const connection = true; // setConnectionActiveWithError(e, setConnectionActive);
+        const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
             {/* eslint-disable-next-line max-len */}

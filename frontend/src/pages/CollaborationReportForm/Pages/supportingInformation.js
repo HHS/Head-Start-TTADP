@@ -53,7 +53,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
 
   // Watch the dataUsed field to determine if "other" is selected
   const selectedDataUsed = watch('dataUsed');
-  const showOtherDataUsed = selectedDataUsed.some((d) => d.value === 'other'); // note that 'other' needs to be lowercase for the dataUsed collection
+  const showOtherDataUsed = selectedDataUsed?.some((d) => d.value === 'other'); // note that 'other' needs to be lowercase for the dataUsed collection
 
   // Watch the hasDataUsed field to conditionally require data selections
   const hasGoals = watch('hasGoals');
