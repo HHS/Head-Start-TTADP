@@ -587,6 +587,7 @@ describe('FormDataHelpers', () => {
         {
           id: 2,
           grantIds: [1, 2, 3],
+          objectives: [],
           activityReportGoals: [
             {
               id: 3,
@@ -600,7 +601,7 @@ describe('FormDataHelpers', () => {
       expect(goalForEditing).toEqual({
         id: 1,
         grantIds: [1, 2, 3],
-        objectives: undefined,
+        objectives: [],
         originalIndex: 0,
         activityReportGoals: [
           {
@@ -645,6 +646,7 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
+          objectives: [],
           prompts: [],
           activityReportGoals: [
             {
@@ -656,6 +658,7 @@ describe('FormDataHelpers', () => {
         {
           id: 2,
           prompts: [],
+          objectives: [],
           grantIds: [1, 2, 3],
           activityReportGoals: [
             {
@@ -688,11 +691,13 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
+          objectives: [],
           prompts: [],
         },
         {
           id: 2,
           grantIds: [1, 2, 3],
+          objectives: [],
           prompts: [],
         },
       ]);
@@ -731,6 +736,7 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
+          objectives: [],
           activityReportGoals: [
             {
               id: 1,
@@ -742,6 +748,7 @@ describe('FormDataHelpers', () => {
         {
           id: 2,
           grantIds: [1, 2, 3],
+          objectives: [],
           activityReportGoals: [
             {
               id: 3,
