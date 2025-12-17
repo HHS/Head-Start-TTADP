@@ -71,6 +71,14 @@ const formatSupportingGoals = (sessionGoalTemplates) => {
   return sessionGoalTemplates.map((goal) => goal.label || goal).join(', ');
 };
 
+export const handleIntendedAudience = (audience) => {
+  const audienceMap = {
+    recipients: 'Recipients',
+    'regional-office-tta': 'Regional office/TTA',
+  };
+  return audienceMap[audience] || audience;
+};
+
 const handleArrayJoin = (arr, join = ', ', alt = 'None') => (arr && arr.length ? arr.join(join) : alt);
 
 export default function ViewTrainingReport({ match }) {
@@ -218,14 +226,6 @@ export default function ViewTrainingReport({ match }) {
   const organizerIsNoNationalCenters = (
     (event?.data?.eventOrganizer || '') === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
   );
-
-  const handleIntendedAudience = (audience) => {
-    const audienceMap = {
-      recipients: 'Recipients',
-      'regional-office-tta': 'Regional office/TTA',
-    };
-    return audienceMap[audience] || audience;
-  };
 
   const eventSummary = event && event.data ? [{
     heading: 'Event Summary',
