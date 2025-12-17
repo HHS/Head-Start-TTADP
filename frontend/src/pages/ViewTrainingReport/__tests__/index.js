@@ -6,7 +6,7 @@ import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router-dom';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import AppLoadingContext from '../../../AppLoadingContext';
-import ViewTrainingReport, { formatOwnerName, translateEventPartnership } from '..';
+import ViewTrainingReport, { formatOwnerName, handleIntendedAudience, translateEventPartnership } from '..';
 import UserContext from '../../../UserContext';
 import { EVENT_PARTNERSHIP, OBJECTIVE_STATUS } from '../../../Constants';
 
@@ -733,6 +733,23 @@ describe('ViewTrainingReport', () => {
       const result = formatOwnerName(event);
 
       expect(result).toBe('');
+    });
+  });
+
+  describe('handleIntendedAudience', () => {
+    it('displays Recipients when intended audience is Recipients', async () => {
+      const audience = handleIntendedAudience('recipients');
+      expect(audience).toBe('Recipients');
+    });
+
+    it('displays "Regional office/TTA" when audience is "regional-office-tta"', () => {
+      const audience = handleIntendedAudience('regional-office-tta');
+      expect(audience).toBe('Regional office/TTA');
+    });
+
+    it('otherwise, it passes the value through', () => {
+      const audience = handleIntendedAudience('Some other audience');
+      expect(audience).toBe('Some other audience');
     });
   });
 
