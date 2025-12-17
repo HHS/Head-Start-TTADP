@@ -16,6 +16,8 @@ export default function useFetch(
   const { setIsAppLoading } = useContext(AppLoadingContext) || {};
 
   useDeepCompareEffect(() => {
+    setLoading(true);
+
     async function fetchData() {
       try {
         setError('');
