@@ -385,6 +385,7 @@ function CollaborationReport({ match, location }) {
 
         updateError();
       } catch (e) {
+        console.warn('Error fetching collaboration report:', e);
         const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
