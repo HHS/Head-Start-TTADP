@@ -6,13 +6,11 @@ import NoResultsFound from '../../../components/NoResultsFound';
 
 export default function RecipientSpotlightDashboardCards({
   recipients,
-  loading,
 }) {
   return (
     <Container
       paddingX={0}
       paddingY={1}
-      loading={loading}
       loadingLabel="Recipient spotlight loading"
       className="maxw-widescreen ttahub-recipient-spotlight-container height-full"
     >
@@ -52,10 +50,8 @@ RecipientSpotlightDashboardCards.propTypes = {
     DRS: PropTypes.bool,
     FEI: PropTypes.bool,
   })),
-  loading: PropTypes.bool,
 };
 
 RecipientSpotlightDashboardCards.defaultProps = {
   recipients: [],
-  loading: false,
 };

@@ -18,7 +18,7 @@ const DEFAULT_OVERVIEW_DATA = {
 export default function RecipientSpotlightDashboard({
   filtersToApply,
 }) {
-  const { data, error, loading } = useFetch(
+  const { data, error } = useFetch(
     { overview: DEFAULT_OVERVIEW_DATA },
     async () => {
       const filters = filtersToQueryString(filtersToApply);
@@ -76,7 +76,6 @@ export default function RecipientSpotlightDashboard({
           <Grid col={12}>
             <RecipientSpotlightDashboardCards
               recipients={recipients}
-              loading={loading}
             />
           </Grid>
         </Grid>
