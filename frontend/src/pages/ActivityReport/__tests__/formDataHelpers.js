@@ -388,6 +388,7 @@ describe('FormDataHelpers', () => {
                 closeSuspendReason: 'closeSuspendReason',
                 closeSuspendContext: 'closeSuspendContext',
                 createdHere: false,
+                useIpdCourses: true,
               },
             ],
           },
@@ -412,6 +413,7 @@ describe('FormDataHelpers', () => {
               closeSuspendReason: 'closeSuspendReason',
               closeSuspendContext: 'closeSuspendContext',
               createdHere: true,
+              useIpdCourses: false,
             },
           ],
         },
@@ -442,6 +444,8 @@ describe('FormDataHelpers', () => {
               closeSuspendReason: 'closeSuspendReason',
               closeSuspendContext: 'closeSuspendContext',
               createdHere: false,
+              useIpdCourses: true,
+              useFiles: true,
             },
           ],
         },
@@ -467,6 +471,8 @@ describe('FormDataHelpers', () => {
               closeSuspendReason: 'closeSuspendReason',
               closeSuspendContext: 'closeSuspendContext',
               createdHere: true,
+              useIpdCourses: false,
+              useFiles: true,
             },
           ],
         },
@@ -525,6 +531,29 @@ describe('FormDataHelpers', () => {
           { id: 1, isActivelyEdited: true },
         ],
       });
+    });
+
+    it('keeps useIpdCourses true even when there are no courses', () => {
+      const { goalForEditing } = convertGoalsToFormData(
+        [{
+          id: 1,
+          name: 'Goal',
+          objectives: [{
+            id: 10,
+            title: 'Objective',
+            courses: [],
+            useIpdCourses: true,
+          }],
+          activityReportGoals: [
+            { id: 1, isActivelyEdited: true },
+          ],
+          prompts: [],
+        }],
+        [1],
+        REPORT_STATUSES.DRAFT,
+      );
+
+      expect(goalForEditing.objectives[0].useIpdCourses).toBe(true);
     });
     it('only returns one goalForEditing (even if more than one activityreportgoal has isActivelyEditing: true', () => {
       const { goals, goalForEditing } = convertGoalsToFormData(
