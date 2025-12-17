@@ -170,7 +170,7 @@ async function createEvents({
       regionalOfficeTta: 'TTAC',
       nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
       pocComplete: false,
-      ownerComplete: true,
+      collabComplete: true,
     },
   });
 
@@ -208,7 +208,7 @@ async function createEvents({
       regionalOfficeTta: 'TTAC',
       nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
       pocComplete: true,
-      ownerComplete: false,
+      collabComplete: false,
     },
   });
 
@@ -234,7 +234,7 @@ async function createEvents({
       isIstVisit: 'yes',
       nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
       pocComplete: true,
-      ownerComplete: false,
+      collabComplete: false,
     },
   });
 

@@ -193,7 +193,7 @@ export const sessionPropTypes = PropTypes.shape({
     ]),
     pocComplete: PropTypes.bool.isRequired,
     submitted: PropTypes.bool,
-    ownerComplete: PropTypes.bool.isRequired,
+    collabComplete: PropTypes.bool.isRequired,
   }).isRequired,
   approverId: PropTypes.number,
 });

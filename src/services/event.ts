@@ -390,7 +390,7 @@ const parseMinimalEventForAlert = (
 });
 
 // type for an array of either strings of functions that return a boolean
-type TChecker = 'ownerComplete' | 'pocComplete';
+type TChecker = 'collabComplete' | 'pocComplete';
 
 const checkSessionForCompletion = (
   session: SessionShape,
@@ -516,7 +516,7 @@ export async function getTrainingReportAlerts(
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-          checkSessionForCompletion(session, event, 'ownerComplete', alerts);
+          checkSessionForCompletion(session, event, 'collabComplete', alerts);
         }
       });
     }

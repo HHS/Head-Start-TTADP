@@ -19,7 +19,7 @@ export type SessionShape = {
     participants?: { value: string; label: string }[];
     nextSteps: { completeDate: string, note: string }[];
     pocComplete: boolean;
-    ownerComplete: boolean;
+    collabComplete: boolean;
   }
 };
 

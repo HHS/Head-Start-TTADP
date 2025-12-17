@@ -17,7 +17,7 @@ export default function useSessionCardPermissions({
   const {
     status,
     pocComplete,
-    ownerComplete,
+    collabComplete,
     facilitation,
   } = session.data;
 
@@ -26,7 +26,7 @@ export default function useSessionCardPermissions({
   const isSessionApprover = user.id === Number(approverId);
 
   const showSessionEdit = useMemo(() => {
-    const submitted = !!(pocComplete && ownerComplete && approverId);
+    const submitted = !!(pocComplete && collabComplete && approverId);
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
     const statusIsNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
     // eslint-disable-next-line max-len
@@ -63,7 +63,7 @@ export default function useSessionCardPermissions({
 
     // eslint-disable-next-line max-len
     // If they are the collaborator, they should not be able to edit the session.
-    if (isCollaborator && !isAdminUser && ownerComplete && !statusIsNeedsAction) {
+    if (isCollaborator && !isAdminUser && collabComplete && !statusIsNeedsAction) {
       return false;
     }
 
@@ -103,7 +103,7 @@ export default function useSessionCardPermissions({
     isPoc,
     pocComplete,
     isAdminUser, isCollaborator,
-    ownerComplete,
+    collabComplete,
     isWriteable,
     eventStatus,
     isOwner,

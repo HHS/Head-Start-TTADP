@@ -29,8 +29,8 @@ const ReviewSubmitSession = ({
   const { register, watch } = useFormContext();
 
   const pocComplete = watch('pocComplete');
-  const ownerComplete = watch('ownerComplete');
-  const isSubmitted = !!(pocComplete && ownerComplete && approverId);
+  const collabComplete = watch('collabComplete');
+  const isSubmitted = !!(pocComplete && collabComplete && approverId);
 
   // The logic for redirecting users has been hoisted all the way up the
   // fetch at the top level CollaborationForm/index.js file

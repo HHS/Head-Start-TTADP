@@ -293,7 +293,7 @@ function EventCard({
             onRemoveSession={onRemoveSession}
             eventStatus={eventStatus}
             pocComplete={data.pocComplete}
-            ownerComplete={data.ownerComplete}
+            collabComplete={data.collabComplete}
             isPoc={isPoc}
             isOwner={isOwner}
             isCollaborator={isCollaborator}
