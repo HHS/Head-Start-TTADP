@@ -219,6 +219,14 @@ export default function ViewTrainingReport({ match }) {
     (event?.data?.eventOrganizer || '') === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
   );
 
+  const handleIntendedAudience = (audience) => {
+    const audienceMap = {
+      recipients: 'Recipients',
+      'regional-office-tta': 'Regional office/TTA',
+    };
+    return audienceMap[audience] || audience;
+  };
+
   const eventSummary = event && event.data ? [{
     heading: 'Event Summary',
     data: {
@@ -231,7 +239,7 @@ export default function ViewTrainingReport({ match }) {
       ...(
         !organizerIsNoNationalCenters ? { 'Regional point of contact': handleArrayJoin(eventPoc) } : {}
       ),
-      'Intended audience': event.data.audience,
+      'Intended audience': handleIntendedAudience(event.data.eventIntendedAudience),
       'Start date': event.data.startDate,
       'End date': event.data.endDate,
       'Training type': event.data['Event Duration/# NC Days of Support'],

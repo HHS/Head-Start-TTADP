@@ -71,7 +71,7 @@ const mockEvent = (data = {}) => ({
     creator: 'cucumber@hogwarts.com',
     eventId: 'R03-PD-23-1037',
     reasons: ['Ongoing Quality Improvement'],
-    audience: 'Recipients',
+    eventIntendedAudience: 'Recipients',
     eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     eventOrganizer: 'Regional PD Event (with National Centers)',
     'Full Event Title': 'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
