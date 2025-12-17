@@ -12,7 +12,7 @@ export async function getRecipientSpotlightIndicators(
   offset,
   limit,
 ) {
-  /*
+
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   const grantsWhere = {
     [Op.and]: [
@@ -39,7 +39,7 @@ export async function getRecipientSpotlightIndicators(
     where: grantsWhere,
     raw: true,
   });
-  */
+
   /*
     Create the spotlight query using the grant ids and other params.
     At the time of writing this comment, there will be a total of seven spotlight indicators.
@@ -67,7 +67,6 @@ export async function getRecipientSpotlightIndicators(
     7. FEI: TBD
 */
 
-  /*
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
   const grantIdFilter = hasGrantIds ? `g.id IN (${grantIdList.join(',')})` : 'TRUE';
@@ -221,10 +220,10 @@ export async function getRecipientSpotlightIndicators(
       type: QueryTypes.SELECT,
     },
   );
-  */
+
   // Return spotlight data with static overview values for dashboard widget
   return {
-    recipients: [],
+    recipients: spotlightData,
     overview: {
       numRecipients: '555',
       totalRecipients: '678',
