@@ -28,7 +28,7 @@ export default function RecipientSpotlightDashboard({
         'asc',
         0,
         filters,
-        undefined, // no limit - get all recipients
+        null, // no limit - get all recipients
       );
       return result;
     },
