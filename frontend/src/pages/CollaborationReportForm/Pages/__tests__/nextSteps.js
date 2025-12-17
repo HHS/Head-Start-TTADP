@@ -233,7 +233,8 @@ describe('nextSteps Page', () => {
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       expect(sectionsData).toHaveLength(1);
-      expect(sectionsData[0].isEditSection).toBe(true);
+      // needs to be false to prevent two edit buttons showing
+      expect(sectionsData[0].isEditSection).toBe(false);
       expect(sectionsData[0].anchor).toBe('next-steps');
       expect(sectionsData[0].items).toHaveLength(4); // 2 steps × 2 items each
     });

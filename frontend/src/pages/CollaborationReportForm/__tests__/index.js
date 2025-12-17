@@ -179,7 +179,7 @@ describe('CollaborationReportForm', () => {
     it('handles collaborators fetch error', async () => {
       render(<ReportComponent id="new" />);
 
-      expect(await screen.findByText(/unable to load report/i)).toBeInTheDocument();
+      expect(await screen.findByText(/There’s an issue with your connection./i)).toBeInTheDocument();
     });
   });
 
@@ -1671,9 +1671,8 @@ describe('CollaborationReportForm', () => {
       getItem.mockReturnValue(null); // No local storage data
 
       render(<ReportComponent id="new" />);
-      await waitFor(() => {
-        expect(screen.getByText('Unable to load report')).toBeInTheDocument();
-      });
+
+      expect(await screen.findByText(/There’s an issue with your connection./i)).toBeInTheDocument();
     });
 
     // FIXME: Not yet implemented
