@@ -16,6 +16,8 @@ export default function useFetch(
   const { setIsAppLoading } = useContext(AppLoadingContext) || {};
 
   useDeepCompareEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[useFetch] Effect triggered, setting loading to true');
     setLoading(true);
 
     async function fetchData() {
@@ -24,15 +26,21 @@ export default function useFetch(
         if (useAppLoading && setIsAppLoading) {
           setIsAppLoading(true);
         }
+        // eslint-disable-next-line no-console
+        console.log('[useFetch] Calling fetcher...');
         const response = await fetcher();
+        // eslint-disable-next-line no-console
+        console.log('[useFetch] Fetcher completed, setting data');
         setData(response);
         setStatusCode(200);
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.error(err);
+        console.error('[useFetch] Error:', err);
         setError(errorMessage);
         setStatusCode(err.status || 500);
       } finally {
+        // eslint-disable-next-line no-console
+        console.log('[useFetch] Setting loading to false');
         setLoading(false);
         if (useAppLoading && setIsAppLoading) {
           setIsAppLoading(false);

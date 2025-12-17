@@ -22,14 +22,20 @@ export default function RecipientSpotlightDashboard({
     { overview: DEFAULT_OVERVIEW_DATA },
     async () => {
       const filters = filtersToQueryString(filtersToApply);
+      // eslint-disable-next-line no-console
+      console.log('[RecipientSpotlightDashboard] Fetching with filters:', filters);
+      // eslint-disable-next-line no-console
+      console.log('[RecipientSpotlightDashboard] CODE DEPLOYED: Passing null for limit');
 
-      const result = getRecipientSpotlight(
+      const result = await getRecipientSpotlight(
         'recipientName',
         'asc',
         0,
         filters,
         null, // no limit - get all recipients
       );
+      // eslint-disable-next-line no-console
+      console.log('[RecipientSpotlightDashboard] Result received:', result);
       return result;
     },
     [filtersToApply],
