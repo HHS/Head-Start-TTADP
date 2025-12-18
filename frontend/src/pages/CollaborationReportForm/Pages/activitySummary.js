@@ -479,6 +479,7 @@ const ReviewSection = () => {
     statesInvolved,
     conductMethod,
   } = getValues();
+  console.log('statesInvolved:', statesInvolved);
 
   const sections = [
     {
@@ -504,7 +505,7 @@ const ReviewSection = () => {
         { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') || '' } },
         { label: 'Activity type', name: 'type', customValue: { type: isStateActivity === 'true' ? 'State' : 'Regional' } },
         ...(isStateActivity === 'true' ? [
-          { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s] || '').join(', ') || '' } },
+          { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s.value] || '').join(', ') || '' } },
         ] : []),
         {
           label: 'Activity method',
