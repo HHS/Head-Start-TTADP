@@ -588,6 +588,7 @@ export default function Objective({
         editingFromActivityReport
         useFiles={objectiveUseFiles}
         onChangeUseFiles={onChangeUseFiles}
+        error={errors.files ? errors.files.message : ''}
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
@@ -664,6 +665,9 @@ Objective.propTypes = {
       message: PropTypes.string,
     }),
     citations: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    files: PropTypes.shape({
       message: PropTypes.string,
     }),
     closeSuspendReason: PropTypes.shape({
