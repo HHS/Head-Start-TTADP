@@ -378,7 +378,7 @@ describe('useEventAndSessionStaff', () => {
   });
 
   describe('REGIONAL_PD_WITH_NATIONAL_CENTERS - facilitation=regional_tta_staff', () => {
-    it('returns empty arrays when facilitation=regional_tta_staff', () => {
+    it('returns regional trainerswhen facilitation=regional_tta_staff', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -392,8 +392,8 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
       // regional_tta_staff no longer sets trainers - comment indicates "already set to correct values"
-      expect(result.current.optionsForValue).toEqual([]);
-      expect(result.current.trainerOptions).toEqual([]);
+      expect(result.current.optionsForValue).toEqual(mockRegionalTrainers);
+      expect(result.current.trainerOptions).toEqual(mockRegionalTrainers);
     });
 
     it('returns empty arrays in all scenarios for regional_tta_staff with empty trainer data', () => {
@@ -685,8 +685,8 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
       // regional_tta_staff returns empty arrays
-      expect(result.current.trainerOptions).toEqual([]);
-      expect(result.current.optionsForValue).toEqual([]);
+      expect(result.current.trainerOptions).toEqual(mockRegionalTrainers);
+      expect(result.current.optionsForValue).toEqual(mockRegionalTrainers);
     });
 
     it('validates optionsForValue is always flat array', () => {
