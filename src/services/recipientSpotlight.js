@@ -12,6 +12,7 @@ export async function getRecipientSpotlightIndicators(
   offset,
   limit,
 ) {
+  /* Temporarily commented out for frontend implementation - will be restored when SQL query is updated
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   const grantsWhere = {
     [Op.and]: [
@@ -38,6 +39,7 @@ export async function getRecipientSpotlightIndicators(
     where: grantsWhere,
     raw: true,
   });
+  */
 
   /*
     Create the spotlight query using the grant ids and other params.
@@ -66,6 +68,7 @@ export async function getRecipientSpotlightIndicators(
     7. FEI: TBD
 */
 
+  /* Temporarily commented out for frontend implementation - will be restored when SQL query is updated
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
   const grantIdFilter = hasGrantIds ? `g.id IN (${grantIdList.join(',')})` : 'TRUE';
@@ -219,6 +222,81 @@ export async function getRecipientSpotlightIndicators(
       type: QueryTypes.SELECT,
     },
   );
+  */
+
+  // Static data for frontend implementation - includes new lastTTA field
+  const spotlightData = [
+    {
+      recipientId: 1001,
+      regionId: 14,
+      recipientName: 'Children and Families First',
+      grantIds: ['14CH1234', '14CH1235'],
+      childIncidents: true,
+      deficiency: true,
+      newRecipients: false,
+      newStaff: true,
+      noTTA: false,
+      DRS: true,
+      FEI: true,
+      lastTTA: '2023-07-01',
+    },
+    {
+      recipientId: 1002,
+      regionId: 14,
+      recipientName: 'Early Learning Alliance',
+      grantIds: ['14CH1236'],
+      childIncidents: false,
+      deficiency: true,
+      newRecipients: true,
+      newStaff: false,
+      noTTA: false,
+      DRS: false,
+      FEI: true,
+      lastTTA: '2024-02-15',
+    },
+    {
+      recipientId: 1003,
+      regionId: 14,
+      recipientName: 'Community Development Corporation',
+      grantIds: ['14CH1237', '14CH1238'],
+      childIncidents: true,
+      deficiency: false,
+      newRecipients: false,
+      newStaff: true,
+      noTTA: false,
+      DRS: true,
+      FEI: false,
+      lastTTA: '2024-03-22',
+    },
+    {
+      recipientId: 1004,
+      regionId: 14,
+      recipientName: 'Bright Futures Head Start',
+      grantIds: ['14CH1239'],
+      childIncidents: false,
+      deficiency: false,
+      newRecipients: true,
+      newStaff: false,
+      noTTA: true,
+      DRS: false,
+      FEI: false,
+      lastTTA: null,
+    },
+    {
+      recipientId: 1005,
+      regionId: 14,
+      recipientName: 'Growing Minds Academy',
+      grantIds: ['14CH1240'],
+      childIncidents: false,
+      deficiency: true,
+      newRecipients: false,
+      newStaff: false,
+      noTTA: false,
+      DRS: false,
+      FEI: true,
+      lastTTA: '2024-01-10',
+    },
+  ];
 
   // Return spotlight data with static overview values for dashboard widget
   return {

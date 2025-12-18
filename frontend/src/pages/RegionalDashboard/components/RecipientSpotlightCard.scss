@@ -1,0 +1,56 @@
+@use '../../../colors.scss' as *;
+
+.ttahub-recipient-spotlight-card {
+  &__recipient-name {
+    color: $text-link;
+    text-decoration: underline;
+
+    &:visited {
+      color: $text-visited;
+    }
+
+    &:hover {
+      color: $ttahub-medium-blue;
+    }
+  }
+
+  // Expanded indicator details
+  &__details {
+    border-top: 1px solid $base-lighter;
+  }
+
+  &__details-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__indicator-box {
+    border: 1px solid $base-darkest;
+
+    &-label {
+      font-size: 0.875rem;
+      color: $base-darkest;
+    }
+
+    &-description {
+      font-size: 0.875rem;
+      color: $base-darkest;
+      line-height: 1.5;
+    }
+
+    // Not applicable styling
+    &--not-applicable {
+      border-style: dashed;
+      border-color: $base-medium;
+
+      .ttahub-recipient-spotlight-card__indicator-box-label {
+        color: $base-medium;
+      }
+
+      .ttahub-recipient-spotlight-card__indicator-box-description {
+        color: $base-medium;
+      }
+    }
+  }
+}

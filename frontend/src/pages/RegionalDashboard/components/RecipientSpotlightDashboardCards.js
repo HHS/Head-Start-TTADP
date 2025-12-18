@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import WidgetH2 from '../../../components/WidgetH2';
 import Container from '../../../components/Container';
 import NoResultsFound from '../../../components/NoResultsFound';
+import RecipientSpotlightCard from './RecipientSpotlightCard';
 
 export default function RecipientSpotlightDashboardCards({
   recipients,
@@ -24,8 +25,13 @@ export default function RecipientSpotlightDashboardCards({
           </p>
         </div>
         {recipients && recipients.length > 0 ? (
-          <div className="usa-table-container--scrollable">
-            {/* Placeholder for future table/cards implementation */}
+          <div className="usa-table-container--scrollable padding-x-3 padding-y-2">
+            {recipients.map((recipient) => (
+              <RecipientSpotlightCard
+                key={`recipient-spotlight-${recipient.recipientId}`}
+                recipient={recipient}
+              />
+            ))}
           </div>
         ) : (
           <NoResultsFound
@@ -40,8 +46,11 @@ export default function RecipientSpotlightDashboardCards({
 
 RecipientSpotlightDashboardCards.propTypes = {
   recipients: PropTypes.arrayOf(PropTypes.shape({
-    recipientId: PropTypes.number,
-    recipientName: PropTypes.string,
+    recipientId: PropTypes.number.isRequired,
+    regionId: PropTypes.number.isRequired,
+    recipientName: PropTypes.string.isRequired,
+    grantIds: PropTypes.arrayOf(PropTypes.string),
+    lastTTA: PropTypes.string,
     childIncidents: PropTypes.bool,
     deficiency: PropTypes.bool,
     newRecipients: PropTypes.bool,
