@@ -51,8 +51,12 @@ function getPropName(key) {
 }
 
 function makeColors() {
-  const keys = Object.keys(colors);
-  const values = Object.values(colors);
+  // const keys = Object.keys(colors);
+  // const values = Object.values(colors);
+  const entries = Object.entries(colors);
+
+  const propNames = entries.map(([key]) => getPropName(key));
+  const values = entries.map(([, value]) => value);
 
   const contents = `
 // STOP! Don't edit this file.
@@ -65,11 +69,17 @@ function makeColors() {
 // figma reference here:
 // https://www.figma.com/file/5Fr0NKQf9MQ5WGd8BWxA6i/TTA_SmartHub-Library-09132021?node-id=0%3A14
 
-${keys.map((key, index) => {
-    const propName = getPropName(key);
+// scss vars
+${
+  propNames.map((name, index) => `$${name}: ${values[index]};`).join('\n')
+}
 
-    return `$${propName}: ${values[index]};`;
-  }).join('\n')}`; // end contents string
+// css custom properties
+:root {
+${propNames.map((name, index) => `  --${name}: ${values[index]};`).join('\n')}
+}
+
+`;
 
   fs.writeFile('./frontend/src/colors.scss', contents, (err) => {
     if (err) {
