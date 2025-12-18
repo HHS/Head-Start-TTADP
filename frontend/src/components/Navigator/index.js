@@ -145,7 +145,7 @@ const Navigator = ({
       stateOfPage = IN_PROGRESS;
     }
 
-    const state = p.review ? formData[formDataStatusProp] : stateOfPage;
+    const state = formData && p.review ? formData[formDataStatusProp] : stateOfPage;
     return {
       label: p.label,
       onNavigation: () => {

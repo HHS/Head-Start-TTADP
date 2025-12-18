@@ -271,7 +271,6 @@ function CollaborationReport({ match, location }) {
 
             if (isNeedsAction) {
               history.push(`/collaboration-reports/${fetchedReport.id}/review`);
-              return;
             }
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
@@ -707,14 +706,14 @@ function CollaborationReport({ match, location }) {
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
               Collaboration report for Region
               {' '}
-              {formData.regionId}
+              {formData?.regionId}
             </h1>
             {author}
           </div>
         </Grid>
         {!hideSideNav && (
         <Grid col="auto" className="flex-align-self-center">
-          {formData.calculatedStatus && (
+          {formData?.calculatedStatus && (
             <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
@@ -729,7 +728,7 @@ function CollaborationReport({ match, location }) {
       >
         <FormProvider {...hookForm}>
           <Navigator
-            formData={formData}
+            formData={formData || {}}
             pages={pages}
             onFormSubmit={onFormSubmit}
             onReview={onReview}
