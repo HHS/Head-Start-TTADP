@@ -422,6 +422,42 @@ const checkSessionForCompletion = (
   }
 };
 
+async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlertShape[]> {
+  // Collect all unique user IDs from alerts
+  const userIds = new Set<number>();
+  alerts.forEach((alert) => {
+    if (alert.approverId) userIds.add(alert.approverId);
+    if (alert.submitterId) userIds.add(alert.submitterId);
+    alert.collaboratorIds.forEach((id) => userIds.add(id));
+  });
+
+  // If no user IDs to fetch, return alerts as-is
+  if (userIds.size === 0) {
+    return alerts;
+  }
+
+  // Fetch all users in one query
+  const users = await User.findAll({
+    where: { id: { [Op.in]: Array.from(userIds) } },
+    attributes: ['id', 'name'],
+    raw: true,
+  }) as Array<{ id: number; name: string }>;
+
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
+
+  // Enrich each alert with user data
+  return alerts.map((alert) => {
+    const enrichedAlert: TRAlertShape = {
+      ...alert,
+      approverName: alert.approverId ? userMap.get(alert.approverId) : undefined,
+      collaboratorNames: alert.collaboratorIds
+        .map((id) => userMap.get(id))
+        .filter((name): name is string => Boolean(name)),
+    };
+    return enrichedAlert;
+  });
+}
+
 export async function getTrainingReportAlerts(
   userId: number | undefined,
   regions: number[] | undefined,
@@ -497,15 +533,14 @@ export async function getTrainingReportAlerts(
 
     // some alerts only trigger for the owner or the collaborators
     if (ownerUserIdFilter(event, userId) || collaboratorUserIdFilter(event, userId)) {
-      // if we are 20 days past the start date
-      if (today.isAfter(nineteenDaysAfterStart)) {
-        // or we are missing event data
+      // if we are 20 days past the end date and missing event data
+      if (today.isAfter(nineteenDaysAfterEnd)) {
         if (!event.data.eventSubmitted) {
           alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
         }
       }
 
-      // if we are 20 days past the end date
+      // if we are 20 days past the start date and there are no sessions
       if (today.isAfter(nineteenDaysAfterStart) && event.sessionReports.length === 0) {
         // and there are no sessions
         alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
@@ -534,9 +569,83 @@ export async function getTrainingReportAlerts(
         }
       }); // for each session
     }
+
+    // Add approval workflow alerts
+    if (event.sessionReports && event.sessionReports.length > 0) {
+      event.sessionReports.forEach((session) => {
+        // Skip if already have an alert for this session
+        if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+
+        // Check for waitingForApproval - session submitted and awaiting approver review
+        // Submitted means: approverId set, pocComplete and collabComplete are true, status is IN_PROGRESS
+        const isSubmitted = !!(
+          session.approverId
+          && session.data
+          && session.data.pocComplete
+          && session.data.collabComplete
+          && session.data.status === TRS.IN_PROGRESS
+        );
+
+        if (isSubmitted) {
+          const isSubmitter = session.data.submitterId === userId;
+          const isApprover = session.approverId === userId;
+
+          // Show to submitter and approver only
+          if (!userId || isSubmitter || isApprover) {
+            alerts.push({
+              id: session.id,
+              eventId: event.data.eventId,
+              isSession: true,
+              sessionName: session.data.sessionName,
+              eventName: event.data.eventName,
+              alertType: 'waitingForApproval',
+              ownerId: event.ownerId,
+              pocIds: event.pocIds,
+              collaboratorIds: event.collaboratorIds,
+              endDate: session.data.endDate,
+              startDate: session.data.startDate,
+              sessionId: session.id,
+              eventStatus: event.data.status,
+              approverId: session.approverId,
+              submitterId: session.data.submitterId,
+            });
+          }
+        }
+
+        // Check for changesNeeded - approver sent session back for edits
+        // This is when status is NEEDS_ACTION
+        const needsChanges = session.data && session.data.status === 'in-progress-needs-action';
+
+        if (needsChanges) {
+          const isSubmitter = session.data.submitterId === userId;
+
+          // Show to submitter only
+          if (!userId || isSubmitter) {
+            alerts.push({
+              id: session.id,
+              eventId: event.data.eventId,
+              isSession: true,
+              sessionName: session.data.sessionName,
+              eventName: event.data.eventName,
+              alertType: 'changesNeeded',
+              ownerId: event.ownerId,
+              pocIds: event.pocIds,
+              collaboratorIds: event.collaboratorIds,
+              endDate: session.data.endDate,
+              startDate: session.data.startDate,
+              sessionId: session.id,
+              eventStatus: event.data.status,
+              approverId: session.approverId,
+              submitterId: session.data.submitterId,
+            });
+          }
+        }
+      });
+    }
   }); // for each event
 
-  return alerts;
+  // Enrich alerts with user names before returning
+  return enrichAlertsWithUserData(alerts);
 }
 
 export async function getTrainingReportAlertsForUser(
