@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import { Alert } from '@trussworks/react-uswds';
@@ -7,6 +7,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import Review from './Review';
 import Container from '../../../components/Container';
 import UserContext from '../../../UserContext';
+import isAdmin from '../../../permissions';
 
 const ReviewSubmitSession = ({
   onReview,
@@ -27,6 +28,7 @@ const ReviewSubmitSession = ({
 
   const { user } = useContext(UserContext);
   const { register, watch } = useFormContext();
+  const isAdminUser = useMemo(() => isAdmin(user), [user]);
 
   const pocComplete = watch('pocComplete');
   const ownerComplete = watch('ownerComplete');
@@ -41,6 +43,7 @@ const ReviewSubmitSession = ({
 
   const isNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
   const isApprover = Number(approverId) === user.id;
+
   const isPoc = (event?.pocIds || []).includes(user.id);
   const reviewPages = pages.filter(({ review }) => Boolean(!review));
 
@@ -64,6 +67,7 @@ const ReviewSubmitSession = ({
         />
 
         <Review
+          isAdmin={isAdminUser}
           isSubmitted={isSubmitted}
           isNeedsAction={isNeedsAction}
           isApprover={isApprover}
