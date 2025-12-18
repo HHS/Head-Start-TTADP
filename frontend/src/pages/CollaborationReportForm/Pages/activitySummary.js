@@ -479,7 +479,6 @@ const ReviewSection = () => {
     statesInvolved,
     conductMethod,
   } = getValues();
-  console.log('statesInvolved:', statesInvolved);
 
   const sections = [
     {
