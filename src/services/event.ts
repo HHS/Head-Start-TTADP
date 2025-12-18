@@ -440,7 +440,6 @@ async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlert
   const users = await User.findAll({
     where: { id: { [Op.in]: Array.from(userIds) } },
     attributes: ['id', 'name'],
-    raw: true,
   }) as Array<{ id: number; name: string }>;
 
   const userMap = new Map(users.map((u) => [u.id, u.name]));
@@ -561,6 +560,7 @@ export async function getTrainingReportAlerts(
       const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
 
       sessions.forEach((session) => {
+        // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
