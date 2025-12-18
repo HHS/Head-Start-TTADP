@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { Button, Textarea } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
@@ -7,6 +7,7 @@ import { reviewSubmitComponentProps } from './constants';
 import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 import SingleApproverSelect from '../../../components/SingleApproverSelect';
+import UserContext from '../../../UserContext';
 
 const path = 'submitter-session-report';
 
@@ -22,6 +23,7 @@ export default function Submit({
   reviewSubmitPagePosition,
   pages,
   isPoc,
+  isAdmin,
 }) {
   const { register, watch, trigger } = useFormContext();
   const pageState = watch('pageState');
@@ -40,6 +42,7 @@ export default function Submit({
   }, [approver]);
 
   const { trainerOptions: approvers } = useEventAndSessionStaff(event);
+  const { user } = useContext(UserContext);
 
   const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
   // eslint-disable-next-line max-len
@@ -59,6 +62,11 @@ export default function Submit({
       .filter((approverGroup) => approverGroup.label === 'Regional trainers')
       .flatMap((group) => group.options)
       .filter((o) => o.roles.some((or) => MANAGER_ROLES.includes(or.name)));
+  }
+
+  // filter current user out of approver list
+  if (!isAdmin) {
+    approverOptions = approverOptions.filter((a) => a.id !== user.id);
   }
 
   // POCs can select approver when facilitation includes regional staff
