@@ -18,6 +18,8 @@ const ACTIONS_NEEDED = {
   missingEventInfo: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/event-summary`} data-sort="missing-event-info">Missing event info</Link></>,
   missingSessionInfo: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/session-summary`} data-sort="missing-session-info">Missing session info</Link></>,
   eventNotCompleted: (alert) => <><Link to={`/training-report/view/${idForLink(alert.eventId)}`} data-sort="event-not-completed">Event not completed</Link></>,
+  waitingForApproval: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/review`} data-sort="waiting-for-approval">Waiting for approval</Link></>,
+  changesNeeded: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/session-summary`} data-sort="changes-needed">Changes needed</Link></>,
 };
 
 export default function TrainingReportAlerts() {
@@ -48,11 +50,22 @@ export default function TrainingReportAlerts() {
     return null;
   }
 
+  const columns = [
+    { key: 'eventId', name: 'Event ID' },
+    { key: 'eventName', name: 'Event Name' },
+    { key: 'sessionName', name: 'Session Name' },
+    { key: 'collaborators', name: 'Collaborators' },
+    { key: 'approver', name: 'Approver' },
+    { key: 'actionNeeded', name: 'Action needed' },
+  ];
+
   // map alerts here to include action links, etc
   const alertsForTable = alerts.map((alert) => ({
     sessionName: alert.sessionName,
     eventId: alert.eventId,
     eventName: alert.eventName,
+    collaborators: alert.collaboratorNames ? alert.collaboratorNames.join(', ') : '',
+    approver: alert.approverName || '',
     actionNeeded: ACTIONS_NEEDED[alert.alertType] ? ACTIONS_NEEDED[alert.alertType](alert) : '',
     id: alert.id,
   }));
@@ -67,12 +80,7 @@ export default function TrainingReportAlerts() {
     >
       {alertsForTable.length ? (
         <SimpleSortableTable
-          columns={[
-            { key: 'eventId', name: 'Event ID' },
-            { key: 'eventName', name: 'Event Name' },
-            { key: 'sessionName', name: 'Session Name' },
-            { key: 'actionNeeded', name: 'Action needed' },
-          ]}
+          columns={columns}
           data={alertsForTable}
           elementSortProp="data-sort"
         />

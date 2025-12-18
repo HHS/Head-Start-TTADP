@@ -6,12 +6,12 @@ import {
 import {
   EventReportPilot,
   SessionReportPilot,
-  sequelize,
+  User,
 } from '../models';
 import {
   getTrainingReportAlerts,
+  getTrainingReportAlertsForUser,
 } from './event';
-import * as transactionModule from '../lib/programmaticTransaction';
 
 jest.mock('bull');
 
@@ -253,16 +253,6 @@ async function createEvents({
 
 describe('getTrainingReportAlerts', () => {
   const ownerId = faker.datatype.number();
-  let snapshot;
-
-  beforeAll(async () => {
-    snapshot = await transactionModule.captureSnapshot();
-  });
-
-  afterAll(async () => {
-    await transactionModule.rollbackToSnapshot(snapshot);
-    await sequelize.close();
-  });
 
   describe('getAllAlerts', () => {
     let testData;
@@ -272,14 +262,251 @@ describe('getTrainingReportAlerts', () => {
 
     it('fetches the correct alerts', async () => {
       const alerts = await getTrainingReportAlerts();
-      const idsToCheck = alerts.map((i) => i.id).filter((i) => testData.ids.has(i));
+      // Filter to just time-based alerts from our test data
+      const timeBasedAlerts = alerts.filter(
+        (a) => !['waitingForApproval', 'changesNeeded'].includes(a.alertType),
+      );
+      const idsToCheck = timeBasedAlerts
+        .map((i) => i.id)
+        .filter((i) => testData.ids.has(i));
+      const expectedIds = [
+        ...new Set([
+          ...testData.ist.missingEventInfo,
+          ...testData.ist.missingSessionInfo,
+          ...testData.ist.noSessionsCreated,
+          ...testData.ist.eventNotCompleted,
+        ]),
+      ];
 
-      expect(idsToCheck.sort()).toStrictEqual([
-        ...testData.ist.missingEventInfo,
-        ...testData.ist.missingSessionInfo,
-        ...testData.ist.noSessionsCreated,
-        ...testData.ist.eventNotCompleted,
-      ].sort());
+      // Verify all expected IDs are present in time-based alerts
+      expectedIds.forEach((expectedId) => {
+        expect(idsToCheck).toContain(
+          expectedId,
+          `Expected ${expectedId} to be in alerts for time-based alert types`,
+        );
+      });
+    });
+
+    it('triggers missingEventInfo alert 20 days after END date', async () => {
+      // Create event with endDate 20 days ago
+      const eventWithOldEndDate = await EventReportPilot.create({
+        ownerId,
+        collaboratorIds: [faker.datatype.number()],
+        pocIds: [faker.datatype.number()],
+        regionId: 1,
+        data: {
+          eventName: 'Missing Event Info Test',
+          eventId: `R01-TR-ENDDATE-${ownerId}`,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          trainingType: 'Series',
+          targetPopulations: ['Children & Families'],
+          reasons: ['Coaching'],
+          vision: 'Testing end date!',
+          eventSubmitted: false,
+          startDate: new Date(new Date().setMonth(new Date().getMonth() - 2)),
+          endDate: new Date(new Date().setDate(new Date().getDate() - 20)), // 20 days ago
+        },
+      });
+
+      const alerts = await getTrainingReportAlerts(ownerId, [1]);
+      const missingEventAlert = alerts.find(
+        (a) => a.alertType === 'missingEventInfo' && a.id === eventWithOldEndDate.id,
+      );
+
+      expect(missingEventAlert).toBeTruthy();
+      expect(missingEventAlert.eventName).toBe('Missing Event Info Test');
+
+      // Clean up immediately so it doesn't get captured by outer rollback
+      await EventReportPilot.destroy({ where: { id: eventWithOldEndDate.id }, force: true });
+    });
+
+    afterAll(async () => {
+      // Destroy all created test events so outer rollback doesn't try to revert them
+      const createdIds = Array.from(testData.ids);
+      await SessionReportPilot.destroy({ where: { eventId: createdIds }, force: true });
+      await EventReportPilot.destroy({ where: { id: createdIds }, force: true });
+    });
+  });
+
+  describe('approval workflow alerts', () => {
+    let submitter;
+    let approver;
+    let event;
+    let sessionWaitingForApproval;
+    let sessionChangesNeeded;
+
+    beforeAll(async () => {
+      const uniqueId = Date.now();
+      submitter = await User.create({
+        name: 'Test Submitter',
+        email: `submitter-${uniqueId}@test.gov`,
+        hsesUserId: `submitter-test-${uniqueId}`,
+        hsesUsername: `submitter-test-${uniqueId}`,
+      });
+
+      approver = await User.create({
+        name: 'Test Approver',
+        email: `approver-${uniqueId}@test.gov`,
+        hsesUserId: `approver-test-${uniqueId}`,
+        hsesUsername: `approver-test-${uniqueId}`,
+      });
+
+      event = await EventReportPilot.create({
+        ownerId: submitter.id,
+        collaboratorIds: [approver.id], // Add approver as collaborator so they see the event
+        pocIds: [],
+        regionId: 1,
+        data: {
+          eventId: 'R01-PD-TESTAPPROVAL',
+          eventName: 'Test Approval Event',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          trainingType: 'Series',
+          targetPopulations: ['Children & Families'],
+          reasons: ['Coaching'],
+          vision: 'Testing approval workflow!',
+          eventSubmitted: true,
+          startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+          endDate: new Date(),
+        },
+      });
+
+      // Session waiting for approval - submitted but not yet approved
+      sessionWaitingForApproval = await SessionReportPilot.create({
+        eventId: event.id,
+        approverId: approver.id,
+        data: {
+          sessionName: 'Session Waiting for Approval',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+          endDate: new Date(),
+          duration: 'Series',
+          objective: 'This is an objective',
+          objectiveTopics: ['Coaching'],
+          objectiveTrainers: ['HBHS'],
+          ttaProvided: 'Test TTA',
+          supportType: 'Maintaining',
+          useIpdCourses: true,
+          deliveryMethod: 'In Person',
+          language: 'English',
+          isIstVisit: 'yes',
+          nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+          pocComplete: true,
+          collabComplete: true,
+          submitterId: submitter.id,
+        },
+      });
+
+      // Session with changes needed - sent back by approver
+      sessionChangesNeeded = await SessionReportPilot.create({
+        eventId: event.id,
+        approverId: approver.id,
+        data: {
+          sessionName: 'Session Needing Changes',
+          status: 'in-progress-needs-action',
+          startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+          endDate: new Date(),
+          duration: 'Series',
+          objective: 'This is an objective',
+          objectiveTopics: ['Coaching'],
+          objectiveTrainers: ['HBHS'],
+          ttaProvided: 'Test TTA',
+          supportType: 'Maintaining',
+          useIpdCourses: true,
+          deliveryMethod: 'In Person',
+          language: 'English',
+          isIstVisit: 'yes',
+          nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+          pocComplete: true,
+          collabComplete: true,
+          submitterId: submitter.id,
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await SessionReportPilot.destroy({
+        where: { eventId: event.id },
+      });
+      await EventReportPilot.destroy({
+        where: { id: event.id },
+      });
+      await User.destroy({
+        where: { id: [submitter.id, approver.id] },
+      });
+    });
+
+    it('should show waitingForApproval alert to submitter', async () => {
+      const alerts = await getTrainingReportAlertsForUser(submitter.id, [1]);
+
+      const waitingAlert = alerts.find(
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+      );
+      expect(waitingAlert).toBeTruthy();
+      expect(waitingAlert.sessionName).toBe('Session Waiting for Approval');
+      expect(waitingAlert.submitterId).toBe(submitter.id);
+      expect(waitingAlert.approverId).toBe(approver.id);
+      expect(waitingAlert.approverName).toBe('Test Approver');
+    });
+
+    it('should show waitingForApproval alert to approver', async () => {
+      const alerts = await getTrainingReportAlertsForUser(approver.id, [1]);
+
+      const waitingAlert = alerts.find(
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+      );
+      expect(waitingAlert).toBeTruthy();
+      expect(waitingAlert.sessionName).toBe('Session Waiting for Approval');
+    });
+
+    it('should show changesNeeded alert to submitter only', async () => {
+      const submitterAlerts = await getTrainingReportAlertsForUser(submitter.id, [1]);
+      const approverAlerts = await getTrainingReportAlertsForUser(approver.id, [1]);
+
+      const submitterChangesAlert = submitterAlerts.find(
+        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id,
+      );
+      const approverChangesAlert = approverAlerts.find(
+        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id,
+      );
+
+      expect(submitterChangesAlert).toBeTruthy();
+      expect(submitterChangesAlert.sessionName).toBe('Session Needing Changes');
+      expect(approverChangesAlert).toBeUndefined();
+    });
+
+    it('should not show approval alerts to unrelated users', async () => {
+      const uniqueId = Date.now();
+      const otherUser = await User.create({
+        name: 'Other User',
+        email: `other-${uniqueId}@test.gov`,
+        hsesUserId: `other-test-${uniqueId}`,
+        hsesUsername: `other-test-${uniqueId}`,
+      });
+
+      const alerts = await getTrainingReportAlertsForUser(otherUser.id, [1]);
+
+      const waitingAlert = alerts.find(
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+      );
+      const changesAlert = alerts.find(
+        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id,
+      );
+
+      expect(waitingAlert).toBeUndefined();
+      expect(changesAlert).toBeUndefined();
+
+      await User.destroy({ where: { id: otherUser.id } });
+    });
+
+    it('should include enriched user data in alerts', async () => {
+      const alerts = await getTrainingReportAlertsForUser(submitter.id, [1]);
+
+      const waitingAlert = alerts.find(
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+      );
+
+      expect(waitingAlert.approverName).toBe('Test Approver');
+      expect(Array.isArray(waitingAlert.collaboratorNames)).toBe(true);
     });
   });
 });

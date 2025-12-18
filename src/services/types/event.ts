@@ -7,6 +7,7 @@ type TRStatusType = TRAINING_REPORT_STATUSES.NOT_STARTED
 
 export type SessionShape = {
   id: number;
+  approverId?: number;
   data: {
     sessionName: string;
     status: string;
@@ -20,6 +21,7 @@ export type SessionShape = {
     nextSteps: { completeDate: string, note: string }[];
     pocComplete: boolean;
     collabComplete: boolean;
+    submitterId?: number;
   }
 };
 
@@ -70,7 +72,7 @@ export type TRAlertShape = {
   id: number;
   eventId: string;
   eventName: string;
-  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted';
+  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted' | 'waitingForApproval' | 'changesNeeded';
   eventStatus: TRStatusType;
   sessionName: string;
   sessionId: number | false;
@@ -80,4 +82,8 @@ export type TRAlertShape = {
   collaboratorIds: number[];
   startDate: string;
   endDate: string;
+  approverId?: number;
+  submitterId?: number;
+  approverName?: string;
+  collaboratorNames?: string[];
 };
