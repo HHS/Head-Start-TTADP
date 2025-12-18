@@ -13,7 +13,6 @@ import {
 import {
   getTrainingReportAlertsForUser,
 } from './event';
-import * as transactionModule from '../lib/programmaticTransaction';
 
 jest.mock('bull');
 
@@ -67,7 +66,7 @@ async function createEvents({
   };
 
   // event with no sessions and a start date of one month ago (Will appear in alerts)
-  // also missing event data
+  // endDate is null so it won't trigger missingEventInfo alert
   const a = await EventReportPilot.create({
     ...baseEvent,
     data: {
@@ -77,7 +76,6 @@ async function createEvents({
     },
   });
 
-  testData.ist.missingEventInfo.push(a.id);
   testData.ist.noSessionsCreated.push(a.id);
 
   // basic event: no sessions, but complete data
