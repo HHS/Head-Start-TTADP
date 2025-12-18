@@ -10,6 +10,7 @@ import { hasTrainingReportWritePermissions } from '../permissions';
 import { getEventAlerts } from '../fetchers/event';
 import WidgetContainer from './WidgetContainer';
 import SimpleSortableTable from './SimpleSortableTable';
+import './TrainingReportAlerts.css';
 
 const idForLink = (eventId) => eventId.split('-').pop();
 
@@ -64,14 +65,15 @@ export default function TrainingReportAlerts() {
     sessionName: alert.sessionName,
     eventId: alert.eventId,
     eventName: alert.eventName,
-    collaborators: alert.collaboratorNames ? alert.collaboratorNames.join(', ') : '',
-    approver: alert.approverName || '',
+    collaborators: alert.collaboratorNames ? alert.collaboratorNames.join(', ') : '--',
+    approver: alert.approverName || '--',
     actionNeeded: ACTIONS_NEEDED[alert.alertType] ? ACTIONS_NEEDED[alert.alertType](alert) : '',
     id: alert.id,
   }));
 
   return (
     <WidgetContainer
+      className="ttahub-training-report-alerts-container"
       title="My training report alerts"
       subtitle="Events or sessions that require timely action"
       showPagingBottom={false}
@@ -79,11 +81,14 @@ export default function TrainingReportAlerts() {
       loading={false}
     >
       {alertsForTable.length ? (
-        <SimpleSortableTable
-          columns={columns}
-          data={alertsForTable}
-          elementSortProp="data-sort"
-        />
+        <div className="ttahub-training-report-alerts-scrollable">
+          <SimpleSortableTable
+            className="ttahub-training-report-alerts"
+            columns={columns}
+            data={alertsForTable}
+            elementSortProp="data-sort"
+          />
+        </div>
       ) : <p className="usa-prose margin-x-3 margin-y-0 padding-y-3">You do not have any overdue tasks.</p>}
     </WidgetContainer>
   );
