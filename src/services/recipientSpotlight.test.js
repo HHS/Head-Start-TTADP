@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import faker from '@faker-js/faker';
 import db from '../models';
 import { getRecipientSpotlightIndicators } from './recipientSpotlight';
@@ -596,6 +597,7 @@ describe('recipientSpotlight service', () => {
     await db.sequelize.close();
   });
 
+  // eslint-disable-next-line jest/no-commented-out-tests
   /* Temporarily commented out for frontend implementation - will be restored when SQL query is updated
   describe('getRecipientSpotlightIndicators', () => {
     it('returns all recipients when no recipientId is provided', async () => {

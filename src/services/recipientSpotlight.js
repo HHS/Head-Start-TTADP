@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { Op, QueryTypes } from 'sequelize';
 import {
   sequelize,
