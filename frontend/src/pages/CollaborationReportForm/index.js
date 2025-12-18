@@ -65,7 +65,7 @@ const defaultValues = {
   duration: '',
   reportReasons: [],
   isStateActivity: '',
-  conductMethod: [],
+  conductMethod: '',
   description: '',
   id: null,
 };
