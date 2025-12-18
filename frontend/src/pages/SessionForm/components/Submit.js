@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Button, Dropdown, Textarea } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
@@ -6,6 +6,7 @@ import IncompletePages from '../../../components/IncompletePages';
 import { reviewSubmitComponentProps } from './constants';
 import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
+import UserContext from '../../../UserContext';
 
 const path = 'submitter-session-report';
 
@@ -16,6 +17,7 @@ export default function Submit({
   reviewSubmitPagePosition,
   pages,
   isPoc,
+  isAdmin,
 }) {
   const { register, watch } = useFormContext();
   const pageState = watch('pageState');
@@ -29,6 +31,7 @@ export default function Submit({
   }
 
   const { trainerOptions: approvers } = useEventAndSessionStaff(event);
+  const { user } = useContext(UserContext);
 
   const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
   // eslint-disable-next-line max-len
@@ -40,6 +43,11 @@ export default function Submit({
   if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && (facilitation === 'regional_tta_staff' || facilitation === 'both')) {
     // format approvers and flatten national and regional trainers into a single list
     approverOptions = approvers.filter((approverGroup) => approverGroup.label === 'Regional trainers').map((group) => group.options).flat();
+  }
+
+  // filter current user out of approver list
+  if (!isAdmin) {
+    approverOptions = approverOptions.filter((approver) => approver.id !== user.id);
   }
 
   // POCs can select approver when facilitation includes regional staff
