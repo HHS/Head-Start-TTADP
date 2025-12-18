@@ -248,8 +248,15 @@ export default function SessionForm({ match }) {
         });
         reportId.current = session.id;
 
+        const message = {
+          isSession: true,
+          sessionName: session.data.sessionName,
+          eventId: session.event.data.eventId,
+          dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+        };
+
         if (session.event.ownerId === user.id && !isAdminUser) {
-          history.push('/training-reports/in-progress', { message: 'Session created successfully' });
+          history.push('/training-reports/in-progress', { message });
           return;
         }
 
