@@ -47,12 +47,14 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
     }
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
+      // if facilitation is region, we are already set to the correct values
+
       if (facilitation === 'national_center' || isEvent) {
         optionsForValue = nationalCenterTrainers;
         trainerOptions = nationalCenterTrainers;
       }
 
-      if (facilitation === 'regional_tta_staff' || facilitation === 'both') {
+      if (facilitation === 'both') {
         optionsForValue = [...nationalCenterTrainers, ...regionalTrainers];
         trainerOptions = [
           {
