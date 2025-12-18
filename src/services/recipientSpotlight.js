@@ -65,6 +65,7 @@ export async function getRecipientSpotlightIndicators(
     6. DRS: TBD
     7. FEI: TBD
 */
+
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
   const grantIdFilter = hasGrantIds ? `g.id IN (${grantIdList.join(',')})` : 'TRUE';
@@ -81,7 +82,7 @@ export async function getRecipientSpotlightIndicators(
       JOIN "Grants" g ON r.id = g."recipientId"
       WHERE ${grantIdFilter}
     ),
-    
+
     -- 1. Child Incidents: Grants with more than one RAN citation in the last 12 months
     child_incidents AS (
       SELECT
@@ -99,7 +100,7 @@ export async function getRecipientSpotlightIndicators(
       GROUP BY r."recipientId"
       HAVING COUNT(*) > 1
     ),
-    
+
     -- 2. Deficiency: Grants with at least one deficiency in findings
     deficiencies AS (
       SELECT
@@ -164,15 +165,15 @@ export async function getRecipientSpotlightIndicators(
       AND ar."calculatedStatus" = 'approved'
       AND ar."approvedAt" >= NOW() - INTERVAL '12 months'
     ),
-    
+
     no_tta AS (
-      SELECT 
+      SELECT
         r."recipientId",
         TRUE AS "noTTA"
       FROM recipients r
       WHERE r."recipientId" NOT IN (SELECT "recipientId" FROM grants_with_tta)
     ),
-    
+
     -- Combine all indicators into one result set
     combined_indicators AS (
       SELECT

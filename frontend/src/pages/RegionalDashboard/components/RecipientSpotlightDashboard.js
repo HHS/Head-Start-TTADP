@@ -6,6 +6,7 @@ import { DashboardOverviewWidget } from '../../../widgets/DashboardOverview';
 import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import { filtersToQueryString } from '../../../utils';
 import useFetch from '../../../hooks/useFetch';
+import RecipientSpotlightDashboardCards from './RecipientSpotlightDashboardCards';
 import './RecipientSpotlightDashboard.scss';
 
 const DEFAULT_OVERVIEW_DATA = {
@@ -21,15 +22,13 @@ export default function RecipientSpotlightDashboard({
     { overview: DEFAULT_OVERVIEW_DATA },
     async () => {
       const filters = filtersToQueryString(filtersToApply);
-
-      const result = getRecipientSpotlight(
+      return getRecipientSpotlight(
         'recipientName',
         'asc',
         0,
         filters,
-        undefined, // no limit - get all recipients
+        null, // no limit - get all recipients
       );
-      return result;
     },
     [filtersToApply],
     'Unable to load overview data',
@@ -37,6 +36,18 @@ export default function RecipientSpotlightDashboard({
   );
 
   const overviewData = data?.overview || DEFAULT_OVERVIEW_DATA;
+
+  // Filter recipients to only include those with at least one priority indicator
+  const allRecipients = data?.recipients || [];
+  const recipients = allRecipients.filter((recipient) => (
+    recipient.childIncidents
+    || recipient.deficiency
+    || recipient.newRecipients
+    || recipient.newStaff
+    || recipient.noTTA
+    || recipient.DRS
+    || recipient.FEI
+  ));
 
   return (
     <>
@@ -63,7 +74,9 @@ export default function RecipientSpotlightDashboard({
         </Grid>
         <Grid row>
           <Grid col={12}>
-            <p>Place holder for spotlight cards table.</p>
+            <RecipientSpotlightDashboardCards
+              recipients={recipients}
+            />
           </Grid>
         </Grid>
       </GridContainer>

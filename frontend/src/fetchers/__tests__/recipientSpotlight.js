@@ -11,7 +11,7 @@ describe('recipientSpotlight fetcher', () => {
   it('calls the correct url with default parameters', async () => {
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${recipientUrl}?sortBy=recipientName&direction=desc&offset=0&limit=10`, mockResponse);
+    fetchMock.getOnce(`${recipientUrl}?sortBy=recipientName&direction=desc&offset=0`, mockResponse);
 
     const response = await getRecipientSpotlight();
 
@@ -24,7 +24,7 @@ describe('recipientSpotlight fetcher', () => {
     const sortDir = 'asc';
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=0&limit=10`, mockResponse);
+    fetchMock.getOnce(`${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=0`, mockResponse);
 
     const response = await getRecipientSpotlight(sortBy, sortDir);
 
@@ -49,7 +49,7 @@ describe('recipientSpotlight fetcher', () => {
     const filters = 'recipientId.in=123&region.in=1';
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${recipientUrl}?sortBy=recipientName&direction=desc&offset=0&limit=10&${filters}`, mockResponse);
+    fetchMock.getOnce(`${recipientUrl}?sortBy=recipientName&direction=desc&offset=0&${filters}`, mockResponse);
 
     const response = await getRecipientSpotlight('recipientName', 'desc', 0, filters);
 

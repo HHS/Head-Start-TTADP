@@ -15,9 +15,7 @@ function NoResultsFound({ customMessage, hideFilterHelp }) {
   return (
     <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center text-center height-full">
       <FontAwesomeIcon icon={faChartColumn} color={colors.baseDarkest} size="2x" />
-      <span>
-        <h3 className="margin-bottom-1 margin-top-2">No results found.</h3>
-      </span>
+      <h3 className="margin-y-1">No results found.</h3>
       <span className="margin-bottom-1">{customMessage || 'Try removing or changing the selected filters.'}</span>
       {!hideFilterHelp && (
       <>
