@@ -10,47 +10,13 @@ module.exports = {
   async up(queryInterface) {
     const readWriteTrainingReports = [
       {
-        userId: 1,
-        regionId: 1,
-        scopeId: READ_WRITE_TRAINING_REPORTS,
-      },
-      {
-        userId: 1,
-        regionId: 3,
-        scopeId: READ_WRITE_TRAINING_REPORTS,
-      },
-      {
         userId: 5,
         regionId: 1,
         scopeId: READ_WRITE_TRAINING_REPORTS,
       },
-      {
-        userId: 3,
-        regionId: 3,
-        scopeId: READ_WRITE_TRAINING_REPORTS,
-      },
-      {
-        userId: 4,
-        regionId: 3,
-        scopeId: READ_WRITE_TRAINING_REPORTS,
-      },
-      {
-        userId: 6,
-        regionId: 1,
-        scopeId: READ_WRITE_TRAINING_REPORTS,
-      },
-    ];
-
-    const collaboratorTrainingReports = [
-      {
-        userId: 3,
-        regionId: 3,
-        scopeId: POC_TRAINING_REPORTS,
-      },
     ];
 
     await queryInterface.bulkInsert('Permissions', readWriteTrainingReports, {});
-    await queryInterface.bulkInsert('Permissions', collaboratorTrainingReports, {});
     await queryInterface.bulkInsert('UserRoles', [{
       userId: 1,
       roleId: 17, // National Center
@@ -80,132 +46,18 @@ module.exports = {
         ARRAY
         [3]::INTEGER[] -- Harry Potter POC.
     );
-
-    -- Regional TTA Hosted Event (no National Centers)
-    -- Owner=5, Collaborator=3, POC=4
-    INSERT INTO "EventReportPilots" (
-      "ownerId",
-      "collaboratorIds",
-      "regionId",
-      "data",
-      "imported",
-      "createdAt",
-      "updatedAt",
-      "pocIds"
-    ) VALUES (
-      5,
-      ARRAY[3]::INTEGER[],
-      3,
-      CAST('{"eventId":"R03-TTA-24-1001","eventName":"Regional TTA Event - Leadership Development","eventOrganizer":"Regional TTA Hosted Event (no National Centers)","eventIntendedAudience":"recipients","trainingType":"Series","targetPopulations":["Infants and Toddlers (ages birth to 3)","Preschool Children (ages 3-5)"],"vision":"Leadership and Governance","creator":"cucumber@hogwarts.com","eventSubmitted":false,"status":"In progress"}' AS JSONB),
-      CAST('{"Event ID":"R03-TTA-24-1001","Event Title":"Regional TTA Event - Leadership Development","Event Organizer - Type of Event":"Regional TTA Hosted Event (no National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Reason for Activity":"Monitoring | Area of Concern\\nMonitoring | Deficiency\\nMonitoring | Noncompliance","Target Population(s)":"Infants and Toddlers (ages birth to 3)\\nPreschool Children (ages 3-5)","Overall Vision/Goal for the PD Event":"Leadership and Governance","IST/Creator":"cucumber@hogwarts.com"}' AS JSONB),
-      NOW(),
-      NOW(),
-      ARRAY[4]::INTEGER[]
-    );
-
-    -- Regional PD Event (with National Centers)
-    -- Owner=5, Collaborator=3, POC=4
-    INSERT INTO "EventReportPilots" (
-      "ownerId",
-      "collaboratorIds",
-      "regionId",
-      "data",
-      "imported",
-      "createdAt",
-      "updatedAt",
-      "pocIds"
-    ) VALUES (
-      5,
-      ARRAY[3]::INTEGER[],
-      3,
-      CAST('{"eventId":"R03-PD-24-1002","eventName":"Regional PD Event - School Readiness","eventOrganizer":"Regional PD Event (with National Centers)","eventIntendedAudience":"recipients","trainingType":"Series","targetPopulations":["Expectant families","Infants and Toddlers (ages birth to 3)"],"vision":"School Readiness","creator":"cucumber@hogwarts.com","eventSubmitted":false,"status":"In progress"}' AS JSONB),
-      CAST('{"Event ID":"R03-PD-24-1002","Event Title":"Regional PD Event - School Readiness","Event Organizer - Type of Event":"Regional PD Event (with National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Reason for Activity":"Child Incident\\nNew Director or Management\\nNew Program Option","Target Population(s)":"Expectant families\\nInfants and Toddlers (ages birth to 3)","Overall Vision/Goal for the PD Event":"School Readiness","IST/Creator":"cucumber@hogwarts.com"}' AS JSONB),
-      NOW(),
-      NOW(),
-      ARRAY[4]::INTEGER[]
-    );
-
-    -- Session for Regional PD Event (R03-PD-24-1002) with national_center facilitation
-    INSERT INTO "SessionReportPilots" (
-      "eventId",
-      "approverId",
-      "data",
-      "createdAt",
-      "updatedAt"
-    )
-    SELECT
-      id,
-      1,
-      CAST('{"sessionName":"School Readiness Workshop - National Center","reviewStatus": "draft","startDate":"2024-02-03","endDate":"2024-02-03","duration":4,"deliveryMethod":"in-person","context":"Specialized school readiness assessment","objective":"Master assessment techniques","numberOfParticipants":25,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"national_center","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Assessment","Child Development"],"objectiveTrainers":[],"participants":["Teacher","Coach"],"additionalStates":[],"reviewStatus":"draft"}' AS JSONB),
-      NOW(),
-      NOW()
-    FROM "EventReportPilots"
-    WHERE data->>'eventId' = 'R03-PD-24-1002';
-
-    -- Session for Regional PD Event (R03-PD-24-1002) with regional_tta_staff facilitation
-    INSERT INTO "SessionReportPilots" (
-      "eventId",
-      "approverId",
-      "data",
-      "createdAt",
-      "updatedAt"
-    )
-    SELECT
-      id,
-      1,
-      CAST('{"sessionName":"School Readiness Workshop - Regional TTA","reviewStatus": "draft","startDate":"2024-01-20","endDate":"2024-01-20","duration":4,"deliveryMethod":"virtual","context":"Building school readiness skills","objective":"Improve school readiness outcomes","numberOfParticipants":35,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"regional_tta_staff","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Teaching Practices"],"objectiveTrainers":[],"participants":["Teacher","Coach","Manager / Coordinator / Specialist"],"additionalStates":[],"reviewStatus":"draft"}' AS JSONB),
-      NOW(),
-      NOW()
-    FROM "EventReportPilots"
-    WHERE data->>'eventId' = 'R03-PD-24-1002';
-
-    -- Session for Regional PD Event (R03-PD-24-1002) with both facilitation
-    INSERT INTO "SessionReportPilots" (
-      "eventId",
-      "approverId",
-      "data",
-      "createdAt",
-      "updatedAt"
-    )
-    SELECT
-      id,
-      1,
-      CAST('{"sessionName":"School Readiness Workshop - Both","reviewStatus": "draft","startDate":"2024-01-27","endDate":"2024-01-27","duration":3.5,"deliveryMethod":"virtual","context":"Advanced school readiness strategies","objective":"Deepen school readiness implementation","numberOfParticipants":30,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"both","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Curriculum Development"],"objectiveTrainers":[],"participants":["Teacher","Coach","Education Manager"],"additionalStates":[],"reviewStatus":"draft"}' AS JSONB),
-      NOW(),
-      NOW()
-    FROM "EventReportPilots"
-    WHERE data->>'eventId' = 'R03-PD-24-1002';
   `);
   },
 
   async down(queryInterface) {
-    // Delete session reports first (due to foreign key constraints)
-    await queryInterface.sequelize.query(`
-      DELETE FROM "SessionReportPilots"
-      WHERE "eventId" IN (
-        SELECT id FROM "EventReportPilots"
-        WHERE data->>'eventId' IN (
-          'R01-PD-23-1037',
-          'R03-TTA-24-1001',
-          'R03-PD-24-1002'
-        )
-      );
-    `);
-
     // Delete the new event reports
     await queryInterface.sequelize.query(`
       DELETE FROM "EventReportPilots"
       WHERE data->>'eventId' IN (
         'R01-PD-23-1037',
-        'R03-TTA-24-1001',
-        'R03-PD-24-1002'
-      );
+     );
     `);
 
-    // Delete original event reports and permissions
-    await queryInterface.bulkDelete('EventReportPilots', { ownerId: 1 }, {});
-    await queryInterface.bulkDelete('Permissions', { userId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }, {});
-    await queryInterface.bulkDelete('Permissions', { userId: 3, scopeId: POC_TRAINING_REPORTS }, {});
     await queryInterface.bulkDelete('Permissions', { userId: 5, scopeId: READ_WRITE_TRAINING_REPORTS }, {});
   },
 };
