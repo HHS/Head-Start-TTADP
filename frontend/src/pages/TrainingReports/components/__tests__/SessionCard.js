@@ -74,7 +74,7 @@ describe('SessionCard', () => {
     expect(screen.getByText(SUPPORT_TYPES[2])).toBeInTheDocument();
     expect(screen.getByText(/FEI, CQI and Data/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/trainer 1, trainer 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/trainer 1; trainer 2/i)).toBeInTheDocument();
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
   });
 
