@@ -14,18 +14,36 @@
     }
   }
 
-  // Add 24px margin between all fields on mobile
-  &__field {
-    @media (max-width: 880px) {
-      margin-bottom: 1.5rem; // 24px
+  // Responsive grid layout
+  &__grid {
+    display: grid;
+    gap: 1.5rem; // 24px
 
-      &:last-child {
-        margin-bottom: 0;
-      }
+    // Mobile: single column (stack vertically)
+    @media (max-width: 639px) {
+      grid-template-columns: 1fr;
     }
 
+    // Tablet: 2 columns
+    @media (min-width: 640px) and (max-width: 880px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    // Desktop: 5 columns with specific widths
     @media (min-width: 881px) {
-      margin-bottom: 0;
+      grid-template-columns: 3fr 2fr 2fr 3fr 2fr;
+      gap: 0;
+    }
+  }
+
+  // Add spacing on desktop only
+  &__field {
+    @media (min-width: 881px) {
+      padding-right: 1.5rem;
+
+      &:last-child {
+        padding-right: 0;
+      }
     }
   }
 
