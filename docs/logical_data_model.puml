@@ -151,6 +151,8 @@ class ActivityReportObjectives{
  supportType : enum
  title : text
  ttaProvided : text
+ useFiles : boolean : false
+ useIpdCourses : boolean : false
 }
 
 class ActivityReportResources{
