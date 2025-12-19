@@ -13,7 +13,8 @@ export async function getRecipientSpotlightIndicators(
   offset,
   limit,
 ) {
-  /* Temporarily commented out for frontend implementation - will be restored when SQL query is updated
+  // Commented out for testing - uncomment for production
+  /*
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   const grantsWhere = {
     [Op.and]: [
@@ -32,7 +33,7 @@ export async function getRecipientSpotlightIndicators(
     ],
   };
 
-  // Get a list of grant ids using the scopes.
+  // Get a list of grant ids using the scopes
   const grantIds = await Grant.findAll({
     attributes: [
       'id',
@@ -69,7 +70,8 @@ export async function getRecipientSpotlightIndicators(
     7. FEI: TBD
 */
 
-  /* Temporarily commented out for frontend implementation - will be restored when SQL query is updated
+  // Commented out for testing - uncomment for production SQL query
+  /*
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
   const grantIdFilter = hasGrantIds ? `g.id IN (${grantIdList.join(',')})` : 'TRUE';
@@ -178,26 +180,50 @@ export async function getRecipientSpotlightIndicators(
       WHERE r."recipientId" NOT IN (SELECT "recipientId" FROM grants_with_tta)
     ),
 
+    -- Last TTA date: Most recent approved report for each recipient
+    last_tta AS (
+      SELECT
+        r."recipientId",
+        MAX(ar."approvedAt") AS "lastTTA"
+      FROM recipients r
+      JOIN "Grants" g ON r."recipientId" = g."recipientId"
+      JOIN "Goals" goals ON goals."grantId" = g.id
+      JOIN "ActivityReportGoals" arg ON arg."goalId" = goals.id
+      JOIN "ActivityReports" ar ON arg."activityReportId" = ar.id
+      WHERE ${grantIdFilter}
+      AND ar."calculatedStatus" = 'approved'
+      GROUP BY r."recipientId"
+    ),
+
     -- Combine all indicators into one result set
     combined_indicators AS (
       SELECT
         r."recipientId",
         r."regionId",
         r."recipientName",
-        ARRAY_AGG(g.id)::text[] AS "grantIds",
+        ARRAY_AGG(DISTINCT g.id)::text[] AS "grantIds",
         COALESCE(ci."childIncidents", FALSE) AS "childIncidents",
         COALESCE(d."deficiency", FALSE) AS "deficiency",
         COALESCE(nr."newRecipients", FALSE) AS "newRecipients",
         COALESCE(ns."newStaff", FALSE) AS "newStaff",
         COALESCE(nt."noTTA", FALSE) AS "noTTA",
         FALSE AS "DRS",  -- Placeholder for future implementation
-        FALSE AS "FEI"   -- Placeholder for future implementation
+        FALSE AS "FEI",   -- Placeholder for future implementation
+        (
+          COALESCE(ci."childIncidents"::int, 0) +
+          COALESCE(d."deficiency"::int, 0) +
+          COALESCE(nr."newRecipients"::int, 0) +
+          COALESCE(ns."newStaff"::int, 0) +
+          COALESCE(nt."noTTA"::int, 0)
+        ) AS "indicatorCount",
+        lt."lastTTA"
       FROM recipients r
       LEFT JOIN child_incidents ci ON r."recipientId" = ci."recipientId"
       LEFT JOIN deficiencies d ON r."recipientId" = d."recipientId"
       LEFT JOIN new_recipients nr ON r."recipientId" = nr."recipientId"
       LEFT JOIN new_staff ns ON r."recipientId" = ns."recipientId"
       LEFT JOIN no_tta nt ON r."recipientId" = nt."recipientId"
+      LEFT JOIN last_tta lt ON r."recipientId" = lt."recipientId"
       JOIN "Grants" g ON r."recipientId" = g."recipientId" AND ${grantIdFilter}
       GROUP BY
         r."recipientId",
@@ -207,59 +233,75 @@ export async function getRecipientSpotlightIndicators(
         d."deficiency",
         nr."newRecipients",
         ns."newStaff",
-        nt."noTTA"
+        nt."noTTA",
+        lt."lastTTA"
+      -- Filter out recipients with zero indicators
+      HAVING (
+        COALESCE(ci."childIncidents", FALSE) = TRUE OR
+        COALESCE(d."deficiency", FALSE) = TRUE OR
+        COALESCE(nr."newRecipients", FALSE) = TRUE OR
+        COALESCE(ns."newStaff", FALSE) = TRUE OR
+        COALESCE(nt."noTTA", FALSE) = TRUE
+      )
     )
 
     SELECT * FROM combined_indicators
-    ORDER BY "${sortBy || 'recipientName'}" ${direction || 'ASC'}
-    ${hasGrantIds ? `LIMIT ${limit || 10}` : ''}
-    OFFSET ${offset || 0}
+    ORDER BY
+      CASE WHEN '${sortBy}' = 'indicatorCount' THEN "indicatorCount" END ${direction === 'desc' ? 'DESC' : 'ASC'},
+      CASE WHEN '${sortBy}' = 'recipientName' THEN "recipientName" END ${direction === 'desc' ? 'DESC' : 'ASC'},
+      CASE WHEN '${sortBy}' = 'lastTTA' THEN "lastTTA" END ${direction === 'desc' ? 'DESC NULLS LAST' : 'ASC NULLS LAST'},
+      CASE WHEN '${sortBy}' = 'regionId' THEN "regionId" END ${direction === 'desc' ? 'DESC' : 'ASC'},
+      "recipientName" ASC
+    ${hasGrantIds && limit ? `LIMIT ${limit}` : ''}
+    ${offset ? `OFFSET ${offset}` : ''}
   `;
-
-  // Execute the raw SQL query to get the recipient spotlight indicators.
-  const spotlightData = await sequelize.query(
-    spotLightSql,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
   */
 
-  // Static data for frontend implementation - includes new lastTTA field
-  const spotlightData = [
+  // Temporarily using static data for testing - comment out for production
+  // const spotlightData = await sequelize.query(
+  //   spotLightSql,
+  //   {
+  //     type: QueryTypes.SELECT,
+  //   },
+  // );
+
+  // Static test data - 20 recipients with varying indicators
+  const allTestData = [
     {
-      recipientId: 1001,
-      regionId: 14,
-      recipientName: 'Children and Families First',
-      grantIds: ['14CH1234', '14CH1235'],
+      recipientId: 1,
+      regionId: 1,
+      recipientName: 'ABC Early Learning Center',
+      grantIds: ['14CH001', '14CH002'],
       childIncidents: true,
       deficiency: true,
       newRecipients: false,
       newStaff: true,
       noTTA: false,
-      DRS: true,
+      DRS: false,
       FEI: true,
-      lastTTA: '2023-07-01',
+      indicatorCount: 4,
+      lastTTA: '2024-03-15',
     },
     {
-      recipientId: 1002,
-      regionId: 14,
-      recipientName: 'Early Learning Alliance',
-      grantIds: ['14CH1236'],
+      recipientId: 2,
+      regionId: 2,
+      recipientName: 'Bright Beginnings Head Start',
+      grantIds: ['14CH003'],
       childIncidents: false,
       deficiency: true,
       newRecipients: true,
       newStaff: false,
       noTTA: false,
       DRS: false,
-      FEI: true,
-      lastTTA: '2024-02-15',
+      FEI: false,
+      indicatorCount: 2,
+      lastTTA: '2024-01-20',
     },
     {
-      recipientId: 1003,
-      regionId: 14,
-      recipientName: 'Community Development Corporation',
-      grantIds: ['14CH1237', '14CH1238'],
+      recipientId: 3,
+      regionId: 3,
+      recipientName: 'Children First Learning Academy',
+      grantIds: ['14CH004', '14CH005'],
       childIncidents: true,
       deficiency: false,
       newRecipients: false,
@@ -267,13 +309,14 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: true,
       FEI: false,
-      lastTTA: '2024-03-22',
+      indicatorCount: 3,
+      lastTTA: '2023-11-05',
     },
     {
-      recipientId: 1004,
-      regionId: 14,
-      recipientName: 'Bright Futures Head Start',
-      grantIds: ['14CH1239'],
+      recipientId: 4,
+      regionId: 4,
+      recipientName: 'Discovery Learning Center',
+      grantIds: ['14CH006'],
       childIncidents: false,
       deficiency: false,
       newRecipients: true,
@@ -281,13 +324,14 @@ export async function getRecipientSpotlightIndicators(
       noTTA: true,
       DRS: false,
       FEI: false,
+      indicatorCount: 2,
       lastTTA: null,
     },
     {
-      recipientId: 1005,
-      regionId: 14,
-      recipientName: 'Growing Minds Academy',
-      grantIds: ['14CH1240'],
+      recipientId: 5,
+      regionId: 5,
+      recipientName: 'Early Explorers Child Development',
+      grantIds: ['14CH007'],
       childIncidents: false,
       deficiency: true,
       newRecipients: false,
@@ -295,17 +339,283 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: false,
       FEI: true,
-      lastTTA: '2024-01-10',
+      indicatorCount: 2,
+      lastTTA: '2024-02-28',
+    },
+    {
+      recipientId: 6,
+      regionId: 6,
+      recipientName: 'Family Support Services',
+      grantIds: ['14CH008', '14CH009'],
+      childIncidents: true,
+      deficiency: true,
+      newRecipients: true,
+      newStaff: true,
+      noTTA: false,
+      DRS: false,
+      FEI: false,
+      indicatorCount: 4,
+      lastTTA: '2024-03-01',
+    },
+    {
+      recipientId: 7,
+      regionId: 7,
+      recipientName: 'Growing Minds Preschool',
+      grantIds: ['14CH010'],
+      childIncidents: false,
+      deficiency: false,
+      newRecipients: false,
+      newStaff: true,
+      noTTA: false,
+      DRS: false,
+      FEI: false,
+      indicatorCount: 1,
+      lastTTA: '2024-03-10',
+    },
+    {
+      recipientId: 8,
+      regionId: 8,
+      recipientName: 'Happy Hearts Early Learning',
+      grantIds: ['14CH011'],
+      childIncidents: true,
+      deficiency: false,
+      newRecipients: false,
+      newStaff: false,
+      noTTA: true,
+      DRS: false,
+      FEI: false,
+      indicatorCount: 2,
+      lastTTA: null,
+    },
+    {
+      recipientId: 9,
+      regionId: 9,
+      recipientName: 'Imagination Station Head Start',
+      grantIds: ['14CH012', '14CH013'],
+      childIncidents: false,
+      deficiency: true,
+      newRecipients: true,
+      newStaff: true,
+      noTTA: false,
+      DRS: true,
+      FEI: true,
+      indicatorCount: 5,
+      lastTTA: '2023-12-15',
+    },
+    {
+      recipientId: 10,
+      regionId: 10,
+      recipientName: 'Joyful Learners Academy',
+      grantIds: ['14CH014'],
+      childIncidents: false,
+      deficiency: false,
+      newRecipients: false,
+      newStaff: false,
+      noTTA: true,
+      DRS: false,
+      FEI: false,
+      indicatorCount: 1,
+      lastTTA: null,
+    },
+    {
+      recipientId: 11,
+      regionId: 11,
+      recipientName: 'Kids First Community Center',
+      grantIds: ['14CH015'],
+      childIncidents: true,
+      deficiency: true,
+      newRecipients: false,
+      newStaff: true,
+      noTTA: false,
+      DRS: false,
+      FEI: false,
+      indicatorCount: 3,
+      lastTTA: '2024-02-05',
+    },
+    {
+      recipientId: 12,
+      regionId: 12,
+      recipientName: 'Little Learners Education Center',
+      grantIds: ['14CH016', '14CH017'],
+      childIncidents: false,
+      deficiency: true,
+      newRecipients: true,
+      newStaff: false,
+      noTTA: false,
+      DRS: false,
+      FEI: true,
+      indicatorCount: 3,
+      lastTTA: '2024-01-15',
+    },
+    {
+      recipientId: 13,
+      regionId: 1,
+      recipientName: 'Mountain View Head Start',
+      grantIds: ['14CH018'],
+      childIncidents: true,
+      deficiency: false,
+      newRecipients: false,
+      newStaff: false,
+      noTTA: false,
+      DRS: true,
+      FEI: false,
+      indicatorCount: 2,
+      lastTTA: '2024-03-20',
+    },
+    {
+      recipientId: 14,
+      regionId: 2,
+      recipientName: 'New Horizons Child Development',
+      grantIds: ['14CH019'],
+      childIncidents: false,
+      deficiency: false,
+      newRecipients: true,
+      newStaff: true,
+      noTTA: true,
+      DRS: false,
+      FEI: false,
+      indicatorCount: 3,
+      lastTTA: null,
+    },
+    {
+      recipientId: 15,
+      regionId: 3,
+      recipientName: 'Opportunity Youth Services',
+      grantIds: ['14CH020', '14CH021'],
+      childIncidents: true,
+      deficiency: true,
+      newRecipients: true,
+      newStaff: true,
+      noTTA: false,
+      DRS: true,
+      FEI: true,
+      indicatorCount: 6,
+      lastTTA: '2023-10-30',
+    },
+    {
+      recipientId: 16,
+      regionId: 4,
+      recipientName: 'Pathways Early Education',
+      grantIds: ['14CH022'],
+      childIncidents: false,
+      deficiency: true,
+      newRecipients: false,
+      newStaff: false,
+      noTTA: false,
+      DRS: false,
+      FEI: false,
+      indicatorCount: 1,
+      lastTTA: '2024-03-25',
+    },
+    {
+      recipientId: 17,
+      regionId: 5,
+      recipientName: 'Quality Kids Learning Center',
+      grantIds: ['14CH023'],
+      childIncidents: true,
+      deficiency: false,
+      newRecipients: true,
+      newStaff: false,
+      noTTA: false,
+      DRS: false,
+      FEI: false,
+      indicatorCount: 2,
+      lastTTA: '2024-02-10',
+    },
+    {
+      recipientId: 18,
+      regionId: 6,
+      recipientName: 'Rainbow Child Care Services',
+      grantIds: ['14CH024', '14CH025'],
+      childIncidents: false,
+      deficiency: false,
+      newRecipients: false,
+      newStaff: true,
+      noTTA: false,
+      DRS: false,
+      FEI: true,
+      indicatorCount: 2,
+      lastTTA: '2024-03-05',
+    },
+    {
+      recipientId: 19,
+      regionId: 7,
+      recipientName: 'Sunshine Academy',
+      grantIds: ['14CH026'],
+      childIncidents: true,
+      deficiency: true,
+      newRecipients: false,
+      newStaff: false,
+      noTTA: true,
+      DRS: false,
+      FEI: false,
+      indicatorCount: 3,
+      lastTTA: null,
+    },
+    {
+      recipientId: 20,
+      regionId: 8,
+      recipientName: 'Tomorrow\'s Leaders Head Start',
+      grantIds: ['14CH027'],
+      childIncidents: false,
+      deficiency: true,
+      newRecipients: true,
+      newStaff: true,
+      noTTA: false,
+      DRS: true,
+      FEI: false,
+      indicatorCount: 4,
+      lastTTA: '2024-01-05',
     },
   ];
 
-  // Return spotlight data with static overview values for dashboard widget
+  // Apply sorting to test data
+  const sortedData = [...allTestData].sort((a, b) => {
+    let comparison = 0;
+
+    if (sortBy === 'indicatorCount') {
+      comparison = a.indicatorCount - b.indicatorCount;
+    } else if (sortBy === 'recipientName') {
+      comparison = a.recipientName.localeCompare(b.recipientName);
+    } else if (sortBy === 'lastTTA') {
+      const dateA = a.lastTTA ? new Date(a.lastTTA) : new Date(0);
+      const dateB = b.lastTTA ? new Date(b.lastTTA) : new Date(0);
+      comparison = dateA - dateB;
+    } else if (sortBy === 'regionId') {
+      comparison = a.regionId - b.regionId;
+    }
+
+    // Apply direction
+    if (direction === 'desc') {
+      comparison = -comparison;
+    }
+
+    // Secondary sort by recipientName for indicatorCount and regionId
+    if ((sortBy === 'indicatorCount' || sortBy === 'regionId') && comparison === 0) {
+      comparison = a.recipientName.localeCompare(b.recipientName);
+    }
+
+    return comparison;
+  });
+
+  // Apply pagination
+  const paginatedData = limit
+    ? sortedData.slice(offset || 0, (offset || 0) + limit)
+    : sortedData.slice(offset || 0);
+
+  const spotlightData = paginatedData;
+
+  // Use static data count for testing
+  const totalCount = allTestData.length;
+
+  // Return spotlight data with count for pagination
   return {
     recipients: spotlightData,
+    count: totalCount,
     overview: {
-      numRecipients: '555',
-      totalRecipients: '678',
-      recipientPercentage: '65%',
+      numRecipients: totalCount.toString(),
+      totalRecipients: '678', // This would need to be calculated separately if needed
+      recipientPercentage: totalCount > 0 ? `${Math.round((totalCount / 678) * 100)}%` : '0%',
     },
   };
 }

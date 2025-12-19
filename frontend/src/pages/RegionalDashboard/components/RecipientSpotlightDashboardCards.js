@@ -1,38 +1,69 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import WidgetH2 from '../../../components/WidgetH2';
+import { Pagination } from '@trussworks/react-uswds';
 import Container from '../../../components/Container';
 import NoResultsFound from '../../../components/NoResultsFound';
 import RecipientSpotlightCard from './RecipientSpotlightCard';
+import RecipientSpotlightCardsHeader from './RecipientSpotlightCardsHeader';
+import { getPageInfo } from '../../../utils';
+import './RecipientSpotlightDashboardCards.scss';
 
 export default function RecipientSpotlightDashboardCards({
   recipients,
+  count,
+  sortConfig,
+  requestSort,
+  handlePageChange,
+  perPage,
+  perPageChange,
+  loading,
 }) {
   return (
     <Container
       paddingX={0}
-      paddingY={1}
+      paddingY={0}
+      loading={loading}
       loadingLabel="Recipient spotlight loading"
-      className="maxw-widescreen ttahub-recipient-spotlight-container height-full"
+      className="maxw-widescreen ttahub-recipient-spotlight-container height-full margin-y-0"
     >
       <div className="ttahub-recipient-spotlight-table inline-size-auto maxw-full height-full">
-        <div className="padding-3 recipient-spotlight-header">
-          <WidgetH2 classNames="padding-0 margin-bottom-1">
-            Recipient spotlight
-          </WidgetH2>
-          <p className="usa-prose padding-0 margin-0">
-            These are the recipients that currently have at least one priority indicator.
-          </p>
-        </div>
+        <RecipientSpotlightCardsHeader
+          sortConfig={sortConfig}
+          requestSort={requestSort}
+          perPage={perPage}
+          perPageChange={perPageChange}
+          count={count}
+        />
         {recipients && recipients.length > 0 ? (
-          <div className="usa-table-container--scrollable padding-x-3 padding-y-2">
-            {recipients.map((recipient) => (
-              <RecipientSpotlightCard
-                key={`recipient-spotlight-${recipient.recipientId}`}
-                recipient={recipient}
+          <>
+            <div className="usa-table-container--scrollable padding-x-3 padding-y-2">
+              {recipients.map((recipient) => (
+                <RecipientSpotlightCard
+                  key={`recipient-spotlight-${recipient.recipientId}`}
+                  recipient={recipient}
+                />
+              ))}
+            </div>
+            {/* Bottom pagination */}
+            <div
+              className="border-top smart-hub-border-base-lighter padding-3 display-flex flex-justify flex-align-center"
+            >
+              {/* Left: Page info */}
+              <div>
+                {getPageInfo(sortConfig.offset, count, sortConfig.activePage, perPage)}
+              </div>
+
+              {/* Right: Pagination controls */}
+              <Pagination
+                pathname=""
+                currentPage={sortConfig.activePage}
+                totalPages={Math.ceil(count / perPage)}
+                onClickNext={() => handlePageChange(sortConfig.activePage + 1)}
+                onClickPrevious={() => handlePageChange(sortConfig.activePage - 1)}
+                onClickPageNumber={(_event, page) => handlePageChange(page)}
               />
-            ))}
-          </div>
+            </div>
+          </>
         ) : (
           <NoResultsFound
             customMessage="At this time, there are no recipients that have a priority indicator."
@@ -58,9 +89,23 @@ RecipientSpotlightDashboardCards.propTypes = {
     noTTA: PropTypes.bool,
     DRS: PropTypes.bool,
     FEI: PropTypes.bool,
+    indicatorCount: PropTypes.number,
   })),
+  count: PropTypes.number.isRequired,
+  sortConfig: PropTypes.shape({
+    sortBy: PropTypes.string.isRequired,
+    direction: PropTypes.string.isRequired,
+    activePage: PropTypes.number.isRequired,
+    offset: PropTypes.number.isRequired,
+  }).isRequired,
+  requestSort: PropTypes.func.isRequired,
+  handlePageChange: PropTypes.func.isRequired,
+  perPage: PropTypes.number.isRequired,
+  perPageChange: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
 };
 
 RecipientSpotlightDashboardCards.defaultProps = {
   recipients: [],
+  loading: false,
 };
