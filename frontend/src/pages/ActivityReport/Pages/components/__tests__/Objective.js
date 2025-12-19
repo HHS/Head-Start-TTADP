@@ -239,6 +239,21 @@ describe('Objective', () => {
     await screen.findByText(/error uploading your file/i);
   });
 
+  it('keeps the iPD course choice selected when switched to "Yes"', async () => {
+    render(<RenderObjective />);
+
+    const ipdFieldset = screen.getByText(/Did you use an iPD course as a resource/i).closest('fieldset');
+    const yesRadio = within(ipdFieldset).getByLabelText('Yes');
+    const noRadio = within(ipdFieldset).getByLabelText('No');
+
+    expect(noRadio).toBeChecked();
+
+    await userEvent.click(yesRadio);
+
+    expect(yesRadio).toBeChecked();
+    expect(noRadio).not.toBeChecked();
+  });
+
   it('does not clear TTA provided between objective changes', async () => {
     render(<RenderObjective />);
     await screen.findByText('What');

@@ -247,6 +247,8 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
       index,
       supportType,
       objectiveCreatedHere,
+      useIpdCourses: objective.useIpdCourses,
+      useFiles: objective.useFiles,
     };
   }));
 }
@@ -434,6 +436,8 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       supportType,
       courses,
       objectiveCreatedHere,
+      useIpdCourses,
+      useFiles,
       citations,
     } = savedObjective;
 
@@ -456,6 +460,8 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
         order: index,
         supportType,
         objectiveCreatedHere,
+        useIpdCourses,
+        useFiles,
       },
     );
   }));

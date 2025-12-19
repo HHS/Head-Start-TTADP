@@ -13,6 +13,8 @@ import {
   OBJECTIVE_RESOURCES,
   validatePrompts,
   validateOnlyWithFlag,
+  OBJECTIVE_COURSES,
+  OBJECTIVE_FILES,
 } from '../goalValidator';
 import {
   GOAL_NAME_ERROR,
@@ -150,6 +152,38 @@ describe('validateGoals', () => {
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].resources`, { message: OBJECTIVE_RESOURCES });
       });
 
+      it('if one objective is set to use IPD courses but has none selected', () => {
+        const objectives = [
+          { ...validObjective },
+          {
+            ...validObjective,
+            useIpdCourses: true,
+            courses: [],
+          },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].courses`, { message: OBJECTIVE_COURSES });
+      });
+
+      it('if one objective is set to use files but has none uploaded', () => {
+        const objectives = [
+          { ...validObjective },
+          {
+            ...validObjective,
+            useFiles: true,
+            files: [],
+          },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].files`, { message: OBJECTIVE_FILES });
+      });
+
       it('doesn\'t die if there is no setError', () => {
         const objectives = [
           { ...validObjective },
@@ -167,7 +201,13 @@ describe('validateGoals', () => {
       it('if "ttaProvided" and "title" are defined for every objective and every goal has at least one objective', () => {
         const objectives = [
           { ...validObjective },
-          { ...validObjective },
+          {
+            ...validObjective,
+            useIpdCourses: true,
+            courses: [{ id: 1 }],
+            useFiles: true,
+            files: [{ id: 1 }],
+          },
         ];
 
         const result = unfinishedObjectives(objectives);
