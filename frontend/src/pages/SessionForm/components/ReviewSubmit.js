@@ -28,7 +28,7 @@ const ReviewSubmitSession = ({
 
   const { user } = useContext(UserContext);
   const { register, watch } = useFormContext();
-  const isAdminUser = useMemo(() => isAdmin(user), [user]);
+  const isAdminUser = useMemo(() => !!(isAdmin(user)), [user]);
 
   const pocComplete = watch('pocComplete');
   const ownerComplete = watch('ownerComplete');
