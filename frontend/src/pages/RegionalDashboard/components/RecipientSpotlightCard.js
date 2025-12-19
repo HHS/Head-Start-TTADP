@@ -96,7 +96,7 @@ export default function RecipientSpotlightCard({ recipient }) {
     >
       <div className="grid-container padding-0">
         <div className="grid-row">
-          <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3 padding-right-3">
+          <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3 padding-right-3 ttahub-recipient-spotlight-card__field">
             <p className="usa-prose text-bold margin-y-0">Recipient</p>
             <Link
               to={`/recipient-tta-records/${recipient.recipientId}/region/${recipient.regionId}/profile`}
@@ -106,21 +106,21 @@ export default function RecipientSpotlightCard({ recipient }) {
             </Link>
           </div>
 
-          <div className="mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2 padding-right-3">
+          <div className="mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2 padding-right-3 ttahub-recipient-spotlight-card__field">
             <p className="usa-prose text-bold margin-y-0">Region</p>
             <p className="usa-prose margin-y-0">
               {recipient.regionId}
             </p>
           </div>
 
-          <div className="mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2 padding-right-3">
+          <div className="mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2 padding-right-3 ttahub-recipient-spotlight-card__field">
             <p className="usa-prose text-bold margin-y-0">Last TTA</p>
             <p className="usa-prose margin-y-0">
               {formatDate(recipient.lastTTA)}
             </p>
           </div>
 
-          <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3 padding-right-3">
+          <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3 padding-right-3 ttahub-recipient-spotlight-card__field">
             <p className="usa-prose text-bold margin-y-0 margin-bottom-1">Indicators</p>
             <div className="margin-top-0">
               <IndicatorCounter
@@ -132,7 +132,7 @@ export default function RecipientSpotlightCard({ recipient }) {
             </div>
           </div>
 
-          <div className="mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2 display-flex flex-align-center ttahub-recipient-spotlight-card__expander-container">
+          <div className="mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2 display-flex flex-align-center ttahub-recipient-spotlight-card__field">
             <ExpanderButton
               type="indicator"
               ariaLabel={`indicators for recipient ${recipient.recipientName}`}

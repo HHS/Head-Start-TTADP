@@ -14,10 +14,18 @@
     }
   }
 
-  // Add margin between indicator counter and expander on mobile
-  &__expander-container {
+  // Add 24px margin between all fields on mobile
+  &__field {
     @media (max-width: 880px) {
-      margin-top: 1rem;
+      margin-bottom: 1.5rem; // 24px
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    @media (min-width: 881px) {
+      margin-bottom: 0;
     }
   }
 
