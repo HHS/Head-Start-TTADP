@@ -2,6 +2,7 @@ import React, {
   useEffect,
   useContext,
   useState,
+  useMemo,
 } from 'react';
 import { capitalize } from 'lodash';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
@@ -18,6 +19,7 @@ import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecial
 import './index.css';
 import UserContext from '../../UserContext';
 import { EVENT_PARTNERSHIP, TRAINING_EVENT_ORGANIZER } from '../../Constants';
+import isAdmin from '../../permissions';
 
 const FORBIDDEN = 403;
 
@@ -48,6 +50,27 @@ export const translateEventPartnership = (eventPartnership) => {
     default:
       return '';
   }
+};
+
+export const formatObjectiveLinks = (objectiveResources) => {
+  if (Array.isArray(objectiveResources) && objectiveResources.length > 0) {
+    return (
+      <ul className="usa-list--none">
+        {objectiveResources.map((resource) => (
+          <li key={resource.value}>
+            <a
+              href={resource.value}
+              rel="noreferrer"
+            >
+              {resource.value}
+            </a>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return 'None';
 };
 
 const formatNextSteps = (nextSteps, heading, striped) => {
@@ -91,6 +114,8 @@ export default function ViewTrainingReport({ match }) {
   const [eventPoc, setEventPoc] = useState([]);
 
   const { user } = useContext(UserContext);
+
+  const isAdminUser = useMemo(() => isAdmin(user), [user]);
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
@@ -178,7 +203,7 @@ export default function ViewTrainingReport({ match }) {
     const eventSubmitted = event && event.data && event.data.eventSubmitted;
     const sessionReports = event && event.sessionReports ? event.sessionReports : [];
 
-    if (!isOwner) {
+    if (!isOwner && !isAdminUser) {
       return false;
     }
 
@@ -234,6 +259,7 @@ export default function ViewTrainingReport({ match }) {
       'Event creator': ownerName,
       Region: `Region ${String(event.regionId)}`,
       'Event organizer': event.data.eventOrganizer,
+      'Additional states involved': handleArrayJoin(event.data.additionalStates),
       'In partnership with HSA': translateEventPartnership(event.data.eventPartnership),
       'Event collaborators': handleArrayJoin(eventCollaborators),
       ...(
@@ -242,8 +268,7 @@ export default function ViewTrainingReport({ match }) {
       'Intended audience': handleIntendedAudience(event.data.eventIntendedAudience),
       'Start date': event.data.startDate,
       'End date': event.data.endDate,
-      'Training type': event.data['Event Duration/# NC Days of Support'],
-      Reasons: event.data.reasons,
+      'Training type': event.data.trainingType,
       'Target populations': handleArrayJoin(event.data.targetPopulations),
       Vision: event.data.vision,
     },
@@ -285,7 +310,7 @@ export default function ViewTrainingReport({ match }) {
           'Session start date': session.data.startDate,
           'Session end date': session.data.endDate,
           'Session duration': `${session.data.duration || 0} hours`,
-          'Session context': session.data.context,
+          'Session context': session.data.context || 'None provided',
         },
       }, {
         heading: 'Objective summary',
@@ -293,9 +318,9 @@ export default function ViewTrainingReport({ match }) {
           'Session objective': session.data.objective,
           'Supporting goals': formatSupportingGoals(session.data.sessionGoalTemplates),
           Topics: handleArrayJoin(session.data.objectiveTopics),
-          'Trainers/NCs': handleArrayJoin(session.data.objectiveTrainers),
-          'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name) : 'None',
-          'Resource links': session.data.objectiveResources && session.data.objectiveResources.filter((r) => r.value).length ? session.data.objectiveResources.map((o) => o.value) : 'None',
+          Trainers: handleArrayJoin(session.data.objectiveTrainers),
+          'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name).join(', ') : 'None',
+          'Resource links': formatObjectiveLinks(session.data.objectiveResources),
           'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None',
           'TTA provided': session.data.ttaProvided,
           'Support type': session.data.objectiveSupportType,
@@ -305,7 +330,7 @@ export default function ViewTrainingReport({ match }) {
         striped: true,
         data: {
           ...generateIstOfficeOrRecipientProperties(session),
-          'TTA type': handleArrayJoin(session.data.ttaType),
+          'TTA type': handleArrayJoin((session.data.ttaType || []).map((t) => capitalize(t).replace(/-/g, ' '))),
           'Delivery method': capitalize(session.data.deliveryMethod || ''),
           ...generateNumberOfParticipants(session),
           'Language used': session.data.language ? session.data.language.join(', ') : [],

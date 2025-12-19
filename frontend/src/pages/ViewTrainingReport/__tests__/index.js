@@ -46,6 +46,7 @@ const oneCompleteSession = [{
     participants: ['Direct Service: Other'],
     deliveryMethod: 'in-person',
     eventDisplayId: 'R03-PD-23-1037',
+    ttaType: ['training', 'technical-assistance'],
     objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
     objectiveTrainers: ['Trainer 1, NC', 'Trainer 2, GS'],
     objectiveResources: [{ value: 'http://random-resource-url' }],
@@ -123,6 +124,7 @@ const mockEvent = (data = {}) => ({
       specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
       numberOfParticipants: 3,
       objectiveSupportType: SUPPORT_TYPES[2],
+      ttaType: ['training', 'technical-assistance'],
       courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
     },
     createdAt: '2023-06-27T13:48:31.490Z',
@@ -159,6 +161,7 @@ const mockEvent = (data = {}) => ({
       specialistNextSteps: [{ note: 's1s2', completeDate: '06/29/2027' }],
       numberOfParticipants: 3,
       objectiveSupportType: SUPPORT_TYPES[1],
+      ttaType: ['training', 'technical-assistance'],
       courses: [{ id: 3, name: 'course 3' }],
     },
     createdAt: '2023-06-27T13:49:23.985Z',
@@ -242,9 +245,6 @@ describe('ViewTrainingReport', () => {
     // vision
     expect(screen.getByText('Oral Health')).toBeInTheDocument();
 
-    // reasons
-    expect(screen.getByText('Ongoing Quality Improvement')).toBeInTheDocument();
-
     // audience
     expect(screen.getByText('Recipients', { selector: '[data-text="true"]' })).toBeInTheDocument();
 
@@ -279,8 +279,7 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('06/14/2026')).toBeInTheDocument();
     expect(screen.getByText('test-file.pdf')).toBeInTheDocument();
     expect(screen.getByText('Implementing')).toBeInTheDocument();
-    expect(screen.getByText('course 1')).toBeInTheDocument();
-    expect(screen.getByText('course 2')).toBeInTheDocument();
+    expect(screen.getByText('course 1, course 2')).toBeInTheDocument();
 
     // session 2
     expect(screen.getByText('Session 2')).toBeInTheDocument();
@@ -675,7 +674,7 @@ describe('ViewTrainingReport', () => {
     });
 
     expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
-    expect(screen.queryAllByText('None').length).toBe(4);
+    expect(screen.queryAllByText('None').length).toBe(3);
   });
 
   describe('formatOwnerName', () => {
