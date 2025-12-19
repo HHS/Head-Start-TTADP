@@ -572,11 +572,6 @@ function CollaborationReport({ match, location }) {
   };
 
   const onSaveAndContinue = async () => {
-    const validity = await hookForm.trigger();
-    if (!validity) {
-      return;
-    }
-
     const currentPosition = pages.find((page) => page.path === currentPage)?.position;
 
     const isAutoSave = false;
