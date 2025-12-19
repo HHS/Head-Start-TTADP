@@ -55,7 +55,7 @@ export const translateEventPartnership = (eventPartnership) => {
 export const formatObjectiveLinks = (objectiveResources) => {
   if (Array.isArray(objectiveResources) && objectiveResources.length > 0) {
     return (
-      <ul className="usa-list--none">
+      <ul className="usa-list">
         {objectiveResources.map((resource) => (
           <li key={resource.value}>
             <a
