@@ -42,7 +42,7 @@ export default function RecipientSpotlightCardsHeader({
       {/* Sort and Per-Page Controls */}
       <div className="display-flex flex-justify flex-wrap margin-bottom-2">
         {/* Left: Sort Dropdown */}
-        <div className="display-flex flex-align-center flex-wrap margin-bottom-1">
+        <div className="display-flex flex-align-center flex-no-wrap margin-bottom-1">
           <Label htmlFor="recipientSpotlightSortBy" className="margin-right-1 margin-y-0 text-no-wrap">
             Sort by
           </Label>
@@ -62,7 +62,7 @@ export default function RecipientSpotlightCardsHeader({
         </div>
 
         {/* Right: Per-Page Selector */}
-        <div className="display-flex flex-align-center flex-no-wrap margin-bottom-1">
+        <div className="display-flex flex-align-center flex-no-wrap margin-bottom-1 margin-left-auto">
           <Label htmlFor="recipientSpotlightPerPage" className="margin-right-1 margin-y-0 text-no-wrap">
             Show
           </Label>

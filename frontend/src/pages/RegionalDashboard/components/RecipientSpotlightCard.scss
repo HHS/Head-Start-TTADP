@@ -1,6 +1,11 @@
 @use '../../../colors.scss' as *;
 
 .ttahub-recipient-spotlight-card {
+  // Override DataCard padding for mobile
+  @media (max-width: 639px) {
+    padding: 1rem !important; // 16px
+  }
+
   &__recipient-name {
     color: $text-link;
     text-decoration: underline;
@@ -22,6 +27,7 @@
     // Mobile: single column (stack vertically)
     @media (max-width: 639px) {
       grid-template-columns: 1fr;
+      gap: 1rem; // 16px
     }
 
     // Tablet: 2 columns
