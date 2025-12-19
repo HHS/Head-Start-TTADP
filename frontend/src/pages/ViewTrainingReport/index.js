@@ -55,7 +55,7 @@ export const translateEventPartnership = (eventPartnership) => {
 export const formatObjectiveLinks = (objectiveResources) => {
   if (Array.isArray(objectiveResources) && objectiveResources.length > 0) {
     return (
-      <ul className="usa-list">
+      <ul className="margin-top-0">
         {objectiveResources.map((resource) => (
           <li key={resource.value}>
             <a
@@ -276,7 +276,7 @@ export default function ViewTrainingReport({ match }) {
   }] : [];
 
   const generateIstOfficeOrRecipientProperties = (session) => ({
-    Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join('; ') : '',
+    Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
     'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
   });
 
@@ -317,7 +317,7 @@ export default function ViewTrainingReport({ match }) {
         data: {
           'Session objective': session.data.objective,
           'Supporting goals': formatSupportingGoals(session.data.sessionGoalTemplates),
-          Topics: handleArrayJoin(session.data.objectiveTopics),
+          Topics: handleArrayJoin(session.data.objectiveTopics, ', '),
           Trainers: handleArrayJoin(session.data.objectiveTrainers),
           'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name).join(', ') : 'None',
           'Resource links': formatObjectiveLinks(session.data.objectiveResources),
