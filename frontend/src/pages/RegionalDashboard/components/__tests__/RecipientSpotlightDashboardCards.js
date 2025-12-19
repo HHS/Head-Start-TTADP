@@ -18,7 +18,6 @@ describe('RecipientSpotlightDashboardCards', () => {
     handlePageChange: jest.fn(),
     perPage: 10,
     perPageChange: jest.fn(),
-    loading: false,
   };
 
   const renderComponent = (props = {}) => {
@@ -33,7 +32,6 @@ describe('RecipientSpotlightDashboardCards', () => {
           handlePageChange={mergedProps.handlePageChange}
           perPage={mergedProps.perPage}
           perPageChange={mergedProps.perPageChange}
-          loading={mergedProps.loading}
         />
       </BrowserRouter>,
     );
@@ -308,18 +306,6 @@ describe('RecipientSpotlightDashboardCards', () => {
     renderComponent({ recipients, count: 25, perPage: 10 });
 
     expect(screen.getByText(/1-10 of 25/)).toBeInTheDocument();
-  });
-
-  it('shows loading state when loading prop is true', () => {
-    renderComponent({ loading: true });
-
-    expect(screen.getByRole('status', { name: /Recipient spotlight loading/i })).toBeInTheDocument();
-  });
-
-  it('does not show loading state when loading prop is false', () => {
-    renderComponent({ loading: false });
-
-    expect(screen.queryByRole('status', { name: /Recipient spotlight loading/i })).not.toBeInTheDocument();
   });
 
   it('passes sortConfig to RecipientSpotlightCardsHeader', () => {

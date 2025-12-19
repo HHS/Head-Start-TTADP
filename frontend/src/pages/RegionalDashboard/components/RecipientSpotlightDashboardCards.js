@@ -16,14 +16,11 @@ export default function RecipientSpotlightDashboardCards({
   handlePageChange,
   perPage,
   perPageChange,
-  loading,
 }) {
   return (
     <Container
       paddingX={0}
       paddingY={0}
-      loading={loading}
-      loadingLabel="Recipient spotlight loading"
       className="maxw-widescreen ttahub-recipient-spotlight-container height-full margin-y-0"
     >
       <div className="ttahub-recipient-spotlight-table inline-size-auto maxw-full height-full">
@@ -55,6 +52,7 @@ export default function RecipientSpotlightDashboardCards({
 
               {/* Right: Pagination controls */}
               <Pagination
+                className="margin-y-0"
                 pathname=""
                 currentPage={sortConfig.activePage}
                 totalPages={Math.ceil(count / perPage)}
@@ -102,10 +100,8 @@ RecipientSpotlightDashboardCards.propTypes = {
   handlePageChange: PropTypes.func.isRequired,
   perPage: PropTypes.number.isRequired,
   perPageChange: PropTypes.func.isRequired,
-  loading: PropTypes.bool,
 };
 
 RecipientSpotlightDashboardCards.defaultProps = {
   recipients: [],
-  loading: false,
 };

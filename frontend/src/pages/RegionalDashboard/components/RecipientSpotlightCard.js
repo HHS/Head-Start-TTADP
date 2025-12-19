@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
@@ -40,10 +40,17 @@ const INDICATOR_DETAILS = {
 
 export default function RecipientSpotlightCard({ recipient }) {
   const [expanded, setExpanded] = useState(false);
+  const firstIndicatorRef = useRef(null);
 
   const closeOrOpenIndicators = () => {
     setExpanded(!expanded);
   };
+
+  useEffect(() => {
+    if (expanded && firstIndicatorRef.current) {
+      firstIndicatorRef.current.focus();
+    }
+  }, [expanded]);
 
   const calculateActiveIndicators = (recip) => {
     const indicators = [
@@ -67,16 +74,27 @@ export default function RecipientSpotlightCard({ recipient }) {
   const renderIndicatorDetails = () => Object.entries(
     INDICATOR_DETAILS,
   ).map(
-    ([key, { label, description }]) => {
+    ([key, { label, description }], index) => {
       const isApplicable = recipient[key];
       const boxClassName = isApplicable
         ? 'ttahub-recipient-spotlight-card__indicator-box padding-y-1 padding-x-2 bg-white radius-md'
         : 'ttahub-recipient-spotlight-card__indicator-box ttahub-recipient-spotlight-card__indicator-box--not-applicable padding-y-1 padding-x-2 bg-white radius-md';
 
       return (
-        <div key={key} className={boxClassName}>
+        <div
+          key={key}
+          ref={index === 0 ? firstIndicatorRef : null}
+          className={boxClassName}
+          role="article"
+          aria-label={`${label} - ${isApplicable ? 'Active indicator' : 'Not applicable to this recipient'}`}
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+        >
           <div className="ttahub-recipient-spotlight-card__indicator-box-label text-bold margin-bottom-05">
             {label}
+            <span className="usa-sr-only">
+              {isApplicable ? ' - Active indicator' : ' - Not applicable to this recipient'}
+            </span>
           </div>
           <p className="ttahub-recipient-spotlight-card__indicator-box-description margin-0">
             {description}
@@ -92,7 +110,7 @@ export default function RecipientSpotlightCard({ recipient }) {
   return (
     <DataCard
       testId={`recipient-spotlight-card-${recipient.recipientId}`}
-      className="ttahub-recipient-spotlight-card margin-bottom-3"
+      className="ttahub-recipient-spotlight-card margin-bottom-1"
     >
       <div className="grid-container padding-0">
         <div className="ttahub-recipient-spotlight-card__grid">
@@ -146,7 +164,7 @@ export default function RecipientSpotlightCard({ recipient }) {
         </div>
 
         {expanded && (
-          <div className="ttahub-recipient-spotlight-card__details margin-top-3 padding-top-3">
+          <div className="ttahub-recipient-spotlight-card__details margin-top-3 padding-top-2">
             <div className="ttahub-recipient-spotlight-card__details-grid">
               {indicatorDetails}
             </div>

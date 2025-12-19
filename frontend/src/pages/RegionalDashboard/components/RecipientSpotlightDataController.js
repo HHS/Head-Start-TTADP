@@ -156,7 +156,6 @@ export default function RecipientSpotlightDataController({
             handlePageChange={handlePageChange}
             perPage={recipientsPerPage}
             perPageChange={perPageChange}
-            loading={loading}
           />
         </Grid>
       </Grid>

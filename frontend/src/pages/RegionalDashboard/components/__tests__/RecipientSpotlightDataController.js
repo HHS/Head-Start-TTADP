@@ -344,20 +344,6 @@ describe('RecipientSpotlightDataController', () => {
     });
   });
 
-  it('passes loading state to RecipientSpotlightDashboardCards', async () => {
-    renderController();
-
-    // Initially loading
-    expect(screen.getByRole('status', { name: /Recipient spotlight loading/i })).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(screen.getByText('Test Recipient 1')).toBeInTheDocument();
-    });
-
-    // After loading
-    expect(screen.queryByRole('status', { name: /Recipient spotlight loading/i })).not.toBeInTheDocument();
-  });
-
   it('renders DashboardOverviewWidget with correct props', async () => {
     renderController();
 
