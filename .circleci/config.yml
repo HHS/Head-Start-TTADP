@@ -148,7 +148,7 @@ workflows:
     # scheduled job to reset lower envs to a default state
     triggers:
     - schedule:
-        cron: "0 3 * * 0" # 3AM UTC = 11PM EST Saturday night
+        cron: "0 3 * * 0" # 3AM UTC = 11PM EST Sunday night
         filters:
           branches:
             only:
