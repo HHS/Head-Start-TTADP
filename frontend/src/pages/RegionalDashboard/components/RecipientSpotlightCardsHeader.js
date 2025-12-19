@@ -40,9 +40,9 @@ export default function RecipientSpotlightCardsHeader({
       </div>
 
       {/* Sort and Per-Page Controls */}
-      <div className="display-flex flex-justify margin-bottom-2">
+      <div className="display-flex flex-justify flex-wrap margin-bottom-2">
         {/* Left: Sort Dropdown */}
-        <div className="display-flex flex-align-center flex-no-wrap">
+        <div className="display-flex flex-align-center flex-wrap margin-bottom-1">
           <Label htmlFor="recipientSpotlightSortBy" className="margin-right-1 margin-y-0 text-no-wrap">
             Sort by
           </Label>
@@ -51,7 +51,7 @@ export default function RecipientSpotlightCardsHeader({
             value={`${sortConfig.sortBy}-${sortConfig.direction}`}
             id="recipientSpotlightSortBy"
             name="recipientSpotlightSortBy"
-            className="width-auto margin-0"
+            className="maxw-full margin-0 ttahub-recipient-spotlight-sort-dropdown"
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -62,7 +62,7 @@ export default function RecipientSpotlightCardsHeader({
         </div>
 
         {/* Right: Per-Page Selector */}
-        <div className="display-flex flex-align-center flex-no-wrap">
+        <div className="display-flex flex-align-center flex-no-wrap margin-bottom-1">
           <Label htmlFor="recipientSpotlightPerPage" className="margin-right-1 margin-y-0 text-no-wrap">
             Show
           </Label>

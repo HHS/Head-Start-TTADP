@@ -132,7 +132,7 @@ export default function RecipientSpotlightCard({ recipient }) {
             </div>
           </div>
 
-          <div className="mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2 display-flex flex-align-center">
+          <div className="mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2 display-flex flex-align-center ttahub-recipient-spotlight-card__expander-container">
             <ExpanderButton
               type="indicator"
               ariaLabel={`indicators for recipient ${recipient.recipientName}`}
