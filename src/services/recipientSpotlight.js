@@ -60,8 +60,9 @@ export async function getRecipientSpotlightIndicators(
       (citation) that has a MonitoringFindingHistories.determination of Deficiency.
     3. New Recipients: if the start date of their oldest grant is less than four years old.
     4. New Staff: If any program personnel effective date falls within the past
-    two years (ProgramPersonnel.effectiveDate) indicate it (we don't know the exact roles yet).
-    5. No TTA: There are no approved reports (AR) for this grant in the LTM.
+    two years (ProgramPersonnel.effectiveDate) indicate it for director and cfo,
+    which matches recipientLeadership() in src/services/recipient.js
+    5. No TTA: There are no approved reports (AR) for this recipient in the LTM.
     6. DRS: TBD
     7. FEI: TBD
 */
@@ -71,40 +72,132 @@ export async function getRecipientSpotlightIndicators(
 
   const spotLightSql = `
     WITH
-    -- Get the base set of recipients with their regions
-    recipients AS (
-      SELECT DISTINCT
-        r.id AS "recipientId",
-        g."regionId",
-        r.name AS "recipientName"
+    -- Creating some useful CTEs
+    -- Join grants and recipients so we don't have to do it repeatedly
+    grant_recipients AS (
+      SELECT
+        r.id rid,
+        r.name AS rname,
+        gr."regionId" region,
+        gr.id grid,
+        gr.number grnumber
       FROM "Recipients" r
-      JOIN "Grants" g ON r.id = g."recipientId"
+      JOIN "Grants" gr
+        ON r.id = gr."recipientId"
       WHERE ${grantIdFilter}
     ),
-    
+    recipients AS (
+    SELECT DISTINCT
+      rid,
+      rname,
+      region
+    FROM grant_recipients
+    ),
+    -- Usually we care about all the grants for a recipient
+    -- not just the ones in the filter
+    all_grants AS (
+    SELECT DISTINCT
+      rid,
+      rname,
+      region,
+      gr.id grid,
+      gr."startDate" grstart,
+      gr.number grnumber
+    FROM recipients
+    JOIN "Grants" gr
+      ON rid = gr."recipientId"
+    WHERE deleted IS NULL OR NOT deleted
+    ),
+    -- Select all the potentially-relevant reviews
+    -- for early filtering of monitoring datasets
+    all_reviews AS (
+    SELECT DISTINCT
+      rid,
+      region,
+      grid,
+      mr."reviewId" ruuid,
+      mr."reviewType" review_type,
+      mrs.name review_status,
+      mr."reportDeliveryDate" rdd,
+      mr."startDate" rsd,
+      mr."sourceCreatedAt" rsc
+    FROM all_grants
+    JOIN "MonitoringReviewGrantees" mrg
+      ON grnumber = mrg."grantNumber"
+    JOIN "MonitoringReviews" mr
+      ON mrg."reviewId" = mr."reviewId"
+    JOIN "MonitoringReviewStatuses" mrs
+      ON mr."statusId" = mrs."statusId"
+    WHERE mr."deletedAt" IS NULL 
+      AND (
+        mr."reportDeliveryDate" > '2025-01-20'
+        OR
+        mr."sourceCreatedAt" > '2025-01-20'
+      )
+    ),
+    ---------------------------------------
+    -- Spotlight indicators ---------------
+    ---------------------------------------
     -- 1. Child Incidents: Grants with more than one RAN citation in the last 12 months
     child_incidents AS (
       SELECT
-        r."recipientId",
-        TRUE AS "childIncidents"
-      FROM recipients r
-      JOIN "Grants" g ON r."recipientId" = g."recipientId"
-      JOIN "MonitoringReviewGrantees" mrg ON g.number = mrg."grantNumber"
-      JOIN "MonitoringReviews" mr ON mrg."reviewId" = mr."reviewId"
-      JOIN "MonitoringReviewStatuses" mrs ON mr."statusId" = mrs."statusId"
-      WHERE ${grantIdFilter}
-      AND mr."reviewType" = 'RAN'
-      AND mrs."name" = 'Complete'
-      AND mr."reportDeliveryDate" >= NOW() - INTERVAL '12 months'
-      GROUP BY r."recipientId"
+        rid incident_rid,
+        region incident_region
+      FROM all_reviews
+      WHERE review_type = 'RAN'
+        AND review_status = 'Complete'
+        AND rdd >= NOW() - INTERVAL '12 months'
+      GROUP BY 1,2
       HAVING COUNT(*) > 1
     ),
     
-    -- 2. Deficiency: Grants with at least one deficiency in findings
+    -- 2. Deficiency: Recipients with at least one uncorrected deficiency
+    --    in monitoring findings. The logic for "uncorrected" is complex
+    --    because we cannot simply rely on the finding's statusId value.
+
+    -- associate each citation with its most recent review
+    -- TODO: recheck the definition of "deficiency"
+    ordered_citation_reviews AS (
+    SELECT DISTINCT ON (mf."findingId")
+      mf."findingId" fid,
+      mf."findingType" finding_type,
+      mfs.name finding_status,
+      ruuid,
+      review_status,
+      rdd
+    FROM "MonitoringFindings" mf
+    JOIN "MonitoringFindingHistories" mfh
+      ON mf."findingId" = mfh."findingId"
+    JOIN all_reviews
+      ON mfh."reviewId" = ruuid
+    JOIN "MonitoringFindingStatuses" mfs
+      ON mf."statusId" = mfs."statusId"
+    WHERE mf."findingType" = 'Deficiency'
+      AND mfs.name = 'Elevated Deficiency'
+    ORDER BY 1,rsd DESC, rsc DESC
+    ),
+    active_citations AS (
+    SELECT mf."findingId" fid
+    FROM "MonitoringFindings" mf
+    JOIN "MonitoringFindingStatuses" mfs
+      ON mf."statusId" = mfs."statusId"
+    WHERE mfs.name IN ('Active', 'Elevated Deficiency')
+      AND mf."sourceDeletedAt" IS NULL
+    ),
+    -- union together active citations with those whose most recent linked
+    -- review is not complete, yielding the list of citations on which TTA
+    -- might still be in progress
+    open_citations AS (
+    SELECT fid FROM active_citations
+    UNION
+    SELECT fid FROM ordered_citation_reviews
+    WHERE review_status != 'Complete'
+    ),
+    -- TODO: refactor w/all_reviews
     deficiencies AS (
       SELECT
-        r."recipientId",
-        TRUE AS "deficiency"
+        rid deficiency_rid,
+        rid deficiency_region
       FROM recipients r
       JOIN "Grants" g ON r."recipientId" = g."recipientId"
       JOIN "MonitoringReviewGrantees" mrg ON g.number = mrg."grantNumber"
@@ -123,86 +216,82 @@ export async function getRecipientSpotlightIndicators(
     -- 3. New Recipients: Recipients with oldest grant less than 4 years old
     new_recipients AS (
       SELECT
-        r."recipientId",
-        TRUE AS "newRecipients"
-      FROM recipients r
-      JOIN (
-        SELECT
-          g."recipientId",
-          MIN(g."startDate") AS oldest_start_date
-        FROM "Grants" g
-        WHERE ${grantIdFilter}
-        GROUP BY g."recipientId"
-      ) oldest_grant ON r."recipientId" = oldest_grant."recipientId"
-      WHERE oldest_grant.oldest_start_date >= NOW() - INTERVAL '4 years'
+        rid new_recip_rid,
+        region new_recip_region
+      FROM all_grants
+      GROUP BY 1,2
+      HAVING MIN(grstart) >= NOW() - INTERVAL '4 years'
     ),
 
     -- 4. New Staff: Any program personnel with effective date in the past 2 years
     new_staff AS (
       SELECT
-        r."recipientId",
-        TRUE AS "newStaff"
-      FROM recipients r
-      JOIN "Grants" g ON r."recipientId" = g."recipientId"
-      JOIN "ProgramPersonnel" pp ON g.id = pp."grantId"
-      WHERE ${grantIdFilter}
-      AND pp."effectiveDate" >= NOW() - INTERVAL '2 years'
-      GROUP BY r."recipientId"
+        rid new_staff_rid,
+        region new_staff_region
+      FROM all_grants
+      JOIN "ProgramPersonnel" pp
+        ON grid = pp."grantId"
+      WHERE pp.role IN ('cfo','director') 
+        AND pp."effectiveDate" >= NOW() - INTERVAL '2 years'
+      GROUP BY 1,2
     ),
 
     -- 5. No TTA: Grants with no approved reports in the last 12 months
-    grants_with_tta AS (
+    -- TODO: add session reports
+    grants_with_ars AS (
       SELECT DISTINCT
-        r."recipientId"
-      FROM recipients r
-      JOIN "Grants" g ON r."recipientId" = g."recipientId"
-      JOIN "ActivityReportGoals" arg ON arg."goalId" IN (
-        SELECT goals.id FROM "Goals" goals WHERE goals."grantId" = g.id
-      )
-      JOIN "ActivityReports" ar ON arg."activityReportId" = ar.id
-      WHERE ${grantIdFilter}
-      AND ar."calculatedStatus" = 'approved'
-      AND ar."approvedAt" >= NOW() - INTERVAL '12 months'
+        rid,
+        region
+      FROM all_grants
+      JOIN "Goals" g
+        ON g."grantId" = grid
+      JOIN "ActivityReportGoals" arg
+        ON arg."goalId" = g.id
+      JOIN "ActivityReports" ar
+        ON arg."activityReportId" = ar.id
+      WHERE ar."calculatedStatus" = 'approved'
+        AND ar."startDate" >= NOW() - INTERVAL '12 months'
+      GROUP BY 1,2
     ),
-    
     no_tta AS (
       SELECT 
-        r."recipientId",
-        TRUE AS "noTTA"
+        rid no_tta_rid,
+        region no_tta_region
       FROM recipients r
-      WHERE r."recipientId" NOT IN (SELECT "recipientId" FROM grants_with_tta)
+      EXCEPT
+      SELECT rid, region FROM grants_with_tta
     ),
     
     -- Combine all indicators into one result set
     combined_indicators AS (
       SELECT
-        r."recipientId",
-        r."regionId",
-        r."recipientName",
-        ARRAY_AGG(g.id)::text[] AS "grantIds",
-        COALESCE(ci."childIncidents", FALSE) AS "childIncidents",
-        COALESCE(d."deficiency", FALSE) AS "deficiency",
-        COALESCE(nr."newRecipients", FALSE) AS "newRecipients",
-        COALESCE(ns."newStaff", FALSE) AS "newStaff",
-        COALESCE(nt."noTTA", FALSE) AS "noTTA",
+        rid "recipientId",
+        region "regionId",
+        rname "recipientName",
+        ARRAY_AGG(g.id)::text[] "grantIds",
+        incident_rid IS NOT NULL "childIncidents",
+        deficiency_rid IS NOT NULL "deficiency",
+        new_recip_rid IS NOT NULL "newRecipients",
+        new_staff_rid IS NOT NULL "newStaff",
+        no_tta_rid IS NOT NULL "noTTA",
         FALSE AS "DRS",  -- Placeholder for future implementation
         FALSE AS "FEI"   -- Placeholder for future implementation
       FROM recipients r
-      LEFT JOIN child_incidents ci ON r."recipientId" = ci."recipientId"
-      LEFT JOIN deficiencies d ON r."recipientId" = d."recipientId"
-      LEFT JOIN new_recipients nr ON r."recipientId" = nr."recipientId"
-      LEFT JOIN new_staff ns ON r."recipientId" = ns."recipientId"
-      LEFT JOIN no_tta nt ON r."recipientId" = nt."recipientId"
-      JOIN "Grants" g ON r."recipientId" = g."recipientId" AND ${grantIdFilter}
-      GROUP BY
-        r."recipientId",
-        r."regionId",
-        r."recipientName",
-        ci."childIncidents",
-        d."deficiency",
-        nr."newRecipients",
-        ns."newStaff",
-        nt."noTTA"
+      LEFT JOIN child_incidents ci
+        ON rid = incident_rid
+        AND region = incident_region
+      LEFT JOIN deficiencies d
+        ON rid = deficiency_rid
+        AND region = deficiency_region
+      LEFT JOIN new_recipients nr
+        ON rid = new_recip_rid
+        AND region = new_recip_region
+      LEFT JOIN new_staff ns
+        ON rid = new_staff_rid
+        AND region = new_staff_region
+      LEFT JOIN no_tta nt
+        ON rid = no_tta_rid
+        AND region = no_tta_region
     )
 
     SELECT * FROM combined_indicators
