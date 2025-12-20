@@ -9,6 +9,7 @@ import './Profile.css';
 import ClassReview from './components/ClassReview';
 import MonitoringReview from './components/MonitoringReview';
 import { useGrantData } from './GrantDataContext';
+import RecipientSpotlight from '../components/RecipientSpotlight';
 
 export default function Profile({
   recipientSummary,
@@ -24,10 +25,13 @@ export default function Profile({
       </Helmet>
       <div className="maxw-widescreen">
         <Grid row gap={4}>
-          <Grid desktop={{ col: 3 }} tabletLg={{ col: 12 }}>
+          <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
             <RecipientSummary summary={recipientSummary} />
           </Grid>
-          <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
+          <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
+            <RecipientSpotlight recipientId={recipientId} regionId={regionId} />
+          </Grid>
+          <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <RecipientLeadership recipientId={recipientId} regionId={regionId} />
           </Grid>
           <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
