@@ -1,169 +1,187 @@
-import AWS from 'aws-sdk';
 import { Readable } from 'stream';
-import { auditLogger } from '../../../logger';
+import { Upload } from '@aws-sdk/lib-storage';
 import S3Client from '../s3';
-import { generateS3Config } from '../../s3';
+import { auditLogger } from '../../../logger';
 
-jest.mock('aws-sdk');
+const mockSend = jest.fn();
+const commandCalls = [];
 
+// Mock AWS SDK client and commands used by stream S3 wrapper
+jest.mock('@aws-sdk/client-s3', () => {
+  const makeCommand = (name) => jest.fn((params) => {
+    const cmd = { name, params };
+    commandCalls.push(cmd);
+    return cmd;
+  });
+
+  return {
+    S3Client: jest.fn(() => ({ send: mockSend })),
+    GetObjectCommand: makeCommand('GetObjectCommand'),
+    HeadObjectCommand: makeCommand('HeadObjectCommand'),
+    DeleteObjectCommand: makeCommand('DeleteObjectCommand'),
+    ListObjectsV2Command: makeCommand('ListObjectsV2Command'),
+  };
+});
+
+// Mock @aws-sdk/lib-storage Upload
+jest.mock('@aws-sdk/lib-storage', () => {
+  const doneMock = jest.fn().mockResolvedValue(undefined);
+  const UploadMock = jest.fn().mockImplementation(() => ({
+    done: doneMock,
+  }));
+  return { Upload: UploadMock };
+});
+
+// Mock logger used by the module under test
 jest.mock('../../../logger', () => ({
   auditLogger: {
     error: jest.fn(),
   },
 }));
 
-describe('S3Client', () => {
-  let s3Client;
-  let mockS3;
-
-  beforeAll(() => {
-    jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+function streamToString(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+    stream.on('error', (err) => reject(err));
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
   });
+}
+
+describe('S3Client', () => {
+  const BUCKET = 'test-bucket';
 
   beforeEach(() => {
-    mockS3 = {
-      upload: jest.fn().mockReturnThis(),
-      promise: jest.fn(),
-      getObject: jest.fn().mockReturnThis(),
-      headObject: jest.fn().mockReturnThis(),
-      deleteObject: jest.fn().mockReturnThis(),
-      listObjectsV2: jest.fn().mockReturnThis(),
-    };
-    AWS.S3.mockImplementation(() => mockS3);
-
-    s3Client = new S3Client({ bucketName: 'test-bucket', s3Config: { signatureVersion: 'v4', s3ForcePathStyle: true } });
-  });
-
-  afterEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('constructor', () => {
-    it('should create an S3 client with default configuration', () => {
-      const s3Config = generateS3Config();
-      const client = new S3Client();
-      expect(AWS.S3).toHaveBeenCalledWith(s3Config.s3Config);
-    });
-
-    it('should create an S3 client with custom configuration', () => {
-      const customConfig = {
-        bucketName: 'custom-bucket',
-        s3Config: {
-          accessKeyId: 'customAccessKeyId',
-          endpoint: 'customEndpoint',
-          region: 'customRegion',
-          secretAccessKey: 'customSecretAccessKey',
-          signatureVersion: 'v4',
-          s3ForcePathStyle: true,
-        },
-      };
-      const client = new S3Client(customConfig);
-      expect(AWS.S3).toHaveBeenCalledWith(customConfig.s3Config);
-    });
+    mockSend.mockReset();
+    commandCalls.length = 0;
   });
 
   describe('uploadFileAsStream', () => {
-    it('should upload file as stream', async () => {
-      const key = 'test-key';
-      const stream = new Readable();
+    it('calls Upload and waits for done()', async () => {
+      const uploadDone = jest.fn().mockResolvedValue(undefined);
+      Upload.mockImplementation(() => ({ done: uploadDone }));
 
-      await s3Client.uploadFileAsStream(key, stream);
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+      const stream = Readable.from(Buffer.from('hello'));
+      await client.uploadFileAsStream('file.txt', stream);
 
-      expect(mockS3.upload).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key, Body: stream });
-      expect(mockS3.promise).toHaveBeenCalled();
+      expect(Upload).toHaveBeenCalled();
+      expect(uploadDone).toHaveBeenCalled();
     });
 
-    it('should throw error and log if upload fails', async () => {
-      const key = 'test-key';
-      const stream = new Readable();
-      const error = new Error('Upload failed');
-      mockS3.promise.mockRejectedValue(error);
+    it('logs and rethrows when upload fails', async () => {
+      const error = new Error('upload failed');
+      const uploadDone = jest.fn().mockRejectedValue(error);
+      Upload.mockImplementation(() => ({ done: uploadDone }));
 
-      await expect(s3Client.uploadFileAsStream(key, stream)).rejects.toThrowError(error);
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+      const stream = Readable.from(Buffer.from('data'));
+
+      await expect(client.uploadFileAsStream('file.txt', stream)).rejects.toThrow(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error uploading file:', error);
     });
   });
 
   describe('downloadFileAsStream', () => {
-    it('should download file as stream', async () => {
-      const key = 'test-key';
-      const response = { Body: Buffer.from('test-data') };
-      mockS3.getObject.mockReturnValueOnce({ promise: jest.fn().mockResolvedValue(response) });
+    it('returns a readable stream with the object body', async () => {
+      const body = Buffer.from('downloaded-content');
+      mockSend.mockResolvedValue({ Body: body });
 
-      const result = await s3Client.downloadFileAsStream(key);
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+      const stream = await client.downloadFileAsStream('file.txt');
+      const text = await streamToString(stream);
 
-      expect(mockS3.getObject).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key });
-      expect(result).toBeInstanceOf(Readable);
+      expect(mockSend).toHaveBeenCalledWith(commandCalls[0]);
+      expect(commandCalls[0]).toEqual({
+        name: 'GetObjectCommand',
+        params: { Bucket: BUCKET, Key: 'file.txt' },
+      });
+      expect(text).toBe(body.toString('utf8'));
     });
 
-    it('should throw error and log if download fails', async () => {
-      const key = 'test-key';
-      const error = new Error('Download failed');
-      mockS3.getObject.mockReturnValueOnce({ promise: jest.fn().mockRejectedValue(error) });
+    it('logs and rethrows when getObject fails', async () => {
+      const error = new Error('not found');
+      mockSend.mockRejectedValue(error);
 
-      await expect(s3Client.downloadFileAsStream(key)).rejects.toThrowError(error);
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+
+      await expect(client.downloadFileAsStream('missing.txt')).rejects.toThrow(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error downloading file:', error);
     });
   });
 
   describe('getFileMetadata', () => {
-    it('should get file metadata', async () => {
-      const key = 'test-key';
-      const response = { Metadata: { size: '1024' } };
-      mockS3.headObject.mockReturnValueOnce({ promise: jest.fn().mockResolvedValue(response) });
+    it('returns headObject response', async () => {
+      const meta = { ContentLength: 42 };
+      mockSend.mockResolvedValue(meta);
 
-      const result = await s3Client.getFileMetadata(key);
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+      const response = await client.getFileMetadata('file.txt');
 
-      expect(mockS3.headObject).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key });
-      expect(result).toEqual(response);
+      expect(response).toBe(meta);
+      expect(commandCalls[0]).toEqual({
+        name: 'HeadObjectCommand',
+        params: { Bucket: BUCKET, Key: 'file.txt' },
+      });
     });
 
-    it('should throw error and log if getting file metadata fails', async () => {
-      const key = 'test-key';
-      const error = new Error('Failed to get file metadata');
-      mockS3.headObject.mockReturnValueOnce({ promise: jest.fn().mockRejectedValue(error) });
+    it('logs and rethrows when headObject fails', async () => {
+      const error = new Error('head failed');
+      mockSend.mockRejectedValue(error);
 
-      await expect(s3Client.getFileMetadata(key)).rejects.toThrowError(error);
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+
+      await expect(client.getFileMetadata('file.txt')).rejects.toThrow(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error getting file metadata:', error);
     });
   });
 
   describe('deleteFile', () => {
-    it('should delete file', async () => {
-      const key = 'test-key';
+    it('calls deleteObject and resolves', async () => {
+      mockSend.mockResolvedValue({ status: 'ok' });
 
-      await s3Client.deleteFile(key);
-
-      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key });
-      expect(mockS3.promise).toHaveBeenCalled();
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+      await expect(client.deleteFile('file.txt')).resolves.toEqual({ status: 'ok' });
+      expect(commandCalls[0]).toEqual({
+        name: 'DeleteObjectCommand',
+        params: { Bucket: BUCKET, Key: 'file.txt' },
+      });
     });
 
-    it('should throw error and log if deleting file fails', async () => {
-      const key = 'test-key';
-      const error = new Error('Failed to delete file');
-      mockS3.promise.mockRejectedValue(error);
+    it('logs and rethrows when deleteObject fails', async () => {
+      const error = new Error('delete failed');
+      mockSend.mockRejectedValue(error);
 
-      await expect(s3Client.deleteFile(key)).rejects.toThrowError(error);
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+
+      await expect(client.deleteFile('file.txt')).rejects.toThrow(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error deleting file:', error);
     });
   });
 
   describe('listFiles', () => {
-    it('should list files', async () => {
-      const response = { Contents: [{ Key: 'file1.txt' }, { Key: 'file2.txt' }] };
-      mockS3.listObjectsV2.mockReturnValueOnce({ promise: jest.fn().mockResolvedValue(response) });
+    it('returns listObjectsV2 response', async () => {
+      const list = { Contents: [{ Key: 'a' }, { Key: 'b' }] };
+      mockSend.mockResolvedValue(list);
 
-      const result = await s3Client.listFiles();
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+      const response = await client.listFiles();
 
-      expect(mockS3.listObjectsV2).toHaveBeenCalledWith({ Bucket: 'test-bucket' });
-      expect(result).toEqual(response);
+      expect(response).toBe(list);
+      expect(commandCalls[0]).toEqual({
+        name: 'ListObjectsV2Command',
+        params: { Bucket: BUCKET },
+      });
     });
 
-    it('should throw error and log if listing files fails', async () => {
-      const error = new Error('Failed to list files');
-      mockS3.listObjectsV2.mockReturnValueOnce({ promise: jest.fn().mockRejectedValue(error) });
+    it('logs and rethrows when listObjectsV2 fails', async () => {
+      const error = new Error('list failed');
+      mockSend.mockRejectedValue(error);
 
-      await expect(s3Client.listFiles()).rejects.toThrowError(error);
+      const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
+
+      await expect(client.listFiles()).rejects.toThrow(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error listing files:', error);
     });
   });

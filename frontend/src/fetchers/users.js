@@ -28,11 +28,6 @@ export const verifyEmailToken = async (token) => {
   await post(join('/', 'api', 'users', 'verify-email', token));
 };
 
-export const getStatistics = async () => {
-  const res = await get(join('/', 'api', 'users', 'statistics'));
-  return res.json();
-};
-
 export const getRegionalTrainerOptions = async (regionId) => {
   const res = await get(join('/', 'api', 'users', 'trainers', 'regional', 'region', regionId));
   return res.json();

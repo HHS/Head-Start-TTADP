@@ -127,6 +127,8 @@ export async function saveObjectivesForReport(objectives, report) {
         supportType: objective.supportType,
         order: index,
         objectiveCreatedHere,
+        useIpdCourses: objective.useIpdCourses,
+        useFiles: objective.useFiles,
       });
 
       return savedObjective;

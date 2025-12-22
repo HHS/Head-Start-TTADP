@@ -6,11 +6,14 @@ import {
   Fieldset,
 } from '@trussworks/react-uswds';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { useFormContext } from 'react-hook-form';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import {
   nextStepsFields,
 } from '../constants';
 import NextStepsRepeater from '../../ActivityReport/Pages/components/NextStepsRepeater';
+import { getNextStepsSections } from '../../ActivityReport/Pages/nextSteps';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 
 const NextSteps = () => (
   <>
@@ -40,11 +43,24 @@ const fields = Object.keys(nextStepsFields);
 const path = 'next-steps';
 const position = 4;
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
+const ReviewSection = () => {
+  const { getValues } = useFormContext();
+  const {
+    specialistNextSteps,
+    recipientNextSteps,
+  } = getValues();
+  return (
+    <ReviewPage sections={getNextStepsSections(specialistNextSteps, recipientNextSteps)} path="next-steps" isCustomValue />);
+};
+
 export const isPageComplete = (hookForm) => {
   const formData = hookForm.getValues();
 
   const { specialistNextSteps, recipientNextSteps } = formData;
+
+  if (!specialistNextSteps || !recipientNextSteps) {
+    return false;
+  }
 
   if (!specialistNextSteps.length || !recipientNextSteps.length) {
     return false;
@@ -65,23 +81,23 @@ export default {
   review: false,
   fields,
   render: (
-    _additionalData,
+    additionalData,
     formData,
     _reportId,
     isAppLoading,
-    _onContinue,
+    onContinue,
     onSaveDraft,
     onUpdatePage,
     _weAreAutoSaving,
     _datePickerKey,
-    onFormSubmit,
+    _onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
       <NextSteps formData={formData} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
         {
           // if status is 'Completed' then don't show the save draft button.
           formData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (

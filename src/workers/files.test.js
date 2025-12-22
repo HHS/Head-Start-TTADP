@@ -1,8 +1,12 @@
 import axios from 'axios';
 import processFile from './files';
-import { s3 } from '../lib/s3';
+import { downloadFile } from '../lib/s3';
 import { File } from '../models';
 import { FILE_STATUSES } from '../constants';
+
+jest.mock('../lib/s3', () => ({
+  downloadFile: jest.fn(),
+}));
 
 const s3Return = {
   AcceptRanges: 'bytes',
@@ -13,8 +17,6 @@ const s3Return = {
   Metadata: {},
   Body: Buffer.from('Hello World!'),
 };
-
-const mockS3 = jest.spyOn(s3, 'getObject').mockImplementation(() => ({ promise: () => Promise.resolve(s3Return) }));
 
 const mockAxios = jest.spyOn(axios, 'post').mockImplementation(() => Promise.resolve());
 const axiosCleanResponse = { status: 200, data: { Status: 'OK', Description: '' } };
@@ -30,6 +32,10 @@ const mockUpdate = jest.spyOn(File, 'update').mockImplementation(() => Promise.r
 const fileKey = '9f830aaa-5bfc-4f9c-a8c6-30753d1440b4.pdf';
 
 describe('File Scanner tests', () => {
+  beforeEach(() => {
+    downloadFile.mockResolvedValue(s3Return);
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -38,7 +44,7 @@ describe('File Scanner tests', () => {
     const got = await processFile(fileKey);
     expect(got.status).toBe(200);
     expect(got.data).toStrictEqual({ Status: 'OK', Description: '' });
-    expect(mockS3).toHaveBeenCalled();
+    expect(downloadFile).toHaveBeenCalled();
     expect(mockAxios).toHaveBeenCalled();
     expect(mockFindOne).toHaveBeenCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toHaveBeenCalledWith(
@@ -51,7 +57,7 @@ describe('File Scanner tests', () => {
     const got = await processFile(fileKey);
     expect(got.status).toBe(406);
     expect(got.data).toStrictEqual({ Status: 'FOUND', Description: 'Eicar-Test-Signature' });
-    expect(mockS3).toHaveBeenCalled();
+    expect(downloadFile).toHaveBeenCalled();
     expect(mockAxios).toHaveBeenCalled();
     expect(mockFindOne).toHaveBeenCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toHaveBeenCalledWith(

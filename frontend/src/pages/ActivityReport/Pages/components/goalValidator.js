@@ -13,6 +13,8 @@ export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link. Invali
 export const OBJECTIVE_TTA = 'Describe the TTA provided';
 export const OBJECTIVE_TOPICS = 'Select at least one topic';
 export const OBJECTIVE_CITATIONS = 'Select at least one citation';
+export const OBJECTIVE_COURSES = 'Select at least one course';
+export const OBJECTIVE_FILES = 'Upload at least one file';
 
 /**
  * Function to validate a single value based on a user's flags
@@ -78,6 +80,16 @@ export const unfinishedObjectives = (
           `${fieldArrayName}[${index}].supportType`,
           { message: 'Select a support type' },
         );
+        incomplete = true;
+      }
+
+      if (objective.useIpdCourses && (!objective.courses || !objective.courses.length)) {
+        setError(`${fieldArrayName}[${index}].courses`, { message: OBJECTIVE_COURSES });
+        incomplete = true;
+      }
+
+      if (objective.useFiles && (!objective.files || !objective.files.length)) {
+        setError(`${fieldArrayName}[${index}].files`, { message: OBJECTIVE_FILES });
         incomplete = true;
       }
 
