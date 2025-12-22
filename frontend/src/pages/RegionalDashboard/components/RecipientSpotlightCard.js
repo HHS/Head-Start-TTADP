@@ -87,8 +87,6 @@ export default function RecipientSpotlightCard({ recipient }) {
           className={boxClassName}
           role="article"
           aria-label={`${label} - ${isApplicable ? 'Active indicator' : 'Not applicable to this recipient'}`}
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-          tabIndex={0}
         >
           <div className="ttahub-recipient-spotlight-card__indicator-box-label text-bold margin-bottom-05">
             {label}
@@ -110,7 +108,7 @@ export default function RecipientSpotlightCard({ recipient }) {
   return (
     <DataCard
       testId={`recipient-spotlight-card-${recipient.recipientId}`}
-      className="ttahub-recipient-spotlight-card margin-bottom-1"
+      className="ttahub-recipient-spotlight-card"
     >
       <div className="grid-container padding-0">
         <div className="ttahub-recipient-spotlight-card__grid">

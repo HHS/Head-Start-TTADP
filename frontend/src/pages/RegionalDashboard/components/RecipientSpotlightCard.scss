@@ -7,6 +7,14 @@
   }
 }
 
+ .usa-table-container--scrollable .ttahub-recipient-spotlight-card {
+  margin-bottom: .5rem;
+}
+
+.ttahub-recipient-spotlight-card__field button {
+  margin: 0px;
+}
+
 .ttahub-recipient-spotlight-card {
 
   &__recipient-name {
