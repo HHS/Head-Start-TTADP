@@ -8,7 +8,7 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { hasApproveActivityReport } from '../../permissions';
 import UserContext from '../../UserContext';
-import { DASHBOARD_FILTER_CONFIG } from './constants';
+import { DASHBOARD_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { showFilterWithMyRegions } from '../regionHelpers';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
@@ -29,7 +29,7 @@ const pageConfig = () => ({
   },
   'recipient-spotlight': {
     h1Text: 'Regional dashboard - Recipient spotlight',
-    showFilters: false,
+    showFilters: true,
   },
   'activity-reports': {
     h1Text: 'Regional dashboard - Activity Reports',
@@ -69,6 +69,14 @@ export default function RegionalDashboard({ match }) {
   const { reportType } = match.params;
   const filterKey = useDashboardFilterKey('regional-dashboard', reportType || 'activityReports');
 
+  // Determine which filter config to use based on report type
+  const filterConfigToUse = useMemo(() => {
+    if (reportType === 'recipient-spotlight') {
+      return RECIPIENT_SPOTLIGHT_FILTER_CONFIG;
+    }
+    return DASHBOARD_FILTER_CONFIG;
+  }, [reportType]);
+
   const {
     // from useUserDefaultRegionFilters
     regions,
@@ -87,7 +95,7 @@ export default function RegionalDashboard({ match }) {
     filterKey,
     true,
     [],
-    DASHBOARD_FILTER_CONFIG,
+    filterConfigToUse,
   );
 
   const {
