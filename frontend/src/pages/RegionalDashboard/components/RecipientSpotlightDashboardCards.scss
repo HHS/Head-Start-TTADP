@@ -8,3 +8,23 @@
 .ttahub-recipient-spotlight-sort-dropdown {
   min-width: 200px;
 }
+
+.ttahub-recipient-spotlight-sort,
+.ttahub-recipient-spotlight-per-page {
+  // When wrapping, ensure both dropdowns align by giving consistent label width
+  @media (max-width: 639px) {
+    label {
+      min-width: 60px;
+    }
+  }
+}
+
+.ttahub-recipient-spotlight-per-page {
+  // Use margin-left: auto to push to the right when on the same line
+  margin-left: auto;
+
+  // But when it wraps to its own line, align to the left
+  @media (max-width: 639px) {
+    margin-left: 0;
+  }
+}

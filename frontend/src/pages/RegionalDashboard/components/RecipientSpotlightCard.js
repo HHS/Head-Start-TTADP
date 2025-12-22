@@ -164,7 +164,7 @@ export default function RecipientSpotlightCard({ recipient }) {
         </div>
 
         {expanded && (
-          <div className="ttahub-recipient-spotlight-card__details margin-top-3 padding-top-2">
+          <div className="ttahub-recipient-spotlight-card__details margin-top-2">
             <div className="ttahub-recipient-spotlight-card__details-grid">
               {indicatorDetails}
             </div>

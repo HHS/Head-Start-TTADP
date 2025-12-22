@@ -1,10 +1,13 @@
 @use '../../../colors.scss' as *;
 
-.ttahub-recipient-spotlight-card {
-  // Override DataCard padding for mobile
+// Increase specificity by combining classes to override DataCard's padding-3
+.ttahub-data-card.ttahub-recipient-spotlight-card {
   @media (max-width: 639px) {
-    padding: 1rem !important; // 16px
+    padding: 1rem; // 16px
   }
+}
+
+.ttahub-recipient-spotlight-card {
 
   &__recipient-name {
     color: $text-link;
@@ -55,7 +58,6 @@
 
   // Expanded indicator details
   &__details {
-    border-top: 1px solid $base-lighter;
   }
 
   &__details-grid {
