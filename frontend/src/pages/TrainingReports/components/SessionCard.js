@@ -36,7 +36,6 @@ function SessionCard({
   eventId,
   session,
   expanded,
-  isWriteable,
   onRemoveSession,
   eventStatus,
   isPoc,
@@ -51,9 +50,9 @@ function SessionCard({
     endDate,
     objective,
     objectiveSupportType,
-    objectiveTopics,
     objectiveTrainers,
     status,
+    sessionGoalTemplates,
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -84,12 +83,11 @@ function SessionCard({
     return <NoStatus />;
   })();
 
-  const { showSessionEdit } = useSessionCardPermissions({
+  const { showSessionEdit, showSessionDelete } = useSessionCardPermissions({
     session,
     isPoc,
     isOwner,
     isCollaborator,
-    isWriteable,
     eventStatus,
     eventOrganizer,
   });
@@ -122,17 +120,21 @@ function SessionCard({
               {sessionName}
             </p>
             {
-            showSessionEdit
+            (showSessionEdit || showSessionDelete)
               && (
                 <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
+                  {showSessionEdit && (
                   <Link to={`/training-report/${eventId}/session/${session.id}`} className="margin-right-4">
                     <Pencil />
                     Edit session
                   </Link>
+                  )}
+                  {showSessionDelete && (
                   <ModalToggleButton modalRef={modalRef} unstyled className="text-decoration-underline">
                     <Trash />
                     Delete session
                   </ModalToggleButton>
+                  )}
                 </div>
               )
           }
@@ -151,12 +153,12 @@ function SessionCard({
           {objectiveSupportType}
         </CardData>
 
-        <CardData label="Topics">
-          {objectiveTopics && objectiveTopics.length > 0 ? objectiveTopics.join(', ') : ''}
+        <CardData label="Supporting goals">
+          {sessionGoalTemplates && sessionGoalTemplates.length > 0 ? sessionGoalTemplates.join(', ') : ''}
         </CardData>
 
         <CardData label="Trainers">
-          {objectiveTrainers && objectiveTrainers.length > 0 ? objectiveTrainers.join(', ') : ''}
+          {objectiveTrainers && objectiveTrainers.length > 0 ? objectiveTrainers.join('; ') : ''}
         </CardData>
 
         <CardData label="Status">
@@ -178,7 +180,7 @@ export const sessionPropTypes = PropTypes.shape({
     endDate: PropTypes.string.isRequired,
     objective: PropTypes.string.isRequired,
     objectiveSupportType: PropTypes.string.isRequired,
-    objectiveTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
+    sessionGoalTemplates: PropTypes.arrayOf(PropTypes.string).isRequired,
     objectiveTrainers: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.oneOf([
       'In progress',
@@ -195,7 +197,6 @@ SessionCard.propTypes = {
   eventId: PropTypes.number.isRequired,
   session: sessionPropTypes.isRequired,
   expanded: PropTypes.bool.isRequired,
-  isWriteable: PropTypes.bool.isRequired,
   onRemoveSession: PropTypes.func.isRequired,
   eventStatus: PropTypes.string.isRequired,
   isPoc: PropTypes.bool.isRequired,

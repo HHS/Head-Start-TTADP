@@ -289,7 +289,6 @@ function EventCard({
             eventOrganizer={data.eventOrganizer}
             session={s}
             expanded={reportsExpanded}
-            isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
             onRemoveSession={onRemoveSession}
             eventStatus={eventStatus}
             pocComplete={data.pocComplete}

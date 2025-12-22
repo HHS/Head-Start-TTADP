@@ -78,6 +78,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
         attributes: [
           'fullName',
           'name',
+          'id',
         ],
         include: [
           {
