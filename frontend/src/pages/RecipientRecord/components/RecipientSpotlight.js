@@ -136,9 +136,19 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
               <div>
                 {
                 spotlightData.map((indicator) => (
-                  <div key={indicator.name} aria-hidden={!indicator.value} className={`ttahub-recipient-spotlight-content-cell ttahub-recipient-spotlight-content-cell${indicator.value ? '-bad-indicator' : '-good-indicator'} radius-md width-full display-flex flex-align-center margin-bottom-1 padding-x-2 padding-y-1`}>
+                  <div
+                    key={indicator.name}
+                    className={`ttahub-recipient-spotlight-content-cell ttahub-recipient-spotlight-content-cell${indicator.value ? '-bad-indicator' : '-good-indicator'} radius-md width-full display-flex flex-align-center margin-bottom-1 padding-x-2 padding-y-1`}
+                    role="article"
+                    aria-label={`${indicator.label} - ${indicator.value ? 'Active indicator' : 'Not applicable to this recipient'}`}
+                  >
                     <div className="display-flex flex-column">
-                      <b><span className="usa-prose">{indicator.label}</span></b>
+                      <b>
+                        <span className="usa-prose">{indicator.label}</span>
+                        <span className="usa-sr-only">
+                          {indicator.value ? ' - Active indicator' : ' - Not applicable to this recipient'}
+                        </span>
+                      </b>
                       <p className="usa-prose margin-y-0 text-wrap">{indicator.description}</p>
                     </div>
                   </div>
