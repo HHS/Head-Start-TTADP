@@ -285,6 +285,34 @@ describe('Regional Dashboard page', () => {
     expect(heading).toBeVisible();
   });
 
+  it('shows filters for recipient-spotlight', async () => {
+    const user = {
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    // Mock recipient spotlight API
+    const recipientSpotlightUrl = '/api/recipient-spotlight';
+    const recipientSpotlightResponse = {
+      count: 0,
+      rows: [],
+      statuses: {},
+    };
+    fetchMock.get(`begin:${recipientSpotlightUrl}`, recipientSpotlightResponse);
+
+    renderDashboard(user, 'recipient-spotlight');
+
+    // Wait for the page to render
+    await screen.findByText(/regional dashboard - recipient spotlight/i);
+
+    // Verify filters container is visible (not hidden)
+    const filterContainer = document.querySelector('.ttahub-dashboard--filters');
+    expect(filterContainer).toBeInTheDocument();
+  });
+
   it('hides specialist name filter if user can approve reports', async () => {
     fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse);
     fetchMock.get('/api/widgets/reasonList?region.in[]=1&region.in[]=2', reasonListResponse);
