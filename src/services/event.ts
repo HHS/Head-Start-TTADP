@@ -122,6 +122,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
         model: SessionReportPilot,
         include: [
           {
+            required: false,
             model: File,
             as: 'supportingAttachments',
             where: {
