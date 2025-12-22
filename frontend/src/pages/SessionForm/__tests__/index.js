@@ -599,19 +599,6 @@ describe('SessionReportForm', () => {
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
-
-    // todo, confirm: i don't think we need these any longer
-    // const putBody = fetchMock.lastOptions(url).body;
-
-    // // Assert the poc complete properties.
-    // const putBodyJson = JSON.parse(putBody);
-    // expect(putBodyJson.data.pocComplete).toBe(true);
-    // expect(putBodyJson.data.pocCompleteId).toBe(1);
-    // expect(putBodyJson.data.pocCompleteDate).toBe(moment().format('YYYY-MM-DD'));
-
-    // expect(putBodyJson.data.ownerComplete).toBe(undefined);
-    // expect(putBodyJson.data.ownerCompleteId).toBe(undefined);
-    // expect(putBodyJson.data.ownerCompleteDate).toBe(undefined);
   });
 
   it('sets owner complete values on submit', async () => {

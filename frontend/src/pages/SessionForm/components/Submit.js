@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { Button, Textarea } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
@@ -28,7 +28,6 @@ export default function Submit({
   const { register, watch, trigger } = useFormContext();
   const pageState = watch('pageState');
   const event = watch('event');
-  const approver = watch('approver');
   const facilitation = watch('facilitation');
 
   let eventOrganizer = '';
@@ -36,10 +35,6 @@ export default function Submit({
   if (event && event.data) {
     eventOrganizer = event.data.eventOrganizer;
   }
-
-  useEffect(() => {
-    // console.log({ approver });
-  }, [approver]);
 
   const { trainerOptions: approvers } = useEventAndSessionStaff(event);
   const { user } = useContext(UserContext);
@@ -56,11 +51,17 @@ export default function Submit({
     approverOptions = approvers.filter((o) => o.roles.some((or) => MANAGER_ROLES.includes(or.name)));
   }
 
-  if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && (facilitation === 'regional_tta_staff' || facilitation === 'both')) {
+  if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && facilitation === 'both') {
     // format approvers and flatten national and regional trainers into a single list
     approverOptions = approvers
       .filter((approverGroup) => approverGroup.label === 'Regional trainers')
       .flatMap((group) => group.options)
+      .filter((o) => o.roles.some((or) => MANAGER_ROLES.includes(or.name)));
+  }
+
+  if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && facilitation === 'regional_tta_staff') {
+    // format approvers and flatten national and regional trainers into a single list
+    approverOptions = approvers
       .filter((o) => o.roles.some((or) => MANAGER_ROLES.includes(or.name)));
   }
 
