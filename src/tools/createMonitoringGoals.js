@@ -8,7 +8,7 @@ import { auditLogger } from '../logger';
 
 const createMonitoringGoals = async () => {
   // This section is here to temporarily disable monitoring goal creation
-  // To re-enable, we can set ENABLE_MONITORING_GOALS=true or just remove
+  // To re-enable, we can set ENABLE_MONITORING_GOALS_CREATION=true or just remove
   // this block if we don't think we'll ever use it again
   if (process.env.ENABLE_MONITORING_GOAL_CREATION !== 'true') {
     auditLogger.info('Monitoring goals creation is temporarily disabled');
