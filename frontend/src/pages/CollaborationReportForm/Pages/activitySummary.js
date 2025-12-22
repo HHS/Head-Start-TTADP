@@ -515,10 +515,10 @@ const ReviewSection = () => {
       title: 'Reason for activity',
       anchor: 'reasons',
       items: [
-        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') || '' } },
+        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: Array.isArray(reportReasons) ? reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') : '' } },
         { label: 'Activity type', name: 'type', customValue: { type: isStateActivity === 'true' ? 'State' : 'Regional' } },
         ...(isStateActivity === 'true' ? [
-          { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s.value] || '').join(', ') || '' } },
+          { label: 'States involved', name: 'states', customValue: { states: Array.isArray(statesInvolved) ? statesInvolved?.map((s) => STATES[s.value] || '').join(', ') : '' } },
         ] : []),
         {
           label: 'Activity method',
