@@ -123,6 +123,11 @@ export const extractGoalIdsInOrder = (packagedGoals) => packagedGoals
   .filter((id) => id); // Filter out any undefined/null IDs (for new goals not yet saved)
 
 export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = null) => {
+  const getUseIpdCoursesFlag = (objective) => objective.useIpdCourses
+    ?? !!(objective.courses && objective.courses.length);
+  const getUseFilesFlag = (objective) => objective.useFiles
+    ?? !!(objective.files && objective.files.length);
+
   const packagedGoals = [
     // we make sure to mark all the read only goals as "ActivelyEdited: false"
     ...goals.map((g) => ({
@@ -150,6 +155,8 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
         files: objective.files,
         supportType: objective.supportType,
         courses: objective.courses,
+        useIpdCourses: getUseIpdCoursesFlag(objective),
+        useFiles: getUseFilesFlag(objective),
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
         createdHere: objective.createdHere,
@@ -187,6 +194,8 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
         files: objective.files,
         supportType: objective.supportType,
         courses: objective.courses,
+        useIpdCourses: getUseIpdCoursesFlag(objective),
+        useFiles: getUseFilesFlag(objective),
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
         createdHere: objective.createdHere,
@@ -234,6 +243,12 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
 export const convertGoalsToFormData = (
   goals, grantIds, calculatedStatus = REPORT_STATUSES.DRAFT, goalOrder = null,
 ) => {
+  const addUseIpdFlag = (objective = {}) => ({
+    ...objective,
+    useIpdCourses: objective.useIpdCourses ?? !!(objective.courses && objective.courses.length),
+    useFiles: objective.useFiles ?? !!(objective.files && objective.files.length),
+  });
+
   // GOAL ORDER RESTORATION: Re-sort goals to match user's intended order
   //
   // THE PROBLEM: Backend returns goals ordered by activityReportGoals.createdAt (when they
@@ -275,7 +290,7 @@ export const convertGoalsToFormData = (
       accumulatedData.goalForEditing = {
         ...goal,
         grantIds,
-        objectives: goal.objectives,
+        objectives: goal.objectives?.map(addUseIpdFlag) || [],
         prompts: goal.prompts || [],
         // Preserve the original index so the goal appears in the correct position
         // when editing in place, even after navigating away and returning
@@ -288,6 +303,7 @@ export const convertGoalsToFormData = (
         ...goal,
         grantIds,
         prompts: goal.prompts || [],
+        objectives: goal.objectives?.map(addUseIpdFlag) || [],
       });
     }
 

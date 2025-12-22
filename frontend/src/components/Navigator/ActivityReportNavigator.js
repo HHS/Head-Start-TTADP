@@ -249,7 +249,9 @@ const ActivityReportNavigator = ({
 
       // Update RHF with saved data
       if (savedData) {
-        reset(savedData);
+        reset({
+          ...savedData,
+        });
       }
 
       updateErrorMessage('');
@@ -378,7 +380,12 @@ const ActivityReportNavigator = ({
       const currentFormData = getValues();
       const {
         goals, goalForEditing: newGoalForEditing,
-      } = convertGoalsToFormData(allGoals, grantIds, currentFormData.calculatedStatus, goalOrder);
+      } = convertGoalsToFormData(
+        allGoals,
+        grantIds,
+        currentFormData.calculatedStatus,
+        goalOrder,
+      );
 
       // Update RHF with new values (includes new IDs from API)
       if (allowUpdateForm) {

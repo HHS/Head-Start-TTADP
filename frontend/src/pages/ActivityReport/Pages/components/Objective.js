@@ -186,6 +186,16 @@ export default function Objective({
 
   const {
     field: {
+      onChange: onChangeUseFiles,
+      value: objectiveUseFiles,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].useFiles`,
+    defaultValue: objective.useFiles ?? !!(objective.files && objective.files.length),
+  });
+
+  const {
+    field: {
       onChange: onChangeUseIpdCourses,
       onBlur: onBlurUseIpdCourses,
       value: objectiveUseIpdCourses,
@@ -193,7 +203,7 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].useIpdCourses`,
-    defaultValue: !!(objective.courses && objective.courses.length) || false,
+    defaultValue: objective.useIpdCourses ?? !!(objective.courses && objective.courses.length),
   });
 
   const {
@@ -309,6 +319,7 @@ export default function Objective({
     onChangeSupportType(newObjective.supportType);
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
+    onChangeUseFiles(newObjective.useFiles ?? !!(newObjective.files && newObjective.files.length));
     onObjectiveChange(newObjective, index); // Call parent on objective change.
 
     // set a new initial status, which we went to preserve separately from the dropdown
@@ -316,7 +327,7 @@ export default function Objective({
     setStatusForCalculations(newObjective.status);
 
     // ipd course
-    onChangeUseIpdCourses(newObjective.courses && newObjective.courses.length);
+    onChangeUseIpdCourses(!!(newObjective.courses && newObjective.courses.length));
     onChangeIpdCourses(newObjective.courses);
 
     // was objective created on this report?
@@ -575,6 +586,9 @@ export default function Objective({
         selectedObjectiveId={selectedObjective.id}
         userCanEdit
         editingFromActivityReport
+        useFiles={objectiveUseFiles}
+        onChangeUseFiles={onChangeUseFiles}
+        error={errors.files ? errors.files.message : ''}
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
@@ -651,6 +665,9 @@ Objective.propTypes = {
       message: PropTypes.string,
     }),
     citations: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    files: PropTypes.shape({
       message: PropTypes.string,
     }),
     closeSuspendReason: PropTypes.shape({

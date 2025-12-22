@@ -22,7 +22,7 @@ import {
   ALERTS_PER_PAGE,
 } from '../../Constants';
 import { filtersToQueryString, expandFilters } from '../../utils';
-import Overview from '../../widgets/Overview';
+import DashboardOverview from '../../widgets/DashboardOverview';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
@@ -251,15 +251,16 @@ function Landing() {
             />
           </Grid>
         </Grid>
-        <Grid row gap className="smart-hub--overview">
-          <Grid col={10}>
-            <Overview
-              regionLabel={regionLabel}
-              tableCaption="TTA overview"
-              filters={filtersToApply}
-            />
-          </Grid>
-        </Grid>
+        <DashboardOverview
+          filters={filtersToApply}
+          fields={[
+            'Grants served',
+            'Activity reports',
+            'Participants',
+            'Hours of TTA',
+          ]}
+          showTooltips
+        />
         <Grid row>
           {error && (
             <Alert type="error" role="alert">
