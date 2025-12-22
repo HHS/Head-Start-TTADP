@@ -33,9 +33,26 @@
       gap: 1rem; // 16px
     }
 
-    // Tablet: 2 columns
+    // Tablet: 3 columns with specific layout
     @media (min-width: 640px) and (max-width: 880px) {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
+
+      // First three items span the first row
+      & > :nth-child(1),
+      & > :nth-child(2),
+      & > :nth-child(3) {
+        grid-column: span 1;
+      }
+
+      // Fourth item (indicators) spans 2 columns
+      & > :nth-child(4) {
+        grid-column: span 2;
+      }
+
+      // Fifth item (expander button) spans 1 column
+      & > :nth-child(5) {
+        grid-column: span 1;
+      }
     }
 
     // Desktop: 5 columns with specific widths
