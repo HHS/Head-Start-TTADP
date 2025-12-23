@@ -304,14 +304,14 @@ const ReviewSection = () => {
       dataToDisplay += `: ${otherDataUsed}`;
     }
   } else {
-    dataToDisplay = 'None provided';
+    dataToDisplay = 'None';
   }
 
   let goalsToDisplay = '';
   if (goals && goals.length > 0) {
     goalsToDisplay = goals.map((g) => g.label).join(', ');
   } else {
-    goalsToDisplay = 'None provided';
+    goalsToDisplay = 'None';
   }
 
   const sections = [
