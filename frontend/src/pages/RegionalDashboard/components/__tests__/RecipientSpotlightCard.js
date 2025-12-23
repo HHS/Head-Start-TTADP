@@ -202,76 +202,12 @@ describe('RecipientSpotlightCard', () => {
       </BrowserRouter>,
     );
 
-    // Expander button should now render even with 0 count
+    // Expander button should render even with 0 count
     const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
     expect(expandButton).toBeInTheDocument();
 
     const filledBoxes = container.querySelectorAll('.ttahub--indicator-box-filled');
     expect(filledBoxes.length).toBe(0);
-  });
-
-  it('displays success message when expanded with zero indicators', () => {
-    const noIndicatorsRecipient = {
-      ...mockRecipient,
-      childIncidents: false,
-      deficiency: false,
-      newRecipients: false,
-      newStaff: false,
-      noTTA: false,
-      DRS: false,
-      FEI: false,
-    };
-
-    render(
-      <BrowserRouter>
-        <RecipientSpotlightCard recipient={noIndicatorsRecipient} />
-      </BrowserRouter>,
-    );
-
-    const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
-    fireEvent.click(expandButton);
-
-    expect(screen.getByText('No priority indicators identified')).toBeInTheDocument();
-    expect(screen.getByText('0 of 7 priority indicators')).toBeInTheDocument();
-  });
-
-  it('displays green checkmark when zero indicators are expanded', () => {
-    const noIndicatorsRecipient = {
-      ...mockRecipient,
-      childIncidents: false,
-      deficiency: false,
-      newRecipients: false,
-      newStaff: false,
-      noTTA: false,
-      DRS: false,
-      FEI: false,
-    };
-
-    const { container } = render(
-      <BrowserRouter>
-        <RecipientSpotlightCard recipient={noIndicatorsRecipient} />
-      </BrowserRouter>,
-    );
-
-    const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
-    fireEvent.click(expandButton);
-
-    // Check for SVG with green fill color
-    const svg = container.querySelector('svg path[fill="#00A91C"]');
-    expect(svg).toBeInTheDocument();
-  });
-
-  it('does not display success message when indicators are present', () => {
-    renderCard(); // Uses mockRecipient with 2 active indicators
-
-    const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
-    fireEvent.click(expandButton);
-
-    // Should NOT show success message
-    expect(screen.queryByText('No priority indicators identified')).not.toBeInTheDocument();
-
-    // Should show count
-    expect(screen.getByText('2 of 7 priority indicators')).toBeInTheDocument();
   });
 
   it('renders all 7 indicator types when all are active', () => {

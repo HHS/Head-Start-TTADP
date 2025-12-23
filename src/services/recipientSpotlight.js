@@ -567,21 +567,6 @@ export async function getRecipientSpotlightIndicators(
       indicatorCount: 4,
       lastTTA: '2024-01-05',
     },
-    {
-      recipientId: 21,
-      regionId: 1,
-      recipientName: 'Tomorrow\'s Leaders Today',
-      grantIds: ['14CH027'],
-      childIncidents: false,
-      deficiency: false,
-      newRecipients: false,
-      newStaff: false,
-      noTTA: false,
-      DRS: false,
-      FEI: false,
-      indicatorCount: 0,
-      lastTTA: '2024-01-05',
-    },
   ];
 
   // Apply sorting to test data
