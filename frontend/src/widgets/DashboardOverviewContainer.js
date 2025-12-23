@@ -10,7 +10,7 @@ export function DashboardOverviewContainer({ fieldData, loading, maxToolTipWidth
       row
       className="smart-hub--dashboard-overview-container margin-bottom-3 position-relative flex-gap-2"
     >
-      <Loader loading={loading} loadingLabel="Resources Overview loading" />
+      <Loader loading={loading} loadingLabel="Overview loading" />
       {fieldData.map((field) => (
         <OverviewWidgetField
           key={field.key}

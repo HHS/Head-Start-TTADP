@@ -25,6 +25,7 @@ import {
   Radio,
   Button,
   ErrorMessage,
+  Link,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import { getTopics } from '../../../fetchers/topics';
@@ -50,10 +51,10 @@ import Drawer from '../../../components/Drawer';
 import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
-import { mustBeQuarterHalfOrWhole, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
-import useFetch from '../../../hooks/useFetch';
-import { getNationalCenterTrainerOptions, getRegionalTrainerOptions } from '../../../fetchers/users';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
+import { mustBeQuarterHalfOrWhole } from '../../../Constants';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -74,73 +75,13 @@ const SessionSummary = ({ datePickerKey, event }) => {
   } = useFormContext();
 
   const id = watch('id');
-  const regionId = watch('regionId');
-  const facilitation = watch('facilitation');
-
-  let eventOrganizer = '';
-
-  if (event && event.data) {
-    eventOrganizer = event.data.eventOrganizer;
-  }
-
-  const {
-    data: regionalTrainers,
-  } = useFetch(
-    [],
-    async () => getRegionalTrainerOptions(String(regionId)),
-    [regionId],
-  );
-
-  const {
-    data: nationalCenterTrainers,
-  } = useFetch(
-    [],
-    async () => getNationalCenterTrainerOptions(String(regionId)),
-    [regionId],
-  );
-
-  let optionsForValue = [];
-
-  const trainerOptions = (() => {
-    if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
-      optionsForValue = regionalTrainers;
-      return regionalTrainers;
-    }
-
-    if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
-      if (facilitation === 'national_center') {
-        optionsForValue = nationalCenterTrainers;
-        return nationalCenterTrainers;
-      }
-
-      if (facilitation === 'regional_tta_staff') {
-        optionsForValue = regionalTrainers;
-        return regionalTrainers;
-      }
-
-      if (facilitation === 'both') {
-        optionsForValue = [...nationalCenterTrainers, ...regionalTrainers];
-        return [
-          {
-            label: 'National Center trainers',
-            options: nationalCenterTrainers,
-          },
-          {
-            label: 'Regional trainers',
-            options: regionalTrainers,
-          },
-        ];
-      }
-    }
-
-    return [];
-  })();
-
-  const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
-
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const courses = watch('courses');
+
+  const { trainerOptions, optionsForValue } = useEventAndSessionStaff(event);
+
+  const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
   const topicsDrawerTriggerRef = useRef(null);
   const goalDrawerTriggerRef = useRef(null);
@@ -148,7 +89,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
-
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
 
@@ -303,7 +243,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      <div>
+      <div className="maxw-mobile">
         <FormItem
           label="Session start date"
           name="startDate"
@@ -387,15 +327,12 @@ const SessionSummary = ({ datePickerKey, event }) => {
       <FormItem
         label="Session context "
         name="context"
-        required
+        required={false}
       >
         <Textarea
           id="context"
           name="context"
-          inputRef={register({
-            required: 'Describe the session context',
-          })}
-          required
+          inputRef={register()}
         />
       </FormItem>
 
@@ -453,6 +390,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 name="sessionGoalTemplates"
                 className="usa-select"
                 styles={selectOptionsReset}
+                closeMenuOnSelect={false}
                 components={{
                   DropdownIndicator: null,
                 }}
@@ -532,6 +470,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 getOptionLabel={(option) => option.name}
                 getOptionValue={(option) => option.id}
                 options={topicOptions || []}
+                closeMenuOnSelect={false}
                 isMulti
                 required
               />
@@ -561,7 +500,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
                 value={(optionsForValue).filter((option) => (
-                  value.includes(option.name)
+                  value.includes(option.fullName)
                 ))}
                 inputId="objectiveTrainers"
                 name="objectiveTrainers"
@@ -572,10 +511,10 @@ const SessionSummary = ({ datePickerKey, event }) => {
                   DropdownIndicator: null,
                 }}
                 onChange={(s) => {
-                  controllerOnChange(s.map((o) => o.name));
+                  controllerOnChange(s.map((o) => o.fullName));
                 }}
                 inputRef={register({ required: 'Select at least one trainer' })}
-                options={trainerOptions || []}
+                options={trainerOptions}
                 getOptionLabel={(option) => option.fullName}
                 getOptionValue={(option) => option.id}
                 isMulti
@@ -747,6 +686,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
 SessionSummary.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
   event: PropTypes.shape({
+    regionId: PropTypes.number,
     data: PropTypes.shape({
       endDate: PropTypes.string,
       eventOrganizer: PropTypes.string,
@@ -764,7 +704,62 @@ const requiredFields = [...Object.keys(sessionSummaryRequiredFields), 'endDate',
 const path = 'session-summary';
 const position = 1;
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
+const ReviewSection = () => {
+  const { watch } = useFormContext();
+
+  const {
+    sessionName,
+    startDate,
+    endDate,
+    duration,
+    context,
+
+    objective,
+    objectiveTopics,
+    objectiveTrainers,
+    courses,
+    sessionGoalTemplates,
+    objectiveResources,
+    files,
+    ttaProvided,
+    objectiveSupportType,
+  } = watch();
+
+  // eslint-disable-next-line max-len
+  const objectiveFiles = (files || []).map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
+  const resources = (objectiveResources || []).map((r) => <Link href={r.value}>{r.value}</Link>);
+
+  const sections = [
+    {
+      anchor: 'activity-for',
+      items: [
+        { label: 'Session name', name: 'sessionName', customValue: { sessionName } },
+        { label: 'Session start date', name: 'startDate', customValue: { startDate } },
+        { label: 'Session end date', name: 'endDate', customValue: { endDate } },
+        { label: 'Duration', name: 'duration', customValue: { duration } },
+        { label: 'Session context', name: 'context', customValue: { context } },
+      ],
+    },
+    {
+      title: 'Objectives summary',
+      anchor: 'session-objective',
+      items: [
+        { label: 'Session objectives', name: 'objective', customValue: { objective } },
+        { label: 'Supporting goals', name: 'goals', customValue: { goals: sessionGoalTemplates } },
+        { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
+        { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
+        { label: 'iPD courses', name: 'courses', customValue: { courses: (courses || []).map((c) => c.name) } },
+        { label: 'Resource links', name: 'objectiveResources', customValue: { objectiveResources: resources } },
+        { label: 'Resource attachments', name: 'files', customValue: { files: objectiveFiles } },
+        { label: 'TTA provided', name: 'ttaProvided', customValue: { ttaProvided } },
+        { label: 'Support type', name: 'objectiveSupportType', customValue: { objectiveSupportType } },
+      ],
+    },
+  ];
+
+  return <ReviewPage sections={sections} path={path} isCustomValue />;
+};
+
 export const isPageComplete = (hookForm) => {
   const { useIpdCourses } = hookForm.getValues();
 
@@ -792,26 +787,20 @@ export default {
     _onUpdatePage,
     _weAreAutoSaving,
     datePickerKey,
-    onFormSubmit,
+    _onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
       <SessionSummary datePickerKey={datePickerKey} event={additionalData.event} />
       <Alert />
-      <div className="display-flex">
-        {
-          !additionalData.isAdminUser
-            ? (
-              <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
-            )
-            : <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
-        }
+      <div className="ttahub-form-button-group display-flex">
+        <Button id={`${path}-save-continue`} className="margin-right-1 usa-button--no-margin-top" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
         {
           // if status is 'Completed' then don't show the save draft button.
           additionalData
           && additionalData.status
           && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
-            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+            <Button id={`${path}-save-draft`} className="usa-button--outline usa-button--no-margin-top " type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
           )
         }
       </div>

@@ -9,8 +9,8 @@ function TrainingReports() {
 
   const requiredCsvHeaders = [
     'Event ID',
-    'Event Title',
-    'IST/Creator',
+    'Edit Title',
+    'Event Creator',
   ];
 
   return (

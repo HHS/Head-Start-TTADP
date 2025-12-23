@@ -76,6 +76,16 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(SUPPORT_TYPES),
       allowNull: true,
     },
+    useIpdCourses: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+    },
+    useFiles: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+    },
     objectiveCreatedHere: {
       type: DataTypes.BOOLEAN,
       allowNull: true,
