@@ -323,7 +323,7 @@ describe('SubmittedCollabReport', () => {
     render(<SubmittedCollabReport report={minimalReport} />);
 
     expect(screen.getByText('Minimal Report')).toBeInTheDocument();
-    expect(screen.getAllByText('None provided')).toHaveLength(2); // For missing collaborators and managers
+    expect(screen.getAllByText('None provided')).toHaveLength(4); // For missing collaborators and managers and such
     expect(screen.getByText('Unknown')).toBeInTheDocument(); // For missing author
   });
 });

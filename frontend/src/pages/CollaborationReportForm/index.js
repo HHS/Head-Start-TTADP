@@ -65,7 +65,7 @@ const defaultValues = {
   duration: '',
   reportReasons: [],
   isStateActivity: '',
-  conductMethod: [],
+  conductMethod: '',
   description: '',
   id: null,
 };
@@ -137,7 +137,8 @@ export const convertFormDataToReport = (data) => {
     ...rest
   } = data;
 
-  const conductMethodValues = conductMethod || null;
+  const conductMethodValues = Array.isArray(conductMethod)
+    ? conductMethod[0] : conductMethod || null;
   const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => s.value) : [];
   const participantValues = participants ? participants.map((p) => p.value) : [];
   const dataUsedValues = dataUsed ? dataUsed.map((d) => d.value) : [];
@@ -231,8 +232,10 @@ function CollaborationReport({ match, location }) {
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
   // reset and the proper values are placed inside inputs
+  // Also, clear the saved draft message when the page changes
   useDeepCompareEffect(() => {
     hookForm.reset(formData);
+    updateShowSavedDraft(false);
   }, [currentPage, formData, hookForm.reset]);
 
   useDeepCompareEffect(() => {
@@ -242,6 +245,7 @@ function CollaborationReport({ match, location }) {
       try {
         updateLoading(true);
         reportId.current = collabReportId;
+        const regionId = getRegionWithReadWrite(user);
 
         if (collabReportId !== 'new') {
           let fetchedReport;
@@ -269,7 +273,6 @@ function CollaborationReport({ match, location }) {
 
             if (isNeedsAction) {
               history.push(`/collaboration-reports/${fetchedReport.id}/review`);
-              return;
             }
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
@@ -286,8 +289,8 @@ function CollaborationReport({ match, location }) {
             ...defaultValues,
             creatorRole: userHasOneRole ? user.roles[0].fullName : null,
             pageState: defaultPageState,
+            regionId,
             userId: user.id,
-            regionId: getRegionWithReadWrite(user),
             version: 2,
           };
         }
@@ -344,9 +347,9 @@ function CollaborationReport({ match, location }) {
 
         // Update form data.
         if (shouldUpdateFromNetwork && collabReportId !== 'new') {
-          updateFormData({ ...formData, ...report }, true);
+          updateFormData({ ...formData, ...report, regionId }, true);
         } else {
-          updateFormData({ ...report, ...formData }, true);
+          updateFormData({ ...report, ...formData, regionId }, true);
         }
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
@@ -383,7 +386,9 @@ function CollaborationReport({ match, location }) {
 
         updateError();
       } catch (e) {
-        const connection = true; // setConnectionActiveWithError(e, setConnectionActive);
+        // eslint-disable-next-line no-console
+        console.warn('Error fetching collaboration report:', e);
+        const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
             {/* eslint-disable-next-line max-len */}
@@ -470,7 +475,6 @@ function CollaborationReport({ match, location }) {
 
         // Process participants, dataUsed, and goals to extract values
         const fieldsToSave = convertFormDataToReport(fields);
-
         const savedReport = await createReport({
           ...fieldsToSave,
           regionId: formData.regionId,
@@ -570,11 +574,6 @@ function CollaborationReport({ match, location }) {
   };
 
   const onSaveAndContinue = async () => {
-    const validity = await hookForm.trigger();
-    if (!validity) {
-      return;
-    }
-
     const currentPosition = pages.find((page) => page.path === currentPage)?.position;
 
     const isAutoSave = false;
@@ -704,14 +703,14 @@ function CollaborationReport({ match, location }) {
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
               Collaboration report for Region
               {' '}
-              {formData.regionId}
+              {formData?.regionId}
             </h1>
             {author}
           </div>
         </Grid>
         {!hideSideNav && (
         <Grid col="auto" className="flex-align-self-center">
-          {formData.calculatedStatus && (
+          {formData?.calculatedStatus && (
             <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
@@ -726,7 +725,7 @@ function CollaborationReport({ match, location }) {
       >
         <FormProvider {...hookForm}>
           <Navigator
-            formData={formData}
+            formData={formData || {}}
             pages={pages}
             onFormSubmit={onFormSubmit}
             onReview={onReview}

@@ -13,7 +13,7 @@ import {
   Checkbox,
   Label,
 } from '@trussworks/react-uswds';
-import Select from 'react-select';
+import Select, { components } from 'react-select';
 import moment from 'moment';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import Drawer from '../../../components/Drawer';
@@ -31,9 +31,17 @@ import './activitySummary.scss';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { COLLAB_REPORT_REASONS, STATES, COLLAB_REPORT_CONDUCT_METHODS } from '../../../Constants';
+import arrowBoth from '../../../images/arrow-both.svg';
 
 const position = 1;
 const path = 'activity-summary';
+
+const DropdownIndicator = (props) => (
+  // eslint-disable-next-line react/jsx-props-no-spreading
+  <components.DropdownIndicator {...props}>
+    <img alt="" style={{ width: '8px' }} src={arrowBoth} />
+  </components.DropdownIndicator>
+);
 
 const ActivitySummary = ({ collaborators = [] }) => {
   const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
@@ -339,6 +347,14 @@ const ActivitySummary = ({ collaborators = [] }) => {
                 placeholder="- Select -"
                 styles={{
                   ...selectOptionsReset,
+                  indicatorsContainer: (baseStyles) => ({
+                    ...baseStyles,
+                    display: 'inline',
+                  }),
+                  dropdownIndicator: (baseStyles) => ({
+                    ...baseStyles,
+                    height: '100%',
+                  }),
                   placeholder: (baseStyles) => ({
                     ...baseStyles,
                     color: 'black',
@@ -347,9 +363,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
                     lineHeight: '1.3',
                   }),
                 }}
-                components={{
-                  DropdownIndicator: null,
-                }}
+                components={{ DropdownIndicator }}
                 onChange={(selected) => {
                   controllerOnChange(selected ? selected.value : null);
                 }}
@@ -411,11 +425,11 @@ export const isPageComplete = (hookForm) => {
     // strings
     name,
     description,
+    conductMethod,
 
     // arrays
     reportReasons,
     statesInvolved,
-    conductMethod,
 
     // numbers
     duration,
@@ -431,6 +445,7 @@ export const isPageComplete = (hookForm) => {
   const stringsToValidate = [
     name,
     description,
+    conductMethod,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
@@ -439,7 +454,6 @@ export const isPageComplete = (hookForm) => {
 
   const arraysToValidate = [
     reportReasons,
-    conductMethod,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {
@@ -501,10 +515,10 @@ const ReviewSection = () => {
       title: 'Reason for activity',
       anchor: 'reasons',
       items: [
-        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') || '' } },
-        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity ? 'State' : 'Regional' } },
-        ...(isStateActivity ? [
-          { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s] || '').join(', ') || '' } },
+        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: Array.isArray(reportReasons) ? reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') : '' } },
+        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity === 'true' ? 'State' : 'Regional' } },
+        ...(isStateActivity === 'true' ? [
+          { label: 'States involved', name: 'states', customValue: { states: Array.isArray(statesInvolved) ? statesInvolved?.map((s) => STATES[s.value] || '').join(', ') : '' } },
         ] : []),
         {
           label: 'Activity method',
