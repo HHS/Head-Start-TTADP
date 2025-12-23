@@ -232,8 +232,10 @@ function CollaborationReport({ match, location }) {
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
   // reset and the proper values are placed inside inputs
+  // Also, clear the saved draft message when the page changes
   useDeepCompareEffect(() => {
     hookForm.reset(formData);
+    updateShowSavedDraft(false);
   }, [currentPage, formData, hookForm.reset]);
 
   useDeepCompareEffect(() => {
