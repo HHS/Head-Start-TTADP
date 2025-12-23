@@ -342,97 +342,97 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
     && goal.grantIds.length > 0
   ));
 
-  if (!goalsWithGrants.length) {
-    return [];
-  }
-
   // Loop goal templates.
   let currentObjectives = [];
 
   // let's get all the existing goals that are not closed
   // we'll use this to determine if we need to create or update
   // we're doing it here so we don't have to query for each goal
-  const existingGoals = await Goal.findAll({
-    where: {
-      grantId: goalsWithGrants.map((goal) => goal.grantIds).flat(),
-      status: { [Op.not]: GOAL_STATUS.CLOSED },
-    },
-  });
+  const existingGoals = goalsWithGrants.length
+    ? await Goal.findAll({
+      where: {
+        grantId: goalsWithGrants.map((goal) => goal.grantIds).flat(),
+        status: { [Op.not]: GOAL_STATUS.CLOSED },
+      },
+    })
+    : [];
 
-  let updatedGoals = await Promise.all(goalsWithGrants.map(async (goal) => {
-    // Loops recipients update / create goals.
-    // eslint-disable-next-line implicit-arrow-linebreak
-    const goalTemplate = goal.goalTemplateId
-      ? await GoalTemplate.findByPk(goal.goalTemplateId)
-      : null;
-    const isMonitoring = goalTemplate && goalTemplate.standard === 'Monitoring';
-    return Promise.all(goal.grantIds.map(async (grantId) => {
-      let newOrUpdatedGoal = existingGoals.find((existingGoal) => (
-        existingGoal.grantId === grantId
-        && (goal.goalTemplateId
-          ? existingGoal.goalTemplateId === goal.goalTemplateId
-          : Array.isArray(goal.goalIds) && goal.goalIds.includes(existingGoal.id))
-      ));
+  let updatedGoals = goalsWithGrants.length
+    ? await Promise.all(goalsWithGrants.map(async (goal) => {
+      // Loops recipients update / create goals.
+      // eslint-disable-next-line implicit-arrow-linebreak
+      const goalTemplate = goal.goalTemplateId
+        ? await GoalTemplate.findByPk(goal.goalTemplateId)
+        : null;
+      const isMonitoring = goalTemplate && goalTemplate.standard === 'Monitoring';
+      return Promise.all(goal.grantIds.map(async (grantId) => {
+        let newOrUpdatedGoal = existingGoals.find((existingGoal) => (
+          existingGoal.grantId === grantId
+          && (goal.goalTemplateId
+            ? existingGoal.goalTemplateId === goal.goalTemplateId
+            : Array.isArray(goal.goalIds) && goal.goalIds.includes(existingGoal.id))
+        ));
 
-      // If this is a monitoring goal check for existing goal.
-      if (isMonitoring && !newOrUpdatedGoal) {
-        // No monitoring goal for this grant skip.
-        return null;
-      }
-
-      if (newOrUpdatedGoal && newOrUpdatedGoal.status === GOAL_STATUS.CLOSED) {
-        // If the goal is 'Closed' create a new goal.
-        newOrUpdatedGoal = null;
-      }
-
-      // If there is no existing goal, or its closed, create a new one in 'Not started'.
-      // this should always be not started to capture a status change when the report is approved
-      if (!newOrUpdatedGoal) {
-        const goalName = goalTemplate ? goalTemplate.templateName : (goal.name || 'Goal');
-        newOrUpdatedGoal = await Goal.create({
-          goalTemplateId: goalTemplate ? goalTemplate.id : null,
-          createdVia: 'activityReport',
-          name: goalName,
-          grantId,
-          status: GOAL_STATUS.NOT_STARTED,
-        }, { individualHooks: true });
-      }
-
-      // Filter prompts for the grant associated with the goal.
-      const filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
-      // Handle goal prompts for curated goals like FEI.
-      if (goalTemplate && goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
-        // If there are not prompts from the report (ARG), we then save
-        // them from the goal field responses in the cacheGoalMetadata() below.
-        if (filteredPrompts && filteredPrompts.length) {
-          await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], filteredPrompts);
+        // If this is a monitoring goal check for existing goal.
+        if (isMonitoring && !newOrUpdatedGoal) {
+          // No monitoring goal for this grant skip.
+          return null;
         }
-      }
 
-      // Did the save happen in the edit mode.
-      const isActivelyBeingEditing = goal.isActivelyBeingEditing
-        ? goal.isActivelyBeingEditing : false;
-      const reportId = report.id ? report.id : report.dataValues.id;
+        if (newOrUpdatedGoal && newOrUpdatedGoal.status === GOAL_STATUS.CLOSED) {
+          // If the goal is 'Closed' create a new goal.
+          newOrUpdatedGoal = null;
+        }
 
-      // Save goal meta data.
-      await cacheGoalMetadata(
-        newOrUpdatedGoal,
-        reportId,
-        isActivelyBeingEditing, // We need to correctly populate if editing on FE.
-        filteredPrompts || [],
-      );
+        // If there is no existing goal, or its closed, create a new one in 'Not started'.
+        // this should always be not started to capture a status change when the report is approved
+        if (!newOrUpdatedGoal) {
+          const goalName = goalTemplate ? goalTemplate.templateName : (goal.name || 'Goal');
+          newOrUpdatedGoal = await Goal.create({
+            goalTemplateId: goalTemplate ? goalTemplate.id : null,
+            createdVia: 'activityReport',
+            name: goalName,
+            grantId,
+            status: GOAL_STATUS.NOT_STARTED,
+          }, { individualHooks: true });
+        }
 
-      // and pass the goal to the objective creation function
-      const newGoalObjectives = await createObjectivesForGoal(
-        newOrUpdatedGoal,
-        goal.objectives,
-        reportId,
-      );
-      currentObjectives = [...currentObjectives, ...newGoalObjectives];
+        // Filter prompts for the grant associated with the goal.
+        const filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
+        // Handle goal prompts for curated goals like FEI.
+        if (goalTemplate && goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+          // If there are not prompts from the report (ARG), we then save
+          // them from the goal field responses in the cacheGoalMetadata() below.
+          if (filteredPrompts && filteredPrompts.length) {
+            await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], filteredPrompts);
+          }
+        }
 
-      return newOrUpdatedGoal;
-    }));
-  }));
+        // Did the save happen in the edit mode.
+        const isActivelyBeingEditing = goal.isActivelyBeingEditing
+          ? goal.isActivelyBeingEditing : false;
+        const reportId = report.id ? report.id : report.dataValues.id;
+
+        // Save goal meta data.
+        await cacheGoalMetadata(
+          newOrUpdatedGoal,
+          reportId,
+          isActivelyBeingEditing, // We need to correctly populate if editing on FE.
+          filteredPrompts || [],
+        );
+
+        // and pass the goal to the objective creation function
+        const newGoalObjectives = await createObjectivesForGoal(
+          newOrUpdatedGoal,
+          goal.objectives,
+          reportId,
+        );
+        currentObjectives = [...currentObjectives, ...newGoalObjectives];
+
+        return newOrUpdatedGoal;
+      }));
+    }))
+    : [];
 
   // Filter out any null values in the updated goals array.
   updatedGoals = updatedGoals.flat().filter((goal) => goal);
