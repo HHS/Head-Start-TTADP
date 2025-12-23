@@ -1,16 +1,9 @@
 import React from 'react';
+import { PRIORITY_INDICATORS } from '@ttahub/common';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-const PRIORITY_INDICATOR_OPTIONS = [
-  'Child incidents',
-  'Deficiency',
-  'DRS',
-  'FEI',
-  'New recipient',
-  'New staff',
-  'No TTA',
-].map((label, value) => ({ value, label }));
+const PRIORITY_INDICATOR_OPTIONS = PRIORITY_INDICATORS.map((label, value) => ({ value, label }));
 
 export default function FilterPriorityIndicator({
   onApply,
