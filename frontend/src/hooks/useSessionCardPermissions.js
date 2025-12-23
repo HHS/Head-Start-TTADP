@@ -9,7 +9,6 @@ export default function useSessionCardPermissions({
   isPoc,
   isOwner,
   isCollaborator,
-  isWriteable,
   eventStatus,
   eventOrganizer,
 }) {
@@ -35,65 +34,53 @@ export default function useSessionCardPermissions({
     const isRegionalWithNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
     const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
 
-    if (statusIsComplete && !isAdminUser) {
+    // Admin override - can edit until event is complete
+    if (isAdminUser) {
+      return eventStatus !== TRAINING_REPORT_STATUSES.COMPLETE;
+    }
+
+    // Universal blockers for non-admin users
+    if (statusIsComplete) {
       return false;
     }
 
-    // If status is NEEDS_ACTION, approver has returned it for editing - allow regular editors
-    if (submitted && !statusIsNeedsAction && !isSessionApprover && !isAdminUser) {
+    // Owner cannot edit (even if they have other roles)
+    if (isOwner) {
       return false;
     }
 
-    // owners do not edit sessions
-    if (isOwner && !isSessionApprover && !isAdminUser) {
+    // Submitted session rules (affects all except admin/owner)
+    if (submitted && !statusIsNeedsAction) {
+      // Only approver can edit when submitted and not needs_action
+      return isSessionApprover;
+    }
+
+    // Approver cannot edit when they've returned it (needs_action)
+    if (submitted && statusIsNeedsAction && isSessionApprover) {
       return false;
     }
 
-    // If they are a POC and POC work is complete, they should not be able to edit the session
-    // unless the approver has returned it for editing (NEEDS_ACTION)
-    if (isPoc && pocComplete && !statusIsNeedsAction && !isAdminUser) {
-      return false;
+    // POC-specific edit blockers (apply even if user has other roles)
+    if (isPoc) {
+      if (isRegionalNoNationalCenters) {
+        return false;
+      }
+      if (pocComplete && !statusIsNeedsAction) {
+        return false;
+      }
     }
 
-    // if the user is a POC and the event organizer is Regional TTA No National Centers,
-    // they cannot edit sessions
-    if (isPoc && isRegionalNoNationalCenters && !isAdminUser) {
-      return false;
+    // Collaborator-specific edit blockers (apply even if user has other roles)
+    if (isCollaborator) {
+      if (ownerComplete && !statusIsNeedsAction) {
+        return false;
+      }
+      if (isRegionalWithNationalCenters && facilitationIncludesRegion) {
+        return false;
+      }
     }
 
-    // eslint-disable-next-line max-len
-    // If they are the collaborator, they should not be able to edit the session.
-    if (isCollaborator && !isAdminUser && ownerComplete && !statusIsNeedsAction) {
-      return false;
-    }
-
-    if (isCollaborator
-      && isRegionalWithNationalCenters
-      && facilitationIncludesRegion
-      && !isAdminUser) {
-      return false;
-    }
-
-    // Approver cannot edit if they've returned it (NEEDS_ACTION)
-    if (submitted && statusIsNeedsAction && isSessionApprover && !isAdminUser) {
-      return false;
-    }
-
-    // Approver can edit if submitted and not complete
-    if (submitted && !statusIsComplete && isSessionApprover) {
-      return true;
-    }
-
-    // First if both general poc and owner status is blocked make sure they are not and admin.
-    if (!isAdminUser && (!isWriteable || statusIsComplete)) {
-      return false;
-    }
-
-    // Admin can edit the session until the EVENT is complete.
-    if (isAdminUser && eventStatus === TRAINING_REPORT_STATUSES.COMPLETE) {
-      return false;
-    }
-
+    // If not blocked, allow edit
     return true;
   }, [
     status,
@@ -102,15 +89,73 @@ export default function useSessionCardPermissions({
     isSessionApprover,
     isPoc,
     pocComplete,
-    isAdminUser, isCollaborator,
+    isAdminUser,
+    isCollaborator,
     ownerComplete,
-    isWriteable,
     eventStatus,
     isOwner,
     approverId,
   ]);
 
+  const showSessionDelete = useMemo(() => {
+    const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
+    // eslint-disable-next-line max-len
+    const isRegionalNoNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
+    // eslint-disable-next-line max-len
+    const isRegionalWithNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
+    const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
+
+    // Admin override - can delete until event is complete
+    if (isAdminUser) {
+      return eventStatus !== TRAINING_REPORT_STATUSES.COMPLETE;
+    }
+
+    // Universal delete blockers for non-admin users
+    if (statusIsComplete || eventStatus === TRAINING_REPORT_STATUSES.COMPLETE) {
+      return false;
+    }
+
+    // Approver-only users cannot delete
+    // (but if they're also owner/POC/collaborator, other rules apply)
+    const isApproverOnly = isSessionApprover && !isOwner && !isCollaborator && !isPoc;
+    if (isApproverOnly) {
+      return false;
+    }
+
+    // POC-specific delete blockers
+    if (isPoc) {
+      if (isRegionalNoNationalCenters) {
+        return false;
+      }
+      if (isRegionalWithNationalCenters && facilitation === 'national_center') {
+        return false;
+      }
+    }
+
+    // Collaborator-specific delete blockers
+    if (isCollaborator) {
+      if (isRegionalWithNationalCenters && facilitationIncludesRegion) {
+        return false;
+      }
+    }
+
+    // If not blocked, allow delete
+    // This includes: Owner, Owner+POC (with valid conditions), Owner+Collaborator, etc.
+    return true;
+  }, [
+    status,
+    eventStatus,
+    eventOrganizer,
+    facilitation,
+    isSessionApprover,
+    isOwner,
+    isCollaborator,
+    isPoc,
+    isAdminUser,
+  ]);
+
   return {
     showSessionEdit,
+    showSessionDelete,
   };
 }

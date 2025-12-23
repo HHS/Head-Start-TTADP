@@ -232,7 +232,7 @@ export default function SessionForm({ match }) {
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
         // eslint-disable-next-line max-len
         const isCollaboratorFromSession = session.event.collaboratorIds.includes(user.id) && !isAdminUser;
-        const { event: { data: { eventOrganizerFromSession } } } = session;
+        const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
         const { approverId } = session;
         const isApproverUser = user.id === Number(approverId);
         // we don't want to refetch if we've extracted the session data
@@ -531,8 +531,6 @@ export default function SessionForm({ match }) {
 
   const onFormSubmit = async () => {
     try {
-      await hookForm.trigger();
-
       // reset the error message
       setError('');
       setIsAppLoading(true);
