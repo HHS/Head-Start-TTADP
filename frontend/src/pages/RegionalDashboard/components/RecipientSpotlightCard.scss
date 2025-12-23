@@ -77,6 +77,17 @@
   &__details {
   }
 
+  &__success-message {
+    h3 {
+      font-size: 1.125rem;
+      line-height: 1.4;
+    }
+  }
+
+  &__details-count {
+    font-size: 0.875rem;
+  }
+
   &__details-grid {
     display: flex;
     flex-direction: column;

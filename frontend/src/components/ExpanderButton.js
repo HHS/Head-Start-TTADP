@@ -16,8 +16,9 @@ const ExpanderButton = forwardRef(({
   ariaLabel,
   pluralize,
   showCount,
+  allowZeroCount,
 }, ref) => {
-  if (count < 1) {
+  if (count < 1 && !allowZeroCount) {
     return null;
   }
 
@@ -54,11 +55,13 @@ ExpanderButton.propTypes = {
   expanded: PropTypes.bool.isRequired,
   pluralize: PropTypes.bool,
   showCount: PropTypes.bool,
+  allowZeroCount: PropTypes.bool,
 };
 
 ExpanderButton.defaultProps = {
   pluralize: true,
   showCount: true,
+  allowZeroCount: false,
 };
 
 export default ExpanderButton;
