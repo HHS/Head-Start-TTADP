@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {
-  render, screen, waitFor, within, act,
+  render, screen, waitFor, within, act, fireEvent,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { useFormContext, useForm } from 'react-hook-form';
@@ -21,6 +21,7 @@ import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import NavigatorButtons from '../components/NavigatorButtons';
 import RichEditor from '../../RichEditor';
+import * as goalValidator from '../../../pages/ActivityReport/Pages/components/goalValidator';
 
 jest.mock('../../../fetchers/activityReports', () => ({
   saveGoalsForReport: jest.fn(),
@@ -197,12 +198,17 @@ describe('ActivityReportNavigator', () => {
     editable = true,
     autoSaveInterval = 500,
     shouldAutoSave = true,
+    onHookForm,
   }) => {
     const hookForm = useForm({
       mode: 'onBlur',
       defaultValues: formData,
       shouldUnregister: false,
     });
+
+    if (onHookForm) {
+      onHookForm(hookForm);
+    }
 
     return (
       <UserContext.Provider value={{ user }}>
@@ -256,6 +262,7 @@ describe('ActivityReportNavigator', () => {
     editable = true,
     autoSaveInterval = 500,
     shouldAutoSave = true,
+    onHookForm,
   } = {}) => {
     await act(() => waitFor(() => {
       render(
@@ -270,6 +277,7 @@ describe('ActivityReportNavigator', () => {
           editable={editable}
           autoSaveInterval={autoSaveInterval}
           shouldAutoSave={shouldAutoSave}
+          onHookForm={onHookForm}
         />,
       );
     }));
@@ -663,6 +671,7 @@ describe('ActivityReportNavigator goals page saves', () => {
     }),
     setValue: jest.fn(),
     setError: jest.fn(),
+    errors: {},
     watch: jest.fn((field) => {
       if (field === 'goalForEditing') return overrides.goalForEditing || null;
       if (field === 'goals') return overrides.goals || [];
@@ -681,6 +690,16 @@ describe('ActivityReportNavigator goals page saves', () => {
     </AppLoadingContext.Provider>,
   );
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+    defaultProps.onSave.mockReset();
+    defaultProps.updateErrorMessage.mockReset();
+    mockAppLoadingContext.setIsAppLoading.mockReset();
+    mockAppLoadingContext.setAppLoadingText.mockReset();
+    goalValidator.validateGoals.mockReturnValue(true);
+    goalValidator.validatePrompts.mockResolvedValue(true);
+  });
+
   it('saves goal draft when navigating away from goals page', async () => {
     const hookForm = createMockHookForm({
       goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
@@ -698,6 +717,56 @@ describe('ActivityReportNavigator goals page saves', () => {
         expect.objectContaining({ goalOrder: expect.any(Array) }),
       );
       expect(mockAppLoadingContext.setIsAppLoading).toHaveBeenCalled();
+    });
+  });
+
+  it('resets goal form fields after successful Save and Continue', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, name: 'Goal' },
+      values: { goalPrompts: [] },
+      formState: { isDirty: true, errors: {} }, // No errors to block getPromptErrors
+    });
+
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(hookForm.setValue).toHaveBeenCalledWith('goalName', '');
+      expect(hookForm.setValue).toHaveBeenCalledWith('goalForEditing', '');
+      expect(hookForm.reset).toHaveBeenCalled();
+    });
+  });
+
+  it('handles errors when onSaveAndContinue fails', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1 },
+      values: { goalPrompts: [] },
+      formState: { isDirty: true, errors: {} },
+    });
+
+    defaultProps.onSave.mockRejectedValue(new Error('API Failure'));
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(defaultProps.updateErrorMessage).toHaveBeenCalledWith(
+        expect.stringContaining('A network error has prevented us from saving'),
+      );
     });
   });
 });
