@@ -22,6 +22,16 @@ import AppLoadingContext from '../../../AppLoadingContext';
 import NavigatorButtons from '../components/NavigatorButtons';
 import RichEditor from '../../RichEditor';
 
+jest.mock('../../../fetchers/activityReports', () => ({
+  saveGoalsForReport: jest.fn(),
+}));
+
+jest.mock('../../../pages/ActivityReport/Pages/components/goalValidator', () => ({
+  validateGoals: jest.fn().mockReturnValue(true),
+  validatePrompts: jest.fn().mockReturnValue(true),
+  OBJECTIVE_RESOURCES: 'Resources are required',
+}));
+
 // user mock
 const user = {
   name: 'test@test.com',
@@ -584,5 +594,110 @@ describe('getPromptErrors', () => {
     document.querySelector = jest.fn(() => null);
     const errors = {};
     expect(getPromptErrors(null, errors)).toBe(false);
+  });
+});
+
+describe('ActivityReportNavigator goals page saves', () => {
+  const defaultProps = {
+    editable: true,
+    currentPage: 'goals-objectives',
+    additionalData: {},
+    reportId: 1,
+    isApprover: false,
+    isPendingApprover: false,
+    onFormSubmit: jest.fn(),
+    onSave: jest.fn(),
+    onReview: jest.fn(),
+    updatePage: jest.fn(),
+    updateLastSaveTime: jest.fn(),
+    updateErrorMessage: jest.fn(),
+    setShouldAutoSave: jest.fn(),
+    pages: [
+      {
+        path: 'goals-objectives',
+        label: 'Goals',
+        position: 2,
+        review: false,
+        isPageComplete: jest.fn().mockReturnValue(false),
+        render: (
+          _additionalData,
+          _formData,
+          _reportId,
+          _isAppLoading,
+          onContinue,
+          onSaveDraft,
+          onUpdatePage,
+        ) => (
+          <NavigatorButtons
+            isAppLoading={false}
+            onContinue={onContinue}
+            onSaveDraft={onSaveDraft}
+            onUpdatePage={onUpdatePage}
+            position={2}
+            path="goals-objectives"
+          />
+        ),
+      },
+      {
+        path: 'review', label: 'Review', position: 3, review: true, render: () => <div />,
+      },
+    ],
+  };
+
+  const mockAppLoadingContext = {
+    isAppLoading: false,
+    setIsAppLoading: jest.fn(),
+    setAppLoadingText: jest.fn(),
+  };
+
+  const createMockHookForm = (overrides = {}) => ({
+    getValues: jest.fn((field) => {
+      const values = {
+        regionId: 1,
+        goalName: 'Test Goal',
+        goalPrompts: [],
+        activityRecipients: [],
+        ...overrides.values,
+      };
+      return field ? values[field] : values;
+    }),
+    setValue: jest.fn(),
+    setError: jest.fn(),
+    watch: jest.fn((field) => {
+      if (field === 'goalForEditing') return overrides.goalForEditing || null;
+      if (field === 'goals') return overrides.goals || [];
+      if (field === 'activityRecipients') return overrides.activityRecipients || [];
+      if (field === 'pageState') return overrides.pageState || {};
+      return null;
+    }),
+    trigger: jest.fn().mockResolvedValue(true),
+    reset: jest.fn(),
+    formState: { isDirty: true, errors: {} },
+  });
+
+  const renderWithContext = (hookForm) => render(
+    <AppLoadingContext.Provider value={mockAppLoadingContext}>
+      <ActivityReportNavigator {...defaultProps} hookForm={hookForm} />
+    </AppLoadingContext.Provider>,
+  );
+
+  it('saves goal draft when navigating away from goals page', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: { goalPrompts: [] },
+    });
+
+    renderWithContext(hookForm);
+
+    const reviewLink = screen.getByRole('button', { name: /Review/i });
+    userEvent.click(reviewLink);
+
+    await waitFor(() => {
+      // Verifies goalOrder extraction and navigation save
+      expect(defaultProps.onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ goalOrder: expect.any(Array) }),
+      );
+      expect(mockAppLoadingContext.setIsAppLoading).toHaveBeenCalled();
+    });
   });
 });

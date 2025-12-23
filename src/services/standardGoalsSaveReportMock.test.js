@@ -541,6 +541,7 @@ describe('Goals DB service', () => {
           name: 'New Curated Goal',
           status: 'In Progress',
           isActivelyBeingEditing: true,
+          goalTemplateId: 1,
         },
       ];
 

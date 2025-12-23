@@ -336,6 +336,16 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
  * @return {object} Goal.objectives
  */
 export async function saveStandardGoalsForReport(goals, userId, report) {
+  const goalsWithGrants = (goals || []).filter((goal) => (
+    goal
+    && Array.isArray(goal.grantIds)
+    && goal.grantIds.length > 0
+  ));
+
+  if (!goalsWithGrants.length) {
+    return [];
+  }
+
   // Loop goal templates.
   let currentObjectives = [];
 
@@ -344,20 +354,24 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
   // we're doing it here so we don't have to query for each goal
   const existingGoals = await Goal.findAll({
     where: {
-      goalTemplateId: goals.map((goal) => goal.goalTemplateId),
-      grantId: goals.map((goal) => goal.grantIds).flat(),
+      grantId: goalsWithGrants.map((goal) => goal.grantIds).flat(),
       status: { [Op.not]: GOAL_STATUS.CLOSED },
     },
   });
 
-  let updatedGoals = await Promise.all(goals.map(async (goal) => {
+  let updatedGoals = await Promise.all(goalsWithGrants.map(async (goal) => {
     // Loops recipients update / create goals.
     // eslint-disable-next-line implicit-arrow-linebreak
-    const goalTemplate = await GoalTemplate.findByPk(goal.goalTemplateId);
-    const isMonitoring = goalTemplate.standard === 'Monitoring';
+    const goalTemplate = goal.goalTemplateId
+      ? await GoalTemplate.findByPk(goal.goalTemplateId)
+      : null;
+    const isMonitoring = goalTemplate && goalTemplate.standard === 'Monitoring';
     return Promise.all(goal.grantIds.map(async (grantId) => {
       let newOrUpdatedGoal = existingGoals.find((existingGoal) => (
-        existingGoal.grantId === grantId && existingGoal.goalTemplateId === goal.goalTemplateId
+        existingGoal.grantId === grantId
+        && (goal.goalTemplateId
+          ? existingGoal.goalTemplateId === goal.goalTemplateId
+          : Array.isArray(goal.goalIds) && goal.goalIds.includes(existingGoal.id))
       ));
 
       // If this is a monitoring goal check for existing goal.
@@ -374,10 +388,11 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       // If there is no existing goal, or its closed, create a new one in 'Not started'.
       // this should always be not started to capture a status change when the report is approved
       if (!newOrUpdatedGoal) {
+        const goalName = goalTemplate ? goalTemplate.templateName : (goal.name || 'Goal');
         newOrUpdatedGoal = await Goal.create({
-          goalTemplateId: goalTemplate.id,
+          goalTemplateId: goalTemplate ? goalTemplate.id : null,
           createdVia: 'activityReport',
-          name: goalTemplate.templateName,
+          name: goalName,
           grantId,
           status: GOAL_STATUS.NOT_STARTED,
         }, { individualHooks: true });
@@ -386,7 +401,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       // Filter prompts for the grant associated with the goal.
       const filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
       // Handle goal prompts for curated goals like FEI.
-      if (goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+      if (goalTemplate && goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
         // If there are not prompts from the report (ARG), we then save
         // them from the goal field responses in the cacheGoalMetadata() below.
         if (filteredPrompts && filteredPrompts.length) {
@@ -491,6 +506,8 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
 
   // Delete Goals if not being used and created from AR.
   await removeUnusedGoalsCreatedViaAr(goalsToRemove, report.id);
+
+  return updatedGoals;
 }
 
 /**
