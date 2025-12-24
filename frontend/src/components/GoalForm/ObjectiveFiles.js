@@ -19,10 +19,12 @@ export default function ObjectiveFiles({
   label,
   forceObjectiveSave,
   selectedObjectiveId,
+  useFiles: useFilesProp,
+  onChangeUseFiles,
 }) {
   const objectiveId = objective.id;
   const hasFiles = useMemo(() => files && files.length > 0, [files]);
-  const [useFiles, setUseFiles] = useState(hasFiles);
+  const [useFiles, setUseFiles] = useState(useFilesProp ?? hasFiles);
   const [fileError, setFileError] = useState();
   const hideFileToggle = useMemo(
     () => (hasFiles && files.some((file) => file.onAnyReport)), [hasFiles, files],
@@ -31,8 +33,17 @@ export default function ObjectiveFiles({
   useEffect(() => {
     if (!useFiles && hasFiles) {
       setUseFiles(true);
+      if (onChangeUseFiles) {
+        onChangeUseFiles(true);
+      }
     }
-  }, [useFiles, hasFiles]);
+  }, [useFiles, hasFiles, onChangeUseFiles]);
+
+  useEffect(() => {
+    if (useFilesProp !== undefined && useFilesProp !== useFiles) {
+      setUseFiles(useFilesProp);
+    }
+  }, [useFilesProp, useFiles]);
 
   const showSaveDraftInfo = forceObjectiveSave
     && (!selectedObjectiveId || !(typeof selectedObjectiveId === 'number'));
@@ -73,14 +84,20 @@ export default function ObjectiveFiles({
                     id={`add-objective-files-yes-${objectiveId}-${index}`}
                     name={`add-objective-files-${objectiveId}-${index}`}
                     checked={useFiles}
-                    onChange={() => setUseFiles(true)}
+                    onChange={() => {
+                      setUseFiles(true);
+                      onChangeUseFiles(true);
+                    }}
                   />
                   <Radio
                     label="No"
                     id={`add-objective-files-no-${objectiveId}-${index}`}
                     name={`add-objective-files-${objectiveId}-${index}`}
                     checked={!useFiles}
-                    onChange={() => setUseFiles(false)}
+                    onChange={() => {
+                      setUseFiles(false);
+                      onChangeUseFiles(false);
+                    }}
                   />
                 </>
               )}
@@ -168,6 +185,8 @@ ObjectiveFiles.propTypes = {
   reportId: PropTypes.number,
   forceObjectiveSave: PropTypes.bool,
   selectedObjectiveId: PropTypes.number,
+  useFiles: PropTypes.bool,
+  onChangeUseFiles: PropTypes.func,
 };
 
 ObjectiveFiles.defaultProps = {
@@ -178,4 +197,6 @@ ObjectiveFiles.defaultProps = {
   forceObjectiveSave: true,
   selectedObjectiveId: undefined,
   label: "Do you plan to use any TTA resources that aren't available as a link?",
+  useFiles: undefined,
+  onChangeUseFiles: () => {},
 };
