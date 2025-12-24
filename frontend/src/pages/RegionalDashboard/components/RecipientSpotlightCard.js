@@ -157,6 +157,7 @@ export default function RecipientSpotlightCard({ recipient }) {
               expanded={expanded}
               pluralize
               showCount={false}
+              allowZeroCount
             />
           </div>
         </div>

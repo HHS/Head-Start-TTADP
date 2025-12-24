@@ -13,6 +13,7 @@ export default function Dashboard({
   resetPagination,
   setResetPagination,
   filterKey,
+  userHasOnlyOneRegion,
 }) {
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
@@ -38,6 +39,7 @@ export default function Dashboard({
         resetPagination={resetPagination}
         setResetPagination={setResetPagination}
         filterKey={filterKey}
+        userHasOnlyOneRegion={userHasOnlyOneRegion}
       />
     </GridContainer>
   );
@@ -49,6 +51,7 @@ Dashboard.propTypes = {
   setResetPagination: PropTypes.func.isRequired,
   filterKey: PropTypes.string.isRequired,
   reportType: PropTypes.string,
+  userHasOnlyOneRegion: PropTypes.bool.isRequired,
 };
 
 Dashboard.defaultProps = {

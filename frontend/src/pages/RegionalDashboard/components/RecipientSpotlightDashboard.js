@@ -8,6 +8,7 @@ import './RecipientSpotlightDashboard.scss';
 export default function RecipientSpotlightDashboard({
   filtersToApply,
   regionId,
+  userHasOnlyOneRegion,
 }) {
   return (
     <>
@@ -18,6 +19,7 @@ export default function RecipientSpotlightDashboard({
         <RecipientSpotlightDataController
           filters={filtersToApply}
           regionId={regionId}
+          userHasOnlyOneRegion={userHasOnlyOneRegion}
         />
       </GridContainer>
     </>
@@ -26,5 +28,10 @@ export default function RecipientSpotlightDashboard({
 
 RecipientSpotlightDashboard.propTypes = {
   filtersToApply: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
-  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  userHasOnlyOneRegion: PropTypes.bool.isRequired,
+};
+
+RecipientSpotlightDashboard.defaultProps = {
+  regionId: undefined,
 };

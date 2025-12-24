@@ -21,7 +21,11 @@ describe('RecipientSpotlightDashboardCards', () => {
   };
 
   const renderComponent = (props = {}) => {
-    const mergedProps = { ...defaultProps, ...props };
+    const mergedProps = {
+      ...defaultProps,
+      userHasOnlyOneRegion: true, // Default to single region user
+      ...props,
+    };
     return render(
       <BrowserRouter>
         <RecipientSpotlightDashboardCards
@@ -32,6 +36,8 @@ describe('RecipientSpotlightDashboardCards', () => {
           handlePageChange={mergedProps.handlePageChange}
           perPage={mergedProps.perPage}
           perPageChange={mergedProps.perPageChange}
+          filters={mergedProps.filters}
+          userHasOnlyOneRegion={mergedProps.userHasOnlyOneRegion}
         />
       </BrowserRouter>,
     );
@@ -198,10 +204,142 @@ describe('RecipientSpotlightDashboardCards', () => {
     expect(container.querySelector('.usa-table-container--scrollable')).toBeInTheDocument();
   });
 
-  it('does not show filter help button in NoResultsFound', () => {
-    renderComponent();
+  describe('No results messages for single-region users', () => {
+    it('shows priority indicator message when no filters are provided', () => {
+      renderComponent({ userHasOnlyOneRegion: true });
 
-    expect(screen.queryByText('Get help using filters')).not.toBeInTheDocument();
+      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+      expect(screen.queryByText('Get help using filters')).not.toBeInTheDocument();
+    });
+
+    it('shows priority indicator message when filters array is empty', () => {
+      renderComponent({ filters: [], userHasOnlyOneRegion: true });
+
+      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+      expect(screen.queryByText('Get help using filters')).not.toBeInTheDocument();
+    });
+
+    it('shows priority indicator message when only region filters are active (ignored for single-region users)', () => {
+      const filters = [
+        {
+          id: '1',
+          topic: 'region',
+          condition: 'is',
+          query: '5',
+        },
+      ];
+
+      renderComponent({ filters, userHasOnlyOneRegion: true });
+
+      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+      expect(screen.queryByText('Get help using filters')).not.toBeInTheDocument();
+    });
+
+    it('shows filter message when non-region filters are active', () => {
+      const filters = [
+        {
+          id: '1',
+          topic: 'grantNumber',
+          condition: 'is',
+          query: '12345',
+        },
+      ];
+
+      renderComponent({ filters, userHasOnlyOneRegion: true });
+
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(screen.getByText('Get help using filters')).toBeInTheDocument();
+    });
+
+    it('shows filter message when mixed filters (region + other) are active', () => {
+      const filters = [
+        {
+          id: '1',
+          topic: 'region',
+          condition: 'is',
+          query: '5',
+        },
+        {
+          id: '2',
+          topic: 'programSpecialist',
+          condition: 'is',
+          query: 'John Doe',
+        },
+      ];
+
+      renderComponent({ filters, userHasOnlyOneRegion: true });
+
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(screen.getByText('Get help using filters')).toBeInTheDocument();
+    });
+  });
+
+  describe('No results messages for multi-region users', () => {
+    it('shows priority indicator message when no filters are provided', () => {
+      renderComponent({ userHasOnlyOneRegion: false });
+
+      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+      expect(screen.queryByText('Get help using filters')).not.toBeInTheDocument();
+    });
+
+    it('shows filter message when only region filters are active (counted for multi-region users)', () => {
+      const filters = [
+        {
+          id: '1',
+          topic: 'region',
+          condition: 'is',
+          query: '5',
+        },
+      ];
+
+      renderComponent({ filters, userHasOnlyOneRegion: false });
+
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(screen.getByText('Get help using filters')).toBeInTheDocument();
+    });
+
+    it('shows filter message when non-region filters are active', () => {
+      const filters = [
+        {
+          id: '1',
+          topic: 'grantNumber',
+          condition: 'is',
+          query: '12345',
+        },
+      ];
+
+      renderComponent({ filters, userHasOnlyOneRegion: false });
+
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(screen.getByText('Get help using filters')).toBeInTheDocument();
+    });
+
+    it('shows filter message when mixed filters (region + other) are active', () => {
+      const filters = [
+        {
+          id: '1',
+          topic: 'region',
+          condition: 'is',
+          query: '5',
+        },
+        {
+          id: '2',
+          topic: 'programSpecialist',
+          condition: 'is',
+          query: 'John Doe',
+        },
+      ];
+
+      renderComponent({ filters, userHasOnlyOneRegion: false });
+
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(screen.getByText('Get help using filters')).toBeInTheDocument();
+    });
   });
 
   it('renders pagination when there are multiple pages', () => {

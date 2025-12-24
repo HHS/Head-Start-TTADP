@@ -184,7 +184,7 @@ describe('RecipientSpotlightCard', () => {
     expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/)).toBeInTheDocument();
   });
 
-  it('renders all indicators as not-applicable when none are active', () => {
+  it('renders expander button even when no indicators are active', () => {
     const noIndicatorsRecipient = {
       ...mockRecipient,
       childIncidents: false,
@@ -202,9 +202,9 @@ describe('RecipientSpotlightCard', () => {
       </BrowserRouter>,
     );
 
-    // When count is 0, ExpanderButton doesn't render (nothing to expand)
-    const expandButton = screen.queryByRole('button', { name: /indicators for recipient/i });
-    expect(expandButton).not.toBeInTheDocument();
+    // Expander button should render even with 0 count
+    const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
+    expect(expandButton).toBeInTheDocument();
 
     const filledBoxes = container.querySelectorAll('.ttahub--indicator-box-filled');
     expect(filledBoxes.length).toBe(0);
