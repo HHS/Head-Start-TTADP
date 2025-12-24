@@ -13,6 +13,7 @@ const reviewSubmitComponentProps = {
     review: PropTypes.bool,
     label: PropTypes.string,
   })).isRequired,
+  isAdmin: PropTypes.bool.isRequired,
 };
 
 export {
