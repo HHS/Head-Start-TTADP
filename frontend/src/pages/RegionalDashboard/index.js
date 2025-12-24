@@ -146,6 +146,7 @@ export default function RegionalDashboard({ match }) {
         filters={filters}
         filterKey={filterKey}
         resetPagination={resetPagination}
+        userHasOnlyOneRegion={userHasOnlyOneRegion}
       />
     </div>
   );
