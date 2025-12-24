@@ -23,7 +23,7 @@ export default function NeedsAction({ onSubmit }) {
   ];
 
   return (
-    <div data-testid="session-form-submit">
+    <div data-testid="session-form-needs-action">
       <FormItem
         label="Creator notes"
         name="additionalNotes"

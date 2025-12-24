@@ -292,7 +292,7 @@ describe('useEventAndSessionStaff', () => {
       expect(result.current.trainerOptions).toEqual(mockNationalCenterTrainers);
     });
 
-    it('returns both trainers when isEvent=true with facilitation=regional_tta_staff', () => {
+    it('returns national center trainers when isEvent=true with facilitation=regional_tta_staff', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -305,21 +305,9 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('regional_tta_staff');
       const { result } = renderHook(() => useEventAndSessionStaff(event, true), { wrapper });
 
-      // facilitation=regional_tta_staff overwrites the isEvent condition (second if block)
-      expect(result.current.optionsForValue).toEqual([
-        ...mockNationalCenterTrainers,
-        ...mockRegionalTrainers,
-      ]);
-      expect(result.current.trainerOptions).toEqual([
-        {
-          label: 'National Center trainers',
-          options: mockNationalCenterTrainers,
-        },
-        {
-          label: 'Regional trainers',
-          options: mockRegionalTrainers,
-        },
-      ]);
+      // facilitation=regional_tta_staff does not match the isEvent condition, so returns empty
+      expect(result.current.optionsForValue).toEqual(mockNationalCenterTrainers);
+      expect(result.current.trainerOptions).toEqual(mockNationalCenterTrainers);
     });
 
     it('returns both trainers when isEvent=true with facilitation=both', () => {
@@ -390,7 +378,7 @@ describe('useEventAndSessionStaff', () => {
   });
 
   describe('REGIONAL_PD_WITH_NATIONAL_CENTERS - facilitation=regional_tta_staff', () => {
-    it('returns both trainers in grouped structure when facilitation=regional_tta_staff', () => {
+    it('returns regional trainerswhen facilitation=regional_tta_staff', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -403,24 +391,12 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('regional_tta_staff');
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
-      expect(result.current.optionsForValue).toEqual([
-        ...mockNationalCenterTrainers,
-        ...mockRegionalTrainers,
-      ]);
-
-      expect(Array.isArray(result.current.trainerOptions)).toBe(true);
-      expect(result.current.trainerOptions).toHaveLength(2);
-      expect(result.current.trainerOptions[0]).toEqual({
-        label: 'National Center trainers',
-        options: mockNationalCenterTrainers,
-      });
-      expect(result.current.trainerOptions[1]).toEqual({
-        label: 'Regional trainers',
-        options: mockRegionalTrainers,
-      });
+      // regional_tta_staff no longer sets trainers - comment indicates "already set to correct values"
+      expect(result.current.optionsForValue).toEqual(mockRegionalTrainers);
+      expect(result.current.trainerOptions).toEqual(mockRegionalTrainers);
     });
 
-    it('handles empty arrays in grouped structure for regional_tta_staff', () => {
+    it('returns empty arrays in all scenarios for regional_tta_staff with empty trainer data', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -434,16 +410,7 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
       expect(result.current.optionsForValue).toEqual([]);
-      expect(result.current.trainerOptions).toEqual([
-        {
-          label: 'National Center trainers',
-          options: [],
-        },
-        {
-          label: 'Regional trainers',
-          options: [],
-        },
-      ]);
+      expect(result.current.trainerOptions).toEqual([]);
     });
   });
 
@@ -615,7 +582,7 @@ describe('useEventAndSessionStaff', () => {
       expect(result.current.trainerOptions).toEqual([]);
     });
 
-    it('handles both trainer arrays empty with REGIONAL_PD_WITH_NATIONAL_CENTERS', () => {
+    it('handles both trainer arrays empty with REGIONAL_PD_WITH_NATIONAL_CENTERS and regional_tta_staff', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -629,32 +596,23 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
       expect(result.current.optionsForValue).toEqual([]);
-      expect(result.current.trainerOptions).toEqual([
-        {
-          label: 'National Center trainers',
-          options: [],
-        },
-        {
-          label: 'Regional trainers',
-          options: [],
-        },
-      ]);
+      expect(result.current.trainerOptions).toEqual([]);
     });
 
-    it('handles regional trainers empty but national center trainers populated', () => {
+    it('handles both trainer arrays populated with REGIONAL_PD_WITH_NATIONAL_CENTERS and both facilitation', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
       };
 
       useFetch
-        .mockReturnValueOnce({ data: [], loading: false, error: null })
+        .mockReturnValueOnce({ data: mockRegionalTrainers, loading: false, error: null })
         .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
 
-      const wrapper = createWrapper('regional_tta_staff');
+      const wrapper = createWrapper('both');
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
-      expect(result.current.optionsForValue).toEqual(mockNationalCenterTrainers);
+      expect(result.current.optionsForValue).toEqual([...mockNationalCenterTrainers, ...mockRegionalTrainers]);
       expect(result.current.trainerOptions).toEqual([
         {
           label: 'National Center trainers',
@@ -662,12 +620,12 @@ describe('useEventAndSessionStaff', () => {
         },
         {
           label: 'Regional trainers',
-          options: [],
+          options: mockRegionalTrainers,
         },
       ]);
     });
 
-    it('handles national center trainers empty but regional trainers populated', () => {
+    it('handles national center trainers empty but regional trainers populated with both facilitation', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -677,7 +635,7 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: mockRegionalTrainers, loading: false, error: null })
         .mockReturnValueOnce({ data: [], loading: false, error: null });
 
-      const wrapper = createWrapper('regional_tta_staff');
+      const wrapper = createWrapper('both');
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
       expect(result.current.optionsForValue).toEqual(mockRegionalTrainers);
@@ -713,7 +671,7 @@ describe('useEventAndSessionStaff', () => {
       expect(result.current.trainerOptions.every((t) => !('label' in t))).toBe(true);
     });
 
-    it('validates grouped array structure for regional_tta_staff', () => {
+    it('validates empty array structure for regional_tta_staff', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -726,12 +684,9 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('regional_tta_staff');
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
-      // Grouped array should have label and options
-      expect(result.current.trainerOptions).toHaveLength(2);
-      expect(result.current.trainerOptions[0]).toHaveProperty('label');
-      expect(result.current.trainerOptions[0]).toHaveProperty('options');
-      expect(result.current.trainerOptions[1]).toHaveProperty('label');
-      expect(result.current.trainerOptions[1]).toHaveProperty('options');
+      // regional_tta_staff returns empty arrays
+      expect(result.current.trainerOptions).toEqual(mockRegionalTrainers);
+      expect(result.current.optionsForValue).toEqual(mockRegionalTrainers);
     });
 
     it('validates optionsForValue is always flat array', () => {
@@ -774,12 +729,12 @@ describe('useEventAndSessionStaff', () => {
 
       expect(isFlatArray).toBe(true);
 
-      // Test grouped structure (regional_tta_staff)
+      // Test grouped structure (both)
       useFetch
         .mockReturnValueOnce({ data: mockRegionalTrainers, loading: false, error: null })
         .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
 
-      const wrapper2 = createWrapper('regional_tta_staff');
+      const wrapper2 = createWrapper('both');
       const { result: result2 } = renderHook(
         () => useEventAndSessionStaff(event, false),
         { wrapper: wrapper2 },

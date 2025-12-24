@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext } from 'react';
 import { Button, Textarea } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
@@ -6,6 +6,7 @@ import IncompletePages from '../../../components/IncompletePages';
 import { reviewSubmitComponentProps } from './constants';
 import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
+import UserContext from '../../../UserContext';
 import SingleApproverSelect from '../../../components/SingleApproverSelect';
 
 const path = 'submitter-session-report';
@@ -22,11 +23,11 @@ export default function Submit({
   reviewSubmitPagePosition,
   pages,
   isPoc,
+  isAdmin,
 }) {
   const { register, watch, trigger } = useFormContext();
   const pageState = watch('pageState');
   const event = watch('event');
-  const approver = watch('approver');
   const facilitation = watch('facilitation');
 
   let eventOrganizer = '';
@@ -35,11 +36,8 @@ export default function Submit({
     eventOrganizer = event.data.eventOrganizer;
   }
 
-  useEffect(() => {
-    // console.log({ approver });
-  }, [approver]);
-
   const { trainerOptions: approvers } = useEventAndSessionStaff(event);
+  const { user } = useContext(UserContext);
 
   const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
   // eslint-disable-next-line max-len
@@ -53,12 +51,23 @@ export default function Submit({
     approverOptions = approvers.filter((o) => o.roles.some((or) => MANAGER_ROLES.includes(or.name)));
   }
 
-  if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && (facilitation === 'regional_tta_staff' || facilitation === 'both')) {
+  if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && facilitation === 'both') {
     // format approvers and flatten national and regional trainers into a single list
     approverOptions = approvers
       .filter((approverGroup) => approverGroup.label === 'Regional trainers')
       .flatMap((group) => group.options)
       .filter((o) => o.roles.some((or) => MANAGER_ROLES.includes(or.name)));
+  }
+
+  if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS && facilitation === 'regional_tta_staff') {
+    // format approvers and flatten national and regional trainers into a single list
+    approverOptions = approvers
+      .filter((o) => o.roles.some((or) => MANAGER_ROLES.includes(or.name)));
+  }
+
+  // filter current user out of approver list
+  if (!isAdmin) {
+    approverOptions = approverOptions.filter((a) => a.id !== user.id);
   }
 
   // POCs can select approver when facilitation includes regional staff
