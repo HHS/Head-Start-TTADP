@@ -281,14 +281,24 @@ describe('TrainingReportForm', () => {
     await waitFor(() => expect(screen.getByText(/: e-1 event/i)).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText(/r01-pd-1234/i)).toBeInTheDocument());
   });
-  it('passes correct values to backend and redirects', async () => {
+  it('passes correct values to backend and redirects with success message', async () => {
     fetchMock.get('/api/events/id/1', completedForm);
 
-    fetchMock.put('/api/events/id/1', {});
+    // Return successful response with proper data structure
+    fetchMock.put('/api/events/id/1', {
+      ...completedForm,
+      data: {
+        ...completedForm.data,
+        status: 'In progress',
+        eventId: 'R01-PD-1234',
+      },
+    });
     fetchMock.get(sessionsUrl, [
       { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
       { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
     ]);
+
+    const pushSpy = jest.spyOn(history, 'push');
 
     act(() => {
       renderTrainingReportForm('1');
@@ -314,7 +324,15 @@ describe('TrainingReportForm', () => {
     // expect the data to contain "eventSubmitted: true"
     expect(fetchMock.lastOptions('/api/events/id/1').body).toContain('"eventSubmitted":true');
 
-    await waitFor(() => expect(screen.getByText(/There was an error saving the training report/i)).toBeInTheDocument());
+    // Verify redirect with message after successful submission
+    await waitFor(() => expect(pushSpy).toHaveBeenCalled());
+
+    expect(pushSpy).toHaveBeenCalledWith('/training-reports/in-progress', {
+      message: expect.objectContaining({
+        eventId: 'R01-PD-1234',
+        dateStr: expect.stringMatching(/\d{2}\/\d{2}\/\d{4} at \d{1,2}:\d{2} [ap]m/),
+      }),
+    });
   });
   it('saves and updates local storage', async () => {
     fetchMock.get('/api/events/id/1', {

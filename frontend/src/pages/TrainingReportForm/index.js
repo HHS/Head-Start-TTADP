@@ -4,6 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
+import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -233,9 +234,15 @@ export default function TrainingReportForm({ match }) {
       });
       resetFormData(hookForm.reset, updatedEvent);
 
+      const dateStr = moment().format('MM/DD/YYYY [at] h:mm a z');
+      const message = {
+        eventId: updatedEvent.data.eventId,
+        dateStr,
+      };
+
       // Redirect back based current status tab.
       const redirect = updatedEvent.data.status.replace(' ', '-').toLowerCase();
-      history.push(`/training-reports/${redirect}`, { message: 'You successfully submitted the event.' });
+      history.push(`/training-reports/${redirect}`, { message });
     } catch (err) {
       // Close the modal and show the error message.
       setError('There was an error saving the training report. Please try again later.');

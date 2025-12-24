@@ -358,7 +358,7 @@ const EventSummary = ({
                   }}
                   onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
-                  options={trainerOptions}
+                  options={trainerOptions.filter((option) => option.id !== data.ownerId)}
                   getOptionLabel={(option) => option.fullName}
                   getOptionValue={(option) => option.id}
                   required
@@ -454,7 +454,7 @@ const EventSummary = ({
                       id="category-regionalOffice"
                       name="eventIntendedAudience"
                       label="Regional office/TTA"
-                      value="regiona-office-tta"
+                      value="regional-office-tta"
                       className="smart-hub--report-checkbox"
                       inputRef={register({ required: 'Select one' })}
                     />

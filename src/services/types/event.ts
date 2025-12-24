@@ -7,6 +7,7 @@ type TRStatusType = TRAINING_REPORT_STATUSES.NOT_STARTED
 
 export type SessionShape = {
   id: number;
+  eventId?: number;
   approverId?: number;
   data: {
     sessionName: string;
@@ -22,7 +23,11 @@ export type SessionShape = {
     pocComplete: boolean;
     collabComplete: boolean;
     submitterId?: number;
-  }
+    objectiveTrainers: string[];
+  };
+  submitted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type EventReportPilotNationalCenterUserType = {
@@ -48,6 +53,7 @@ export type EventShape = {
     eventName: string;
     eventSubmitted: boolean;
     additionalStates: string[];
+    eventOrganizer?: 'Regional TTA Hosted Event (no National Centers)' | 'Regional PD Event (with National Centers)';
   };
   updatedAt: string;
   sessionReports: SessionShape[];
