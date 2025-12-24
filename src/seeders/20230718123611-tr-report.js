@@ -34,6 +34,11 @@ module.exports = {
         regionId: 3,
         scopeId: READ_WRITE_TRAINING_REPORTS,
       },
+      {
+        userId: 6,
+        regionId: 1,
+        scopeId: READ_WRITE_TRAINING_REPORTS,
+      },
     ];
 
     const collaboratorTrainingReports = [
@@ -165,7 +170,7 @@ module.exports = {
     SELECT
       id,
       1,
-      CAST('{"sessionName":"School Readiness Workshop - Both","reviewStatus": "draft","startDate":"2024-01-27","endDate":"2024-01-27","duration":3.5,"deliveryMethod":"virtual","context":"Advanced school readiness strategies","objective":"Deepen school readiness implementation","numberOfParticipants":30,"status":"In progress","collabComplete":false,"pocComplete":false,"regionId":3,"facilitation":"both","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Curriculum Development"],"objectiveTrainers":["Regional TTA Team","NCQTL"],"participants":["Teacher","Coach","Education Manager"],"additionalStates":[],"reviewStatus":"draft"}' AS JSONB),
+      CAST('{"sessionName":"School Readiness Workshop - Both","reviewStatus": "draft","startDate":"2024-01-27","endDate":"2024-01-27","duration":3.5,"deliveryMethod":"virtual","context":"Advanced school readiness strategies","objective":"Deepen school readiness implementation","numberOfParticipants":30,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"both","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Curriculum Development"],"objectiveTrainers":[],"participants":["Teacher","Coach","Education Manager"],"additionalStates":[],"reviewStatus":"draft"}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
