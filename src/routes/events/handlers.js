@@ -15,6 +15,7 @@ import {
   destroyEvent,
   findEventsByStatus,
   getTrainingReportAlertsForUser,
+  filterEventSessions,
 } from '../../services/event';
 import { userById } from '../../services/users';
 import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
@@ -108,7 +109,16 @@ export const getHandler = async (req, res) => {
       return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
-    return res.status(httpCodes.OK).send(event);
+    // Filter sessions based on user role
+    // Handle both single events and arrays
+    let filteredEvent;
+    if (Array.isArray(event)) {
+      filteredEvent = event.map((e) => filterEventSessions(e, userId, auth.isAdmin()));
+    } else {
+      filteredEvent = filterEventSessions(event, userId, auth.isAdmin());
+    }
+
+    return res.status(httpCodes.OK).send(filteredEvent);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }
