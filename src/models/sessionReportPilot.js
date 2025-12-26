@@ -82,7 +82,7 @@ export default (sequelize, DataTypes) => {
           this.approverId
           && this.data
           && this.data.pocComplete
-          && this.data.ownerComplete
+          && this.data.collabComplete
         );
       },
     },

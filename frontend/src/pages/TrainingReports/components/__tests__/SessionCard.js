@@ -32,7 +32,7 @@ describe('SessionCard', () => {
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
       pocComplete: false,
-      ownerComplete: false,
+      collabComplete: false,
       submitted: false,
       facilitation: 'national_centers',
     },
@@ -41,13 +41,12 @@ describe('SessionCard', () => {
   const renderSessionCard = async (
     session = defaultSession,
     eventStatus = TRAINING_REPORT_STATUSES.IN_PROGRESS,
-    passedUser = defaultUser,
+    user = defaultUser,
     isOwner = true,
     isPoc = false,
     isCollaborator = false,
     eventOrganizer = 'Regional PD Event (with National Centers)',
   ) => {
-    const user = passedUser || defaultUser;
     render((
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
@@ -92,24 +91,17 @@ describe('SessionCard', () => {
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('hides both edit and delete when session is complete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: true,
-          ownerComplete: true,
-          status: 'Complete',
-        },
+  it('hides edit link if session is complete', () => {
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: true,
+        collabComplete: true,
+        status: 'Complete',
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      true,
-      false,
-      false,
-    );
+    });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
@@ -195,7 +187,7 @@ describe('SessionCard', () => {
     expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
   });
 
-  it('admin can edit and delete even when pocComplete and ownerComplete are true', () => {
+  it('shows the edit session link when the user is an admin and creator and pocComplete and collabComplete are true', () => {
     const superUser = {
       id: 1,
       homeRegionId: 1,
@@ -210,29 +202,22 @@ describe('SessionCard', () => {
       ],
     };
 
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          ownerId: 1,
-          pocComplete: true,
-          ownerComplete: true,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        ownerId: 1,
+        pocComplete: true,
+        collabComplete: true,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      superUser,
-      false,
-      false,
-      true,
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('admin POC can edit and delete even when pocComplete and ownerComplete are true', () => {
+  it('shows the edit session link when the user is an admin and poc and pocComplete and collabComplete are true', () => {
     const superUser = {
       id: 1,
       homeRegionId: 1,
@@ -247,23 +232,17 @@ describe('SessionCard', () => {
       ],
     };
 
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          ownerId: 3,
-          pocIds: [1],
-          pocComplete: true,
-          ownerComplete: true,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        ownerId: 3,
+        pocIds: [1],
+        pocComplete: true,
+        collabComplete: true,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      superUser,
-      false,
-      true,
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -291,137 +270,91 @@ describe('SessionCard', () => {
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('POC cannot edit when pocComplete but can still delete (submission does not block delete)', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: true,
-          ownerComplete: false,
-          facilitation: 'regional_tta_staff',
-        },
+  it('hides the edit session button if the poc work is complete', () => {
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: true,
+        collabComplete: false,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      true,
-      false,
-      'Regional PD Event (with National Centers)',
-    );
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('owner cannot edit but can delete when ownerComplete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: false,
-          ownerComplete: true,
-        },
+  it('hides the edit session button if the owner work is complete', () => {
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        collabComplete: true,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      true, // isOwner
-      false,
-      false,
-    );
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('collaborator cannot edit when ownerComplete but can still delete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: false,
-          ownerComplete: true,
-        },
+  it('hides the edit session button if the user is a collaborator and the owner work is complete', () => {
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        collabComplete: true,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      false,
-      true, // isCollaborator
-    );
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('collaborator can edit and delete when neither pocComplete nor ownerComplete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: true,
-          ownerComplete: false,
-        },
+  it('shows the edit session button if the owner work is not complete', () => {
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: true,
+        collabComplete: false,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      false,
-      true, // isCollaborator
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('POC can edit and delete when pocComplete is false', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: false,
-          ownerComplete: true,
-          facilitation: 'regional_tta_staff',
-        },
+  it('shows the edit session button if the poc work is not complete', () => {
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        collabComplete: true,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      true, // isPoc
-      false,
-      'Regional PD Event (with National Centers)',
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('collaborator can edit and delete when owner work is not complete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: false,
-          ownerComplete: false,
-        },
+  it('shows the edit button if the user is a collaborator and the owner work is not complete', () => {
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        collabComplete: false,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      false,
-      true, // isCollaborator
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
