@@ -41,13 +41,12 @@ describe('SessionCard', () => {
   const renderSessionCard = async (
     session = defaultSession,
     eventStatus = TRAINING_REPORT_STATUSES.IN_PROGRESS,
-    passedUser = defaultUser,
+    user = defaultUser,
     isOwner = true,
     isPoc = false,
     isCollaborator = false,
     eventOrganizer = 'Regional PD Event (with National Centers)',
   ) => {
-    const user = passedUser || defaultUser;
     render((
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
@@ -212,7 +211,7 @@ describe('SessionCard', () => {
         pocComplete: true,
         collabComplete: true,
       },
-    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, false, true);
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -243,7 +242,7 @@ describe('SessionCard', () => {
         pocComplete: true,
         collabComplete: true,
       },
-    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, true);
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -325,7 +324,7 @@ describe('SessionCard', () => {
         pocComplete: true,
         collabComplete: false,
       },
-    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -340,7 +339,7 @@ describe('SessionCard', () => {
         pocComplete: false,
         collabComplete: true,
       },
-    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -355,7 +354,7 @@ describe('SessionCard', () => {
         pocComplete: false,
         collabComplete: false,
       },
-    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
