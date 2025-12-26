@@ -1,37 +1,31 @@
 /* eslint-disable indent */
 /* eslint-disable no-console */
-const fs = require('fs');
-const crypto = require('crypto');
+const fs = require('node:fs');
+const { promises: fsPromises } = require('node:fs');
+const crypto = require('node:crypto');
 const colors = require('../frontend/src/colors');
 
-function generateHashes() {
-  const scssFileBuffer = fs.readFileSync('./frontend/src/colors.scss');
-  const scsshash = crypto.createHash('sha256');
-  scsshash.update(scssFileBuffer);
+async function generateHashes() {
+  try {
+    const scssFileBuffer = await fs.promises.readFile('./frontend/src/colors.scss');
+    const scsshash = crypto.createHash('sha256');
+    scsshash.update(scssFileBuffer);
 
-  const scsshex = scsshash.digest('hex');
-  fs.writeFile('./colorsscsschecksum', scsshex, (err) => {
-    if (err) {
-      console.error('cannot generate colors.scss hash');
-      return;
-    }
-
+    const scsshex = scsshash.digest('hex');
+    await fsPromises.writeFile('./frontend/colorsscsschecksum', scsshex);
     console.log('colors.scss hash created');
-  }); // end fs call
 
-  const jsFileBuffer = fs.readFileSync('./frontend/src/colors.js');
-  const jsHash = crypto.createHash('sha256');
-  jsHash.update(jsFileBuffer);
+    const jsFileBuffer = await fs.promises.readFile('./frontend/src/colors.js');
+    const jsHash = crypto.createHash('sha256');
+    jsHash.update(jsFileBuffer);
 
-  const jshex = jsHash.digest('hex');
-  fs.writeFile('./colorsjschecksum', jshex, (err) => {
-    if (err) {
-      console.error('cannot generate colors.js hash');
-      return;
-    }
-
+    const jshex = jsHash.digest('hex');
+    await fsPromises.writeFile('./frontend/colorsjschecksum', jshex);
     console.log('colors.js hash created');
-  }); // end fs call
+  } catch (err) {
+    console.error('Error generating hashes:', err);
+    throw err;
+  }
 }
 
 function getPropName(key) {
@@ -50,15 +44,14 @@ function getPropName(key) {
   return propName;
 }
 
-function makeColors() {
-  // const keys = Object.keys(colors);
-  // const values = Object.values(colors);
-  const entries = Object.entries(colors);
+async function makeColors() {
+  try {
+    const entries = Object.entries(colors);
 
-  const propNames = entries.map(([key]) => getPropName(key));
-  const values = entries.map(([, value]) => value);
+    const propNames = entries.map(([key]) => getPropName(key));
+    const values = entries.map(([, value]) => value);
 
-  const contents = `
+    const contents = `
 // STOP! Don't edit this file.
 // Instead, edit colors.js and run 'yarn makecolors'
 // or if you are using docker, yarn docker:makecolors
@@ -81,16 +74,14 @@ ${propNames.map((name, index) => `  --${name}: ${values[index]};`).join('\n')}
 
 `;
 
-  fs.writeFile('./frontend/src/colors.scss', contents, (err) => {
-    if (err) {
-      console.error('cannot generate colors.scss');
-      return;
-    }
-
+    await fsPromises.writeFile('./frontend/src/colors.scss', contents);
     console.log('colors.scss created');
 
-    generateHashes();
-  }); // end fs call
-}// end make colors function
+    await generateHashes();
+  } catch (err) {
+    console.error('Error generating colors:', err);
+    process.exit(1);
+  }
+}
 
 makeColors();
