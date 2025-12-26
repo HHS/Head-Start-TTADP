@@ -57,7 +57,7 @@ describe('TrainingReportAlerts', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('You do not have any overdue tasks.'),
+        screen.getByText('You have no events or sessions that require action'),
       ).toBeInTheDocument();
     });
   });

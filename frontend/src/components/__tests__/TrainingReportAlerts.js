@@ -59,7 +59,7 @@ describe('TrainingReportAlerts', () => {
       renderTest();
     });
 
-    expect(await screen.findByText('You do not have any overdue tasks.')).toBeInTheDocument();
+    expect(await screen.findByText('You have no events or sessions that require action')).toBeInTheDocument();
   });
 
   it('shows the alerts in a table', async () => {
@@ -137,6 +137,6 @@ describe('TrainingReportAlerts', () => {
       renderTest();
     });
 
-    expect(await screen.findByText('You do not have any overdue tasks.')).toBeInTheDocument();
+    expect(await screen.findByText('You have no events or sessions that require action')).toBeInTheDocument();
   });
 });

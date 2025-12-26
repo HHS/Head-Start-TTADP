@@ -89,7 +89,7 @@ export default function TrainingReportAlerts() {
             elementSortProp="data-sort"
           />
         </div>
-      ) : <p className="usa-prose margin-x-3 margin-y-0 padding-y-3">You do not have any overdue tasks.</p>}
+      ) : <p className="usa-prose margin-0 padding-5 text-bold text-center">You have no events or sessions that require action</p>}
     </WidgetContainer>
   );
 }
