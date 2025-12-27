@@ -363,7 +363,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </Drawer>
         <FormItem
           required={false}
-          htmlFor="sessionGoalTemplates"
+          htmlFor="goalTemplates"
           label={(
             <>
               Select the goals that this activity supports
@@ -378,16 +378,14 @@ const SessionSummary = ({ datePickerKey, event }) => {
               </button>
             </>
           )}
-          name="sessionGoalTemplates"
+          name="goalTemplates"
         >
           <Controller
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
-                value={(goalTemplates || []).filter((option) => (
-                  value.includes(option.standard)
-                ))}
-                inputId="sessionGoalTemplates"
-                name="sessionGoalTemplates"
+                value={value}
+                inputId="goalTemplates"
+                name="goalTemplates"
                 className="usa-select"
                 styles={selectOptionsReset}
                 closeMenuOnSelect={false}
@@ -396,7 +394,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 }}
                 onBlur={onBlur}
                 onChange={(s) => {
-                  controllerOnChange(s.map((o) => o.standard));
+                  controllerOnChange(s);
                 }}
                 inputRef={register({ required: 'Select at least one goal' })}
                 getOptionLabel={(option) => option.standard}
