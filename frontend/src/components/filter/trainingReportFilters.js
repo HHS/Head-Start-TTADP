@@ -8,12 +8,14 @@ import {
   SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
   EMPTY_MULTI_SELECT,
   SELECT_CONDITIONS,
+  FILTER_CONDITIONS,
 } from '../../Constants';
 import FilterInput from './FilterInput';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterNationalCenterNameSelect from './FilterNationalCenterNameSelect';
 import { handleArrayQuery } from './helpers';
+import FilterGoalStandard from './FilterGoalStandard';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -127,6 +129,22 @@ export const eventIdFilter = {
       inputId={`eventId-${condition}-${id}`}
       onApply={onApplyQuery}
       label="Enter a event id"
+    />
+  ),
+};
+
+export const goalCategoryFilter = {
+  id: 'standard',
+  display: 'Goal category',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGoalStandard
+      query={query}
+      inputId={`goalCategory-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter a goal category"
     />
   ),
 };
