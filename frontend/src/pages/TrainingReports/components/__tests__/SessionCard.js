@@ -28,7 +28,7 @@ describe('SessionCard', () => {
       endDate: '01/03/2021',
       objective: 'This is my session objective',
       objectiveSupportType: SUPPORT_TYPES[2],
-      sessionGoalTemplates: ['FEI', 'CQI and Data'],
+      sessionGoalTemplates: [{ id: 1, standard: 'FEI' }, { id: 2, standard: 'CQI and Data' }],
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
       pocComplete: false,
