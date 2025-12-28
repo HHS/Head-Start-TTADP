@@ -13,7 +13,7 @@ export default function FilterGoalStandard({
   const standards = (goalTemplates || []).map((template) => ({
     label: template.standard,
     value: template.id,
-  }));
+  })).filter(({ label }) => label !== 'Monitoring');
 
   const onApplyClick = (selected) => {
     onApply(selected);
