@@ -413,7 +413,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 return true;
               },
             }}
-            name="sessionGoalTemplates"
+            name="goalTemplates"
             defaultValue={[]}
           />
         </FormItem>
@@ -716,7 +716,7 @@ const ReviewSection = () => {
     objectiveTopics,
     objectiveTrainers,
     courses,
-    sessionGoalTemplates,
+    goalTemplates,
     objectiveResources,
     files,
     ttaProvided,
@@ -743,7 +743,7 @@ const ReviewSection = () => {
       anchor: 'session-objective',
       items: [
         { label: 'Session objectives', name: 'objective', customValue: { objective } },
-        { label: 'Supporting goals', name: 'goals', customValue: { goals: sessionGoalTemplates } },
+        { label: 'Supporting goals', name: 'goals', customValue: { goals: goalTemplates } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
         { label: 'iPD courses', name: 'courses', customValue: { courses: (courses || []).map((c) => c.name) } },
