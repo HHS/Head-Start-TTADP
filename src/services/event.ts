@@ -255,6 +255,13 @@ export async function findEventHelperBlob({
         model: SessionReportPilot,
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
+        include: [
+          {
+            model: db.GoalTemplate,
+            as: 'goalTemplates',
+            attributes: ['standard'],
+          },
+        ],
         attributes: [
           'id',
           'eventId',

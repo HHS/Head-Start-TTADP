@@ -44,6 +44,7 @@ function SessionCard({
   eventOrganizer,
 }) {
   const modalRef = useRef();
+  const { goalTemplates } = session;
   const {
     sessionName,
     startDate,
@@ -52,7 +53,6 @@ function SessionCard({
     objectiveSupportType,
     objectiveTrainers,
     status,
-    sessionGoalTemplates,
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -154,7 +154,7 @@ function SessionCard({
         </CardData>
 
         <CardData label="Supporting goals">
-          {sessionGoalTemplates && sessionGoalTemplates.length > 0 ? sessionGoalTemplates.map((sgt) => sgt.standard).join(', ') : ''}
+          {goalTemplates && goalTemplates.length > 0 ? goalTemplates.map((sgt) => sgt.standard).join(', ') : ''}
         </CardData>
 
         <CardData label="Trainers">
@@ -172,6 +172,7 @@ function SessionCard({
 
 export const sessionPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
+  goalTemplates: PropTypes.arrayOf(PropTypes.shape({ standard: PropTypes.string })).isRequired,
   data: PropTypes.shape({
     facilitation: PropTypes.string.isRequired,
     regionId: PropTypes.number.isRequired,
@@ -180,7 +181,6 @@ export const sessionPropTypes = PropTypes.shape({
     endDate: PropTypes.string.isRequired,
     objective: PropTypes.string.isRequired,
     objectiveSupportType: PropTypes.string.isRequired,
-    sessionGoalTemplates: PropTypes.arrayOf(PropTypes.string).isRequired,
     objectiveTrainers: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.oneOf([
       'In progress',
