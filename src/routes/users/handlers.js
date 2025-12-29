@@ -231,7 +231,8 @@ export async function getTrainingReportNationalCenterUsers(req, res) {
       return;
     }
 
-    res.json();
+    const nationalCenterTrainers = await usersByRoles(['NC']);
+    res.json(nationalCenterTrainers);
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }
