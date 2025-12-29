@@ -66,11 +66,7 @@ SupportingAttachmentsSessionOrCommunication.propTypes = {
   handleDelete: PropTypes.func.isRequired,
   idKey: PropTypes.string.isRequired,
   children: PropTypes.node,
-  formName: PropTypes.string,
-};
-
-SupportingAttachmentsSessionOrCommunication.defaultProps = {
-  formName: 'files',
+  formName: PropTypes.string.isRequired,
 };
 
 SupportingAttachmentsSessionOrCommunication.defaultProps = {
