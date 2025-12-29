@@ -63,7 +63,7 @@ const updateSessionReportRelatedModels = async (
   }
 };
 
-export const validateFields = (request, requiredFields) => {
+export const validateFields = (request, requiredFields: string[]) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
 
   if (missingFields.length) {

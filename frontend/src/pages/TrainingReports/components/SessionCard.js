@@ -154,7 +154,7 @@ function SessionCard({
         </CardData>
 
         <CardData label="Supporting goals">
-          {goalTemplates && goalTemplates.length > 0 ? goalTemplates.map((sgt) => sgt.standard).join(', ') : ''}
+          {goalTemplates && goalTemplates.length > 0 ? goalTemplates.map((gt) => gt.standard).join(', ') : ''}
         </CardData>
 
         <CardData label="Trainers">
