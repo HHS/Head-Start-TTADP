@@ -726,6 +726,7 @@ const ReviewSection = () => {
   // eslint-disable-next-line max-len
   const objectiveFiles = (files || []).map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
   const resources = (objectiveResources || []).map((r) => <Link href={r.value}>{r.value}</Link>);
+  const supportingGoals = (goalTemplates || []).map((g) => g.standard);
 
   const sections = [
     {
@@ -743,7 +744,7 @@ const ReviewSection = () => {
       anchor: 'session-objective',
       items: [
         { label: 'Session objectives', name: 'objective', customValue: { objective } },
-        { label: 'Supporting goals', name: 'goals', customValue: { goals: goalTemplates } },
+        { label: 'Supporting goals', name: 'goals', customValue: { goals: supportingGoals } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
         { label: 'iPD courses', name: 'courses', customValue: { courses: (courses || []).map((c) => c.name) } },
