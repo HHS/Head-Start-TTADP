@@ -17,6 +17,7 @@ const SupportingAttachmentsSessionOrCommunication = ({
   handleDelete,
   idKey,
   children,
+  formName,
 }) => {
   const [fileError, setFileError] = useState();
   const { register } = useFormContext();
@@ -39,7 +40,7 @@ const SupportingAttachmentsSessionOrCommunication = ({
           </span>
           { fileError && (<ErrorMessage>{fileError}</ErrorMessage>)}
           <Controller
-            name="supportingAttachments"
+            name={formName}
             defaultValue={[]}
             render={({ onChange, value }) => (
               <ReportFileUploader
@@ -65,6 +66,11 @@ SupportingAttachmentsSessionOrCommunication.propTypes = {
   handleDelete: PropTypes.func.isRequired,
   idKey: PropTypes.string.isRequired,
   children: PropTypes.node,
+  formName: PropTypes.string,
+};
+
+SupportingAttachmentsSessionOrCommunication.defaultProps = {
+  formName: 'files',
 };
 
 SupportingAttachmentsSessionOrCommunication.defaultProps = {
