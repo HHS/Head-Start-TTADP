@@ -15,12 +15,9 @@ export default function FilterGoalStandard({
     value: template.id,
   })).filter(({ label }) => label !== 'Monitoring');
 
-  const onApplyClick = (selected) => {
-    onApply(selected);
-  };
   return (
     <FilterSelect
-      onApply={onApplyClick}
+      onApply={onApply}
       inputId={inputId}
       labelText="Select goal standard to filter by"
       options={standards}
