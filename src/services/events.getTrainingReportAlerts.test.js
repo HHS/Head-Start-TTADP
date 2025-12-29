@@ -17,6 +17,8 @@ jest.mock('bull');
 
 const regionId = 1;
 
+const CURRENT_DATE = new Date();
+
 async function createEvents({
   ownerId = faker.datatype.number(),
   collaboratorId = faker.datatype.number(),
@@ -62,7 +64,7 @@ async function createEvents({
     ...baseEvent,
     data: {
       ...baseEvent.data,
-      startDate: new Date(),
+      startDate: CURRENT_DATE,
     },
   });
 
@@ -74,7 +76,7 @@ async function createEvents({
     ...baseEvent,
     data: {
       ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
       endDate: null,
     },
   });
@@ -88,8 +90,8 @@ async function createEvents({
     data: {
       ...baseEvent.data,
       eventSubmitted: true,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
+      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+      endDate: CURRENT_DATE,
     },
   });
 
@@ -102,8 +104,8 @@ async function createEvents({
     data: {
       ...baseEvent.data,
       eventSubmitted: true,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
+      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+      endDate: CURRENT_DATE,
     },
   });
 
@@ -122,8 +124,8 @@ async function createEvents({
     ...baseEvent,
     data: {
       ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 2)),
-      endDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 2)),
+      endDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
       eventSubmitted: true,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
     },
@@ -141,8 +143,8 @@ async function createEvents({
     ...baseEvent,
     data: {
       ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
+      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+      endDate: CURRENT_DATE,
       eventSubmitted: true,
     },
   });
@@ -154,8 +156,8 @@ async function createEvents({
     eventId: f.id,
     data: {
       sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
+      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+      endDate: CURRENT_DATE,
       duration: 'Series',
       objective: 'This is an objective',
       objectiveTopics: ['Coaching'],
@@ -168,7 +170,7 @@ async function createEvents({
       language: 'English',
       isIstVisit: 'yes',
       regionalOfficeTta: 'TTAC',
-      nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+      nextSteps: [{ completeDate: CURRENT_DATE, note: 'Next step 1' }],
       pocComplete: false,
       collabComplete: true,
     },
@@ -180,8 +182,8 @@ async function createEvents({
     ...baseEvent,
     data: {
       ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
+      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+      endDate: CURRENT_DATE,
       eventSubmitted: true,
     },
   });
@@ -193,8 +195,8 @@ async function createEvents({
     eventId: g.id,
     data: {
       sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
+      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+      endDate: CURRENT_DATE,
       duration: 'Series',
       objective: 'This is an objective',
       objectiveTopics: ['Coaching'],
@@ -206,7 +208,7 @@ async function createEvents({
       language: 'English',
       isIstVisit: 'yes',
       regionalOfficeTta: 'TTAC',
-      nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+      nextSteps: [{ completeDate: CURRENT_DATE, note: 'Next step 1' }],
       pocComplete: true,
       collabComplete: false,
     },
@@ -220,8 +222,8 @@ async function createEvents({
     data: {
       status: TRAINING_REPORT_STATUSES.COMPLETE,
       sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
+      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+      endDate: CURRENT_DATE,
       duration: 'Series',
       objective: 'This is an objective',
       objectiveTopics: ['Coaching'],
@@ -232,7 +234,7 @@ async function createEvents({
       deliveryMethod: 'In Person',
       language: 'English',
       isIstVisit: 'yes',
-      nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+      nextSteps: [{ completeDate: CURRENT_DATE, note: 'Next step 1' }],
       pocComplete: true,
       collabComplete: false,
     },
@@ -303,8 +305,8 @@ describe('getTrainingReportAlerts', () => {
           reasons: ['Coaching'],
           vision: 'Testing end date!',
           eventSubmitted: false,
-          startDate: new Date(new Date().setMonth(new Date().getMonth() - 2)),
-          endDate: new Date(new Date().setDate(new Date().getDate() - 20)), // 20 days ago
+          startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 2)),
+          endDate: new Date(CURRENT_DATE.setDate(CURRENT_DATE.getDate() - 20)), // 20 days ago
         },
       });
 
@@ -365,8 +367,8 @@ describe('getTrainingReportAlerts', () => {
           reasons: ['Coaching'],
           vision: 'Testing approval workflow!',
           eventSubmitted: true,
-          startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-          endDate: new Date(),
+          startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+          endDate: CURRENT_DATE,
         },
       });
 
@@ -377,8 +379,8 @@ describe('getTrainingReportAlerts', () => {
         data: {
           sessionName: 'Session Waiting for Approval',
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-          startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-          endDate: new Date(),
+          startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+          endDate: CURRENT_DATE,
           duration: 'Series',
           objective: 'This is an objective',
           objectiveTopics: ['Coaching'],
@@ -389,7 +391,7 @@ describe('getTrainingReportAlerts', () => {
           deliveryMethod: 'In Person',
           language: 'English',
           isIstVisit: 'yes',
-          nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+          nextSteps: [{ completeDate: CURRENT_DATE, note: 'Next step 1' }],
           pocComplete: true,
           collabComplete: true,
           submitterId: submitter.id,
@@ -403,8 +405,8 @@ describe('getTrainingReportAlerts', () => {
         data: {
           sessionName: 'Session Needing Changes',
           status: 'in-progress-needs-action',
-          startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-          endDate: new Date(),
+          startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+          endDate: CURRENT_DATE,
           duration: 'Series',
           objective: 'This is an objective',
           objectiveTopics: ['Coaching'],
@@ -415,7 +417,7 @@ describe('getTrainingReportAlerts', () => {
           deliveryMethod: 'In Person',
           language: 'English',
           isIstVisit: 'yes',
-          nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+          nextSteps: [{ completeDate: CURRENT_DATE, note: 'Next step 1' }],
           pocComplete: true,
           collabComplete: true,
           submitterId: submitter.id,
