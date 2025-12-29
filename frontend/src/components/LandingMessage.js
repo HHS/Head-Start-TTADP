@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Alert, Button } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router';
@@ -34,6 +34,10 @@ export default function LandingMessage({
       </>
     );
   }
+
+  // clear the message so it doesn't show again on navigation/refresh
+  useEffect(() => history.replace({ ...history.location, state: { message: null } }),
+    [history]);
 
   if (showAlert && message) {
     return (
