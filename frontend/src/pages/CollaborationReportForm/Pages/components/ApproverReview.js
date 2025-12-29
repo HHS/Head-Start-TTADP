@@ -89,6 +89,8 @@ export default function ApproverReview({
 
         </>
 
+        <p className="text-bold margin-bottom-2">Approval status</p>
+
         <ApproverStatusList approverStatus={approverStatusList} />
 
         <Button disabled={hasIncompletePages} type="submit">Submit</Button>

@@ -2,7 +2,7 @@ import React from 'react';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExclamationCircle, faCheck, faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faCheck, faClock } from '@fortawesome/free-solid-svg-icons';
 import colors from '../../../../colors';
 
 const getStatusIcon = (status) => {
@@ -13,7 +13,7 @@ const getStatusIcon = (status) => {
     return <FontAwesomeIcon className="margin-right-105" size="1x" color={colors.success} icon={faCheck} />;
   }
 
-  return <FontAwesomeIcon className="margin-right-105" size="1x" color={colors.warning} icon={faMinus} />;
+  return <FontAwesomeIcon className="margin-right-105" size="1x" color={colors.warning} icon={faClock} />;
 };
 
 const getDisplayStatus = (status) => {
