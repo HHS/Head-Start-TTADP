@@ -39,7 +39,7 @@ const SupportingAttachmentsSessionOrCommunication = ({
           </span>
           { fileError && (<ErrorMessage>{fileError}</ErrorMessage>)}
           <Controller
-            name="files"
+            name="supportingAttachments"
             defaultValue={[]}
             render={({ onChange, value }) => (
               <ReportFileUploader
