@@ -12,7 +12,7 @@ import {
 import FilterInput from './FilterInput';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
-import { handleArrayQuery } from './helpers';
+import { useDisplayStaff } from './utils';
 import FilterTrainingReportStaff from './FilterTrainingReportStaff';
 
 const EMPTY_SINGLE_SELECT = {
@@ -90,7 +90,7 @@ export const collaboratorsFilter = {
   display: 'Collaborators',
   conditions: SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleArrayQuery,
+  displayQuery: useDisplayStaff,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterTrainingReportStaff
       inputId={`collaborators-${condition}-${id}`}
@@ -105,7 +105,7 @@ export const creatorFilter = {
   display: 'Creator',
   conditions: SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleArrayQuery,
+  displayQuery: useDisplayStaff,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterTrainingReportStaff
       inputId={`creator-${condition}-${id}`}
