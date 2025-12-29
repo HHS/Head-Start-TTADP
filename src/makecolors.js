@@ -7,7 +7,7 @@ const colors = require('../frontend/src/colors');
 
 async function generateHashes() {
   try {
-    const scssFileBuffer = await fs.promises.readFile('./frontend/src/colors.scss');
+    const scssFileBuffer = await fsPromises.readFile('./frontend/src/colors.scss');
     const scsshash = crypto.createHash('sha256');
     scsshash.update(scssFileBuffer);
 
@@ -15,7 +15,7 @@ async function generateHashes() {
     await fsPromises.writeFile('./frontend/colorsscsschecksum', scsshex);
     console.log('colors.scss hash created');
 
-    const jsFileBuffer = await fs.promises.readFile('./frontend/src/colors.js');
+    const jsFileBuffer = await fsPromises.readFile('./frontend/src/colors.js');
     const jsHash = crypto.createHash('sha256');
     jsHash.update(jsFileBuffer);
 
