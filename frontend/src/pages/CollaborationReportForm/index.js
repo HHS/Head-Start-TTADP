@@ -570,7 +570,18 @@ function CollaborationReport({ match, location }) {
     };
     await submitReport(reportId.current, reportToSubmit);
     cleanupLocalStorage(collabReportId);
-    history.push('/collaboration-reports/'); // TODO: message
+
+    // Prepare success message
+    const timezone = moment.tz.guess();
+    const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+    const message = {
+      time,
+      reportId: formData.id,
+      displayId: formData.displayId,
+      status: 'submitted',
+    };
+
+    history.push('/collaboration-reports/', { message });
   };
 
   const onSaveAndContinue = async () => {
