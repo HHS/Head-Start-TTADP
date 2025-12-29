@@ -1,24 +1,14 @@
 import React, { useContext } from 'react';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
-import useFetch from '../../hooks/useFetch';
-import { getAllTrainerOptionsByUser } from '../../fetchers/users';
-import UserContext from '../../UserContext';
+import { StaffContext } from '../StaffProvider';
 
 export default function FilterTrainingReportStaff({
   onApply,
   inputId,
   query,
 }) {
-  const { user } = useContext(UserContext);
-
-  const {
-    data,
-  } = useFetch(
-    [],
-    async () => getAllTrainerOptionsByUser(String(user.id)),
-    [user.id],
-  );
+  const { staff } = useContext(StaffContext);
 
   const onApplyClick = (selected) => {
     onApply(selected);
@@ -29,7 +19,7 @@ export default function FilterTrainingReportStaff({
       onApply={onApplyClick}
       inputId={inputId}
       labelText="Select user to filter by"
-      options={data}
+      options={staff}
       selectedValues={query}
       labelProp="fullName"
       valueProp="id"
