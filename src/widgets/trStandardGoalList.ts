@@ -4,7 +4,7 @@ import db, { sequelize } from '../models';
 import { CREATION_METHOD } from '../constants';
 import { IScopes } from './types';
 
-export default async function trReasonList(scopes: IScopes) {
+export default async function trStandardGoalList(scopes: IScopes) {
   const events = await db.EventReportPilot.findAll({
     attributes: ['id'],
     where: {
@@ -23,9 +23,8 @@ export default async function trReasonList(scopes: IScopes) {
   });
 
   return (await db.GoalTemplate.findAll({
-    logging: console.log,
     attributes: [
-      'standard',
+      ['standard', 'name'],
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.eventId'))), 'count'],
     ],
     where: {
@@ -56,7 +55,10 @@ export default async function trReasonList(scopes: IScopes) {
       'GoalTemplate.standard',
       'sessionReports->SessionReportPilotGoalTemplate.id',
     ],
-    order: [[sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.eventId'))), 'DESC']],
+    order: [
+      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.eventId'))), 'DESC'],
+      ['standard', 'ASC'],
+    ],
   })).map((gt: {
     toJSON: () => ({ standard: string, count: number })
   }) => gt.toJSON());

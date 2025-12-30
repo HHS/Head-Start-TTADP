@@ -11,7 +11,6 @@ import {
 import filtersToScopes from '../scopes';
 import { createEvent } from '../services/event';
 import trStandardGoalList from './trStandardGoalList';
-import { CREATION_METHOD } from '../constants';
 
 const mockUser = {
   homeRegionId: 1,
@@ -219,15 +218,15 @@ describe('trStandardGoalList', () => {
     expect(results.length).toBeGreaterThanOrEqual(2);
 
     // Find the results for our test standards
-    const teachingPracticesResult = results.find((r) => r.standard === 'Teaching Practices');
-    const ersearResult = results.find((r) => r.standard === 'ERSEA');
+    const teachingPracticesResult = results.find((r) => r.name === 'Teaching Practices');
+    const ersearResult = results.find((r) => r.name === 'ERSEA');
 
     // Both should exist in results
     expect(teachingPracticesResult).toBeDefined();
     expect(ersearResult).toBeDefined();
 
     // Monitoring standard should not be in results
-    const monitoringResult = results.find((r) => r.standard === 'Monitoring');
+    const monitoringResult = results.find((r) => r.name === 'Monitoring');
     expect(monitoringResult).toBeUndefined();
   });
 
@@ -238,7 +237,7 @@ describe('trStandardGoalList', () => {
 
     // Should only count complete session reports
     // Incomplete session reports should be excluded
-    const teachingPracticesResult = results.find((r) => r.standard === 'Teaching Practices');
+    const teachingPracticesResult = results.find((r) => r.name === 'Teaching Practices');
 
     // The count should only reflect the complete session reports
     expect(teachingPracticesResult).toBeDefined();
