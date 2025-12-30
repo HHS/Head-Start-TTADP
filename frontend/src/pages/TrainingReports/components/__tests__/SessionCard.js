@@ -22,6 +22,7 @@ describe('SessionCard', () => {
     id: 1,
     approverId: 999,
     goalTemplates: [{ id: 1, standard: 'FEI' }, { id: 2, standard: 'CQI and Data' }],
+    trainers: [{ fullName: 'Trainer 1' }, { fullName: 'Trainer 2' }],
     data: {
       regionId: 1,
       sessionName: 'This is my session title',
@@ -29,7 +30,6 @@ describe('SessionCard', () => {
       endDate: '01/03/2021',
       objective: 'This is my session objective',
       objectiveSupportType: SUPPORT_TYPES[2],
-      objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
       pocComplete: false,
       ownerComplete: false,

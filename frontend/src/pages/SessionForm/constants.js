@@ -140,6 +140,7 @@ export const istKeys = [
   'files',
   'ttaProvided',
   'objectiveSupportType',
+  'trainers',
 ];
 
 export const pocKeys = [
