@@ -280,19 +280,23 @@ export async function updateSession(id: number, request) {
     },
   );
 
-  await updateSessionReportRelatedModels(
-    id,
-    SessionReportPilotGoalTemplate,
-    'goalTemplateId',
-    (goalTemplates || []).map((template: { id: number }) => template.id),
-  );
+  if (goalTemplates) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotGoalTemplate,
+      'goalTemplateId',
+      goalTemplates.map((template: { id: number }) => template.id),
+    );
+  }
 
-  await updateSessionReportRelatedModels(
-    id,
-    SessionReportPilotTrainer,
-    'userId',
-    (trainers || []).map((trainer: { id: number }) => trainer.id),
-  );
+  if (trainers) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotTrainer,
+      'userId',
+      trainers.map((trainer: { id: number }) => trainer.id),
+    );
+  }
 
   return findSessionHelper({ id }) as Promise<SessionReportShape>;
 }
