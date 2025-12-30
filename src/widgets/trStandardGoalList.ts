@@ -41,7 +41,7 @@ export default async function trStandardGoalList(scopes: IScopes) {
         model: db.SessionReportPilot,
         as: 'sessionReports',
         attributes: [],
-        required: false,
+        required: true,
         where: {
           data: {
             status: TRAINING_REPORT_STATUSES.COMPLETE,
