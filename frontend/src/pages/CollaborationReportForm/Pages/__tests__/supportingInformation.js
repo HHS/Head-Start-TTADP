@@ -342,7 +342,7 @@ describe('CR Supporting Information Page', () => {
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const goalsItem = sectionsData[0].items.find((item) => item.name === 'goals');
-      expect(goalsItem.customValue.goals).toBe('None provided');
+      expect(goalsItem.customValue.goals).toBe('None');
     });
 
     it('handles empty dataUsed array', () => {
@@ -359,7 +359,7 @@ describe('CR Supporting Information Page', () => {
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
-      expect(dataItem.customValue.data).toBe('None provided');
+      expect(dataItem.customValue.data).toBe('None');
     });
 
     it('handles null/undefined form data', () => {
@@ -373,8 +373,8 @@ describe('CR Supporting Information Page', () => {
       const goalsItem = sectionsData[0].items.find((item) => item.name === 'goals');
       const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
 
-      expect(goalsItem.customValue.goals).toBe('None provided');
-      expect(dataItem.customValue.data).toBe('None provided');
+      expect(goalsItem.customValue.goals).toBe('None');
+      expect(dataItem.customValue.data).toBe('None');
     });
   });
 
