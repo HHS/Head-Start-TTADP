@@ -8,6 +8,6 @@
   // Aligns text inputs
   .usa-input:not([type=number]),
   .usa-textarea {
-    width: 498px;
+    max-width: 498px;
   }
 }
