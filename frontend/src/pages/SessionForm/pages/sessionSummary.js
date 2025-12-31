@@ -401,7 +401,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 inputRef={register({ required: 'Select at least one goal' })}
                 getOptionLabel={(option) => option.standard}
                 getOptionValue={(option) => option.id}
-                options={(goalTemplates ? goalTemplates.filter((g) => g.standard !== 'Monitoring') : [])}
+                options={(goalTemplates ? goalTemplates.filter((g) => g.standard !== 'Monitoring' && g.standard !== 'RAN investigation') : [])}
                 isMulti
                 required
               />
@@ -500,7 +500,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
                 value={(optionsForValue).filter((option) => (
-                  value.includes(option.name)
+                  value.includes(option.fullName)
                 ))}
                 inputId="objectiveTrainers"
                 name="objectiveTrainers"
@@ -511,7 +511,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                   DropdownIndicator: null,
                 }}
                 onChange={(s) => {
-                  controllerOnChange(s.map((o) => o.name));
+                  controllerOnChange(s.map((o) => o.fullName));
                 }}
                 inputRef={register({ required: 'Select at least one trainer' })}
                 options={trainerOptions}

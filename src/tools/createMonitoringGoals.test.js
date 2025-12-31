@@ -155,6 +155,9 @@ describe('createMonitoringGoals', () => {
   let snapShot;
 
   beforeAll(async () => {
+    // Exempt testing from temporary disabling of monitoring goal creation
+    process.env.ENABLE_MONITORING_GOAL_CREATION = 'true';
+
     // Create a snapshot of the database so we can rollback after the tests.
     snapShot = await captureSnapshot();
 
