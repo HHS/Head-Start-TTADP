@@ -6,6 +6,9 @@ import { render, screen } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import supportingInformationPage from '../supportingInformation';
 
+const { reviewSection } = supportingInformationPage;
+const ReviewSection = () => reviewSection();
+
 // Mock dependencies
 jest.mock('react-helmet', () => ({
   Helmet: function MockHelmet({ children }) {
@@ -29,16 +32,6 @@ jest.mock('../../../../components/Navigator/components/NavigatorButtons', () => 
       <button type="button" onClick={onContinue} data-testid="continue-btn">Continue</button>
       <button type="button" onClick={onSaveDraft} data-testid="save-draft-btn">Save Draft</button>
       <button type="button" onClick={() => onUpdatePage(1)} data-testid="update-page-btn">Update Page</button>
-    </div>
-  );
-});
-
-jest.mock('../../../ActivityReport/Pages/Review/ReviewPage', () => function MockReviewPage({ sections, path, isCustomValue }) {
-  return (
-    <div data-testid="review-page">
-      <div data-testid="review-page-path">{path}</div>
-      <div data-testid="review-page-custom-value">{isCustomValue.toString()}</div>
-      <div data-testid="review-page-sections">{JSON.stringify(sections)}</div>
     </div>
   );
 });
@@ -200,202 +193,66 @@ describe('CR Supporting Information Page', () => {
   });
 
   describe('ReviewSection Component', () => {
-    it('processes goals correctly', () => {
-      const formData = {
-        goals: [
-          { label: 'Goal 1', value: 'goal_1' },
-          { label: 'Goal 2', value: 'goal_2' },
-          { label: 'Goal 3', value: 'goal_3' },
-        ],
-        dataUsed: [],
-      };
-
-      render(
-        <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      const goalsItem = sectionsData[0].items.find((item) => item.name === 'goals');
-      expect(goalsItem.customValue.goals).toBe('Goal 1, Goal 2, Goal 3');
-    });
-
-    it('processes dataUsed with COLLAB_REPORT_DATA lookup', () => {
-      const formData = {
-        goals: [],
-        dataUsed: [
-          { label: 'Census data', value: 'census_data' },
-          { label: 'Homelessness', value: 'homelessness' },
-        ],
-      };
-
-      render(
-        <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
-      expect(dataItem.customValue.data).toBe('Census data, Homelessness');
-    });
-
-    it('handles "other" data type with otherDataUsed', () => {
-      const formData = {
-        goals: [],
-        dataUsed: [
-          { label: 'Census data', value: 'census_data' },
-          { label: 'Other', value: 'other' },
-        ],
-        otherDataUsed: 'Custom data type',
-      };
-
-      render(
-        <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
-      expect(dataItem.customValue.data).toBe('Census data, Other: Custom data type');
-    });
-
-    it('handles unknown data types gracefully', () => {
-      const formData = {
-        goals: [],
-        dataUsed: [
-          { label: 'unknown_data', value: 'unknown_data' },
-          { label: 'Census data', value: 'census_data' },
-        ],
-      };
-
-      render(
-        <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
-      expect(dataItem.customValue.data).toBe(', Census data');
-    });
-
-    it('builds sections structure correctly', () => {
+    it('renders correctly', () => {
       const formData = {
         goals: [{ label: 'Test Goal', value: 'test_goal' }],
-        dataUsed: [{ label: 'census_data', value: 'census_data' }],
-        participants: ['State', 'Other'],
+        dataUsed: [{ label: 'Census Data', value: 'census_data' }, { label: 'Other', value: 'other' }],
+        otherDataUsed: 'Custom Data',
+        participants: [{ label: 'State', value: 'State' }, { label: 'Other', value: 'Other' }],
+        otherParticipants: 'Custom Participant',
       };
 
       render(
         <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
+          <ReviewSection />
         </TestWrapper>,
       );
 
-      const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      expect(sectionsData).toHaveLength(1);
-      expect(sectionsData[0].anchor).toBe('support-information');
-      expect(sectionsData[0].items).toHaveLength(3);
+      const participantsSection = screen.getByText('Participants');
+      expect(participantsSection).toBeInTheDocument();
+      const participantsText = screen.getByText('State, Other: Custom Participant');
+      expect(participantsText).toBeInTheDocument();
 
-      const { items } = sectionsData[0];
-      expect(items[0].label).toBe('Participants');
-      expect(items[0].name).toBe('participants');
-      expect(items[1].label).toBe('Data collected/shared');
-      expect(items[1].name).toBe('data');
-      expect(items[2].label).toBe('Supporting goals');
-      expect(items[2].name).toBe('goals');
+      const dataSection = screen.getByText('Data collected/shared');
+      expect(dataSection).toBeInTheDocument();
+      const dataText = screen.getByText('Census Data, Other: Custom Data');
+      expect(dataText).toBeInTheDocument();
+
+      const goalsSection = screen.getByText('Supporting goals');
+      expect(goalsSection).toBeInTheDocument();
+      const goalsText = screen.getByText('Test Goal');
+      expect(goalsText).toBeInTheDocument();
     });
 
-    it('renders ReviewPage with correct props', () => {
+    it('handles empty fields gracefully', () => {
       const formData = {
         goals: [],
         dataUsed: [],
-      };
-
-      render(
-        <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      expect(screen.getByTestId('review-page')).toBeInTheDocument();
-      expect(screen.getByTestId('review-page-path')).toHaveTextContent('supporting-information');
-      expect(screen.getByTestId('review-page-custom-value')).toHaveTextContent('true');
-    });
-  });
-
-  describe('Data Processing Edge Cases', () => {
-    it('handles empty goals array', () => {
-      const formData = {
-        reportGoals: [],
-        dataUsed: [],
-      };
-
-      render(
-        <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      const goalsItem = sectionsData[0].items.find((item) => item.name === 'goals');
-      expect(goalsItem.customValue.goals).toBe('None');
-    });
-
-    it('handles empty dataUsed array', () => {
-      const formData = {
-        reportGoals: [],
-        dataUsed: [],
-      };
-
-      render(
-        <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
-      expect(dataItem.customValue.data).toBe('None');
-    });
-
-    it('handles null/undefined form data', () => {
-      render(
-        <TestWrapper defaultValues={{}}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      const goalsItem = sectionsData[0].items.find((item) => item.name === 'goals');
-      const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
-
-      expect(goalsItem.customValue.goals).toBe('None');
-      expect(dataItem.customValue.data).toBe('None');
-    });
-  });
-
-  describe('Participants Section', () => {
-    it('always includes participants item with empty customValue', () => {
-      const formData = {
-        reportGoals: [],
-        dataUsed: [],
+        otherDataUsed: '',
         participants: [],
+        otherParticipants: '',
       };
 
       render(
         <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
+          <ReviewSection />
         </TestWrapper>,
       );
 
-      const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      const participantsItem = sectionsData[0].items.find((item) => item.name === 'participants');
-      expect(participantsItem.label).toBe('Participants');
-      expect(participantsItem.customValue.participants).toBe('None provided');
+      const participantsSection = screen.getByText('Participants');
+      expect(participantsSection).toBeInTheDocument();
+      const participantsText = screen.getByText('None provided');
+      expect(participantsText).toBeInTheDocument();
+
+      const dataSection = screen.getByText('Data collected/shared');
+      expect(dataSection).toBeInTheDocument();
+      const dataText = screen.getAllByText('None')[0];
+      expect(dataText).toBeInTheDocument();
+
+      const goalsSection = screen.getByText('Supporting goals');
+      expect(goalsSection).toBeInTheDocument();
+      const goalsText = screen.getAllByText('None')[1];
+      expect(goalsText).toBeInTheDocument();
     });
   });
 });

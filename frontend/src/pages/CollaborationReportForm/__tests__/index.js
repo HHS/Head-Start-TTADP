@@ -944,9 +944,6 @@ describe('CollaborationReportForm', () => {
 
     // FIXME: WIP
     it('saves the form and continues to next page', async () => {
-      const mockPush = jest.fn();
-      history.push = mockPush;
-
       fetchMock.post('/api/collaboration-reports', {
         id: 'new',
         regionId: 1,
@@ -977,14 +974,8 @@ describe('CollaborationReportForm', () => {
       expect(saveContinueButton).toBeInTheDocument();
       userEvent.click(saveContinueButton);
 
-      // FIXME: Doesn't currently submit and move to next page correctly,
-      // presumably the report object being posted above isn't complete enough
-      // to allow for transition
       await waitFor(() => {
-        // expect(mockPush).toHaveBeenCalled();
-        // expect(screen.getByText(/Supporting information/)).toBeInTheDocument();
-        // expect(history.location.pathname).toContain('supporting-information');
-        expect(true).toBe(true);
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
       });
     });
 

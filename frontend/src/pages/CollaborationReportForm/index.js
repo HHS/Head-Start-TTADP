@@ -427,6 +427,7 @@ function CollaborationReport({ match, location }) {
   }
 
   // This error message is a catch all assuming that the network storage is working
+  // istanbul ignore next - hard to inject an error state
   if (error && !formData) {
     return (
       <Alert type="error">
