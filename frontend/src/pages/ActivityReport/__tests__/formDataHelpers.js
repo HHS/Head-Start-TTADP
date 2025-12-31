@@ -388,6 +388,7 @@ describe('FormDataHelpers', () => {
                 closeSuspendReason: 'closeSuspendReason',
                 closeSuspendContext: 'closeSuspendContext',
                 createdHere: false,
+                useIpdCourses: true,
               },
             ],
           },
@@ -412,6 +413,7 @@ describe('FormDataHelpers', () => {
               closeSuspendReason: 'closeSuspendReason',
               closeSuspendContext: 'closeSuspendContext',
               createdHere: true,
+              useIpdCourses: false,
             },
           ],
         },
@@ -442,6 +444,8 @@ describe('FormDataHelpers', () => {
               closeSuspendReason: 'closeSuspendReason',
               closeSuspendContext: 'closeSuspendContext',
               createdHere: false,
+              useIpdCourses: true,
+              useFiles: true,
             },
           ],
         },
@@ -467,6 +471,8 @@ describe('FormDataHelpers', () => {
               closeSuspendReason: 'closeSuspendReason',
               closeSuspendContext: 'closeSuspendContext',
               createdHere: true,
+              useIpdCourses: false,
+              useFiles: true,
             },
           ],
         },
@@ -526,6 +532,73 @@ describe('FormDataHelpers', () => {
         ],
       });
     });
+
+    it('keeps useIpdCourses true even when there are no courses', () => {
+      const { goalForEditing } = convertGoalsToFormData(
+        [{
+          id: 1,
+          name: 'Goal',
+          objectives: [{
+            id: 10,
+            title: 'Objective',
+            courses: [],
+            useIpdCourses: true,
+          }],
+          activityReportGoals: [
+            { id: 1, isActivelyEdited: true },
+          ],
+          prompts: [],
+        }],
+        [1],
+        REPORT_STATUSES.DRAFT,
+      );
+
+      expect(goalForEditing.objectives[0].useIpdCourses).toBe(true);
+    });
+    it('defaults useFiles to true when files exist and flag is undefined', () => {
+      const { goalForEditing } = convertGoalsToFormData(
+        [{
+          id: 1,
+          name: 'Goal',
+          objectives: [{
+            id: 10,
+            title: 'Objective',
+            files: [{}],
+          }],
+          activityReportGoals: [
+            { id: 1, isActivelyEdited: true },
+          ],
+          prompts: [],
+        }],
+        [1],
+        REPORT_STATUSES.DRAFT,
+      );
+
+      expect(goalForEditing.objectives[0].useFiles).toBe(true);
+    });
+    it('defaults flags to false when no files or courses exist', () => {
+      const { goalForEditing } = convertGoalsToFormData(
+        [{
+          id: 1,
+          name: 'Goal',
+          objectives: [{
+            id: 10,
+            title: 'Objective',
+            files: [],
+            courses: [],
+          }],
+          activityReportGoals: [
+            { id: 1, isActivelyEdited: true },
+          ],
+          prompts: [],
+        }],
+        [1],
+        REPORT_STATUSES.DRAFT,
+      );
+
+      expect(goalForEditing.objectives[0].useFiles).toBe(false);
+      expect(goalForEditing.objectives[0].useIpdCourses).toBe(false);
+    });
     it('only returns one goalForEditing (even if more than one activityreportgoal has isActivelyEditing: true', () => {
       const { goals, goalForEditing } = convertGoalsToFormData(
         [
@@ -558,6 +631,7 @@ describe('FormDataHelpers', () => {
         {
           id: 2,
           grantIds: [1, 2, 3],
+          objectives: [],
           activityReportGoals: [
             {
               id: 3,
@@ -571,7 +645,7 @@ describe('FormDataHelpers', () => {
       expect(goalForEditing).toEqual({
         id: 1,
         grantIds: [1, 2, 3],
-        objectives: undefined,
+        objectives: [],
         originalIndex: 0,
         activityReportGoals: [
           {
@@ -616,6 +690,7 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
+          objectives: [],
           prompts: [],
           activityReportGoals: [
             {
@@ -627,6 +702,7 @@ describe('FormDataHelpers', () => {
         {
           id: 2,
           prompts: [],
+          objectives: [],
           grantIds: [1, 2, 3],
           activityReportGoals: [
             {
@@ -659,11 +735,13 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
+          objectives: [],
           prompts: [],
         },
         {
           id: 2,
           grantIds: [1, 2, 3],
+          objectives: [],
           prompts: [],
         },
       ]);
@@ -702,6 +780,7 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
+          objectives: [],
           activityReportGoals: [
             {
               id: 1,
@@ -713,6 +792,7 @@ describe('FormDataHelpers', () => {
         {
           id: 2,
           grantIds: [1, 2, 3],
+          objectives: [],
           activityReportGoals: [
             {
               id: 3,

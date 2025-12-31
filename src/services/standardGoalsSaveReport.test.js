@@ -548,6 +548,83 @@ describe('save standard goals for report', () => {
     });
   });
 
+  describe('useIpdCourses and useFiles flags', () => {
+    let grant;
+    let goalTemplate;
+    let report;
+
+    beforeAll(async () => {
+      grant = await createGrant({
+        recipientId: recipient1.id,
+      });
+
+      goalTemplate = await createGoalTemplate({
+        name: 'Flag persistence template',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      report = await createReport({
+        activityRecipients: [{ grantId: grant.id }],
+        status: REPORT_STATUSES.IN_PROGRESS,
+      });
+    });
+
+    afterAll(async () => {
+      await cleanUpGoalAndAllAssociations(
+        goalTemplate.id,
+        report.id,
+        [grant.id],
+      );
+      await ActivityReport.destroy({ where: { id: report.id } });
+      await GoalTemplate.destroy({ where: { id: goalTemplate.id } });
+      await Grant.destroy({ where: { id: grant.id } });
+    });
+
+    it('persists flags on activity report objectives', async () => {
+      const goals = [
+        {
+          goalIds: [],
+          grantIds: [grant.id],
+          goalTemplateId: goalTemplate.id,
+          name: goalTemplate.templateName,
+          status: GOAL_STATUS.NOT_STARTED,
+          timeframe: null,
+          source: [],
+          prompts: [],
+          objectives: [
+            {
+              id: null,
+              isNew: true,
+              ttaProvided: 'tta',
+              title: 'objective with flags',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              topics: [],
+              resources: [],
+              files: [],
+              courses: [],
+              closeSuspendReason: null,
+              closeSuspendContext: null,
+              supportType: '',
+              goalId: null,
+              createdHere: true,
+              useIpdCourses: true,
+              useFiles: true,
+            },
+          ],
+        },
+      ];
+
+      await saveStandardGoalsForReport(goals, 1, report);
+
+      const aro = await ActivityReportObjective.findOne({
+        where: { activityReportId: report.id },
+      });
+
+      expect(aro.useIpdCourses).toBe(true);
+      expect(aro.useFiles).toBe(true);
+    });
+  });
+
   describe('goal field responses', () => {
     let grant;
     let goalTemplate;

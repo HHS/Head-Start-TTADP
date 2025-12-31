@@ -20,12 +20,14 @@ import {
 } from './types/event';
 import EventReport from '../policies/event';
 import { trEventComplete } from '../lib/mailer';
+import { FILE_STATUSES } from '../constants';
 
 const {
   EventReportPilot,
   SessionReportPilot,
   User,
   EventReportPilotNationalCenterUser,
+  File,
 } = db;
 
 type WhereOptions = {
@@ -118,6 +120,18 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
       },
       {
         model: SessionReportPilot,
+        include: [
+          {
+            required: false,
+            model: File,
+            as: 'supportingAttachments',
+            where: {
+              status: {
+                [Op.ne]: FILE_STATUSES.UPLOAD_FAILED,
+              },
+            },
+          },
+        ],
         attributes: [
           'id',
           'eventId',

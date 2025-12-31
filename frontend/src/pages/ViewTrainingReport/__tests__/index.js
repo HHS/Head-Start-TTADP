@@ -6,7 +6,13 @@ import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router-dom';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import AppLoadingContext from '../../../AppLoadingContext';
-import ViewTrainingReport, { formatOwnerName, handleIntendedAudience, translateEventPartnership } from '..';
+import ViewTrainingReport, {
+  formatOwnerName,
+  handleIntendedAudience,
+  translateEventPartnership,
+  formatObjectiveLinks,
+  formatSupportingAttachments,
+} from '..';
 import UserContext from '../../../UserContext';
 import { EVENT_PARTNERSHIP, OBJECTIVE_STATUS } from '../../../Constants';
 
@@ -749,6 +755,80 @@ describe('ViewTrainingReport', () => {
     it('otherwise, it passes the value through', () => {
       const audience = handleIntendedAudience('Some other audience');
       expect(audience).toBe('Some other audience');
+    });
+  });
+
+  describe('formatSupportingAttachments', () => {
+    it('handles undefined', () => {
+      const formatted = formatSupportingAttachments(undefined);
+      expect(formatted).toBe('None provided');
+    });
+    it('handles empty array', () => {
+      const formatted = formatSupportingAttachments([]);
+      expect(formatted).toBe('None provided');
+    });
+    it('handles array with one attachment', async () => {
+      const formatted = render(formatSupportingAttachments([{
+        originalFileName: 'file1.pdf',
+        url: { url: 'http://file1-url' },
+      }]));
+      const links = await formatted.findAllByRole('link');
+      expect(links.length).toBe(1);
+      expect(links[0].getAttribute('href')).toBe('http://file1-url');
+      expect(links[0].textContent).toBe('file1.pdf');
+    });
+    it('handles array with multiple attachments', async () => {
+      const formatted = render(formatSupportingAttachments([
+        {
+          originalFileName: 'file1.pdf',
+          url: { url: 'http://file1-url' },
+        },
+        {
+          originalFileName: 'file2.docx',
+          url: { url: 'http://file2-url' },
+        },
+      ]));
+      const links = await formatted.findAllByRole('link');
+      expect(links.length).toBe(2);
+      const linkHrefs = links.map((link) => link.getAttribute('href'));
+      expect(linkHrefs).toContainEqual('http://file1-url');
+      expect(linkHrefs).toContainEqual('http://file2-url');
+      const linkTexts = links.map((link) => link.textContent);
+      expect(linkTexts).toContainEqual('file1.pdf');
+      expect(linkTexts).toContainEqual('file2.docx');
+    });
+  });
+
+  describe('formatObjectiveLinks', () => {
+    it('handles undefined', () => {
+      const formatted = formatObjectiveLinks(undefined);
+      expect(formatted).toBe('None provided');
+    });
+    it('handles empty array', () => {
+      const formatted = formatObjectiveLinks([]);
+      expect(formatted).toBe('None provided');
+    });
+    it('handles array with one link', async () => {
+      const formatted = render(formatObjectiveLinks([{ value: 'http://link1' }]));
+      const links = await formatted.findAllByRole('link');
+      expect(links.length).toBe(1);
+      const linkHrefs = links.map((link) => link.getAttribute('href'));
+      expect(linkHrefs).toContainEqual('http://link1');
+    });
+    it('handles array with multiple links', async () => {
+      const formatted = render(formatObjectiveLinks([{ value: 'http://link1' }, { value: 'http://link2' }]));
+      const links = await formatted.findAllByRole('link');
+
+      expect(links.length).toBe(2);
+      const linkHrefs = links.map((link) => link.getAttribute('href'));
+      expect(linkHrefs).toContainEqual('http://link1');
+      expect(linkHrefs).toContainEqual('http://link2');
+    });
+    it('handes array with empty link values', async () => {
+      const formatted = render(formatObjectiveLinks([{ value: '' }, { value: 'http://link2' }]));
+      const lis = await formatted.findAllByRole('listitem');
+      expect(lis.length).toBe(1);
+      expect(lis[0].textContent).toBe('http://link2');
     });
   });
 

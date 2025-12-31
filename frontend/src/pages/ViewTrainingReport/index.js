@@ -53,24 +53,27 @@ export const translateEventPartnership = (eventPartnership) => {
 };
 
 export const formatObjectiveLinks = (objectiveResources) => {
-  if (Array.isArray(objectiveResources) && objectiveResources.length > 0) {
-    return (
-      <ul className="margin-top-0">
-        {objectiveResources.map((resource) => (
-          <li key={resource.value}>
-            <a
-              href={resource.value}
-              rel="noreferrer"
-            >
-              {resource.value}
-            </a>
-          </li>
-        ))}
-      </ul>
-    );
+  if (Array.isArray(objectiveResources)) {
+    const resources = objectiveResources.filter((res) => res.value && res.value.trim() !== '');
+    if (resources.length > 0) {
+      return (
+        <ul className="margin-top-0">
+          {resources.map((resource) => (
+            <li key={resource.value}>
+              <a
+                href={resource.value}
+                rel="noreferrer"
+              >
+                {resource.value}
+              </a>
+            </li>
+          ))}
+        </ul>
+      );
+    }
   }
 
-  return 'None';
+  return 'None provided';
 };
 
 const formatNextSteps = (nextSteps, heading, striped) => {
@@ -100,6 +103,31 @@ export const handleIntendedAudience = (audience) => {
     'regional-office-tta': 'Regional office/TTA',
   };
   return audienceMap[audience] || audience;
+};
+
+export const formatSupportingAttachments = (attachments) => {
+  if (Array.isArray(attachments) && attachments.length > 0) {
+    return (
+      <ul className="margin-top-0">
+        {attachments.map((attachment) => {
+          const { originalFileName } = attachment;
+          const { url } = attachment.url;
+          return (
+            <li key={originalFileName}>
+              <a
+                href={url}
+                rel="noreferrer"
+              >
+                {originalFileName}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
+  return 'None provided';
 };
 
 const handleArrayJoin = (arr, join = ', ', alt = 'None') => (arr && arr.length ? arr.join(join) : alt);
@@ -334,6 +362,12 @@ export default function ViewTrainingReport({ match }) {
           'Delivery method': capitalize(session.data.deliveryMethod || ''),
           ...generateNumberOfParticipants(session),
           'Language used': session.data.language ? session.data.language.join(', ') : [],
+        },
+      },
+      {
+        heading: 'Supporting attachments',
+        data: {
+          Attachments: formatSupportingAttachments(session.supportingAttachments || []),
         },
       },
       formatNextSteps(session.data.specialistNextSteps || [], 'Specialist\'s next steps', false),
