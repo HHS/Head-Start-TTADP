@@ -1,6 +1,5 @@
 import { Op, WhereOptions } from 'sequelize';
 import { map, pickBy } from 'lodash';
-import { DECIMAL_BASE } from '@ttahub/common';
 import db from '../models';
 
 const { Topic } = db;
@@ -56,7 +55,7 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
 }
 
 export function createFiltersToScopes(filters, topicToQuery, options, userId, validTopics) {
-  const validFilters = pickBy(filters, (query, topicAndCondition) => {
+  const validFilters = pickBy(filters, (_query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
     if (!(topic in topicToQuery)) {
       return false;
