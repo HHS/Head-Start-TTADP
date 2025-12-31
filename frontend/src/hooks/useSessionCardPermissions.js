@@ -16,7 +16,7 @@ export default function useSessionCardPermissions({
   const {
     status,
     pocComplete,
-    ownerComplete,
+    collabComplete,
     facilitation,
   } = session.data;
 
@@ -25,7 +25,7 @@ export default function useSessionCardPermissions({
   const isSessionApprover = user.id === Number(approverId);
 
   const showSessionEdit = useMemo(() => {
-    const submitted = !!(pocComplete && ownerComplete && approverId);
+    const submitted = !!(pocComplete && collabComplete && approverId);
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
     const statusIsNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
     // eslint-disable-next-line max-len
@@ -72,7 +72,7 @@ export default function useSessionCardPermissions({
 
     // Collaborator-specific edit blockers (apply even if user has other roles)
     if (isCollaborator) {
-      if (ownerComplete && !statusIsNeedsAction) {
+      if (collabComplete && !statusIsNeedsAction) {
         return false;
       }
       if (isRegionalWithNationalCenters && facilitationIncludesRegion) {
@@ -91,7 +91,7 @@ export default function useSessionCardPermissions({
     pocComplete,
     isAdminUser,
     isCollaborator,
-    ownerComplete,
+    collabComplete,
     eventStatus,
     isOwner,
     approverId,

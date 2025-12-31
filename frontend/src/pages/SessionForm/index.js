@@ -386,12 +386,12 @@ export default function SessionForm({ match }) {
    *
    * Behavior:
    * - Admin users can modify all completion fields (no changes made)
-   * - POCs with national center facilitation: removes ownerComplete (tracked by owner)
-   * - POCs in regional PD with national centers events: sets ownerComplete to true
+   * - POCs with national center facilitation: removes collabComplete (tracked by owner)
+   * - POCs in regional PD with national centers events: sets collabComplete to true
    * - All other non-admin users: removes pocComplete (tracked by POC)
    *
    * @param {Object} roleData - The role-based session data object potentially containing
-   *                             ownerComplete and pocComplete properties
+   *                             collabComplete and pocComplete properties
    * @returns {Object} A shallow copy of roleData with completion fields removed or
    *                    modified based on the user's role
    */
@@ -399,12 +399,12 @@ export default function SessionForm({ match }) {
     const updatedRoleData = { ...roleData };
     if (!isAdminUser) {
       if (isPoc && roleData.facilitation === 'national_center') {
-      // Remove ownerComplete as this is tracked from the owner.
-        delete updatedRoleData.ownerComplete;
+      // Remove collabComplete as this is tracked from the owner.
+        delete updatedRoleData.collabComplete;
       } else if (
         isPoc && eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
       ) {
-        updatedRoleData.ownerComplete = true;
+        updatedRoleData.collabComplete = true;
       } else if (
         eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
       ) {
@@ -567,9 +567,9 @@ export default function SessionForm({ match }) {
 
       // Owner, collaborator, and admin can submitted the session.
       if (isOwner || isCollaborator || isAdminUser) {
-        roleData.ownerComplete = true;
-        roleData.ownerCompleteId = user.id;
-        roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
+        roleData.collabComplete = true;
+        roleData.collabCompleteId = user.id;
+        roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
       }
 
       // Remove complete property data based on current role.
