@@ -14,6 +14,11 @@ module.exports = {
         regionId: 1,
         scopeId: READ_WRITE_TRAINING_REPORTS,
       },
+      {
+        userId: 9,
+        regionId: 1,
+        scopeId: POC_TRAINING_REPORTS,
+      },
     ];
 
     await queryInterface.bulkInsert('Permissions', readWriteTrainingReports, {});

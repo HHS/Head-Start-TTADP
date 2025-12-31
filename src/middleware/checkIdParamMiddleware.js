@@ -227,6 +227,10 @@ export function checkRecipientIdParam(req, res, next) {
   return checkIdParam(req, res, next, 'recipientId');
 }
 
+export function checkUserIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'userId');
+}
+
 export function checkGoalGroupIdParam(req, res, next) {
   return checkIdParam(req, res, next, 'goalGroupId');
 }
