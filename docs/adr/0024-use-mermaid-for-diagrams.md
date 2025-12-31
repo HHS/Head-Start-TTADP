@@ -1,16 +1,14 @@
-# 7. Use Mermaid for diagrams
+# 7. Migrate from PUML to Mermaid for diagrams
 
-Date: 2020-10-01
+Date: 2025-12-29
 
 ## Status
 
-Accepted
+Pending
 
 ## Context
 
-Certain things we need to document, such as our data model and boundary diagrams are
-better represented as diagrams than text. Choosing a single service will make it easier to
-learn the system and keep diagrams up to date.
+Due to its dependency on Java and GraphViz, Plant UML requires an external service to render diagrams, resulting in needing to switch between tools and render the diagram in a separate step to include it in the repo.  Mermaid is a newer approach that shares many syntax similarities to PUML, while also offering native rendering in tools such as GitHub.
 
 ## Decision
 
