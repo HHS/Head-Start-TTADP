@@ -1,286 +1,325 @@
 Logical Data Model
 ==================
 
-<img src="http://www.plantuml.com/plantuml/png/pLXBRnit4Bxlh-2j3pH6qQ8z144Gnr42eubjMCwfw85QZbTqkHnsEAj4iFtVAovbTkbTsMj9TNkniT-yP_ZneJUU9N5JcyANqe3uyU3NNuhY6o4Ng9LmX3C3jHTVDC-5j9K19Kh2BrvS0d3X_zJMIPArCDe2Bnq899vZKPH6UYy-Uo1nNGZnlT1Al1JQCbGhwDMh2YoGP52lNxVYkGSVj8-3ccVIjifmAsleIW9-sAn2aMODVYMIH7BvAYe4d_Sjt1mjd3Jr3AWBGosrwGAisS1B0RQfGnoiuHmgZVQuKy2tF__qdJYVl9-SJqwE9bFXcfdHvK5Kz0TQjRaRwVaZLjgk35dNu5dMhfMK1A7sG-v96gS69BTt3OqHnhKqRq1oCItHmJOUX53WIzAEDTg4xbJE6L2jlHzTKkE1HimXB9Wq1TfoUZxqQOHPsyzWjUja_sfMs8G8oO_f1hhmeT5s9zIGxdxMm7FC64Knp5jKonps3gs7JVWHAX3xcVadgGtGYXVZHdw5itjxGgJi1Qx0toFwHmlBCdOZKZSWlfbTGScvTL1RQ5wUWqDY7xoiemStlYbBy06T8HgGDZQXCS7BbKSxst7CQ8R8zn1XBz3fShnD2XFjHZMPq8nPwi5hMkaSt1-hnspQB7QdnmUKPbmFXF0ikV5T93Yyf7jgshydhAUr9FPp0BvWUMQapKQ_VSPnR0-bNQra8veUNFn7JJ-1hpnbS3wLa5UGK-dnj0up_RlqB39a30t0nTB1y7wpiOODssgfdGRBOnUF47Hd4dBOqwRtWUG3AVGk9TkUMIdrKQPhtMZS8qr0YDz9Xdl5WbK3QAbqnfnTcnMPCshpsgRerBAAv2ZBa5IqsfAxs_VZbET04ykQbrlSstQBdLDsJ7W3bIoNnweJVtBqyRUZS_3OKDbUvzNGVHrjNw-l9fNIuPoNvWGPiWKRUNHwUIQ9TQbT65X6DGL6Bu2MdthN8jMakvI2KjVIP0izj2Wn8eFI5fXj6lqBLyvlHrYHh8FkqDE59LN0P-WQqsOrfBFGn8qqxzObzSDAZtR0pcNDwOdR0sP8KA9b-CfP5RA2AKk6zTLe1Q5HdwHTuTIRJdiTMz_sfxtDffIc3DM2YhAEY5d6wlASOhH3vmWNg-yOzgclWorU54Pw_Xn9ytRvBpz6WjaUwHkRDUv9tZ_TnTEEzoqwt3s9khn6tjTsTje-2FG2HhJWQTjyp9qrctzo_I6kthEmGXMe38zLPj0UvjpP-fvno4ywGwC9fZDj38Sw9-2UAN64niWPacJyNzDYG_fXvJrRsbimOaFQYORFcZlUHHtX8MMumteBinCtDo_mMiJjF2At-EB5pNNdjwyCpbClugzrVPFeS4Y09kctpy2Y_IjkRree3AP8bvKxnNJZBiAV7XgT7Xo8yB_hT12AOPEtXEIXGsDIa7KvEPPt8hZPJDtOmeTL-lxI-_QnMB4B6HGBmEiDHsmn3CVMteYGRkfEFrGKhKUMYwCehggqI8iDz8hXdg2OYpjBk2VAFpETx1Wgsc46-R2uixLlLde3LZMr-Hi0" alt="logical data model diagram">
+```mermaid
+erDiagram
+USERS {
+  int id PK "auto-generated"
+  string hsesUserId "NOT NULL"
+  string hsesUsername "NOT NULL"
+  string hsesAuthorities "array, NOT NULL"
+  string name
+  string phoneNumber
+  string email
+  string title "enum"
+  int homeRegionId FK "nullable, references Regions"
+  timestamp lastLogin "NOT NULL"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
 
-UML Source
-----------
+REGIONS {
+  int id PK "auto-generated"
+  string name "NOT NULL"
+}
 
+SCOPES {
+  int id PK "auto-generated"
+  string name "NOT NULL"
+  string description
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+PERMISSIONS {
+  int id PK "auto-generated"
+  int userId FK "NOT NULL, references Users"
+  int regionId FK "NOT NULL, references Regions"
+  int scopeId FK "NOT NULL, references Scopes"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+REQUEST_ERRORS {
+  int id PK "auto-generated"
+  string operation
+  string uri
+  string method
+  string requestBody
+  string responseBody
+  string responseCode
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+MAILER_LOGS {
+  int id PK "auto-generated"
+  string jobId "NOT NULL"
+  string emailTo "array, NOT NULL"
+  string action "enum, NOT NULL"
+  string subject "NOT NULL"
+  string activityReports "array of integers, NOT NULL"
+  boolean success
+  json result
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+ROLES {
+  int id PK "NOT NULL"
+  string name "NOT NULL"
+}
+
+TOPICS {
+  int id PK "NOT NULL"
+  string name "NOT NULL"
+}
+
+ROLE_TOPICS {
+  int id PK "auto-generated"
+  int roleId FK "NOT NULL, references Roles"
+  int topicId FK "NOT NULL, references Topics"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+GOALS {
+  int id PK "NOT NULL"
+  string name "NOT NULL"
+  string status
+  string timeframe
+  boolean isFromSmartsheetTtaPlan
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+TOPIC_GOALS {
+  int id PK "NOT NULL"
+  int goalId FK "NOT NULL, references Goals"
+  int topicId FK "NOT NULL, references Topics"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+NEXT_STEPS {
+  int id PK "NOT NULL"
+  int activityReportId FK "NOT NULL, references ActivityReports"
+  string note "NOT NULL"
+  string noteType "NOT NULL"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+RECIPIENTS {
+  int id PK "NOT NULL"
+  string name "NOT NULL"
+  string recipientType
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+GRANTS {
+  int id PK "NOT NULL"
+  string number "NOT NULL"
+  int regionId FK "nullable, references Regions"
+  int recipientId FK "NOT NULL, references Recipients"
+  string status
+  timestamp startDate
+  timestamp endDate
+  boolean cdi
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+GRANT_GOALS {
+  int id PK "auto-generated"
+  int recipientId FK "NOT NULL, references Recipients"
+  int grantId FK "NOT NULL, references Grants"
+  int goalId FK "NOT NULL, references Goals"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+OTHER_ENTITIES {
+  int id PK "auto-generated"
+  string name "NOT NULL"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+ACTIVITY_REPORTS {
+  int id PK "auto-generated"
+  string legacyId
+  string ECLKCResourcesUsed "array"
+  string nonECLKCResourcesUsed "array"
+  string additionalNotes
+  int numberOfParticipants
+  string deliveryMethod
+  decimal duration
+  date endDate
+  date startDate
+  string activityRecipientType
+  string requester
+  string programTypes "array"
+  string targetPopulations "array"
+  string virtualDeliveryType
+  string reason "array"
+  string participants "array"
+  string topics "array"
+  string context
+  json pageState
+  string oldManagerNotes
+  string submissionStatus "NOT NULL"
+  string calculatedStatus
+  string ttaType "array"
+  int oldApprovingManagerId FK "nullable, references Users"
+  int userId FK "NOT NULL, references Users"
+  int lastUpdatedById FK "nullable, references Users"
+  int regionId FK "NOT NULL, references Regions"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+ACTIVITY_REPORT_APPROVERS {
+  int id PK "auto-generated"
+  int activityReportId FK "NOT NULL, references ActivityReports"
+  int userId FK "NOT NULL, references Users"
+  string status
+  string note
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+OBJECTIVES {
+  int id PK "auto-generated"
+  int goalId FK "NOT NULL, references Goals"
+  string title
+  string ttaProvided
+  string status
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+ACTIVITY_PARTICIPANTS {
+  int id PK "auto-generated"
+  int activityReportId FK "NOT NULL, references ActivityReports"
+  int grantId FK "nullable, references Grants"
+  int otherEntityId FK "nullable, references OtherEntities"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+ACTIVITY_REPORT_COLLABORATORS {
+  int id PK "auto-generated"
+  int activityReportId FK "NOT NULL, references ActivityReports"
+  int userId FK "NOT NULL, references Users"
+}
+
+ACTIVITY_REPORT_GOALS {
+  int id PK "auto-generated"
+  int activityReportId FK "NOT NULL, references ActivityReports"
+  int goalId FK "NOT NULL, references Goals"
+}
+
+ACTIVITY_REPORT_OBJECTIVES {
+  int id PK "auto-generated"
+  int activityReportId FK "NOT NULL, references ActivityReports"
+  int objectiveId FK "NOT NULL, references Objectives"
+  timestamp createdAt "NOT NULL"
+  timestamp updatedAt "NOT NULL"
+}
+
+%% User Relationships
+USERS }o--|| REGIONS : "has home region"
+USERS ||--|{ PERMISSIONS : "has"
+USERS ||--o{ ACTIVITY_REPORTS : "creates"
+USERS ||--o{ ACTIVITY_REPORT_APPROVERS : "approves"
+USERS ||--o{ ACTIVITY_REPORT_COLLABORATORS : "collaborates on"
+
+%% Region Relationships
+REGIONS ||--o{ PERMISSIONS : "scoped to"
+REGIONS ||--o{ GRANTS : "belongs to"
+
+%% Scope Relationships
+SCOPES ||--o{ PERMISSIONS : "defines"
+
+%% Role and Topic Relationships
+ROLES ||--o{ ROLE_TOPICS : "has"
+TOPICS ||--o{ ROLE_TOPICS : "belongs to"
+TOPICS ||--o{ TOPIC_GOALS : "categorizes"
+TOPICS }o--o{ GOALS : "tagged with"
+
+%% Goal Relationships
+GOALS ||--o{ TOPIC_GOALS : "has"
+GOALS ||--o{ GRANT_GOALS : "associated with"
+GOALS ||--o{ ACTIVITY_REPORT_GOALS : "tracked in"
+GOALS ||--o{ OBJECTIVES : "has"
+
+%% Recipient and Grant Relationships
+RECIPIENTS ||--o{ GRANTS : "receives"
+RECIPIENTS ||--o{ GRANT_GOALS : "has"
+
+%% Grant Relationships
+GRANTS ||--o{ GRANT_GOALS : "has"
+GRANTS ||--o{ ACTIVITY_PARTICIPANTS : "participates in"
+
+%% Other Entity Relationships
+OTHER_ENTITIES ||--o{ ACTIVITY_PARTICIPANTS : "participates in"
+
+%% Activity Report Relationships
+ACTIVITY_REPORTS ||--o{ ACTIVITY_REPORT_COLLABORATORS : "has"
+ACTIVITY_REPORTS ||--o{ NEXT_STEPS : "has"
+ACTIVITY_REPORTS ||--o{ ACTIVITY_REPORT_GOALS : "addresses"
+ACTIVITY_REPORTS ||--o{ ACTIVITY_REPORT_APPROVERS : "reviewed by"
+ACTIVITY_REPORTS ||--o{ ACTIVITY_PARTICIPANTS : "includes"
+ACTIVITY_REPORTS ||--o{ ACTIVITY_REPORT_OBJECTIVES : "addresses"
+
+%% Objective Relationships
+OBJECTIVES ||--o{ ACTIVITY_REPORT_OBJECTIVES : "tracked in"
 ```
-@startuml
-scale 0.65
 
-' avoid problems with angled crows feet
-skinparam linetype ortho
+## Editing This Diagram
 
-class User {
-  * id : integer <<generated>>
-  * hsesUserId : string
-  * hsesUsername : string
-  hsesAuthorities : array<string>
-  name : string
-  phoneNumber : string
-  email : string
-  title: enum
-  homeRegionId : integer(32) REFERENCES public.Regions.id
-  * lastLogin : timestamp
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
+This diagram uses Mermaid ER Diagram syntax with crow's foot notation and renders directly in GitHub.
 
-class Region {
-  * id : integer <<generated>>
-  * name : string
-}
+### Crow's Foot Notation Guide
 
-class Scope {
-  * id : integer <<generated>>
-  * name : string
-  description: string
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
+The relationship lines use industry-standard crow's foot notation:
 
-class Permission {
-  * id : integer <<generated>>
-  * userId : integer(32) REFERENCES public.Users.id
-  * regionId : integer(32) REFERENCES public.Regions.id
-  * scopeId : integer(32) REFERENCES public.Scopes.id
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
+- `||--o{` = **One-to-many** (zero or more on the many side)
+  - Example: One user creates zero or more activity reports
+- `||--|{` = **One-to-many** (one or more on the many side)
+  - Example: One user has one or more permissions (if enforced)
+- `}o--||` = **Many-to-one** (optional on the many side)
+  - Example: Many users optionally belong to one region
+- `}o--o{` = **Many-to-many** (optional on both sides)
+  - Example: Topics and goals have a many-to-many relationship
 
-class RequestErrors {
-  * id : integer <<generated>>
-  operation : string
-  uri : string
-  method : string
-  requestBody : string
-  responseBody : string
-  responseCode : string
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
+**Symbol meanings:**
+- `||` = Exactly one (required)
+- `o|` = Zero or one (optional)
+- `}o` = Zero or more (optional, many)
+- `}|` = One or more (required, many)
 
-class MailerLog {
-  * id : integer <<generated>>
-  * jobId : string
-  * emailTo : [string]
-  * action : enum
-  * subject : string
-  * activityReports : [integer]
-  success : boolean
-  result : jsonb
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
+### Field Notation
 
-class Role {
-  * id : integer
-  * name : string
-}
+- **PK** = Primary key
+- **FK** = Foreign key
+- **"NOT NULL"** = Required field
+- **"nullable"** = Optional field
+- **"array"** = Array/list type
+- **"enum"** = Enumerated type
+- **"auto-generated"** = Database-generated value
 
-class Topic {
-  * id : integer
-  * name : string
-}
+### To Edit
 
-class RoleTopic {
-  * id : integer <<generated>>
-  * roleId : integer(32) REFERENCES public.Roles.id
-  * topicId: integer(32) REFERENCES public.Topics.id
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class Goal {
-  * id : integer
-  * name : string
-  status : string
-  timeframe : string
-  isFromSmartsheetTtaPlan : boolean
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class TopicGoal {
-  * id : integer
-  * goalId : integer(32) REFERENCES public.Goals.id
-  * topicId: integer(32) REFERENCES public.Topics.id
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class NextSteps {
-  * id: integer
-  * activityReportId: integer(32) REFERENCES public.ActivityReport.id
-  * note: string
-  * noteType: string
-  * createdAt: timestamp
-  * updatedAt: timestamp
-}
-
-class Recipient {
-  * id : integer
-  * name : string
-    recipientType : string
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class Grant {
-  * id : integer
-  * number : string
-  regionId : integer(32) REFERENCES public.Regions.id
-  * recipientId : integer(32) REFERENCES public.Recipient.id
-  status : string
-  startDate : timestamp
-  endDate : timestamp
-  cdi : boolean
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class GrantGoal {
-  * id : integer <<generated>>
-  * recipientId : integer(32) REFERENCES public.Recipients.id
-  * grantId : integer(32) REFERENCES public.Grants.id
-  * goalId : integer(32) REFERENCES public.Goals.id
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class OtherEntity {
-  * id : integer <<generated>>
-  * name : string
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class ActivityReport {
-  * id : integer <<generated>>
-  legacyId: string
-  ECLKCResourcesUsed : array<string>
-  nonECLKCResourcesUsed: array<string>
-  additionalNotes : string
-  numberOfParticipants : integer
-  deliveryMethod : string
-  duration : decimal
-  endDate : date
-  startDate : date
-  activityRecipientType : string
-  requester : string
-  programTypes : array<string>
-  targetPopulations : array<string>
-  virtualDeliveryType : string
-  reason : array<string>
-  participants : array<string>
-  topics : array<string>
-  context : string
-  pageState : json
-  oldManagerNotes : string
-  * submissionStatus : string
-  calculatedStatus: string
-  ttaType : array<string>
-  oldApprovingManagerId : integer(32) REFERENCES public.Users.id
-  * userId : integer(32) REFERENCES public.Users.id
-  lastUpdatedById : integer(32) REFERENCES public.Users.id
-  * regionId : integer(32) REFERENCES public.Region.id
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class ActivityReportApprover {
-  * id : integer <<generated>>
-  * activityReportId : integer(32) REFERENCES public.ActivityReport.id
-  * userId : integer(32) REFERENCES public.User.id
-  status: string
-  note : string
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class Objective {
-  * id : integer <<generated>>
-  * goalId : integer(32) REFERENCES public.Goal.id
-  title : string,
-  ttaProvided : string,
-  status : string,
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class ActivityParticipant {
-  * id : integer <<generated>>
-  * activityReportId : integer(32) REFERENCES public.ActivityReport.id
-  grantId : integer(32) REFERENCES public.Grant.id
-  otherEntityId : integer(32) REFERENCES public.OtherEntity.id
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-class ActivityReportCollaborator {
-  * id : integer <<generated>>
-  * activityReportId : integer(32) REFERENCES public.ActivityReport.id
-  * userId : integer(32) REFERENCES public.User.id
-}
-
-class ActivityReportGoal {
-  * id : integer <<generated>>
-  * activityReportId : integer(32) REFERENCES public.ActivityReport.id
-  * goalId : integer(32) REFERENCES public.Goal.id
-}
-
-class ActivityReportObjective {
-  * id : integer <<generated>>
-  * activityReportId : integer(32) REFERENCES public.ActivityReport.id
-  * objectiveId : integer(32) REFERENCES public.Objective.id
-  * createdAt : timestamp
-  * updatedAt : timestamp
-}
-
-User ||-o{ Region
-User }o--|{ Permission
-User }o--|{ ActivityReport
-Scope }o--|{ Permission
-Region }o--|{ Permission
-Role }o--|{ Topic
-Topic }|--|{ Goal
-Recipient }o--|{ GrantGoal
-Goal }o--|{ GrantGoal
-Role .. RoleTopic
-Topic .. RoleTopic
-Topic .. TopicGoal
-Goal .. TopicGoal
-Recipient ||--|{ Grant
-Region ||--|{ Grant
-ActivityReport .. ActivityReportCollaborator
-User .. ActivityReportCollaborator
-ActivityReport .. NextSteps
-ActivityReport .. ActivityReportGoal
-ActivityReport ||--o{ ActivityReportApprover
-ActivityReportApprover }o--|| User
-Goal .. ActivityReportGoal
-Goal }|--|{ ActivityReport
-Goal ||-o{ Objective
-ActivityReportObjective }o--|{ Objective
-ActivityReportObjective }o--|{ ActivityReport
-
-User ||-o{ ActivityReport
-ActivityReport ||-o{ ActivityParticipant
-Grant ||-{ ActivityParticipant
-OtherEntity ||-{ ActivityParticipant
-@enduml
-```
-
-Instructions
-------------
-
-1. [Edit this diagram with plantuml.com](//www.plantuml.com/plantuml/png/pLXBRnit4Bxlh-2j3pH6qQ8z144Gnr42eubjMCwfw85QZbTqkHnsEAj4iFtVAovbTkbTsMj9TNkniT-yP_ZneJUU9N5JcyANqe3uyU3NNuhY6o4Ng9LmX3C3jHTVDC-5j9K19Kh2BrvS0d3X_zJMIPArCDe2Bnq899vZKPH6UYy-Uo1nNGZnlT1Al1JQCbGhwDMh2YoGP52lNxVYkGSVj8-3ccVIjifmAsleIW9-sAn2aMODVYMIH7BvAYe4d_Sjt1mjd3Jr3AWBGosrwGAisS1B0RQfGnoiuHmgZVQuKy2tF__qdJYVl9-SJqwE9bFXcfdHvK5Kz0TQjRaRwVaZLjgk35dNu5dMhfMK1A7sG-v96gS69BTt3OqHnhKqRq1oCItHmJOUX53WIzAEDTg4xbJE6L2jlHzTKkE1HimXB9Wq1TfoUZxqQOHPsyzWjUja_sfMs8G8oO_f1hhmeT5s9zIGxdxMm7FC64Knp5jKonps3gs7JVWHAX3xcVadgGtGYXVZHdw5itjxGgJi1Qx0toFwHmlBCdOZKZSWlfbTGScvTL1RQ5wUWqDY7xoiemStlYbBy06T8HgGDZQXCS7BbKSxst7CQ8R8zn1XBz3fShnD2XFjHZMPq8nPwi5hMkaSt1-hnspQB7QdnmUKPbmFXF0ikV5T93Yyf7jgshydhAUr9FPp0BvWUMQapKQ_VSPnR0-bNQra8veUNFn7JJ-1hpnbS3wLa5UGK-dnj0up_RlqB39a30t0nTB1y7wpiOODssgfdGRBOnUF47Hd4dBOqwRtWUG3AVGk9TkUMIdrKQPhtMZS8qr0YDz9Xdl5WbK3QAbqnfnTcnMPCshpsgRerBAAv2ZBa5IqsfAxs_VZbET04ykQbrlSstQBdLDsJ7W3bIoNnweJVtBqyRUZS_3OKDbUvzNGVHrjNw-l9fNIuPoNvWGPiWKRUNHwUIQ9TQbT65X6DGL6Bu2MdthN8jMakvI2KjVIP0izj2Wn8eFI5fXj6lqBLyvlHrYHh8FkqDE59LN0P-WQqsOrfBFGn8qqxzObzSDAZtR0pcNDwOdR0sP8KA9b-CfP5RA2AKk6zTLe1Q5HdwHTuTIRJdiTMz_sfxtDffIc3DM2YhAEY5d6wlASOhH3vmWNg-yOzgclWorU54Pw_Xn9ytRvBpz6WjaUwHkRDUv9tZ_TnTEEzoqwt3s9khn6tjTsTje-2FG2HhJWQTjyp9qrctzo_I6kthEmGXMe38zLPj0UvjpP-fvno4ywGwC9fZDj38Sw9-2UAN64niWPacJyNzDYG_fXvJrRsbimOaFQYORFcZlUHHtX8MMumteBinCtDo_mMiJjF2At-EB5pNNdjwyCpbClugzrVPFeS4Y09kctpy2Y_IjkRree3AP8bvKxnNJZBiAV7XgT7Xo8yB_hT12AOPEtXEIXGsDIa7KvEPPt8hZPJDtOmeTL-lxI-_QnMB4B6HGBmEiDHsmn3CVMteYGRkfEFrGKhKUMYwCehggqI8iDz8hXdg2OYpjBk2VAFpETx1Wgsc46-R2uixLlLde3LZMr-Hi0)
-2. Copy and paste the final UML into the UML Source section
-3. Update the img src and edit link target to the current values
+1. Modify the Mermaid source in this file
+2. Preview changes by viewing this file in GitHub or using a [Mermaid preview tool](https://mermaid.live/)
+3. GitHub will automatically render the updated diagram
 
 ### Notes
 
-* See the help docs for [Entity Relationship Diagram](https://plantuml.com/ie-diagram) and [Class Diagram](https://plantuml.com/class-diagram) for syntax help.
-* We're using the `*` visibility modifier to denote fields that cannot be `null`.
+* See the [Mermaid ER Diagram documentation](https://mermaid.js.org/syntax/entityRelationshipDiagram.html) for syntax help
+* Entity names use UPPER_CASE with underscores (database convention)
+* Relationship labels describe the nature of the connection
+* Complex types (arrays, JSON) are documented in field comments
