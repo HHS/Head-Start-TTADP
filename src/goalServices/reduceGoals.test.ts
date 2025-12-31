@@ -352,6 +352,76 @@ describe('reduceGoals', () => {
       },
     ]);
   });
+
+  it('returns useIpdCourses and useFiles flags from activity report objectives', () => {
+    const goalsWithFlags = [
+      {
+        id: 1,
+        name: 'Goal with flags',
+        objectives: [
+          {
+            id: 10,
+            title: 'Objective flag',
+            status: 'Not Started',
+            useIpdCourses: true,
+            useFiles: true,
+            topics: [],
+            resources: [],
+            files: [],
+            courses: [],
+            goalId: 1,
+            onApprovedAR: false,
+            onAR: false,
+            rtrOrder: 1,
+            activityReportObjectives: [
+              {
+                status: 'Not Started',
+                useIpdCourses: true,
+                useFiles: true,
+                dataValues: {
+                  useIpdCourses: true,
+                  useFiles: true,
+                },
+                activityReportObjectiveResources: [],
+                activityReportObjectiveTopics: [],
+                activityReportObjectiveCourses: [],
+                activityReportObjectiveFiles: [],
+                activityReportObjectiveCitations: [],
+              },
+            ],
+          },
+        ],
+        activityReportGoals: [
+          {
+            id: 1,
+            isActivelyEdited: false,
+            createdAt: new Date(),
+          },
+        ],
+        grant: {
+          recipientId: 1,
+          numberWithProgramTypes: 1,
+          recipient: {
+            dataValues: {},
+          },
+        },
+        dataValues: {
+          grant: {
+            recipientId: 1,
+            numberWithProgramTypes: 1,
+          },
+        },
+        grantId: 1,
+        createdVia: 'rtr',
+        source: 'Source',
+      },
+    ];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = reduceGoals(goalsWithFlags as any, true);
+    expect(result[0].objectives[0].useIpdCourses).toBe(true);
+    expect(result[0].objectives[0].useFiles).toBe(true);
+  });
   describe('reduceRelationThroughActivityReportObjectives', () => {
     it('should handle null topic values without crashing', () => {
       // Mock objective with an activity report that has a null topic
