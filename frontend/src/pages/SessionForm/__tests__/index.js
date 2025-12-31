@@ -48,7 +48,7 @@ const istAndPocFields = {
   recipientNextSteps: [],
   specialistNextSteps: [],
   pocComplete: false,
-  ownerComplete: false,
+  collabComplete: false,
   istSelectionComplete: false,
   status: 'In progress',
   ownerId: null,
@@ -679,9 +679,9 @@ describe('SessionReportForm', () => {
 
     // Assert the owner complete properties.
     const putBodyJson = JSON.parse(putBody);
-    expect(putBodyJson.data.ownerComplete).toBe(true);
-    expect(putBodyJson.data.ownerCompleteId).toBe(1);
-    expect(putBodyJson.data.ownerCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+    expect(putBodyJson.data.collabComplete).toBe(true);
+    expect(putBodyJson.data.collabCompleteId).toBe(1);
+    expect(putBodyJson.data.collabCompleteDate).toBe(moment().format('YYYY-MM-DD'));
 
     // Assert the poc complete properties are NOT set.
     expect(putBodyJson.data.pocComplete).toBe(true);
@@ -882,9 +882,9 @@ describe('SessionReportForm', () => {
     const putBodyJson = JSON.parse(putBody);
 
     // Assert the body has POC key properties using the hasOwnProperty method
-    // POC (not admin) should only get POC keys, and ownerComplete should be removed.
-    const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
-    pocKeysWithoutOwnerComplete.forEach((key) => {
+    // POC (not admin) should only get POC keys, and collabComplete should be removed.
+    const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
+    pocKeysWithoutcollabComplete.forEach((key) => {
       expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
     });
     // Assert IST-only fields are NOT present (fields in istKeys but not in pocKeys)
@@ -1081,7 +1081,7 @@ describe('SessionReportForm', () => {
           regionId: 1,
           reviewStatus: REPORT_STATUSES.SUBMITTED,
           pocComplete: true,
-          ownerComplete: true,
+          collabComplete: true,
           data: {
             sessionName: 'Test Session',
             duration: 2,
@@ -1182,7 +1182,7 @@ describe('SessionReportForm', () => {
           regionId: 1,
           reviewStatus: REPORT_STATUSES.SUBMITTED,
           pocComplete: true,
-          ownerComplete: true,
+          collabComplete: true,
           data: {
             sessionName: 'Test Session Needs Action',
             duration: 2,
@@ -1281,7 +1281,7 @@ describe('SessionReportForm', () => {
           regionId: 1,
           reviewStatus: REPORT_STATUSES.SUBMITTED,
           pocComplete: true,
-          ownerComplete: true,
+          collabComplete: true,
           data: {
             sessionName: 'Test Session No Status',
             duration: 2,
@@ -1369,7 +1369,7 @@ describe('SessionReportForm', () => {
           regionId: 1,
           reviewStatus: REPORT_STATUSES.SUBMITTED,
           pocComplete: true,
-          ownerComplete: true,
+          collabComplete: true,
           data: {
             sessionName: 'Test Session Error',
             duration: 2,
@@ -1640,8 +1640,8 @@ describe('SessionReportForm', () => {
       });
 
       // Verify POC keys are included
-      const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
-      pocKeysWithoutOwnerComplete.forEach((key) => {
+      const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
+      pocKeysWithoutcollabComplete.forEach((key) => {
         expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
       });
     });
@@ -1733,7 +1733,7 @@ describe('SessionReportForm', () => {
 
       // Verify both IST and POC keys are included
       const allKeys = [...istKeys, ...pocKeys];
-      const allKeysWithoutComplete = allKeys.filter((key) => key !== 'pocComplete' && key !== 'ownerComplete');
+      const allKeysWithoutComplete = allKeys.filter((key) => key !== 'pocComplete' && key !== 'collabComplete');
       allKeysWithoutComplete.forEach((key) => {
         expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
       });
@@ -1783,8 +1783,8 @@ describe('SessionReportForm', () => {
       const putBodyJson = JSON.parse(putBody);
 
       // Verify POC keys are included
-      const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
-      pocKeysWithoutOwnerComplete.forEach((key) => {
+      const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
+      pocKeysWithoutcollabComplete.forEach((key) => {
         expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
       });
 

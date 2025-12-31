@@ -21,7 +21,8 @@ export type SessionShape = {
     participants?: { value: string; label: string }[];
     nextSteps: { completeDate: string, note: string }[];
     pocComplete: boolean;
-    ownerComplete: boolean;
+    collabComplete: boolean;
+    submitterId?: number;
     objectiveTrainers: string[];
   };
   submitted?: boolean;
@@ -77,7 +78,7 @@ export type TRAlertShape = {
   id: number;
   eventId: string;
   eventName: string;
-  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted';
+  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted' | 'waitingForApproval' | 'changesNeeded';
   eventStatus: TRStatusType;
   sessionName: string;
   sessionId: number | false;
@@ -87,4 +88,8 @@ export type TRAlertShape = {
   collaboratorIds: number[];
   startDate: string;
   endDate: string;
+  approverId?: number;
+  submitterId?: number;
+  approverName?: string;
+  collaboratorNames?: string[];
 };
