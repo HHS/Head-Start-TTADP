@@ -94,8 +94,8 @@ describe('RecipientSpotlightDataController', () => {
 
     await waitFor(() => {
       expect(getRecipientSpotlight).toHaveBeenCalledWith(
-        'recipientName',
-        'asc',
+        'indicatorCount',
+        'desc',
         0,
         '',
         10,
@@ -182,8 +182,8 @@ describe('RecipientSpotlightDataController', () => {
 
     await waitFor(() => {
       expect(getRecipientSpotlight).toHaveBeenCalledWith(
-        'recipientName',
-        'asc',
+        'indicatorCount',
+        'desc',
         0,
         '',
         25,
@@ -209,8 +209,8 @@ describe('RecipientSpotlightDataController', () => {
 
     await waitFor(() => {
       expect(getRecipientSpotlight).toHaveBeenCalledWith(
-        'recipientName',
-        'asc',
+        'indicatorCount',
+        'desc',
         10,
         '',
         10,
@@ -251,8 +251,8 @@ describe('RecipientSpotlightDataController', () => {
 
     await waitFor(() => {
       expect(getRecipientSpotlight).toHaveBeenLastCalledWith(
-        'recipientName',
-        'asc',
+        'indicatorCount',
+        'desc',
         0,
         'test.in[]=value',
         10,
@@ -279,8 +279,8 @@ describe('RecipientSpotlightDataController', () => {
 
     await waitFor(() => {
       expect(getRecipientSpotlight).toHaveBeenLastCalledWith(
-        'recipientName',
-        'asc',
+        'indicatorCount',
+        'desc',
         10,
         '',
         10,
@@ -321,8 +321,8 @@ describe('RecipientSpotlightDataController', () => {
 
     await waitFor(() => {
       expect(getRecipientSpotlight).toHaveBeenLastCalledWith(
-        'recipientName',
-        'asc',
+        'indicatorCount',
+        'desc',
         10,
         '',
         10,
@@ -335,8 +335,8 @@ describe('RecipientSpotlightDataController', () => {
 
     await waitFor(() => {
       expect(getRecipientSpotlight).toHaveBeenLastCalledWith(
-        'recipientName',
-        'asc',
+        'indicatorCount',
+        'desc',
         0,
         '',
         25,

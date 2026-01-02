@@ -180,8 +180,8 @@ describe('Recipient spotlight Dashboard page', () => {
 
     await waitFor(() => {
       expect(getRecipientSpotlight).toHaveBeenCalledWith(
-        'recipientName',
-        'asc',
+        'indicatorCount',
+        'desc',
         0,
         '',
         10,

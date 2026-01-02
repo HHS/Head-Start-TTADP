@@ -30,8 +30,8 @@ export default function RecipientSpotlightDataController({
   const { filterKey } = useContext(FilterContext);
 
   const defaultSort = {
-    sortBy: 'recipientName',
-    direction: 'asc',
+    sortBy: 'indicatorCount',
+    direction: 'desc',
   };
 
   // Grid and Paging
