@@ -22,6 +22,7 @@ import AppLoadingContext from '../../../AppLoadingContext';
 import NavigatorButtons from '../components/NavigatorButtons';
 import RichEditor from '../../RichEditor';
 import * as goalValidator from '../../../pages/ActivityReport/Pages/components/goalValidator';
+import { saveGoalsForReport } from '../../../fetchers/activityReports';
 
 jest.mock('../../../fetchers/activityReports', () => ({
   saveGoalsForReport: jest.fn(),
@@ -300,8 +301,7 @@ describe('ActivityReportNavigator', () => {
   });
 
   it('does not allow saving if the form is not editable', async () => {
-    const isEditable = false;
-    await renderNavigator({ isEditable });
+    await renderNavigator({ editable: false });
 
     fetchMock.restore();
     expect(fetchMock.called()).toBe(false);
@@ -671,7 +671,7 @@ describe('ActivityReportNavigator goals page saves', () => {
     }),
     setValue: jest.fn(),
     setError: jest.fn(),
-    errors: {},
+    errors: overrides.errors || {},
     watch: jest.fn((field) => {
       if (field === 'goalForEditing') return overrides.goalForEditing || null;
       if (field === 'goals') return overrides.goals || [];
@@ -681,12 +681,12 @@ describe('ActivityReportNavigator goals page saves', () => {
     }),
     trigger: jest.fn().mockResolvedValue(true),
     reset: jest.fn(),
-    formState: { isDirty: true, errors: {} },
+    formState: overrides.formState || { isDirty: true, errors: {} },
   });
 
-  const renderWithContext = (hookForm) => render(
+  const renderWithContext = (hookForm, props = {}) => render(
     <AppLoadingContext.Provider value={mockAppLoadingContext}>
-      <ActivityReportNavigator {...defaultProps} hookForm={hookForm} />
+      <ActivityReportNavigator {...defaultProps} {...props} hookForm={hookForm} />
     </AppLoadingContext.Provider>,
   );
 
@@ -706,6 +706,8 @@ describe('ActivityReportNavigator goals page saves', () => {
       values: { goalPrompts: [] },
     });
 
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
     renderWithContext(hookForm);
 
     const reviewLink = screen.getByRole('button', { name: /Review/i });
@@ -716,8 +718,108 @@ describe('ActivityReportNavigator goals page saves', () => {
       expect(defaultProps.onSave).toHaveBeenCalledWith(
         expect.objectContaining({ goalOrder: expect.any(Array) }),
       );
+      expect(hookForm.reset).toHaveBeenCalled();
       expect(mockAppLoadingContext.setIsAppLoading).toHaveBeenCalled();
     });
+  });
+
+  it('does not save draft goal when prompts have errors', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: {
+        goalPrompts: [{ fieldName: 'prompt-one' }],
+        'goalForEditing.objectives': [],
+      },
+      errors: { 'prompt-one': { type: 'manual', message: 'Error' } },
+    });
+
+    renderWithContext(hookForm);
+
+    const saveDraftButton = screen.getByRole('button', { name: /save draft/i });
+    userEvent.click(saveDraftButton);
+
+    expect(saveGoalsForReport).not.toHaveBeenCalled();
+  });
+
+  it('does not save draft goal when resources are invalid', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: {
+        goalPrompts: [],
+        'goalForEditing.objectives': [{
+          resources: [{ value: 'http://test' }],
+        }],
+      },
+    });
+
+    renderWithContext(hookForm);
+
+    const saveDraftButton = screen.getByRole('button', { name: /save draft/i });
+    userEvent.click(saveDraftButton);
+
+    expect(saveGoalsForReport).not.toHaveBeenCalled();
+  });
+
+  it('autosave marks invalid resources when goal is being edited', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: {
+        goalPrompts: [],
+        'goalForEditing.objectives': [{
+          resources: [{ value: 'http://test' }],
+        }],
+      },
+    });
+
+    saveGoalsForReport.mockResolvedValueOnce([]);
+
+    renderWithContext(hookForm, { autoSaveInterval: 200, shouldAutoSave: true });
+
+    act(() => {
+      jest.advanceTimersByTime(400);
+    });
+
+    await waitFor(() => expect(hookForm.setError).toHaveBeenCalledWith(
+      'goalForEditing.objectives[0].resources',
+      { message: 'Resources are required' },
+    ));
+  });
+
+  it('focuses and exits when goals are invalid', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: { goalPrompts: [] },
+    });
+    const focus = jest.fn();
+    const originalQuerySelector = document.querySelector;
+    document.querySelector = jest.fn(() => ({ focus }));
+    goalValidator.validateGoals.mockReturnValueOnce(false);
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => expect(focus).toHaveBeenCalled());
+
+    document.querySelector = originalQuerySelector;
+  });
+
+  it('stops save when prompts have errors on continue', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: {
+        goalPrompts: [{ fieldName: 'prompt-two' }],
+      },
+      errors: { 'prompt-two': { type: 'manual', message: 'Error' } },
+    });
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    expect(defaultProps.onSave).not.toHaveBeenCalled();
   });
 
   it('resets goal form fields after successful Save and Continue', async () => {
@@ -742,6 +844,27 @@ describe('ActivityReportNavigator goals page saves', () => {
       expect(hookForm.setValue).toHaveBeenCalledWith('goalName', '');
       expect(hookForm.setValue).toHaveBeenCalledWith('goalForEditing', '');
       expect(hookForm.reset).toHaveBeenCalled();
+    });
+  });
+
+  it('shows an error when Save and Continue returns no data', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, name: 'Goal' },
+      values: { goalPrompts: [] },
+      formState: { isDirty: true, errors: {} },
+    });
+
+    defaultProps.onSave.mockResolvedValue(null);
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.updateErrorMessage).toHaveBeenCalledWith(
+        expect.stringContaining('A network error has prevented us from saving'),
+      );
     });
   });
 
