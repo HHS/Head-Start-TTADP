@@ -599,19 +599,6 @@ describe('SessionReportForm', () => {
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
-
-    // todo, confirm: i don't think we need these any longer
-    // const putBody = fetchMock.lastOptions(url).body;
-
-    // // Assert the poc complete properties.
-    // const putBodyJson = JSON.parse(putBody);
-    // expect(putBodyJson.data.pocComplete).toBe(true);
-    // expect(putBodyJson.data.pocCompleteId).toBe(1);
-    // expect(putBodyJson.data.pocCompleteDate).toBe(moment().format('YYYY-MM-DD'));
-
-    // expect(putBodyJson.data.ownerComplete).toBe(undefined);
-    // expect(putBodyJson.data.ownerCompleteId).toBe(undefined);
-    // expect(putBodyJson.data.ownerCompleteDate).toBe(undefined);
   });
 
   it('sets owner complete values on submit', async () => {
@@ -946,25 +933,28 @@ describe('SessionReportForm', () => {
     expect(history.location.pathname).toContain('/session/999');
   });
 
-  it('redirects when event owner creates session', async () => {
+  it('redirects when event owner creates session and user is not admin', async () => {
     fetchMock.post(sessionsUrl, {
       id: 999,
       eventId: 1,
       regionId: 1,
-      data: {},
+      data: {
+        sessionName: 'Test Session Name',
+      },
       event: {
         regionId: 1,
-        ownerId: 2,
+        ownerId: 1,
         pocIds: [],
         collaboratorIds: [1],
         data: {
-          eventId: 1,
+          eventId: 'R01-PD-1234',
           eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
     });
 
-    const spy = jest.spyOn(history, 'replace');
+    const pushSpy = jest.spyOn(history, 'push');
+    const replaceSpy = jest.spyOn(history, 'replace');
 
     await act(async () => {
       renderSessionForm('1', 'session-summary', 'new');
@@ -972,17 +962,21 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
 
-    // Verify the form rendered with the created session
-    await waitFor(() => {
-      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
+    // Verify redirect with message when event owner creates session
+    await waitFor(() => expect(pushSpy).toHaveBeenCalled());
 
-    expect(spy).toHaveBeenCalled();
+    // Assert history.push was called with correct path and message object
+    expect(pushSpy).toHaveBeenCalledWith('/training-reports/in-progress', {
+      message: expect.objectContaining({
+        isSession: true,
+        sessionName: 'Test Session Name',
+        eventId: 'R01-PD-1234',
+        dateStr: expect.stringMatching(/\d{2}\/\d{2}\/\d{4} at \d{1,2}:\d{2} [ap]m/),
+      }),
+    });
 
-    // The reportId.current should be set to the created session ID (999)
-    // We can verify this indirectly by checking that history.replace was called
-    // with the correct URL
-    expect(history.location.pathname).toContain('/session/999');
+    // Verify replace was NOT called (mutually exclusive paths)
+    expect(replaceSpy).not.toHaveBeenCalled();
   });
 
   it('sets reportId.current when existing session is fetched', async () => {

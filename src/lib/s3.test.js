@@ -110,6 +110,61 @@ describe('generateS3Config', () => {
     const cfg = generateS3Config();
     expect(cfg).toEqual({ s3Bucket: null, s3Config: { region: 'us-gov-west-1' } });
   });
+
+  it('includes endpoint property when S3_ENDPOINT is set with VCAP_SERVICES', () => {
+    const credentials = {
+      bucket: 'vcap-bucket',
+      access_key_id: 'VCAP_AK',
+      secret_access_key: 'VCAP_SK',
+      region: 'us-gov-west-1',
+    };
+    const services = { s3: [{ credentials }] };
+    const { generateS3Config, mockErrorLogger } = loadModule({
+      VCAP_SERVICES: JSON.stringify(services),
+      S3_ENDPOINT: 'http://minio:9000',
+    });
+
+    const cfg = generateS3Config();
+    expect(cfg).toStrictEqual({
+      s3Bucket: 'vcap-bucket',
+      s3Config: {
+        credentials: {
+          accessKeyId: 'VCAP_AK',
+          secretAccessKey: 'VCAP_SK',
+        },
+        endpoint: 'http://minio:9000',
+        logger: mockErrorLogger,
+        region: 'us-gov-west-1',
+        forcePathStyle: true,
+      },
+    });
+  });
+
+  it('includes endpoint property when S3_ENDPOINT is set with environment variables', () => {
+    const env = {
+      S3_BUCKET: 'env-bucket',
+      AWS_ACCESS_KEY_ID: 'ENV_AK',
+      AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+      AWS_REGION: 'us-gov-west-1',
+      S3_ENDPOINT: 'http://localhost:9000',
+    };
+    const { generateS3Config, mockErrorLogger } = loadModule(env);
+
+    const cfg = generateS3Config();
+    expect(cfg).toEqual({
+      s3Bucket: 'env-bucket',
+      s3Config: {
+        credentials: {
+          accessKeyId: 'ENV_AK',
+          secretAccessKey: 'ENV_SK',
+        },
+        endpoint: 'http://localhost:9000',
+        logger: mockErrorLogger,
+        region: 'us-gov-west-1',
+        forcePathStyle: true,
+      },
+    });
+  });
 });
 
 describe('S3 helpers', () => {
@@ -229,7 +284,7 @@ describe('S3 helpers', () => {
       expect(res.error).toBeInstanceOf(Error);
     });
 
-    it('creates a signed URL for the requested object', async () => {
+    it('creates a signed URL for the requested object with AWS S3', async () => {
       const env = {
         S3_BUCKET: 'env-bucket',
         AWS_ACCESS_KEY_ID: 'ENV_AK',
@@ -248,6 +303,60 @@ describe('S3 helpers', () => {
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
       expect(mockAuditLogger.info).toHaveBeenCalled();
+    });
+
+    it('uses Minio host when S3_ENDPOINT is set', async () => {
+      const env = {
+        S3_BUCKET: 'env-bucket',
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: 'http://minio:9000',
+      };
+      const {
+        getSignedDownloadUrl,
+        mockGetSignedUrl,
+        mockAuditLogger,
+      } = loadModule(env);
+      const client = { send: jest.fn() };
+      const result = { host: 'minio:9000', path: '/file.txt' };
+      mockGetSignedUrl.mockImplementation(() => result);
+      const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
+      expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
+      expect(mockAuditLogger.info).toHaveBeenCalled();
+      // Verify that mockGetSignedUrl was called with the Minio host
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'minio:9000',
+        }),
+        expect.any(Object),
+      );
+    });
+
+    it('uses localhost Minio host when S3_ENDPOINT is http://localhost:9000', async () => {
+      const env = {
+        S3_BUCKET: 'env-bucket',
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: 'http://localhost:9000',
+      };
+      const {
+        getSignedDownloadUrl,
+        mockGetSignedUrl,
+      } = loadModule(env);
+      const client = { send: jest.fn() };
+      const result = { host: 'localhost:9000', path: '/file.txt' };
+      mockGetSignedUrl.mockImplementation(() => result);
+      const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
+      expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
+      // Verify that mockGetSignedUrl was called with the localhost host
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'localhost:9000',
+        }),
+        expect.any(Object),
+      );
     });
 
     it('logs and returns the error when presigning fails', async () => {

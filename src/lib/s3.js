@@ -25,6 +25,7 @@ const generateS3Config = () => {
           region: credentials.region,
           forcePathStyle: true,
           logger: errorLogger,
+          ...(process.env.S3_ENDPOINT && { endpoint: process.env.S3_ENDPOINT }),
           credentials: {
             accessKeyId: credentials.access_key_id,
             secretAccessKey: credentials.secret_access_key,
@@ -48,6 +49,7 @@ const generateS3Config = () => {
         region: process.env.AWS_REGION || DEFAULT_REGION,
         forcePathStyle: true,
         logger: errorLogger,
+        ...(process.env.S3_ENDPOINT && { endpoint: process.env.S3_ENDPOINT }),
         credentials: {
           accessKeyId: AWS_ACCESS_KEY_ID,
           secretAccessKey: AWS_SECRET_ACCESS_KEY,
@@ -142,9 +144,13 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
     secretAccessKey: s3Config.credentials.secretAccessKey,
   };
 
+  const host = process.env.S3_ENDPOINT
+    ? new URL(process.env.S3_ENDPOINT).host
+    : `${s3Bucket}.s3.${s3Config.region}.amazonaws.com`;
+
   const opts = {
     service: 's3',
-    host: `${s3Bucket}.s3.${s3Config.region}.amazonaws.com`,
+    host,
     path: `/${key}`,
     region: s3Config.region,
     expires,
