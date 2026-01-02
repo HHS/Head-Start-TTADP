@@ -47,7 +47,7 @@ export default function CreatorNeedsAction({
                 valueProperty="user.id"
                 labelProperty="user.fullName"
                 options={approverOptions}
-                filterInitialValue
+                filterInitialValue={false}
                 required={false}
               />
             </FormItem>
