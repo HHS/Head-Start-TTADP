@@ -102,7 +102,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Recipient may need prioritized attention/i)).toBeInTheDocument();
-      expect(screen.getByText(/3 of 7 priority indicators/i)).toBeInTheDocument();
+      expect(screen.getByText(/3 of 5 priority indicators/i)).toBeInTheDocument();
     });
   });
 
@@ -115,7 +115,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/No priority indicators identified/i)).toBeInTheDocument();
-      expect(screen.getByText(/0 of 7 priority indicators/i)).toBeInTheDocument();
+      expect(screen.getByText(/0 of 5 priority indicators/i)).toBeInTheDocument();
     });
   });
 
@@ -132,8 +132,9 @@ describe('RecipientSpotlight', () => {
       expect(badIndicators).toHaveLength(3);
 
       // Find all indicators with good-indicator class (false)
+      // FEI and DRS are now hidden, so only 2 good indicators remain (deficiency and newStaff)
       const goodIndicators = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
-      expect(goodIndicators).toHaveLength(4);
+      expect(goodIndicators).toHaveLength(2);
     });
 
     // Verify specific indicators from our mock data

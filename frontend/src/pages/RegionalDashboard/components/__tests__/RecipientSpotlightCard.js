@@ -67,7 +67,7 @@ describe('RecipientSpotlightCard', () => {
   it('displays indicator count text inline with counter', () => {
     renderCard();
     // The text is now rendered inline within the IndicatorCounter component
-    expect(screen.getByText(/2\s+of\s+7/)).toBeInTheDocument();
+    expect(screen.getByText(/2\s+of\s+5/)).toBeInTheDocument();
   });
 
   it('renders ExpanderButton with "View" text initially', () => {
@@ -121,14 +121,12 @@ describe('RecipientSpotlightCard', () => {
     const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
     fireEvent.click(expandButton);
 
-    // Should show all indicators
+    // Should show all indicators (FEI and DRS are temporarily hidden)
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('New recipient')).toBeInTheDocument();
     expect(screen.getByText('Deficiency')).toBeInTheDocument();
     expect(screen.getByText('New staff')).toBeInTheDocument();
     expect(screen.getByText('No TTA')).toBeInTheDocument();
-    expect(screen.getByText('DRS')).toBeInTheDocument();
-    expect(screen.getByText('FEI')).toBeInTheDocument();
   });
 
   it('handles recipient with all indicators active', () => {
@@ -149,8 +147,9 @@ describe('RecipientSpotlightCard', () => {
       </BrowserRouter>,
     );
 
+    // Only 5 indicators are shown (FEI and DRS are temporarily hidden)
     const filledBoxes = container.querySelectorAll('.ttahub--indicator-box-filled');
-    expect(filledBoxes.length).toBe(7);
+    expect(filledBoxes.length).toBe(5);
   });
 
   it('handles recipient with no active indicators', () => {
@@ -210,7 +209,7 @@ describe('RecipientSpotlightCard', () => {
     expect(filledBoxes.length).toBe(0);
   });
 
-  it('renders all 7 indicator types when all are active', () => {
+  it('renders all 5 indicator types when all are active', () => {
     const allActiveRecipient = {
       ...mockRecipient,
       childIncidents: true,
@@ -231,10 +230,9 @@ describe('RecipientSpotlightCard', () => {
     const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
     fireEvent.click(expandButton);
 
+    // FEI and DRS are temporarily hidden
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('Deficiency')).toBeInTheDocument();
-    expect(screen.getByText('DRS')).toBeInTheDocument();
-    expect(screen.getByText('FEI')).toBeInTheDocument();
     expect(screen.getByText('New recipient')).toBeInTheDocument();
     expect(screen.getByText('New staff')).toBeInTheDocument();
     expect(screen.getByText('No TTA')).toBeInTheDocument();
