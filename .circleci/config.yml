@@ -154,6 +154,7 @@ workflows:
             only:
             - main
     jobs:
+    - build_and_lint
     - deploy_job:
         name: reset (dev-blue)
         target_env: "dev-blue"
