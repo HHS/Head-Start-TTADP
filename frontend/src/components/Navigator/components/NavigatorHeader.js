@@ -14,7 +14,7 @@ const NavigatorHeader = ({ label, titleOverride, formData }) => {
 
   return (
     <div className="padding-top-2">
-      <h2 className="font-family-serif" ref={heading}>{finalLabel}</h2>
+      <h2 className="font-family-serif" data-testid="navigator-header" ref={heading}>{finalLabel}</h2>
     </div>
   );
 };

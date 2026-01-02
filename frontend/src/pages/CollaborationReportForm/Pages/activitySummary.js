@@ -79,6 +79,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             id="name"
             name="name"
             type="text"
+            data-testid="activity-name-input"
             inputRef={register({
               required: 'Enter activity name',
             })}
