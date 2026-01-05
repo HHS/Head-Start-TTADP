@@ -146,30 +146,30 @@ workflows:
 
   reset_env_cron:
     # scheduled job to reset lower envs to a default state
-    triggers:
-    - schedule:
-        cron: "0 3 * * 0" # 3AM UTC = 11PM EST Sunday night
-        filters:
-          branches:
-            only:
-            - main
+    # triggers:
+    # - schedule:
+    #     cron: "0 3 * * 0" # 3AM UTC = 11PM EST Sunday night
+    #     filters:
+    #       branches:
+    #         only:
+    #         - tm/env-cron
     jobs:
     - build_and_lint
-    - deploy_job:
-        name: reset (dev-blue)
-        target_env: "dev-blue"
-    - deploy_job:
-        name: reset (dev-green)
-        target_env: "dev-green"
-    - deploy_job:
-        name: reset (dev-red)
-        target_env: "dev-red"
+    # - deploy_job:
+    #     name: reset (dev-blue)
+    #     target_env: "dev-blue"
+    # - deploy_job:
+    #     name: reset (dev-green)
+    #     target_env: "dev-green"
+    # - deploy_job:
+    #     name: reset (dev-red)
+    #     target_env: "dev-red"
     - deploy_job:
         name: reset (dev-pink)
         target_env: "dev-pink"
-    - deploy_job:
-        name: reset (dev-gold)
-        target_env: "dev-gold"
+    # - deploy_job:
+    #     name: reset (dev-gold)
+    #     target_env: "dev-gold"
 
   restore_db_cron:
     # scheduled job to ensure lower envs have a recent copy of the database
