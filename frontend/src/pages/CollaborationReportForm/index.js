@@ -368,17 +368,7 @@ function CollaborationReport({ match, location }) {
           }
         }
 
-        // if a report has been marked as need action or approved by any approver, it can no longer
-        // be edited even by an approver
-        const approverHasMarkedReport = report.approvers.some((approver) => (
-          approver.status === REPORT_STATUSES.APPROVED
-        ));
-
-        const canWriteReport = canWriteAsCollaboratorOrAuthor
-          || (
-            canWriteAsApprover
-             && !approverHasMarkedReport
-          );
+        const canWriteReport = canWriteAsCollaboratorOrAuthor || canWriteAsApprover;
 
         updateEditable(canWriteReport);
 
@@ -446,8 +436,12 @@ function CollaborationReport({ match, location }) {
   }
 
   // istanbul ignore next - too hard to test
+  const approverCanEdit = isApprover
+    && formData
+    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+
   const updatePage = (position) => {
-    if (!editable) {
+    if (!editable && !approverCanEdit) {
       return;
     }
 
