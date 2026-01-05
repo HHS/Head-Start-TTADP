@@ -362,17 +362,7 @@ function ActivityReport({
           }
         }
 
-        // if a report has been marked as need action or approved by any approver, it can no longer
-        // be edited even by an approver
-        const approverHasMarkedReport = report.approvers.some((approver) => (
-          approver.status === REPORT_STATUSES.APPROVED
-        ));
-
-        const canWriteReport = canWriteAsCollaboratorOrAuthor
-          || (
-            canWriteAsApprover
-             && !approverHasMarkedReport
-          );
+        const canWriteReport = canWriteAsCollaboratorOrAuthor || canWriteAsApprover;
 
         updateEditable(canWriteReport);
 
@@ -447,7 +437,11 @@ function ActivityReport({
     );
   }
 
-  if (connectionActive && !editable && currentPage !== 'review') {
+  const approverCanEdit = isApprover
+    && formData
+    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+
+  if (connectionActive && !editable && currentPage !== 'review' && !approverCanEdit) {
     return (
       <Redirect to={`/activity-reports/${activityReportId}/review`} />
     );
@@ -466,7 +460,7 @@ function ActivityReport({
   }
 
   const updatePage = (position) => {
-    if (!editable) {
+    if (!editable && !approverCanEdit) {
       return;
     }
 

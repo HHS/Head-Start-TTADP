@@ -316,7 +316,7 @@ describe('Goals DB service', () => {
 
       await saveStandardGoalsForReport([
         {
-          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'Closed', objectives: [],
+          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'Closed', objectives: [], goalTemplateId: 1,
         },
       ], 1, { id: mockActivityReportId });
       expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
@@ -502,7 +502,7 @@ describe('Goals DB service', () => {
           name: 'New Goal',
           status: 'In Progress',
           isActivelyBeingEditing: true,
-          goalTemplateId: null,
+          goalTemplateId: 1,
         },
       ];
 
@@ -541,6 +541,7 @@ describe('Goals DB service', () => {
           name: 'New Curated Goal',
           status: 'In Progress',
           isActivelyBeingEditing: true,
+          goalTemplateId: 1,
         },
       ];
 
