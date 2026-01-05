@@ -10,7 +10,7 @@ import {
 } from '@ttahub/common';
 import moment from 'moment';
 import { auditLogger } from '../logger';
-import db, { sequelize } from '../models';
+import db from '../models';
 import {
   EventShape,
   CreateEventRequest,
@@ -28,6 +28,7 @@ const {
   User,
   EventReportPilotNationalCenterUser,
   File,
+  sequelize,
 } = db;
 
 type WhereOptions = {
@@ -688,6 +689,11 @@ export async function getTrainingReportAlertsForUser(
       {
         pocIds: {
           [Op.contains]: [userId],
+        },
+      },
+      {
+        id: {
+          [Op.in]: sequelize.literal(`(SELECT "eventId" FROM "SessionReportPilots" srp WHERE srp."approverId" = ${userId})`),
         },
       },
     ],
