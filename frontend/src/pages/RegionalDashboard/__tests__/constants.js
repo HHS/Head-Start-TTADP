@@ -15,7 +15,7 @@ describe('RegionalDashboard constants', () => {
 
       expect(filterIds).toContain('grantNumber'); // Grant number
       expect(filterIds).toContain('group'); // Group
-      expect(filterIds).toContain('recipientsWithoutTTA'); // Last TTA
+      expect(filterIds).toContain('lastTTA'); // Last TTA
       expect(filterIds).toContain('programSpecialist'); // Program specialist
       expect(filterIds).toContain('priorityIndicator'); // Priority indicator (NEW)
       expect(filterIds).toContain('programType'); // Program types

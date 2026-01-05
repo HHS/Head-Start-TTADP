@@ -24,7 +24,7 @@ import {
   priorityIndicatorFilter,
 } from '../../components/filter/activityReportFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
-import { groupsFilter, recipientsWithoutTTA } from '../../components/filter/grantFilters';
+import { groupsFilter, lastTTA } from '../../components/filter/grantFilters';
 
 const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
@@ -58,7 +58,7 @@ DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 const RECIPIENT_SPOTLIGHT_FILTER_CONFIG = [
   grantNumberFilter, // Grant number
   groupsFilter, // Group
-  recipientsWithoutTTA, // Last TTA (Recipients without TTA)
+  lastTTA, // Last TTA
   programSpecialistFilter, // Program specialist
   priorityIndicatorFilter, // Priority indicator (NEW)
   programTypeFilter, // Program types

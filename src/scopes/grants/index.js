@@ -10,7 +10,7 @@ import { withProgramTypes, withoutProgramTypes } from './programType';
 import { withStateCode } from './stateCode';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 import { withGroup, withoutGroup } from './group';
-import { noActivityWithin } from './recipientsWithoutTTA';
+import { beforeLastTTA, afterLastTTA, withinLastTTA } from './lastTTA';
 import { withGoalName, withoutGoalName } from './goalName';
 import { withGrantStatus, withoutGrantStatus } from './grantStatus';
 import { withGoalResponse, withoutGoalResponse } from './goalResponse';
@@ -45,9 +45,11 @@ export const topicToQuery = {
     win: (query) => activeWithinDates(query),
     in: (query) => activeWithinDates(query),
   },
-  recipientsWithoutTTA: {
-    win: (query) => noActivityWithin(query),
-    in: (query) => noActivityWithin(query),
+  lastTTA: {
+    bef: (query) => beforeLastTTA(query),
+    aft: (query) => afterLastTTA(query),
+    win: (query) => withinLastTTA(query),
+    in: (query) => withinLastTTA(query),
   },
   region: {
     in: (query) => withRegion(query),
