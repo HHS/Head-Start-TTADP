@@ -36,7 +36,7 @@ const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) 
 }));
 
 const MESSAGE_TEMPLATES = {
-  eventSubmitted: (eventId, dateStr) => (
+  eventSubmitted: (_sessionName, eventId, dateStr) => (
     <>
       You submitted Training Event
       {' '}
@@ -47,7 +47,35 @@ const MESSAGE_TEMPLATES = {
       {dateStr}
     </>
   ),
+  sessionCreated: (_sessionName, eventId, dateStr) => (
+    <>
+      You created a session
+      {' '}
+      for Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      on
+      {' '}
+      {dateStr}
+    </>
+  ),
   sessionSubmitted: (sessionName, eventId, dateStr) => (
+    <>
+      You submitted the session
+      {' '}
+      {sessionName}
+      {' '}
+      of Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      on
+      {' '}
+      {dateStr}
+    </>
+  ),
+  sessionReviewSubmitted: (sessionName, eventId, dateStr) => (
     <>
       Your review for session
       {' '}
@@ -73,15 +101,19 @@ export const evaluateMessageFromHistory = (history) => {
       return null;
     }
 
-    if (message.isSession) {
-      return MESSAGE_TEMPLATES.sessionSubmitted(
+    const { messageTemplate } = message;
+
+    if (MESSAGE_TEMPLATES[messageTemplate]) {
+      return MESSAGE_TEMPLATES[messageTemplate](
         message.sessionName,
         message.eventId,
         message.dateStr,
       );
     }
 
+    // default case
     return MESSAGE_TEMPLATES.eventSubmitted(
+      message.sessionName,
       message.eventId,
       message.dateStr,
     );
