@@ -54,7 +54,7 @@ function main() {
   } else {
   // wait for task logs to propagate
     runCmd('sleep 15');
-    runCmd(`cf logs ${appName} --recent | grep ${taskName} | grep -i "error"`);
+    runCmd(`cf logs ${appName} --recent | grep ${taskName} | grep -i "ERR"`);
     console.log('Task failed');
     process.exit(1);
   }
