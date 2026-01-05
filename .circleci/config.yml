@@ -158,18 +158,28 @@ workflows:
     # - deploy_job:
     #     name: reset (dev-blue)
     #     target_env: "dev-blue"
+          # requires:
+          # - build_and_lint
     # - deploy_job:
     #     name: reset (dev-green)
     #     target_env: "dev-green"
+          # requires:
+          # - build_and_lint
     # - deploy_job:
     #     name: reset (dev-red)
     #     target_env: "dev-red"
+          # requires:
+          # - build_and_lint
     - deploy_job:
         name: reset (dev-pink)
         target_env: "dev-pink"
+        requires:
+          - build_and_lint
     # - deploy_job:
     #     name: reset (dev-gold)
     #     target_env: "dev-gold"
+    #       requires:
+    #       - build_and_lint
 
   restore_db_cron:
     # scheduled job to ensure lower envs have a recent copy of the database
