@@ -151,6 +151,8 @@ class ActivityReportObjectives{
  supportType : enum
  title : text
  ttaProvided : text
+ useFiles : boolean : false
+ useIpdCourses : boolean : false
 }
 
 class ActivityReportResources{
@@ -1258,10 +1260,8 @@ class Users{
 }
 
 enum enum_Users_flags {
- anv_statistics
  collaboration_report
  quality_assurance_dashboard
- regional_goal_dashboard
 }
 
 enum_Users_flags <|-- Users

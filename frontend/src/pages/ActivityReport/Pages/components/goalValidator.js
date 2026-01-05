@@ -2,6 +2,7 @@ import {
   validateListOfResources,
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
+import { NOOP } from '../../../../Constants';
 
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
 export const GOAL_MISSING_OBJECTIVE = 'Select a TTA objective';
@@ -12,6 +13,8 @@ export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link. Invali
 export const OBJECTIVE_TTA = 'Describe the TTA provided';
 export const OBJECTIVE_TOPICS = 'Select at least one topic';
 export const OBJECTIVE_CITATIONS = 'Select at least one citation';
+export const OBJECTIVE_COURSES = 'Select at least one course';
+export const OBJECTIVE_FILES = 'Upload at least one file';
 
 /**
  * Function to validate a single value based on a user's flags
@@ -80,6 +83,16 @@ export const unfinishedObjectives = (
         incomplete = true;
       }
 
+      if (objective.useIpdCourses && (!objective.courses || !objective.courses.length)) {
+        setError(`${fieldArrayName}[${index}].courses`, { message: OBJECTIVE_COURSES });
+        incomplete = true;
+      }
+
+      if (objective.useFiles && (!objective.files || !objective.files.length)) {
+        setError(`${fieldArrayName}[${index}].files`, { message: OBJECTIVE_FILES });
+        incomplete = true;
+      }
+
       return incomplete;
     },
   );
@@ -112,8 +125,8 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
   return false;
 };
 
-export const validateGoals = (goals, setError = () => {}) => {
-  if (goals.length < 1) {
+export const validateGoals = (goals, setError = NOOP) => {
+  if (!goals || goals.length < 1) {
     return GOALS_EMPTY;
   }
 

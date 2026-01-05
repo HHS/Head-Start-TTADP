@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -15,10 +16,15 @@ import FormItem from './FormItem';
 import MultiSelect from './MultiSelect';
 import GroupAlert from './GroupAlert';
 import { parseCheckboxEvent } from '../Constants';
+import QuestionTooltip from './QuestionTooltip';
 
 const placeholderText = '- Select -';
 
-const RecipientsWithGroups = ({ regionId }) => {
+const RecipientsWithGroups = ({
+  regionId,
+  states,
+  showTooltip,
+}) => {
   const {
     control,
     register,
@@ -31,15 +37,22 @@ const RecipientsWithGroups = ({ regionId }) => {
 
   const [recipientOptions, setRecipientOptions] = useState();
 
+  // states is an array like "Colorado (CO)", "Arizona (AZ)", "Oregon (OR)"
+  const stateCodes = useMemo(() => states.map((state) => {
+    const match = state.match(/\(([^)]+)\)/);
+    return match ? match[1] : null;
+  }).filter((code) => code !== null),
+  [states]);
+
   useEffect(() => {
     async function fetchRecipients() {
       if (!recipientOptions && regionId) {
-        const data = await getPossibleSessionParticipants(regionId);
+        const data = await getPossibleSessionParticipants(regionId, stateCodes);
         setRecipientOptions(data);
       }
     }
     fetchRecipients();
-  }, [recipientOptions, regionId]);
+  }, [recipientOptions, regionId, stateCodes]);
 
   const options = (recipientOptions || []).map((recipient) => ({
     label: recipient.name,
@@ -186,14 +199,19 @@ const RecipientsWithGroups = ({ regionId }) => {
       {
           groups.length > 0
            && (
-           <div className="smart-hub-activity-summary-use-group margin-top-0">
+           <div className="smart-hub-activity-summary-use-group margin-top-0 display-flex flex-align-center">
              <Checkbox
                id="use-group"
                label="Use group"
-               className="margin-top-1"
+               className={`margin-top-1 ${showTooltip ? 'margin-right-1' : ''}`}
                onChange={toggleUseGroup}
                checked={useGroups}
              />
+             {showTooltip && (
+             <QuestionTooltip
+               text="You can use a group to speed up selection, then remove recipients who did not attend."
+             />
+             )}
            </div>
            )
         }
@@ -208,6 +226,16 @@ const RecipientsWithGroups = ({ regionId }) => {
 
 RecipientsWithGroups.propTypes = {
   regionId: PropTypes.number.isRequired,
+  states: PropTypes.arrayOf(PropTypes.string),
+  showTooltip: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.string,
+  ]),
+};
+
+RecipientsWithGroups.defaultProps = {
+  showTooltip: false,
+  states: [],
 };
 
 export default RecipientsWithGroups;

@@ -28,7 +28,7 @@ export function Field({
         </span>
       </span>
       <span className="smart-hub--dashboard-overview-field-label display-flex flex-2 flex-column flex-justify-center">
-        <span className="text-bold smart-hub--overview-font-size">{data}</span>
+        <span className="text-bold smart-hub--dashboard-overview-font-size">{data}</span>
         {showTooltip ? (
           <Tooltip
             displayText={label}

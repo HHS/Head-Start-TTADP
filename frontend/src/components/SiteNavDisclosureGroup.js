@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faMinus } from '@fortawesome/free-solid-svg-icons';
-import './SiteNavDisclosureGroup.css';
+import './SiteNavDisclosureGroup.scss';
 
 export default function SiteNavDisclosureGroup({ children, title }) {
   return (

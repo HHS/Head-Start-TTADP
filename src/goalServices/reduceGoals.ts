@@ -262,6 +262,12 @@ export function reduceObjectivesForActivityReport(
       closeSuspendContext,
       closeSuspendReason,
       objectiveCreatedHere,
+      useIpdCourses: objective.activityReportObjectives?.[0]?.useIpdCourses
+        ?? objective.useIpdCourses
+        ?? false,
+      useFiles: objective.activityReportObjectives?.[0]?.useFiles
+        ?? objective.useFiles
+        ?? false,
 
       // for the associated models, we need to return not the direct associations
       // but those associated through an activity report since those reflect the state

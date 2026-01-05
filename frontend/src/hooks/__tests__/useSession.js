@@ -3,6 +3,7 @@ import React from 'react';
 import {
   render, screen,
 } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import useSession from '../useSession';
 import { mockWindowProperty } from '../../testHelpers';
@@ -18,7 +19,11 @@ const SessionFilters = () => {
   );
 };
 
-const renderSessionFilters = () => render(<SessionFilters />);
+const renderSessionFilters = () => render(
+  <MemoryRouter>
+    <SessionFilters />
+  </MemoryRouter>,
+);
 
 describe('useSession', () => {
   const setItem = jest.fn();

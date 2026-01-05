@@ -1,5 +1,15 @@
-import { S3 } from 'aws-sdk';
-import { auditLogger } from '../logger';
+import {
+  S3Client,
+  GetBucketVersioningCommand,
+  PutBucketVersioningCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
+import { sign } from 'aws4';
+import { Upload } from '@aws-sdk/lib-storage';
+import { auditLogger, errorLogger } from '../logger';
+
+const DEFAULT_REGION = 'us-gov-west-1';
 
 const generateS3Config = () => {
   // Take configuration from cloud.gov if it is available. If not, use env variables.
@@ -10,14 +20,16 @@ const generateS3Config = () => {
     if (services.s3 && services.s3.length > 0) {
       const { credentials } = services.s3[0];
       return {
-        bucketName: credentials.bucket,
+        s3Bucket: credentials.bucket,
         s3Config: {
-          accessKeyId: credentials.access_key_id,
-          endpoint: credentials.fips_endpoint,
           region: credentials.region,
-          secretAccessKey: credentials.secret_access_key,
-          signatureVersion: 'v4',
-          s3ForcePathStyle: true,
+          forcePathStyle: true,
+          logger: errorLogger,
+          ...(process.env.S3_ENDPOINT && { endpoint: process.env.S3_ENDPOINT }),
+          credentials: {
+            accessKeyId: credentials.access_key_id,
+            secretAccessKey: credentials.secret_access_key,
+          },
         },
       };
     }
@@ -28,50 +40,52 @@ const generateS3Config = () => {
     S3_BUCKET,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
-    S3_ENDPOINT,
   } = process.env;
 
   if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
     return {
-      bucketName: S3_BUCKET,
+      s3Bucket: S3_BUCKET,
       s3Config: {
-        accessKeyId: AWS_ACCESS_KEY_ID,
-        endpoint: S3_ENDPOINT,
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
-        signatureVersion: 'v4',
-        s3ForcePathStyle: true,
+        region: process.env.AWS_REGION || DEFAULT_REGION,
+        forcePathStyle: true,
+        logger: errorLogger,
+        ...(process.env.S3_ENDPOINT && { endpoint: process.env.S3_ENDPOINT }),
+        credentials: {
+          accessKeyId: AWS_ACCESS_KEY_ID,
+          secretAccessKey: AWS_SECRET_ACCESS_KEY,
+        },
       },
     };
   }
 
   // Return null if S3 is not configured
   return {
-    bucketName: null,
-    s3Config: null,
+    s3Bucket: null,
+    s3Config: { region: DEFAULT_REGION },
   };
 };
 
-const { bucketName, s3Config } = generateS3Config();
-const s3 = s3Config ? new S3(s3Config) : null;
+const { s3Bucket, s3Config } = generateS3Config();
+const s3Client = s3Config ? new S3Client(s3Config) : null;
 
-const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
-  if (!s3Client || !bucket) {
-    throw new Error('S3 is not configured.');
+const deleteFileFromS3 = async (key, bucket = s3Bucket, client = s3Client) => {
+  if (!client || !bucket) {
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const params = {
     Bucket: bucket,
     Key: key,
   };
-  return s3Client.deleteObject(params).promise();
+  return client.send(new DeleteObjectCommand(params));
 };
 
-const deleteFileFromS3Job = async (job, s3Client = s3) => {
+const deleteFileFromS3Job = async (job, client = s3Client) => {
   const {
     fileId, fileKey, bucket,
   } = job.data;
   let res;
   try {
-    res = await deleteFileFromS3(fileKey, bucket, s3Client);
+    res = await deleteFileFromS3(fileKey, bucket, client);
     return ({ status: 200, data: { fileId, fileKey, res } });
   } catch (error) {
     auditLogger.error(`S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`);
@@ -79,9 +93,9 @@ const deleteFileFromS3Job = async (job, s3Client = s3) => {
   }
 };
 
-const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
-  if (!s3Client || !bucket) {
-    throw new Error('S3 is not configured.');
+const verifyVersioning = async (bucket = s3Bucket, client = s3Client) => {
+  if (!client || !bucket) {
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const versioningConfiguration = {
     MFADelete: 'Disabled',
@@ -90,69 +104,93 @@ const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   let params = {
     Bucket: bucket,
   };
-  const data = await s3Client.getBucketVersioning(params);
+
+  const data = await client.send(new GetBucketVersioningCommand(params));
   if (!(data) || data.Status !== 'Enabled') {
     params = {
       Bucket: bucket,
       VersioningConfiguration: versioningConfiguration,
     };
-    return s3Client.putBucketVersioning(params);
+    return client.send(new PutBucketVersioningCommand(params));
   }
   return data;
 };
 
-const downloadFile = (key, s3Client = s3, Bucket = bucketName) => {
-  if (!s3Client || !Bucket) {
-    throw new Error('S3 is not configured.');
+const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
+  if (!client || !bucket) {
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const params = {
-    Bucket,
+    Bucket: bucket,
     Key: key,
   };
-  return s3Client.getObject(params).promise();
+  const res = await client.send(new GetObjectCommand(params));
+  if (res.Body) {
+    const byteChunks = await res.Body.transformToByteArray();
+    res.Body = Buffer.from(byteChunks);
+  }
+  return res;
 };
 
-const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
+const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires = 360) => {
   const url = { url: null, error: null };
-  if (!s3Client || !Bucket) {
-    url.error = new Error('S3 is not configured.');
+  if (!client || !bucket) {
+    url.error = new Error(`S3 not configured (${client}, ${bucket})`);
     return url;
   }
+
+  const creds = {
+    accessKeyId: s3Config.credentials.accessKeyId,
+    secretAccessKey: s3Config.credentials.secretAccessKey,
+  };
+
+  const host = process.env.S3_ENDPOINT
+    ? new URL(process.env.S3_ENDPOINT).host
+    : `${s3Bucket}.s3.${s3Config.region}.amazonaws.com`;
+
+  const opts = {
+    service: 's3',
+    host,
+    path: `/${key}`,
+    region: s3Config.region,
+    expires,
+    signQuery: true,
+  };
+
   try {
-    const params = {
-      Bucket,
-      Key,
-      Expires,
-    };
-    url.url = s3Client.getSignedUrl('getObject', params);
+    const result = sign(opts, creds);
+    url.url = `https://${result.host}${result.path}`;
+    auditLogger.info(`Generated signed download URL for key ${key}`);
   } catch (error) {
+    auditLogger.error(`Failed to generate: ${error.message}`);
     url.error = error;
   }
   return url;
 };
 
-const uploadFile = async (buffer, name, type, s3Client = s3, Bucket = bucketName) => {
-  if (!s3Client || !Bucket) {
-    throw new Error('S3 is not configured.');
+const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Bucket) => {
+  if (!client || !bucket) {
+    throw new Error(`S3 not configured (${client}, ${bucket})`);
   }
   const params = {
     Body: buffer,
-    Bucket,
+    Bucket: bucket,
     ContentType: type.mime,
     Key: name,
   };
-  // Only check for versioning if not using Minio
+  // Only check for versioning if not running locally
   if (process.env.NODE_ENV === 'production') {
-    await verifyVersioning(Bucket, s3Client);
+    await verifyVersioning(bucket, client);
   }
-
-  return s3Client.upload(params).promise();
+  const response = await new Upload({ client, params }).done();
+  auditLogger.info(`File uploaded to S3: ${response.Key}`);
+  return response;
 };
 
 export {
-  s3,
+  s3Client,
   downloadFile,
-  getPresignedURL,
+  getSignedDownloadUrl,
   uploadFile,
   generateS3Config,
   verifyVersioning,

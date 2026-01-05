@@ -308,3 +308,14 @@ export const OBJECTIVE_STATUS = {
   SUSPENDED: 'Suspended',
   COMPLETE: 'Complete',
 };
+
+export const TRAINING_EVENT_ORGANIZER = {
+  REGIONAL_PD_WITH_NATIONAL_CENTERS: 'Regional PD Event (with National Centers)',
+  REGIONAL_TTA_NO_NATIONAL_CENTERS: 'Regional TTA Hosted Event (no National Centers)',
+};
+
+export const EVENT_PARTNERSHIP = {
+  REGIONAL_HSA: 'regional_hsa',
+  STATE_HSA: 'state_hsa',
+  NO: 'no',
+};

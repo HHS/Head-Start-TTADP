@@ -33,10 +33,11 @@ export default function Monitoring({
   match,
 }) {
   const { params: { currentPage, recipientId, regionId } } = match;
-  const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
   const history = useHistory();
   const [byReview, setByReview] = useState([]);
   const [byCitation, setByCitation] = useState([]);
+  const [announcement, setAnnouncement] = useState('');
 
   const lookup = useMemo(() => ({
     [MONITORING_PAGES.REVIEW]: {
@@ -57,12 +58,18 @@ export default function Monitoring({
     }
   }, [currentPage, history, recipientId, regionId]);
 
+  useEffect(() => {
+    setAppLoadingText('Loading monitoring data');
+  }, [setAppLoadingText]);
+
   useDeepCompareEffect(() => {
     async function fetchMonitoringData(slug) {
       setIsAppLoading(true);
+      setAnnouncement('Loading monitoring data');
       try {
         const data = await lookup[slug].fetcher(recipientId, regionId);
         lookup[slug].setter(data);
+        setAnnouncement(`Monitoring data by ${currentPage} loaded.`);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching monitoring data:', error);
@@ -79,12 +86,13 @@ export default function Monitoring({
 
   return (
     <Container className="maxw-full position-relative" paddingX={0} paddingY={0} positionRelative>
+      <div className="usa-sr-only" role="status">{announcement}</div>
       <div className="padding-x-3 position-relative">
         <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
           <h2>TTA provided against monitoring citations</h2>
         </div>
+        <Tabs tabs={LINKS} ariaLabel="Monitoring navigation" prefix={linkPrefix} />
       </div>
-      <Tabs tabs={LINKS} ariaLabel="Monitoring navigation" prefix={linkPrefix} />
       <div className="padding-x-3 padding-y-2">
         {currentPage === MONITORING_PAGES.REVIEW && (
           <ReviewCards data={byReview} regionId={Number(regionId)} />

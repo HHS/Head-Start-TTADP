@@ -41,8 +41,8 @@ import ModalWithCancel from '../../../components/ModalWithCancel';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import Req from '../../../components/Req';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
+import FormItemWithDrawerTriggerLabel from '../../../components/FormItemWithDrawerTriggerLabel';
 
 export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
   const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
@@ -80,7 +80,6 @@ const ActivitySummary = ({
   recipients,
   collaborators,
   setShouldAutoSave,
-  formData,
 }) => {
   const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
 
@@ -159,7 +158,7 @@ const ActivitySummary = ({
         ? await getGoalTemplates(newRecipientGrantIds)
         : [];
 
-      citations = newRecipientGrantIds.length > 0 ? await fetchCitationsByGrant(formData.regionId,
+      citations = newRecipientGrantIds.length > 0 ? await fetchCitationsByGrant(getValues('regionId'),
         newRecipientGrantIds, startDate)
         : [];
     } catch (err) {
@@ -345,24 +344,11 @@ const ActivitySummary = ({
           >
             <ContentFromFeedByTag tagName="ttahub-tta-request-option" className="ttahub-drawer--objective-topics-guidance" contentSelector="table" />
           </Drawer>
-          <FormItem
-            className="margin-0"
-            customLabel={(
-              <>
-                <Label className="margin-bottom-0" htmlFor="activityReason" />
-                Why was this activity requested?
-                {' '}
-                <Req />
-                <button
-                  type="button"
-                  className="usa-button usa-button--unstyled margin-left-1 activity-summary-button-no-top-margin"
-                  ref={activityReasonRef}
-                >
-                  Get help choosing an option
-                </button>
-              </>
-          )}
+          <FormItemWithDrawerTriggerLabel
+            label="Why was this activity requested?"
             name="activityReason"
+            drawerTriggerRef={activityReasonRef}
+            drawerTriggerLabel="Get help choosing an option"
             required
           >
             <Controller
@@ -410,7 +396,8 @@ const ActivitySummary = ({
               name="activityReason"
               defaultValue={null}
             />
-          </FormItem>
+          </FormItemWithDrawerTriggerLabel>
+
         </div>
         <div className="margin-top-2">
           <FormItem
@@ -617,11 +604,6 @@ ActivitySummary.propTypes = {
     ),
   }).isRequired,
   setShouldAutoSave: PropTypes.func.isRequired,
-  formData: PropTypes.shape({
-    calculatedStatus: PropTypes.string,
-    pageState: PropTypes.shape({}),
-    regionId: PropTypes.number.isRequired,
-  }).isRequired,
 };
 
 const getNumberOfParticipants = (deliveryMethod) => {
@@ -792,7 +774,7 @@ export default {
   review: false,
   render: (
     additionalData,
-    formData,
+    _formData,
     _reportId,
     isAppLoading,
     onContinue,
@@ -812,7 +794,6 @@ export default {
           collaborators={collaborators}
           groups={groups}
           setShouldAutoSave={setShouldAutoSave}
-          formData={formData}
         />
         <Alert />
         <NavigatorButtons

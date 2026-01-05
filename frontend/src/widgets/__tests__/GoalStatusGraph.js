@@ -5,16 +5,15 @@ import {
   screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { GoalStatusChart } from '../GoalStatusGraph';
 
 describe('GoalStatusChart', () => {
   const testData = {
     total: 300,
-    [GOAL_STATUS.NOT_STARTED]: 150,
-    [GOAL_STATUS.IN_PROGRESS]: 25,
-    [GOAL_STATUS.CLOSED]: 100,
-    [GOAL_STATUS.SUSPENDED]: 25,
+    'Not started': 150,
+    'In progress': 25,
+    Closed: 100,
+    Suspended: 25,
   };
 
   const renderGoalStatusChart = (data) => render(<GoalStatusChart data={data} loading={false} />);
@@ -23,10 +22,10 @@ describe('GoalStatusChart', () => {
     renderGoalStatusChart(testData);
     expect(await screen.findByText('300 goals')).toBeVisible();
 
-    await screen.findByText(GOAL_STATUS.NOT_STARTED, { selector: 'span' });
-    await screen.findByText(GOAL_STATUS.IN_PROGRESS, { selector: 'span' });
-    await screen.findByText(GOAL_STATUS.SUSPENDED, { selector: 'span' });
-    await screen.findByText(GOAL_STATUS.CLOSED, { selector: 'span' });
+    await screen.findByText('Not started', { selector: 'span' });
+    await screen.findByText('In progress', { selector: 'span' });
+    await screen.findByText('Suspended', { selector: 'span' });
+    await screen.findByText('Closed', { selector: 'span' });
 
     const twentyFives = await screen.findAllByText(/25\/300/i);
     expect(twentyFives.length).toBe(2);
@@ -34,7 +33,7 @@ describe('GoalStatusChart', () => {
     await screen.findByText(/150\/300/i);
 
     const bars = document.querySelectorAll('.ttahub-goal-bar');
-    expect(bars.length).toBe(5);
+    expect(bars.length).toBe(4);
   });
 
   it('switches to accessible data', async () => {

@@ -1,43 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES, LANGUAGES } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
-
 import { useFormContext } from 'react-hook-form';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   Button,
+  Checkbox,
   Radio,
 } from '@trussworks/react-uswds';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
 import {
   participantsFields,
-  pageComplete,
 } from '../constants';
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
 import FormItem from '../../../components/FormItem';
 import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 
 const placeholderText = '- Select -';
-
-const ROLE_OPTIONS = [
-  'Admin. Assistant',
-  'COR',
-  'Early Childhood Manager',
-  'Early Childhood Specialist',
-  'Family Engagement Specialist',
-  'Grantee Specialist',
-  'Grantee Specialist Manager',
-  'Grants Management Specialist',
-  'Health Specialist',
-  'Program Specialist',
-  'Region Program Manager',
-  'Supervisory Program Specialist',
-  'System Specialist',
-  'TTAC',
-];
+const TTA_TYPE_LABEL_MAP = {
+  training: 'Training',
+  'technical-assistance': 'Technical Assistance',
+};
 
 const Participants = ({ formData }) => {
   const {
@@ -48,51 +34,19 @@ const Participants = ({ formData }) => {
   } = useFormContext();
 
   const deliveryMethod = watch('deliveryMethod');
-  const isIstVisit = watch('isIstVisit') === 'yes';
-  const isNotIstVisit = watch('isIstVisit') === 'no';
 
   const regionId = watch('regionId');
   const eventRegionId = formData.event ? formData.event.regionId : null;
+  const states = formData.additionalStates || [];
 
-  // handle existing sessions
-  useDeepCompareEffect(() => {
-    const {
-      istSelectionComplete,
-      recipients,
-      participants,
-      numberOfParticipantsInPerson,
-      numberOfParticipantsVirtually,
-      numberOfParticipants,
-    } = formData;
-
-    const formStarted = (
-      recipients && recipients.length
-    ) || (
-      participants && participants.length
-    ) || numberOfParticipantsInPerson
-    || numberOfParticipantsVirtually
-    || numberOfParticipants;
-
-    if (!istSelectionComplete && formStarted) {
-      setValue('isIstVisit', 'no');
+  useEffect(() => {
+    if (deliveryMethod === 'hybrid') {
+      setValue('numberOfParticipants', '');
+    } else {
+      setValue('numberOfParticipantsVirtually', '');
+      setValue('numberOfParticipantsInPerson', '');
     }
-
-    if (!istSelectionComplete) {
-      setValue('istSelectionComplete', true);
-    }
-  }, [formData, setValue]);
-
-  // clear values between toggles
-  useDeepCompareEffect(() => {
-    if (isIstVisit) {
-      setValue('recipients', []);
-      setValue('participants', []);
-    }
-
-    if (isNotIstVisit) {
-      setValue('regionalOfficeTta', []);
-    }
-  }, [isIstVisit, isNotIstVisit, setValue]);
+  }, [deliveryMethod, setValue]);
 
   return (
     <>
@@ -100,75 +54,57 @@ const Participants = ({ formData }) => {
         <title>Session Participants</title>
       </Helmet>
       <IndicatesRequiredField />
-      <FormItem
-        label="Is this an IST visit?"
-        name="isIstVisit"
-        fieldSetWrapper
-      >
-        <Radio
-          id="is-ist-visit-yes"
-          name="isIstVisit"
-          label="Yes"
-          value="yes"
-          className="smart-hub--report-checkbox"
-          inputRef={register({ required: 'Select one' })}
-        />
-
-        <Radio
-          id="is-ist-visit-no"
-          name="isIstVisit"
-          label="No"
-          value="no"
-          className="smart-hub--report-checkbox"
-          inputRef={register({ required: 'Select one' })}
-        />
-        <input type="hidden" name="istSelectionComplete" ref={register} />
-      </FormItem>
-
-      {isNotIstVisit && (
-        <>
-          <RecipientsWithGroups
-            regionId={regionId || eventRegionId}
-          />
-          <div className="margin-top-2">
-            <FormItem
-              label="Recipient participants"
-              name="participants"
-            >
-              <MultiSelect
-                name="participants"
-                control={control}
-                placeholderText={placeholderText}
-                options={
-              recipientParticipants
-                .map((participant) => ({ value: participant, label: participant }))
-                }
-                required="Select at least one participant"
-              />
-            </FormItem>
-          </div>
-        </>
-      )}
-
-      {isIstVisit && (
+      <RecipientsWithGroups
+        states={states}
+        showTooltip="You can use a group to speed up selection, then remove recipients who did not attend."
+        regionId={regionId || eventRegionId}
+      />
       <div className="margin-top-2">
         <FormItem
-          label="Regional Office/TTA "
-          name="regionalOfficeTta"
+          label="Recipient participants"
+          name="participants"
         >
           <MultiSelect
-            name="regionalOfficeTta"
+            name="participants"
             control={control}
             placeholderText={placeholderText}
             options={
-              ROLE_OPTIONS
-                .map((role) => ({ value: role, label: role }))
-            }
-            required="Select at least one"
+              recipientParticipants
+                .map((participant) => ({ value: participant, label: participant }))
+                }
+            required="Select at least one participant"
           />
         </FormItem>
       </div>
-      )}
+
+      <div className="margin-top-2">
+        <FormItem
+          label="What type of TTA was provided?"
+          name="ttaType"
+          fieldSetWrapper
+        >
+          <Checkbox
+            id="training"
+            label="Training"
+            value="training"
+            name="ttaType"
+            className="smart-hub--report-checkbox"
+            inputRef={register({
+              required: 'Select at least one',
+            })}
+          />
+          <Checkbox
+            id="technical-assistance"
+            label="Technical Assistance"
+            value="technical-assistance"
+            name="ttaType"
+            className="smart-hub--report-checkbox"
+            inputRef={register({
+              required: 'Select at least one',
+            })}
+          />
+        </FormItem>
+      </div>
 
       <div className="margin-top-2">
         <FormItem
@@ -237,6 +173,7 @@ Participants.propTypes = {
     recipients: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
     })),
+    additionalStates: PropTypes.arrayOf(PropTypes.string),
     regionId: PropTypes.number,
     istSelectionComplete: PropTypes.bool,
     event: PropTypes.shape({
@@ -262,19 +199,73 @@ const fields = Object.keys(participantsFields);
 const path = 'participants';
 const position = 2;
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
+const ReviewSection = () => {
+  const { getValues } = useFormContext();
+
+  const {
+    recipients,
+    participants,
+    deliveryMethod,
+    numberOfParticipants,
+    numberOfParticipantsInPerson,
+    numberOfParticipantsVirtually,
+    language,
+    ttaType,
+  } = getValues();
+
+  const tta = ttaType.map((t) => TTA_TYPE_LABEL_MAP[t] || '').join(', ');
+
+  const sections = [
+    {
+      anchor: 'participants',
+      items: [
+        { label: 'Recipients', name: 'recipients', customValue: { recipients: recipients?.map((r) => r.label).join(', ') || '' } },
+        { label: 'Recipient participants', name: 'participants', customValue: { participants } },
+        { label: 'TTA type', name: 'ttaType', customValue: { ttaType: tta } },
+        { label: 'Delivery method', name: 'deliveryMethod', customValue: { deliveryMethod } },
+        ...(deliveryMethod === 'hybrid' ? [
+          { label: 'Number of participants attending in person', name: 'numberOfParticipantsInPerson', customValue: { numberOfParticipantsInPerson } },
+          { label: 'Number of participants attending virtually', name: 'numberOfParticipantsVirtually', customValue: { numberOfParticipantsVirtually } },
+        ] : [
+          { label: 'Number of participants', name: 'numberOfParticipants', customValue: { numberOfParticipants } },
+        ]),
+        { label: 'Language used', name: 'language', customValue: { language } },
+      ],
+    },
+  ];
+
+  return <ReviewPage sections={sections} path={path} isCustomValue />;
+};
+
 export const isPageComplete = (hookForm) => {
-  const { isIstVisit } = hookForm.getValues();
+  const values = hookForm.getValues();
+  const { deliveryMethod } = values;
 
-  if (isIstVisit === 'yes') {
-    return pageComplete(hookForm, [...fields, 'regionalOfficeTta'], true);
+  // Base fields that are always required
+  const baseFields = ['deliveryMethod', 'language', 'ttaType', 'recipients', 'participants'];
+  const baseComplete = baseFields.every((field) => {
+    const val = values[field];
+    if (Array.isArray(val)) {
+      return val.length > 0;
+    }
+    return !!(val);
+  });
+
+  if (!baseComplete) {
+    return false;
   }
 
-  if (isIstVisit === 'no') {
-    return pageComplete(hookForm, [...fields, 'recipients', 'participants']);
+  // Conditional validation based on delivery method
+  if (deliveryMethod === 'hybrid') {
+    // Both hybrid fields must be present and valid
+    const inPerson = values.numberOfParticipantsInPerson;
+    const virtually = values.numberOfParticipantsVirtually;
+    return !!(inPerson) && !!(virtually);
   }
 
-  return pageComplete(hookForm, fields);
+  // For virtual or in-person, check numberOfParticipants
+  const participants = values.numberOfParticipants;
+  return !!(participants);
 };
 
 export default {

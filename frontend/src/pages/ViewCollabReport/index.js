@@ -10,7 +10,7 @@ import { NOOP } from '../../Constants';
 
 export default function ViewCollabReport({ match }) {
   const { collabReportId } = match.params;
-  const displayId = collabReportId || '';
+  const displayId = collabReportId;
 
   const { data: report, error, statusCode } = useFetch(
     null,

@@ -9,7 +9,9 @@ export const useDisplayGroups = (query) => {
   }
 
   return [query].flat().map((q) => {
-    const group = myGroups.find((g) => g.id === q);
+    // Group IDs from API are numbers, but URL params are strings
+    // Convert both to strings for comparison
+    const group = myGroups.find((g) => String(g.id) === String(q));
     return group ? group.name : '';
   }).join(', ');
 };

@@ -48,6 +48,22 @@ export default function Objectives({
 
   const onAddNew = () => {
     append({ ...NEW_OBJECTIVE(isMonitoring) });
+
+    // Focus the newest objective's title after adding
+    setTimeout(() => {
+      const allValues = getValues();
+      const fieldArrayGoals = allValues.goalForEditing || [];
+
+      if (!fieldArrayGoals.objectives) return;
+
+      const newIndex = fieldArrayGoals.objectives.length - 1;
+      const newObjectiveTitleField = document.getElementById(
+        `goalForEditing.objectives[${newIndex}].title`,
+      );
+      if (newObjectiveTitleField) {
+        newObjectiveTitleField.focus();
+      }
+    }, 0);
   };
 
   const setUpdatedUsedObjectiveIds = () => {
@@ -161,7 +177,7 @@ export default function Objectives({
             />
           );
         })}
-      {firstObjective || (fields.length === 1 && getValues(`${fieldArrayName}[0].title`) === '') ? null : <PlusButton text="Add new objective" onClick={onAddNew} /> }
+      {firstObjective || (fields.length === 1 && getValues(`${fieldArrayName}[0].title`) === '') ? null : <PlusButton className="margin-bottom-2" text="Add new objective" onClick={onAddNew} /> }
     </>
   );
 }

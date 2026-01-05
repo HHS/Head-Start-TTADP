@@ -1,105 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { ALL_STATES_FLATTENED, ALL_STATES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import UserContext from '../UserContext';
 import { getStateCodes } from '../fetchers/users';
 import { allRegionsUserHasActivityReportPermissionTo } from '../permissions';
 import MultiSelect from './MultiSelect';
-
-// List of states, by region
-// see: https://www.acf.hhs.gov/oro/regional-offices
-const ALL_STATES = [
-  // Region 1 States
-  [
-    { label: 'Massachusetts (MA)', value: 'MA' },
-    { label: 'Maine (ME)', value: 'ME' },
-    { label: 'Connecticut (CT)', value: 'CT' },
-    { label: 'Rhode Island (RI)', value: 'RI' },
-    { label: 'Vermont (VT)', value: 'VT' },
-    { label: 'New Hampshire (NH)', value: 'NH' },
-  ],
-  // Region 2 States
-  [
-    { label: 'New York (NY)', value: 'NY' },
-    { label: 'New Jersey (NJ)', value: 'NJ' },
-    { label: 'Puerto Rico (PR)', value: 'PR' },
-  ],
-  // Region 3 States
-  [
-    { label: 'Pennsylvania (PA)', value: 'PA' },
-    { label: 'West Virginia (WV)', value: 'WV' },
-    { label: 'Maryland (MD)', value: 'MD' },
-    { label: 'Delaware (DE)', value: 'DE' },
-    { label: 'Virginia (VA)', value: 'VA' },
-    { label: 'District of Columbia (DC)', value: 'DC' },
-  ],
-  // Region 4 States
-  [
-    { label: 'Kentucky (KY)', value: 'KY' },
-    { label: 'Tennessee (TN)', value: 'TN' },
-    { label: 'North Carolina (NC)', value: 'NC' },
-    { label: 'Alabama (AL)', value: 'AL' },
-    { label: 'Mississippi (MS)', value: 'MS' },
-    { label: 'Georgia (GA)', value: 'GA' },
-    { label: 'South Carolina (SC)', value: 'SC' },
-    { label: 'Florida (FL)', value: 'FL' },
-  ],
-  // Region 5 States
-  [
-    { label: 'Minnesota (MN)', value: 'MN' },
-    { label: 'Wisconsin (WI)', value: 'WI' },
-    { label: 'Illinois (IL)', value: 'IL' },
-    { label: 'Indiana (IN)', value: 'IN' },
-    { label: 'Michigan (MI)', value: 'MI' },
-    { label: 'Ohio (OH)', value: 'OH' },
-  ],
-  // Region 6 States
-  [
-    { label: 'New Mexico (NM)', value: 'NM' },
-    { label: 'Oklahoma (OK)', value: 'OK' },
-    { label: 'Arkansas (AR)', value: 'AR' },
-    { label: 'Texas (TX)', value: 'TX' },
-    { label: 'Louisiana (LA)', value: 'LA' },
-  ],
-  // Region 7 States
-  [
-    { label: 'Nebraska (NE)', value: 'NE' },
-    { label: 'Iowa (IA)', value: 'IA' },
-    { label: 'Kansas (KS)', value: 'KS' },
-    { label: 'Missouri (MO)', value: 'MO' },
-  ],
-  // Region 8 States
-  [
-    { label: 'Montana (MT)', value: 'MT' },
-    { label: 'North Dakota (ND)', value: 'ND' },
-    { label: 'South Dakota (SD)', value: 'SD' },
-    { label: 'Wyoming (WY)', value: 'WY' },
-    { label: 'Utah (UT)', value: 'UT' },
-    { label: 'Colorado (CO)', value: 'CO' },
-  ],
-  // Region 9 States
-  [
-    { label: 'Nevada (NV)', value: 'NV' },
-    { label: 'California (CA)', value: 'CA' },
-    { label: 'Arizona (AZ)', value: 'AZ' },
-    { label: 'Hawaii (HI)', value: 'HI' },
-    { label: 'Guam (GU)', value: 'GU' },
-    { label: 'American Samoa (AS)', value: 'AS' },
-    { label: 'Virgin Islands (VI)', value: 'VI' },
-    { label: 'Northern Mariana Islands (MP)', value: 'MP' },
-    { label: 'Federated States of Micronesia (FM)', value: 'FM' },
-    { label: 'Marshall Islands (MH)', value: 'MH' },
-    { label: 'Republic of Palau (PW)', value: 'PW' },
-  ],
-  // 'Region 10 States
-  [
-    { label: 'Washington (WA)', value: 'WA' },
-    { label: 'Oregon (OR)', value: 'OR' },
-    { label: 'Idaho (ID)', value: 'ID' },
-    { label: 'Alaska (AK)', value: 'AK' },
-  ],
-];
-
-const ALL_STATES_FLATTENED = ALL_STATES.flat();
 
 export default function StateMultiSelect({
   name, control,

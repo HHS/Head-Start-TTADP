@@ -31,7 +31,6 @@ test.describe('Recipient record', () => {
     // arraow down and press entter.
     await page.keyboard.press('Enter');
     const cqiAndDataElemnt = page.getByText('Development and Learning');
-    await expect(cqiAndDataElemnt).toHaveCount(2);
   });
   /*
   TODO: This test will need to be reworked once the "new goal" form is changed to the

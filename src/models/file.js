@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { getPresignedURL } = require('../lib/s3');
+const { getSignedDownloadUrl } = require('../lib/s3');
 const { afterDestroy } = require('./hooks/file');
 
 export default (sequelize, DataTypes) => {
@@ -78,8 +78,7 @@ export default (sequelize, DataTypes) => {
     url: {
       type: DataTypes.VIRTUAL,
       get() {
-        const url = getPresignedURL(this.key);
-        return url;
+        return getSignedDownloadUrl(this.key);
       },
     },
   }, {

@@ -4,11 +4,14 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "../build/server",
+    "skipLibCheck": true,
+    "incremental": true,
+    "resolveJsonModule": true, 
+    "noErrorTruncation": true,
     "esModuleInterop": true,
     "declaration": false,
     "allowJs": true,
     "removeComments": true,
-    "types": ["jest"]
   },
   "include": [
     "./**/*.js",

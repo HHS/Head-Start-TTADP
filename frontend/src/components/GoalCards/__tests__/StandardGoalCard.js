@@ -483,7 +483,10 @@ describe('StandardGoalCard', () => {
     history.push = jest.fn();
     userEvent.click(deleteButton);
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-    expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/rttapa', { message: 'Goal deleted successfully' });
+    expect(history.push).toHaveBeenCalledWith(
+      '/recipient-tta-records/1/region/1/rttapa',
+      { message: 'Goal deleted successfully', refreshRecipient: true },
+    );
     expect(document.querySelector('.smart-hub-border-base-error')).toBeNull();
   });
 
@@ -808,6 +811,60 @@ describe('StandardGoalCard', () => {
     expect(viewButton).toBeInTheDocument();
   });
 
+  it('handles invalid status change', async () => {
+    const g = {
+      ...goal,
+      status: GOAL_STATUS.IN_PROGRESS,
+      objectives: [
+        {
+          id: 1,
+          ids: [1],
+          endDate: '2022-01-01',
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+      ],
+    };
+
+    renderStandardGoalCard({}, g);
+    const changeStatusBtn = await screen.findByRole('button', { name: /Change status for goal 1/i });
+
+    act(() => {
+      userEvent.click(changeStatusBtn);
+    });
+
+    // const url = '/api/goals/changeStatus';
+    // fetchMock.put(url, {
+    //   ...g,
+    //   status: GOAL_STATUS.CLOSED,
+    // });
+
+    const closed = await screen.findByRole('button', { name: /closed/i });
+    act(() => {
+      userEvent.click(closed);
+    });
+
+    const regionalOfficeRequest = await screen.findByText(/regional office request/i, { selector: '[for=suspending-reason-3-modal_1]' });
+    const submit = await screen.findByRole('button', { name: /Change goal status/i });
+
+    act(() => {
+      userEvent.click(regionalOfficeRequest);
+    });
+
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    expect(await screen.findByText(/The goal status cannot be changed until all In progress objectives are complete. Update the objective status./i)).toBeVisible();
+  });
+
   it('shows objectives as suspended when goal status is suspended', async () => {
     const suspendedGoal = {
       ...goal,
@@ -880,5 +937,346 @@ describe('StandardGoalCard', () => {
     const suspendedObjectives = (await screen.findAllByText('Suspended')).filter((v) => v.getAttribute('aria-label').includes('Change status for objective'));
 
     expect(suspendedObjectives.length).toBe(2);
+  });
+
+  describe('Goal creator deletion permissions', () => {
+    it('creator can delete NOT_STARTED goal with write permission', async () => {
+      const user = {
+        id: 123,
+        name: 'test@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const goalWithCreator = {
+        ...goal,
+        status: GOAL_STATUS.NOT_STARTED,
+        onAR: false,
+        statusChanges: [
+          {
+            userId: 123,
+            userName: 'test@test.com',
+            context: 'Creation',
+            oldStatus: null,
+            newStatus: GOAL_STATUS.NOT_STARTED,
+          },
+        ],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, goalWithCreator, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = await screen.findByText(/Delete/i);
+      expect(deleteButton).toBeInTheDocument();
+    });
+
+    it('creator cannot delete without write permission', async () => {
+      const user = {
+        id: 123,
+        name: 'test@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const goalWithCreator = {
+        ...goal,
+        status: GOAL_STATUS.NOT_STARTED,
+        onAR: false,
+        statusChanges: [
+          {
+            userId: 123,
+            userName: 'test@test.com',
+            context: 'Creation',
+            oldStatus: null,
+            newStatus: GOAL_STATUS.NOT_STARTED,
+          },
+        ],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, goalWithCreator, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = screen.queryByText(/Delete/i);
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('creator cannot delete DRAFT status goal', async () => {
+      const user = {
+        id: 123,
+        name: 'test@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const goalWithCreator = {
+        ...goal,
+        status: GOAL_STATUS.DRAFT,
+        onAR: false,
+        statusChanges: [
+          {
+            userId: 123,
+            userName: 'test@test.com',
+            context: 'Creation',
+            oldStatus: null,
+            newStatus: GOAL_STATUS.DRAFT,
+          },
+        ],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, goalWithCreator, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = screen.queryByText(/Delete/i);
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('creator cannot delete IN_PROGRESS goal', async () => {
+      const user = {
+        id: 123,
+        name: 'test@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const goalWithCreator = {
+        ...goal,
+        status: GOAL_STATUS.IN_PROGRESS,
+        onAR: false,
+        objectives: [
+          {
+            ...goal.objectives[0],
+            status: OBJECTIVE_STATUS.COMPLETE,
+          },
+        ],
+        statusChanges: [
+          {
+            userId: 123,
+            userName: 'test@test.com',
+            context: 'Creation',
+            oldStatus: null,
+            newStatus: GOAL_STATUS.NOT_STARTED,
+          },
+        ],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, goalWithCreator, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = screen.queryByText(/Delete/i);
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('non-creator cannot delete NOT_STARTED goal without approver permission', async () => {
+      const user = {
+        id: 456,
+        name: 'different@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const goalWithDifferentCreator = {
+        ...goal,
+        status: GOAL_STATUS.NOT_STARTED,
+        onAR: false,
+        statusChanges: [
+          {
+            userId: 123,
+            userName: 'creator@test.com',
+            context: 'Creation',
+            oldStatus: null,
+            newStatus: GOAL_STATUS.NOT_STARTED,
+          },
+        ],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, goalWithDifferentCreator, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = screen.queryByText(/Delete/i);
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('creator cannot delete monitoring goal', async () => {
+      const user = {
+        id: 123,
+        name: 'test@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const monitoringGoalWithCreator = {
+        ...goal,
+        standard: 'Monitoring',
+        status: GOAL_STATUS.NOT_STARTED,
+        onAR: false,
+        statusChanges: [
+          {
+            userId: 123,
+            userName: 'test@test.com',
+            context: 'Creation',
+            oldStatus: null,
+            newStatus: GOAL_STATUS.NOT_STARTED,
+          },
+        ],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, monitoringGoalWithCreator, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = screen.queryByText(/Delete/i);
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('handles edge case: statusChanges is empty', async () => {
+      const user = {
+        id: 123,
+        name: 'test@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const goalWithEmptyStatusChanges = {
+        ...goal,
+        status: GOAL_STATUS.NOT_STARTED,
+        onAR: false,
+        statusChanges: [],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, goalWithEmptyStatusChanges, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = screen.queryByText(/Delete/i);
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('handles edge case: No Creation context in statusChanges', async () => {
+      const user = {
+        id: 123,
+        name: 'test@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const goalWithoutCreationContext = {
+        ...goal,
+        status: GOAL_STATUS.NOT_STARTED,
+        onAR: false,
+        statusChanges: [
+          {
+            userId: 123,
+            userName: 'test@test.com',
+            context: 'StatusUpdate',
+            oldStatus: GOAL_STATUS.DRAFT,
+            newStatus: GOAL_STATUS.NOT_STARTED,
+          },
+        ],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, goalWithoutCreationContext, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = screen.queryByText(/Delete/i);
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('handles edge case: Creation statusChange has null userId', async () => {
+      const user = {
+        id: 123,
+        name: 'test@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const goalWithNullCreatorId = {
+        ...goal,
+        status: GOAL_STATUS.NOT_STARTED,
+        onAR: false,
+        statusChanges: [
+          {
+            userId: null,
+            userName: 'System',
+            context: 'Creation',
+            oldStatus: null,
+            newStatus: GOAL_STATUS.NOT_STARTED,
+          },
+        ],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, goalWithNullCreatorId, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = screen.queryByText(/Delete/i);
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('creator can delete with APPROVE_ACTIVITY_REPORTS permission', async () => {
+      const user = {
+        id: 123,
+        name: 'test@test.com',
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      const goalWithCreator = {
+        ...goal,
+        status: GOAL_STATUS.NOT_STARTED,
+        onAR: false,
+        statusChanges: [
+          {
+            userId: 123,
+            userName: 'test@test.com',
+            context: 'Creation',
+            oldStatus: null,
+            newStatus: GOAL_STATUS.NOT_STARTED,
+          },
+        ],
+      };
+
+      renderStandardGoalCard(DEFAULT_PROPS, goalWithCreator, user);
+      userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      const deleteButton = await screen.findByText(/Delete/i);
+      expect(deleteButton).toBeInTheDocument();
+    });
   });
 });

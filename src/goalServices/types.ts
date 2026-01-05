@@ -100,6 +100,8 @@ interface IActivityReportObjective {
   ttaProvided: string;
   closeSuspendReason: string;
   closeSuspendContext: string;
+  useIpdCourses?: boolean;
+  useFiles?: boolean;
   activityReportObjectiveTopics: {
     topic: ITopic;
   }[];
@@ -187,6 +189,8 @@ interface IObjective {
   onAnyReport?: boolean;
   closeSuspendReason?: string;
   closeSuspendContext?: string;
+  useIpdCourses?: boolean;
+  useFiles?: boolean;
   topics: ITopic[];
   resources: IResource[];
   files: IFile[];

@@ -99,6 +99,15 @@ export default function ReportsTable({
     setSortConfig({ sortBy, direction, activePage: 1 });
   };
 
+  // Handle keyboard events for sortable headers, but only Enter and Space
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      e.target.click();
+    }
+  };
+
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
   const renderColumnHeader = (displayName, name) => {
     const sortClassName = getClassNamesFor(name);
@@ -122,7 +131,7 @@ export default function ReportsTable({
           onClick={() => {
             requestSort(name);
           }}
-          onKeyDown={() => requestSort(name)}
+          onKeyDown={handleKeyDown}
           className={`sortable ${sortClassName} ttahub-button--unstyled text-bold`}
           aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}

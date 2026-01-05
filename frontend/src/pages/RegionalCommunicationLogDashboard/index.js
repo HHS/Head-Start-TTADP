@@ -3,7 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
-import { getUserRegions } from '../../permissions';
+import { DECIMAL_BASE } from '@ttahub/common';
+import { getUserRegions, canCreateCommunicationLog } from '../../permissions';
 import UserContext from '../../UserContext';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 import { formatDateRange } from '../../utils';
@@ -65,6 +66,10 @@ export default function RegionalCommunicationLog() {
   const regions = useMemo(() => getUserRegions(user), [user]);
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
   const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
+  const canCreateCommLog = useMemo(
+    () => canCreateCommunicationLog(user, parseInt(defaultRegion, DECIMAL_BASE)),
+    [user, defaultRegion],
+  );
 
   // eslint-disable-next-line max-len
   const allRegionsFilters = useMemo(() => (userHasOnlyOneRegion ? [] : buildDefaultRegionFilters(regions)), [regions, userHasOnlyOneRegion]);
@@ -133,11 +138,13 @@ export default function RegionalCommunicationLog() {
           {' '}
           {userHasOnlyOneRegion ? 'your region' : 'your regions'}
         </h1>
-        <div>
-          <NewReportButton to={`/communication-log/region/${defaultRegion}/log/new`}>
-            Add communication
-          </NewReportButton>
-        </div>
+        {canCreateCommLog && (
+          <div>
+            <NewReportButton to={`/communication-log/region/${defaultRegion}/log/new`}>
+              Add communication
+            </NewReportButton>
+          </div>
+        )}
       </div>
 
       <FilterPanelContainer>

@@ -5,10 +5,10 @@ import SCOPES from '../../middleware/scopeConstants';
 import {
   userById,
   usersWithPermissions,
-  statisticsByUser,
   setFlag,
   getTrainingReportUsersByRegion,
   getUserNamesByIds,
+  usersByRoles,
 } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { statesByGrantRegion } from '../../services/grant';
@@ -17,7 +17,6 @@ import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
 import { currentUserId } from '../../services/currentUser';
 import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
-import getCachedResponse from '../../lib/cache';
 import { FEATURE_FLAGS } from '../../constants';
 
 export async function getPossibleCollaborators(req, res) {
@@ -32,27 +31,6 @@ export async function getPossibleCollaborators(req, res) {
 
     const users = await usersWithPermissions([region], SCOPES.READ_WRITE_REPORTS);
     res.json(users);
-  } catch (error) {
-    await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
-  }
-}
-
-export async function getUserStatistics(req, res) {
-  try {
-    const user = await userById(await currentUserId(req, res));
-    const regions = user.permissions.map((permission) => permission.regionId);
-    const authorization = new UserPolicy(user);
-    // Get regions user can write.
-    const canWrite = regions.some((region) => authorization.canWriteInRegion(region));
-    const key = `statisticsByUser?userId=${user.id}`;
-
-    const statistics = await getCachedResponse(
-      key,
-      async () => JSON.stringify(await statisticsByUser(user, regions, !canWrite)),
-      JSON.parse,
-    );
-
-    res.json(statistics);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
   }
@@ -186,6 +164,57 @@ export async function getTrainingReportUsers(req, res) {
     }
 
     res.json(await getTrainingReportUsersByRegion(region, event));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getTrainingReportTrainersByRegion(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+
+    const authorization = new EventPolicy(user, {});
+    const { regionId } = req.params;
+
+    const region = parseInt(regionId, DECIMAL_BASE);
+
+    if (!authorization.canGetTrainingReportUsersInRegion(region)) {
+      res.sendStatus(403);
+      return;
+    }
+
+    res.json(await usersByRoles([
+      // roles pulled from this answer in Slack:
+      // https://adhoc.slack.com/docs/T025UGMV9/F09LB5EQUN4?focus_section_id=temp:C:efWcf6d8bbdaef14ed6b85b02369
+      'HS',
+      'SS',
+      'ECS',
+      'GS',
+      'FES',
+      'TTAC',
+      'ECM',
+      'GSM',
+    ], region));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getTrainingReportNationalCenterUsers(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+
+    const authorization = new EventPolicy(user, {});
+    const { regionId } = req.params;
+
+    const region = parseInt(regionId, DECIMAL_BASE);
+
+    if (!authorization.canGetTrainingReportUsersInRegion(region)) {
+      res.sendStatus(403);
+      return;
+    }
+
+    res.json(await usersByRoles(['NC']));
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }

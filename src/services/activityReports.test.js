@@ -1357,6 +1357,18 @@ describe('Activity report service', () => {
         expect(ids).toContain(approvedReport.id);
       });
 
+      it('coerces single report id params into an array', async () => {
+        const rows = await getAllDownloadableActivityReports(
+          '14',
+          {},
+          0,
+          `${approvedReport.id}`,
+        );
+        const ids = rows.map((row) => row.id);
+        expect(ids.length).toEqual(1);
+        expect(ids).toContain(approvedReport.id);
+      });
+
       it('will return legacy reports', async () => {
         const rows = await getAllDownloadableActivityReports([14], {}, true);
         const ids = rows.map((row) => row.id);

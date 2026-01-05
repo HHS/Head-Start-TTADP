@@ -6,7 +6,6 @@ export const NO_ERROR = <></>;
 export const sessionSummaryRequiredFields = {
   sessionName: '',
   duration: '',
-  context: '',
   objective: '',
   objectiveTopics: [],
   objectiveTrainers: [],
@@ -23,13 +22,14 @@ export const sessionSummaryFields = {
   objectiveResources: [],
   courses: [],
   files: [],
+  context: '',
 };
 
 export const participantsFields = {
   deliveryMethod: '',
   numberOfParticipants: '',
   language: [],
-  isIstVisit: '',
+  ttaType: [],
 };
 
 export const nextStepsFields = {
@@ -52,6 +52,10 @@ export const defaultValues = {
   eventId: '',
   eventDisplayId: '',
   eventName: '',
+  approver: null,
+  approverId: '',
+  approvalStatus: '',
+  submitted: false,
   status: 'In progress',
   pageState: {
     1: NOT_STARTED,
@@ -75,6 +79,10 @@ export const baseDefaultValues = {
     3: NOT_STARTED,
     4: NOT_STARTED,
   },
+  additionalNotes: '',
+  managerNotes: '',
+  approver: null,
+  dateSubmitted: '',
 };
 
 export const pageComplete = (
@@ -86,7 +94,6 @@ export const pageComplete = (
   if (Array.isArray(val)) {
     return val.length > 0;
   }
-
   return !!(val);
 });
 
@@ -104,6 +111,15 @@ export const defaultKeys = [
   'pocComplete',
   'ownerComplete',
   'facilitation',
+  'additionalNotes',
+  'approverId',
+  'managerNotes',
+  'dateSubmitted',
+  'submitted',
+  'submitter',
+  'additionalStates',
+  'reviewStatus',
+  'approvalStatus',
 ];
 
 export const istKeys = [
@@ -132,6 +148,7 @@ export const pocKeys = [
   'regionalOfficeTta',
   'recipients',
   'participants',
+  'ttaType',
   'numberOfParticipants',
   'numberOfParticipantsInPerson',
   'numberOfParticipantsVirtually',

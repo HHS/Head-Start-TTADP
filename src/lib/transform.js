@@ -4,6 +4,8 @@ import { uniq } from 'lodash';
 import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
+const HTML_TO_TEXT_OPTIONS = { selectors: [{ selector: 'table', format: 'dataTable' }] };
+
 function transformDate(field) {
   function transformer(instance) {
     let value = '';
@@ -59,6 +61,25 @@ function transformRelatedModelProp(field, prop) {
       }
       // we sort the values
       const value = records.map((r) => (r[prop] || '')).sort().join('\n');
+      Object.defineProperty(obj, prop, {
+        value,
+        enumerable: true,
+      });
+    }
+    return obj;
+  }
+  return transformer;
+}
+
+function transformRelatedModelPropHTML(field, prop) {
+  function transformer(instance) {
+    const obj = {};
+    let records = instance[field];
+    if (records) {
+      if (!Array.isArray(records)) {
+        records = [records];
+      }
+      const value = records.map((r) => convert(r[prop] || '', HTML_TO_TEXT_OPTIONS)).sort().join('\n');
       Object.defineProperty(obj, prop, {
         value,
         enumerable: true,
@@ -177,7 +198,7 @@ function transformCollaborators(joinTable, field, fieldName) {
 function transformHTML(field) {
   function transformer(instance) {
     const html = instance[field] || '';
-    const value = convert(html, { selectors: [{ selector: 'table', format: 'dataTable' }] });
+    const value = convert(html, HTML_TO_TEXT_OPTIONS);
     const obj = {};
     Object.defineProperty(obj, field, {
       value,
@@ -573,7 +594,7 @@ const logTransformers = [
   transformRelatedModelProp('data', 'duration'),
   transformRelatedModelProp('data', 'method'),
   transformRelatedModelProp('data', 'purpose'),
-  transformRelatedModelProp('data', 'notes'),
+  transformRelatedModelPropHTML('data', 'notes'),
   transformRelatedModelProp('data', 'result'),
   transformRelatedModelPropNested('data', 'goals'),
   transformRelatedModelPropNested('data', 'otherStaff'),

@@ -57,7 +57,7 @@ function Menu({
         width,
       } = buttonRef.current.getBoundingClientRect();
 
-      // we could be progratically calculating the height and width offset numbers
+      // we could be programmatically calculating the height and width offset numbers
       // but a little manual work up front will save on performance in the browser
 
       let leftPos = l + width;
@@ -143,7 +143,7 @@ function Menu({
         <ul className="usa-list usa-list--unstyled" role="menu">
           {menuItems.map((item) => (
             <li key={item.label} role="menuitem">
-              <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin">
+              <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin" aria-label={item.label}>
                 <div className="padding-2 padding-right-3">
                   {item.label}
                 </div>

@@ -4,10 +4,10 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:20.19.3-browsers
+    - image: cimg/node:22.20.0-browsers
   docker-postgres-executor:
     docker:
-    - image: cimg/node:20.19.3-browsers
+    - image: cimg/node:22.20.0-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -144,6 +144,32 @@ workflows:
     - run_import_job:
         target_env: "<< pipeline.parameters.target_env >>"
 
+  reset_env_cron:
+    # scheduled job to reset lower envs to a default state
+    triggers:
+    - schedule:
+        cron: "0 3 * * 0" # 3AM UTC = 11PM EST Sunday night
+        filters:
+          branches:
+            only:
+            - main
+    jobs:
+    - deploy_job:
+        name: reset (dev-blue)
+        target_env: "dev-blue"
+    - deploy_job:
+        name: reset (dev-green)
+        target_env: "dev-green"
+    - deploy_job:
+        name: reset (dev-red)
+        target_env: "dev-red"
+    - deploy_job:
+        name: reset (dev-pink)
+        target_env: "dev-pink"
+    - deploy_job:
+        name: reset (dev-gold)
+        target_env: "dev-gold"
+
   restore_db_cron:
     # scheduled job to ensure lower envs have a recent copy of the database
     # backup prod db to snapshot
@@ -242,8 +268,7 @@ workflows:
   clear_build_cache:
     when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
     jobs:
-    - clear_cache_job:
-        target_env: << pipeline.parameters.target_env >> 
+    - clear_cache_job
 
   clear_buildcache_cron:
     # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
@@ -256,22 +281,7 @@ workflows:
             only:
             - main
     jobs:
-    - clear_cache_job:
-        target_env: "tta-smarthub-prod" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-staging"
-    - clear_cache_job:
-        target_env: "tta-automation"
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-blue" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-green" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-red" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-gold" 
-    - clear_cache_job:
-        target_env: "tta-smarthub-dev-pink"
+    - clear_cache_job
         
 
 # ----------------- Jobs -----------------
@@ -376,7 +386,7 @@ jobs:
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
-            node -r esm ./tools/check-coverage.js \
+            node ./tools/check-coverage.js \
               --directory-filter=src/,tools/ \
               --fail-on-uncovered=false \
               --output-format=json,html
@@ -429,7 +439,7 @@ jobs:
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
-            node -r esm ./tools/check-coverage.js \
+            node ./tools/check-coverage.js \
               --coverage-file=../frontend/coverage/coverage-final.json \
               --artifact-dir=../frontend/coverage-artifacts \
               --directory-filter=frontend/ \
@@ -653,6 +663,8 @@ jobs:
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
+        when: always
+        name: Create monitoring updates summary
         command: |
           if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
             echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
@@ -663,6 +675,7 @@ jobs:
             goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
             echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
           fi
+          echo $(grep -o "Error.*" cmd_log.txt | tail -n 1) >> monitoring-updates.txt
           cat monitoring-updates.txt
     - when:
         condition:
@@ -674,22 +687,33 @@ jobs:
 
   clear_cache_job:
     executor: docker-executor
-    parameters:
-      target_env:
-        type: string
     steps:
     - checkout
     - install_cf_tools
-    - cf_login:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Clear build cache
-        command: |
-          app_name="tta-smarthub-<< parameters.target_env >>"
-          echo "Clearing build cache for ${app_name}"
-          app_guid=$(cf app --guid ${app_name})
-          cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
-          echo "Build cache cleared"
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-blue
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-red
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-green
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-pink
+    - cf_cache_clear:
+        space: dev
+        target_app: tta-smarthub-dev-gold
+    - cf_cache_clear:
+        space: staging
+        target_app: tta-smarthub-staging
+    - cf_cache_clear:
+        space: prod
+        target_app: tta-automation
+    - cf_cache_clear:
+        space: prod
+        target_app: tta-smarthub-prod
 
 # ----------------- Commands -----------------
 
@@ -739,8 +763,8 @@ commands:
         name: Install CF tools
         command: |
           # Install Cloud Foundry CLI
-          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-          echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service
@@ -883,6 +907,25 @@ commands:
             -p ${cg_password} \
             -o ${cg_org} \
             -s ${cg_space}
+
+  cf_cache_clear:
+    description: "Clear the build cache for a given app"
+    parameters:
+      space:
+        type: string
+      target_app:
+        type: string
+    steps:
+    - cf_login:
+        target_env: << parameters.space >>
+    - run:
+        name: Clear build cache (<< parameters.target_app >>)
+        command: |
+          app_name=<< parameters.target_app >>
+          app_guid=$(cf app --guid ${app_name})
+          echo "Clearing build cache for ${app_name} (${app_guid})"
+          cf curl -f -i -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+          echo "Build cache cleared"
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials and push application using deployment configuration file."
@@ -1144,8 +1187,8 @@ commands:
           sudo apt-get install -y pv uuid-runtime wget coreutils jq apt-utils
 
           # Install Cloud Foundry CLI
-          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-          echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service

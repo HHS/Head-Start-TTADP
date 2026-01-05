@@ -6,11 +6,6 @@ import { topicFrequencyGraph } from './topicFrequencyGraph';
 import targetPopulationTable from './targetPopulationTable';
 import frequencyGraph from './frequencyGraph';
 import goalStatusByGoalName from './goalStatusByGoalName';
-// ----
-// regional goal dashboard
-import goalsByStatus from './regionalGoalDashboard/goalsByStatus';
-import goalsPercentage from './regionalGoalDashboard/goalsPercentage';
-import topicsByGoalStatus from './regionalGoalDashboard/topicsByGoalStatus';
 import trOverview from './trOverview';
 import trReasonList from './trReasonList';
 import trSessionsByTopic from './trSessionsByTopic';
@@ -29,10 +24,6 @@ export default {
   targetPopulationTable,
   frequencyGraph,
   goalStatusByGoalName,
-
-  goalsByStatus,
-  goalsPercentage,
-  topicsByGoalStatus,
 
   trOverview,
   trReasonList,

@@ -10,30 +10,22 @@ module.exports = {
   async up(queryInterface) {
     const readWriteTrainingReports = [
       {
-        userId: 1,
-        regionId: 1,
-        scopeId: READ_WRITE_TRAINING_REPORTS,
-      },
-      {
         userId: 5,
         regionId: 1,
         scopeId: READ_WRITE_TRAINING_REPORTS,
       },
     ];
 
-    const collaboratorTrainingReports = [
-      {
-        userId: 3,
-        regionId: 1,
-        scopeId: POC_TRAINING_REPORTS,
-      },
-    ];
-
     await queryInterface.bulkInsert('Permissions', readWriteTrainingReports, {});
-    await queryInterface.bulkInsert('Permissions', collaboratorTrainingReports, {});
+    await queryInterface.bulkInsert('UserRoles', [{
+      userId: 1,
+      roleId: 17, // National Center
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }]);
 
     await queryInterface.sequelize.query(`
-    -- create a report for cuke    
+    -- create a report for cuke
     INSERT INTO "EventReportPilots" (
       "ownerId",
       "collaboratorIds",
@@ -47,7 +39,7 @@ module.exports = {
       5,
       ARRAY[]::INTEGER[],
       1,
-      CAST('{"eventId":"R01-PD-23-1037","Full Event Title":"R01 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","eventName":"Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","eventOrganizer":"Regional PD Event (with National Centers)","audience":"Recipients","Event Duration/# NC Days of Support":"Series","reasons":["Ongoing Quality Improvement"],"targetPopulations":["None"],"vision":"Oral Health","creator":"cucumber@hogwarts.com"}' AS JSONB),
+      CAST('{"eventId":"R01-PD-23-1037","Full Event Title":"R01 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","eventName":"Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","eventOrganizer":"Regional PD Event (with National Centers)","audience":"Recipients","Event Duration/# NC Days of Support":"Series","targetPopulations":["None"],"vision":"Oral Health","creator":"cucumber@hogwarts.com"}' AS JSONB),
       CAST('{"Event ID":"R01-PD-23-1037","Full Event Title":"R01 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","Edit Title":"Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","Event Organizer - Type of Event":"Regional PD Event (with National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Reason for Activity":"Ongoing Quality Improvement","Target Population(s)":"None","Overall Vision/Goal for the PD Event":"Oral Health","Creator":"cucumber@hogwarts.com"}' AS JSONB),
       NOW(),
       NOW(),
@@ -58,9 +50,14 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.bulkDelete('EventReportPilots', { ownerId: 1 }, {});
-    await queryInterface.bulkDelete('Permissions', { userId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }, {});
-    await queryInterface.bulkDelete('Permissions', { userId: 3, scopeId: POC_TRAINING_REPORTS }, {});
+    // Delete the new event reports
+    await queryInterface.sequelize.query(`
+      DELETE FROM "EventReportPilots"
+      WHERE data->>'eventId' IN (
+        'R01-PD-23-1037',
+     );
+    `);
+
     await queryInterface.bulkDelete('Permissions', { userId: 5, scopeId: READ_WRITE_TRAINING_REPORTS }, {});
   },
 };

@@ -53,7 +53,6 @@ const RenderApprover = ({
       <Approver
         onFormReview={onFormReview}
         reviewed={reviewed}
-        formData={formData}
         isPendingApprover
         pages={pages}
         availableApprovers={[{ id: 1, name: 'Approver 1' }]}

@@ -174,16 +174,6 @@ const SiteNav = ({
                       Regional Dashboard
                     </NavLink>
                   </li>
-                  <FeatureFlag flag="regional_goal_dashboard">
-                    <li>
-                      <NavLink
-                        withinDisclosure
-                        to="/regional-goal-dashboard"
-                      >
-                        Regional Goal Dashboard
-                      </NavLink>
-                    </li>
-                  </FeatureFlag>
                   <li>
                     <NavLink
                       withinDisclosure

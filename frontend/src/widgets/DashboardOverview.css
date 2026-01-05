@@ -1,5 +1,5 @@
 @media( min-width: 64em ){
-    .smart-hub--dashboard-overview  {      
+    .smart-hub--dashboard-overview  {
         gap: 1em;
     }
     .smart-hub--dashboard-overview-field {
@@ -11,4 +11,8 @@
     border-radius: 50%;
     height: 3em;
     width: 3em;
+}
+
+.smart-hub--dashboard-overview-font-size {
+  font-size: 19px;
 }

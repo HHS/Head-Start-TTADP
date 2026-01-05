@@ -207,6 +207,7 @@ describe('session reports service', () => {
     let program;
     let program2;
     let recipient;
+    let alternateRecipient;
 
     beforeAll(async () => {
       await db.Region.create({
@@ -214,7 +215,17 @@ describe('session reports service', () => {
         name: `Random test region ${mockRegionId}`,
       });
 
+      await db.Region.create({
+        id: mockRegionId + 1,
+        name: `Random test region ${mockRegionId + 1}`,
+      });
+
       recipient = await db.Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      alternateRecipient = await db.Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),
       });
@@ -224,6 +235,15 @@ describe('session reports service', () => {
         number: faker.datatype.string(),
         recipientId: recipient.id,
         regionId: mockRegionId,
+        status: 'Active',
+      });
+
+      await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: alternateRecipient.id,
+        regionId: mockRegionId + 1,
+        stateCode: 'CA',
         status: 'Active',
       });
 
@@ -267,13 +287,30 @@ describe('session reports service', () => {
 
       await db.Grant.destroy({
         where: {
-          recipientId: recipient.id,
+          recipientId: [
+            recipient.id,
+            alternateRecipient.id,
+          ],
         },
         individualHooks: true,
       });
 
-      await db.Recipient.destroy({ where: { id: recipient.id } });
-      await db.Region.destroy({ where: { id: mockRegionId } });
+      await db.Recipient.destroy({
+        where: {
+          id: [
+            recipient.id,
+            alternateRecipient.id,
+          ],
+        },
+      });
+      await db.Region.destroy({
+        where: {
+          id: [
+            mockRegionId,
+            mockRegionId + 1,
+          ],
+        },
+      });
     });
     it('retrieves possible participants', async () => {
       const participants = await getPossibleSessionParticipants(mockRegionId);
@@ -282,6 +319,23 @@ describe('session reports service', () => {
       expect(participants[0]).toHaveProperty('id');
       expect(participants[0]).toHaveProperty('name');
       expect(participants[0].grants.length).toBe(1);
+    });
+
+    it('ignores an empty states array', async () => {
+      const participants = await getPossibleSessionParticipants(mockRegionId, []);
+      expect(participants.length).toBe(1);
+      expect(participants[0].id).toBe(recipient.id);
+      expect(participants[0]).toHaveProperty('id');
+      expect(participants[0]).toHaveProperty('name');
+      expect(participants[0].grants.length).toBe(1);
+    });
+
+    it('retrieves participants from alternate states', async () => {
+      const participants = await getPossibleSessionParticipants(mockRegionId, ['CA']);
+      expect(participants.length).toBe(2);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([recipient.id, alternateRecipient.id]),
+      );
     });
   });
   describe('findSessionHelper', () => {
