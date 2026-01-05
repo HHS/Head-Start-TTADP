@@ -108,12 +108,13 @@ export default function RegionalDashboard({ match }) {
     const config = [...filterConfig];
 
     // If user has approve activity report permission add 'Specialist name' filter.
-    if (hasApproveActivityReport(user)) {
+    // Exclude specialist name filter from recipient spotlight
+    if (hasApproveActivityReport(user) && reportType !== 'recipient-spotlight') {
       config.push(specialistNameFilter);
       config.sort((a, b) => a.display.localeCompare(b.display));
     }
     return config;
-  }, [filterConfig, user]);
+  }, [filterConfig, user, reportType]);
 
   return (
     <div className="ttahub-dashboard">
