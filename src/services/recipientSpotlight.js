@@ -279,7 +279,7 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: false,
       FEI: true,
-      indicatorCount: 4,
+      indicatorCount: 3,
       lastTTA: '2024-03-15',
     },
     {
@@ -309,7 +309,7 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: true,
       FEI: false,
-      indicatorCount: 3,
+      indicatorCount: 2,
       lastTTA: '2023-11-05',
     },
     {
@@ -339,7 +339,7 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: false,
       FEI: true,
-      indicatorCount: 2,
+      indicatorCount: 1,
       lastTTA: '2024-02-28',
     },
     {
@@ -399,7 +399,7 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: true,
       FEI: true,
-      indicatorCount: 5,
+      indicatorCount: 3,
       lastTTA: '2023-12-15',
     },
     {
@@ -444,7 +444,7 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: false,
       FEI: true,
-      indicatorCount: 3,
+      indicatorCount: 2,
       lastTTA: '2024-01-15',
     },
     {
@@ -459,7 +459,7 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: true,
       FEI: false,
-      indicatorCount: 2,
+      indicatorCount: 1,
       lastTTA: '2024-03-20',
     },
     {
@@ -489,7 +489,7 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: true,
       FEI: true,
-      indicatorCount: 6,
+      indicatorCount: 4,
       lastTTA: '2023-10-30',
     },
     {
@@ -534,7 +534,7 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: false,
       FEI: true,
-      indicatorCount: 2,
+      indicatorCount: 1,
       lastTTA: '2024-03-05',
     },
     {
@@ -564,7 +564,7 @@ export async function getRecipientSpotlightIndicators(
       noTTA: false,
       DRS: true,
       FEI: false,
-      indicatorCount: 4,
+      indicatorCount: 3,
       lastTTA: '2024-01-05',
     },
   ];
