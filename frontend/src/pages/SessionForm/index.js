@@ -29,6 +29,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
 import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 import './index.css';
+import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -185,6 +186,8 @@ export default function SessionForm({ match }) {
     applicationPages,
     isSessionNavigationDead,
   } = useSessionFormRoleAndPages(hookForm);
+
+  const canSelectApprover = useCanSelectApprover({ isPoc, watch: hookForm.watch });
 
   const redirectPagePath = applicationPages[0]?.path || null;
 
@@ -589,7 +592,7 @@ export default function SessionForm({ match }) {
           ...(isRegionalNoNationalCenters && roleData.pocComplete ? { pocComplete: true } : {}),
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
           dateSubmitted: moment().format('MM/DD/YYYY'), // date the session was submitted
-          submitter: user.fullName, // user submitted the session for approval
+          ...(canSelectApprover ? { submitterId: user.id } : {}),
         },
         trainingReportId,
         eventId: trainingReportId || null,
