@@ -587,7 +587,7 @@ describe('TrainingReports', () => {
       expect(link).toHaveAttribute('href', '/training-report/view/1234');
     });
 
-    it('returns event message when isSession is false or undefined', () => {
+    it('returns event message when messageTemplate is false or undefined', () => {
       const mockHistory = {
         location: {
           state: {
