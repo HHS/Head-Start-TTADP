@@ -322,20 +322,21 @@ INSERT INTO "EventReportPilots" (
 INSERT INTO "SessionReportPilots" (
   "eventId",
   "approverId",
+  "submitterId",
   "data",
   "createdAt",
   "updatedAt"
 ) VALUES (
   (SELECT id FROM "EventReportPilots" WHERE "data"->>'eventId' = 'R03-ALERT-006'),
   7,
+  3,
   jsonb_build_object(
     'sessionName', 'Waiting Approval',
     'status', 'In progress',
     'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '5 days', 'MM/DD/YYYY'),
     'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '5 days', 'MM/DD/YYYY'),
     'pocComplete', true,
-    'collabComplete', true,
-    'submitterId', 3
+    'collabComplete', true
   ),
   NOW(),
   NOW()
@@ -376,20 +377,21 @@ INSERT INTO "EventReportPilots" (
 INSERT INTO "SessionReportPilots" (
   "eventId",
   "approverId",
+  "submitterId",
   "data",
   "createdAt",
   "updatedAt"
 ) VALUES (
   (SELECT id FROM "EventReportPilots" WHERE "data"->>'eventId' = 'R03-ALERT-007'),
   7,
+  3,
   jsonb_build_object(
     'sessionName', 'Changes Needed',
-    'status', 'in-progress-needs-action',
+    'status', 'needs_action',
     'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '5 days', 'MM/DD/YYYY'),
     'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '5 days', 'MM/DD/YYYY'),
     'pocComplete', true,
-    'collabComplete', true,
-    'submitterId', 3
+    'collabComplete', true
   ),
   NOW(),
   NOW()
