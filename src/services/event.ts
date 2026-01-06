@@ -8,6 +8,7 @@ import {
   EVENT_TARGET_POPULATIONS,
   EVENT_AUDIENCE,
   REPORT_STATUSES,
+  ALL_STATES_FLATTENED,
 } from '@ttahub/common';
 import moment from 'moment';
 import { auditLogger } from '../logger';
@@ -925,9 +926,7 @@ const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(B
 
 const mappings: Record<string, string> = {
   Audience: 'eventIntendedAudience',
-  // 'IST/Creator': 'creator',
   'Event Creator': 'creator',
-  // 'Event Title': 'eventName',
   'Edit Title': 'eventName',
   'Event Duration': 'trainingType',
   'Event Duration/#NC Days of Support': 'trainingType',
@@ -938,7 +937,6 @@ const mappings: Record<string, string> = {
   'Vision/Goal/Outcomes for the PD Event': 'vision',
   'Vision/Outcomes for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
-  // 'Reason(s) for PD': 'reasons', // TODO: Verify data should no longer be imported
   'Target Population(s)': 'targetPopulations',
   'Event Organizer - Type of Event': 'eventOrganizer',
   'IST Name:': 'istName',
@@ -1043,6 +1041,19 @@ const checkEventExists = async (eventId: string) => {
   if (event) throw new Error(`Event ${eventId} already exists`);
 };
 
+const VALID_STATE_NAMES = [...new Set(
+  ALL_STATES_FLATTENED.map(({ label }) => label.split('(')[0].trim()),
+)];
+
+const validateStates = (states: Set<string>) => {
+  Array.from(states).forEach((state) => {
+    if (!VALID_STATE_NAMES.includes(state)) {
+      throw new Error(`State not valid: ${state}`);
+    }
+  });
+  return states;
+};
+
 export async function csvImport(buffer: Buffer) {
   const skipped: string[] = [];
   const errors: string[] = [];
@@ -1131,7 +1142,7 @@ export async function csvImport(buffer: Buffer) {
       data.targetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS].includes(target));
 
       // Additional States Involved, remove duplicates.
-      data.additionalStates = [...new Set(data.additionalStates as string[])]; // TODO: (maybe) create master list of states/outer pacific to validate against
+      data.additionalStates = [...validateStates(new Set(data.additionalStates as string[]))];
 
       await db.EventReportPilot.create({
         collaboratorIds: [],
