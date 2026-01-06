@@ -641,6 +641,7 @@ function perform_restore() {
     echo "EXITING BEFORE RESTORE FOR SAFETY"
 
 #     #set -x
+
 #     set -o pipefail
 
 #     log "INFO" "Reset database before restore"
