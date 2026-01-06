@@ -21,11 +21,11 @@ on:
         required: true
         type: choice
         options: 
-        - ttahub-dev-blue
-        - ttahub-dev-red
-        - ttahub-dev-green
-        - ttahub-dev-gold
-        - ttahub-dev-pink
+        - dev-blue
+        - dev-red
+        - dev-green
+        - dev-gold
+        - dev-pink
 
 jobs:
   restore:
