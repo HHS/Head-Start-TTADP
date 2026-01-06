@@ -316,6 +316,7 @@ export default function Routes({
             <AppWrapper
               authenticated
               logout={logout}
+              padded={false}
               hasAlerts={!!(alert)}
             >
               <RegionalDashboard match={match} />

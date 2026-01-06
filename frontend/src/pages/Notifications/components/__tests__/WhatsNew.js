@@ -4,6 +4,13 @@ import WhatsNew, { formatWhatsNew } from '../WhatsNew';
 import { mockRSSData, mockWindowProperty } from '../../../../testHelpers';
 import { parseFeedIntoDom } from '../../../../utils';
 
+jest.mock('moment', () => {
+  const actualMoment = jest.requireActual('moment');
+  const mockMoment = (input) => (input ? actualMoment(input) : actualMoment('2025-06-01'));
+  Object.assign(mockMoment, actualMoment);
+  return mockMoment;
+});
+
 describe('formatWhatsNew', () => {
   describe('with localStorage', () => {
     mockWindowProperty('localStorage', {

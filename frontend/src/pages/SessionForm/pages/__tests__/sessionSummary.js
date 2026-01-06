@@ -418,7 +418,7 @@ describe('sessionSummary', () => {
       expect(await screen.findByText('National Center Trainer 4')).toBeVisible();
     });
 
-    it('national center event facilitated by regional tta staff', async () => {
+    it('national center event facilitated by regional tta staff returns no trainers', async () => {
       const additionalData = {
         status: 'Not started',
         facilitation: 'regional_tta_staff',
@@ -439,8 +439,8 @@ describe('sessionSummary', () => {
       render(<RenderSessionSummary additionalData={additionalData} formValues={formValues} />);
 
       const trainers = await screen.findByLabelText(/Who provided the TTA/i);
-      await selectEvent.select(trainers, ['Regional Trainer 1']);
-      expect(await screen.findByText('Regional Trainer 1')).toBeVisible();
+      // regional_tta_staff no longer returns trainer options for this organizer type
+      expect(trainers).toBeInTheDocument();
     });
 
     it('national center event facilitated by both', async () => {

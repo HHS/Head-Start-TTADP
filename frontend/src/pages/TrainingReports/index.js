@@ -5,7 +5,7 @@ import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { useHistory } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './index.scss';
@@ -34,6 +34,93 @@ const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) 
   key: TRAINING_REPORT_STATUSES_URL_PARAMS[status], value: status,
 }));
 
+const MESSAGE_TEMPLATES = {
+  eventSubmitted: (_sessionName, eventId, dateStr) => (
+    <>
+      You submitted Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      on
+      {' '}
+      {dateStr}
+    </>
+  ),
+  sessionCreated: (_sessionName, eventId, dateStr) => (
+    <>
+      You created a session
+      {' '}
+      for Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      on
+      {' '}
+      {dateStr}
+    </>
+  ),
+  sessionSubmitted: (sessionName, eventId, dateStr) => (
+    <>
+      You submitted the session
+      {' '}
+      {sessionName}
+      {' '}
+      of Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      on
+      {' '}
+      {dateStr}
+    </>
+  ),
+  sessionReviewSubmitted: (sessionName, eventId, dateStr) => (
+    <>
+      Your review for session
+      {' '}
+      {sessionName}
+      {' '}
+      of Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      was submitted on
+      {' '}
+      {dateStr}
+    </>
+  ),
+};
+
+export const evaluateMessageFromHistory = (history) => {
+  const { state } = history.location;
+  if (state && state.message) {
+    const { message } = state;
+
+    if (!message.eventId) {
+      return null;
+    }
+
+    const { messageTemplate } = message;
+
+    if (MESSAGE_TEMPLATES[messageTemplate]) {
+      return MESSAGE_TEMPLATES[messageTemplate](
+        message.sessionName,
+        message.eventId,
+        message.dateStr,
+      );
+    }
+
+    // default case
+    return MESSAGE_TEMPLATES.eventSubmitted(
+      message.sessionName,
+      message.eventId,
+      message.dateStr,
+    );
+  }
+
+  return null;
+};
+
 export default function TrainingReports({ match }) {
   const { params: { status } } = match;
   const { user } = useContext(UserContext);
@@ -43,7 +130,7 @@ export default function TrainingReports({ match }) {
   const [cardsInternalMessage, setCardsInternalMessage] = useState();
   const history = useHistory();
   // eslint-disable-next-line max-len
-  const [msg, setMsg] = useState(history.location.state && history.location.state.message ? <>{history.location.state.message}</> : null);
+  const [msg, setMsg] = useState(evaluateMessageFromHistory(history));
 
   const {
     regions,

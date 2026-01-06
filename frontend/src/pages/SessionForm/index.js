@@ -248,8 +248,15 @@ export default function SessionForm({ match }) {
         });
         reportId.current = session.id;
 
+        const message = {
+          messageTemplate: 'sessionCreated',
+          sessionName: session.data.sessionName,
+          eventId: session.event.data.eventId,
+          dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+        };
+
         if (session.event.ownerId === user.id && !isAdminUser) {
-          history.push('/training-reports/in-progress', { message: 'Session created successfully' });
+          history.push('/training-reports/in-progress', { message });
           return;
         }
 
@@ -521,7 +528,14 @@ export default function SessionForm({ match }) {
         eventId: trainingReportId || null,
       });
 
-      history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
+      const message = {
+        messageTemplate: 'sessionReviewSubmitted',
+        sessionName: data.sessionName,
+        eventId: trainingReportId,
+        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+      };
+
+      history.push('/training-reports/in-progress', { message });
     } catch (err) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
@@ -581,7 +595,14 @@ export default function SessionForm({ match }) {
         eventId: trainingReportId || null,
       });
 
-      history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
+      const message = {
+        messageTemplate: 'sessionSubmitted',
+        sessionName: data.sessionName,
+        eventId: trainingReportId,
+        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+      };
+
+      history.push('/training-reports/in-progress', { message });
     } catch (err) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
