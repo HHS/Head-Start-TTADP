@@ -7,15 +7,12 @@ import Modal from '../../../components/VanillaModal';
 import {
   InProgress,
   Closed,
-  NeedsActionIcon,
   NoStatus,
   Pencil,
   Trash,
 } from '../../../components/icons';
 import useSessionCardPermissions from '../../../hooks/useSessionCardPermissions';
 import './SessionCard.scss';
-
-const FRIENDLY_NEEDS_ACTION = 'Needs action';
 
 const CardData = ({ label, children }) => (
   <li className="ttahub-session-card__card-data desktop:padding-bottom-05 flex-align-start padding-bottom-1">
@@ -61,7 +58,7 @@ function SessionCard({
       case TRAINING_REPORT_STATUSES.COMPLETE:
         return status;
       case REPORT_STATUSES.NEEDS_ACTION:
-        return FRIENDLY_NEEDS_ACTION;
+        return TRAINING_REPORT_STATUSES.IN_PROGRESS;
       default:
         return TRAINING_REPORT_STATUSES.NOT_STARTED;
     }
@@ -70,9 +67,6 @@ function SessionCard({
   const displaySessionStatus = getSessionDisplayStatusText();
 
   const getSessionStatusIcon = (() => {
-    if (displaySessionStatus === FRIENDLY_NEEDS_ACTION) {
-      return <NeedsActionIcon />;
-    }
     if (displaySessionStatus === TRAINING_REPORT_STATUSES.IN_PROGRESS) {
       return <InProgress />;
     }
