@@ -74,14 +74,14 @@ export default function SubmittedCollabReport({ report }) {
   ))[0]?.label || '';
   const formattedStates = statesInvolved?.map((activityStateCode) => STATES[activityStateCode] || '').join(', ') || '';
   const formattedReasons = reportReasons?.map((reasonId) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ');
-  const formattedGoals = reportGoals?.map((goal) => goal?.goalTemplate?.standard || '').join(', ') || 'None provided';
+  const formattedGoals = reportGoals?.map((goal) => goal?.goalTemplate?.standard || '').join(', ') || 'None';
   const formattedDataUsed = dataUsed?.map(({ collabReportDatum }) => {
     if (collabReportDatum === 'other') {
       return `Other: ${otherDataUsed}`;
     }
 
     return COLLAB_REPORT_DATA[collabReportDatum] || '';
-  }).join(', ') || 'None provided';
+  }).join(', ') || 'None';
   const formattedParticipants = participants?.map((p) => {
     if (p === 'Other' && otherParticipants) {
       return `Other: ${otherParticipants}`;
