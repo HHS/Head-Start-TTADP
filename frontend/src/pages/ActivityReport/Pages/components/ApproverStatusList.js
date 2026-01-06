@@ -18,12 +18,12 @@ const getStatusIcon = (status) => {
 
 const getDisplayStatus = (status) => {
   if (status && status === 'needs_action') {
-    return 'Needs Action';
+    return 'Needs action';
   }
   if (status && status === 'approved') {
     return 'Approved';
   }
-  return 'Pending Approval';
+  return 'Pending approval';
 };
 
 const ApproverStatusList = ({
