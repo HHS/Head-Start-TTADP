@@ -13,7 +13,7 @@ import {
   Checkbox,
   Label,
 } from '@trussworks/react-uswds';
-import Select, { components } from 'react-select';
+import Select from 'react-select';
 import moment from 'moment';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import Drawer from '../../../components/Drawer';
@@ -30,17 +30,9 @@ import StateMultiSelect from '../../../components/StateMultiSelect';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { COLLAB_REPORT_REASONS, STATES, COLLAB_REPORT_CONDUCT_METHODS } from '../../../Constants';
-import arrowBoth from '../../../images/arrow-both.svg';
 
 const position = 1;
 const path = 'activity-summary';
-
-const DropdownIndicator = (props) => (
-  // eslint-disable-next-line react/jsx-props-no-spreading
-  <components.DropdownIndicator {...props}>
-    <img alt="" style={{ width: '8px' }} src={arrowBoth} />
-  </components.DropdownIndicator>
-);
 
 const ActivitySummary = ({ collaborators = [] }) => {
   const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
@@ -347,14 +339,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
                 placeholder="- Select -"
                 styles={{
                   ...selectOptionsReset,
-                  indicatorsContainer: (baseStyles) => ({
-                    ...baseStyles,
-                    display: 'inline',
-                  }),
-                  dropdownIndicator: (baseStyles) => ({
-                    ...baseStyles,
-                    height: '100%',
-                  }),
                   placeholder: (baseStyles) => ({
                     ...baseStyles,
                     color: 'black',
@@ -363,7 +347,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
                     lineHeight: '1.3',
                   }),
                 }}
-                components={{ DropdownIndicator }}
                 onChange={(selected) => {
                   controllerOnChange(selected ? selected.value : null);
                 }}
