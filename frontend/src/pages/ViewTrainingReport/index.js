@@ -9,6 +9,7 @@ import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert } from '@trussworks/react-uswds';
+import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { eventById, completeEvent } from '../../fetchers/event';
 import { getNamesByIds } from '../../fetchers/users';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -325,11 +326,22 @@ export default function ViewTrainingReport({ match }) {
     };
   };
 
+  const displayStatus = (status) => {
+    if (status) {
+      if (status === REPORT_STATUSES.NEEDS_ACTION) {
+        return 'In progress';
+      }
+
+      return status;
+    }
+    return 'Not started';
+  };
+
   const sessions = event && event.sessionReports ? event.sessionReports.map((session, index) => (
     <ReadOnlyContent
       key={session.id}
       title={`Session ${index + 1}`}
-      displayStatus={session.data.status || 'Not started'}
+      displayStatus={displayStatus(session.data.status)}
       sections={[{
         heading: 'Session Summary',
         striped: true,
