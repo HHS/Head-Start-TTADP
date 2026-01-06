@@ -420,7 +420,7 @@ const ActivityReportNavigator = ({
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
     const fieldArrayName = 'goalForEditing.objectives';
-    const objectives = getValues(fieldArrayName);
+    const objectives = getValues(fieldArrayName) || goalForEditing?.objectives || [];
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
     const promptTitles = getValues('goalPrompts');
@@ -461,13 +461,6 @@ const ActivityReportNavigator = ({
 
     // save goal to api, come back with new ids for goal and objectives
     try {
-      // clear out the goal form
-      setValue('goalForEditing', null);
-      setValue('goalName', '');
-      setValue('goalEndDate', '');
-      setValue('goalForEditing.objectives', []);
-      setValue('goalPrompts', []);
-
       // set goals to form data as appropriate
       const packagedGoals = packageGoals(
         selectedGoals,
@@ -491,21 +484,38 @@ const ActivityReportNavigator = ({
       };
       const savedData = await onSave(data);
 
-      // Update RHF with saved data
-      if (savedData) {
-        reset(savedData);
-
-        // On save goal re-evaluate page status.
-        updateGoalsObjectivesPageState(savedData);
+      if (!savedData) {
+        updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+        return;
       }
 
-      updateErrorMessage('');
+      // Update RHF with saved data
+      if (savedData) {
+        const normalizedSavedData = {
+          ...savedData,
+          goalForEditing: savedData.goalForEditing || '',
+        };
+
+        reset(normalizedSavedData);
+
+        // On save goal re-evaluate page status.
+        updateGoalsObjectivesPageState(normalizedSavedData);
+
+        // clear out the goal form after a successful save
+        setValue('goalForEditing.objectives', []);
+        setValue('goalForEditing', '');
+        setValue('goalName', '');
+        setValue('goalEndDate', '');
+        setValue('goalPrompts', []);
+
+        // close the goal form
+        toggleGoalForm(true);
+
+        updateErrorMessage('');
+      }
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
-
-    // close the goal form
-    toggleGoalForm(true);
   };
 
   const onSaveAndContinueGoalsAndObjectives = async () => {
@@ -541,6 +551,11 @@ const ActivityReportNavigator = ({
      * @param {boolean} isNavigation whether or not the draft save is triggered by a navigation
      */
   const draftSaver = async (isAutoSave = false, isNavigation = false) => {
+    if (!editable) {
+      setIsAppLoading(false);
+      return;
+    }
+
     // Determine if we should save draft on auto save.
     const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
 

@@ -38,7 +38,7 @@ export default class ActivityReport {
       && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED);
 
     return canUpdateAsAuthorAndCollaborator
-      || (canUpdateAsApprover && !this.hasBeenMarkedByApprover());
+      || canUpdateAsApprover;
   }
 
   canReset() {

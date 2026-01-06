@@ -97,7 +97,7 @@ describe('ActivityReport', () => {
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
     });
 
-    it('does not allow approvers to navigate and change the report if the report has been approvedby one approver', async () => {
+    it('allows approvers to navigate and change the report even if another approver has already approved', async () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', {
         ...data,
@@ -119,7 +119,8 @@ describe('ActivityReport', () => {
         ],
       });
       renderActivityReport(1, 'activity-summary', null, 3);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+      const startDate = await screen.findByRole('textbox', { name: /start date/i });
+      expect(startDate).toBeVisible();
     });
 
     it('allows approvers to navigate and change the report if the report is submitted', async () => {

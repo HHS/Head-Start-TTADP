@@ -38,7 +38,7 @@ export default class CollabReport {
       && this.collabReport.calculatedStatus === REPORT_STATUSES.SUBMITTED);
 
     return canUpdateAsAuthorOrCollaborator
-      || (canUpdateAsApprover && !this.hasBeenMarkedByApprover());
+      || canUpdateAsApprover;
   }
 
   canReset() {
