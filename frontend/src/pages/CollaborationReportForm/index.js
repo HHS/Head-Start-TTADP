@@ -45,6 +45,7 @@ import useLocalStorageCleanup from '../../hooks/useLocalStorageCleanup';
 import usePresenceData from '../../hooks/usePresenceData';
 import { getApprovers } from '../../fetchers/activityReports';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
+import './index.scss';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
