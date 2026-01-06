@@ -89,8 +89,8 @@ jobs:
             cf run-task $TARGET_ENV --name $TASK_NAME -m 2G --command "$COMMAND" 
             #echo "Waiting for task to complete..."
             sleep 15
-            ./bin/watch-task.js $TARGET_ENV $TASK_NAME
             echo "Gathering logs..."
+            ./bin/watch-task.js $TARGET_ENV $TASK_NAME
             sleep 30
             cf logs $TARGET_ENV --recent | grep $TASK_NAME
 
