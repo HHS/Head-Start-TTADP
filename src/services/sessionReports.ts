@@ -97,6 +97,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       'data',
       'updatedAt',
       'approverId',
+      'submitterId',
       'submitted',
       // eslint-disable-next-line @typescript-eslint/quotes
       [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
@@ -181,6 +182,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     approverId: session?.approverId ?? null,
     approver: session?.approver ?? null,
     submitted: session?.submitted ?? false,
+    submitterId: session?.submitterId ?? null,
   };
 }
 
@@ -226,6 +228,7 @@ export async function updateSession(id: number, request) {
   const {
     eventId, data: {
       approverId,
+      submitterId,
       goalTemplates,
       ...data
     },
@@ -243,11 +246,16 @@ export async function updateSession(id: number, request) {
   } as {
     eventId: number;
     approverId?: number;
+    submitterId?: number;
     data: Cast;
   };
 
   if (approverId) {
     update.approverId = Number(approverId);
+  }
+
+  if (submitterId) {
+    update.submitterId = Number(submitterId);
   }
 
   await SessionReportPilot.update(

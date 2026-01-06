@@ -7,6 +7,7 @@ import {
   TARGET_POPULATIONS,
   EVENT_TARGET_POPULATIONS,
   EVENT_AUDIENCE,
+  REPORT_STATUSES,
 } from '@ttahub/common';
 import moment from 'moment';
 import { auditLogger } from '../logger';
@@ -46,6 +47,19 @@ export const validateFields = (request, requiredFields) => {
     throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
   }
 };
+
+const INCLUDED_SESSION_ATTRIBUTES = [
+  'id',
+  'eventId',
+  'data',
+  'createdAt',
+  'updatedAt',
+  'approverId',
+  'submitted',
+  'submitterId',
+  // eslint-disable-next-line @typescript-eslint/quotes
+  [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+];
 
 /**
  * Creates an event.
@@ -123,6 +137,11 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
         model: SessionReportPilot,
         include: [
           {
+            model: db.GoalTemplate,
+            as: 'goalTemplates',
+            attributes: ['standard'],
+          },
+          {
             required: false,
             model: File,
             as: 'supportingAttachments',
@@ -133,17 +152,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
             },
           },
         ],
-        attributes: [
-          'id',
-          'eventId',
-          'data',
-          'createdAt',
-          'updatedAt',
-          'approverId',
-          'submitted',
-          // eslint-disable-next-line @typescript-eslint/quotes
-          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
-        ],
+        attributes: INCLUDED_SESSION_ATTRIBUTES,
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
         order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
@@ -263,17 +272,7 @@ export async function findEventHelperBlob({
             attributes: ['standard'],
           },
         ],
-        attributes: [
-          'id',
-          'eventId',
-          'data',
-          'createdAt',
-          'updatedAt',
-          'approverId',
-          'submitted',
-          // eslint-disable-next-line @typescript-eslint/quotes
-          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
-        ],
+        attributes: INCLUDED_SESSION_ATTRIBUTES,
         order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
       },
     ],
@@ -595,77 +594,69 @@ export async function getTrainingReportAlerts(
     }
 
     // Add approval workflow alerts
-    if (event.sessionReports && event.sessionReports.length > 0) {
-      event.sessionReports.forEach((session) => {
-        // Skip if already have an alert for this session
-        if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+    event.sessionReports.forEach((session) => {
+      // Skip if already have an alert for this session
+      if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
 
-        // Check for waitingForApproval - session submitted and awaiting approver review
-        // Submitted means: approverId set, pocComplete and collabComplete are true, status is IN_PROGRESS
-        const isSubmitted = !!(
-          session.approverId
-          && session.data
-          && session.data.pocComplete
-          && session.data.collabComplete
-          && session.data.status === TRS.IN_PROGRESS
-        );
+      // Check for waitingForApproval - session submitted and awaiting approver review
+      // Submitted means: approverId set, pocComplete and collabComplete are true, status is IN_PROGRESS
+      const isSubmitted = session.submitted;
 
-        if (isSubmitted) {
-          const isSubmitter = session.data.submitterId === userId;
-          const isApprover = session.approverId === userId;
+      if (isSubmitted && session.data.status !== REPORT_STATUSES.NEEDS_ACTION) {
+        const isSubmitter = session.submitterId === userId;
+        const isApprover = session.approverId === userId;
 
-          // Show to submitter and approver only
-          if (!userId || isSubmitter || isApprover) {
-            alerts.push({
-              id: session.id,
-              eventId: event.data.eventId,
-              isSession: true,
-              sessionName: session.data.sessionName,
-              eventName: event.data.eventName,
-              alertType: 'waitingForApproval',
-              ownerId: event.ownerId,
-              pocIds: event.pocIds,
-              collaboratorIds: event.collaboratorIds,
-              endDate: session.data.endDate,
-              startDate: session.data.startDate,
-              sessionId: session.id,
-              eventStatus: event.data.status,
-              approverId: session.approverId,
-              submitterId: session.data.submitterId,
-            });
-          }
+        // Show to submitter and approver only
+        if (!userId || isSubmitter || isApprover) {
+          alerts.push({
+            id: session.id,
+            eventId: event.data.eventId,
+            isSession: true,
+            sessionName: session.data.sessionName,
+            eventName: event.data.eventName,
+            alertType: 'waitingForApproval',
+            ownerId: event.ownerId,
+            pocIds: event.pocIds,
+            collaboratorIds: event.collaboratorIds,
+            endDate: session.data.endDate,
+            startDate: session.data.startDate,
+            sessionId: session.id,
+            eventStatus: event.data.status,
+            approverId: session.approverId,
+            submitterId: session.submitterId,
+          });
         }
+      }
 
-        // Check for changesNeeded - approver sent session back for edits
-        // This is when status is NEEDS_ACTION
-        const needsChanges = session.data && session.data.status === 'in-progress-needs-action';
+      // Check for changesNeeded - approver sent session back for edits
+      // This is when status is NEEDS_ACTION
+      const needsChanges = session.data && session.data.status === REPORT_STATUSES.NEEDS_ACTION;
 
-        if (needsChanges) {
-          const isSubmitter = session.data.submitterId === userId;
+      if (needsChanges) {
+        const isSubmitter = session.submitterId === userId;
 
-          // Show to submitter only
-          if (!userId || isSubmitter) {
-            alerts.push({
-              id: session.id,
-              eventId: event.data.eventId,
-              isSession: true,
-              sessionName: session.data.sessionName,
-              eventName: event.data.eventName,
-              alertType: 'changesNeeded',
-              ownerId: event.ownerId,
-              pocIds: event.pocIds,
-              collaboratorIds: event.collaboratorIds,
-              endDate: session.data.endDate,
-              startDate: session.data.startDate,
-              sessionId: session.id,
-              eventStatus: event.data.status,
-              approverId: session.approverId,
-              submitterId: session.data.submitterId,
-            });
-          }
+        // Show to submitter only
+        if (!userId || isSubmitter) {
+          alerts.push({
+            id: session.id,
+            eventId: event.data.eventId,
+            isSession: true,
+            sessionName: session.data.sessionName,
+            eventName: event.data.eventName,
+            alertType: 'changesNeeded',
+            ownerId: event.ownerId,
+            pocIds: event.pocIds,
+            collaboratorIds: event.collaboratorIds,
+            endDate: session.data.endDate,
+            startDate: session.data.startDate,
+            sessionId: session.id,
+            eventStatus: event.data.status,
+            approverId: session.approverId,
+            submitterId: session.submitterId,
+          });
         }
-      });
-    }
+      }
+    });
   }); // for each event
 
   // Enrich alerts with user names before returning
