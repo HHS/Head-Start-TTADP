@@ -7,6 +7,7 @@ export type SessionReportShape = {
   updatedAt: string;
   event: unknown;
   approverId: number | null;
+  submitterId: number | null;
   approver: { id: number } | null;
   submitted: boolean;
 };
