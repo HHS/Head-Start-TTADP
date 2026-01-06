@@ -29,6 +29,11 @@ export default function ApproverReview({
   const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
   const submitButtonLabel = isCreator ? 'Update report' : 'Submit';
 
+  function sentenceCase(str) {
+    const tempString = _.startCase(str);
+    return tempString.charAt(0).toUpperCase() + tempString.slice(1).toLowerCase();
+  }
+
   return (
     <>
       {
@@ -49,7 +54,7 @@ export default function ApproverReview({
               dateSubmitted
                 ? (
                   <div className="margin-bottom-4">
-                    <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0">Date Submitted</p>
+                    <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0">Date submitted</p>
                     <p className="margin-top-0">{formattedDateSubmitted}</p>
                   </div>
                 )
@@ -69,7 +74,9 @@ export default function ApproverReview({
             >
               <option name="default" value="" disabled hidden>- Select -</option>
               {managerReportStatuses.map((reportStatus) => (
-                <option key={reportStatus} value={reportStatus}>{_.startCase(reportStatus)}</option>
+                <option key={reportStatus} value={reportStatus}>
+                  {sentenceCase(reportStatus)}
+                </option>
               ))}
             </Dropdown>
           </FormItem>
