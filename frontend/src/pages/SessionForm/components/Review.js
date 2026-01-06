@@ -15,6 +15,7 @@ const Review = ({
   isPoc,
   onFormReview,
   isApprover,
+  isAdmin,
   approver,
   isSubmitted,
   onUpdatePage,
@@ -83,6 +84,7 @@ const Review = ({
         pages={pages}
         onFormReview={onFormReview}
         isPoc={isPoc}
+        isAdmin={isAdmin}
       />
     </>
   );
@@ -115,6 +117,7 @@ Review.propTypes = {
     fullName: PropTypes.string,
   }).isRequired,
   reviewSubmitPagePosition: PropTypes.number.isRequired,
+  isAdmin: PropTypes.bool.isRequired,
 };
 
 export default Review;
