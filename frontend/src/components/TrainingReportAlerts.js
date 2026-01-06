@@ -89,7 +89,7 @@ export default function TrainingReportAlerts() {
             elementSortProp="data-sort"
           />
         </div>
-      ) : <p className="usa-prose margin-0 padding-5 text-bold text-center">You have no events or sessions that require action</p>}
+      ) : <p className="font-serif-md margin-0 padding-10 text-bold text-center">You have no events or sessions that require action</p>}
     </WidgetContainer>
   );
 }
