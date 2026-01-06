@@ -2,6 +2,7 @@
 import faker from '@faker-js/faker';
 import {
   TRAINING_REPORT_STATUSES,
+  REPORT_STATUSES,
 } from '@ttahub/common';
 import {
   EventReportPilot,
@@ -376,6 +377,7 @@ describe('getTrainingReportAlerts', () => {
       sessionWaitingForApproval = await SessionReportPilot.create({
         eventId: event.id,
         approverId: approver.id,
+        submitterId: submitter.id,
         data: {
           sessionName: 'Session Waiting for Approval',
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
@@ -394,7 +396,6 @@ describe('getTrainingReportAlerts', () => {
           nextSteps: [{ completeDate: CURRENT_DATE, note: 'Next step 1' }],
           pocComplete: true,
           collabComplete: true,
-          submitterId: submitter.id,
         },
       });
 
@@ -402,9 +403,10 @@ describe('getTrainingReportAlerts', () => {
       sessionChangesNeeded = await SessionReportPilot.create({
         eventId: event.id,
         approverId: approver.id,
+        submitterId: submitter.id,
         data: {
           sessionName: 'Session Needing Changes',
-          status: 'in-progress-needs-action',
+          status: REPORT_STATUSES.NEEDS_ACTION,
           startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
           endDate: CURRENT_DATE,
           duration: 'Series',
@@ -420,7 +422,6 @@ describe('getTrainingReportAlerts', () => {
           nextSteps: [{ completeDate: CURRENT_DATE, note: 'Next step 1' }],
           pocComplete: true,
           collabComplete: true,
-          submitterId: submitter.id,
         },
       });
     });
