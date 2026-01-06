@@ -261,9 +261,8 @@ run_script() {
 
     log "INFO" "Check if the script is executable"
     if [ ! -x "$script_path" ]; then
-        log "ERROR" "The script $script_name is not executable."
-        set -e
-        return 1  # Return with an error status
+        log "ERROR" "The script $script_name at $script_path is not executable."
+        chmod +x "$script_path"
     fi
 
     log "INFO" "Execute the script with any passed arguments and capture its output"
