@@ -93,6 +93,14 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
             simple={false}
             labelProperty="label"
             valueProperty="value"
+            rules={{
+              validate: (value) => {
+                if (!value.length) {
+                  return 'Select at least one participant';
+                }
+                return true;
+              },
+            }}
             required
           />
         </FormItem>
@@ -154,6 +162,14 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
               simple={false}
               labelProperty="label"
               valueProperty="value"
+              rules={{
+                validate: (value) => {
+                  if (!value.length) {
+                    return 'Select at least one data type';
+                  }
+                  return true;
+                },
+              }}
               required
             />
           </FormItem>
@@ -217,6 +233,14 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
               simple={false}
               labelProperty="label"
               valueProperty="value"
+              rules={{
+                validate: (value) => {
+                  if (!value.length) {
+                    return 'Select at least one goal';
+                  }
+                  return true;
+                },
+              }}
               required
             />
           </FormItem>
@@ -246,6 +270,7 @@ export const isPageComplete = (hookForm) => {
     hasGoals,
     goals,
   } = formData;
+  console.log('supp info formData:', formData);
 
   // Check if participants is provided
   if (!participants || participants.length === 0) {
@@ -257,6 +282,11 @@ export const isPageComplete = (hookForm) => {
     return false;
   }
 
+  // Check if hasDataUsed is not null
+  if (hasDataUsed === null) {
+    return false;
+  }
+
   // Check if hasDataUsed and dataUsed is provided
   if (hasDataUsed === 'true' && (!dataUsed || dataUsed.length === 0)) {
     return false;
@@ -264,6 +294,11 @@ export const isPageComplete = (hookForm) => {
 
   // Check if data used and "other" selected but not provided
   if (hasDataUsed === 'true' && dataUsed.some((d) => d.value === 'other') && !otherDataUsed) {
+    return false;
+  }
+
+  // Check if hasGoals is not null
+  if (hasGoals === null) {
     return false;
   }
 
