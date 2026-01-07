@@ -41,7 +41,7 @@ type SessionReportSortSortMapEntryKey = 'id' | 'sessionName' | 'startDate' | 'en
 export type SessionReportTableRowSortMapEntry = readonly [
   string,
   Utils.Literal | string,
-];
+] | [ string ];
 
 // eslint-disable-next-line max-len
 export type SessionReportSortSortMap = Record<SessionReportSortSortMapEntryKey, SessionReportTableRowSortMapEntry>;
