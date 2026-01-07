@@ -363,7 +363,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </Drawer>
         <FormItem
           required={false}
-          htmlFor="sessionGoalTemplates"
+          htmlFor="goalTemplates"
           label={(
             <>
               Select the goals that this activity supports
@@ -378,16 +378,14 @@ const SessionSummary = ({ datePickerKey, event }) => {
               </button>
             </>
           )}
-          name="sessionGoalTemplates"
+          name="goalTemplates"
         >
           <Controller
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
-                value={(goalTemplates || []).filter((option) => (
-                  value.includes(option.standard)
-                ))}
-                inputId="sessionGoalTemplates"
-                name="sessionGoalTemplates"
+                value={value}
+                inputId="goalTemplates"
+                name="goalTemplates"
                 className="usa-select"
                 styles={selectOptionsReset}
                 closeMenuOnSelect={false}
@@ -396,7 +394,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 }}
                 onBlur={onBlur}
                 onChange={(s) => {
-                  controllerOnChange(s.map((o) => o.standard));
+                  controllerOnChange(s);
                 }}
                 inputRef={register({ required: 'Select at least one goal' })}
                 getOptionLabel={(option) => option.standard}
@@ -415,7 +413,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 return true;
               },
             }}
-            name="sessionGoalTemplates"
+            name="goalTemplates"
             defaultValue={[]}
           />
         </FormItem>
@@ -718,7 +716,7 @@ const ReviewSection = () => {
     objectiveTopics,
     objectiveTrainers,
     courses,
-    sessionGoalTemplates,
+    goalTemplates,
     objectiveResources,
     files,
     ttaProvided,
@@ -728,6 +726,7 @@ const ReviewSection = () => {
   // eslint-disable-next-line max-len
   const objectiveFiles = (files || []).map((f) => (f.url && f.url.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
   const resources = (objectiveResources || []).map((r) => <Link href={r.value}>{r.value}</Link>);
+  const supportingGoals = (goalTemplates || []).map((g) => g.standard);
 
   const sections = [
     {
@@ -745,7 +744,7 @@ const ReviewSection = () => {
       anchor: 'session-objective',
       items: [
         { label: 'Session objectives', name: 'objective', customValue: { objective } },
-        { label: 'Supporting goals', name: 'goals', customValue: { goals: sessionGoalTemplates } },
+        { label: 'Supporting goals', name: 'goals', customValue: { goals: supportingGoals } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
         { label: 'iPD courses', name: 'courses', customValue: { courses: (courses || []).map((c) => c.name) } },

@@ -132,7 +132,7 @@ export const istKeys = [
   'objective',
   'objectiveTopics',
   'objectiveTrainers',
-  'sessionGoalTemplates',
+  'goalTemplates',
   'useIpdCourses',
   'courses',
   'objectiveResources',

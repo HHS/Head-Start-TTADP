@@ -63,7 +63,7 @@ const istAndPocFields = {
   },
   'pageVisited-supporting-attachments': false,
   facilitation: 'national_center',
-  sessionGoalTemplates: [],
+  goalTemplates: [],
   approverId: null,
   additionalNotes: '',
   managerNotes: '',
