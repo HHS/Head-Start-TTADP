@@ -148,7 +148,7 @@ const Review = ({
 
       <IndicatesRequiredField />
       {!isSubmitted && (
-        <p>
+        <p style={{ maxWidth: '700px' }}>
           Review the information in each section before submitting for approval.
           Once submitted, you will no longer be able to edit the report.
         </p>
