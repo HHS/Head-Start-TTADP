@@ -443,6 +443,10 @@ export const isPageComplete = (hookForm) => {
     return false;
   }
 
+  if (isStateActivity === null) {
+    return false;
+  }
+
   if (isStateActivity === 'true' && (!statesInvolved || !statesInvolved.length)) {
     return false;
   }
