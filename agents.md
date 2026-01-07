@@ -13,7 +13,8 @@ The **Office of Head Start TTA Smart Hub** is a full-stack application for manag
 - **Database**: PostgreSQL via Sequelize ORM
 - **Queue**: Redis + Bull for background job processing
 - **Testing**: Jest (backend & frontend), Playwright (E2E), Cucumber (BDD)
-- **Infrastructure**: Cloud Foundry, Cloud.gov, CircleCI, Docker for local development
+- **Infrastructure**: Cloud Foundry, Cloud.gov, CircleCI
+- **Local Deve**: Docker
 
 ## Code Review Philosophy
 - Start with a brief summary of the modifications and context
@@ -21,7 +22,6 @@ The **Office of Head Start TTA Smart Hub** is a full-stack application for manag
 - Be concise: one sentence per comment when possible
 - Add more context and explain why only if the impact is not obvious
 - Unless instructed otherwise, focus on correctness, security, operability and performance
-- Offer suggestions which would lead to significant improvements
 
 ## Code Review Focus Areas
 
@@ -45,16 +45,6 @@ The **Office of Head Start TTA Smart Hub** is a full-stack application for manag
 - Spot inefficient loops and algorithmic issues
 - Check for memory leaks and resource cleanup
 - Highlight significant performance improvement opportunities
-
-## Response Format
-
-When you identify an issue, provide a single concise sentence that states the problem and the suggested fix; add a second sentence and explain why if the impact is not obvious.
-
-Example:
-```
-This could panic if the vector is empty; use `.get(0)` or add a length check before indexing.
-```
-
 
 ## Development Commands
 
