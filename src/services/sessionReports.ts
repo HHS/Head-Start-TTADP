@@ -147,42 +147,11 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
         through: { attributes: [] }, // exclude join table attributes
       },
       {
-        model: db.User,
-        as: 'trainers',
-        attributes: [
-          'fullName',
-          'name',
-          'id',
-        ],
-        include: [
-          {
-            model: db.Role,
-            as: 'roles',
-            attributes: [
-              'name',
-            ],
-          },
-        ],
+        ...userInclude('trainers'),
         through: { attributes: [] }, // exclude join table attributes
       },
-      {
-        model: db.User,
-        as: 'approver',
-        attributes: [
-          'fullName',
-          'name',
-          'id',
-        ],
-        include: [
-          {
-            model: db.Role,
-            as: 'roles',
-            attributes: [
-              'name',
-            ],
-          },
-        ],
-      },
+      userInclude('approver'),
+      userInclude('submitter'),
     ],
   };
 
@@ -222,6 +191,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     approver: session?.approver ?? null,
     submitted: session?.submitted ?? false,
     submitterId: session?.submitterId ?? null,
+    submitter: session?.submitter ?? null,
     trainers: session?.trainers ?? [],
   };
 }
