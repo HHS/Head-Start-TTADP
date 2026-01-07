@@ -36,15 +36,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v5
-      # - name: CF Login
-      #   # Reference: https://github.com/cloud-gov/cg-cli-tools
-      #   uses: cloud-gov/cg-cli-tools@main
-      #   with:
-      #     cf_username: ${{ secrets.CG_DEV_USERNAME }}
-      #     cf_password: ${{ secrets.CG_DEV_PASSWORD }}
-      #     cf_space: ${{ secrets.CG_DEV_SPACE }}
-      #     cf_org: hhs-acf-ohs-tta
-      #     cf_command: 
       - name: Setup Cloud Foundry CLI
         run: |
           wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
@@ -63,7 +54,7 @@ jobs:
             
             TASK_NAME="task-$(date +%s)"
             TARGET_ENV="tta-smarthub-${{ github.event.inputs.target_db }}"
-            COMMAND="cd /home/vcap/app/automation/db-backup/scripts; bash ./db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}"
+            COMMAND="cd /home/vcap/app/automation/db-backup/scripts; bash ./db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ttahub-${{ github.event.inputs.target_db }}"
 
             # json_data=$(jq -n \
             # --arg directory "./automation" \
