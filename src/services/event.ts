@@ -611,12 +611,13 @@ export async function getTrainingReportAlerts(
     event.sessionReports.forEach((session) => {
       // Skip if already have an alert for this session
       if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+      if (session.data.status === TRS.COMPLETE) return;
 
       // Check for waitingForApproval - session submitted and awaiting approver review
       // Submitted means: approverId set, pocComplete and collabComplete are true, status is IN_PROGRESS
       const isSubmitted = session.submitted;
 
-      if (isSubmitted && session.data.status !== REPORT_STATUSES.NEEDS_ACTION) {
+      if (isSubmitted && ![REPORT_STATUSES.NEEDS_ACTION].includes(session.data.status)) {
         const isSubmitter = session.submitterId === userId;
         const isApprover = session.approverId === userId;
 
