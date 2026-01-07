@@ -2,7 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import Overview from '../../../widgets/TrainingReportDashboardOverview';
-import TRReasonList from '../../../widgets/TRReasonList';
+import TRStandardGoalsList from '../../../widgets/TRStandardGoalsList';
 import TRHoursOfTrainingByNationalCenter from '../../../widgets/TRHoursOfTrainingByNationalCenter';
 import VTopicFrequency from '../../../widgets/VTopicFrequency';
 
@@ -20,10 +20,9 @@ export default function TrainingReportDashboard() {
         />
         <Grid row gap={2} className="flex-align-stretch margin-bottom-3">
           <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
-            <TRReasonList
+            <TRStandardGoalsList
               filters={[]}
-              loading={false}
-              title="Reasons in Training Reports"
+              title="Goal categories in Training Report sessions"
             />
           </Grid>
           <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
