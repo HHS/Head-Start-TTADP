@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to all agentic coding assistants.
+This file provides general guidance to all agentic coding assistants.
 
 ## Project Overview
 
@@ -310,3 +310,32 @@ Key environment variables (see `.env.example`):
 | Dev (Red/Blue/Green/Gold/Pink) | https://tta-smarthub-dev-{color}.app.cloud.gov/ |
 
 Infrastructure is managed via Terraform and deployed to Cloud.gov (see `/docs/guides/infrastructure.md`).
+
+## Agent Working Agreements
+
+### When to Ask Questions
+- Ask for clarification when acceptance criteria are missing, scope is ambiguous, or constraints (performance, security, data size) are unclear.
+- Pause and ask before making broad refactors or touching many files outside the target area.
+
+### Testing Expectations
+- Add or update tests for behavior changes unless the change is purely documentation or formatting.
+- Prefer focused unit/integration tests; add E2E only when the user-facing flow changes.
+- If tests are skipped, note why and suggest follow-up coverage.
+
+### Error Handling & Logging
+- Use consistent error handling patterns in the surrounding code; avoid introducing new styles.
+- Log actionable context (request IDs, relevant entity IDs) without leaking PII.
+
+### Database Changes
+- Always include migrations for schema changes; name them clearly (verb + object).
+- Ensure migrations are reversible; include `down` logic.
+- Avoid relying on seed data in tests; create/destroy test data within tests.
+
+### Safe Defaults
+- Prefer transactions for multi-step writes.
+- Avoid raw SQL unless necessary; use Sequelize scopes/models.
+- Avoid network calls in unit tests; mock external services.
+
+### Release Hygiene
+- Update OpenAPI specs when API shape changes.
+- Update docs/ADRs if a decision or architecture change is introduced.
