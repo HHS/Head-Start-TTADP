@@ -13,6 +13,7 @@ const {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
   SessionReportPilotGoalTemplate,
+  SessionReportPilotTrainer,
 } = db;
 
 type WhereOptions = {
@@ -127,6 +128,25 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       },
       {
         model: db.User,
+        as: 'trainers',
+        attributes: [
+          'fullName',
+          'name',
+          'id',
+        ],
+        include: [
+          {
+            model: db.Role,
+            as: 'roles',
+            attributes: [
+              'name',
+            ],
+          },
+        ],
+        through: { attributes: [] }, // exclude join table attributes
+      },
+      {
+        model: db.User,
         as: 'approver',
         attributes: [
           'fullName',
@@ -181,6 +201,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     approverId: session?.approverId ?? null,
     approver: session?.approver ?? null,
     submitted: session?.submitted ?? false,
+    trainers: session?.trainers ?? [],
   };
 }
 
@@ -227,6 +248,7 @@ export async function updateSession(id: number, request) {
     eventId, data: {
       approverId,
       goalTemplates,
+      trainers,
       ...data
     },
   } = request;
@@ -258,12 +280,23 @@ export async function updateSession(id: number, request) {
     },
   );
 
-  await updateSessionReportRelatedModels(
-    id,
-    SessionReportPilotGoalTemplate,
-    'goalTemplateId',
-    (goalTemplates || []).map((template: { id: number }) => template.id),
-  );
+  if (goalTemplates) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotGoalTemplate,
+      'goalTemplateId',
+      goalTemplates.map((template: { id: number }) => template.id),
+    );
+  }
+
+  if (trainers) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotTrainer,
+      'userId',
+      trainers.map((trainer: { id: number }) => trainer.id),
+    );
+  }
 
   return findSessionHelper({ id }) as Promise<SessionReportShape>;
 }
