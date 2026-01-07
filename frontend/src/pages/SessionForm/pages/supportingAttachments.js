@@ -56,6 +56,7 @@ export default {
         visitedFieldName={supportingAttachmentsVisitedField}
         handleDelete={deleteSessionSupportingAttachment}
         idKey="sessionAttachmentId"
+        formName="supportingAttachments"
       />
       <Alert />
       <div className="display-flex">
