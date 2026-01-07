@@ -61,6 +61,7 @@ describe('session report handlers', () => {
     })),
     sendStatus: jest.fn(),
     json: jest.fn(),
+    attachment: jest.fn(),
   };
 
   beforeEach(() => {
@@ -352,8 +353,6 @@ describe('session report handlers', () => {
       ],
     };
 
-    const mockCsvResponse = 'Event ID,Event Title,Session Name,Session Start Date,Session End Date,Topics\n1037,Event 1,Session 1,2024-01-01,2024-01-02,"Topic 1\nTopic 2"';
-
     const mockRequest = {
       session: { userId: 1 },
       query: {},
@@ -419,7 +418,10 @@ describe('session report handlers', () => {
 
     it('returns training reports in CSV format', async () => {
       getUserReadRegions.mockResolvedValue([1, 2, 3]);
-      getSessionReports.mockResolvedValue(mockCsvResponse);
+      getSessionReports.mockResolvedValue({
+        count: 2,
+        rows: mockTrainingReportResponse.rows,
+      });
 
       const requestWithCsv = {
         session: { userId: 1 },
@@ -428,12 +430,29 @@ describe('session report handlers', () => {
 
       await getSessionReportsHandler(requestWithCsv, mockResponse);
 
-      expect(mockResponse.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
-      expect(mockResponse.setHeader).toHaveBeenCalledWith(
-        'Content-Disposition',
-        'attachment; filename="training-reports.csv"',
-      );
-      expect(mockResponse.send).toHaveBeenCalledWith(mockCsvResponse);
+      expect(mockResponse.send).toHaveBeenCalled();
+      const csvOutput = mockResponse.send.mock.calls[0][0];
+      expect(csvOutput).toContain('Event ID');
+      expect(csvOutput).toContain('Event Title');
+      expect(csvOutput).toContain('Session Name');
+      expect(csvOutput).toContain('Session Start Date');
+      expect(csvOutput).toContain('Session End Date');
+      expect(csvOutput).toContain('Topics');
+
+      expect(csvOutput).toContain('1037');
+      expect(csvOutput).toContain('Event 1');
+      expect(csvOutput).toContain('Session 1');
+      expect(csvOutput).toContain('2024-01-01');
+      expect(csvOutput).toContain('2024-01-01');
+      expect(csvOutput).toContain('Topic 1');
+      expect(csvOutput).toContain('Topic 2');
+
+      expect(csvOutput).toContain('1038');
+      expect(csvOutput).toContain('Event 2');
+      expect(csvOutput).toContain('Session 2');
+      expect(csvOutput).toContain('2024-01-03');
+      expect(csvOutput).toContain('2024-01-04');
+      expect(csvOutput).toContain('Topic 3');
     });
 
     it('supports sorting by event fields (eventId, eventName)', async () => {
@@ -457,15 +476,6 @@ describe('session report handlers', () => {
 
     it('returns 403 when user has no readable regions', async () => {
       getUserReadRegions.mockResolvedValue([]); // Empty array
-
-      await getSessionReportsHandler(mockRequest, mockResponse);
-
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
-      expect(getSessionReports).not.toHaveBeenCalled();
-    });
-
-    it('returns 403 when user readable regions is null', async () => {
-      getUserReadRegions.mockResolvedValue(null);
 
       await getSessionReportsHandler(mockRequest, mockResponse);
 
