@@ -726,7 +726,7 @@ const ReviewSection = () => {
   } = watch();
 
   // eslint-disable-next-line max-len
-  const objectiveFiles = (files || []).map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
+  const objectiveFiles = (files || []).map((f) => (f.url && f.url.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
   const resources = (objectiveResources || []).map((r) => <Link href={r.value}>{r.value}</Link>);
 
   const sections = [
