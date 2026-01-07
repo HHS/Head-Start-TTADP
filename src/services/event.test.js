@@ -894,13 +894,13 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       expect(filteredEvents[0]).toMatchObject(baseEventData);
     });
 
-    it('should NOT return NOT_STARTED events for collaborator (changed behavior)', async () => {
+    it('should return NOT_STARTED events for collaborator', async () => {
       const events = [event];
 
       const filteredEvents = await filterEventsByStatus(events, null, 789);
 
-      // Collaborators can NO LONGER see NOT_STARTED events
-      expect(filteredEvents).toHaveLength(0);
+      // Collaborators can see NOT_STARTED events
+      expect(filteredEvents).toHaveLength(1);
     });
 
     it('should return events for owner when status is null', async () => {
