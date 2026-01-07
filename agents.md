@@ -1,6 +1,10 @@
-# AGENTS.md
+# agents.md
 
 This file provides general guidance to all agentic coding assistants.
+
+## Personal Customization
+
+For personal instructions or modifications specific to Claude, create a `CLAUDE-mine.md` file in the repository root. This file is gitignored and will be automatically included by Claude Code.
 
 ## Project Overview
 
@@ -8,18 +12,18 @@ The **Office of Head Start TTA Smart Hub** is a full-stack application for manag
 
 ## Tech Stack
 
-- **Backend**: Node.js, Express, TypeScript
+- **Backend**: Node.js 20.x, Express, TypeScript
 - **Frontend**: React, USWDS (U.S. Web Design System)
 - **Database**: PostgreSQL via Sequelize ORM
 - **Queue**: Redis + Bull for background job processing
 - **Testing**: Jest (backend & frontend), Playwright (E2E), Cucumber (BDD)
 - **Infrastructure**: Cloud Foundry, Cloud.gov, CircleCI
-- **Local Deve**: Docker
+- **Local Development**: Docker
 
 ## Code Review Philosophy
 - Start with a brief summary of the modifications and context
 - Focus on actionable and specific feedback
-- Be concise: one sentence per comment when possible
+- Be concise: prefer one sentence when sufficient, add detail for non-obvious impacts
 - Add more context and explain why only if the impact is not obvious
 - Unless instructed otherwise, focus on correctness, security, operability and performance
 
