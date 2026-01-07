@@ -13,6 +13,7 @@ import {
   Alert, Grid, Button,
 } from '@trussworks/react-uswds';
 import UserContext from '../../UserContext';
+import StaffProvider from '../../components/StaffProvider';
 import colors from '../../colors';
 import WidgetContainer from '../../components/WidgetContainer';
 import Tabs from '../../components/Tabs';
@@ -238,23 +239,24 @@ export default function TrainingReports({ match }) {
   const statusForDisplay = tabValues.find((t) => t.value === status).key;
   const titleCaseStatus = convertToTitleCase(statusForDisplay);
   return (
-    <div className="ttahub-training-reports">
-      <Helmet>
-        <title>
-          {titleCaseStatus}
-          {' '}
-          - Training Reports
-        </title>
-      </Helmet>
-      <>
-        <RegionPermissionModal
-          filters={filters}
-          user={user}
-          showFilterWithMyRegions={
+    <StaffProvider>
+      <div className="ttahub-training-reports">
+        <Helmet>
+          <title>
+            {titleCaseStatus}
+            {' '}
+            - Training Reports
+          </title>
+        </Helmet>
+        <>
+          <RegionPermissionModal
+            filters={filters}
+            user={user}
+            showFilterWithMyRegions={
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
-        />
-        {(msg) && (
+          />
+          {(msg) && (
           <Alert
             type="success"
             role="alert"
@@ -274,62 +276,63 @@ export default function TrainingReports({ match }) {
           >
             {msg}
           </Alert>
-        )}
-        <Grid>
-          <Grid row gap>
-            <Grid>
-              <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
+          )}
+          <Grid>
+            <Grid row gap>
+              <Grid>
+                <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
+              </Grid>
+            </Grid>
+            <Grid row>
+              {error && (
+              <Alert className="margin-bottom-2" type="error" role="alert">
+                {error}
+              </Alert>
+              )}
+            </Grid>
+            <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+              <FilterPanel
+                applyButtonAria="apply filters for training reports"
+                filters={filters}
+                onApplyFilters={onApplyFilters}
+                onRemoveFilter={onRemoveFilter}
+                filterConfig={filterConfig}
+                allUserRegions={regions}
+              />
+            </Grid>
+
+            <TrainingReportAlerts />
+
+            <Grid row>
+              <WidgetContainer
+                title="Events"
+                loading={false}
+                loadingLabel="Training events loading"
+                showPaging={false}
+                showHeaderBorder={false}
+              >
+                <Tabs tabs={tabValues} ariaLabel="Training events" />
+                <EventCards
+                  events={displayEvents}
+                  eventType={status}
+                  onRemoveSession={onRemoveSession}
+                  onDeleteEvent={onDeleteEvent}
+                  removeEventFromDisplay={removeEventFromDisplay}
+                  alerts={{
+                    message: cardsInternalMessage,
+                    setMessage: setCardsInternalMessage,
+                    setParentMessage: (updatedMessage) => {
+                      setCardsInternalMessage(null);
+                      setMsg(updatedMessage);
+                    },
+                  }}
+                />
+              </WidgetContainer>
             </Grid>
           </Grid>
-          <Grid row>
-            {error && (
-            <Alert className="margin-bottom-2" type="error" role="alert">
-              {error}
-            </Alert>
-            )}
-          </Grid>
-          <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
-            <FilterPanel
-              applyButtonAria="apply filters for training reports"
-              filters={filters}
-              onApplyFilters={onApplyFilters}
-              onRemoveFilter={onRemoveFilter}
-              filterConfig={filterConfig}
-              allUserRegions={regions}
-            />
-          </Grid>
-
-          <TrainingReportAlerts />
-
-          <Grid row>
-            <WidgetContainer
-              title="Events"
-              loading={false}
-              loadingLabel="Training events loading"
-              showPaging={false}
-              showHeaderBorder={false}
-            >
-              <Tabs tabs={tabValues} ariaLabel="Training events" />
-              <EventCards
-                events={displayEvents}
-                eventType={status}
-                onRemoveSession={onRemoveSession}
-                onDeleteEvent={onDeleteEvent}
-                removeEventFromDisplay={removeEventFromDisplay}
-                alerts={{
-                  message: cardsInternalMessage,
-                  setMessage: setCardsInternalMessage,
-                  setParentMessage: (updatedMessage) => {
-                    setCardsInternalMessage(null);
-                    setMsg(updatedMessage);
-                  },
-                }}
-              />
-            </WidgetContainer>
-          </Grid>
-        </Grid>
-      </>
-    </div>
+        </>
+      </div>
+    </StaffProvider>
 
   );
 }
