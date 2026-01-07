@@ -136,6 +136,20 @@ describe('ActivityReport', () => {
       const startDate = await screen.findByRole('textbox', { name: /start date/i });
       expect(startDate).toBeVisible();
     });
+
+    it('allows approvers to navigate and change the report if the report needs action', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [{ user: { id: 3 } }],
+      });
+      renderActivityReport(1, 'activity-summary', null, 3);
+
+      const startDate = await screen.findByRole('textbox', { name: /start date/i });
+      expect(startDate).toBeVisible();
+    });
   });
 
   describe('for read only users', () => {

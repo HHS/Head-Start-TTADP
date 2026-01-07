@@ -439,7 +439,10 @@ function ActivityReport({
 
   const approverCanEdit = isApprover
     && formData
-    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+    && (
+      formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+      || formData.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+    );
 
   if (connectionActive && !editable && currentPage !== 'review' && !approverCanEdit) {
     return (

@@ -430,7 +430,10 @@ function CollaborationReport({ match, location }) {
   // istanbul ignore next - too hard to test
   const approverCanEdit = isApprover
     && formData
-    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+    && (
+      formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+      || formData.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+    );
 
   const updatePage = (position) => {
     if (!editable && !approverCanEdit) {
