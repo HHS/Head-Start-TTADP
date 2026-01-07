@@ -95,7 +95,7 @@ const formatSupportingGoals = (sessionGoalTemplates) => {
   if (!sessionGoalTemplates || sessionGoalTemplates.length === 0) {
     return 'None';
   }
-  return sessionGoalTemplates.map((goal) => goal.label || goal).join(', ');
+  return sessionGoalTemplates.map((goal) => goal.standard || goal).join(', ');
 };
 
 export const handleIntendedAudience = (audience) => {
@@ -356,7 +356,7 @@ export default function ViewTrainingReport({ match }) {
         heading: 'Objective summary',
         data: {
           'Session objective': session.data.objective,
-          'Supporting goals': formatSupportingGoals(session.data.sessionGoalTemplates),
+          'Supporting goals': formatSupportingGoals(session.data.goalTemplates),
           Topics: handleArrayJoin(session.data.objectiveTopics, ', '),
           Trainers: handleArrayJoin(session.data.objectiveTrainers),
           'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name).join(', ') : 'None',
