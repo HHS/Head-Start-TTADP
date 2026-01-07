@@ -74,7 +74,7 @@ const istAndPocFields = {
 };
 
 const completeFormData = {
-  eventId: 1,
+  eventId: '1',
   eventDisplayId: 'R-EVENT',
   id: 1,
   ownerId: 1,
@@ -177,7 +177,7 @@ describe('SessionReportForm', () => {
         pocIds: [],
         collaboratorIds: [1], // Owner is also a collaborator
         data: {
-          eventId: 1,
+          eventId: '1',
           eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
@@ -1108,7 +1108,7 @@ describe('SessionReportForm', () => {
             pocIds: [],
             collaboratorIds: [],
             data: {
-              eventId: 1,
+              eventId: '1',
               eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
             },
           },
@@ -1205,6 +1205,9 @@ describe('SessionReportForm', () => {
             managerNotes: 'Please revise',
             dateSubmitted: '01/15/2024',
             submitter: 'Test Submitter',
+            event: {
+              eventId: '1',
+            },
           },
           approverId: 1,
           approver: { id: 1, fullName: 'Test Approver' },
@@ -1214,7 +1217,7 @@ describe('SessionReportForm', () => {
             pocIds: [],
             collaboratorIds: [],
             data: {
-              eventId: 1,
+              eventId: '1',
               eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
             },
           },
@@ -1249,7 +1252,7 @@ describe('SessionReportForm', () => {
       });
 
       // Mock the PUT request
-      fetchMock.put(url, { id: 2, eventId: 1 });
+      fetchMock.put(url, { id: 2, eventId: 1, event: { data: { eventId: 1 } } });
 
       // Wait for the Approve button to appear
       await waitFor(() => {
