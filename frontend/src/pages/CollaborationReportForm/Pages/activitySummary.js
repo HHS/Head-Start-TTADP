@@ -52,6 +52,17 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const placeholderText = '- Select -';
   const drawerTriggerRef = useRef(null);
 
+  const [descriptionError, setDescriptionError] = React.useState('');
+
+  const checkForDescription = (el) => {
+    const { value } = el.target;
+    if (!value || value.trim() === '') {
+      setDescriptionError('Enter activity description');
+    } else {
+      setDescriptionError('');
+    }
+  };
+
   return (
     <>
       <Helmet>
@@ -371,19 +382,26 @@ const ActivitySummary = ({ collaborators = [] }) => {
           />
         </FormItem>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend">
+      <Fieldset className={`smart-hub--report-legend ${descriptionError ? 'usa-form-group--error' : ''}`}>
         <Label htmlFor="description">
           Activity description
           {' '}
           <Req />
         </Label>
+
+        {descriptionError && (
+        <span className="usa-error-message" role="alert">Enter description</span>
+        )}
+
         <Textarea
           id="description"
           className="height-10 minh-5 smart-hub--text-area__resize-vertical"
           name="description"
           defaultValue=""
           data-testid="description-input"
-          inputRef={register()}
+          error={!!descriptionError}
+          inputRef={register({ required: true })}
+          onBlur={checkForDescription}
           required
         />
       </Fieldset>
@@ -541,7 +559,7 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    DraftAlert,
   ) => {
     const { collaborators } = additionalData;
     return (
@@ -549,7 +567,7 @@ export default {
         <ActivitySummary
           collaborators={collaborators}
         />
-        <Alert />
+        <DraftAlert />
         <NavigatorButtons
           isAppLoading={isAppLoading}
           onContinue={onContinue}
