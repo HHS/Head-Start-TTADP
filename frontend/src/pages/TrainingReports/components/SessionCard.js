@@ -44,14 +44,16 @@ function SessionCard({
   eventOrganizer,
 }) {
   const modalRef = useRef();
-  const { goalTemplates } = session;
+  const {
+    goalTemplates,
+    trainers,
+  } = session;
   const {
     sessionName,
     startDate,
     endDate,
     objective,
     objectiveSupportType,
-    objectiveTrainers,
     status,
   } = session.data;
 
@@ -91,6 +93,8 @@ function SessionCard({
     eventStatus,
     eventOrganizer,
   });
+
+  const objectiveTrainers = (trainers || []).map((tr) => tr.fullName);
 
   return (
     <div>
@@ -173,6 +177,7 @@ function SessionCard({
 export const sessionPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   goalTemplates: PropTypes.arrayOf(PropTypes.shape({ standard: PropTypes.string })).isRequired,
+  trainers: PropTypes.arrayOf(PropTypes.shape({ fullName: PropTypes.string })).isRequired,
   data: PropTypes.shape({
     facilitation: PropTypes.string.isRequired,
     regionId: PropTypes.number.isRequired,
@@ -181,7 +186,6 @@ export const sessionPropTypes = PropTypes.shape({
     endDate: PropTypes.string.isRequired,
     objective: PropTypes.string.isRequired,
     objectiveSupportType: PropTypes.string.isRequired,
-    objectiveTrainers: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.oneOf([
       'In progress',
       'Complete',

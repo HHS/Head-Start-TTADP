@@ -8,7 +8,7 @@ export const sessionSummaryRequiredFields = {
   duration: '',
   objective: '',
   objectiveTopics: [],
-  objectiveTrainers: [],
+  trainers: [],
   objectiveSupportType: '',
   regionId: '',
   ttaProvided: '',
@@ -120,6 +120,7 @@ export const defaultKeys = [
   'additionalStates',
   'reviewStatus',
   'approvalStatus',
+  'trainers',
 ];
 
 export const istKeys = [
@@ -131,7 +132,6 @@ export const istKeys = [
   'context',
   'objective',
   'objectiveTopics',
-  'objectiveTrainers',
   'goalTemplates',
   'useIpdCourses',
   'courses',

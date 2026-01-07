@@ -260,6 +260,24 @@ export async function findEventHelperBlob({
             model: db.GoalTemplate,
             as: 'goalTemplates',
             attributes: ['standard'],
+            through: {
+              attributes: [],
+            },
+          },
+          {
+            model: db.User,
+            as: 'trainers',
+            attributes: ['name', 'fullName'],
+            through: {
+              attributes: [],
+            },
+            include: [
+              {
+                model: db.Role,
+                as: 'roles',
+                attributes: ['name'],
+              },
+            ],
           },
         ],
         attributes: [

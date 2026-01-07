@@ -8,6 +8,11 @@ export type SessionReportShape = {
     id: number;
     standard: string;
   }[];
+  trainers: {
+    id: number,
+    name: string,
+    fullName: string,
+  }[],
   updatedAt: string;
   event: unknown;
   approverId: number | null;
