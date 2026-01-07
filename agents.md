@@ -13,41 +13,42 @@ The **Office of Head Start TTA Smart Hub** is a full-stack application for manag
 ## Tech Stack
 
 - **Backend**: Node.js 20.x, Express, TypeScript
-- **Frontend**: React, USWDS (U.S. Web Design System)
+- **Frontend**: React 17.x, USWDS (U.S. Web Design System)
 - **Database**: PostgreSQL via Sequelize ORM
 - **Queue**: Redis + Bull for background job processing
 - **Testing**: Jest (backend & frontend), Playwright (E2E), Cucumber (BDD)
 - **Infrastructure**: Cloud Foundry, Cloud.gov, CircleCI
 - **Local Development**: Docker
 
-## Code Review Philosophy
-- Start with a brief summary of the modifications and context
-- Focus on actionable and specific feedback, not pedantic stylistic issues
-- Be concise: prefer one sentence when sufficient, add detail for non-obvious impacts
-- Unless instructed otherwise, focus on correctness, security, operability and performance
+## Agent Working Agreements
 
-## Code Review Focus Areas
+### When to Ask Questions
+- Ask for clarification when acceptance criteria are missing, scope is ambiguous, or constraints (performance, security, data size) are unclear.
+- Pause and ask before making broad refactors or touching many files outside the target area.
 
-### Correctness
-- Typos
-- Logic errors
-- Race conditions
-- Resource leaks
-- Off-by-one errors
-- Missing error handling
-- Boundary conditions
+### Testing Expectations
+- Add or update tests for behavior changes unless the change is purely documentation or formatting.
+- Prefer focused unit/integration tests; add E2E only when the user-facing flow changes.
+- If tests are skipped, note why and suggest follow-up coverage.
 
-### Security
-- Check for hardcoded secrets, API keys, or credentials
-- Look for SQL or data injection issues and XSS vulnerabilities
-- Verify proper input validation and sanitization
-- Review authentication and authorization logic
-- Data privacy or PII leakage risks
+### Error Handling & Logging
+- Use consistent error handling patterns in the surrounding code; avoid introducing new styles.
+- Log actionable context (request IDs, relevant entity IDs) without leaking PII.
 
-### Performance
-- Spot inefficient loops and algorithmic issues
-- Check for memory leaks and resource cleanup
-- Highlight significant performance improvement opportunities
+### Database Changes
+- Always include migrations for schema changes; name them clearly (verb + object).
+- Ensure migrations are reversible; include `down` logic.
+- Avoid relying on seed data in tests; create/destroy test data within tests.
+
+### Safe Defaults
+- Prefer transactions for multi-step writes.
+- Avoid raw SQL unless necessary; use Sequelize scopes/models.
+- Avoid network calls in unit tests; mock external services.
+
+### Release Hygiene
+- Update OpenAPI specs when API shape changes.
+- Update docs/ADRs if a decision or architecture change is introduced.
+
 
 ## Development Commands
 
@@ -313,32 +314,3 @@ Key environment variables (see `.env.example`):
 | Dev (Red/Blue/Green/Gold/Pink) | https://tta-smarthub-dev-{color}.app.cloud.gov/ |
 
 Infrastructure is managed via Terraform and deployed to Cloud.gov (see `/docs/guides/infrastructure.md`).
-
-## Agent Working Agreements
-
-### When to Ask Questions
-- Ask for clarification when acceptance criteria are missing, scope is ambiguous, or constraints (performance, security, data size) are unclear.
-- Pause and ask before making broad refactors or touching many files outside the target area.
-
-### Testing Expectations
-- Add or update tests for behavior changes unless the change is purely documentation or formatting.
-- Prefer focused unit/integration tests; add E2E only when the user-facing flow changes.
-- If tests are skipped, note why and suggest follow-up coverage.
-
-### Error Handling & Logging
-- Use consistent error handling patterns in the surrounding code; avoid introducing new styles.
-- Log actionable context (request IDs, relevant entity IDs) without leaking PII.
-
-### Database Changes
-- Always include migrations for schema changes; name them clearly (verb + object).
-- Ensure migrations are reversible; include `down` logic.
-- Avoid relying on seed data in tests; create/destroy test data within tests.
-
-### Safe Defaults
-- Prefer transactions for multi-step writes.
-- Avoid raw SQL unless necessary; use Sequelize scopes/models.
-- Avoid network calls in unit tests; mock external services.
-
-### Release Hygiene
-- Update OpenAPI specs when API shape changes.
-- Update docs/ADRs if a decision or architecture change is introduced.
