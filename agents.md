@@ -22,9 +22,8 @@ The **Office of Head Start TTA Smart Hub** is a full-stack application for manag
 
 ## Code Review Philosophy
 - Start with a brief summary of the modifications and context
-- Focus on actionable and specific feedback
+- Focus on actionable and specific feedback, not pedantic stylistic issues
 - Be concise: prefer one sentence when sufficient, add detail for non-obvious impacts
-- Add more context and explain why only if the impact is not obvious
 - Unless instructed otherwise, focus on correctness, security, operability and performance
 
 ## Code Review Focus Areas
