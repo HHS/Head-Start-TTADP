@@ -8,6 +8,18 @@ import RecipientSpotlightCardsHeader from './RecipientSpotlightCardsHeader';
 import { getPageInfo } from '../../../utils';
 import './RecipientSpotlightDashboardCards.scss';
 
+const hasActiveFilters = (filters, userHasOnlyOneRegion) => {
+  if (!filters || filters.length === 0) return false;
+
+  return filters.some((filter) => {
+    // Non-region filters always count as active
+    if (filter.topic !== 'region') return true;
+
+    // Region filters only count if user has multiple regions
+    return !userHasOnlyOneRegion;
+  });
+};
+
 export default function RecipientSpotlightDashboardCards({
   recipients,
   count,
@@ -16,6 +28,8 @@ export default function RecipientSpotlightDashboardCards({
   handlePageChange,
   perPage,
   perPageChange,
+  filters,
+  userHasOnlyOneRegion,
 }) {
   return (
     <Container
@@ -64,8 +78,12 @@ export default function RecipientSpotlightDashboardCards({
           </>
         ) : (
           <NoResultsFound
-            customMessage="At this time, there are no recipients that have a priority indicator."
-            hideFilterHelp
+            customMessage={
+              hasActiveFilters(filters, userHasOnlyOneRegion)
+                ? undefined
+                : 'At this time, there are no recipients that have a priority indicator.'
+            }
+            hideFilterHelp={!hasActiveFilters(filters, userHasOnlyOneRegion)}
           />
         )}
       </div>
@@ -100,8 +118,20 @@ RecipientSpotlightDashboardCards.propTypes = {
   handlePageChange: PropTypes.func.isRequired,
   perPage: PropTypes.number.isRequired,
   perPageChange: PropTypes.func.isRequired,
+  filters: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    topic: PropTypes.string,
+    condition: PropTypes.string,
+    query: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+      PropTypes.arrayOf(PropTypes.string),
+    ]),
+  })),
+  userHasOnlyOneRegion: PropTypes.bool.isRequired,
 };
 
 RecipientSpotlightDashboardCards.defaultProps = {
   recipients: [],
+  filters: [],
 };

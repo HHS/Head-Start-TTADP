@@ -50,13 +50,49 @@ const createRowForEachIndicator = (name, label, value, description) => ({
   name, label, value, description,
 });
 const mappedData = (data) => ([
-  createRowForEachIndicator('childIncidents', 'Child incidents', data.childIncidents, 'Recipient has experienced more than one child incident cited in a RAN in the last 12 months'),
-  createRowForEachIndicator('deficiency', 'Deficiency', data.deficiency, 'Recipient has at least one active monitoring deficiency'),
-  createRowForEachIndicator('DRS', 'DRS', data.DRS, 'Recipient meets the conditions for the Designation Renewal System (DRS)'),
-  createRowForEachIndicator('FEI', 'FEI', data.FEI, 'Recipient is currently in the Full Enrollment Initiative (FEI)'),
-  createRowForEachIndicator('newRecipients', 'New recipients', data.newRecipients, 'Recipient is in the first 4 years as a Head Start program with no previous OHS grant'),
-  createRowForEachIndicator('newStaff', 'New staff', data.newStaff, 'Recipient has changed the name of the director or fiscal officer within the last two years in HSES, signifying a key hire'),
-  createRowForEachIndicator('noTTA', 'No TTA', data.noTTA, 'Recipient does not have any TTA reports in last 12 months'),
+  createRowForEachIndicator(
+    'childIncidents',
+    'Child incidents',
+    data.childIncidents,
+    'Recipient has experienced more than one child incident cited in a RAN in the last 12 months',
+  ),
+  createRowForEachIndicator(
+    'deficiency',
+    'Deficiency',
+    data.deficiency,
+    'Recipient has at least one active monitoring deficiency',
+  ),
+  // Temporarily hidden - will be added back later
+  // createRowForEachIndicator(
+  //   'DRS',
+  //   'DRS',
+  //   data.DRS,
+  //   'Recipient meets the conditions for the Designation Renewal System (DRS)',
+  // ),
+  // createRowForEachIndicator(
+  //   'FEI',
+  //   'FEI',
+  //   data.FEI,
+  //   'Recipient is currently in the Full Enrollment Initiative (FEI)',
+  // ),
+  createRowForEachIndicator(
+    'newRecipients',
+    'New recipients',
+    data.newRecipients,
+    'Recipient is in the first 4 years as a Head Start program with no previous OHS grant',
+  ),
+  createRowForEachIndicator(
+    'newStaff',
+    'New staff',
+    data.newStaff,
+    'Recipient has changed the name of the director or fiscal officer within the last two years in HSES, signifying a key hire',
+  ),
+  createRowForEachIndicator(
+    'noTTA',
+    'No TTA',
+    data.noTTA,
+    'Recipient does not have any TTA reports in last 12 months',
+  ),
 ]);
 
 export default function RecipientSpotlight({ regionId, recipientId }) {
@@ -126,13 +162,13 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
                   )}
                 <h3 className="margin-0 font-serif-md">{hasIndicators ? 'Recipient may need prioritized attention' : 'No priority indicators identified'}</h3>
               </div>
-              <IndicatorCounter count={numberOfTrueIndicators} totalCount={7} />
+              <IndicatorCounter count={numberOfTrueIndicators} totalCount={5} />
             </div>
           </div>
 
           <div className="display-flex flex-align-center margin-top-1">
             <div className="flex-row">
-              <b><p className="usa-prose margin-0 margin-bottom-2">{`${numberOfTrueIndicators} of 7 priority indicators`}</p></b>
+              <b><p className="usa-prose margin-0 margin-bottom-2">{`${numberOfTrueIndicators} of 5 priority indicators`}</p></b>
               <div>
                 {
                 spotlightData.map((indicator) => (

@@ -16,14 +16,15 @@ const INDICATOR_DETAILS = {
     label: 'Deficiency',
     description: 'Recipient has at least one active monitoring deficiency',
   },
-  DRS: {
-    label: 'DRS',
-    description: 'Recipient meets the conditions for the Designation Renewal System (DRS)',
-  },
-  FEI: {
-    label: 'FEI',
-    description: 'Recipient is currently in the Full Enrollment Initiative (FEI)',
-  },
+  // Temporarily hidden - will be added back later
+  // DRS: {
+  //   label: 'DRS',
+  //   description: 'Recipient meets the conditions for the Designation Renewal System (DRS)',
+  // },
+  // FEI: {
+  //   label: 'FEI',
+  //   description: 'Recipient is currently in the Full Enrollment Initiative (FEI)',
+  // },
   newRecipients: {
     label: 'New recipient',
     description: 'Recipient is in the first 4 years as a Head Start program with no previous OHS grant',
@@ -59,8 +60,9 @@ export default function RecipientSpotlightCard({ recipient }) {
       recip.newRecipients,
       recip.newStaff,
       recip.noTTA,
-      recip.DRS,
-      recip.FEI,
+      // Temporarily hidden - will be added back later
+      // recip.DRS,
+      // recip.FEI,
     ];
     return indicators.filter(Boolean).length;
   };
@@ -141,7 +143,7 @@ export default function RecipientSpotlightCard({ recipient }) {
             <div className="margin-top-0">
               <IndicatorCounter
                 count={activeCount}
-                totalCount={7}
+                totalCount={5}
                 showCountInline
                 noTopMargin
               />
@@ -157,6 +159,7 @@ export default function RecipientSpotlightCard({ recipient }) {
               expanded={expanded}
               pluralize
               showCount={false}
+              allowZeroCount
             />
           </div>
         </div>

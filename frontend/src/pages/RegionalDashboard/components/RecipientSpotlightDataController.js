@@ -20,6 +20,7 @@ import RecipientSpotlightDashboardCards from './RecipientSpotlightDashboardCards
 export default function RecipientSpotlightDataController({
   filters,
   regionId,
+  userHasOnlyOneRegion,
 }) {
   // Page Behavior
   const [recipientsPerPage, setRecipientsPerPage] = useState(RECIPIENTS_SPOTLIGHT_PER_PAGE);
@@ -29,8 +30,8 @@ export default function RecipientSpotlightDataController({
   const { filterKey } = useContext(FilterContext);
 
   const defaultSort = {
-    sortBy: 'recipientName',
-    direction: 'asc',
+    sortBy: 'indicatorCount',
+    direction: 'desc',
   };
 
   // Grid and Paging
@@ -156,6 +157,8 @@ export default function RecipientSpotlightDataController({
             handlePageChange={handlePageChange}
             perPage={recipientsPerPage}
             perPageChange={perPageChange}
+            filters={filters}
+            userHasOnlyOneRegion={userHasOnlyOneRegion}
           />
         </Grid>
       </Grid>
@@ -174,9 +177,11 @@ RecipientSpotlightDataController.propTypes = {
       PropTypes.arrayOf(PropTypes.string),
     ]),
   })),
-  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  userHasOnlyOneRegion: PropTypes.bool.isRequired,
 };
 
 RecipientSpotlightDataController.defaultProps = {
   filters: [],
+  regionId: undefined,
 };
