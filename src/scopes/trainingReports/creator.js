@@ -1,16 +1,14 @@
 /* eslint-disable import/prefer-default-export */
-import { filterAssociation } from './utils';
+import { Op } from 'sequelize';
+import { sequelize } from '../../models';
 
-const creators = `
-SELECT
- DISTINCT erp."id"
-FROM "NationalCenters" "NationalCenters"
-INNER JOIN "NationalCenterUsers" "NationalCenterUsers"
-ON "NationalCenters".id = "NationalCenterUsers"."nationalCenterId"
-INNER JOIN "EventReportPilots" erp
-ON erp."ownerId"="NationalCenterUsers"."userId"
-WHERE "NationalCenters"."name"`;
+export function withCreators(userIds) {
+  const userIdsAsNumbers = userIds.filter((id) => !Number.isNaN(id)).map((id) => Number(id));
 
-export function withCreators(names) {
-  return filterAssociation(creators, names, false, 'ILIKE');
+  return sequelize.where(
+    sequelize.col('"EventReportPilot".ownerId'),
+    {
+      [Op.in]: userIdsAsNumbers,
+    },
+  );
 }

@@ -22,6 +22,25 @@ type WhereOptions = {
   data?: unknown;
 };
 
+const userInclude = (as: string) => ({
+  model: db.User,
+  as,
+  attributes: [
+    'fullName',
+    'name',
+    'id',
+  ],
+  include: [
+    {
+      model: db.Role,
+      as: 'roles',
+      attributes: [
+        'name',
+      ],
+    },
+  ],
+});
+
 const updateSessionReportRelatedModels = async (
   sessionReportId: number,
   joinTableModel: typeof SessionReportPilotGoalTemplate,
@@ -129,6 +148,25 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       },
       {
         model: db.User,
+        as: 'trainers',
+        attributes: [
+          'fullName',
+          'name',
+          'id',
+        ],
+        include: [
+          {
+            model: db.Role,
+            as: 'roles',
+            attributes: [
+              'name',
+            ],
+          },
+        ],
+        through: { attributes: [] }, // exclude join table attributes
+      },
+      {
+        model: db.User,
         as: 'approver',
         attributes: [
           'fullName',
@@ -184,6 +222,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     approver: session?.approver ?? null,
     submitted: session?.submitted ?? false,
     submitterId: session?.submitterId ?? null,
+    trainers: session?.trainers ?? [],
   };
 }
 
@@ -268,12 +307,23 @@ export async function updateSession(id: number, request) {
     },
   );
 
-  await updateSessionReportRelatedModels(
-    id,
-    SessionReportPilotGoalTemplate,
-    'goalTemplateId',
-    (goalTemplates || []).map((template: { id: number }) => template.id),
-  );
+  if (goalTemplates) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotGoalTemplate,
+      'goalTemplateId',
+      goalTemplates.map((template: { id: number }) => template.id),
+    );
+  }
+
+  if (trainers) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotTrainer,
+      'userId',
+      trainers.map((trainer: { id: number }) => trainer.id),
+    );
+  }
 
   if (trainers) {
     await updateSessionReportRelatedModels(
