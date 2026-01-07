@@ -115,7 +115,7 @@ In short:
 
 #### Goal Create flow diagram
 
-[`monitoring-goal-create-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/monitoring-goal-create-flow.puml)
+[`monitoring-goal-create-flow.md`](flow-diagrams/monitoring-goal-create-flow.md)
 
 ### When Monitoring Goals Are Reopened
 ---------------------------------
@@ -132,7 +132,7 @@ In short:
 
 #### Goal Reopening flow diagram
 
-[`monitoring-goal-reopen-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/monitoring-goal-reopen-flow.puml)
+[`monitoring-goal-reopen-flow.md`](flow-diagrams/monitoring-goal-reopen-flow.md)
 
 ---
 
@@ -164,7 +164,7 @@ In short:
 
 ## Import Flow Diagram
 
-[`monitoring-import-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/monitoring-import-flow.puml)
+[`monitoring-import-flow.md`](flow-diagrams/monitoring-import-flow.md)
 
 ---
 
@@ -172,11 +172,11 @@ In short:
 
 ### Monitoring Feature ERD
 
-Included in [`monitoring-erd.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/monitoring-erd.puml)
+Included in [`monitoring-erd.md`](monitoring-erd.md)
 
 ### Import System ERD
 
-Included in [`import-erd.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/import-erd.puml)
+Included in [`import-erd.md`](import-erd.md)
 
 ---
 
@@ -223,7 +223,7 @@ Note: You must be logged into the production environment for this to work on rea
 
 ### Manual Import Flow Diagram
 
-[`manual-monitoring-import-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/manual-monitoring-import-flow.puml)
+[`manual-monitoring-import-flow.md`](flow-diagrams/manual-monitoring-import-flow.md)
 
 ### Triggering Imports via Queued Background Jobs
 While the import system is usually triggered directly, it also supports background job queuing using Bull.
@@ -235,4 +235,4 @@ These enqueue jobs to be picked up by a queue worker running the appropriate log
 
 ### Queued Import Flow Diagram
 
-[`queued-monitoring-import-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/queued-monitoring-import-flow.puml)
+[`queued-monitoring-import-flow.md`](flow-diagrams/queued-monitoring-import-flow.md)

@@ -144,4 +144,4 @@ A: The intent is for citations to be available to select within the time period 
 
 ## 📎 Additional Documentation
 For developer details, see: [Technical Documentation](monitoring-tech.md)
-For diagram, see [High Level Diagram](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/sequence-diagrams/data-ingestion-monitoring-goal.puml)
+For diagram, see [High Level Diagram](sequence-diagrams/data-ingestion-monitoring-goal.md)
