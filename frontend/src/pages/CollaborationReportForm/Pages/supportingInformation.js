@@ -270,7 +270,6 @@ export const isPageComplete = (hookForm) => {
     hasGoals,
     goals,
   } = formData;
-  console.log('supp info formData:', formData);
 
   // Check if participants is provided
   if (!participants || participants.length === 0) {

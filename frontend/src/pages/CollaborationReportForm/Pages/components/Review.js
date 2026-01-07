@@ -9,6 +9,7 @@ import UserContext from '../../../../UserContext';
 import IndicatesRequiredField from '../../../../components/IndicatesRequiredField';
 import ApproverReview from './ApproverReview';
 import CreatorSubmit from './CreatorSubmit';
+import { draftValuesPropType } from './constants';
 
 const TopAlert = ({
   author,
@@ -110,6 +111,7 @@ const Review = ({
   onSaveForm,
   onUpdatePage,
   onSaveDraft,
+  draftValues,
   onSubmit,
   isNeedsAction,
   pendingApprovalCount,
@@ -194,6 +196,7 @@ const Review = ({
         onSaveForm={onSaveForm}
         onUpdatePage={onUpdatePage}
         onSaveDraft={onSaveDraft}
+        draftValues={draftValues}
         onSubmit={onSubmit}
       />
     </>
@@ -229,6 +232,7 @@ Review.propTypes = {
   onUpdatePage: PropTypes.func.isRequired,
   onSaveForm: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  draftValues: draftValuesPropType.isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
   author: PropTypes.shape({
     fullName: PropTypes.string,

@@ -3,11 +3,14 @@ import {
   Form,
   Fieldset,
   Button,
+  Alert,
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import IncompletePages from '../../../../components/IncompletePages';
 import FormItem from '../../../../components/FormItem';
 import ApproverSelect from '../../../ActivityReport/Pages/Review/Submitter/components/ApproverSelect';
+import DismissingComponentWrapper from '../../../../components/DismissingComponentWrapper';
+
 import { reviewPageDefaultProps, reviewPagePropType } from './constants';
 import CreatorNeedsAction from './CreatorNeedsAction';
 
@@ -32,8 +35,27 @@ export default function CreatorSubmit({
   thisApprovingManager,
   approverStatusList,
   onSubmit,
+  draftValues,
 }) {
   const { handleSubmit } = useFormContext();
+  const { showSavedDraft, updateShowSavedDraft, lastSaveTime } = draftValues;
+
+  const DraftAlert = () => (
+    <DismissingComponentWrapper
+      shown={showSavedDraft}
+      updateShown={updateShowSavedDraft}
+      hideFromScreenReader={false}
+    >
+      {lastSaveTime && (
+      <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
+        Draft saved on
+        {' '}
+        {/* eslint-disable-next-line react/prop-types */}
+        {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+      </Alert>
+      )}
+    </DismissingComponentWrapper>
+  );
 
   if (isNeedsAction) {
     return (
@@ -80,6 +102,8 @@ export default function CreatorSubmit({
           </Fieldset>
         </div>
         )}
+
+        <DraftAlert />
 
         <Button type="submit">Submit for approval</Button>
         <Button id={`draft-${path}-save-draft`} className="usa-button--outline" type="button" onClick={() => onSaveDraft()}>Save draft</Button>
