@@ -287,9 +287,7 @@ export async function getSessionReports(
 
   // Use the requested sort column or default to id descending
   const sortEntry = sortMap[sortBy] || sortMap.id;
-  const orderClause = sortEntry.length === 1
-    ? [[sortEntry[0], sortDir.toUpperCase()]]
-    : [[sortEntry[0], sortEntry[1], sortDir.toUpperCase()]];
+  const orderClause = [[...sortEntry, sortDir]];
 
   // Get scopes from filters
   const { trainingReport: trainingReportScopes } = await filtersToScopes(filterParams, {});
