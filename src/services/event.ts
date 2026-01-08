@@ -147,6 +147,25 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
               },
             },
           },
+          {
+            required: false,
+            model: User,
+            as: 'trainers',
+            attributes: [
+              'fullName',
+              'name',
+              'id',
+            ],
+            include: [
+              {
+                model: db.Role,
+                as: 'roles',
+                attributes: [
+                  'name',
+                ],
+              },
+            ],
+          },
         ],
         attributes: INCLUDED_SESSION_ATTRIBUTES,
         as: 'sessionReports',
