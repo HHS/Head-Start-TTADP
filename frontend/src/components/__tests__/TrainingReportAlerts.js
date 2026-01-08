@@ -490,6 +490,53 @@ describe('TrainingReportAlerts', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Test Event')).toBeInTheDocument();
+      expect(screen.getByText('--')).toBeInTheDocument();
+    });
+  });
+
+  it('displays approver name with icon for waitingForApproval', async () => {
+    const alerts = [
+      {
+        id: 1,
+        eventId: 'R01-PD-12345',
+        eventName: 'Test Event',
+        sessionName: 'Session 1',
+        alertType: 'waitingForApproval',
+        approverName: 'Approver User',
+        collaboratorNames: [],
+        submitterId: 1,
+        approverId: 2,
+      },
+    ];
+
+    renderComponent(alerts);
+
+    await waitFor(() => {
+      expect(screen.getByText('Approver User')).toBeInTheDocument();
+      expect(document.querySelector('.fa-clock')).toBeTruthy();
+    });
+  });
+
+  it('displays approver name with icon for changesNeeded', async () => {
+    const alerts = [
+      {
+        id: 1,
+        eventId: 'R01-PD-12345',
+        eventName: 'Test Event',
+        sessionName: 'Session 1',
+        alertType: 'changesNeeded',
+        approverName: 'Approver User',
+        collaboratorNames: [],
+        submitterId: 1,
+        approverId: 2,
+      },
+    ];
+
+    renderComponent(alerts);
+
+    await waitFor(() => {
+      expect(screen.getByText('Approver User')).toBeInTheDocument();
+      expect(document.querySelector('.fa-circle-exclamation')).toBeTruthy();
     });
   });
 });

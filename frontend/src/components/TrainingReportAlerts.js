@@ -10,6 +10,7 @@ import { hasTrainingReportWritePermissions } from '../permissions';
 import { getEventAlerts } from '../fetchers/event';
 import WidgetContainer from './WidgetContainer';
 import SimpleSortableTable from './SimpleSortableTable';
+import { NeedsActionIcon, PendingApprovalIcon } from './icons';
 import './TrainingReportAlerts.css';
 
 const idForLink = (eventId) => eventId.split('-').pop();
@@ -21,6 +22,27 @@ const ACTIONS_NEEDED = {
   eventNotCompleted: (alert) => <><Link to={`/training-report/view/${idForLink(alert.eventId)}`} data-sort="event-not-completed">Event not completed</Link></>,
   waitingForApproval: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/review`} data-sort="waiting-for-approval">Waiting for approval</Link></>,
   changesNeeded: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/session-summary`} data-sort="changes-needed">Changes needed</Link></>,
+};
+
+const STATUS_ICONS = {
+  waitingForApproval: <PendingApprovalIcon />,
+  changesNeeded: <NeedsActionIcon />,
+};
+
+const APPROVAL_TAG = (
+  approverName,
+  alertType,
+) => {
+  if (!approverName) {
+    return '--';
+  }
+
+  return (
+    <>
+      {STATUS_ICONS[alertType] || null}
+      {approverName}
+    </>
+  );
 };
 
 export default function TrainingReportAlerts() {
@@ -66,7 +88,7 @@ export default function TrainingReportAlerts() {
     eventId: alert.eventId,
     eventName: alert.eventName,
     collaborators: alert.collaboratorNames ? alert.collaboratorNames.join(', ') : '--',
-    approver: alert.approverName || '--',
+    approver: APPROVAL_TAG(alert.approverName, alert.alertType),
     actionNeeded: ACTIONS_NEEDED[alert.alertType] ? ACTIONS_NEEDED[alert.alertType](alert) : '',
     id: alert.id,
   }));
