@@ -33,15 +33,15 @@ const TopAlert = ({
       .map((a) => a.user.fullName);
 
     if (approverNames.length === 0) {
-      return 'Changes have been requested for the Collaboration Report.';
+      return 'Changes have been requested for this Collaboration Report.';
     }
 
     if (approverNames.length === 1) {
-      return `${approverNames[0]} is requesting changes to the Collaboration Report.`;
+      return `${approverNames[0]} is requesting changes to this Collaboration Report.`;
     }
 
     if (approverNames.length === 2) {
-      return `${approverNames[0]} and ${approverNames[1]} are requesting changes to the Collaboration Report.`;
+      return `${approverNames[0]} and ${approverNames[1]} are requesting changes to this Collaboration Report.`;
     }
 
     // Multiple approvers (3 or more) - use Oxford comma
