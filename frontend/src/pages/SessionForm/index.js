@@ -453,11 +453,13 @@ export default function SessionForm({ match }) {
           };
         }
 
+        const status = formData.status || TRAINING_REPORT_STATUSES.IN_PROGRESS;
+
         // PUT it to the backend
         const updatedSession = await updateSession(sessionId, {
           data: {
             ...roleData,
-            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+            status,
           },
           trainingReportId,
           eventId: trainingReportId || null,
