@@ -299,7 +299,7 @@ describe('Review Component', () => {
       });
 
       // Should still render the alert even if some approvers don't have user data
-      expect(screen.getByText(/Changes have been requested for the Collaboration Report/)).toBeInTheDocument();
+      expect(screen.getByText(/Changes have been requested for this Collaboration Report/)).toBeInTheDocument();
     });
   });
 

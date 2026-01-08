@@ -50,7 +50,7 @@ const TopAlert = ({
     return `${otherApprovers}, and ${lastApprover} are requesting changes to the Collaboration Report.`;
   };
 
-  const isApprover = approvers && approvers.some((a) => a.user.fullName === user.fullName);
+  const isApprover = approvers && approvers.some((a) => a.user?.fullName === user.fullName);
 
   if (isNeedsAction && !isApprover) {
     return (
