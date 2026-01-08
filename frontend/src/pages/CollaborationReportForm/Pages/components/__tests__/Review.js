@@ -190,7 +190,7 @@ describe('Review Component', () => {
         approvers: needsActionApprovers,
       });
 
-      expect(screen.getByText(/Manager One and Manager Two are requesting changes to the Collaboration Report/)).toBeInTheDocument();
+      expect(screen.getByText(/Manager One and Manager Two are requesting changes to this Collaboration Report/)).toBeInTheDocument();
       expect(screen.getByText(/Please review any manager notes below and resubmit for approval/)).toBeInTheDocument();
     });
 
@@ -295,6 +295,7 @@ describe('Review Component', () => {
         isSubmitted: true,
         isNeedsAction: true,
         approvers: incompleteApprovers,
+        user: { fullName: 'Some User' },
       });
 
       // Should still render the alert even if some approvers don't have user data
@@ -334,7 +335,7 @@ describe('Review Component', () => {
         approvers,
       });
 
-      expect(screen.getByText(/Single Manager is requesting changes to the Collaboration Report/)).toBeInTheDocument();
+      expect(screen.getByText(/Single Manager is requesting changes to this Collaboration Report/)).toBeInTheDocument();
     });
   });
 });
