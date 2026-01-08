@@ -1,6 +1,6 @@
 get:
   tags:
-    - session-reports
+    - session report
   description: Retrieves session reports with pagination, sorting, and filtering
   parameters:
     - in: query
