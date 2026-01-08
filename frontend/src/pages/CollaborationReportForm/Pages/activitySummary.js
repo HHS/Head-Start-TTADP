@@ -313,7 +313,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="false"
             label="Regional"
             className="smart-hub--report-checkbox"
-            inputRef={register({ required: 'Select one' })}
+            inputRef={register({ required: 'Select an activity type' })}
             required
           />
           <Radio
@@ -322,7 +322,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="true"
             label="State"
             className="smart-hub--report-checkbox"
-            inputRef={register({ required: 'Select one' })}
+            inputRef={register({ required: 'Select an activity type' })}
           />
         </FormItem>
       </Fieldset>
