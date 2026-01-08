@@ -96,7 +96,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
             rules={{
               validate: (value) => {
                 if (!value.length) {
-                  return 'Select at least one participant';
+                  return 'Select at least one';
                 }
                 return true;
               },
@@ -165,7 +165,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
               rules={{
                 validate: (value) => {
                   if (!value.length) {
-                    return 'Select at least one data type';
+                    return 'Select at least one';
                   }
                   return true;
                 },
@@ -236,7 +236,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
               rules={{
                 validate: (value) => {
                   if (!value.length) {
-                    return 'Select at least one goal';
+                    return 'Select at least one';
                   }
                   return true;
                 },

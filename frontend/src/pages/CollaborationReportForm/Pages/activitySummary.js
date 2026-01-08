@@ -53,6 +53,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const drawerTriggerRef = useRef(null);
 
   const [descriptionError, setDescriptionError] = React.useState('');
+  const [reasonError, setReasonError] = React.useState('');
 
   const checkForDescription = (el) => {
     const { value } = el.target;
@@ -60,6 +61,15 @@ const ActivitySummary = ({ collaborators = [] }) => {
       setDescriptionError('Enter activity description');
     } else {
       setDescriptionError('');
+    }
+  };
+
+  const checkForReasons = () => {
+    const reasons = watch('reportReasons');
+    if (!reasons || reasons.length === 0) {
+      setReasonError('Select at least one reason');
+    } else {
+      setReasonError('');
     }
   };
 
@@ -85,6 +95,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             inputRef={register({
               required: 'Enter activity name',
             })}
+            required
           />
         </FormItem>
         <div className="margin-y-2">
@@ -201,6 +212,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
           label="What was the purpose for participating in this activity?"
           name="reportReasons"
           required
+          className={reasonError ? 'usa-form-group--error' : ''}
         >
           <DrawerTriggerButton className="margin-top-2" drawerTriggerRef={drawerTriggerRef}>
             Get help choosing a purpose
@@ -258,6 +270,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="participate_work_groups"
             label="Participate in national, regional, state, and local work groups and meetings"
             inputRef={register({ required: 'Select at least one' })}
+            onBlur={checkForReasons}
           />
           <Checkbox
             className="margin-top-2"
@@ -266,6 +279,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="support_coordination"
             label="Support partnerships, coordination, and collaboration with state/regional partners"
             inputRef={register({ required: 'Select at least one' })}
+            onBlur={checkForReasons}
           />
           <Checkbox
             className="margin-top-2"
@@ -274,6 +288,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="agg_regional_data"
             label="Aggregate, analyze, and/or present regional data"
             inputRef={register({ required: 'Select at least one' })}
+            onBlur={checkForReasons}
           />
           <Checkbox
             className="margin-top-2"
@@ -282,6 +297,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="develop_presentations"
             label="Develop and provide presentations, training, and resources to RO and/or state/regional partners"
             inputRef={register({ required: 'Select at least one' })}
+            onBlur={checkForReasons}
           />
         </FormItem>
       </Fieldset>
@@ -372,7 +388,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             rules={{
               validate: (value) => {
                 if (!value) {
-                  return 'Select a reason why this activity was requested';
+                  return 'Select how the activity was conducted';
                 }
                 return true;
               },
