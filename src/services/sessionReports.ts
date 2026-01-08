@@ -1,19 +1,70 @@
-import { cast, Op } from 'sequelize';
+import {
+  cast, Op, Sequelize, Model,
+} from 'sequelize';
 import { Cast } from 'sequelize/types/utils';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
-import { auditLogger } from '../logger';
 
 const {
   SessionReportPilot,
   EventReportPilot,
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
+  SessionReportPilotGoalTemplate,
+  SessionReportPilotTrainer,
 } = db;
 
-export const validateFields = (request, requiredFields) => {
+type WhereOptions = {
+  id?: number;
+  eventId?: number;
+  data?: unknown;
+};
+
+const updateSessionReportRelatedModels = async (
+  sessionReportId: number,
+  joinTableModel: typeof SessionReportPilotGoalTemplate,
+  relatedModelForeignKey: string,
+  relatedModelForeignKeyIds: number[],
+) => {
+  // First, remove any existing associations not in the new list.
+  await joinTableModel.destroy({
+    where: {
+      sessionReportPilotId: sessionReportId,
+      [relatedModelForeignKey]: { [Op.notIn]: relatedModelForeignKeyIds },
+    },
+  });
+
+  // Next, add new associations.
+  const existingAssociations = await joinTableModel.findAll({
+    attributes: ['id', relatedModelForeignKey],
+    where: {
+      sessionReportPilotId: sessionReportId,
+      [relatedModelForeignKey]: { [Op.in]: relatedModelForeignKeyIds },
+    },
+  });
+
+  const existingForeignKeyIds = existingAssociations.map(
+    (assoc: { [key: string]: number }) => assoc[relatedModelForeignKey],
+  );
+
+  const newAssociations = relatedModelForeignKeyIds
+    .filter((key) => !existingForeignKeyIds.includes(key))
+    .map((key) => ({
+      sessionReportPilotId: sessionReportId,
+      [relatedModelForeignKey]: key,
+    }));
+
+  if (newAssociations.length > 0) {
+    await joinTableModel.bulkCreate(
+      newAssociations,
+      { individualHooks: true, ignoreDuplicates: true },
+    );
+  }
+};
+
+export const validateFields = (request, requiredFields: string[]) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
 
   if (missingFields.length) {
@@ -37,12 +88,6 @@ export async function destroySession(id: number): Promise<void> {
   // Delete session.
   await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
-
-type WhereOptions = {
-  id?: number;
-  eventId?: number;
-  data?: unknown;
-};
 
 // eslint-disable-next-line max-len
 export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
@@ -71,6 +116,34 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       {
         model: db.File,
         as: 'supportingAttachments',
+      },
+      {
+        model: db.GoalTemplate,
+        as: 'goalTemplates',
+        attributes: [
+          'id',
+          'standard',
+        ],
+        through: { attributes: [] }, // exclude join table attributes
+      },
+      {
+        model: db.User,
+        as: 'trainers',
+        attributes: [
+          'fullName',
+          'name',
+          'id',
+        ],
+        include: [
+          {
+            model: db.Role,
+            as: 'roles',
+            attributes: [
+              'name',
+            ],
+          },
+        ],
+        through: { attributes: [] }, // exclude join table attributes
       },
       {
         model: db.User,
@@ -122,18 +195,23 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     data: session?.data ?? {},
     files: session?.files ?? [],
     supportingAttachments: session?.supportingAttachments ?? [],
+    goalTemplates: session?.goalTemplates ?? [],
     updatedAt: session?.updatedAt,
     event: session?.event,
     approverId: session?.approverId ?? null,
     approver: session?.approver ?? null,
     submitted: session?.submitted ?? false,
+    trainers: session?.trainers ?? [],
   };
 }
 
 export async function createSession(request) {
   validateFields(request, ['eventId', 'data']);
 
-  const { eventId, data } = request;
+  const {
+    eventId,
+    data,
+  } = request;
 
   const event = await findEventByDbId(eventId);
 
@@ -166,7 +244,14 @@ export async function updateSession(id: number, request) {
 
   validateFields(request, ['eventId', 'data']);
 
-  const { eventId, data: { approverId, ...data } } = request;
+  const {
+    eventId, data: {
+      approverId,
+      goalTemplates,
+      trainers,
+      ...data
+    },
+  } = request;
 
   // Combine existing session data with new data.
   const existingData = session.data;
@@ -194,6 +279,24 @@ export async function updateSession(id: number, request) {
       individualHooks: true,
     },
   );
+
+  if (goalTemplates) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotGoalTemplate,
+      'goalTemplateId',
+      goalTemplates.map((template: { id: number }) => template.id),
+    );
+  }
+
+  if (trainers) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotTrainer,
+      'userId',
+      trainers.map((trainer: { id: number }) => trainer.id),
+    );
+  }
 
   return findSessionHelper({ id }) as Promise<SessionReportShape>;
 }

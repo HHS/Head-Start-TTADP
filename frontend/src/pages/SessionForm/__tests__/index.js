@@ -27,7 +27,7 @@ const istAndPocFields = {
   context: 'test context',
   objective: 'test objective',
   objectiveTopics: ['topic'],
-  objectiveTrainers: ['DTL'],
+  trainers: [{ id: 1, fullName: 'Trainer 1, NC' }],
   useIpdCourses: true,
   courses: [],
   objectiveResources: [],
@@ -63,7 +63,7 @@ const istAndPocFields = {
   },
   'pageVisited-supporting-attachments': false,
   facilitation: 'national_center',
-  sessionGoalTemplates: [],
+  goalTemplates: [],
   approverId: null,
   additionalNotes: '',
   managerNotes: '',
@@ -539,7 +539,7 @@ describe('SessionReportForm', () => {
           context: 'test context',
           objective: 'test objective',
           objectiveTopics: ['topic'],
-          objectiveTrainers: ['DTL'],
+          trainers: [{ id: 1, fullName: 'Trainer, NC' }],
           numberOfParticipants: 1,
           deliveryMethod: 'In-person',
           language: ['English'],
@@ -614,7 +614,7 @@ describe('SessionReportForm', () => {
           context: 'test context',
           objective: 'test objective',
           objectiveTopics: ['topic'],
-          objectiveTrainers: ['DTL'],
+          trainers: [{ id: 1, fullName: 'Trainer, NC' }],
           numberOfParticipants: 1,
           deliveryMethod: 'In-person',
           language: ['English'],
@@ -968,7 +968,7 @@ describe('SessionReportForm', () => {
     // Assert history.push was called with correct path and message object
     expect(pushSpy).toHaveBeenCalledWith('/training-reports/in-progress', {
       message: expect.objectContaining({
-        isSession: true,
+        messageTemplate: 'sessionCreated',
         sessionName: 'Test Session Name',
         eventId: 'R01-PD-1234',
         dateStr: expect.stringMatching(/\d{2}\/\d{2}\/\d{4} at \d{1,2}:\d{2} [ap]m/),
@@ -1164,7 +1164,12 @@ describe('SessionReportForm', () => {
       // Verify navigation with success message
       await waitFor(() => expect(historySpy).toHaveBeenCalled());
       expect(historySpy).toHaveBeenCalledWith('/training-reports/in-progress', {
-        message: 'You successfully submitted the session.',
+        message: {
+          dateStr: expect.any(String),
+          eventId: '1',
+          messageTemplate: 'sessionReviewSubmitted',
+          sessionName: 'Test Session',
+        },
       });
 
       // Verify no error message is displayed
@@ -1266,7 +1271,12 @@ describe('SessionReportForm', () => {
       // Verify navigation with success message
       await waitFor(() => expect(historySpy).toHaveBeenCalled());
       expect(historySpy).toHaveBeenCalledWith('/training-reports/in-progress', {
-        message: 'You successfully submitted the session.',
+        message: {
+          dateStr: expect.any(String),
+          eventId: '1',
+          messageTemplate: 'sessionReviewSubmitted',
+          sessionName: 'Test Session Needs Action',
+        },
       });
     });
 
