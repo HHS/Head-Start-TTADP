@@ -390,7 +390,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
         </Label>
 
         {descriptionError && (
-        <span className="usa-error-message" role="alert">Enter description</span>
+        <span className="usa-error-message" role="alert">Describe the activity</span>
         )}
 
         <Textarea
