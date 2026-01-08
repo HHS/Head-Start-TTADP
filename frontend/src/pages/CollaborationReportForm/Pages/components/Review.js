@@ -13,6 +13,7 @@ import { draftValuesPropType } from './constants';
 
 const TopAlert = ({
   author,
+  user,
   isNeedsAction,
   pendingApprovalCount,
   approvers,
@@ -49,7 +50,9 @@ const TopAlert = ({
     return `${otherApprovers}, and ${lastApprover} are requesting changes to the Collaboration Report.`;
   };
 
-  if (isNeedsAction) {
+  const isApprover = approvers && approvers.some((a) => a.user.fullName === user.fullName);
+
+  if (isNeedsAction && !isApprover) {
     return (
       <Alert type="error" noIcon slim className="margin-bottom-4 no-print">
         <span className="text-bold">
@@ -85,6 +88,9 @@ const TopAlert = ({
 
 TopAlert.propTypes = {
   author: PropTypes.shape({
+    fullName: PropTypes.string,
+  }).isRequired,
+  user: PropTypes.shape({
     fullName: PropTypes.string,
   }).isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
@@ -158,6 +164,7 @@ const Review = ({
         pendingApprovalCount={pendingApprovalCount}
         isNeedsAction={isNeedsAction}
         author={author}
+        user={user}
         approvers={approvers}
       />
       )}
