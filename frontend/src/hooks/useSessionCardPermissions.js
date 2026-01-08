@@ -33,6 +33,7 @@ export default function useSessionCardPermissions({
     // eslint-disable-next-line max-len
     const isRegionalWithNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
     const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
+    const facilitationIsNationalCenters = facilitation === 'national_center';
 
     // Admin override - can edit until event is complete
     if (isAdminUser) {
@@ -66,6 +67,10 @@ export default function useSessionCardPermissions({
         return false;
       }
       if (pocComplete && !statusIsNeedsAction) {
+        return false;
+      }
+
+      if (facilitationIsNationalCenters && statusIsNeedsAction) {
         return false;
       }
     }

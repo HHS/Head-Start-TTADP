@@ -97,6 +97,7 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
+            facilitation: 'regional_tta_staff',
             status: REPORT_STATUSES.NEEDS_ACTION,
             collabComplete: true,
             pocComplete: true,
@@ -244,6 +245,29 @@ describe('useSessionCardPermissions', () => {
         ...baseProps,
         isPoc: true,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(false);
+    });
+
+    it('returns false when POC with Regional PD with National Centers and NEEDS_ACTION status', () => {
+      const props = {
+        ...baseProps,
+        isPoc: true,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            facilitation: 'national_center',
+            status: REPORT_STATUSES.NEEDS_ACTION,
+          },
+        },
       };
 
       const { result } = renderHook(() => useSessionCardPermissions(props), {
