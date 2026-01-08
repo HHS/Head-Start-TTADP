@@ -232,7 +232,7 @@ function CollaborationReport({ match, location }) {
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
   // reset and the proper values are placed inside inputs
   useDeepCompareEffect(() => {
-    hookForm.reset(formData);
+    hookForm.reset(formData, { errors: true });
   }, [currentPage, formData, hookForm.reset]);
 
   useDeepCompareEffect(() => {
