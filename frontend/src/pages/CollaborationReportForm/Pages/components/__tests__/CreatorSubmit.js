@@ -89,6 +89,7 @@ describe('CreatorSubmit Component', () => {
     ],
     onUpdatePage: jest.fn(),
     onSaveDraft: jest.fn(),
+    draftValues: {},
     onSubmit: jest.fn(),
     isNeedsAction: false,
     dateSubmitted: null,

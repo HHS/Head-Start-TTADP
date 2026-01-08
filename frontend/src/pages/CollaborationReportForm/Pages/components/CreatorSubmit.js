@@ -35,7 +35,7 @@ export default function CreatorSubmit({
   thisApprovingManager,
   approverStatusList,
   onSubmit,
-  draftValues,
+  draftValues = {},
 }) {
   const { handleSubmit } = useFormContext();
   const { showSavedDraft, updateShowSavedDraft, lastSaveTime } = draftValues;
