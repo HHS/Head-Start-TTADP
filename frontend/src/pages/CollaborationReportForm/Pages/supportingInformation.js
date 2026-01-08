@@ -315,8 +315,10 @@ const ReviewSection = () => {
   const {
     participants,
     otherParticipants,
+    hasDataUsed,
     dataUsed,
     otherDataUsed,
+    hasGoals,
     goals,
   } = watch();
 
@@ -337,6 +339,8 @@ const ReviewSection = () => {
     if (dataUsed.some((d) => d.value === 'other') && otherDataUsed) {
       dataToDisplay += `: ${otherDataUsed}`;
     }
+  } else if (hasDataUsed === null) {
+    dataToDisplay = 'None provided';
   } else {
     dataToDisplay = 'None';
   }
@@ -344,6 +348,8 @@ const ReviewSection = () => {
   let goalsToDisplay = '';
   if (goals && goals.length > 0) {
     goalsToDisplay = goals.map((g) => g.label).join(', ');
+  } else if (hasGoals === null) {
+    goalsToDisplay = 'None provided';
   } else {
     goalsToDisplay = 'None';
   }
