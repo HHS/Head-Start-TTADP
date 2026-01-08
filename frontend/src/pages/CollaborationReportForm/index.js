@@ -316,7 +316,8 @@ function CollaborationReport({ match, location }) {
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
           || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
         const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
-          report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+          report.calculatedStatus === REPORT_STATUSES.SUBMITTED
+          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION)
         );
 
         updateAdditionalData({
