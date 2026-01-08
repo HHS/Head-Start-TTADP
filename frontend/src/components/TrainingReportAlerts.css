@@ -7,6 +7,10 @@
     container-type: inline-size;
 }
 
+.ttahub-training-report-alerts th button {
+    padding: 0;
+}
+
 /* Just to match the mockup, with the overflowing text */
 .ttahub-training-report-alerts td {
     overflow-x: hidden;
