@@ -1,6 +1,10 @@
-# CLAUDE.md
+# agents.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides general guidance to all agentic coding assistants.
+
+## Personal Customization
+
+For personal instructions or modifications specific to Claude, create a `CLAUDE-mine.md` file in the repository root. This file is gitignored and will be automatically included by Claude Code.
 
 ## Project Overview
 
@@ -8,12 +12,43 @@ The **Office of Head Start TTA Smart Hub** is a full-stack application for manag
 
 ## Tech Stack
 
-- **Backend**: Node.js 20.19.3, Express, TypeScript
-- **Frontend**: React 17, USWDS (U.S. Web Design System)
+- **Backend**: Node.js 20.x, Express, TypeScript
+- **Frontend**: React 17.x, USWDS (U.S. Web Design System)
 - **Database**: PostgreSQL via Sequelize ORM
 - **Queue**: Redis + Bull for background job processing
 - **Testing**: Jest (backend & frontend), Playwright (E2E), Cucumber (BDD)
-- **Infrastructure**: Cloud.gov, Docker for local development
+- **Infrastructure**: Cloud Foundry, Cloud.gov, CircleCI
+- **Local Development**: Docker
+
+## Agent Working Agreements
+
+### When to Ask Questions
+- Ask for clarification when acceptance criteria are missing, scope is ambiguous, or constraints (performance, security, data size) are unclear.
+- Pause and ask before making broad refactors or touching many files outside the target area.
+
+### Testing Expectations
+- Add or update tests for behavior changes unless the change is purely documentation or formatting.
+- Prefer focused unit/integration tests; add E2E only when the user-facing flow changes.
+- If tests are skipped, note why and suggest follow-up coverage.
+
+### Error Handling & Logging
+- Use consistent error handling patterns in the surrounding code; avoid introducing new styles.
+- Log actionable context (request IDs, relevant entity IDs) without leaking PII.
+
+### Database Changes
+- Always include migrations for schema changes; name them clearly (verb + object).
+- Ensure migrations are reversible; include `down` logic.
+- Avoid relying on seed data in tests; create/destroy test data within tests.
+
+### Safe Defaults
+- Prefer transactions for multi-step writes.
+- Avoid raw SQL unless necessary; use Sequelize scopes/models.
+- Avoid network calls in unit tests; mock external services.
+
+### Release Hygiene
+- Update OpenAPI specs when API shape changes.
+- Update docs/ADRs if a decision or architecture change is introduced.
+
 
 ## Development Commands
 
