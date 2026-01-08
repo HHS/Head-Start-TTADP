@@ -19,7 +19,7 @@ import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
 import { FEATURE_FLAGS } from '../../constants';
 
-const verifyTrPermissions = async (req, res) => {
+const verifyTrViewPermissions = async (req, res) => {
   const user = await userById(await currentUserId(req, res));
 
   const { permissions } = user;
@@ -198,7 +198,11 @@ export async function getTrainingReportUsers(req, res) {
 
 export async function getTrainingReportTrainersByRegionAndNationalCenter(req, res) {
   try {
-    const { isAdmin, regionIds } = await verifyTrPermissions(req, res);
+    const { isAdmin, regionIds } = await verifyTrViewPermissions(req, res);
+
+    if (res.headersSent) {
+      return;
+    }
 
     const regionalTrainers = await usersByRoles([
       // roles pulled from this answer in Slack:
@@ -228,7 +232,11 @@ export async function getTrainingReportTrainersByRegionAndNationalCenter(req, re
 
 export async function getTrainingReportTrainersByRegion(req, res) {
   try {
-    const { isAdmin, regionIds } = await verifyTrPermissions(req, res);
+    const { isAdmin, regionIds } = await verifyTrViewPermissions(req, res);
+    if (res.headersSent) {
+      return;
+    }
+
     const regionalTrainers = await usersByRoles([
       // roles pulled from this answer in Slack:
       // https://adhoc.slack.com/docs/T025UGMV9/F09LB5EQUN4?focus_section_id=temp:C:efWcf6d8bbdaef14ed6b85b02369
@@ -254,7 +262,10 @@ export async function getTrainingReportTrainersByRegion(req, res) {
 
 export async function getTrainingReportNationalCenterUsers(req, res) {
   try {
-    await verifyTrPermissions(req, res);
+    await verifyTrViewPermissions(req, res);
+    if (res.headersSent) {
+      return;
+    }
 
     const nationalCenterTrainers = await usersByRoles(['NC']);
     res.json(nationalCenterTrainers);

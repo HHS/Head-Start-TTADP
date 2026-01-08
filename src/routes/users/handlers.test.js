@@ -730,20 +730,35 @@ describe('User handlers', () => {
     });
 
     it('should return 403 if user does not have permission in region', async () => {
-      const unauthorizedReq = {
-        ...req,
-        params: {
-          regionId: '4',
-        },
+      const unauthorizedUser = {
+        id: '1',
+        name: 'John Doe',
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+        lastLogin: new Date(),
       };
-      userById.mockResolvedValueOnce(mockUser);
+
+      userById.mockResolvedValueOnce(unauthorizedUser);
       currentUserId.mockResolvedValueOnce(1);
 
-      await getTrainingReportNationalCenterUsers(unauthorizedReq, res);
+      const resWithHeadersSent = {
+        sendStatus: jest.fn(),
+        json: jest.fn(),
+        status: jest.fn(() => ({
+          end: jest.fn(),
+        })),
+        headersSent: true,
+      };
+
+      await getTrainingReportNationalCenterUsers(req, resWithHeadersSent);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(res.sendStatus).toHaveBeenCalledTimes(1);
-      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(resWithHeadersSent.sendStatus).toHaveBeenCalledTimes(1);
+      expect(resWithHeadersSent.sendStatus).toHaveBeenCalledWith(403);
       expect(usersByRoles).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
     });
@@ -753,6 +768,7 @@ describe('User handlers', () => {
         { id: 1, name: 'NC User 1', email: 'nc1@test.gov' },
         { id: 2, name: 'NC User 2', email: 'nc2@test.gov' },
       ];
+
       userById.mockResolvedValueOnce(mockUser);
       currentUserId.mockResolvedValueOnce(1);
       usersByRoles.mockResolvedValueOnce(mockNCUsers);
