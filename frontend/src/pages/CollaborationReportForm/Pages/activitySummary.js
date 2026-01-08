@@ -499,6 +499,9 @@ const ReviewSection = () => {
     conductMethod,
   } = getValues();
 
+  // eslint-disable-next-line no-nested-ternary
+  const isStateDisplay = isStateActivity === null ? 'None provided' : (isStateActivity === 'true' ? 'State' : 'Regional');
+
   const sections = [
     {
       anchor: 'activity-for',
@@ -521,7 +524,7 @@ const ReviewSection = () => {
       anchor: 'reasons',
       items: [
         { label: 'Activity purpose', name: 'purpose', customValue: { purpose: Array.isArray(reportReasons) ? reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') : '' } },
-        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity === 'true' ? 'State' : 'Regional' } },
+        { label: 'Activity type', name: 'type', customValue: { type: isStateDisplay } },
         ...(isStateActivity === 'true' ? [
           { label: 'States involved', name: 'states', customValue: { states: Array.isArray(statesInvolved) ? statesInvolved?.map((s) => STATES[s.value] || '').join(', ') : '' } },
         ] : []),
