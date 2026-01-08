@@ -19,6 +19,33 @@ import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
 import { FEATURE_FLAGS } from '../../constants';
 
+const verifyTrPermissions = async (req, res) => {
+  const user = await userById(await currentUserId(req, res));
+
+  const { permissions } = user;
+  const trPermissions = permissions.filter(({ scopeId }) => (
+    [
+      SCOPES.POC_TRAINING_REPORTS,
+      SCOPES.READ_REPORTS,
+      SCOPES.READ_WRITE_TRAINING_REPORTS,
+      SCOPES.ADMIN,
+    ].includes(scopeId)
+  ));
+
+  if (!trPermissions.length) {
+    res.sendStatus(403);
+    return null;
+  }
+
+  const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
+  const regionIds = permissions.map(({ regionId }) => regionId);
+
+  return {
+    isAdmin,
+    regionIds,
+  };
+};
+
 export async function getPossibleCollaborators(req, res) {
   try {
     const user = await userById(await currentUserId(req, res));
@@ -171,25 +198,7 @@ export async function getTrainingReportUsers(req, res) {
 
 export async function getTrainingReportTrainersByRegionAndNationalCenter(req, res) {
   try {
-    const user = await userById(await currentUserId(req, res));
-
-    const { permissions } = user;
-    const trPermissions = permissions.filter(({ scopeId }) => (
-      [
-        SCOPES.POC_TRAINING_REPORTS,
-        SCOPES.READ_REPORTS,
-        SCOPES.READ_WRITE_TRAINING_REPORTS,
-        SCOPES.ADMIN,
-      ].includes(scopeId)
-    ));
-
-    if (!trPermissions.length) {
-      res.sendStatus(403);
-      return;
-    }
-
-    const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
-    const regionIds = permissions.map(({ regionId }) => regionId);
+    const { isAdmin, regionIds } = await verifyTrPermissions(req, res);
 
     const regionalTrainers = await usersByRoles([
       // roles pulled from this answer in Slack:
@@ -219,26 +228,7 @@ export async function getTrainingReportTrainersByRegionAndNationalCenter(req, re
 
 export async function getTrainingReportTrainersByRegion(req, res) {
   try {
-    const user = await userById(await currentUserId(req, res));
-
-    const { permissions } = user;
-    const trPermissions = permissions.filter(({ scopeId }) => (
-      [
-        SCOPES.POC_TRAINING_REPORTS,
-        SCOPES.READ_REPORTS,
-        SCOPES.READ_WRITE_TRAINING_REPORTS,
-        SCOPES.ADMIN,
-      ].includes(scopeId)
-    ));
-
-    if (!trPermissions.length) {
-      res.sendStatus(403);
-      return;
-    }
-
-    const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
-    const regionIds = permissions.map(({ regionId }) => regionId);
-
+    const { isAdmin, regionIds } = await verifyTrPermissions(req, res);
     const regionalTrainers = await usersByRoles([
       // roles pulled from this answer in Slack:
       // https://adhoc.slack.com/docs/T025UGMV9/F09LB5EQUN4?focus_section_id=temp:C:efWcf6d8bbdaef14ed6b85b02369
@@ -264,17 +254,7 @@ export async function getTrainingReportTrainersByRegion(req, res) {
 
 export async function getTrainingReportNationalCenterUsers(req, res) {
   try {
-    const user = await userById(await currentUserId(req, res));
-
-    const authorization = new EventPolicy(user, {});
-    const { regionId } = req.params;
-
-    const region = parseInt(regionId, DECIMAL_BASE);
-
-    if (!authorization.canGetTrainingReportUsersInRegion(region)) {
-      res.sendStatus(403);
-      return;
-    }
+    await verifyTrPermissions(req, res);
 
     const nationalCenterTrainers = await usersByRoles(['NC']);
     res.json(nationalCenterTrainers);
