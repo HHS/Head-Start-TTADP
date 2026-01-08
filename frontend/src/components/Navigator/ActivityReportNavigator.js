@@ -168,8 +168,15 @@ const ActivityReportNavigator = ({
 
       // Update RHF with saved data (includes new IDs, etc.)
       if (savedData) {
-        reset(savedData);
+        // Check if we should update form data
+        // (prevents focus loss in rich text editors during autosave)
+        const allowUpdateForm = shouldUpdateFormData(isAutoSave);
 
+        if (allowUpdateForm) {
+          reset(savedData);
+        }
+
+        // ALWAYS update page state regardless of autosave - this doesn't cause focus issues
         // After save, check and update the goals & objectives page state
         updateGoalsObjectivesPageState(savedData);
       }
@@ -528,15 +535,15 @@ const ActivityReportNavigator = ({
     }
   };
 
-  const onSaveDraft = async () => {
+  const onSaveDraft = async (isAutoSave = false) => {
     try {
-      setSavingLoadScreen();
+      setSavingLoadScreen(isAutoSave);
 
       // Prevent saving draft if the form is not dirty,
       // unless we are on the supporting attachments page which can be "blank".
       if (isDirty || currentPage === 'supporting-attachments') {
         // save the form data to the server
-        await onSaveForm();
+        await onSaveForm(isAutoSave);
       }
 
       updateShowSavedDraft(true); // show the saved draft message
@@ -573,7 +580,7 @@ const ActivityReportNavigator = ({
       }
     } else {
       // Save regular.
-      await onSaveDraft();
+      await onSaveDraft(isAutoSave);
     }
   };
 
@@ -677,7 +684,7 @@ ActivityReportNavigator.propTypes = {
 
 ActivityReportNavigator.defaultProps = {
   additionalData: {},
-  autoSaveInterval: 1000 * 60 * 2,
+  autoSaveInterval: 1000 * 30,
   lastSaveTime: null,
   errorMessage: '',
   reportCreator: {
