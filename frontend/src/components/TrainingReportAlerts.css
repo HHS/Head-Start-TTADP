@@ -46,8 +46,19 @@
 
     .ttahub-training-report-alerts th:last-child,
     .ttahub-training-report-alerts td:last-child {
-        box-shadow: -1px 0 0 0 var(--text-ink);
         position: sticky;
         right: 0;
+    }
+
+    .ttahub-training-report-alerts th:last-child::before,
+    .ttahub-training-report-alerts td:last-child::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: var(--text-ink);
+        pointer-events: none;
     }
 }

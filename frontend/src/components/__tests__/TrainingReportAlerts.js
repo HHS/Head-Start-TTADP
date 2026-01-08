@@ -326,7 +326,7 @@ describe('TrainingReportAlerts', () => {
       const link = screen.getByText('Changes needed');
       expect(link).toHaveAttribute(
         'href',
-        '/training-report/44444/session/789/session-summary',
+        '/training-report/44444/session/789/review',
       );
     });
   });

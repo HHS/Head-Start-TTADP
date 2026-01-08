@@ -21,7 +21,7 @@ const ACTIONS_NEEDED = {
   missingSessionInfo: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/session-summary`} data-sort="missing-session-info">Missing session info</Link></>,
   eventNotCompleted: (alert) => <><Link to={`/training-report/view/${idForLink(alert.eventId)}`} data-sort="event-not-completed">Event not completed</Link></>,
   waitingForApproval: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/review`} data-sort="waiting-for-approval">Waiting for approval</Link></>,
-  changesNeeded: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/session-summary`} data-sort="changes-needed">Changes needed</Link></>,
+  changesNeeded: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/review`} data-sort="changes-needed">Changes needed</Link></>,
 };
 
 const STATUS_ICONS = {
