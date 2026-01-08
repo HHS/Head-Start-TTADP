@@ -6,6 +6,7 @@ import {
   updateHandler,
   getParticipants,
   getGroups,
+  getSessionReportsHandler,
 } from './handlers';
 import {
   createSession,
@@ -13,12 +14,14 @@ import {
   updateSession,
   findSessionsByEventId,
   getPossibleSessionParticipants,
+  getSessionReports,
 } from '../../services/sessionReports';
 import EventReport from '../../policies/event';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from '../../services/event';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 import { groupsByRegion } from '../../services/groups';
+import { getUserReadRegions } from '../../services/accessValidation';
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
@@ -29,6 +32,9 @@ jest.mock('../../services/users', () => ({
 }));
 jest.mock('../../services/groups', () => ({
   groupsByRegion: jest.fn(),
+}));
+jest.mock('../../services/accessValidation', () => ({
+  getUserReadRegions: jest.fn(),
 }));
 
 describe('session report handlers', () => {
@@ -55,6 +61,7 @@ describe('session report handlers', () => {
     })),
     sendStatus: jest.fn(),
     json: jest.fn(),
+    attachment: jest.fn(),
   };
 
   beforeEach(() => {
@@ -317,6 +324,193 @@ describe('session report handlers', () => {
     it('handles errors', async () => {
       getPossibleSessionParticipants.mockRejectedValue(new Error('error'));
       await getParticipants({ params: { id: 1 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('getSessionReportsHandler', () => {
+    const mockTrainingReportResponse = {
+      count: 2,
+      rows: [
+        {
+          id: 1,
+          eventId: '1037',
+          eventName: 'Event 1',
+          sessionName: 'Session 1',
+          startDate: '2024-01-01',
+          endDate: '2024-01-02',
+          objectiveTopics: ['Topic 1', 'Topic 2'],
+        },
+        {
+          id: 2,
+          eventId: '1038',
+          eventName: 'Event 2',
+          sessionName: 'Session 2',
+          startDate: '2024-01-03',
+          endDate: '2024-01-04',
+          objectiveTopics: ['Topic 3'],
+        },
+      ],
+    };
+
+    const mockRequest = {
+      session: { userId: 1 },
+      query: {},
+    };
+
+    beforeEach(() => {
+      mockResponse.setHeader = jest.fn();
+      mockResponse.send = jest.fn();
+      mockResponse.json = jest.fn();
+    });
+
+    it('returns training reports in JSON format', async () => {
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      getSessionReports.mockResolvedValue(mockTrainingReportResponse);
+
+      await getSessionReportsHandler(mockRequest, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(mockTrainingReportResponse);
+    });
+
+    it('returns training reports with default pagination', async () => {
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      getSessionReports.mockResolvedValue(mockTrainingReportResponse);
+
+      await getSessionReportsHandler(mockRequest, mockResponse);
+
+      expect(getSessionReports).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sortBy: 'id',
+          sortDir: 'DESC',
+          offset: 0,
+          limit: 10,
+          format: 'json',
+        }),
+      );
+    });
+
+    it('returns training reports with custom pagination', async () => {
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      getSessionReports.mockResolvedValue(mockTrainingReportResponse);
+
+      const requestWithPagination = {
+        session: { userId: 1 },
+        query: {
+          offset: '20',
+          limit: '5',
+          sortBy: 'startDate',
+          sortDir: 'asc',
+        },
+      };
+
+      await getSessionReportsHandler(requestWithPagination, mockResponse);
+
+      expect(getSessionReports).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sortBy: 'startDate',
+          sortDir: 'asc',
+          offset: 20,
+          limit: 5,
+        }),
+      );
+    });
+
+    it('returns training reports in CSV format', async () => {
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      getSessionReports.mockResolvedValue({
+        count: 2,
+        rows: mockTrainingReportResponse.rows,
+      });
+
+      const requestWithCsv = {
+        session: { userId: 1 },
+        query: { format: 'csv' },
+      };
+
+      await getSessionReportsHandler(requestWithCsv, mockResponse);
+
+      expect(mockResponse.send).toHaveBeenCalled();
+      const csvOutput = mockResponse.send.mock.calls[0][0];
+      expect(csvOutput).toContain('Event ID');
+      expect(csvOutput).toContain('Event Title');
+      expect(csvOutput).toContain('Session Name');
+      expect(csvOutput).toContain('Session Start Date');
+      expect(csvOutput).toContain('Session End Date');
+      expect(csvOutput).toContain('Topics');
+
+      expect(csvOutput).toContain('1037');
+      expect(csvOutput).toContain('Event 1');
+      expect(csvOutput).toContain('Session 1');
+      expect(csvOutput).toContain('2024-01-01');
+      expect(csvOutput).toContain('2024-01-01');
+      expect(csvOutput).toContain('Topic 1');
+      expect(csvOutput).toContain('Topic 2');
+
+      expect(csvOutput).toContain('1038');
+      expect(csvOutput).toContain('Event 2');
+      expect(csvOutput).toContain('Session 2');
+      expect(csvOutput).toContain('2024-01-03');
+      expect(csvOutput).toContain('2024-01-04');
+      expect(csvOutput).toContain('Topic 3');
+    });
+
+    it('supports sorting by event fields (eventId, eventName)', async () => {
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      getSessionReports.mockResolvedValue(mockTrainingReportResponse);
+
+      const requestWithEventSorting = {
+        session: { userId: 1 },
+        query: { sortBy: 'eventName', sortDir: 'asc' },
+      };
+
+      await getSessionReportsHandler(requestWithEventSorting, mockResponse);
+
+      expect(getSessionReports).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sortBy: 'eventName',
+          sortDir: 'asc',
+        }),
+      );
+    });
+
+    it('returns 403 when user has no readable regions', async () => {
+      getUserReadRegions.mockResolvedValue([]); // Empty array
+
+      await getSessionReportsHandler(mockRequest, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+      expect(getSessionReports).not.toHaveBeenCalled();
+    });
+
+    it('passes additional filter parameters to service', async () => {
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      getSessionReports.mockResolvedValue(mockTrainingReportResponse);
+
+      const requestWithFilters = {
+        session: { userId: 1 },
+        query: {
+          'startDate.bef': '2024-06-01',
+          'eventId.ctn': '1037',
+        },
+      };
+
+      await getSessionReportsHandler(requestWithFilters, mockResponse);
+
+      expect(getSessionReports).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'startDate.bef': '2024-06-01',
+          'eventId.ctn': '1037',
+        }),
+      );
+    });
+
+    it('handles errors gracefully', async () => {
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      getSessionReports.mockRejectedValue(new Error('Database error'));
+
+      await getSessionReportsHandler(mockRequest, mockResponse);
+
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });

@@ -1,15 +1,62 @@
-post:
+get:
   tags:
-    - training report
-  summary: Create a new training report
-  requestBody:
-    required: true
-    content:
-      application/json:
-        schema:
-          type: object
-          properties:
-            eventId:
-              type: integer
-            data:
-              type: object
+    - session report
+  description: Retrieves session reports with pagination, sorting, and filtering
+  parameters:
+    - in: query
+      name: sortBy
+      schema:
+        type: string
+      description: Field to sort by (id, sessionName, startDate, endDate, eventId, eventName)
+      example: id
+    - in: query
+      name: sortDir
+      schema:
+        type: string
+      description: Sort direction (asc or desc)
+      example: DESC
+    - in: query
+      name: offset
+      schema:
+        type: number
+      description: Pagination offset
+      example: 0
+    - in: query
+      name: limit
+      schema:
+        type: number
+      description: Pagination limit
+      example: 10
+    - in: query
+      name: format
+      schema:
+        type: string
+      description: Response format (json or csv)
+      example: json
+    - in: query
+      name: startDate.bef
+      schema:
+        type: string
+      description: Include reports with start date before the ISO8601 value
+    - in: query
+      name: startDate.aft
+      schema:
+        type: string
+      description: Include reports with start date after the ISO8601 value
+    - in: query
+      name: eventId.ctn
+      schema:
+        type: string
+      description: Filter by event ID contains
+  responses:
+    200:
+      description: Successfully retrieved session reports
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/sessionReportsResponse'
+    403:
+      description: Forbidden - user does not have access to any region
+    500:
+      description: Internal server error
+
