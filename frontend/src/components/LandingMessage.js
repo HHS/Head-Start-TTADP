@@ -16,23 +16,39 @@ export default function LandingMessage({
   let msg;
   const message = history.location.state && history.location.state.message;
   if (message) {
-    msg = (
-      <>
-        You successfully
-        {' '}
-        {message.status}
-        {' '}
-        report
-        {' '}
-        <Link to={`${linkBase}${message.reportId}`}>
-          {message.displayId}
-        </Link>
-        {' '}
-        on
-        {' '}
-        {message.time}
-      </>
-    );
+    if (message.status === 'reviewed' || message.status === 'approved') {
+      msg = (
+        <>
+          You submitted your review for
+          {' '}
+          <Link to={`${linkBase}${message.reportId}`}>
+            {message.displayId}
+          </Link>
+          {' '}
+          on
+          {' '}
+          {message.time}
+        </>
+      );
+    } else {
+      msg = (
+        <>
+          You successfully
+          {' '}
+          {message.status}
+          {' '}
+          report
+          {' '}
+          <Link to={`${linkBase}${message.reportId}`}>
+            {message.displayId}
+          </Link>
+          {' '}
+          on
+          {' '}
+          {message.time}
+        </>
+      );
+    }
   }
 
   // clear the message so it doesn't show again on navigation/refresh
