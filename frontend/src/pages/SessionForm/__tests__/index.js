@@ -1985,4 +1985,134 @@ describe('SessionReportForm', () => {
       expect(screen.queryByLabelText(/Creator notes/i)).not.toBeInTheDocument();
     });
   });
+
+  describe('collaborator access with submitted forms', () => {
+    it('collaborator sees all pages when form is submitted on regional event with national centers', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            submitted: true,
+            facilitation: 'national_center',
+            sessionName: 'Test Session',
+            duration: 1,
+            startDate: '01/01/2024',
+            endDate: '01/01/2024',
+            context: 'Test context',
+            objective: 'Test objective',
+            objectiveTopics: ['topic'],
+            numberOfParticipants: 1,
+            deliveryMethod: 'In-person',
+            language: ['English'],
+            ttaProvided: 'test',
+            objectiveSupportType: 'Planning',
+            recipients: [1],
+            participants: [1],
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [1],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      // Collaborator should see all navigation items when form is submitted
+      expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
+      expect(screen.getByText('Participants')).toBeInTheDocument();
+      expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
+      expect(screen.getByText('Next steps')).toBeInTheDocument();
+    });
+
+    it('collaborator sees only session summary when form is NOT submitted', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            submitted: false,
+            facilitation: 'national_center',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [1],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      // Collaborator should only see session summary when not submitted
+      expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
+      expect(screen.queryByText('Participants')).not.toBeInTheDocument();
+      expect(screen.queryByText('Supporting attachments')).not.toBeInTheDocument();
+      expect(screen.queryByText('Next steps')).not.toBeInTheDocument();
+    });
+
+    it('collaborator on regional_tta_no_national_centers event sees all pages regardless of submission status', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            submitted: false,
+            facilitation: 'both',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [1],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      // Collaborator on regional TTA no national centers should see all pages
+      expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
+      expect(screen.getByText('Participants')).toBeInTheDocument();
+      expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
+      expect(screen.getByText('Next steps')).toBeInTheDocument();
+    });
+  });
 });
