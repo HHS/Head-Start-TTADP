@@ -285,7 +285,8 @@ function ActivityReport({
           || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
 
         const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
-          report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+          report.calculatedStatus === REPORT_STATUSES.SUBMITTED
+          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION)
         );
 
         // Add recipientIds to groups.
@@ -439,7 +440,10 @@ function ActivityReport({
 
   const approverCanEdit = isApprover
     && formData
-    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+    && (
+      formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+      || formData.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+    );
 
   if (connectionActive && !editable && currentPage !== 'review' && !approverCanEdit) {
     return (

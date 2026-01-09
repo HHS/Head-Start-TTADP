@@ -136,6 +136,48 @@ describe('ActivityReport', () => {
       const startDate = await screen.findByRole('textbox', { name: /start date/i });
       expect(startDate).toBeVisible();
     });
+
+    it('allows approvers to navigate and change the report if the report needs action', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [{ user: { id: 3 } }],
+      });
+      renderActivityReport(1, 'activity-summary', null, 3);
+
+      const startDate = await screen.findByRole('textbox', { name: /start date/i });
+      expect(startDate).toBeVisible();
+    });
+
+    it('allows approvers to save changes when the report needs action', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [
+          { user: { id: 3 }, status: null },
+          { user: { id: 4 }, status: REPORT_STATUSES.NEEDS_ACTION },
+        ],
+      });
+      fetchMock.put('/api/activity-reports/1', (url, opts) => ({
+        ...data,
+        ...JSON.parse(opts.body),
+      }));
+
+      renderActivityReport(1, 'activity-summary', null, 3);
+
+      const participantsInput = await screen.findByLabelText(/number of participants/i);
+      userEvent.clear(participantsInput);
+      userEvent.type(participantsInput, '2');
+
+      const saveButton = await screen.findByRole('button', { name: /save draft/i });
+      userEvent.click(saveButton);
+
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1', { method: 'put' })).toBeTruthy());
+    });
   });
 
   describe('for read only users', () => {
