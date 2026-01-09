@@ -37,3 +37,8 @@ export const getNationalCenterTrainerOptions = async (regionId) => {
   const res = await get(join('/', 'api', 'users', 'trainers', 'national-center', 'region', regionId));
   return res.json();
 };
+
+export const getAllTrainerOptionsByUser = async (userId) => {
+  const res = await get(join('/', 'api', 'users', 'trainers', 'regional', 'user', userId));
+  return res.json();
+};

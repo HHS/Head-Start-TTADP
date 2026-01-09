@@ -3,16 +3,15 @@
 const { execSync } = require('child_process');
 const { exit } = require('node:process');
 const fs = require('fs');
-const e = require('express');
 
 /* eslint-disable no-console */
 
-const knownIssuesFile = 'yarn-audit-known-issues';
-const cmd = 'yarn audit --level low --json --groups dependencies';
+const ISSUES_FILE = 'yarn-audit-known-issues';
+const AUDIT_CMD = 'yarn audit --level low --json --groups dependencies';
 
 function parseResult(rawData) {
   const findings = new Map();
-  rawData.split('\n').forEach((line) => {
+  rawData.split(/\r?\n/).forEach((line) => {
     if (line) {
       try {
         const result = JSON.parse(line);
@@ -35,14 +34,14 @@ function parseResult(rawData) {
 }
 
 function getKnownIssues() {
-  const fileData = fs.readFileSync(knownIssuesFile, 'utf8');
+  const fileData = fs.readFileSync(ISSUES_FILE, 'utf8');
   return parseResult(fileData);
 }
 
 function getNewIssues() {
   let stdout = '';
   try {
-    stdout = execSync(cmd);
+    stdout = execSync(AUDIT_CMD).toString();
   } catch (err) {
     // yarn returns non-zero exit code on findings
     stdout = err.stdout.toString();
@@ -63,14 +62,14 @@ function compareIssues(knownIssues, newIssues) {
 function main() {
   const newIssues = getNewIssues();
   const knownIssues = getKnownIssues();
-  console.log(`Found ${newIssues.size} current issues.`);
   if (newIssues.size === 0) {
     console.info('No issues found.');
     exit(0);
   }
+  console.log(`Found ${newIssues.size} current issues.`);
   console.info(`Skipping ${knownIssues.size} known issues (${[...knownIssues.keys()]})`);
   const unsolvedIssues = compareIssues(knownIssues, newIssues);
-  console.info(`To update the ignore list, run '${cmd} > ${knownIssuesFile}'`);
+  console.info(`To update the ignore list, run '${AUDIT_CMD} > ${ISSUES_FILE}'`);
   console.info('---------------------');
   console.error(`Found ${unsolvedIssues.length} issues\n`);
   if (unsolvedIssues.length !== 0) {

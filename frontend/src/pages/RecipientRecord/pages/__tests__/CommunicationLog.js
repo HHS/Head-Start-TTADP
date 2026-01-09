@@ -13,6 +13,43 @@ import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
 import AriaLiveContext from '../../../../AriaLiveContext';
 
+const fakeResponse = {
+  rows: [
+    {
+      data: {
+        goals: [{ label: 'First goal', value: '16' }, { label: 'Second goal', value: '10' }],
+        notes: '',
+        method: 'Phone',
+        result: '',
+        purpose: 'My purpose',
+        duration: 0.25,
+        regionId: '1',
+        createdAt: '2025-01-22T00:28:35.416Z',
+        displayId: 'R01-CL-00001',
+        pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
+        otherStaff: [{ label: 'Harry', value: '10' }],
+        pocComplete: false,
+        communicationDate: '01/01/2025',
+        recipientNextSteps: [{ note: 'recip step 1', completeDate: '02/02/2025' }],
+        specialistNextSteps: [{ note: 'spec step 1', completeDate: '02/01/2025' }],
+        'pageVisited-next-steps': 'true',
+        'pageVisited-supporting-attachments': 'true',
+      },
+      files: [
+        {
+          id: 1,
+          originalFileName: 'cat.png',
+        },
+      ],
+      author: {
+        name: 'Harry Potter',
+        id: 1,
+      },
+    },
+  ],
+  count: 1,
+};
+
 describe('CommunicationLog', () => {
   const history = createMemoryHistory();
   const renderTest = () => {
@@ -34,43 +71,8 @@ describe('CommunicationLog', () => {
     fetchMock.restore();
   });
 
-  it('renders the communication log approriately', async () => {
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', {
-      rows: [
-        {
-          data: {
-            goals: [{ label: 'First goal', value: '16' }, { label: 'Second goal', value: '10' }],
-            notes: '',
-            method: 'Phone',
-            result: '',
-            purpose: 'My purpose',
-            duration: 0.25,
-            regionId: '1',
-            createdAt: '2025-01-22T00:28:35.416Z',
-            displayId: 'R01-CL-00001',
-            pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
-            otherStaff: [{ label: 'Harry', value: '10' }],
-            pocComplete: false,
-            communicationDate: '01/01/2025',
-            recipientNextSteps: [{ note: 'recip step 1', completeDate: '02/02/2025' }],
-            specialistNextSteps: [{ note: 'spec step 1', completeDate: '02/01/2025' }],
-            'pageVisited-next-steps': 'true',
-            'pageVisited-supporting-attachments': 'true',
-          },
-          files: [
-            {
-              id: 1,
-              originalFileName: 'cat.png',
-            },
-          ],
-          author: {
-            name: 'Harry Potter',
-            id: 1,
-          },
-        },
-      ],
-      count: 1,
-    });
+  it('renders the communication log appropriately', async () => {
+    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', fakeResponse);
     await act(() => waitFor(() => renderTest()));
     const tableCells = screen.getAllByRole('cell');
     const tableCellContents = tableCells.map((cell) => cell.textContent).join('');

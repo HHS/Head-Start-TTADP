@@ -19,7 +19,7 @@ function ApproverSelect({
   if (required) {
     rules = {
       validate: {
-        notEmpty: (value) => (value && value.length) || 'Select at least one manager',
+        notEmpty: (value) => (value && value.length) || 'Select at least one',
       },
     };
   }

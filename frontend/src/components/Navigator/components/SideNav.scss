@@ -23,6 +23,10 @@
   color: $ttahub-medium-blue;
 }
 
+.usa-accordion__content .smart-hub--navigator-link:hover {
+  background-color: initial;
+}
+
 .smart-hub--navigator-list {
   list-style-type: none;
   padding-left: 0;
@@ -106,6 +110,7 @@
   0% {
     opacity: 0;
   }
+
   100% {
     opacity: 1;
   }

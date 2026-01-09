@@ -6,15 +6,15 @@ import {
   collaboratorsFilter,
   creatorFilter,
   eventIdFilter,
+  goalCategoryFilter,
 } from '../../components/filter/trainingReportFilters';
-import { goalNameFilter } from '../../components/filter/goalFilters';
 
 const TRAINING_REPORT_FILTER_CONFIG = [
   startDateFilter,
   creatorFilter,
   collaboratorsFilter,
   eventIdFilter,
-  goalNameFilter,
+  goalCategoryFilter,
   regionFilter,
 ];
 

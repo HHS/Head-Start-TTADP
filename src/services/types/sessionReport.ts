@@ -4,6 +4,15 @@ export type SessionReportShape = {
   data: unknown;
   files: unknown[];
   supportingAttachments: unknown[];
+  goalTemplates: {
+    id: number;
+    standard: string;
+  }[];
+  trainers: {
+    id: number,
+    name: string,
+    fullName: string,
+  }[],
   updatedAt: string;
   event: unknown;
   approverId: number | null;

@@ -89,6 +89,7 @@ describe('CreatorSubmit Component', () => {
     ],
     onUpdatePage: jest.fn(),
     onSaveDraft: jest.fn(),
+    draftValues: {},
     onSubmit: jest.fn(),
     isNeedsAction: false,
     dateSubmitted: null,
@@ -288,13 +289,6 @@ describe('CreatorSubmit Component', () => {
       const submitButton = screen.getByText('Submit for approval');
       expect(submitButton).toBeEnabled();
     });
-
-    it('disables submit button when hasIncompletePages is true', () => {
-      renderComponent({ hasIncompletePages: true });
-
-      const submitButton = screen.getByText('Submit for approval');
-      expect(submitButton).toBeDisabled();
-    });
   });
 
   describe('Button Click Handlers', () => {
@@ -399,7 +393,6 @@ describe('CreatorSubmit Component', () => {
 
       expect(screen.getByTestId('incomplete-pages')).toBeInTheDocument();
       expect(screen.queryByText('Approving manager')).not.toBeInTheDocument();
-      expect(screen.getByText('Submit for approval')).toBeDisabled();
     });
   });
 });

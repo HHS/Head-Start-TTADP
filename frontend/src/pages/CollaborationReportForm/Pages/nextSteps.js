@@ -1,24 +1,48 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
+import { Fieldset } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import NextStepsRepeater from './components/NextStepsRepeater';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import { isValidDate } from '../../../utils';
 
 const path = 'next-steps';
 const position = 3;
 
-export const isPageComplete = () => true;
+const NextSteps = () => {
+  const { watch, setValue } = useFormContext();
+  const steps = watch('steps');
 
-const NextSteps = () => (
-  <>
-    <Helmet>
-      <title>Next Steps</title>
-    </Helmet>
-  </>
-);
+  useEffect(() => {
+    if (!steps || steps.length === 0) {
+      const stepsToAdd = [];
+      // If no steps, add an empty one.
+      stepsToAdd.push({ collabStepDetail: '', collabStepCompleteDate: '' });
+      setValue('steps', stepsToAdd);
+    }
+  }, [steps, setValue]);
+
+  return (
+    <>
+      <Helmet>
+        <title>Next Steps</title>
+      </Helmet>
+      <IndicatesRequiredField />
+      <Fieldset id="next-steps-field-set" className="smart-hub--report-legend margin-top-4" legend="What have you agreed to do next?">
+        <NextStepsRepeater
+          id="next-steps-repeater-id"
+          name="steps"
+          ariaName="Next Steps"
+        />
+      </Fieldset>
+    </>
+  );
+};
 
 const getNextStepsSections = (steps) => {
-  const specialistItems = (steps || []).map((step, index) => ([
+  const nextStepItems = (steps || []).map((step, index) => ([
     {
       label: `Step ${index + 1}`,
       name: 'step',
@@ -33,11 +57,34 @@ const getNextStepsSections = (steps) => {
 
   return [
     {
-      isEditSection: true,
+      isEditSection: false,
       anchor: 'next-steps',
-      items: [...specialistItems.flatMap((item) => item)],
+      items: [...nextStepItems.flatMap((item) => item)],
     },
   ];
+};
+
+export const isPageComplete = (hookForm) => {
+  const { getValues } = hookForm;
+  const { steps } = getValues();
+
+  if (!steps || steps.length === 0) {
+    return false;
+  }
+
+  const allStepsComplete = steps.every((
+    { collabStepDetail: detail, collabStepCompleteDate: date },
+  ) => (
+    detail !== null && detail !== '' && date !== null && date !== ''));
+  if (!allStepsComplete) return false;
+
+  const eachDateValid = steps.every((step) => {
+    if (!step.collabStepCompleteDate) return false;
+    return Boolean(isValidDate(step.collabStepCompleteDate));
+  });
+  if (!eachDateValid) return false;
+
+  return true;
 };
 
 const ReviewSection = () => {

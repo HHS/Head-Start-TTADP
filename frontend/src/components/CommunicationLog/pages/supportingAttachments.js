@@ -41,6 +41,7 @@ export default {
           visitedFieldName={visitedField}
           handleDelete={deleteLogFile}
           idKey="communicationLogId"
+          formName="files"
         >
           <Label className="margin-top-0" htmlFor="files">
             Upload any relevant attachments.

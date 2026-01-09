@@ -41,7 +41,6 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'SessionReportPilotTrainer',
     tableName: 'SessionReportPilotTrainers',
-    paranoid: true,
     timestamps: true,
     indexes: [
       {

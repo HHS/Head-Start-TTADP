@@ -72,7 +72,6 @@ export const convertReportToFormData = (fetchedReport) => {
     hasGoals,
     reportGoals,
     statesInvolved,
-    conductMethod,
     ...rest
   } = fetchedReport;
 
@@ -101,19 +100,17 @@ export const convertReportToFormData = (fetchedReport) => {
   }
 
   // Convert participants, dataUsed, goals, and statesInvolved for use with multiselect components
-  const participantValues = participants ? participants.map((p) => ({ label: p, value: p })) : [];
-  const dataUsedValues = dataUsed ? dataUsed.map((d) => (
+  const participantValues = Array.isArray(participants)
+    ? participants.map((p) => ({ label: p, value: p })) : [];
+  const dataUsedValues = Array.isArray(dataUsed) ? dataUsed.map((d) => (
     { label: COLLAB_REPORT_DATA[d.collabReportDatum], value: d.collabReportDatum }
   )) : [];
-  const goalsValues = reportGoals ? reportGoals.map((g) => (
+  const goalsValues = Array.isArray(reportGoals) ? reportGoals.map((g) => (
     { label: g.goalTemplate.standard, value: g.goalTemplateId }
   )) : [];
-  const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => (
+  const statesInvolvedValues = Array.isArray(statesInvolved) ? statesInvolved.map((s) => (
     { label: STATES[s], value: s }
   )) : [];
-
-  // Convert conductMethod array to object for use with single select component
-  const conductMethodValue = conductMethod || null;
 
   const retVal = {
     ...rest,
@@ -125,7 +122,6 @@ export const convertReportToFormData = (fetchedReport) => {
     hasGoals: hasGoalsValue,
     goals: goalsValues,
     statesInvolved: statesInvolvedValues,
-    conductMethod: conductMethodValue,
   };
   return retVal;
 };

@@ -255,6 +255,31 @@ export async function findEventHelperBlob({
         model: SessionReportPilot,
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
+        include: [
+          {
+            model: db.GoalTemplate,
+            as: 'goalTemplates',
+            attributes: ['standard'],
+            through: {
+              attributes: [],
+            },
+          },
+          {
+            model: db.User,
+            as: 'trainers',
+            attributes: ['name', 'fullName'],
+            through: {
+              attributes: [],
+            },
+            include: [
+              {
+                model: db.Role,
+                as: 'roles',
+                attributes: ['name'],
+              },
+            ],
+          },
+        ],
         attributes: [
           'id',
           'eventId',
@@ -726,13 +751,15 @@ export async function filterEventsByStatus(events: EventShape[], status: string,
     case null:
       /**
        * Not started events
-       * Visible only to owner or POC
-       * 12/14/25
-       * - Collaborators CANNOT see NOT_STARTED events (changed from previous behavior)
+       * Visible only to owner, collab or POC
        */
       return events.filter((event) => {
         // Owner can see
         if (event.ownerId === userId) {
+          return true;
+        }
+
+        if (event.collaboratorIds.includes(userId)) {
           return true;
         }
 

@@ -976,7 +976,7 @@ commands:
     - restore_cache:
         key: env-owners-
     - run:
-        name: Write owner into file
+        name: Update env owners canvas
         command: |
           mkdir -p environments
           current_env="<< parameters.target_env >>"
@@ -984,13 +984,14 @@ commands:
           cd environments
           ls -la
           echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > ${current_env}
-          data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
+          data="Env | Name | Branch | Date |\n|---|---|---|---|"
           for file in *; do
-            cat ${file}
             if [ ! -d ${file} ]; then
-              data="${data}$(cat ${file})\n"
+              data="${data}\n$(cat ${file})"
             fi;
           done
+
+          echo -e "Updating canvas with data:\n${data}"
 
           curl -w "\n%{http_code}\n" --fail-with-body -X POST \
           https://slack.com/api/canvases.edit \
@@ -1003,8 +1004,8 @@ commands:
               "document_content": {
                 "type": "markdown",
                 "markdown": "'"$data"'"
-              },
-            }],
+              }
+            }]
           }'
 
     - save_cache:
