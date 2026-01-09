@@ -32,7 +32,7 @@ describe('useSessionCardPermissions', () => {
     data: {
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       pocComplete: false,
-      ownerComplete: false,
+      collabComplete: false,
       facilitation: 'national_centers',
     },
   };
@@ -54,7 +54,7 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
-            ownerComplete: true,
+            collabComplete: true,
             pocComplete: true,
           },
         },
@@ -75,7 +75,7 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
-            ownerComplete: true,
+            collabComplete: true,
             pocComplete: true,
           },
         },
@@ -97,8 +97,9 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
+            facilitation: 'regional_tta_staff',
             status: REPORT_STATUSES.NEEDS_ACTION,
-            ownerComplete: true,
+            collabComplete: true,
             pocComplete: true,
           },
         },
@@ -121,7 +122,7 @@ describe('useSessionCardPermissions', () => {
           data: {
             ...baseSession.data,
             status: REPORT_STATUSES.NEEDS_ACTION,
-            ownerComplete: true,
+            collabComplete: true,
             pocComplete: true,
           },
         },
@@ -143,7 +144,7 @@ describe('useSessionCardPermissions', () => {
           data: {
             ...baseSession.data,
             status: REPORT_STATUSES.NEEDS_ACTION,
-            ownerComplete: true,
+            collabComplete: true,
             pocComplete: true,
           },
         },
@@ -165,7 +166,7 @@ describe('useSessionCardPermissions', () => {
           data: {
             ...baseSession.data,
             status: REPORT_STATUSES.NEEDS_ACTION,
-            ownerComplete: true,
+            collabComplete: true,
             pocComplete: true,
           },
         },
@@ -254,6 +255,29 @@ describe('useSessionCardPermissions', () => {
       expect(result.current.showSessionEdit).toBe(false);
     });
 
+    it('returns false when POC with Regional PD with National Centers and NEEDS_ACTION status', () => {
+      const props = {
+        ...baseProps,
+        isPoc: true,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            facilitation: 'national_center',
+            status: REPORT_STATUSES.NEEDS_ACTION,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(false);
+    });
+
     it('returns true when POC with valid conditions', () => {
       const props = {
         ...baseProps,
@@ -271,7 +295,7 @@ describe('useSessionCardPermissions', () => {
   });
 
   describe('collaborator permissions', () => {
-    it('returns false when collaborator and ownerComplete is true for non-admin', () => {
+    it('returns false when collaborator and collabComplete is true for non-admin', () => {
       const props = {
         ...baseProps,
         isCollaborator: true,
@@ -279,7 +303,7 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
-            ownerComplete: true,
+            collabComplete: true,
           },
         },
       };
@@ -292,7 +316,7 @@ describe('useSessionCardPermissions', () => {
       expect(result.current.showSessionEdit).toBe(false);
     });
 
-    it('returns true when collaborator and ownerComplete is true for admin', () => {
+    it('returns true when collaborator and collabComplete is true for admin', () => {
       const props = {
         ...baseProps,
         isCollaborator: true,
@@ -300,7 +324,7 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
-            ownerComplete: true,
+            collabComplete: true,
           },
         },
       };
@@ -485,7 +509,7 @@ describe('useSessionCardPermissions', () => {
       expect(result.current.showSessionEdit).toBe(true);
     });
 
-    it('handles collaborator who is admin with ownerComplete', () => {
+    it('handles collaborator who is admin with collabComplete', () => {
       const props = {
         ...baseProps,
         isCollaborator: true,
@@ -493,7 +517,7 @@ describe('useSessionCardPermissions', () => {
           ...baseSession,
           data: {
             ...baseSession.data,
-            ownerComplete: true,
+            collabComplete: true,
           },
         },
       };
@@ -515,7 +539,7 @@ describe('useSessionCardPermissions', () => {
           data: {
             ...baseSession.data,
             pocComplete: true,
-            ownerComplete: true,
+            collabComplete: true,
           },
         },
       };

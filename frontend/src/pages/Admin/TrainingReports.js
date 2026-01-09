@@ -11,6 +11,8 @@ function TrainingReports() {
     'Event ID',
     'Edit Title',
     'Event Creator',
+    'Event Organizer - Type of Event',
+    'Audience',
   ];
 
   return (
@@ -32,12 +34,12 @@ function TrainingReports() {
               </strong>
               :
               {' '}
-              Single line text value
+              Single line text value starting with R and two digits (e.g., R##-TR-####)
               <Req />
             </li>
             <li>
               <strong>
-                Event Title
+                Edit Title
               </strong>
               :
               {' '}
@@ -46,11 +48,11 @@ function TrainingReports() {
             </li>
             <li>
               <strong>
-                IST/Creator
+                Event Creator
               </strong>
               :
               {' '}
-              Single line text value, user email address
+              User email address. User must have write permissions in the event&apos;s region.
               <Req />
             </li>
             <li>
@@ -65,59 +67,8 @@ function TrainingReports() {
               {' '}
               or
               {' '}
-              <em>IST TTA/Visit</em>
-            </li>
-            <li>
-              <strong>
-                National Centers
-              </strong>
-              :
-              {' '}
-              A three or four digit national center identifier.
-              This will find and attach the associated user as a collaborator on the event.
-            </li>
-            <li>
-              <strong>
-                Event Duration
-              </strong>
-              :
-              {' '}
-              One of
-              {' '}
-              <em>1 day or less</em>
-              {' '}
-              or
-              {' '}
-              <em>Multi-Day single event</em>
-              or
-              {' '}
-              <em>Series</em>
-            </li>
-            <li>
-              <strong>
-                Reason(s) for PD
-              </strong>
-              :
-              {' '}
-              A list of reasons, separated by new lines.
-              Any reasons not matching one of the reasons we expect will be ignored.
-            </li>
-            <li>
-              <strong>
-                Vision/Goal/Outcomes for the PD Event
-              </strong>
-              :
-              {' '}
-              A free text field. Formatting other than spaces or new lines will not be preserved.
-            </li>
-            <li>
-              <strong>
-                Target Population(s)
-              </strong>
-              :
-              {' '}
-              A list of populations, separated by new lines.
-              Any reasons not matching one of the target populations we expect will be ignored.
+              <em>Regional TTA Hosted Event (no National Centers)</em>
+              <Req />
             </li>
             <li>
               <strong>
@@ -127,20 +78,80 @@ function TrainingReports() {
               {' '}
               One of
               {' '}
-              <em>Regional office/TTA</em>
+              <em>Recipients</em>
               {' '}
               or
               {' '}
-              <em>Recipients</em>
+              <em>Regional office/TTA</em>
+              <Req />
             </li>
             <li>
               <strong>
-                Designated Region POC for Event/Request
+                Designated POC for Event/Request
               </strong>
               :
               {' '}
-              A list of Hub user&apos;s names, seperated by the &quot;&#x2F;&quot; character.
-              Any names not matching an existing user will be ignored.
+              A list of Hub user names, separated by the &quot;/&quot; character.
+              Users must have POC permissions in the event&apos;s region.
+            </li>
+            <li>
+              <strong>
+                Vision/Goal/Outcomes for the PD Event
+              </strong>
+              {' '}
+              (or variants like
+              {' '}
+              <em>Vision/Outcomes for the PD Event</em>
+              ):
+              {' '}
+              Free text field describing the vision and goals.
+            </li>
+            <li>
+              <strong>
+                Reason for Activity
+              </strong>
+              :
+              {' '}
+              A list of reasons, separated by new lines.
+              Invalid reasons will be filtered out.
+            </li>
+            <li>
+              <strong>
+                Target Population(s)
+              </strong>
+              :
+              {' '}
+              A list of target populations, separated by new lines.
+              Invalid populations will be filtered out.
+            </li>
+            <li>
+              <strong>
+                State/Territory Invited
+              </strong>
+              :
+              {' '}
+              A list of state or territory names, separated by new lines.
+              Must be valid U.S. state or territory names.
+            </li>
+            <li>
+              <strong>
+                IST Name
+              </strong>
+              :
+              {' '}
+              Optional field for IST trainer name.
+            </li>
+            <li>
+              <strong>
+                Event Approach
+              </strong>
+              {' '}
+              (or
+              {' '}
+              <em>Event Duration</em>
+              ):
+              {' '}
+              Optional field for training approach or duration.
             </li>
           </ul>
         </div>

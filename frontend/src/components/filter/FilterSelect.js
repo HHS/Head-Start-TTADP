@@ -87,7 +87,7 @@ export default function FilterSelect({
       let charCount = 0;
       let andMoreShown = false;
 
-      const truncated = selectedValues.map((selection, index) => {
+      const truncated = [selectedValues].flat().map((selection, index) => {
         // if the "and x more tags" message has been shown
         if (andMoreShown) {
           return null;

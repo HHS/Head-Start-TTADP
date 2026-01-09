@@ -8,6 +8,7 @@ import {
 } from '@trussworks/react-uswds';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { Helmet } from 'react-helmet';
+import moment from 'moment';
 import useFetch from '../../hooks/useFetch';
 import Container from '../../components/Container';
 import BackLink from '../../components/BackLink';
@@ -79,8 +80,17 @@ export default function SessionReportFacilitation({ match }) {
       const facilitationIncludesRegion = facilitation === 'both' || facilitation === 'regional_tta_staff';
       const collaboratorWithRegionalFacilitation = isCollaborator && facilitationIncludesRegion;
 
+      const { eventId } = trainingReport.data;
+
+      const message = {
+        messageTemplate: 'sessionCreated',
+        sessionName: '',
+        eventId,
+        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+      };
+
       if (!isAdminUser && (collaboratorWithRegionalFacilitation || isOwner)) {
-        history.push(TRAINING_REPORT_URL_IN_PROGRESS, { message: 'Session created successfully' });
+        history.push(TRAINING_REPORT_URL_IN_PROGRESS, { message });
         return;
       }
 

@@ -22,7 +22,7 @@ const TopAlert = ({
   return (
     <Alert type="info" noIcon slim className="margin-bottom-4 no-print">
       <>
-        {submitter}
+        {submitter.fullName}
         {' '}
         has requested approval for this session report.
         {' '}
@@ -33,7 +33,9 @@ const TopAlert = ({
 };
 
 TopAlert.propTypes = {
-  submitter: PropTypes.string.isRequired,
+  submitter: PropTypes.shape({
+    fullName: PropTypes.string,
+  }).isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
   approver: PropTypes.shape({
     fullName: PropTypes.string,

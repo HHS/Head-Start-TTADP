@@ -36,7 +36,7 @@ export const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
   pocComplete: false,
-  ownerComplete: false,
+  collabComplete: false,
 };
 
 export const defaultFormValues = {
@@ -109,7 +109,7 @@ export const defaultKeys = [
   'status',
   'pageState',
   'pocComplete',
-  'ownerComplete',
+  'collabComplete',
   'facilitation',
   'additionalNotes',
   'approverId',

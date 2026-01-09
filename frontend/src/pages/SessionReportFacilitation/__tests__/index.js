@@ -243,7 +243,14 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('both');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
+          message: {
+            dateStr: expect.any(String),
+            eventId: expect.any(String),
+            messageTemplate: 'sessionCreated',
+            sessionName: '',
+          },
+        });
       });
     });
     it('submits form with regional tta', async () => {
@@ -270,7 +277,14 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('regional_tta_staff');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
+          message: {
+            dateStr: expect.any(String),
+            eventId: expect.any(String),
+            messageTemplate: 'sessionCreated',
+            sessionName: '',
+          },
+        });
       });
     });
     it('submits form with national center', async () => {
@@ -331,7 +345,14 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('national_center');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
+          message: {
+            dateStr: expect.any(String),
+            eventId: expect.any(String),
+            messageTemplate: 'sessionCreated',
+            sessionName: '',
+          },
+        });
       });
     });
 
@@ -359,7 +380,14 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('regional_tta_staff');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
+          message: {
+            dateStr: expect.any(String),
+            eventId: expect.any(String),
+            messageTemplate: 'sessionCreated',
+            sessionName: '',
+          },
+        });
       });
     });
 
@@ -387,7 +415,14 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('both');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, { message: 'Session created successfully' });
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
+          message: {
+            dateStr: expect.any(String),
+            eventId: expect.any(String),
+            messageTemplate: 'sessionCreated',
+            sessionName: '',
+          },
+        });
       });
     });
 

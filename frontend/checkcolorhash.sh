@@ -12,9 +12,6 @@ if [ "$currentJsHash" != "$newJsChecksum" ]; then
   exit 1
 fi
 
-echo $currentScssHash
-echo $newScssChecksum
-
 if [ "$currentScssHash" != "$newScssChecksum" ]; then
   echo 'Error. SCSS hash does not match \n'
   echo 'Please run yarn makecolors or yarn docker:makecolors'
@@ -22,4 +19,5 @@ if [ "$currentScssHash" != "$newScssChecksum" ]; then
   exit 1
 fi
 
+echo 'Color hashes match'
 exit 0
