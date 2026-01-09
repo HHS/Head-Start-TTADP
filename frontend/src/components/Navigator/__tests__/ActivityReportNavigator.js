@@ -12,9 +12,9 @@ import { useFormContext, useForm } from 'react-hook-form';
 import ActivityReportNavigator, {
   getPrompts,
   getPromptErrors,
-  shouldUpdateFormData,
   formatEndDate,
 } from '../ActivityReportNavigator';
+import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
 import UserContext from '../../../UserContext';
 import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
