@@ -235,8 +235,8 @@ function CollaborationReport({ match, location }) {
   // reset and the proper values are placed inside inputs
   // Also, clear the saved draft message when the page changes
   useDeepCompareEffect(() => {
-    hookForm.reset(formData);
     updateShowSavedDraft(false);
+    hookForm.reset(formData, { errors: true });
   }, [currentPage, formData, hookForm.reset]);
 
   useDeepCompareEffect(() => {

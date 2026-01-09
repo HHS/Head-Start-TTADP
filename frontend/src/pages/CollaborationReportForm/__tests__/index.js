@@ -154,6 +154,79 @@ describe('CollaborationReportForm', () => {
     expect(heading).toBeInTheDocument();
   });
 
+  it('keeps activity summary validation errors after review navigation', async () => {
+    getItem.mockReturnValue(JSON.stringify({
+      regionId: 1,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    }));
+
+    render(<ReportComponent id="123" />);
+
+    await screen.findByText(/Collaboration report for Region [\d]/i);
+
+    const [activityNameInput] = await screen.findAllByTestId('textInput');
+    userEvent.type(activityNameInput, 'Test activity');
+    userEvent.clear(activityNameInput);
+    userEvent.tab();
+
+    expect(await screen.findByText('Enter activity name')).toBeInTheDocument();
+
+    const reviewButton = await screen.findByRole('button', { name: /review and submit/i });
+    userEvent.click(reviewButton);
+
+    await screen.findByText('Review and submit');
+
+    const activitySummaryButton = await screen.findByRole('button', { name: /activity summary/i });
+    userEvent.click(activitySummaryButton);
+
+    await screen.findByText(/Collaboration report for Region [\d]/i);
+    expect(await screen.findByText('Enter activity name')).toBeInTheDocument();
+  });
+
+  // FIXME: Not yet implemented
+  it('renders with single user role and sets creator role', async () => {
+    getItem.mockReturnValue(JSON.stringify({
+      regionId: 1,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    }));
+
+    render(<ReportComponent id="new" userRoles={[{ fullName: 'Health Specialist' }]} />);
+
+    const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
+    expect(heading).toBeInTheDocument();
+  });
+
+  // FIXME: Not yet implemented
+  it('renders with multiple user roles without setting creator role', async () => {
+    getItem.mockReturnValue(JSON.stringify({
+      regionId: 1,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    }));
+
+    render(
+      <ReportComponent
+        id="new"
+        userRoles={[{ fullName: 'Health Specialist' }, { fullName: 'Education Specialist' }]}
+      />,
+    );
+
+    const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
+    expect(heading).toBeInTheDocument();
+  });
+
+  // FIXME: Not yet implemented
+  it('renders without region prop and uses user region', async () => {
+    getItem.mockReturnValue(JSON.stringify({
+      regionId: 1,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    }));
+
+    render(<ReportComponent id="new" region={undefined} />);
+
+    const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
+    expect(heading).toBeInTheDocument();
+  });
+
   it('handles loading state', () => {
     // Mock getItem to return null to force loading state
     getItem.mockReturnValue(null);
