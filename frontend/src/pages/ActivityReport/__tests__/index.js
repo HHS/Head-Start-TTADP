@@ -224,6 +224,33 @@ describe('ActivityReport', () => {
     });
   });
 
+  describe('validation persistence', () => {
+    it('keeps activity summary errors after review navigation', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', data);
+      fetchMock.put('/api/activity-reports/1', { ...data, targetPopulations: [] });
+
+      renderActivityReport('1', 'activity-summary');
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+
+      const targetPopulationsInput = await screen.findByRole('combobox', { name: /target populations addressed/i });
+      await reactSelectEvent.clearAll(targetPopulationsInput);
+      userEvent.tab();
+
+      expect(await screen.findByText('Select at least one')).toBeInTheDocument();
+
+      const reviewButton = await screen.findByRole('button', { name: /review and submit/i });
+      userEvent.click(reviewButton);
+      await screen.findByText('Review and submit');
+
+      const activitySummaryButton = await screen.findByRole('button', { name: /activity summary/i });
+      userEvent.click(activitySummaryButton);
+
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+      expect(await screen.findByText('Select at least one')).toBeInTheDocument();
+    });
+  });
+
   it('defaults to activity summary if no page is in the url', async () => {
     renderActivityReport('new', null);
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
