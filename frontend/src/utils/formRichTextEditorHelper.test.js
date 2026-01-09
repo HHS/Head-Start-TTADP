@@ -96,4 +96,55 @@ describe('shouldUpdateFormData', () => {
     // Should return true when no editors on page
     expect(shouldUpdateFormData(true)).toBe(true);
   });
+
+  it('handles selection with null anchorNode', () => {
+    const mockEditor = {
+      contains: jest.fn(() => false),
+    };
+
+    jest.spyOn(document, 'querySelectorAll').mockReturnValue([mockEditor]);
+    jest.spyOn(document, 'getSelection').mockReturnValue({
+      anchorNode: null,
+    });
+
+    // Should return true when anchorNode is null
+    expect(shouldUpdateFormData(true)).toBe(true);
+    expect(mockEditor.contains).toHaveBeenCalledWith(null);
+  });
+
+  it('handles undefined selection', () => {
+    jest.spyOn(document, 'querySelectorAll').mockReturnValue([]);
+    jest.spyOn(document, 'getSelection').mockReturnValue(undefined);
+
+    // Should handle gracefully even with undefined selection
+    expect(shouldUpdateFormData(true)).toBe(true);
+  });
+
+  it('checks all editors when cursor is not in any of them', () => {
+    const mockEditor1 = {
+      contains: jest.fn(() => false),
+    };
+    const mockEditor2 = {
+      contains: jest.fn(() => false),
+    };
+    const mockEditor3 = {
+      contains: jest.fn(() => false),
+    };
+
+    jest.spyOn(document, 'querySelectorAll').mockReturnValue([
+      mockEditor1,
+      mockEditor2,
+      mockEditor3,
+    ]);
+    jest.spyOn(document, 'getSelection').mockReturnValue({
+      anchorNode: document.createElement('div'),
+    });
+
+    expect(shouldUpdateFormData(true)).toBe(true);
+
+    // Verify all editors were checked
+    expect(mockEditor1.contains).toHaveBeenCalled();
+    expect(mockEditor2.contains).toHaveBeenCalled();
+    expect(mockEditor3.contains).toHaveBeenCalled();
+  });
 });
