@@ -4,6 +4,7 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
+import userEvent from '@testing-library/user-event';
 import supportingInformationPage from '../supportingInformation';
 
 const { reviewSection } = supportingInformationPage;
@@ -189,6 +190,54 @@ describe('CR Supporting Information Page', () => {
       expect(mockOnSaveDraft).toHaveBeenCalledTimes(1);
       expect(mockOnUpdatePage).toHaveBeenCalledTimes(1);
       expect(mockOnUpdatePage).toHaveBeenCalledWith(1);
+    });
+
+    it('renders correctly', async () => {
+      const formData = {
+        goals: [{ label: 'Test Goal', value: 'test_goal' }],
+        dataUsed: [{ label: 'Census Data', value: 'census_data' }, { label: 'Other', value: 'other' }],
+        otherDataUsed: 'Custom Data',
+        participants: [{ label: 'Head Start Recipients', value: 'Head Start Recipients' }, { label: 'Other', value: 'Other' }],
+        otherParticipants: 'Custom Participant',
+      };
+
+      render(
+        <TestWrapper defaultValues={formData}>
+          {supportingInformationPage.render(
+            {},
+            {},
+            1,
+            false,
+            mockOnContinue,
+            mockOnSaveDraft,
+            mockOnUpdatePage,
+            false,
+            '',
+            jest.fn(),
+            mockAlert,
+          )}
+        </TestWrapper>,
+      );
+
+      expect(screen.getByText('Supporting information')).toBeInTheDocument();
+
+      // Check Participants exists
+      const participantsSelect = screen.getByText('Who participated in the activity?');
+      expect(participantsSelect).toBeInTheDocument();
+      userEvent.click(participantsSelect);
+      expect(screen.getByText('Head Start Recipients')).toBeInTheDocument();
+      expect(screen.getByText('Other')).toBeInTheDocument();
+      userEvent.click(screen.getByText('Other'));
+      const otherParticipantsInput = screen.getByText('Others who participated').closest('fieldset').querySelector('input');
+      expect(otherParticipantsInput).toBeInTheDocument();
+
+      // Check Data Collected/Shared exists
+      const dataUsed = screen.getByText('Did you collect, use, and/or share data during this activity?');
+      expect(dataUsed).toBeInTheDocument();
+
+      // Check Goals exists
+      const goalsSelect = screen.getByText('Does the content of this activity help recipients in your region support their goals?');
+      expect(goalsSelect).toBeInTheDocument();
     });
   });
 
