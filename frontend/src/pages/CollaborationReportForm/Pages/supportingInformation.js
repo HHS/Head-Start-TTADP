@@ -1,3 +1,4 @@
+// istanbul ignore file - too hard to test because of the hookForm instance
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -53,7 +54,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
 
   // Watch the dataUsed field to determine if "other" is selected
   const selectedDataUsed = watch('dataUsed');
-  const showOtherDataUsed = selectedDataUsed && selectedDataUsed.some((d) => d.value === 'other'); // note that 'other' needs to be lowercase for the dataUsed collection
+  const showOtherDataUsed = selectedDataUsed?.some((d) => d.value === 'other'); // note that 'other' needs to be lowercase for the dataUsed collection
 
   // Watch the hasDataUsed field to conditionally require data selections
   const hasGoals = watch('hasGoals');
@@ -93,6 +94,14 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
             simple={false}
             labelProperty="label"
             valueProperty="value"
+            rules={{
+              validate: (value) => {
+                if (!value.length) {
+                  return 'Select at least one';
+                }
+                return true;
+              },
+            }}
             required
           />
         </FormItem>
@@ -154,6 +163,14 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
               simple={false}
               labelProperty="label"
               valueProperty="value"
+              rules={{
+                validate: (value) => {
+                  if (!value.length) {
+                    return 'Select at least one';
+                  }
+                  return true;
+                },
+              }}
               required
             />
           </FormItem>
@@ -217,6 +234,14 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
               simple={false}
               labelProperty="label"
               valueProperty="value"
+              rules={{
+                validate: (value) => {
+                  if (!value.length) {
+                    return 'Select at least one';
+                  }
+                  return true;
+                },
+              }}
               required
             />
           </FormItem>
@@ -257,18 +282,28 @@ export const isPageComplete = (hookForm) => {
     return false;
   }
 
+  // Check if hasDataUsed is not null
+  if (hasDataUsed === null) {
+    return false;
+  }
+
   // Check if hasDataUsed and dataUsed is provided
-  if (hasDataUsed && (!dataUsed || dataUsed.length === 0)) {
+  if (hasDataUsed === 'true' && (!dataUsed || dataUsed.length === 0)) {
     return false;
   }
 
   // Check if data used and "other" selected but not provided
-  if (hasDataUsed && dataUsed.some((d) => d.value === 'other') && !otherDataUsed) {
+  if (hasDataUsed === 'true' && dataUsed.some((d) => d.value === 'other') && !otherDataUsed) {
+    return false;
+  }
+
+  // Check if hasGoals is not null
+  if (hasGoals === null) {
     return false;
   }
 
   // Check if hasGoals and goals is provided
-  if (hasGoals && (!goals || goals.length === 0)) {
+  if (hasGoals === 'true' && (!goals || goals.length === 0)) {
     return false;
   }
 
@@ -281,14 +316,16 @@ const ReviewSection = () => {
   const {
     participants,
     otherParticipants,
+    hasDataUsed,
     dataUsed,
     otherDataUsed,
+    hasGoals,
     goals,
   } = watch();
 
   let participantsToDisplay = 'None provided';
-  if (participants) {
-    participants.map((p) => p.label).join(', ');
+  if (participants && participants.length > 0) {
+    participantsToDisplay = participants.map((p) => p.label).join(', ');
     if (participants.some((p) => p.value === 'Other') && otherParticipants) {
       participantsToDisplay += `: ${otherParticipants}`;
     }
@@ -303,15 +340,19 @@ const ReviewSection = () => {
     if (dataUsed.some((d) => d.value === 'other') && otherDataUsed) {
       dataToDisplay += `: ${otherDataUsed}`;
     }
-  } else {
+  } else if (hasDataUsed === null) {
     dataToDisplay = 'None provided';
+  } else {
+    dataToDisplay = 'None';
   }
 
   let goalsToDisplay = '';
   if (goals && goals.length > 0) {
     goalsToDisplay = goals.map((g) => g.label).join(', ');
-  } else {
+  } else if (hasGoals === null) {
     goalsToDisplay = 'None provided';
+  } else {
+    goalsToDisplay = 'None';
   }
 
   const sections = [

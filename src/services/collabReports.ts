@@ -66,7 +66,7 @@ export const collabReportScopes = async (filters, userId, status) => {
       },
       {
         id: {
-          [Op.in]: sequelize.literal(`(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra INNER JOIN "CollabReports" cr ON cr.id = cra."collabReportId" WHERE cra."userId" = ${userId} AND cr."calculatedStatus" = 'submitted' AND cr."deletedAt" IS NULL)`),
+          [Op.in]: sequelize.literal(`(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra INNER JOIN "CollabReports" cr ON cr.id = cra."collabReportId" WHERE cra."userId" = ${userId} AND cr."calculatedStatus" IN ('${REPORT_STATUSES.SUBMITTED}', '${REPORT_STATUSES.NEEDS_ACTION}') AND cr."deletedAt" IS NULL)`),
         },
       },
     ];
@@ -159,16 +159,36 @@ async function saveReportSteps(collabReportId: number, steps: Model[]) {
 
   // Then create new steps if any are provided
   if (steps && steps.length > 0) {
-    const newSteps = steps.map((step: Model) => ({
-      collabReportId,
-      ...step.toJSON(),
-    }));
-    await CollabReportStep.bulkCreate(newSteps);
+    const newSteps = steps.map((step: Model) => {
+      // @ts-ignore - This and the below ignores are because we're accessing specific props
+      if (step.collabStepDetail && step.collabStepCompleteDate) {
+        return ({
+          collabReportId,
+          // @ts-ignore
+          collabStepDetail: step.collabStepDetail,
+          // @ts-ignore
+          collabStepCompleteDate: step.collabStepCompleteDate,
+          ...step,
+        });
+      }
+      return null;
+    }).filter((s) => s !== null);
+
+    if (newSteps) {
+      await CollabReportStep.bulkCreate(newSteps);
+    }
   }
 }
 
-async function saveReportGoals(collabReportId: number, reportGoals: number[]) {
-  // First, destroy any existing goals for this report
+async function saveReportGoals(collabReportId: number, reportGoals) {
+  let goalsToSet = reportGoals;
+  // Shape the data if an object instead of an array of numbers
+  if (reportGoals && reportGoals.length > 0 && reportGoals[0].goalTemplateId) {
+    // map goal objects to numbers
+    goalsToSet = reportGoals.map((g) => g.goalTemplateId);
+  }
+
+  // Destroy any existing goals for this report
   await CollabReportGoal.destroy({
     where: {
       collabReportId,
@@ -176,8 +196,8 @@ async function saveReportGoals(collabReportId: number, reportGoals: number[]) {
   });
 
   // Then create new goals if any are provided
-  if (reportGoals && reportGoals.length > 0) {
-    const newGoals = reportGoals.map((goal: number) => ({
+  if (goalsToSet && goalsToSet.length > 0) {
+    const newGoals = goalsToSet.map((goal: number) => ({
       collabReportId,
       goalTemplateId: goal,
     }));

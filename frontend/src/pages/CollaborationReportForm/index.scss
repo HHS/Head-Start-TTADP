@@ -1,2 +1,26 @@
 @use '../../colors.scss' as *;
 
+.smart-hub-collab-report {
+
+  // Fixes a margin issue with the "indicates required field" element
+  form .cr-activity-summary-required p:first-of-type {
+    margin-bottom: 0;
+  }
+
+  // Makes inputs uniformly responsive
+  .usa-input:not([type=number]),
+  .usa-textarea {
+    max-width: 498px;
+  }
+
+  // Adding a bottom margin for mobile views to the status label and auto-save alert
+  @media (max-width: 1084px) {
+    .smart-hub-status-label {
+      margin-bottom: 16px;
+    }
+
+    .smart-hub--save-alert {
+      margin-bottom: 16px;
+    }
+  }
+}

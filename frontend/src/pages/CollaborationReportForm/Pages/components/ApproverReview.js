@@ -22,10 +22,17 @@ export default function ApproverReview({
   hasBeenReviewed,
   thisApprovingManager,
   approverStatusList,
+  isCreator,
 }) {
   const { handleSubmit, register, watch } = useFormContext();
   const status = watch('status');
   const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
+  const submitButtonLabel = isCreator ? 'Update report' : 'Submit';
+
+  function sentenceCase(str) {
+    const tempString = _.startCase(str);
+    return tempString.charAt(0).toUpperCase() + tempString.slice(1).toLowerCase();
+  }
 
   return (
     <>
@@ -47,7 +54,7 @@ export default function ApproverReview({
               dateSubmitted
                 ? (
                   <div className="margin-bottom-4">
-                    <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0">Date Submitted</p>
+                    <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0">Date submitted</p>
                     <p className="margin-top-0">{formattedDateSubmitted}</p>
                   </div>
                 )
@@ -67,7 +74,9 @@ export default function ApproverReview({
             >
               <option name="default" value="" disabled hidden>- Select -</option>
               {managerReportStatuses.map((reportStatus) => (
-                <option key={reportStatus} value={reportStatus}>{_.startCase(reportStatus)}</option>
+                <option key={reportStatus} value={reportStatus}>
+                  {sentenceCase(reportStatus)}
+                </option>
               ))}
             </Dropdown>
           </FormItem>
@@ -89,13 +98,15 @@ export default function ApproverReview({
 
         </>
 
+        <p className="text-bold margin-bottom-2">Approval status</p>
+
         <ApproverStatusList approverStatus={approverStatusList} />
 
-        <Button disabled={hasIncompletePages} type="submit">Submit</Button>
+        <Button disabled={hasIncompletePages} type="submit">{submitButtonLabel}</Button>
       </Form>
     </>
   );
 }
 
 ApproverReview.propTypes = reviewPagePropType;
-ApproverReview.defaultPropts = reviewPageDefaultProps;
+ApproverReview.defaultProps = reviewPageDefaultProps;

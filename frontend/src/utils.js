@@ -411,7 +411,9 @@ export function getCollabReportStatusDisplayAndClassnames(
       // If they have reviewed, they always see "Reviewed" regardless of their choice
       displayStatus = 'Reviewed';
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
-    } else if (calculatedStatus === REPORT_STATUSES.SUBMITTED) {
+    } else if (
+      calculatedStatus === REPORT_STATUSES.SUBMITTED
+      || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
       // If they haven't reviewed it yet and the report is submitted, they see "Needs action"
       displayStatus = 'Needs action';
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;

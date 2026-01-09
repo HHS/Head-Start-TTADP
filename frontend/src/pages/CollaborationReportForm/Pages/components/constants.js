@@ -5,6 +5,12 @@ const approver = PropTypes.shape({
   status: PropTypes.string,
 });
 
+const draftValuesPropType = {
+  showSavedDraft: PropTypes.bool.isRequired,
+  updateShowSavedDraft: PropTypes.func.isRequired,
+  lastSaveTime: PropTypes.shape({}),
+};
+
 const reviewPagePropType = {
   hasIncompletePages: PropTypes.bool.isRequired,
   incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -21,10 +27,11 @@ const reviewPagePropType = {
   onSaveDraft: PropTypes.func.isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func.isRequired,
+  draftValues: draftValuesPropType,
 };
 
 const reviewPageDefaultProps = {
   dateSubmitted: null,
 };
 
-export { reviewPagePropType, reviewPageDefaultProps };
+export { reviewPagePropType, reviewPageDefaultProps, draftValuesPropType };

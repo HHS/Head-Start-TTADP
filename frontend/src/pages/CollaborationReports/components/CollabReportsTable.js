@@ -153,7 +153,7 @@ const CollabReportsTable = ({
             'Last saved',
           ]}
           data={tabularData}
-          firstHeading="Report ID"
+          firstHeading="Report&nbsp;ID"
           enableCheckboxes
           checkboxes={reportCheckboxes}
           setCheckboxes={setReportCheckboxes}

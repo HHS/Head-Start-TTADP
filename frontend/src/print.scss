@@ -4,17 +4,18 @@
   }
 
   // Overrides the extra padding around the whole app
-  #appWrapper > div {
+  #appWrapper>div {
     padding: 0;
   }
 
   // Overrides the extra padding around the Approved AR view
-  #main-content > .ttahub-activity-report-view > div {
+  #main-content>.ttahub-activity-report-view>div {
     padding: 0;
   }
 
   // Overrides specific to the Approved AR View
-  .ttahub-activity-report-view {
+  .ttahub-activity-report-view,
+  .ttahub-collab-report-view {
     * {
       font-size: 14px;
     }
@@ -48,7 +49,8 @@
       break-inside: auto !important;
     }
 
-    .ttahub-read-only-content-section, .ttahub-read-only-content-section h3 {
+    .ttahub-read-only-content-section,
+    .ttahub-read-only-content-section h3 {
       margin-top: 0;
       margin-bottom: 8px !important;
     }
