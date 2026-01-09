@@ -239,6 +239,41 @@ describe('CR Supporting Information Page', () => {
       const goalsSelect = screen.getByText('Does the content of this activity help recipients in your region support their goals?');
       expect(goalsSelect).toBeInTheDocument();
     });
+
+    it('renders other participants', async () => {
+      const formData = {
+        goals: [{ label: 'Test Goal', value: 'test_goal' }],
+        dataUsed: [{ label: 'Census Data', value: 'census_data' }, { label: 'Other', value: 'other' }],
+        otherDataUsed: 'Custom Data',
+        participants: [{ label: 'Head Start Recipients', value: 'Head Start Recipients' }, { label: 'Other', value: 'Other' }],
+        otherParticipants: 'Custom Participant',
+      };
+
+      render(
+        <TestWrapper defaultValues={formData}>
+          {supportingInformationPage.render(
+            {},
+            {},
+            1,
+            false,
+            mockOnContinue,
+            mockOnSaveDraft,
+            mockOnUpdatePage,
+            false,
+            '',
+            jest.fn(),
+            mockAlert,
+          )}
+        </TestWrapper>,
+      );
+
+      expect(screen.getByText('Supporting information')).toBeInTheDocument();
+
+      // Check Other Participants input value
+      const otherParticipantsInput = screen.getByText('Others who participated').closest('fieldset').querySelector('input');
+      expect(otherParticipantsInput).toBeInTheDocument();
+      expect(otherParticipantsInput).toHaveValue('Custom Participant');
+    });
   });
 
   describe('ReviewSection Component', () => {
