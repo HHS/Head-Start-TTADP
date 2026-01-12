@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import useDeepCompareEffect from 'use-deep-compare-effect';
+import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
 export default function useFetch(
   initialValue,
@@ -11,7 +11,7 @@ export default function useFetch(
   const [error, setError] = useState('');
   const [statusCode, setStatusCode] = useState(null);
 
-  useDeepCompareEffect(() => {
+  useDeepCompareEffectNoCheck(() => {
     async function fetchData() {
       try {
         setError('');
@@ -27,7 +27,7 @@ export default function useFetch(
     }
 
     fetchData();
-  }, [dependencies]);
+  }, [...dependencies]);
 
   return {
     data,
