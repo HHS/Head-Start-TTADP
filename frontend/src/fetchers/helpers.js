@@ -54,7 +54,7 @@ const getSessionReportsDownloadURL = (reportIds) => {
   const sessionReportUrl = join('/', 'api', 'session-reports');
   const reportsQuery = reportIds.map((i) => `report[]=${i}`);
   const queryItems = ['?format=csv', ...reportsQuery];
-  return join(sessionReportUrl, 'download', queryItems.join('&'));
+  return join(sessionReportUrl, queryItems.join('&'));
 };
 
 const getAllSessionReportsDownloadURL = (filterQuery) => {

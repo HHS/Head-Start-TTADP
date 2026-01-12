@@ -97,7 +97,7 @@ function ReportRow({
         ) }
       </td>
       <th data-label="Event ID" scope="row" className="smart-hub--blue">
-        {eventId || 'N/A'}
+        {eventId || '--'}
       </th>
       <td data-label="Event title">
         {eventName ? (
@@ -106,7 +106,7 @@ function ReportRow({
             tooltipText={eventName}
             buttonLabel="click to reveal event name"
           />
-        ) : 'N/A'}
+        ) : '--'}
       </td>
       <td data-label="Session name">
         {sessionName ? (
@@ -115,13 +115,13 @@ function ReportRow({
             tooltipText={sessionName}
             buttonLabel="click to reveal session name"
           />
-        ) : 'N/A'}
+        ) : ''}
       </td>
       <td data-label="Session start date">
-        {startDate ? moment(startDate).format(DATE_DISPLAY_FORMAT) : 'N/A'}
+        {startDate ? moment(startDate).format(DATE_DISPLAY_FORMAT) : '--'}
       </td>
       <td data-label="Session end date">
-        {endDate ? moment(endDate).format(DATE_DISPLAY_FORMAT) : 'N/A'}
+        {endDate ? moment(endDate).format(DATE_DISPLAY_FORMAT) : '--'}
       </td>
       <td data-label="Topics">
         <TooltipWithCollection collection={topicsArray} collectionTitle={`topics for ${eventId}`} position={openMenuUp ? 'top' : 'bottom'} />

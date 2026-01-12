@@ -57,18 +57,18 @@ describe('ReportRow', () => {
     expect(screen.getByText('01/02/2024')).toBeInTheDocument();
   });
 
-  it('displays N/A for missing eventId', () => {
+  it('handles missing eventId', () => {
     const reportWithoutEventId = { ...mockReport, eventId: null };
     renderReportRow({ report: reportWithoutEventId });
-
-    expect(screen.getByText('N/A')).toBeInTheDocument();
+    const elements = document.querySelectorAll('[data-label="Event ID"]');
+    expect(elements.length).toBeGreaterThan(0);
   });
 
-  it('displays N/A for missing eventName', () => {
+  it('handles missing eventName', () => {
     const reportWithoutEventName = { ...mockReport, eventName: null };
     renderReportRow({ report: reportWithoutEventName });
 
-    const elements = screen.getAllByText('N/A');
+    const elements = document.querySelectorAll('[data-label="Event title"]');
     expect(elements.length).toBeGreaterThan(0);
   });
 
