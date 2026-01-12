@@ -5,11 +5,11 @@ import {
   Grid,
   Alert,
 } from '@trussworks/react-uswds';
-import { filtersToQueryString } from '../utils';
-import { REPORTS_PER_PAGE } from '../Constants';
-import useSessionSort from '../hooks/useSessionSort';
-import useFetch from '../hooks/useFetch';
-import './ScrollableReportsTable.css';
+import { filtersToQueryString } from '../../utils';
+import { REPORTS_PER_PAGE } from '../../Constants';
+import useSessionSort from '../../hooks/useSessionSort';
+import useFetch from '../../hooks/useFetch';
+import './index.css';
 
 function ScrollableReportsTable({
   filters,
