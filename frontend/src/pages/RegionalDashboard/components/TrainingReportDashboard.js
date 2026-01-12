@@ -56,7 +56,7 @@ export default function TrainingReportDashboard({
           <Grid row>
             <TrainingReportsTable
               filters={filtersToApply}
-              tableCaption="Training Reports"
+              tableCaption="Training reports"
               exportIdPrefix="tr-rd-"
               resetPagination={resetPagination}
               setResetPagination={setResetPagination}
