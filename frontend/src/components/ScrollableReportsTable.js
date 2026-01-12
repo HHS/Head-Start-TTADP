@@ -8,8 +8,8 @@ import {
 import { filtersToQueryString } from '../utils';
 import { REPORTS_PER_PAGE } from '../Constants';
 import useSessionSort from '../hooks/useSessionSort';
-import './ScrollableReportsTable.css';
 import useFetch from '../hooks/useFetch';
+import './ScrollableReportsTable.css';
 
 function ScrollableReportsTable({
   filters,
@@ -18,6 +18,7 @@ function ScrollableReportsTable({
   resetPagination,
   setResetPagination,
   sessionSortKey,
+  defaultSortBy,
 
   // child components
   ReportsTable,
@@ -32,7 +33,7 @@ function ScrollableReportsTable({
   downloadReports,
 }) {
   const [sortConfig, setSortConfig] = useSessionSort({
-    sortBy: 'id',
+    sortBy: defaultSortBy,
     direction: 'desc',
     activePage: 1,
   }, sessionSortKey);
@@ -72,7 +73,8 @@ function ScrollableReportsTable({
     'Unable to fetch reports',
   );
 
-  const { rows: reports, count: reportsCount } = data;
+  const reportsCount = data && data.count ? data.count : 0;
+  const reports = data && data.reports ? data.reports : [];
 
   const handleDownloadAllReports = async (
     setIsDownloading,
@@ -181,6 +183,7 @@ ScrollableReportsTable.propTypes = {
   getAllReportsDownloadUrl: PropTypes.func.isRequired,
   getReports: PropTypes.func.isRequired,
   downloadReports: PropTypes.func.isRequired,
+  defaultSortBy: PropTypes.string.isRequired,
 };
 
 ScrollableReportsTable.defaultProps = {
