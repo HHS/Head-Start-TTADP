@@ -133,13 +133,13 @@ function ScrollableReportsTable({
 
   return (
     <>
+      {error && (
       <Grid row>
-        {error && (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
-        )}
+        <Alert type="error" role="alert">
+          {error}
+        </Alert>
       </Grid>
+      )}
 
       <ReportsTable
         handleDownloadAllReports={handleDownloadAllReports}

@@ -147,7 +147,7 @@ export default function ReportsTable({
   const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
 
   return (
-    <Container className="landing inline-size-auto maxw-full position-relative" paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
+    <Container className="landing inline-size-auto minw-full width-full maxw-full position-relative" paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <TableHeader
         title={tableCaption}
         numberOfSelected={numberOfSelectedReports}
