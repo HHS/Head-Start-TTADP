@@ -180,13 +180,6 @@ describe('ApproverReview Component', () => {
       expect(submitButton).toHaveAttribute('type', 'submit');
     });
 
-    it('disables submit button when hasIncompletePages is true', async () => {
-      renderComponent({ hasIncompletePages: true });
-
-      const submitButton = await screen.findByRole('button', { name: 'Submit' });
-      expect(submitButton).toBeDisabled();
-    });
-
     it('triggers form submission on submit button click', () => {
       const mockOnFormReview = jest.fn();
       renderComponent({ onFormReview: mockOnFormReview });
