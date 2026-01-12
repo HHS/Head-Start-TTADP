@@ -51,15 +51,15 @@ const getAllAlertsDownloadURL = (filterQuery) => {
 };
 
 const getSessionReportsDownloadURL = (reportIds) => {
-  const sessionReportUrl = join('/', 'api', 'session-reports');
-  const reportsQuery = reportIds.map((i) => `report[]=${i}`);
-  const queryItems = ['?format=csv', ...reportsQuery];
-  return join(sessionReportUrl, queryItems.join('&'));
+  const params = new URLSearchParams({ format: 'csv' });
+  reportIds.forEach((id) => params.append('sessionId[]', id));
+  params.append('format', 'csv');
+  return join('/', 'api', 'session-reports', `?${params.toString()}`);
 };
 
 const getAllSessionReportsDownloadURL = (filterQuery) => {
-  const query = filterQuery ? `?${filterQuery}` : '';
-  return join('/', 'api', 'session-reports', `download-all${query}`);
+  const query = filterQuery ? `?${filterQuery}&` : '?';
+  return join('/', 'api', 'session-reports', `${query}format=csv`);
 };
 
 export {

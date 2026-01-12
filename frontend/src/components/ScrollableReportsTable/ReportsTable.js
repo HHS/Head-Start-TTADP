@@ -9,6 +9,17 @@ import TableHeader from '../TableHeader';
 import { parseCheckboxEvent, REPORTS_PER_PAGE } from '../../Constants';
 import './ReportsTable.css';
 
+const downloadBlob = (blob) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `download-tr-${new Date().toISOString()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
 export default function ReportsTable({
   loading,
   reports,
@@ -45,8 +56,7 @@ export default function ReportsTable({
     try {
       setIsDownloadingState(true);
       const blob = await downloadReports(downloadURL);
-      const csv = URL.createObjectURL(blob);
-      window.location.assign(csv);
+      downloadBlob(blob);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
@@ -77,8 +87,7 @@ export default function ReportsTable({
       try {
         setIsDownloadingState(true);
         const blob = await downloadReports(downloadURL);
-        const csv = URL.createObjectURL(blob);
-        window.location.assign(csv);
+        downloadBlob(blob);
       } catch (err) {
         // eslint-disable-next-line no-console
         console.log(err);

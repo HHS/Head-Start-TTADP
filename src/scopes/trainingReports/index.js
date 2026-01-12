@@ -7,6 +7,7 @@ import { withCreators } from './creator';
 import { withoutEventId, withEventId } from './eventId';
 import { withGoalName, withoutGoalName } from './goalName';
 import { withoutStandard, withStandard } from './standard';
+import { withSessionId } from './sessionId';
 
 export const topicToQuery = {
   startDate: {
@@ -32,6 +33,9 @@ export const topicToQuery = {
   goalName: {
     ctn: (query) => withGoalName(query),
     nctn: (query) => withoutGoalName(query),
+  },
+  sessionId: {
+    in: (query) => withSessionId(query),
   },
   standard: {
     in: (query) => withStandard(query),
