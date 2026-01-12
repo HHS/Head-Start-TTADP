@@ -1,11 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { getReports, downloadReports } from '../../fetchers/activityReports';
-import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
+import { getSessionReports, downloadSessionReports } from '../../fetchers/sessionReports';
+import { getSessionReportsDownloadURL, getAllSessionReportsDownloadURL } from '../../fetchers/helpers';
 import ReportsTable from './ReportsTable';
 import ScrollableReportsTable from '../ScrollableReportsTable';
 
-function ActivityReportsTable({
+function TrainingReportsTable({
   filters,
   tableCaption,
   exportIdPrefix,
@@ -19,18 +19,18 @@ function ActivityReportsTable({
       exportIdPrefix={exportIdPrefix}
       resetPagination={resetPagination}
       setResetPagination={setResetPagination}
-      sessionSortKey="activityReportsTable"
-      getReportsDownloadUrl={getReportsDownloadURL}
-      getAllReportsDownloadUrl={getAllReportsDownloadURL}
-      getReports={getReports}
-      downloadReports={downloadReports}
+      sessionSortKey="trainingReportsTable"
+      getReportsDownloadUrl={getSessionReportsDownloadURL}
+      getAllReportsDownloadUrl={getAllSessionReportsDownloadURL}
+      getReports={getSessionReports}
+      downloadReports={downloadSessionReports}
       ReportsTable={ReportsTable}
-      defaultSortBy="updatedAt"
+      defaultSortBy="id"
     />
   );
 }
 
-ActivityReportsTable.propTypes = {
+TrainingReportsTable.propTypes = {
   exportIdPrefix: PropTypes.string.isRequired,
   filters: PropTypes.arrayOf(
     PropTypes.shape({
@@ -50,8 +50,8 @@ ActivityReportsTable.propTypes = {
   setResetPagination: PropTypes.func.isRequired,
 };
 
-ActivityReportsTable.defaultProps = {
+TrainingReportsTable.defaultProps = {
   resetPagination: false,
 };
 
-export default ActivityReportsTable;
+export default TrainingReportsTable;

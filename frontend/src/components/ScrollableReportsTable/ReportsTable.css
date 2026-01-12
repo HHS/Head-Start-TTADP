@@ -1,3 +1,7 @@
+.tta-smarthub--report-heading .usa-checkbox__label {
+    padding-left: 0;
+}
+
 .tta-smarthub--report-row td:first-child {
     position: relative;
 }
@@ -22,7 +26,7 @@
 }
 
 /**
-* even if it's display: inline, we still want to hide the button visually unless it's focused. 
+* even if it's display: inline, we still want to hide the button visually unless it's focused.
 * that's what the code does below (handles focus and not focused states)
 */
 
@@ -39,7 +43,7 @@
 
 .tta-smarthub--report-row .ttahub-export-reports {
     background: white;
-    left: 50px;  
+    left: 50px;
     top: -10px;
     position: absolute;
     z-index: 100000;

@@ -8,7 +8,6 @@ import { getReportsDownloadURL } from '../../fetchers/helpers';
 import TooltipWithCollection from '../TooltipWithCollection';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import './ReportRow.css';
 
 function ReportRow({
   report,

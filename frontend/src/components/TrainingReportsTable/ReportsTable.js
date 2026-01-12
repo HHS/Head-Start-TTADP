@@ -4,15 +4,12 @@ import BaseReportsTable from '../ScrollableReportsTable/ReportsTable';
 import ReportRow from './ReportRow';
 
 const columns = [
-  { displayName: 'Report ID', fieldName: 'regionId' },
-  { displayName: 'Recipient', fieldName: 'activityRecipients' },
-  { displayName: 'Date started', fieldName: 'startDate' },
-  { displayName: 'Creator', fieldName: 'author' },
-  { displayName: 'Created date', fieldName: 'createdAt' },
+  { displayName: 'Event ID', fieldName: 'eventId' },
+  { displayName: 'Event title', fieldName: 'eventName' },
+  { displayName: 'Session name', fieldName: 'sessionName' },
+  { displayName: 'Session start date', fieldName: 'startDate' },
+  { displayName: 'Session end date', fieldName: 'endDate' },
   { displayName: 'Topics', fieldName: 'topics' },
-  { displayName: 'Collaborators', fieldName: 'collaborators' },
-  { displayName: 'Last saved', fieldName: 'updatedAt' },
-  { displayName: 'Approved date', fieldName: 'approvedAt' },
 ];
 
 export default function ReportsTable({
@@ -49,7 +46,7 @@ export default function ReportsTable({
       filterQuery={filterQuery}
       columns={columns}
       RowComponent={ReportRow}
-      loadingLabel="Activity reports table loading"
+      loadingLabel="Training reports table loading"
     />
   );
 }
@@ -59,11 +56,11 @@ ReportsTable.propTypes = {
   reports: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
-      regionId: PropTypes.number,
-      activityRecipients: PropTypes.arrayOf(PropTypes.shape(
-        { activityRecipientId: PropTypes.number },
-      )),
+      eventId: PropTypes.string,
+      eventName: PropTypes.string,
+      sessionName: PropTypes.string,
       startDate: PropTypes.string,
+      endDate: PropTypes.string,
     }),
   ).isRequired,
   sortConfig: PropTypes.shape({

@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Link, useHistory } from 'react-router-dom';
 import { completeEvent, resumeEvent, suspendEvent } from '../../../fetchers/event';
 import UserContext from '../../../UserContext';
-import { eventPropTypes } from '../constants';
+import { eventPropTypes, idForLink as getIdForLink } from '../constants';
 import ContextMenu from '../../../components/ContextMenu';
 import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
@@ -43,7 +43,7 @@ function EventCard({
   const [eventStatus, setEventStatus] = useState(data.status);
 
   const { eventId, eventSubmitted } = data;
-  const idForLink = eventId.split('-').pop();
+  const idForLink = getIdForLink(eventId);
   const isOwner = event.ownerId === user.id;
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
   const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);

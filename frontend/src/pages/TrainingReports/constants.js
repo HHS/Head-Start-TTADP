@@ -50,3 +50,5 @@ export const EVENT_STATUS = {
   COMPLETE: 'complete',
   SUSPENDED: 'suspended',
 };
+
+export const idForLink = (eventId) => (eventId || '').split('-').pop();

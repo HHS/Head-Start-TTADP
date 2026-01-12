@@ -50,10 +50,23 @@ const getAllAlertsDownloadURL = (filterQuery) => {
   return join('/', 'api', 'activity-reports', 'alerts', `download-all${query}`);
 };
 
+const getSessionReportsDownloadURL = (reportIds) => {
+  const params = new URLSearchParams({ format: 'csv' });
+  reportIds.forEach((id) => params.append('sessionId.in[]', id));
+  return join('/', 'api', 'session-reports', `?${params.toString()}`);
+};
+
+const getAllSessionReportsDownloadURL = (filterQuery) => {
+  const query = filterQuery ? `?${filterQuery}&` : '?';
+  return join('/', 'api', 'session-reports', `${query}format=csv`);
+};
+
 export {
   getReportsDownloadURL as default,
   getReportsDownloadURL,
   getAllReportsDownloadURL,
   getAllAlertsDownloadURL,
+  getSessionReportsDownloadURL,
+  getAllSessionReportsDownloadURL,
   combineReportDataFromApi,
 };
