@@ -6,6 +6,7 @@ import formPages from './pages';
 import Review from './components/Review';
 import Container from '../../../components/Container';
 import UserContext from '../../../UserContext';
+import { draftValuesPropType } from './components/constants';
 
 const ReviewSubmit = ({
   onReview,
@@ -18,6 +19,7 @@ const ReviewSubmit = ({
   onSaveForm,
   onSaveDraft,
   onSubmit,
+  draftValues,
 }) => {
   const {
     calculatedStatus,
@@ -41,7 +43,7 @@ const ReviewSubmit = ({
   // store some values for readability
   const isCreator = userId === user.id;
   // eslint-disable-next-line max-len
-  const isCollaborator = collabReportSpecialists.some(({ specialistId }) => user.id === specialistId);
+  const isCollaborator = collabReportSpecialists?.some(({ specialistId }) => user.id === specialistId);
   const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
   const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
   const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
@@ -78,6 +80,7 @@ const ReviewSubmit = ({
           reviewItems={reviewItems}
           onSaveForm={onSaveForm}
           onSaveDraft={onSaveDraft}
+          draftValues={draftValues}
           onSubmit={onSubmit}
           onUpdatePage={onUpdatePage}
           pendingApprovalCount={pendingApprovalCount}
@@ -132,6 +135,7 @@ ReviewSubmit.propTypes = {
   onSaveForm: PropTypes.func.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  draftValues: draftValuesPropType.isRequired,
 };
 
 ReviewSubmit.defaultProps = {
@@ -157,12 +161,14 @@ const reviewPage = {
       lastSaveTime,
       onUpdatePage,
       onSaveDraft,
+      draftValues,
     ) => (
       <ReviewSubmit
         availableApprovers={additionalData.approvers}
         onSubmit={onFormSubmit}
         onSaveForm={onSave}
         onSaveDraft={onSaveDraft}
+        draftValues={draftValues}
         onUpdatePage={onUpdatePage}
         onReview={onReview}
         isApprover={isApprover}

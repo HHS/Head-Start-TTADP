@@ -45,14 +45,16 @@ function SessionCard({
 }) {
   const modalRef = useRef();
   const {
+    goalTemplates,
+    trainers,
+  } = session;
+  const {
     sessionName,
     startDate,
     endDate,
     objective,
     objectiveSupportType,
-    objectiveTrainers,
     status,
-    sessionGoalTemplates,
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -91,6 +93,8 @@ function SessionCard({
     eventStatus,
     eventOrganizer,
   });
+
+  const objectiveTrainers = (trainers || []).map((tr) => tr.fullName);
 
   return (
     <div>
@@ -154,7 +158,7 @@ function SessionCard({
         </CardData>
 
         <CardData label="Supporting goals">
-          {sessionGoalTemplates && sessionGoalTemplates.length > 0 ? sessionGoalTemplates.join(', ') : ''}
+          {goalTemplates && goalTemplates.length > 0 ? goalTemplates.map((gt) => gt.standard).join(', ') : ''}
         </CardData>
 
         <CardData label="Trainers">
@@ -172,6 +176,8 @@ function SessionCard({
 
 export const sessionPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
+  goalTemplates: PropTypes.arrayOf(PropTypes.shape({ standard: PropTypes.string })).isRequired,
+  trainers: PropTypes.arrayOf(PropTypes.shape({ fullName: PropTypes.string })).isRequired,
   data: PropTypes.shape({
     facilitation: PropTypes.string.isRequired,
     regionId: PropTypes.number.isRequired,
@@ -180,8 +186,6 @@ export const sessionPropTypes = PropTypes.shape({
     endDate: PropTypes.string.isRequired,
     objective: PropTypes.string.isRequired,
     objectiveSupportType: PropTypes.string.isRequired,
-    sessionGoalTemplates: PropTypes.arrayOf(PropTypes.string).isRequired,
-    objectiveTrainers: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.oneOf([
       'In progress',
       'Complete',

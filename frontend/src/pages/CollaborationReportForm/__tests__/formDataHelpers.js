@@ -659,14 +659,14 @@ describe('formDataHelpers', () => {
         expect(result.conductMethod).toEqual(null);
       });
 
-      it('should return null when conductMethod is undefined', () => {
+      it('should return undefined when conductMethod is undefined', () => {
         const fetchedReport = {
           id: 1,
         };
 
         const result = convertReportToFormData(fetchedReport);
 
-        expect(result.conductMethod).toEqual(null);
+        expect(result.conductMethod).toEqual(undefined);
       });
     });
 
