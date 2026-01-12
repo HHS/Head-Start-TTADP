@@ -1020,7 +1020,7 @@ describe('ActivityReportNavigator autosave with shouldUpdateFormData', () => {
 
     await waitFor(() => {
       expect(defaultProps.onSave).toHaveBeenCalled();
-      expect(hookForm.reset).toHaveBeenCalledWith({ id: 1, goals: [] });
+      expect(hookForm.reset).toHaveBeenCalledWith({ id: 1, goals: [] }, { errors: true });
     });
   });
 
@@ -1074,7 +1074,7 @@ describe('ActivityReportNavigator autosave with shouldUpdateFormData', () => {
     await waitFor(() => {
       expect(defaultProps.onSave).toHaveBeenCalled();
       // reset SHOULD be called even with cursor in RTE for manual saves
-      expect(hookForm.reset).toHaveBeenCalledWith({ id: 1, goals: [] });
+      expect(hookForm.reset).toHaveBeenCalledWith({ id: 1, goals: [] }, { errors: true });
     });
   });
 
