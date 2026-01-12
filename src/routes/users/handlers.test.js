@@ -504,6 +504,18 @@ describe('User handlers', () => {
       lastLogin: new Date(),
     };
 
+    const mockUserWithoutTRPermissions = {
+      id: '2',
+      name: 'Jane Doe',
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.SITE_ACCESS,
+        },
+      ],
+      lastLogin: new Date(),
+    };
+
     const req = {
       params: {
         regionId: '1',
@@ -529,7 +541,7 @@ describe('User handlers', () => {
           regionId: '4',
         },
       };
-      userById.mockResolvedValueOnce(mockUser);
+      userById.mockResolvedValueOnce(mockUserWithoutTRPermissions);
       currentUserId.mockResolvedValueOnce(1);
 
       await getTrainingReportTrainersByRegion(unauthorizedReq, res);
@@ -542,18 +554,22 @@ describe('User handlers', () => {
     });
 
     it('should return a list of trainers by region with correct roles', async () => {
-      const mockTrainers = [
+      const mockRegionalTrainers = [
         { id: 1, name: 'Trainer 1', email: 'trainer1@test.gov' },
         { id: 2, name: 'Trainer 2', email: 'trainer2@test.gov' },
       ];
+      const mockNCTrainers = [
+        { id: 3, name: 'NC User 1', email: 'nc1@test.gov' },
+      ];
       userById.mockResolvedValueOnce(mockUser);
       currentUserId.mockResolvedValueOnce(1);
-      usersByRoles.mockResolvedValueOnce(mockTrainers);
+      usersByRoles.mockResolvedValueOnce(mockRegionalTrainers);
+      usersByRoles.mockResolvedValueOnce(mockNCTrainers);
 
       await getTrainingReportTrainersByRegion(req, res);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(usersByRoles).toHaveBeenCalledWith([
+      expect(usersByRoles).toHaveBeenNthCalledWith(1, [
         'HS',
         'SS',
         'ECS',
@@ -562,8 +578,9 @@ describe('User handlers', () => {
         'TTAC',
         'ECM',
         'GSM',
-      ], 1);
-      expect(res.json).toHaveBeenCalledWith(mockTrainers);
+      ], [1]);
+      expect(usersByRoles).toHaveBeenNthCalledWith(2, ['NC']);
+      expect(res.json).toHaveBeenCalledWith([...mockRegionalTrainers, ...mockNCTrainers]);
     });
 
     it('should handle errors', async () => {

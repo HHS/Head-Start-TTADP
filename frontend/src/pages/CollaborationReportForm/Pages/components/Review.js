@@ -9,9 +9,11 @@ import UserContext from '../../../../UserContext';
 import IndicatesRequiredField from '../../../../components/IndicatesRequiredField';
 import ApproverReview from './ApproverReview';
 import CreatorSubmit from './CreatorSubmit';
+import { draftValuesPropType } from './constants';
 
 const TopAlert = ({
   author,
+  user,
   isNeedsAction,
   pendingApprovalCount,
   approvers,
@@ -31,15 +33,15 @@ const TopAlert = ({
       .map((a) => a.user.fullName);
 
     if (approverNames.length === 0) {
-      return 'Changes have been requested for the Collaboration Report.';
+      return 'Changes have been requested for this Collaboration Report.';
     }
 
     if (approverNames.length === 1) {
-      return `${approverNames[0]} is requesting changes to the Collaboration Report.`;
+      return `${approverNames[0]} is requesting changes to this Collaboration Report.`;
     }
 
     if (approverNames.length === 2) {
-      return `${approverNames[0]} and ${approverNames[1]} are requesting changes to the Collaboration Report.`;
+      return `${approverNames[0]} and ${approverNames[1]} are requesting changes to this Collaboration Report.`;
     }
 
     // Multiple approvers (3 or more) - use Oxford comma
@@ -48,7 +50,9 @@ const TopAlert = ({
     return `${otherApprovers}, and ${lastApprover} are requesting changes to the Collaboration Report.`;
   };
 
-  if (isNeedsAction) {
+  const isApprover = approvers && approvers.some((a) => a.user?.fullName === user.fullName);
+
+  if (isNeedsAction && !isApprover) {
     return (
       <Alert type="error" noIcon slim className="margin-bottom-4 no-print">
         <span className="text-bold">
@@ -86,6 +90,9 @@ TopAlert.propTypes = {
   author: PropTypes.shape({
     fullName: PropTypes.string,
   }).isRequired,
+  user: PropTypes.shape({
+    fullName: PropTypes.string,
+  }).isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
   pendingApprovalCount: PropTypes.number.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
@@ -110,6 +117,7 @@ const Review = ({
   onSaveForm,
   onUpdatePage,
   onSaveDraft,
+  draftValues,
   onSubmit,
   isNeedsAction,
   pendingApprovalCount,
@@ -145,11 +153,18 @@ const Review = ({
       <h2 className="font-family-serif">Review and submit</h2>
 
       <IndicatesRequiredField />
+      {!isSubmitted && (
+        <p className="usa-prose" style={{ maxWidth: '700px' }}>
+          Review the information in each section before submitting for approval.
+          Once submitted, you will no longer be able to edit the report.
+        </p>
+      )}
       {isSubmitted && (
       <TopAlert
         pendingApprovalCount={pendingApprovalCount}
         isNeedsAction={isNeedsAction}
         author={author}
+        user={user}
         approvers={approvers}
       />
       )}
@@ -188,6 +203,7 @@ const Review = ({
         onSaveForm={onSaveForm}
         onUpdatePage={onUpdatePage}
         onSaveDraft={onSaveDraft}
+        draftValues={draftValues}
         onSubmit={onSubmit}
       />
     </>
@@ -223,6 +239,7 @@ Review.propTypes = {
   onUpdatePage: PropTypes.func.isRequired,
   onSaveForm: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  draftValues: draftValuesPropType.isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
   author: PropTypes.shape({
     fullName: PropTypes.string,

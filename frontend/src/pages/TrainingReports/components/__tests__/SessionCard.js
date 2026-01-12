@@ -21,6 +21,8 @@ describe('SessionCard', () => {
   const defaultSession = {
     id: 1,
     approverId: 999,
+    goalTemplates: [{ id: 1, standard: 'FEI' }, { id: 2, standard: 'CQI and Data' }],
+    trainers: [{ fullName: 'Trainer 1' }, { fullName: 'Trainer 2' }],
     data: {
       regionId: 1,
       sessionName: 'This is my session title',
@@ -28,8 +30,6 @@ describe('SessionCard', () => {
       endDate: '01/03/2021',
       objective: 'This is my session objective',
       objectiveSupportType: SUPPORT_TYPES[2],
-      sessionGoalTemplates: ['FEI', 'CQI and Data'],
-      objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
       pocComplete: false,
       ownerComplete: false,
@@ -144,12 +144,12 @@ describe('SessionCard', () => {
   it('correctly renders with empty data', () => {
     renderSessionCard({
       ...defaultSession,
+      goalTemplates: [],
       data: {
         ...defaultSession.data,
         startDate: null,
         endDate: null,
         objectiveTrainers: [],
-        sessionGoalTemplates: [],
       },
     });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
@@ -161,12 +161,12 @@ describe('SessionCard', () => {
   it('correctly renders with null data', () => {
     renderSessionCard({
       ...defaultSession,
+      goalTemplates: null,
       data: {
         ...defaultSession.data,
         startDate: null,
         endDate: null,
         objectiveTrainers: null,
-        sessionGoalTemplates: null,
       },
     });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
