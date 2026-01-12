@@ -173,6 +173,11 @@ describe('CollaborationReportForm', () => {
 
     expect(await screen.findByText('Enter activity name')).toBeInTheDocument();
 
+    const descriptionInput = await screen.findByTestId('description-input');
+    fireEvent.blur(descriptionInput, { target: { value: '' } });
+
+    expect(await screen.findByText('Describe the activity')).toBeInTheDocument();
+
     const reviewButton = await screen.findByRole('button', { name: /review and submit/i });
     userEvent.click(reviewButton);
 
@@ -183,6 +188,7 @@ describe('CollaborationReportForm', () => {
 
     await screen.findByText(/Collaboration report for Region [\d]/i);
     expect(await screen.findByText('Enter activity name')).toBeInTheDocument();
+    expect(await screen.findByText('Describe the activity')).toBeInTheDocument();
   });
 
   // FIXME: Not yet implemented
