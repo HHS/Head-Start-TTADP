@@ -9,6 +9,7 @@ import { filtersToQueryString } from '../../utils';
 import { REPORTS_PER_PAGE } from '../../Constants';
 import useSessionSort from '../../hooks/useSessionSort';
 import useFetch from '../../hooks/useFetch';
+import BaseReportsTable from './ReportsTable';
 import './index.css';
 
 function ScrollableReportsTable({
@@ -21,7 +22,7 @@ function ScrollableReportsTable({
   defaultSortBy,
 
   // child components
-  ReportsTable,
+  ReportsTable = BaseReportsTable,
 
   /* functions */
   // url constructor
@@ -76,61 +77,6 @@ function ScrollableReportsTable({
   const reportsCount = data && data.count ? data.count : 0;
   const reports = data && data.rows ? data.rows : [];
 
-  const handleDownloadAllReports = async (
-    setIsDownloading,
-    setDownloadError,
-    downloadAllButtonRef,
-  ) => {
-    const downloadURL = getAllReportsDownloadUrl(filterQuery);
-
-    try {
-      setIsDownloading(true);
-      const blob = await downloadReports(downloadURL);
-      const csv = URL.createObjectURL(blob);
-      window.location.assign(csv);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
-      setDownloadError(true);
-    } finally {
-      setIsDownloading(false);
-      downloadAllButtonRef.current.focus();
-    }
-  };
-
-  const handleDownloadClick = async (
-    reportCheckboxes,
-    setIsDownloading,
-    setDownloadError,
-    downloadSelectedButtonRef,
-  ) => {
-    const toDownloadableReportIds = (accumulator, entry) => {
-      if (!reports) return accumulator;
-      const [key, value] = entry;
-      if (value === false) return accumulator;
-      accumulator.push(key);
-      return accumulator;
-    };
-
-    const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
-    if (downloadable.length) {
-      const downloadURL = getReportsDownloadUrl(downloadable);
-      try {
-        setIsDownloading(true);
-        const blob = await downloadReports(downloadURL);
-        const csv = URL.createObjectURL(blob);
-        window.location.assign(csv);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(err);
-        setDownloadError(true);
-      } finally {
-        setIsDownloading(false);
-        downloadSelectedButtonRef.current.focus();
-      }
-    }
-  };
-
   return (
     <>
       {error && (
@@ -142,8 +88,6 @@ function ScrollableReportsTable({
       )}
 
       <ReportsTable
-        handleDownloadAllReports={handleDownloadAllReports}
-        handleDownloadClick={handleDownloadClick}
         reportsCount={reportsCount}
         tableCaption={tableCaption}
         exportIdPrefix={exportIdPrefix}
@@ -154,6 +98,10 @@ function ScrollableReportsTable({
         offset={offset}
         setOffset={setOffset}
         activePage={activePage}
+        getReportsDownloadUrl={getReportsDownloadUrl}
+        getAllReportsDownloadUrl={getAllReportsDownloadUrl}
+        downloadReports={downloadReports}
+        filterQuery={filterQuery}
       />
     </>
   );
@@ -178,7 +126,7 @@ ScrollableReportsTable.propTypes = {
   resetPagination: PropTypes.bool,
   setResetPagination: PropTypes.func.isRequired,
   sessionSortKey: PropTypes.string.isRequired,
-  ReportsTable: PropTypes.elementType.isRequired,
+  ReportsTable: PropTypes.elementType,
   getReportsDownloadUrl: PropTypes.func.isRequired,
   getAllReportsDownloadUrl: PropTypes.func.isRequired,
   getReports: PropTypes.func.isRequired,
@@ -188,6 +136,7 @@ ScrollableReportsTable.propTypes = {
 
 ScrollableReportsTable.defaultProps = {
   resetPagination: false,
+  ReportsTable: BaseReportsTable,
 };
 
 export default ScrollableReportsTable;

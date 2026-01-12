@@ -26,8 +26,10 @@ export default function ReportsTable({
   exportIdPrefix,
   reportsCount,
   activePage,
-  handleDownloadAllReports,
-  handleDownloadClick,
+  getReportsDownloadUrl,
+  getAllReportsDownloadUrl,
+  downloadReports,
+  filterQuery,
 }) {
   return (
     <BaseReportsTable
@@ -41,8 +43,10 @@ export default function ReportsTable({
       exportIdPrefix={exportIdPrefix}
       reportsCount={reportsCount}
       activePage={activePage}
-      handleDownloadAllReports={handleDownloadAllReports}
-      handleDownloadClick={handleDownloadClick}
+      getReportsDownloadUrl={getReportsDownloadUrl}
+      getAllReportsDownloadUrl={getAllReportsDownloadUrl}
+      downloadReports={downloadReports}
+      filterQuery={filterQuery}
       columns={columns}
       RowComponent={ReportRow}
       loadingLabel="Activity reports table loading"
@@ -73,7 +77,9 @@ ReportsTable.propTypes = {
   tableCaption: PropTypes.string.isRequired,
   exportIdPrefix: PropTypes.string.isRequired,
   reportsCount: PropTypes.number.isRequired,
-  handleDownloadAllReports: PropTypes.func.isRequired,
-  handleDownloadClick: PropTypes.func.isRequired,
   activePage: PropTypes.number.isRequired,
+  getReportsDownloadUrl: PropTypes.func.isRequired,
+  getAllReportsDownloadUrl: PropTypes.func.isRequired,
+  downloadReports: PropTypes.func.isRequired,
+  filterQuery: PropTypes.string.isRequired,
 };

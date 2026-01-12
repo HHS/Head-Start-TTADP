@@ -13,7 +13,7 @@ const mockReport = {
   sessionName: 'Session 1',
   startDate: '2024-01-01',
   endDate: '2024-01-02',
-  objectiveTopics: [{ name: 'Topic 1' }, { name: 'Topic 2' }],
+  objectiveTopics: ['Topic 1', 'Topic 2'],
 };
 
 const defaultProps = {

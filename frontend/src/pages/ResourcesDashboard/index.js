@@ -147,63 +147,6 @@ export default function ResourcesDashboard() {
     filters,
   ]);
 
-  const handleDownloadReports = async (setIsDownloading, setDownloadError, url, buttonRef) => {
-    try {
-      setIsDownloading(true);
-      const blob = await downloadReports(url);
-      const csv = URL.createObjectURL(blob);
-      window.location.assign(csv);
-    } /* istanbul ignore next: hard to test error on download */ catch (err) {
-      setDownloadError(true);
-    } finally {
-      setIsDownloading(false);
-      buttonRef.current.focus();
-    }
-  };
-
-  const handleDownloadAllReports = async (
-    setIsDownloading,
-    setDownloadError,
-    downloadAllButtonRef,
-  ) => {
-    const queryString = reportIds.map((i) => `id=${i}`).join('&');
-    const downloadURL = getAllReportsDownloadURL(queryString);
-
-    return handleDownloadReports(
-      setIsDownloading,
-      setDownloadError,
-      downloadURL,
-      downloadAllButtonRef,
-    );
-  };
-
-  /* istanbul ignore next: hard to test downloads */
-  const handleDownloadClick = async (
-    reportCheckboxes,
-    setIsDownloading,
-    setDownloadError,
-    downloadSelectedButtonRef,
-  ) => {
-    const toDownloadableReportIds = (accumulator, entry) => {
-      if (!activityReports.rows) return accumulator;
-      const [key, value] = entry;
-      if (value === false) return accumulator;
-      accumulator.push(key);
-      return accumulator;
-    };
-
-    const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
-    if (downloadable.length) {
-      const downloadURL = getReportsDownloadURL(downloadable);
-      await handleDownloadReports(
-        setIsDownloading,
-        setDownloadError,
-        downloadURL,
-        downloadSelectedButtonRef,
-      );
-    }
-  };
-
   return (
     <div className="ttahub-resources-dashboard">
       <Helmet>
@@ -254,8 +197,6 @@ export default function ResourcesDashboard() {
         loading={areReportsLoading}
         reports={activityReports.rows}
         sortConfig={activityReportSortConfig}
-        handleDownloadAllReports={handleDownloadAllReports}
-        handleDownloadClick={handleDownloadClick}
         setSortConfig={setActivityReportSortConfig}
         offset={activityReportOffset}
         setOffset={setActivityReportOffset}
@@ -263,6 +204,10 @@ export default function ResourcesDashboard() {
         exportIdPrefix="activity-reports"
         reportsCount={activityReports.count}
         activePage={activePage}
+        getReportsDownloadUrl={getReportsDownloadURL}
+        getAllReportsDownloadUrl={getAllReportsDownloadURL}
+        downloadReports={downloadReports}
+        filterQuery={reportIds ? reportIds.map((i) => `id=${i}`).join('&') : ''}
       />
 
     </div>

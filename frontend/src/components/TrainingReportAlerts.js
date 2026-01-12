@@ -10,8 +10,7 @@ import { hasTrainingReportWritePermissions } from '../permissions';
 import { getEventAlerts } from '../fetchers/event';
 import WidgetContainer from './WidgetContainer';
 import SimpleSortableTable from './SimpleSortableTable';
-
-const idForLink = (eventId) => eventId.split('-').pop();
+import { idForLink } from '../pages/TrainingReports/constants';
 
 const ACTIONS_NEEDED = {
   noSessionsCreated: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/new/`} data-sort="no-sessions-created">Create a session</Link></>,

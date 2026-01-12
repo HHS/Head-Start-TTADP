@@ -20,8 +20,10 @@ export default function ReportsTable({
   exportIdPrefix,
   reportsCount,
   activePage,
-  handleDownloadAllReports,
-  handleDownloadClick,
+  getReportsDownloadUrl,
+  getAllReportsDownloadUrl,
+  downloadReports,
+  filterQuery,
   columns,
   RowComponent,
   loadingLabel,
@@ -32,6 +34,61 @@ export default function ReportsTable({
   const [downloadError, setDownloadError] = useState(false);
   const downloadAllButtonRef = useRef();
   const downloadSelectedButtonRef = useRef();
+
+  const handleDownloadAllReports = async (
+    setIsDownloadingState,
+    setDownloadErrorState,
+    buttonRef,
+  ) => {
+    const downloadURL = getAllReportsDownloadUrl(filterQuery);
+
+    try {
+      setIsDownloadingState(true);
+      const blob = await downloadReports(downloadURL);
+      const csv = URL.createObjectURL(blob);
+      window.location.assign(csv);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+      setDownloadErrorState(true);
+    } finally {
+      setIsDownloadingState(false);
+      buttonRef.current.focus();
+    }
+  };
+
+  const handleDownloadClick = async (
+    reportCheckboxesState,
+    setIsDownloadingState,
+    setDownloadErrorState,
+    buttonRef,
+  ) => {
+    const toDownloadableReportIds = (accumulator, entry) => {
+      if (!reports) return accumulator;
+      const [key, value] = entry;
+      if (value === false) return accumulator;
+      accumulator.push(key);
+      return accumulator;
+    };
+
+    const downloadable = Object.entries(reportCheckboxesState).reduce(toDownloadableReportIds, []);
+    if (downloadable.length) {
+      const downloadURL = getReportsDownloadUrl(downloadable);
+      try {
+        setIsDownloadingState(true);
+        const blob = await downloadReports(downloadURL);
+        const csv = URL.createObjectURL(blob);
+        window.location.assign(csv);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.log(err);
+        setDownloadErrorState(true);
+      } finally {
+        setIsDownloadingState(false);
+        buttonRef.current.focus();
+      }
+    }
+  };
 
   const makeReportCheckboxes = (reportsArr, checked) => (
     reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
@@ -236,9 +293,11 @@ ReportsTable.propTypes = {
   tableCaption: PropTypes.string.isRequired,
   exportIdPrefix: PropTypes.string.isRequired,
   reportsCount: PropTypes.number.isRequired,
-  handleDownloadAllReports: PropTypes.func.isRequired,
-  handleDownloadClick: PropTypes.func.isRequired,
   activePage: PropTypes.number.isRequired,
+  getReportsDownloadUrl: PropTypes.func.isRequired,
+  getAllReportsDownloadUrl: PropTypes.func.isRequired,
+  downloadReports: PropTypes.func.isRequired,
+  filterQuery: PropTypes.string.isRequired,
   columns: PropTypes.arrayOf(
     PropTypes.shape({
       displayName: PropTypes.string.isRequired,
