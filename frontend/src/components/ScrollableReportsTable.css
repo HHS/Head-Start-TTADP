@@ -1,4 +1,4 @@
-.usa-table-container--scrollable, 
+.usa-table-container--scrollable,
 .usa-checkbox__label {
   margin-top: 0px;
 }
@@ -9,6 +9,6 @@
   margin-bottom: 0;
 }
 
-.ttahub-activity-report-table--heading-row .usa-checkbox__label{
+.tta-smarthub--report-heading .usa-checkbox__label{
   padding-left: 0;
 }

@@ -11,6 +11,8 @@ const activityReports = [
     topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
     sortedTopics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
     calculatedStatus: 'draft',
+    creatorName: 'Kiwi, GS',
+    createdAt: '2021-02-01T21:00:57.149Z',
     pendingApprovals: '1 of 3',
     approvers: [
       {
@@ -109,6 +111,8 @@ const activityReports = [
     regionId: 14,
     topics: [],
     sortedTopics: [],
+    creatorName: 'Kiwi, GS',
+    createdAt: '2021-02-01T21:00:57.149Z',
     pendingApprovals: '2 of 2',
     approvers: [
       {

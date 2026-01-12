@@ -31,10 +31,23 @@ describe('Training report Dashboard page', () => {
   afterEach(() => fetchMock.restore());
 
   const renderTest = () => {
-    render(<TrainingReportDashboard />);
+    render(
+      <TrainingReportDashboard
+        filtersToApply={[]}
+        resetPagination={false}
+        setResetPagination={jest.fn()}
+        filterKey="training-reports"
+      />,
+    );
   };
 
   it('renders and fetches data', async () => {
+    // Mock session reports API
+    fetchMock.get('/api/session-reports?sortBy=id&sortDir=desc&offset=0&limit=10', {
+      count: 0,
+      rows: [],
+    });
+
     renderTest();
 
     expect(fetchMock.calls(overviewUrl)).toHaveLength(1);
