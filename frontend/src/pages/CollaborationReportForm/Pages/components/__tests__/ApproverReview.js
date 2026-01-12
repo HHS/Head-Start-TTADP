@@ -125,7 +125,7 @@ describe('ApproverReview Component', () => {
 
       expect(moment).toHaveBeenCalledWith('2024-01-15T10:30:00Z');
       expect(mockMoment.format).toHaveBeenCalledWith(DATE_DISPLAY_FORMAT);
-      expect(screen.getByText('Date Submitted')).toBeInTheDocument();
+      expect(screen.getByText('Date submitted')).toBeInTheDocument();
       // Check that the formatted date paragraph exists
       const dateParagraphs = document.querySelectorAll('p.margin-top-0');
       expect(dateParagraphs.length).toBeGreaterThan(0);

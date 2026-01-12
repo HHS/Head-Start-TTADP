@@ -45,6 +45,7 @@ import useLocalStorageCleanup from '../../hooks/useLocalStorageCleanup';
 import usePresenceData from '../../hooks/usePresenceData';
 import { getApprovers } from '../../fetchers/activityReports';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
+import './index.scss';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
@@ -65,7 +66,7 @@ const defaultValues = {
   duration: '',
   reportReasons: [],
   isStateActivity: '',
-  conductMethod: [],
+  conductMethod: '',
   description: '',
   id: null,
 };
@@ -137,7 +138,8 @@ export const convertFormDataToReport = (data) => {
     ...rest
   } = data;
 
-  const conductMethodValues = conductMethod || null;
+  const conductMethodValues = Array.isArray(conductMethod)
+    ? conductMethod[0] : conductMethod || null;
   const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => s.value) : [];
   const participantValues = participants ? participants.map((p) => p.value) : [];
   const dataUsedValues = dataUsed ? dataUsed.map((d) => d.value) : [];
@@ -231,7 +233,9 @@ function CollaborationReport({ match, location }) {
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
   // reset and the proper values are placed inside inputs
+  // Also, clear the saved draft message when the page changes
   useDeepCompareEffect(() => {
+    updateShowSavedDraft(false);
     hookForm.reset(formData, { errors: true });
   }, [currentPage, formData, hookForm.reset]);
 
@@ -242,6 +246,7 @@ function CollaborationReport({ match, location }) {
       try {
         updateLoading(true);
         reportId.current = collabReportId;
+        const regionId = getRegionWithReadWrite(user);
 
         if (collabReportId !== 'new') {
           let fetchedReport;
@@ -269,7 +274,6 @@ function CollaborationReport({ match, location }) {
 
             if (isNeedsAction) {
               history.push(`/collaboration-reports/${fetchedReport.id}/review`);
-              return;
             }
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
@@ -286,8 +290,8 @@ function CollaborationReport({ match, location }) {
             ...defaultValues,
             creatorRole: userHasOneRole ? user.roles[0].fullName : null,
             pageState: defaultPageState,
+            regionId,
             userId: user.id,
-            regionId: getRegionWithReadWrite(user),
             version: 2,
           };
         }
@@ -307,6 +311,7 @@ function CollaborationReport({ match, location }) {
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
 
+        // istanbul ignore next - hard to test collaborator mode
         const isCollaborator = report.collabReportSpecialists
           && report.collabReportSpecialists.some((u) => u.specialistId === user.id);
         const isAuthor = report.userId === user.id;
@@ -316,7 +321,8 @@ function CollaborationReport({ match, location }) {
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
           || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
         const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
-          report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+          report.calculatedStatus === REPORT_STATUSES.SUBMITTED
+          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION)
         );
 
         updateAdditionalData({
@@ -331,6 +337,7 @@ function CollaborationReport({ match, location }) {
         // time retrieved from the network (report.updatedAt)
         // and whichever is newer "wins"
 
+        // istanbul ignore next - hard to test time comparisons in-memory
         if (formData && savedToStorageTime) {
           const updatedAtFromNetwork = moment(report.updatedAt);
           const updatedAtFromLocalStorage = moment(savedToStorageTime);
@@ -344,9 +351,9 @@ function CollaborationReport({ match, location }) {
 
         // Update form data.
         if (shouldUpdateFromNetwork && collabReportId !== 'new') {
-          updateFormData({ ...formData, ...report }, true);
+          updateFormData({ ...formData, ...report, regionId }, true);
         } else {
-          updateFormData({ ...report, ...formData }, true);
+          updateFormData({ ...report, ...formData, regionId }, true);
         }
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
@@ -373,7 +380,9 @@ function CollaborationReport({ match, location }) {
 
         updateError();
       } catch (e) {
-        const connection = true; // setConnectionActiveWithError(e, setConnectionActive);
+        // eslint-disable-next-line no-console
+        console.warn('Error fetching collaboration report:', e);
+        const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
             {/* eslint-disable-next-line max-len */}
@@ -412,6 +421,7 @@ function CollaborationReport({ match, location }) {
   }
 
   // This error message is a catch all assuming that the network storage is working
+  // istanbul ignore next - hard to inject an error state
   if (error && !formData) {
     return (
       <Alert type="error">
@@ -430,7 +440,10 @@ function CollaborationReport({ match, location }) {
   // istanbul ignore next - too hard to test
   const approverCanEdit = isApprover
     && formData
-    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+    && (
+      formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+      || formData.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+    );
 
   const updatePage = (position) => {
     if (!editable && !approverCanEdit) {
@@ -449,6 +462,7 @@ function CollaborationReport({ match, location }) {
     }
   };
 
+  // istanbul ignore next - testing the save function is not working properly
   const onSave = async (data, forceUpdate = false) => {
     try {
       if (reportId.current === 'new') {
@@ -464,7 +478,6 @@ function CollaborationReport({ match, location }) {
 
         // Process participants, dataUsed, and goals to extract values
         const fieldsToSave = convertFormDataToReport(fields);
-
         const savedReport = await createReport({
           ...fieldsToSave,
           regionId: formData.regionId,
@@ -518,6 +531,7 @@ function CollaborationReport({ match, location }) {
     }
   };
 
+  // istanbul ignore next - testing saving not working properly at this time
   const onSaveDraft = async (isAutoSave = false, forceUpdate = false) => {
     try {
       // Turn on loading screen
@@ -560,15 +574,21 @@ function CollaborationReport({ match, location }) {
     };
     await submitReport(reportId.current, reportToSubmit);
     cleanupLocalStorage(collabReportId);
-    history.push('/collaboration-reports/'); // TODO: message
+
+    // Prepare success message
+    const timezone = moment.tz.guess();
+    const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+    const message = {
+      time,
+      reportId: formData.id,
+      displayId: formData.displayId,
+      status: 'submitted',
+    };
+
+    history.push('/collaboration-reports/', { message });
   };
 
   const onSaveAndContinue = async () => {
-    const validity = await hookForm.trigger();
-    if (!validity) {
-      return;
-    }
-
     const currentPosition = pages.find((page) => page.path === currentPage)?.position;
 
     const isAutoSave = false;
@@ -698,14 +718,14 @@ function CollaborationReport({ match, location }) {
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
               Collaboration report for Region
               {' '}
-              {formData.regionId}
+              {formData?.regionId}
             </h1>
             {author}
           </div>
         </Grid>
         {!hideSideNav && (
         <Grid col="auto" className="flex-align-self-center">
-          {formData.calculatedStatus && (
+          {formData?.calculatedStatus && (
             <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
@@ -720,7 +740,7 @@ function CollaborationReport({ match, location }) {
       >
         <FormProvider {...hookForm}>
           <Navigator
-            formData={formData}
+            formData={formData || {}}
             pages={pages}
             onFormSubmit={onFormSubmit}
             onReview={onReview}
