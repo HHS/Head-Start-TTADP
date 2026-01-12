@@ -366,21 +366,6 @@ export async function getSessionReports(
     sessionReport: sessionReportScopes,
   } = await filtersToScopes(filterParams, {});
 
-  console.log(`
-    ==============================
-    ${JSON.stringify(params, null, 2)}
-
-
-    ${JSON.stringify(filterParams, null, 2)}
-
-
-    ${sessionReportScopes}
-
-
-    ==============================
-    
- `);
-
   // Get events to pass into session query
   // (the scopes construction makes this necessary, sadly)
   const events = await EventReportPilot.findAll({
