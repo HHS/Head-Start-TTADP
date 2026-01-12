@@ -20,40 +20,40 @@ export default function TrainingReportDashboard({
       <Helmet>
         <title>Regional Dashboard - Training Reports</title>
       </Helmet>
-      <GridContainer className="margin-0 padding-0">
-        <Overview
-          filters={filtersToApply}
-          showTooltips
-          loading={false}
-        />
-        <Grid row gap={2} className="flex-align-stretch margin-bottom-3">
-          <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
-            <TRReasonList
-              filters={filtersToApply}
-              loading={false}
-              title="Reasons in Training Reports"
-            />
-          </Grid>
-          <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
-            <TRHoursOfTrainingByNationalCenter
-              filters={filtersToApply}
-              loading={false}
-              title="Hours of training by National Center"
-              subtitle="Hours reported on Training Report sessions"
-              xAxisLabel="National Center"
-              yAxisLabel="Number of hours"
-            />
-          </Grid>
-        </Grid>
-        <Grid row>
-          <VTopicFrequency
+      <FilterContext.Provider value={{ filterKey }}>
+        <GridContainer className="margin-0 padding-0">
+          <Overview
             filters={filtersToApply}
+            showTooltips
             loading={false}
-            title="Number of TR sessions by topic"
           />
-        </Grid>
-        <Grid row>
-          <FilterContext.Provider value={{ filterKey }}>
+          <Grid row gap={2} className="flex-align-stretch margin-bottom-3">
+            <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
+              <TRReasonList
+                filters={filtersToApply}
+                loading={false}
+                title="Reasons in Training Reports"
+              />
+            </Grid>
+            <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
+              <TRHoursOfTrainingByNationalCenter
+                filters={filtersToApply}
+                loading={false}
+                title="Hours of training by National Center"
+                subtitle="Hours reported on Training Report sessions"
+                xAxisLabel="National Center"
+                yAxisLabel="Number of hours"
+              />
+            </Grid>
+          </Grid>
+          <Grid row>
+            <VTopicFrequency
+              filters={filtersToApply}
+              loading={false}
+              title="Number of TR sessions by topic"
+            />
+          </Grid>
+          <Grid row>
             <TrainingReportsTable
               filters={filtersToApply}
               tableCaption="Training Reports"
@@ -61,9 +61,9 @@ export default function TrainingReportDashboard({
               resetPagination={resetPagination}
               setResetPagination={setResetPagination}
             />
-          </FilterContext.Provider>
-        </Grid>
-      </GridContainer>
+          </Grid>
+        </GridContainer>
+      </FilterContext.Provider>
     </>
   );
 }

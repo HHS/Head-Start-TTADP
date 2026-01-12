@@ -25,6 +25,7 @@ function TrainingReportsTable({
       getReports={getSessionReports}
       downloadReports={downloadSessionReports}
       ReportsTable={ReportsTable}
+      defaultSortBy="id"
     />
   );
 }
