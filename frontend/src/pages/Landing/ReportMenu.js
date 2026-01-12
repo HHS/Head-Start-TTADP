@@ -76,102 +76,100 @@ function ReportMenu({
           icon={faSortDown}
         />
       </button>
-      {open && (
-        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className={menuClassNames}>
-          <Container paddingX={2} paddingY={2} className="margin-bottom-0">
-            {downloadError && (
-              <Alert
-                noIcon
-                slim
-                type="error"
-                className="margin-bottom-3 ttahub-report-menu-alert"
-                role="alert"
-                cta={(
-                  <Button
-                    autoFocus
-                    outline
-                    onClick={() => setDownloadError(false)}
-                  >
-                    Dismiss
-                  </Button>
-                )}
+      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className={menuClassNames} hidden={!open}>
+        <Container paddingX={2} paddingY={2} className="margin-bottom-0">
+          {downloadError && (
+          <Alert
+            noIcon
+            slim
+            type="error"
+            className="margin-bottom-3 ttahub-report-menu-alert"
+            role="alert"
+            cta={(
+              <Button
+                autoFocus
+                outline
+                onClick={() => setDownloadError(false)}
               >
-                Sorry, something went wrong. Please try your request again.
-                <br />
-                You may export up to
+                Dismiss
+              </Button>
+                )}
+          >
+            Sorry, something went wrong. Please try your request again.
+            <br />
+            You may export up to
+            {' '}
+            {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
+            {' '}
+            reports at a time.
+            {' '}
+            <br />
+            For assistance, please
+            {' '}
+            <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
+            .
+          </Alert>
+          )}
+          {count > MAXIMUM_EXPORTED_REPORTS ? (
+            <>
+              <div className="usa-hint" id="no-exports-please">
+                <p>
+                  This export has
+                  {' '}
+                  {count.toLocaleString('en-US')}
+                  {' '}
+                  reports. You can only export
                   {' '}
                   {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
                   {' '}
-                reports at a time.
+                  reports at a time.
+                </p>
+                <p>
+                  To export more than
                   {' '}
-                <br />
-                For assistance, please
+                  {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
                   {' '}
-                <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
-                .
-              </Alert>
-            )}
-            {count > MAXIMUM_EXPORTED_REPORTS ? (
+                  reports, please
+                  {' '}
+                  <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
+                  {' '}
+                  and specify the filters you need.
+                </p>
+              </div>
+            </>
+          )
+            : (
               <>
-                <div className="usa-hint" id="no-exports-please">
-                  <p>
-                    This export has
-                    {' '}
-                    {count.toLocaleString('en-US')}
-                    {' '}
-                    reports. You can only export
-                    {' '}
-                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
-                    {' '}
-                    reports at a time.
-                  </p>
-                  <p>
-                    To export more than
-                    {' '}
-                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
-                    {' '}
-                    reports, please
-                    {' '}
-                    <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
-                    {' '}
-                    and specify the filters you need.
-                  </p>
-                </div>
-              </>
-            )
-              : (
-                <>
-                  <Loader loading={isDownloading} loadingLabel="Downloading reports" text="Downloading reports" />
-                  <button
-                    ref={downloadAllButtonRef}
-                    role="menuitem"
-                    onClick={onExportAll}
-                    type="button"
-                    disabled={downloadError || isDownloading}
-                    className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
-                    id={`${exportIdPrefix}export-table`}
-                  >
-                    Export table data
-                  </button>
+                <Loader loading={isDownloading} loadingLabel="Downloading reports" text="Downloading reports" />
+                <button
+                  ref={downloadAllButtonRef}
+                  role="menuitem"
+                  onClick={onExportAll}
+                  type="button"
+                  disabled={downloadError || isDownloading}
+                  className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
+                  id={`${exportIdPrefix}export-table`}
+                >
+                  Export table data
+                </button>
 
-                </>
-              ) }
-            {hasSelectedReports && onExportSelected && (
-              <button
-                ref={downloadSelectedButtonRef}
-                role="menuitem"
-                onClick={onExportSelected}
-                type="button"
-                disabled={isDownloading}
-                className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
-                id={`${exportIdPrefix}export-reports`}
-              >
-                Export selected reports
-              </button>
-            )}
-          </Container>
-        </div>
-      )}
+              </>
+            ) }
+          {hasSelectedReports && onExportSelected && (
+          <button
+            ref={downloadSelectedButtonRef}
+            role="menuitem"
+            onClick={onExportSelected}
+            type="button"
+            disabled={isDownloading}
+            className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
+            id={`${exportIdPrefix}export-reports`}
+          >
+            Export selected reports
+          </button>
+          )}
+        </Container>
+      </div>
     </span>
   );
 }

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
-import { useHistory } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import moment from 'moment';
 import ContextMenu from '../ContextMenu';
 import { getSessionReportsDownloadURL } from '../../fetchers/helpers';
 import TooltipWithCollection from '../TooltipWithCollection';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import './ReportRow.css';
+import { idForLink } from '../../pages/TrainingReports/constants';
 
 function ReportRow({
   report,
@@ -32,10 +32,12 @@ function ReportRow({
 
   const history = useHistory();
 
+  const eventLink = `/training-report/view/${idForLink(eventId)}`;
+
   const menuItems = [
     {
-      label: 'View Session',
-      onClick: () => { history.push(`/session/${id}`); },
+      label: 'View Report',
+      onClick: () => { history.push(eventLink); },
     },
   ];
 
@@ -43,7 +45,8 @@ function ReportRow({
     menuItems.push({
       label: 'Copy URL',
       onClick: async () => {
-        await navigator.clipboard.writeText(`${window.location.origin}/session/${id}`);
+        const url = `${window.location.origin}${eventLink}`;
+        await navigator.clipboard.writeText(url);
       },
     });
   }
@@ -76,8 +79,6 @@ function ReportRow({
     setTrClassname('tta-smarthub--report-row');
   };
 
-  const topicsArray = objectiveTopics ? objectiveTopics.map((t) => t.name) : [];
-
   return (
     <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`landing_${id}`}>
       <td className="width-8" data-label="Select report">
@@ -97,16 +98,10 @@ function ReportRow({
         ) }
       </td>
       <th data-label="Event ID" scope="row" className="smart-hub--blue">
-        {eventId || '--'}
+        <Link to={eventLink} data-sort="event-not-completed">{eventId}</Link>
       </th>
       <td data-label="Event title">
-        {eventName ? (
-          <Tooltip
-            displayText={eventName}
-            tooltipText={eventName}
-            buttonLabel="click to reveal event name"
-          />
-        ) : '--'}
+        {eventName || ''}
       </td>
       <td data-label="Session name">
         {sessionName ? (
@@ -124,7 +119,7 @@ function ReportRow({
         {endDate ? moment(endDate).format(DATE_DISPLAY_FORMAT) : '--'}
       </td>
       <td data-label="Topics">
-        <TooltipWithCollection collection={topicsArray} collectionTitle={`topics for ${eventId}`} position={openMenuUp ? 'top' : 'bottom'} />
+        <TooltipWithCollection collection={objectiveTopics} collectionTitle={`topics for ${eventId}`} position={openMenuUp ? 'top' : 'bottom'} />
       </td>
       <td data-label="Context menu">
         <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={openMenuUp} fixed />

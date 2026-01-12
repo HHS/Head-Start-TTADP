@@ -12,7 +12,7 @@ const mockReports = [
     sessionName: 'Session 1',
     startDate: '2024-01-01',
     endDate: '2024-01-02',
-    objectiveTopics: [{ name: 'Topic 1' }],
+    objectiveTopics: ['Topic 1'],
   },
   {
     id: 2,
@@ -21,7 +21,7 @@ const mockReports = [
     sessionName: 'Session 2',
     startDate: '2024-01-03',
     endDate: '2024-01-04',
-    objectiveTopics: [{ name: 'Topic 2' }],
+    objectiveTopics: ['Topic 2'],
   },
 ];
 
