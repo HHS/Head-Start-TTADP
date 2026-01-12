@@ -157,7 +157,7 @@ const ActivityReportNavigator = ({
         const allowUpdateForm = shouldUpdateFormData(isAutoSave);
 
         if (allowUpdateForm) {
-          reset(savedData);
+          reset(savedData, { errors: true });
         }
 
         // ALWAYS update page state regardless of autosave - this doesn't cause focus issues

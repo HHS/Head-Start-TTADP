@@ -63,3 +63,5 @@ tests/e2e/report.xml
 # Claude/Anthropic config files
 CLAUDE-mine.md
 
+# Copilot Instructions, etc.
+.github/instructions/
