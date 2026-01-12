@@ -74,7 +74,7 @@ function ScrollableReportsTable({
   );
 
   const reportsCount = data && data.count ? data.count : 0;
-  const reports = data && data.reports ? data.reports : [];
+  const reports = data && data.rows ? data.rows : [];
 
   const handleDownloadAllReports = async (
     setIsDownloading,
