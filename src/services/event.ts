@@ -27,6 +27,7 @@ import { FILE_STATUSES } from '../constants';
 const {
   EventReportPilot,
   SessionReportPilot,
+  GoalTemplate,
   User,
   EventReportPilotNationalCenterUser,
   File,
@@ -148,6 +149,15 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
             },
           },
           {
+            model: GoalTemplate,
+            as: 'goalTemplates',
+            attributes: [
+              'id',
+              'standard',
+            ],
+            through: { attributes: [] }, // exclude join table attributes
+          },
+          {
             required: false,
             model: User,
             as: 'trainers',
@@ -221,7 +231,6 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     data: event?.data,
     updatedAt: event?.updatedAt,
     sessionReports: event?.sessionReports ?? [],
-    eventReportPilotNationalCenterUsers: event?.eventReportPilotNationalCenterUsers ?? [],
   };
 }
 

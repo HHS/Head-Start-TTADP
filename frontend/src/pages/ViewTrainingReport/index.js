@@ -93,7 +93,7 @@ const formatNextSteps = (nextSteps, heading, striped) => {
 
 const formatSupportingGoals = (sessionGoalTemplates) => {
   if (!sessionGoalTemplates || sessionGoalTemplates.length === 0) {
-    return 'None';
+    return 'None provided';
   }
   return sessionGoalTemplates.map((goal) => goal.standard || goal).join(', ');
 };
@@ -131,7 +131,7 @@ export const formatSupportingAttachments = (attachments) => {
   return 'None provided';
 };
 
-const handleArrayJoin = (arr, join = ', ', alt = 'None') => (arr && arr.length ? arr.join(join) : alt);
+const handleArrayJoin = (arr, join = ', ', alt = 'None provided') => (arr && arr.length ? arr.join(join) : alt);
 
 export default function ViewTrainingReport({ match }) {
   const [event, setEvent] = useState(null);
@@ -356,12 +356,12 @@ export default function ViewTrainingReport({ match }) {
         heading: 'Objective summary',
         data: {
           'Session objective': session.data.objective,
-          'Supporting goals': formatSupportingGoals(session.data.goalTemplates),
+          'Supporting goals': formatSupportingGoals(session.goalTemplates),
           Topics: handleArrayJoin(session.data.objectiveTopics, ', '),
           Trainers: handleArrayJoin((session.trainers || []).map(({ fullName }) => fullName)),
-          'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name).join(', ') : 'None',
+          'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name).join(', ') : 'None provided',
           'Resource links': formatObjectiveLinks(session.data.objectiveResources),
-          'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None',
+          'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None provided',
           'TTA provided': session.data.ttaProvided,
           'Support type': session.data.objectiveSupportType,
         },
