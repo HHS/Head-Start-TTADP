@@ -52,8 +52,7 @@ const getAllAlertsDownloadURL = (filterQuery) => {
 
 const getSessionReportsDownloadURL = (reportIds) => {
   const params = new URLSearchParams({ format: 'csv' });
-  reportIds.forEach((id) => params.append('sessionId[]', id));
-  params.append('format', 'csv');
+  reportIds.forEach((id) => params.append('sessionId.in[]', id));
   return join('/', 'api', 'session-reports', `?${params.toString()}`);
 };
 
