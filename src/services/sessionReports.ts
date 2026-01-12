@@ -361,7 +361,25 @@ export async function getSessionReports(
   const orderClause = [[...sortEntry, sortDir]];
 
   // Get scopes from filters
-  const { trainingReport: trainingReportScopes } = await filtersToScopes(filterParams, {});
+  const {
+    trainingReport: trainingReportScopes,
+    sessionReport: sessionReportScopes,
+  } = await filtersToScopes(filterParams, {});
+
+  console.log(`
+    ==============================
+    ${JSON.stringify(params, null, 2)}
+
+
+    ${JSON.stringify(filterParams, null, 2)}
+
+
+    ${sessionReportScopes}
+
+
+    ==============================
+    
+ `);
 
   // Get events to pass into session query
   // (the scopes construction makes this necessary, sadly)
@@ -396,7 +414,10 @@ export async function getSessionReports(
       [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
     ],
     where: {
-      eventId: events.map(({ id }) => id),
+      [Op.and]: [
+        { eventId: events.map(({ id }) => id) },
+        ...sessionReportScopes,
+      ],
     },
     include: [
       {
