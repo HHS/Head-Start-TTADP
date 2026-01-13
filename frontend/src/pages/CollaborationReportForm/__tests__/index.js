@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  fireEvent,
 } from '@testing-library/react';
 import { Router } from 'react-router';
 import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
@@ -154,8 +155,7 @@ describe('CollaborationReportForm', () => {
     expect(heading).toBeInTheDocument();
   });
 
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip('keeps activity summary validation errors after review navigation', async () => {
+  it('keeps activity summary validation errors after review navigation', async () => {
     getItem.mockReturnValue(JSON.stringify({
       regionId: 1,
       calculatedStatus: REPORT_STATUSES.DRAFT,
@@ -165,12 +165,18 @@ describe('CollaborationReportForm', () => {
 
     await screen.findByText(/Collaboration report for Region [\d]/i);
 
-    const [activityNameInput] = await screen.findAllByTestId('textInput');
-    userEvent.type(activityNameInput, 'Test activity');
-    userEvent.clear(activityNameInput);
-    userEvent.tab();
+    const activityNameInput = await screen.findByTestId('activity-name-input');
+    fireEvent.change(activityNameInput, { target: { value: 'Test activity' } });
+    fireEvent.blur(activityNameInput);
+    fireEvent.change(activityNameInput, { target: { value: '' } });
+    fireEvent.blur(activityNameInput);
 
     expect(await screen.findByText('Enter activity name')).toBeInTheDocument();
+
+    const descriptionInput = await screen.findByTestId('description-input');
+    fireEvent.blur(descriptionInput, { target: { value: '' } });
+
+    expect(await screen.findByText('Describe the activity')).toBeInTheDocument();
 
     const reviewButton = await screen.findByRole('button', { name: /review and submit/i });
     userEvent.click(reviewButton);
@@ -182,6 +188,7 @@ describe('CollaborationReportForm', () => {
 
     await screen.findByText(/Collaboration report for Region [\d]/i);
     expect(await screen.findByText('Enter activity name')).toBeInTheDocument();
+    expect(await screen.findByText('Describe the activity')).toBeInTheDocument();
   });
 
   // FIXME: Not yet implemented
