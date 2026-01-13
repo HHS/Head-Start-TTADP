@@ -14,7 +14,7 @@ This document is intended as an onboarding guide for new engineers as they creat
 ## Frontend
 
 ### Hook and component based architecture
-- Whenever possible, leverage existing hooks. For example, the common pattern of fetching data and storing it in a useEffect is encapsulated with the "useFetch" hook
+- Whenever possible, leverage existing hooks. For example, the common pattern of fetching data with a useEffect and storing it in a useState is encapsulated with the "useFetch" hook
 - Whenever possible, reuse existing components. This makes the codebase more maintainable and consistent, and leans into the strengths of React.
 
 ### CSS
