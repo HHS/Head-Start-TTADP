@@ -29,13 +29,13 @@ export function OverviewWidgetField({
   const drawerTriggerRef = useRef(null);
   const noData = data === '0%';
   return (
-    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-y-2 padding-x-1">
-      <span className="smart-hub--dashboard-overview-widget-field-icon flex-1 display-flex flex-justify-center flex-align-center">
+    <Grid desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2">
+      <span className="smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center">
         <span className="smart-hub--dashboard-overview-widget-field-icon__background-sm smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center" style={{ backgroundColor }}>
           <FontAwesomeIcon color={iconColor} icon={icon} size={iconSize} />
         </span>
       </span>
-      <span className="smart-hub--dashboard-overview-widget-field-label display-flex flex-2 flex-column flex-justify-center">
+      <span className="smart-hub--dashboard-overview-widget-field-label display-flex flex-column flex-justify-center">
         <div>
           {showNoResults && noData ? (
             <>

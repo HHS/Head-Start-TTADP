@@ -5,15 +5,6 @@
     position: relative;
 }
 
-.smart-hub-tooltip .ttahub-tooltip-underline {
-    position: absolute;
-    width: 100%;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    overflow: visible;
-}
-
 .smart-hub-tooltip .usa-button,
 .smart-hub-tooltip .usa-button:hover {
     margin-top: 0;
@@ -27,11 +18,20 @@
     overflow-y: visible;
     text-overflow: ellipsis;
     vertical-align: middle;
-    white-space: nowrap;
+    white-space: normal; /* Allow text to wrap */
 }
 
 .smart-hub--ellipsis > span {
     position: relative;
+}
+
+/* CSS-based dashed underline */
+.smart-hub-tooltip__underlined-text {
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 2px;
+  text-decoration-color: #71767A; /* Same color as original SVG */
+  text-underline-offset: 2px; /* Space between text and underline */
 }
 
 .smart-hub-tooltip {
