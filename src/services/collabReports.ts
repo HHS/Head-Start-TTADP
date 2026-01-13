@@ -161,14 +161,17 @@ async function saveReportSteps(collabReportId: number, steps: Model[]) {
   if (steps && steps.length > 0) {
     const newSteps = steps.map((step: Model) => {
       // @ts-ignore - This and the below ignores are because we're accessing specific props
-      if (step.collabStepDetail && step.collabStepCompleteDate) {
+      if (step.collabStepDetail) {
+        // @ts-ignore
+        const rawDate = step.collabStepCompleteDate;
+        const normalizedDate = rawDate || null;
         return ({
+          ...step,
           collabReportId,
           // @ts-ignore
           collabStepDetail: step.collabStepDetail,
           // @ts-ignore
-          collabStepCompleteDate: step.collabStepCompleteDate,
-          ...step,
+          collabStepCompleteDate: normalizedDate,
         });
       }
       return null;
@@ -389,6 +392,7 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   let savedReport;
 
   const {
+    id,
     author,
     collabReportSpecialists,
     approvers,
@@ -405,7 +409,7 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   if (oldReport) {
     savedReport = await update(fields, oldReport);
   } else {
-    savedReport = await create(newReport);
+    savedReport = await create(fields);
   }
 
   const { id: reportId } = savedReport;
