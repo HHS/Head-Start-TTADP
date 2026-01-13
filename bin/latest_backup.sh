@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+
 # Summary:
 # - Creates a CF service key for the S3-backed backup service, retrieves credentials,
 #   and uses AWS CLI to locate the latest backup or a specified file.
@@ -12,14 +12,30 @@
 # - Required: cf, aws, jq, uuidgen, unzip, openssl
 # - Optional: curl or wget (HTTP fetch), sha256sum or shasum (SHA-256), md5sum or md5 (MD5), numfmt (size formatting)
 
+USAGE="""
+Usage: $0\n
+See README.md for full details\n
+Options:\n
+default behavior w/ no args: download and verify latest db backup)\n
+[-d | --download-and-verify]\n
+[-g | --generate-urls]\n
+[-l | --list-backup-files]\n
+[-e | --erase-file <zip_file>]\n
+[-k | --delete-keys]\n
+[-f | --specific-file <file_name>]\n
+[-s | --s3-folder <s3_folder>]\n
+[-n | --service-name <CF_S3_SERVICE_NAME>]\n
+[-a | --allow-deletion]\n
+[-h | --help]\n
+"""
+
 # Constants
 readonly SERVICE_KEY_MAX_AGE_SECONDS=86400  # 1 day
 readonly PRESIGNED_URL_EXPIRATION_SECONDS=3600  # 1 hour
 
 # Print usage info.
 print_usage() {
-    echo "Usage: $0 [-n | --service-name <CF_S3_SERVICE_NAME>] [-s | --s3-folder <s3_folder>] [-a | --allow-deletion] [-l | --list-backup-files] [-f | --specific-file <file_name>] [-d | --download-and-verify] [-g | --generate-urls] [-e | --erase-file <zip_file>] [-k | --delete-keys]"
-    echo "Default behavior (no args): download and verify the latest backup."
+    echo -e $USAGE
 }
 
 # Return success if a command is available.
