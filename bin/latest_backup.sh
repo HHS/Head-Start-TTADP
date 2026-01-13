@@ -19,7 +19,7 @@ readonly PRESIGNED_URL_EXPIRATION_SECONDS=3600  # 1 hour
 # Print usage info.
 print_usage() {
     echo "Usage: $0 [-n | --service-name <CF_S3_SERVICE_NAME>] [-s | --s3-folder <s3_folder>] [-a | --allow-deletion] [-l | --list-backup-files] [-f | --specific-file <file_name>] [-d | --download-and-verify] [-g | --generate-urls] [-e | --erase-file <zip_file>] [-k | --delete-keys]"
-    echo "Default behavior: download and verify the latest backup."
+    echo "Default behavior (no args): download and verify the latest backup."
 }
 
 # Return success if a command is available.
@@ -220,7 +220,7 @@ create_service_key() {
     else
         log_info "Creating service key with name ${key_name}..."
         if ! cf create-service-key "${cf_s3_service_name}" "${key_name}"; then
-            log_error "Failed to create service key."
+            log_error "Failed to create service key"
             exit 3
         elif ! check_service_key_exists "${cf_s3_service_name}" "${key_name}"; then
             log_error "Failed to create service key, even though it returned success."
@@ -299,7 +299,7 @@ delete_service_keys() {
         fi
         key_age_seconds=$((current_time - key_created_epoch))
         if [ "${key_age_seconds}" -ge "${SERVICE_KEY_MAX_AGE_SECONDS}" ]; then
-            log_info "Deleting service key ${key_name} (age ${key_age_seconds}s)..."
+            log_info "Deleting service key ${key_name} (age $((key_age_seconds / 86400)) days)..."
             cf delete-service-key "${cf_s3_service_name}" "${key_name}" -f
         fi
     done
@@ -579,7 +579,7 @@ erase_files() {
 }
 
 # Function to retrieve and use S3 service credentials
-fetch_latest_backup_info_and_cleanup() {
+main() {
     local cf_s3_service_name="${cf_s3_service_name:-ttahub-db-backups}"  # Default to 'db-backups' if not provided
     local s3_folder="${s3_folder:-production}"  # Default to root of the bucket if not provided
     local deletion_allowed="${deletion_allowed:-no}"  # Default to no deletion if not provided
@@ -596,6 +596,7 @@ fetch_latest_backup_info_and_cleanup() {
     log_info "Using service key name: $key_name for service instance: $cf_s3_service_name"
 
     # Attempt to retrieve or create the service key
+    cf target -s ttahub-prod
     create_service_key "$cf_s3_service_name" "$key_name"
 
     credentials_json=$(fetch_service_key "$cf_s3_service_name" "$key_name")
@@ -754,4 +755,4 @@ if (( ${#missing_commands[@]} > 0 )); then
 fi
 
 # Fetch the latest backup information, generate URLs, and clean up the service key
-fetch_latest_backup_info_and_cleanup
+main

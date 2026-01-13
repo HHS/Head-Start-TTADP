@@ -77,7 +77,7 @@ cf target -s ttahub-prod
 # Removes: .zip, .pwd, .md5, .sha256
 ```
 
-**Cleanup old service keys (older than 6 hours):**
+**Cleanup old service keys (older than 1 day):**
 ```bash
 ./latest_backup.sh --delete-keys
 ```
