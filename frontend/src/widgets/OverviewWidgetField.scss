@@ -35,27 +35,10 @@
   flex-basis: calc(25% - 18px); /* 4 columns with 24px gap */
 }
 
-/* Mobile: Stack all cards in single column */
-@media (max-width: 63.99em) {
-  .smart-hub--dashboard-overview-widget-field {
-    flex-basis: 100% !important;
-  }
-}
-
-/* Tablet: 2 columns for all card counts */
-@media (min-width: 40em) and (max-width: 63.99em) {
-  .smart-hub--overview-grid-cols-1 .smart-hub--dashboard-overview-widget-field,
-  .smart-hub--overview-grid-cols-2 .smart-hub--dashboard-overview-widget-field,
-  .smart-hub--overview-grid-cols-3 .smart-hub--dashboard-overview-widget-field,
-  .smart-hub--overview-grid-cols-4 .smart-hub--dashboard-overview-widget-field {
-    flex-basis: calc(50% - 12px) !important;
-  }
-}
-
 /* Card content styling */
 .smart-hub--dashboard-overview-widget-field {
-  padding: 16px !important; /* Fixed 16px padding */
-  gap: 0 !important; /* Remove USWDS gap */
+  padding: 16px; /* Fixed 16px padding */
+  gap: 0; /* Remove USWDS gap */
 }
 
 /* Icon to content gap */
@@ -67,5 +50,22 @@
 /* Left-align content */
 .smart-hub--dashboard-overview-widget-field-label {
   flex: 1 1 auto; /* Grow to fill space */
-  align-items: flex-start !important; /* Left-align content */
+  align-items: flex-start; /* Left-align content */
+}
+
+/* Mobile: Stack all cards in single column */
+@media (max-width: 63.99em) {
+  .smart-hub--dashboard-overview-container .smart-hub--dashboard-overview-widget-field {
+    flex-basis: 100%;
+  }
+}
+
+/* Tablet: 2 columns for all card counts */
+@media (min-width: 40em) and (max-width: 63.99em) {
+  .smart-hub--dashboard-overview-container.smart-hub--overview-grid-cols-1 .smart-hub--dashboard-overview-widget-field,
+  .smart-hub--dashboard-overview-container.smart-hub--overview-grid-cols-2 .smart-hub--dashboard-overview-widget-field,
+  .smart-hub--dashboard-overview-container.smart-hub--overview-grid-cols-3 .smart-hub--dashboard-overview-widget-field,
+  .smart-hub--dashboard-overview-container.smart-hub--overview-grid-cols-4 .smart-hub--dashboard-overview-widget-field {
+    flex-basis: calc(50% - 12px);
+  }
 }
