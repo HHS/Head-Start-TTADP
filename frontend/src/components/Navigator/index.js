@@ -60,6 +60,9 @@ const Navigator = ({
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
+  const draftValues = useMemo(() => ({
+    showSavedDraft, updateShowSavedDraft, lastSaveTime,
+  }), [showSavedDraft, updateShowSavedDraft, lastSaveTime]);
 
   const context = useFormContext();
 
@@ -145,7 +148,7 @@ const Navigator = ({
       stateOfPage = IN_PROGRESS;
     }
 
-    const state = p.review ? formData[formDataStatusProp] : stateOfPage;
+    const state = formData && p.review ? formData[formDataStatusProp] : stateOfPage;
     return {
       label: p.label,
       onNavigation: () => {
@@ -205,6 +208,7 @@ const Navigator = ({
             lastSaveTime,
             onUpdatePage,
             onSaveDraft,
+            draftValues,
           )}
           {!page.review
             && (
