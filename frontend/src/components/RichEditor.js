@@ -45,9 +45,21 @@ const RichEditor = ({
 }) => {
   const [editorState, setEditorState] = useState(() => createEditorState(value));
   const lastHtmlRef = useRef(value || '');
+  const editorWrapperRef = useRef(null);
 
   useEffect(() => {
     const incomingHtml = value || '';
+    // Check if the editor currently has focus
+    const editorHasFocus = editorWrapperRef.current
+      && editorWrapperRef.current.contains(document.activeElement);
+
+    // Don't update if the editor has focus - the user's local state is more current
+    // than any incoming props during active editing
+    if (editorHasFocus) {
+      return;
+    }
+
+    // Only update if the content has actually changed
     if (incomingHtml !== lastHtmlRef.current) {
       lastHtmlRef.current = incomingHtml;
       setEditorState(createEditorState(incomingHtml));
@@ -63,34 +75,36 @@ const RichEditor = ({
   };
 
   return (
-    <Editor
-      editorState={editorState}
-      onBlur={onBlur}
-      spellCheck
-      onEditorStateChange={handleEditorChange}
-      ariaLabel={ariaLabel}
-      handlePastedText={() => false}
-      tabIndex="0"
-      editorStyle={{ border: '1px solid #565c65', minHeight: BASE_EDITOR_HEIGHT }}
-      toolbar={{
-        options: ['inline', 'blockType', 'list'],
-        inline: {
-          inDropdown: false,
-          className: undefined,
-          component: undefined,
-          dropdownClassName: undefined,
-          options: ['bold', 'italic', 'underline', 'strikethrough'],
-        },
-        blockType: {
-          inDropdown: true,
-          options: ['Normal', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
-        },
-        list: {
-          inDrodown: false,
-          options: ['unordered', 'ordered'],
-        },
-      }}
-    />
+    <div ref={editorWrapperRef}>
+      <Editor
+        editorState={editorState}
+        onBlur={onBlur}
+        spellCheck
+        onEditorStateChange={handleEditorChange}
+        ariaLabel={ariaLabel}
+        handlePastedText={() => false}
+        tabIndex="0"
+        editorStyle={{ border: '1px solid #565c65', minHeight: BASE_EDITOR_HEIGHT }}
+        toolbar={{
+          options: ['inline', 'blockType', 'list'],
+          inline: {
+            inDropdown: false,
+            className: undefined,
+            component: undefined,
+            dropdownClassName: undefined,
+            options: ['bold', 'italic', 'underline', 'strikethrough'],
+          },
+          blockType: {
+            inDropdown: true,
+            options: ['Normal', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
+          },
+          list: {
+            inDrodown: false,
+            options: ['unordered', 'ordered'],
+          },
+        }}
+      />
+    </div>
   );
 };
 
