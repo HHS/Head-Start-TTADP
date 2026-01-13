@@ -668,7 +668,7 @@ ActivityReportNavigator.propTypes = {
 
 ActivityReportNavigator.defaultProps = {
   additionalData: {},
-  autoSaveInterval: 1000 * 60 * 2,
+  autoSaveInterval: 1000 * 30,
   lastSaveTime: null,
   errorMessage: '',
   reportCreator: {
