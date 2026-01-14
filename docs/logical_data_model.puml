@@ -274,10 +274,10 @@ class CollabReportSpecialists{
 class CollabReportSteps{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
- * collabStepCompleteDate : date
  * collabStepDetail : text
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ collabStepCompleteDate : date
  deletedAt : timestamp with time zone
 }
 
