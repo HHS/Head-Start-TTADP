@@ -38,6 +38,8 @@ type WhereOptions = {
   regionId?: number;
 };
 
+const EVENT_REPORT_PILOT_VERSION = 2;
+
 export const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
 
@@ -111,6 +113,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
       'regionId',
       'data',
       'updatedAt',
+      'version',
     ],
     where,
     include: [
@@ -197,6 +200,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     updatedAt: event?.updatedAt,
     sessionReports: event?.sessionReports ?? [],
     eventReportPilotNationalCenterUsers: event?.eventReportPilotNationalCenterUsers ?? [],
+    version: event?.version ?? EVENT_REPORT_PILOT_VERSION,
   };
 }
 
@@ -1066,6 +1070,7 @@ export async function csvImport(buffer: Buffer) {
         pocIds: pocs,
         data: sequelize.cast(JSON.stringify(data), 'jsonb'),
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
+        version: EVENT_REPORT_PILOT_VERSION,
       });
 
       return true;

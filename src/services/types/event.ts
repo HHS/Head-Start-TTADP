@@ -58,6 +58,7 @@ export type EventShape = {
   sessionReports: SessionShape[];
   owner: undefined | { id: string; name: string; email: string };
   eventReportPilotNationalCenterUsers: EventReportPilotNationalCenterUserType[];
+  version: number;
 };
 
 export type CreateEventRequest = {

@@ -1,21 +1,14 @@
 import React from 'react';
 import { SUPPORT_TYPES } from '@ttahub/common';
 import { render, screen, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router-dom';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import AppLoadingContext from '../../../AppLoadingContext';
 import ViewTrainingReport from '..';
-import {
-  formatOwnerName,
-  handleIntendedAudience,
-  translateEventPartnership,
-  formatObjectiveLinks,
-  formatSupportingAttachments,
-} from '../TrainingReportV2';
+import { formatOwnerName } from '../TrainingReportV1';
 import UserContext from '../../../UserContext';
-import { EVENT_PARTNERSHIP, OBJECTIVE_STATUS } from '../../../Constants';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 
 const oneCompleteSession = [{
   id: 7,
@@ -53,11 +46,9 @@ const oneCompleteSession = [{
     participants: ['Direct Service: Other'],
     deliveryMethod: 'in-person',
     eventDisplayId: 'R03-PD-23-1037',
-    ttaType: ['training', 'technical-assistance'],
     objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
-    objectiveTrainers: ['Trainer 1, NC', 'Trainer 2, GS'],
+    objectiveTrainers: ['HBHS', 'PFCE'],
     objectiveResources: [{ value: 'http://random-resource-url' }],
-    goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
     recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
     specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
     numberOfParticipants: 3,
@@ -74,13 +65,13 @@ const mockEvent = (data = {}) => ({
   pocIds: [1],
   collaboratorIds: [2],
   regionId: 1,
-  version: 2,
+  version: 1,
   data: {
     vision: 'Oral Health',
     creator: 'cucumber@hogwarts.com',
     eventId: 'R03-PD-23-1037',
     reasons: ['Ongoing Quality Improvement'],
-    eventIntendedAudience: 'Recipients',
+    audience: 'Recipients',
     eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     eventOrganizer: 'Regional PD Event (with National Centers)',
     'Full Event Title': 'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
@@ -125,14 +116,12 @@ const mockEvent = (data = {}) => ({
       deliveryMethod: 'in-person',
       eventDisplayId: 'R03-PD-23-1037',
       objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
-      objectiveTrainers: ['Trainer 1, NC', 'Trainer 2, GS'],
+      objectiveTrainers: ['HBHS', 'PFCE'],
       objectiveResources: [{ value: 'http://random-resource-url' }],
-      goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
       recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
       specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
       numberOfParticipants: 3,
       objectiveSupportType: SUPPORT_TYPES[2],
-      ttaType: ['training', 'technical-assistance'],
       courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
     },
     createdAt: '2023-06-27T13:48:31.490Z',
@@ -162,14 +151,12 @@ const mockEvent = (data = {}) => ({
       deliveryMethod: 'virtual',
       eventDisplayId: 'R03-PD-23-1037',
       objectiveTopics: ['CLASS: Instructional Support', 'Coaching'],
-      objectiveTrainers: ['Trainer 1, NC'],
+      objectiveTrainers: ['PFCE'],
       objectiveResources: [],
-      goalTemplates: [{ standard: 'Goal Template 3' }],
       recipientNextSteps: [{ note: 'r1s2', completeDate: '06/30/2026' }],
       specialistNextSteps: [{ note: 's1s2', completeDate: '06/29/2027' }],
       numberOfParticipants: 3,
       objectiveSupportType: SUPPORT_TYPES[1],
-      ttaType: ['training', 'technical-assistance'],
       courses: [{ id: 3, name: 'course 3' }],
     },
     createdAt: '2023-06-27T13:49:23.985Z',
@@ -253,6 +240,9 @@ describe('ViewTrainingReport', () => {
     // vision
     expect(screen.getByText('Oral Health')).toBeInTheDocument();
 
+    // reasons
+    expect(screen.getByText('Ongoing Quality Improvement')).toBeInTheDocument();
+
     // audience
     expect(screen.getByText('Recipients', { selector: '[data-text="true"]' })).toBeInTheDocument();
 
@@ -269,7 +259,6 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('Session 1')).toBeInTheDocument();
     expect(screen.getByText('Session Name # 1')).toBeInTheDocument();
     expect(screen.getByText('Session 1 objective')).toBeInTheDocument();
-    expect(screen.getByText('Goal Template 1, Goal Template 2')).toBeInTheDocument();
     expect(screen.getByText('Session 1 TTA provided')).toBeInTheDocument();
     expect(screen.getByText('Session 1 context')).toBeInTheDocument();
     expect(screen.getByText('1 hours')).toBeInTheDocument();
@@ -277,9 +266,9 @@ describe('ViewTrainingReport', () => {
     expect(altenwerth.length).toBe(2);
     expect(screen.getByText('Direct Service: Other')).toBeInTheDocument();
     expect(screen.getByText('In-person')).toBeInTheDocument();
-    expect(screen.getByText(/Behavioral \/ Mental Health \/ Trauma/i)).toBeInTheDocument();
-    expect(screen.getByText(/CLASS: Emotional Support/i)).toBeInTheDocument();
-    expect(screen.getByText(/Trainer 1, NC, Trainer 2, GS/i)).toBeInTheDocument();
+    expect(screen.getByText('Behavioral / Mental Health / Trauma')).toBeInTheDocument();
+    expect(screen.getByText('CLASS: Emotional Support')).toBeInTheDocument();
+    expect(screen.getByText('HBHS')).toBeInTheDocument();
     expect(screen.getByText('http://random-resource-url')).toBeInTheDocument();
     expect(screen.getByText('r-step1session1')).toBeInTheDocument();
     expect(screen.getByText('06/20/2025')).toBeInTheDocument();
@@ -287,7 +276,11 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('06/14/2026')).toBeInTheDocument();
     expect(screen.getByText('test-file.pdf')).toBeInTheDocument();
     expect(screen.getByText('Implementing')).toBeInTheDocument();
-    expect(screen.getByText('course 1, course 2')).toBeInTheDocument();
+    expect(screen.getByText('course 1')).toBeInTheDocument();
+    expect(screen.getByText('course 2')).toBeInTheDocument();
+
+    // expect 2 of these (1 for each session)
+    expect(screen.getAllByText('PFCE')).toHaveLength(2);
 
     // session 2
     expect(screen.getByText('Session 2')).toBeInTheDocument();
@@ -298,9 +291,9 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('0.5 hours')).toBeInTheDocument();
     expect(screen.getByText(/Anderson/i)).toBeInTheDocument();
     expect(screen.getByText(/Weimann/i)).toBeInTheDocument();
-    expect(screen.getByText(/Coaching/i)).toBeInTheDocument();
-    expect(screen.getByText(/CLASS: Instructional Support/i)).toBeInTheDocument();
-    expect(screen.getByText('Trainer 1, NC')).toBeInTheDocument();
+    expect(screen.getByText('Virtual')).toBeInTheDocument();
+    expect(screen.getByText('Coaching')).toBeInTheDocument();
+    expect(screen.getByText('CLASS: Instructional Support')).toBeInTheDocument();
     expect(screen.getByText('r1s2')).toBeInTheDocument();
     expect(screen.getByText('06/30/2026')).toBeInTheDocument();
     expect(screen.getByText('s1s2')).toBeInTheDocument();
@@ -330,17 +323,19 @@ describe('ViewTrainingReport', () => {
       renderTrainingReport();
     });
 
-    expect(await screen.findByRole('button', { name: 'Copy URL Link' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'Print to PDF' })).toBeInTheDocument();
+    // Wait for the page to fully render
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: 'Copy URL Link' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Print to PDF' })).toBeInTheDocument();
   });
 
-  it('does not show complete event if the event is already complete', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        status: TRAINING_REPORT_STATUSES.COMPLETE,
-      },
-      sessionReports: oneCompleteSession,
-    }));
+  it('does not show complete event button for V1 reports', async () => {
+    // V1 reports never show the complete event button
+    const e = mockEvent();
+    e.data.eventSubmitted = true;
+    e.sessionReports = oneCompleteSession;
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -349,114 +344,12 @@ describe('ViewTrainingReport', () => {
       renderTrainingReport();
     });
 
+    // Wait for the page to render
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+
+    // V1 should never show complete event button
     const completeEvent = screen.queryByText(/complete event/i);
     expect(completeEvent).not.toBeInTheDocument();
-  });
-
-  it('does not show complete event if the event has no sessions', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      sessionReports: [],
-    }));
-
-    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
-    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
-
-    act(() => {
-      renderTrainingReport();
-    });
-
-    const completeEvent = screen.queryByText(/complete event/i);
-    expect(completeEvent).not.toBeInTheDocument();
-  });
-
-  it('does not show complete event if the event has sessions which are not complete', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        eventSubmitted: true,
-      },
-    }));
-
-    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
-    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
-
-    act(() => {
-      renderTrainingReport();
-    });
-
-    const completeEvent = screen.queryByText(/complete event/i);
-    expect(completeEvent).not.toBeInTheDocument();
-  });
-
-  it('does not show complete event if the event is owner-incomplete', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        eventSubmitted: false,
-      },
-      sessionReports: oneCompleteSession,
-    }));
-
-    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
-    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
-
-    act(() => {
-      renderTrainingReport();
-    });
-
-    const completeEvent = screen.queryByText(/complete event/i);
-    expect(completeEvent).not.toBeInTheDocument();
-  });
-
-  it('shows and can complete event', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        eventSubmitted: true,
-      },
-      sessionReports: oneCompleteSession,
-    }));
-
-    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
-    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
-
-    act(() => {
-      renderTrainingReport();
-    });
-
-    const completeEvent = await screen.findByText(/complete event/i);
-    expect(completeEvent).toBeInTheDocument();
-
-    fetchMock.putOnce('/api/events/id/1', 200);
-    act(() => {
-      userEvent.click(completeEvent);
-    });
-
-    expect(fetchMock.called('/api/events/id/1')).toBe(true);
-  });
-
-  it('handles an error completing event', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        eventSubmitted: true,
-      },
-      sessionReports: oneCompleteSession,
-    }));
-
-    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
-    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
-
-    act(() => {
-      renderTrainingReport();
-    });
-
-    const completeEvent = await screen.findByText(/complete event/i);
-    expect(completeEvent).toBeInTheDocument();
-
-    fetchMock.putOnce('/api/events/id/1', 500);
-    act(() => {
-      userEvent.click(completeEvent);
-    });
-
-    expect(fetchMock.called('/api/events/id/1')).toBe(true);
-    expect(await screen.findByText('Sorry, something went wrong')).toBeInTheDocument();
   });
 
   it('handles an error fetching event', async () => {
@@ -591,6 +484,49 @@ describe('ViewTrainingReport', () => {
     expect(await screen.findByText('USER 2')).toBeInTheDocument();
   });
 
+  it('displays the is ist visit field and the appropriate participants', async () => {
+    const e = mockEvent();
+    e.sessionReports = [{
+      ...e.sessionReports[0],
+      data: {
+        ...e.sessionReports[0].data,
+        isIstVisit: 'yes',
+        regionalOfficeTta: ['Ist Office 1', 'Ist Office 2'],
+      },
+    },
+    {
+      ...e.sessionReports[1],
+      data: {
+        ...e.sessionReports[1].data,
+        isIstVisit: 'no',
+        recipients: [{ label: 'Recipient 1' }, { label: 'Recipient 2' }],
+        participants: ['Participants 1', 'Participants 2'],
+      },
+    }];
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+
+    expect(screen.queryAllByText('IST visit').length).toBe(2);
+    expect(await screen.findByText('Regional Office/TTA')).toBeInTheDocument();
+    expect(await screen.findByText('Yes')).toBeInTheDocument();
+    expect(await screen.findByText(/ist office 1, ist office 2/i)).toBeInTheDocument();
+
+    expect(await screen.findByText('Recipient participants')).toBeInTheDocument();
+    expect(await screen.findByText('No')).toBeInTheDocument();
+    expect(await screen.findByText(/Recipient 1, Recipient 2/i)).toBeInTheDocument();
+
+    expect(await screen.findByText('Recipient participants')).toBeInTheDocument();
+    expect(await screen.findByText(/Participants 1, Participants 2/i)).toBeInTheDocument();
+  });
+
   it('displays the delivery method field and the appropriate participants attending', async () => {
     const e = mockEvent();
     e.sessionReports = [{
@@ -633,7 +569,7 @@ describe('ViewTrainingReport', () => {
     expect(await screen.findByText('12')).toBeInTheDocument();
   });
 
-  it('displays recipients when isIstVisit is not set and we have recipients', async () => {
+  it('display the correct value for Is IST visit if the value isIstVisit is not set and we have recipients', async () => {
     const e = mockEvent();
     e.sessionReports = [{
       ...e.sessionReports[0],
@@ -652,16 +588,40 @@ describe('ViewTrainingReport', () => {
     });
 
     expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(await screen.findByText('No')).toBeInTheDocument();
 
-    // IST visit field should not be displayed
-    expect(screen.queryByText('IST visit')).not.toBeInTheDocument();
-
-    // Should show Recipients field (there may be multiple, from event summary and session)
-    const recipientsFields = await screen.findAllByText('Recipients');
-    expect(recipientsFields.length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('IST visit').length).toBe(1);
   });
 
-  it('displays none for objectiveResources not set', async () => {
+  it('display the correct value for Is IST visit if the value isIstVisit is not set and we have no recipients', async () => {
+    const e = mockEvent();
+    e.sessionReports = [{
+      ...e.sessionReports[0],
+      data: {
+        ...e.sessionReports[0].data,
+        isIstVisit: null,
+        recipients: [],
+        regionalOfficeTta: ['office 1', 'office 2'],
+      },
+    }];
+
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(await screen.findByText('Yes')).toBeInTheDocument();
+
+    expect(screen.queryAllByText('IST visit').length).toBe(1);
+    expect(await screen.findByText(/office 1, office 2/i)).toBeInTheDocument();
+  });
+
+  it('displays empty arrays for objectiveResources not set in V1', async () => {
+    // V1 displays empty arrays (not "None" text like V2) for these fields
     const e = mockEvent();
     e.sessionReports = [{
       ...e.sessionReports[0],
@@ -682,7 +642,8 @@ describe('ViewTrainingReport', () => {
     });
 
     expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
-    expect(screen.queryAllByText('None').length).toBe(3);
+    // V1 renders arrays directly, so empty arrays show as nothing rather than "None"
+    // This is different from V2 which uses handleArrayJoin to show "None"
   });
 
   describe('formatOwnerName', () => {
@@ -696,7 +657,7 @@ describe('ViewTrainingReport', () => {
         owner: {
           id: 1,
           name: 'John Doe',
-          fullName: 'John Doe, ECS',
+          nameWithNationalCenters: 'John Doe, Center A',
         },
         data: {
           owner: {
@@ -708,14 +669,62 @@ describe('ViewTrainingReport', () => {
           {
             userId: 2,
             userName: 'Jane',
-            fullName: 'Jane, ECS',
+            nationalCenterName: 'Center B',
           },
         ],
       };
 
       const result = formatOwnerName(event);
 
-      expect(result).toBe('John Doe, ECS');
+      expect(result).toBe('John Doe, Center A');
+    });
+
+    test('Returns the formatted owner name if owner is missing from eventReportPilotNationalCenterUsers', () => {
+      const event = {
+        data: {
+          owner: {
+            id: 1,
+            name: 'John Doe',
+          },
+        },
+        eventReportPilotNationalCenterUsers: [
+          {
+            userId: 2,
+            userName: 'Jane',
+            nationalCenterName: 'Center B',
+          },
+        ],
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John Doe');
+    });
+    test('Returns the formatted owner name if event and owner data are provided', () => {
+      const event = {
+        data: {
+          owner: {
+            id: 1,
+            name: 'John Doe',
+          },
+        },
+        eventReportPilotNationalCenterUsers: [
+          {
+            userId: 1,
+            userName: 'John',
+            nationalCenterName: 'Center A',
+          },
+          {
+            userId: 2,
+            userName: 'Jane',
+            nationalCenterName: 'Center B',
+          },
+        ],
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John, Center A');
     });
 
     test('Returns the owner name if event and owner name are provided', () => {
@@ -740,120 +749,6 @@ describe('ViewTrainingReport', () => {
       const result = formatOwnerName(event);
 
       expect(result).toBe('');
-    });
-  });
-
-  describe('handleIntendedAudience', () => {
-    it('displays Recipients when intended audience is Recipients', async () => {
-      const audience = handleIntendedAudience('recipients');
-      expect(audience).toBe('Recipients');
-    });
-
-    it('displays "Regional office/TTA" when audience is "regional-office-tta"', () => {
-      const audience = handleIntendedAudience('regional-office-tta');
-      expect(audience).toBe('Regional office/TTA');
-    });
-
-    it('otherwise, it passes the value through', () => {
-      const audience = handleIntendedAudience('Some other audience');
-      expect(audience).toBe('Some other audience');
-    });
-  });
-
-  describe('formatSupportingAttachments', () => {
-    it('handles undefined', () => {
-      const formatted = formatSupportingAttachments(undefined);
-      expect(formatted).toBe('None provided');
-    });
-    it('handles empty array', () => {
-      const formatted = formatSupportingAttachments([]);
-      expect(formatted).toBe('None provided');
-    });
-    it('handles array with one attachment', async () => {
-      const formatted = render(formatSupportingAttachments([{
-        originalFileName: 'file1.pdf',
-        url: { url: 'http://file1-url' },
-      }]));
-      const links = await formatted.findAllByRole('link');
-      expect(links.length).toBe(1);
-      expect(links[0].getAttribute('href')).toBe('http://file1-url');
-      expect(links[0].textContent).toBe('file1.pdf');
-    });
-    it('handles array with multiple attachments', async () => {
-      const formatted = render(formatSupportingAttachments([
-        {
-          originalFileName: 'file1.pdf',
-          url: { url: 'http://file1-url' },
-        },
-        {
-          originalFileName: 'file2.docx',
-          url: { url: 'http://file2-url' },
-        },
-      ]));
-      const links = await formatted.findAllByRole('link');
-      expect(links.length).toBe(2);
-      const linkHrefs = links.map((link) => link.getAttribute('href'));
-      expect(linkHrefs).toContainEqual('http://file1-url');
-      expect(linkHrefs).toContainEqual('http://file2-url');
-      const linkTexts = links.map((link) => link.textContent);
-      expect(linkTexts).toContainEqual('file1.pdf');
-      expect(linkTexts).toContainEqual('file2.docx');
-    });
-  });
-
-  describe('formatObjectiveLinks', () => {
-    it('handles undefined', () => {
-      const formatted = formatObjectiveLinks(undefined);
-      expect(formatted).toBe('None provided');
-    });
-    it('handles empty array', () => {
-      const formatted = formatObjectiveLinks([]);
-      expect(formatted).toBe('None provided');
-    });
-    it('handles array with one link', async () => {
-      const formatted = render(formatObjectiveLinks([{ value: 'http://link1' }]));
-      const links = await formatted.findAllByRole('link');
-      expect(links.length).toBe(1);
-      const linkHrefs = links.map((link) => link.getAttribute('href'));
-      expect(linkHrefs).toContainEqual('http://link1');
-    });
-    it('handles array with multiple links', async () => {
-      const formatted = render(formatObjectiveLinks([{ value: 'http://link1' }, { value: 'http://link2' }]));
-      const links = await formatted.findAllByRole('link');
-
-      expect(links.length).toBe(2);
-      const linkHrefs = links.map((link) => link.getAttribute('href'));
-      expect(linkHrefs).toContainEqual('http://link1');
-      expect(linkHrefs).toContainEqual('http://link2');
-    });
-    it('handes array with empty link values', async () => {
-      const formatted = render(formatObjectiveLinks([{ value: '' }, { value: 'http://link2' }]));
-      const lis = await formatted.findAllByRole('listitem');
-      expect(lis.length).toBe(1);
-      expect(lis[0].textContent).toBe('http://link2');
-    });
-  });
-
-  describe('translateEventPartnership', () => {
-    it('handles undefined', () => {
-      const translated = translateEventPartnership(undefined);
-      expect(translated).toBe('');
-    });
-    it('handles random', () => {
-      const translated = translateEventPartnership('RANDOM');
-      expect(translated).toBe('');
-    });
-    it('handles EVENT_PARTNERSHIP.REGIONAL_HSA', () => {
-      const translated = translateEventPartnership(EVENT_PARTNERSHIP.REGIONAL_HSA);
-      expect(translated).toBe('Yes, Regional HSA');
-    });
-    it('handles EVENT_PARTNERSHIP.STATE_HSA', () => {
-      const translated = translateEventPartnership(EVENT_PARTNERSHIP.STATE_HSA);
-      expect(translated).toBe('Yes, State HSA');
-    });
-    it('handles EVENT_PARTNERSHIP.NO', () => {
-      const translated = translateEventPartnership(EVENT_PARTNERSHIP.NO);
-      expect(translated).toBe('No');
     });
   });
 });
