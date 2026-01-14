@@ -168,7 +168,7 @@ const ActivityReportNavigator = ({
 
       // Update RHF with saved data (includes new IDs, etc.)
       if (savedData) {
-        reset(savedData);
+        reset(savedData, { errors: true });
 
         // After save, check and update the goals & objectives page state
         updateGoalsObjectivesPageState(savedData);

@@ -171,6 +171,18 @@ describe('Activity Report policies', () => {
         expect(policy.canUpdate()).toBeTruthy();
       });
 
+      it('is true if the user is an approver and report needs action', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          [approver.id],
+          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.NEEDS_ACTION,
+        );
+        const policy = new ActivityReport(approver, report);
+        expect(policy.canUpdate()).toBeTruthy();
+      });
+
       it('...unless the report is draft', () => {
         const report = activityReport(
           author.id,

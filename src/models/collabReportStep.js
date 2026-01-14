@@ -28,7 +28,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
     },
     collabStepCompleteDate: {
-      allowNull: false,
+      allowNull: true,
       type: DataTypes.DATEONLY,
       get: formatDate,
     },

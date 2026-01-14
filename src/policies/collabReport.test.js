@@ -333,6 +333,15 @@ describe('CollabReport Policy', () => {
       expect(policy.canUpdate()).toBe(true);
     });
 
+    it('should return true when user is approver and report needs action', () => {
+      collabReport.calculatedStatus = REPORT_STATUSES.NEEDS_ACTION;
+      collabReport.approvers = [
+        { user: { id: 1 }, status: 'pending' },
+      ];
+      const policy = new CollabReport(user, collabReport);
+      expect(policy.canUpdate()).toBe(true);
+    });
+
     it('should return true when user is approver even if another approver has marked the report', () => {
       collabReport.userId = 2; // User is not the author
       collabReport.calculatedStatus = REPORT_STATUSES.SUBMITTED;
