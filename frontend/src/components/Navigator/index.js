@@ -299,7 +299,7 @@ Navigator.defaultProps = {
   onSaveAndContinue: null,
   showSavedDraft: false,
   additionalData: {},
-  autoSaveInterval: 1000 * 30,
+  autoSaveInterval: 1000 * 60 * 2,
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
