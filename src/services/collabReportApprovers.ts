@@ -54,7 +54,7 @@ export async function upsertApprover(values) {
   }
 
   // Finally, get the complete approver object from the db
-  approver = CollabReportApprover.findOne({
+  approver = await CollabReportApprover.findOne({
     where: { collabReportId, userId },
     include: [{
       model: User,
