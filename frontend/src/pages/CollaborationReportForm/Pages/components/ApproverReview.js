@@ -14,7 +14,6 @@ import DisplayApproverNotes from '../../../ActivityReport/Pages/components/Displ
 import { reviewPageDefaultProps, reviewPagePropType } from './constants';
 
 export default function ApproverReview({
-  hasIncompletePages,
   onFormReview,
   dateSubmitted,
   otherManagerNotes,
@@ -102,7 +101,7 @@ export default function ApproverReview({
 
         <ApproverStatusList approverStatus={approverStatusList} />
 
-        <Button disabled={hasIncompletePages} type="submit">{submitButtonLabel}</Button>
+        <Button type="submit">{submitButtonLabel}</Button>
       </Form>
     </>
   );

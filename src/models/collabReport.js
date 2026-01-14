@@ -189,14 +189,13 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.VIRTUAL,
         get() {
           if (!this.reportReasons) return null;
-          return this.reportReasons.join('/n');
+          return this.reportReasons.join('\n');
         },
       },
       method: {
         type: DataTypes.VIRTUAL,
         get() {
-          if (!this.conductMethod || !this.conductMethod.join) return null;
-          return this.conductMethod.join('\n');
+          return this.conductMethod;
         },
       },
       approvedAt: {
@@ -211,7 +210,7 @@ export default (sequelize, DataTypes) => {
           }
 
           const max = sortBy(this.approvers, 'updatedAt');
-          return max[0].updatedAt;
+          return max[max.length - 1].updatedAt;
         },
       },
     },
