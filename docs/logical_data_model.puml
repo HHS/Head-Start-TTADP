@@ -325,11 +325,9 @@ enum enum_CollabReports_participants {
  State and territory adminstrators
  State environmental health and safety systems
  State family engagement systems
- !issue='value missing from model enum: State health and welness systems'
- State health and welness systems
+ State health and wellness systems
  State homelessness agency/McKinney Vento liason
  TTA staff
- !issue='value missing from schema enum: State health and wellness systems'
 }
 
 enum_CollabReports_participants <|-- CollabReports
