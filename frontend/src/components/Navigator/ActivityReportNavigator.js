@@ -14,6 +14,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData, packageGoals, extractGoalIdsInOrder } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
+import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 import useFormGrantData from '../../hooks/useFormGrantData';
 import useNavigatorState from './useNavigatorState';
 
@@ -65,23 +66,6 @@ export function getPromptErrors(promptTitles, errors) {
 }
 
 export const formatEndDate = (formEndDate) => ((formEndDate && formEndDate.toLowerCase() !== 'invalid date') ? formEndDate : '');
-
-/**
- * @summary checks to see if the tta provided field contains the cursor
- * if it does, we don't want to update the form data
- *
- * @param {boolean} isAutoSave
- * @returns {boolean} whether or not the form data should be updated via the hook form
- */
-export const shouldUpdateFormData = (isAutoSave) => {
-  if (!isAutoSave) {
-    return true;
-  }
-
-  const richTextEditors = document.querySelectorAll('.rdw-editor-main');
-  const selection = document.getSelection();
-  return !(Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode)));
-};
 
 const ActivityReportNavigator = ({
   editable,
@@ -168,8 +152,15 @@ const ActivityReportNavigator = ({
 
       // Update RHF with saved data (includes new IDs, etc.)
       if (savedData) {
-        reset(savedData, { errors: true });
+        // Check if we should update form data
+        // (prevents focus loss in rich text editors during autosave)
+        const allowUpdateForm = shouldUpdateFormData(isAutoSave);
 
+        if (allowUpdateForm) {
+          reset(savedData, { errors: true });
+        }
+
+        // ALWAYS update page state regardless of autosave - this doesn't cause focus issues
         // After save, check and update the goals & objectives page state
         updateGoalsObjectivesPageState(savedData);
       }
@@ -528,15 +519,15 @@ const ActivityReportNavigator = ({
     }
   };
 
-  const onSaveDraft = async () => {
+  const onSaveDraft = async (isAutoSave = false) => {
     try {
-      setSavingLoadScreen();
+      setSavingLoadScreen(isAutoSave);
 
       // Prevent saving draft if the form is not dirty,
       // unless we are on the supporting attachments page which can be "blank".
       if (isDirty || currentPage === 'supporting-attachments') {
         // save the form data to the server
-        await onSaveForm();
+        await onSaveForm(isAutoSave);
       }
 
       updateShowSavedDraft(true); // show the saved draft message
@@ -573,7 +564,7 @@ const ActivityReportNavigator = ({
       }
     } else {
       // Save regular.
-      await onSaveDraft();
+      await onSaveDraft(isAutoSave);
     }
   };
 
