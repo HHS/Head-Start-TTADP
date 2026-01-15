@@ -67,6 +67,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
 
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
+  const isSubmitted = useMemo(() => formData.submitted, [formData.submitted]);
 
   const {
     isPoc,
@@ -120,6 +121,13 @@ export default function useSessionFormRoleAndPages(hookForm) {
         pages.supportingAttachments,
         pages.nextSteps,
       ];
+    } else if (isCollaborator && isRegionalWithNationalCenters && !facilitationIncludesRegion && isSubmitted) {
+      pagesWithReview = [
+        pages.sessionSummary,
+        pages.participants,
+        pages.supportingAttachments,
+        pages.nextSteps,
+      ];
     } else if (isCollaborator && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
       pagesWithReview = [
         pages.sessionSummary,
@@ -153,6 +161,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
     isApprover,
     isCollaborator,
     isPoc,
+    isSubmitted,
     isRegionalNoNationalCenters,
     isRegionalWithNationalCenters,
   ]);
