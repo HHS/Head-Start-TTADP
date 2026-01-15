@@ -21,6 +21,26 @@
     margin: auto;
 }
 
+/*
+  The below values (12px, 16px) come from the formula for distributing gap space evenly across flex items:
+
+  Formula: flex-basis = (100% / n) - (gap × (n-1) / n)
+
+  For 2 columns with 24px gap:
+  - Gap to subtract per item: 24px × (2-1) / 2 = 24px × 1/2 = 12px
+  - Result: calc(50% - 12px)
+
+  For 3 columns with 24px gap:
+  - Gap to subtract per item: 24px × (3-1) / 3 = 24px × 2/3 = 16px
+  - Result: calc(33.333% - 16px)
+
+  Verification:
+  - 2 columns: 2 × (50% - 12px) + 1 gap × 24px = 100% - 24px + 24px = 100% ✓
+  - 3 columns: 3 × (33.333% - 16px) + 2 gaps × 24px = 100% - 48px + 48px = 100% ✓
+
+  The logic is that with n columns, there are n-1 gaps. The total gap space (gap × (n-1)) must be subtracted from the available width, and each item absorbs its fair share (1/n) of that total gap space.
+  */
+
 /* Dynamic grid columns based on card count */
 .smart-hub--overview-grid-cols-1 .smart-hub--dashboard-overview-widget-field,
 .smart-hub--overview-grid-cols-2 .smart-hub--dashboard-overview-widget-field {
@@ -36,32 +56,18 @@
   flex-grow: 0; /* Prevent cards from expanding to fill row */
 }
 
-/* Card content styling */
-.smart-hub--dashboard-overview-widget-field {
-  padding: 16px; /* Fixed 16px padding */
-  gap: 0; /* Remove USWDS gap */
-}
+/* Card content styling - padding-2 and gap-0 applied via USWDS classes */
 
-/* Icon to content gap */
+/* Icon to content gap - margin-right-2 applied via USWDS class */
 .smart-hub--dashboard-overview-widget-field-icon {
-  margin-right: 16px; /* Fixed 16px gap between icon and text */
   flex: 0 0 auto; /* Don't grow or shrink */
 }
 
-/* Remove margin from nested inner icon (it also has the icon class) */
-.smart-hub--dashboard-overview-widget-field-icon__background-sm {
-  margin-right: 0;
-}
+/* Remove margin from nested inner icon - margin-right-0 applied via USWDS class */
 
-/* Left-align content */
+/* Left-align content - flex-align-start applied via USWDS class */
 .smart-hub--dashboard-overview-widget-field-label {
   flex: 1 1 auto; /* Grow to fill space */
-  align-items: flex-start; /* Left-align content */
-}
-
-/* Count text (numerator/denominator) font size */
-.smart-hub--dashboard-overview-widget-field-label2 {
-  font-size: 14px;
 }
 
 /* Mobile: Stack all cards in single column */
