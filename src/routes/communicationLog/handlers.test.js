@@ -18,7 +18,7 @@ import {
   logsByScopes,
   csvLogsByScopes,
 } from '../../services/communicationLog';
-import { userById } from '../../services/users';
+import { userById, usersByRoles } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
 import {
   communicationLogById,
@@ -723,18 +723,18 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
       };
-      const mockUsers = [{ value: 1, label: 'UserA' }, { value: 2, label: 'UserB' }];
+      const mockUsers = [{ id: 1, name: 'UserA' }, { id: 2, name: 'UserB' }];
       const mockGoals = [{ value: 1, label: 'GoalA' }, { value: 2, label: 'GoalB' }];
       const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }, { value: 2, label: 'RecipientB', grants: [] }];
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue(mockUsers);
+      usersByRoles.mockResolvedValue(mockUsers);
       GoalTemplate.findAll.mockResolvedValue(mockGoals);
       Recipient.findAll.mockResolvedValue(mockRecipients);
       Group.findAll.mockResolvedValue([]);
       const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
       // eslint-disable-next-line max-len
       expect(result).toEqual({
-        regionalUsers: mockUsers,
+        regionalUsers: mockUsers.map((u) => ({ label: u.name, value: u.id })),
         standardGoals: mockGoals,
         recipients: [
           { value: 1, label: 'RecipientA' },
@@ -758,7 +758,7 @@ describe('communicationLog handlers', () => {
       const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }];
 
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue(mockUsers);
+      usersByRoles.mockResolvedValue(mockUsers);
       GoalTemplate.findAll.mockResolvedValue(mockGoals);
       Recipient.findAll.mockResolvedValue(mockRecipients);
       Group.findAll.mockResolvedValue([]);
@@ -825,7 +825,7 @@ describe('communicationLog handlers', () => {
       const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }];
 
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue(mockUsers);
+      usersByRoles.mockResolvedValue(mockUsers);
       GoalTemplate.findAll.mockResolvedValue(mockGoals);
       Recipient.findAll.mockResolvedValue(mockRecipients);
       Group.findAll.mockResolvedValue([]);
@@ -866,7 +866,7 @@ describe('communicationLog handlers', () => {
       };
 
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue([]);
+      usersByRoles.mockResolvedValue([]);
       GoalTemplate.findAll.mockResolvedValue([]);
       Recipient.findAll.mockResolvedValue([]);
       Group.findAll.mockResolvedValue([]);
@@ -891,7 +891,7 @@ describe('communicationLog handlers', () => {
       };
 
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue([]);
+      usersByRoles.mockResolvedValue([]);
       GoalTemplate.findAll.mockResolvedValue([]);
       Recipient.findAll.mockResolvedValue([]);
       Group.findAll.mockResolvedValue([]);
@@ -946,7 +946,7 @@ describe('communicationLog handlers', () => {
       ];
 
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue([]);
+      usersByRoles.mockResolvedValue([]);
       GoalTemplate.findAll.mockResolvedValue([]);
       Recipient.findAll.mockResolvedValue(mockRecipients);
       Group.findAll.mockResolvedValue([]);
@@ -988,16 +988,16 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
       };
-      const mockUsers = [{ value: 1, label: 'User' }];
+      const mockUsers = [{ id: 1, name: 'UserA' }];
       const mockGoals = [{ value: 1, label: 'Goal' }];
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue(mockUsers);
+      usersByRoles.mockResolvedValue(mockUsers);
       GoalTemplate.findAll.mockResolvedValue(mockGoals);
       Recipient.findAll.mockResolvedValue([]);
       Group.findAll.mockResolvedValue([]);
       await communicationLogAdditionalData(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith({
-        regionalUsers: mockUsers,
+        regionalUsers: mockUsers.map((u) => ({ label: u.name, value: u.id })),
         standardGoals:
         mockGoals,
         groups: [],
