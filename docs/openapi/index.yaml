@@ -410,6 +410,44 @@ components:
         - collaboratorIds
         - regionId
         - data
+    sessionReportTableRow:
+      type: object
+      description: A session report row returned from the get session reports endpoint
+      properties:
+        id:
+          type: number
+        eventId:
+          type: string
+          nullable: true
+        eventName:
+          type: string
+          nullable: true
+        sessionName:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          nullable: true
+        endDate:
+          type: string
+          nullable: true
+        objectiveTopics:
+          type: array
+          items:
+            type: string
+          nullable: true
+    sessionReportsResponse:
+      type: object
+      description: Response object for get session reports endpoint
+      properties:
+        count:
+          type: number
+          description: Total count of matching session reports
+        rows:
+          type: array
+          description: Array of session report rows
+          items:
+            $ref: '#/components/schemas/sessionReportTableRow'
 
   parameters:
     reportId.in:
