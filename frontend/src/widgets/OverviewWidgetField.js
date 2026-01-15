@@ -65,7 +65,7 @@ export function OverviewWidgetField({
         ) : (
           <span className="margin-top-1">{label1}</span>
         )}
-        {label2}
+        {label2 && <span className="smart-hub--dashboard-overview-widget-field-label2">{label2}</span>}
         {route && (!showNoResults || !noData) && (
           <Link
             to={route.to}
