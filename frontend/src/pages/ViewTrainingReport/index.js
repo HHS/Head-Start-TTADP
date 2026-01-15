@@ -9,6 +9,7 @@ import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert } from '@trussworks/react-uswds';
+import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { eventById, completeEvent } from '../../fetchers/event';
 import { getNamesByIds } from '../../fetchers/users';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -92,7 +93,7 @@ const formatNextSteps = (nextSteps, heading, striped) => {
 
 const formatSupportingGoals = (sessionGoalTemplates) => {
   if (!sessionGoalTemplates || sessionGoalTemplates.length === 0) {
-    return 'None';
+    return 'None provided';
   }
   return sessionGoalTemplates.map((goal) => goal.standard || goal).join(', ');
 };
@@ -130,7 +131,7 @@ export const formatSupportingAttachments = (attachments) => {
   return 'None provided';
 };
 
-const handleArrayJoin = (arr, join = ', ', alt = 'None') => (arr && arr.length ? arr.join(join) : alt);
+const handleArrayJoin = (arr, join = ', ', alt = 'None provided') => (arr && arr.length ? arr.join(join) : alt);
 
 export default function ViewTrainingReport({ match }) {
   const [event, setEvent] = useState(null);
@@ -325,11 +326,22 @@ export default function ViewTrainingReport({ match }) {
     };
   };
 
+  const displayStatus = (status) => {
+    if (status) {
+      if (status === REPORT_STATUSES.NEEDS_ACTION) {
+        return 'In progress';
+      }
+
+      return status;
+    }
+    return 'Not started';
+  };
+
   const sessions = event && event.sessionReports ? event.sessionReports.map((session, index) => (
     <ReadOnlyContent
       key={session.id}
       title={`Session ${index + 1}`}
-      displayStatus={session.data.status || 'Not started'}
+      displayStatus={displayStatus(session.data.status)}
       sections={[{
         heading: 'Session Summary',
         striped: true,
@@ -344,12 +356,12 @@ export default function ViewTrainingReport({ match }) {
         heading: 'Objective summary',
         data: {
           'Session objective': session.data.objective,
-          'Supporting goals': formatSupportingGoals(session.data.goalTemplates),
+          'Supporting goals': formatSupportingGoals(session.goalTemplates),
           Topics: handleArrayJoin(session.data.objectiveTopics, ', '),
-          Trainers: handleArrayJoin(session.data.objectiveTrainers),
-          'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name).join(', ') : 'None',
+          Trainers: handleArrayJoin((session.trainers || []).map(({ fullName }) => fullName)),
+          'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name).join(', ') : 'None provided',
           'Resource links': formatObjectiveLinks(session.data.objectiveResources),
-          'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None',
+          'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None provided',
           'TTA provided': session.data.ttaProvided,
           'Support type': session.data.objectiveSupportType,
         },

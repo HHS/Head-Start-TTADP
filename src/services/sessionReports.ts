@@ -22,6 +22,25 @@ type WhereOptions = {
   data?: unknown;
 };
 
+const userInclude = (as: string) => ({
+  model: db.User,
+  as,
+  attributes: [
+    'fullName',
+    'name',
+    'id',
+  ],
+  include: [
+    {
+      model: db.Role,
+      as: 'roles',
+      attributes: [
+        'name',
+      ],
+    },
+  ],
+});
+
 const updateSessionReportRelatedModels = async (
   sessionReportId: number,
   joinTableModel: typeof SessionReportPilotGoalTemplate,
@@ -98,6 +117,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       'data',
       'updatedAt',
       'approverId',
+      'submitterId',
       'submitted',
       // eslint-disable-next-line @typescript-eslint/quotes
       [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
@@ -127,42 +147,11 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
         through: { attributes: [] }, // exclude join table attributes
       },
       {
-        model: db.User,
-        as: 'trainers',
-        attributes: [
-          'fullName',
-          'name',
-          'id',
-        ],
-        include: [
-          {
-            model: db.Role,
-            as: 'roles',
-            attributes: [
-              'name',
-            ],
-          },
-        ],
+        ...userInclude('trainers'),
         through: { attributes: [] }, // exclude join table attributes
       },
-      {
-        model: db.User,
-        as: 'approver',
-        attributes: [
-          'fullName',
-          'name',
-          'id',
-        ],
-        include: [
-          {
-            model: db.Role,
-            as: 'roles',
-            attributes: [
-              'name',
-            ],
-          },
-        ],
-      },
+      userInclude('approver'),
+      userInclude('submitter'),
     ],
   };
 
@@ -201,6 +190,8 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     approverId: session?.approverId ?? null,
     approver: session?.approver ?? null,
     submitted: session?.submitted ?? false,
+    submitterId: session?.submitterId ?? null,
+    submitter: session?.submitter ?? null,
     trainers: session?.trainers ?? [],
   };
 }
@@ -248,6 +239,7 @@ export async function updateSession(id: number, request) {
     eventId, data: {
       approverId,
       goalTemplates,
+      submitterId,
       trainers,
       ...data
     },
@@ -265,11 +257,16 @@ export async function updateSession(id: number, request) {
   } as {
     eventId: number;
     approverId?: number;
+    submitterId?: number;
     data: Cast;
   };
 
   if (approverId) {
     update.approverId = Number(approverId);
+  }
+
+  if (submitterId) {
+    update.submitterId = Number(submitterId);
   }
 
   await SessionReportPilot.update(
@@ -286,6 +283,15 @@ export async function updateSession(id: number, request) {
       SessionReportPilotGoalTemplate,
       'goalTemplateId',
       goalTemplates.map((template: { id: number }) => template.id),
+    );
+  }
+
+  if (trainers) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotTrainer,
+      'userId',
+      trainers.map((trainer: { id: number }) => trainer.id),
     );
   }
 
