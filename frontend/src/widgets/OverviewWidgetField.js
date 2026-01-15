@@ -110,7 +110,7 @@ OverviewWidgetField.defaultProps = {
   label2: '',
   route: null,
   filterApplicable: true,
-  iconSize: 'sm',
+  iconSize: 'lg',
   showNoResults: false,
 };
 

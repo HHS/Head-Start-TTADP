@@ -70,6 +70,12 @@
   flex: 1 1 auto; /* Grow to fill space */
 }
 
+/* Link styling for readability */
+.smart-hub--dashboard-overview-widget-field-label a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
 /* Mobile: Stack all cards in single column */
 @media (max-width: 63.99em) {
   .smart-hub--dashboard-overview-container .smart-hub--dashboard-overview-widget-field {
