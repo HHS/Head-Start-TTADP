@@ -567,6 +567,16 @@ function CollaborationReport({ match, location }) {
   };
 
   const onFormSubmit = async (data) => {
+    const hasIncompletePages = pages.some((page) => {
+      const pageState = hookForm.getValues('pageState');
+      return page.position !== 4 && pageState && pageState[page.position] !== 'Complete';
+    });
+
+    if (hasIncompletePages) {
+      updateError('Please complete all pages before submitting the report.');
+      return;
+    }
+
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
       creatorRole: data.creatorRole,
@@ -597,6 +607,16 @@ function CollaborationReport({ match, location }) {
   };
 
   const onReview = async (data) => {
+    const hasIncompletePages = pages.some((page) => {
+      const pageState = hookForm.getValues('pageState');
+      return page.position !== 4 && pageState && pageState[page.position] !== 'Complete';
+    });
+
+    if (hasIncompletePages) {
+      updateError('Please complete all pages before submitting the report.');
+      return;
+    }
+
     await reviewReport(reportId.current, { note: data.note, status: data.status });
     const timezone = moment.tz.guess();
     const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
