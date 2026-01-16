@@ -1,4 +1,5 @@
 import { DECIMAL_BASE } from '@ttahub/common';
+import { uniq } from 'lodash';
 import UserPolicy from '../../policies/user';
 import EventPolicy from '../../policies/event';
 import SCOPES from '../../middleware/scopeConstants';
@@ -38,7 +39,7 @@ const verifyTrViewPermissions = async (req, res) => {
   }
 
   const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
-  const regionIds = permissions.map(({ regionId }) => regionId);
+  const regionIds = uniq(permissions.map(({ regionId }) => regionId));
 
   return {
     isAdmin,
@@ -232,7 +233,7 @@ export async function getTrainingReportTrainersByRegionAndNationalCenter(req, re
 
 export async function getTrainingReportTrainersByRegion(req, res) {
   try {
-    const { isAdmin, regionIds } = await verifyTrViewPermissions(req, res);
+    const { regionIds } = await verifyTrViewPermissions(req, res);
     if (res.headersSent) {
       return;
     }
@@ -249,8 +250,7 @@ export async function getTrainingReportTrainersByRegion(req, res) {
       'TTAC',
       'ECM',
       'GSM',
-    // admins see all users
-    ], isAdmin ? null : regionIds);
+    ], regionIds);
 
     res.json([
       ...regionalTrainers,

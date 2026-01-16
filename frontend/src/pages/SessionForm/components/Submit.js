@@ -15,6 +15,7 @@ const path = 'submitter-session-report';
 const MANAGER_ROLES = [
   'ECM',
   'GSM',
+  'TTAC',
 ];
 
 export default function Submit({

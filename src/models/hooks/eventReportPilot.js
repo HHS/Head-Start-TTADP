@@ -1,6 +1,4 @@
 /* eslint-disable global-require */
-/* eslint-disable import/prefer-default-export */
-const { Op } = require('sequelize');
 const { auditLogger } = require('../../logger');
 const { purifyDataFields } = require('../helpers/purifyFields');
 
@@ -47,85 +45,6 @@ const notifyNewOwner = async (_sequelize, instance) => {
   }
 };
 
-const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, options) => {
-  try {
-    const { ownerId, collaboratorIds } = instance;
-    const userIds = [ownerId, ...collaboratorIds].filter((f) => f);
-    const users = await sequelize.models.User.findAll({
-      where: {
-        id: userIds,
-      },
-      include: [
-        {
-          model: sequelize.models.NationalCenter,
-          as: 'nationalCenters', // despite the relation being singular in the UI, the name is plural
-        },
-      ],
-      transaction: options.transaction,
-    });
-
-    const records = [];
-    users.forEach((user) => {
-      user.nationalCenters.forEach((nc) => {
-        records.push({
-          userId: user.id,
-          userName: user.name,
-          eventReportPilotId: instance.id,
-          nationalCenterId: nc.id,
-          nationalCenterName: nc.name,
-        });
-      });
-    });
-
-    const promises = [];
-
-    // create or update records
-    for (let i = 0; i < records.length; i += 1) {
-      const record = records[i];
-
-      // eslint-disable-next-line no-await-in-loop
-      const cachedData = await sequelize.models.EventReportPilotNationalCenterUser.findOne({
-        where: {
-          eventReportPilotId: instance.id,
-          userId: record.userId,
-          nationalCenterId: record.nationalCenterId,
-        },
-        transaction: options.transaction,
-      });
-
-      if (cachedData) {
-        promises.push(
-          cachedData.update(record, {
-            transaction: options.transaction,
-          }),
-        );
-      } else {
-        promises.push(
-          sequelize.models.EventReportPilotNationalCenterUser.create(record, {
-            transaction: options.transaction,
-          }),
-        );
-      }
-    }
-
-    const eventReportNationalCenterUsers = await Promise.all(promises);
-
-    // delete records that are not present in the new list
-    const ids = eventReportNationalCenterUsers.map((r) => r.id);
-    await sequelize.models.EventReportPilotNationalCenterUser.destroy({
-      where: {
-        eventReportPilotId: instance.id,
-        id: {
-          [Op.notIn]: ids,
-        },
-      },
-      transaction: options.transaction,
-    });
-  } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
-  }
-};
-
 const beforeUpdate = async (_sequelize, instance) => {
   purifyDataFields(instance, fieldsToEscape);
 };
@@ -136,11 +55,9 @@ const beforeCreate = async (_sequelize, instance) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
-  await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
-  await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
   await notifyNewOwner(sequelize, instance);
 };
 
@@ -149,5 +66,4 @@ export {
   beforeUpdate,
   beforeCreate,
   afterCreate,
-  createOrUpdateNationalCenterUserCacheTable,
 };
