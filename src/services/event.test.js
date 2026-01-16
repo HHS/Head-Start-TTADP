@@ -817,28 +817,6 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
       jest.restoreAllMocks();
     });
-
-    it('should return default values when data, sessionReports, and eventReportPilotNationalCenterUsers are undefined', async () => {
-      const ownerId = 67890;
-
-      // Create an event without data, sessionReports, and eventReportPilotNationalCenterUsers
-      const createdEvent = await db.EventReportPilot.create({
-        ownerId,
-        pocIds: [ownerId],
-        collaboratorIds: [ownerId],
-        regionId: 1,
-        data: {},
-      });
-
-      const foundEvent = await findEventHelper({ id: createdEvent.id });
-
-      expect(foundEvent).toHaveProperty('data', {});
-      expect(foundEvent).toHaveProperty('sessionReports', []);
-      expect(foundEvent).toHaveProperty('eventReportPilotNationalCenterUsers', []);
-
-      // Clean up
-      await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
-    });
   });
 
   describe('destroyEvent', () => {

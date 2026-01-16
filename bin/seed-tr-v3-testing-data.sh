@@ -1,12 +1,15 @@
 #!/bin/bash
 
 # Script to seed Training Report V3 testing data
-# This creates permissions, event reports, and session reports for testing purposes
+# This script is intended to test TR Alerts
 
 set -e  # Exit on error
 
 # run the load-test-db.sh script to ensure the database is ready
 sh ./bin/load-test-db
+
+export $(grep POSTGRES_PASSWORD   ./.env)
+export PGPASSWORD=${POSTGRES_PASSWORD}
 
 # Get database connection info from environment or use defaults
 DB_HOST=${POSTGRES_HOST:-localhost}
@@ -47,9 +50,9 @@ VALUES
   (4, 3, 1, NOW(), NOW())   -- Ron Weasley - Collaborator
 ON CONFLICT ("userId", "regionId", "scopeId") DO NOTHING;
 
+
 -- ========================================
--- SCENARIO 1: Regional TTA Hosted Event (no National Centers)
--- POC has no involvement in sessions
+-- Claude: insert SQL BELOW
 -- ========================================
 
 -- Event 1.1: Not started
@@ -73,9 +76,23 @@ INSERT INTO "EventReportPilots" (
   CAST('{"Event ID":"R03-TTA-24-2002","Event Title":"Regional TTA Event - In Progress","Event Organizer - Type of Event":"Regional TTA Hosted Event (no National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Target Population(s)":"Infants and Toddlers (ages birth to 3)","Overall Vision/Goal for the PD Event":"Leadership and Governance","IST/Creator":"cucumber@hogwarts.com"}' AS JSONB),
   NOW(), NOW(), 2
 );
+-- ========================================
+-- ALERT TEST DATA
+-- ========================================
+-- This section creates minimal test data to validate all 6 Training Report V3 alert types:
+-- 1. missingEventInfo: Event not submitted 20 days past END date
+-- 2. noSessionsCreated: No sessions 20 days past START date
+-- 3. eventNotCompleted: Event incomplete 20 days past END date (all sessions complete)
+-- 4. missingSessionInfo: Session incomplete 20 days past START date (collab or POC section)
+-- 5. waitingForApproval: Session submitted awaiting approver review
+-- 6. changesNeeded: Approver returned session for edits
 
--- Event 1.3: Suspended
--- Owner=5 (Cucumber User), Collaborators=[3] (Harry Potter)
+-- ========================================
+-- ALERT 1: Missing Event Info
+-- ========================================
+-- Event not submitted 20 days after event END date
+-- Who sees: Owner (User 5), Collaborators (User 3)
+
 INSERT INTO "EventReportPilots" (
   "ownerId", "collaboratorIds", "regionId", "data", "imported", "createdAt", "updatedAt", "version"
 ) VALUES (
@@ -94,16 +111,37 @@ INSERT INTO "EventReportPilots" (
   CAST('{"eventId":"R03-TTA-24-2004","eventName":"Regional TTA Event - Complete","eventOrganizer":"Regional TTA Hosted Event (no National Centers)","eventIntendedAudience":"recipients","trainingType":"Series","targetPopulations":["Infants and Toddlers (ages birth to 3)"],"vision":"Leadership and Governance","creator":"cucumber@hogwarts.com","eventSubmitted":true,"status":"Complete"}' AS JSONB),
   CAST('{"Event ID":"R03-TTA-24-2004","Event Title":"Regional TTA Event - Complete","Event Organizer - Type of Event":"Regional TTA Hosted Event (no National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Target Population(s)":"Infants and Toddlers (ages birth to 3)","Overall Vision/Goal for the PD Event":"Leadership and Governance","IST/Creator":"cucumber@hogwarts.com"}' AS JSONB),
   NOW(), NOW(), 2
+  "ownerId",
+  "collaboratorIds",
+  "regionId",
+  "data",
+  "pocIds",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  5,
+  ARRAY[3]::INTEGER[],
+  3,
+  jsonb_build_object(
+    'eventId', 'R03-ALERT-001',
+    'eventName', 'Alert Test: Missing Event Info',
+    'eventOrganizer', 'Regional TTA Hosted Event (no National Centers)',
+    'status', 'In progress',
+    'eventSubmitted', false,
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '30 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE - INTERVAL '21 days', 'MM/DD/YYYY')
+  ),
+  ARRAY[6]::INTEGER[],
+  NOW(),
+  NOW()
 );
 
 -- ========================================
--- SCENARIO 2: Regional PD Event (with NC) - All Facilitation Types
--- POC has full involvement in sessions
--- Consolidated: One "In Progress" event with 3 sessions (NC, Regional, Both)
+-- ALERT 2: No Sessions Created
 -- ========================================
+-- No sessions created 20 days after event START date
+-- Who sees: Owner (User 5), Collaborators (User 3)
 
--- Event 2.1: Not started
--- Owner=5 (Cucumber User), Collaborators=[3,4] (Harry Potter, Ron Weasley), POCs=[6] (Larry Botter)
 INSERT INTO "EventReportPilots" (
   "ownerId", "collaboratorIds", "regionId", "data", "imported", "createdAt", "updatedAt", "pocIds", "version"
 ) VALUES (
@@ -144,75 +182,297 @@ INSERT INTO "EventReportPilots" (
   CAST('{"eventId":"R03-PD-24-3004","eventName":"Regional PD Event - Complete","eventOrganizer":"Regional PD Event (with National Centers)","eventIntendedAudience":"recipients","trainingType":"Series","targetPopulations":["Preschool Children (ages 3-5)"],"vision":"School Readiness","creator":"cucumber@hogwarts.com","eventSubmitted":true,"status":"Complete"}' AS JSONB),
   CAST('{"Event ID":"R03-PD-24-3004","Event Title":"Regional PD Event - Complete","Event Organizer - Type of Event":"Regional PD Event (with National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Target Population(s)":"Preschool Children (ages 3-5)","Overall Vision/Goal for the PD Event":"School Readiness","IST/Creator":"cucumber@hogwarts.com"}' AS JSONB),
   NOW(), NOW(), ARRAY[6]::INTEGER[], 2
+  "ownerId",
+  "collaboratorIds",
+  "regionId",
+  "data",
+  "pocIds",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  5,
+  ARRAY[3]::INTEGER[],
+  3,
+  jsonb_build_object(
+    'eventId', 'R03-ALERT-002',
+    'eventName', 'Alert Test: No Sessions Created',
+    'eventOrganizer', 'Regional TTA Hosted Event (no National Centers)',
+    'status', 'In progress',
+    'eventSubmitted', true,
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '21 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '10 days', 'MM/DD/YYYY')
+  ),
+  ARRAY[6]::INTEGER[],
+  NOW(),
+  NOW()
+);
+-- Note: No sessions will be created for this event to trigger the alert
+
+-- ========================================
+-- ALERT 3: Event Not Completed
+-- ========================================
+-- Event not completed 20 days past END date, with all sessions complete
+-- Who sees: Owner (User 5) ONLY
+
+INSERT INTO "EventReportPilots" (
+  "ownerId",
+  "collaboratorIds",
+  "regionId",
+  "data",
+  "pocIds",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  5,
+  ARRAY[]::INTEGER[],
+  3,
+  jsonb_build_object(
+    'eventId', 'R03-ALERT-003',
+    'eventName', 'Alert Test: Event Not Completed',
+    'eventOrganizer', 'Regional TTA Hosted Event (no National Centers)',
+    'status', 'In progress',
+    'eventSubmitted', true,
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '30 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE - INTERVAL '21 days', 'MM/DD/YYYY')
+  ),
+  ARRAY[]::INTEGER[],
+  NOW(),
+  NOW()
+);
+
+-- Create a complete session for this event (triggers eventNotCompleted alert)
+INSERT INTO "SessionReportPilots" (
+  "eventId",
+  "approverId",
+  "data",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  (SELECT id FROM "EventReportPilots" WHERE "data"->>'eventId' = 'R03-ALERT-003'),
+  7,
+  jsonb_build_object(
+    'sessionName', 'Complete Session',
+    'status', 'Complete',
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '25 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE - INTERVAL '24 days', 'MM/DD/YYYY'),
+    'pocComplete', true,
+    'collabComplete', true
+  ),
+  NOW(),
+  NOW()
 );
 
 -- ========================================
--- SESSIONS: Create sessions for In Progress and Complete events
+-- ALERT 4a: Missing Session Info - Collaborator Section
 -- ========================================
+-- Session not submitted 20 days past session START date (collabComplete = false)
+-- Who sees: Owner (User 5), Collaborators (User 3)
 
--- Session 1.1: Scenario 1 - In Progress (Regional TTA facilitation)
--- Approver: Christopher Chant (User 7, Regional Manager)
-INSERT INTO "SessionReportPilots" ("eventId", "approverId", "data", "createdAt", "updatedAt")
-SELECT id, 7,
-  CAST('{"sessionName":"TTA Session - In Progress","reviewStatus":"draft","startDate":"2024-02-01","endDate":"2024-02-01","duration":3,"deliveryMethod":"virtual","context":"Leadership development session","objective":"Improve leadership skills","numberOfParticipants":20,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"regional_tta_staff","recipients":[{"value":1234,"label":"Example Recipient 1"}],"objectiveTopics":["Leadership","Governance"],"objectiveTrainers":["Regional TTA Team"],"participants":["Teacher","Coach"],"additionalStates":[]}' AS JSONB),
-  NOW(), NOW()
-FROM "EventReportPilots" WHERE data->>'eventId' = 'R03-TTA-24-2002';
+INSERT INTO "EventReportPilots" (
+  "ownerId",
+  "collaboratorIds",
+  "regionId",
+  "data",
+  "pocIds",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  5,
+  ARRAY[3]::INTEGER[],
+  3,
+  jsonb_build_object(
+    'eventId', 'R03-ALERT-004',
+    'eventName', 'Alert Test: Missing Session Info - Collab',
+    'eventOrganizer', 'Regional TTA Hosted Event (no National Centers)',
+    'status', 'In progress',
+    'eventSubmitted', true,
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '30 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '10 days', 'MM/DD/YYYY')
+  ),
+  ARRAY[6]::INTEGER[],
+  NOW(),
+  NOW()
+);
 
--- Session 1.2: Scenario 1 - Complete (Regional TTA facilitation)
--- Approver: Christopher Chant (User 7, Regional Manager)
-INSERT INTO "SessionReportPilots" ("eventId", "approverId", "data", "createdAt", "updatedAt")
-SELECT id, 7,
-  CAST('{"sessionName":"TTA Session - Complete","reviewStatus":"complete","startDate":"2024-01-15","endDate":"2024-01-15","duration":3,"deliveryMethod":"virtual","context":"Leadership development session","objective":"Improve leadership skills","numberOfParticipants":20,"status":"Complete","ownerComplete":true,"pocComplete":true,"regionId":3,"facilitation":"regional_tta_staff","recipients":[{"value":1234,"label":"Example Recipient 1"}],"objectiveTopics":["Leadership","Governance"],"objectiveTrainers":["Regional TTA Team"],"participants":["Teacher","Coach"],"additionalStates":[]}' AS JSONB),
-  NOW(), NOW()
-FROM "EventReportPilots" WHERE data->>'eventId' = 'R03-TTA-24-2004';
+INSERT INTO "SessionReportPilots" (
+  "eventId",
+  "data",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  (SELECT id FROM "EventReportPilots" WHERE "data"->>'eventId' = 'R03-ALERT-004'),
+  jsonb_build_object(
+    'sessionName', 'Missing Collab Info',
+    'status', 'In progress',
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '21 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '5 days', 'MM/DD/YYYY'),
+    'pocComplete', true,
+    'collabComplete', false
+  ),
+  NOW(),
+  NOW()
+);
 
--- Session 2.1a: Scenario 2 - In Progress (National Center facilitation)
--- Approver: Luz Noceda (User 8, National Center)
-INSERT INTO "SessionReportPilots" ("eventId", "approverId", "data", "createdAt", "updatedAt")
-SELECT id, 8,
-  CAST('{"sessionName":"NC Trainers Session - In Progress","reviewStatus":"draft","startDate":"2024-02-10","endDate":"2024-02-10","duration":4,"deliveryMethod":"in-person","context":"School readiness with NC support","objective":"Master school readiness strategies","numberOfParticipants":25,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"national_center","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Assessment"],"objectiveTrainers":["NCQTL"],"participants":["Teacher","Coach"],"additionalStates":[]}' AS JSONB),
-  NOW(), NOW()
-FROM "EventReportPilots" WHERE data->>'eventId' = 'R03-PD-24-3002';
+-- ========================================
+-- ALERT 4b: Missing Session Info - POC Section
+-- ========================================
+-- Session not submitted 20 days past session START date (pocComplete = false)
+-- Who sees: POCs (User 6)
 
--- Session 2.1b: Scenario 2 - In Progress (Regional facilitation)
--- Approver: Christopher Chant (User 7, Regional Manager)
-INSERT INTO "SessionReportPilots" ("eventId", "approverId", "data", "createdAt", "updatedAt")
-SELECT id, 7,
-  CAST('{"sessionName":"Regional Trainers Session - In Progress","reviewStatus":"draft","startDate":"2024-02-15","endDate":"2024-02-15","duration":3.5,"deliveryMethod":"virtual","context":"Family engagement strategies","objective":"Enhance family engagement","numberOfParticipants":30,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"regional_tta_staff","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["Family Engagement","Communication"],"objectiveTrainers":["Regional TTA Team"],"participants":["Family Service Worker","Manager"],"additionalStates":[]}' AS JSONB),
-  NOW(), NOW()
-FROM "EventReportPilots" WHERE data->>'eventId' = 'R03-PD-24-3002';
+INSERT INTO "EventReportPilots" (
+  "ownerId",
+  "collaboratorIds",
+  "regionId",
+  "data",
+  "pocIds",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  5,
+  ARRAY[3]::INTEGER[],
+  3,
+  jsonb_build_object(
+    'eventId', 'R03-ALERT-005',
+    'eventName', 'Alert Test: Missing Session Info - POC',
+    'eventOrganizer', 'Regional PD Event (with National Centers)',
+    'status', 'In progress',
+    'eventSubmitted', true,
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '30 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '10 days', 'MM/DD/YYYY')
+  ),
+  ARRAY[6]::INTEGER[],
+  NOW(),
+  NOW()
+);
 
--- Session 2.1c: Scenario 2 - In Progress (Both NC and Regional facilitation)
--- Approver: Luz Noceda (User 8, National Center - NC involvement means NC approver)
-INSERT INTO "SessionReportPilots" ("eventId", "approverId", "data", "createdAt", "updatedAt")
-SELECT id, 8,
-  CAST('{"sessionName":"Both Trainers Session - In Progress","reviewStatus":"draft","startDate":"2024-02-20","endDate":"2024-02-20","duration":5,"deliveryMethod":"hybrid","context":"Comprehensive assessment training","objective":"Master assessment techniques","numberOfParticipants":35,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":3,"facilitation":"both","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["Child Screening","Assessment","Development"],"objectiveTrainers":["Regional TTA Team","NCQTL"],"participants":["Teacher","Coach","Education Manager"],"additionalStates":[]}' AS JSONB),
-  NOW(), NOW()
-FROM "EventReportPilots" WHERE data->>'eventId' = 'R03-PD-24-3002';
+INSERT INTO "SessionReportPilots" (
+  "eventId",
+  "data",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  (SELECT id FROM "EventReportPilots" WHERE "data"->>'eventId' = 'R03-ALERT-005'),
+  jsonb_build_object(
+    'sessionName', 'Missing POC Info',
+    'status', 'In progress',
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '21 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '5 days', 'MM/DD/YYYY'),
+    'pocComplete', false,
+    'collabComplete', true
+  ),
+  NOW(),
+  NOW()
+);
 
--- Session 2.2a: Scenario 2 - Complete (National Center facilitation)
--- Approver: Luz Noceda (User 8, National Center)
-INSERT INTO "SessionReportPilots" ("eventId", "approverId", "data", "createdAt", "updatedAt")
-SELECT id, 8,
-  CAST('{"sessionName":"NC Trainers Session - Complete","reviewStatus":"complete","startDate":"2024-01-25","endDate":"2024-01-25","duration":4,"deliveryMethod":"in-person","context":"School readiness with NC support","objective":"Master school readiness strategies","numberOfParticipants":25,"status":"Complete","ownerComplete":true,"pocComplete":true,"regionId":3,"facilitation":"national_center","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Assessment"],"objectiveTrainers":["NCQTL"],"participants":["Teacher","Coach"],"additionalStates":[]}' AS JSONB),
-  NOW(), NOW()
-FROM "EventReportPilots" WHERE data->>'eventId' = 'R03-PD-24-3004';
+-- ========================================
+-- ALERT 5: Waiting for Approval
+-- ========================================
+-- Session submitted and waiting for approver review
+-- Who sees: Submitter (User 3), Approver (User 7)
 
--- Session 2.2b: Scenario 2 - Complete (Regional facilitation)
--- Approver: Christopher Chant (User 7, Regional Manager)
-INSERT INTO "SessionReportPilots" ("eventId", "approverId", "data", "createdAt", "updatedAt")
-SELECT id, 7,
-  CAST('{"sessionName":"Regional Trainers Session - Complete","reviewStatus":"complete","startDate":"2024-01-30","endDate":"2024-01-30","duration":3.5,"deliveryMethod":"virtual","context":"Family engagement strategies","objective":"Enhance family engagement","numberOfParticipants":30,"status":"Complete","ownerComplete":true,"pocComplete":true,"regionId":3,"facilitation":"regional_tta_staff","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["Family Engagement","Communication"],"objectiveTrainers":["Regional TTA Team"],"participants":["Family Service Worker","Manager"],"additionalStates":[]}' AS JSONB),
-  NOW(), NOW()
-FROM "EventReportPilots" WHERE data->>'eventId' = 'R03-PD-24-3004';
+INSERT INTO "EventReportPilots" (
+  "ownerId",
+  "collaboratorIds",
+  "regionId",
+  "data",
+  "pocIds",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  5,
+  ARRAY[3]::INTEGER[],
+  3,
+  jsonb_build_object(
+    'eventId', 'R03-ALERT-006',
+    'eventName', 'Alert Test: Waiting for Approval',
+    'eventOrganizer', 'Regional TTA Hosted Event (no National Centers)',
+    'status', 'In progress',
+    'eventSubmitted', true,
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '10 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '10 days', 'MM/DD/YYYY')
+  ),
+  ARRAY[6]::INTEGER[],
+  NOW(),
+  NOW()
+);
 
--- Session 2.2c: Scenario 2 - Complete (Both NC and Regional facilitation)
--- Approver: Luz Noceda (User 8, National Center - NC involvement means NC approver)
-INSERT INTO "SessionReportPilots" ("eventId", "approverId", "data", "createdAt", "updatedAt")
-SELECT id, 8,
-  CAST('{"sessionName":"Both Trainers Session - Complete","reviewStatus":"complete","startDate":"2024-02-05","endDate":"2024-02-05","duration":5,"deliveryMethod":"hybrid","context":"Comprehensive assessment training","objective":"Master assessment techniques","numberOfParticipants":35,"status":"Complete","ownerComplete":true,"pocComplete":true,"regionId":3,"facilitation":"both","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["Child Screening","Assessment","Development"],"objectiveTrainers":["Regional TTA Team","NCQTL"],"participants":["Teacher","Coach","Education Manager"],"additionalStates":[]}' AS JSONB),
-  NOW(), NOW()
-FROM "EventReportPilots" WHERE data->>'eventId' = 'R03-PD-24-3004';
+INSERT INTO "SessionReportPilots" (
+  "eventId",
+  "approverId",
+  "submitterId",
+  "data",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  (SELECT id FROM "EventReportPilots" WHERE "data"->>'eventId' = 'R03-ALERT-006'),
+  7,
+  3,
+  jsonb_build_object(
+    'sessionName', 'Waiting Approval',
+    'status', 'In progress',
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '5 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '5 days', 'MM/DD/YYYY'),
+    'pocComplete', true,
+    'collabComplete', true
+  ),
+  NOW(),
+  NOW()
+);
+
+-- ========================================
+-- ALERT 6: Changes Needed
+-- ========================================
+-- Approver returned session for edits
+-- Who sees: Submitter (User 3) ONLY
+
+INSERT INTO "EventReportPilots" (
+  "ownerId",
+  "collaboratorIds",
+  "regionId",
+  "data",
+  "pocIds",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  5,
+  ARRAY[3]::INTEGER[],
+  3,
+  jsonb_build_object(
+    'eventId', 'R03-ALERT-007',
+    'eventName', 'Alert Test: Changes Needed',
+    'eventOrganizer', 'Regional TTA Hosted Event (no National Centers)',
+    'status', 'In progress',
+    'eventSubmitted', true,
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '10 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '10 days', 'MM/DD/YYYY')
+  ),
+  ARRAY[6]::INTEGER[],
+  NOW(),
+  NOW()
+);
+
+INSERT INTO "SessionReportPilots" (
+  "eventId",
+  "approverId",
+  "submitterId",
+  "data",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  (SELECT id FROM "EventReportPilots" WHERE "data"->>'eventId' = 'R03-ALERT-007'),
+  7,
+  3,
+  jsonb_build_object(
+    'sessionName', 'Changes Needed',
+    'status', 'needs_action',
+    'startDate', TO_CHAR(CURRENT_DATE - INTERVAL '5 days', 'MM/DD/YYYY'),
+    'endDate', TO_CHAR(CURRENT_DATE + INTERVAL '5 days', 'MM/DD/YYYY'),
+    'pocComplete', true,
+    'collabComplete', true
+  ),
+  NOW(),
+  NOW()
+);
 
 SQL
 
