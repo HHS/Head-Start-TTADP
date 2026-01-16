@@ -406,6 +406,7 @@ class EventReportPilots{
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
  imported : jsonb
  pocIds : integer[]
+ version : integer
 }
 
 class Files{
