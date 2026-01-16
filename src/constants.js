@@ -231,7 +231,6 @@ const MAINTENANCE_TYPE = {
 
 const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
-  'collaboration_report',
 ];
 
 const MAINTENANCE_CATEGORY = {
