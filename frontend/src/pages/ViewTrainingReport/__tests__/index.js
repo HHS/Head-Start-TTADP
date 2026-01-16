@@ -35,7 +35,6 @@ const oneCompleteSession = [{
       updatedAt: '2023-06-27T13:48:54.745Z',
       originalFileName: 'test-file.pdf',
     }],
-    trainers: [{ fullName: 'Trainer 1, NC' }, { fullName: 'Trainer 2, GS' }],
     status: TRAINING_REPORT_STATUSES.COMPLETE,
     context: 'Session 1 context',
     endDate: '06/16/2023',
@@ -63,6 +62,7 @@ const oneCompleteSession = [{
     objectiveSupportType: SUPPORT_TYPES[2],
     courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
   },
+  trainers: [{ fullName: 'Trainer 1, NC' }, { fullName: 'Trainer 2, GS' }],
   goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
   createdAt: '2023-06-27T13:48:31.490Z',
   updatedAt: '2023-06-27T13:49:18.579Z',
@@ -278,7 +278,7 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('In-person')).toBeInTheDocument();
     expect(screen.getByText(/Behavioral \/ Mental Health \/ Trauma/i)).toBeInTheDocument();
     expect(screen.getByText(/CLASS: Emotional Support/i)).toBeInTheDocument();
-    expect(screen.getByText(/Trainer 1, NC, Trainer 2, GS/i)).toBeInTheDocument();
+    expect(screen.getByText(/Trainer 1, NC; Trainer 2, GS/i)).toBeInTheDocument();
     expect(screen.getByText('http://random-resource-url')).toBeInTheDocument();
     expect(screen.getByText('r-step1session1')).toBeInTheDocument();
     expect(screen.getByText('06/20/2025')).toBeInTheDocument();
@@ -681,7 +681,8 @@ describe('ViewTrainingReport', () => {
     });
 
     expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
-    expect(screen.queryAllByText('None provided').length).toBe(5);
+    // resources, courses, files
+    expect(screen.queryAllByText('None provided').length).toBe(3);
   });
 
   describe('formatOwnerName', () => {

@@ -244,9 +244,9 @@ export default function TrainingReportV2({
         heading: 'Objective summary',
         data: {
           'Session objective': session.data.objective,
-          'Supporting goals': formatSupportingGoals(session.data.goalTemplates),
+          'Supporting goals': formatSupportingGoals(session.goalTemplates),
           Topics: handleArrayJoin(session.data.objectiveTopics, ', '),
-          Trainers: handleArrayJoin(session.data.objectiveTrainers),
+          Trainers: handleArrayJoin((session.trainers || []).map((t) => t.fullName), '; '),
           'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name).join(', ') : 'None',
           'Resource links': formatObjectiveLinks(session.data.objectiveResources),
           'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None',
