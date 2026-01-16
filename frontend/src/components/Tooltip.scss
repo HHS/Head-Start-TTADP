@@ -18,7 +18,7 @@
     overflow-y: visible;
     text-overflow: ellipsis;
     vertical-align: middle;
-    white-space: normal; /* Allow text to wrap */
+    white-space: nowrap;
 }
 
 .smart-hub--ellipsis > span {
@@ -30,7 +30,7 @@
   text-decoration: underline;
   text-decoration-style: dashed;
   text-decoration-thickness: 1px;
-  text-decoration-color: $base-medium; /* Same color as original SVG */
+  text-decoration-color: $base-darkest; /* Lighter grey to match original appearance */
   text-underline-offset: 6px; /* Space between text and underline */
 }
 
