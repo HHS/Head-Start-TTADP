@@ -37,10 +37,14 @@ describe('Tooltip', () => {
     expect(await screen.findByText(/my display text/i)).toBeVisible();
     const button = await screen.findByRole('button', { name: /button label/i });
     await expect(button).toBeInTheDocument();
-    await expect(document.querySelector('svg')).toBeInTheDocument();
+    // Check for CSS underline class instead of SVG
+    const underlinedText = document.querySelector('.smart-hub-tooltip__underlined-text');
+    await expect(underlinedText).toBeInTheDocument();
+    await expect(underlinedText).toHaveTextContent('my display text');
   });
   it('renders without underline', async () => {
     renderTooltip('my display text', false, 'my button label', 'my tool tip text', true);
-    await expect(document.querySelector('svg')).not.toBeInTheDocument();
+    // Check that CSS underline class is not present
+    await expect(document.querySelector('.smart-hub-tooltip__underlined-text')).not.toBeInTheDocument();
   });
 });
