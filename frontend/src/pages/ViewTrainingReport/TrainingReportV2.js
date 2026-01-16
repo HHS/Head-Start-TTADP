@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { capitalize } from 'lodash';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
 import { Alert } from '@trussworks/react-uswds';
 import BackLink from '../../components/BackLink';
@@ -25,6 +25,17 @@ export const formatOwnerName = (event) => {
   } catch (err) {
     return '';
   }
+};
+
+const displayStatus = (status) => {
+  if (status) {
+    if (status === REPORT_STATUSES.NEEDS_ACTION) {
+      return 'In progress';
+    }
+
+    return status;
+  }
+  return 'Not started';
 };
 
 export const translateEventPartnership = (eventPartnership) => {
@@ -80,7 +91,7 @@ const formatNextSteps = (nextSteps, heading, striped) => {
 
 const formatSupportingGoals = (sessionGoalTemplates) => {
   if (!sessionGoalTemplates || sessionGoalTemplates.length === 0) {
-    return 'None';
+    return 'None provided';
   }
   return sessionGoalTemplates.map((goal) => goal.standard || goal).join(', ');
 };
@@ -118,7 +129,7 @@ export const formatSupportingAttachments = (attachments) => {
   return 'None provided';
 };
 
-const handleArrayJoin = (arr, join = ', ', alt = 'None') => (arr && arr.length ? arr.join(join) : alt);
+const handleArrayJoin = (arr, join = ', ', alt = 'None provided') => (arr && arr.length ? arr.join(join) : alt);
 
 export default function TrainingReportV2({
   event,
@@ -218,7 +229,7 @@ export default function TrainingReportV2({
     <ReadOnlyContent
       key={session.id}
       title={`Session ${index + 1}`}
-      displayStatus={session.data.status || 'Not started'}
+      displayStatus={displayStatus(session.data.status)}
       sections={[{
         heading: 'Session Summary',
         striped: true,
