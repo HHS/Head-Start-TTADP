@@ -7,10 +7,12 @@ import {
   TARGET_POPULATIONS,
   EVENT_TARGET_POPULATIONS,
   EVENT_AUDIENCE,
+  REPORT_STATUSES,
+  ALL_STATES_FLATTENED,
 } from '@ttahub/common';
 import moment from 'moment';
 import { auditLogger } from '../logger';
-import db, { sequelize } from '../models';
+import db from '../models';
 import {
   EventShape,
   CreateEventRequest,
@@ -25,9 +27,11 @@ import { FILE_STATUSES } from '../constants';
 const {
   EventReportPilot,
   SessionReportPilot,
+  GoalTemplate,
   User,
   EventReportPilotNationalCenterUser,
   File,
+  sequelize,
 } = db;
 
 type WhereOptions = {
@@ -45,6 +49,19 @@ export const validateFields = (request, requiredFields) => {
     throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
   }
 };
+
+const INCLUDED_SESSION_ATTRIBUTES = [
+  'id',
+  'eventId',
+  'data',
+  'createdAt',
+  'updatedAt',
+  'approverId',
+  'submitted',
+  'submitterId',
+  // eslint-disable-next-line @typescript-eslint/quotes
+  [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+];
 
 /**
  * Creates an event.
@@ -131,18 +148,36 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
               },
             },
           },
+          {
+            model: GoalTemplate,
+            as: 'goalTemplates',
+            attributes: [
+              'id',
+              'standard',
+            ],
+            through: { attributes: [] }, // exclude join table attributes
+          },
+          {
+            required: false,
+            model: User,
+            as: 'trainers',
+            attributes: [
+              'fullName',
+              'name',
+              'id',
+            ],
+            include: [
+              {
+                model: db.Role,
+                as: 'roles',
+                attributes: [
+                  'name',
+                ],
+              },
+            ],
+          },
         ],
-        attributes: [
-          'id',
-          'eventId',
-          'data',
-          'createdAt',
-          'updatedAt',
-          'approverId',
-          'submitted',
-          // eslint-disable-next-line @typescript-eslint/quotes
-          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
-        ],
+        attributes: INCLUDED_SESSION_ATTRIBUTES,
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
         order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
@@ -196,7 +231,6 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     data: event?.data,
     updatedAt: event?.updatedAt,
     sessionReports: event?.sessionReports ?? [],
-    eventReportPilotNationalCenterUsers: event?.eventReportPilotNationalCenterUsers ?? [],
   };
 }
 
@@ -255,6 +289,7 @@ export async function findEventHelperBlob({
         model: SessionReportPilot,
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
+        attributes: INCLUDED_SESSION_ATTRIBUTES,
         include: [
           {
             model: db.GoalTemplate,
@@ -279,17 +314,6 @@ export async function findEventHelperBlob({
               },
             ],
           },
-        ],
-        attributes: [
-          'id',
-          'eventId',
-          'data',
-          'createdAt',
-          'updatedAt',
-          'approverId',
-          'submitted',
-          // eslint-disable-next-line @typescript-eslint/quotes
-          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
         ],
         order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
       },
@@ -431,7 +455,7 @@ const parseMinimalEventForAlert = (
 });
 
 // type for an array of either strings of functions that return a boolean
-type TChecker = 'ownerComplete' | 'pocComplete';
+type TChecker = 'collabComplete' | 'pocComplete';
 
 const checkSessionForCompletion = (
   session: SessionShape,
@@ -462,6 +486,41 @@ const checkSessionForCompletion = (
     });
   }
 };
+
+async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlertShape[]> {
+  // Collect all unique user IDs from alerts
+  const userIds = new Set<number>();
+  alerts.forEach((alert) => {
+    if (alert.approverId) userIds.add(alert.approverId);
+    if (alert.submitterId) userIds.add(alert.submitterId);
+    alert.collaboratorIds.forEach((id) => userIds.add(id));
+  });
+
+  // If no user IDs to fetch, return alerts as-is
+  if (userIds.size === 0) {
+    return alerts;
+  }
+
+  // Fetch all users in one query
+  const users = await User.findAll({
+    where: { id: { [Op.in]: Array.from(userIds) } },
+    attributes: ['id', 'name'],
+  }) as Array<{ id: number; name: string }>;
+
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
+
+  // Enrich each alert with user data
+  return alerts.map((alert) => {
+    const enrichedAlert: TRAlertShape = {
+      ...alert,
+      approverName: alert.approverId ? userMap.get(alert.approverId) : undefined,
+      collaboratorNames: alert.collaboratorIds
+        .map((id) => userMap.get(id))
+        .filter((name): name is string => Boolean(name)),
+    };
+    return enrichedAlert;
+  });
+}
 
 export async function getTrainingReportAlerts(
   userId: number | undefined,
@@ -538,15 +597,14 @@ export async function getTrainingReportAlerts(
 
     // some alerts only trigger for the owner or the collaborators
     if (ownerUserIdFilter(event, userId) || collaboratorUserIdFilter(event, userId)) {
-      // if we are 20 days past the start date
-      if (today.isAfter(nineteenDaysAfterStart)) {
-        // or we are missing event data
+      // if we are 20 days past the end date and missing event data
+      if (today.isAfter(nineteenDaysAfterEnd)) {
         if (!event.data.eventSubmitted) {
           alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
         }
       }
 
-      // if we are 20 days past the end date
+      // if we are 20 days past the start date and there are no sessions
       if (today.isAfter(nineteenDaysAfterStart) && event.sessionReports.length === 0) {
         // and there are no sessions
         alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
@@ -557,7 +615,7 @@ export async function getTrainingReportAlerts(
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-          checkSessionForCompletion(session, event, 'ownerComplete', alerts);
+          checkSessionForCompletion(session, event, 'collabComplete', alerts);
         }
       });
     }
@@ -567,6 +625,7 @@ export async function getTrainingReportAlerts(
       const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
 
       sessions.forEach((session) => {
+        // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
@@ -575,9 +634,76 @@ export async function getTrainingReportAlerts(
         }
       }); // for each session
     }
+
+    // Add approval workflow alerts
+    event.sessionReports.forEach((session) => {
+      // Skip if already have an alert for this session
+      if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+      if (session.data.status === TRS.COMPLETE) return;
+
+      // Check for waitingForApproval - session submitted and awaiting approver review
+      // Submitted means: approverId set, pocComplete and collabComplete are true, status is IN_PROGRESS
+      const isSubmitted = session.submitted;
+
+      if (isSubmitted && ![REPORT_STATUSES.NEEDS_ACTION].includes(session.data.status)) {
+        const isSubmitter = session.submitterId === userId;
+        const isApprover = session.approverId === userId;
+
+        // Show to submitter and approver only
+        if (!userId || isSubmitter || isApprover) {
+          alerts.push({
+            id: session.id,
+            eventId: event.data.eventId,
+            isSession: true,
+            sessionName: session.data.sessionName,
+            eventName: event.data.eventName,
+            alertType: 'waitingForApproval',
+            ownerId: event.ownerId,
+            pocIds: event.pocIds,
+            collaboratorIds: event.collaboratorIds,
+            endDate: session.data.endDate,
+            startDate: session.data.startDate,
+            sessionId: session.id,
+            eventStatus: event.data.status,
+            approverId: session.approverId,
+            submitterId: session.submitterId,
+          });
+        }
+      }
+
+      // Check for changesNeeded - approver sent session back for edits
+      // This is when status is NEEDS_ACTION
+      const needsChanges = session.data && session.data.status === REPORT_STATUSES.NEEDS_ACTION;
+
+      if (needsChanges) {
+        const isSubmitter = session.submitterId === userId;
+
+        // Show to submitter only
+        if (!userId || isSubmitter) {
+          alerts.push({
+            id: session.id,
+            eventId: event.data.eventId,
+            isSession: true,
+            sessionName: session.data.sessionName,
+            eventName: event.data.eventName,
+            alertType: 'changesNeeded',
+            ownerId: event.ownerId,
+            pocIds: event.pocIds,
+            collaboratorIds: event.collaboratorIds,
+            endDate: session.data.endDate,
+            startDate: session.data.startDate,
+            sessionId: session.id,
+            eventStatus: event.data.status,
+            approverId: session.approverId,
+            submitterId: session.submitterId,
+          });
+        }
+      }
+    });
   }); // for each event
 
-  return alerts;
+  // Enrich alerts with user names before returning
+  return enrichAlertsWithUserData(alerts);
 }
 
 export async function getTrainingReportAlertsForUser(
@@ -597,6 +723,11 @@ export async function getTrainingReportAlertsForUser(
       {
         pocIds: {
           [Op.contains]: [userId],
+        },
+      },
+      {
+        id: {
+          [Op.in]: sequelize.literal(`(SELECT "eventId" FROM "SessionReportPilots" srp WHERE srp."approverId" = ${userId})`),
         },
       },
     ],
@@ -851,9 +982,7 @@ const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(B
 
 const mappings: Record<string, string> = {
   Audience: 'eventIntendedAudience',
-  // 'IST/Creator': 'creator',
   'Event Creator': 'creator',
-  // 'Event Title': 'eventName',
   'Edit Title': 'eventName',
   'Event Duration': 'trainingType',
   'Event Duration/#NC Days of Support': 'trainingType',
@@ -864,7 +993,6 @@ const mappings: Record<string, string> = {
   'Vision/Goal/Outcomes for the PD Event': 'vision',
   'Vision/Outcomes for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
-  // 'Reason(s) for PD': 'reasons', // TODO: Verify data should no longer be imported
   'Target Population(s)': 'targetPopulations',
   'Event Organizer - Type of Event': 'eventOrganizer',
   'IST Name:': 'istName',
@@ -969,6 +1097,19 @@ const checkEventExists = async (eventId: string) => {
   if (event) throw new Error(`Event ${eventId} already exists`);
 };
 
+const VALID_STATE_NAMES = [...new Set(
+  ALL_STATES_FLATTENED.map(({ label }) => label.split('(')[0].trim()),
+)];
+
+const validateStates = (states: Set<string>) => {
+  Array.from(states).forEach((state) => {
+    if (!VALID_STATE_NAMES.includes(state)) {
+      throw new Error(`State not valid: ${state}`);
+    }
+  });
+  return states;
+};
+
 export async function csvImport(buffer: Buffer) {
   const skipped: string[] = [];
   const errors: string[] = [];
@@ -1057,7 +1198,7 @@ export async function csvImport(buffer: Buffer) {
       data.targetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS].includes(target));
 
       // Additional States Involved, remove duplicates.
-      data.additionalStates = [...new Set(data.additionalStates as string[])]; // TODO: (maybe) create master list of states/outer pacific to validate against
+      data.additionalStates = [...validateStates(new Set(data.additionalStates as string[]))];
 
       await db.EventReportPilot.create({
         collaboratorIds: [],

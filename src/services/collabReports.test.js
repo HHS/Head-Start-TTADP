@@ -132,6 +132,22 @@ describe('Collab Reports Service', () => {
       expect(result.name).toEqual(reportObject.name);
     });
 
+    it('ignores provided id when creating a new report', async () => {
+      const existingReport = await CollabReport.create({
+        ...reportObject,
+        name: `${reportObject.name}-existing`,
+      });
+
+      const result = await createOrUpdateReport({
+        ...reportObject,
+        id: existingReport.id,
+        name: `${reportObject.name}-new`,
+      }, null);
+
+      expect(result.id).not.toEqual(existingReport.id);
+      expect(result.name).toEqual(`${reportObject.name}-new`);
+    });
+
     it('updates an existing report when given valid data', async () => {
       // Create a report to test with
       await CollabReport.create(reportObject);
@@ -598,6 +614,33 @@ describe('Collab Reports Service', () => {
         expect(steps).toHaveLength(2);
         expect(steps[0].collabStepDetail).toBe('First step completed');
         expect(steps[1].collabStepDetail).toBe('Second step completed');
+      });
+
+      it('saves steps when the completion date is missing', async () => {
+        const reportWithSteps = {
+          ...reportObject,
+          name: 'Test Report with Step Missing Date',
+          steps: [
+            {
+              collabStepDetail: 'Step without date',
+              collabStepCompleteDate: null,
+              toJSON() {
+                return { collabStepDetail: 'Step without date', collabStepCompleteDate: null };
+              },
+            },
+          ],
+        };
+
+        const result = await createOrUpdateReport(reportWithSteps, null);
+        testReport = await CollabReport.findByPk(result.id);
+
+        const steps = await CollabReportStep.findAll({
+          where: { collabReportId: result.id },
+        });
+
+        expect(steps).toHaveLength(1);
+        expect(steps[0].collabStepDetail).toBe('Step without date');
+        expect(steps[0].collabStepCompleteDate).toBeNull();
       });
 
       it('updates existing steps when updating a report', async () => {

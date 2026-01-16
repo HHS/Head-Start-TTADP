@@ -8,6 +8,7 @@ import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 import UserContext from '../../../UserContext';
 import SingleApproverSelect from '../../../components/SingleApproverSelect';
+import useCanSelectApprover from '../../../hooks/useCanSelectApprover';
 
 const path = 'submitter-session-report';
 
@@ -29,6 +30,9 @@ export default function Submit({
   const pageState = watch('pageState');
   const event = watch('event');
   const facilitation = watch('facilitation');
+
+  // POCs can select approver when facilitation includes regional staff
+  const canSelectApprover = useCanSelectApprover({ isPoc, watch });
 
   let eventOrganizer = '';
 
@@ -69,10 +73,6 @@ export default function Submit({
   if (!isAdmin) {
     approverOptions = approverOptions.filter((a) => a.id !== user.id);
   }
-
-  // POCs can select approver when facilitation includes regional staff
-  const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
-  const canSelectApprover = !isPoc || (isPoc && facilitationIncludesRegion);
 
   const onFormSubmit = async () => {
     const valid = await trigger();

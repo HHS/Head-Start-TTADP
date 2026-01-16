@@ -29,6 +29,8 @@ export default (sequelize, DataTypes) => {
       });
       // Approver.
       SessionReportPilot.belongsTo(models.User, { foreignKey: 'approverId', as: 'approver' });
+      // Submitter
+      SessionReportPilot.belongsTo(models.User, { foreignKey: 'submitterId', as: 'submitter' });
       // Trainers.
       SessionReportPilot.hasMany(models.SessionReportPilotTrainer, { foreignKey: 'sessionReportPilotId', as: 'sessionTrainers' });
       SessionReportPilot.belongsToMany(models.User, {
@@ -71,6 +73,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    submitterId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     data: {
       type: DataTypes.JSONB,
       allowNull: false,
@@ -82,7 +88,7 @@ export default (sequelize, DataTypes) => {
           this.approverId
           && this.data
           && this.data.pocComplete
-          && this.data.ownerComplete
+          && this.data.collabComplete
         );
       },
     },

@@ -41,6 +41,9 @@ const ActivitySummary = ({ collaborators = [] }) => {
     register,
     watch,
     control,
+    formState: { errors },
+    setError,
+    clearErrors,
   } = useFormContext();
 
   const isStateActivity = watch('isStateActivity');
@@ -52,24 +55,24 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const placeholderText = '- Select -';
   const drawerTriggerRef = useRef(null);
 
-  const [descriptionError, setDescriptionError] = React.useState('');
-  const [reasonError, setReasonError] = React.useState('');
+  const descriptionError = errors?.description?.message;
+  const reasonError = errors?.reportReasons?.message;
 
   const checkForDescription = (el) => {
     const { value } = el.target;
     if (!value || value.trim() === '') {
-      setDescriptionError('Enter activity description');
+      setError('description', { type: 'required', message: 'Describe the activity' });
     } else {
-      setDescriptionError('');
+      clearErrors('description');
     }
   };
 
   const checkForReasons = () => {
     const reasons = watch('reportReasons');
     if (!reasons || reasons.length === 0) {
-      setReasonError('Select at least one reason');
+      setError('reportReasons', { type: 'required', message: 'Select at least one' });
     } else {
-      setReasonError('');
+      clearErrors('reportReasons');
     }
   };
 
@@ -406,7 +409,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
         </Label>
 
         {descriptionError && (
-        <span className="usa-error-message" role="alert">Describe the activity</span>
+        <span className="usa-error-message" role="alert">{descriptionError}</span>
         )}
 
         <Textarea
@@ -416,7 +419,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
           defaultValue=""
           data-testid="description-input"
           error={!!descriptionError}
-          inputRef={register({ required: true })}
+          inputRef={register({ required: 'Describe the activity' })}
           onBlur={checkForDescription}
           required
         />
