@@ -252,7 +252,7 @@ function EventCard({
             <p className="usa-prose text-bold  margin-y-0">Event end date</p>
             <p className="usa-prose margin-y-0">{checkForDate(data.endDate)}</p>
           </div>
-          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__menu position-absolute right-0">
+          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__menu">
             {menuItems.length > 0 && (
             <ContextMenu
               label={contextMenuLabel}
