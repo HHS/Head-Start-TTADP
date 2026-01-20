@@ -2,10 +2,16 @@ import {
   cast, Op, Sequelize, Model,
 } from 'sequelize';
 import { Cast } from 'sequelize/types/utils';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, { sequelize } from '../models';
-import { SessionReportShape } from './types/sessionReport';
+import {
+  SessionReportShape,
+  GetSessionReportsResponse,
+  GetSessionReportsParams,
+  SessionReportSortSortMap,
+} from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
+import filtersToScopes from '../scopes';
 
 const {
   SessionReportPilot,
@@ -360,4 +366,93 @@ export async function getPossibleSessionParticipants(
       ],
     }],
   });
+}
+
+/**
+ * Get training reports (sessions) with pagination, sorting, and filtering
+ * @param params Query parameters including pagination, sorting, filtering, and format
+ * @returns JSON object with count and rows
+ */
+export async function getSessionReports(
+  params: GetSessionReportsParams,
+): Promise<GetSessionReportsResponse> {
+  const {
+    sortBy = 'id',
+    sortDir = 'DESC',
+    offset = 0,
+    limit = 10,
+    format = 'json',
+    ...filterParams
+  } = params;
+
+  // Define allowed sort columns with their actual database paths
+  const sortMap: SessionReportSortSortMap = {
+    id: ['id'],
+    sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
+    startDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'startDate\' AS DATE)')],
+    endDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'endDate\' AS DATE)')],
+    eventId: ['event', sequelize.literal('data->>\'eventId\'::text')],
+    eventName: ['event', sequelize.literal('data->>\'eventName\'::text')],
+  };
+
+  // Use the requested sort column or default to id descending
+  const sortEntry = sortMap[sortBy] || sortMap.id;
+  const orderClause = [[...sortEntry, sortDir]];
+
+  // Get scopes from filters
+  const { trainingReport: trainingReportScopes } = await filtersToScopes(filterParams, {});
+
+  // Get events to pass into session query
+  // (the scopes construction makes this necessary, sadly)
+  const events = await EventReportPilot.findAll({
+    attributes: ['id'],
+    where: {
+      [Op.and]: [
+        ...trainingReportScopes,
+        {
+          data: {
+            status: {
+              [Op.in]: [
+                TRAINING_REPORT_STATUSES.COMPLETE,
+                TRAINING_REPORT_STATUSES.IN_PROGRESS,
+              ],
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  // Build query options
+  const queryOptions = {
+    attributes: [
+      'id',
+      [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
+      [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
+      [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
+      [sequelize.literal('"SessionReportPilot"."data"->>\'startDate\''), 'startDate'],
+      [sequelize.literal('"SessionReportPilot"."data"->>\'endDate\''), 'endDate'],
+      [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
+    ],
+    where: {
+      eventId: events.map(({ id }) => id),
+    },
+    include: [
+      {
+        model: EventReportPilot,
+        as: 'event',
+        attributes: [],
+        required: true,
+      },
+    ],
+    order: orderClause,
+    raw: true,
+    subQuery: false,
+  } as Record<string, unknown>;
+
+  queryOptions.offset = offset;
+  queryOptions.limit = limit;
+
+  // Query sessions
+  return SessionReportPilot.findAndCountAll(queryOptions);
 }
