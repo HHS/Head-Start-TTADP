@@ -90,6 +90,8 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
           JOIN "CommunicationLogRecipients" clr ON r.id = clr."recipientId"
           WHERE clr."communicationLogId" = "CommunicationLog".id
         ) ${direction}`),
+      ], [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.GOALS:
@@ -98,6 +100,8 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
           SELECT MIN(g->>'label')
           FROM jsonb_array_elements(data->'goals') g
         ) ${direction}`),
+      ], [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.AUTHOR:
@@ -105,16 +109,23 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sequelize.literal(`author.name ${direction}`),
       ], [
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`),
+      ], [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.PURPOSE:
       result = [[
         sequelize.literal(`data->>'purpose' ${direction}`),
+      ],
+      [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RESULT:
       result = [[
         sequelize.literal(`data->>'result' ${direction}`),
+      ], [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.DATE:

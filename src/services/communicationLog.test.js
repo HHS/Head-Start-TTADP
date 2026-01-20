@@ -167,6 +167,7 @@ describe('communicationLog services', () => {
       expect(result).toEqual([
         [sequelize.literal('author.name ASC')],
         [sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE ASC')],
+        [sequelize.col('id'), 'ASC'],
       ]);
     });
 
@@ -178,6 +179,7 @@ describe('communicationLog services', () => {
 
       expect(result).toEqual([
         [sequelize.literal("data->>'purpose' DESC")],
+        [sequelize.col('id'), 'DESC'],
       ]);
     });
 
@@ -189,6 +191,7 @@ describe('communicationLog services', () => {
 
       expect(result).toEqual([
         [sequelize.literal("data->>'result' ASC")],
+        [sequelize.col('id'), 'ASC'],
       ]);
     });
 
@@ -227,6 +230,7 @@ describe('communicationLog services', () => {
 
       expect(result).toEqual([
         [sequelize.literal("data->>'purpose' DESC")],
+        [sequelize.col('id'), 'DESC'],
       ]);
     });
 
