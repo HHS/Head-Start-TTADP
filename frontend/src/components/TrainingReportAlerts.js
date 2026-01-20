@@ -10,6 +10,8 @@ import { hasTrainingReportWritePermissions } from '../permissions';
 import { getEventAlerts } from '../fetchers/event';
 import WidgetContainer from './WidgetContainer';
 import SimpleSortableTable from './SimpleSortableTable';
+import { NeedsActionIcon, PendingApprovalIcon } from './icons';
+import './TrainingReportAlerts.css';
 
 const idForLink = (eventId) => eventId.split('-').pop();
 
@@ -18,6 +20,29 @@ const ACTIONS_NEEDED = {
   missingEventInfo: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/event-summary`} data-sort="missing-event-info">Missing event info</Link></>,
   missingSessionInfo: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/session-summary`} data-sort="missing-session-info">Missing session info</Link></>,
   eventNotCompleted: (alert) => <><Link to={`/training-report/view/${idForLink(alert.eventId)}`} data-sort="event-not-completed">Event not completed</Link></>,
+  waitingForApproval: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/review`} data-sort="waiting-for-approval">Waiting for approval</Link></>,
+  changesNeeded: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/review`} data-sort="changes-needed">Changes needed</Link></>,
+};
+
+const STATUS_ICONS = {
+  waitingForApproval: <PendingApprovalIcon />,
+  changesNeeded: <NeedsActionIcon />,
+};
+
+const APPROVAL_TAG = (
+  approverName,
+  alertType,
+) => {
+  if (!approverName) {
+    return '--';
+  }
+
+  return (
+    <>
+      {STATUS_ICONS[alertType] || null}
+      {approverName}
+    </>
+  );
 };
 
 export default function TrainingReportAlerts() {
@@ -48,17 +73,29 @@ export default function TrainingReportAlerts() {
     return null;
   }
 
+  const columns = [
+    { key: 'eventId', name: 'Event ID' },
+    { key: 'eventName', name: 'Event Name' },
+    { key: 'sessionName', name: 'Session Name' },
+    { key: 'collaborators', name: 'Collaborators' },
+    { key: 'approver', name: 'Approver' },
+    { key: 'actionNeeded', name: 'Action needed' },
+  ];
+
   // map alerts here to include action links, etc
   const alertsForTable = alerts.map((alert) => ({
     sessionName: alert.sessionName,
     eventId: alert.eventId,
     eventName: alert.eventName,
+    collaborators: alert.collaboratorNames ? alert.collaboratorNames.join(', ') : '--',
+    approver: APPROVAL_TAG(alert.approverName, alert.alertType),
     actionNeeded: ACTIONS_NEEDED[alert.alertType] ? ACTIONS_NEEDED[alert.alertType](alert) : '',
     id: alert.id,
   }));
 
   return (
     <WidgetContainer
+      className="ttahub-training-report-alerts-container"
       title="My training report alerts"
       subtitle="Events or sessions that require timely action"
       showPagingBottom={false}
@@ -66,17 +103,15 @@ export default function TrainingReportAlerts() {
       loading={false}
     >
       {alertsForTable.length ? (
-        <SimpleSortableTable
-          columns={[
-            { key: 'eventId', name: 'Event ID' },
-            { key: 'eventName', name: 'Event Name' },
-            { key: 'sessionName', name: 'Session Name' },
-            { key: 'actionNeeded', name: 'Action needed' },
-          ]}
-          data={alertsForTable}
-          elementSortProp="data-sort"
-        />
-      ) : <p className="usa-prose margin-x-3 margin-y-0 padding-y-3">You do not have any overdue tasks.</p>}
+        <div className="ttahub-training-report-alerts-scrollable">
+          <SimpleSortableTable
+            className="ttahub-training-report-alerts"
+            columns={columns}
+            data={alertsForTable}
+            elementSortProp="data-sort"
+          />
+        </div>
+      ) : <p className="font-serif-md margin-0 padding-10 text-bold text-center">You have no events or sessions that require action</p>}
     </WidgetContainer>
   );
 }
