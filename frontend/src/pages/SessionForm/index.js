@@ -29,6 +29,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
 import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 import './index.css';
+import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -47,6 +48,7 @@ const determineKeyArray = ({
   eventOrganizer,
   isApprover,
   facilitation = '',
+  isSubmitted = false,
 }) => {
   // eslint-disable-next-line max-len
   const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
@@ -57,6 +59,8 @@ const determineKeyArray = ({
   if (isAdminUser || (isCollaborator && isRegionalNoNationalCenters) || isApprover) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc && facilitationIncludesRegion) {
+    keyArray = [...istKeys, ...pocKeys];
+  } else if (isCollaborator && isSubmitted) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc) {
     keyArray = pocKeys;
@@ -91,6 +95,7 @@ const resetFormData = ({
     eventOrganizer,
     isApprover,
     facilitation: updatedSession?.data?.facilitation || '',
+    isSubmitted: updatedSession.submitted,
   });
 
   const {
@@ -185,6 +190,8 @@ export default function SessionForm({ match }) {
     applicationPages,
     isSessionNavigationDead,
   } = useSessionFormRoleAndPages(hookForm);
+
+  const canSelectApprover = useCanSelectApprover({ isPoc, watch: hookForm.watch });
 
   const redirectPagePath = applicationPages[0]?.path || null;
 
@@ -386,12 +393,12 @@ export default function SessionForm({ match }) {
    *
    * Behavior:
    * - Admin users can modify all completion fields (no changes made)
-   * - POCs with national center facilitation: removes ownerComplete (tracked by owner)
-   * - POCs in regional PD with national centers events: sets ownerComplete to true
+   * - POCs with national center facilitation: removes collabComplete (tracked by owner)
+   * - POCs in regional PD with national centers events: sets collabComplete to true
    * - All other non-admin users: removes pocComplete (tracked by POC)
    *
    * @param {Object} roleData - The role-based session data object potentially containing
-   *                             ownerComplete and pocComplete properties
+   *                             collabComplete and pocComplete properties
    * @returns {Object} A shallow copy of roleData with completion fields removed or
    *                    modified based on the user's role
    */
@@ -399,12 +406,12 @@ export default function SessionForm({ match }) {
     const updatedRoleData = { ...roleData };
     if (!isAdminUser) {
       if (isPoc && roleData.facilitation === 'national_center') {
-      // Remove ownerComplete as this is tracked from the owner.
-        delete updatedRoleData.ownerComplete;
+      // Remove collabComplete as this is tracked from the owner.
+        delete updatedRoleData.collabComplete;
       } else if (
         isPoc && eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
       ) {
-        updatedRoleData.ownerComplete = true;
+        updatedRoleData.collabComplete = true;
       } else if (
         eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
       ) {
@@ -436,6 +443,7 @@ export default function SessionForm({ match }) {
           isCollaborator,
           isApprover,
           facilitation: data?.facilitation || '',
+          isSubmitted: data?.submitted,
         });
         let roleData = reduceDataToMatchKeys(keyArray, data);
 
@@ -450,11 +458,13 @@ export default function SessionForm({ match }) {
           };
         }
 
+        const status = formData.status || TRAINING_REPORT_STATUSES.IN_PROGRESS;
+
         // PUT it to the backend
         const updatedSession = await updateSession(sessionId, {
           data: {
             ...roleData,
-            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+            status,
           },
           trainingReportId,
           eventId: trainingReportId || null,
@@ -531,7 +541,7 @@ export default function SessionForm({ match }) {
       const message = {
         messageTemplate: 'sessionReviewSubmitted',
         sessionName: data.sessionName,
-        eventId: trainingReportId,
+        eventId: data.event.data.eventId,
         dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
       };
 
@@ -562,6 +572,7 @@ export default function SessionForm({ match }) {
         isCollaborator,
         isApprover,
         facilitation: data?.facilitation || '',
+        isSubmitted: data?.submitted,
       });
       let roleData = reduceDataToMatchKeys(keyArray, data);
 
@@ -574,9 +585,9 @@ export default function SessionForm({ match }) {
 
       // Owner, collaborator, and admin can submitted the session.
       if (isOwner || isCollaborator || isAdminUser) {
-        roleData.ownerComplete = true;
-        roleData.ownerCompleteId = user.id;
-        roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
+        roleData.collabComplete = true;
+        roleData.collabCompleteId = user.id;
+        roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
       }
 
       // Remove complete property data based on current role.
@@ -589,7 +600,7 @@ export default function SessionForm({ match }) {
           ...(isRegionalNoNationalCenters && roleData.pocComplete ? { pocComplete: true } : {}),
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
           dateSubmitted: moment().format('MM/DD/YYYY'), // date the session was submitted
-          submitter: user.fullName, // user submitted the session for approval
+          ...(canSelectApprover ? { submitterId: user.id } : {}),
         },
         trainingReportId,
         eventId: trainingReportId || null,
@@ -598,7 +609,7 @@ export default function SessionForm({ match }) {
       const message = {
         messageTemplate: 'sessionSubmitted',
         sessionName: data.sessionName,
-        eventId: trainingReportId,
+        eventId: data.event.data.eventId,
         dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
       };
 

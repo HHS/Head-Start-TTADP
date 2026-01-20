@@ -32,6 +32,7 @@ module.exports = {
     await queryInterface.sequelize.query(`
     -- create a report for cuke
     INSERT INTO "EventReportPilots" (
+      "version",
       "ownerId",
       "collaboratorIds",
       "regionId",
@@ -41,6 +42,7 @@ module.exports = {
       "updatedAt",
       "pocIds"
     ) VALUES (
+      2,
       5,
       ARRAY[]::INTEGER[],
       1,

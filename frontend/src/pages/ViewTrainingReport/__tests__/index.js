@@ -6,13 +6,14 @@ import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router-dom';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import AppLoadingContext from '../../../AppLoadingContext';
-import ViewTrainingReport, {
+import ViewTrainingReport from '..';
+import {
   formatOwnerName,
   handleIntendedAudience,
   translateEventPartnership,
   formatObjectiveLinks,
   formatSupportingAttachments,
-} from '..';
+} from '../TrainingReportV2';
 import UserContext from '../../../UserContext';
 import { EVENT_PARTNERSHIP, OBJECTIVE_STATUS } from '../../../Constants';
 
@@ -54,15 +55,15 @@ const oneCompleteSession = [{
     eventDisplayId: 'R03-PD-23-1037',
     ttaType: ['training', 'technical-assistance'],
     objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
-    objectiveTrainers: ['Trainer 1, NC', 'Trainer 2, GS'],
     objectiveResources: [{ value: 'http://random-resource-url' }],
-    goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
     recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
     specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
     numberOfParticipants: 3,
     objectiveSupportType: SUPPORT_TYPES[2],
     courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
   },
+  trainers: [{ fullName: 'Trainer 1, NC' }, { fullName: 'Trainer 2, GS' }],
+  goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
   createdAt: '2023-06-27T13:48:31.490Z',
   updatedAt: '2023-06-27T13:49:18.579Z',
 }];
@@ -73,6 +74,7 @@ const mockEvent = (data = {}) => ({
   pocIds: [1],
   collaboratorIds: [2],
   regionId: 1,
+  version: 2,
   data: {
     vision: 'Oral Health',
     creator: 'cucumber@hogwarts.com',
@@ -89,6 +91,7 @@ const mockEvent = (data = {}) => ({
   sessionReports: [{
     id: 7,
     eventId: 1,
+    trainers: [{ fullName: 'Trainer 1, NC' }, { fullName: 'Trainer 2, GS' }],
     data: {
       id: 7,
       files: [{
@@ -123,9 +126,7 @@ const mockEvent = (data = {}) => ({
       deliveryMethod: 'in-person',
       eventDisplayId: 'R03-PD-23-1037',
       objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
-      objectiveTrainers: ['Trainer 1, NC', 'Trainer 2, GS'],
       objectiveResources: [{ value: 'http://random-resource-url' }],
-      goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
       recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
       specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
       numberOfParticipants: 3,
@@ -133,11 +134,13 @@ const mockEvent = (data = {}) => ({
       ttaType: ['training', 'technical-assistance'],
       courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
     },
+    goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
     createdAt: '2023-06-27T13:48:31.490Z',
     updatedAt: '2023-06-27T13:49:18.579Z',
   }, {
     id: 8,
     eventId: 1,
+    trainers: [{ fullName: 'Trainer 1, NC' }],
     data: {
       id: 8,
       files: [],
@@ -160,9 +163,7 @@ const mockEvent = (data = {}) => ({
       deliveryMethod: 'virtual',
       eventDisplayId: 'R03-PD-23-1037',
       objectiveTopics: ['CLASS: Instructional Support', 'Coaching'],
-      objectiveTrainers: ['Trainer 1, NC'],
       objectiveResources: [],
-      goalTemplates: [{ standard: 'Goal Template 3' }],
       recipientNextSteps: [{ note: 'r1s2', completeDate: '06/30/2026' }],
       specialistNextSteps: [{ note: 's1s2', completeDate: '06/29/2027' }],
       numberOfParticipants: 3,
@@ -170,6 +171,7 @@ const mockEvent = (data = {}) => ({
       ttaType: ['training', 'technical-assistance'],
       courses: [{ id: 3, name: 'course 3' }],
     },
+    goalTemplates: [{ standard: 'Goal Template 3' }],
     createdAt: '2023-06-27T13:49:23.985Z',
     updatedAt: '2023-06-27T13:49:59.039Z',
   },
@@ -197,7 +199,6 @@ const mockEvent = (data = {}) => ({
       deliveryMethod: '',
       eventDisplayId: 'R03-PD-23-1037',
       objectiveTopics: [],
-      objectiveTrainers: [],
       objectiveResources: [],
       recipientNextSteps: [],
       specialistNextSteps: [],
@@ -277,7 +278,7 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('In-person')).toBeInTheDocument();
     expect(screen.getByText(/Behavioral \/ Mental Health \/ Trauma/i)).toBeInTheDocument();
     expect(screen.getByText(/CLASS: Emotional Support/i)).toBeInTheDocument();
-    expect(screen.getByText(/Trainer 1, NC, Trainer 2, GS/i)).toBeInTheDocument();
+    expect(screen.getByText(/Trainer 1, NC; Trainer 2, GS/i)).toBeInTheDocument();
     expect(screen.getByText('http://random-resource-url')).toBeInTheDocument();
     expect(screen.getByText('r-step1session1')).toBeInTheDocument();
     expect(screen.getByText('06/20/2025')).toBeInTheDocument();
@@ -680,7 +681,8 @@ describe('ViewTrainingReport', () => {
     });
 
     expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
-    expect(screen.queryAllByText('None').length).toBe(3);
+    // resources, courses, files
+    expect(screen.queryAllByText('None provided').length).toBe(3);
   });
 
   describe('formatOwnerName', () => {
