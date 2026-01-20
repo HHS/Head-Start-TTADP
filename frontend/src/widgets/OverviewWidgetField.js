@@ -29,13 +29,13 @@ export function OverviewWidgetField({
   const drawerTriggerRef = useRef(null);
   const noData = data === '0%';
   return (
-    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-y-2 padding-x-1">
-      <span className="smart-hub--dashboard-overview-widget-field-icon flex-1 display-flex flex-justify-center flex-align-center">
-        <span className="smart-hub--dashboard-overview-widget-field-icon__background-sm smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center" style={{ backgroundColor }}>
+    <Grid desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-2 gap-0">
+      <span className="smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center margin-right-2">
+        <span className="smart-hub--dashboard-overview-widget-field-icon__background-sm smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center margin-right-0" style={{ backgroundColor }}>
           <FontAwesomeIcon color={iconColor} icon={icon} size={iconSize} />
         </span>
       </span>
-      <span className="smart-hub--dashboard-overview-widget-field-label display-flex flex-2 flex-column flex-justify-center">
+      <span className="smart-hub--dashboard-overview-widget-field-label display-flex flex-column flex-justify-center flex-align-start">
         <div>
           {showNoResults && noData ? (
             <>
@@ -65,7 +65,7 @@ export function OverviewWidgetField({
         ) : (
           <span className="margin-top-1">{label1}</span>
         )}
-        {label2}
+        {label2 && <span className="font-sans-2xs">{label2}</span>}
         {route && (!showNoResults || !noData) && (
           <Link
             to={route.to}
@@ -110,7 +110,7 @@ OverviewWidgetField.defaultProps = {
   label2: '',
   route: null,
   filterApplicable: true,
-  iconSize: 'sm',
+  iconSize: 'lg',
   showNoResults: false,
 };
 

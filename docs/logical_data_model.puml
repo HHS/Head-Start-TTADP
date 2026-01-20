@@ -406,6 +406,7 @@ class EventReportPilots{
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
  imported : jsonb
  pocIds : integer[]
+ version : integer
 }
 
 class Files{
@@ -1176,6 +1177,7 @@ class SessionReportPilotTrainers{
 class SessionReportPilots{
  * id : integer : <generated>
  approverId : integer : REFERENCES "Users".id
+ submitterId : integer : REFERENCES "Users".id
  * eventId : integer : REFERENCES "EventReportPilots".id
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
@@ -1258,7 +1260,6 @@ class Users{
 }
 
 enum enum_Users_flags {
- collaboration_report
  quality_assurance_dashboard
 }
 
@@ -2907,7 +2908,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nati
 Users "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : user, objectiveCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : trainer, sessionTrainers
-Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : approver, sessionReportsAsApprover
+Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : approver, submitter, sessionReportsAsApprover
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
