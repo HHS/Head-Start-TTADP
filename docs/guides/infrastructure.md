@@ -90,9 +90,11 @@ Our project includes four deployed Postgres databases, one to interact with each
 
 ### Open an SSH session to a running application instance
 
-```
-cf ssh tta-smarthub-dev-blue -t -c "/tmp/lifecycle/launcher /home/vcap/app sh '{}'"
-```
+Open a session to a running application instance
+```cf ssh tta-smarthub-dev-blue```
+
+Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH command to open a shell with .profile settings active
+```cf ssh tta-smarthub-dev-blue -t -c "/tmp/lifecycle/launcher /home/vcap/app sh '{}'"```
 
 #### Run psql commands directly
 
