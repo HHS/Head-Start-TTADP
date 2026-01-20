@@ -58,6 +58,7 @@ export type EventShape = {
   updatedAt: string;
   sessionReports: SessionShape[];
   owner: undefined | { id: string; name: string; email: string };
+  version: number;
 };
 
 export type CreateEventRequest = {

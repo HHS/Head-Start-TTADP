@@ -44,6 +44,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.JSONB,
       allowNull: true,
     },
+    version: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'EventReportPilot',
