@@ -132,7 +132,7 @@ const Review = ({
   const history = useHistory();
 
   const otherManagerNotes = approverStatusList
-    ? approverStatusList.filter((a) => a.note) : null;
+    ? approverStatusList.filter((a) => a.note && a.user.id !== user.id) : null;
   const thisApprovingManager = approverStatusList
     ? approverStatusList.filter((a) => a.user.id === user.id) : null;
   const hasBeenReviewed = thisApprovingManager
