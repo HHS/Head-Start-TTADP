@@ -82,9 +82,9 @@
 '/event/collaboratorId/${collaboratorId}':
   $ref: './event/collaboratorId/collaboratorId.yaml'
 
-'/sessioon-reports':
-  $ref: './sessioon-reports/index.yaml'
-'/sessioon-reports/id/${id}':
-  $ref: './sessioon-reports/id/id.yaml'
-'/sessioon-reports/eventId/${eventId}':
-  $ref: './sessioon-reports/eventId/eventId.yaml'
+'/session-reports':
+  $ref: './session-reports/index.yaml'
+'/session-reports/id/${id}':
+  $ref: './session-reports/id/id.yaml'
+'/session-reports/eventId/${eventId}':
+  $ref: './session-reports/eventId/eventId.yaml'
