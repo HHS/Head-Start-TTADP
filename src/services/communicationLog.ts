@@ -3,7 +3,7 @@ import stringify from 'csv-stringify/lib/sync';
 import moment from 'moment';
 import db from '../models';
 import { communicationLogToCsvRecord } from '../lib/transform';
-import { SORT_DIR, COMMUNICATION_LOG_LIMIT_MAX } from '../constants';
+import { SORT_DIR } from '../constants';
 
 const {
   sequelize,
@@ -79,7 +79,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   switch (safeSortBy) {
     case COMMUNICATION_LOG_SORT_KEYS.ID:
       result = [[
-        sequelize.literal(`CONCAT('R', LPAD(CAST((data->>'regionId') AS TEXT), 2, '0'), '-CL-', LPAD(CAST("CommunicationLog".id AS TEXT), 5, '0')) ${direction}`),
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RECIPIENT:
@@ -121,7 +121,11 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
     default:
       result = [[
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`),
-      ]];
+      ],
+      [
+        sequelize.col('id'), direction,
+      ],
+      ];
       break;
   }
   return result;
