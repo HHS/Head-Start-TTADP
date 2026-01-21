@@ -27,7 +27,6 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import StateMultiSelect from '../../../components/StateMultiSelect';
-import './activitySummary.scss';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { COLLAB_REPORT_REASONS, STATES, COLLAB_REPORT_CONDUCT_METHODS } from '../../../Constants';
@@ -42,6 +41,9 @@ const ActivitySummary = ({ collaborators = [] }) => {
     register,
     watch,
     control,
+    formState: { errors },
+    setError,
+    clearErrors,
   } = useFormContext();
 
   const isStateActivity = watch('isStateActivity');
@@ -52,6 +54,27 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const { connectionActive } = useContext(NetworkContext);
   const placeholderText = '- Select -';
   const drawerTriggerRef = useRef(null);
+
+  const descriptionError = errors?.description?.message;
+  const reasonError = errors?.reportReasons?.message;
+
+  const checkForDescription = (el) => {
+    const { value } = el.target;
+    if (!value || value.trim() === '') {
+      setError('description', { type: 'required', message: 'Describe the activity' });
+    } else {
+      clearErrors('description');
+    }
+  };
+
+  const checkForReasons = () => {
+    const reasons = watch('reportReasons');
+    if (!reasons || reasons.length === 0) {
+      setError('reportReasons', { type: 'required', message: 'Select at least one' });
+    } else {
+      clearErrors('reportReasons');
+    }
+  };
 
   return (
     <>
@@ -71,9 +94,11 @@ const ActivitySummary = ({ collaborators = [] }) => {
             id="name"
             name="name"
             type="text"
+            data-testid="activity-name-input"
             inputRef={register({
               required: 'Enter activity name',
             })}
+            required
           />
         </FormItem>
         <div className="margin-y-2">
@@ -190,6 +215,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
           label="What was the purpose for participating in this activity?"
           name="reportReasons"
           required
+          className={reasonError ? 'usa-form-group--error' : ''}
         >
           <DrawerTriggerButton className="margin-top-2" drawerTriggerRef={drawerTriggerRef}>
             Get help choosing a purpose
@@ -247,6 +273,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="participate_work_groups"
             label="Participate in national, regional, state, and local work groups and meetings"
             inputRef={register({ required: 'Select at least one' })}
+            onBlur={checkForReasons}
           />
           <Checkbox
             className="margin-top-2"
@@ -255,6 +282,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="support_coordination"
             label="Support partnerships, coordination, and collaboration with state/regional partners"
             inputRef={register({ required: 'Select at least one' })}
+            onBlur={checkForReasons}
           />
           <Checkbox
             className="margin-top-2"
@@ -263,6 +291,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="agg_regional_data"
             label="Aggregate, analyze, and/or present regional data"
             inputRef={register({ required: 'Select at least one' })}
+            onBlur={checkForReasons}
           />
           <Checkbox
             className="margin-top-2"
@@ -271,6 +300,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="develop_presentations"
             label="Develop and provide presentations, training, and resources to RO and/or state/regional partners"
             inputRef={register({ required: 'Select at least one' })}
+            onBlur={checkForReasons}
           />
         </FormItem>
       </Fieldset>
@@ -286,7 +316,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="false"
             label="Regional"
             className="smart-hub--report-checkbox"
-            inputRef={register({ required: 'Select one' })}
+            inputRef={register({ required: 'Select an activity type' })}
             required
           />
           <Radio
@@ -295,7 +325,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             value="true"
             label="State"
             className="smart-hub--report-checkbox"
-            inputRef={register({ required: 'Select one' })}
+            inputRef={register({ required: 'Select an activity type' })}
           />
         </FormItem>
       </Fieldset>
@@ -347,9 +377,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
                     lineHeight: '1.3',
                   }),
                 }}
-                components={{
-                  DropdownIndicator: null,
-                }}
                 onChange={(selected) => {
                   controllerOnChange(selected ? selected.value : null);
                 }}
@@ -364,7 +391,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             rules={{
               validate: (value) => {
                 if (!value) {
-                  return 'Select a reason why this activity was requested';
+                  return 'Select how the activity was conducted';
                 }
                 return true;
               },
@@ -374,19 +401,26 @@ const ActivitySummary = ({ collaborators = [] }) => {
           />
         </FormItem>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend">
+      <Fieldset className={`smart-hub--report-legend ${descriptionError ? 'usa-form-group--error' : ''}`}>
         <Label htmlFor="description">
           Activity description
           {' '}
           <Req />
         </Label>
+
+        {descriptionError && (
+        <span className="usa-error-message" role="alert">{descriptionError}</span>
+        )}
+
         <Textarea
           id="description"
           className="height-10 minh-5 smart-hub--text-area__resize-vertical"
           name="description"
           defaultValue=""
           data-testid="description-input"
-          inputRef={register()}
+          error={!!descriptionError}
+          inputRef={register({ required: 'Describe the activity' })}
+          onBlur={checkForDescription}
           required
         />
       </Fieldset>
@@ -411,11 +445,11 @@ export const isPageComplete = (hookForm) => {
     // strings
     name,
     description,
+    conductMethod,
 
     // arrays
     reportReasons,
     statesInvolved,
-    conductMethod,
 
     // numbers
     duration,
@@ -431,6 +465,7 @@ export const isPageComplete = (hookForm) => {
   const stringsToValidate = [
     name,
     description,
+    conductMethod,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
@@ -439,10 +474,13 @@ export const isPageComplete = (hookForm) => {
 
   const arraysToValidate = [
     reportReasons,
-    conductMethod,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {
+    return false;
+  }
+
+  if (isStateActivity === null) {
     return false;
   }
 
@@ -480,6 +518,9 @@ const ReviewSection = () => {
     conductMethod,
   } = getValues();
 
+  // eslint-disable-next-line no-nested-ternary
+  const isStateDisplay = isStateActivity === null ? 'None provided' : (isStateActivity === 'true' ? 'State' : 'Regional');
+
   const sections = [
     {
       anchor: 'activity-for',
@@ -501,10 +542,10 @@ const ReviewSection = () => {
       title: 'Reason for activity',
       anchor: 'reasons',
       items: [
-        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') || '' } },
-        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity ? 'State' : 'Regional' } },
-        ...(isStateActivity ? [
-          { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s] || '').join(', ') || '' } },
+        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: Array.isArray(reportReasons) ? reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') : '' } },
+        { label: 'Activity type', name: 'type', customValue: { type: isStateDisplay } },
+        ...(isStateActivity === 'true' ? [
+          { label: 'States involved', name: 'states', customValue: { states: Array.isArray(statesInvolved) ? statesInvolved?.map((s) => STATES[s.value] || '').join(', ') : '' } },
         ] : []),
         {
           label: 'Activity method',
@@ -540,7 +581,7 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    DraftAlert,
   ) => {
     const { collaborators } = additionalData;
     return (
@@ -548,7 +589,7 @@ export default {
         <ActivitySummary
           collaborators={collaborators}
         />
-        <Alert />
+        <DraftAlert />
         <NavigatorButtons
           isAppLoading={isAppLoading}
           onContinue={onContinue}

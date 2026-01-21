@@ -14,6 +14,11 @@ module.exports = {
         regionId: 1,
         scopeId: READ_WRITE_TRAINING_REPORTS,
       },
+      {
+        userId: 9,
+        regionId: 1,
+        scopeId: POC_TRAINING_REPORTS,
+      },
     ];
 
     await queryInterface.bulkInsert('Permissions', readWriteTrainingReports, {});
@@ -27,6 +32,7 @@ module.exports = {
     await queryInterface.sequelize.query(`
     -- create a report for cuke
     INSERT INTO "EventReportPilots" (
+      "version",
       "ownerId",
       "collaboratorIds",
       "regionId",
@@ -36,6 +42,7 @@ module.exports = {
       "updatedAt",
       "pocIds"
     ) VALUES (
+      2,
       5,
       ARRAY[]::INTEGER[],
       1,

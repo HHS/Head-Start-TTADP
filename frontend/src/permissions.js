@@ -22,7 +22,8 @@ const hasTrainingReportWritePermissions = (user) => {
   const permissions = _.get(user, 'permissions');
   return permissions && permissions.find(
     (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS
-      || p.scopeId === SCOPE_IDS.POC_TRAINING_REPORTS,
+      || p.scopeId === SCOPE_IDS.POC_TRAINING_REPORTS
+      || p.scopeId === SCOPE_IDS.ADMIN,
   ) !== undefined;
 };
 

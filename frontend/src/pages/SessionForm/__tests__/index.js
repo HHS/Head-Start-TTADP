@@ -27,7 +27,7 @@ const istAndPocFields = {
   context: 'test context',
   objective: 'test objective',
   objectiveTopics: ['topic'],
-  objectiveTrainers: ['DTL'],
+  trainers: [{ id: 1, fullName: 'Trainer 1, NC' }],
   useIpdCourses: true,
   courses: [],
   objectiveResources: [],
@@ -48,7 +48,7 @@ const istAndPocFields = {
   recipientNextSteps: [],
   specialistNextSteps: [],
   pocComplete: false,
-  ownerComplete: false,
+  collabComplete: false,
   istSelectionComplete: false,
   status: 'In progress',
   ownerId: null,
@@ -63,7 +63,7 @@ const istAndPocFields = {
   },
   'pageVisited-supporting-attachments': false,
   facilitation: 'national_center',
-  sessionGoalTemplates: [],
+  goalTemplates: [],
   approverId: null,
   additionalNotes: '',
   managerNotes: '',
@@ -74,7 +74,7 @@ const istAndPocFields = {
 };
 
 const completeFormData = {
-  eventId: 1,
+  eventId: '1',
   eventDisplayId: 'R-EVENT',
   id: 1,
   ownerId: 1,
@@ -177,7 +177,7 @@ describe('SessionReportForm', () => {
         pocIds: [],
         collaboratorIds: [1], // Owner is also a collaborator
         data: {
-          eventId: 1,
+          eventId: '1',
           eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
@@ -539,7 +539,7 @@ describe('SessionReportForm', () => {
           context: 'test context',
           objective: 'test objective',
           objectiveTopics: ['topic'],
-          objectiveTrainers: ['DTL'],
+          trainers: [{ id: 1, fullName: 'Trainer, NC' }],
           numberOfParticipants: 1,
           deliveryMethod: 'In-person',
           language: ['English'],
@@ -614,7 +614,7 @@ describe('SessionReportForm', () => {
           context: 'test context',
           objective: 'test objective',
           objectiveTopics: ['topic'],
-          objectiveTrainers: ['DTL'],
+          trainers: [{ id: 1, fullName: 'Trainer, NC' }],
           numberOfParticipants: 1,
           deliveryMethod: 'In-person',
           language: ['English'],
@@ -679,9 +679,9 @@ describe('SessionReportForm', () => {
 
     // Assert the owner complete properties.
     const putBodyJson = JSON.parse(putBody);
-    expect(putBodyJson.data.ownerComplete).toBe(true);
-    expect(putBodyJson.data.ownerCompleteId).toBe(1);
-    expect(putBodyJson.data.ownerCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+    expect(putBodyJson.data.collabComplete).toBe(true);
+    expect(putBodyJson.data.collabCompleteId).toBe(1);
+    expect(putBodyJson.data.collabCompleteDate).toBe(moment().format('YYYY-MM-DD'));
 
     // Assert the poc complete properties are NOT set.
     expect(putBodyJson.data.pocComplete).toBe(true);
@@ -882,9 +882,9 @@ describe('SessionReportForm', () => {
     const putBodyJson = JSON.parse(putBody);
 
     // Assert the body has POC key properties using the hasOwnProperty method
-    // POC (not admin) should only get POC keys, and ownerComplete should be removed.
-    const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
-    pocKeysWithoutOwnerComplete.forEach((key) => {
+    // POC (not admin) should only get POC keys, and collabComplete should be removed.
+    const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
+    pocKeysWithoutcollabComplete.forEach((key) => {
       expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
     });
     // Assert IST-only fields are NOT present (fields in istKeys but not in pocKeys)
@@ -1081,7 +1081,7 @@ describe('SessionReportForm', () => {
           regionId: 1,
           reviewStatus: REPORT_STATUSES.SUBMITTED,
           pocComplete: true,
-          ownerComplete: true,
+          collabComplete: true,
           data: {
             sessionName: 'Test Session',
             duration: 2,
@@ -1108,7 +1108,7 @@ describe('SessionReportForm', () => {
             pocIds: [],
             collaboratorIds: [],
             data: {
-              eventId: 1,
+              eventId: '1',
               eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
             },
           },
@@ -1187,7 +1187,7 @@ describe('SessionReportForm', () => {
           regionId: 1,
           reviewStatus: REPORT_STATUSES.SUBMITTED,
           pocComplete: true,
-          ownerComplete: true,
+          collabComplete: true,
           data: {
             sessionName: 'Test Session Needs Action',
             duration: 2,
@@ -1205,6 +1205,9 @@ describe('SessionReportForm', () => {
             managerNotes: 'Please revise',
             dateSubmitted: '01/15/2024',
             submitter: 'Test Submitter',
+            event: {
+              eventId: '1',
+            },
           },
           approverId: 1,
           approver: { id: 1, fullName: 'Test Approver' },
@@ -1214,7 +1217,7 @@ describe('SessionReportForm', () => {
             pocIds: [],
             collaboratorIds: [],
             data: {
-              eventId: 1,
+              eventId: '1',
               eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
             },
           },
@@ -1249,7 +1252,7 @@ describe('SessionReportForm', () => {
       });
 
       // Mock the PUT request
-      fetchMock.put(url, { id: 2, eventId: 1 });
+      fetchMock.put(url, { id: 2, eventId: 1, event: { data: { eventId: 1 } } });
 
       // Wait for the Approve button to appear
       await waitFor(() => {
@@ -1291,7 +1294,7 @@ describe('SessionReportForm', () => {
           regionId: 1,
           reviewStatus: REPORT_STATUSES.SUBMITTED,
           pocComplete: true,
-          ownerComplete: true,
+          collabComplete: true,
           data: {
             sessionName: 'Test Session No Status',
             duration: 2,
@@ -1379,7 +1382,7 @@ describe('SessionReportForm', () => {
           regionId: 1,
           reviewStatus: REPORT_STATUSES.SUBMITTED,
           pocComplete: true,
-          ownerComplete: true,
+          collabComplete: true,
           data: {
             sessionName: 'Test Session Error',
             duration: 2,
@@ -1650,8 +1653,8 @@ describe('SessionReportForm', () => {
       });
 
       // Verify POC keys are included
-      const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
-      pocKeysWithoutOwnerComplete.forEach((key) => {
+      const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
+      pocKeysWithoutcollabComplete.forEach((key) => {
         expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
       });
     });
@@ -1743,7 +1746,7 @@ describe('SessionReportForm', () => {
 
       // Verify both IST and POC keys are included
       const allKeys = [...istKeys, ...pocKeys];
-      const allKeysWithoutComplete = allKeys.filter((key) => key !== 'pocComplete' && key !== 'ownerComplete');
+      const allKeysWithoutComplete = allKeys.filter((key) => key !== 'pocComplete' && key !== 'collabComplete');
       allKeysWithoutComplete.forEach((key) => {
         expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
       });
@@ -1793,8 +1796,8 @@ describe('SessionReportForm', () => {
       const putBodyJson = JSON.parse(putBody);
 
       // Verify POC keys are included
-      const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
-      pocKeysWithoutOwnerComplete.forEach((key) => {
+      const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
+      pocKeysWithoutcollabComplete.forEach((key) => {
         expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
       });
 
@@ -1980,6 +1983,136 @@ describe('SessionReportForm', () => {
 
       // Verify POC cannot see creator notes
       expect(screen.queryByLabelText(/Creator notes/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('collaborator access with submitted forms', () => {
+    it('collaborator sees all pages when form is submitted on regional event with national centers', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            submitted: true,
+            facilitation: 'national_center',
+            sessionName: 'Test Session',
+            duration: 1,
+            startDate: '01/01/2024',
+            endDate: '01/01/2024',
+            context: 'Test context',
+            objective: 'Test objective',
+            objectiveTopics: ['topic'],
+            numberOfParticipants: 1,
+            deliveryMethod: 'In-person',
+            language: ['English'],
+            ttaProvided: 'test',
+            objectiveSupportType: 'Planning',
+            recipients: [1],
+            participants: [1],
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [1],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      // Collaborator should see all navigation items when form is submitted
+      expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
+      expect(screen.getByText('Participants')).toBeInTheDocument();
+      expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
+      expect(screen.getByText('Next steps')).toBeInTheDocument();
+    });
+
+    it('collaborator sees only session summary when form is NOT submitted', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            submitted: false,
+            facilitation: 'national_center',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [1],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      // Collaborator should only see session summary when not submitted
+      expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
+      expect(screen.queryByText('Participants')).not.toBeInTheDocument();
+      expect(screen.queryByText('Supporting attachments')).not.toBeInTheDocument();
+      expect(screen.queryByText('Next steps')).not.toBeInTheDocument();
+    });
+
+    it('collaborator on regional_tta_no_national_centers event sees all pages regardless of submission status', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(
+        url, {
+          id: 1,
+          eventId: 1,
+          regionId: 1,
+          data: {
+            submitted: false,
+            facilitation: 'both',
+          },
+          event: {
+            regionId: 1,
+            ownerId: 2,
+            pocIds: [],
+            collaboratorIds: [1],
+            data: {
+              eventId: 1,
+              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+            },
+          },
+        },
+      );
+
+      act(() => {
+        renderSessionForm('1', 'session-summary', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      // Collaborator on regional TTA no national centers should see all pages
+      expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
+      expect(screen.getByText('Participants')).toBeInTheDocument();
+      expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
+      expect(screen.getByText('Next steps')).toBeInTheDocument();
     });
   });
 });

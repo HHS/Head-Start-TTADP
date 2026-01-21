@@ -30,8 +30,8 @@ describe('Approver Status List', () => {
     expect(statusValues).toMatchInlineSnapshot(`
       Array [
         "Approved by Test Approver1",
-        "Pending Approval from Test Approver2",
-        "Needs Action from Test Approver3",
+        "Pending approval from Test Approver2",
+        "Needs action from Test Approver3",
       ]
     `);
 

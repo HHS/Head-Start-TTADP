@@ -1,19 +1,95 @@
-import { cast, Op } from 'sequelize';
+import {
+  cast, Op, Sequelize, Model,
+} from 'sequelize';
 import { Cast } from 'sequelize/types/utils';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, { sequelize } from '../models';
-import { SessionReportShape } from './types/sessionReport';
+import {
+  SessionReportShape,
+  GetSessionReportsResponse,
+  GetSessionReportsParams,
+  SessionReportSortSortMap,
+} from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
-import { auditLogger } from '../logger';
+import filtersToScopes from '../scopes';
 
 const {
   SessionReportPilot,
   EventReportPilot,
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
+  SessionReportPilotGoalTemplate,
+  SessionReportPilotTrainer,
 } = db;
 
-export const validateFields = (request, requiredFields) => {
+type WhereOptions = {
+  id?: number;
+  eventId?: number;
+  data?: unknown;
+};
+
+const userInclude = (as: string) => ({
+  model: db.User,
+  as,
+  attributes: [
+    'fullName',
+    'name',
+    'id',
+  ],
+  include: [
+    {
+      model: db.Role,
+      as: 'roles',
+      attributes: [
+        'name',
+      ],
+    },
+  ],
+});
+
+const updateSessionReportRelatedModels = async (
+  sessionReportId: number,
+  joinTableModel: typeof SessionReportPilotGoalTemplate,
+  relatedModelForeignKey: string,
+  relatedModelForeignKeyIds: number[],
+) => {
+  // First, remove any existing associations not in the new list.
+  await joinTableModel.destroy({
+    where: {
+      sessionReportPilotId: sessionReportId,
+      [relatedModelForeignKey]: { [Op.notIn]: relatedModelForeignKeyIds },
+    },
+  });
+
+  // Next, add new associations.
+  const existingAssociations = await joinTableModel.findAll({
+    attributes: ['id', relatedModelForeignKey],
+    where: {
+      sessionReportPilotId: sessionReportId,
+      [relatedModelForeignKey]: { [Op.in]: relatedModelForeignKeyIds },
+    },
+  });
+
+  const existingForeignKeyIds = existingAssociations.map(
+    (assoc: { [key: string]: number }) => assoc[relatedModelForeignKey],
+  );
+
+  const newAssociations = relatedModelForeignKeyIds
+    .filter((key) => !existingForeignKeyIds.includes(key))
+    .map((key) => ({
+      sessionReportPilotId: sessionReportId,
+      [relatedModelForeignKey]: key,
+    }));
+
+  if (newAssociations.length > 0) {
+    await joinTableModel.bulkCreate(
+      newAssociations,
+      { individualHooks: true, ignoreDuplicates: true },
+    );
+  }
+};
+
+export const validateFields = (request, requiredFields: string[]) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
 
   if (missingFields.length) {
@@ -38,12 +114,6 @@ export async function destroySession(id: number): Promise<void> {
   await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
 
-type WhereOptions = {
-  id?: number;
-  eventId?: number;
-  data?: unknown;
-};
-
 // eslint-disable-next-line max-len
 export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
   const query = {
@@ -53,6 +123,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       'data',
       'updatedAt',
       'approverId',
+      'submitterId',
       'submitted',
       // eslint-disable-next-line @typescript-eslint/quotes
       [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
@@ -73,23 +144,20 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
         as: 'supportingAttachments',
       },
       {
-        model: db.User,
-        as: 'approver',
+        model: db.GoalTemplate,
+        as: 'goalTemplates',
         attributes: [
-          'fullName',
-          'name',
           'id',
+          'standard',
         ],
-        include: [
-          {
-            model: db.Role,
-            as: 'roles',
-            attributes: [
-              'name',
-            ],
-          },
-        ],
+        through: { attributes: [] }, // exclude join table attributes
       },
+      {
+        ...userInclude('trainers'),
+        through: { attributes: [] }, // exclude join table attributes
+      },
+      userInclude('approver'),
+      userInclude('submitter'),
     ],
   };
 
@@ -122,18 +190,25 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     data: session?.data ?? {},
     files: session?.files ?? [],
     supportingAttachments: session?.supportingAttachments ?? [],
+    goalTemplates: session?.goalTemplates ?? [],
     updatedAt: session?.updatedAt,
     event: session?.event,
     approverId: session?.approverId ?? null,
     approver: session?.approver ?? null,
     submitted: session?.submitted ?? false,
+    submitterId: session?.submitterId ?? null,
+    submitter: session?.submitter ?? null,
+    trainers: session?.trainers ?? [],
   };
 }
 
 export async function createSession(request) {
   validateFields(request, ['eventId', 'data']);
 
-  const { eventId, data } = request;
+  const {
+    eventId,
+    data,
+  } = request;
 
   const event = await findEventByDbId(eventId);
 
@@ -166,7 +241,15 @@ export async function updateSession(id: number, request) {
 
   validateFields(request, ['eventId', 'data']);
 
-  const { eventId, data: { approverId, ...data } } = request;
+  const {
+    eventId, data: {
+      approverId,
+      goalTemplates,
+      submitterId,
+      trainers,
+      ...data
+    },
+  } = request;
 
   // Combine existing session data with new data.
   const existingData = session.data;
@@ -180,11 +263,16 @@ export async function updateSession(id: number, request) {
   } as {
     eventId: number;
     approverId?: number;
+    submitterId?: number;
     data: Cast;
   };
 
   if (approverId) {
     update.approverId = Number(approverId);
+  }
+
+  if (submitterId) {
+    update.submitterId = Number(submitterId);
   }
 
   await SessionReportPilot.update(
@@ -194,6 +282,33 @@ export async function updateSession(id: number, request) {
       individualHooks: true,
     },
   );
+
+  if (goalTemplates) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotGoalTemplate,
+      'goalTemplateId',
+      goalTemplates.map((template: { id: number }) => template.id),
+    );
+  }
+
+  if (trainers) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotTrainer,
+      'userId',
+      trainers.map((trainer: { id: number }) => trainer.id),
+    );
+  }
+
+  if (trainers) {
+    await updateSessionReportRelatedModels(
+      id,
+      SessionReportPilotTrainer,
+      'userId',
+      trainers.map((trainer: { id: number }) => trainer.id),
+    );
+  }
 
   return findSessionHelper({ id }) as Promise<SessionReportShape>;
 }
@@ -251,4 +366,93 @@ export async function getPossibleSessionParticipants(
       ],
     }],
   });
+}
+
+/**
+ * Get training reports (sessions) with pagination, sorting, and filtering
+ * @param params Query parameters including pagination, sorting, filtering, and format
+ * @returns JSON object with count and rows
+ */
+export async function getSessionReports(
+  params: GetSessionReportsParams,
+): Promise<GetSessionReportsResponse> {
+  const {
+    sortBy = 'id',
+    sortDir = 'DESC',
+    offset = 0,
+    limit = 10,
+    format = 'json',
+    ...filterParams
+  } = params;
+
+  // Define allowed sort columns with their actual database paths
+  const sortMap: SessionReportSortSortMap = {
+    id: ['id'],
+    sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
+    startDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'startDate\' AS DATE)')],
+    endDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'endDate\' AS DATE)')],
+    eventId: ['event', sequelize.literal('data->>\'eventId\'::text')],
+    eventName: ['event', sequelize.literal('data->>\'eventName\'::text')],
+  };
+
+  // Use the requested sort column or default to id descending
+  const sortEntry = sortMap[sortBy] || sortMap.id;
+  const orderClause = [[...sortEntry, sortDir]];
+
+  // Get scopes from filters
+  const { trainingReport: trainingReportScopes } = await filtersToScopes(filterParams, {});
+
+  // Get events to pass into session query
+  // (the scopes construction makes this necessary, sadly)
+  const events = await EventReportPilot.findAll({
+    attributes: ['id'],
+    where: {
+      [Op.and]: [
+        ...trainingReportScopes,
+        {
+          data: {
+            status: {
+              [Op.in]: [
+                TRAINING_REPORT_STATUSES.COMPLETE,
+                TRAINING_REPORT_STATUSES.IN_PROGRESS,
+              ],
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  // Build query options
+  const queryOptions = {
+    attributes: [
+      'id',
+      [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
+      [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
+      [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
+      [sequelize.literal('"SessionReportPilot"."data"->>\'startDate\''), 'startDate'],
+      [sequelize.literal('"SessionReportPilot"."data"->>\'endDate\''), 'endDate'],
+      [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
+    ],
+    where: {
+      eventId: events.map(({ id }) => id),
+    },
+    include: [
+      {
+        model: EventReportPilot,
+        as: 'event',
+        attributes: [],
+        required: true,
+      },
+    ],
+    order: orderClause,
+    raw: true,
+    subQuery: false,
+  } as Record<string, unknown>;
+
+  queryOptions.offset = offset;
+  queryOptions.limit = limit;
+
+  // Query sessions
+  return SessionReportPilot.findAndCountAll(queryOptions);
 }

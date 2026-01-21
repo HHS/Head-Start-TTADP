@@ -10,8 +10,10 @@ export default function FilterSelect({
   options,
   selectedValues,
   mapByValue,
+  labelProp,
+  valueProp,
 }) {
-  const key = mapByValue ? 'value' : 'label';
+  const key = mapByValue ? valueProp : labelProp;
 
   const value = [selectedValues].flat().map((selection) => (
     options.find((option) => option[key] === selection)
@@ -85,7 +87,7 @@ export default function FilterSelect({
       let charCount = 0;
       let andMoreShown = false;
 
-      const truncated = selectedValues.map((selection, index) => {
+      const truncated = [selectedValues].flat().map((selection, index) => {
         // if the "and x more tags" message has been shown
         if (andMoreShown) {
           return null;
@@ -143,6 +145,8 @@ export default function FilterSelect({
         value={value}
         isMulti
         menuShouldScrollIntoView={false}
+        getOptionLabel={(option) => option[labelProp]}
+        getOptionValue={(option) => option[valueProp]}
       />
       {coverAll()}
     </div>
@@ -164,8 +168,12 @@ FilterSelect.propTypes = {
   inputId: PropTypes.string.isRequired,
   selectedValues: PropTypes.arrayOf(PropTypes.string).isRequired,
   mapByValue: PropTypes.bool,
+  labelProp: PropTypes.string,
+  valueProp: PropTypes.string,
 };
 
 FilterSelect.defaultProps = {
   mapByValue: false,
+  labelProp: 'label',
+  valueProp: 'value',
 };

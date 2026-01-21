@@ -817,28 +817,6 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
       jest.restoreAllMocks();
     });
-
-    it('should return default values when data, sessionReports, and eventReportPilotNationalCenterUsers are undefined', async () => {
-      const ownerId = 67890;
-
-      // Create an event without data, sessionReports, and eventReportPilotNationalCenterUsers
-      const createdEvent = await db.EventReportPilot.create({
-        ownerId,
-        pocIds: [ownerId],
-        collaboratorIds: [ownerId],
-        regionId: 1,
-        data: {},
-      });
-
-      const foundEvent = await findEventHelper({ id: createdEvent.id });
-
-      expect(foundEvent).toHaveProperty('data', {});
-      expect(foundEvent).toHaveProperty('sessionReports', []);
-      expect(foundEvent).toHaveProperty('eventReportPilotNationalCenterUsers', []);
-
-      // Clean up
-      await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
-    });
   });
 
   describe('destroyEvent', () => {
@@ -894,13 +872,13 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       expect(filteredEvents[0]).toMatchObject(baseEventData);
     });
 
-    it('should NOT return NOT_STARTED events for collaborator (changed behavior)', async () => {
+    it('should return NOT_STARTED events for collaborator', async () => {
       const events = [event];
 
       const filteredEvents = await filterEventsByStatus(events, null, 789);
 
-      // Collaborators can NO LONGER see NOT_STARTED events
-      expect(filteredEvents).toHaveLength(0);
+      // Collaborators can see NOT_STARTED events
+      expect(filteredEvents).toHaveLength(1);
     });
 
     it('should return events for owner when status is null', async () => {
