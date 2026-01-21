@@ -1,6 +1,6 @@
 # Best practices: code authoring and review
 
-This document is intended as an onboarding guide for new engineers as they create code. It should also be leveraged by LLM based code tools for authroing and reviewing code.
+This document is intended as an onboarding guide for new engineers as they create code. It should also be leveraged by LLM based code tools for authoring and reviewing code.
 
 ## Backend
 
