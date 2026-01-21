@@ -66,6 +66,15 @@ export const COMMUNICATION_LOG_SORT_KEYS = {
   ID: 'Log_ID',
 };
 
+/**
+ * Constructs an order by array for Sequelize based on the sortBy and sortDir inputs
+ * IMPORTANT: We need to make sure to include a secondary sort by ID to ensure consistent results
+ * when primary sort fields are the same across multiple records (communicationDate, purpose, etc)
+ *
+ * @param sortBy string
+ * @param sortDir 'ASC' | 'DESC'
+ * @returns string[] Sequelize order by array
+ */
 export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   const direction = [SORT_DIR.ASC, SORT_DIR.DESC].includes(sortDir.toUpperCase())
     ? sortDir.toUpperCase()
