@@ -233,8 +233,17 @@ export async function getTrainingReportTrainersByRegionAndNationalCenter(req, re
 
 export async function getTrainingReportTrainersByRegion(req, res) {
   try {
+    const { regionId } = req.params;
+
     const { regionIds } = await verifyTrViewPermissions(req, res);
     if (res.headersSent) {
+      return;
+    }
+
+    const regionIdInt = parseInt(regionId, DECIMAL_BASE);
+
+    if (!regionIds.includes(regionIdInt)) {
+      res.sendStatus(403);
       return;
     }
 
@@ -250,7 +259,7 @@ export async function getTrainingReportTrainersByRegion(req, res) {
       'TTAC',
       'ECM',
       'GSM',
-    ], regionIds);
+    ], regionIdInt);
 
     res.json([
       ...regionalTrainers,

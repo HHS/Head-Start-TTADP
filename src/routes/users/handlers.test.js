@@ -554,6 +554,22 @@ describe('User handlers', () => {
       expect(res.json).not.toHaveBeenCalled();
     });
 
+    it('should return 403 if user requests a region they do not have permission for', async () => {
+      const unauthorizedRegionReq = {
+        params: { regionId: '4' }, // User only has permission for region 1
+      };
+      userById.mockResolvedValueOnce(mockUser); // Has TR permission for region 1 only
+      currentUserId.mockResolvedValueOnce(1);
+
+      await getTrainingReportTrainersByRegion(unauthorizedRegionReq, res);
+
+      expect(userById).toHaveBeenCalledTimes(1);
+      expect(currentUserId).toHaveBeenCalledTimes(1);
+      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(usersByRoles).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
     it('should return a list of trainers by region with correct roles', async () => {
       const mockRegionalTrainers = [
         { id: 1, name: 'Trainer 1', email: 'trainer1@test.gov' },
@@ -576,7 +592,7 @@ describe('User handlers', () => {
         'TTAC',
         'ECM',
         'GSM',
-      ], [1]);
+      ], 1);
       expect(res.json).toHaveBeenCalledWith([...mockRegionalTrainers]);
     });
 
