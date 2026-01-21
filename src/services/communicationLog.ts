@@ -3,7 +3,7 @@ import stringify from 'csv-stringify/lib/sync';
 import moment from 'moment';
 import db from '../models';
 import { communicationLogToCsvRecord } from '../lib/transform';
-import { SORT_DIR, COMMUNICATION_LOG_LIMIT_MAX } from '../constants';
+import { SORT_DIR } from '../constants';
 
 const {
   sequelize,
@@ -66,6 +66,15 @@ export const COMMUNICATION_LOG_SORT_KEYS = {
   ID: 'Log_ID',
 };
 
+/**
+ * Constructs an order by array for Sequelize based on the sortBy and sortDir inputs
+ * IMPORTANT: We need to make sure to include a secondary sort by ID to ensure consistent results
+ * when primary sort fields are the same across multiple records (communicationDate, purpose, etc)
+ *
+ * @param sortBy string
+ * @param sortDir 'ASC' | 'DESC'
+ * @returns string[] Sequelize order by array
+ */
 export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   const direction = [SORT_DIR.ASC, SORT_DIR.DESC].includes(sortDir.toUpperCase())
     ? sortDir.toUpperCase()
@@ -79,7 +88,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   switch (safeSortBy) {
     case COMMUNICATION_LOG_SORT_KEYS.ID:
       result = [[
-        sequelize.literal(`CONCAT('R', LPAD(CAST((data->>'regionId') AS TEXT), 2, '0'), '-CL-', LPAD(CAST("CommunicationLog".id AS TEXT), 5, '0')) ${direction}`),
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RECIPIENT:
@@ -90,6 +99,8 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
           JOIN "CommunicationLogRecipients" clr ON r.id = clr."recipientId"
           WHERE clr."communicationLogId" = "CommunicationLog".id
         ) ${direction}`),
+      ], [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.GOALS:
@@ -98,6 +109,8 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
           SELECT MIN(g->>'label')
           FROM jsonb_array_elements(data->'goals') g
         ) ${direction}`),
+      ], [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.AUTHOR:
@@ -105,23 +118,34 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sequelize.literal(`author.name ${direction}`),
       ], [
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`),
+      ], [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.PURPOSE:
       result = [[
         sequelize.literal(`data->>'purpose' ${direction}`),
+      ],
+      [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RESULT:
       result = [[
         sequelize.literal(`data->>'result' ${direction}`),
+      ], [
+        sequelize.col('id'), direction,
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.DATE:
     default:
       result = [[
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`),
-      ]];
+      ],
+      [
+        sequelize.col('id'), direction,
+      ],
+      ];
       break;
   }
   return result;
