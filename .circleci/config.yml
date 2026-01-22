@@ -4,10 +4,10 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:22.20.0-browsers
+    - image: cimg/node:22.22.0-browsers
   docker-postgres-executor:
     docker:
-    - image: cimg/node:22.20.0-browsers
+    - image: cimg/node:22.22.0-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost

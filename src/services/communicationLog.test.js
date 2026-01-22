@@ -134,6 +134,29 @@ describe('communicationLog services', () => {
     expect(result.data).toEqual({ foo: 'bar' });
   });
 
+  it('preserves recipients when recipients array is empty', async () => {
+    // First verify the log has a recipient
+    const before = await logById(log.id);
+    expect(before.recipients.length).toEqual(1);
+    expect(before.recipients[0].id).toEqual(recipient.id);
+
+    // Update with empty recipients array - should preserve existing recipients
+    const result = await updateLog(log.id, { foo: 'updated', recipients: [] });
+    expect(result.id).toEqual(log.id);
+    expect(result.recipients.length).toEqual(1);
+    expect(result.recipients[0].id).toEqual(recipient.id);
+    expect(result.data).toEqual({ foo: 'updated' });
+  });
+
+  it('preserves recipients when recipients is undefined', async () => {
+    // Update without recipients field - should preserve existing recipients
+    const result = await updateLog(log.id, { foo: 'another update' });
+    expect(result.id).toEqual(log.id);
+    expect(result.recipients.length).toEqual(1);
+    expect(result.recipients[0].id).toEqual(recipient.id);
+    expect(result.data).toEqual({ foo: 'another update' });
+  });
+
   it('deletes logs', async () => {
     const file = await File.create({
       originalFileName: 'test.txt',
