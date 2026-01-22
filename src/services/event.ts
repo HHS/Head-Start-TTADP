@@ -1199,7 +1199,12 @@ export async function csvImport(buffer: Buffer) {
       data.reasons = [...new Set(data.reasons as string[])].filter((reason) => REASONS.includes(reason));
 
       // Target Populations, remove duplicates and invalid values.
-      data.targetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS].includes(target));
+      const allTargetPopulations = [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS];
+      const filteredTargetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => allTargetPopulations.includes(target));
+      if (!filteredTargetPopulations.length) {
+        throw new Error('Target populations is required!');
+      }
+      data.targetPopulations = filteredTargetPopulations;
 
       // Additional States Involved, remove duplicates.
       data.additionalStates = [...validateStates(new Set(data.additionalStates as string[]))];
