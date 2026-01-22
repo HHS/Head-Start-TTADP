@@ -1,0 +1,64 @@
+.ttahub-training-report-alerts-container {
+    /* CSS custom properties */
+    --half-column-width: 150px;
+
+    /* setup container context and name */
+    container-name: tta-hub-training-report-alerts;
+    container-type: inline-size;
+}
+
+.ttahub-training-report-alerts th button {
+    padding: 0;
+}
+
+/* Just to match the mockup, with the overflowing text */
+.ttahub-training-report-alerts td {
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+}
+
+/* most columns get double width */
+.ttahub-training-report-alerts td,
+.ttahub-training-report-alerts th {
+    max-width: calc(var(--half-column-width) * 2);
+}
+
+/* event ID is a half-width column */
+.ttahub-training-report-alerts th:first-child,
+.ttahub-training-report-alerts td:first-child {
+    max-width: var(--half-column-width);
+}
+
+
+@container tta-hub-training-report-alerts (max-width: 1140px) {
+    .ttahub-training-report-alerts-scrollable {
+        overflow-x: scroll;
+    }
+
+    .ttahub-training-report-alerts {
+        position: relative;
+    }
+
+    .ttahub-training-report-alerts thead th:last-child {
+        background-color: white;
+    }
+
+    .ttahub-training-report-alerts th:last-child,
+    .ttahub-training-report-alerts td:last-child {
+        position: sticky;
+        right: 0;
+    }
+
+    .ttahub-training-report-alerts th:last-child::before,
+    .ttahub-training-report-alerts td:last-child::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: var(--text-ink);
+        pointer-events: none;
+    }
+}

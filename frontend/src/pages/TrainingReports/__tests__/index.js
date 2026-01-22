@@ -79,7 +79,7 @@ const inProgressEvents = [{
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
       pocComplete: false,
-      ownerComplete: false,
+      collabComplete: false,
       submitted: false,
       facilitation: 'national_centers',
     },

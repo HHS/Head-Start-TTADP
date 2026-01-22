@@ -154,7 +154,7 @@ export default class EventReport {
   }
 
   isSubmitted() {
-    return !!(this.session && this.session.data && this.session.data.pocComplete && this.session.data.ownerComplete);
+    return !!(this.session && this.session.data && this.session.data.pocComplete && this.session.data.collabComplete);
   }
 
   canEditAsSessionApprover() {
