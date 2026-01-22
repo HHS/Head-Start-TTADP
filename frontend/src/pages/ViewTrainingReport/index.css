@@ -21,4 +21,8 @@
     .ttahub-completed-training-report-container > div {
         padding: 0 !important;
     }
+
+    .ttahub-read-only-content-section-container > div:has(h2) {
+        margin-block-start: 1rem;
+    }
 }
