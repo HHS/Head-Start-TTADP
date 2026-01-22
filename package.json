@@ -343,7 +343,7 @@
     "@opensearch-project/opensearch": "^1.1.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/otlp-exporter-base": "^0.207.0",
-    "@ttahub/common": "2.2.19",
+    "@ttahub/common": "2.2.20",
     "@types/ioredis-mock": "^8.2.6",
     "adm-zip": "^0.5.1",
     "ajv": "^8.17.1",
