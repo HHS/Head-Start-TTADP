@@ -64,7 +64,7 @@ export const getSessionReportsCSV = async (sortConfig, filters = []) => {
 export const getSessionReportsCSVById = async (ids, sortConfig, filters = []) => {
   const params = formatCSVParams(getSortConfigParams(sortConfig));
   params.append('format', 'csv');
-  const reportIds = ids.map((id) => (`id.in[]=${id}`)).join('&');
+  const reportIds = ids.map((id) => (`sessionId.in[]=${id}`)).join('&');
   const filterParams = filtersToQueryString(filters);
   const url = filterParams
     ? `${sessionsUrl}?${reportIds}&${params.toString()}&${filterParams}`
