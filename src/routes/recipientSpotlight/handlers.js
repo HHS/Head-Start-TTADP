@@ -65,12 +65,27 @@ export async function getRecipientSpotLight(req, res) {
       req.query,
       { userId },
     );
+
+    // Extract indicator filter params
+    // Support both priorityIndicator.in and priorityIndicator.in[] formats
+    const indicatorFilterIn = req.query['priorityIndicator.in[]']
+      || req.query['priorityIndicator.in'];
+    let indicatorsToInclude = [];
+    if (indicatorFilterIn) {
+      indicatorsToInclude = Array.isArray(indicatorFilterIn)
+        ? indicatorFilterIn
+        : [indicatorFilterIn];
+    }
+
+    console.log('\n\n\n-----indicatorFilterIn ', indicatorFilterIn);
+
     const recipientSpotlightData = await getRecipientSpotlightIndicators(
       scopes,
       sortBy,
       direction,
       parsedOffset,
       parsedLimit,
+      indicatorsToInclude,
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);

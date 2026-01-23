@@ -969,4 +969,182 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients[0]).toHaveProperty('FEI');
     });
   });
+
+  describe('getRecipientSpotlightIndicators - Priority Indicator Filtering', () => {
+    it('filters by single indicator (New staff)', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        ['New staff'],
+      );
+
+      expect(result).toHaveProperty('recipients');
+      expect(result.recipients.length).toBeGreaterThan(0);
+
+      // All returned recipients should have newStaff = true
+      result.recipients.forEach((recipient) => {
+        expect(recipient.newStaff).toBe(true);
+      });
+
+      // Our test "New Staff Recipient" should be in the results
+      const newStaffRecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'New Staff Recipient',
+      );
+      expect(newStaffRecipientResult).toBeDefined();
+    });
+
+    it('filters by single indicator (No TTA)', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        ['No TTA'],
+      );
+
+      expect(result).toHaveProperty('recipients');
+      expect(result.recipients.length).toBeGreaterThan(0);
+
+      // All returned recipients should have noTTA = true
+      result.recipients.forEach((recipient) => {
+        expect(recipient.noTTA).toBe(true);
+      });
+
+      // Our test "No TTA Recipient" should be in the results
+      const noTTARecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'No TTA Recipient',
+      );
+      expect(noTTARecipientResult).toBeDefined();
+    });
+
+    it('filters by multiple indicators with OR logic', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        ['New staff', 'No TTA'],
+      );
+
+      expect(result).toHaveProperty('recipients');
+      expect(result.recipients.length).toBeGreaterThan(0);
+
+      // All returned recipients should have either newStaff = true OR noTTA = true
+      result.recipients.forEach((recipient) => {
+        expect(recipient.newStaff || recipient.noTTA).toBe(true);
+      });
+
+      // Both test recipients should be in the results
+      const newStaffRecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'New Staff Recipient',
+      );
+      const noTTARecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'No TTA Recipient',
+      );
+      expect(newStaffRecipientResult).toBeDefined();
+      expect(noTTARecipientResult).toBeDefined();
+    });
+
+    it('returns all recipients when indicator filter is empty', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const resultWithoutFilter = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [], // empty filter
+      );
+
+      const resultDefault = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        // no filter param provided
+      );
+
+      // Both should return the same results
+      expect(resultWithoutFilter.count).toBe(resultDefault.count);
+      expect(resultWithoutFilter.recipients.length).toBe(resultDefault.recipients.length);
+    });
+
+    it('ignores invalid indicator labels', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const resultWithInvalid = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        ['Invalid Label', 'Another Invalid'],
+      );
+
+      const resultDefault = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+      );
+
+      // Invalid labels should be filtered out, returning all recipients (default behavior)
+      expect(resultWithInvalid.count).toBe(resultDefault.count);
+    });
+
+    it('handles mixed valid and invalid indicator labels', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        ['New staff', 'Invalid Label'],
+      );
+
+      expect(result).toHaveProperty('recipients');
+      expect(result.recipients.length).toBeGreaterThan(0);
+
+      // Should filter by the valid indicator only
+      result.recipients.forEach((recipient) => {
+        expect(recipient.newStaff).toBe(true);
+      });
+    });
+
+    it('filters by New recipient indicator', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        ['New recipient'],
+      );
+
+      expect(result).toHaveProperty('recipients');
+      expect(result.recipients.length).toBeGreaterThan(0);
+
+      // All returned recipients should have newRecipients = true
+      result.recipients.forEach((recipient) => {
+        expect(recipient.newRecipients).toBe(true);
+      });
+
+      // Our test "New Recipient" should be in the results
+      const newRecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'New Recipient',
+      );
+      expect(newRecipientResult).toBeDefined();
+    });
+  });
 });

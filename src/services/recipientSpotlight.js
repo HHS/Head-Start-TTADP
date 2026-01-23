@@ -5,6 +5,17 @@ import {
   Grant,
 } from '../models';
 
+// Map from indicator label (as shown in UI) to column name in SQL
+const INDICATOR_LABEL_TO_COLUMN = {
+  'Child incidents': 'childIncidents',
+  Deficiency: 'deficiency',
+  'New recipient': 'newRecipients',
+  'New staff': 'newStaff',
+  'No TTA': 'noTTA',
+  DRS: 'DRS',
+  FEI: 'FEI',
+};
+
 /* eslint-disable import/prefer-default-export */
 export async function getRecipientSpotlightIndicators(
   scopes,
@@ -12,6 +23,7 @@ export async function getRecipientSpotlightIndicators(
   direction,
   offset,
   limit,
+  indicatorsToInclude = [],
 ) {
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   const grantsWhere = {
@@ -70,6 +82,20 @@ export async function getRecipientSpotlightIndicators(
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
   const grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'TRUE';
+
+  // Build indicator WHERE clause for filtering by priority indicators
+  let indicatorWhereClause = 'TRUE';
+
+  if (indicatorsToInclude.length > 0) {
+    const includeConditions = indicatorsToInclude
+      .map((label) => INDICATOR_LABEL_TO_COLUMN[label])
+      .filter(Boolean)
+      .map((col) => `"${col}" = TRUE`);
+
+    if (includeConditions.length > 0) {
+      indicatorWhereClause = `(${includeConditions.join(' OR ')})`;
+    }
+  }
 
   const spotLightSql = `
     WITH
@@ -307,7 +333,7 @@ export async function getRecipientSpotlightIndicators(
       *,
       COUNT(*) OVER() AS "totalCount"
     FROM combined_indicators
-    WHERE "indicatorCount" > -1
+    WHERE ${indicatorWhereClause}
     ORDER BY "${sortBy || 'recipientName'}" ${direction || 'ASC'}
     ${hasGrantIds ? `LIMIT ${limit}` : ''}
     OFFSET ${offset}
