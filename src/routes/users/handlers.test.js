@@ -26,7 +26,9 @@ import { createAndStoreVerificationToken, validateVerificationToken } from '../.
 import { currentUserId } from '../../services/currentUser';
 import SCOPES from '../../middleware/scopeConstants';
 import { FEATURE_FLAGS } from '../../constants';
+import activeUsers from '../../services/activeUsers';
 
+jest.mock('../../services/activeUsers');
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
   usersWithPermissions: jest.fn(),
@@ -258,9 +260,15 @@ describe('User handlers', () => {
       const request = {
         ...mockRequest,
       };
+      const stream = {
+        on: jest.fn((e, cb) => cb()),
+        pipe: jest.fn(),
+      };
+      activeUsers.mockResolvedValue(stream);
+      userById.mockResolvedValue({ id: 1, name: 'user' });
       User.prototype.isAdmin = jest.fn().mockReturnValue(true);
       await getActiveUsers(request, mockResponse);
-      expect(mockResponse.on).toHaveBeenCalled();
+      expect(stream.pipe).toHaveBeenCalledWith(mockResponse);
       expect(mockResponse.writeHead).toHaveBeenCalled();
       expect(mockResponse.error).not.toHaveBeenCalled();
     });
@@ -545,13 +553,27 @@ describe('User handlers', () => {
       userById.mockResolvedValueOnce(mockUserWithoutTRPermissions);
       currentUserId.mockResolvedValueOnce(1);
 
-      await getTrainingReportTrainersByRegion(unauthorizedReq, res);
+      // Create a local res object for this specific test case.
+      const localRes = {
+        sendStatus: jest.fn(),
+        json: jest.fn(),
+        status: jest.fn(() => ({ end: jest.fn() })),
+        headersSent: false,
+      };
+
+      // Simulate that headers are sent after the first call to sendStatus.
+      localRes.sendStatus.mockImplementationOnce((code) => {
+        localRes.headersSent = true;
+        return localRes;
+      });
+
+      await getTrainingReportTrainersByRegion(unauthorizedReq, localRes);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(res.sendStatus).toHaveBeenCalledTimes(1);
-      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(localRes.sendStatus).toHaveBeenCalledTimes(1);
+      expect(localRes.sendStatus).toHaveBeenCalledWith(403);
       expect(usersByRoles).not.toHaveBeenCalled();
-      expect(res.json).not.toHaveBeenCalled();
+      expect(localRes.json).not.toHaveBeenCalled();
     });
 
     it('should return 403 if user requests a region they do not have permission for', async () => {
@@ -662,13 +684,27 @@ describe('User handlers', () => {
       userById.mockResolvedValueOnce(mockUserWithoutTRPermissions);
       currentUserId.mockResolvedValueOnce(1);
 
-      await getTrainingReportTrainersByRegionAndNationalCenter(unauthorizedReq, res);
+      // Create a local res object for this specific test case.
+      const localRes = {
+        sendStatus: jest.fn(),
+        json: jest.fn(),
+        status: jest.fn(() => ({ end: jest.fn() })),
+        headersSent: false,
+      };
+
+      // Simulate that headers are sent after the first call to sendStatus.
+      localRes.sendStatus.mockImplementationOnce((code) => {
+        localRes.headersSent = true;
+        return localRes;
+      });
+
+      await getTrainingReportTrainersByRegionAndNationalCenter(unauthorizedReq, localRes);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(res.sendStatus).toHaveBeenCalledTimes(1);
-      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(localRes.sendStatus).toHaveBeenCalledTimes(1);
+      expect(localRes.sendStatus).toHaveBeenCalledWith(403);
       expect(usersByRoles).not.toHaveBeenCalled();
-      expect(res.json).not.toHaveBeenCalled();
+      expect(localRes.json).not.toHaveBeenCalled();
     });
 
     it('should return a list of trainers by region with correct roles', async () => {

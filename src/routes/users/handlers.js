@@ -29,17 +29,15 @@ const verifyTrViewPermissions = async (req, res) => {
       SCOPES.POC_TRAINING_REPORTS,
       SCOPES.READ_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
-      SCOPES.ADMIN,
     ].includes(scopeId)
   ));
 
+  const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
+  const regionIds = uniq(trPermissions.map(({ regionId }) => regionId));
+
   if (!trPermissions.length) {
     res.sendStatus(403);
-    return null;
   }
-
-  const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
-  const regionIds = uniq(permissions.map(({ regionId }) => regionId));
 
   return {
     isAdmin,
