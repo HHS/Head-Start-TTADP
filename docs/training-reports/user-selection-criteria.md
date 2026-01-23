@@ -59,7 +59,9 @@ Each field uses different filtering criteria based on user roles, permissions, a
 
 ```
                           ┌─────────────────────────┐
-                          │   Event Configuration   │
+                          │   Event Configuration   | 
+                          |    Regional TTA         |
+                          |   (No National Centers) │
                           │     (isEvent=true)      │
                           └───────────┬─────────────┘
                                       │
