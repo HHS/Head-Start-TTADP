@@ -278,7 +278,12 @@ export async function getRecipientSpotlightIndicators(
         new_staff_rid IS NOT NULL "newStaff",
         no_tta_rid IS NOT NULL "noTTA",
         FALSE AS "DRS",  -- Placeholder for future implementation
-        FALSE AS "FEI"   -- Placeholder for future implementation
+        FALSE AS "FEI",   -- Placeholder for future implementation
+        (incident_rid IS NOT NULL)::int +
+        (deficiency_rid IS NOT NULL)::int +
+        (new_recip_rid IS NOT NULL)::int +
+        (new_staff_rid IS NOT NULL)::int +
+        (no_tta_rid IS NOT NULL)::int "indicatorCount"
       FROM recipients
       LEFT JOIN child_incidents ci
         ON rid = incident_rid
@@ -298,12 +303,7 @@ export async function getRecipientSpotlightIndicators(
     )
 
     SELECT * FROM combined_indicators
-    WHERE
-      "childIncidents"::int +
-      "deficiency"::int + 
-      "newRecipients"::int +
-      "newStaff"::int +
-      "noTTA"::int > -1
+    WHERE "indicatorCount" > -1
     ORDER BY "${sortBy || 'recipientName'}" ${direction || 'ASC'}
     ${hasGrantIds ? `LIMIT ${limit || 10}` : ''}
     OFFSET ${offset || 0}
