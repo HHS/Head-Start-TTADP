@@ -50,7 +50,7 @@ export type GetSessionReportsParams = {
   sortBy?: string;
   sortDir?: string;
   offset?: number;
-  limit?: number;
+  limit?: number | 'all';
   format?: 'json' | 'csv';
 };
 

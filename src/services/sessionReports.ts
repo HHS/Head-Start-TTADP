@@ -412,7 +412,10 @@ export async function getSessionReports(
   const orderClause = [[...sortEntry, sortDir]];
 
   // Get scopes from filters
-  const { trainingReport: trainingReportScopes } = await filtersToScopes(filterParams, {});
+  const {
+    trainingReport: trainingReportScopes,
+    sessionReport: sessionReportScopes,
+  } = await filtersToScopes(filterParams, {});
 
   // Get events to pass into session query
   // (the scopes construction makes this necessary, sadly)
@@ -470,7 +473,8 @@ export async function getSessionReports(
   } as Record<string, unknown>;
 
   queryOptions.offset = offset;
-  if (limit !== undefined) {
+
+  if (limit !== 'all') {
     queryOptions.limit = limit;
   }
 
@@ -492,7 +496,7 @@ export async function getSessionReports(
     offset,
   } as Record<string, unknown>;
 
-  if (limit !== undefined) {
+  if (limit !== 'all') {
     idQuery.limit = limit;
   }
 
@@ -502,7 +506,12 @@ export async function getSessionReports(
   // Now fetch full data for just those IDs (with goalTemplates)
   const result = await SessionReportPilot.findAll({
     attributes: queryOptions.attributes,
-    where: { id: sessionIds },
+    where: {
+      [Op.and]: [
+        { id: sessionIds },
+        ...sessionReportScopes,
+      ],
+    },
     include: queryOptions.include,
     order: orderClause,
     subQuery: false,
