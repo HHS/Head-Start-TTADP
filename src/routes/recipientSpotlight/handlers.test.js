@@ -66,8 +66,8 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         'name',
         'asc',
-        '0',
-        undefined,
+        0,
+        10,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -86,8 +86,8 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         'name',
         'asc',
-        '0',
-        undefined,
+        0,
+        10,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -130,8 +130,8 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         'date',
         'desc',
-        '10',
-        undefined,
+        10,
+        10,
       );
     });
 
@@ -148,8 +148,8 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         undefined,
         undefined,
-        '0',
-        undefined,
+        0,
+        10,
       );
     });
 

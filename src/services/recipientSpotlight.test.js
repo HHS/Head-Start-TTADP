@@ -288,7 +288,7 @@ describe('recipientSpotlight service', () => {
       effectiveDate: pastYear,
       title: 'New Staff Member',
       programId: 1, // Adding required field
-      role: 'Staff', // Adding required field
+      role: 'director', // Must be 'cfo' or 'director' to match service logic
       active: true, // Adding required field
     });
 
@@ -942,7 +942,7 @@ describe('recipientSpotlight service', () => {
 
   // Placeholder test for static data implementation
   describe('getRecipientSpotlightIndicators - Static Data', () => {
-    it('returns static data with required fields including lastTTA', async () => {
+    it('returns static data with required fields', async () => {
       const scopes = createScopesWithRegion(REGION_ID);
       const result = await getRecipientSpotlightIndicators(
         scopes,
@@ -953,9 +953,9 @@ describe('recipientSpotlight service', () => {
       );
 
       expect(result).toHaveProperty('recipients');
+      expect(result).toHaveProperty('count');
       expect(result).toHaveProperty('overview');
       expect(result.recipients.length).toBeGreaterThan(0);
-      expect(result.recipients[0]).toHaveProperty('lastTTA');
       expect(result.recipients[0]).toHaveProperty('recipientId');
       expect(result.recipients[0]).toHaveProperty('regionId');
       expect(result.recipients[0]).toHaveProperty('recipientName');

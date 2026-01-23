@@ -159,6 +159,7 @@ export default function RecipientSpotlightDataController({
             perPageChange={perPageChange}
             filters={filters}
             userHasOnlyOneRegion={userHasOnlyOneRegion}
+            loading={loading}
           />
         </Grid>
       </Grid>
