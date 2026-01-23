@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Link, useHistory } from 'react-router-dom';
-import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
@@ -138,13 +137,9 @@ const TrainingReportsTable = ({
       titleGroupClassNames="padding-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2"
     >
       {data.rows.length === 0 && (
-        <Container className="landing" paddingX={0} paddingY={0}>
-          <div className="text-center padding-10">
-            <p className="usa-prose text-center bold">
-              <strong>{emptyMsg}</strong>
-            </p>
-          </div>
-        </Container>
+      <div>
+        <p className="font-serif-md margin-0 padding-10 text-bold text-center">{emptyMsg}</p>
+      </div>
       )}
       {data.rows.length > 0 && (
         <HorizontalTableWidget
