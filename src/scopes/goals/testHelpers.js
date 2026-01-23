@@ -341,6 +341,7 @@ export async function tearDownSharedTestData() {
   await Grant.destroy({
     where: {
       id: [
+        sharedTestData.goalGrant.id,
         sharedTestData.grant.id,
         sharedTestData.otherGrant.id,
         sharedTestData.topicsGrant.id,
@@ -353,11 +354,27 @@ export async function tearDownSharedTestData() {
   await Recipient.destroy({
     where: {
       id: [
+        sharedTestData.goalGrant.recipientId,
         sharedTestData.grant.recipientId,
+        sharedTestData.otherGrant.recipientId,
         sharedTestData.topicsGrant.recipientId,
         sharedTestData.reasonsGrant.recipientId,
       ],
     },
     individualHooks: true,
   });
+
+  sharedTestData.reportIds = null;
+  sharedTestData.objectiveIds = null;
+  sharedTestData.possibleGoalIds = null;
+  sharedTestData.emptyReport = null;
+  sharedTestData.reportWithReasons = null;
+  sharedTestData.reportWithTopics = null;
+  sharedTestData.grant = null;
+  sharedTestData.topicsGrant = null;
+  sharedTestData.reasonsGrant = null;
+  sharedTestData.otherGrant = null;
+  sharedTestData.goalGrant = null;
+  sharedTestData.activityReportGoalIds = null;
+  sharedTestData.ots = [];
 }
