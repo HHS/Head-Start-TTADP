@@ -288,12 +288,17 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
     // Service layer filters will handle region filtering based on userReadRegions
     // For CSV export, don't apply limit/offset to get all rows
 
-    const offsetValue = offset ? Number(offset) : 0;
-    const limitValue = limit ? Number(limit) : 10;
+    let offsetValue = offset ? Number(offset) : 0;
+    let limitValue = limit ? Number(limit) : 10;
 
     const formatValue = format ? format.toLowerCase() : 'json';
+    const isCSV = format === 'csv';
 
-    // const isCSV = format === 'csv';
+    if (isCSV) {
+      offsetValue = 0;
+      limitValue = undefined;
+    }
+
     const serviceParams = {
       sortBy: sortBy || 'id',
       sortDir: sortDir || 'DESC',
