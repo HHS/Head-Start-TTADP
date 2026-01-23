@@ -1,5 +1,5 @@
 import {
-  cast, Op, Sequelize, Model,
+  cast, Op, Model,
 } from 'sequelize';
 import { Cast } from 'sequelize/types/utils';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
@@ -385,6 +385,18 @@ export async function getSessionReports(
     ...filterParams
   } = params;
 
+  // Map frontend column header keys to backend sort keys
+  // The frontend HorizontalTableWidget sends displayName.replaceAll(' ', '_') as sortBy
+  const sortByAliases: Record<string, string> = {
+    Session_name: 'sessionName',
+    Session_start_date: 'startDate',
+    Session_end_date: 'endDate',
+    'Event&nbsp;ID': 'eventId',
+    Event_title: 'eventName',
+  };
+
+  const resolvedSortBy = sortByAliases[sortBy] || sortBy;
+
   // Define allowed sort columns with their actual database paths
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
@@ -396,7 +408,7 @@ export async function getSessionReports(
   };
 
   // Use the requested sort column or default to id descending
-  const sortEntry = sortMap[sortBy] || sortMap.id;
+  const sortEntry = sortMap[resolvedSortBy] || sortMap.id;
   const orderClause = [[...sortEntry, sortDir]];
 
   // Get scopes from filters
@@ -444,15 +456,75 @@ export async function getSessionReports(
         attributes: [],
         required: true,
       },
+      {
+        model: db.GoalTemplate,
+        as: 'goalTemplates',
+        attributes: ['standard'],
+        through: { attributes: [] },
+        required: false,
+      },
     ],
     order: orderClause,
-    raw: true,
-    subQuery: false,
+    subQuery: true,
+    distinct: true,
   } as Record<string, unknown>;
 
   queryOptions.offset = offset;
-  queryOptions.limit = limit;
+  if (limit !== undefined) {
+    queryOptions.limit = limit;
+  }
 
-  // Query sessions
-  return SessionReportPilot.findAndCountAll(queryOptions);
+  // First get the IDs of sessions for this page (without the goalTemplates join
+  // which inflates row counts and breaks LIMIT/OFFSET)
+  const idQuery = {
+    attributes: ['id'],
+    where: queryOptions.where,
+    include: [
+      {
+        model: EventReportPilot,
+        as: 'event',
+        attributes: [],
+        required: true,
+      },
+    ],
+    order: orderClause,
+    subQuery: false,
+    offset,
+  } as Record<string, unknown>;
+
+  if (limit !== undefined) {
+    idQuery.limit = limit;
+  }
+
+  const { count, rows: idRows } = await SessionReportPilot.findAndCountAll(idQuery);
+  const sessionIds = idRows.map((r: Model) => r.get('id'));
+
+  // Now fetch full data for just those IDs (with goalTemplates)
+  const result = await SessionReportPilot.findAll({
+    attributes: queryOptions.attributes,
+    where: { id: sessionIds },
+    include: queryOptions.include,
+    order: orderClause,
+    subQuery: false,
+  });
+
+  // Transform rows to plain objects with goalTemplates included
+  const rows = result.map((row: Model) => {
+    const plain = row.get({ plain: true });
+    return {
+      id: plain.id,
+      eventId: plain.eventId,
+      eventName: plain.eventName,
+      sessionName: plain.sessionName,
+      startDate: plain.startDate,
+      endDate: plain.endDate,
+      objectiveTopics: plain.objectiveTopics,
+      goalTemplates: plain.goalTemplates || [],
+    };
+  });
+
+  return {
+    count,
+    rows,
+  };
 }
