@@ -403,26 +403,32 @@ const updateLog = async (id: number, logData: CommLogData) => {
     ...data
   } = logData;
 
-  const recipientIds = recipients.map((recipient) => Number(recipient.value));
+  // Only process recipients if array is provided and non-empty
+  // This prevents accidental deletion of all recipients when recipients array is empty/undefined
+  const recipientIds = Array.isArray(recipients)
+    ? recipients.map((recipient) => Number(recipient.value)).filter((rid) => rid > 0)
+    : [];
 
-  await CommunicationLogRecipient.destroy({
-    where: {
-      communicationLogId: id,
-      recipientId: {
-        [Op.notIn]: recipientIds,
+  if (recipientIds.length > 0) {
+    await CommunicationLogRecipient.destroy({
+      where: {
+        communicationLogId: id,
+        recipientId: {
+          [Op.notIn]: recipientIds,
+        },
       },
-    },
-  });
+    });
 
-  await CommunicationLogRecipient.bulkCreate(
-    recipientIds.map((recipientId) => ({
-      recipientId,
-      communicationLogId: id,
-    })),
-    {
-      ignoreDuplicates: true,
-    },
-  );
+    await CommunicationLogRecipient.bulkCreate(
+      recipientIds.map((recipientId) => ({
+        recipientId,
+        communicationLogId: id,
+      })),
+      {
+        ignoreDuplicates: true,
+      },
+    );
+  }
 
   await CommunicationLog.update({
     data: formatCommunicationDateWithJsonData(data as CommLogData),
