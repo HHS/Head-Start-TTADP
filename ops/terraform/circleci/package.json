@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "esm": "^3.2.25",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.23"
   }
 }
