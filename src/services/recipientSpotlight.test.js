@@ -287,7 +287,7 @@ describe('recipientSpotlight service', () => {
       effectiveDate: pastYear,
       title: 'New Staff Member',
       programId: 1, // Adding required field
-      role: 'Staff', // Adding required field
+      role: 'director', // Must be 'cfo' or 'director' to match service logic
       active: true, // Adding required field
     });
 

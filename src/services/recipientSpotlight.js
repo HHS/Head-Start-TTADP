@@ -68,7 +68,7 @@ export async function getRecipientSpotlightIndicators(
 */
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
-  const grantIdFilter = hasGrantIds ? `g.id IN (${grantIdList.join(',')})` : 'TRUE';
+  const grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'TRUE';
 
   const spotLightSql = `
     WITH
@@ -87,11 +87,13 @@ export async function getRecipientSpotlightIndicators(
       WHERE ${grantIdFilter}
     ),
     recipients AS (
-    SELECT DISTINCT
+    SELECT
       rid,
       rname,
-      region
+      region,
+      ARRAY_AGG(grid)::text[] grant_ids
     FROM grant_recipients
+    GROUP BY 1,2,3
     ),
     -- Usually we care about all the grants for a recipient
     -- not just the ones in the filter
@@ -159,8 +161,13 @@ export async function getRecipientSpotlightIndicators(
     -- TODO: recheck the definition of "deficiency"
     ordered_citation_reviews AS (
     SELECT DISTINCT ON (mf."findingId")
+      rid,
+      region,
+      grid,
       mf."findingId" fid,
-      mf."findingType" finding_type,
+      -- this is only safe with deficiencies because AOCs and ANCs are not
+      -- consistent between findingType and determination
+      COALESCE(mfh.determination, mf."findingType") finding_type,
       mfs.name finding_status,
       ruuid,
       review_status,
@@ -173,44 +180,16 @@ export async function getRecipientSpotlightIndicators(
     JOIN "MonitoringFindingStatuses" mfs
       ON mf."statusId" = mfs."statusId"
     WHERE mf."findingType" = 'Deficiency'
-      AND mfs.name = 'Elevated Deficiency'
-    ORDER BY 1,rsd DESC, rsc DESC
+      OR mfs.name = 'Elevated Deficiency'
+    ORDER BY mf."findingId",rsd DESC, rsc DESC
     ),
-    active_citations AS (
-    SELECT mf."findingId" fid
-    FROM "MonitoringFindings" mf
-    JOIN "MonitoringFindingStatuses" mfs
-      ON mf."statusId" = mfs."statusId"
-    WHERE mfs.name IN ('Active', 'Elevated Deficiency')
-      AND mf."sourceDeletedAt" IS NULL
-    ),
-    -- union together active citations with those whose most recent linked
-    -- review is not complete, yielding the list of citations on which TTA
-    -- might still be in progress
-    open_citations AS (
-    SELECT fid FROM active_citations
-    UNION
-    SELECT fid FROM ordered_citation_reviews
-    WHERE review_status != 'Complete'
-    ),
-    -- TODO: refactor w/all_reviews
     deficiencies AS (
-      SELECT
+      SELECT DISTINCT
         rid deficiency_rid,
-        rid deficiency_region
-      FROM recipients r
-      JOIN "Grants" g ON r."recipientId" = g."recipientId"
-      JOIN "MonitoringReviewGrantees" mrg ON g.number = mrg."grantNumber"
-      JOIN "MonitoringReviews" mr ON mrg."reviewId" = mr."reviewId"
-      JOIN "MonitoringReviewStatuses" mrs ON mr."statusId" = mrs."statusId"
-      JOIN "MonitoringFindingHistories" mfh ON mr."reviewId" = mfh."reviewId"
-      JOIN "MonitoringFindings" mf ON mfh."findingId" = mf."findingId"
-      JOIN "MonitoringFindingStatuses" mfs ON mf."statusId" = mfs."statusId"
-      WHERE ${grantIdFilter}
-      AND mrs."name" = 'Complete'
-      AND mfs."name" IN ('Active', 'Elevated Deficiency')
-      AND mfh.determination = 'Deficiency'
-      GROUP BY r."recipientId"
+        region deficiency_region
+      FROM ordered_citation_reviews
+      WHERE finding_status IN ('Active','Elevated Deficiency')
+        OR rdd IS NULL
     ),
 
     -- 3. New Recipients: Recipients with oldest grant less than 4 years old
@@ -236,13 +215,20 @@ export async function getRecipientSpotlightIndicators(
       GROUP BY 1,2
     ),
 
-    -- 5. No TTA: Grants with no approved reports in the last 12 months
-    -- TODO: add session reports
-    grants_with_ars AS (
-      SELECT DISTINCT
+    -- 5. No TTA: Grants with no approved reports or TR sessions
+    --    in the last 12 months
+    recent_session_grants AS (
+    SELECT (jsonb_array_elements(data->'recipients')->>'value')::integer session_grid
+    FROM "SessionReportPilots"
+    WHERE data->>'status' = 'Complete'
+      AND (data->>'startDate')::timestamp >= NOW() - INTERVAL '12 months'
+    ),
+    grants_with_tta AS (
+      SELECT
+        grid,
         rid,
         region
-      FROM all_grants
+      FROM grant_recipients
       JOIN "Goals" g
         ON g."grantId" = grid
       JOIN "ActivityReportGoals" arg
@@ -251,24 +237,41 @@ export async function getRecipientSpotlightIndicators(
         ON arg."activityReportId" = ar.id
       WHERE ar."calculatedStatus" = 'approved'
         AND ar."startDate" >= NOW() - INTERVAL '12 months'
-      GROUP BY 1,2
+      UNION
+      SELECT
+        grid,
+        rid,
+        region
+      FROM grant_recipients
+      JOIN recent_session_grants
+        ON grid = session_grid
+    ),
+    grants_without_tta AS (
+      SELECT 
+        grid,
+        rid,
+        region
+      FROM grant_recipients
+      EXCEPT
+      SELECT
+        grid,
+        rid,
+        region
+      FROM grants_with_tta
     ),
     no_tta AS (
-      SELECT 
+      SELECT DISTINCT
         rid no_tta_rid,
         region no_tta_region
-      FROM recipients r
-      EXCEPT
-      SELECT rid, region FROM grants_with_tta
+      FROM grants_without_tta
     ),
-    
     -- Combine all indicators into one result set
     combined_indicators AS (
       SELECT
         rid "recipientId",
         region "regionId",
         rname "recipientName",
-        ARRAY_AGG(g.id)::text[] "grantIds",
+        grant_ids "grantIds",
         incident_rid IS NOT NULL "childIncidents",
         deficiency_rid IS NOT NULL "deficiency",
         new_recip_rid IS NOT NULL "newRecipients",
@@ -276,7 +279,7 @@ export async function getRecipientSpotlightIndicators(
         no_tta_rid IS NOT NULL "noTTA",
         FALSE AS "DRS",  -- Placeholder for future implementation
         FALSE AS "FEI"   -- Placeholder for future implementation
-      FROM recipients r
+      FROM recipients
       LEFT JOIN child_incidents ci
         ON rid = incident_rid
         AND region = incident_region
@@ -295,6 +298,12 @@ export async function getRecipientSpotlightIndicators(
     )
 
     SELECT * FROM combined_indicators
+    WHERE
+      "childIncidents"::int +
+      "deficiency"::int + 
+      "newRecipients"::int +
+      "newStaff"::int +
+      "noTTA"::int > -1
     ORDER BY "${sortBy || 'recipientName'}" ${direction || 'ASC'}
     ${hasGrantIds ? `LIMIT ${limit || 10}` : ''}
     OFFSET ${offset || 0}
