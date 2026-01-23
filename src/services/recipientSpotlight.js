@@ -118,8 +118,16 @@ export async function getRecipientSpotlightIndicators(
       rid,
       rname,
       region,
-      ARRAY_AGG(grid)::text[] grant_ids
+      ARRAY_AGG(DISTINCT grid)::text[] grant_ids,
+      MAX(ar."startDate") last_tta
     FROM grant_recipients
+    LEFT JOIN "Goals" g
+      ON g."grantId" = grid
+    LEFT JOIN "ActivityReportGoals" arg
+      ON arg."goalId" = g.id
+    LEFT JOIN "ActivityReports" ar
+      ON arg."activityReportId" = ar.id
+      AND ar."calculatedStatus" = 'approved'
     GROUP BY 1,2,3
     ),
     -- Usually we care about all the grants for a recipient
@@ -299,6 +307,7 @@ export async function getRecipientSpotlightIndicators(
         region "regionId",
         rname "recipientName",
         grant_ids "grantIds",
+        last_tta "lastTta",
         incident_rid IS NOT NULL "childIncidents",
         deficiency_rid IS NOT NULL "deficiency",
         new_recip_rid IS NOT NULL "newRecipients",
