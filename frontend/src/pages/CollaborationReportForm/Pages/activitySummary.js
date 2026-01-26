@@ -60,8 +60,8 @@ const ActivitySummary = ({ collaborators = [] }) => {
 
   const checkForDescription = () => {
     const value = watch('description');
-    // Have to check value length because editor is returning a hidden character
-    if (!value || value === '<p></p>' || value.length === 8) {
+    const stripped = value ? value.replace(/<[^>]*>/g, '').trim() : '';
+    if (!stripped) {
       setError('description', { type: 'required', message: 'Describe the activity' });
     } else {
       clearErrors('description');
@@ -402,13 +402,13 @@ const ActivitySummary = ({ collaborators = [] }) => {
           />
         </FormItem>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Description">
+      <Fieldset className={`smart-hub--report-legend ${descriptionError ? 'usa-form-group--error' : ''}`}>
         <Label htmlFor="description">
           Activity description
           {' '}
           <Req />
         </Label>
-        <div className={`smart-hub--text-area__resize-vertical margin-top-1 ${descriptionError ? 'usa-form-group--error' : ''}`}>
+        <div className="smart-hub--text-area__resize-vertical margin-top-1">
           {descriptionError && (
           <span className="usa-error-message" role="alert">{descriptionError}</span>
           )}
