@@ -307,7 +307,7 @@ export async function getRecipientSpotlightIndicators(
         region "regionId",
         rname "recipientName",
         grant_ids "grantIds",
-        last_tta "lastTta",
+        last_tta "lastTTA",
         incident_rid IS NOT NULL "childIncidents",
         deficiency_rid IS NOT NULL "deficiency",
         new_recip_rid IS NOT NULL "newRecipients",
