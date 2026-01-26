@@ -58,16 +58,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const descriptionError = errors?.description?.message;
   const reasonError = errors?.reportReasons?.message;
 
-  const checkForDescription = () => {
-    const value = watch('description');
-    const stripped = value ? value.replace(/<[^>]*>/g, '').trim() : '';
-    if (!stripped) {
-      setError('description', { type: 'required', message: 'Describe the activity' });
-    } else {
-      clearErrors('description');
-    }
-  };
-
   const checkForReasons = () => {
     const reasons = watch('reportReasons');
     if (!reasons || reasons.length === 0) {
@@ -412,9 +402,13 @@ const ActivitySummary = ({ collaborators = [] }) => {
           {descriptionError && (
           <span className="usa-error-message" role="alert">{descriptionError}</span>
           )}
-          {/* Don't use 'required' param even though it's required
-            because it messes up error detection for some unknown reason. */}
-          <HookFormRichEditor ariaLabel="Description" name="description" id="description" onBlur={checkForDescription} />
+          <HookFormRichEditor
+            ariaLabel="Description"
+            name="description"
+            id="description"
+            required
+            errorMessage="Describe the activity"
+          />
         </div>
       </Fieldset>
     </>
