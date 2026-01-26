@@ -42,7 +42,7 @@ const NextSteps = () => {
 };
 
 const getNextStepsSections = (steps) => {
-  const nextStepItems = (steps || []).map((step, index) => ([
+  const nextStepItems = steps[0]?.collabStepDetail ? (steps).map((step, index) => ([
     {
       label: `Step ${index + 1}`,
       name: 'step',
@@ -53,7 +53,18 @@ const getNextStepsSections = (steps) => {
       name: 'date',
       customValue: { date: step.collabStepCompleteDate },
     },
-  ]));
+  ])) : [
+    {
+      label: 'Step 1',
+      name: 'step',
+      customValue: { step: 'None provided' },
+    },
+    {
+      label: 'Anticipated completion',
+      name: 'date',
+      customValue: { date: 'None provided' },
+    },
+  ];
 
   return [
     {
