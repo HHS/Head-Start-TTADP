@@ -173,8 +173,9 @@ describe('CollaborationReportForm', () => {
 
     expect(await screen.findByText('Enter activity name')).toBeInTheDocument();
 
-    const descriptionInput = await screen.findByTestId('description-input');
-    fireEvent.blur(descriptionInput, { target: { value: '' } });
+    const descriptionLabel = await screen.findByText('Description');
+    const descriptionInput = descriptionLabel.parentElement.querySelector('.rdw-editor-main');
+    fireEvent.blur(descriptionInput);
 
     expect(await screen.findByText('Describe the activity')).toBeInTheDocument();
 
