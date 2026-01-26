@@ -42,7 +42,7 @@ const NextSteps = () => {
 };
 
 const getNextStepsSections = (steps) => {
-  const nextStepItems = steps[0]?.collabStepDetail ? (steps).map((step, index) => ([
+  const nextStepItems = steps?.[0]?.collabStepDetail ? (steps).map((step, index) => ([
     {
       label: `Step ${index + 1}`,
       name: 'step',
