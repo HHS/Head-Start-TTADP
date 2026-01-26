@@ -39,6 +39,9 @@ export type SessionReportTableRow = {
   endDate: string | null;
   objectiveTopics: string[] | null;
   goalTemplates: { standard: string }[];
+  recipients: { label: string }[],
+  participants: string[],
+  duration: number,
 };
 
 export type GetSessionReportsResponse = {

@@ -59,6 +59,18 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
         key: 'objectiveTopics',
         header: 'Topics',
       },
+      {
+        key: 'recipients',
+        header: 'Recipients',
+      },
+      {
+        key: 'participants',
+        header: 'Recipient Participants',
+      },
+      {
+        key: 'duration',
+        header: 'duration',
+      },
     ],
   };
 
@@ -70,6 +82,12 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
       : '',
     goalTemplates: Array.isArray(row.goalTemplates)
       ? row.goalTemplates.map((gt) => gt.standard).join(', ')
+      : '',
+    recipients: Array.isArray(row.recipients)
+      ? row.recipients.map((r) => r.label).join(', ')
+      : '',
+    participants: Array.isArray(row.participants)
+      ? row.participants.join(', ')
       : '',
   }));
 
