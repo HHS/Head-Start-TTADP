@@ -3,6 +3,7 @@ import { Op, QueryTypes } from 'sequelize';
 import {
   sequelize,
   Grant,
+  Recipient,
 } from '../models';
 
 // Map from indicator label (as shown in UI) to column name in SQL
@@ -24,6 +25,7 @@ export async function getRecipientSpotlightIndicators(
   offset,
   limit,
   indicatorsToInclude = [],
+  regions = [],
 ) {
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   const grantsWhere = {
@@ -82,6 +84,32 @@ export async function getRecipientSpotlightIndicators(
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
   const grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'TRUE';
+
+  // Query total distinct recipients for the requested regions
+  const totalRecipients = await Recipient.count({
+    distinct: true,
+    col: 'id',
+    include: [{
+      model: Grant,
+      as: 'grants',
+      attributes: [],
+      required: true,
+      where: {
+        regionId: {
+          [Op.in]: regions.map((r) => parseInt(r, 10)),
+        },
+        [Op.or]: [
+          { status: 'Active' },
+          {
+            status: 'Inactive',
+            inactivationDate: {
+              [Op.gte]: INACTIVATION_CUT_OFF,
+            },
+          },
+        ],
+      },
+    }],
+  });
 
   // Build indicator WHERE clause for filtering by priority indicators
   let indicatorWhereClause = 'TRUE';
@@ -370,8 +398,10 @@ export async function getRecipientSpotlightIndicators(
     count: totalCount,
     overview: {
       numRecipients: totalCount.toString(),
-      totalRecipients: '678', // This would need to be calculated separately if needed
-      recipientPercentage: totalCount > 0 ? `${Math.round((totalCount / 678) * 100)}%` : '0%',
+      totalRecipients: totalRecipients.toString(),
+      recipientPercentage: totalRecipients > 0
+        ? `${Math.round((totalCount / totalRecipients) * 100)}%`
+        : '0%',
     },
   };
 }

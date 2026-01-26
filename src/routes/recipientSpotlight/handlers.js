@@ -41,22 +41,22 @@ export async function getRecipientSpotLight(req, res) {
     const requestedRegions = req.query['region.in[]'] || req.query['region.in'];
 
     // Check if user has access to requested regions
-    if (requestedRegions) {
-      // Ensure requestedRegions is an array
-      const regionsArray = Array.isArray(requestedRegions) ? requestedRegions : [requestedRegions];
-
-      // Check if all requested regions are in user's allowed regions
-      const hasAccess = regionsArray.every(
-        (region) => userReadRegions.includes(parseInt(region, DECIMAL_BASE)),
-      );
-
-      if (!hasAccess) {
-        res.sendStatus(httpCodes.FORBIDDEN);
-        return;
-      }
-    } else {
+    if (!requestedRegions) {
       // No regions requested - return forbidden
       // User must explicitly request regions they have access to
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    // Ensure requestedRegions is an array
+    const regionsArray = Array.isArray(requestedRegions) ? requestedRegions : [requestedRegions];
+
+    // Check if all requested regions are in user's allowed regions
+    const hasAccess = regionsArray.every(
+      (region) => userReadRegions.includes(parseInt(region, DECIMAL_BASE)),
+    );
+
+    if (!hasAccess) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
@@ -86,6 +86,7 @@ export async function getRecipientSpotLight(req, res) {
       parsedOffset,
       parsedLimit,
       indicatorsToInclude,
+      regionsArray,
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);
