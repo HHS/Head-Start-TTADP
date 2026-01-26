@@ -8,7 +8,6 @@ import {
   Fieldset,
   Radio,
   Grid,
-  Textarea,
   TextInput,
   Checkbox,
   Label,
@@ -28,6 +27,7 @@ import Req from '../../../components/Req';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import StateMultiSelect from '../../../components/StateMultiSelect';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { COLLAB_REPORT_REASONS, STATES, COLLAB_REPORT_CONDUCT_METHODS } from '../../../Constants';
 
@@ -58,9 +58,10 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const descriptionError = errors?.description?.message;
   const reasonError = errors?.reportReasons?.message;
 
-  const checkForDescription = (el) => {
-    const { value } = el.target;
-    if (!value || value.trim() === '') {
+  const checkForDescription = () => {
+    const value = watch('description');
+    // Have to check value length because editor is returning a hidden character
+    if (!value || value === '<p></p>' || value.length === 8) {
       setError('description', { type: 'required', message: 'Describe the activity' });
     } else {
       clearErrors('description');
@@ -401,28 +402,20 @@ const ActivitySummary = ({ collaborators = [] }) => {
           />
         </FormItem>
       </Fieldset>
-      <Fieldset className={`smart-hub--report-legend ${descriptionError ? 'usa-form-group--error' : ''}`}>
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Description">
         <Label htmlFor="description">
           Activity description
           {' '}
           <Req />
         </Label>
-
-        {descriptionError && (
-        <span className="usa-error-message" role="alert">{descriptionError}</span>
-        )}
-
-        <Textarea
-          id="description"
-          className="height-10 minh-5 smart-hub--text-area__resize-vertical"
-          name="description"
-          defaultValue=""
-          data-testid="description-input"
-          error={!!descriptionError}
-          inputRef={register({ required: 'Describe the activity' })}
-          onBlur={checkForDescription}
-          required
-        />
+        <div className={`smart-hub--text-area__resize-vertical margin-top-1 ${descriptionError ? 'usa-form-group--error' : ''}`}>
+          {descriptionError && (
+          <span className="usa-error-message" role="alert">{descriptionError}</span>
+          )}
+          {/* Don't use 'required' param even though it's required
+            because it messes up error detection for some unknown reason. */}
+          <HookFormRichEditor ariaLabel="Description" name="description" id="description" onBlur={checkForDescription} />
+        </div>
       </Fieldset>
     </>
   );
