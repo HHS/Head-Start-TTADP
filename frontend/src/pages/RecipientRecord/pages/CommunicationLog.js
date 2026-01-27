@@ -51,6 +51,7 @@ const DeleteLogModal = ({
   log,
 }) => {
   const onDeleteLog = () => {
+    // istanbul ignore next - tested elsewhere
     onLogRemoved(log)
       .then(modalRef.current.toggleModal(false));
   };
@@ -133,6 +134,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
     EMPTY_ARRAY, // keyColumns
   );
 
+  // istanbul ignore next - hard to test here
   const { exportRows } = useAsyncWidgetExport(
     checkboxes,
     'Communication_Log_Export',

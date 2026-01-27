@@ -5,22 +5,34 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {
-  render, screen, waitFor, within, act,
+  render, screen, waitFor, within, act, fireEvent,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { useFormContext, useForm } from 'react-hook-form';
 import ActivityReportNavigator, {
   getPrompts,
   getPromptErrors,
-  shouldUpdateFormData,
   formatEndDate,
 } from '../ActivityReportNavigator';
+import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
 import UserContext from '../../../UserContext';
 import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import NavigatorButtons from '../components/NavigatorButtons';
 import RichEditor from '../../RichEditor';
+import * as goalValidator from '../../../pages/ActivityReport/Pages/components/goalValidator';
+import { saveGoalsForReport } from '../../../fetchers/activityReports';
+
+jest.mock('../../../fetchers/activityReports', () => ({
+  saveGoalsForReport: jest.fn(),
+}));
+
+jest.mock('../../../pages/ActivityReport/Pages/components/goalValidator', () => ({
+  validateGoals: jest.fn().mockReturnValue(true),
+  validatePrompts: jest.fn().mockReturnValue(true),
+  OBJECTIVE_RESOURCES: 'Resources are required',
+}));
 
 // user mock
 const user = {
@@ -187,12 +199,17 @@ describe('ActivityReportNavigator', () => {
     editable = true,
     autoSaveInterval = 500,
     shouldAutoSave = true,
+    onHookForm,
   }) => {
     const hookForm = useForm({
       mode: 'onBlur',
       defaultValues: formData,
       shouldUnregister: false,
     });
+
+    if (onHookForm) {
+      onHookForm(hookForm);
+    }
 
     return (
       <UserContext.Provider value={{ user }}>
@@ -246,6 +263,7 @@ describe('ActivityReportNavigator', () => {
     editable = true,
     autoSaveInterval = 500,
     shouldAutoSave = true,
+    onHookForm,
   } = {}) => {
     await act(() => waitFor(() => {
       render(
@@ -260,6 +278,7 @@ describe('ActivityReportNavigator', () => {
           editable={editable}
           autoSaveInterval={autoSaveInterval}
           shouldAutoSave={shouldAutoSave}
+          onHookForm={onHookForm}
         />,
       );
     }));
@@ -282,8 +301,7 @@ describe('ActivityReportNavigator', () => {
   });
 
   it('does not allow saving if the form is not editable', async () => {
-    const isEditable = false;
-    await renderNavigator({ isEditable });
+    await renderNavigator({ editable: false });
 
     fetchMock.restore();
     expect(fetchMock.called()).toBe(false);
@@ -584,5 +602,540 @@ describe('getPromptErrors', () => {
     document.querySelector = jest.fn(() => null);
     const errors = {};
     expect(getPromptErrors(null, errors)).toBe(false);
+  });
+});
+
+describe('ActivityReportNavigator goals page saves', () => {
+  const defaultProps = {
+    editable: true,
+    currentPage: 'goals-objectives',
+    additionalData: {},
+    reportId: 1,
+    isApprover: false,
+    isPendingApprover: false,
+    onFormSubmit: jest.fn(),
+    onSave: jest.fn(),
+    onReview: jest.fn(),
+    updatePage: jest.fn(),
+    updateLastSaveTime: jest.fn(),
+    updateErrorMessage: jest.fn(),
+    setShouldAutoSave: jest.fn(),
+    pages: [
+      {
+        path: 'goals-objectives',
+        label: 'Goals',
+        position: 2,
+        review: false,
+        isPageComplete: jest.fn().mockReturnValue(false),
+        render: (
+          _additionalData,
+          _formData,
+          _reportId,
+          _isAppLoading,
+          onContinue,
+          onSaveDraft,
+          onUpdatePage,
+        ) => (
+          <NavigatorButtons
+            isAppLoading={false}
+            onContinue={onContinue}
+            onSaveDraft={onSaveDraft}
+            onUpdatePage={onUpdatePage}
+            position={2}
+            path="goals-objectives"
+          />
+        ),
+      },
+      {
+        path: 'review', label: 'Review', position: 3, review: true, render: () => <div />,
+      },
+    ],
+  };
+
+  const mockAppLoadingContext = {
+    isAppLoading: false,
+    setIsAppLoading: jest.fn(),
+    setAppLoadingText: jest.fn(),
+  };
+
+  const createMockHookForm = (overrides = {}) => ({
+    getValues: jest.fn((field) => {
+      const values = {
+        regionId: 1,
+        goalName: 'Test Goal',
+        goalPrompts: [],
+        activityRecipients: [],
+        ...overrides.values,
+      };
+      return field ? values[field] : values;
+    }),
+    setValue: jest.fn(),
+    setError: jest.fn(),
+    errors: overrides.errors || {},
+    watch: jest.fn((field) => {
+      if (field === 'goalForEditing') return overrides.goalForEditing || null;
+      if (field === 'goals') return overrides.goals || [];
+      if (field === 'activityRecipients') return overrides.activityRecipients || [];
+      if (field === 'pageState') return overrides.pageState || {};
+      return null;
+    }),
+    trigger: jest.fn().mockResolvedValue(true),
+    reset: jest.fn(),
+    formState: overrides.formState || { isDirty: true, errors: {} },
+  });
+
+  const renderWithContext = (hookForm, props = {}) => render(
+    <AppLoadingContext.Provider value={mockAppLoadingContext}>
+      <ActivityReportNavigator {...defaultProps} {...props} hookForm={hookForm} />
+    </AppLoadingContext.Provider>,
+  );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    defaultProps.onSave.mockReset();
+    defaultProps.updateErrorMessage.mockReset();
+    mockAppLoadingContext.setIsAppLoading.mockReset();
+    mockAppLoadingContext.setAppLoadingText.mockReset();
+    goalValidator.validateGoals.mockReturnValue(true);
+    goalValidator.validatePrompts.mockResolvedValue(true);
+  });
+
+  it('saves goal draft when navigating away from goals page', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: { goalPrompts: [] },
+    });
+
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
+    renderWithContext(hookForm);
+
+    const reviewLink = screen.getByRole('button', { name: /Review/i });
+    userEvent.click(reviewLink);
+
+    await waitFor(() => {
+      // Verifies goalOrder extraction and navigation save
+      expect(defaultProps.onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ goalOrder: expect.any(Array) }),
+      );
+      expect(hookForm.reset).toHaveBeenCalled();
+      expect(mockAppLoadingContext.setIsAppLoading).toHaveBeenCalled();
+    });
+  });
+
+  it('does not save draft goal when prompts have errors', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: {
+        goalPrompts: [{ fieldName: 'prompt-one' }],
+        'goalForEditing.objectives': [],
+      },
+      errors: { 'prompt-one': { type: 'manual', message: 'Error' } },
+    });
+
+    renderWithContext(hookForm);
+
+    const saveDraftButton = screen.getByRole('button', { name: /save draft/i });
+    userEvent.click(saveDraftButton);
+
+    expect(saveGoalsForReport).not.toHaveBeenCalled();
+  });
+
+  it('does not save draft goal when resources are invalid', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: {
+        goalPrompts: [],
+        'goalForEditing.objectives': [{
+          resources: [{ value: 'http://test' }],
+        }],
+      },
+    });
+
+    renderWithContext(hookForm);
+
+    const saveDraftButton = screen.getByRole('button', { name: /save draft/i });
+    userEvent.click(saveDraftButton);
+
+    expect(saveGoalsForReport).not.toHaveBeenCalled();
+  });
+
+  it('autosave marks invalid resources when goal is being edited', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: {
+        goalPrompts: [],
+        'goalForEditing.objectives': [{
+          resources: [{ value: 'http://test' }],
+        }],
+      },
+    });
+
+    saveGoalsForReport.mockResolvedValueOnce([]);
+
+    renderWithContext(hookForm, { autoSaveInterval: 200, shouldAutoSave: true });
+
+    act(() => {
+      jest.advanceTimersByTime(400);
+    });
+
+    await waitFor(() => expect(hookForm.setError).toHaveBeenCalledWith(
+      'goalForEditing.objectives[0].resources',
+      { message: 'Resources are required' },
+    ));
+  });
+
+  it('focuses and exits when goals are invalid', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: { goalPrompts: [] },
+    });
+    const focus = jest.fn();
+    const originalQuerySelector = document.querySelector;
+    document.querySelector = jest.fn(() => ({ focus }));
+    goalValidator.validateGoals.mockReturnValueOnce(false);
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => expect(focus).toHaveBeenCalled());
+
+    document.querySelector = originalQuerySelector;
+  });
+
+  it('stops save when prompts have errors on continue', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
+      values: {
+        goalPrompts: [{ fieldName: 'prompt-two' }],
+      },
+      errors: { 'prompt-two': { type: 'manual', message: 'Error' } },
+    });
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    expect(defaultProps.onSave).not.toHaveBeenCalled();
+  });
+
+  it('resets goal form fields after successful Save and Continue', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, name: 'Goal' },
+      values: { goalPrompts: [] },
+      formState: { isDirty: true, errors: {} }, // No errors to block getPromptErrors
+    });
+
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(hookForm.setValue).toHaveBeenCalledWith('goalName', '');
+      expect(hookForm.setValue).toHaveBeenCalledWith('goalForEditing', '');
+      expect(hookForm.reset).toHaveBeenCalled();
+    });
+  });
+
+  it('shows an error when Save and Continue returns no data', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1, name: 'Goal' },
+      values: { goalPrompts: [] },
+      formState: { isDirty: true, errors: {} },
+    });
+
+    defaultProps.onSave.mockResolvedValue(null);
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.updateErrorMessage).toHaveBeenCalledWith(
+        expect.stringContaining('A network error has prevented us from saving'),
+      );
+    });
+  });
+
+  it('handles errors when onSaveAndContinue fails', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 1 },
+      values: { goalPrompts: [] },
+      formState: { isDirty: true, errors: {} },
+    });
+
+    defaultProps.onSave.mockRejectedValue(new Error('API Failure'));
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(defaultProps.updateErrorMessage).toHaveBeenCalledWith(
+        expect.stringContaining('A network error has prevented us from saving'),
+      );
+    });
+  });
+});
+
+describe('ActivityReportNavigator autosave with shouldUpdateFormData', () => {
+  const defaultProps = {
+    editable: true,
+    currentPage: 'activity-summary',
+    additionalData: {},
+    reportId: 1,
+    isApprover: false,
+    isPendingApprover: false,
+    onFormSubmit: jest.fn(),
+    onSave: jest.fn(),
+    onReview: jest.fn(),
+    updatePage: jest.fn(),
+    updateLastSaveTime: jest.fn(),
+    updateErrorMessage: jest.fn(),
+    setShouldAutoSave: jest.fn(),
+    shouldAutoSave: true,
+    autoSaveInterval: 200,
+    pages: [
+      {
+        path: 'activity-summary',
+        label: 'Activity Summary',
+        position: 0,
+        review: false,
+        isPageComplete: jest.fn().mockReturnValue(false),
+        render: (
+          _additionalData,
+          _formData,
+          _reportId,
+          _isAppLoading,
+          onContinue,
+          onSaveDraft,
+          onUpdatePage,
+        ) => (
+          <>
+            <div>Activity Summary</div>
+            <NavigatorButtons
+              isAppLoading={false}
+              onContinue={onContinue}
+              onSaveDraft={onSaveDraft}
+              onUpdatePage={onUpdatePage}
+              position={0}
+              path="activity-summary"
+            />
+          </>
+        ),
+      },
+      {
+        path: 'goals-objectives',
+        label: 'Goals',
+        position: 2,
+        review: false,
+        isPageComplete: jest.fn().mockReturnValue(false),
+        render: () => <div>Goals</div>,
+      },
+      {
+        path: 'review', label: 'Review', position: 3, review: true, render: () => <div />,
+      },
+    ],
+  };
+
+  const mockAppLoadingContext = {
+    isAppLoading: false,
+    setIsAppLoading: jest.fn(),
+    setAppLoadingText: jest.fn(),
+  };
+
+  const createMockHookForm = (overrides = {}) => ({
+    getValues: jest.fn((field) => {
+      const values = {
+        regionId: 1,
+        activityRecipients: [],
+        ...overrides.values,
+      };
+      return field ? values[field] : values;
+    }),
+    setValue: jest.fn(),
+    setError: jest.fn(),
+    errors: overrides.errors || {},
+    watch: jest.fn((field) => {
+      if (field === 'goalForEditing') return null;
+      if (field === 'goals') return [];
+      if (field === 'activityRecipients') return [];
+      if (field === 'pageState') return {};
+      return null;
+    }),
+    trigger: jest.fn().mockResolvedValue(true),
+    reset: jest.fn(),
+    formState: overrides.formState || { isDirty: true, errors: {} },
+  });
+
+  const renderWithContext = (hookForm, props = {}) => render(
+    <AppLoadingContext.Provider value={mockAppLoadingContext}>
+      <ActivityReportNavigator {...defaultProps} {...props} hookForm={hookForm} />
+    </AppLoadingContext.Provider>,
+  );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    defaultProps.onSave.mockReset();
+    defaultProps.updateErrorMessage.mockReset();
+    mockAppLoadingContext.setIsAppLoading.mockReset();
+    mockAppLoadingContext.setAppLoadingText.mockReset();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
+  it('calls reset() during autosave when cursor is NOT in rich text editor', async () => {
+    const hookForm = createMockHookForm();
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
+    // Mock shouldUpdateFormData to return true (cursor NOT in RTE)
+    jest.spyOn(document, 'querySelectorAll').mockReturnValue([]);
+
+    renderWithContext(hookForm);
+
+    // Trigger autosave by advancing timers
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+      expect(hookForm.reset).toHaveBeenCalledWith({ id: 1, goals: [] }, { errors: true });
+    });
+  });
+
+  it('does NOT call reset() during autosave when cursor is in rich text editor', async () => {
+    const hookForm = createMockHookForm();
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
+    // Mock shouldUpdateFormData to return false (cursor in RTE)
+    const mockEditor = {
+      contains: jest.fn(() => true),
+    };
+    jest.spyOn(document, 'querySelectorAll').mockReturnValue([mockEditor]);
+    jest.spyOn(document, 'getSelection').mockReturnValue({
+      anchorNode: document.createElement('div'),
+    });
+
+    renderWithContext(hookForm);
+
+    // Trigger autosave by advancing timers
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+    });
+
+    // reset should NOT be called when cursor is in RTE during autosave
+    expect(hookForm.reset).not.toHaveBeenCalled();
+  });
+
+  it('always calls reset() during manual save regardless of cursor position', async () => {
+    const hookForm = createMockHookForm();
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
+    // Mock shouldUpdateFormData to return false (cursor in RTE)
+    const mockEditor = {
+      contains: jest.fn(() => true),
+    };
+    jest.spyOn(document, 'querySelectorAll').mockReturnValue([mockEditor]);
+    jest.spyOn(document, 'getSelection').mockReturnValue({
+      anchorNode: document.createElement('div'),
+    });
+
+    renderWithContext(hookForm);
+
+    // Click Save Draft button (manual save)
+    const saveDraftButton = screen.getByRole('button', { name: /save draft/i });
+    fireEvent.click(saveDraftButton);
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+      // reset SHOULD be called even with cursor in RTE for manual saves
+      expect(hookForm.reset).toHaveBeenCalledWith({ id: 1, goals: [] }, { errors: true });
+    });
+  });
+
+  it('always calls updateLastSaveTime regardless of shouldUpdateFormData result', async () => {
+    const hookForm = createMockHookForm();
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
+    // Mock shouldUpdateFormData to return false (cursor in RTE)
+    const mockEditor = {
+      contains: jest.fn(() => true),
+    };
+    jest.spyOn(document, 'querySelectorAll').mockReturnValue([mockEditor]);
+    jest.spyOn(document, 'getSelection').mockReturnValue({
+      anchorNode: document.createElement('div'),
+    });
+
+    renderWithContext(hookForm);
+
+    // Trigger autosave
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+      expect(defaultProps.updateLastSaveTime).toHaveBeenCalled();
+    });
+  });
+
+  it('does not show loading screen during autosave', async () => {
+    const hookForm = createMockHookForm();
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
+    renderWithContext(hookForm);
+
+    // Trigger autosave
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+    });
+
+    // Loading screen should NOT be shown for autosave
+    expect(mockAppLoadingContext.setAppLoadingText).not.toHaveBeenCalled();
+  });
+
+  it('shows loading screen during manual save', async () => {
+    const hookForm = createMockHookForm();
+    defaultProps.onSave.mockResolvedValue({ id: 1, goals: [] });
+
+    renderWithContext(hookForm);
+
+    // Click Save Draft button (manual save)
+    const saveDraftButton = screen.getByRole('button', { name: /save draft/i });
+    fireEvent.click(saveDraftButton);
+
+    await waitFor(() => {
+      expect(mockAppLoadingContext.setAppLoadingText).toHaveBeenCalledWith('Saving');
+      expect(mockAppLoadingContext.setIsAppLoading).toHaveBeenCalledWith(true);
+    });
   });
 });

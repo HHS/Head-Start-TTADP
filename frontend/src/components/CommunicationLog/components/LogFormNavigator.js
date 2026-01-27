@@ -58,16 +58,20 @@ const LogFormNavigator = ({
 
   const formData = getValues();
 
-  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   useEffect(() => {
     // fetch communication log data
     async function fetchLog() {
+      // Note: We don't need to check isAppLoading here because:
+      // 1. reportFetched flag prevents refetching after initial load
+      // 2. This effect only runs when meaningful dependencies change (reportId, currentPage, etc.)
+      // 3. Not checking isAppLoading prevents unnecessary effect re-runs during saves
       if (!shouldFetch({
         communicationLogId: reportId.current,
         regionId,
         reportFetched,
-        isAppLoading,
+        isAppLoading: false, // Always pass false - reportFetched handles preventing concurrent fetches
         currentPage,
         recipientId,
       })) {
@@ -98,7 +102,6 @@ const LogFormNavigator = ({
     reset,
     regionId,
     reportFetched,
-    isAppLoading,
     setIsAppLoading,
     currentPage,
     setError,

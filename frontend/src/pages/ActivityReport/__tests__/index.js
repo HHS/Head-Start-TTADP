@@ -97,7 +97,7 @@ describe('ActivityReport', () => {
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
     });
 
-    it('does not allow approvers to navigate and change the report if the report has been approvedby one approver', async () => {
+    it('allows approvers to navigate and change the report even if another approver has already approved', async () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', {
         ...data,
@@ -119,7 +119,8 @@ describe('ActivityReport', () => {
         ],
       });
       renderActivityReport(1, 'activity-summary', null, 3);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+      const startDate = await screen.findByRole('textbox', { name: /start date/i });
+      expect(startDate).toBeVisible();
     });
 
     it('allows approvers to navigate and change the report if the report is submitted', async () => {
@@ -134,6 +135,48 @@ describe('ActivityReport', () => {
 
       const startDate = await screen.findByRole('textbox', { name: /start date/i });
       expect(startDate).toBeVisible();
+    });
+
+    it('allows approvers to navigate and change the report if the report needs action', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [{ user: { id: 3 } }],
+      });
+      renderActivityReport(1, 'activity-summary', null, 3);
+
+      const startDate = await screen.findByRole('textbox', { name: /start date/i });
+      expect(startDate).toBeVisible();
+    });
+
+    it('allows approvers to save changes when the report needs action', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [
+          { user: { id: 3 }, status: null },
+          { user: { id: 4 }, status: REPORT_STATUSES.NEEDS_ACTION },
+        ],
+      });
+      fetchMock.put('/api/activity-reports/1', (url, opts) => ({
+        ...data,
+        ...JSON.parse(opts.body),
+      }));
+
+      renderActivityReport(1, 'activity-summary', null, 3);
+
+      const participantsInput = await screen.findByLabelText(/number of participants/i);
+      userEvent.clear(participantsInput);
+      userEvent.type(participantsInput, '2');
+
+      const saveButton = await screen.findByRole('button', { name: /save draft/i });
+      userEvent.click(saveButton);
+
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1', { method: 'put' })).toBeTruthy());
     });
   });
 
@@ -178,6 +221,33 @@ describe('ActivityReport', () => {
       // Only network save times are displayed when available
       const alerts = screen.queryAllByTestId('alert');
       expect(alerts.length).toBe(0);
+    });
+  });
+
+  describe('validation persistence', () => {
+    it('keeps activity summary errors after review navigation', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', data);
+      fetchMock.put('/api/activity-reports/1', { ...data, targetPopulations: [] });
+
+      renderActivityReport('1', 'activity-summary');
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+
+      const targetPopulationsInput = await screen.findByRole('combobox', { name: /target populations addressed/i });
+      await reactSelectEvent.clearAll(targetPopulationsInput);
+      userEvent.tab();
+
+      expect(await screen.findByText('Select at least one')).toBeInTheDocument();
+
+      const reviewButton = await screen.findByRole('button', { name: /review and submit/i });
+      userEvent.click(reviewButton);
+      await screen.findByText('Review and submit');
+
+      const activitySummaryButton = await screen.findByRole('button', { name: /activity summary/i });
+      userEvent.click(activitySummaryButton);
+
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+      expect(await screen.findByText('Select at least one')).toBeInTheDocument();
     });
   });
 

@@ -6,6 +6,13 @@ import { createMemoryHistory } from 'history';
 import Notifications from '../index';
 import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
 
+jest.mock('moment', () => {
+  const actualMoment = jest.requireActual('moment');
+  const mockMoment = (input) => (input ? actualMoment(input) : actualMoment('2025-06-01'));
+  Object.assign(mockMoment, actualMoment);
+  return mockMoment;
+});
+
 describe('Notifications', () => {
   const history = createMemoryHistory();
   const renderNotifications = (data = { whatsNew: mockRSSData() }) => render(

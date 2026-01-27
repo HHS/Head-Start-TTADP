@@ -79,7 +79,7 @@ const inProgressEvents = [{
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
       pocComplete: false,
-      ownerComplete: false,
+      collabComplete: false,
       submitted: false,
       facilitation: 'national_centers',
     },
@@ -552,12 +552,12 @@ describe('TrainingReports', () => {
       expect(result).toBeNull();
     });
 
-    it('returns session message when isSession is true', () => {
+    it('returns correct message template', () => {
       const mockHistory = {
         location: {
           state: {
             message: {
-              isSession: true,
+              messageTemplate: 'sessionReviewSubmitted',
               sessionName: 'My Session',
               eventId: 'R01-PD-1234',
               dateStr: '12/18/2025 at 3:30 pm EST',

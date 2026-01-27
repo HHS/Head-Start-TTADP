@@ -8,7 +8,7 @@ export const sessionSummaryRequiredFields = {
   duration: '',
   objective: '',
   objectiveTopics: [],
-  objectiveTrainers: [],
+  trainers: [],
   objectiveSupportType: '',
   regionId: '',
   ttaProvided: '',
@@ -36,7 +36,7 @@ export const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
   pocComplete: false,
-  ownerComplete: false,
+  collabComplete: false,
 };
 
 export const defaultFormValues = {
@@ -109,7 +109,7 @@ export const defaultKeys = [
   'status',
   'pageState',
   'pocComplete',
-  'ownerComplete',
+  'collabComplete',
   'facilitation',
   'additionalNotes',
   'approverId',
@@ -120,6 +120,7 @@ export const defaultKeys = [
   'additionalStates',
   'reviewStatus',
   'approvalStatus',
+  'trainers',
 ];
 
 export const istKeys = [
@@ -131,7 +132,6 @@ export const istKeys = [
   'context',
   'objective',
   'objectiveTopics',
-  'objectiveTrainers',
   'goalTemplates',
   'useIpdCourses',
   'courses',

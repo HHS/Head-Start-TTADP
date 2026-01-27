@@ -7,15 +7,12 @@ import Modal from '../../../components/VanillaModal';
 import {
   InProgress,
   Closed,
-  NeedsActionIcon,
   NoStatus,
   Pencil,
   Trash,
 } from '../../../components/icons';
 import useSessionCardPermissions from '../../../hooks/useSessionCardPermissions';
 import './SessionCard.scss';
-
-const FRIENDLY_NEEDS_ACTION = 'Needs action';
 
 const CardData = ({ label, children }) => (
   <li className="ttahub-session-card__card-data desktop:padding-bottom-05 flex-align-start padding-bottom-1">
@@ -44,14 +41,16 @@ function SessionCard({
   eventOrganizer,
 }) {
   const modalRef = useRef();
-  const { goalTemplates } = session;
+  const {
+    goalTemplates,
+    trainers,
+  } = session;
   const {
     sessionName,
     startDate,
     endDate,
     objective,
     objectiveSupportType,
-    objectiveTrainers,
     status,
   } = session.data;
 
@@ -61,7 +60,7 @@ function SessionCard({
       case TRAINING_REPORT_STATUSES.COMPLETE:
         return status;
       case REPORT_STATUSES.NEEDS_ACTION:
-        return FRIENDLY_NEEDS_ACTION;
+        return TRAINING_REPORT_STATUSES.IN_PROGRESS;
       default:
         return TRAINING_REPORT_STATUSES.NOT_STARTED;
     }
@@ -70,9 +69,6 @@ function SessionCard({
   const displaySessionStatus = getSessionDisplayStatusText();
 
   const getSessionStatusIcon = (() => {
-    if (displaySessionStatus === FRIENDLY_NEEDS_ACTION) {
-      return <NeedsActionIcon />;
-    }
     if (displaySessionStatus === TRAINING_REPORT_STATUSES.IN_PROGRESS) {
       return <InProgress />;
     }
@@ -91,6 +87,8 @@ function SessionCard({
     eventStatus,
     eventOrganizer,
   });
+
+  const objectiveTrainers = (trainers || []).map((tr) => tr.fullName);
 
   return (
     <div>
@@ -173,6 +171,7 @@ function SessionCard({
 export const sessionPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   goalTemplates: PropTypes.arrayOf(PropTypes.shape({ standard: PropTypes.string })).isRequired,
+  trainers: PropTypes.arrayOf(PropTypes.shape({ fullName: PropTypes.string })).isRequired,
   data: PropTypes.shape({
     facilitation: PropTypes.string.isRequired,
     regionId: PropTypes.number.isRequired,
@@ -181,7 +180,6 @@ export const sessionPropTypes = PropTypes.shape({
     endDate: PropTypes.string.isRequired,
     objective: PropTypes.string.isRequired,
     objectiveSupportType: PropTypes.string.isRequired,
-    objectiveTrainers: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.oneOf([
       'In progress',
       'Complete',
@@ -189,7 +187,7 @@ export const sessionPropTypes = PropTypes.shape({
     ]),
     pocComplete: PropTypes.bool.isRequired,
     submitted: PropTypes.bool,
-    ownerComplete: PropTypes.bool.isRequired,
+    collabComplete: PropTypes.bool.isRequired,
   }).isRequired,
   approverId: PropTypes.number,
 });
