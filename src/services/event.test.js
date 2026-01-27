@@ -750,6 +750,19 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(importedEvent.data.targetPopulations).toEqual(['Program Staff', 'Expectant families']);
     });
 
+    it('errors when all target populations are invalid', async () => {
+      const reportId = 'R01-TR-9999';
+      const invalidPopulation = '"Invalid Pop Only"';
+
+      const d = `${headings.join(',')}
+${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${invalidPopulation},${audience},${poc.name}`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
+      expect(result.count).toEqual(0);
+      expect(result.errors.length).toEqual(1);
+      expect(result.errors).toEqual(['Target populations is required!']);
+    });
+
     it('skips rows that have an invalid audience', async () => {
       const reportId = 'R01-TR-5725';
       const mixedColumns = `${headings.join(',')},Extra Column`;
