@@ -30,7 +30,6 @@ import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
 import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
-import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -425,15 +424,13 @@ export default function SessionForm({ match }) {
     return updatedRoleData;
   };
 
-  const onSave = async (isAutoSave = false) => {
+  const onSave = async () => {
     // Only do this if the session is not complete.
     if (formData.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
       try {
         // reset the error message
         setError('');
-        if (!isAutoSave) {
-          setIsAppLoading(true);
-        }
+        setIsAppLoading(true);
         hookForm.clearErrors();
 
         // grab the newest data from the form
@@ -473,29 +470,12 @@ export default function SessionForm({ match }) {
           eventId: trainingReportId || null,
         });
 
-        // Only reset the form if the user is not actively editing a WYSIWYG editor.
-        // This prevents focus loss and cursor position reset during autosave.
-        const allowUpdateForm = shouldUpdateFormData(isAutoSave);
-        if (allowUpdateForm) {
-          resetFormData({
-            reset: hookForm.reset,
-            updatedSession,
-            isPocFromSession: isPoc,
-            isAdminUser,
-            isCollaborator,
-            eventOrganizer,
-            isApprover,
-          });
-        }
-
         updateLastSaveTime(moment(updatedSession.updatedAt));
         updateShowSavedDraft(true);
       } catch (err) {
         setError('There was an error saving the session. Please try again later.');
       } finally {
-        if (!isAutoSave) {
-          setIsAppLoading(false);
-        }
+        setIsAppLoading(false);
       }
     }
   };
