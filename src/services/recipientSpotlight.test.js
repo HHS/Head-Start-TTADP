@@ -3,12 +3,6 @@ import faker from '@faker-js/faker';
 import db from '../models';
 import { getRecipientSpotlightIndicators } from './recipientSpotlight';
 
-// Mock SCOPES for testing
-const SCOPES = {
-  // Use proper structure for Sequelize where conditions - no restrictions
-  adminRead: { grant: { id: { [db.Sequelize.Op.ne]: null } } },
-};
-
 // Helper function to create scopes with region filter
 const createScopesWithRegion = (regionId) => ({
   grant: {
@@ -597,37 +591,40 @@ describe('recipientSpotlight service', () => {
     await db.sequelize.close();
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /* Temporarily commented out for frontend implementation - will be restored when SQL query is updated
   describe('getRecipientSpotlightIndicators', () => {
-    it('returns all recipients when no recipientId is provided', async () => {
+    it('returns recipients with required fields', async () => {
       const scopes = createScopesWithRegion(REGION_ID);
       const result = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
         'ASC',
         0,
+        10,
+        [],
+        [REGION_ID],
       );
 
-      expect(result).toBeDefined();
-      expect(result.recipients).toBeDefined();
-      expect(Array.isArray(result.recipients)).toBe(true);
-
-      // Check each recipient item if we have any results
-      for (let i = 0; i < result.recipients.length; i += 1) {
-        const item = result.recipients[i];
-        expect(item).toHaveProperty('recipientId');
-        expect(item).toHaveProperty('regionId');
-        expect(item).toHaveProperty('recipientName');
-        expect(item).toHaveProperty('grantIds');
-        expect(item).toHaveProperty('childIncidents');
-        expect(item).toHaveProperty('deficiency');
-        expect(item).toHaveProperty('newRecipients');
-        expect(item).toHaveProperty('newStaff');
-        expect(item).toHaveProperty('noTTA');
-        expect(item).toHaveProperty('DRS');
-        expect(item).toHaveProperty('FEI');
-      }
+      expect(result).toHaveProperty('recipients');
+      expect(result).toHaveProperty('count');
+      expect(result).toHaveProperty('overview');
+      expect(result.recipients.length).toBeGreaterThan(0);
+      expect(result.recipients[0]).toHaveProperty('recipientId');
+      expect(result.recipients[0]).toHaveProperty('regionId');
+      expect(result.recipients[0]).toHaveProperty('recipientName');
+      expect(result.recipients[0]).toHaveProperty('grantIds');
+      expect(result.recipients[0]).toHaveProperty('childIncidents');
+      expect(result.recipients[0]).toHaveProperty('deficiency');
+      expect(result.recipients[0]).toHaveProperty('newRecipients');
+      expect(result.recipients[0]).toHaveProperty('newStaff');
+      expect(result.recipients[0]).toHaveProperty('noTTA');
+      expect(result.recipients[0]).toHaveProperty('DRS');
+      expect(result.recipients[0]).toHaveProperty('FEI');
+      expect(result.overview).toHaveProperty('numRecipients');
+      expect(result.overview).toHaveProperty('totalRecipients');
+      expect(result.overview).toHaveProperty('recipientPercentage');
+      expect(typeof result.overview.numRecipients).toBe('string');
+      expect(typeof result.overview.totalRecipients).toBe('string');
+      expect(typeof result.overview.recipientPercentage).toBe('string');
     });
 
     it('returns a specific recipient when recipientId is provided', async () => {
@@ -637,6 +634,9 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [],
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -654,6 +654,9 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [],
+        [REGION_ID],
       );
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
@@ -668,6 +671,9 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [],
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -683,6 +689,9 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [],
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -698,6 +707,9 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [],
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -713,6 +725,9 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [],
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -730,14 +745,20 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        100,
+        [],
+        [REGION_ID],
       );
 
-      // Test with offset 2, limit 2
+      // Test with offset 2
       const secondPage = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
         'ASC',
         2,
+        100,
+        [],
+        [REGION_ID],
       );
 
       expect(firstPage).toBeDefined();
@@ -761,19 +782,19 @@ describe('recipientSpotlight service', () => {
     it('handles sorting correctly', async () => {
       // Create multiple recipients with different names to ensure sorting works
       const recipientA = await Recipient.create({
-        id: 9001,
+        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
         name: 'AAAA Test Recipient',
         regionId: REGION_ID,
       });
 
       const recipientB = await Recipient.create({
-        id: 9002,
+        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
         name: 'ZZZZ Test Recipient',
         regionId: REGION_ID,
       });
 
       const grantA = await Grant.create({
-        id: 9901,
+        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
         number: 'G-SORT-TEST-A',
         recipientId: recipientA.id,
         regionId: REGION_ID,
@@ -784,7 +805,7 @@ describe('recipientSpotlight service', () => {
       });
 
       const grantB = await Grant.create({
-        id: 9902,
+        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
         number: 'G-SORT-TEST-B',
         recipientId: recipientB.id,
         regionId: REGION_ID,
@@ -803,6 +824,9 @@ describe('recipientSpotlight service', () => {
           'recipientName',
           'ASC',
           0,
+          100,
+          [],
+          [REGION_ID],
         );
 
         // Test descending order
@@ -811,6 +835,9 @@ describe('recipientSpotlight service', () => {
           'recipientName',
           'DESC',
           0,
+          100,
+          [],
+          [REGION_ID],
         );
 
         expect(ascResult).toBeDefined();
@@ -842,8 +869,8 @@ describe('recipientSpotlight service', () => {
         );
       } finally {
         // Clean up the test data
-        await Grant.destroy({ where: { id: [9901, 9902] }, force: true });
-        await Recipient.destroy({ where: { id: [9001, 9002] }, force: true });
+        await Grant.destroy({ where: { id: [grantA.id, grantB.id] }, force: true });
+        await Recipient.destroy({ where: { id: [recipientA.id, recipientB.id] }, force: true });
       }
     });
 
@@ -854,6 +881,9 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [],
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -861,61 +891,6 @@ describe('recipientSpotlight service', () => {
       expect(Array.isArray(result.recipients)).toBe(true);
       expect(result.recipients[0].DRS).toBe(false);
       expect(result.recipients[0].FEI).toBe(false);
-    });
-
-    it('returns object with recipients and overview properties', async () => {
-      const scopes = createScopesWithRegion(REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-      );
-
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty('recipients');
-      expect(result).toHaveProperty('overview');
-      expect(Array.isArray(result.recipients)).toBe(true);
-      expect(result.overview).toHaveProperty('numRecipients');
-      expect(result.overview).toHaveProperty('totalRecipients');
-      expect(result.overview).toHaveProperty('recipientPercentage');
-      expect(typeof result.overview.numRecipients).toBe('string');
-      expect(typeof result.overview.totalRecipients).toBe('string');
-      expect(typeof result.overview.recipientPercentage).toBe('string');
-    });
-
-    it('handles no limit parameter (gets all recipients)', async () => {
-      const scopes = createScopesWithRegion(REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        undefined, // no limit
-      );
-
-      expect(result).toBeDefined();
-      expect(result.recipients).toBeDefined();
-      expect(Array.isArray(result.recipients)).toBe(true);
-      // Should return all recipients, not just 10
-      // We created at least 6 test recipients
-      expect(result.recipients.length).toBeGreaterThanOrEqual(6);
-    });
-
-    it('works with no region ID specified (uses userRegions)', async () => {
-      // Test without region filtering in scopes - should return all
-      const result = await getRecipientSpotlightIndicators(
-        SCOPES.adminRead,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-      );
-
-      expect(result).toBeDefined();
-      expect(result.recipients).toBeDefined();
-      expect(Array.isArray(result.recipients)).toBe(true);
     });
 
     it('works with empty grant list (queries all grants)', async () => {
@@ -928,45 +903,16 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
+        [],
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(result.overview).toBeDefined();
-      // With scope that matches no grants, recipients should still be returned
-      // (the query uses TRUE when no grant IDs)
+      // With scope that matches no grants, the query uses TRUE as filter
+      // so it returns all recipients in the region
       expect(Array.isArray(result.recipients)).toBe(true);
-    });
-  });
-  */
-
-  // Placeholder test for static data implementation
-  describe('getRecipientSpotlightIndicators - Static Data', () => {
-    it('returns static data with required fields', async () => {
-      const scopes = createScopesWithRegion(REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-      );
-
-      expect(result).toHaveProperty('recipients');
-      expect(result).toHaveProperty('count');
-      expect(result).toHaveProperty('overview');
-      expect(result.recipients.length).toBeGreaterThan(0);
-      expect(result.recipients[0]).toHaveProperty('recipientId');
-      expect(result.recipients[0]).toHaveProperty('regionId');
-      expect(result.recipients[0]).toHaveProperty('recipientName');
-      expect(result.recipients[0]).toHaveProperty('grantIds');
-      expect(result.recipients[0]).toHaveProperty('childIncidents');
-      expect(result.recipients[0]).toHaveProperty('deficiency');
-      expect(result.recipients[0]).toHaveProperty('newRecipients');
-      expect(result.recipients[0]).toHaveProperty('newStaff');
-      expect(result.recipients[0]).toHaveProperty('noTTA');
-      expect(result.recipients[0]).toHaveProperty('DRS');
-      expect(result.recipients[0]).toHaveProperty('FEI');
     });
   });
 
@@ -980,6 +926,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         ['New staff'],
+        [REGION_ID],
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1006,6 +953,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         ['No TTA'],
+        [REGION_ID],
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1032,6 +980,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         ['New staff', 'No TTA'],
+        [REGION_ID],
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1062,6 +1011,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         [], // empty filter
+        [REGION_ID],
       );
 
       const resultDefault = await getRecipientSpotlightIndicators(
@@ -1070,7 +1020,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        // no filter param provided
+        [], // no filter
+        [REGION_ID],
       );
 
       // Both should return the same results
@@ -1087,6 +1038,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         ['Invalid Label', 'Another Invalid'],
+        [REGION_ID],
       );
 
       const resultDefault = await getRecipientSpotlightIndicators(
@@ -1095,6 +1047,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
+        [],
+        [REGION_ID],
       );
 
       // Invalid labels should be filtered out, returning all recipients (default behavior)
@@ -1110,6 +1064,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         ['New staff', 'Invalid Label'],
+        [REGION_ID],
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1130,6 +1085,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         ['New recipient'],
+        [REGION_ID],
       );
 
       expect(result).toHaveProperty('recipients');

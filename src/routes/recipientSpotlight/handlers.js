@@ -77,8 +77,6 @@ export async function getRecipientSpotLight(req, res) {
         : [indicatorFilterIn];
     }
 
-    console.log('\n\n\n-----indicatorFilterIn ', indicatorFilterIn);
-
     const recipientSpotlightData = await getRecipientSpotlightIndicators(
       scopes,
       sortBy,
