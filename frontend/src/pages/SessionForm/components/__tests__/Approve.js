@@ -1,9 +1,13 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import Approve from '../Approve';
 
-// eslint-disable-next-line react/prop-types
+jest.mock('../../../../components/HookFormRichEditor', () => function MockHookFormRichEditor({ id, name, ariaLabel }) {
+  return <textarea id={id} name={name} aria-label={ariaLabel} data-testid="rich-editor" />;
+});
+
 const FormWrapper = ({ defaultValues }) => {
   const hookForm = useForm({
     mode: 'onChange',
