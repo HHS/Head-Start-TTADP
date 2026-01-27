@@ -144,6 +144,12 @@ export async function getAccessToken(req) {
     }
 
     const client = await getOidcClient();
+    const pkce = req.session?.pkce;
+    if (!pkce?.codeVerifier) {
+      auditLogger.error('OIDC callback missing PKCE code verifier. Possible lost session.');
+      return undefined;
+    }
+
     // Send the authorization code and the code verifier in a request for an access token.
     // The authorization server recomputes the challenge from the verifier using the previously
     // agreed-upon hash algorithm, and compares the challenge with the one it associated
@@ -152,16 +158,11 @@ export async function getAccessToken(req) {
      * @type {import('openid-client').AuthorizationCodeGrantChecks}
      */
     const options = {
-      pkceCodeVerifier: req.session.pkce.codeVerifier,
-      expectedState: req.session.pkce.state,
-      expectedNonce: req.session.pkce.nonce,
+      pkceCodeVerifier: pkce?.codeVerifier,
+      expectedState: pkce?.state,
+      expectedNonce: pkce?.nonce,
       idTokenExpected: true,
     };
-
-    if (!req.session?.pkce?.codeVerifier) {
-      auditLogger.error('OIDC callback missing PKCE code verifier. Possible lost session.');
-      return undefined;
-    }
 
     const tokens = await client.authorizationCodeGrant(issuerConfig, currentUrl, options);
 

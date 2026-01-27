@@ -247,6 +247,23 @@ describe('authMiddleware', () => {
     );
   });
 
+  it('getAccessToken: returns undefined when PKCE verifier is missing', async () => {
+    const req = {
+      originalUrl: '/oauth2-client/login/oauth2/code/?code=abc&state=state',
+      protocol: 'http',
+      get: () => 'localhost:3000',
+      session: {
+        pkce: { state: 'state', nonce: 'nonce' },
+      },
+    };
+
+    const token = await getAccessToken(req);
+    expect(token).toBeUndefined();
+
+    const oc = require('openid-client');
+    expect(oc.authorizationCodeGrant).not.toHaveBeenCalled();
+  });
+
   it('getAccessToken: returns undefined on error', async () => {
     const oc = require('openid-client');
     oc.authorizationCodeGrant.mockRejectedValueOnce(new Error('boom'));
