@@ -1147,4 +1147,92 @@ describe('recipientSpotlight service', () => {
       expect(newRecipientResult).toBeDefined();
     });
   });
+
+  describe('totalRecipients counts recipient-region pairs', () => {
+    let multiRegionRecipient;
+    let grantRegion1;
+    let grantRegion2;
+    const REGION_1 = 1;
+    const REGION_2 = 2;
+    const pastFiveYearsLocal = new Date();
+    pastFiveYearsLocal.setFullYear(pastFiveYearsLocal.getFullYear() - 5);
+
+    beforeAll(async () => {
+      // Create GrantNumberLinks for our test grant numbers
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: 'G-MULTI-R1' },
+        { grantNumber: 'G-MULTI-R2' },
+      ], { ignoreDuplicates: true });
+
+      // Create a single recipient
+      multiRegionRecipient = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })),
+        name: 'Multi Region Recipient',
+      });
+
+      // Create grants in different regions for same recipient
+      grantRegion1 = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })),
+        number: 'G-MULTI-R1',
+        recipientId: multiRegionRecipient.id,
+        regionId: REGION_1,
+        status: 'Active',
+        startDate: pastFiveYearsLocal,
+      });
+
+      grantRegion2 = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })),
+        number: 'G-MULTI-R2',
+        recipientId: multiRegionRecipient.id,
+        regionId: REGION_2,
+        status: 'Active',
+        startDate: pastFiveYearsLocal,
+      });
+    });
+
+    afterAll(async () => {
+      const grantIdsToDelete = [grantRegion1?.id, grantRegion2?.id].filter(Boolean);
+      if (grantIdsToDelete.length > 0) {
+        await Grant.destroy({ where: { id: grantIdsToDelete }, force: true });
+      }
+      if (multiRegionRecipient?.id) {
+        await Recipient.destroy({ where: { id: multiRegionRecipient.id }, force: true });
+      }
+      await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-MULTI-R1', 'G-MULTI-R2'] } });
+    });
+
+    it('counts recipient once per region when querying multiple regions', async () => {
+      const scopes = {
+        grant: {
+          [db.Sequelize.Op.and]: [
+            { id: { [db.Sequelize.Op.ne]: null } },
+            { regionId: { [db.Sequelize.Op.in]: [REGION_1, REGION_2] } },
+            { recipientId: multiRegionRecipient.id },
+          ],
+        },
+      };
+
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        10,
+        [],
+        [REGION_1, REGION_2],
+      );
+
+      // Should return 2 rows (one per region) for the same recipient
+      expect(result.recipients.length).toBe(2);
+      // totalRecipients counts ALL recipient-region pairs in the selected regions,
+      // so it will be >= 2 (includes our test recipient plus any others in those regions)
+      expect(parseInt(result.overview.totalRecipients, 10)).toBeGreaterThanOrEqual(2);
+      // Both rows should be for the same recipient name
+      expect(result.recipients[0].recipientName).toBe('Multi Region Recipient');
+      expect(result.recipients[1].recipientName).toBe('Multi Region Recipient');
+      // But different regions
+      const regions = result.recipients.map((r) => r.regionId).sort();
+      expect(regions).toEqual([REGION_1, REGION_2]);
+    });
+  });
 });

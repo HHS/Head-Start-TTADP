@@ -3,7 +3,6 @@ import { Op, QueryTypes } from 'sequelize';
 import {
   sequelize,
   Grant,
-  Recipient,
 } from '../models';
 
 // Map from indicator label (as shown in UI) to column name in SQL
@@ -85,31 +84,32 @@ export async function getRecipientSpotlightIndicators(
   const hasGrantIds = grantIdList.length > 0;
   const grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'TRUE';
 
-  // Query total distinct recipients for the requested regions
-  const totalRecipients = await Recipient.count({
-    distinct: true,
-    col: 'id',
-    include: [{
-      model: Grant,
-      as: 'grants',
-      attributes: [],
-      required: true,
-      where: {
-        regionId: {
-          [Op.in]: regions.map((r) => parseInt(r, 10)),
-        },
-        [Op.or]: [
-          { status: 'Active' },
-          {
-            status: 'Inactive',
-            inactivationDate: {
-              [Op.gte]: INACTIVATION_CUT_OFF,
-            },
-          },
-        ],
-      },
-    }],
+  // Query total distinct recipient-region pairs for the selected regions
+  // This counts all recipients with active/recently-inactive grants in the regions,
+  // regardless of other scope filters, to get the true denominator for the percentage
+  const totalRecipientsResult = await sequelize.query(`
+    SELECT COUNT(*) AS "totalRecipients"
+    FROM (
+      SELECT DISTINCT r.id, gr."regionId"
+      FROM "Recipients" r
+      JOIN "Grants" gr ON r.id = gr."recipientId"
+      WHERE gr."regionId" IN (:regions)
+        AND (
+          gr.status = 'Active'
+          OR (
+            gr.status = 'Inactive'
+            AND gr."inactivationDate" >= :cutoffDate
+          )
+        )
+    ) AS recipient_regions
+  `, {
+    replacements: {
+      regions: regions.map((r) => parseInt(r, 10)),
+      cutoffDate: INACTIVATION_CUT_OFF,
+    },
+    type: QueryTypes.SELECT,
   });
+  const totalRecipients = parseInt(totalRecipientsResult[0]?.totalRecipients || 0, 10);
 
   // Build indicator WHERE clause for filtering by priority indicators
   let indicatorWhereClause = 'TRUE';
