@@ -448,6 +448,9 @@ export async function getSessionReports(
       [sequelize.literal('"SessionReportPilot"."data"->>\'startDate\''), 'startDate'],
       [sequelize.literal('"SessionReportPilot"."data"->>\'endDate\''), 'endDate'],
       [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
+      [sequelize.literal('"SessionReportPilot"."data"->\'recipients\''), 'recipients'],
+      [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
+      [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
     ],
     where: {
       eventId: events.map(({ id }) => id),
@@ -529,6 +532,9 @@ export async function getSessionReports(
       endDate: plain.endDate,
       objectiveTopics: plain.objectiveTopics,
       goalTemplates: plain.goalTemplates || [],
+      duration: plain.duration,
+      recipients: plain.recipients,
+      participants: plain.participants,
     };
   });
 
