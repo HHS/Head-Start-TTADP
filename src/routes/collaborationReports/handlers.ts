@@ -241,8 +241,9 @@ export async function saveReport(req: Request, res: Response) {
     delete newReport.regionId;
 
     // Merge the updated report with the old
+    const oldReportJSON = existingReport.toJSON();
     const savedReport = await createOrUpdateReport({
-      ...existingReport, ...newReport,
+      ...oldReportJSON, ...newReport,
     }, existingReport);
 
     res.json(savedReport);
