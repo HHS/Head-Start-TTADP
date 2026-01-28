@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import renderData from './renderReadOnlyContentData';
 import STATUSES from './GoalCards/components/StatusDropdownStatuses';
-import './ReadOnlyContent.scss';
+import './ReadOnlyContent.css';
 
 const HEADING_CLASSES = {
   4: 'font-serif-md',
