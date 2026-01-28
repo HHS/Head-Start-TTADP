@@ -7,7 +7,7 @@ async function logOldRecordsCount() {
   try {
     // List of tables to check for old records
     const [tables] = await sequelize.query(`
-      SELECT DISTINCT t.table_name
+      SELECT t.table_name
       FROM information_schema.tables t
       INNER JOIN information_schema.columns c
         ON c.table_schema = t.table_schema
