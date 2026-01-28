@@ -68,7 +68,6 @@ do
         (cd frontend && yarn lint:fix:single "${f#frontend/}")
       else
         check_and_run_yarn "."
-        echo "Checking $f"
         yarn lint:fix:single "$f"
       fi
     fi
