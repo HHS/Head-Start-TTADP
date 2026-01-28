@@ -94,7 +94,7 @@ const afterDestroy = async (sequelize, instance) => {
   });
   // We allow users to create approvers before submitting the report. Calculated
   // status should only exist for submitted reports.
-  if (report.submissionStatus === REPORT_STATUSES.SUBMITTED) {
+  if (report && report.submissionStatus === REPORT_STATUSES.SUBMITTED) {
     const foundApproverStatuses = await sequelize.models.CollabReportApprover.findAll({
       attributes: ['status'],
       where: { collabReportId: instance.collabReportId },

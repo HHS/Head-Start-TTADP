@@ -614,6 +614,12 @@ const collabReportTransformers = [
   'startDate',
   'endDate',
   'status',
+  'steps',
+  'participants',
+  'goals',
+  'dataUsed',
+  'approvers',
+  'author',
 ];
 
 /**
