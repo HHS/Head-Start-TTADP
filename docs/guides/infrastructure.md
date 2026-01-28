@@ -88,7 +88,15 @@ Our project includes four deployed Postgres databases, one to interact with each
 
 ### Second, choose an interaction method
 
-#### Option A: Run psql commands directly
+### Open an SSH session to a running application instance
+
+Open a session to a running application instance
+```cf ssh tta-smarthub-dev-blue```
+
+Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH command to open a shell with .profile settings active
+```cf ssh tta-smarthub-dev-blue -t -c "/tmp/lifecycle/launcher /home/vcap/app sh '{}'"```
+
+#### Run psql commands directly
 
 1. If you haven't used the the cloud foundry plugin [cf-service-connect][cf-service-connect] before, install it now
 
@@ -130,7 +138,7 @@ Our project includes four deployed Postgres databases, one to interact with each
     cgawsbrokerprodbt584djy6n6cnuz=> 
     ```
 
-#### Option B: Run script as task
+#### Run script as task
 
 1. Use [cf run-task][cf-run-task] command
 
@@ -152,7 +160,7 @@ Our project includes four deployed Postgres databases, one to interact with each
    cf logs tta-smarthub-sandbox --recent | grep APP/TASK/
    ```
 
-#### Option C: Run script in an interactive shell
+#### Run script in an interactive shell
 
 1. If on prod, enable shh in space first
 
