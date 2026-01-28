@@ -29,6 +29,7 @@ const verifyTrViewPermissions = async (req, res) => {
       SCOPES.POC_TRAINING_REPORTS,
       SCOPES.READ_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
+      SCOPES.ADMIN,
     ].includes(scopeId)
   ));
 
@@ -269,7 +270,9 @@ export async function getTrainingReportTrainersByRegion(req, res) {
 
 export async function getTrainingReportNationalCenterUsers(req, res) {
   try {
+    // this fn sends a status of 403 if the user lacks permissions/is not an admin
     await verifyTrViewPermissions(req, res);
+
     if (res.headersSent) {
       return;
     }
