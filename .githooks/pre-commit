@@ -5,7 +5,8 @@ export YARN_IGNORE_ENGINES=1
 # Set USE_DOCKER based on whether both backend and frontend containers are running
 USE_DOCKER=false
 if docker ps >/dev/null 2>&1; then
-  if [ "$(docker ps | grep -E "head-start-ttadp-backend|head-start-ttadp-frontend" | wc -l)" -eq 2 ]; then
+  if docker compose ps --services --status=running 2>/dev/null | grep -q '^backend$' \
+    && docker compose ps --services --status=running 2>/dev/null | grep -q '^frontend$'; then
     USE_DOCKER=true
   fi
 fi
@@ -21,59 +22,82 @@ check_and_run_yarn() {
 
 common_changed=false
 common_package_json_changed=false
-frontend_yarn_lock_changed=false
-backend_yarn_lock_changed=false
-files=$(git diff --cached --name-only)
+root_yarn_lock_changed=false
 
-for f in $files
-do
+declare -a frontend_js_ts_files=()
+declare -a backend_js_ts_files=()
+declare -a tf_files=()
+
+while IFS= read -r -d '' f; do
   # check if packages/common/src/index.js was changed
-  if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
+  if [[ $f == packages/common/src/index.js ]]; then
     common_changed=true
   fi
 
   # check if packages/common/package.json was changed
-  if [ -e "$f" ] && [[ $f == packages/common/package.json ]]; then
+  if [[ $f == packages/common/package.json ]]; then
     common_package_json_changed=true
   fi
-  
-  # check if frontend/yarn.lock was changed
-  if [ -e "$f" ] && [[ $f == frontend/yarn.lock ]]; then
-    frontend_yarn_lock_changed=true
-  fi
-  
-  # check if backend/yarn.lock was changed
-  if [ -e "$f" ] && [[ $f == backend/yarn.lock ]]; then
-    backend_yarn_lock_changed=true
+
+  # check if root yarn.lock was changed
+  if [[ $f == yarn.lock ]]; then
+    root_yarn_lock_changed=true
   fi
 
-  # Format any *.tf files that were cached/staged
+  # Format any *.tf files that were cached/staged (only if file still exists)
   if [ -e "$f" ] && [[ $f == *.tf ]]; then
-    printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
+    tf_files+=("$f")
+  fi
+
+  # Collect changed .js and .ts files (only if file still exists)
+  if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.ts ]]); then
+    if [[ $f == frontend/* ]]; then
+      frontend_js_ts_files+=("${f#frontend/}")
+    else
+      backend_js_ts_files+=("$f")
+    fi
+  fi
+done < <(git diff --cached --name-only -z --diff-filter=ACMRT)
+
+if [ "${#tf_files[@]}" -gt 0 ]; then
+  printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
+  for f in "${tf_files[@]}"; do
     terraform fmt "$f"
     git add "$f"
-  fi
+  done
+fi
 
-  # Autolint changed .js and .ts files
-  if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.ts ]]); then
-    if [ "$USE_DOCKER" = true ]; then
-      if [[ $f == frontend/* ]]; then
-        docker compose run -T --rm frontend yarn lint:fix:single "${f#frontend/}"
-      else
-        docker compose --profile minimal_required_postgres --profile minimal_required_redis run -T --rm backend yarn lint:fix:single "$f"
-      fi
-    else
-      if [[ $f == frontend/* ]]; then
-        check_and_run_yarn frontend
-        (cd frontend && yarn lint:fix:single "${f#frontend/}")
-      else
-        check_and_run_yarn "."
-        yarn lint:fix:single "$f"
-      fi
+if [ "${#frontend_js_ts_files[@]}" -gt 0 ] || [ "${#backend_js_ts_files[@]}" -gt 0 ]; then
+  if [ "$USE_DOCKER" = true ]; then
+    if [ "${#frontend_js_ts_files[@]}" -gt 0 ]; then
+      docker compose run -T --rm frontend bash -lc 'for f in "$@"; do yarn lint:fix:single "$f"; done' -- "${frontend_js_ts_files[@]}"
+      for f in "${frontend_js_ts_files[@]}"; do
+        git add "frontend/$f"
+      done
     fi
-    git add "$f"
+    if [ "${#backend_js_ts_files[@]}" -gt 0 ]; then
+      docker compose --profile minimal_required_postgres --profile minimal_required_redis run -T --rm backend bash -lc 'for f in "$@"; do yarn lint:fix:single "$f"; done' -- "${backend_js_ts_files[@]}"
+      for f in "${backend_js_ts_files[@]}"; do
+        git add "$f"
+      done
+    fi
+  else
+    if [ "${#frontend_js_ts_files[@]}" -gt 0 ]; then
+      check_and_run_yarn frontend
+      (cd frontend && for f in "${frontend_js_ts_files[@]}"; do yarn lint:fix:single "$f"; done)
+      for f in "${frontend_js_ts_files[@]}"; do
+        git add "frontend/$f"
+      done
+    fi
+    if [ "${#backend_js_ts_files[@]}" -gt 0 ]; then
+      check_and_run_yarn "."
+      for f in "${backend_js_ts_files[@]}"; do
+        yarn lint:fix:single "$f"
+        git add "$f"
+      done
+    fi
   fi
-done
+fi
 
 # Versioning and lock file checks
 if [ $common_changed = true ]; then
@@ -82,8 +106,8 @@ if [ $common_changed = true ]; then
     exit 1
   fi
 
-  if [ $frontend_yarn_lock_changed = false ] || [ $backend_yarn_lock_changed = false ]; then
-    echo "ERROR: common/src/index.js was changed, but a yarn.lock file was not updated. Please make sure you've updated both yarn.lock files if you've updated the common/index.js file."
+  if [ $root_yarn_lock_changed = false ]; then
+    echo "ERROR: common/src/index.js was changed, but yarn.lock was not updated. Please make sure you've updated the root yarn.lock if you've updated the common/index.js file."
     exit 1
   fi
 fi

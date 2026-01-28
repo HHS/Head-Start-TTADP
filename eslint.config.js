@@ -7,10 +7,6 @@ const globals = require("globals");
 const importPlugin = require("eslint-plugin-import");
 const jestPlugin = require("eslint-plugin-jest");
 const nodePlugin = require("eslint-plugin-n");
-const reactPlugin = require("eslint-plugin-react");
-const reactHooksPlugin = require("eslint-plugin-react-hooks");
-const jsxA11yPlugin = require("eslint-plugin-jsx-a11y");
-const testingLibraryPlugin = require("eslint-plugin-testing-library");
 
 module.exports = [
   {
@@ -28,9 +24,8 @@ module.exports = [
   {
     ignores: [
       "build/*",
+      "frontend/*",
       "node_modules/*",
-      "frontend/build/*",
-      "frontend/public/*",
       "public/*",
       "coverage/*",
       "reports/*",
