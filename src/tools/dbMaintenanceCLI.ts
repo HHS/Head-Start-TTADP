@@ -1,121 +1,29 @@
 import { auditLogger } from '../logger';
 import { sequelize } from '../models';
 
-const OLD_THRESHOLD = 365; // days
-
-// List of tables to check for old records
-const tables = [
-  'ZALActivityRecipients',
-  'ZALActivityReportApprovers',
-  'ZALActivityReportCollaborators',
-  'ZALActivityReportFiles',
-  'ZALActivityReportGoalFieldResponses',
-  'ZALActivityReportGoalResources',
-  'ZALActivityReportGoals',
-  'ZALActivityReportObjectiveCitations',
-  'ZALActivityReportObjectiveCourses',
-  'ZALActivityReportObjectiveFiles',
-  'ZALActivityReportObjectiveResources',
-  'ZALActivityReportObjectiveTopics',
-  'ZALActivityReportObjectives',
-  'ZALActivityReportResources',
-  'ZALActivityReports',
-  'ZALCollabReportActivityStates',
-  'ZALCollabReportApprovers',
-  'ZALCollabReportDataUsed',
-  'ZALCollabReportGoals',
-  'ZALCollabReportReasons',
-  'ZALCollabReportSpecialists',
-  'ZALCollabReportSteps',
-  'ZALCollabReports',
-  'ZALCollaboratorRoles',
-  'ZALCollaboratorTypes',
-  'ZALCommunicationLogFiles',
-  'ZALCommunicationLogRecipients',
-  'ZALCommunicationLogs',
-  'ZALCourses',
-  'ZALEventReportPilotNationalCenterUsers',
-  'ZALEventReportPilots',
-  'ZALFiles',
-  'ZALGoalCollaborators',
-  'ZALGoalFieldResponses',
-  'ZALGoalResources',
-  'ZALGoalStatusChanges',
-  'ZALGoalTemplateFieldPrompts',
-  'ZALGoalTemplateObjectiveTemplates',
-  'ZALGoalTemplateResources',
-  'ZALGoalTemplates',
-  'ZALGoals',
-  'ZALGrantNumberLinks',
-  'ZALGrantReplacementTypes',
-  'ZALGrantReplacements',
-  'ZALGrants',
-  'ZALGroupCollaborators',
-  'ZALGroupGrants',
-  'ZALGroups',
-  'ZALImportDataFiles',
-  'ZALImportFiles',
-  'ZALImports',
-  'ZALMailerLogs',
-  'ZALMaintenanceLogs',
-  'ZALMonitoringClassSummaries',
-  'ZALMonitoringFindingGrants',
-  'ZALMonitoringFindingHistories',
-  'ZALMonitoringFindingHistoryStatusLinks',
-  'ZALMonitoringFindingHistoryStatuses',
-  'ZALMonitoringFindingLinks',
-  'ZALMonitoringFindingStandards',
-  'ZALMonitoringFindingStatusLinks',
-  'ZALMonitoringFindingStatuses',
-  'ZALMonitoringFindings',
-  'ZALMonitoringGranteeLinks',
-  'ZALMonitoringReviewGrantees',
-  'ZALMonitoringReviewLinks',
-  'ZALMonitoringReviewStatusLinks',
-  'ZALMonitoringReviewStatuses',
-  'ZALMonitoringReviews',
-  'ZALMonitoringStandardLinks',
-  'ZALMonitoringStandards',
-  'ZALNationalCenterUsers',
-  'ZALNationalCenters',
-  'ZALNextStepResources',
-  'ZALNextSteps',
-  'ZALObjectiveCollaborators',
-  'ZALObjectiveTemplates',
-  'ZALObjectives',
-  'ZALOtherEntities',
-  'ZALPermissions',
-  'ZALProgramPersonnel',
-  'ZALPrograms',
-  'ZALRecipients',
-  'ZALRegions',
-  'ZALResources',
-  'ZALRoleTopics',
-  'ZALRoles',
-  'ZALScopes',
-  'ZALSessionReportPilotFiles',
-  'ZALSessionReportPilotGoalTemplates',
-  'ZALSessionReportPilotGrants',
-  'ZALSessionReportPilotSupportingAttachments',
-  'ZALSessionReportPilotTrainers',
-  'ZALSessionReportPilots',
-  'ZALSiteAlerts',
-  'ZALTopics',
-  'ZALUserRoles',
-  'ZALUserSettingOverrides',
-  'ZALUserSettings',
-  'ZALUserValidationStatus',
-  'ZALUsers',
-  'ZALValidFor',
-  'ZALZADescriptor',
-  'ZALZAFilter',
-];
+const OLD_THRESHOLD = '3 years';
 
 async function logOldRecordsCount() {
   try {
+    // List of tables to check for old records
+    const [tables] = await sequelize.query(`
+      SELECT DISTINCT t.table_name
+      FROM information_schema.tables t
+      INNER JOIN information_schema.columns c
+        ON c.table_schema = t.table_schema
+        AND c.table_name = t.table_name
+        AND c.column_name = 'dml_timestamp'
+      WHERE t.table_schema = 'public'
+        AND t.table_name LIKE 'ZAL%'
+        AND t.table_type = 'BASE TABLE'
+      ORDER BY t.table_name
+    `);
+
     const results = await Promise.allSettled(
       tables.map(async (table) => {
-        const [queryResults] = await sequelize.query(`SELECT COUNT(*) AS count FROM "${table}" WHERE "dml_timestamp" < NOW() - INTERVAL '${OLD_THRESHOLD} days';`);
+        const [queryResults] = await sequelize.query(
+          `SELECT COUNT(*) AS count FROM "${table}" WHERE "dml_timestamp" < NOW() - INTERVAL '${OLD_THRESHOLD}';`,
+        );
         const count = queryResults[0]?.count || 0;
         return { table, count };
       }),
@@ -123,7 +31,9 @@ async function logOldRecordsCount() {
 
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
-        auditLogger.info(`Table: ${result.value.table}, Records older than ${OLD_THRESHOLD} days: ${result.value.count}`);
+        auditLogger.info(
+          `Table: ${result.value.table}, Records older than ${OLD_THRESHOLD}: ${result.value.count}`,
+        );
       } else {
         const table = tables[index];
         const message = result.reason instanceof Error
@@ -140,7 +50,18 @@ async function logOldRecordsCount() {
 }
 
 if (require.main === module) {
-  logOldRecordsCount();
+  logOldRecordsCount()
+    .then(() => sequelize.close())
+    .then(() => {
+      process.exit(process.exitCode || 0);
+    })
+    .catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      auditLogger.error(`Error running db maintenance: ${message}`);
+      sequelize.close().finally(() => {
+        process.exit(1);
+      });
+    });
 }
 
 export default logOldRecordsCount;
