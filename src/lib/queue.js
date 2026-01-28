@@ -109,15 +109,17 @@ export function removeQueueEventHandlers(
 // Close out the queue and remove handlers
 function handleShutdown(queue) {
   return () => {
-    auditLogger.error('Shutting down, attempting to close queue...');
-    queue.close().then(() => {
-      removeQueueEventHandlers(queue);
-      auditLogger.error('Queue closed successfully.');
-      process.exit(0);
-    }).catch((err) => {
-      auditLogger.error('Failed when closing queue: ', err);
-      process.exit(1);
-    });
+    auditLogger.info('Shutting down, closing queue...');
+    queue
+      .close()
+      .then(() => {
+        removeQueueEventHandlers(queue);
+        process.exit(0);
+      })
+      .catch((err) => {
+        auditLogger.error('Failed when closing queue: ', err);
+        process.exit(1);
+      });
   };
 }
 
