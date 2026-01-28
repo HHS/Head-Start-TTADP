@@ -25,6 +25,10 @@ export async function getRecipientSpotLight(req, res) {
       sortBy, direction, offset, limit,
     } = req.query;
 
+    // Parse pagination params to integers
+    const parsedOffset = offset ? parseInt(offset, DECIMAL_BASE) : 0;
+    const parsedLimit = limit ? parseInt(limit, DECIMAL_BASE) : 10;
+
     const userId = await currentUserId(req, res);
 
     // Get user's read regions
@@ -37,22 +41,22 @@ export async function getRecipientSpotLight(req, res) {
     const requestedRegions = req.query['region.in[]'] || req.query['region.in'];
 
     // Check if user has access to requested regions
-    if (requestedRegions) {
-      // Ensure requestedRegions is an array
-      const regionsArray = Array.isArray(requestedRegions) ? requestedRegions : [requestedRegions];
-
-      // Check if all requested regions are in user's allowed regions
-      const hasAccess = regionsArray.every(
-        (region) => userReadRegions.includes(parseInt(region, DECIMAL_BASE)),
-      );
-
-      if (!hasAccess) {
-        res.sendStatus(httpCodes.FORBIDDEN);
-        return;
-      }
-    } else {
+    if (!requestedRegions) {
       // No regions requested - return forbidden
       // User must explicitly request regions they have access to
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    // Ensure requestedRegions is an array
+    const regionsArray = Array.isArray(requestedRegions) ? requestedRegions : [requestedRegions];
+
+    // Check if all requested regions are in user's allowed regions
+    const hasAccess = regionsArray.every(
+      (region) => userReadRegions.includes(parseInt(region, DECIMAL_BASE)),
+    );
+
+    if (!hasAccess) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
@@ -61,12 +65,26 @@ export async function getRecipientSpotLight(req, res) {
       req.query,
       { userId },
     );
+
+    // Extract indicator filter params
+    // Support both priorityIndicator.in and priorityIndicator.in[] formats
+    const indicatorFilterIn = req.query['priorityIndicator.in[]']
+      || req.query['priorityIndicator.in'];
+    let indicatorsToInclude = [];
+    if (indicatorFilterIn) {
+      indicatorsToInclude = Array.isArray(indicatorFilterIn)
+        ? indicatorFilterIn
+        : [indicatorFilterIn];
+    }
+
     const recipientSpotlightData = await getRecipientSpotlightIndicators(
       scopes,
       sortBy,
       direction,
-      offset,
-      limit,
+      parsedOffset,
+      parsedLimit,
+      indicatorsToInclude,
+      regionsArray,
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);
