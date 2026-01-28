@@ -340,7 +340,7 @@ function ActivityReport({
             }
           }
         } catch (err) {
-          // eslint-disable-next-line no-console
+           
           console.error('Error loading from localStorage during fetch:', err);
         }
 
@@ -376,7 +376,7 @@ function ActivityReport({
         const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
-            {/* eslint-disable-next-line max-len */}
+            { }
             There&rsquo;s an issue with your connection. Some sections of this form may not load correctly.
             <br />
             Your work is saved on this computer. If you continue to have problems,
@@ -644,7 +644,7 @@ function ActivityReport({
   ) : null;
 
   /* istanbul ignore next: hard to test websocket functionality */
-  // eslint-disable-next-line no-shadow, no-unused-vars
+   
   const handleRevisionUpdate = (revision, { userId, timestamp, reportId }) => {
     // If the user is not the one who made the revision, redirect them to the revision change page.
     if (user.id !== userId) {

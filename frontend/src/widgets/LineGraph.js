@@ -305,7 +305,7 @@ LineGraph.propTypes = {
       })).isRequired,
     })).isRequired,
   }).isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
+   
   widgetRef: PropTypes.object.isRequired,
   showTabularData: PropTypes.bool.isRequired,
 };

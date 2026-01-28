@@ -1,4 +1,4 @@
-/* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
+ 
 import React, {
   useState, useContext, useEffect, useRef,
 } from 'react';

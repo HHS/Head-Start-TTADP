@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 /*
   Collaboration report. Makes use of the navigator to split the long form into
   multiple pages. Each "page" is defined in the `./Pages` directory.
@@ -262,7 +262,7 @@ function CollaborationReport({ match, location }) {
             // make sure we BELONG here
             const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
             const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
-            // eslint-disable-next-line max-len
+             
             const isApproverFromFetched = approvers.some(({ user: approver }) => user.id === approver.id);
             const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
 
@@ -380,12 +380,12 @@ function CollaborationReport({ match, location }) {
 
         updateError();
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Error fetching collaboration report:', e);
         const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
-            {/* eslint-disable-next-line max-len */}
+            { }
             There&rsquo;s an issue with your connection. Some sections of this form may not load correctly.
             <br />
             Your work is saved on this computer. If you continue to have problems,
@@ -657,7 +657,7 @@ function CollaborationReport({ match, location }) {
     && !isApprover;
 
   const author = creatorNameWithRole ? (
-      // eslint-disable-next-line react/jsx-indent
+       
       <>
         <hr />
         <p>
@@ -669,7 +669,7 @@ function CollaborationReport({ match, location }) {
   ) : null;
 
   /* istanbul ignore next: hard to test websocket functionality */
-  // eslint-disable-next-line no-shadow, no-unused-vars
+   
   const handleRevisionUpdate = (revision, { userId, timestamp, reportId }) => {
     // If the user is not the one who made the revision, redirect them to the revision change page.
     if (user.id !== userId) {

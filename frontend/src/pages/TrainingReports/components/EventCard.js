@@ -77,7 +77,7 @@ function EventCard({
       return false;
     }
 
-    // eslint-disable-next-line max-len
+     
     if (sessionReports.length === 0 || !sessionReports.every((session) => session.data.status === TRAINING_REPORT_STATUSES.COMPLETE)) {
       return false;
     }
@@ -152,7 +152,7 @@ function EventCard({
           await resumeEvent(
             idForLink,
             eventReport,
-            // eslint-disable-next-line max-len
+             
             sessions.length ? TRAINING_REPORT_STATUSES.IN_PROGRESS : TRAINING_REPORT_STATUSES.NOT_STARTED,
           );
           setEventStatus(TRAINING_REPORT_STATUSES.IN_PROGRESS);

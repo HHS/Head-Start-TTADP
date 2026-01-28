@@ -3,7 +3,7 @@
  * Changes:
  *  - Removed `option--is-selected` so the selected item style is not applied to selected items
  */
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 /* eslint-disable react/prop-types */
 import React from 'react';
 

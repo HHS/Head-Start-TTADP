@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+ 
 import { unfinishedObjectives } from './goalValidator';
 
 import { OBJECTIVES_EMPTY } from '../../../../components/GoalForm/constants';

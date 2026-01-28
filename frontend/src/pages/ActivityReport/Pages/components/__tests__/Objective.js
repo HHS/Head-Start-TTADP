@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import '@testing-library/jest-dom';
 import {
   render, screen, within, act, fireEvent, waitFor,
@@ -60,7 +60,7 @@ const flushPromises = async (rerender, ui) => {
 let getValues;
 
 const RenderObjective = ({
-  // eslint-disable-next-line react/prop-types
+   
   objective = defaultObjective,
   onRemove = () => {},
   citationOptions = [],

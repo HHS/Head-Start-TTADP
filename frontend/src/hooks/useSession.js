@@ -29,7 +29,7 @@ export default function useSession(key, initialValue) {
         return JSON.parse(fromStorage);
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.log(error); // we're "catching" this by returning the default value
     }
 

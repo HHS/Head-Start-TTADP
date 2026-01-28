@@ -28,7 +28,7 @@ export default function ObjectiveCourseSelect({
       try {
         setOptions(await getCourses());
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Error fetching courses from the API', e);
       }
     }

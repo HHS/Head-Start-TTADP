@@ -45,14 +45,14 @@ export default function Submit({
   const { user } = useContext(UserContext);
 
   const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
-  // eslint-disable-next-line max-len
+   
   const incompletePages = Object.values(pages).filter((page) => filtered.includes(page.position)).map(({ label }) => label);
   const hasIncompletePages = incompletePages.length > 0;
 
   let approverOptions = approvers;
 
   if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
-    // eslint-disable-next-line max-len
+     
     approverOptions = approvers.filter((o) => o.roles.some((or) => MANAGER_ROLES.includes(or.name)));
   }
 

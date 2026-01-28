@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import TopAlert from '../TopAlert';

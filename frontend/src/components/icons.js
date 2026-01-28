@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -29,7 +29,7 @@ const Icon = ({
 Icon.propTypes = {
   size: PropTypes.string,
   color: PropTypes.string,
-  // eslint-disable-next-line react/forbid-prop-types
+   
   icon: PropTypes.object,
 };
 

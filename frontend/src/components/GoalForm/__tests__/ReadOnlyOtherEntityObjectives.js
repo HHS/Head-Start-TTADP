@@ -25,7 +25,7 @@ const createdObjectives = [{
 },
 ];
 
-// eslint-disable-next-line react/prop-types
+ 
 const RenderReadOnlyObjective = (onEdit = jest.fn(), hideEdit = false) => (
   render(<ReadOnlyOtherEntityObjectives
     onEdit={onEdit}

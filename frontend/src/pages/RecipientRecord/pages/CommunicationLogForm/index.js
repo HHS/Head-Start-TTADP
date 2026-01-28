@@ -164,7 +164,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
         </Grid>
       </Grid>
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
-        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        { }
         <FormProvider {...hookForm}>
           <LogProvider regionId={regionId}>
             <LogFormNavigator

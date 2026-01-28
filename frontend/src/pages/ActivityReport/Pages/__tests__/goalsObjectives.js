@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import '@testing-library/jest-dom';
 import {
   render, screen, act, waitFor,
@@ -130,7 +130,7 @@ const renderGoals = (
   );
 };
 
-// eslint-disable-next-line react/prop-types
+ 
 const RenderReview = ({ goals, activityRecipientType = 'recipient', objectivesWithoutGoals = [] }) => {
   const history = createMemoryHistory();
   const hookForm = useForm({

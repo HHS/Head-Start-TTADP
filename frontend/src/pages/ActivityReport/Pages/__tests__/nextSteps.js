@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import {

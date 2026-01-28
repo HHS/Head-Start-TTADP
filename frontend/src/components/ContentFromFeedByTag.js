@@ -43,7 +43,7 @@ export default function ContentFromFeedByTag({
             if (contentElement) {
               setContent(contentElement.outerHTML);
             } else {
-              // eslint-disable-next-line no-console
+               
               console.log('No content element found with selector', contentSelector, 'displaying entire contents instead: ', tagName);
               setContent(summaryContent);
             }
@@ -54,11 +54,11 @@ export default function ContentFromFeedByTag({
       } catch (err) {
         // ignore abort error
         if (err.name === 'AbortError') {
-          // eslint-disable-next-line no-console
+           
           console.log('Fetch aborted');
           return;
         }
-        // eslint-disable-next-line no-console
+         
         console.log('There was an error fetching content with tag', tagName, err);
       }
     }

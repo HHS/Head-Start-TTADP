@@ -1,6 +1,6 @@
-/* eslint-disable max-len */
+ 
 /* eslint-disable react/prop-types */
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React from 'react';
 import { SUPPORT_TYPES } from '@ttahub/common';
 import { MemoryRouter } from 'react-router-dom';

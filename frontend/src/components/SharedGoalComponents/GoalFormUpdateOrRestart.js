@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React from 'react';
 import PropTypes from 'prop-types';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
@@ -56,7 +56,7 @@ export default function GoalFormUpdateOrRestart({
 }
 
 GoalFormUpdateOrRestart.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
+   
   hookForm: PropTypes.object.isRequired,
   recipient: PropTypes.shape({
     id: PropTypes.number,

@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-/* eslint-disable import/no-extraneous-dependencies */
+ 
 /* istanbul ignore file: tested elsewhere  */
 import React from 'react';
 import { Router } from 'react-router';

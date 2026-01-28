@@ -90,7 +90,7 @@ export default function ObjectiveSelection({
         type="hidden"
         name={`${fieldName}[${index}].objectiveId`}
         id={`${fieldName}[${index}].objectiveId`}
-        // eslint-disable-next-line react/jsx-props-no-spreading
+         
         {...register(`${fieldName}[${index}].objectiveId`)}
         defaultValue={field.objectiveId}
       />

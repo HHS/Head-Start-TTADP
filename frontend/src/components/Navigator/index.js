@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 /*
   The navigator is a component used to show multiple form pages. It displays a stickied nav window
   on the left hand side with each page of the form listed. Clicking on an item in the nav list will

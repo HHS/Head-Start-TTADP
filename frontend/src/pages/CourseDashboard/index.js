@@ -1,5 +1,5 @@
-/* eslint-disable no-alert */
-/* eslint-disable no-console */
+ 
+ 
 import React, {
   useContext,
   useMemo,

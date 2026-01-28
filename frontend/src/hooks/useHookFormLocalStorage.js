@@ -54,7 +54,7 @@ export default function useHookFormLocalStorage(
         }
       }
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error loading createdInLocalStorage timestamp:', err);
     }
   }, [localStorageAvailable, storageKey]);
@@ -99,7 +99,7 @@ export default function useHookFormLocalStorage(
 
       window.localStorage.setItem(storageKey, JSON.stringify(dataToStore));
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error saving to localStorage:', err);
     }
   }, [storageKey, shouldSave]);

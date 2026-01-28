@@ -1,11 +1,11 @@
-/* eslint-disable react/forbid-prop-types */
+ 
 /*
   Uses `react-dropzone` to allow file uploads. Must be placed inside a `react-hook-form`
   form. Selected files display below the main input in a 2 by 2 grid.
 */
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React from 'react';
 import PropTypes from 'prop-types';
 import { deleteObjectiveFile, deleteFile, removeActivityReportObjectiveFile } from '../../fetchers/File';
@@ -113,7 +113,7 @@ const ObjectiveFileUploader = ({
 
 ObjectiveFileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
+   
   files: PropTypes.arrayOf(PropTypes.object),
   objective: PropTypes.shape({
     isNew: PropTypes.bool,

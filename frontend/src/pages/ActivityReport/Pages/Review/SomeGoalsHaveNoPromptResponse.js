@@ -59,7 +59,7 @@ const SomeGoalsHaveNoPromptResponse = ({
       const data = await missingDataForActivityReport(regionId, goalIds);
       setMissingGoalData(data);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error fetching missing data', error);
       setMissingGoalData([]);
     }

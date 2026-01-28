@@ -162,7 +162,7 @@ const ActivitySummary = ({
         newRecipientGrantIds, startDate)
         : [];
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to fetch goal templates or citations:', err);
     }
 

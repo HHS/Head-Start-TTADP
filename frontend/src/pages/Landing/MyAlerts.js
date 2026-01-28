@@ -1,4 +1,4 @@
-/* eslint-disable react/forbid-prop-types */
+ 
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
@@ -235,7 +235,7 @@ export function ReportsRow({ reports, removeAlert }) {
 }
 
 ReportsRow.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
+   
   reports: PropTypes.arrayOf(PropTypes.object).isRequired,
   removeAlert: PropTypes.func.isRequired,
   message: PropTypes.shape({
@@ -394,7 +394,7 @@ function MyAlerts(props) {
 }
 
 MyAlerts.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
+   
   reports: PropTypes.arrayOf(PropTypes.object),
   newBtn: PropTypes.bool.isRequired,
   alertsSortConfig: PropTypes.shape({ sortBy: PropTypes.string, direction: PropTypes.string }),

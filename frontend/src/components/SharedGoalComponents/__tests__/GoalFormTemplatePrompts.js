@@ -1,5 +1,5 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable max-len */
+ 
+ 
 /* eslint-disable react/prop-types */
 import React from 'react';
 import { render, screen } from '@testing-library/react';

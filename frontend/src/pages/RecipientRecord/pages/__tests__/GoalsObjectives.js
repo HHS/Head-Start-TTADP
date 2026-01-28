@@ -476,7 +476,7 @@ describe('Goals and Objectives', () => {
     const goalCount = 60;
     const goalsToDisplay = [];
     const allGoalIds = [];
-    // eslint-disable-next-line no-plusplus
+     
     for (let i = 1; i <= goalCount; i++) {
       const goalText = `This is goal text ${i}.`;
       goalsToDisplay.push({ ...goalToUse, id: i, goalText });

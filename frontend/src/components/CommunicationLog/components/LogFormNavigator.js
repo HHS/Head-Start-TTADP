@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 /* istanbul ignore file: most of what is needed to be tested here is already tested in Navigator component */
 import React, {
   useContext,

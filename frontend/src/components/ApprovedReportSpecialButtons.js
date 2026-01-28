@@ -20,7 +20,7 @@ export default function ApprovedReportSpecialButtons({
       await navigator.clipboard.writeText(window.location.href);
       setSuccessfullyCopiedClipboard(true);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error(err);
       setSomethingWentWrongWithClipboard(true);
     }

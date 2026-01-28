@@ -47,7 +47,7 @@ describe('ConditionalFieldsForHookForm', () => {
 
     return (
       <div>
-        { /* eslint-disable-next-line react/jsx-props-no-spreading */ }
+        {   }
         <FormProvider {...hookForm}>
           <ConditionalFieldsForHookForm
             prompts={prompts}

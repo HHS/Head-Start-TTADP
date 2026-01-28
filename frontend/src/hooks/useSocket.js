@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 import {
   useEffect,
   useState,
@@ -97,7 +97,7 @@ export default function useSocket(user) {
 
       socket.current = s;
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error(error);
     }
 

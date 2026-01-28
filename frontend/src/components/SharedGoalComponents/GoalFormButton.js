@@ -17,7 +17,7 @@ export default function GoalFormButton({
 
   if (type === GOAL_FORM_BUTTON_TYPES.LINK) {
     if (!to) {
-      // eslint-disable-next-line no-console
+       
       console.error('GoalFormButton: to prop is required for link buttons');
       return null;
     }
@@ -49,7 +49,7 @@ GoalFormButton.propTypes = {
   label: PropTypes.string.isRequired,
   to: PropTypes.string,
   onClick: PropTypes.func,
-  // eslint-disable-next-line react/forbid-prop-types -- modalRef is a ref object
+   
   modalRef: PropTypes.shape({ current: PropTypes.object }),
 };
 

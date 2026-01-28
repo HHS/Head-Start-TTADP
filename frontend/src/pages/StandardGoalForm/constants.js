@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+ 
 
 const GOAL_FORM_FIELDS = {
   SELECTED_GRANT: 'selectedGrant',

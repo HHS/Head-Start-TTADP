@@ -13,7 +13,7 @@ const FormWrapper = ({ defaultValues, error = null }) => {
 
   return (
     <UserContext.Provider value={{ user: { id: 1, name: 'Test User' } }}>
-      {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+      { }
       <FormProvider {...hookForm}>
         <ReviewSubmit
           onReview={jest.fn()}

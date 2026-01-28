@@ -50,7 +50,7 @@ export default function WidgetContainer(
             offset={offset}
             perPage={perPage}
             handlePageChange={handlePageChange}
-              // eslint-disable-next-line react/jsx-props-no-spreading
+               
             {...paginationCardTopProps}
           />
         ) : null}

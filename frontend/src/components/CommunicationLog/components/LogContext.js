@@ -24,7 +24,7 @@ const LogProvider = ({ children, regionId }) => {
         setRecipients(data.recipients);
         setGroups(data.groups);
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.error('Error fetching additional communication log data');
       }
     };

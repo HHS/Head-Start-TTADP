@@ -207,7 +207,7 @@ describe('RegionalCommunicationLogDashboard', () => {
 
   it('has an actions menu with View and Delete - can View', async () => {
     const push = jest.fn();
-    // eslint-disable-next-line global-require
+     
     jest.spyOn(require('react-router'), 'useHistory').mockReturnValue({ push });
 
     act(() => renderComm(userCentralOffice, '/communication-log'));

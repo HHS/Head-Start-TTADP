@@ -26,7 +26,7 @@ export default function FilterTTAType({ onApply, query, inputId }) {
 
   return (
     <>
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
+      {   }
       <label className="usa-sr-only" htmlFor={inputId}>Select tta type to filter by</label>
       <Dropdown name={inputId} id={inputId} value={query} onChange={onApplyTTAType}>
         <option value="training">

@@ -44,7 +44,7 @@ export default function useWidgetExport(
       const blob = new Blob([csvString], { type: 'text/csv' });
       blobToCsvDownload(blob, exportName);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error(error);
     }
   }, [checkboxes, data, exportHeading, exportName, headers, exportDataName]);

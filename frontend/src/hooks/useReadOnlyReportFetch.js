@@ -52,7 +52,7 @@ export default function useReadOnlyReportFetch(match, user) {
       window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(report.id));
       window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(report.id));
     } catch (e) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Local storage may not be available: ', e);
     }
   },

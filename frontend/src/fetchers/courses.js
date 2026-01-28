@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+ 
 import join from 'url-join';
 import {
   destroy,

@@ -1,6 +1,6 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
+ 
 /* eslint-disable react/prop-types */
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
@@ -21,7 +21,7 @@ const user = {
   name: 'test@test.com',
 };
 
-// eslint-disable-next-line react/prop-types
+ 
 const Input = ({
   name,
   required,
@@ -166,7 +166,7 @@ describe('Navigator', () => {
     );
   };
 
-  // eslint-disable-next-line arrow-body-style
+   
   const renderNavigator = (params) => {
     render(
       <NavigatorWithForm {...params} />,

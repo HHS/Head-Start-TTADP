@@ -35,9 +35,9 @@ export const findWhatsChanged = (object, base) => {
     // after goals have been saved we pass up the removed recipients so that their specific links
     // to the activity report/goals will be severed on the backend
     if (current === 'activityRecipients' && !isEqual(base[current], object[current])) {
-      // eslint-disable-next-line max-len
+       
       const grantIds = object.activityRecipients.map((activityRecipient) => activityRecipient.activityRecipientId);
-      // eslint-disable-next-line max-len
+       
       accumulator.recipientsWhoHaveGoalsThatShouldBeRemoved = base.activityRecipients.filter((baseData) => (
         !grantIds.includes(baseData.activityRecipientId)
       )).map((activityRecipient) => activityRecipient.activityRecipientId);
@@ -160,7 +160,7 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
         createdHere: objective.createdHere,
-        // eslint-disable-next-line max-len
+         
         goalId: g.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
       })),
     })),
@@ -199,7 +199,7 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
         createdHere: objective.createdHere,
-        // eslint-disable-next-line max-len
+         
         goalId: goal.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
       })),
       grantIds,
@@ -286,7 +286,7 @@ export const convertGoalsToFormData = (
       && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
       && !accumulatedData.goalForEditing) {
       // we set it as the goal for editing
-      // eslint-disable-next-line no-param-reassign
+       
       accumulatedData.goalForEditing = {
         ...goal,
         grantIds,

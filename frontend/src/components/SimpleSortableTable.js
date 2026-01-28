@@ -75,7 +75,7 @@ const SimpleSortableTable = ({
         </thead>
         <tbody>
           {sortedData.map((item, index) => (
-          // eslint-disable-next-line react/no-array-index-key
+           
             <tr key={index}>
               {columns.map((column) => (
                 <td key={column.key} data-label={column.name}>
@@ -91,7 +91,7 @@ const SimpleSortableTable = ({
 };
 
 SimpleSortableTable.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
+   
   data: PropTypes.arrayOf(PropTypes.object).isRequired,
   columns: PropTypes.arrayOf(
     PropTypes.shape({

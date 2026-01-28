@@ -10,7 +10,7 @@ describe('TrainingReportDashboardOverview', () => {
     loading: false,
   };
 
-  // eslint-disable-next-line react/jsx-props-no-spreading
+   
   const renderTest = (props) => render(<TrainingReportDashboardOverview {...props} />);
 
   it('renders without explicit data', async () => {

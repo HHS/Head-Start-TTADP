@@ -87,7 +87,7 @@ const NeedsAction = ({
           !userHasOneRole
             ? (
               <>
-                { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
+                {   }
                 <label htmlFor="creatorRole" className="text-bold">Creator role</label>
                 <span className="smart-hub--form-required"> (Required)</span>
                 <FormGroup error={showCreatorRoleError}>

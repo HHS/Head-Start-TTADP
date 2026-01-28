@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import '@testing-library/jest-dom';
 import {
   render, screen, waitFor,
@@ -104,7 +104,7 @@ const renderReview = (
   render(
     <Router history={history}>
       <UserContext.Provider value={{ user }}>
-        {/* eslint-disable-next-line max-len */}
+        { }
         <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
           <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
             <RenderReview

@@ -71,7 +71,7 @@ export default function Monitoring({
         lookup[slug].setter(data);
         setAnnouncement(`Monitoring data by ${currentPage} loaded.`);
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.error('Error fetching monitoring data:', error);
         history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${error.status}`);
       } finally {

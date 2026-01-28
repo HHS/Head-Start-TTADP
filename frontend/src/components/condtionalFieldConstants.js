@@ -19,7 +19,7 @@ export const MULTISELECT_RESPONSE_COMPLETION_DICTIONARY = {
 };
 
 const MULTISELECT_VALIDATION_DICTIONARY_KEYS = Object.keys(MULTISELECT_VALIDATION_DICTIONARY);
-// eslint-disable-next-line max-len
+ 
 const MULTISELECT_RESPONSE_COMPLETION_DICTIONARY_KEYS = Object.keys(MULTISELECT_RESPONSE_COMPLETION_DICTIONARY);
 
 export const confirmMultiselectResponseComplete = (validations) => validations.rules.reduce((

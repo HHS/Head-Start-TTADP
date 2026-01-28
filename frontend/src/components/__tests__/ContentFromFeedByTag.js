@@ -52,7 +52,7 @@ describe('ContentFromFeedByTag', () => {
     openLinksInNewTab = false,
   ) => {
     fetchMock.get(`/api/feeds/item?tag=${tag}`, content);
-    // eslint-disable-next-line max-len
+     
     render(<ContentFromFeedByTag tagName={tag} contentSelector={selector} openLinksInNewTab={openLinksInNewTab} />);
   };
 

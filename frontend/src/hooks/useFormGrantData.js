@@ -16,6 +16,6 @@ export function calculateFormGrantData(activityRecipients) {
 }
 
 export default function useFormGrantData(activityRecipients) {
-  // eslint-disable-next-line max-len
+   
   return useMemo(() => calculateFormGrantData(activityRecipients), [activityRecipients]);
 }

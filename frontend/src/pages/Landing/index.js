@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
+ 
 import React, {
   useState,
   useEffect,
@@ -154,7 +154,7 @@ function Landing() {
         }
         updateError('');
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.log(e);
         updateError('Unable to fetch reports');
       }

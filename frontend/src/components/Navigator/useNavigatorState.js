@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import { useCallback } from 'react';
 import {
   IN_PROGRESS, COMPLETE,
@@ -49,7 +49,7 @@ export default function useNavigatorState({
     } else if (isCurrentPageGoalsObjectives && currentGoalsObjectivesPageState === COMPLETE) {
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
     } else if (isCurrentPageGoalsObjectives) {
-      // eslint-disable-next-line max-len
+       
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentGoalsObjectivesPageState;
     }
 

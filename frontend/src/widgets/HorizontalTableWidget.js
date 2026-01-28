@@ -1,4 +1,4 @@
-/* eslint-disable react/no-array-index-key */
+ 
 import React, { useState, useEffect } from 'react';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';

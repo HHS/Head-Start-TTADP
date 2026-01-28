@@ -66,7 +66,7 @@ function App() {
         const alertFromApi = await getSiteAlerts();
         setAlert(alertFromApi);
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.error(`There was an error fetching alerts: ${e}`);
       }
     }
@@ -83,7 +83,7 @@ function App() {
         const notificationsFromApi = await getNotifications();
         setNotifications({ whatsNew: notificationsFromApi });
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.error(`There was an error fetching notifications: ${e}`);
       }
     }
@@ -103,7 +103,7 @@ function App() {
           window.localStorage.removeItem(LOCAL_STORAGE_AR_EDITABLE_KEY(report.id));
         });
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.log('Error cleaning up reports', err);
       }
     }

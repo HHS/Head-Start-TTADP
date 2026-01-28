@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+ 
 import {
   communicationDateFilter,
 } from '../../components/filter/communicationLogFilters';

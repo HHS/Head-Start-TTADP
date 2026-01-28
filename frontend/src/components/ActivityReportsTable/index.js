@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
+ 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -61,7 +61,7 @@ function ActivityReportsTable({
         setReportsCount(count || 0);
         setError('');
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.log(e);
         setError('Unable to fetch reports');
       } finally {
@@ -98,7 +98,7 @@ function ActivityReportsTable({
       const csv = URL.createObjectURL(blob);
       window.location.assign(csv);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.log(err);
       setDownloadError(true);
     } finally {
@@ -131,7 +131,7 @@ function ActivityReportsTable({
         const csv = URL.createObjectURL(blob);
         window.location.assign(csv);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.log(err);
         setDownloadError(true);
       } finally {

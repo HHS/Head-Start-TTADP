@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+ 
 export function storageAvailable(type) {
   // this is a function from MDN to test if a storage is available before trying to use it
   // https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API

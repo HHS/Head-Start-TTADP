@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
+ 
 import React, { useState, useEffect } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';

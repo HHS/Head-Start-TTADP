@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types */
+ 
 import '@testing-library/jest-dom';
 import React from 'react';
 import join from 'url-join';

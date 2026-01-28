@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React from 'react';
 import join from 'url-join';
 import moment from 'moment';
@@ -24,7 +24,7 @@ const participantsUrl = join(sessionsUrl, 'participants', '1');
 const groupsUrl = join(sessionsUrl, 'groups', '?region=1');
 function mockRecipients(howMany) {
   const mock = [];
-  // eslint-disable-next-line no-plusplus
+   
   for (let i = 0; i < howMany; i++) {
     mock.push({
       id: i,

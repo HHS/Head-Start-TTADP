@@ -40,7 +40,7 @@ DeleteFileModal.propTypes = {
   ]).isRequired,
   onFileRemoved: PropTypes.func.isRequired,
   index: PropTypes.number,
-  // eslint-disable-next-line react/forbid-prop-types
+   
   files: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 

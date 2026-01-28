@@ -34,11 +34,11 @@ describe('VBar Graph', () => {
     await waitFor(() => expect(document.querySelector('svg')).not.toBe(null));
 
     const point1 = document.querySelector('g.ytick');
-    // eslint-disable-next-line no-underscore-dangle
+     
     expect(point1.__data__.text).toBe('0');
 
     const point2 = document.querySelector('g.xtick');
-    // eslint-disable-next-line no-underscore-dangle
+     
     expect(point2.__data__.text).toBe('one');
   });
 

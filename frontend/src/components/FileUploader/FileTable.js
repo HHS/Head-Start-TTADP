@@ -108,7 +108,7 @@ const FileTable = ({ onFileRemoved, files }) => {
 
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
+   
   files: PropTypes.arrayOf(PropTypes.object),
 };
 FileTable.defaultProps = {

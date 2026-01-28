@@ -31,7 +31,7 @@ import arrowBoth from '../images/arrow-both.svg';
 import colors from '../colors';
 
 export const DropdownIndicator = (props) => (
-  // eslint-disable-next-line react/jsx-props-no-spreading
+   
   <components.DropdownIndicator {...props}>
     <img alt="" style={{ width: '8px' }} src={arrowBoth} />
   </components.DropdownIndicator>
@@ -254,7 +254,7 @@ MultiSelect.propTypes = {
   ).isRequired,
   canCreate: PropTypes.bool,
   onCreateOption: PropTypes.func,
-  // eslint-disable-next-line react/forbid-prop-types
+   
   control: PropTypes.object.isRequired,
   components: PropTypes.shape({}),
   onItemSelected: PropTypes.func,

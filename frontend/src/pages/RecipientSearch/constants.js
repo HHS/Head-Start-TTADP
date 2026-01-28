@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+ 
 import { regionFilter } from '../../components/filter/activityReportFilters';
 import { feiRootCauseFilter, goalNameFilter } from '../../components/filter/goalFilters';
 import { groupsFilter, recipientsWithoutTTA, grantStatusFilter } from '../../components/filter/grantFilters';

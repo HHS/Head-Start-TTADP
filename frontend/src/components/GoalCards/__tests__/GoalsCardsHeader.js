@@ -57,7 +57,7 @@ describe('GoalCardsHeader', () => {
     render(
       <UserContext.Provider value={{ user }}>
         <Router history={history}>
-          {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+          { }
           <GoalCardsHeader {...defaultProps} {...props} />
         </Router>
       </UserContext.Provider>,

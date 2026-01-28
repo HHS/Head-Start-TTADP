@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 import { renderHook, act } from '@testing-library/react-hooks';
 import useAsyncWidgetExport from '../useAsyncWidgetExport';
 import { blobToCsvDownload } from '../../utils';

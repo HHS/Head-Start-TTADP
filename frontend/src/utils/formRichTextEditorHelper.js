@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+ 
 /**
  * Utilities for handling rich text editor behavior in forms.
  *

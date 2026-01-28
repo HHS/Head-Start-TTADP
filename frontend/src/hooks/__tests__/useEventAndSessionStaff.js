@@ -1,6 +1,6 @@
-/* eslint-disable max-len */
+ 
 /* eslint-disable react/prop-types */
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useForm, FormProvider } from 'react-hook-form';

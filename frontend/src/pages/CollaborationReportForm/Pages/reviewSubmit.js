@@ -42,7 +42,7 @@ const ReviewSubmit = ({
 
   // store some values for readability
   const isCreator = userId === user.id;
-  // eslint-disable-next-line max-len
+   
   const isCollaborator = collabReportSpecialists?.some(({ specialistId }) => user.id === specialistId);
   const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
   const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;

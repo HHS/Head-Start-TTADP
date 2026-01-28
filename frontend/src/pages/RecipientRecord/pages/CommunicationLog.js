@@ -244,13 +244,13 @@ export default function CommunicationLog({ regionId, recipientId }) {
       await deleteCommunicationLogById(log.id);
       window.location.reload();
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error deleting log:', err);
     }
   };
 
   const handlePageChange = (pageNumber) => {
-    // eslint-disable-next-line max-len
+     
     setSortConfig({ ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * COMMUNICATION_LOG_PER_PAGE });
   };
 

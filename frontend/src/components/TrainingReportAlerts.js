@@ -58,7 +58,7 @@ export default function TrainingReportAlerts() {
         const eventAlerts = await getEventAlerts();
         setAlerts(eventAlerts);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.error(err);
         setAlerts([]);
       }

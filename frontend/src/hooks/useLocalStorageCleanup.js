@@ -42,7 +42,7 @@ export function cleanupLocalStorage(
     window.localStorage.removeItem(oldAdditionalDataKey);
     window.localStorage.removeItem(oldEditableKey);
   } catch (e) {
-    // eslint-disable-next-line no-console
+     
     console.warn('Local storage may not be available: ', e);
   }
 }

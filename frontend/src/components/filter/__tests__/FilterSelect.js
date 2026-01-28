@@ -21,7 +21,7 @@ describe('FilterSelect', () => {
       selectedValues: ['clue but a fancy tin version like the kind you get at barnes and noble', 'bananagrams'],
       mapByValue: false,
     };
-    // eslint-disable-next-line react/jsx-props-no-spreading
+     
     render(<FilterSelect {...props} />);
   };
 

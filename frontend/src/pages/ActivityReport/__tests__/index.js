@@ -1,5 +1,5 @@
-/* eslint-disable max-len */
-/* eslint-disable jest/no-commented-out-tests */
+ 
+ 
 import '@testing-library/jest-dom';
 import reactSelectEvent from 'react-select-event';
 import {

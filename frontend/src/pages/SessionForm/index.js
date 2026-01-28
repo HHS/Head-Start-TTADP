@@ -50,7 +50,7 @@ const determineKeyArray = ({
   facilitation = '',
   isSubmitted = false,
 }) => {
-  // eslint-disable-next-line max-len
+   
   const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
 
   const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
@@ -171,7 +171,7 @@ export default function SessionForm({ match }) {
 
   const eventOrganizer = formData.event?.data?.eventOrganizer || '';
 
-  // eslint-disable-next-line max-len
+   
   const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
 
   const {
@@ -237,7 +237,7 @@ export default function SessionForm({ match }) {
       try {
         const session = await createSession(trainingReportId);
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
-        // eslint-disable-next-line max-len
+         
         const isCollaboratorFromSession = session.event.collaboratorIds.includes(user.id) && !isAdminUser;
         const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
         const { approverId } = session;
@@ -307,9 +307,9 @@ export default function SessionForm({ match }) {
         const notSubmittedApprover = !submitted && isApproverUser && !isAdminUser;
         const needsActionApprover = submitted && isApproverUser && isNeedsAction;
 
-        // eslint-disable-next-line max-len
+         
         const isPocFromSession = (session.event.pocIds || []).includes(user.id) && !isAdminUser;
-        // eslint-disable-next-line max-len
+         
         const isCollaboratorFromSession = (session.event.collaboratorIds || []).includes(user.id) && !isAdminUser;
 
         const isOwnerFromSession = session.event.ownerId === user.id;
@@ -317,9 +317,9 @@ export default function SessionForm({ match }) {
         // check the event organizer and user role
         const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
 
-        // eslint-disable-next-line max-len
+         
         const isRegionalEventPoc = eventOrganizerFromSession === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && isPocFromSession && !isAdminUser;
-        // eslint-disable-next-line max-len
+         
         const isFormUser = (isPocFromSession || isOwnerFromSession || isCollaboratorFromSession) && !isAdminUser;
 
         const submittedFormUser = submitted && isFormUser && !isNeedsAction && !isApproverUser;
@@ -665,7 +665,7 @@ export default function SessionForm({ match }) {
         </Grid>
       </Grid>
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
-        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        { }
         <FormProvider {...hookForm}>
           <Navigator
             deadNavigation={isSessionNavigationDead}

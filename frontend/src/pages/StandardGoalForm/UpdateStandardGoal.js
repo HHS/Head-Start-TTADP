@@ -45,7 +45,7 @@ export default function UpdateStandardGoal({ recipient }) {
         }
 
         const resetFormData = {
-          // eslint-disable-next-line max-len
+           
           [GOAL_FORM_FIELDS.OBJECTIVES]: g.objectives.map((o) => ({
             value: o.title, objectiveId: o.id, onAR: o.onAR, status: o.status,
           })),
@@ -55,7 +55,7 @@ export default function UpdateStandardGoal({ recipient }) {
         };
         hookForm.reset(resetFormData);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.error(err);
         history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${err.status}`);
       } finally {
@@ -96,14 +96,14 @@ export default function UpdateStandardGoal({ recipient }) {
       await updateStandardGoal({
         goalTemplateId,
         grantId,
-        // eslint-disable-next-line max-len
+         
         objectives: data.objectives ? data.objectives.map((o) => ({ title: o.value, id: o.objectiveId })) : [],
         rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
       });
 
       history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.log(err);
     } finally {
       setIsAppLoading(false);

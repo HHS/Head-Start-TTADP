@@ -71,7 +71,7 @@ export default function RegionalCommunicationLog() {
     [user, defaultRegion],
   );
 
-  // eslint-disable-next-line max-len
+   
   const allRegionsFilters = useMemo(() => (userHasOnlyOneRegion ? [] : buildDefaultRegionFilters(regions)), [regions, userHasOnlyOneRegion]);
 
   const filterConfig = useMemo(() => [

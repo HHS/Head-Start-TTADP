@@ -1,7 +1,7 @@
 // This is a test file so ignore eslint error about packages
 // being in dev dependencies instead of dependencies
 
-/* eslint-disable import/no-extraneous-dependencies */
+ 
 
 // jest-dom adds custom jest matchers for asserting on DOM nodes.
 // allows you to do things like:

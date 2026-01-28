@@ -1,5 +1,5 @@
-/* eslint-disable class-methods-use-this */
-// eslint-disable-next-line import/prefer-default-export
+ 
+ 
 export class MeshClient {
   constructor() {
     this.callbacks = {};

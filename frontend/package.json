@@ -78,7 +78,7 @@
     "lint": "eslint --config eslint.config.js $@ src",
     "lint:ci": "yarn lint && yarn lint --format junit -o ./reports/lint.xml",
     "lint:fix": "yarn lint --fix",
-    "lint:fix:single": "eslint --config eslint.config.js --fix src"
+    "lint:fix:single": "eslint --config eslint.config.js --fix --no-warn-ignored"
   },
   "resolutions": {},
   "babel": {

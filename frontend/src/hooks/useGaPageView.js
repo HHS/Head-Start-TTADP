@@ -20,7 +20,7 @@ export default function useGaPageView() {
         window.dataLayer.push(event);
       }
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.log('Error sending page view to Google Analytics', err);
     }
   }, [location.pathname]);

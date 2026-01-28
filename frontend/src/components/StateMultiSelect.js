@@ -96,6 +96,6 @@ export default function StateMultiSelect({
 
 StateMultiSelect.propTypes = {
   name: PropTypes.string.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
+   
   control: PropTypes.object.isRequired,
 };

@@ -100,7 +100,7 @@ export default function ConditionalFields({
 }
 
 ConditionalFields.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
+   
   errors: PropTypes.object.isRequired, // we don't know the keys or values of this object
   prompts: PropTypes.arrayOf(
     PropTypes.shape({

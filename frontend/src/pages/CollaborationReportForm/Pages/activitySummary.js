@@ -221,7 +221,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             Get help choosing a purpose
           </DrawerTriggerButton>
 
-          {/* eslint-disable max-len */}
+          { }
           <Drawer title="Purpose guidance" triggerRef={drawerTriggerRef}>
             <p>
               <strong>
@@ -264,7 +264,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
               Examples include training for PSs about licensing in the states, presenting content at a state health advisory group meeting, or a presentation for RPM/RPD.
             </p>
           </Drawer>
-          {/* eslint-enable max-len */}
+          { }
 
           <Checkbox
             className="margin-top-2"
@@ -518,7 +518,7 @@ const ReviewSection = () => {
     conductMethod,
   } = getValues();
 
-  // eslint-disable-next-line no-nested-ternary
+   
   const isStateDisplay = isStateActivity === null ? 'None provided' : (isStateActivity === 'true' ? 'State' : 'Regional');
 
   const sections = [

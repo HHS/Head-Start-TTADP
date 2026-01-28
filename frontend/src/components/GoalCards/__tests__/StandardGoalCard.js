@@ -86,7 +86,7 @@ describe('StandardGoalCard', () => {
 
   const history = createMemoryHistory();
 
-  // eslint-disable-next-line max-len
+   
   const renderStandardGoalCard = (props = DEFAULT_PROPS, defaultGoal = goal, user = DEFAULT_USER) => {
     render((
       <Router history={history}>
@@ -100,7 +100,7 @@ describe('StandardGoalCard', () => {
               performGoalStatusUpdate={() => {}}
               handleGoalCheckboxSelect={() => {}}
               isChecked={false}
-              // eslint-disable-next-line react/jsx-props-no-spreading
+               
               {...props}
             />
           </UserContext.Provider>

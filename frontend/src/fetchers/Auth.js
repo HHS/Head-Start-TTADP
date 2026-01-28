@@ -5,7 +5,7 @@ export const fetchLogout = async () => {
   try {
     await get(join('/', 'api', 'logout'));
   } catch (e) {
-    // eslint-disable-next-line no-console
+     
     console.log('error logging out, ignoring');
   }
 };

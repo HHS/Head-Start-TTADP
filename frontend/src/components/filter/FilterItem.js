@@ -144,7 +144,7 @@ export default function FilterItem({
           </span>
         )
       }
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      {  }
       <label className="usa-sr-only" htmlFor={`topic-${id}`}>
         Select a filter
       </label>
@@ -159,7 +159,7 @@ export default function FilterItem({
         <option value="" disabled hidden>- Select -</option>
         {topicOptions}
       </select>
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      {  }
       <label className="usa-sr-only" htmlFor={`condition-${id}`}>
         Select a condition
       </label>

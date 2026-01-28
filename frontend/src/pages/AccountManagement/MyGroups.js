@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
+ 
 import React, { useEffect, useState, useContext } from 'react';
 import { GROUP_SHARED_WITH } from '@ttahub/common';
 import ReactRouterPropTypes from 'react-router-prop-types';

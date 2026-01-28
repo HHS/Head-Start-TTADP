@@ -74,7 +74,7 @@ export default function StandardGoalForm({ recipient }) {
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
-  // eslint-disable-next-line max-len
+   
   const userCanEdit = useMemo(() => canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE)), [regionId, user]);
 
   const [goalTemplatePrompts] = useGoalTemplatePrompts(
@@ -103,7 +103,7 @@ export default function StandardGoalForm({ recipient }) {
         { refreshRecipient: true },
       );
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error(err);
       history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${err.status}`);
     } finally {
@@ -116,7 +116,7 @@ export default function StandardGoalForm({ recipient }) {
   }
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
+     
     <FormProvider {...hookForm}>
       <GoalFormNavigationLink recipient={recipient} regionId={regionId} />
       <GoalFormHeading recipient={recipient} regionId={regionId} />

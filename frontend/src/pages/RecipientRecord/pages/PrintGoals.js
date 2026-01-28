@@ -42,7 +42,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
         setGoals(goalRows);
         setError('');
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.error(e);
         setError('Unable to fetch goals');
       }

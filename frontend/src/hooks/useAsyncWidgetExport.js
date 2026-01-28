@@ -35,7 +35,7 @@ export default function useAsyncWidgetExport(
       );
       blobToCsvDownload(blob, exportName);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error(error);
     }
   }, [checkboxes, exportName, fetcher, filters, sortConfig.direction, sortConfig.sortBy]);

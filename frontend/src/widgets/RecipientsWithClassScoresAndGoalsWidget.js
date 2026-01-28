@@ -227,7 +227,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
       <div className="bg-white padding-x-3">
         <div className="desktop:display-flex flex-justify smart-hub-border-base-lighter border-bottom">
           <div className="flex-align-center margin-bottom-3 display-flex">
-            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+            { }
             <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
             <Dropdown
               onChange={setSortBy}
@@ -246,7 +246,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
             </Dropdown>
           </div>
           <div className="flex-align-center margin-bottom-3 display-flex">
-            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+            { }
             <Label className="display-block margin-right-1 margin-y-0" style={{ minWidth: 'max-content' }} htmlFor="perPage">Show</Label>
             <Dropdown
               className="margin-top-0 margin-right-1 width-auto"

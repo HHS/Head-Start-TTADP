@@ -1,7 +1,7 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/prop-types */
-/* eslint-disable arrow-body-style */
-/* eslint-disable max-len */
+ 
+ 
+ 
+ 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';

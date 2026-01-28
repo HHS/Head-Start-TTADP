@@ -28,9 +28,9 @@ export default function useSessionCardPermissions({
     const submitted = !!(pocComplete && collabComplete && approverId);
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
     const statusIsNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
-    // eslint-disable-next-line max-len
+     
     const isRegionalNoNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
-    // eslint-disable-next-line max-len
+     
     const isRegionalWithNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
     const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
     const facilitationIsNationalCenters = facilitation === 'national_center';
@@ -104,9 +104,9 @@ export default function useSessionCardPermissions({
 
   const showSessionDelete = useMemo(() => {
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
-    // eslint-disable-next-line max-len
+     
     const isRegionalNoNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
-    // eslint-disable-next-line max-len
+     
     const isRegionalWithNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
     const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
 

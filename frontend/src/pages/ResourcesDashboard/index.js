@@ -1,5 +1,5 @@
-/* eslint-disable no-alert */
-/* eslint-disable no-console */
+ 
+ 
 import React, {
   useContext,
   useState,
@@ -106,7 +106,7 @@ export default function ResourcesDashboard() {
         setActivityReports(data);
         updateError('');
       } /* istanbul ignore next: cannot test console.log */ catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.log(e);
         updateError('Unable to fetch reports');
       } finally {

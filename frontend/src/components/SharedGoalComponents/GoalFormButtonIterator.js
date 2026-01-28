@@ -25,7 +25,7 @@ GoalFormButtonIterator.propTypes = {
     onClick: PropTypes.func,
     to: PropTypes.string,
   })).isRequired,
-  // eslint-disable-next-line react/forbid-prop-types -- modalRef is a ref object
+   
   modalRef: PropTypes.shape({ current: PropTypes.object }),
 };
 

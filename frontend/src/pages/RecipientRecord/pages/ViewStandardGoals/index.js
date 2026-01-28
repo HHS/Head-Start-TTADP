@@ -148,7 +148,7 @@ export default function ViewGoalDetails({
         if (isSubscribed) {
           setFetchError('There was an error fetching goal history');
         }
-        // eslint-disable-next-line no-console
+         
         console.error(err);
       } finally {
         if (isSubscribed) {

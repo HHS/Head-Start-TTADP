@@ -79,7 +79,7 @@ SupportingAttachmentsSessionOrCommunication.defaultProps = {
       <li>other items not available online</li>
       <li>other non-resource items not available online</li>
     </ul>
-    {/* eslint-disable-next-line react/jsx-closing-tag-location */}
+    { }
   </Label>),
 };
 

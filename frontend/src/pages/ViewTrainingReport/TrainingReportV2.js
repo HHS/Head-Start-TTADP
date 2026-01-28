@@ -164,7 +164,7 @@ export default function TrainingReportV2({
       return false;
     }
 
-    // eslint-disable-next-line max-len
+     
     if (sessionReports.length === 0 || !sessionReports.every((session) => session.data.status === TRAINING_REPORT_STATUSES.COMPLETE)) {
       return false;
     }

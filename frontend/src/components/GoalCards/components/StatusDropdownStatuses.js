@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React from 'react';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import colors from '../../../colors';

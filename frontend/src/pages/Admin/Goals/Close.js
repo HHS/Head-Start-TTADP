@@ -130,7 +130,7 @@ export default function Close() {
         const goals = await getGoals(grantIds);
         setGoalOptions(reduceAndSortGoals(goals));
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.log(err);
       } finally {
         setIsAppLoading(false);
@@ -150,7 +150,7 @@ export default function Close() {
         const groups = await getGroupsByRegion(region);
         setGroupOptions(groups);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.log(err);
       } finally {
         setIsAppLoading(false);
@@ -164,7 +164,7 @@ export default function Close() {
       setIsAppLoading(true);
       setResponse(await closeMultiRecipientGoalsFromAdmin(data));
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.log(err);
       setResponse({
         isError: true,
@@ -217,7 +217,7 @@ export default function Close() {
       </Helmet>
       <Container>
         <h2 className="margin-top-0">Close goals</h2>
-        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        { }
         <FormProvider {...hookForm}>
           <form className="usa-form maxw-tablet">
             <Modal

@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen, act } from '@testing-library/react';
@@ -9,7 +9,7 @@ import { MemoryRouter } from 'react-router';
 import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
 
 describe('SomeGoalsHaveNoPromptResponse', () => {
-  // eslint-disable-next-line react/prop-types
+   
   const RenderSomeGoalsHaveNoPromptResponse = (props) => (
     <MemoryRouter>
       <SomeGoalsHaveNoPromptResponse

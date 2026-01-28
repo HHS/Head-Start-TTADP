@@ -23,7 +23,7 @@ export default function useGaUserData(user) {
         window.dataLayer.push(event);
       }
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.log('Error sending user data to Google Analytics', err);
     }
   }, [user]);

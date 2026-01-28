@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 import React, {
   useContext,
   useRef,
@@ -124,7 +124,7 @@ export default function RegionalCommunicationLog() {
         </Grid>
       </Grid>
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
-        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        { }
         <FormProvider {...hookForm}>
           <LogFormNavigator
             shouldFetch={shouldFetch}

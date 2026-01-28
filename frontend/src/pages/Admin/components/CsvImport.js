@@ -133,7 +133,7 @@ export default function CsvImport(
         const headersArray = Object.keys(records[0]);
 
         // Check required headers.
-        // eslint-disable-next-line max-len
+         
         const missingHeaders = requiredCsvHeaders.filter((header) => !headersArray.includes(header));
         if (missingHeaders.length > 0) {
           setError(`Required headers missing: ${missingHeaders.join(', ')}`);

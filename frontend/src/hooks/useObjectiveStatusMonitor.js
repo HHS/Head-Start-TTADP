@@ -38,7 +38,7 @@ export default function useObjectiveStatusMonitor(objectives) {
         evaluateObjectiveMapRefForStatus(objectiveMap),
       );
     } catch (e) {
-      // eslint-disable-next-line no-console
+       
       console.error(e);
     }
   }, []);

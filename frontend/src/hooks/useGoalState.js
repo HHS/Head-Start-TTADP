@@ -89,7 +89,7 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
             }
 
             // if we have a goal template selected, then we are using an existing goal - return it
-            // eslint-disable-next-line max-len
+             
             return data.goalTemplate && data.goalTemplate.goals.length ? data.goalTemplate.goals[0] : false;
           })();
 
@@ -98,7 +98,7 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
           // isExistingGoal refers to whether this hook is used on an existing goal edit form
           // not to whether the goal already exists in the new goal form
           // (comment here acknowledging that is a bit confusing)
-          // eslint-disable-next-line max-len
+           
           if (isExistingGoal || isCreatingNewGoal || (useOhsInitiativeGoal && !existingOhsInitiativeGoal)) {
             const ids = await action(recipient.id, regionId, isExistingGoal, data);
             forwardToGoalWithIds(ids);
@@ -181,7 +181,7 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
       try {
         await pageState[page].submit(data);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.error(err);
       }
     }, [page, pageState],

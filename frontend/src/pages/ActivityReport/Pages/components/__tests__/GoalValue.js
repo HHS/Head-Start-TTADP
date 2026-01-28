@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types */
+ 
 import '@testing-library/jest-dom';
 import {
   render, screen,
@@ -27,7 +27,7 @@ describe('GoalValue', () => {
         data,
       };
 
-    // eslint-disable-next-line react/jsx-props-no-spreading
+     
     return render(<GoalValue {...props} />);
   };
 

@@ -107,7 +107,7 @@ describe('useHookFormLocalStorage', () => {
       const { result } = renderHook(() => useHookFormLocalStorage('test-key', mockHookForm));
 
       expect(result.current).toBe(true);
-      // eslint-disable-next-line no-console
+       
       expect(console.error).not.toHaveBeenCalled();
     });
 
@@ -117,7 +117,7 @@ describe('useHookFormLocalStorage', () => {
       const { result } = renderHook(() => useHookFormLocalStorage('test-key', mockHookForm));
 
       expect(result.current).toBe(true);
-      // eslint-disable-next-line no-console
+       
       expect(console.error).toHaveBeenCalledWith(
         'Error loading createdInLocalStorage timestamp:',
         expect.any(Error),
@@ -268,7 +268,7 @@ describe('useHookFormLocalStorage', () => {
       }
 
       await waitFor(() => {
-        // eslint-disable-next-line no-console
+         
         expect(console.error).toHaveBeenCalledWith(
           'Error saving to localStorage:',
           expect.any(Error),

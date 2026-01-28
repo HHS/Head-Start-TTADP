@@ -78,7 +78,7 @@ export default function Create() {
         setCreatorOptions(creators);
         setGroupOptions(groups);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.log(err);
       }
     }
@@ -91,7 +91,7 @@ export default function Create() {
         const templates = await getCuratedTemplates();
         setCuratedGoalOptions(templates);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.log(err);
       }
     }
@@ -108,7 +108,7 @@ export default function Create() {
         const templatePrompts = await getGoalTemplatePrompts(templateId);
         setPrompts(templatePrompts);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.log(err);
       }
     }
@@ -139,7 +139,7 @@ export default function Create() {
       const created = await createMultiRecipientGoalsFromAdmin(data);
       setResponse(created);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.log(err);
       setResponse({
         isError: true,
@@ -206,7 +206,7 @@ export default function Create() {
       </Helmet>
       <Container>
         <h2 className="margin-top-0">Create goals</h2>
-        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        { }
         <FormProvider {...hookForm}>
           <form className="usa-form maxw-tablet" onSubmit={hookForm.handleSubmit(onSubmit)}>
             <FormGroup className="usa-form-group" required>

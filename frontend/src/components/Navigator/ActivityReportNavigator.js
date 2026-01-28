@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React, {
   useState,
   useContext,
@@ -91,7 +91,7 @@ const ActivityReportNavigator = ({
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
-  // eslint-disable-next-line max-len
+   
   const goalsAndObjectivesPage = useMemo(() => pages.find((p) => p.position === GOALS_AND_OBJECTIVES_POSITION), [pages]);
 
   const {

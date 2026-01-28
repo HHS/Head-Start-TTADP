@@ -25,7 +25,7 @@ export default function useMediaCapture(reference, title = 'download') {
       a.setAttribute('download', `${today}-${title}.png`);
       a.click();
     } catch (e) {
-      // eslint-disable-next-line no-console
+       
       console.log(e);
     }
   }, [reference, title]);

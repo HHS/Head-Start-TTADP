@@ -85,7 +85,7 @@ export default function RegionalDashboard({ match }) {
   const {
     h1Text,
     showFilters,
-  // eslint-disable-next-line max-len
+   
   } = pageConfig(userHasOnlyOneRegion, defaultRegion)[reportType] || pageConfig(userHasOnlyOneRegion, defaultRegion).default;
 
   const filtersToUse = useMemo(() => {

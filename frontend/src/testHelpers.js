@@ -33,7 +33,7 @@ export const withText = (text) => (content, node) => {
 
 function mockProperty(obj, property, value) {
   const { [property]: originalProperty } = obj;
-  // eslint-disable-next-line no-param-reassign
+   
   delete obj[property];
   beforeAll(() => {
     Object.defineProperty(obj, property, {
@@ -43,7 +43,7 @@ function mockProperty(obj, property, value) {
     });
   });
   afterAll(() => {
-    // eslint-disable-next-line no-param-reassign
+     
     obj[property] = originalProperty;
   });
 }

@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 const formatCitations = (citations, activityRecipients) => citations.reduce((acc, citation) => {
   const { monitoringReferences } = citation;
   monitoringReferences.forEach((reference) => {
-    // eslint-disable-next-line max-len
+     
     const recipient = activityRecipients.find((ar) => ar.activityRecipientId === reference.grantId);
     if (recipient) {
       if (acc[recipient.name]) {

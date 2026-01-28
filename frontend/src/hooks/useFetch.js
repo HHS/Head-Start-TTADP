@@ -19,7 +19,7 @@ export default function useFetch(
         setData(response);
         setStatusCode(200);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.error(err);
         setError(errorMessage);
         setStatusCode(err.status || 500);

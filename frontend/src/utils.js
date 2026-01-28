@@ -306,7 +306,7 @@ export const blobToCsvDownload = (blob, fileName) => {
     document.body.appendChild(a);
     a.click();
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error(error);
   } finally {
     window.URL.revokeObjectURL(url);

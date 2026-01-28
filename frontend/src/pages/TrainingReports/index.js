@@ -130,7 +130,7 @@ export default function TrainingReports({ match }) {
   const [displayEvents, setDisplayEvents] = useState([]);
   const [cardsInternalMessage, setCardsInternalMessage] = useState();
   const history = useHistory();
-  // eslint-disable-next-line max-len
+   
   const [msg, setMsg] = useState(evaluateMessageFromHistory(history));
 
   const {
@@ -160,7 +160,7 @@ export default function TrainingReports({ match }) {
         setDisplayEvents(events);
         updateError('');
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.log(e);
         updateError('Unable to fetch events');
       } finally {
@@ -198,7 +198,7 @@ export default function TrainingReports({ match }) {
       // update the state
       setDisplayEvents(events);
     } catch (e) {
-      // eslint-disable-next-line no-console
+       
       console.log(e);
     }
   };
@@ -226,7 +226,7 @@ export default function TrainingReports({ match }) {
       removeEventFromDisplay(id);
     } catch (e) {
       updateError('Unable to delete event');
-      // eslint-disable-next-line no-console
+       
       console.log(e);
     }
   };

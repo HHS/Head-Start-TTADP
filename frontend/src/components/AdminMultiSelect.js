@@ -1,5 +1,5 @@
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable react/jsx-props-no-spreading */
+ 
+ 
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
@@ -71,7 +71,7 @@ AdminMultiSelect.propTypes = {
   onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   label: PropTypes.string.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
+   
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 

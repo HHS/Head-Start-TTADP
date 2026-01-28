@@ -50,7 +50,7 @@ export default function CreatorSubmit({
       <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
         Draft saved on
         {' '}
-        {/* eslint-disable-next-line react/prop-types */}
+        { }
         {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
       </Alert>
       )}

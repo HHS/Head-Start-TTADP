@@ -24,7 +24,7 @@ export default function ResourceUseSparkline({ dataPoints }) {
 
   // the color of the bar with the highest value is orange, the other are blue
   const maxIndex = values.indexOf(Math.max(...values));
-  // eslint-disable-next-line max-len
+   
   const color = values.map((_v, i) => (i === maxIndex ? colors.ttahubOrange : colors.ttahubMediumBlue));
 
   const trace = {

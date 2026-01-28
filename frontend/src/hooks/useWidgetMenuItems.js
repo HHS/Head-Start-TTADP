@@ -7,7 +7,7 @@ export default function useWidgetMenuItems(
   checkboxes,
   exportRows,
 ) {
-  // eslint-disable-next-line max-len
+   
   const atLeastOneRowIsSelected = useMemo(() => Object.values(checkboxes).some((v) => v), [checkboxes]);
 
   const menuItems = useMemo(() => {

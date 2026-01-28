@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 import React from 'react';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';

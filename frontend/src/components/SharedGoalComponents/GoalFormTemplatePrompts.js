@@ -22,11 +22,11 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
 
   // we can assume that there is only ever one prompt: for root causes
   // todo: if this ever changes, rewrite this to be generic
-  // eslint-disable-next-line max-len
+   
   const prompt = useMemo(() => (goalTemplatePrompts ? goalTemplatePrompts[0] : null), [goalTemplatePrompts]);
   const promptId = useMemo(() => uniqueId('goal-form-prompt-'), []);
 
-  // eslint-disable-next-line max-len
+   
   const options = useMemo(() => (prompt ? prompt.options.map((option) => ({ name: option, id: option })) : []), [prompt]);
 
   const drawerContent = useMemo(() => (

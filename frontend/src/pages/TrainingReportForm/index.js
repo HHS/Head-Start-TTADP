@@ -302,7 +302,7 @@ export default function TrainingReportForm({ match }) {
         }
       }
       >
-        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        { }
         <FormProvider {...hookForm}>
           <Modal
             modalRef={modalRef}

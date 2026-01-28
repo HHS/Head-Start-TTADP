@@ -48,7 +48,7 @@ Field.propTypes = {
   icon: PropTypes.shape({
     prefix: PropTypes.string,
     iconName: PropTypes.string,
-    // eslint-disable-next-line react/forbid-prop-types
+     
     icon: PropTypes.array,
   }).isRequired,
   iconColor: PropTypes.string.isRequired,

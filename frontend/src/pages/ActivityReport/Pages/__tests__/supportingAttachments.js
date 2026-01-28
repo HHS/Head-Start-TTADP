@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -15,7 +15,7 @@ const RenderSupportingAttachments = ({ data }) => {
     mode: 'onChange',
     defaultValues: data,
   });
-  // eslint-disable-next-line react/prop-types
+   
   return (
     <Router history={history}>
       <FormProvider {...hookForm}>
@@ -44,7 +44,7 @@ const RenderSupportingAttachmentsReview = ({ data }) => {
     mode: 'onChange',
     defaultValues: data,
   });
-  // eslint-disable-next-line react/prop-types
+   
   return (
     <Router history={history}>
       <FormProvider {...hookForm}>

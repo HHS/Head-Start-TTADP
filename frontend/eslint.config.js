@@ -56,6 +56,7 @@ module.exports = [
       "linebreak-style": 0,
       "no-unused-vars": "off",
       "jsx-a11y/no-autofocus": "warn",
+      "import/no-named-as-default-member": "off",
     },
   },
   {

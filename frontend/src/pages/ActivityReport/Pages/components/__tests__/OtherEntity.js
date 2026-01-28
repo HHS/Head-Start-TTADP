@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -32,7 +32,7 @@ const RenderOtherEntity = ({ objectivesWithoutGoals, recipientIds }) => {
 };
 
 RenderOtherEntity.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
+   
   objectivesWithoutGoals: PropTypes.arrayOf(PropTypes.object).isRequired,
   recipientIds: PropTypes.arrayOf(PropTypes.number).isRequired,
 };

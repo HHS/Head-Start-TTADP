@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+ 
 import React from 'react';
 import moment from 'moment';
 import { FILTER_CONDITIONS, EMPTY_MULTI_SELECT, WITHOUT_ACTIVITY_DATE_CONDITIONS } from '../../Constants';

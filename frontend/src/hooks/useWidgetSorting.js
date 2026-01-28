@@ -55,7 +55,7 @@ export default function useWidgetSorting(
             ...t,
             sortBy: !t.data
               ? t[sortKey].toString().toLowerCase() // If we don't have data, use the value.
-              // eslint-disable-next-line max-len
+               
               : t.data.find((tp) => (tp.sortKey || tp.title) === sortKey).value.toString().toLowerCase(),
           };
         });

@@ -46,13 +46,13 @@ export default function RestartStandardGoal({ recipient }) {
 
         // We want the user to start fresh with objectives and root causes.
         const resetFormData = {
-          // eslint-disable-next-line max-len
+           
           [GOAL_FORM_FIELDS.OBJECTIVES]: [],
         };
 
         hookForm.reset(resetFormData);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.error(err);
         history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${err.status}`);
       } finally {
@@ -99,7 +99,7 @@ export default function RestartStandardGoal({ recipient }) {
 
       history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.log(err);
     } finally {
       setIsAppLoading(false);

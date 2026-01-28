@@ -83,7 +83,7 @@ export default function GoalCardsHeader({
       </div>
       <div className="ttahub-goal-cards-header--sort-and-pagination">
         <div className="desktop:display-flex flex-align-center">
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+          { }
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
           <Dropdown
             onChange={setSortBy}

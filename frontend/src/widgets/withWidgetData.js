@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';

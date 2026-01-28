@@ -1,4 +1,4 @@
-/* eslint-disable jest/no-disabled-tests */
+ 
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
@@ -178,11 +178,11 @@ describe('Topic & Frequency Graph Widget', () => {
     // this won't change because we sort count and then alphabetically
     // and this is always last in that case
     const firstPoint = document.querySelector('g.ytick');
-    // eslint-disable-next-line no-underscore-dangle
+     
     expect(firstPoint.__data__.text).toBe('Human Resources');
 
     const point1 = Array.from(document.querySelectorAll('g.ytick')).pop();
-    // eslint-disable-next-line no-underscore-dangle
+     
     expect(point1.__data__.text).toBe('Community and Self-Assessment');
 
     act(() => userEvent.click(apply));
@@ -191,7 +191,7 @@ describe('Topic & Frequency Graph Widget', () => {
     await screen.findByText('CLASS: Instructional Support');
 
     const point2 = Array.from(document.querySelectorAll('g.ytick')).pop();
-    // eslint-disable-next-line no-underscore-dangle
+     
     expect(point2.__data__.text).toBe('CLASS: Instructional Support');
   });
 });

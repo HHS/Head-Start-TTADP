@@ -6,7 +6,7 @@ const LinkToActivityReports = () => (
   <RouterLink to="/activity-reports">Activity Reports</RouterLink>
 );
 
-// eslint-disable-next-line arrow-body-style
+ 
 const NewVersionAvailable = () => {
   return (
     <>

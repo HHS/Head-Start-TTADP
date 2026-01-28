@@ -14,7 +14,7 @@ const RTest = ({ children }) => {
   reset = methods.reset;
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
+     
     <FormProvider {...methods}>
       {children}
     </FormProvider>

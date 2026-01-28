@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
@@ -20,7 +20,7 @@ const defaultUser = {
 };
 
 const RenderSubmitter = ({
-  // eslint-disable-next-line react/prop-types
+   
   onFormSubmit, formData, pages, onResetToDraft, onSave,
 }) => {
   const defaultValues = {

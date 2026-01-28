@@ -122,7 +122,7 @@ export default function StandardGoalCard({
         }));
       }
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error updating goal status:', err);
       setStatusChangeError(true);
     }

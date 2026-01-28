@@ -39,7 +39,7 @@ export const formatWhatsNew = (feed) => {
       alreadyRead = JSON.parse(storage);
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.log('local storage unavailable', error);
   }
 
@@ -121,7 +121,7 @@ export default function WhatsNew({ data }) {
 
       window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(articleIds));
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.log('local storage unavailable', error);
     }
   }, [articles]);

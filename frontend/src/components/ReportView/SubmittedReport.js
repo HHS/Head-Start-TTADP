@@ -51,7 +51,7 @@ export default function SubmittedReport({ data }) {
 
   // third table
   let {
-    // eslint-disable-next-line prefer-const
+     
     context, displayId,
   } = data;
   if (context === '') context = 'None provided';

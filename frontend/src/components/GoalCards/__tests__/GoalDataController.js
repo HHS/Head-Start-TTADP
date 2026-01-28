@@ -59,7 +59,7 @@ describe('GoalDataController', () => {
       <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>
         <UserContext.Provider value={{ user: DEFAULT_USER }}>
           <Router history={history}>
-            {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+            { }
             <GoalDataController {...defaultProps} {...props} />
           </Router>
         </UserContext.Provider>

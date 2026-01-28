@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 import React, { useMemo, useContext } from 'react';
 import useSessionDeadNavigation from './useSessionDeadNavigation';
 import isAdmin from '../permissions';

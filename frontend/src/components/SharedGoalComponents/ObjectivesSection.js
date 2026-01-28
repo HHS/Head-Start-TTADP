@@ -73,7 +73,7 @@ export default function ObjectivesSection({
               >
                 <input
                   type="hidden"
-                  // eslint-disable-next-line react/jsx-props-no-spreading
+                   
                   {...register(`${fieldName}[${index}].objectiveId`)}
                   defaultValue={field.objectiveId}
                 />

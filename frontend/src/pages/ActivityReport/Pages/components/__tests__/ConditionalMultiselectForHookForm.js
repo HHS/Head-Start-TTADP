@@ -50,7 +50,7 @@ describe('ConditionalMultiselectForHookForm', () => {
 
     return (
       <div>
-        { /* eslint-disable-next-line react/jsx-props-no-spreading */ }
+        {   }
         <FormProvider {...hookForm}>
           <ConditionalMultiselectForHookForm
             fieldData={fieldData}

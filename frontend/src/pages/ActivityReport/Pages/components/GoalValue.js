@@ -3,7 +3,7 @@
  * Changes:
  * - Show the goal number when selected
  */
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 /* eslint-disable react/prop-types */
 import React from 'react';
 

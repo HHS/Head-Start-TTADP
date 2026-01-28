@@ -46,7 +46,7 @@ export default function useLocalStorage(key, defaultValue, save = true) {
       try {
         window.localStorage.setItem(key, JSON.stringify(storedValue));
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.log('local storage unavailable', error);
       }
     }

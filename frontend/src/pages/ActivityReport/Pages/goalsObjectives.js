@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
+ 
 // disabling prop spreading to use the "register" function from react hook form the same
 // way they did in their examples
 import React, {
@@ -155,7 +155,7 @@ const GoalsObjectives = ({
           setFetchError(false);
         } catch (err) {
           setFetchError(true);
-          // eslint-disable-next-line no-console
+           
           console.error(err);
         }
       }
@@ -218,7 +218,7 @@ const GoalsObjectives = ({
     try {
       await setGoalAsActivelyEdited(reportId, goal.goalIds, pageState);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('failed to set goal as actively edited with this error:', err);
     }
     const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
