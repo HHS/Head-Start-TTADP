@@ -20,6 +20,7 @@ test-results
 build/
 frontend/build
 node_modules
+.yarn
 
 # Terraform
 **/.terraform.lock.hcl
