@@ -16,6 +16,9 @@ export async function validateSubmission(instance) {
     'isStateActivity',
     'conductMethod',
     'description',
+    'participants',
+    'reportReasons',
+    'steps',
   ];
 
   if (isSubmission) {
