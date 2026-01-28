@@ -18,9 +18,10 @@ async function logOldRecordsCount() {
         AND t.table_type = 'BASE TABLE'
       ORDER BY t.table_name
     `);
+    const tableNames = tables.map((r) => r.table_name);
 
     const results = await Promise.allSettled(
-      tables.map(async (table) => {
+      tableNames.map(async (table) => {
         const [queryResults] = await sequelize.query(
           `SELECT COUNT(*) AS count FROM "${table}" WHERE "dml_timestamp" < NOW() - INTERVAL '${OLD_THRESHOLD}';`,
         );
@@ -35,7 +36,7 @@ async function logOldRecordsCount() {
           `Table: ${result.value.table}, Records older than ${OLD_THRESHOLD}: ${result.value.count}`,
         );
       } else {
-        const table = tables[index];
+        const table = tableNames[index];
         const message = result.reason instanceof Error
           ? result.reason.message
           : String(result.reason);
