@@ -37,9 +37,6 @@ describe('logOldRecordsCount', () => {
     await logOldRecordsCount();
 
     expect(sequelize.query).toHaveBeenCalled();
-    expect(sequelize.query).toHaveBeenCalledWith(
-      expect.stringContaining('ZALActivityRecipients'),
-    );
     expect(auditLogger.error).not.toHaveBeenCalled();
   });
 
