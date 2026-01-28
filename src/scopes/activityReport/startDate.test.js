@@ -77,6 +77,17 @@ describe('startDate filtersToScopes', () => {
         .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
     });
 
+    it('within handles month-only ranges', async () => {
+      const filters = { 'startDate.win': '2021/01-2021/12' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([secondReport.id]));
+    });
+
     it('within returns reports with start dates when the filters are an array', async () => {
       const filters = { 'startDate.win': ['2020/06/06-2022/06/06', '2020/06/05-2021/06/05'] };
       const { activityReport: scope } = await filtersToScopes(filters);

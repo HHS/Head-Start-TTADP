@@ -1,8 +1,44 @@
 import { Op, WhereOptions } from 'sequelize';
+import moment from 'moment';
 import { map, pickBy } from 'lodash';
 import db from '../models';
 
 const { Topic } = db;
+const YEAR_MONTH_PATTERN = /^\d{4}[-/]\d{1,2}$/;
+const YEAR_MONTH_FORMATS = ['YYYY-MM', 'YYYY-M', 'YYYY/MM', 'YYYY/M'];
+const FULL_DATE_FORMATS = [
+  'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-MM-D', 'YYYY-M-DD',
+  'YYYY/MM/DD', 'YYYY/M/D', 'YYYY/MM/D', 'YYYY/M/DD',
+  'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
+  'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
+];
+
+function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {
+  if (!value || typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (YEAR_MONTH_PATTERN.test(trimmed)) {
+    const monthOnly = moment(trimmed, YEAR_MONTH_FORMATS, true);
+    if (!monthOnly.isValid()) {
+      return null;
+    }
+    const bounded = boundary === 'end' ? monthOnly.endOf('month') : monthOnly.startOf('month');
+    return bounded.format('YYYY-MM-DD');
+  }
+
+  const fullDate = moment(trimmed, FULL_DATE_FORMATS, true);
+  if (!fullDate.isValid()) {
+    return null;
+  }
+
+  return fullDate.format('YYYY-MM-DD');
+}
 /**
  * Takes an array of string date ranges (2020/09/01-2021/10/02, for example)
  * and attempts to turn them into something sequelize can understand
@@ -12,15 +48,27 @@ const { Topic } = db;
  * @param {string} Operator (a sequelize date operator)
  * @returns an array meant to be folded in an Op.and/Op.or sequelize expression
  */
-export function compareDate(dates: string[], property: string, operator: string): WhereOptions[] {
-  return dates.reduce((acc, date) => [
-    ...acc,
-    {
-      [property]: {
-        [operator]: date,
+export function compareDate(
+  dates: string[],
+  property: string,
+  operator: typeof Op.lte | typeof Op.lt | typeof Op.gte | typeof Op.gt,
+): WhereOptions[] {
+  const boundary = operator === Op.lte || operator === Op.lt ? 'end' : 'start';
+  return dates.reduce((acc, date) => {
+    const normalized = normalizeDateInput(date, boundary);
+    if (!normalized) {
+      return acc;
+    }
+
+    return [
+      ...acc,
+      {
+        [property]: {
+          [operator]: normalized,
+        },
       },
-    },
-  ], []);
+    ];
+  }, []);
 }
 
 /**
@@ -42,12 +90,18 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
       return acc;
     }
 
+    const normalizedStartDate = normalizeDateInput(startDate, 'start');
+    const normalizedEndDate = normalizeDateInput(endDate, 'end');
+    if (!normalizedStartDate || !normalizedEndDate) {
+      return acc;
+    }
+
     return [
       ...acc,
       {
         [property]: {
-          [Op.gte]: startDate,
-          [Op.lte]: endDate,
+          [Op.gte]: normalizedStartDate,
+          [Op.lte]: normalizedEndDate,
         },
       },
     ];
