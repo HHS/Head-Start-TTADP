@@ -869,7 +869,7 @@ describe('recipientSpotlight service', () => {
         );
       } finally {
         // Clean up the test data
-        await Grant.destroy({ where: { id: [grantA.id, grantB.id] }, force: true });
+        await Grant.destroy({ where: { id: [grantA.id, grantB.id] }, force: true, individualHooks: true });
         await Recipient.destroy({ where: { id: [recipientA.id, recipientB.id] }, force: true });
       }
     });
@@ -1103,7 +1103,7 @@ describe('recipientSpotlight service', () => {
       expect(newRecipientResult).toBeDefined();
     });
   });
-
+  /// failing block
   describe('secondary sorting', () => {
     // Test recipients with different indicator counts and names
     let sortRecipientA; // Will have 0 indicators
@@ -1271,20 +1271,40 @@ describe('recipientSpotlight service', () => {
     });
 
     afterAll(async () => {
-      // Clean up activity report goals first (by grantId since we have multiple goals)
+      // Clean up activity report goals first (by goalId, since ActivityReportGoal doesn't have grantId)
       const grantIdsForCleanup = [sortGrantA?.id, sortGrantB?.id, sortGrantC?.id, sortGrantD?.id].filter(Boolean);
+
+      // Get the activity report IDs that are linked to our grants BEFORE deleting ActivityReportGoals
+      let activityReportIds = [];
       if (grantIdsForCleanup.length > 0) {
-        await ActivityReportGoal.destroy({
+        // First find goals for these grants, then use goalIds to find ActivityReportGoals
+        const goals = await Goal.findAll({
           where: { grantId: grantIdsForCleanup },
+          attributes: ['id'],
+        });
+        const goalIds = goals.map((g) => g.id);
+
+        if (goalIds.length > 0) {
+          const activityReportGoals = await ActivityReportGoal.findAll({
+            where: { goalId: goalIds },
+            attributes: ['activityReportId'],
+          });
+          activityReportIds = [...new Set(activityReportGoals.map((arg) => arg.activityReportId))];
+
+          await ActivityReportGoal.destroy({
+            where: { goalId: goalIds },
+            force: true,
+          });
+        }
+      }
+
+      // Clean up only the activity reports associated with our test grants
+      if (activityReportIds.length > 0) {
+        await ActivityReport.destroy({
+          where: { id: activityReportIds },
           force: true,
         });
       }
-
-      // Clean up activity reports
-      await ActivityReport.destroy({
-        where: { userId: testUser.id },
-        force: true,
-      });
 
       // Clean up goals (by grantId to get all goals created for these grants)
       if (grantIdsForCleanup.length > 0) {
@@ -1294,7 +1314,7 @@ describe('recipientSpotlight service', () => {
       // Clean up grants
       const grantIds = [sortGrantA?.id, sortGrantB?.id, sortGrantC?.id, sortGrantD?.id].filter(Boolean);
       if (grantIds.length > 0) {
-        await Grant.destroy({ where: { id: grantIds }, force: true });
+        await Grant.destroy({ where: { id: grantIds }, force: true, individualHooks: true });
       }
 
       // Clean up recipients
@@ -1460,7 +1480,7 @@ describe('recipientSpotlight service', () => {
         expect(testRecipients[0].recipientName).toBe('Alpha Region Sort Recipient');
         expect(testRecipients[1].recipientName).toBe('Beta Region Sort Recipient');
       } finally {
-        await Grant.destroy({ where: { id: [grantRegion1A.id, grantRegion1B.id] }, force: true });
+        await Grant.destroy({ where: { id: [grantRegion1A.id, grantRegion1B.id] }, force: true, individualHooks: true });
         await Recipient.destroy({ where: { id: [recipientRegion1A.id, recipientRegion1B.id] }, force: true });
         await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-REGION-SORT-1', 'G-REGION-SORT-2'] } });
       }
@@ -1533,7 +1553,7 @@ describe('recipientSpotlight service', () => {
         expect(testRecipients[0].recipientName).toBe('Charlie Region Sort Recipient');
         expect(testRecipients[1].recipientName).toBe('Delta Region Sort Recipient');
       } finally {
-        await Grant.destroy({ where: { id: [grantRegionDescA.id, grantRegionDescB.id] }, force: true });
+        await Grant.destroy({ where: { id: [grantRegionDescA.id, grantRegionDescB.id] }, force: true, individualHooks: true });
         await Recipient.destroy({ where: { id: [recipientRegionDescA.id, recipientRegionDescB.id] }, force: true });
         await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-REGION-SORT-3', 'G-REGION-SORT-4'] } });
       }
@@ -1585,7 +1605,7 @@ describe('recipientSpotlight service', () => {
     afterAll(async () => {
       const grantIdsToDelete = [grantRegion1?.id, grantRegion2?.id].filter(Boolean);
       if (grantIdsToDelete.length > 0) {
-        await Grant.destroy({ where: { id: grantIdsToDelete }, force: true });
+        await Grant.destroy({ where: { id: grantIdsToDelete }, force: true, individualHooks: true });
       }
       if (multiRegionRecipient?.id) {
         await Recipient.destroy({ where: { id: multiRegionRecipient.id }, force: true });
