@@ -8,6 +8,9 @@ import UserContext from '../../../../UserContext';
 import useEventAndSessionStaff from '../../../../hooks/useEventAndSessionStaff';
 
 jest.mock('../../../../hooks/useEventAndSessionStaff');
+jest.mock('../../../../components/HookFormRichEditor', () => function MockHookFormRichEditor({ id, name, ariaLabel }) {
+  return <textarea id={id} name={name} aria-label={ariaLabel} data-testid="rich-editor" />;
+});
 
 const FormWrapper = ({ defaultValues, children }) => {
   const hookForm = useForm({

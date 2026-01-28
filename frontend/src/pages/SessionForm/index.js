@@ -701,7 +701,7 @@ export default function SessionForm({ match }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             formDataStatusProp="reviewStatus"
-            shouldAutoSave={false}
+            shouldAutoSave
           />
         </FormProvider>
       </NetworkContext.Provider>

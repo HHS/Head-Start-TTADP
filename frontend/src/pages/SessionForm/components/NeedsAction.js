@@ -1,15 +1,17 @@
 import React from 'react';
-import { Button, Textarea } from '@trussworks/react-uswds';
+import { Button } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import { reviewSubmitComponentProps } from './constants';
 import ReadOnlyField from '../../../components/ReadOnlyField';
+import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
 import ApproverStatusList from '../../ActivityReport/Pages/components/ApproverStatusList';
 
 const path = 'needs-action-session-report';
 
 export default function NeedsAction({ onSubmit }) {
-  const { register, watch } = useFormContext();
+  const { watch } = useFormContext();
 
   const { approver, managerNotes, status } = watch();
 
@@ -29,11 +31,11 @@ export default function NeedsAction({ onSubmit }) {
         name="additionalNotes"
         required={false}
       >
-        <Textarea inputRef={register()} name="additionalNotes" id="additionalNotes" />
+        <HookFormRichEditor ariaLabel="Creator notes" name="additionalNotes" />
       </FormItem>
       <div className="margin-top-4">
         <ReadOnlyField label="Manager notes">
-          {managerNotes}
+          <ReadOnlyEditor value={managerNotes} ariaLabel="Manager notes" />
         </ReadOnlyField>
       </div>
       <div className="margin-top-4">
