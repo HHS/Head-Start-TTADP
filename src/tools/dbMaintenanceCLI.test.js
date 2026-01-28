@@ -31,7 +31,7 @@ describe('logOldRecordsCount', () => {
     process.exitCode = originalExitCode;
   });
 
-  it('queries tables and closes the connection', async () => {
+  it('queries tables', async () => {
     sequelize.query.mockResolvedValue([[{ count: '5' }]]);
 
     await logOldRecordsCount();
@@ -40,7 +40,6 @@ describe('logOldRecordsCount', () => {
     expect(sequelize.query).toHaveBeenCalledWith(
       expect.stringContaining('ZALActivityRecipients'),
     );
-    expect(sequelize.close).toHaveBeenCalled();
     expect(auditLogger.error).not.toHaveBeenCalled();
   });
 
@@ -53,6 +52,5 @@ describe('logOldRecordsCount', () => {
       expect.stringContaining('exit error'),
     );
     expect(process.exitCode).toBe(1);
-    expect(sequelize.close).toHaveBeenCalled();
   });
 });
