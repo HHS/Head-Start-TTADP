@@ -38,6 +38,10 @@ export type SessionReportTableRow = {
   startDate: string | null;
   endDate: string | null;
   objectiveTopics: string[] | null;
+  goalTemplates: { standard: string }[];
+  recipients: { label: string }[],
+  participants: string[],
+  duration: number,
 };
 
 export type GetSessionReportsResponse = {
@@ -49,7 +53,7 @@ export type GetSessionReportsParams = {
   sortBy?: string;
   sortDir?: string;
   offset?: number;
-  limit?: number;
+  limit?: number | 'all';
   format?: 'json' | 'csv';
 };
 

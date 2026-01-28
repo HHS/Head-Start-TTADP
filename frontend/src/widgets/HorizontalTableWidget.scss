@@ -11,7 +11,7 @@
     border-right: 1px solid black;
   }
 
-  .smarthub-horizontal-table-widget .data-header {
+  .smarthub-horizontal-table-widget .data-header.sticky-first-column {
     background: #fff;
     border-bottom: 0px;
     position: sticky;
@@ -153,7 +153,7 @@
 }
 
 // Make sure first column is always sticky.
-.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column {
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column.sticky-first-column {
   position: sticky;
   z-index: 1;
   max-width: 330px;
