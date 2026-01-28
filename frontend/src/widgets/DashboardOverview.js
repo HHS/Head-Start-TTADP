@@ -141,6 +141,18 @@ const getDashboardFields = (data, showTooltip) => ([
     tooltipText: 'Recipients have at least one active grant',
     data: data.recipientPercentage,
   },
+  {
+    lookUpKey: 'Recipients with priority indicators',
+    key: 'recipients-with-priority-indicators',
+    icon: faUser,
+    showTooltip,
+    label1: 'Recipients with priority indicators',
+    label2: `${data.numRecipients} of ${data.totalRecipients}`,
+    iconColor: colors.ttahubMediumBlue,
+    backgroundColor: colors.ttahubBlueLight,
+    tooltipText: 'Recipients with at least one priority indicator',
+    data: data.recipientPercentage,
+  },
 ]);
 
 export function DashboardOverviewWidget({
@@ -148,6 +160,7 @@ export function DashboardOverviewWidget({
   loading,
   fields,
   showTooltips,
+  maxToolTipWidth,
 }) {
   // Get the fields we need while maintaining the order.
   const fieldsToDisplay = fields.map(
@@ -162,6 +175,7 @@ export function DashboardOverviewWidget({
     <DashboardOverviewContainer
       fieldData={fieldsToDisplay}
       loading={loading}
+      maxToolTipWidth={maxToolTipWidth}
     />
   );
 }
@@ -179,6 +193,7 @@ DashboardOverviewWidget.propTypes = {
   loading: PropTypes.bool,
   fields: PropTypes.arrayOf(PropTypes.string),
   showTooltips: PropTypes.bool,
+  maxToolTipWidth: PropTypes.number,
 };
 
 DashboardOverviewWidget.defaultProps = {
@@ -201,6 +216,7 @@ DashboardOverviewWidget.defaultProps = {
     'Hours of TTA',
     'In person activities',
   ],
+  maxToolTipWidth: null,
 };
 
 export default withWidgetData(DashboardOverviewWidget, 'overview');
