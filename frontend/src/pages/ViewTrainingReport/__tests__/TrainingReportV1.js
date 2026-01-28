@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import AppLoadingContext from '../../../AppLoadingContext';
 import ViewTrainingReport from '..';
-import { formatOwnerName } from '../TrainingReportV1';
+import { formatOwnerName, valueOrDefault } from '../TrainingReportV1';
 import UserContext from '../../../UserContext';
 import { OBJECTIVE_STATUS } from '../../../Constants';
 
@@ -448,8 +448,15 @@ describe('ViewTrainingReport', () => {
 
     renderTrainingReport();
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: 'Session 1' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', {
+      name: 'Training event report R03-PD-23-1037',
+    })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', {
+      name: 'Session 1',
+    })).toBeInTheDocument();
+
+    const noneProvided = screen.getAllByText('None provided');
+    expect(noneProvided.length).toBeGreaterThan(0);
   });
 
   it('will not fetch if there are eventReportPilotNationalCenterUsers in the response that match the IDs', async () => {
@@ -620,16 +627,20 @@ describe('ViewTrainingReport', () => {
     expect(await screen.findByText(/office 1, office 2/i)).toBeInTheDocument();
   });
 
-  it('displays empty arrays for objectiveResources not set in V1', async () => {
-    // V1 displays empty arrays (not "None" text like V2) for these fields
+  it('displays "None provided" for empty arrays and null fields', async () => {
     const e = mockEvent();
     e.sessionReports = [{
       ...e.sessionReports[0],
       data: {
         ...e.sessionReports[0].data,
-        objectiveResources: [{ value: '' }],
+        objectiveResources: [],
         courses: [],
         files: [],
+        objectiveTopics: [],
+        objectiveTrainers: [],
+        objectiveSupportType: null,
+        specialistNextSteps: [],
+        recipientNextSteps: [],
       },
     }];
 
@@ -641,9 +652,48 @@ describe('ViewTrainingReport', () => {
       renderTrainingReport();
     });
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
-    // V1 renders arrays directly, so empty arrays show as nothing rather than "None"
-    // This is different from V2 which uses handleArrayJoin to show "None"
+    expect(await screen.findByRole('heading', {
+      name: 'Training event report R03-PD-23-1037',
+    })).toBeInTheDocument();
+
+    const noneProvided = screen.getAllByText('None provided');
+    expect(noneProvided.length).toBeGreaterThan(0);
+  });
+
+  describe('valueOrDefault', () => {
+    it('returns "None provided" for null', () => {
+      expect(valueOrDefault(null)).toBe('None provided');
+    });
+
+    it('returns "None provided" for undefined', () => {
+      expect(valueOrDefault(undefined)).toBe('None provided');
+    });
+
+    it('returns "None provided" for empty string', () => {
+      expect(valueOrDefault('')).toBe('None provided');
+    });
+
+    it('returns "None provided" for whitespace-only string', () => {
+      expect(valueOrDefault('   ')).toBe('None provided');
+    });
+
+    it('returns "None provided" for empty array', () => {
+      expect(valueOrDefault([])).toBe('None provided');
+    });
+
+    it('returns the value for a non-empty string', () => {
+      expect(valueOrDefault('hello')).toBe('hello');
+    });
+
+    it('returns the value for a non-empty array', () => {
+      const arr = ['a', 'b'];
+      expect(valueOrDefault(arr)).toEqual(['a', 'b']);
+    });
+
+    it('returns the value for a number', () => {
+      expect(valueOrDefault(0)).toBe(0);
+      expect(valueOrDefault(42)).toBe(42);
+    });
   });
 
   describe('formatOwnerName', () => {
