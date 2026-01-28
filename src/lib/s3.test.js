@@ -1,5 +1,3 @@
-/* eslint-env jest */
-
 const ORIGINAL_ENV = { ...process.env };
 
 const loadModule = (env = {}) => {
@@ -32,7 +30,7 @@ const loadModule = (env = {}) => {
   jest.doMock('@aws-sdk/lib-storage', () => ({ Upload: mockUpload }));
   jest.doMock('aws4', () => ({ sign: mockGetSignedUrl }));
   jest.doMock('../logger', () => ({ auditLogger: mockAuditLogger, errorLogger: mockErrorLogger }));
-  /* eslint-disable global-require */
+   
   const mod = require('./s3');
 
   return {
@@ -294,7 +292,6 @@ describe('S3 helpers', () => {
       const {
         getSignedDownloadUrl,
         mockGetSignedUrl,
-        recordedCommands,
         mockAuditLogger,
       } = loadModule(env);
       const client = { send: jest.fn() };

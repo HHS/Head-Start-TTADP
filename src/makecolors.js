@@ -1,6 +1,3 @@
-/* eslint-disable indent */
-/* eslint-disable no-console */
-const fs = require('node:fs');
 const { promises: fsPromises } = require('node:fs');
 const crypto = require('node:crypto');
 const colors = require('../frontend/src/colors');

@@ -68,7 +68,7 @@ export async function createUser(user) {
 }
 
 function defaultRegion() {
-  // eslint-disable-next-line max-len
+   
   const number = faker.unique(() => faker.datatype.number({ min: 50, max: 2000 }));
   return {
     id: number,
@@ -94,7 +94,7 @@ function defaultGrant() {
 export async function createRecipient(recipient) {
   return Recipient.create({
     id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
-    // eslint-disable-next-line max-len
+     
     name: faker.company.companyName() + faker.company.companySuffix() + faker.datatype.number({ min: 1, max: 1000 }),
     uei: 'NNA5N2KHMGN2',
     ...recipient,

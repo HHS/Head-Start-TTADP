@@ -1,4 +1,5 @@
 /* istanbul ignore file: tested but not showing as tested for coverage purposes */
+import type { Signals } from 'node:process';
 import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
 import { generateRedisConfig } from './queue';
@@ -13,9 +14,9 @@ export default class LockManager {
 
   private lockTTL: number;
 
-  private renewalInterval?: NodeJS.Timeout;
+  private renewalInterval?: ReturnType<typeof setInterval>;
 
-  private handleShutdown = async (signalOrError: NodeJS.Signals | Error): Promise<void> => {
+  private handleShutdown = async (signalOrError: Signals | Error): Promise<void> => {
     if (signalOrError instanceof Error) {
       auditLogger.error(`An error occurred: ${signalOrError}`);
     } else {
@@ -30,13 +31,7 @@ export default class LockManager {
     process.on('SIGINT', this.handleShutdown);
     process.on('SIGTERM', this.handleShutdown);
     process.on('uncaughtException', this.handleShutdown);
-    process.on(
-      'unhandledRejection',
-      this.handleShutdown as unknown as (
-        reason,
-        promise,
-      ) => void,
-    );
+    process.on('unhandledRejection', this.handleShutdown as () => void);
   }
 
   constructor(
@@ -67,13 +62,7 @@ export default class LockManager {
     process.removeListener('SIGINT', this.handleShutdown);
     process.removeListener('SIGTERM', this.handleShutdown);
     process.removeListener('uncaughtException', this.handleShutdown);
-    process.removeListener(
-      'unhandledRejection',
-      this.handleShutdown as unknown as (
-        reason,
-        promise,
-      ) => void,
-    );
+    process.removeListener('unhandledRejection', this.handleShutdown as () => void);
   }
 
   public async close(): Promise<void> {
@@ -142,7 +131,6 @@ export default class LockManager {
     } catch (err) {
       if (err.message !== 'Connection is closed.') {
         auditLogger.error(`LockManager.close: ${err.message}`, err);
-        // eslint-disable-next-line no-unsafe-finally
         throw err;
       }
     }

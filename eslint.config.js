@@ -1,135 +1,119 @@
-const airbnbExtended = require('eslint-config-airbnb-extended');
-const tsParser = require('@typescript-eslint/parser');
-const tsPlugin = require('@typescript-eslint/eslint-plugin');
-const jestPlugin = require('eslint-plugin-jest');
-const testingLibraryPlugin = require('eslint-plugin-testing-library');
-const reactPlugin = require('eslint-plugin-react');
-const reactHooksPlugin = require('eslint-plugin-react-hooks');
-const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
-const importPlugin = require('eslint-plugin-import');
-const importXPlugin = require('eslint-plugin-import-x');
-const nPlugin = require('eslint-plugin-n');
-const stylisticPlugin = require('@stylistic/eslint-plugin');
-
-const toArray = (config) => (Array.isArray(config) ? config : [config]);
-const airbnbBaseRecommended = airbnbExtended.configs?.base?.recommended;
-const airbnbBaseTypescript = airbnbExtended.configs?.base?.typescript;
-const airbnbReactRecommended = airbnbExtended.configs?.react?.recommended;
-const airbnbReactTypescript = airbnbExtended.configs?.react?.typescript;
-const airbnbConfigs = [
-  ...toArray(airbnbBaseRecommended),
-  ...toArray(airbnbBaseTypescript),
-  ...toArray(airbnbReactRecommended),
-  ...toArray(airbnbReactTypescript),
-];
-const tsRecommended = tsPlugin.configs['flat/recommended'] || tsPlugin.configs.recommended || {};
-const jestRecommended = jestPlugin.configs['flat/recommended'] || jestPlugin.configs.recommended || {};
-const testingLibraryReact = testingLibraryPlugin.configs?.['flat/react']
-  || testingLibraryPlugin.configs?.react
-  || {};
-const tsRecommendedConfigs = toArray(tsRecommended).map((config) => (
-  config.files ? config : { ...config, files: ['src/**/*.{ts,tsx}'] }
-));
-const testingLibraryReactScoped = testingLibraryReact.files
-  ? testingLibraryReact
-  : {
-      ...testingLibraryReact,
-      files: [
-        'frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
-        'frontend/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
-      ],
-    };
+const esLint = require("@eslint/js");
+const tsLint = require("typescript-eslint");
+const globals = require("globals");
+const importPlugin = require("eslint-plugin-import");
+const jestPlugin = require("eslint-plugin-jest");
+const nodePlugin = require("eslint-plugin-n");
+const reactPlugin = require("eslint-plugin-react");
+const reactHooksPlugin = require("eslint-plugin-react-hooks");
+const jsxA11yPlugin = require("eslint-plugin-jsx-a11y");
+const testingLibraryPlugin = require("eslint-plugin-testing-library");
 
 module.exports = [
   {
     ignores: [
-      'node_modules/*',
-      'build/*',
-      'frontend/build/*',
-      'frontend/public/*',
-      'public/*',
-      'coverage/*',
-      'reports/*',
-      'playwright.config.js',
-      'tests/*',
-      'packages/*',
-      'ops/*',
-      'cucumber/*',
-      'e2e/*',
-      'playwright-report/*',
-      'test-results/*',
-      'eslint.config.js',
+      "build/*",
+      "node_modules/*",
+      "frontend/build/*",
+      "frontend/public/*",
+      "public/*",
+      "coverage/*",
+      "reports/*",
+      "tests/*",
+      "packages/*",
+      "ops/*",
+      "e2e/*",
+      "cucumber/*",
+      "playwright-report/*",
+      "playwright.config.js",
+      "test-results/*",
+      "eslint.config.js",
+      "eslint.config.mts",
     ],
   },
-  {
-    files: ['**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}'],
+  // Javascript
+  esLint.configs.recommended,
+  { 
+    files: ["src/**/*.js"],
     plugins: {
-      '@typescript-eslint': tsPlugin,
-      '@stylistic': stylisticPlugin,
-      'import-x': importXPlugin,
-      n: nPlugin,
-      react: reactPlugin,
-      'react-hooks': reactHooksPlugin,
-      'jsx-a11y': jsxA11yPlugin,
-      jest: jestPlugin,
-      'testing-library': testingLibraryPlugin,
       import: importPlugin,
+      jest: jestPlugin,
+      node: nodePlugin,
+    },
+    languageOptions: {
+      sourceType: "module",
+      globals: {
+        ...globals.jest,
+        ...globals.node,
+      },
+    },
+    rules: {
+      "no-unused-vars": "off",
+      "no-require-imports": "off",
+      "node/no-missing-import": "off",
+      "node/no-missing-require": "off",
+      "node/no-unpublished-import": "off",
+      "node/no-unpublished-require": "off",
+      "node/no-process-exit": "off",
     },
   },
-  ...airbnbConfigs,
-  jestRecommended,
-  ...tsRecommendedConfigs,
-  testingLibraryReactScoped,
-  {
-    files: ['src/**/*.{js,ts}'],
+  // Typescript
+  { 
+    files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
-      parser: tsParser,
+      parser: tsLint.parser,
       parserOptions: {
-        ecmaVersion: 2020,
-        sourceType: 'module',
-        project: './src/tsconfig.json',
+        project: "./src/tsconfig.json",
+      },
+      globals: {
+        ...globals.node,
+        ...globals.jest,
       },
     },
     plugins: {
-      '@typescript-eslint': tsPlugin,
-      import: importPlugin,
+      "@typescript-eslint": tsLint.plugin,
       jest: jestPlugin,
     },
     rules: {
-      'linebreak-style': "off",
-      '@typescript-eslint/no-var-requires': "off",
-      '@typescript-eslint/no-unused-vars': "off",
-      '@typescript-eslint/no-empty-function': "off",
-      '@typescript-eslint/ban-ts-comment': "off",
+      ...tsLint.configs.recommended.rules,
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
+  // Frontend (React + browser)
   {
-    files: ['frontend/src/**/*.{js,jsx,ts,tsx}'],
+    files: ["frontend/src/**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
+      parser: tsLint.parser,
       parserOptions: {
         ecmaFeatures: {
           jsx: true,
         },
       },
-    },
-    settings: {
-      react: {
-        version: 'detect',
+      globals: {
+        ...globals.browser,
+        ...globals.jest,
       },
     },
     plugins: {
-      'testing-library': testingLibraryPlugin,
       react: reactPlugin,
-      'react-hooks': reactHooksPlugin,
-      'jsx-a11y': jsxA11yPlugin,
-      import: importPlugin,
-      jest: jestPlugin,
+      "react-hooks": reactHooksPlugin,
+      "jsx-a11y": jsxA11yPlugin,
+      "testing-library": testingLibraryPlugin,
+      "@typescript-eslint": tsLint.plugin,
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
     },
     rules: {
-      'react/jsx-filename-extension': [ "warn", { extensions: ['.js', '.jsx'] }],
-      'linebreak-style': "off",
+      ...reactPlugin.configs.flat.recommended.rules,
+      ...reactHooksPlugin.configs.recommended.rules,
+      ...jsxA11yPlugin.configs.recommended.rules,
+      ...testingLibraryPlugin.configs["flat/react"].rules,
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },
   },
 ];

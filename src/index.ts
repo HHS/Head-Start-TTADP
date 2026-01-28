@@ -1,6 +1,6 @@
-/* eslint-disable import/first */
+ 
 if (process.env.NODE_ENV === 'production') {
-  // eslint-disable-next-line global-require
+   
   require('newrelic');
 }
 

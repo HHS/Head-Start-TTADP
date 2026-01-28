@@ -78,22 +78,9 @@
     "lint": "eslint --config ../eslint.config.js src",
     "lint:fix": "eslint --config ../eslint.config.js --fix src",
     "lint:fix:single": "eslint --config ../eslint.config.js --fix",
-    "lint:ci": "eslint --config ../eslint.config.js -f eslint-formatter-multiple src"
+    "lint:ci": "eslint --config ../eslint.config.js src"
   },
   "resolutions": {},
-  "eslint-formatter-multiple": {
-    "formatters": [
-      {
-        "name": "stylish",
-        "output": "console"
-      },
-      {
-        "name": "junit",
-        "output": "file",
-        "path": "reports/lint.xml"
-      }
-    ]
-  },
   "babel": {
     "presets": [
       "@babel/preset-react"
@@ -122,7 +109,6 @@
     "cross-env": "^7.0.2",
     "eslint": "9.39.2",
     "eslint-config-airbnb-extended": "2.3.3",
-    "eslint-formatter-multiple": "^1.0.0",
     "eslint-import-resolver-typescript": "4.1.0",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-import-x": "4.8.0",

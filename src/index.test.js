@@ -1,4 +1,4 @@
-/* eslint-disable global-require */
+ 
 import request from 'supertest';
 
 jest.mock('./middleware/authMiddleware', () => ({

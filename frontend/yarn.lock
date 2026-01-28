@@ -6316,10 +6316,10 @@ eslint-config-react-app@^7.0.1:
     eslint-plugin-react-hooks "^4.3.0"
     eslint-plugin-testing-library "^5.0.1"
 
-eslint-formatter-multiple@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/eslint-formatter-multiple/-/eslint-formatter-multiple-1.0.0.tgz#223db63a682038b001763c5d36d32975be4bdbb3"
-  integrity sha512-0Jv8gn7LmXj9c20E9BNAI1Wn3Lxw2v3nCvYRpk30kBLhc3wBees6DIXkJgaY2hoeOjvSq8n4peQ6KJstk5gmKQ==
+eslint-formatter-junit@9.0.1:
+  version "9.0.1"
+  resolved "https://registry.yarnpkg.com/eslint-formatter-junit/-/eslint-formatter-junit-9.0.1.tgz#673bfbba323c55ebdcf32ffbc21386ad2d32421f"
+  integrity sha512-0MrNGXg2C46M/ImjWuClHSGKHBR0eSBPfYHqPgYmB0utq7Jog3YyLBmbshNvo/Ba/Al3zClPWdd6/jnxk2F+9Q==
 
 eslint-import-resolver-node@^0.3.9:
   version "0.3.9"

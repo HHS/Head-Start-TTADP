@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/dot-notation */
-/* eslint-disable no-underscore-dangle */
+ 
 import db, {
   Resource,
 } from '../models';
