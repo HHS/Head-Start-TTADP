@@ -335,6 +335,7 @@ export async function tearDownSharedTestData() {
 
   await Promise.all(
     [sharedTestData.emptyReport, sharedTestData.reportWithReasons, sharedTestData.reportWithTopics]
+      .filter(Boolean)
       .map(async (report) => destroyReport(report)),
   );
 

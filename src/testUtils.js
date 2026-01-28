@@ -92,10 +92,18 @@ function defaultGrant() {
 }
 
 export async function createRecipient(recipient) {
+  // Monotonic sequence to avoid PK collisions across tests.
+  if (!global.recipientIdSeq) {
+    global.recipientIdSeq = 400000;
+  }
+  global.recipientIdSeq += 1;
   return Recipient.create({
-    id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+    id: global.recipientIdSeq,
     // eslint-disable-next-line max-len
-    name: faker.company.companyName() + faker.company.companySuffix() + faker.datatype.number({ min: 1, max: 1000 }),
+    name:
+      faker.company.companyName()
+      + faker.company.companySuffix()
+      + faker.datatype.number({ min: 1, max: 1000 }),
     uei: 'NNA5N2KHMGN2',
     ...recipient,
   });
