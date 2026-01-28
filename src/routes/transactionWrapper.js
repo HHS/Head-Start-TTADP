@@ -16,7 +16,6 @@ export default function transactionWrapper(originalFunction, context = '', isRea
     const startTime = Date.now();
     try {
       httpContext.set('auditDescriptor', originalFunction.name);
-      // eslint-disable-next-line @typescript-eslint/return-await
       return await sequelize.transaction(async (transaction) => {
         httpContext.set('transactionId', transaction.id);
         let snapShot;

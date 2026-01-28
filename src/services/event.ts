@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
 import {
@@ -61,7 +61,7 @@ const INCLUDED_SESSION_ATTRIBUTES = [
   'approverId',
   'submitted',
   'submitterId',
-  // eslint-disable-next-line @typescript-eslint/quotes
+   
   [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
 ];
 
@@ -331,7 +331,7 @@ export async function findEventHelperBlob({
     // if key is null or undefined, we assign its value to the fallback value
     return events.map((event) => {
       if (!event.data[key]) {
-        // eslint-disable-next-line no-param-reassign
+         
         event.data[key] = fallbackValue;
       }
       return event;
@@ -633,7 +633,7 @@ export async function getTrainingReportAlerts(
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-        // eslint-disable-next-line no-restricted-syntax
+         
           checkSessionForCompletion(session, event, 'pocComplete', alerts);
         }
       }); // for each session
@@ -1167,7 +1167,7 @@ export async function csvImport(buffer: Buffer) {
 
       if (cleanLine['Designated POC for Event/Request']) {
         const pocNames = cleanLine['Designated POC for Event/Request'].split('/').map((name) => name.trim());
-        // eslint-disable-next-line no-restricted-syntax
+         
         for await (const pocName of pocNames) {
           const poc = await checkUserExistsByName(pocName);
           const policy = new EventReport(poc, {

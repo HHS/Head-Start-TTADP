@@ -69,7 +69,7 @@ describe('deleteHandler', () => {
     sendStatus: jest.fn(),
     end: jest.fn(),
   };
-  // eslint-disable-next-line @typescript-eslint/no-shadow
+   
   const mockUser = { id: 1 };
 
   beforeEach(() => {
@@ -105,7 +105,7 @@ describe('deleteHandler', () => {
   it('returns 403 if user is not authorized for event session', async () => {
     getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
     EventPolicy.mockImplementation(() => mockPolicy);
@@ -129,7 +129,7 @@ describe('deleteHandler', () => {
   it('deletes session file if authorized', async () => {
     getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(true) };
     EventPolicy.mockImplementation(() => mockPolicy);
@@ -201,7 +201,7 @@ describe('deleteHandler', () => {
   it('returns 403 if user is not authorized for session attachment', async () => {
     getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
     EventPolicy.mockImplementation(() => mockPolicy);
@@ -225,7 +225,7 @@ describe('deleteHandler', () => {
   it('deletes session attachment file if authorized', async () => {
     getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(true) };
     EventPolicy.mockImplementation(() => mockPolicy);

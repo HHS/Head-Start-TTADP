@@ -16,13 +16,13 @@ const testCsvUrl = join('/', 'api', 'admin', 'test-csv');
 
 jest.mock('detect-file-encoding-and-language');
 
-// eslint-disable-next-line quotes
+ 
 const goodTestCSVFile = "Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\nevent test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n";
-// eslint-disable-next-line quotes
+ 
 const duplicateTestCSVFile = "Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
-// eslint-disable-next-line quotes
+ 
 const missingColumnsTestCSVFile = "Primary ID Missing,Edit Title Missing,IST Name:,Creator Missing,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
-// eslint-disable-next-line quotes
+ 
 const invalidColumnTestCsvFile = "Invalid Column,Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\ninvalid value,event test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\ninvalid value 2,event test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n";
 
 describe('CsvImport', () => {
@@ -111,7 +111,7 @@ describe('CsvImport', () => {
       const file = new File([duplicateTestCSVFile], 'CSV_Test_Invalid_File_Type.csv', { type: 'text/csv' });
       userEvent.upload(fileInput, file);
       await waitFor(async () => {
-        // eslint-disable-next-line max-len
+         
         // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
         const error = await screen.findByText(/duplicate primary ids found\. please correct and try again\. duplicates: event test/i);
         expect(error).toBeVisible();
@@ -139,7 +139,7 @@ describe('CsvImport', () => {
       userEvent.upload(fileInput, file);
 
       await waitFor(async () => {
-        // eslint-disable-next-line max-len
+         
         // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
         const error = await screen.findByText(/Required headers missing: Primary ID, Edit Title, Creator/i);
         expect(error).toBeVisible();
@@ -177,7 +177,7 @@ describe('CsvImport', () => {
       userEvent.upload(fileInput, file);
 
       await waitFor(async () => {
-        // eslint-disable-next-line max-len
+         
         // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
         const error = await screen.findByText(/Invalid headers found: Invalid Column/i);
         expect(error).toBeVisible();
@@ -248,7 +248,7 @@ describe('CsvImport', () => {
         const success = await screen.findByText(/2 test csv imported successfully./i);
         expect(success).toBeVisible();
 
-        // eslint-disable-next-line max-len
+         
         // assert to see the text '2 skipped' and then check each skipped event in its own <li> element
         const skippedHeader = await screen.findByText(/2 skipped/i);
         expect(skippedHeader).toBeVisible();
@@ -315,7 +315,7 @@ describe('CsvImport', () => {
         const success = await screen.findByText(/2 test csv imported successfully./i);
         expect(success).toBeVisible();
 
-        // eslint-disable-next-line max-len
+         
         // assert to see the text '2 crated' and then check each skipped event in its own <li> element
         const crate3dHeader = await screen.findByText(/2 created/i);
         expect(crate3dHeader).toBeVisible();
@@ -324,7 +324,7 @@ describe('CsvImport', () => {
         const createdEvent2 = within(crate3dHeader).getByText(/created course 2/i);
         expect(createdEvent2).toBeInTheDocument();
 
-        // eslint-disable-next-line max-len
+         
         // assert to see the text '2 skipped' and then check each skipped event in its own <li> element
         const skippedHeader = await screen.findByText(/2 skipped/i);
         expect(skippedHeader).toBeVisible();
@@ -461,7 +461,7 @@ describe('CsvImport', () => {
       // click the upload button.
       userEvent.click(uploadButton);
       // Make sure the fetch event hasn't fired.
-      await waitFor(async () => expect(expect(fetchMock.calls(testCsvUrl).length).toBe(0)));
+      await waitFor(async () => expect(fetchMock.calls(testCsvUrl).length).toBe(0));
     });
 
     expect(uploadButton).toBeVisible();

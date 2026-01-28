@@ -1,10 +1,10 @@
-/* eslint-disable import/no-dynamic-require */
-/* eslint-disable global-require */
+ 
+/* eslint-disable node/global-require */
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const cls = require('cls-hooked');
-const httpContext = require('express-http-context'); // eslint-disable-line import/no-import-module-exports
+const httpContext = require('express-http-context');  
 
 const namespace = cls.createNamespace('transaction');
 const basename = path.basename(__filename);
@@ -33,7 +33,7 @@ function isConnectionOpen() {
   }
 
   // Check if there are any active connections in the pool
-  // eslint-disable-next-line no-underscore-dangle
+   
   const isOpen = pool._availableObjects.length > 0 || pool._inUseObjects.length > 0;
   return isOpen;
 }

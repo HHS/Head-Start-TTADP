@@ -32,7 +32,7 @@ export default (sequelize, DataTypes) => {
     isAutoDetected: {
       type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
       get() {
-        // eslint-disable-next-line global-require
+        // eslint-disable-next-line node/global-require
         const { calculateIsAutoDetectedForActivityReport } = require('../services/resource');
         return calculateIsAutoDetectedForActivityReport(this.get('sourceFields'));
       },

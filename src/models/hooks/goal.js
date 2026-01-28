@@ -10,7 +10,7 @@ const {
 const { skipIf } = require('../helpers/flowControl');
 
 const processForEmbeddedResources = async (_sequelize, instance) => {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line node/global-require
   const { calculateIsAutoDetectedForGoal, processGoalForResourcesById } = require('../../services/resource');
   const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForGoal(changed)) {
@@ -125,7 +125,7 @@ const preventPreStandardEditing = async (_sequelize, instance) => {
 
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
-    options.fields = []; //eslint-disable-line
+    options.fields = [];  
   }
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);

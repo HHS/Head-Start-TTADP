@@ -75,10 +75,10 @@
     "eject": "craco eject",
     "test": "cross-env TZ=America/New_York craco test",
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/craco test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
-    "lint": "eslint --config ../eslint.config.js src",
-    "lint:fix": "eslint --config ../eslint.config.js --fix src",
-    "lint:fix:single": "eslint --config ../eslint.config.js --fix",
-    "lint:ci": "eslint --config ../eslint.config.js src"
+    "lint": "eslint --config eslint.config.js $@ src",
+    "lint:ci": "yarn lint && yarn lint --format junit -o ./reports/lint.xml",
+    "lint:fix": "yarn lint --fix",
+    "lint:fix:single": "eslint --config eslint.config.js --fix src"
   },
   "resolutions": {},
   "babel": {

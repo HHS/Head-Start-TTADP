@@ -36,7 +36,7 @@ describe('modelUtils', () => {
       };
 
       const tableName = 'nonexistent';
-      // eslint-disable-next-line @typescript-eslint/quotes
+       
       expect(() => modelForTable(mockDB, tableName)).toThrow(`Unable to find table for 'nonexistent'`);
     });
   });

@@ -200,7 +200,7 @@ describe('smartsheets', () => {
     });
 
     it('should register two GET routes with transactionWrapper middleware when environment variable is set to app.cloud.gov domain', () => {
-      // eslint-disable-next-line global-require
+      // eslint-disable-next-line node/global-require
       const { route } = require('./ss');
 
       route('https://tta.app.cloud.gov');
@@ -213,7 +213,7 @@ describe('smartsheets', () => {
     it('should register two GET routes returning 403 when environment variable is not set to app.cloud.gov domain', () => {
       const originalSmartSheetLocal = process.env.SMARTSHEET_LOCAL;
       delete process.env.SMARTSHEET_LOCAL;
-      // eslint-disable-next-line global-require
+      // eslint-disable-next-line node/global-require
       const { route } = require('./ss');
 
       route('https://tta.app.cloud.gov');

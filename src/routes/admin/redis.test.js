@@ -48,7 +48,7 @@ describe('redis', () => {
     mockInfo.mockResolvedValue('');
     mockFlushall.mockResolvedValue('');
 
-    // eslint-disable-next-line @typescript-eslint/no-shadow, global-require
+    // eslint-disable-next-line node/global-require
     const { handleError } = require('../../lib/apiErrorHandler');
     handleError.mockImplementation(() => {});
   });
@@ -64,7 +64,7 @@ describe('redis', () => {
     });
 
     it('handles errors', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-shadow, global-require
+      // eslint-disable-next-line node/global-require
       const { handleError } = require('../../lib/apiErrorHandler');
       mockInfo.mockRejectedValueOnce(new Error('error'));
 
@@ -84,7 +84,7 @@ describe('redis', () => {
     });
 
     it('handles errors', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-shadow, global-require
+      // eslint-disable-next-line node/global-require
       const { handleError } = require('../../lib/apiErrorHandler');
       mockFlushall.mockRejectedValueOnce(new Error('error'));
 

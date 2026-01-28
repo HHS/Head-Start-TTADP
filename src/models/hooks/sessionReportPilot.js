@@ -1,6 +1,6 @@
-/* eslint-disable global-require */
+/* eslint-disable node/global-require */
 
-/* eslint-disable max-len */
+ 
 const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');

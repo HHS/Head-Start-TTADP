@@ -31,6 +31,7 @@ const loadModule = (env = {}) => {
   jest.doMock('aws4', () => ({ sign: mockGetSignedUrl }));
   jest.doMock('../logger', () => ({ auditLogger: mockAuditLogger, errorLogger: mockErrorLogger }));
    
+  // eslint-disable-next-line node/global-require
   const mod = require('./s3');
 
   return {

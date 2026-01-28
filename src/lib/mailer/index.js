@@ -1,5 +1,4 @@
 /* istanbul ignore file: tested but not showing up in coverage */
-/* eslint-disable @typescript-eslint/return-await */
 import { createTransport } from 'nodemailer';
 import moment from 'moment';
 import { uniq, lowerCase } from 'lodash';
@@ -982,7 +981,7 @@ export async function trainingReportTaskDueNotifications(freq) {
     }
 
     // get all outstanding training reports
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const { getTrainingReportAlerts } = require('../../services/event');
     // imported here to avoid circular dependency import
 

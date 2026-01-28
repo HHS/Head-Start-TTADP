@@ -27,7 +27,7 @@ jest.mock('../lib/apiErrorHandler', () => ({
   default: jest.fn(async () => {}),
 }));
 
-/* eslint-disable global-require */
+/* eslint-disable node/global-require */
 const tokenMiddleware = require('./tokenMiddleware').default || require('./tokenMiddleware');
 
 const { auditLogger } = require('../logger');

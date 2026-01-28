@@ -22,7 +22,7 @@ describe('propagateDestroyToFile', () => {
   });
 
   it('should delete the file if it is not associated with any other models', async () => {
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const { addDeleteFileToQueue } = require('../../services/s3Queue');
     const transaction = await sequelize.transaction();
     const file = await File.create({

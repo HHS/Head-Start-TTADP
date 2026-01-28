@@ -18,7 +18,7 @@ const { purifyFields } = require('../helpers/purifyFields');
 const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line node/global-require
   const { calculateIsAutoDetectedForActivityReport, processActivityReportForResourcesById } = require('../../services/resource');
   const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForActivityReport(changed)) {
@@ -44,7 +44,7 @@ const copyStatus = (instance) => {
 };
 
 const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line node/global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -152,14 +152,14 @@ const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) =>
      || (instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
       && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED)) {
     // Get all the goals for this report.
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
       const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
       const reportGoals = await getGoalsForReport(instance.id);
       // If we have at least one closed goal,
       // lets call the save standard goals for report to ensure its all up to snuff.
       // We need to re-save all goals not just the closed ones.
       if (reportGoals.length) {
-        // eslint-disable-next-line global-require
+        // eslint-disable-next-line node/global-require
         const { saveStandardGoalsForReport } = require('../../services/standardGoals');
         // Set the status of each closed goal to 'In Progress'.
         const updateStatusGoals = reportGoals.map((g) => ({
@@ -443,7 +443,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
   if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
     if (instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
       && instance.calculatedStatus !== REPORT_STATUSES.APPROVED) {
-      // eslint-disable-next-line max-len
+       
       // TODO: Run extensive check and update where required all used goals and objectives as not onApprovedAR
       let objectives;
       try {
@@ -653,7 +653,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
 };
 
 const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line node/global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
 
   const changed = instance.changed();
@@ -709,7 +709,7 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
 };
 
 const automaticUnsuspendGoalOnApproval = async (instance) => {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line node/global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
 
   const changed = instance.changed();
@@ -720,7 +720,7 @@ const automaticUnsuspendGoalOnApproval = async (instance) => {
 
   if (reportHasBeenApproved) {
     // Get all the goals for this report.
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
     const reportGoals = await getGoalsForReport(instance.id);
 
@@ -742,7 +742,7 @@ const automaticUnsuspendGoalOnApproval = async (instance) => {
 };
 
 const forceStatusEventOnReopenedGoal = async (instance) => {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line node/global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
 
   const changed = instance.changed();
@@ -751,7 +751,7 @@ const forceStatusEventOnReopenedGoal = async (instance) => {
     && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
     && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
     // Get all the goals for this report.
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
     const reportGoals = await getGoalsForReport(instance.id);
 
@@ -975,7 +975,7 @@ const revisionBumpBroadcast = async (sequelize, instance) => {
         const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
 
         // Dynamically import the mesh server to avoid circular dependencies
-        // eslint-disable-next-line global-require
+        // eslint-disable-next-line node/global-require
         const { getMeshServer } = require('../../index');
         const mesh = getMeshServer();
 
@@ -1003,7 +1003,7 @@ const revisionBumpBroadcast = async (sequelize, instance) => {
 
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
-    options.fields = []; //eslint-disable-line
+    options.fields = [];  
   }
   setSubmittedDate(sequelize, instance, options);
 };

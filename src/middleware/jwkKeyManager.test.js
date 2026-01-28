@@ -127,7 +127,7 @@ describe('jwkKeyManager', () => {
   });
 });
 
-/* eslint-disable global-require */
+/* eslint-disable node/global-require */
 describe('jwkKeyManager (env errors)', () => {
   const ORIGINAL_ENV = { ...process.env };
 
@@ -160,7 +160,7 @@ describe('jwkKeyManager (env errors)', () => {
   });
 });
 
-/* eslint-disable global-require */
+/* eslint-disable node/global-require */
 describe('jwkKeyManager (signing key caching, isolated)', () => {
   test('returns a cached signing key (importJWK called once in a fresh module)', async () => {
     jest.resetModules();
@@ -194,4 +194,4 @@ describe('jwkKeyManager (signing key caching, isolated)', () => {
     expect(key1).toBe(key2);
   });
 });
-/* eslint-enable global-require */
+ 

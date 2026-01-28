@@ -298,7 +298,7 @@ describe('TR sessions by topic', () => {
   });
 
   it('handles topics that are not in the topics list', async () => {
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const helpers = require('./helpers');
     const originalFindAll = db.EventReportPilot.findAll;
     const originalGetAllTopics = helpers.getAllTopicsForWidget;

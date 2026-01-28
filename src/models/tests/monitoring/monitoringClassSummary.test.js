@@ -49,11 +49,11 @@ describe('MonitoringClassSummary', () => {
         'classroomOrganization',
         'instructionalSupport',
         // Use Sequelize.literal to reference nested attributes
-        // eslint-disable-next-line @typescript-eslint/quotes
+         
         [Sequelize.literal(`"monitoringReviewLink->monitoringReviews"."outcome"`), 'monitoringReviewOutcome'],
-        // eslint-disable-next-line @typescript-eslint/quotes
+         
         [Sequelize.literal(`"monitoringReviewLink->monitoringReviews"."reviewType"`), 'monitoringReviewType'],
-        // eslint-disable-next-line @typescript-eslint/quotes
+         
         [Sequelize.literal(`"grantNumberLink->grant"."status"`), 'grantStatus'],
       ],
       where: { grantNumber: '09HP044444' },

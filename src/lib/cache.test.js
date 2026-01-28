@@ -54,7 +54,7 @@ describe('getCachedResponse', () => {
   });
 
   it('handles a failure to connect to the client', async () => {
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const { Redis } = require('ioredis');
 
     Redis.mockImplementationOnce(() => {

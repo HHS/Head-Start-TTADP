@@ -114,7 +114,7 @@ export async function destroySession(id: number): Promise<void> {
   await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
 
-// eslint-disable-next-line max-len
+ 
 export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
   const query = {
     attributes: [
@@ -125,7 +125,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       'approverId',
       'submitterId',
       'submitted',
-      // eslint-disable-next-line @typescript-eslint/quotes
+       
       [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
     ],
     where,

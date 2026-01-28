@@ -118,7 +118,7 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           </ReadOnlyField>
           <p className="usa-prose margin-bottom-0 text-bold">Supporting attachments</p>
           {log.files.map((file) => (
-            <p className="usa-prose margin-top-0 margin-bottom-0">
+            <p key={file.id || file.originalFileName} className="usa-prose margin-top-0 margin-bottom-0">
               <a href={file.url.url}>
                 {file.originalFileName}
               </a>

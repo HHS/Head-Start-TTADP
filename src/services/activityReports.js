@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/quotes */
+ 
 import _ from 'lodash';
 import { Op } from 'sequelize';
 import moment from 'moment';
@@ -56,7 +56,7 @@ export async function batchQuery(query, limit) {
   const finalResult = [];
 
   while (!finished) {
-    // eslint-disable-next-line no-await-in-loop
+     
     const rows = await ActivityReport.findAll({
       ...query,
       limit,
@@ -135,7 +135,7 @@ async function saveReportCollaborators(activityReportId, collaborators) {
   });
 
   if (updatedReportCollaborators && updatedReportCollaborators.length > 0) {
-    // eslint-disable-next-line max-len
+     
     await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all((collaborator?.user?.roles || []).map(async (role) => CollaboratorRole.findOrCreate({
       where: {
         activityReportCollaboratorId: collaborator.id,
@@ -565,11 +565,11 @@ export async function activityReports(
           '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
         ),
         sequelize.literal(
-          // eslint-disable-next-line quotes
+           
           `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
         ),
         sequelize.literal(
-          // eslint-disable-next-line quotes
+           
           `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
         ),
       ],

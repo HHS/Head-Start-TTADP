@@ -106,6 +106,13 @@ describe('ObjectiveForm', () => {
     userEvent.click(objectiveText);
     userEvent.tab(); // trigger blur event
 
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>, <></>, <></>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [
+      <span key="text" className="usa-error-message">{objectiveTextError}</span>,
+      <React.Fragment key="topic" />,
+      <React.Fragment key="resource" />,
+      <React.Fragment key="link" />,
+      <React.Fragment key="file" />,
+      <React.Fragment key="other" />,
+    ]);
   });
 });

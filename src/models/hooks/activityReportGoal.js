@@ -6,7 +6,7 @@ const {
 } = require('../helpers/genericCollaborator');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line node/global-require
   const { calculateIsAutoDetectedForActivityReportGoal, processActivityReportGoalForResourcesById } = require('../../services/resource');
   const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForActivityReportGoal(changed)) {
@@ -80,7 +80,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
-    options.fields = []; //eslint-disable-line
+    options.fields = [];  
   }
 };
 

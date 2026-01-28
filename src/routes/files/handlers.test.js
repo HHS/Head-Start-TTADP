@@ -54,7 +54,7 @@ jest.mock('../../middleware/jwkKeyManager', () => ({
 jest.mock('axios');
 jest.mock('smartsheet');
 
-/* eslint-disable global-require */
+/* eslint-disable node/global-require */
 const app = require('../../app').default || require('../../app');
 
 jest.mock('../../services/scanQueue', () => jest.fn());

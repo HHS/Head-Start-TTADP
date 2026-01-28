@@ -16,7 +16,7 @@
 
 // //   beforeAll(() => {
 // //     // process.env = {}; // Optionally clear the previous env
-// //     // // eslint-disable-next-line global-require
+// //     // // eslint-disable-next-line node/global-require
 // //     // require('dotenv').config(); // Re-import to refresh the env variables
 // //     connectionSettings = {
 // //       host: isInDocker()

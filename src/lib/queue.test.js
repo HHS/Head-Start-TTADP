@@ -1,4 +1,4 @@
-/* eslint-disable import/first */
+ 
 jest.mock('bull', () => ({
   __esModule: true,
   default: jest.fn(() => ({
@@ -192,7 +192,7 @@ describe('newQueue', () => {
       default: mockQueue,
     }));
 
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const { default: Queue } = require('bull');
     const newQueue = (await import('./queue')).default;
 
@@ -223,7 +223,7 @@ describe('newQueue', () => {
       default: mockQueue,
     }));
 
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const { default: Queue } = require('bull');
     const newQueue = (await import('./queue')).default;
 
@@ -250,7 +250,7 @@ describe('removeQueueEventHandlers', () => {
     const originalProcessRemoveListener = process.removeListener;
     process.removeListener = jest.fn();
 
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const { removeQueueEventHandlers } = require('./queue');
 
     const errorListener = jest.fn();

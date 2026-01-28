@@ -179,7 +179,7 @@ export default function NationalCenters({ match }) {
               {getCenterToDisplay(center)}
             </Link>
           )),
-            <Link to="/admin/national-centers/new">
+            <Link key="new" to="/admin/national-centers/new">
               Add new national center
             </Link>,
           ]}

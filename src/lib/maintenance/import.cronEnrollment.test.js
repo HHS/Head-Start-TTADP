@@ -37,7 +37,7 @@ const { getImportSchedules } = require('../importSystem');
 
 // Import the module under test (in an isolated module context so that our mocks are used)
 jest.isolateModules(() => {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line node/global-require
   require('./import');
 });
 
@@ -48,7 +48,7 @@ beforeAll(() => {
     throw new Error('registerCronEnrollmentFunction was not called');
   }
   // Save the callback so that we can invoke it with test parameters.
-  // eslint-disable-next-line prefer-destructuring
+   
   enrollmentCallback = registerCronEnrollmentFunction.mock.calls[0][0];
 });
 

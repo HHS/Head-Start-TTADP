@@ -26,7 +26,7 @@ function renderUserNav(users) {
     if (name) {
       display = name;
     }
-    return <NavLink to={`/admin/users/${id}`}>{display}</NavLink>;
+    return <NavLink key={id} to={`/admin/users/${id}`}>{display}</NavLink>;
   });
 }
 
@@ -38,7 +38,7 @@ export const setFeatureFromURL = (location, setter) => {
       setter(flagSearch);
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
+     
     console.log(e);
   }
 };
@@ -72,7 +72,7 @@ function Admin(props) {
       try {
         updateUsers(await getUsers());
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.log(e);
         updateError('Unable to fetch users');
       }
@@ -161,7 +161,7 @@ function Admin(props) {
     try {
       updatedUser = await updateUser(selectedUser.id, newUser);
     } catch (e) {
-      // eslint-disable-next-line no-console
+       
       console.log(e);
       updateError('Unable to save user');
       return;
@@ -195,7 +195,7 @@ function Admin(props) {
       document.body.appendChild(a);
       a.click();
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.log(err);
     } finally {
       URL.revokeObjectURL(csv);

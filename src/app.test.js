@@ -52,7 +52,7 @@ jest.mock('./middleware/jwkKeyManager', () => ({
 jest.mock('axios');
 jest.mock('smartsheet');
 
- 
+// eslint-disable-next-line node/global-require
 const app = require('./app').default || require('./app');
 
 describe('TTA Hub server', () => {

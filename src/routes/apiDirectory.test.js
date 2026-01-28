@@ -25,7 +25,7 @@ jest.mock('../services/users');
 jest.mock('axios');
 jest.mock('smartsheet');
 
-/* eslint-disable global-require */
+/* eslint-disable node/global-require */
 const app = require('../app').default || require('../app');
 
 const mockUser = {

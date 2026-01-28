@@ -5,7 +5,7 @@ import SCOPES from './scopeConstants';
 import { getUserInfo, getAccessToken, logoutOidc } from './authMiddleware';
 
 jest.mock('openid-client', () => {
-  /* eslint-disable global-require */
+  /* eslint-disable node/global-require */
   const { URL } = require('node:url');
   const moduleAsClient = {
     discovery: jest.fn(async () => ({})),
@@ -53,7 +53,7 @@ jest.mock('../lib/apiErrorHandler', () => ({
   default: jest.fn(async () => {}),
 }));
 
-/* eslint-disable global-require */
+/* eslint-disable node/global-require */
 const { default: authMiddleware, login } = require('./authMiddleware');
 
 const mockUser = {

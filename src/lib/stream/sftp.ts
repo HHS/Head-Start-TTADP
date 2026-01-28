@@ -1,3 +1,4 @@
+import type { Signals } from 'node:process';
 import { Client } from 'ssh2';
 import { Readable } from 'stream';
 import { auditLogger } from '../../logger';
@@ -52,7 +53,7 @@ interface FileListing {
  *          followed by nine characters representing the owner, group, and other
  *          permissions (e.g., 'rwxr-xr--').
  */
-/* eslint-disable no-bitwise */
+ 
 function modeToPermissions(mode: number): string {
   // Constants for the permission bits
   const READ = 4;
@@ -96,7 +97,7 @@ function modeToPermissions(mode: number): string {
 
   return typeChar + ownerPermsString + groupPermsString + otherPermsString;
 }
-/* eslint-enable no-bitwise */
+ 
 
 class SftpClient {
   private client = new Client();
@@ -240,7 +241,7 @@ class SftpClient {
    *
    * @param signal - The signal received from the NodeJS process.
    */
-  private handleSignal(signal: NodeJS.Signals): void {
+  private handleSignal(signal: Signals): void {
     // console.log(`Received ${signal}, closing FTP client...`);
     this.disconnect();
     // After handling the cleanup, we should allow the process to exit naturally

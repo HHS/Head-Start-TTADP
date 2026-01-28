@@ -31,6 +31,7 @@ jest.mock('axios');
 jest.mock('smartsheet');
 
 // Import app AFTER mocks so it uses stubs
+// eslint-disable-next-line node/global-require
 const app = require('./app').default || require('./app');
 
 describe('Root', () => {

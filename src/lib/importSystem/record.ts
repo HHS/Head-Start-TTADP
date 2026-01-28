@@ -38,7 +38,7 @@ const getPriorFile = async (
   const importFile: { name: string } | null = await ImportFile.findOne({
     attributes: [
       // Selecting the 'name' attribute from ftpFileInfo
-      // eslint-disable-next-line @typescript-eslint/quotes
+       
       [Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'name'],
     ],
     where: {
@@ -52,7 +52,7 @@ const getPriorFile = async (
       ],
     },
     // Ordering the results by ftpFileInfo.date in descending order
-    // eslint-disable-next-line @typescript-eslint/quotes
+     
     order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
     raw: true,
     lock: true, // Lock the row for update to prevent race conditions
@@ -133,8 +133,8 @@ const getNextFileToProcess = async (
   }
 
   // Use the PostgresInterval interface in the destructuring assignment
-  /* eslint-disable @typescript-eslint/quotes */
-  /* eslint-disable prefer-template */
+   
+   
   const results = await ZALImportFile.findAll({
     attributes: [
       // Using Sequelize.fn to calculate the average difference in timestamps
@@ -158,8 +158,8 @@ const getNextFileToProcess = async (
     },
     raw: true, // This will give you raw JSON objects instead of model instances
   }) as [{ avg: PostgresInterval, stddev: PostgresInterval }];
-  /* eslint-enable @typescript-eslint/quotes */
-  /* eslint-disable prefer-template */
+   
+   
 
   const [{
     avg,

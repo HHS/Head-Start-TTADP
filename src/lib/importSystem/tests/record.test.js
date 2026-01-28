@@ -83,7 +83,7 @@ describe('record', () => {
 
       expect(ImportFile.findOne).toHaveBeenCalledWith({
         attributes: [
-          // eslint-disable-next-line @typescript-eslint/quotes
+           
           [Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'name'],
         ],
         where: {
@@ -96,7 +96,7 @@ describe('record', () => {
             },
           ],
         },
-        // eslint-disable-next-line @typescript-eslint/quotes
+         
         order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
         raw: true,
         lock: true,
@@ -113,7 +113,7 @@ describe('record', () => {
 
       expect(ImportFile.findOne).toHaveBeenCalledWith({
         attributes: [
-          // eslint-disable-next-line @typescript-eslint/quotes
+           
           [Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'name'],
         ],
         where: {
@@ -126,7 +126,7 @@ describe('record', () => {
             },
           ],
         },
-        // eslint-disable-next-line @typescript-eslint/quotes
+         
         order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
         raw: true,
         lock: true,
@@ -153,7 +153,7 @@ describe('record', () => {
 
       expect(ImportFile.findOne).toHaveBeenCalledWith({
         attributes: [
-          // eslint-disable-next-line @typescript-eslint/quotes
+           
           [Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'name'],
         ],
         where: {
@@ -166,7 +166,7 @@ describe('record', () => {
             },
           ],
         },
-        // eslint-disable-next-line @typescript-eslint/quotes
+         
         order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
         raw: true,
         lock: true,

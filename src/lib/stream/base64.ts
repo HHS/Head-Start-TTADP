@@ -1,4 +1,5 @@
 // base64-stream.ts
+import type { BufferEncoding } from 'node:buffer';
 import { Transform } from 'stream';
 
 type Base64StreamMode = 'encode' | 'decode';
@@ -11,7 +12,7 @@ class Base64Stream extends Transform {
     this.leftover = '';
   }
 
-  // eslint-disable-next-line no-underscore-dangle
+   
   _transform(
     chunk: Buffer,
     encoding: BufferEncoding,
@@ -41,7 +42,7 @@ class Base64Stream extends Transform {
     }
   }
 
-  // eslint-disable-next-line no-underscore-dangle
+   
   _flush(callback: (error?: Error | null, data?: Buffer) => void): void {
     if (this.mode === 'decode' && this.leftover.length > 0) {
       // Pad the leftover data to make it a multiple of 4 characters

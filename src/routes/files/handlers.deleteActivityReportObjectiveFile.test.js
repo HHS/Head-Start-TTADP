@@ -42,7 +42,7 @@ describe('deleteActivityReportObjectiveFile', () => {
     sendStatus: jest.fn(),
     end: jest.fn(),
   };
-  // eslint-disable-next-line @typescript-eslint/no-shadow
+   
   const mockUser = { id: 1 };
 
   beforeEach(() => {
@@ -52,14 +52,14 @@ describe('deleteActivityReportObjectiveFile', () => {
   });
 
   it('returns 404 if report is not found', async () => {
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([]);
     await deleteActivityReportObjectiveFile(mockReq, mockRes);
     expect(mockRes.sendStatus).toHaveBeenCalledWith(404);
   });
 
   it('returns 404 if file is not found', async () => {
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([{ id: 1 }]);
     getFileById.mockResolvedValue(null);
     await deleteActivityReportObjectiveFile(mockReq, mockRes);
@@ -67,7 +67,7 @@ describe('deleteActivityReportObjectiveFile', () => {
   });
 
   it('returns 403 if user is not authorized to update report', async () => {
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([{ id: 1 }]);
     getFileById.mockResolvedValue({ id: 1 });
     const mockPolicy = { canUpdate: jest.fn().mockReturnValue(false) };
@@ -77,7 +77,7 @@ describe('deleteActivityReportObjectiveFile', () => {
   });
 
   it('deletes specific activity report objective file if authorized', async () => {
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([{ id: 1 }]);
     getFileById.mockResolvedValue({ id: 1 });
     const mockPolicy = { canUpdate: jest.fn().mockReturnValue(true) };

@@ -5,8 +5,8 @@ import Create from './Create';
 import Close from './Close';
 
 const sideNavMenuItems = [
-  <Link to="/admin/goals/create">Create</Link>,
-  <Link to="/admin/goals/close">Close</Link>,
+  <Link key="create" to="/admin/goals/create">Create</Link>,
+  <Link key="close" to="/admin/goals/close">Close</Link>,
 ];
 
 export default function Goals() {

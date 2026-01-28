@@ -1,5 +1,5 @@
 import { ALL_PARTICIPANTS } from '@ttahub/common';
-import filterArray, { filterAssociation } from './utils';
+import { filterAssociation } from './utils';
 
 export function onlyValidParticipants(query) {
   if (!Array.isArray(query)) {

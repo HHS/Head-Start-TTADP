@@ -1,7 +1,7 @@
 const { VALID_URL_REGEX } = require('@ttahub/common');
 
 const autoPopulateDomain = (sequelize, instance, options) => {
-  // eslint-disable-next-line no-prototype-builtins
+   
   if (instance.url && (instance.domain === undefined
     || instance.domain === null)) {
     const [{ groups: { host, ip } }] = instance.url.matchAll(VALID_URL_REGEX);
@@ -32,7 +32,7 @@ const afterCreate = async (sequelize, instance, options) => {
     // Lib: /lib/resource Imports: /models/{Resource}
     // Model: /models/{Resource} Imports: /models/hooks/resource
     // Hook: /models/hooks/resource Imports: /services/resourceQueue
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line node/global-require
     const { addGetResourceMetadataToQueue } = require('../../services/resourceQueue');
     addGetResourceMetadataToQueue(instance.id, instance.url);
   }

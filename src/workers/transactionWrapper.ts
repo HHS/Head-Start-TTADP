@@ -27,17 +27,16 @@ const transactionQueueWrapper = (
     httpContext.set('auditDescriptor', originalFunction.name);
 
     if (job.data && job.data.referenceData !== undefined) {
-      // eslint-disable-next-line no-param-reassign
+       
       delete job.data.referenceData;
     }
     try {
-      // eslint-disable-next-line global-require
+      // eslint-disable-next-line node/global-require
       const { sequelize } = require('../models');
-      // eslint-disable-next-line @typescript-eslint/return-await
       return await sequelize.transaction(async (transaction) => {
         httpContext.set('transactionId', transaction.id);
         try {
-          // eslint-disable-next-line
+           
           await addAuditTransactionSettings(sequelize, null, null, 'transaction', originalFunction.name);
           const result = await originalFunction(job);
           const duration = Date.now() - startTime;

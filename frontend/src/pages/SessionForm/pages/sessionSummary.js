@@ -719,10 +719,17 @@ const ReviewSection = () => {
     objectiveSupportType,
   } = watch();
 
-  // eslint-disable-next-line max-len
-  const objectiveFiles = (files || []).map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
-  // eslint-disable-next-line max-len
-  const resources = (objectiveResources || []).filter((r) => r.value).map((r) => <Link href={r.value}>{r.value}</Link>);
+   
+  const objectiveFiles = (files || []).map((f) => {
+    const key = f.id || f.originalFileName || f.url?.url;
+    return f.url
+      ? <Link key={key} href={f.url.url}>{f.originalFileName}</Link>
+      : <span key={key}>{f.originalFileName}</span>;
+  });
+   
+  const resources = (objectiveResources || []).filter((r) => r.value).map((r) => (
+    <Link key={r.id || r.value} href={r.value}>{r.value}</Link>
+  ));
   const supportingGoals = (goalTemplates || []).map((g) => g.standard);
   const objectiveTrainers = (trainers || []).map((t) => t.fullName);
 

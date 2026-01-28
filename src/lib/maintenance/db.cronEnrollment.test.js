@@ -30,7 +30,7 @@ const { registerCronEnrollmentFunction, addCronJob } = require('./common');
 // Import the module under test inside an isolated module context
 // so that our mocks are used when the module is evaluated.
 jest.isolateModules(() => {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line node/global-require
   require('./db');
 });
 
@@ -41,7 +41,7 @@ beforeAll(() => {
   if (registerCronEnrollmentFunction.mock.calls.length === 0) {
     throw new Error('registerCronEnrollmentFunction was not called');
   }
-  // eslint-disable-next-line prefer-destructuring
+   
   enrollmentCallback = registerCronEnrollmentFunction.mock.calls[0][0];
 });
 

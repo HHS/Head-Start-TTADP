@@ -239,7 +239,7 @@ export function addObjectiveSectionsToArray(
         ...(objective.status === OBJECTIVE_STATUS.SUSPENDED ? {
           'Reason suspended': (
             objective.closeSuspendReason || ''
-          ) + (` - ${objective.closeSuspendContext}` || ''),
+          ) + (objective.closeSuspendContext ? ` - ${objective.closeSuspendContext}` : ''),
         } : {}),
       },
       isStriped,

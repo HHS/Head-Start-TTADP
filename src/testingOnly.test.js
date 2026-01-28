@@ -48,7 +48,7 @@ describe('testingOnly', () => {
       return mock;
     });
 
-    // // eslint-disable-next-line global-require
+    // // eslint-disable-next-line node/global-require
     // const { doNothing } = require('./testingOnly');
     // doNothing();
   });

@@ -81,12 +81,14 @@ const ReviewItem = ({
   }
 
   values = values.map((v, index) => {
+    const key = `${label}-${index}-${v}`;
     // If not a valid url, then its most likely just text, so leave it as is
     // except for several values
     if (!isValidURL(v)) {
       if (isRichText) {
         return (
           <Editor
+            key={key}
             readOnly
             toolbarHidden
             defaultEditorState={getEditorState(v)}
@@ -94,13 +96,18 @@ const ReviewItem = ({
           />
         );
       }
-      return mapUrlValue(v);
+      return (
+        <React.Fragment key={key}>
+          {mapUrlValue(v)}
+        </React.Fragment>
+      );
     }
 
     const linkNameToUse = linkNamePath ? linkNameValues[index] : v;
     if (isFile) {
       return (
         <a
+          key={key}
           href={v}
           target="_blank"
           rel="noreferrer"
@@ -110,11 +117,11 @@ const ReviewItem = ({
       );
     }
     if (isExternalURL(v) || isInternalGovernmentLink(v)) {
-      return <ExternalLink to={v}>{linkNameToUse}</ExternalLink>;
+      return <ExternalLink key={key} to={v}>{linkNameToUse}</ExternalLink>;
     }
 
     const localLink = new URL(v);
-    return <Link to={localLink.pathname}>{linkNameToUse}</Link>;
+    return <Link key={key} to={localLink.pathname}>{linkNameToUse}</Link>;
   });
 
   const emptySelector = value && value !== noneProvided ? '' : 'smart-hub-review-item--empty';
@@ -149,7 +156,7 @@ ReviewItem.propTypes = {
   sortValues: PropTypes.bool,
   // This will be object like { [fieldName]: value }, so
   // we don't know the keys and types in advance
-  // eslint-disable-next-line react/forbid-prop-types
+   
   customValue: PropTypes.object,
   linkNamePath: PropTypes.string,
   isFile: PropTypes.bool,

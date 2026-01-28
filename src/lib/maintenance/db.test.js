@@ -447,7 +447,7 @@ describe('maintenance', () => {
       const type = MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE;
       const data = { someKey: 'someValue' };
 
-      // eslint-disable-next-line global-require
+      // eslint-disable-next-line node/global-require
       const enqueueSpy = require('./common').enqueueMaintenanceJob;
 
       await enqueueDBMaintenanceJob(type, data);

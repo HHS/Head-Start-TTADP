@@ -1,3 +1,4 @@
+import type { BufferEncoding } from 'node:buffer';
 import { Transform } from 'stream';
 import * as chardet from 'chardet';
 
@@ -44,7 +45,7 @@ class EncodingConverter extends Transform {
     this.buffer = Buffer.alloc(0); // Initialize an empty buffer
   }
 
-  // eslint-disable-next-line no-underscore-dangle
+   
   _transform(
     chunk: Buffer,
     _encoding: string,
@@ -60,7 +61,7 @@ class EncodingConverter extends Transform {
         const detectedEncoding = chardet.detect(new Uint8Array(this.buffer));
 
         // Check if the detected encoding is supported
-        // eslint-disable-next-line max-len
+         
         this.sourceEncoding = detectedEncoding && EncodingConverter.supportedEncodings.has(detectedEncoding.toLowerCase() as BufferEncoding)
           ? detectedEncoding.toLowerCase()
           : 'utf-8';
@@ -107,7 +108,7 @@ class EncodingConverter extends Transform {
     }
   }
 
-  // eslint-disable-next-line no-underscore-dangle
+   
   _flush(callback: (error?: Error | null, data?: Buffer) => void): void {
     if (this.detectEncoding && this.buffer.length > 0) {
       // If flush is called and we're still detecting the encoding,

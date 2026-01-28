@@ -58,7 +58,7 @@ export default (sequelize, DataTypes) => {
     size: {
       type: DataTypes.ENUM(possibleSizes),
       allowNull: false,
-      // eslint-disable-next-line @typescript-eslint/quotes
+       
       defaultValue: sequelize.literal(`'standard'::"enum_SiteAlerts_size"`),
     },
   }, {

@@ -1,4 +1,4 @@
-/* eslint-disable global-require */
+/* eslint-disable node/global-require */
 const { auditLogger } = require('../../logger');
 const { purifyDataFields } = require('../helpers/purifyFields');
 
