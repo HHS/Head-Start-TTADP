@@ -1104,6 +1104,442 @@ describe('recipientSpotlight service', () => {
     });
   });
 
+  describe('secondary sorting', () => {
+    // Test recipients with different indicator counts and names
+    let sortRecipientA; // Will have 0 indicators
+    let sortRecipientB; // Will have 0 indicators
+    let sortRecipientC; // Will have 1 indicator (noTTA)
+    let sortRecipientD; // Will have 1 indicator (noTTA)
+    let sortGrantA;
+    let sortGrantB;
+    let sortGrantC;
+    let sortGrantD;
+
+    const pastFiveYearsSort = new Date();
+    pastFiveYearsSort.setFullYear(pastFiveYearsSort.getFullYear() - 5);
+    const pastYearSort = new Date();
+    pastYearSort.setMonth(pastYearSort.getMonth() - 6);
+
+    beforeAll(async () => {
+      // Clean up any orphaned data from previous failed test runs using transaction
+      await sequelize.transaction(async (t) => {
+        const sortGrantNumbers = ['G-SORT-SEC-A', 'G-SORT-SEC-B', 'G-SORT-SEC-C', 'G-SORT-SEC-D'];
+        const existingGrants = await Grant.findAll({
+          where: { number: sortGrantNumbers },
+          raw: true,
+          transaction: t,
+        });
+        if (existingGrants.length > 0) {
+          const existingGrantIds = existingGrants.map((g) => g.id);
+          const existingRecipientIds = [...new Set(existingGrants.map((g) => g.recipientId))];
+          await ActivityReportGoal.destroy({ where: { grantId: existingGrantIds }, force: true, transaction: t });
+          await Goal.destroy({ where: { grantId: existingGrantIds }, force: true, transaction: t });
+          await Grant.destroy({
+            where: { id: existingGrantIds },
+            force: true,
+            individualHooks: true,
+            transaction: t,
+          });
+          await Recipient.destroy({
+            where: { id: existingRecipientIds },
+            force: true,
+            transaction: t,
+          });
+        }
+      });
+
+      // Create GrantNumberLinks for test grants
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: 'G-SORT-SEC-A' },
+        { grantNumber: 'G-SORT-SEC-B' },
+        { grantNumber: 'G-SORT-SEC-C' },
+        { grantNumber: 'G-SORT-SEC-D' },
+      ], { ignoreDuplicates: true });
+
+      // Create recipients with names that allow us to verify secondary sort
+      // Zebra and Yak will have 0 indicators (with TTA)
+      // Apple and Banana will have 1 indicator (noTTA)
+      sortRecipientA = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        name: 'Zebra Secondary Sort Recipient',
+        regionId: REGION_ID,
+      });
+
+      sortRecipientB = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        name: 'Yak Secondary Sort Recipient',
+        regionId: REGION_ID,
+      });
+
+      sortRecipientC = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        name: 'Banana Secondary Sort Recipient',
+        regionId: REGION_ID,
+      });
+
+      sortRecipientD = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        name: 'Apple Secondary Sort Recipient',
+        regionId: REGION_ID,
+      });
+
+      // Create grants - all old enough to not trigger newRecipients
+      sortGrantA = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        number: 'G-SORT-SEC-A',
+        recipientId: sortRecipientA.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      sortGrantB = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        number: 'G-SORT-SEC-B',
+        recipientId: sortRecipientB.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      sortGrantC = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        number: 'G-SORT-SEC-C',
+        recipientId: sortRecipientC.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      sortGrantD = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        number: 'G-SORT-SEC-D',
+        recipientId: sortRecipientD.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      // Create goals for TTA - each grant needs its own goal for the join to work
+      const goalA = await Goal.create({
+        name: 'Secondary Sort Test Goal A',
+        status: 'Not Started',
+        onAR: true,
+        onApprovedAR: false,
+        grantId: sortGrantA.id,
+      });
+
+      const goalB = await Goal.create({
+        name: 'Secondary Sort Test Goal B',
+        status: 'Not Started',
+        onAR: true,
+        onApprovedAR: false,
+        grantId: sortGrantB.id,
+      });
+
+      // Create activity reports for Zebra and Yak (so they have TTA, thus 0 indicators)
+      // Apple and Banana will NOT have activity reports (so they have noTTA indicator)
+      const grantsWithGoals = [
+        { grantId: sortGrantA.id, goalId: goalA.id },
+        { grantId: sortGrantB.id, goalId: goalB.id },
+      ];
+      await Promise.all(grantsWithGoals.map(async ({ grantId, goalId }) => {
+        const report = await ActivityReport.create({
+          activityRecipientType: 'recipient',
+          submissionStatus: 'submitted',
+          calculatedStatus: 'approved',
+          userId: testUser.id,
+          regionId: REGION_ID,
+          startDate: pastYearSort,
+          endDate: pastYearSort,
+          approvedAt: pastYearSort,
+          duration: 1,
+        });
+
+        await ActivityReportGoal.create({
+          activityReportId: report.id,
+          grantId,
+          goalId,
+        });
+
+        return report;
+      }));
+    });
+
+    afterAll(async () => {
+      // Clean up activity report goals first (by grantId since we have multiple goals)
+      const grantIdsForCleanup = [sortGrantA?.id, sortGrantB?.id, sortGrantC?.id, sortGrantD?.id].filter(Boolean);
+      if (grantIdsForCleanup.length > 0) {
+        await ActivityReportGoal.destroy({
+          where: { grantId: grantIdsForCleanup },
+          force: true,
+        });
+      }
+
+      // Clean up activity reports
+      await ActivityReport.destroy({
+        where: { userId: testUser.id },
+        force: true,
+      });
+
+      // Clean up goals (by grantId to get all goals created for these grants)
+      if (grantIdsForCleanup.length > 0) {
+        await Goal.destroy({ where: { grantId: grantIdsForCleanup }, force: true });
+      }
+
+      // Clean up grants
+      const grantIds = [sortGrantA?.id, sortGrantB?.id, sortGrantC?.id, sortGrantD?.id].filter(Boolean);
+      if (grantIds.length > 0) {
+        await Grant.destroy({ where: { id: grantIds }, force: true });
+      }
+
+      // Clean up recipients
+      const recipientIds = [
+        sortRecipientA?.id, sortRecipientB?.id, sortRecipientC?.id, sortRecipientD?.id,
+      ].filter(Boolean);
+      if (recipientIds.length > 0) {
+        await Recipient.destroy({ where: { id: recipientIds }, force: true });
+      }
+
+      // Clean up grant number links
+      await db.GrantNumberLink.destroy({
+        where: { grantNumber: ['G-SORT-SEC-A', 'G-SORT-SEC-B', 'G-SORT-SEC-C', 'G-SORT-SEC-D'] },
+      });
+    });
+
+    it('sorts by indicatorCount ASC with recipientName as secondary sort', async () => {
+      const scopes = {
+        grant: {
+          [db.Sequelize.Op.and]: [
+            { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
+            { regionId: REGION_ID },
+          ],
+        },
+      };
+
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'indicatorCount',
+        'ASC',
+        0,
+        100,
+        [],
+        [REGION_ID],
+      );
+
+      const testRecipients = result.recipients.filter(
+        (r) => r.recipientName.includes('Secondary Sort Recipient'),
+      );
+
+      expect(testRecipients.length).toBe(4);
+
+      // With ASC on indicatorCount, 0-indicator recipients come first
+      // Within 0-indicator group, should be sorted by name ASC: Yak before Zebra
+      const zeroIndicators = testRecipients.filter((r) => r.indicatorCount === 0);
+      const oneIndicator = testRecipients.filter((r) => r.indicatorCount === 1);
+
+      expect(zeroIndicators.length).toBe(2);
+      expect(oneIndicator.length).toBe(2);
+
+      // Check secondary sort within same indicatorCount
+      expect(zeroIndicators[0].recipientName).toBe('Yak Secondary Sort Recipient');
+      expect(zeroIndicators[1].recipientName).toBe('Zebra Secondary Sort Recipient');
+
+      expect(oneIndicator[0].recipientName).toBe('Apple Secondary Sort Recipient');
+      expect(oneIndicator[1].recipientName).toBe('Banana Secondary Sort Recipient');
+    });
+
+    it('sorts by indicatorCount DESC with recipientName as secondary sort', async () => {
+      const scopes = {
+        grant: {
+          [db.Sequelize.Op.and]: [
+            { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
+            { regionId: REGION_ID },
+          ],
+        },
+      };
+
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'indicatorCount',
+        'DESC',
+        0,
+        100,
+        [],
+        [REGION_ID],
+      );
+
+      const testRecipients = result.recipients.filter(
+        (r) => r.recipientName.includes('Secondary Sort Recipient'),
+      );
+
+      expect(testRecipients.length).toBe(4);
+
+      // With DESC on indicatorCount, 1-indicator recipients come first
+      // Within each group, should be sorted by name ASC: Apple before Banana
+      const oneIndicator = testRecipients.filter((r) => r.indicatorCount === 1);
+      const zeroIndicators = testRecipients.filter((r) => r.indicatorCount === 0);
+
+      // First should be the 1-indicator recipients (sorted by name ASC)
+      expect(oneIndicator[0].recipientName).toBe('Apple Secondary Sort Recipient');
+      expect(oneIndicator[1].recipientName).toBe('Banana Secondary Sort Recipient');
+
+      // Then 0-indicator recipients (sorted by name ASC)
+      expect(zeroIndicators[0].recipientName).toBe('Yak Secondary Sort Recipient');
+      expect(zeroIndicators[1].recipientName).toBe('Zebra Secondary Sort Recipient');
+    });
+
+    it('sorts by regionId ASC with recipientName as secondary sort', async () => {
+      // Create additional grant number links
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: 'G-REGION-SORT-1' },
+        { grantNumber: 'G-REGION-SORT-2' },
+      ], { ignoreDuplicates: true });
+
+      const recipientRegion1B = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        name: 'Beta Region Sort Recipient',
+      });
+
+      const recipientRegion1A = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        name: 'Alpha Region Sort Recipient',
+      });
+
+      const grantRegion1B = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        number: 'G-REGION-SORT-1',
+        recipientId: recipientRegion1B.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      const grantRegion1A = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        number: 'G-REGION-SORT-2',
+        recipientId: recipientRegion1A.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      try {
+        const scopes = {
+          grant: {
+            [db.Sequelize.Op.and]: [
+              { id: { [db.Sequelize.Op.in]: [grantRegion1A.id, grantRegion1B.id] } },
+              { regionId: REGION_ID },
+            ],
+          },
+        };
+
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'regionId',
+          'ASC',
+          0,
+          100,
+          [],
+          [REGION_ID],
+        );
+
+        const testRecipients = result.recipients.filter(
+          (r) => r.recipientName.includes('Region Sort Recipient'),
+        );
+
+        expect(testRecipients.length).toBe(2);
+
+        // Both in same region, so sorted by name ASC: Alpha before Beta
+        expect(testRecipients[0].recipientName).toBe('Alpha Region Sort Recipient');
+        expect(testRecipients[1].recipientName).toBe('Beta Region Sort Recipient');
+      } finally {
+        await Grant.destroy({ where: { id: [grantRegion1A.id, grantRegion1B.id] }, force: true });
+        await Recipient.destroy({ where: { id: [recipientRegion1A.id, recipientRegion1B.id] }, force: true });
+        await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-REGION-SORT-1', 'G-REGION-SORT-2'] } });
+      }
+    });
+
+    it('sorts by regionId DESC with recipientName as secondary sort', async () => {
+      // Create additional grant number links
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: 'G-REGION-SORT-3' },
+        { grantNumber: 'G-REGION-SORT-4' },
+      ], { ignoreDuplicates: true });
+
+      const recipientRegionDescB = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        name: 'Delta Region Sort Recipient',
+      });
+
+      const recipientRegionDescA = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        name: 'Charlie Region Sort Recipient',
+      });
+
+      const grantRegionDescB = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        number: 'G-REGION-SORT-3',
+        recipientId: recipientRegionDescB.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      const grantRegionDescA = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        number: 'G-REGION-SORT-4',
+        recipientId: recipientRegionDescA.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      try {
+        const scopes = {
+          grant: {
+            [db.Sequelize.Op.and]: [
+              { id: { [db.Sequelize.Op.in]: [grantRegionDescA.id, grantRegionDescB.id] } },
+              { regionId: REGION_ID },
+            ],
+          },
+        };
+
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'regionId',
+          'DESC',
+          0,
+          100,
+          [],
+          [REGION_ID],
+        );
+
+        const testRecipients = result.recipients.filter(
+          (r) => r.recipientName.includes('Region Sort Recipient'),
+        );
+
+        expect(testRecipients.length).toBe(2);
+
+        // Both in same region, so sorted by name ASC: Charlie before Delta
+        expect(testRecipients[0].recipientName).toBe('Charlie Region Sort Recipient');
+        expect(testRecipients[1].recipientName).toBe('Delta Region Sort Recipient');
+      } finally {
+        await Grant.destroy({ where: { id: [grantRegionDescA.id, grantRegionDescB.id] }, force: true });
+        await Recipient.destroy({ where: { id: [recipientRegionDescA.id, recipientRegionDescB.id] }, force: true });
+        await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-REGION-SORT-3', 'G-REGION-SORT-4'] } });
+      }
+    });
+  });
+
   describe('totalRecipients counts recipient-region pairs', () => {
     let multiRegionRecipient;
     let grantRegion1;

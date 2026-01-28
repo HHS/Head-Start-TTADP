@@ -371,7 +371,9 @@ export async function getRecipientSpotlightIndicators(
       COUNT(*) OVER() AS "totalCount"
     FROM combined_indicators
     WHERE ${indicatorWhereClause}
-    ORDER BY "${sortBy || 'recipientName'}" ${direction || 'ASC'}
+    ORDER BY "${sortBy || 'recipientName'}" ${direction || 'ASC'}${
+  (sortBy === 'indicatorCount' || sortBy === 'regionId') ? ', "recipientName" ASC' : ''
+}
     ${hasGrantIds ? `LIMIT ${limit}` : ''}
     OFFSET ${offset}
   `;
