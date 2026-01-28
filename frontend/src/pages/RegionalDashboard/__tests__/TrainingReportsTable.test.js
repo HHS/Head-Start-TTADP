@@ -98,7 +98,7 @@ describe('TrainingReportsTable', () => {
     );
 
     const link = screen.getByRole('link', { name: 'R01-TR-23-1037' });
-    expect(link).toHaveAttribute('href', '/training-report/R01-TR-23-1037');
+    expect(link).toHaveAttribute('href', '/training-report/1037');
   });
 
   describe('handlePageChange', () => {

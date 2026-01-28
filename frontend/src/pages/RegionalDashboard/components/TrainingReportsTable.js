@@ -10,6 +10,8 @@ import { getSessionReportsCSV, getSessionReportsCSVById } from '../../../fetcher
 
 const PER_PAGE = 10;
 
+const idForLink = (eventId) => eventId.split('-').pop();
+
 const TrainingReportsTable = ({
   emptyMsg,
   loading,
@@ -66,7 +68,7 @@ const TrainingReportsTable = ({
 
   const tabularData = useMemo(() => data.rows.map((r) => ({
     id: r.id,
-    heading: <Link to={`/training-report/${r.eventId}`}>{r.eventId}</Link>,
+    heading: <Link to={`/training-report/${idForLink(r.eventId)}`}>{r.eventId}</Link>,
     data: [
       {
         title: 'Event title',
@@ -108,7 +110,7 @@ const TrainingReportsTable = ({
     actions: [
       {
         label: 'View',
-        onClick: () => history.push(`/training-report/view/${r.id}`),
+        onClick: () => history.push(`/training-report/view/${idForLink(r.eventId)}`),
       },
       {
         label: 'Export',
