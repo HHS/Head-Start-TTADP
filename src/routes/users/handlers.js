@@ -33,13 +33,12 @@ const verifyTrViewPermissions = async (req, res) => {
     ].includes(scopeId)
   ));
 
+  const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
+  const regionIds = uniq(trPermissions.map(({ regionId }) => regionId));
+
   if (!trPermissions.length) {
     res.sendStatus(403);
-    return null;
   }
-
-  const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
-  const regionIds = uniq(permissions.map(({ regionId }) => regionId));
 
   return {
     isAdmin,
@@ -233,8 +232,17 @@ export async function getTrainingReportTrainersByRegionAndNationalCenter(req, re
 
 export async function getTrainingReportTrainersByRegion(req, res) {
   try {
-    const { regionIds } = await verifyTrViewPermissions(req, res);
+    const { regionId } = req.params;
+
+    const { regionIds, isAdmin } = await verifyTrViewPermissions(req, res);
     if (res.headersSent) {
+      return;
+    }
+
+    const regionIdInt = parseInt(regionId, DECIMAL_BASE);
+
+    if (!regionIds.includes(regionIdInt) && !isAdmin) {
+      res.sendStatus(403);
       return;
     }
 
@@ -250,7 +258,7 @@ export async function getTrainingReportTrainersByRegion(req, res) {
       'TTAC',
       'ECM',
       'GSM',
-    ], regionIds);
+    ], regionIdInt);
 
     res.json([
       ...regionalTrainers,
@@ -262,7 +270,9 @@ export async function getTrainingReportTrainersByRegion(req, res) {
 
 export async function getTrainingReportNationalCenterUsers(req, res) {
   try {
+    // this fn sends a status of 403 if the user lacks permissions/is not an admin
     await verifyTrViewPermissions(req, res);
+
     if (res.headersSent) {
       return;
     }
