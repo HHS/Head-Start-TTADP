@@ -1,14 +1,14 @@
 import React from 'react';
 import {
-  render, screen, act, fireEvent, waitFor,
+  render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import join from 'url-join';
-import { Router, MemoryRouter } from 'react-router';
+import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
-import TrainingReports from '../index';
+import TrainingReports, { evaluateMessageFromHistory } from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { EVENT_STATUS } from '../constants';
@@ -51,8 +51,8 @@ const notStartedEvents = [{
 
 const inProgressEvents = [{
   id: 3,
-  ownerId: 1,
-  collaboratorIds: [],
+  ownerId: 999,
+  collaboratorIds: [1],
   pocIds: [],
   regionId: 2,
   data: {
@@ -67,6 +67,7 @@ const inProgressEvents = [{
     id: 1,
     eventId: 3,
     regionId: 2,
+    approverId: 999,
     data: {
       regionId: 2,
       sessionName: 'This is my session title',
@@ -77,6 +78,10 @@ const inProgressEvents = [{
       objectiveTopics: ['Topic 1', 'Topic 2'],
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
+      pocComplete: false,
+      collabComplete: false,
+      submitted: false,
+      facilitation: 'national_centers',
     },
   }],
 }];
@@ -428,52 +433,6 @@ describe('TrainingReports', () => {
     expect(await screen.findByRole('heading', { name: /training reports - all regions/i })).toBeInTheDocument();
   });
 
-  test('displays a message', async () => {
-    const user = {
-      id: 1,
-      name: 'test@test.com',
-      homeRegionId: 1,
-      permissions: [
-        {
-          scopeId: 3,
-          regionId: 1,
-        },
-      ],
-    };
-    const message = 'Successfully submitted report';
-
-    const pastLocations = [
-      { pathname: '/training-reports/not-started', state: { message } },
-    ];
-
-    render(
-      <MemoryRouter initialEntries={pastLocations}>
-        <UserContext.Provider value={{ user }}>
-          <AppLoadingContext.Provider value={
-            {
-              setIsAppLoading: jest.fn(),
-              setAppLoadingText: jest.fn(),
-              isAppLoading: false,
-            }
-          }
-          >
-            <TrainingReports match={{ params: { status: EVENT_STATUS.NOT_STARTED } }} />
-          </AppLoadingContext.Provider>
-        </UserContext.Provider>
-      </MemoryRouter>,
-    );
-
-    expect(await screen.findByText(/Successfully submitted report/i)).toBeVisible();
-    const alertButton = await screen.findByLabelText(/dismiss alert/i);
-    expect(alertButton).toBeVisible();
-
-    fireEvent.click(alertButton);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/you successfully tested training report R04-PD-23-1123 on today/i)).not.toBeInTheDocument();
-    });
-  });
-
   // Filters.
   it('correctly renders data based on filters', async () => {
     const user = {
@@ -535,5 +494,154 @@ describe('TrainingReports', () => {
     expect(await screen.findByText(/training reports/i)).toBeVisible();
     expect(await screen.findByText(/not started event 1/i)).toBeInTheDocument();
     expect(await screen.findByText(/not started event 2/i)).toBeInTheDocument();
+  });
+
+  describe('evaluateMessageFromHistory', () => {
+    it('returns null when history has no state', () => {
+      const mockHistory = {
+        location: {},
+      };
+
+      const result = evaluateMessageFromHistory(mockHistory);
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null when state exists but message is missing', () => {
+      const mockHistory = {
+        location: {
+          state: {},
+        },
+      };
+
+      const result = evaluateMessageFromHistory(mockHistory);
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null when message exists but eventId is missing', () => {
+      const mockHistory = {
+        location: {
+          state: {
+            message: {
+              dateStr: '12/18/2025 at 3:30 pm EST',
+            },
+          },
+        },
+      };
+
+      const result = evaluateMessageFromHistory(mockHistory);
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null when message has empty eventId', () => {
+      const mockHistory = {
+        location: {
+          state: {
+            message: {
+              eventId: '',
+              dateStr: '12/18/2025 at 3:30 pm EST',
+            },
+          },
+        },
+      };
+
+      const result = evaluateMessageFromHistory(mockHistory);
+
+      expect(result).toBeNull();
+    });
+
+    it('returns correct message template', () => {
+      const mockHistory = {
+        location: {
+          state: {
+            message: {
+              messageTemplate: 'sessionReviewSubmitted',
+              sessionName: 'My Session',
+              eventId: 'R01-PD-1234',
+              dateStr: '12/18/2025 at 3:30 pm EST',
+            },
+          },
+        },
+      };
+
+      const result = evaluateMessageFromHistory(mockHistory);
+
+      const testHistory = createMemoryHistory();
+      render(
+        <Router history={testHistory}>
+          {result}
+        </Router>,
+      );
+
+      expect(screen.getByText(/Your review for session/)).toBeInTheDocument();
+      expect(screen.getByText(/My Session/)).toBeInTheDocument();
+      expect(screen.getByText(/of Training Event/)).toBeInTheDocument();
+      expect(screen.getByText('R01-PD-1234')).toBeInTheDocument();
+      expect(screen.getByText(/was submitted on/)).toBeInTheDocument();
+      expect(screen.getByText(/12\/18\/2025 at 3:30 pm EST/)).toBeInTheDocument();
+
+      // Verify link points to correct view page
+      const link = screen.getByRole('link', { name: 'R01-PD-1234' });
+      expect(link).toHaveAttribute('href', '/training-report/view/1234');
+    });
+
+    it('returns event message when isSession is false or undefined', () => {
+      const mockHistory = {
+        location: {
+          state: {
+            message: {
+              eventId: 'R02-PD-5678',
+              dateStr: '12/18/2025 at 4:00 pm EST',
+            },
+          },
+        },
+      };
+
+      const result = evaluateMessageFromHistory(mockHistory);
+
+      const testHistory = createMemoryHistory();
+      render(
+        <Router history={testHistory}>
+          {result}
+        </Router>,
+      );
+
+      expect(screen.getByText(/You submitted Training Event/)).toBeInTheDocument();
+      expect(screen.getByText('R02-PD-5678')).toBeInTheDocument();
+      expect(screen.getByText(/on/)).toBeInTheDocument();
+      expect(screen.getByText(/12\/18\/2025 at 4:00 pm EST/)).toBeInTheDocument();
+
+      // Verify link points to correct view page
+      const link = screen.getByRole('link', { name: 'R02-PD-5678' });
+      expect(link).toHaveAttribute('href', '/training-report/view/5678');
+    });
+
+    it('handles eventId with different format correctly', () => {
+      const mockHistory = {
+        location: {
+          state: {
+            message: {
+              eventId: 'R14-PD-99-9999',
+              dateStr: '12/18/2025 at 5:00 pm EST',
+            },
+          },
+        },
+      };
+
+      const result = evaluateMessageFromHistory(mockHistory);
+
+      const testHistory = createMemoryHistory();
+      render(
+        <Router history={testHistory}>
+          {result}
+        </Router>,
+      );
+
+      // The link extracts last segment after split
+      const link = screen.getByRole('link', { name: 'R14-PD-99-9999' });
+      expect(link).toHaveAttribute('href', '/training-report/view/9999');
+    });
   });
 });

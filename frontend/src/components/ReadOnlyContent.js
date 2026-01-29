@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import renderData from './renderReadOnlyContentData';
 import STATUSES from './GoalCards/components/StatusDropdownStatuses';
-import './ReadOnlyContent.scss';
+import './ReadOnlyContent.css';
 
 const HEADING_CLASSES = {
   4: 'font-serif-md',
@@ -22,7 +22,7 @@ const Status = ({ statusKey }) => {
 
   const { IconWithProps } = data;
   return (
-    <div className="ttahub-read-only-content-section--heading--section-row-status display-flex flex-align-center margin-left-4">
+    <div className="ttahub-read-only-content-section--heading--section-row-status display-flex flex-align-center margin-left-4 margin-bottom-3">
       <IconWithProps size="xl" />
       <p className="ttahub-read-only-content-section--heading--section-row-status-text margin-0 text-bold font-sans-md">{data.display}</p>
     </div>

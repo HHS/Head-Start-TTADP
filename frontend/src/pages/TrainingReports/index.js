@@ -5,7 +5,7 @@ import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { useHistory } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './index.scss';
@@ -13,6 +13,7 @@ import {
   Alert, Grid, Button,
 } from '@trussworks/react-uswds';
 import UserContext from '../../UserContext';
+import StaffProvider from '../../components/StaffProvider';
 import colors from '../../colors';
 import WidgetContainer from '../../components/WidgetContainer';
 import Tabs from '../../components/Tabs';
@@ -34,6 +35,93 @@ const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) 
   key: TRAINING_REPORT_STATUSES_URL_PARAMS[status], value: status,
 }));
 
+const MESSAGE_TEMPLATES = {
+  eventSubmitted: (_sessionName, eventId, dateStr) => (
+    <>
+      You submitted Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      on
+      {' '}
+      {dateStr}
+    </>
+  ),
+  sessionCreated: (_sessionName, eventId, dateStr) => (
+    <>
+      You created a session
+      {' '}
+      for Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      on
+      {' '}
+      {dateStr}
+    </>
+  ),
+  sessionSubmitted: (sessionName, eventId, dateStr) => (
+    <>
+      You submitted the session
+      {' '}
+      {sessionName}
+      {' '}
+      of Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      on
+      {' '}
+      {dateStr}
+    </>
+  ),
+  sessionReviewSubmitted: (sessionName, eventId, dateStr) => (
+    <>
+      Your review for session
+      {' '}
+      {sessionName}
+      {' '}
+      of Training Event
+      {' '}
+      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      {' '}
+      was submitted on
+      {' '}
+      {dateStr}
+    </>
+  ),
+};
+
+export const evaluateMessageFromHistory = (history) => {
+  const { state } = history.location;
+  if (state && state.message) {
+    const { message } = state;
+
+    if (!message.eventId) {
+      return null;
+    }
+
+    const { messageTemplate } = message;
+
+    if (MESSAGE_TEMPLATES[messageTemplate]) {
+      return MESSAGE_TEMPLATES[messageTemplate](
+        message.sessionName,
+        message.eventId,
+        message.dateStr,
+      );
+    }
+
+    // default case
+    return MESSAGE_TEMPLATES.eventSubmitted(
+      message.sessionName,
+      message.eventId,
+      message.dateStr,
+    );
+  }
+
+  return null;
+};
+
 export default function TrainingReports({ match }) {
   const { params: { status } } = match;
   const { user } = useContext(UserContext);
@@ -43,7 +131,7 @@ export default function TrainingReports({ match }) {
   const [cardsInternalMessage, setCardsInternalMessage] = useState();
   const history = useHistory();
   // eslint-disable-next-line max-len
-  const [msg, setMsg] = useState(history.location.state && history.location.state.message ? <>{history.location.state.message}</> : null);
+  const [msg, setMsg] = useState(evaluateMessageFromHistory(history));
 
   const {
     regions,
@@ -151,23 +239,24 @@ export default function TrainingReports({ match }) {
   const statusForDisplay = tabValues.find((t) => t.value === status).key;
   const titleCaseStatus = convertToTitleCase(statusForDisplay);
   return (
-    <div className="ttahub-training-reports">
-      <Helmet>
-        <title>
-          {titleCaseStatus}
-          {' '}
-          - Training Reports
-        </title>
-      </Helmet>
-      <>
-        <RegionPermissionModal
-          filters={filters}
-          user={user}
-          showFilterWithMyRegions={
+    <StaffProvider>
+      <div className="ttahub-training-reports">
+        <Helmet>
+          <title>
+            {titleCaseStatus}
+            {' '}
+            - Training Reports
+          </title>
+        </Helmet>
+        <>
+          <RegionPermissionModal
+            filters={filters}
+            user={user}
+            showFilterWithMyRegions={
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
-        />
-        {(msg) && (
+          />
+          {(msg) && (
           <Alert
             type="success"
             role="alert"
@@ -187,62 +276,63 @@ export default function TrainingReports({ match }) {
           >
             {msg}
           </Alert>
-        )}
-        <Grid>
-          <Grid row gap>
-            <Grid>
-              <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
+          )}
+          <Grid>
+            <Grid row gap>
+              <Grid>
+                <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
+              </Grid>
+            </Grid>
+            <Grid row>
+              {error && (
+              <Alert className="margin-bottom-2" type="error" role="alert">
+                {error}
+              </Alert>
+              )}
+            </Grid>
+            <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+              <FilterPanel
+                applyButtonAria="apply filters for training reports"
+                filters={filters}
+                onApplyFilters={onApplyFilters}
+                onRemoveFilter={onRemoveFilter}
+                filterConfig={filterConfig}
+                allUserRegions={regions}
+              />
+            </Grid>
+
+            <TrainingReportAlerts />
+
+            <Grid row>
+              <WidgetContainer
+                title="Events"
+                loading={false}
+                loadingLabel="Training events loading"
+                showPaging={false}
+                showHeaderBorder={false}
+              >
+                <Tabs tabs={tabValues} ariaLabel="Training events" />
+                <EventCards
+                  events={displayEvents}
+                  eventType={status}
+                  onRemoveSession={onRemoveSession}
+                  onDeleteEvent={onDeleteEvent}
+                  removeEventFromDisplay={removeEventFromDisplay}
+                  alerts={{
+                    message: cardsInternalMessage,
+                    setMessage: setCardsInternalMessage,
+                    setParentMessage: (updatedMessage) => {
+                      setCardsInternalMessage(null);
+                      setMsg(updatedMessage);
+                    },
+                  }}
+                />
+              </WidgetContainer>
             </Grid>
           </Grid>
-          <Grid row>
-            {error && (
-            <Alert className="margin-bottom-2" type="error" role="alert">
-              {error}
-            </Alert>
-            )}
-          </Grid>
-          <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
-            <FilterPanel
-              applyButtonAria="apply filters for training reports"
-              filters={filters}
-              onApplyFilters={onApplyFilters}
-              onRemoveFilter={onRemoveFilter}
-              filterConfig={filterConfig}
-              allUserRegions={regions}
-            />
-          </Grid>
-
-          <TrainingReportAlerts />
-
-          <Grid row>
-            <WidgetContainer
-              title="Events"
-              loading={false}
-              loadingLabel="Training events loading"
-              showPaging={false}
-              showHeaderBorder={false}
-            >
-              <Tabs tabs={tabValues} ariaLabel="Training events" />
-              <EventCards
-                events={displayEvents}
-                eventType={status}
-                onRemoveSession={onRemoveSession}
-                onDeleteEvent={onDeleteEvent}
-                removeEventFromDisplay={removeEventFromDisplay}
-                alerts={{
-                  message: cardsInternalMessage,
-                  setMessage: setCardsInternalMessage,
-                  setParentMessage: (updatedMessage) => {
-                    setCardsInternalMessage(null);
-                    setMsg(updatedMessage);
-                  },
-                }}
-              />
-            </WidgetContainer>
-          </Grid>
-        </Grid>
-      </>
-    </div>
+        </>
+      </div>
+    </StaffProvider>
 
   );
 }

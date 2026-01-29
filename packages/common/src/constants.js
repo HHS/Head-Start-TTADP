@@ -451,7 +451,7 @@ const TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = {
   "State HSA",
   "State environmental health and safety systems",
   "State family engagement systems",
-  "State health and welness systems",
+  "State health and wellness systems",
   "State homelessness agency/McKinney Vento liason",
   "State Professional development system",
   "TTA staff",
@@ -459,7 +459,7 @@ const TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = {
  ];
 
  exports.COLLAB_REPORT_PARTICIPANTS = COLLAB_REPORT_PARTICIPANTS;
- 
+
 // List of states, by region
 // see: https://www.acf.hhs.gov/oro/regional-offices
 const ALL_STATES = [

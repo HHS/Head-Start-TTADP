@@ -22,7 +22,8 @@ const hasTrainingReportWritePermissions = (user) => {
   const permissions = _.get(user, 'permissions');
   return permissions && permissions.find(
     (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS
-      || p.scopeId === SCOPE_IDS.POC_TRAINING_REPORTS,
+      || p.scopeId === SCOPE_IDS.POC_TRAINING_REPORTS
+      || p.scopeId === SCOPE_IDS.ADMIN,
   ) !== undefined;
 };
 
@@ -202,19 +203,15 @@ const canEditOrCreateSessionReports = (user, region) => {
 
 /**
  * Check if user can create communication logs in a specific region.
- * Requires READ_WRITE_ACTIVITY_REPORTS (scopeId 3) permission for the region,
- * or ADMIN permission (scopeId 2).
+ * Requires READ_WRITE_ACTIVITY_REPORTS (scopeId 3) permission for the region.
+ * Region 14 is excluded as it is not an actual region.
  * @param {object} user - user object
  * @param {number} regionId - region id
  * @returns {boolean} - True if the user can create communication logs in the region
  */
 const canCreateCommunicationLog = (user, regionId) => {
-  if (!user || !regionId) {
+  if (!user || !regionId || regionId === 14) {
     return false;
-  }
-
-  if (isAdmin(user)) {
-    return true;
   }
 
   const { permissions } = user;

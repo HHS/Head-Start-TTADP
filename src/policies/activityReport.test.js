@@ -171,6 +171,18 @@ describe('Activity Report policies', () => {
         expect(policy.canUpdate()).toBeTruthy();
       });
 
+      it('is true if the user is an approver and report needs action', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          [approver.id],
+          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.NEEDS_ACTION,
+        );
+        const policy = new ActivityReport(approver, report);
+        expect(policy.canUpdate()).toBeTruthy();
+      });
+
       it('...unless the report is draft', () => {
         const report = activityReport(
           author.id,
@@ -195,13 +207,13 @@ describe('Activity Report policies', () => {
         expect(policy.canUpdate()).toBe(false);
       });
 
-      it('...unless the report has already been approved by another', () => {
+      it('is true even if another approver has already approved the report', () => {
         const report = activityReport(
           author.id,
           null,
           [approver.id, canApproveRegion.id],
-          REPORT_STATUSES.APPROVED,
-          REPORT_STATUSES.APPROVED,
+          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.SUBMITTED,
         );
 
         report.approvers[1] = {
@@ -210,7 +222,7 @@ describe('Activity Report policies', () => {
         };
 
         const policy = new ActivityReport(approver, report);
-        expect(policy.canUpdate()).toBe(false);
+        expect(policy.canUpdate()).toBe(true);
       });
 
       it('is false for non-authors/collaborators/approvers', () => {

@@ -15,6 +15,7 @@ import {
   getPossibleSessionParticipants,
   findSessionHelper,
   validateFields,
+  getSessionReports,
 } from './sessionReports';
 import { createGrant, createGoal, destroyGoal } from '../testUtils';
 
@@ -207,6 +208,7 @@ describe('session reports service', () => {
     let program;
     let program2;
     let recipient;
+    let alternateRecipient;
 
     beforeAll(async () => {
       await db.Region.create({
@@ -214,7 +216,17 @@ describe('session reports service', () => {
         name: `Random test region ${mockRegionId}`,
       });
 
+      await db.Region.create({
+        id: mockRegionId + 1,
+        name: `Random test region ${mockRegionId + 1}`,
+      });
+
       recipient = await db.Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      alternateRecipient = await db.Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),
       });
@@ -224,6 +236,15 @@ describe('session reports service', () => {
         number: faker.datatype.string(),
         recipientId: recipient.id,
         regionId: mockRegionId,
+        status: 'Active',
+      });
+
+      await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: alternateRecipient.id,
+        regionId: mockRegionId + 1,
+        stateCode: 'CA',
         status: 'Active',
       });
 
@@ -267,13 +288,30 @@ describe('session reports service', () => {
 
       await db.Grant.destroy({
         where: {
-          recipientId: recipient.id,
+          recipientId: [
+            recipient.id,
+            alternateRecipient.id,
+          ],
         },
         individualHooks: true,
       });
 
-      await db.Recipient.destroy({ where: { id: recipient.id } });
-      await db.Region.destroy({ where: { id: mockRegionId } });
+      await db.Recipient.destroy({
+        where: {
+          id: [
+            recipient.id,
+            alternateRecipient.id,
+          ],
+        },
+      });
+      await db.Region.destroy({
+        where: {
+          id: [
+            mockRegionId,
+            mockRegionId + 1,
+          ],
+        },
+      });
     });
     it('retrieves possible participants', async () => {
       const participants = await getPossibleSessionParticipants(mockRegionId);
@@ -282,6 +320,23 @@ describe('session reports service', () => {
       expect(participants[0]).toHaveProperty('id');
       expect(participants[0]).toHaveProperty('name');
       expect(participants[0].grants.length).toBe(1);
+    });
+
+    it('ignores an empty states array', async () => {
+      const participants = await getPossibleSessionParticipants(mockRegionId, []);
+      expect(participants.length).toBe(1);
+      expect(participants[0].id).toBe(recipient.id);
+      expect(participants[0]).toHaveProperty('id');
+      expect(participants[0]).toHaveProperty('name');
+      expect(participants[0].grants.length).toBe(1);
+    });
+
+    it('retrieves participants from alternate states', async () => {
+      const participants = await getPossibleSessionParticipants(mockRegionId, ['CA']);
+      expect(participants.length).toBe(2);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([recipient.id, alternateRecipient.id]),
+      );
     });
   });
   describe('findSessionHelper', () => {
@@ -370,6 +425,378 @@ describe('session reports service', () => {
       expect(() => {
         validateFields({ field1: 'value1' }, ['field1', 'field2']);
       }).toThrow();
+    });
+  });
+
+  describe('getSessionReports', () => {
+    let testEvent;
+    let testSessions = [];
+    const uniqueOwnerId = 99_800;
+
+    const testEventLongId = 'R01-PD-99800';
+
+    beforeAll(async () => {
+      // Create test event
+      testEvent = await createEvent({
+        ownerId: uniqueOwnerId,
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: testEventLongId,
+          eventName: 'Test Event for Sessions',
+        },
+      });
+
+      // Create test sessions with varied data for sorting/filtering
+      testSessions = await Promise.all([
+        createSession({
+          eventId: testEvent.id,
+          data: {
+            sessionName: 'Alpha Session',
+            startDate: '01/15/2024',
+            endDate: '01/16/2024',
+            objectiveTopics: ['Topic A', 'Topic B'],
+          },
+        }),
+        createSession({
+          eventId: testEvent.id,
+          data: {
+            sessionName: 'Beta Session',
+            startDate: '01/10/2024',
+            endDate: '01/11/2024',
+            objectiveTopics: ['Topic C'],
+          },
+        }),
+        createSession({
+          eventId: testEvent.id,
+          data: {
+            sessionName: 'Gamma Session',
+            startDate: '01/20/2024',
+            endDate: '01/21/2024',
+            objectiveTopics: [],
+          },
+        }),
+      ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all(
+        testSessions.map((session) => destroySession(session.id)),
+      );
+      await destroyEvent(testEvent.id);
+    });
+
+    // Basic Functionality Tests
+    it('should return correct structure with count and rows', async () => {
+      const result = await getSessionReports({
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result).toHaveProperty('count');
+      expect(result).toHaveProperty('rows');
+      expect(typeof result.count).toBe('number');
+      expect(Array.isArray(result.rows)).toBe(true);
+    });
+
+    it('should work with no parameters (defaults)', async () => {
+      const result = await getSessionReports({
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThan(0);
+      expect(result.count).toBeGreaterThanOrEqual(result.rows.length);
+    });
+
+    it('should return all expected fields per row', async () => {
+      const result = await getSessionReports({
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThan(0);
+      const row = result.rows[0];
+      expect(row).toHaveProperty('id');
+      expect(row).toHaveProperty('eventId');
+      expect(row).toHaveProperty('eventName');
+      expect(row).toHaveProperty('sessionName');
+      expect(row).toHaveProperty('startDate');
+      expect(row).toHaveProperty('endDate');
+      expect(row).toHaveProperty('objectiveTopics');
+    });
+
+    // Pagination Tests
+    it('should apply default offset of 0 and limit of 10', async () => {
+      const result = await getSessionReports({
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeLessThanOrEqual(10);
+    });
+
+    it('should skip records with offset parameter', async () => {
+      const firstPage = await getSessionReports({ limit: 1, offset: 0, 'eventId.ctn': [testEventLongId] });
+      const secondPage = await getSessionReports({ limit: 1, offset: 1, 'eventId.ctn': [testEventLongId] });
+
+      expect(firstPage.rows.length).toBe(1);
+      expect(secondPage.rows.length).toBe(1);
+      expect(firstPage.rows[0].id).not.toBe(secondPage.rows[0].id);
+    });
+
+    it('should limit results with limit parameter', async () => {
+      const limitOne = await getSessionReports({ limit: 1, 'eventId.ctn': [testEventLongId] });
+      const limitTwo = await getSessionReports({ limit: 2, 'eventId.ctn': [testEventLongId] });
+
+      expect(limitOne.rows.length).toBeLessThanOrEqual(1);
+      expect(limitTwo.rows.length).toBeLessThanOrEqual(2);
+    });
+
+    it('should return accurate total count regardless of pagination', async () => {
+      const allResults = await getSessionReports({ limit: 1000, 'eventId.ctn': [testEventLongId] });
+      const paginatedResults = await getSessionReports({ limit: 1, offset: 0, 'eventId.ctn': [testEventLongId] });
+
+      expect(allResults.count).toBe(paginatedResults.count);
+    });
+
+    // Sorting Tests
+    it('should sort by id DESC by default', async () => {
+      const result = await getSessionReports({ limit: 100, 'eventId.ctn': [testEventLongId] });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [
+        row.id,
+        result.rows[idx + 1].id,
+      ]);
+      pairs.forEach(([current, next]) => {
+        expect(current).toBeGreaterThanOrEqual(next);
+      });
+    });
+
+    it('should sort by id ASC', async () => {
+      const result = await getSessionReports({
+        sortBy: 'id',
+        sortDir: 'ASC',
+        limit: 100,
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [
+        row.id,
+        result.rows[idx + 1].id,
+      ]);
+      pairs.forEach(([current, next]) => {
+        expect(current).toBeLessThanOrEqual(next);
+      });
+    });
+
+    it('should sort by sessionName ASC', async () => {
+      const result = await getSessionReports({
+        sortBy: 'sessionName',
+        sortDir: 'ASC',
+        limit: 100,
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [
+        row.sessionName || '',
+        result.rows[idx + 1].sessionName || '',
+      ]);
+      pairs.forEach(([current, next]) => {
+        expect(current.localeCompare(next)).toBeLessThanOrEqual(0);
+      });
+    });
+
+    it('should sort by sessionName DESC', async () => {
+      const result = await getSessionReports({
+        sortBy: 'sessionName',
+        sortDir: 'DESC',
+        limit: 100,
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [
+        row.sessionName || '',
+        result.rows[idx + 1].sessionName || '',
+      ]);
+      pairs.forEach(([current, next]) => {
+        expect(current.localeCompare(next)).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    it('should sort by startDate ASC with date casting', async () => {
+      const result = await getSessionReports({
+        sortBy: 'startDate',
+        sortDir: 'ASC',
+        limit: 100,
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [
+        new Date(row.startDate || 0).getTime(),
+        new Date(result.rows[idx + 1].startDate || 0).getTime(),
+      ]);
+      pairs.forEach(([current, next]) => {
+        expect(current).toBeLessThanOrEqual(next);
+      });
+    });
+
+    it('should sort by startDate DESC with date casting', async () => {
+      const result = await getSessionReports({
+        sortBy: 'startDate',
+        sortDir: 'DESC',
+        limit: 100,
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [
+        new Date(row.startDate || 0).getTime(),
+        new Date(result.rows[idx + 1].startDate || 0).getTime(),
+      ]);
+      pairs.forEach(([current, next]) => {
+        expect(current).toBeGreaterThanOrEqual(next);
+      });
+    });
+
+    it('should sort by endDate ASC', async () => {
+      const result = await getSessionReports({
+        sortBy: 'endDate',
+        sortDir: 'ASC',
+        limit: 100,
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [
+        new Date(row.endDate || 0).getTime(),
+        new Date(result.rows[idx + 1].endDate || 0).getTime(),
+      ]);
+      pairs.forEach(([current, next]) => {
+        expect(current).toBeLessThanOrEqual(next);
+      });
+    });
+
+    it('should sort by eventId ASC', async () => {
+      const result = await getSessionReports({
+        sortBy: 'eventId',
+        sortDir: 'ASC',
+        limit: 100,
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [
+        row.eventId || '',
+        result.rows[idx + 1].eventId || '',
+      ]);
+      pairs.forEach(([current, next]) => {
+        expect(current.localeCompare(next)).toBeLessThanOrEqual(0);
+      });
+    });
+
+    it('should sort by eventName DESC', async () => {
+      const result = await getSessionReports({
+        sortBy: 'eventName',
+        sortDir: 'DESC',
+        limit: 100,
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [
+        row.eventName || '',
+        result.rows[idx + 1].eventName || '',
+      ]);
+      pairs.forEach(([current, next]) => {
+        expect(current.localeCompare(next)).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    it('should fall back to id sort when sortBy is invalid', async () => {
+      const result = await getSessionReports({ sortBy: 'invalidField', sortDir: 'DESC', 'eventId.ctn': [testEventLongId] });
+
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      // Should not throw and should return results
+      expect(result).toHaveProperty('count');
+      expect(result).toHaveProperty('rows');
+    });
+
+    // Data Extraction Tests
+    it('should extract JSONB sessionName correctly from SessionReportPilot.data', async () => {
+      const result = await getSessionReports({ limit: 100, 'eventId.ctn': [testEventLongId] });
+
+      const alphaSession = result.rows.find((r) => r.sessionName === 'Alpha Session');
+      expect(alphaSession).toBeDefined();
+      expect(alphaSession.sessionName).toBe('Alpha Session');
+    });
+
+    it('should extract JSONB eventId correctly from EventReportPilot.data', async () => {
+      const result = await getSessionReports({ limit: 100, 'eventId.ctn': [testEventLongId] });
+
+      const sessions = result.rows.filter((r) => r.eventId === 'R01-PD-99800');
+      expect(sessions.length).toBeGreaterThan(0);
+      expect(sessions[0].eventId).toBe('R01-PD-99800');
+    });
+
+    it('should extract JSONB eventName correctly from EventReportPilot.data', async () => {
+      const result = await getSessionReports({ limit: 100, 'eventId.ctn': [testEventLongId] });
+
+      const sessions = result.rows.filter((r) => r.eventName === 'Test Event for Sessions');
+      expect(sessions.length).toBeGreaterThan(0);
+      expect(sessions[0].eventName).toBe('Test Event for Sessions');
+    });
+
+    it('should return objectiveTopics array correctly', async () => {
+      const result = await getSessionReports({ limit: 100, 'eventId.ctn': [testEventLongId] });
+
+      const alphaSession = result.rows.find((r) => r.sessionName === 'Alpha Session');
+      expect(alphaSession).toBeDefined();
+      expect(Array.isArray(alphaSession.objectiveTopics)).toBe(true);
+      expect(alphaSession.objectiveTopics.length).toBe(2);
+    });
+
+    it('should return empty objectiveTopics array when not set', async () => {
+      const result = await getSessionReports({ limit: 100, 'eventId.ctn': [testEventLongId] });
+
+      const gammaSession = result.rows.find((r) => r.sessionName === 'Gamma Session');
+      expect(gammaSession).toBeDefined();
+      expect(Array.isArray(gammaSession.objectiveTopics)).toBe(true);
+      expect(gammaSession.objectiveTopics.length).toBe(0);
+    });
+
+    it('should handle null/undefined JSONB fields gracefully', async () => {
+      const result = await getSessionReports({ limit: 100, 'eventId.ctn': [testEventLongId] });
+
+      // Should not throw and should return results
+      expect(result.rows.length).toBeGreaterThanOrEqual(0);
+      result.rows.forEach((row) => {
+        expect(row).toHaveProperty('id');
+      });
+    });
+
+    it('should handle large offset returning empty rows but correct count', async () => {
+      const allResults = await getSessionReports({ limit: 1000, 'eventId.ctn': [testEventLongId] });
+      const largeOffset = await getSessionReports({
+        limit: 10,
+        offset: allResults.count + 100,
+        'eventId.ctn': [testEventLongId],
+      });
+
+      expect(largeOffset.rows.length).toBe(0);
+      expect(largeOffset.count).toBe(allResults.count);
+    });
+
+    it('should return single result correctly', async () => {
+      const result = await getSessionReports({ limit: 1, 'eventId.ctn': [testEventLongId] });
+
+      expect(result.rows.length).toBeLessThanOrEqual(1);
+      result.rows.forEach((row) => {
+        expect(row).toHaveProperty('id');
+        expect(row).toHaveProperty('sessionName');
+      });
     });
   });
 });

@@ -60,8 +60,8 @@ const staticUserPermissions = [
   },
   {
     userId: 4,
-    regionId: 14,
-    scopeId: ADMIN,
+    regionId: 3,
+    scopeId: READ_WRITE_REPORTS,
   },
   {
     userId: 4,
@@ -87,6 +87,71 @@ const staticUserPermissions = [
     userId: 5,
     regionId: 1,
     scopeId: APPROVE_REPORTS,
+  },
+  {
+    userId: 6,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 6,
+    regionId: 2,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 6,
+    regionId: 2,
+    scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 6,
+    regionId: 3,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 6,
+    regionId: 3,
+    scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 7,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 7,
+    regionId: 1,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 7,
+    regionId: 3,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 8,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 8,
+    regionId: 1,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 8,
+    regionId: 3,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 9,
+    regionId: 14,
+    scopeId: SITE_ACCESS,
+  },
+  {
+    userId: 9,
+    regionId: 3,
+    scopeId: READ_REPORTS,
   },
 ];
 
@@ -156,6 +221,46 @@ const staticUsers = [
     homeRegionId: 3,
     lastLogin: moment().toISOString(),
   },
+  {
+    id: 6,
+    hsesUserId: '6',
+    email: 'larry@hogwarts.com',
+    hsesUsername: 'larry@hogwarts.com',
+    name: 'Larry Botter',
+    phoneNumber: '555-555-5553',
+    homeRegionId: 1,
+    lastLogin: moment().toISOString(),
+  },
+  {
+    id: 7,
+    hsesUserId: '7',
+    email: 'christopher@chrestomanci.com',
+    hsesUsername: 'christopher@chrestomanci.com',
+    name: 'Christopher Chant',
+    phoneNumber: '555-555-5554',
+    homeRegionId: 3,
+    lastLogin: moment().toISOString(),
+  },
+  {
+    id: 8,
+    hsesUserId: '8',
+    email: 'luz@hexside.com',
+    hsesUsername: 'luz@hexside.com',
+    name: 'Luz Noceda',
+    phoneNumber: '555-555-5555',
+    homeRegionId: 3,
+    lastLogin: moment().toISOString(),
+  },
+  {
+    id: 9,
+    hsesUserId: '9',
+    email: 'rose@piranesi.com',
+    hsesUsername: 'rose@piranesi.com',
+    name: 'Piranesi',
+    phoneNumber: '555-555-5555',
+    homeRegionId: 3,
+    lastLogin: moment().toISOString(),
+  },
 ];
 
 const generatedUsers = hsesUsernames.map((u, i) => ({
@@ -163,7 +268,7 @@ const generatedUsers = hsesUsernames.map((u, i) => ({
   email: `${u}@test.com`,
   hsesUsername: u,
   name: u.split('.')[2],
-  phoneNumber: '555-555-5553',
+  phoneNumber: '555-555-5554',
   homeRegionId: 1,
   lastLogin: moment().toISOString(),
 }));
@@ -345,6 +450,24 @@ module.exports = {
       {
         userId: 5,
         roleId: 5,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      {
+        userId: 6,
+        roleId: 10,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      {
+        userId: 8,
+        roleId: 17,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      {
+        userId: 9,
+        roleId: 10,
         createdAt: moment().toISOString(),
         updatedAt: moment().toISOString(),
       },

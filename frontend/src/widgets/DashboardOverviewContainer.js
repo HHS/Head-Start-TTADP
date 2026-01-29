@@ -8,9 +8,9 @@ export function DashboardOverviewContainer({ fieldData, loading }) {
   return (
     <Grid
       row
-      className="smart-hub--dashboard-overview-container margin-bottom-3 position-relative flex-gap-2"
+      className={`smart-hub--dashboard-overview-container margin-bottom-3 position-relative flex-gap-3 smart-hub--overview-grid-cols-${Math.min(fieldData.length, 4)}`}
     >
-      <Loader loading={loading} loadingLabel="Resources Overview loading" />
+      <Loader loading={loading} loadingLabel="Overview loading" />
       {fieldData.map((field) => (
         <OverviewWidgetField
           key={field.key}

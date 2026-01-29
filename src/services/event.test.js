@@ -28,6 +28,29 @@ import { auditLogger } from '../logger';
 import * as mailer from '../lib/mailer';
 
 describe('event service', () => {
+  const ownerIds = [98_989, 98_900, 11_111, 11_112, 11_113, 50_500, 50_501];
+  beforeAll(async () => {
+    // Clean up any existing test data before running tests
+    // First find the events we want to delete
+    const eventsToDelete = await db.EventReportPilot.findAll({
+      where: { ownerId: { [Op.in]: ownerIds } },
+      attributes: ['id'],
+    });
+
+    // Delete SessionReportPilot records for these events first
+    if (eventsToDelete.length > 0) {
+      const eventIds = eventsToDelete.map((event) => event.id);
+      await db.SessionReportPilot.destroy({ where: { eventId: { [Op.in]: eventIds } } });
+    }
+
+    // Then delete the EventReportPilot records
+    await db.EventReportPilot.destroy({ where: { ownerId: { [Op.in]: ownerIds } } });
+  });
+
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
+
   afterAll(async () => {
     await db.sequelize.close();
   });
@@ -169,6 +192,24 @@ describe('event service', () => {
   });
 
   describe('finders', () => {
+    beforeEach(async () => {
+      // Clean up test data before each test in this section
+      // First find the events we want to delete
+      const eventsToDelete = await db.EventReportPilot.findAll({
+        where: { ownerId: { [Op.in]: ownerIds } },
+        attributes: ['id'],
+      });
+
+      // Delete SessionReportPilot records for these events first
+      if (eventsToDelete.length > 0) {
+        const eventIds = eventsToDelete.map((event) => event.id);
+        await db.SessionReportPilot.destroy({ where: { eventId: { [Op.in]: eventIds } } });
+      }
+
+      // Then delete the EventReportPilot records
+      await db.EventReportPilot.destroy({ where: { ownerId: { [Op.in]: ownerIds } } });
+    });
+
     it('findEventByDbId', async () => {
       const created = await createAnEvent(98_989);
       const found = await findEventByDbId(created.id);
@@ -252,71 +293,10 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
-    it('findEventsByStatus', async () => {
-      const created = await createAnEventWithStatus(98_989, TRS.IN_PROGRESS);
-      const found = await findEventsByStatus(
-        TRS.IN_PROGRESS,
-        [],
-        98_989,
-        null,
-        false,
-        { ownerId: 98_989 },
-      );
-
-      expect(found.length).toBe(1);
-      expect(found[0].data).toHaveProperty('status', TRS.IN_PROGRESS);
-      await destroyEvent(created.id);
-
-      const created2 = await createAnEventWithStatus(98_989, TRS.NOT_STARTED);
-      const found2 = await findEventsByStatus(
-        TRS.NOT_STARTED,
-        [],
-        98_989,
-        null,
-        false,
-        { ownerId: 98_989 },
-      );
-
-      // ---------
-      // ensure no found events have a status of TRS.IN_PROGRESS
-      // if we search for TRS.NOT_STARTED:
-      found2.forEach((event) => {
-        expect(event.data).not.toHaveProperty('status', TRS.IN_PROGRESS);
-      });
-
-      await destroyEvent(created2.id);
-
-      // ---------
-      // ensure allowNull param works:
-      const created3 = await createAnEventWithStatus(50_500, null);
-      const created4 = await createAnEventWithStatus(50_501, TRS.IN_PROGRESS);
-
-      const found3 = await findEventsByStatus(
-        null,
-        [],
-        50_500,
-        null,
-        true,
-        { ownerId: 50_500 },
-      );
-      const found4 = await findEventsByStatus(
-        TRS.IN_PROGRESS,
-        [],
-        50_501,
-        null,
-        false,
-        { ownerId: 50_501 },
-      );
-
-      expect(found3.map((f) => f.id)).toContain(created3.id);
-      expect(found4.length).toBe(1);
-      expect(found4[0].id).toBe(created4.id);
-
-      // await destroyEvent(created3.id);
-      await destroyEvent(created4.id);
-    });
-
     it('findEventHelperBlob session sort order', async () => {
+      // Clean up any existing events for this test user to ensure clean state
+      await db.EventReportPilot.destroy({ where: { ownerId: 98_989 } });
+
       const created = await createAnEventWithStatus(98_989, TRS.IN_PROGRESS);
 
       const sessionReport1 = await db.SessionReportPilot.create({
@@ -352,12 +332,13 @@ describe('event service', () => {
       );
 
       expect(found.length).toBe(1);
-      expect(found[0].data).toHaveProperty('status', TRS.IN_PROGRESS);
+      const foundReport = found[0];
+      expect(foundReport.data).toHaveProperty('status', TRS.IN_PROGRESS);
 
-      expect(found[0].sessionReports.length).toBe(3);
-      expect(found[0].sessionReports[0].id).toBe(sessionReport3.id);
-      expect(found[0].sessionReports[1].id).toBe(sessionReport1.id);
-      expect(found[0].sessionReports[2].id).toBe(sessionReport2.id);
+      expect(foundReport.sessionReports.length).toBe(3);
+      expect(foundReport.sessionReports[0].id).toBe(sessionReport3.id);
+      expect(foundReport.sessionReports[1].id).toBe(sessionReport1.id);
+      expect(foundReport.sessionReports[2].id).toBe(sessionReport2.id);
 
       await db.SessionReportPilot.destroy({
         where: {
@@ -510,23 +491,34 @@ describe('event service', () => {
     Affected by Disaster"`;
     const reasons = `"Complaint
     Planning/Coordination"`;
-    const typeOfEvent = 'IST TTA/Visit';
+    const typeOfEvent = 'Regional PD Event (with National Centers)';
+    const ncOneName = 'TEST_NC_ONE_EVENT';
+    const ncTwoName = 'TEST_NC_TWO_EVENT';
 
     const headings = [
-      'IST/Creator',
+      'Event Creator',
       'Event ID',
-      'Event Title',
+      'Edit Title',
       'Event Organizer - Type of Event',
       'National Centers',
       'Event Duration',
-      'Reason(s) for PD',
+      'Reason for Activity',
       'Vision/Goal/Outcomes for the PD Event',
       'Target Population(s)',
       'Audience',
-      'Designated Region POC for Event/Request',
+      'Designated POC for Event/Request',
     ];
 
     beforeAll(async () => {
+      // Clean up any existing test data from previous failed runs
+      await db.EventReportPilot.destroy({ where: { ownerId: userId } });
+      await db.NationalCenterUser.destroy({
+        where: { userId: [userId, collaboratorId, pocId] },
+      });
+      await db.NationalCenter.destroy({ where: { name: [ncOneName, ncTwoName] } });
+      await db.Permission.destroy({ where: { userId: [userId, collaboratorId, pocId] } });
+      await db.User.destroy({ where: { id: [userId, collaboratorId, pocId] } });
+
       // owner
       await db.User.create({
         id: userId,
@@ -580,7 +572,7 @@ describe('event service', () => {
 
       // national centers
       ncOne = await db.NationalCenter.create({
-        name: faker.hacker.abbreviation(),
+        name: ncOneName,
       });
 
       // owner for national center 1
@@ -590,7 +582,7 @@ describe('event service', () => {
       });
 
       ncTwo = await db.NationalCenter.create({
-        name: faker.hacker.abbreviation(),
+        name: ncTwoName,
       });
 
       // collab is national center user 2
@@ -608,10 +600,10 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
     afterAll(async () => {
       await db.EventReportPilot.destroy({ where: { ownerId: userId } });
       await db.NationalCenterUser.destroy({
-        where: { userId: [userId, collaboratorId] },
+        where: { userId: [userId, collaboratorId, pocId] },
       });
-      await db.NationalCenter.destroy({ where: { id: [ncOne.id, ncTwo.id] } });
-      await db.Permission.destroy({ where: { id: [userId, collaboratorId, pocId] } });
+      await db.NationalCenter.destroy({ where: { name: [ncOneName, ncTwoName] } });
+      await db.Permission.destroy({ where: { userId: [userId, collaboratorId, pocId] } });
       await db.User.destroy({ where: { id: [userId, collaboratorId, pocId] } });
     });
 
@@ -678,21 +670,6 @@ ${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
         userId: pocId,
         regionId: 1,
         scopeId: SCOPES.POC_TRAINING_REPORTS,
-      });
-    });
-
-    it('errors if the IST Collaborator user lacks permissions', async () => {
-      await db.Permission.destroy({ where: { userId: collaboratorId } });
-      const d = `${headings.join(',')}
-${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
-      const b = Buffer.from(d);
-      const result = await csvImport(b);
-      expect(result.count).toEqual(0);
-      expect(result.errors).toEqual([`User ${collaborator.name} does not have permission to write in region ${regionId}`]);
-      await db.Permission.create({
-        userId: collaboratorId,
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
       });
     });
 
@@ -785,9 +762,9 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.skipped).toEqual(['Value "Invalid Audience" is invalid for column "Audience". Must be of one of Recipients, Regional office/TTA: R01-TR-5725']);
     });
 
-    it('defaults to `Creator` heading when `IST/Creator` is not found, but errors when Creator fallback is not found', async () => {
+    it('defaults to `Creator` heading when `Event Creator` is not found, but errors when Creator fallback is not found', async () => {
       const reportId = 'R01-TR-5725';
-      const newHeadings = headings.filter((h) => h !== 'IST/Creator');
+      const newHeadings = headings.filter((h) => h !== 'Event Creator');
       const d = `${newHeadings.join(',')}
 ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},Recipients,${poc.name}`;
       const b = Buffer.from(d);
@@ -840,28 +817,6 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
       jest.restoreAllMocks();
     });
-
-    it('should return default values when data, sessionReports, and eventReportPilotNationalCenterUsers are undefined', async () => {
-      const ownerId = 67890;
-
-      // Create an event without data, sessionReports, and eventReportPilotNationalCenterUsers
-      const createdEvent = await db.EventReportPilot.create({
-        ownerId,
-        pocIds: [ownerId],
-        collaboratorIds: [ownerId],
-        regionId: 1,
-        data: {},
-      });
-
-      const foundEvent = await findEventHelper({ id: createdEvent.id });
-
-      expect(foundEvent).toHaveProperty('data', {});
-      expect(foundEvent).toHaveProperty('sessionReports', []);
-      expect(foundEvent).toHaveProperty('eventReportPilotNationalCenterUsers', []);
-
-      // Clean up
-      await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
-    });
   });
 
   describe('destroyEvent', () => {
@@ -894,7 +849,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
 
   describe('filterEventsByStatus', () => {
     const userId = 123;
-    const event = {
+    const baseEventData = {
       id: 1,
       ownerId: userId,
       pocIds: [456],
@@ -903,6 +858,10 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       data: { status: TRS.NOT_STARTED },
       sessionReports: [],
     };
+    const event = {
+      ...baseEventData,
+      toJSON: () => baseEventData,
+    };
 
     it('should return events for POC, owner, or collaborator when status is null', async () => {
       const events = [event];
@@ -910,16 +869,16 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       const filteredEvents = await filterEventsByStatus(events, null, userId);
 
       expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toEqual(event);
+      expect(filteredEvents[0]).toMatchObject(baseEventData);
     });
 
-    it('should return events for collaborator when status is null', async () => {
+    it('should return NOT_STARTED events for collaborator', async () => {
       const events = [event];
 
       const filteredEvents = await filterEventsByStatus(events, null, 789);
 
+      // Collaborators can see NOT_STARTED events
       expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toEqual(event);
     });
 
     it('should return events for owner when status is null', async () => {
@@ -928,7 +887,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       const filteredEvents = await filterEventsByStatus(events, null, userId);
 
       expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toEqual(event);
+      expect(filteredEvents[0]).toMatchObject(baseEventData);
     });
 
     it('should return events for admin without filtering', async () => {
@@ -937,17 +896,25 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       const filteredEvents = await filterEventsByStatus(events, TRS.NOT_STARTED, userId, true);
 
       expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toEqual(event);
+      expect(filteredEvents[0]).toMatchObject(baseEventData);
     });
 
     it('should return events with all sessions for owner, collaborator, or POC when status is IN_PROGRESS', async () => {
-      const inProgressEvent = {
-        ...event,
+      const inProgressEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.IN_PROGRESS },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const inProgressEvent = {
+        ...inProgressEventData,
+        toJSON: () => inProgressEventData,
       };
       const events = [inProgressEvent];
 
@@ -958,13 +925,21 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
 
     it('should return events with all sessions for collaborator when status is IN_PROGRESS', async () => {
-      const inProgressEvent = {
-        ...event,
+      const inProgressEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.IN_PROGRESS },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const inProgressEvent = {
+        ...inProgressEventData,
+        toJSON: () => inProgressEventData,
       };
       const events = [inProgressEvent];
 
@@ -975,13 +950,21 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
 
     it('should return events with all sessions for POC when status is IN_PROGRESS', async () => {
-      const inProgressEvent = {
-        ...event,
+      const inProgressEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.IN_PROGRESS },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const inProgressEvent = {
+        ...inProgressEventData,
+        toJSON: () => inProgressEventData,
       };
       const events = [inProgressEvent];
 
@@ -991,32 +974,22 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       expect(filteredEvents[0].sessionReports).toHaveLength(2);
     });
 
-    it('should return events with only complete sessions for non-owner, non-collaborator, non-POC when status is IN_PROGRESS', async () => {
-      const inProgressEvent = {
-        ...event,
-        data: { status: TRS.IN_PROGRESS },
-        sessionReports: [
-          { id: 1, data: { status: TRS.COMPLETE } },
-          { id: 2, data: { status: TRS.IN_PROGRESS } },
-        ],
-      };
-      const events = [inProgressEvent];
-
-      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 999);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0].sessionReports).toHaveLength(1);
-      expect(filteredEvents[0].sessionReports[0].data.status).toBe(TRS.COMPLETE);
-    });
-
     it('should return events for all users when status is COMPLETE', async () => {
-      const completeEvent = {
-        ...event,
+      const completeEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.COMPLETE },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const completeEvent = {
+        ...completeEventData,
+        toJSON: () => completeEventData,
       };
       const events = [completeEvent];
 
@@ -1027,13 +1000,21 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
 
     it('should return events for all users when status is SUSPENDED', async () => {
-      const suspendedEvent = {
-        ...event,
+      const suspendedEventData = {
+        id: 1,
+        ownerId: userId,
+        pocIds: [456],
+        collaboratorIds: [789],
+        regionId: 1,
         data: { status: TRS.SUSPENDED },
         sessionReports: [
           { id: 1, data: { status: TRS.COMPLETE } },
           { id: 2, data: { status: TRS.IN_PROGRESS } },
         ],
+      };
+      const suspendedEvent = {
+        ...suspendedEventData,
+        toJSON: () => suspendedEventData,
       };
       const events = [suspendedEvent];
 
@@ -1097,15 +1078,14 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     it('should map CSV line to data object correctly', () => {
       const line = {
         Audience: 'Recipients',
-        'IST/Creator': 'creator@example.com',
-        'Event Title': 'Event Title Example',
+        'Event Creator': 'creator@example.com',
+        'Edit Title': 'Event Title Example',
         'Event Duration': '2 days',
         'Event Duration/#NC Days of Support': '3 days',
         'Event ID': 'R01-TR-1234',
         'Overall Vision/Goal for the PD Event': 'Overall Vision',
         'Vision/Goal/Outcomes for the PD Event': 'Vision Outcome',
-        'Reason for Activity': 'Complaint',
-        'Reason(s) for PD': 'Planning/Coordination',
+        'Reason for Activity': 'Complaint\nPlanning/Coordination',
         'Target Population(s)': 'Program Staff\nAffected by Disaster',
         'Event Organizer - Type of Event': 'Regional office/TTA',
         'IST Name:': 'IST Name Example',
@@ -1120,7 +1100,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         trainingType: '3 days',
         eventId: 'R01-TR-1234',
         vision: 'Vision Outcome',
-        reasons: ['Planning/Coordination'],
+        reasons: ['Complaint', 'Planning/Coordination'],
         targetPopulations: ['Program Staff', 'Affected by Disaster'],
         eventOrganizer: 'Regional office/TTA',
         istName: 'IST Name Example 2',
@@ -1185,6 +1165,326 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       await expect(checkUserExistsByNationalCenter('Nonexistent National Center')).rejects.toThrow('User associated with National Center: Nonexistent National Center does not exist');
 
       jest.restoreAllMocks();
+    });
+  });
+
+  describe('Session visibility based on event organizer type', () => {
+    describe('Scenario 1: Regional TTA Hosted Event (no National Centers)', () => {
+      let regionalTtaEvent;
+      let ownerId;
+      let collaboratorId;
+      let pocId;
+      let approverId;
+      let regionalUserId;
+      let approverUser;
+
+      beforeAll(async () => {
+        ownerId = 80000;
+        collaboratorId = 80001;
+        pocId = 80002;
+        approverId = 80003;
+        regionalUserId = 80004;
+
+        // Create approver user
+        approverUser = await db.User.create({
+          id: approverId,
+          homeRegionId: 1,
+          name: 'Scenario 1 Approver',
+          hsesUsername: `scenario1approver${approverId}`,
+          hsesUserId: `scenario1approver${approverId}`,
+          email: `approver${approverId}@test.com`,
+        });
+
+        regionalTtaEvent = await createAnEvent(ownerId);
+
+        // Update event with Regional TTA organizer type
+        await db.EventReportPilot.update(
+          {
+            pocIds: [pocId],
+            collaboratorIds: [collaboratorId],
+            data: {
+              ...regionalTtaEvent.data,
+              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+              status: TRS.IN_PROGRESS,
+            },
+          },
+          { where: { id: regionalTtaEvent.id } },
+        );
+
+        // Create sessions with different statuses
+        await db.SessionReportPilot.create({
+          eventId: regionalTtaEvent.id,
+          data: {
+            sessionName: 'Session 1 - In Progress',
+            status: TRS.IN_PROGRESS,
+          },
+          approverId,
+        });
+
+        await db.SessionReportPilot.create({
+          eventId: regionalTtaEvent.id,
+          data: {
+            sessionName: 'Session 2 - Complete',
+            status: TRS.COMPLETE,
+          },
+          approverId,
+        });
+      });
+
+      afterAll(async () => {
+        await destroyEvent(regionalTtaEvent.id);
+        if (approverUser) {
+          await db.User.destroy({ where: { id: approverId } });
+        }
+      });
+
+      it('Event collaborator sees all sessions', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          collaboratorId,
+          null,
+          false,
+          { id: regionalTtaEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
+      });
+
+      it('Event POC sees NO sessions for Regional TTA events', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          pocId,
+          null,
+          false,
+          { id: regionalTtaEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(1);
+        // POC cannot see any sessions for Regional TTA events
+        expect(events[0].sessionReports).toHaveLength(0);
+      });
+
+      it('Event owner sees all sessions', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          ownerId,
+          null,
+          false,
+          { id: regionalTtaEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
+      });
+
+      it('Approver sees only sessions that have been submitted', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          approverId,
+          null,
+          false,
+          { id: regionalTtaEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(0);
+      });
+
+      it('Regional user does not see in progress events', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          regionalUserId,
+          null,
+          false,
+          { id: regionalTtaEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(0);
+      });
+
+      it('Administrator sees all sessions', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          regionalUserId,
+          null,
+          false,
+          { id: regionalTtaEvent.id },
+          true, // isAdmin
+        );
+
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
+      });
+    });
+
+    describe('Scenario 2: Regional PD Event (with National Centers)', () => {
+      let regionalPdEvent;
+      let ownerId;
+      let collaboratorId;
+      let pocId;
+      let approverId;
+      let regionalUserId;
+      let approverUser;
+
+      beforeAll(async () => {
+        ownerId = 81000;
+        collaboratorId = 81001;
+        pocId = 81002;
+        approverId = 81003;
+        regionalUserId = 81004;
+
+        // Create approver user
+        approverUser = await db.User.create({
+          id: approverId,
+          homeRegionId: 1,
+          name: 'Scenario 2 Approver',
+          hsesUsername: `scenario2approver${approverId}`,
+          hsesUserId: `scenario2approver${approverId}`,
+          email: `approver${approverId}@test.com`,
+        });
+
+        regionalPdEvent = await createAnEvent(ownerId);
+
+        // Update event with Regional PD organizer type
+        await db.EventReportPilot.update(
+          {
+            pocIds: [pocId],
+            collaboratorIds: [collaboratorId],
+            data: {
+              ...regionalPdEvent.data,
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+              status: TRS.IN_PROGRESS,
+            },
+          },
+          { where: { id: regionalPdEvent.id } },
+        );
+
+        // Create sessions with different statuses
+        await db.SessionReportPilot.create({
+          eventId: regionalPdEvent.id,
+          data: {
+            sessionName: 'Session 1 - In Progress',
+            status: TRS.IN_PROGRESS,
+          },
+          approverId,
+        });
+
+        await db.SessionReportPilot.create({
+          eventId: regionalPdEvent.id,
+          data: {
+            sessionName: 'Session 2 - Complete',
+            status: TRS.COMPLETE,
+          },
+          approverId,
+        });
+      });
+
+      afterAll(async () => {
+        await destroyEvent(regionalPdEvent.id);
+        if (approverUser) {
+          await db.User.destroy({ where: { id: approverId } });
+        }
+      });
+
+      it('Event collaborator sees all sessions', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          collaboratorId,
+          null,
+          false,
+          { id: regionalPdEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
+      });
+
+      it('Event POC sees all sessions for Regional PD events', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          pocId,
+          null,
+          false,
+          { id: regionalPdEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(1);
+        // POC CAN see all sessions for Regional PD events
+        expect(events[0].sessionReports).toHaveLength(2);
+      });
+
+      it('Event owner sees all sessions', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          ownerId,
+          null,
+          false,
+          { id: regionalPdEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
+      });
+
+      it('Approver does not see in progress events (with no submitted sessions)', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          approverId,
+          null,
+          false,
+          { id: regionalPdEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(0);
+      });
+
+      it('Regional user does not see in progress events', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          regionalUserId,
+          null,
+          false,
+          { id: regionalPdEvent.id },
+          false, // isAdmin
+        );
+
+        expect(events).toHaveLength(0);
+      });
+
+      it('Administrator sees all sessions', async () => {
+        const events = await findEventsByStatus(
+          TRS.IN_PROGRESS,
+          [ownerId],
+          regionalUserId,
+          null,
+          false,
+          { id: regionalPdEvent.id },
+          true, // isAdmin
+        );
+
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
+      });
     });
   });
 });

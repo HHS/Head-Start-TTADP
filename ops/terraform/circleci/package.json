@@ -8,8 +8,7 @@
     "export-ci": "bin/export-ci.js"
   },
   "dependencies": {
-    "circleci": "^0.3.3",
     "esm": "^3.2.25",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.23"
   }
 }

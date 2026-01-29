@@ -6,10 +6,9 @@ export const NO_ERROR = <></>;
 export const sessionSummaryRequiredFields = {
   sessionName: '',
   duration: '',
-  context: '',
   objective: '',
   objectiveTopics: [],
-  objectiveTrainers: [],
+  trainers: [],
   objectiveSupportType: '',
   regionId: '',
   ttaProvided: '',
@@ -23,20 +22,21 @@ export const sessionSummaryFields = {
   objectiveResources: [],
   courses: [],
   files: [],
+  context: '',
 };
 
 export const participantsFields = {
   deliveryMethod: '',
   numberOfParticipants: '',
   language: [],
-  isIstVisit: '',
+  ttaType: [],
 };
 
 export const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
   pocComplete: false,
-  ownerComplete: false,
+  collabComplete: false,
 };
 
 export const defaultFormValues = {
@@ -52,6 +52,10 @@ export const defaultValues = {
   eventId: '',
   eventDisplayId: '',
   eventName: '',
+  approver: null,
+  approverId: '',
+  approvalStatus: '',
+  submitted: false,
   status: 'In progress',
   pageState: {
     1: NOT_STARTED,
@@ -75,6 +79,10 @@ export const baseDefaultValues = {
     3: NOT_STARTED,
     4: NOT_STARTED,
   },
+  additionalNotes: '',
+  managerNotes: '',
+  approver: null,
+  dateSubmitted: '',
 };
 
 export const pageComplete = (
@@ -86,7 +94,6 @@ export const pageComplete = (
   if (Array.isArray(val)) {
     return val.length > 0;
   }
-
   return !!(val);
 });
 
@@ -102,8 +109,18 @@ export const defaultKeys = [
   'status',
   'pageState',
   'pocComplete',
-  'ownerComplete',
+  'collabComplete',
   'facilitation',
+  'additionalNotes',
+  'approverId',
+  'managerNotes',
+  'dateSubmitted',
+  'submitted',
+  'submitter',
+  'additionalStates',
+  'reviewStatus',
+  'approvalStatus',
+  'trainers',
 ];
 
 export const istKeys = [
@@ -115,8 +132,7 @@ export const istKeys = [
   'context',
   'objective',
   'objectiveTopics',
-  'objectiveTrainers',
-  'sessionGoalTemplates',
+  'goalTemplates',
   'useIpdCourses',
   'courses',
   'objectiveResources',
@@ -132,6 +148,7 @@ export const pocKeys = [
   'regionalOfficeTta',
   'recipients',
   'participants',
+  'ttaType',
   'numberOfParticipants',
   'numberOfParticipantsInPerson',
   'numberOfParticipantsVirtually',

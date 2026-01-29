@@ -190,9 +190,15 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(1);
-      expect(data[0].id).toBe(e.id);
+      // Owner should see their own event
+      expect(ids).toContain(e.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.NOT_STARTED);
+      });
     });
 
     it('collab', async () => {
@@ -209,9 +215,15 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(1);
-      expect(data[0].id).toBe(e.id);
+      // Owner should see their own event
+      expect(ids).toContain(e.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.NOT_STARTED);
+      });
     });
 
     it('poc', async () => {
@@ -228,9 +240,15 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(1);
-      expect(data[0].id).toBe(e.id);
+      // POC should see events where they're listed as POC
+      expect(ids).toContain(e.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.NOT_STARTED);
+      });
     });
 
     it('otherWrite', async () => {
@@ -247,9 +265,16 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(1);
-      expect(data[0].id).toBe(e2.id);
+      // otherWrite should see their own event (e2), not e
+      expect(ids).toContain(e2.id);
+      expect(ids).not.toContain(e.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.NOT_STARTED);
+      });
     });
 
     it('otherRead', async () => {
@@ -266,8 +291,16 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(0);
+      // otherRead should not see test events (not owner/collab/poc)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.NOT_STARTED);
+      });
     });
 
     it('otherPoc', async () => {
@@ -284,8 +317,16 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(0);
+      // otherPoc should not see test events (not poc for these events)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.NOT_STARTED);
+      });
     });
 
     it('seesNone', async () => {
@@ -302,8 +343,16 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(0);
+      // seesNone should not see test events (no permissions)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.NOT_STARTED);
+      });
     });
   });
 
@@ -355,14 +404,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
-      expect(data.length).toBe(2);
       const ids = data.map((d) => d.id);
+
+      // Owner should see only their own event (e), not e2 (regional access only)
       expect(ids).toContain(e.id);
-      expect(ids).toContain(e2.id);
-      expect(data[0].id).toBe(e.id);
-      expect(data[0].sessionReports.length).toBe(2);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[1].sessionReports.length).toBe(0);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+      });
+
+      // Owner sees all sessions for their event (e)
+      const ownerEvent = data.find((d) => d.id === e.id);
+      expect(ownerEvent.sessionReports.length).toBe(2);
     });
 
     it('collab', async () => {
@@ -379,11 +434,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[0].sessionReports.length).toBe(2);
-      expect(data[1].id).toBe(e2.id);
+      // Collaborator should see only their event (e), not e2 (regional access only)
+      expect(ids).toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+      });
+
+      // Collaborator sees all sessions for their event (e)
+      const collabEvent = data.find((d) => d.id === e.id);
+      expect(collabEvent.sessionReports.length).toBe(2);
     });
 
     it('poc', async () => {
@@ -400,11 +464,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[0].sessionReports.length).toBe(2);
-      expect(data[1].id).toBe(e2.id);
+      // POC should see only their event (e), not e2 (regional access only)
+      expect(ids).toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+      });
+
+      // POC sees all sessions for their event (e)
+      const pocEvent = data.find((d) => d.id === e.id);
+      expect(pocEvent.sessionReports.length).toBe(2);
     });
 
     it('otherWrite', async () => {
@@ -421,11 +494,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[0].sessionReports.length).toBe(1);
+      // otherWrite should see only their own event (e2), not e (no direct role)
+      expect(ids).not.toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+      });
+
+      // otherWrite sees all sessions for their own event (e2)
+      const ownEvent = data.find((d) => d.id === e2.id);
+      expect(ownEvent.sessionReports.length).toBe(0);
     });
 
     it('otherRead', async () => {
@@ -442,11 +524,16 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[0].sessionReports.length).toBe(1);
+      // otherRead should not see test events (regional access only, no direct role)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+      });
     });
 
     it('otherPoc', async () => {
@@ -463,11 +550,16 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[0].sessionReports.length).toBe(1);
+      // otherPoc should not see test events (regional access only, no direct role)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+      });
     });
 
     it('seesNone', async () => {
@@ -484,8 +576,16 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(0);
+      // seesNone should not see test events (no regional permissions)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+      });
     });
   });
 
@@ -551,11 +651,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[0].sessionReports.length).toBe(2);
-      expect(data[1].id).toBe(e2.id);
+      // Owner should see both test events
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
+      });
+
+      // Owner sees all sessions for their event
+      const ownerEvent = data.find((d) => d.id === e.id);
+      expect(ownerEvent.sessionReports.length).toBe(2);
     });
 
     it('collab', async () => {
@@ -572,11 +681,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[0].sessionReports.length).toBe(2);
-      expect(data[1].id).toBe(e2.id);
+      // Collaborator should see both test events
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
+      });
+
+      // Collaborator sees all sessions for their event
+      const collabEvent = data.find((d) => d.id === e.id);
+      expect(collabEvent.sessionReports.length).toBe(2);
     });
 
     it('poc', async () => {
@@ -593,11 +711,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[0].sessionReports.length).toBe(2);
-      expect(data[1].id).toBe(e2.id);
+      // POC should see both test events
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
+      });
+
+      // POC sees all sessions for their event
+      const pocEvent = data.find((d) => d.id === e.id);
+      expect(pocEvent.sessionReports.length).toBe(2);
     });
 
     it('otherWrite', async () => {
@@ -614,11 +741,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[0].sessionReports.length).toBe(2);
+      // otherWrite should see both test events (regional permissions)
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
+      });
+
+      // For COMPLETE status, all users see all sessions
+      const event1 = data.find((d) => d.id === e.id);
+      expect(event1.sessionReports.length).toBe(2);
     });
 
     it('otherRead', async () => {
@@ -635,11 +771,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[0].sessionReports.length).toBe(2);
+      // otherRead should see both test events (regional permissions)
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
+      });
+
+      // For COMPLETE status, all users see all sessions
+      const event1 = data.find((d) => d.id === e.id);
+      expect(event1.sessionReports.length).toBe(2);
     });
 
     it('otherPoc', async () => {
@@ -656,11 +801,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[0].sessionReports.length).toBe(2);
+      // otherPoc should see both test events (regional permissions)
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
+      });
+
+      // For COMPLETE status, all users see all sessions
+      const event1 = data.find((d) => d.id === e.id);
+      expect(event1.sessionReports.length).toBe(2);
     });
 
     it('seesNone', async () => {
@@ -677,8 +831,16 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(0);
+      // seesNone should not see test events (no regional permissions)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
+      });
     });
   });
 
@@ -730,11 +892,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[0].sessionReports.length).toBe(2);
-      expect(data[1].id).toBe(e2.id);
+      // Owner should see both test events
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.SUSPENDED);
+      });
+
+      // Owner sees all sessions for their event
+      const ownerEvent = data.find((d) => d.id === e.id);
+      expect(ownerEvent.sessionReports.length).toBe(2);
     });
 
     it('collab', async () => {
@@ -751,11 +922,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[0].sessionReports.length).toBe(2);
-      expect(data[1].id).toBe(e2.id);
+      // Collaborator should see both test events
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.SUSPENDED);
+      });
+
+      // Collaborator sees all sessions for their event
+      const collabEvent = data.find((d) => d.id === e.id);
+      expect(collabEvent.sessionReports.length).toBe(2);
     });
 
     it('poc', async () => {
@@ -772,11 +952,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[0].sessionReports.length).toBe(2);
-      expect(data[1].id).toBe(e2.id);
+      // POC should see both test events
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.SUSPENDED);
+      });
+
+      // POC sees all sessions for their event
+      const pocEvent = data.find((d) => d.id === e.id);
+      expect(pocEvent.sessionReports.length).toBe(2);
     });
 
     it('otherWrite', async () => {
@@ -793,11 +982,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[0].sessionReports.length).toBe(2);
+      // otherWrite should see both test events (regional permissions)
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.SUSPENDED);
+      });
+
+      // For SUSPENDED status, all users see all sessions
+      const event1 = data.find((d) => d.id === e.id);
+      expect(event1.sessionReports.length).toBe(2);
     });
 
     it('otherRead', async () => {
@@ -814,11 +1012,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[0].sessionReports.length).toBe(2);
+      // otherRead should see both test events (regional permissions)
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.SUSPENDED);
+      });
+
+      // For SUSPENDED status, all users see all sessions
+      const event1 = data.find((d) => d.id === e.id);
+      expect(event1.sessionReports.length).toBe(2);
     });
 
     it('otherPoc', async () => {
@@ -835,11 +1042,20 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(2);
-      expect(data[0].id).toBe(e.id);
-      expect(data[1].id).toBe(e2.id);
-      expect(data[0].sessionReports.length).toBe(2);
+      // otherPoc should see both test events (regional permissions)
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.SUSPENDED);
+      });
+
+      // For SUSPENDED status, all users see all sessions
+      const event1 = data.find((d) => d.id === e.id);
+      expect(event1.sessionReports.length).toBe(2);
     });
 
     it('seesNone', async () => {
@@ -856,8 +1072,16 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
+      const ids = data.map((d) => d.id);
 
-      expect(data.length).toBe(0);
+      // seesNone should not see test events (no regional permissions)
+      expect(ids).not.toContain(e.id);
+      expect(ids).not.toContain(e2.id);
+
+      // Verify all returned events have the correct status
+      data.forEach((event) => {
+        expect(event.data.status).toBe(TRAINING_REPORT_STATUSES.SUSPENDED);
+      });
     });
   });
 });

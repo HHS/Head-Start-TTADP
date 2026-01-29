@@ -27,6 +27,7 @@ import {
   createCommunicationLogByRecipientId,
 } from '../../../../fetchers/communicationLog';
 import { LogProvider } from '../../../../components/CommunicationLog/components/LogContext';
+import { shouldUpdateFormData } from '../../../../utils/formRichTextEditorHelper';
 
 const shouldFetch = ({
   communicationLogId,
@@ -84,7 +85,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [reportFetched, setReportFetched] = useState(false);
 
-  const onSave = async () => {
+  const onSave = async (isAutoSave = false) => {
     try {
       setError(null);
       setIsAppLoading(true);
@@ -109,7 +110,12 @@ export default function CommunicationLogForm({ match, recipientName }) {
       }
 
       // update the form data
-      resetFormData(hookForm.reset, loggedCommunication);
+      // Check if we should update form data
+      // (prevents focus loss in rich text editors during autosave)
+      const allowUpdateForm = shouldUpdateFormData(isAutoSave);
+      if (allowUpdateForm) {
+        resetFormData(hookForm.reset, loggedCommunication);
+      }
 
       // update the last save time
       updateLastSaveTime(moment(loggedCommunication.updatedAt));

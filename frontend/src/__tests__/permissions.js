@@ -404,6 +404,18 @@ describe('permissions', () => {
       expect(hasTrainingReportWritePermissions(user)).toBeTruthy();
     });
 
+    it('returns true if the user has ADMIN permission', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.ADMIN,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasTrainingReportWritePermissions(user)).toBeTruthy();
+    });
+
     it('returns false otherwise', () => {
       const user = {
         permissions: [

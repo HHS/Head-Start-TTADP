@@ -1,10 +1,12 @@
+/* eslint-disable max-len */
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class EventReport {
-  constructor(user, eventReport) {
+  constructor(user, eventReport, sessionReport = null) {
     this.user = user;
     this.eventReport = eventReport;
+    this.session = sessionReport;
     this.permissions = user.permissions || [];
   }
 
@@ -147,8 +149,20 @@ export default class EventReport {
     return this.isAdmin() || this.isAuthor() || this.isCollaborator();
   }
 
+  isSessionApprover() {
+    return this.session && this.session.approverId === this.user.id;
+  }
+
+  isSubmitted() {
+    return !!(this.session && this.session.data && this.session.data.pocComplete && this.session.data.collabComplete);
+  }
+
+  canEditAsSessionApprover() {
+    return !!(this.session && this.session.data && this.isSubmitted() && this.isSessionApprover());
+  }
+
   canEditSession() {
-    return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc();
+    return !!(this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc() || this.canEditAsSessionApprover());
   }
 
   canUploadFile() {

@@ -35,10 +35,13 @@ export default class ActivityReport {
       && this.reportHasEditableStatus();
 
     const canUpdateAsApprover = (this.canReview()
-      && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED);
+      && (
+        this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED
+        || this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+      ));
 
     return canUpdateAsAuthorAndCollaborator
-      || (canUpdateAsApprover && !this.hasBeenMarkedByApprover());
+      || canUpdateAsApprover;
   }
 
   canReset() {

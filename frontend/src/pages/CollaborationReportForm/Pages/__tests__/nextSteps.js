@@ -80,10 +80,26 @@ describe('nextSteps Page', () => {
   });
 
   describe('isPageComplete Function', () => {
-    it('always returns true', () => {
-      expect(isPageComplete()).toBe(true);
-      expect(isPageComplete({})).toBe(true);
-      expect(isPageComplete({ someData: 'test' })).toBe(true);
+    it('returns true if at least one valid step', () => {
+      const hookForm = {
+        getValues: () => ({
+          steps: [
+            { collabStepDetail: 'Step 1 detail', collabStepCompleteDate: '2024-01-15' },
+          ],
+        }),
+      };
+
+      expect(isPageComplete(hookForm)).toBe(true);
+    });
+
+    it('returns false if steps is undefined', () => {
+      const hookForm = {
+        getValues: () => ({
+          steps: undefined,
+        }),
+      };
+
+      expect(isPageComplete(hookForm)).toBe(false);
     });
   });
 
@@ -217,7 +233,8 @@ describe('nextSteps Page', () => {
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       expect(sectionsData).toHaveLength(1);
-      expect(sectionsData[0].isEditSection).toBe(true);
+      // needs to be false to prevent two edit buttons showing
+      expect(sectionsData[0].isEditSection).toBe(false);
       expect(sectionsData[0].anchor).toBe('next-steps');
       expect(sectionsData[0].items).toHaveLength(4); // 2 steps × 2 items each
     });
@@ -230,7 +247,19 @@ describe('nextSteps Page', () => {
       );
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      expect(sectionsData[0].items).toHaveLength(0);
+      const { items } = sectionsData[0];
+      expect(items).toHaveLength(2); // 1 step with "none provided" values
+
+      expect(items[0]).toEqual({
+        label: 'Step 1',
+        name: 'step',
+        customValue: { step: 'None provided' },
+      });
+      expect(items[1]).toEqual({
+        label: 'Anticipated completion',
+        name: 'date',
+        customValue: { date: 'None provided' },
+      });
     });
 
     it('handles null steps', () => {
@@ -241,7 +270,7 @@ describe('nextSteps Page', () => {
       );
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      expect(sectionsData[0].items).toHaveLength(0);
+      expect(sectionsData[0].items).toHaveLength(2); // 1 step with "none provided" values
     });
 
     it('creates correct step items structure', () => {
@@ -360,7 +389,19 @@ describe('nextSteps Page', () => {
       );
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
-      expect(sectionsData[0].items).toHaveLength(0);
+      const { items } = sectionsData[0];
+      expect(items).toHaveLength(2); // 1 step with "none provided" values
+
+      expect(items[0]).toEqual({
+        label: 'Step 1',
+        name: 'step',
+        customValue: { step: 'None provided' },
+      });
+      expect(items[1]).toEqual({
+        label: 'Anticipated completion',
+        name: 'date',
+        customValue: { date: 'None provided' },
+      });
     });
   });
 });

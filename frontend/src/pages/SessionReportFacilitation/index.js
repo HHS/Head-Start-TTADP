@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useMemo } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router';
@@ -8,6 +8,7 @@ import {
 } from '@trussworks/react-uswds';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { Helmet } from 'react-helmet';
+import moment from 'moment';
 import useFetch from '../../hooks/useFetch';
 import Container from '../../components/Container';
 import BackLink from '../../components/BackLink';
@@ -17,6 +18,7 @@ import { createSession } from '../../fetchers/session';
 import { eventById } from '../../fetchers/event';
 import { ROUTES } from '../../Constants';
 import UserContext from '../../UserContext';
+import isAdmin from '../../permissions';
 
 const TRAINING_REPORT_URL_NOT_STARTED = '/training-reports/not-started';
 const TRAINING_REPORT_URL_IN_PROGRESS = '/training-reports/in-progress';
@@ -32,6 +34,7 @@ export default function SessionReportFacilitation({ match }) {
   });
 
   const { user } = useContext(UserContext);
+  const isAdminUser = useMemo(() => isAdmin(user), [user]);
 
   const { data: trainingReport, error, statusCode } = useFetch(
     null,
@@ -39,21 +42,27 @@ export default function SessionReportFacilitation({ match }) {
     [trainingReportId],
   );
 
+  useEffect(() => {
+    if (!trainingReport) {
+      return;
+    }
+
+    const trUsers = [
+      ...trainingReport.collaboratorIds,
+      trainingReport.owner.id,
+    ];
+
+    if (!isAdminUser && !trUsers.includes(user.id)) {
+      history.replace(`${ROUTES.SOMETHING_WENT_WRONG}/401`);
+    }
+  }, [history, isAdminUser, trainingReport, user.id]);
+
   if (error) {
-    history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
+    history.replace(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
   }
 
   if (!trainingReport) {
     return 'Loading...';
-  }
-
-  const trUsers = [
-    ...trainingReport.collaboratorIds,
-    trainingReport.owner.id,
-  ];
-
-  if (!trUsers.includes(user.id)) {
-    history.push(`${ROUTES.SOMETHING_WENT_WRONG}/401`);
   }
 
   const { register, handleSubmit, errors } = hookForm;
@@ -65,9 +74,23 @@ export default function SessionReportFacilitation({ match }) {
       // since they'd be forwarded out otherwise (POC cannot create sessions)
 
       const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
+      const isOwner = trainingReport.owner.id === user.id;
+      const { facilitation } = data;
 
-      if (isCollaborator) {
-        history.push(TRAINING_REPORT_URL_IN_PROGRESS);
+      const facilitationIncludesRegion = facilitation === 'both' || facilitation === 'regional_tta_staff';
+      const collaboratorWithRegionalFacilitation = isCollaborator && facilitationIncludesRegion;
+
+      const { eventId } = trainingReport.data;
+
+      const message = {
+        messageTemplate: 'sessionCreated',
+        sessionName: '',
+        eventId,
+        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+      };
+
+      if (!isAdminUser && (collaboratorWithRegionalFacilitation || isOwner)) {
+        history.push(TRAINING_REPORT_URL_IN_PROGRESS, { message });
         return;
       }
 

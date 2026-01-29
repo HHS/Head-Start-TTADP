@@ -7,6 +7,8 @@ type TRStatusType = TRAINING_REPORT_STATUSES.NOT_STARTED
 
 export type SessionShape = {
   id: number;
+  eventId?: number;
+  approverId?: number;
   data: {
     sessionName: string;
     status: string;
@@ -19,8 +21,13 @@ export type SessionShape = {
     participants?: { value: string; label: string }[];
     nextSteps: { completeDate: string, note: string }[];
     pocComplete: boolean;
-    ownerComplete: boolean;
-  }
+    collabComplete: boolean;
+    objectiveTrainers: string[];
+  };
+  submitterId: number | null;
+  submitted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type EventReportPilotNationalCenterUserType = {
@@ -45,11 +52,13 @@ export type EventShape = {
     eventId: string;
     eventName: string;
     eventSubmitted: boolean;
+    additionalStates: string[];
+    eventOrganizer?: 'Regional TTA Hosted Event (no National Centers)' | 'Regional PD Event (with National Centers)';
   };
   updatedAt: string;
   sessionReports: SessionShape[];
   owner: undefined | { id: string; name: string; email: string };
-  eventReportPilotNationalCenterUsers: EventReportPilotNationalCenterUserType[];
+  version: number;
 };
 
 export type CreateEventRequest = {
@@ -69,7 +78,7 @@ export type TRAlertShape = {
   id: number;
   eventId: string;
   eventName: string;
-  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted';
+  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted' | 'waitingForApproval' | 'changesNeeded';
   eventStatus: TRStatusType;
   sessionName: string;
   sessionId: number | false;
@@ -79,4 +88,8 @@ export type TRAlertShape = {
   collaboratorIds: number[];
   startDate: string;
   endDate: string;
+  approverId?: number;
+  submitterId?: number;
+  approverName?: string;
+  collaboratorNames?: string[];
 };

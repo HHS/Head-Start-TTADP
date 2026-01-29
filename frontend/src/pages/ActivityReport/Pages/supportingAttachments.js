@@ -56,13 +56,18 @@ SupportingAttachments.propTypes = {
   reportId: PropTypes.node.isRequired,
 };
 
-const getAttachmentsSections = (files) => {
+export const getAttachmentsSections = (files) => {
   const hasAttachments = files && files.length > 0;
 
   // Create HTML content that matches what the test expects
   const fileContents = hasAttachments
-    ? files.map((file) => `<a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a>`)
-    : ['None provided'];
+    ? files.map((file) => {
+      if (file.url && file.url.url) {
+        return `<a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a>`;
+      }
+
+      return file.originalFileName;
+    }) : ['None provided'];
 
   return [
     {

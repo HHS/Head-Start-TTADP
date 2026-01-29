@@ -4,10 +4,10 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:22.20.0-browsers
+    - image: cimg/node:22.22.0-browsers
   docker-postgres-executor:
     docker:
-    - image: cimg/node:22.20.0-browsers
+    - image: cimg/node:22.22.0-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -143,6 +143,43 @@ workflows:
     jobs:
     - run_import_job:
         target_env: "<< pipeline.parameters.target_env >>"
+
+  reset_env_cron:
+    #scheduled job to reset lower envs to a default state
+    triggers:
+    - schedule:
+        cron: "0 3 * * 0" # 3AM UTC = 11PM EST Sunday night
+        filters:
+          branches:
+            only:
+            - main
+    jobs:
+    - build_and_lint
+    - deploy_job:
+        name: reset (dev-blue)
+        target_env: "dev-blue"
+        requires:
+        - build_and_lint
+    - deploy_job:
+        name: reset (dev-green)
+        target_env: "dev-green"
+        requires:
+        - build_and_lint
+    - deploy_job:
+        name: reset (dev-red)
+        target_env: "dev-red"
+        requires:
+        - build_and_lint
+    - deploy_job:
+        name: reset (dev-pink)
+        target_env: "dev-pink"
+        requires:
+          - build_and_lint
+    - deploy_job:
+        name: reset (dev-gold)
+        target_env: "dev-gold"
+        requires:
+        - build_and_lint
 
   restore_db_cron:
     # scheduled job to ensure lower envs have a recent copy of the database
@@ -737,8 +774,8 @@ commands:
         name: Install CF tools
         command: |
           # Install Cloud Foundry CLI
-          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-          echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service
@@ -939,7 +976,7 @@ commands:
     - restore_cache:
         key: env-owners-
     - run:
-        name: Write owner into file
+        name: Update env owners canvas
         command: |
           mkdir -p environments
           current_env="<< parameters.target_env >>"
@@ -947,13 +984,14 @@ commands:
           cd environments
           ls -la
           echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > ${current_env}
-          data="Env | Name | Branch | Date |\n|---|---|---|---|\n"
+          data="Env | Name | Branch | Date |\n|---|---|---|---|"
           for file in *; do
-            cat ${file}
             if [ ! -d ${file} ]; then
-              data="${data}$(cat ${file})\n"
+              data="${data}\n$(cat ${file})"
             fi;
           done
+
+          echo -e "Updating canvas with data:\n${data}"
 
           curl -w "\n%{http_code}\n" --fail-with-body -X POST \
           https://slack.com/api/canvases.edit \
@@ -966,8 +1004,8 @@ commands:
               "document_content": {
                 "type": "markdown",
                 "markdown": "'"$data"'"
-              },
-            }],
+              }
+            }]
           }'
 
     - save_cache:
@@ -1162,8 +1200,8 @@ commands:
           sudo apt-get install -y pv uuid-runtime wget coreutils jq apt-utils
 
           # Install Cloud Foundry CLI
-          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-          echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service

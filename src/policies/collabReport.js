@@ -35,10 +35,13 @@ export default class CollabReport {
       && this.reportHasEditableStatus();
 
     const canUpdateAsApprover = (this.canReview()
-      && this.collabReport.calculatedStatus === REPORT_STATUSES.SUBMITTED);
+      && (
+        this.collabReport.calculatedStatus === REPORT_STATUSES.SUBMITTED
+        || this.collabReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+      ));
 
     return canUpdateAsAuthorOrCollaborator
-      || (canUpdateAsApprover && !this.hasBeenMarkedByApprover());
+      || canUpdateAsApprover;
   }
 
   canReset() {

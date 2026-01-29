@@ -19,7 +19,7 @@ import {
 } from '../../services/communicationLog';
 import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
-import { userById } from '../../services/users';
+import { userById, usersByRoles } from '../../services/users';
 import Policy from '../../policies/communicationLog';
 import filtersToScopes from '../../scopes';
 import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
@@ -56,31 +56,28 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
     return null;
   }
   const ONE_YEAR_IN_MS = 365 * 24 * 60 * 60 * 1000;
-  const regionalUsers = await User.findAll({
-    attributes: [
-      ['id', 'value'],
-      ['name', 'label'],
+
+  const users = await usersByRoles(
+    [
+      'TTAC',
+      'ECM',
+      'GSM',
+      'GS',
+      'ECS',
+      'HS',
+      'FES',
+      'SS',
     ],
-    where: {
-      [Op.and]: [
-        { '$permissions.scopeId$': SCOPES.SITE_ACCESS },
-        { '$permissions.regionId$': 14 },
-        { homeRegionId: regionId },
-      ],
-    },
-    include: [
-      { model: Permission, as: 'permissions', attributes: [] },
-      {
-        model: UserRole,
-        as: 'userRoles',
-        attributes: [],
-        include: [
-          { model: Role, as: 'role', attributes: [] },
-        ],
-      },
-    ],
-    order: [['label', 'ASC']],
-  });
+    regionId,
+  ) as {
+    id: number;
+    name: string;
+  }[];
+
+  const regionalUsers = users.map((u) => ({
+    label: u.name,
+    value: u.id,
+  }));
 
   const standardGoals = await GoalTemplate.findAll({
     where: { standard: { [Op.ne]: null } },

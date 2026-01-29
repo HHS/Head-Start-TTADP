@@ -9,11 +9,12 @@ import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Alert, Grid, Button, ModalToggleButton,
+  Alert, Grid,
 } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
+import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import {
@@ -24,11 +25,11 @@ import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
-import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
-import isAdmin from '../../permissions';
-import sessionSummary from './pages/sessionSummary';
-import Modal from '../../components/VanillaModal';
+import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
+import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
+import './index.css';
+import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -40,9 +41,26 @@ const reduceDataToMatchKeys = (keys, data) => keys.reduce((acc, key) => {
   return acc;
 }, {});
 
-const determineKeyArray = (isAdminUser, isPoc) => {
+const determineKeyArray = ({
+  isAdminUser,
+  isPoc,
+  isCollaborator,
+  eventOrganizer,
+  isApprover,
+  facilitation = '',
+  isSubmitted = false,
+}) => {
+  // eslint-disable-next-line max-len
+  const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+
+  const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
+
   let keyArray;
-  if (isAdminUser) {
+  if (isAdminUser || (isCollaborator && isRegionalNoNationalCenters) || isApprover) {
+    keyArray = [...istKeys, ...pocKeys];
+  } else if (isPoc && facilitationIncludesRegion) {
+    keyArray = [...istKeys, ...pocKeys];
+  } else if (isCollaborator && isSubmitted) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc) {
     keyArray = pocKeys;
@@ -61,8 +79,24 @@ const determineKeyArray = (isAdminUser, isPoc) => {
    * @param {*} event - not an HTML event, but the event object from the database, which has some
    * information stored at the top level of the object, and some stored in a data column
    */
-const resetFormData = (reset, updatedSession, isPocFromSession, isAdminUser) => {
-  const keyArray = determineKeyArray(isAdminUser, isPocFromSession);
+const resetFormData = ({
+  reset,
+  updatedSession,
+  isPocFromSession,
+  isAdminUser,
+  isCollaborator,
+  isApprover,
+  eventOrganizer = '',
+}) => {
+  const keyArray = determineKeyArray({
+    isAdminUser,
+    isPoc: isPocFromSession,
+    isCollaborator,
+    eventOrganizer,
+    isApprover,
+    facilitation: updatedSession?.data?.facilitation || '',
+    isSubmitted: updatedSession.submitted,
+  });
 
   const {
     data,
@@ -94,7 +128,6 @@ export default function SessionForm({ match }) {
   const { params: { sessionId, currentPage, trainingReportId } } = match;
 
   const reportId = useRef(sessionId);
-  const modalRef = useRef();
 
   // for redirects if a page is not provided
   const history = useHistory();
@@ -136,6 +169,11 @@ export default function SessionForm({ match }) {
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
+  const eventOrganizer = formData.event?.data?.eventOrganizer || '';
+
+  // eslint-disable-next-line max-len
+  const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+
   const {
     socket,
     setSocketPath,
@@ -143,51 +181,19 @@ export default function SessionForm({ match }) {
     messageStore,
   } = useSocket(user);
 
-  const isAdminUser = isAdmin(user);
-
   const {
     isPoc,
+    isAdminUser,
     isCollaborator,
     isOwner,
-  } = (() => {
-    let isPocUser = false;
-    let isCollaboratorUser = false;
-    let isOwnerUser = false;
-    if (formData && formData.event) {
-      if ((formData.event.pocIds && formData.event.pocIds.includes(user.id))) {
-        isPocUser = true;
-      }
+    isApprover,
+    applicationPages,
+    isSessionNavigationDead,
+  } = useSessionFormRoleAndPages(hookForm);
 
-      if (formData.event.collaboratorIds && formData.event.collaboratorIds.includes(user.id)) {
-        isCollaboratorUser = true;
-      }
+  const canSelectApprover = useCanSelectApprover({ isPoc, watch: hookForm.watch });
 
-      if (formData.event.ownerId && formData.event.ownerId === user.id) {
-        isOwnerUser = true;
-      }
-    }
-    return {
-      isPoc: isPocUser,
-      isCollaborator: isCollaboratorUser,
-      isOwner: isOwnerUser,
-    };
-  })();
-
-  // Set pages based on user role.
-  let applicationPages = [];
-  if (isAdminUser) {
-    applicationPages = [
-      pages.sessionSummary,
-      pages.participants,
-      pages.supportingAttachments,
-      pages.nextSteps,
-    ];
-  } else if (isPoc) {
-    applicationPages = [pages.participants, pages.supportingAttachments, pages.nextSteps];
-  } else {
-    applicationPages = [sessionSummary];
-  }
-  const redirectPagePath = isPoc && !isAdminUser ? 'participants' : 'session-summary';
+  const redirectPagePath = applicationPages[0]?.path || null;
 
   useEffect(() => {
     if (!trainingReportId || !sessionId || !currentPage) {
@@ -205,26 +211,63 @@ export default function SessionForm({ match }) {
   usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
   useEffect(() => {
+    // if report isn't or created fetched, the app should be loading
+    // (Report fetched is set in the use effect that fetches the report)
     const loading = !reportFetched;
     setIsAppLoading(loading);
   }, [reportFetched, setIsAppLoading]);
 
   useEffect(() => {
+    // once report is fetched (in the use effect that fetches the report)
+    // -- or created
+    // we check to see if we have a session ID and aren't on a form page
+    // if we aren't, redirect to the first form page
+    if (reportFetched && sessionId && sessionId !== 'new' && !currentPage && redirectPagePath) {
+      history.replace(`/training-report/${trainingReportId}/session/${sessionId}/${redirectPagePath}`);
+    }
+  }, [reportFetched, sessionId, currentPage, history, trainingReportId, redirectPagePath]);
+
+  useEffect(() => {
     // create a new session
     async function createNewSession() {
-      if (!trainingReportId || !currentPage || sessionId !== 'new' || reportFetched) {
+      if (!trainingReportId || sessionId !== 'new' || reportFetched) {
         return;
       }
 
       try {
         const session = await createSession(trainingReportId);
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
-
+        // eslint-disable-next-line max-len
+        const isCollaboratorFromSession = session.event.collaboratorIds.includes(user.id) && !isAdminUser;
+        const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
+        const { approverId } = session;
+        const isApproverUser = user.id === Number(approverId);
         // we don't want to refetch if we've extracted the session data
         setReportFetched(true);
-        resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
+        resetFormData({
+          reset: hookForm.reset,
+          updatedSession: session,
+          isPocFromSession,
+          isAdminUser,
+          isCollaborator: isCollaboratorFromSession,
+          eventOrganizer: eventOrganizerFromSession,
+          isApprover: isApproverUser,
+        });
         reportId.current = session.id;
-        history.replace(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
+
+        const message = {
+          messageTemplate: 'sessionCreated',
+          sessionName: session.data.sessionName,
+          eventId: session.event.data.eventId,
+          dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+        };
+
+        if (session.event.ownerId === user.id && !isAdminUser) {
+          history.push('/training-reports/in-progress', { message });
+          return;
+        }
+
+        history.replace(`/training-report/${trainingReportId}/session/${session.id}`);
       } catch (e) {
         setError('Error creating session');
       } finally {
@@ -236,19 +279,80 @@ export default function SessionForm({ match }) {
     }
 
     createNewSession();
-  }, [currentPage, history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
+  }, [history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
 
   useEffect(() => {
-    // fetch event report data
+    // fetch session data
     async function fetchSession() {
-      if (!currentPage || reportFetched || sessionId === 'new') {
+      if (reportFetched || sessionId === 'new') {
         return;
       }
+      const viewTrUrl = `/training-report/view/${trainingReportId}`;
       try {
         const session = await getSessionBySessionId(sessionId);
+
+        /**
+         * handle the cases where we need to redirect away
+         * we'll do this here inline instead of loading into state
+         * (just to save render cycles)
+         */
+
+        // is it submitted?
+        const { approverId, submitted } = session;
+        const isApproverUser = user.id === Number(approverId);
+
+        const isNeedsAction = session.data.status === REPORT_STATUSES.NEEDS_ACTION;
+        const sessionComplete = session.data.status === TRAINING_REPORT_STATUSES.COMPLETE;
+
+        const notSubmittedApprover = !submitted && isApproverUser && !isAdminUser;
+        const needsActionApprover = submitted && isApproverUser && isNeedsAction;
+
         // eslint-disable-next-line max-len
         const isPocFromSession = (session.event.pocIds || []).includes(user.id) && !isAdminUser;
-        resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
+        // eslint-disable-next-line max-len
+        const isCollaboratorFromSession = (session.event.collaboratorIds || []).includes(user.id) && !isAdminUser;
+
+        const isOwnerFromSession = session.event.ownerId === user.id;
+
+        // check the event organizer and user role
+        const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
+
+        // eslint-disable-next-line max-len
+        const isRegionalEventPoc = eventOrganizerFromSession === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && isPocFromSession && !isAdminUser;
+        // eslint-disable-next-line max-len
+        const isFormUser = (isPocFromSession || isOwnerFromSession || isCollaboratorFromSession) && !isAdminUser;
+
+        const submittedFormUser = submitted && isFormUser && !isNeedsAction && !isApproverUser;
+        const completeSessionFormUser = sessionComplete && (isFormUser || isApproverUser);
+
+        // when do we redirect to the "View" page?
+        if (
+          notSubmittedApprover // approver, session not submitted yet
+          || submittedFormUser // when the form is submitted and we are a form-filler
+          || completeSessionFormUser // when the form is complete and we are a form-filler
+          || needsActionApprover // when we are an approver and the form is needs action
+          || isRegionalEventPoc // if it's a "regional" session and we are a POC (corner case)
+        ) {
+          history.push(viewTrUrl);
+          return;
+        }
+
+        resetFormData({
+          reset: hookForm.reset,
+          updatedSession: session,
+          isPocFromSession,
+          isAdminUser,
+          isCollaborator: isCollaboratorFromSession,
+          eventOrganizer: eventOrganizerFromSession,
+          isApprover: isApproverUser,
+        });
+
+        // we push approvers to the review page
+        if (submitted && isApproverUser && !isNeedsAction && currentPage !== 'review') {
+          history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
+          return;
+        }
+
         reportId.current = session.id;
       } catch (e) {
         history.push(`/something-went-wrong/${e.status}`);
@@ -258,7 +362,7 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-  }, [currentPage, hookForm.reset, reportFetched, sessionId, history]);
+  }, [hookForm.reset, reportFetched, sessionId, history]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, applicationPages, currentPage);
@@ -274,18 +378,44 @@ export default function SessionForm({ match }) {
     history.push(newPath, state);
   };
 
-  if (!currentPage || ((isPoc && !isAdminUser) && currentPage === 'session-summary')) {
+  // Redirect if no page is specified, or if the specified page isn't available to this user
+  const pageExists = currentPage && applicationPages.some((p) => p.path === currentPage);
+  if (redirectPagePath && (!currentPage || !pageExists)) {
     return (
       <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`} />
     );
   }
 
+  /**
+   * Removes or modifies completion tracking fields based on the current user's role.
+   * This enforces role-based access control by preventing users from modifying
+   * completion fields they are not authorized to edit.
+   *
+   * Behavior:
+   * - Admin users can modify all completion fields (no changes made)
+   * - POCs with national center facilitation: removes collabComplete (tracked by owner)
+   * - POCs in regional PD with national centers events: sets collabComplete to true
+   * - All other non-admin users: removes pocComplete (tracked by POC)
+   *
+   * @param {Object} roleData - The role-based session data object potentially containing
+   *                             collabComplete and pocComplete properties
+   * @returns {Object} A shallow copy of roleData with completion fields removed or
+   *                    modified based on the user's role
+   */
   const removeCompleteDataBaseOnRole = (roleData) => {
     const updatedRoleData = { ...roleData };
     if (!isAdminUser) {
-      if (isPoc) {
-      // Remove ownerComplete as this is tracked from the owner.
-        delete updatedRoleData.ownerComplete;
+      if (isPoc && roleData.facilitation === 'national_center') {
+      // Remove collabComplete as this is tracked from the owner.
+        delete updatedRoleData.collabComplete;
+      } else if (
+        isPoc && eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+      ) {
+        updatedRoleData.collabComplete = true;
+      } else if (
+        eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
+      ) {
+        updatedRoleData.pocComplete = true;
       } else {
         // Remove pocComplete as this is tracked from the POC.
         delete updatedRoleData.pocComplete;
@@ -306,7 +436,15 @@ export default function SessionForm({ match }) {
         // grab the newest data from the form
         const data = hookForm.getValues();
 
-        const keyArray = determineKeyArray(isAdminUser, isPoc);
+        const keyArray = determineKeyArray({
+          isAdminUser,
+          isPoc,
+          eventOrganizer,
+          isCollaborator,
+          isApprover,
+          facilitation: data?.facilitation || '',
+          isSubmitted: data?.submitted,
+        });
         let roleData = reduceDataToMatchKeys(keyArray, data);
 
         // Remove complete property data based on current role.
@@ -320,11 +458,13 @@ export default function SessionForm({ match }) {
           };
         }
 
+        const status = formData.status || TRAINING_REPORT_STATUSES.IN_PROGRESS;
+
         // PUT it to the backend
         const updatedSession = await updateSession(sessionId, {
           data: {
             ...roleData,
-            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+            status,
           },
           trainingReportId,
           eventId: trainingReportId || null,
@@ -342,21 +482,79 @@ export default function SessionForm({ match }) {
 
   const onSaveAndContinue = async () => {
     if (formData.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-      await onSave();
+      try {
+        setError('');
+        await onSave();
+      } catch (e) {
+        setError('There was an error saving the session report');
+      }
       updateShowSavedDraft(false);
     }
     const whereWeAre = applicationPages.find((p) => p.path === currentPage);
     const nextPage = applicationPages.find((p) => p.position === whereWeAre.position + 1);
 
-    if ((isPoc || isAdminUser) && nextPage) {
+    if (nextPage) {
       updatePage(nextPage.position);
+    }
+  };
+
+  const onReview = async () => {
+    try {
+      await hookForm.trigger();
+
+      // reset the error message
+      setError('');
+      setIsAppLoading(true);
+
+      // grab the newest data from the form
+      const {
+        approvalStatus,
+        ...data
+      } = hookForm.getValues();
+
+      const status = (() => {
+        if (approvalStatus === REPORT_STATUSES.APPROVED) {
+          return TRAINING_REPORT_STATUSES.COMPLETE;
+        }
+
+        if (approvalStatus === REPORT_STATUSES.NEEDS_ACTION) {
+          return REPORT_STATUSES.NEEDS_ACTION;
+        }
+
+        return '';
+      })();
+
+      if (!status) {
+        return;
+      }
+
+      // PUT it to the backend
+      await updateSession(sessionId, {
+        data: {
+          ...data,
+          status,
+        },
+        trainingReportId,
+        eventId: trainingReportId || null,
+      });
+
+      const message = {
+        messageTemplate: 'sessionReviewSubmitted',
+        sessionName: data.sessionName,
+        eventId: data.event.data.eventId,
+        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+      };
+
+      history.push('/training-reports/in-progress', { message });
+    } catch (err) {
+      setError('There was an error saving the session report. Please try again later.');
+    } finally {
+      setIsAppLoading(false);
     }
   };
 
   const onFormSubmit = async () => {
     try {
-      await hookForm.trigger();
-
       // reset the error message
       setError('');
       setIsAppLoading(true);
@@ -367,7 +565,15 @@ export default function SessionForm({ match }) {
       } = hookForm.getValues();
 
       // Get form data based on role IST vs POC.
-      const keyArray = determineKeyArray(isAdminUser, isPoc);
+      const keyArray = determineKeyArray({
+        isAdminUser,
+        isPoc,
+        eventOrganizer,
+        isCollaborator,
+        isApprover,
+        facilitation: data?.facilitation || '',
+        isSubmitted: data?.submitted,
+      });
       let roleData = reduceDataToMatchKeys(keyArray, data);
 
       // If we are a POC submitting set POC submitted values in data.
@@ -379,13 +585,10 @@ export default function SessionForm({ match }) {
 
       // Owner, collaborator, and admin can submitted the session.
       if (isOwner || isCollaborator || isAdminUser) {
-        roleData.ownerComplete = true;
-        roleData.ownerCompleteId = user.id;
-        roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
+        roleData.collabComplete = true;
+        roleData.collabCompleteId = user.id;
+        roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
       }
-
-      // If both are complete mark the session as complete.
-      roleData.status = data.status;
 
       // Remove complete property data based on current role.
       roleData = removeCompleteDataBaseOnRole(roleData);
@@ -394,16 +597,24 @@ export default function SessionForm({ match }) {
       await updateSession(sessionId, {
         data: {
           ...roleData,
+          ...(isRegionalNoNationalCenters && roleData.pocComplete ? { pocComplete: true } : {}),
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          dateSubmitted: moment().format('MM/DD/YYYY'), // date the session was submitted
+          ...(canSelectApprover ? { submitterId: user.id } : {}),
         },
         trainingReportId,
         eventId: trainingReportId || null,
       });
 
-      history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
+      const message = {
+        messageTemplate: 'sessionSubmitted',
+        sessionName: data.sessionName,
+        eventId: data.event.data.eventId,
+        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+      };
+
+      history.push('/training-reports/in-progress', { message });
     } catch (err) {
-      // Close the modal if there is an error.
-      modalRef.current.toggleModal(false);
       setError('There was an error saving the session report. Please try again later.');
     } finally {
       setIsAppLoading(false);
@@ -419,25 +630,10 @@ export default function SessionForm({ match }) {
     return null;
   }
 
-  const nonFormUser = !isOwner && !isAdminUser && !isPoc && !isCollaborator && (sessionId !== 'new') && !error;
-  if (reportFetched
-      && ((formData.status === TRAINING_REPORT_STATUSES.COMPLETE
-        && (!isAdminUser))
-      || nonFormUser)) {
-    return (
-      <Redirect to={`/training-report/view/${trainingReportId}`} />
-    );
+  // Don't render until we have valid pages for the user's role
+  if (applicationPages.length === 0) {
+    return null;
   }
-
-  const showSubmitModal = async () => {
-    // updateIncompletePages();
-    const isValidForm = await hookForm.trigger();
-
-    if (isValidForm) {
-      // Toggle the modal only if the form is valid.
-      modalRef.current.toggleModal(true);
-    }
-  };
 
   const { event } = formData;
 
@@ -455,42 +651,24 @@ export default function SessionForm({ match }) {
       </BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
-          <div className="margin-y-2">
-            <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
+          <div className="margin-top-2 margin-bottom-4">
+            <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0 margin-bottom-1">
               Training report - Session
             </h1>
-            {
-              formData && formData.event && (
-                <div className="lead-paragraph">
-                  {formData.event.data.eventId}
-                  :
-                  {' '}
-                  {formData.eventName}
-                </div>
-              )
-            }
+            <div className="lead-paragraph">
+              {formData.eventId}
+              :
+              {' '}
+              {formData?.event?.data?.eventName || ''}
+            </div>
           </div>
         </Grid>
       </Grid>
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <Modal
-            modalRef={modalRef}
-            heading="Are you sure you want to continue?"
-          >
-            <p>You will not be able to make changes once you save the session.</p>
-
-            <Button
-              type="submit"
-              className="margin-right-1"
-              onClick={() => onFormSubmit()}
-            >
-              Yes, continue
-            </Button>
-            <ModalToggleButton className="usa-button--subtle" closer modalRef={modalRef} data-focus="true">No, cancel</ModalToggleButton>
-          </Modal>
           <Navigator
+            deadNavigation={isSessionNavigationDead}
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
             key={currentPage}
@@ -506,15 +684,15 @@ export default function SessionForm({ match }) {
               pages: applicationPages,
               isAdminUser,
               event,
+              approvers: [],
             }}
             formData={formData}
             pages={applicationPages}
-            onFormSubmit={showSubmitModal}
+            onFormSubmit={onFormSubmit}
             onSave={onSave}
-            onResetToDraft={() => {}}
             isApprover={false}
             isPendingApprover={false}
-            onReview={() => {}}
+            onReview={onReview}
             errorMessage={errorMessage}
             updateErrorMessage={updateErrorMessage}
             savedToStorageTime={savedToStorageTime}
@@ -522,8 +700,8 @@ export default function SessionForm({ match }) {
             onSaveAndContinue={onSaveAndContinue}
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
-            formDataStatusProp="status"
-            hideSideNav={!isPoc && !isAdminUser}
+            formDataStatusProp="reviewStatus"
+            shouldAutoSave={false}
           />
         </FormProvider>
       </NetworkContext.Provider>
