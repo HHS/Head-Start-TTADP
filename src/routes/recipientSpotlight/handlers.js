@@ -31,8 +31,8 @@ export async function getRecipientSpotLight(req, res) {
 
     const userId = await currentUserId(req, res);
 
-    // Get user's read regions
-    const userReadRegions = await getUserReadRegions(userId);
+    // Get user's read regions (deduplicated)
+    const userReadRegions = [...new Set(await getUserReadRegions(userId))];
 
     // Extract requested regions from query
     // Support both region.in and region.in[] formats
