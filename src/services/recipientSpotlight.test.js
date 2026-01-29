@@ -600,7 +600,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_ID],
       );
 
@@ -635,7 +634,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_ID],
       );
 
@@ -655,7 +653,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_ID],
       );
       expect(result).toBeDefined();
@@ -672,7 +669,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_ID],
       );
 
@@ -690,7 +686,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_ID],
       );
 
@@ -708,7 +703,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_ID],
       );
 
@@ -726,7 +720,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_ID],
       );
 
@@ -746,7 +739,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        [],
         [REGION_ID],
       );
 
@@ -757,7 +749,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         2,
         100,
-        [],
         [REGION_ID],
       );
 
@@ -825,7 +816,6 @@ describe('recipientSpotlight service', () => {
           'ASC',
           0,
           100,
-          [],
           [REGION_ID],
         );
 
@@ -836,7 +826,6 @@ describe('recipientSpotlight service', () => {
           'DESC',
           0,
           100,
-          [],
           [REGION_ID],
         );
 
@@ -882,7 +871,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_ID],
       );
 
@@ -903,7 +891,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_ID],
       );
 
@@ -925,8 +912,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        ['New staff'],
         [REGION_ID],
+        ['New staff'],
       );
 
       expect(result).toHaveProperty('recipients');
@@ -952,8 +939,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        ['No TTA'],
         [REGION_ID],
+        ['No TTA'],
       );
 
       expect(result).toHaveProperty('recipients');
@@ -979,8 +966,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        ['New staff', 'No TTA'],
         [REGION_ID],
+        ['New staff', 'No TTA'],
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1010,8 +997,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        [], // empty filter
         [REGION_ID],
+        [], // empty filter
       );
 
       const resultDefault = await getRecipientSpotlightIndicators(
@@ -1020,8 +1007,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        [], // no filter
         [REGION_ID],
+        [], // no filter
       );
 
       // Both should return the same results
@@ -1037,8 +1024,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        ['Invalid Label', 'Another Invalid'],
         [REGION_ID],
+        ['Invalid Label', 'Another Invalid'],
       );
 
       const resultDefault = await getRecipientSpotlightIndicators(
@@ -1047,7 +1034,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        [],
         [REGION_ID],
       );
 
@@ -1063,8 +1049,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        ['New staff', 'Invalid Label'],
         [REGION_ID],
+        ['New staff', 'Invalid Label'],
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1084,8 +1070,8 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        ['New recipient'],
         [REGION_ID],
+        ['New recipient'],
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1347,7 +1333,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        [],
         [REGION_ID],
       );
 
@@ -1389,7 +1374,6 @@ describe('recipientSpotlight service', () => {
         'DESC',
         0,
         100,
-        [],
         [REGION_ID],
       );
 
@@ -1466,7 +1450,6 @@ describe('recipientSpotlight service', () => {
           'ASC',
           0,
           100,
-          [],
           [REGION_ID],
         );
 
@@ -1539,7 +1522,6 @@ describe('recipientSpotlight service', () => {
           'DESC',
           0,
           100,
-          [],
           [REGION_ID],
         );
 
@@ -1630,7 +1612,6 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [],
         [REGION_1, REGION_2],
       );
 

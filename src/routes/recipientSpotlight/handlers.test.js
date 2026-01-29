@@ -68,8 +68,8 @@ describe('recipientSpotlight handlers', () => {
         'asc',
         0,
         10,
-        [],
         ['1'],
+        [],
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -90,8 +90,8 @@ describe('recipientSpotlight handlers', () => {
         'asc',
         0,
         10,
-        [],
         ['1'],
+        [],
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -136,8 +136,8 @@ describe('recipientSpotlight handlers', () => {
         'desc',
         10,
         10,
-        [],
         ['1'],
+        [],
       );
     });
 
@@ -156,8 +156,8 @@ describe('recipientSpotlight handlers', () => {
         undefined,
         0,
         10,
-        [],
         ['1'],
+        [],
       );
     });
 
@@ -206,8 +206,8 @@ describe('recipientSpotlight handlers', () => {
         'asc',
         0,
         10,
-        [],
         ['1', '2', '3'],
+        [],
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
       expect(res.sendStatus).not.toHaveBeenCalledWith(403);

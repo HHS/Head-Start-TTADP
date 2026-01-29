@@ -42,8 +42,8 @@ export async function getRecipientSpotlightIndicators(
   direction,
   offset,
   limit,
-  indicatorsToInclude = [],
   regions = [],
+  indicatorsToInclude = [],
 ) {
   // Early return if no regions are provided
   if (!regions || regions.length === 0) {

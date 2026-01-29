@@ -84,8 +84,8 @@ export async function getRecipientSpotLight(req, res) {
       direction,
       parsedOffset,
       parsedLimit,
-      indicatorsToInclude,
       regionsArray,
+      indicatorsToInclude,
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);
