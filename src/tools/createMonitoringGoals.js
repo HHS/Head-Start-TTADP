@@ -27,6 +27,10 @@ const createMonitoringGoals = async () => {
     await sequelize.transaction(async (transaction) => {
       [goals] = await sequelize.query(`
       WITH
+      -- making a convenient single source for monitoring dates that
+      -- get used in the logic
+      -- just the start date at this point
+      monitoring_dates AS ( SELECT '2025-01-20'::date monitoring_start_date),
       -- Get the monitoring Goal template ID. Having this here makes
       -- most of the logic run anywhere without changes
       monitoring_template AS (
@@ -54,8 +58,12 @@ const createMonitoringGoals = async () => {
         ON mr."statusId" = mrs."statusId"
       JOIN "MonitoringFindingStatuses" mfs
         ON mf."statusId" = mfs."statusId"
+      CROSS JOIN monitoring_dates
       WHERE mfh."sourceDeletedAt" IS NULL
-        AND mr."reportDeliveryDate" > '2025-01-20'
+        AND (
+          mr."reportDeliveryDate" > monitoring_start_date
+          OR mr."reportDeliveryDate" IS NULL
+        )
       ORDER BY 1,mr."startDate" DESC, mr."sourceCreatedAt" DESC, mr.id DESC
       ),
       -- finding the latest close date for Monitoring Goals to optimize
@@ -73,14 +81,13 @@ const createMonitoringGoals = async () => {
       WHERE "newStatus" = 'Closed'
       ORDER BY 1,2,gsc."performedAt"
       ),
-      -- Ignore AOC findings if a Monitoring Goal was closed since the latest
+      -- Ignore any findings where a Monitoring Goal was closed since the latest
       -- review reporting the finding was delivered
-      ignoreable_aocs AS (
+      ignoreable_findings AS (
       SELECT fid ignoreable_fid
       FROM ordered_citation_reviews ocr
       JOIN "MonitoringReviewGrantees" mrg
         ON mrg."reviewId" = rid
-        AND finding_type IN ('Area of Concern','Concern')
       JOIN "Grants" gr
         ON mrg."grantNumber" = gr.number
       JOIN closed_monitoring_goals
@@ -88,17 +95,14 @@ const createMonitoringGoals = async () => {
       GROUP BY 1
       HAVING BOOL_OR(last_close > rdd)
       ),
-      -- find active status citations but ignore the AOCs we don't
+      -- find active status citations but ignore Findings we don't
       -- consider to truly be 'Active'
       active_citations AS (
-      SELECT mf."findingId" fid
-      FROM "MonitoringFindings" mf
-      JOIN "MonitoringFindingStatuses" mfs
-        ON mf."statusId" = mfs."statusId"
-      WHERE mfs.name IN ('Active', 'Elevated Deficiency')
-        AND mf."sourceDeletedAt" IS NULL
+      SELECT fid
+      FROM ordered_citation_reviews
+      WHERE finding_status IN ('Active', 'Elevated Deficiency')
       EXCEPT
-      SELECT ignoreable_fid FROM ignoreable_aocs
+      SELECT ignoreable_fid FROM ignoreable_findings
       ),
       -- union together active citations with those whose most recent linked
       -- review is not complete, yielding the list of citations on which TTA
