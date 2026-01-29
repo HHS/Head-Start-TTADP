@@ -21,3 +21,8 @@ This document is intended as an onboarding guide for new engineers as they creat
 - Use the USWDS utility classes rather than authoring new CSS whenever possible. (It is usually possible)
 - Avoid complicated nesting. One level should be the maximum, as deep nesting becomes unreadable almost immediately.
 - Prefer vanilla CSS over SCSS. Long term, we should consider abandoning SCSS as the platform offers us full access to all the features without needing to opt-in to a third party dependency. 
+
+### WYSIWYG Fields
+- We use a WYSIWYG libray called "React Draft" (example: @frontend/src/components/RichEditor.js)
+- When we use this component within our React Hook Form forms (our standard form library), it is vital that we disable features like autosave, as this can cause re-rendering and loss of text for users actively entering text in those fields. An example of this pattern is documented along with the helper function here: @frontend/src/utils/formRichTextEditorHelper.js
+
