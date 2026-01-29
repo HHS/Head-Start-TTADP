@@ -16,6 +16,25 @@ const INDICATOR_LABEL_TO_COLUMN = {
   FEI: 'FEI',
 };
 
+// Whitelist of allowed sortBy column names to prevent SQL injection
+const ALLOWED_SORT_COLUMNS = [
+  'recipientId',
+  'regionId',
+  'recipientName',
+  'lastTTA',
+  'childIncidents',
+  'deficiency',
+  'newRecipients',
+  'newStaff',
+  'noTTA',
+  'DRS',
+  'FEI',
+  'indicatorCount',
+];
+
+// Whitelist of allowed sort directions
+const ALLOWED_DIRECTIONS = ['ASC', 'DESC'];
+
 /* eslint-disable import/prefer-default-export */
 export async function getRecipientSpotlightIndicators(
   scopes,
@@ -110,6 +129,10 @@ export async function getRecipientSpotlightIndicators(
     type: QueryTypes.SELECT,
   });
   const totalRecipients = parseInt(totalRecipientsResult[0]?.totalRecipients || 0, 10);
+
+  // Validate and sanitize sortBy and direction to prevent SQL injection
+  const safeSortBy = ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : 'recipientName';
+  const safeDirection = ALLOWED_DIRECTIONS.includes(direction?.toUpperCase()) ? direction.toUpperCase() : 'ASC';
 
   // Build indicator WHERE clause for filtering by priority indicators
   let indicatorWhereClause = 'TRUE';
@@ -371,8 +394,8 @@ export async function getRecipientSpotlightIndicators(
       COUNT(*) OVER() AS "totalCount"
     FROM combined_indicators
     WHERE ${indicatorWhereClause}
-    ORDER BY "${sortBy || 'recipientName'}" ${direction || 'ASC'}${
-  (sortBy === 'indicatorCount' || sortBy === 'regionId') ? ', "recipientName" ASC' : ''
+    ORDER BY "${safeSortBy}" ${safeDirection}${
+  (safeSortBy === 'indicatorCount' || safeSortBy === 'regionId') ? ', "recipientName" ASC' : ''
 }
     ${hasGrantIds ? `LIMIT ${limit}` : ''}
     OFFSET ${offset}
