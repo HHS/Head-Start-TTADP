@@ -14,7 +14,7 @@ import useRequestSort from '../../../hooks/useRequestSort';
 
 export default function TrainingReportDashboard({ filters }) {
   const [sortConfig, setSortConfig] = useSessionSort({
-    sortBy: 'eventId',
+    sortBy: 'Event_ID',
     direction: 'desc',
     activePage: 1,
     offset: 0,
@@ -25,7 +25,6 @@ export default function TrainingReportDashboard({ filters }) {
   const {
     data,
     error,
-    loading,
   } = useFetch(
     { rows: [], count: 0 },
     () => getSessionReportsTable(sortConfig, filters),
@@ -79,7 +78,7 @@ export default function TrainingReportDashboard({ filters }) {
           <TrainingReportsTable
             data={data}
             title="Training Reports"
-            loading={loading}
+            loading={false}
             emptyMsg="No training reports found"
             requestSort={requestSort}
             sortConfig={sortConfig}

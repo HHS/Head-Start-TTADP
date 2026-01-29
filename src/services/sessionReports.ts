@@ -391,8 +391,10 @@ export async function getSessionReports(
     Session_name: 'sessionName',
     Session_start_date: 'startDate',
     Session_end_date: 'endDate',
-    'Event&nbsp;ID': 'eventId',
+    Event_ID: 'eventId',
     Event_title: 'eventName',
+    Supporting_goals: 'supportingGoals',
+    Topics: 'topics',
   };
 
   const resolvedSortBy = sortByAliases[sortBy] || sortBy;
@@ -405,6 +407,8 @@ export async function getSessionReports(
     endDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'endDate\' AS DATE)')],
     eventId: ['event', sequelize.literal('data->>\'eventId\'::text')],
     eventName: ['event', sequelize.literal('data->>\'eventName\'::text')],
+    supportingGoals: [sequelize.literal('(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)')],
+    topics: [sequelize.literal('("SessionReportPilot".data->\'objectiveTopics\'->>0)::text')],
   };
 
   // Use the requested sort column or default to id descending

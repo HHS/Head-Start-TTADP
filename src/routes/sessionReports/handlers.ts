@@ -69,7 +69,7 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
       },
       {
         key: 'duration',
-        header: 'duration',
+        header: 'Duration (hours)',
       },
     ],
   };

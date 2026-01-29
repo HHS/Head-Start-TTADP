@@ -68,7 +68,7 @@ const TrainingReportsTable = ({
 
   const tabularData = useMemo(() => data.rows.map((r) => ({
     id: r.id,
-    heading: <Link to={`/training-report/${idForLink(r.eventId)}`}>{r.eventId}</Link>,
+    heading: <Link to={`/training-report/view/${idForLink(r.eventId)}?back_link=hide`}>{r.eventId}</Link>,
     data: [
       {
         title: 'Event title',
@@ -110,7 +110,7 @@ const TrainingReportsTable = ({
     actions: [
       {
         label: 'View',
-        onClick: () => history.push(`/training-report/view/${idForLink(r.eventId)}`),
+        onClick: () => history.push(`/training-report/view/${idForLink(r.eventId)}?back_link=hide`),
       },
       {
         label: 'Export',
@@ -154,7 +154,7 @@ const TrainingReportsTable = ({
             'Topics',
           ]}
           data={tabularData}
-          firstHeading="Event&nbsp;ID"
+          firstHeading="Event ID"
           enableCheckboxes
           checkboxes={reportCheckboxes}
           setCheckboxes={setReportCheckboxes}

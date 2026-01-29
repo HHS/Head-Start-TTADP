@@ -57,7 +57,7 @@ export type GetSessionReportsParams = {
   format?: 'json' | 'csv';
 };
 
-type SessionReportSortSortMapEntryKey = 'id' | 'sessionName' | 'startDate' | 'endDate' | 'eventId' | 'eventName';
+type SessionReportSortSortMapEntryKey = 'id' | 'sessionName' | 'startDate' | 'endDate' | 'eventId' | 'eventName' | 'supportingGoals' | 'topics';
 
 export type SessionReportTableRowSortMapEntry = readonly [
   string,
