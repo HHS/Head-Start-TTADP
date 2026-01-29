@@ -6,6 +6,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import CitationDrawerContent from '../CitationDrawerContent';
+import AppLoadingContext from '../../AppLoadingContext';
 
 describe('CitationDrawerContent', () => {
   const citationUrl = '/api/citations/text?citationIds=citation1&citationIds=citation2';
@@ -22,7 +23,11 @@ describe('CitationDrawerContent', () => {
   afterEach(() => fetchMock.restore());
 
   const renderTest = () => {
-    render(<CitationDrawerContent citations={['citation1', 'citation2']} />);
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <CitationDrawerContent citations={['citation1', 'citation2']} />
+      </AppLoadingContext.Provider>,
+    );
   };
 
   it('fetches citations', async () => {

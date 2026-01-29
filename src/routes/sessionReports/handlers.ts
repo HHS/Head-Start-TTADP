@@ -40,6 +40,10 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
         header: 'Event Title',
       },
       {
+        key: 'goalTemplates',
+        header: 'Supporting Goals',
+      },
+      {
         key: 'sessionName',
         header: 'Session Name',
       },
@@ -55,10 +59,39 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
         key: 'objectiveTopics',
         header: 'Topics',
       },
+      {
+        key: 'recipients',
+        header: 'Recipients',
+      },
+      {
+        key: 'participants',
+        header: 'Recipient Participants',
+      },
+      {
+        key: 'duration',
+        header: 'Duration (hours)',
+      },
     ],
   };
 
-  const csvData = stringify(rows, options);
+  // Transform goalTemplates array to comma-separated string of standard values
+  const transformedRows = rows.map((row) => ({
+    ...row,
+    objectiveTopics: Array.isArray(row.objectiveTopics)
+      ? row.objectiveTopics.join(', ')
+      : '',
+    goalTemplates: Array.isArray(row.goalTemplates)
+      ? row.goalTemplates.map((gt) => gt.standard).join(', ')
+      : '',
+    recipients: Array.isArray(row.recipients)
+      ? row.recipients.map((r) => r.label).join(', ')
+      : '',
+    participants: Array.isArray(row.participants)
+      ? row.participants.join(', ')
+      : '',
+  }));
+
+  const csvData = stringify(transformedRows, options);
 
   res.attachment('training-reports.csv');
   return res.send(`\ufeff${csvData}`);
@@ -271,12 +304,25 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
 
     // Build params object for service
     // Service layer filters will handle region filtering based on userReadRegions
+    // For CSV export, don't apply limit/offset to get all rows
+
+    let offsetValue = offset ? Number(offset) : 0;
+    let limitValue: number | 'all' = limit ? Number(limit) : 10;
+
+    const formatValue = format ? format.toLowerCase() : 'json';
+    const isCSV = format === 'csv';
+
+    if (isCSV) {
+      offsetValue = 0;
+      limitValue = 'all';
+    }
+
     const serviceParams = {
       sortBy: sortBy || 'id',
       sortDir: sortDir || 'DESC',
-      offset: offset ? Number(offset) : 0,
-      limit: limit ? Number(limit) : 10,
-      format: (format === 'csv' ? 'csv' : 'json') as 'json' | 'csv',
+      offset: offsetValue,
+      limit: limitValue,
+      format: formatValue as 'json' | 'csv',
       ...filterParams,
     };
 

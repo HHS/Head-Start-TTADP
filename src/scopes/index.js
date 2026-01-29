@@ -3,6 +3,7 @@ import { activityReportsFiltersToScopes as activityReport } from './activityRepo
 import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
 import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
 import { collabReportFiltersToScopes as collabReport } from './collabReports';
+import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
 import { getValidTopicsSet } from './utils';
@@ -14,6 +15,7 @@ const models = {
   trainingReport,
   communicationLog,
   collabReport,
+  sessionReport,
 };
 
 /**

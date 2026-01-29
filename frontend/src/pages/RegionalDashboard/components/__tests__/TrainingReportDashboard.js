@@ -5,6 +5,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import TrainingReportDashboard from '../TrainingReportDashboard';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 describe('Training report Dashboard page', () => {
   const hoursOfTrainingUrl = '/api/widgets/trHoursOfTrainingByNationalCenter';
@@ -31,7 +32,11 @@ describe('Training report Dashboard page', () => {
   afterEach(() => fetchMock.restore());
 
   const renderTest = () => {
-    render(<TrainingReportDashboard />);
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <TrainingReportDashboard />
+      </AppLoadingContext.Provider>,
+    );
   };
 
   it('renders and fetches data', async () => {

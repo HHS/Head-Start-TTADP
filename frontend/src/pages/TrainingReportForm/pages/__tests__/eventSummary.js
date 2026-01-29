@@ -16,6 +16,7 @@ import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 import EventSummary from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const { ADMIN, READ_WRITE_TRAINING_REPORTS } = SCOPE_IDS;
 
@@ -93,24 +94,26 @@ describe('eventSummary', () => {
       hookForm.getValues = () => defaultFormValues;
 
       return (
-        <FormProvider {...hookForm}>
-          <UserContext.Provider value={{ user }}>
-            <NetworkContext.Provider value={{ connectionActive: true }}>
-              <EventSummary
-                additionalData={additionalData}
-                reportId={1}
-                isAppLoading={false}
-                onFormSubmit={jest.fn()}
-                onSaveDraft={onSaveDraft}
-                onUpdatePage={jest.fn()}
-                weAreAutoSaving={false}
-                datePickerKey="key"
-                Alert={() => <></>}
-                showSubmitModal={jest.fn()}
-              />
-            </NetworkContext.Provider>
-          </UserContext.Provider>
-        </FormProvider>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+          <FormProvider {...hookForm}>
+            <UserContext.Provider value={{ user }}>
+              <NetworkContext.Provider value={{ connectionActive: true }}>
+                <EventSummary
+                  additionalData={additionalData}
+                  reportId={1}
+                  isAppLoading={false}
+                  onFormSubmit={jest.fn()}
+                  onSaveDraft={onSaveDraft}
+                  onUpdatePage={jest.fn()}
+                  weAreAutoSaving={false}
+                  datePickerKey="key"
+                  Alert={() => <></>}
+                  showSubmitModal={jest.fn()}
+                />
+              </NetworkContext.Provider>
+            </UserContext.Provider>
+          </FormProvider>
+        </AppLoadingContext.Provider>
       );
     };
 
