@@ -106,13 +106,15 @@ export async function getRecipientSpotlightIndicators(
   // Query total distinct recipient-region pairs for the selected regions
   // This counts all recipients with active/recently-inactive grants in the regions,
   // regardless of other scope filters, to get the true denominator for the percentage
+  const hasRegions = regions.length > 0;
+  const regionFilter = hasRegions ? 'gr."regionId" IN (:regions)' : 'TRUE';
   const totalRecipientsResult = await sequelize.query(`
     SELECT COUNT(*) AS "totalRecipients"
     FROM (
       SELECT DISTINCT r.id, gr."regionId"
       FROM "Recipients" r
       JOIN "Grants" gr ON r.id = gr."recipientId"
-      WHERE gr."regionId" IN (:regions)
+      WHERE ${regionFilter}
         AND (
           gr.status = 'Active'
           OR (
@@ -123,7 +125,7 @@ export async function getRecipientSpotlightIndicators(
     ) AS recipient_regions
   `, {
     replacements: {
-      regions: regions.map((r) => parseInt(r, 10)),
+      ...(hasRegions && { regions: regions.map((r) => parseInt(r, 10)) }),
       cutoffDate: INACTIVATION_CUT_OFF,
     },
     type: QueryTypes.SELECT,

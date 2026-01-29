@@ -40,25 +40,26 @@ export async function getRecipientSpotLight(req, res) {
     // region.in is used by manual filter construction (RecipientSpotlight component)
     const requestedRegions = req.query['region.in[]'] || req.query['region.in'];
 
-    // Check if user has access to requested regions
+    // Determine which regions to use:
+    // If no regions requested, default to all user's read regions
+    // If regions requested, validate user has access to all of them
+    let regionsArray;
     if (!requestedRegions) {
-      // No regions requested - return forbidden
-      // User must explicitly request regions they have access to
-      res.sendStatus(httpCodes.FORBIDDEN);
-      return;
-    }
+      // No regions requested - use all user's read regions
+      regionsArray = userReadRegions.map((r) => r.toString());
+    } else {
+      // Ensure requestedRegions is an array
+      regionsArray = Array.isArray(requestedRegions) ? requestedRegions : [requestedRegions];
 
-    // Ensure requestedRegions is an array
-    const regionsArray = Array.isArray(requestedRegions) ? requestedRegions : [requestedRegions];
+      // Check if all requested regions are in user's allowed regions
+      const hasAccess = regionsArray.every(
+        (region) => userReadRegions.includes(parseInt(region, DECIMAL_BASE)),
+      );
 
-    // Check if all requested regions are in user's allowed regions
-    const hasAccess = regionsArray.every(
-      (region) => userReadRegions.includes(parseInt(region, DECIMAL_BASE)),
-    );
-
-    if (!hasAccess) {
-      res.sendStatus(httpCodes.FORBIDDEN);
-      return;
+      if (!hasAccess) {
+        res.sendStatus(httpCodes.FORBIDDEN);
+        return;
+      }
     }
 
     const { grant: scopes } = await filtersToScopes(
