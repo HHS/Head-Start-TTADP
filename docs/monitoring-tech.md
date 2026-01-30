@@ -106,7 +106,9 @@ A new goal is created if:
 * The review is Complete
 * It is of a type like 'AIAN-DEF', 'RAN', 'FA-1', 'Follow-up', 'FA1-FR',
           'FA-2', 'FA2-CR', 'Special'
-* There is at least one finding with a status name of 'Active' linked to the grant
+* There is at least one valid 'Active' Finding linked to the grant
+  * Findings are considered the be active if they have an 'Active' or 'Elevated Deficiency' status OR if their most recent follow-up review is not yet delivered.
+  * Because 'Area of Concern' (AOC) Findings mostly remain in an 'Active' status indefinitely, they will not be considered active if a Monitoring Goal has been closed since the Finding's most recent review's reportDeliveryDate.
 * The grant has no existing goal linked to the Monitoring goal template
 
 In short:

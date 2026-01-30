@@ -110,8 +110,8 @@ describe('createMonitoringGoals', () => {
   let grantBeingMerged11A;
   let grantBeingMerged11B;
   let grantBeingMerged11C;
-  // Make sure if a monitoring goal is closed but meets the criteria for a finding its re-open'd.
-  let grantReopenMonitoringGoal12;
+  // Make sure we do NOT create a new goal if the existing goal was closed after the review was delivered.
+  let grantWithGoalClosedAfterDelivery12;
   // Make sure we close a monitoring goal if it has no active citations AND un-approved reports.
   let grantClosedMonitoringGoal13;
   let grantToNotCloseMonitoringGoal14;
@@ -137,7 +137,7 @@ describe('createMonitoringGoals', () => {
   const grantBeingMergedNumber11A = uuidv4();
   const grantBeingMergedNumber11B = uuidv4();
   const grantBeingMergedNumber11C = uuidv4();
-  const grantReopenMonitoringGoalNumber12 = uuidv4();
+  const grantWithGoalClosedAfterDeliveryNumber12 = uuidv4();
   const grantClosedMonitoringGoalNumber13 = uuidv4();
   const grantToNotCloseMonitoringGoalNumber14 = uuidv4();
   const grantWithApprovedReportsButOpenCitationsNumber15 = uuidv4();
@@ -146,10 +146,9 @@ describe('createMonitoringGoals', () => {
   const grantWithNonMonitoringGoalToCloseNumber17 = uuidv4();
   const grantWithOpenObjectivesNumber18 = uuidv4();
 
-  let goalForReopen12;
+  let closedGoalAfterDelivery12;
   let goalForClose13;
 
-  let nonMonitoringGoalForReopen16;
   let nonMonitoringGoalForClose17;
 
   let snapShot;
@@ -350,7 +349,7 @@ describe('createMonitoringGoals', () => {
       {
         // 12
         id: faker.datatype.number({ min: 9999 }),
-        number: grantReopenMonitoringGoalNumber12,
+        number: grantWithGoalClosedAfterDeliveryNumber12,
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -435,7 +434,7 @@ describe('createMonitoringGoals', () => {
       grantBeingMerged11A,
       grantBeingMerged11B,
       grantBeingMerged11C,
-      grantReopenMonitoringGoal12,
+      grantWithGoalClosedAfterDelivery12,
       grantClosedMonitoringGoal13,
       grantToNotCloseMonitoringGoal14,
       grantWithApprovedReportsButOpenCitations15,
@@ -535,7 +534,7 @@ describe('createMonitoringGoals', () => {
     const grantBeingMergedNumberGranteeId11A = uuidv4();
     const grantBeingMergedNumberGranteeId11B = uuidv4();
     const grantBeingMergedNumberGranteeId11C = uuidv4();
-    const grantReopenMonitoringGoalNumberGranteeId12 = uuidv4();
+    const grantWithGoalClosedAfterDeliveryGranteeId12 = uuidv4();
     const grantClosedMonitoringGoalNumberGranteeId13 = uuidv4();
     const grantToNotCloseMonitoringGoalNumberGranteeId14 = uuidv4();
     const grantWithApprovedReportsButOpenCitationsNumberGranteeId15 = uuidv4();
@@ -560,7 +559,7 @@ describe('createMonitoringGoals', () => {
     const grantBeingMergedNumberReviewId11A = uuidv4();
     const grantBeingMergedNumberReviewId11B = uuidv4();
     const grantBeingMergedNumberReviewId11C = uuidv4();
-    const grantReopenMonitoringGoalNumberReviewId12 = uuidv4();
+    const grantWithGoalClosedAfterDeliveryReviewId12 = uuidv4();
     const grantClosedMonitoringGoalNumberReviewId13 = uuidv4();
     const grantToNotCloseMonitoringGoalNumberReviewId14 = uuidv4();
     const grantWithApprovedReportsButOpenCitationsNumberReviewId15 = uuidv4();
@@ -742,9 +741,9 @@ describe('createMonitoringGoals', () => {
       {
         // 12
         id: faker.datatype.number({ min: 999999 }),
-        grantNumber: grantReopenMonitoringGoalNumber12,
-        reviewId: grantReopenMonitoringGoalNumberReviewId12,
-        granteeId: grantReopenMonitoringGoalNumberGranteeId12,
+        grantNumber: grantWithGoalClosedAfterDeliveryNumber12,
+        reviewId: grantWithGoalClosedAfterDeliveryReviewId12,
+        granteeId: grantWithGoalClosedAfterDeliveryGranteeId12,
         createTime: new Date(),
         updateTime: new Date(),
         updateBy: 'Support Team',
@@ -942,7 +941,7 @@ describe('createMonitoringGoals', () => {
         sourceUpdatedAt: new Date(),
       },
       {
-        // 6
+        // 6 - Non-complete reviews don't have reportDeliveryDate in real data
         reviewId: grantThatsMonitoringReviewStatusIsNotCompleteNumberReviewId6,
         contentId: faker.datatype.uuid(),
         statusId: statusId6,
@@ -950,7 +949,7 @@ describe('createMonitoringGoals', () => {
         startDate: new Date(),
         endDate: new Date(),
         reviewType: 'FA-2',
-        reportDeliveryDate: new Date(),
+        reportDeliveryDate: null,
         reportAttachmentId: faker.datatype.uuid(),
         outcome: faker.random.words(5),
         hash: faker.datatype.uuid(),
@@ -1086,15 +1085,15 @@ describe('createMonitoringGoals', () => {
         sourceUpdatedAt: new Date(),
       },
       {
-        // 12
-        reviewId: grantReopenMonitoringGoalNumberReviewId12,
+        // 12 - reportDeliveryDate is before goal closure, so finding should be ignored
+        reviewId: grantWithGoalClosedAfterDeliveryReviewId12,
         contentId: uuidv4(),
         statusId: status12,
         name: faker.random.words(3),
         startDate: new Date(),
         endDate: new Date(),
         reviewType: 'RAN',
-        reportDeliveryDate: new Date(),
+        reportDeliveryDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
         reportAttachmentId: uuidv4(),
         outcome: faker.random.words(5),
         hash: uuidv4(),
@@ -1568,7 +1567,7 @@ describe('createMonitoringGoals', () => {
       },
       {
         // 12
-        reviewId: grantReopenMonitoringGoalNumberReviewId12,
+        reviewId: grantWithGoalClosedAfterDeliveryReviewId12,
         findingHistoryId: uuidv4(),
         findingId: findingId12,
         statusId: status12,
@@ -2199,7 +2198,7 @@ describe('createMonitoringGoals', () => {
       {
         // 12
         findingId: findingId12,
-        granteeId: grantReopenMonitoringGoalNumberGranteeId12,
+        granteeId: grantWithGoalClosedAfterDeliveryGranteeId12,
         statusId: status12,
         findingType: faker.random.word(),
         source: faker.random.word(),
@@ -2338,11 +2337,12 @@ describe('createMonitoringGoals', () => {
       createdVia: 'monitoring',
     });
 
-    // Create a monitoring goal for grantReopenMonitoringGoalNumberReviewId12 in case 12 thats closed and should be set to Not started.
-    goalForReopen12 = await Goal.create({
+    // Create a closed monitoring goal for case 12; since it was closed after the review
+    // was delivered, no new goal should be created (finding is considered addressed).
+    closedGoalAfterDelivery12 = await Goal.create({
       id: faker.datatype.number({ min: 9999 }),
       name: goalTemplateName,
-      grantId: grantReopenMonitoringGoal12.id,
+      grantId: grantWithGoalClosedAfterDelivery12.id,
       goalTemplateId: goalTemplate.id,
       status: 'Closed',
       createdVia: 'monitoring',
@@ -2358,16 +2358,7 @@ describe('createMonitoringGoals', () => {
       createdVia: 'monitoring',
     });
 
-    // Goals that should NOT be opened or closed.
-    nonMonitoringGoalForReopen16 = await Goal.create({
-      id: faker.datatype.number({ min: 9999 }),
-      name: goalTemplateName,
-      grantId: grantWithNonMonitoringGoalToOpen16.id,
-      goalTemplateId: goalTemplate.id,
-      createdVia: 'activityReport',
-      status: 'Closed',
-    });
-
+    // Goal that should NOT be closed (createdVia != 'monitoring').
     nonMonitoringGoalForClose17 = await Goal.create({
       id: faker.datatype.number({ min: 9999 }),
       name: goalTemplateName,
@@ -2677,41 +2668,13 @@ describe('createMonitoringGoals', () => {
     expect(goalChangeStatus11C.userId).toBeNull();
     expect(goalChangeStatus11C.userName).toBeNull();
 
-    // CASE 12: Create a new monitoring goal when an existing one is closed; keep old closed.
-    const grant12Goals = await Goal.findAll({ where: { grantId: grantReopenMonitoringGoal12.id } });
-    expect(grant12Goals.length).toBe(2);
-    // Old closed goal remains closed.
-    const closedOldGoal = grant12Goals.find((g) => g.id === goalForReopen12.id);
-    expect(closedOldGoal).toBeTruthy();
-    expect(closedOldGoal.status).toBe('Closed');
-    // New goal is created in Not Started using the monitoring template.
-    const newMonitoringGoal = grant12Goals.find((g) => g.id !== goalForReopen12.id
-      && g.goalTemplateId === goalTemplate.id
-      && g.createdVia === 'monitoring');
-    expect(newMonitoringGoal).toBeTruthy();
-    expect(newMonitoringGoal.status).toBe('Not Started');
-    // Ensure initial GoalStatusChange exists for the newly created goal (creation event).
-    const goalChangeStatus12New = await GoalStatusChange.findOne({
-      where: {
-        goalId: newMonitoringGoal.id,
-        oldStatus: null,
-        newStatus: 'Not Started',
-        reason: 'Goal created',
-        context: 'Creation',
-      },
-    });
-    expect(goalChangeStatus12New).not.toBeNull();
-    expect(goalChangeStatus12New.userId).toBeNull();
-    expect(goalChangeStatus12New.userName).toBeNull();
-    // Ensure we did NOT change status on the old closed goal.
-    const noReopenOld = await GoalStatusChange.findOne({
-      where: {
-        goalId: goalForReopen12.id,
-        oldStatus: 'Closed',
-        newStatus: 'Not Started',
-      },
-    });
-    expect(noReopenOld).toBeNull();
+    // CASE 12: Does NOT create a new monitoring goal when finding's review was delivered
+    // before the existing goal was closed (finding is ignored as already addressed).
+    const grant12Goals = await Goal.findAll({ where: { grantId: grantWithGoalClosedAfterDelivery12.id } });
+    expect(grant12Goals.length).toBe(1);
+    // Only the existing closed goal should remain.
+    expect(grant12Goals[0].id).toBe(closedGoalAfterDelivery12.id);
+    expect(grant12Goals[0].status).toBe('Closed');
 
     // CASE 13: Does not auto-close monitoring goal that no longer has any active citations.
     const grant13Goals = await Goal.findAll({ where: { grantId: grantClosedMonitoringGoal13.id } });
@@ -2752,22 +2715,13 @@ describe('createMonitoringGoals', () => {
     expect(grant15Goals[0].goalTemplateId).toBe(goalTemplate.id);
     expect(grant15Goals[0].status).toBe('Not started');
 
-    // CASE 16 & 17: We should not open or close goals without createdVia='monitoring'
+    // CASE 16: Creates a monitoring goal for a grant with active findings
     const grant16Goals = await Goal.findAll({ where: { grantId: grantWithNonMonitoringGoalToOpen16.id } });
-    expect(grant16Goals.length).toBe(2);
+    expect(grant16Goals.length).toBe(1);
+    expect(grant16Goals[0].goalTemplateId).toBe(goalTemplate.id);
+    expect(grant16Goals[0].status).toBe('Not Started');
 
-    // Assert of the two goals one is closed one is open for the same grant. The one that is closed should have createdVia activityReport the one that is open should have created via monitoring
-    const closedMonitoringGoal = grant16Goals.find((goal) => goal.status === 'Closed');
-    const openMonitoringGoal = grant16Goals.find((goal) => goal.status === 'Not Started');
-    expect(closedMonitoringGoal).not.toBeNull();
-    expect(closedMonitoringGoal.createdVia).toBe('activityReport');
-    expect(closedMonitoringGoal.goalTemplateId).toBe(goalTemplate.id);
-    expect(closedMonitoringGoal.grantId).toBe(grantWithNonMonitoringGoalToOpen16.id);
-    expect(openMonitoringGoal).not.toBeNull();
-    expect(openMonitoringGoal.createdVia).toBe('monitoring');
-    expect(openMonitoringGoal.grantId).toBe(grantWithNonMonitoringGoalToOpen16.id);
-    expect(openMonitoringGoal.goalTemplateId).toBe(goalTemplate.id);
-
+    // CASE 17: Existing goal remains unchanged
     const grant17Goals = await Goal.findAll({ where: { grantId: grantWithNonMonitoringGoalToClose17.id } });
     expect(grant17Goals.length).toBe(1);
     expect(grant17Goals[0].status).toBe('Not started');
