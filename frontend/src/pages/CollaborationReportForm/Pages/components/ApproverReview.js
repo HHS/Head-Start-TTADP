@@ -80,7 +80,7 @@ export default function ApproverReview({
             </Dropdown>
           </FormItem>
 
-          {(status === APPROVER_STATUSES.NEEDS_ACTION) && (
+          {(status === APPROVER_STATUSES.NEEDS_ACTION || hasReviewNote) && (
           <Fieldset className="smart-hub--report-legend margin-bottom-4 smart-hub--report-legend__no-legend-margin-top">
             <Label htmlFor="note">Add manager notes</Label>
             <div className="margin-top-1">
