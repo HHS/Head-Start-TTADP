@@ -152,7 +152,8 @@ export async function getRecipientSpotlightIndicators(
   const safeDirection = ALLOWED_DIRECTIONS.includes(direction?.toUpperCase()) ? direction.toUpperCase() : 'ASC';
 
   // Build indicator WHERE clause for filtering by priority indicators
-  let indicatorWhereClause = 'TRUE';
+  // Default to only showing recipients with at least one indicator
+  let indicatorWhereClause = '"indicatorCount" > 0';
 
   if (indicatorsToInclude.length > 0) {
     const includeConditions = indicatorsToInclude
