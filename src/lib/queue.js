@@ -106,20 +106,21 @@ export function removeQueueEventHandlers(
   if (rejectionListener) process.removeListener('unhandledRejection', rejectionListener);
 }
 
-// Close out the queue and remove handlers
+// Define the handlers so they can be added and removed
 function handleShutdown(queue) {
   return () => {
-    auditLogger.info('Shutting down, closing queue...');
-    queue
-      .close()
-      .then(() => {
-        removeQueueEventHandlers(queue);
-        process.exit(0);
-      })
-      .catch((err) => {
-        auditLogger.error('Failed when closing queue: ', err);
-        process.exit(1);
-      });
+    auditLogger.error(
+      'Shutting down, but queue closing is disabled for now...',
+    );
+    // queue.close().then(() => {
+    //   auditLogger.error('Queue closed successfully.');
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(0);
+    // }).catch((err) => {
+    //   auditLogger.error('Failed to close the queue:', err);
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // });
   };
 }
 
