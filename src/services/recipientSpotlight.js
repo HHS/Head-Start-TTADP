@@ -42,7 +42,7 @@ export async function getRecipientSpotlightIndicators(
   direction,
   offset,
   limit,
-  regions = [],
+  regions,
   indicatorsToInclude = [],
 ) {
   // Early return if no regions are provided
@@ -211,7 +211,7 @@ export async function getRecipientSpotlightIndicators(
     FROM recipients
     JOIN "Grants" gr
       ON rid = gr."recipientId"
-    WHERE deleted IS NULL OR NOT deleted
+    WHERE gr.deleted IS NULL OR NOT gr.deleted
     ),
     -- Select all the potentially-relevant reviews
     -- for early filtering of monitoring datasets
@@ -439,8 +439,8 @@ export async function getRecipientSpotlightIndicators(
     recipients,
     count: totalCount,
     overview: {
-      numRecipients: totalCount.toString(),
-      totalRecipients: totalRecipients.toString(),
+      numRecipients: totalCount.toString(), // This is the total number of cards (recipient:region).
+      totalRecipients: totalRecipients.toString(), // This is the total number of recipient:region for denom.
       recipientPercentage: totalRecipients > 0
         ? `${Math.round((totalCount / totalRecipients) * 100)}%`
         : '0%',
