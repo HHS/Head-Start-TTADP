@@ -66,8 +66,10 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         'name',
         'asc',
-        '0',
-        undefined,
+        0,
+        10,
+        ['1'],
+        [],
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -86,8 +88,10 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         'name',
         'asc',
-        '0',
-        undefined,
+        0,
+        10,
+        ['1'],
+        [],
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -130,8 +134,10 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         'date',
         'desc',
-        '10',
-        undefined,
+        10,
+        10,
+        ['1'],
+        [],
       );
     });
 
@@ -148,8 +154,10 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         undefined,
         undefined,
-        '0',
-        undefined,
+        0,
+        10,
+        ['1'],
+        [],
       );
     });
 
@@ -181,7 +189,7 @@ describe('recipientSpotlight handlers', () => {
       expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
     });
 
-    it('should return 403 FORBIDDEN when no region is specified in the request', async () => {
+    it('should default to all user read regions when no region is specified in the request', async () => {
       req.query = {
         'recipientId.in': '456',
         sortBy: 'name',
@@ -191,8 +199,18 @@ describe('recipientSpotlight handlers', () => {
 
       await getRecipientSpotLight(req, res);
 
-      expect(res.sendStatus).toHaveBeenCalledWith(403);
-      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+      // Should use all user's read regions (1, 2, 3) as strings
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'name',
+        'asc',
+        0,
+        10,
+        ['1', '2', '3'],
+        [],
+      );
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+      expect(res.sendStatus).not.toHaveBeenCalledWith(403);
     });
 
     it('should allow access when user requests multiple regions they have access to', async () => {
