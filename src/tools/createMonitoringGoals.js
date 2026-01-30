@@ -38,7 +38,7 @@ const createMonitoringGoals = async () => {
       -- making a convenient single source for monitoring dates that
       -- get used in the logic
       -- just the start date at this point
-      monitoring_dates AS ( SELECT '2025-01-20'::date monitoring_start_date),
+      monitoring_dates AS ( SELECT '${cutOffDate}'::date monitoring_start_date),
       -- Get the monitoring Goal template ID. Having this here makes
       -- most of the logic run anywhere without changes
       monitoring_template AS (
@@ -52,11 +52,19 @@ const createMonitoringGoals = async () => {
       ordered_citation_reviews AS (
       SELECT DISTINCT ON (mf."findingId")
         mf."findingId" fid,
-        mf."findingType" finding_type,
+        CASE
+          WHEN mfh.determination = 'Concern' THEN 'Area of Concern'
+          WHEN mfh.determination IS NOT NULL THEN mfh.determination
+          ELSE mf."findingType"
+        END AS finding_type,
         mfs.name finding_status,
         mfh."reviewId" rid,
         mrs.name review_status,
-        mr."reportDeliveryDate" rdd
+        mr."reviewType" review_type,
+        mr."reportDeliveryDate" rdd,
+        -- get the latest reportDeliveryDate from any delivered review for this finding
+        -- (needed for ignoreable_findings since most recent review may be In Progress with NULL rdd)
+        MAX(mr."reportDeliveryDate") OVER (PARTITION BY mf."findingId") last_rdd
       FROM "MonitoringFindings" mf
       JOIN "MonitoringFindingHistories" mfh
         ON mf."findingId" = mfh."findingId"
@@ -75,9 +83,9 @@ const createMonitoringGoals = async () => {
       ORDER BY 1,mr."startDate" DESC, mr."sourceCreatedAt" DESC, mr.id DESC
       ),
       -- finding the latest close date for Monitoring Goals to optimize
-      -- query speed for ignoreable_aocs
+      -- query speed for ignoreable_findings
       closed_monitoring_goals AS (
-      SELECT DISTINCT ON (g.id)
+      SELECT DISTINCT ON (g."grantId")
         g.id gid,
         g."grantId" grid,
         gsc."performedAt" last_close
@@ -87,7 +95,7 @@ const createMonitoringGoals = async () => {
       JOIN "GoalStatusChanges" gsc
         ON g.id = gsc."goalId"
       WHERE "newStatus" = 'Closed'
-      ORDER BY 1,2,gsc."performedAt"
+      ORDER BY 2,gsc."performedAt" DESC
       ),
       -- Ignore any findings where a Monitoring Goal was closed since the latest
       -- review reporting the finding was delivered
@@ -101,7 +109,7 @@ const createMonitoringGoals = async () => {
       JOIN closed_monitoring_goals
         ON gr.id = grid
       GROUP BY 1
-      HAVING BOOL_OR(last_close > rdd)
+      HAVING BOOL_OR(last_close > last_rdd)
       ),
       -- find active status citations but ignore Findings we don't
       -- consider to truly be 'Active'
@@ -113,49 +121,42 @@ const createMonitoringGoals = async () => {
       SELECT ignoreable_fid FROM ignoreable_findings
       ),
       -- union together active citations with those whose most recent linked
-      -- review is not complete, yielding the list of citations on which TTA
-      -- might still be in progress
+      -- review hasn't been delivered, yielding the list of citations on which
+      -- TTA might still be in progress
       open_citations AS (
       SELECT fid FROM active_citations
       UNION
       SELECT fid FROM ordered_citation_reviews
-      WHERE review_status != 'Complete'
+      WHERE rdd IS NULL
       ),
       grants_needing_goal AS (
       SELECT
         grta."activeGrantId" "grantId"
-      FROM "Grants" gr
+      FROM open_citations oc
+      JOIN ordered_citation_reviews ocr
+        ON oc.fid = ocr.fid
+      JOIN "MonitoringReviewGrantees" mrg
+        ON mrg."reviewId" = ocr.rid
+      JOIN "Grants" gr
+        ON gr.number = mrg."grantNumber"
       JOIN "GrantRelationshipToActive" grta
         ON gr.id = grta."grantId"
         AND grta."activeGrantId" IS NOT NULL
-      JOIN "MonitoringReviewGrantees" mrg
-        ON gr.number = mrg."grantNumber"
-      JOIN "MonitoringReviews" mr
-        ON mrg."reviewId" = mr."reviewId"
-      JOIN "MonitoringReviewStatuses" mrs
-        ON mr."statusId" = mrs."statusId"
-      JOIN "MonitoringFindingHistories" mfh
-        ON mr."reviewId" = mfh."reviewId"
-      JOIN open_citations
-        ON mfh."findingId" = fid
       JOIN "MonitoringFindingGrants" mfg
-        ON fid = mfg."findingId"
+        ON oc.fid = mfg."findingId"
         AND mrg."granteeId" = mfg."granteeId"
       LEFT JOIN "Goals" g
-        ON (
-          grta."grantId" = g."grantId"
-          OR
-          grta."activeGrantId" = g."grantId"
-        )
+        ON (grta."grantId" = g."grantId" OR grta."activeGrantId" = g."grantId")
         AND g."goalTemplateId" = (SELECT monitoring_gtid FROM monitoring_template)
         AND g."deletedAt" IS NULL
         AND g.status != 'Closed'
       JOIN "Grants" gr2
         ON grta."activeGrantId" = gr2.id
         AND gr."recipientId" = gr2."recipientId"
+      CROSS JOIN monitoring_dates
       WHERE NOT gr2.cdi
-        AND mr."reportDeliveryDate" BETWEEN '${cutOffDate}' AND NOW()
-        AND mr."reviewType" IN (
+        AND ocr.rdd BETWEEN monitoring_start_date AND NOW()
+        AND ocr.review_type IN (
           'AIAN-DEF',
           'RAN',
           'Follow-up',
@@ -164,7 +165,7 @@ const createMonitoringGoals = async () => {
           'Special'
         )
         AND g.id IS NULL
-        GROUP BY 1
+      GROUP BY 1
       ),
       new_goals AS (
         SELECT

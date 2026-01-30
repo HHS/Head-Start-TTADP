@@ -49,6 +49,9 @@ export async function getCitationsByGrantIds(
   const grantsByCitations = await sequelize.query(
     /* sql */
     `WITH
+      ---------------------
+      -- Convenient CTEs --
+      ---------------------
       -- making a convenient single source for monitoring dates that
       -- get used in the logic
       monitoring_dates AS ( SELECT '${cutOffStartDate}'::date monitoring_start_date),
@@ -61,27 +64,72 @@ export async function getCitationsByGrantIds(
         AND "deletedAt" IS NULL
       ORDER BY standard, id DESC
       ),
-      -- find just relevant grants with all needed grant info
-      grants AS (
-      SELECT DISTINCT
-        gr.id grid,
-        gr.number grnumber,
-        grta."activeGrantId" active_grid
-      FROM "Grants" gr
-      JOIN "GrantRelationshipToActive" grta
-        ON gr.id = grta."grantId"
-      WHERE grta."activeGrantId" IN (${grantIds.join(',')})
-        OR gr.id IN (${grantIds.join(',')})
+      -- Join grants to active grants and recipients so we don't have to do it repeatedly
+      grant_recipients AS (
+        SELECT
+          r.id rid,
+          r.name AS rname,
+          gr."regionId" region,
+          gr.id grid,
+          gr.number grnumber,
+          grta."activeGrantId" active_grid
+        FROM "Recipients" r
+        JOIN "Grants" gr
+          ON r.id = gr."recipientId"
+        JOIN "GrantRelationshipToActive" grta
+          ON gr.id = grta."grantId"
+        WHERE  grta."activeGrantId" IN (${grantIds.join(',')}) 
+          OR gr.id IN (${grantIds.join(',')})
       ),
+      -- Select all the potentially-relevant reviews
+      -- for early filtering of monitoring datasets
+      all_reviews AS (
+      SELECT DISTINCT
+        rid,
+        region,
+        grid,
+        mr."reviewId" ruuid,
+        mr."reviewType" review_type,
+        mrs.name review_status,
+        mr."reportDeliveryDate" rdd,
+        mr."startDate" rsd,
+        mr."sourceCreatedAt" rsc
+      FROM grant_recipients
+      JOIN "MonitoringReviewGrantees" mrg
+        ON grnumber = mrg."grantNumber"
+      JOIN "MonitoringReviews" mr
+        ON mrg."reviewId" = mr."reviewId"
+      JOIN "MonitoringReviewStatuses" mrs
+        ON mr."statusId" = mrs."statusId"
+      CROSS JOIN monitoring_dates monitoring_start_date
+      WHERE mr."deletedAt" IS NULL 
+        AND (
+          mr."reportDeliveryDate" > monitoring_start_date
+          OR
+          mr."sourceCreatedAt" > monitoring_start_date
+        )
+      ),
+      ----------------
+      -- Main logic --
+      ----------------
       -- associate each citation with its most recent review
       ordered_citation_reviews AS (
       SELECT DISTINCT ON (mf."findingId")
         mf."findingId" fid,
-        mf."findingType" finding_type,
+        CASE
+          WHEN mfh.determination = 'Concern' THEN 'Area of Concern'
+          WHEN mfh.determination IS NOT NULL THEN mfh.determination
+          ELSE mf."findingType"
+        END AS finding_type,
         mfs.name finding_status,
+        mf.source,
         mfh."reviewId" rid,
         mrs.name review_status,
+        mr."reviewType" review_type,
         mr."reportDeliveryDate" rdd,
+        -- get the latest reportDeliveryDate from any delivered review for this finding
+        -- (needed for ignoreable_findings since most recent review may be In Progress with NULL rdd)
+        MAX(mr."reportDeliveryDate") OVER (PARTITION BY mf."findingId") last_rdd,
         grid
       FROM "MonitoringFindings" mf
       JOIN "MonitoringFindingHistories" mfh
@@ -94,29 +142,28 @@ export async function getCitationsByGrantIds(
         ON mf."statusId" = mfs."statusId"
       JOIN "MonitoringReviewGrantees" mrg
         ON mr."reviewId" = mrg."reviewId"
-      JOIN grants
+      JOIN grant_recipients
         ON mrg."grantNumber" = grnumber
       CROSS JOIN monitoring_dates
       WHERE mfh."sourceDeletedAt" IS NULL
         AND (mr."reportDeliveryDate" > monitoring_start_date OR mr."reportDeliveryDate" IS NULL)
       ORDER BY 1,mr."startDate" DESC, mr."sourceCreatedAt" DESC, mr.id DESC
       ),
-      -- finding the latest close date for Monitoring Goals to optimize
-      -- query speed for
+      -- finding the latest close date for Monitoring Goals
       closed_monitoring_goals AS (
-      SELECT DISTINCT ON (g.id)
+      SELECT DISTINCT ON (g."grantId")
         g.id gid,
         grid,
         gsc."performedAt" last_close
       FROM "Goals" g
-      JOIN grants
+      JOIN grant_recipients
         ON g."grantId" = grid
       JOIN monitoring_template
         ON g."goalTemplateId" = monitoring_gtid
       JOIN "GoalStatusChanges" gsc
         ON g.id = gsc."goalId"
       WHERE "newStatus" = 'Closed'
-      ORDER BY 1,2,gsc."performedAt"
+      ORDER BY 2,gsc."performedAt" DESC
       ),
       -- Ignore any findings where a Monitoring Goal was closed since the latest
       -- review reporting the finding was delivered
@@ -126,7 +173,7 @@ export async function getCitationsByGrantIds(
       JOIN closed_monitoring_goals cmg
         ON ocr.grid = cmg.grid
       GROUP BY 1
-      HAVING BOOL_OR(last_close > rdd)
+      HAVING BOOL_OR(last_close > last_rdd)
       ),
       -- find active status citations but ignore Findings we don't
       -- consider to truly be 'Active'
@@ -144,55 +191,60 @@ export async function getCitationsByGrantIds(
       SELECT fid FROM active_citations
       UNION
       SELECT fid FROM ordered_citation_reviews
-      WHERE review_status != 'Complete'
+      WHERE rdd IS NULL
       ),
-      -- Get the most recent review for each finding-grant combination
-      -- that was delivered before the reportStartDate
-      "RecentMonitoring" AS (
-        SELECT DISTINCT ON (oc.fid, grid)
+      -- Subquery ensures only the most recent history for each finding-grant combination
+      "RecentMonitoring" AS ( 
+        SELECT DISTINCT ON (oc.fid, ocr.grid)
           oc.fid "findingId",
-          grid "grantId",
+          source,
+          ocr.grid AS "grantId",
+          finding_status,
           active_grid "activeGrantId",
           grnumber "grantNumber",
           mr."reviewId",
-          mr."name" "reviewName",
+          mr.name "reviewName",
           mr."reportDeliveryDate",
-          mrg."granteeId"
+          mrg."granteeId",
+          finding_type
         FROM open_citations oc
+        JOIN ordered_citation_reviews ocr
+          ON oc.fid = ocr.fid
         JOIN "MonitoringFindingHistories" mfh
           ON mfh."findingId" = oc.fid
         JOIN "MonitoringReviews" mr
           ON mfh."reviewId" = mr."reviewId"
         JOIN "MonitoringReviewGrantees" mrg
           ON mrg."reviewId" = mr."reviewId"
-        JOIN grants
+        JOIN grant_recipients
           ON grnumber = mrg."grantNumber"
         CROSS JOIN monitoring_dates
         WHERE mr."reportDeliveryDate"::date BETWEEN monitoring_start_date AND '${reportStartDate}'
-        ORDER BY oc.fid, grid, mr."reportDeliveryDate" DESC
+        ORDER BY oc.fid, ocr.grid, mr."reportDeliveryDate" DESC
       )
     SELECT
       ms."standardId",
       ms.citation,
       JSONB_AGG( DISTINCT
         JSONB_BUILD_OBJECT(
-          'findingId', mf."findingId",
+          'findingId', rm."findingId",
           'grantId', rm."grantId",
+          'originalGrantId', rm."grantId", -- this is not used anywhere
           'grantNumber', rm."grantNumber",
           'reviewName', rm."reviewName",
           'reportDeliveryDate', rm."reportDeliveryDate",
-          'findingType', mf."findingType",
-          'findingSource', mf."source",
-          'monitoringFindingStatusName', mfs."name",
+          'findingType', finding_type,
+          'findingSource', rm.source,
+          'monitoringFindingStatusName', finding_status,
           'citation', ms.citation,
           'severity', CASE
-                  WHEN mf."findingType" = 'Deficiency' THEN 1
-                  WHEN mf."findingType" = 'Noncompliance' THEN 2
+                  WHEN finding_type = 'Deficiency' THEN 1
+                  WHEN finding_type = 'Noncompliance' THEN 2
                   ELSE 3 -- Area of Concern
                 END,
           'acro', CASE
-                  WHEN mf."findingType" = 'Deficiency' THEN 'DEF'
-                  WHEN mf."findingType" = 'Noncompliance' THEN 'ANC'
+                  WHEN finding_type = 'Deficiency' THEN 'DEF'
+                  WHEN finding_type = 'Noncompliance' THEN 'ANC'
                   ELSE 'AOC' -- Area of Concern
                 END
         )
@@ -203,17 +255,10 @@ export async function getCitationsByGrantIds(
       AND g."status" NOT IN ('Closed', 'Suspended')
     JOIN monitoring_template
       ON g."goalTemplateId" = monitoring_gtid
-    JOIN "MonitoringFindings" mf
-      ON rm."findingId" = mf."findingId"
-    JOIN "MonitoringFindingStatuses" mfs
-      ON mf."statusId" = mfs."statusId"
-    JOIN "MonitoringFindingStandards" mfs2
-      ON mf."findingId" = mfs2."findingId"
+    JOIN "MonitoringFindingStandards" mfs
+      ON rm."findingId" = mfs."findingId"
     JOIN "MonitoringStandards" ms
-      ON mfs2."standardId" = ms."standardId"
-    JOIN "MonitoringFindingGrants" mfg
-      ON mf."findingId" = mfg."findingId"
-      AND rm."granteeId" = mfg."granteeId"
+      ON mfs."standardId" = ms."standardId"
     GROUP BY 1,2
     ORDER BY 2,1;
     `,
