@@ -35,7 +35,7 @@
     "db:seed:undo": "node_modules/.bin/sequelize db:seed:undo:all",
     "db:seed:undo:prod": "node_modules/.bin/sequelize db:seed:undo:all --options-path .production.sequelizerc",
     "db:validation": "node ./build/server/src/tools/dataValidationCLI.js",
-    "deps": "yarn global add node-gyp && yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
+    "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "deps:audit": "./tools/run-yarn-audit.js && cd frontend && ../tools/run-yarn-audit.js",
     "deps:local": "yarn global add node-gyp && yarn install && yarn --cwd frontend install",
     "deps:update-lockfile": "yarn install --mode update-lockfile && cd frontend && yarn install --mode update-lockfile",
