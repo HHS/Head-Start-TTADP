@@ -246,8 +246,7 @@ function CollaborationReport({ match, location }) {
   // Focus the form when a new page is loaded
   useEffect(() => {
     if (previousPageRef.current !== currentPage && formRef.current) {
-      formRef.current.focus();
-      window.scrollTo(0, 0);
+      formRef.current.focus({ preventScroll: true });
       previousPageRef.current = currentPage;
     }
   }, [currentPage]);
