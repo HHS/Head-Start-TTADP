@@ -56,10 +56,12 @@ The **Office of Head Start TTA Smart Hub** is a full-stack application for manag
 
 **Initial Setup:**
 ```bash
-yarn docker:reset  # Build, install deps, run migrations & seeders
+yarn docker:restart  # Build, install deps, run migrations & seeders
 yarn docker:start  # Start all services
 yarn docker:stop   # Stop and remove containers
 ```
+
+Seeding runs when the configured table is empty (defaults: `Users` count < 1). Force reseed with `FORCE_DB_SEED=true yarn docker:restart`.
 
 **Running Services:**
 - Frontend: http://localhost:3000

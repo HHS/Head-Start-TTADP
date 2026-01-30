@@ -94,6 +94,7 @@
     "es5-ext": "^0.10.63",
     "express": "^4.22.0",
     "follow-redirects": "^1.15.6",
+    "resolve-url-loader": "^5.0.0",
     "glob-parent": "^6.0.2",
     "json5": "^1.0.2",
     "lodash": "^4.17.23",

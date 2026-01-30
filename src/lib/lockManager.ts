@@ -56,8 +56,19 @@ export default class LockManager {
     this.lockValue = uuidv4();
     this.lockTTL = lockTTL;
 
-    if (this.redis.client && process.env.NODE_ENV !== 'test') {
-      this.redis.client('SETNAME', `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${this.lockKey}-${this.lockValue}-${process.pid}`);
+    const isMockRedis = this.redis.constructor?.name === 'RedisMock'
+      || (this.redis as unknown as { options?: { data?: unknown } })?.options?.data !== undefined;
+    const canSetClientName = typeof (this.redis as { client?: unknown }).client === 'function'
+      && process.env.NODE_ENV !== 'test'
+      && !isMockRedis;
+
+    if (canSetClientName) {
+      try {
+        this.redis.client('SETNAME', `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${this.lockKey}-${this.lockValue}-${process.pid}`);
+      } catch (err) {
+        // In environments where the "client" command is unsupported (e.g., mocks), skip naming.
+        auditLogger.warn('LockManager: unable to set Redis client name; continuing without it', { err });
+      }
     }
 
     this.registerEventListeners();

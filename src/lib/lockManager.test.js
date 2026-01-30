@@ -27,7 +27,9 @@ describe('LockManager', () => {
   });
 
   afterEach(async () => {
-    await lockManager.stopRenewal();
+    if (lockManager?.stopRenewal) {
+      await lockManager.stopRenewal();
+    }
     jest.clearAllMocks();
   });
 
@@ -111,7 +113,9 @@ describe('LockManager', () => {
     });
 
     afterEach(async () => {
-      lockManager2.close();
+      if (lockManager2?.close) {
+        await lockManager2.close();
+      }
       jest.restoreAllMocks();
     });
 

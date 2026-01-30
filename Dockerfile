@@ -1,12 +1,26 @@
-FROM node:22.22.0
+# syntax=docker/dockerfile:1.7
+FROM node:22-bookworm-slim AS base
+
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install lcov -y
+ENV NODE_ENV=development \
+    YARN_CACHE_FOLDER=/app/.yarn/cache \
+    PATH="/app/node_modules/.bin:${PATH}"
 
-# Set up permissions for yarn cache and node_modules
-RUN mkdir -p /home/node/.cache/yarn && \
-    chown -R node:node /home/node/.cache/yarn && \
-    mkdir -p /app/node_modules && \
-    chown -R node:node /app && \
-    chown -R node:node /app/node_modules
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    bash \
+    ca-certificates \
+    curl \
+    dumb-init \
+    git \
+    make \
+    g++ \
+    python3 \
+    postgresql-client \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/bin/dumb-init", "--", "/usr/local/bin/entrypoint.sh"]
+
+CMD ["bash"]

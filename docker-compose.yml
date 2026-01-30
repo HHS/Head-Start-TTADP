@@ -1,105 +1,284 @@
+x-app-env: &app-env
+  NODE_ENV: development
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-something_secret}
+  POSTGRES_DB: ${POSTGRES_DB:-ttasmarthub}
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_PASS: ${REDIS_PASS:-SUPERSECUREPASSWORD}
+  REDIS_URL: redis://:${REDIS_PASS:-SUPERSECUREPASSWORD}@redis:6379
+  TTA_SMART_HUB_URI: http://localhost:3000
+  REDIRECT_URI_HOST: http://localhost:8080
+  BACKEND_PROXY: http://backend:8080
+  S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+  CLAMAV_ENDPOINT: ${CLAMAV_ENDPOINT:-https://clamav-rest:9443}
+  BYPASS_AUTH: ${BYPASS_AUTH:-true}
+  YARN_CACHE_FOLDER: /app/.yarn/cache
+
 services:
-  api-docs:
-    image: redocly/redoc
-    profiles:
-      - full_stack
-    ports:
-      - "5003:80"
-    volumes:
-      - "./docs/openapi/:/usr/share/nginx/html/swagger/"
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["dev", "test", "full"]
+    env_file:
+      - .env
     environment:
-      - SPEC_URL=swagger/index.yaml
-  db:
-    image: postgres:15.6
-    container_name: postgres_docker
-    env_file: .env
-    profiles:
-      - minimal_required_postgres
+      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-something_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ttasmarthub}
     ports:
       - "5432:5432"
     volumes:
-      - dbdata:/var/lib/postgresql/data
-    shm_size: 1g
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DB:-ttasmarthub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    networks:
+      - app
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["dev", "test", "full"]
+    env_file:
+      - .env
+    command: ["redis-server", "--requirepass", "${REDIS_PASS:-SUPERSECUREPASSWORD}"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASS:-SUPERSECUREPASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - app
+
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["dev", "test", "full"]
+    command: ["bash", "-c", "echo database ready"]
+    environment:
+      <<: *app-env
+      RUN_DB_SETUP: "true"
+      INSTALL_SCOPE: backend
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app
+    volumes:
+      - .:/app
+      - backend_node_modules:/app/node_modules
+      - yarn_cache:/app/.yarn/cache
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["dev", "test", "full"]
+    command: ["yarn", "server"]
+    environment:
+      <<: *app-env
+      INSTALL_SCOPE: backend
+      RUN_DB_SETUP: "false"
+      PORT: 8080
+    env_file:
+      - .env
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - backend_node_modules:/app/node_modules
+      - yarn_cache:/app/.yarn/cache
+    networks:
+      - app
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["dev", "test", "full"]
+    command: ["yarn", "--cwd", "frontend", "start"]
+    environment:
+      <<: *app-env
+      INSTALL_SCOPE: frontend
+      RUN_DB_SETUP: "false"
+      PORT: 3000
+    env_file:
+      - .env
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - frontend_node_modules:/app/frontend/node_modules
+      - yarn_cache:/app/.yarn/cache
+    networks:
+      - app
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["full"]
+    command: ["yarn", "worker"]
+    environment:
+      <<: *app-env
+      INSTALL_SCOPE: backend
+      RUN_DB_SETUP: "false"
+      INSTANCE_NUMBER: 0
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    volumes:
+      - .:/app
+      - backend_node_modules:/app/node_modules
+      - yarn_cache:/app/.yarn/cache
+    networks:
+      - app
+
+  redoc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["full"]
+    command: ["yarn", "docs:serve"]
+    environment:
+      <<: *app-env
+      INSTALL_SCOPE: backend
+      RUN_DB_SETUP: "false"
+      PORT: 5003
+    env_file:
+      - .env
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    ports:
+      - "5003:5003"
+    volumes:
+      - .:/app
+      - backend_node_modules:/app/node_modules
+      - yarn_cache:/app/.yarn/cache
+    networks:
+      - app
+
   minio:
-    image: minio/minio:RELEASE.2024-01-01T16-36-33Z
-    profiles:
-      - full_stack
-    env_file: .env
+    image: minio/minio:latest
+    profiles: ["full"]
+    env_file:
+      - .env
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-EXAMPLEID}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-EXAMPLESECRETKEY}
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - minio-data:/data
-    command: server /data --console-address ":9001"
-  aws-cli:
-    image: amazon/aws-cli
-    profiles:
-      - full_stack
-    env_file: .env
-    command: ["--endpoint-url", "http://minio:9000", "s3api", "create-bucket", "--bucket", "$S3_BUCKET"]
-    depends_on:
-      - minio
+      - minio_data:/data
+    networks:
+      - app
+
   clamav-rest:
-    image: ajilaag/clamav-rest
-    profiles:
-      - full_stack
+    image: ghcr.io/ajilaag/clamav-rest:20211026
+    profiles: ["full"]
+    env_file:
+      - .env
+    environment:
+      ZIP_SCAN_ENABLED: "true"
     ports:
       - "9443:9443"
-    environment:
-      - MAX_FILE_SIZE=30M
-  redis:
-    image: redis:6.2.6
-    profiles:
-      - minimal_required_redis
-    command: ['redis-server', '--requirepass', '$REDIS_PASS']
-    env_file: .env
-    ports:
-      - "6379:6379"
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    profiles:
-      - minimal_required_redis
-    environment:
-      - REDIS_HOSTS=local:redis:6379:0:${REDIS_PASS}
-    ports:
-      - "8081:8081"
-    depends_on:
-      - redis
-  mailcatcher:
-    image: schickling/mailcatcher
-    profiles:
-      - full_stack
-    ports:
-      - "1025:1025"
-      - "1080:1080"
-  testingonly:
+    volumes:
+      - clamav_defs:/var/lib/clamav
+    networks:
+      - app
+
+  tests:
     build:
       context: .
-    profiles:
-      - full_stack
-    ports:
-      - "9999:9999"
-    depends_on:
-      - db
-    volumes:
-      - ".:/app:rw"
-    command: yarn start:testingonly
+      dockerfile: Dockerfile
+    profiles: ["test"]
+    command: ["yarn", "test:ci"]
     environment:
-      - POSTGRES_HOST=postgres_docker
-      - NODE_ENV=development
-  sftp:
-    image: jmcombs/sftp:alpine
-    profiles:
-      - full_stack
+      <<: *app-env
+      INSTALL_SCOPE: all
+      RUN_DB_SETUP: "false"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     volumes:
-        - ./test-sftp:/home/tta_ro/ProdTTAHome
-        - ./test-sftp/sshd_config:/etc/ssh/sshd_config
-    ports:
-        - "${SFTP_EXPOSED_PORT:-22}:22"
-    command: ${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001
+      - .:/app
+      - backend_node_modules:/app/node_modules
+      - frontend_node_modules:/app/frontend/node_modules
+      - yarn_cache:/app/.yarn/cache
+    networks:
+      - app
+
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.56.1-jammy
+    profiles: ["test"]
+    working_dir: /app
+    command: ["bash", "-c", "yarn --cwd frontend install --frozen-lockfile && yarn e2e"]
+    env_file:
+      - .env
+    environment:
+      <<: *app-env
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    depends_on:
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
+    volumes:
+      - .:/app
+      - frontend_node_modules:/app/frontend/node_modules
+      - yarn_cache:/app/.yarn/cache
+    networks:
+      - app
+    user: root
+
+networks:
+  app:
+    driver: bridge
+
 volumes:
-  dbdata: {}
-  minio-data: {}
-  yarn-cache: {}
-  node_modules-backend: {}
-  node_modules-frontend: {}
+  pgdata:
+  redisdata:
+  backend_node_modules:
+  frontend_node_modules:
+  yarn_cache:
+  minio_data:
+  clamav_defs:

@@ -10,13 +10,37 @@ If you run into issues, check the [troubleshooting](#troubleshooting) section.
 4. Install cross-env `npm install -g cross-env`
 5. Copy `.env.example` to `.env`.
 6. Change the `AUTH_CLIENT_ID` variable to value found in the team 1password account. If you don't have access to 1password, please ask in the acf-head-start-eng slack channel for access.
-7. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
-8. Run `yarn docker:start` to start the application.
-   - The [frontend][frontend] will run on `localhost:3000`
-   - The [backend][backend] will run on `localhost:8080`
-   - [API documentation][API documentation] will run on `localhost:5003`
-   - [minio][minio] (S3-compatible file storage) will run on `localhost:9000`
-9. Run `yarn docker:stop` to stop the servers and remove the docker containers.
+7. Run `yarn docker:restart`. This tears down any previous stack, removes compose-built images, rebuilds, then starts the **dev** profile (backend, frontend, postgres, redis) and runs `yarn db:migrate`. Seeds are **opt-in** to avoid duplicate data; see below.
+8. Run `yarn docker:start` to start the dev profile without rebuilding.
+   - The [frontend][frontend] runs on `localhost:3000`
+   - The [backend][backend] runs on `localhost:8080`
+9. Run `yarn docker:stop` to stop containers. Add `-v` (e.g., `docker compose down -v`) if you want to wipe volumes, including the node_modules/Yarn cache volumes.
+
+**Profiles**
+
+- `dev` (default via the scripts): backend, frontend, postgres, redis with bind mounts for fast iteration.
+- `test`: adds test runners (unit/E2E); still reuses postgres/redis.
+- `full`: starts all services (worker, minio, clamav, redoc, etc.).
+
+Use `yarn docker:full` to bring up the full stack, or `yarn docker:test` to run the test profile (exits with the test status).
+
+**Seeding**
+
+- Default dev startup skips seeds to avoid duplicate-key errors when volumes persist.
+- To seed once (after a fresh restart), run: `yarn docker:seed` (runs migrations + seeds in the db-init container).
+- To force reseed on restart: `RUN_DB_SEED=true yarn docker:restart`.
+
+**Proxy**
+
+The frontend dev server proxies `/api` to the backend using `BACKEND_PROXY` (set in `.env` and defaulted in compose to `http://backend:8080`). If you run backend natively, set `BACKEND_PROXY=http://localhost:8080`.
+
+**Service hostnames**
+
+Docker compose pins service hosts internally (`POSTGRES_HOST=postgres`, `REDIS_HOST=redis`) regardless of values in your `.env`, so you don’t need to edit those for Docker use. If you run services natively, keep the localhost settings in `.env`.
+
+**Node modules caching**
+
+Compose creates named volumes for backend/frontend `node_modules` plus a shared Yarn cache volume. This speeds up installs inside containers while keeping your host `node_modules` untouched. To force a clean install, drop volumes with `docker compose down -v`.
 
 **Notes:**
 
@@ -25,15 +49,14 @@ If you run into issues, check the [troubleshooting](#troubleshooting) section.
 
 #### Troubleshooting
 
-If you see errors that the version of nodejs is incorrect, you may have older versions of the containers built.
-Delete those images and rerun `yarn docker:reset`.
+If you see errors that the version of nodejs is incorrect, rerun `yarn docker:restart`. The script tears down containers, removes compose-built images, rebuilds, and restarts the stack automatically.
 
 When using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of those services are already running on your machine.
 
 On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve:
 `brew install docker-compose`
 
-If you run into issues with file permissions when using docker, you may want to try changing the CURRENT_USER values in your .env.  run `id -u` and `id -g` to get your current user uid/gid.
+If you run into issues with file permissions when using docker bind mounts, check your Docker Desktop file sharing settings. Containers now run with Docker defaults; no UID/GID override is required.
 
 **Apple Silicon & Chromium**
 

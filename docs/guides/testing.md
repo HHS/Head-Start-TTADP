@@ -4,7 +4,7 @@
 
 ### Testing With Docker
 
-If switching branches for code review, run `yarn docker:reset` before running your tests.
+If switching branches for code review, run `yarn docker:restart` before running your tests. Use `yarn docker:seed` if you need the seed data after a restart.
 
 Run `yarn docker:test` to run all tests for the frontend and backend.
 
