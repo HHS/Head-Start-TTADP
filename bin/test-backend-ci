@@ -71,7 +71,7 @@ function runJestBatch(batch) {
 }
 
 async function summarizeReports() {
-  console.log('>>>>>>>> Test Failure Summary');
+  console.log('----- Test Failure Summary -----');
 
   const limit = 5;
   for (const { name } of batches) {
@@ -83,10 +83,14 @@ async function summarizeReports() {
       const data = await parseStringPromise(xml, { explicitArray: true, mergeAttrs: true });
 
       const suites = [];
-      if (data.testsuites) {
+      if (data && data.testsuites && data.testsuites[0]) {
         suites.push(...(data.testsuites[0].testsuite || []));
-      } else if (data.testsuite) {
+      } else if (data && data.testsuite && data.testsuite[0]) {
         suites.push(data.testsuite[0]);
+      }
+      if (suites.length === 0) {
+        console.log(`${name}: unable to summarize (no testsuite data)`);
+        continue;
       }
 
       const counts = suites.reduce((acc, s) => {

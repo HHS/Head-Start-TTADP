@@ -219,8 +219,6 @@ export async function tearDownSharedTestData() {
       id: userIds,
     },
   });
-
-  await db.sequelize.close();
 }
 
 // Re-export commonly used items

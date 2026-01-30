@@ -315,7 +315,6 @@ jobs:
         paths:
         - node_modules
         - frontend/node_modules
-        - packages/common/node_modules
         key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
@@ -499,25 +498,49 @@ jobs:
         artifact_path: reports
 
   dynamic_security_scan:
-    executor: machine-executor
+    executor: docker-postgres-executor
     resource_class: large
+    environment:
+      BYPASS_AUTH: "true"
+      NODE_ENV: "development"
+      PORT: 8080
     steps:
     - attach_workspace:
         at: .
     - run:
-        name: Start up local services
-        command: ./bin/prod-style-server
+        name: Ensure reports directory exists
+        command: mkdir -p reports/zap
     - run:
-        name: Wait for Node.js server to start
-        command: ./bin/ping-server 8080
+        name: Run database migrations
+        command: yarn db:migrate:ci
     - run:
-        name: Pull OWASP ZAP docker image
-        command: docker pull zaproxy/zap-stable:latest
+        name: Start backend server
+        command: |
+          node build/server/src/index.js > reports/zap/server.log 2>&1 &
+          echo $! > /tmp/backend.pid
     - run:
-        name: Run OWASP ZAP scan for Node.js server
-        command: ./bin/run-owasp-scan --target http://server:8080 --full
+        name: Wait for backend to start
+        command: ./bin/ping-server 8080 localhost "/" 10
+    - run:
+        name: Install OWASP ZAP dependencies
+        command: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jre python3
+    - run:
+        name: Download OWASP ZAP
+        command: |
+          ZAP_VERSION=2.15.0
+          curl -sSL https://github.com/zaproxy/zaproxy/releases/download/v${ZAP_VERSION}/ZAP_${ZAP_VERSION}_Linux.tar.gz | tar xz -C /tmp
+    - run:
+        name: Run OWASP ZAP full scan
+        command: |
+          ZAP_VERSION=2.15.0
+          /tmp/ZAP_${ZAP_VERSION}/zap-full-scan.py -t http://localhost:8080 \
+            -J reports/zap/zap.json \
+            -r reports/zap/zap.html \
+            -w reports/zap/zap.md
     - store_artifacts:
-        path: reports
+        path: reports/zap
 
   deploy_job:
     executor: docker-executor
