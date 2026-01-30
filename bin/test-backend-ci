@@ -1,114 +1,139 @@
-#!/bin/bash -x
-declare lr=">>>>>>>>"
-declare -i exit_code=0
+#!/usr/bin/env node
+/**
+ * Runs backend Jest batches (root + domain folders + tools), writes JUnit to reports/,
+ * and prints a concise failure summary. Coverage merging is handled in CI separately.
+ */
+const { spawnSync } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+const { parseStringPromise } = require('xml2js');
 
-check_exit() {
-    if [[ "$1" -ne 0 ]]; then
-        echo "$lr last docker compose command failed"
-        ((exit_code++))
-    fi
+const ROOT = process.cwd();
+const JEST = path.join(ROOT, 'node_modules', '.bin', 'jest');
+const REPORT_DIR = path.join(ROOT, 'reports');
+const DEFAULT_ENV = {
+  POSTGRES_USERNAME: 'postgres',
+  POSTGRES_DB: 'ttasmarthub',
+  CURRENT_USER_ID: '5',
+  CI: 'true',
+};
+
+const batches = [
+  { name: 'root', testPath: 'src/*.js', coverageFrom: 'src/*.{js,ts}', coverageDir: 'coverage/src/root', coverage: true },
+  ...['lib', 'middleware', 'models', 'policies', 'routes', 'scopes', 'services', 'widgets', 'goalServices'].map((t) => ({
+    name: t,
+    testPath: `src/${t}`,
+    coverageFrom: `src/${t}/**/!(*CLI).{js,ts}`,
+    coverageDir: `coverage/src/${t}`,
+    coverage: true,
+  })),
+  { name: 'tools', testPath: 'tools', coverage: false },
+];
+
+let exitCode = 0;
+const failFast = process.env.FAIL_FAST === 'true' || process.env.FAIL_FAST === '1';
+
+function runJestBatch(batch) {
+  const env = {
+    ...process.env,
+    ...DEFAULT_ENV,
+    JEST_JUNIT_OUTPUT_DIR: 'reports',
+    JEST_JUNIT_OUTPUT_NAME: `${batch.name}.xml`,
+  };
+
+  const args = [
+    '--expose-gc',
+    JEST,
+    batch.testPath,
+    batch.coverage === false ? '--coverage=false' : '--coverage',
+    '--colors',
+    '--reporters=jest-junit',
+    '--reporters=default',
+    '--runInBand',
+    '--silent',
+    '--logHeapUsage',
+    '--forceExit',
+  ];
+
+  if (batch.coverageDir) {
+    args.push(`--coverageDirectory=${path.join(ROOT, batch.coverageDir)}`);
+  }
+  if (batch.coverageFrom) {
+    args.push(`--collectCoverageFrom=${batch.coverageFrom}`);
+  }
+
+  const res = spawnSync('node', args, { stdio: 'inherit', env });
+  if (res.status !== 0) {
+    exitCode += 1;
+    return false;
+  }
+  return true;
 }
 
-log() {
-    echo "$lr $*"
+async function summarizeReports() {
+  console.log('>>>>>>>> Test Failure Summary');
+
+  const limit = 5;
+  for (const { name } of batches) {
+    const reportPath = path.join(REPORT_DIR, `${name}.xml`);
+    if (!fs.existsSync(reportPath)) continue;
+
+    try {
+      const xml = fs.readFileSync(reportPath, 'utf8');
+      const data = await parseStringPromise(xml, { explicitArray: true, mergeAttrs: true });
+
+      const suites = [];
+      if (data.testsuites) {
+        suites.push(...(data.testsuites[0].testsuite || []));
+      } else if (data.testsuite) {
+        suites.push(data.testsuite[0]);
+      }
+
+      const counts = suites.reduce((acc, s) => {
+        acc.tests += Number(s.tests || 0);
+        acc.failures += Number(s.failures || 0);
+        acc.errors += Number(s.errors || 0);
+        acc.time += Number(s.time || 0);
+        return acc;
+      }, { tests: 0, failures: 0, errors: 0, time: 0 });
+
+      const failures = [];
+      suites.forEach((suite) => {
+        (suite.testcase || []).forEach((tc) => {
+          const failure = (tc.failure && tc.failure[0]) || (tc.error && tc.error[0]);
+          if (failure) {
+            const message = (failure.message || failure._ || '').toString().trim();
+            failures.push({
+              classname: tc.classname || '',
+              name: tc.name || '',
+              message,
+            });
+          }
+        });
+      });
+
+      const status = counts.failures + counts.errors === 0 ? 'PASS' : 'FAIL';
+      console.log(`${name}: ${status} (${counts.tests} tests, ${counts.failures} failures, ${counts.errors} errors, ${counts.time.toFixed(2)}s)`);
+      failures.slice(0, limit).forEach((f) => {
+        const msg = f.message ? ` :: ${f.message.slice(0, 120)}` : '';
+        console.log(`  - ${f.classname} :: ${f.name}${msg}`);
+      });
+    } catch (err) {
+      console.log(`${name}: unable to summarize (${err.message})`);
+    }
+  }
 }
 
-main(){
-    # first get the tests in the root directory
-    node_modules/.bin/cross-env \
-		JEST_JUNIT_OUTPUT_DIR=reports \
-		JEST_JUNIT_OUTPUT_NAME=root.xml \
-		POSTGRES_USERNAME=postgres \
-		POSTGRES_DB=ttasmarthub \
-		CURRENT_USER_ID=5 \
-		CI=true \
-		node \
-		--expose-gc \
-		./node_modules/.bin/jest \
-		src/*.js \
-		--coverage \
-		--colors \
-		--reporters=jest-junit \
-		--reporters=default \
-		--runInBand \
-		--silent \
-		--colors \
-		--logHeapUsage \
-		--coverageDirectory="$(pwd)"/coverage/src/root \
-		--collectCoverageFrom="src/*.{js,ts}" \
-		--forceExit
-
-	check_exit "$?"
-
-    # then list through the folders and run the tests
-    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "widgets" "goalServices")
-
-    for target in "${targets[@]}"; do
-        # jest command to
-        # - run tests in the target folder
-        # - collect coverage from the target folder
-        # - output coverage relative to the target folder
-        # - some other useful flags
-
-        node_modules/.bin/cross-env \
-			JEST_JUNIT_OUTPUT_DIR=reports \
-			JEST_JUNIT_OUTPUT_NAME="$target".xml \
-			POSTGRES_USERNAME=postgres \
-			POSTGRES_DB=ttasmarthub \
-			CURRENT_USER_ID=5 \
-			CI=true \
-			node \
-			--expose-gc \
-			./node_modules/.bin/jest \
-			src/"$target" \
-			--coverage \
-			--colors \
-			--reporters=jest-junit \
-			--reporters=default \
-			--runInBand \
-			--silent \
-			--colors \
-			--logHeapUsage \
-			--coverageDirectory="$(pwd)"/coverage/src/"$target" \
-			--collectCoverageFrom="src/$target/**/!(*CLI).{js,ts}" \
-			--forceExit
-
-			check_exit "$?"
-    done
-
-	if [[ $exit_code -ne 0 ]]; then
-        echo
-        log "Errors occurred during script execution"
-   	fi
-
-	#run tests on tools
-	node_modules/.bin/cross-env \
-		JEST_JUNIT_OUTPUT_DIR=reports \
-		JEST_JUNIT_OUTPUT_NAME="tools".xml \
-		POSTGRES_USERNAME=postgres \
-		POSTGRES_DB=ttasmarthub \
-		CURRENT_USER_ID=5 \
-		CI=true \
-		node \
-		--expose-gc \
-		./node_modules/.bin/jest \
-		tools \
-		--coverage=false \
-		--colors \
-		--reporters=jest-junit \
-		--reporters=default \
-		--runInBand \
-		--silent \
-		--colors \
-		--logHeapUsage \
-		--forceExit
-
-	check_exit "$?"
-
-    # Merge coverage reports
-    node ./tools/merge-coverage.js
-
-    exit "$exit_code"
+async function main() {
+  for (const batch of batches) {
+    const ok = runJestBatch(batch);
+    if (!ok && failFast) {
+      console.log('>>>>>>>> fail-fast: stopping after first failing batch');
+      break;
+    }
+  }
+  await summarizeReports();
+  process.exit(exitCode);
 }
 
-main
+main();
