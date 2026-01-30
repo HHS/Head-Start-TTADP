@@ -44,8 +44,9 @@ async function logOldRecordsCount() {
         process.exitCode = 1;
       }
     });
-  } catch (e) {
-    auditLogger.error(`Error running db maintenance: ${e.message}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    auditLogger.error(`Error running db maintenance: ${error.message}`);
     process.exitCode = 1;
   }
 }
@@ -57,8 +58,7 @@ if (require.main === module) {
       process.exit(process.exitCode || 0);
     })
     .catch((error) => {
-      const message = error instanceof Error ? error.message : String(error);
-      auditLogger.error(`Error running db maintenance: ${message}`);
+      auditLogger.error(`Error running db maintenance: ${error.message}`);
       sequelize.close().finally(() => {
         process.exit(1);
       });
