@@ -1,7 +1,8 @@
 import React, { useContext } from 'react';
-import { Button, Textarea } from '@trussworks/react-uswds';
+import { Button } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import IncompletePages from '../../../components/IncompletePages';
 import { reviewSubmitComponentProps } from './constants';
 import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
@@ -27,7 +28,7 @@ export default function Submit({
   isPoc,
   isAdmin,
 }) {
-  const { register, watch, trigger } = useFormContext();
+  const { watch, trigger } = useFormContext();
   const pageState = watch('pageState');
   const event = watch('event');
   const facilitation = watch('facilitation');
@@ -94,7 +95,7 @@ export default function Submit({
           name="additionalNotes"
           required={false}
         >
-          <Textarea inputRef={register()} name="additionalNotes" id="additionalNotes" />
+          <HookFormRichEditor ariaLabel="Creator notes" name="additionalNotes" />
         </FormItem>
       )}
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
