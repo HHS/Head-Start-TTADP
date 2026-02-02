@@ -16,7 +16,7 @@
     border-right: 1px solid black;
   }
 
-  .smarthub-horizontal-table-widget .data-header.sticky-first-column {
+  .smarthub-horizontal-table-widget .data-header.smarthub-horizontal-table--sticky-first-column {
     background: #fff;
     border-bottom: 0px;
     position: sticky;
@@ -128,11 +128,6 @@
   vertical-align: middle;
 }
 
-.smarthub-horizontal-table-widget .left-with-checkbox {
-  left: 44px;
-}
-
-
 .smarthub-horizontal-table-widget tfoot {
   border-top: 1px solid $text-ink;
 }
@@ -158,10 +153,15 @@
 }
 
 // Make sure first column is always sticky.
-.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column.sticky-first-column {
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
+  left: 0px;
   position: sticky;
   z-index: 1;
   max-width: 330px;
+  
+  &.smarthub-horizontal-table--sticky-first-column-checkboxes-enabled {
+    left: 44px;
+  }
 }
 
 // Ensure cell font size is consistent, even when it's a tooltip wrapper

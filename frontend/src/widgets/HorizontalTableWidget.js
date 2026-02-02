@@ -172,7 +172,7 @@ export default function HorizontalTableWidget(
     }
 
     if (stickyFirstColumn) {
-      classes.push('sticky-first-column');
+      classes.push('smarthub-horizontal-table--sticky-first-column');
     }
 
     return classes.join(' ');
@@ -254,6 +254,7 @@ export default function HorizontalTableWidget(
                   isFirstColumn
                   enableCheckboxes={enableCheckboxes}
                   hideFirstColumnBorder={hideFirstColumnBorder}
+                  stickyFirstColumn={stickyFirstColumn}
                 />
                 {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
                   <HorizontalTableWidgetCell

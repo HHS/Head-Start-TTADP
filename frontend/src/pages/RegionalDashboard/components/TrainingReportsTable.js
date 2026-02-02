@@ -165,7 +165,7 @@ const TrainingReportsTable = ({
           showTotalColumn={false}
           showDashForNullValue
           hideFirstColumnBorder
-          stickyFirstColumn={false}
+          stickyFirstColumn
           stickyLastColumn={false}
         />
       )}
