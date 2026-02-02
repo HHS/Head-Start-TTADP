@@ -68,6 +68,7 @@ const TrainingReportsTable = ({
 
   const tabularData = useMemo(() => data.rows.map((r) => ({
     id: r.id,
+    title: r.eventId,
     heading: <Link to={`/training-report/view/${idForLink(r.eventId)}?back_link=hide`}>{r.eventId}</Link>,
     data: [
       {

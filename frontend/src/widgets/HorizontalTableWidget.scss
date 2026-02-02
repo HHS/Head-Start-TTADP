@@ -1,5 +1,10 @@
 @use "../colors.scss" as *;
 
+.smarthub-horizontal-table-widget td .usa-checkbox__label::before {
+  /* this vertically aligns the checkbox in the table cell */
+  top: 4px;
+}
+
 @media (min-width: 60em) {
   .smarthub-horizontal-table-widget
   .smarthub-horizontal-table-first-column-border::after {

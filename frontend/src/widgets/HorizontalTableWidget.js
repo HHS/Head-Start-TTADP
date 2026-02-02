@@ -1,5 +1,5 @@
 /* eslint-disable react/no-array-index-key */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Table, Checkbox } from '@trussworks/react-uswds';
@@ -30,6 +30,22 @@ export default function HorizontalTableWidget(
     stickyLastColumn,
   },
 ) {
+  const [menuWidthOffset, setMenuWidthOffset] = useState(110);
+
+  useLayoutEffect(() => {
+    // get first menuContainer
+    const menuContainer = document.querySelector('.smart-hub-menu-container');
+
+    if (menuContainer) {
+      const { width } = menuContainer.getBoundingClientRect();
+      // 12 is an eyeball, since we want it aligned to part of the svg chevron
+      const newOffset = width + 12;
+      if (newOffset !== menuWidthOffset) {
+        setMenuWidthOffset(newOffset);
+      }
+    }
+  }, [menuWidthOffset]);
+
   // State for select all check box.
   const [allCheckBoxesChecked, setAllCheckBoxesChecked] = useState(false);
 
@@ -221,7 +237,14 @@ export default function HorizontalTableWidget(
                 {
                   enableCheckboxes && (
                     <td className="width-8 checkbox-column" data-label="Select report">
-                      <Checkbox id={r.id} label="" value={r.id} checked={checkboxes[r.id] || false} onChange={handleReportSelect} aria-label={`Select ${r.title || r.heading}`} />
+                      <Checkbox
+                        id={r.id}
+                        label=""
+                        value={r.id}
+                        checked={checkboxes[r.id] || false}
+                        onChange={handleReportSelect}
+                        aria-label={(() => `Select ${r.title || r.heading}`)()}
+                      />
                     </td>
                   )
                 }
@@ -246,7 +269,7 @@ export default function HorizontalTableWidget(
                       left
                       label={`Actions for ${r.title || r.heading}`}
                       menuItems={r.actions}
-                      menuWidthOffset={110}
+                      menuWidthOffset={menuWidthOffset}
                     />
                   </td>
                 ) : null}
