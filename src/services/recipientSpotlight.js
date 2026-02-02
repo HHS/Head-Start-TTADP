@@ -186,6 +186,8 @@ export async function getRecipientSpotlightIndicators(
   const spotLightSql = `
     WITH
     -- Creating some useful CTEs
+    -- make it easy to limit to only monitoring data in the valid timeframe
+    monitoring_dates AS ( SELECT '2025-01-21'::date monitoring_start_date),
     -- Join grants and recipients so we don't have to do it repeatedly
     grant_recipients AS (
       SELECT
@@ -199,6 +201,7 @@ export async function getRecipientSpotlightIndicators(
         ON r.id = gr."recipientId"
       WHERE ${grantIdFilter}
     ),
+    -- create a slim recipient list with some recipient-level info
     recipients AS (
     SELECT
       rid,
@@ -217,7 +220,8 @@ export async function getRecipientSpotlightIndicators(
     GROUP BY 1,2,3
     ),
     -- Usually we care about all the grants for a recipient
-    -- not just the ones in the filter
+    -- not just the ones in the filter. A deficient finding
+    -- on *any* rec
     all_grants AS (
     SELECT DISTINCT
       rid,
@@ -251,11 +255,12 @@ export async function getRecipientSpotlightIndicators(
       ON mrg."reviewId" = mr."reviewId"
     JOIN "MonitoringReviewStatuses" mrs
       ON mr."statusId" = mrs."statusId"
+    CROSS JOIN monitoring_dates
     WHERE mr."deletedAt" IS NULL 
       AND (
-        mr."reportDeliveryDate" > '2025-01-20'
+        mr."reportDeliveryDate" > monitoring_start_date
         OR
-        mr."sourceCreatedAt" > '2025-01-20'
+        mr."sourceCreatedAt" > monitoring_start_date
       )
     ),
     ---------------------------------------
@@ -278,8 +283,7 @@ export async function getRecipientSpotlightIndicators(
     --    in monitoring findings. The logic for "uncorrected" is complex
     --    because we cannot simply rely on the finding's statusId value.
 
-    -- associate each citation with its most recent review
-    -- TODO: recheck the definition of "deficiency"
+    -- associate each citation with its most recent review to see 
     ordered_citation_reviews AS (
     SELECT DISTINCT ON (mf."findingId")
       rid,
