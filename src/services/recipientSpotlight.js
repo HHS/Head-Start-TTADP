@@ -3,6 +3,7 @@ import { Op, QueryTypes } from 'sequelize';
 import {
   sequelize,
   Grant,
+  Recipient,
 } from '../models';
 
 // Map from indicator label (as shown in UI) to column name in SQL
@@ -84,13 +85,26 @@ export async function getRecipientSpotlightIndicators(
   };
 
   // Get a list of grant ids using the scopes.
-  const grantIds = await Grant.findAll({
-    attributes: [
-      'id',
+  // Use Recipient.findAll with include to ensure scope aliases work correctly.
+  // The grant scopes use "grants"."id" which requires the include pattern.
+  const grantResults = await Recipient.findAll({
+    attributes: [],
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        attributes: ['id'],
+        where: grantsWhere,
+        required: true,
+      },
     ],
-    where: grantsWhere,
     raw: true,
+    nest: true,
   });
+
+  // Extract unique grant ids from the nested results
+  const uniqueGrantIds = [...new Set(grantResults.map((r) => r.grants.id))];
+  const grantIds = uniqueGrantIds.map((id) => ({ id }));
 
   /*
     Create the spotlight query using the grant ids and other params.
