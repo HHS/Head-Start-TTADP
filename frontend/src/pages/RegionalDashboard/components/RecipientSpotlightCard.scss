@@ -1,0 +1,122 @@
+@use '../../../colors.scss' as *;
+
+// Increase specificity by combining classes to override DataCard's padding-3
+.ttahub-data-card.ttahub-recipient-spotlight-card {
+  @media (max-width: 639px) {
+    padding: 1rem; // 16px
+  }
+}
+
+ .usa-table-container--scrollable .ttahub-recipient-spotlight-card {
+  margin-bottom: .5rem;
+}
+
+.ttahub-recipient-spotlight-card__field button {
+  margin: 0px;
+}
+
+.ttahub-recipient-spotlight-card {
+
+  &__recipient-name {
+    color: $text-link;
+    text-decoration: underline;
+
+    &:visited {
+      color: $text-visited;
+    }
+
+    &:hover {
+      color: $ttahub-medium-blue;
+    }
+  }
+
+  // Responsive grid layout
+  &__grid {
+    display: grid;
+    gap: 1.5rem; // 24px
+
+    // Mobile: single column (stack vertically)
+    @media (max-width: 639px) {
+      grid-template-columns: 1fr;
+      gap: 1rem; // 16px
+    }
+
+    // Tablet: 3 columns with specific layout
+    @media (min-width: 640px) and (max-width: 880px) {
+      grid-template-columns: repeat(3, 1fr);
+
+      // First three items span the first row
+      & > :nth-child(1),
+      & > :nth-child(2),
+      & > :nth-child(3) {
+        grid-column: span 1;
+      }
+
+      // Fourth item (indicators) spans 2 columns
+      & > :nth-child(4) {
+        grid-column: span 2;
+      }
+
+      // Fifth item (expander button) spans 1 column
+      & > :nth-child(5) {
+        grid-column: span 1;
+      }
+    }
+
+    // Desktop: 5 columns with specific widths
+    @media (min-width: 881px) {
+      grid-template-columns: 3fr 2fr 2fr 3fr 2fr;
+      gap: 0;
+    }
+  }
+
+  // Add spacing on desktop only
+  &__field {
+    @media (min-width: 881px) {
+      padding-right: 1.5rem;
+
+      &:last-child {
+        padding-right: 0;
+      }
+    }
+  }
+
+  // Expanded indicator details
+  &__details {
+  }
+
+  &__details-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__indicator-box {
+    border: 1px solid $base-darkest;
+
+    &-label {
+      font-size: 0.875rem;
+      color: $base-darkest;
+    }
+
+    &-description {
+      font-size: 0.875rem;
+      color: $base-darkest;
+      line-height: 1.5;
+    }
+
+    // Not applicable styling
+    &--not-applicable {
+      border-style: dashed;
+      border-color: $base-medium;
+
+      .ttahub-recipient-spotlight-card__indicator-box-label {
+        color: $base-medium;
+      }
+
+      .ttahub-recipient-spotlight-card__indicator-box-description {
+        color: $base-medium;
+      }
+    }
+  }
+}
