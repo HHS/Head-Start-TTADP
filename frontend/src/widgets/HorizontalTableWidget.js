@@ -175,6 +175,10 @@ export default function HorizontalTableWidget(
       classes.push('smarthub-horizontal-table--sticky-first-column');
     }
 
+    if (stickyFirstColumn && enableCheckboxes) {
+      classes.push('smarthub-horizontal-table--sticky-first-column-checkboxes-enabled');
+    }
+
     return classes.join(' ');
   };
 
