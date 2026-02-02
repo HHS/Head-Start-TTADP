@@ -45,6 +45,7 @@ export async function getRecipientSpotlightIndicators(
   limit,
   regions,
   indicatorsToInclude = [],
+  indicatorsToExclude = [],
 ) {
   // Early return if no regions are provided
   if (!regions || regions.length === 0) {
@@ -180,6 +181,19 @@ export async function getRecipientSpotlightIndicators(
 
     if (includeConditions.length > 0) {
       indicatorWhereClause = `(${includeConditions.join(' OR ')})`;
+    }
+  }
+
+  // Handle exclusion filter - exclude recipients with any of the excluded indicators
+  if (indicatorsToExclude.length > 0) {
+    const excludeConditions = indicatorsToExclude
+      .map((label) => INDICATOR_LABEL_TO_COLUMN[label])
+      .filter(Boolean)
+      .map((col) => `"${col}" = FALSE`);
+
+    if (excludeConditions.length > 0) {
+      // All excluded indicators must be FALSE (i.e., recipient must NOT have any of them)
+      indicatorWhereClause = `${indicatorWhereClause} AND (${excludeConditions.join(' AND ')})`;
     }
   }
 

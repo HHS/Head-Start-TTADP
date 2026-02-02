@@ -78,6 +78,17 @@ export async function getRecipientSpotLight(req, res) {
         : [indicatorFilterIn];
     }
 
+    // Extract indicator exclusion filter params (NOT case)
+    // Support both priorityIndicator.nin and priorityIndicator.nin[] formats
+    const indicatorFilterNin = req.query['priorityIndicator.nin[]']
+      || req.query['priorityIndicator.nin'];
+    let indicatorsToExclude = [];
+    if (indicatorFilterNin) {
+      indicatorsToExclude = Array.isArray(indicatorFilterNin)
+        ? indicatorFilterNin
+        : [indicatorFilterNin];
+    }
+
     const recipientSpotlightData = await getRecipientSpotlightIndicators(
       scopes,
       sortBy,
@@ -86,6 +97,7 @@ export async function getRecipientSpotLight(req, res) {
       parsedLimit,
       regionsArray,
       indicatorsToInclude,
+      indicatorsToExclude,
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);
