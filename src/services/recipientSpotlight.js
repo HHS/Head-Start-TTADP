@@ -243,7 +243,8 @@ export async function getRecipientSpotlightIndicators(
       region,
       gr.id grid,
       gr."startDate" grstart,
-      gr.number grnumber
+      gr.number grnumber,
+      gr.status grstatus
     FROM recipients
     JOIN "Grants" gr
       ON rid = gr."recipientId"
@@ -367,7 +368,7 @@ export async function getRecipientSpotlightIndicators(
         grid,
         rid,
         region
-      FROM grant_recipients
+      FROM all_grants ag
       JOIN "Goals" g
         ON g."grantId" = grid
       JOIN "ActivityReportGoals" arg
@@ -376,21 +377,24 @@ export async function getRecipientSpotlightIndicators(
         ON arg."activityReportId" = ar.id
       WHERE ar."calculatedStatus" = 'approved'
         AND ar."startDate" >= NOW() - INTERVAL '12 months'
+        AND grstatus = 'Active'
       UNION
       SELECT
         grid,
         rid,
         region
-      FROM grant_recipients
+      FROM all_grants
       JOIN recent_session_grants
         ON grid = session_grid
+      WHERE grstatus = 'Active'
     ),
     grants_without_tta AS (
-      SELECT 
+      SELECT
         grid,
         rid,
         region
-      FROM grant_recipients
+      FROM all_grants
+      WHERE grstatus = 'Active'
       EXCEPT
       SELECT
         grid,
