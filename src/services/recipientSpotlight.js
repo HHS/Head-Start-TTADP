@@ -60,9 +60,12 @@ export async function getRecipientSpotlightIndicators(
 
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   // Build where for grants, filter by region early on.
+  // Get the where clause from scopes.grant (may be empty object if no filters)
+  const grantScopeWhere = scopes?.grant?.where || {};
+
   const grantsWhere = {
     [Op.and]: [
-      scopes.grant,
+      grantScopeWhere,
       {
         regionId: { [Op.in]: regions.map((r) => parseInt(r, 10)) },
       },
@@ -118,7 +121,7 @@ export async function getRecipientSpotlightIndicators(
 */
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
-  const grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'TRUE';
+  const grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'FALSE';
 
   // Query total distinct recipient-region pairs for the selected regions
   // This counts all recipients with active/recently-inactive grants in the regions,

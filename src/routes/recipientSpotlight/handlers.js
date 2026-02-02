@@ -62,7 +62,7 @@ export async function getRecipientSpotLight(req, res) {
       }
     }
 
-    const { grant: scopes } = await filtersToScopes(
+    const scopes = await filtersToScopes(
       req.query,
       { userId },
     );

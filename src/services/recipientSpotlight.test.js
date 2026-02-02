@@ -4,23 +4,30 @@ import db from '../models';
 import { getRecipientSpotlightIndicators } from './recipientSpotlight';
 
 // Helper function to create scopes with region filter
+// Structure matches what filtersToScopes returns: { grant: { where: {...}, include: [...] } }
 const createScopesWithRegion = (regionId) => ({
   grant: {
-    [db.Sequelize.Op.and]: [
-      { id: { [db.Sequelize.Op.ne]: null } },
-      { regionId: { [db.Sequelize.Op.in]: [regionId] } },
-    ],
+    where: {
+      [db.Sequelize.Op.and]: [
+        { id: { [db.Sequelize.Op.ne]: null } },
+        { regionId: { [db.Sequelize.Op.in]: [regionId] } },
+      ],
+    },
+    include: [],
   },
 });
 
 // Helper function to create scopes with recipient and region filter
 const createScopesWithRecipientAndRegion = (recipientId, regionId) => ({
   grant: {
-    [db.Sequelize.Op.and]: [
-      { id: { [db.Sequelize.Op.ne]: null } },
-      { recipientId: { [db.Sequelize.Op.in]: [recipientId] } },
-      { regionId: { [db.Sequelize.Op.in]: [regionId] } },
-    ],
+    where: {
+      [db.Sequelize.Op.and]: [
+        { id: { [db.Sequelize.Op.ne]: null } },
+        { recipientId: { [db.Sequelize.Op.in]: [recipientId] } },
+        { regionId: { [db.Sequelize.Op.in]: [regionId] } },
+      ],
+    },
+    include: [],
   },
 });
 
@@ -906,7 +913,7 @@ describe('recipientSpotlight service', () => {
 
     it('works with empty grant list (queries all grants)', async () => {
       // Create a scope that returns no grants initially
-      const emptyGrantScope = { grant: { id: { [db.Sequelize.Op.eq]: -999 } } };
+      const emptyGrantScope = { grant: { where: { id: { [db.Sequelize.Op.eq]: -999 } }, include: [] } };
 
       const result = await getRecipientSpotlightIndicators(
         emptyGrantScope,
@@ -1112,6 +1119,81 @@ describe('recipientSpotlight service', () => {
       expect(newRecipientResult).toBeDefined();
     });
   });
+
+  describe('state code filtering', () => {
+    it('returns no results when filtering by a state code with no matching grants', async () => {
+      // Create a scope that filters by a non-existent state code
+      // This simulates what happens when filtersToScopes processes stateCode.ctn=ZZ
+      const scopes = {
+        grant: {
+          where: {
+            [db.Sequelize.Op.and]: [
+              { stateCode: { [db.Sequelize.Op.in]: ['ZZ'] } }, // Non-existent state code
+              { regionId: { [db.Sequelize.Op.in]: [REGION_ID] } },
+            ],
+          },
+          include: [],
+        },
+      };
+
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+      );
+
+      // Should return empty results since no grants match 'ZZ' state code
+      expect(result.recipients).toEqual([]);
+      expect(result.count).toBe(0);
+      expect(result.overview.numRecipients).toBe('0');
+    });
+
+    it('returns results only for grants matching the specified state code', async () => {
+      // First, update one of our test grants to have a specific state code
+      await db.Grant.update(
+        { stateCode: 'TX' },
+        { where: { id: childIncidentsGrant.id }, individualHooks: true },
+      );
+
+      try {
+        // Filter by 'TX' state code
+        const scopes = {
+          grant: {
+            where: {
+              [db.Sequelize.Op.and]: [
+                { stateCode: { [db.Sequelize.Op.in]: ['TX'] } },
+                { regionId: { [db.Sequelize.Op.in]: [REGION_ID] } },
+              ],
+            },
+            include: [],
+          },
+        };
+
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          100,
+          [REGION_ID],
+        );
+
+        // Should only return the recipient with the TX grant
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].recipientName).toBe('Child Incidents Recipient');
+      } finally {
+        // Reset the state code
+        await db.Grant.update(
+          { stateCode: null },
+          { where: { id: childIncidentsGrant.id }, individualHooks: true },
+        );
+      }
+    });
+  });
+
   /// failing block
   describe('secondary sorting', () => {
     // Test recipients with different indicator counts and names
@@ -1343,10 +1425,13 @@ describe('recipientSpotlight service', () => {
     it('sorts by indicatorCount ASC with recipientName as secondary sort', async () => {
       const scopes = {
         grant: {
-          [db.Sequelize.Op.and]: [
-            { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
-            { regionId: REGION_ID },
-          ],
+          where: {
+            [db.Sequelize.Op.and]: [
+              { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
+              { regionId: REGION_ID },
+            ],
+          },
+          include: [],
         },
       };
 
@@ -1374,10 +1459,13 @@ describe('recipientSpotlight service', () => {
     it('sorts by indicatorCount DESC with recipientName as secondary sort', async () => {
       const scopes = {
         grant: {
-          [db.Sequelize.Op.and]: [
-            { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
-            { regionId: REGION_ID },
-          ],
+          where: {
+            [db.Sequelize.Op.and]: [
+              { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
+              { regionId: REGION_ID },
+            ],
+          },
+          include: [],
         },
       };
 
@@ -1442,10 +1530,13 @@ describe('recipientSpotlight service', () => {
       try {
         const scopes = {
           grant: {
-            [db.Sequelize.Op.and]: [
-              { id: { [db.Sequelize.Op.in]: [grantRegion1A.id, grantRegion1B.id] } },
-              { regionId: REGION_ID },
-            ],
+            where: {
+              [db.Sequelize.Op.and]: [
+                { id: { [db.Sequelize.Op.in]: [grantRegion1A.id, grantRegion1B.id] } },
+                { regionId: REGION_ID },
+              ],
+            },
+            include: [],
           },
         };
 
@@ -1514,10 +1605,13 @@ describe('recipientSpotlight service', () => {
       try {
         const scopes = {
           grant: {
-            [db.Sequelize.Op.and]: [
-              { id: { [db.Sequelize.Op.in]: [grantRegionDescA.id, grantRegionDescB.id] } },
-              { regionId: REGION_ID },
-            ],
+            where: {
+              [db.Sequelize.Op.and]: [
+                { id: { [db.Sequelize.Op.in]: [grantRegionDescA.id, grantRegionDescB.id] } },
+                { regionId: REGION_ID },
+              ],
+            },
+            include: [],
           },
         };
 
@@ -1603,11 +1697,14 @@ describe('recipientSpotlight service', () => {
     it('counts recipient once per region when querying multiple regions', async () => {
       const scopes = {
         grant: {
-          [db.Sequelize.Op.and]: [
-            { id: { [db.Sequelize.Op.ne]: null } },
-            { regionId: { [db.Sequelize.Op.in]: [REGION_1, REGION_2] } },
-            { recipientId: multiRegionRecipient.id },
-          ],
+          where: {
+            [db.Sequelize.Op.and]: [
+              { id: { [db.Sequelize.Op.ne]: null } },
+              { regionId: { [db.Sequelize.Op.in]: [REGION_1, REGION_2] } },
+              { recipientId: multiRegionRecipient.id },
+            ],
+          },
+          include: [],
         },
       };
 
