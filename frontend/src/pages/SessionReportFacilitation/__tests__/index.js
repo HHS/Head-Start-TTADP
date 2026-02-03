@@ -8,6 +8,7 @@ import fetchMock from 'fetch-mock';
 import SessionReportFacilitation from '../index';
 import UserContext from '../../../UserContext';
 import isAdmin from '../../../permissions';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 jest.mock('../../../permissions', () => ({
   __esModule: true,
@@ -34,17 +35,19 @@ describe('SessionReportFacilitation', () => {
   };
 
   const renderComponent = (reportId = trainingReportId) => render(
-    <UserContext.Provider value={{ user: { id: 1 } }}>
-      <Router history={history}>
-        <SessionReportFacilitation
-          match={{
-            params: { trainingReportId: reportId },
-            path: '',
-            url: '',
-          }}
-        />
-      </Router>
-    </UserContext.Provider>,
+    <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+      <UserContext.Provider value={{ user: { id: 1 } }}>
+        <Router history={history}>
+          <SessionReportFacilitation
+            match={{
+              params: { trainingReportId: reportId },
+              path: '',
+              url: '',
+            }}
+          />
+        </Router>
+      </UserContext.Provider>
+    </AppLoadingContext.Provider>,
   );
 
   beforeEach(() => {

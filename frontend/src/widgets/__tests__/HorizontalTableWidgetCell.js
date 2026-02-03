@@ -138,4 +138,138 @@ describe('TableCell', () => {
     const td = container.querySelector('td');
     expect(td).toHaveClass('left-with-checkbox');
   });
+
+  it('applies position-relative class to non-first column cells', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({ data, isFirstColumn: false });
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('position-relative');
+    expect(td).not.toHaveClass('smarthub-horizontal-table-first-column');
+  });
+
+  it('applies position-relative class to first column cells', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({ data, isFirstColumn: true });
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('position-relative');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column');
+  });
+
+  it('applies sticky column classes when stickyFirstColumn is true', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      stickyFirstColumn: true,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('smarthub-horizontal-table--sticky-first-column');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column-border');
+  });
+
+  it('applies sticky column checkbox class when both stickyFirstColumn and enableCheckboxes are true', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      stickyFirstColumn: true,
+      enableCheckboxes: true,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('smarthub-horizontal-table--sticky-first-column');
+    expect(td).toHaveClass('smarthub-horizontal-table--sticky-first-column-checkboxes-enabled');
+    expect(td).toHaveClass('left-with-checkbox');
+  });
+
+  it('applies border class when hideFirstColumnBorder is false (default)', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column-border');
+  });
+
+  it('does not apply border class when hideFirstColumnBorder is true and stickyFirstColumn is false', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      hideFirstColumnBorder: true,
+      stickyFirstColumn: false,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).not.toHaveClass('smarthub-horizontal-table-first-column-border');
+  });
+
+  it('applies border class when stickyFirstColumn is true even if hideFirstColumnBorder is true', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      hideFirstColumnBorder: true,
+      stickyFirstColumn: true,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column-border');
+  });
+
+  it('applies left-0 class when enableCheckboxes is false', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      enableCheckboxes: false,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('left-0');
+    expect(td).not.toHaveClass('left-with-checkbox');
+  });
 });

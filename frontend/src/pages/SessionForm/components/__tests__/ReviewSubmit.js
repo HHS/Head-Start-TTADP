@@ -3,6 +3,7 @@ import { render, screen, act } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import ReviewSubmit from '../ReviewSubmit';
 import UserContext from '../../../../UserContext';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 // eslint-disable-next-line react/prop-types
 const FormWrapper = ({ defaultValues, error = null }) => {
@@ -12,21 +13,23 @@ const FormWrapper = ({ defaultValues, error = null }) => {
   });
 
   return (
-    <UserContext.Provider value={{ user: { id: 1, name: 'Test User' } }}>
-      {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-      <FormProvider {...hookForm}>
-        <ReviewSubmit
-          onReview={jest.fn()}
-          formData={defaultValues}
-          error={error}
-          onUpdatePage={jest.fn()}
-          onSaveDraft={jest.fn()}
-          onSubmit={jest.fn()}
-          pages={[]}
-          reviewSubmitPagePosition={4}
-        />
-      </FormProvider>
-    </UserContext.Provider>
+    <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+      <UserContext.Provider value={{ user: { id: 1, name: 'Test User' } }}>
+        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        <FormProvider {...hookForm}>
+          <ReviewSubmit
+            onReview={jest.fn()}
+            formData={defaultValues}
+            error={error}
+            onUpdatePage={jest.fn()}
+            onSaveDraft={jest.fn()}
+            onSubmit={jest.fn()}
+            pages={[]}
+            reviewSubmitPagePosition={4}
+          />
+        </FormProvider>
+      </UserContext.Provider>
+    </AppLoadingContext.Provider>
   );
 };
 
