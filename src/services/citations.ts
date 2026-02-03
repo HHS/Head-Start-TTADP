@@ -151,7 +151,7 @@ export async function getCitationsByGrantIds(
       ),
       -- finding the latest close date for Monitoring Goals
       closed_monitoring_goals AS (
-      SELECT DISTINCT ON (g."grantId")
+      SELECT DISTINCT ON (grid)
         g.id gid,
         grid,
         gsc."performedAt" last_close
