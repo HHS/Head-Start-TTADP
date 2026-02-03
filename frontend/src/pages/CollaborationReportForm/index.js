@@ -46,6 +46,7 @@ import usePresenceData from '../../hooks/usePresenceData';
 import { getApprovers } from '../../fetchers/activityReports';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import './index.scss';
+import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
@@ -514,7 +515,10 @@ function CollaborationReport({ match, location }) {
 
         const currentPageState = hookForm.getValues('pageState');
         const convertedReport = convertReportToFormData(updatedReport);
-        updateFormData({ ...convertedReport, pageState: currentPageState }, true);
+        const allowUpdateForm = shouldUpdateFormData(false);
+        if (allowUpdateForm) {
+          updateFormData({ ...convertedReport, pageState: currentPageState }, true);
+        }
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
