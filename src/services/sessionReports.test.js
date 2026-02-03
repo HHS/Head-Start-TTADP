@@ -798,5 +798,25 @@ describe('session reports service', () => {
         expect(row).toHaveProperty('sessionName');
       });
     });
+
+    it('should apply sessionReportScopes consistently to both count and data queries', async () => {
+      // Get all sessions for the test event first
+      const allResults = await getSessionReports({
+        'eventId.ctn': [testEventLongId],
+        limit: 1000,
+      });
+
+      // Now filter by a specific session ID using sessionId.in filter
+      const specificSessionId = allResults.rows[0].id;
+      const filteredResults = await getSessionReports({
+        'eventId.ctn': [testEventLongId],
+        'sessionId.in': [String(specificSessionId)],
+      });
+
+      // The count should match the actual rows returned
+      expect(filteredResults.count).toBe(filteredResults.rows.length);
+      expect(filteredResults.count).toBe(1);
+      expect(filteredResults.rows[0].id).toBe(specificSessionId);
+    });
   });
 });

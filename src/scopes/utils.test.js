@@ -1,4 +1,5 @@
-import { scopeToWhere } from './utils';
+import { Op } from 'sequelize';
+import { compareDate, scopeToWhere } from './utils';
 import { ActivityReport } from '../models'; // Assuming the model is imported from './models'
 
 describe('scopeToWhere', () => {
@@ -34,5 +35,34 @@ describe('scopeToWhere', () => {
     expect(result).toBe('alias."column1" = \'value1\' AND alias."column2" = \'value2\'');
 
     findAllSpy.mockRestore();
+  });
+});
+
+describe('compareDate', () => {
+  it('normalizes month-only dates using the start of the month for gte', () => {
+    const result = compareDate(['2025/02'], 'startDate', Op.gte);
+    expect(result).toEqual([
+      {
+        startDate: {
+          [Op.gte]: '2025-02-01',
+        },
+      },
+    ]);
+  });
+
+  it('normalizes month-only dates using the end of the month for lte', () => {
+    const result = compareDate(['2025/02'], 'startDate', Op.lte);
+    expect(result).toEqual([
+      {
+        startDate: {
+          [Op.lte]: '2025-02-28',
+        },
+      },
+    ]);
+  });
+
+  it('skips invalid dates', () => {
+    const result = compareDate(['not-a-date'], 'startDate', Op.gte);
+    expect(result).toEqual([]);
   });
 });

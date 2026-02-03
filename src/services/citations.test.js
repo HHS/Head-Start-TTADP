@@ -85,7 +85,7 @@ const createMonitoringData = async (
       statusId: findingStatusId,
       narrative: faker.random.words(10),
       ordinal: faker.datatype.number({ min: 1, max: 10 }),
-      determination: faker.random.words(5),
+      determination: citation.determination || null,
       hash: faker.datatype.uuid(),
       sourceCreatedAt: new Date(),
       sourceUpdatedAt: new Date(),
@@ -566,7 +566,7 @@ describe('citations service', () => {
       statusId: faker.datatype.number({ min: 9999 }),
       narrative: faker.random.words(10),
       ordinal: faker.datatype.number({ min: 1, max: 10 }),
-      determination: faker.random.words(5),
+      determination: null,
       hash: faker.datatype.uuid(),
       sourceCreatedAt: new Date(),
       sourceUpdatedAt: new Date(),
@@ -588,10 +588,9 @@ describe('citations service', () => {
     const reportStartDate = new Date().toISOString().split('T')[0];
     const citationsToAssert = await getCitationsByGrantIds([grant1.id, grant1a.id, grant2.id, grant3.id], reportStartDate);
 
-    // Assert correct number of citations.
-    // This will be all four now because the AR date is also the reportDeliveryDate
-    // which means that all citations will be considered valid for that time
-    expect(citationsToAssert.length).toBe(4);
+    // grant1 and grant1s have monitoring goals; grant2 and grant3 do not
+    // grant1 has 2 active, non-deleted citations and grant1a has 1.
+    expect(citationsToAssert.length).toBe(3);
 
     // Assert the citations.
     // Get the citation with the text 'Grant 1 - Citation 1 - Good'.

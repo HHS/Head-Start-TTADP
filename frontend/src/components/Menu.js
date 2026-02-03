@@ -49,6 +49,7 @@ function Menu({
   const recordButtonPositionAndUpdateMenu = useCallback(() => {
     // set initial postition
     if (fixed && buttonRef.current && buttonRef.current.getBoundingClientRect) {
+      // buttonRef.current.style = 'background: red';
       // get the button's position
       const {
         top,
@@ -125,7 +126,8 @@ function Menu({
   return (
     <div
       onBlur={onBlur}
-      className="position-relative"
+      className="position-relative smart-hub-menu-container"
+      ref={buttonRef}
     >
       <button
         className={`smart-hub--menu-button usa-button usa-button--unstyled smart-hub--button__no-margin ${className}`}
@@ -134,7 +136,6 @@ function Menu({
         aria-label={label}
         type="button"
         data-testid={buttonTestId}
-        ref={buttonRef}
       >
         {buttonText}
       </button>

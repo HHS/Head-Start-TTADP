@@ -109,7 +109,9 @@ export function removeQueueEventHandlers(
 // Define the handlers so they can be added and removed
 function handleShutdown(queue) {
   return () => {
-    auditLogger.error('Shutting down, but queue closing is disabled for now...');
+    auditLogger.error(
+      'Shutting down, but queue closing is disabled for now...',
+    );
     // queue.close().then(() => {
     //   auditLogger.error('Queue closed successfully.');
     //   removeQueueEventHandlers(queue);
