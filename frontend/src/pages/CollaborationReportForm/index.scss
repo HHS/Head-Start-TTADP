@@ -2,8 +2,10 @@
 
 .smart-hub-collab-report {
 
-  // Remove focus outline when programmatically focused (tabIndex={-1})
-  &:focus {
+  // Remove focus outline only when it is not considered focus-visible
+  // (e.g., mouse or programmatic focus on tabIndex={-1}).
+  // This preserves a visible indicator for keyboard users (WCAG 2.4.7).
+  &:focus:not(:focus-visible) {
     outline: none;
   }
 
