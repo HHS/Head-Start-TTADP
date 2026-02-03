@@ -1,6 +1,18 @@
-import type { BufferEncoding } from 'node:buffer';
-import { Transform } from 'stream';
-import * as chardet from 'chardet';
+import { Transform } from "stream";
+import * as chardet from "chardet";
+
+type BufferEncoding =
+  | "ascii"
+  | "utf8"
+  | "utf-8"
+  | "utf16le"
+  | "ucs2"
+  | "ucs-2"
+  | "base64"
+  | "base64url"
+  | "latin1"
+  | "binary"
+  | "hex";
 
 class EncodingConverter extends Transform {
   private detectEncoding: boolean;
@@ -9,17 +21,17 @@ class EncodingConverter extends Transform {
 
   // Define a set of supported encodings for Buffer methods
   private static readonly supportedEncodings: Set<BufferEncoding> = new Set([
-    'ascii',
-    'utf8',
-    'utf-8',
-    'utf16le',
-    'ucs2',
-    'ucs-2',
-    'base64',
-    'base64url',
-    'latin1',
-    'binary',
-    'hex',
+    "ascii",
+    "utf8",
+    "utf-8",
+    "utf16le",
+    "ucs2",
+    "ucs-2",
+    "base64",
+    "base64url",
+    "latin1",
+    "binary",
+    "hex",
   ]);
 
   constructor(
@@ -27,16 +39,22 @@ class EncodingConverter extends Transform {
     private sourceEncoding?: string,
   ) {
     super();
-    if (targetEncoding
-      && EncodingConverter.supportedEncodings
-        .has(targetEncoding.toLowerCase() as BufferEncoding)) {
+    if (
+      targetEncoding &&
+      EncodingConverter.supportedEncodings.has(
+        targetEncoding.toLowerCase() as BufferEncoding,
+      )
+    ) {
       this.targetEncoding = targetEncoding.toLowerCase();
     } else {
       throw new Error(`Unsupported encoding detected: ${targetEncoding}`);
     }
-    if (sourceEncoding
-      && EncodingConverter.supportedEncodings
-        .has(sourceEncoding.toLowerCase() as BufferEncoding)) {
+    if (
+      sourceEncoding &&
+      EncodingConverter.supportedEncodings.has(
+        sourceEncoding.toLowerCase() as BufferEncoding,
+      )
+    ) {
       this.sourceEncoding = sourceEncoding.toLowerCase();
     } else if (sourceEncoding) {
       throw new Error(`Unsupported encoding detected: ${sourceEncoding}`);
@@ -45,7 +63,6 @@ class EncodingConverter extends Transform {
     this.buffer = Buffer.alloc(0); // Initialize an empty buffer
   }
 
-   
   _transform(
     chunk: Buffer,
     _encoding: string,
@@ -53,7 +70,10 @@ class EncodingConverter extends Transform {
   ): void {
     if (this.detectEncoding) {
       // Continue collecting chunks until we have enough to detect the encoding
-      this.buffer = Buffer.concat([new Uint8Array(this.buffer), new Uint8Array(chunk)]);
+      this.buffer = Buffer.concat([
+        new Uint8Array(this.buffer),
+        new Uint8Array(chunk),
+      ]);
       if (this.buffer.length >= 1024) {
         // We have enough data to detect the encoding
         this.detectEncoding = false; // Set flag to false as we've detected the encoding
@@ -61,10 +81,14 @@ class EncodingConverter extends Transform {
         const detectedEncoding = chardet.detect(new Uint8Array(this.buffer));
 
         // Check if the detected encoding is supported
-         
-        this.sourceEncoding = detectedEncoding && EncodingConverter.supportedEncodings.has(detectedEncoding.toLowerCase() as BufferEncoding)
-          ? detectedEncoding.toLowerCase()
-          : 'utf-8';
+
+        this.sourceEncoding =
+          detectedEncoding &&
+          EncodingConverter.supportedEncodings.has(
+            detectedEncoding.toLowerCase() as BufferEncoding,
+          )
+            ? detectedEncoding.toLowerCase()
+            : "utf-8";
 
         // If the source encoding matches the target encoding, pass through the entire buffer
         if (this.sourceEncoding === this.targetEncoding) {
@@ -88,7 +112,10 @@ class EncodingConverter extends Transform {
   convertBuffer(callback: (error?: Error | null, data?: Buffer) => void) {
     try {
       const data = this.buffer.toString(this.sourceEncoding as BufferEncoding);
-      const convertedBuffer = Buffer.from(data, this.targetEncoding as BufferEncoding);
+      const convertedBuffer = Buffer.from(
+        data,
+        this.targetEncoding as BufferEncoding,
+      );
       this.push(convertedBuffer);
       this.buffer = Buffer.alloc(0); // Clear the buffer
       callback();
@@ -97,10 +124,16 @@ class EncodingConverter extends Transform {
     }
   }
 
-  convertChunk(chunk: Buffer, callback: (error?: Error | null, data?: Buffer) => void) {
+  convertChunk(
+    chunk: Buffer,
+    callback: (error?: Error | null, data?: Buffer) => void,
+  ) {
     try {
       const data = chunk.toString(this.sourceEncoding as BufferEncoding);
-      const convertedChunk = Buffer.from(data, this.targetEncoding as BufferEncoding);
+      const convertedChunk = Buffer.from(
+        data,
+        this.targetEncoding as BufferEncoding,
+      );
       this.push(convertedChunk);
       callback();
     } catch (error) {
@@ -108,12 +141,12 @@ class EncodingConverter extends Transform {
     }
   }
 
-   
   _flush(callback: (error?: Error | null, data?: Buffer) => void): void {
     if (this.detectEncoding && this.buffer.length > 0) {
       // If flush is called and we're still detecting the encoding,
       // perform the conversion on the remaining buffer.
-      this.sourceEncoding = chardet.detect(new Uint8Array(this.buffer)) || 'utf-8';
+      this.sourceEncoding =
+        chardet.detect(new Uint8Array(this.buffer)) || "utf-8";
 
       // If the source encoding matches the target encoding, pass through the remaining buffer
       if (this.sourceEncoding === this.targetEncoding) {
