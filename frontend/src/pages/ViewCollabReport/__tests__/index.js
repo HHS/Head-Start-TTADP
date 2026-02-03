@@ -5,6 +5,7 @@ import { Router } from 'react-router-dom';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import { REPORT_STATUSES } from '@ttahub/common';
+import AppLoadingContext from '../../../AppLoadingContext';
 import ViewCollabReport from '..';
 
 const history = createMemoryHistory();
@@ -81,9 +82,11 @@ const renderViewCollabReport = (reportId = '123') => {
   };
 
   return render(
-    <Router history={history}>
-      <ViewCollabReport match={match} />
-    </Router>,
+    <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+      <Router history={history}>
+        <ViewCollabReport match={match} />
+      </Router>
+    </AppLoadingContext.Provider>,
   );
 };
 
