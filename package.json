@@ -109,8 +109,9 @@
     "publish:common": "yarn --cwd ./packages/common publish",
     "merge-coverage": "node ./src/tools/merge-coverage.js",
     "check-coverage": "node ./src/tools/check-coverage.js --fail-on-uncovered=true",
-    "createMonitoringGoalsCLI": "node ./build/server/src/tools/createMonitoringGoalsCLI.js",
-    "createMonitoringGoalsCLI:local": "tsx ./src/tools/createMonitoringGoalsCLI.js"
+    "cli:createMonitoringGoalsCLI": "node ./build/server/src/tools/createMonitoringGoalsCLI.js",
+    "cli:createMonitoringGoalsCLI:local": "tsx ./src/tools/createMonitoringGoalsCLI.js",
+    "cli:dbMaintenance": "node ./build/server/src/tools/dbMaintenanceCLI.js"
   },
   "repository": {
     "type": "git",
