@@ -51,7 +51,7 @@ export default async function trHoursOfTrainingByNationalCenter(
     sessionReports.forEach((sessionReport) => {
       const { objectiveTrainers, duration } = sessionReport.data;
 
-      objectiveTrainers.forEach((trainer) => {
+      (objectiveTrainers || []).forEach((trainer) => {
         // trainers were originally and are now stored by the national center abbrev.
         // but looking at the data, there was a period where they were stored as
         // abbrev - user name, so we need to check for that
