@@ -13,6 +13,7 @@ import RegionalDashboard from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 const history = createMemoryHistory();
 
@@ -108,13 +109,15 @@ describe('Regional Dashboard page', () => {
 
   const renderDashboard = (user, reportType = '') => {
     render(
-      <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
-        <UserContext.Provider value={{ user }}>
-          <Router history={history}>
-            <RegionalDashboard match={{ params: { reportType }, path: '', url: '' }} />
-          </Router>
-        </UserContext.Provider>
-      </AriaLiveContext.Provider>,
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+          <UserContext.Provider value={{ user }}>
+            <Router history={history}>
+              <RegionalDashboard match={{ params: { reportType }, path: '', url: '' }} />
+            </Router>
+          </UserContext.Provider>
+        </AriaLiveContext.Provider>
+      </AppLoadingContext.Provider>,
     );
   };
 

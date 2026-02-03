@@ -1,5 +1,5 @@
 /* eslint-disable react/no-array-index-key */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Table, Checkbox } from '@trussworks/react-uswds';
@@ -26,8 +26,26 @@ export default function HorizontalTableWidget(
     footerData,
     selectAllIdPrefix,
     showDashForNullValue,
+    stickyFirstColumn,
+    stickyLastColumn,
   },
 ) {
+  const [menuWidthOffset, setMenuWidthOffset] = useState(110);
+
+  useLayoutEffect(() => {
+    // get first menuContainer
+    const menuContainer = document.querySelector('.smart-hub-menu-container');
+
+    if (menuContainer) {
+      const { width } = menuContainer.getBoundingClientRect();
+      // 12 is an eyeball, since we want it aligned to part of the svg chevron
+      const newOffset = width + 12;
+      if (newOffset !== menuWidthOffset) {
+        setMenuWidthOffset(newOffset);
+      }
+    }
+  }, [menuWidthOffset]);
+
   // State for select all check box.
   const [allCheckBoxesChecked, setAllCheckBoxesChecked] = useState(false);
 
@@ -137,6 +155,33 @@ export default function HorizontalTableWidget(
     ]).isRequired,
   };
 
+  const firstHeadingClasses = () => {
+    const classes = [
+      'smarthub-horizontal-table-first-column',
+      'smarthub-horizontal-table-first-column-border',
+    ];
+
+    if (!enableSorting) {
+      classes.push('data-header');
+    }
+
+    if (enableCheckboxes) {
+      classes.push('left-with-checkbox');
+    } else {
+      classes.push('left-0');
+    }
+
+    if (stickyFirstColumn) {
+      classes.push('smarthub-horizontal-table--sticky-first-column');
+    }
+
+    if (stickyFirstColumn && enableCheckboxes) {
+      classes.push('smarthub-horizontal-table--sticky-first-column-checkboxes-enabled');
+    }
+
+    return classes.join(' ');
+  };
+
   return (
     <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
       <Table stackedStyle="default" fullWidth striped bordered={false}>
@@ -159,9 +204,9 @@ export default function HorizontalTableWidget(
             }
             {
               enableSorting
-                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), firstHeading, `smarthub-horizontal-table-first-column smarthub-horizontal-table-first-column-border ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`)
+                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), firstHeading, firstHeadingClasses())
                 : (
-                  <th className={`smarthub-horizontal-table-first-column smarthub-horizontal-table-first-column-border data-header ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
+                  <th className={firstHeadingClasses()}>
                     {firstHeading}
                   </th>
                 )
@@ -171,7 +216,7 @@ export default function HorizontalTableWidget(
             }
             {
             data.some((r) => r.actions) && (
-              <th scope="col" aria-label="context menu" className="smarthub-horizontal-table-last-column fixed-th">
+              <th scope="col" aria-label="context menu" className={`${stickyLastColumn ? 'smarthub-horizontal-table-last-column' : ''} fixed-th`}>
                 Actions
               </th>
             )
@@ -196,7 +241,14 @@ export default function HorizontalTableWidget(
                 {
                   enableCheckboxes && (
                     <td className="width-8 checkbox-column" data-label="Select report">
-                      <Checkbox id={r.id} label="" value={r.id} checked={checkboxes[r.id] || false} onChange={handleReportSelect} aria-label={`Select ${r.title || r.heading}`} />
+                      <Checkbox
+                        id={r.id}
+                        label=""
+                        value={r.id}
+                        checked={checkboxes[r.id] || false}
+                        onChange={handleReportSelect}
+                        aria-label={(() => `Select ${r.title || r.heading}`)()}
+                      />
                     </td>
                   )
                 }
@@ -206,6 +258,7 @@ export default function HorizontalTableWidget(
                   isFirstColumn
                   enableCheckboxes={enableCheckboxes}
                   hideFirstColumnBorder={hideFirstColumnBorder}
+                  stickyFirstColumn={stickyFirstColumn}
                 />
                 {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
                   <HorizontalTableWidgetCell
@@ -215,12 +268,13 @@ export default function HorizontalTableWidget(
                   />
                 ))}
                 {r.actions && r.actions.length ? (
-                  <td data-label={`Row actions for ${r.title || r.heading}`} key={`horizontal_table_row_actions_${index}`} className={`smarthub-horizontal-table-last-column text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
+                  <td data-label={`Row actions for ${r.title || r.heading}`} key={`horizontal_table_row_actions_${index}`} className={`${stickyLastColumn ? 'smarthub-horizontal-table-last-column' : ''} text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
                     <ContextMenu
                       fixed
+                      left
                       label={`Actions for ${r.title || r.heading}`}
                       menuItems={r.actions}
-                      menuWidthOffset={110}
+                      menuWidthOffset={menuWidthOffset}
                     />
                   </td>
                 ) : null}
@@ -279,6 +333,8 @@ HorizontalTableWidget.propTypes = {
     PropTypes.arrayOf(PropTypes.string),
   ]),
   showDashForNullValue: PropTypes.bool,
+  stickyFirstColumn: PropTypes.bool,
+  stickyLastColumn: PropTypes.bool,
 };
 
 HorizontalTableWidget.defaultProps = {
@@ -301,4 +357,6 @@ HorizontalTableWidget.defaultProps = {
   caption: '',
   selectAllIdPrefix: null,
   showDashForNullValue: false,
+  stickyFirstColumn: true,
+  stickyLastColumn: true,
 };
