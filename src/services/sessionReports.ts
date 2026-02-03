@@ -489,7 +489,12 @@ export async function getSessionReports(
   // which inflates row counts and breaks LIMIT/OFFSET)
   const idQuery = {
     attributes: ['id'],
-    where: queryOptions.where,
+    where: {
+      [Op.and]: [
+        queryOptions.where,
+        ...sessionReportScopes,
+      ],
+    },
     include: [
       {
         model: EventReportPilot,
