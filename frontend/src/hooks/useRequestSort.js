@@ -12,6 +12,8 @@ export default function useRequestSort(setSortConfig) {
         ...previousConfig,
         sortBy,
         direction,
+        activePage: 1,
+        offset: 0,
       });
     });
   }, [setSortConfig]);

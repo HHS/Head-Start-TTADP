@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router';
 import FindingWithinReview from '../FindingWithinReview';
 import UserContext from '../../../../../../UserContext';
 import { OBJECTIVE_STATUS } from '../../../../../../Constants';
+import AppLoadingContext from '../../../../../../AppLoadingContext';
 
 describe('FindingWithinReview', () => {
   const mockFinding = {
@@ -36,11 +37,13 @@ describe('FindingWithinReview', () => {
   const mockRegionId = 1;
 
   const renderTest = (finding = mockFinding) => render(
-    <UserContext.Provider value={{ user: { roles: [], id: 1, email: 'test@test.gov' } }}>
-      <MemoryRouter>
-        <FindingWithinReview finding={finding} regionId={mockRegionId} />
-      </MemoryRouter>
-    </UserContext.Provider>,
+    <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+      <UserContext.Provider value={{ user: { roles: [], id: 1, email: 'test@test.gov' } }}>
+        <MemoryRouter>
+          <FindingWithinReview finding={finding} regionId={mockRegionId} />
+        </MemoryRouter>
+      </UserContext.Provider>
+    </AppLoadingContext.Provider>,
   );
 
   it('renders ReviewObjective components when objectives are present', () => {

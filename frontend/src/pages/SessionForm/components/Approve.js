@@ -1,11 +1,13 @@
 import React from 'react';
 import { startCase } from 'lodash';
-import { Button, Dropdown, Textarea } from '@trussworks/react-uswds';
+import { Button, Dropdown } from '@trussworks/react-uswds';
 import { APPROVER_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import { reviewSubmitComponentProps } from './constants';
 import ReadOnlyField from '../../../components/ReadOnlyField';
+import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
 import ApproverStatusList from '../../ActivityReport/Pages/components/ApproverStatusList';
 
 const path = 'approver-session-report';
@@ -32,14 +34,14 @@ export default function Approve({ onFormReview }) {
   return (
     <div data-testid="session-form-approver">
       <ReadOnlyField label="Creator notes">
-        {additionalNotes}
+        <ReadOnlyEditor value={additionalNotes} ariaLabel="Creator notes" />
       </ReadOnlyField>
       <FormItem
         label="Add manager notes"
         name="managerNotes"
         required={false}
       >
-        <Textarea inputRef={register()} name="managerNotes" id="managerNotes" />
+        <HookFormRichEditor ariaLabel="Add manager notes" name="managerNotes" />
       </FormItem>
       <ReadOnlyField
         label="Date submitted"
