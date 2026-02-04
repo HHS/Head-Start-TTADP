@@ -37,19 +37,30 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
     [event?.regionId],
   );
 
+  // Filter out AA users for session trainers (isEvent=false)
+  // AA users should only appear as Event Collaborators, not as Session Trainers
+  const regionalTrainersForDisplay = useMemo(() => {
+    if (isEvent) {
+      return regionalTrainers;
+    }
+    return regionalTrainers.filter(
+      (user) => !user.roles?.some((role) => role.name === 'AA'),
+    );
+  }, [regionalTrainers, isEvent]);
+
   return useMemo(() => {
     let optionsForValue = [];
     let trainerOptions = [];
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
-      optionsForValue = regionalTrainers;
-      trainerOptions = regionalTrainers;
+      optionsForValue = regionalTrainersForDisplay;
+      trainerOptions = regionalTrainersForDisplay;
     }
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
       if (facilitation === 'regional_tta_staff') {
-        optionsForValue = regionalTrainers;
-        trainerOptions = regionalTrainers;
+        optionsForValue = regionalTrainersForDisplay;
+        trainerOptions = regionalTrainersForDisplay;
       }
 
       if (facilitation === 'national_center' || isEvent) {
@@ -58,7 +69,7 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
       }
 
       if (facilitation === 'both') {
-        optionsForValue = [...nationalCenterTrainers, ...regionalTrainers];
+        optionsForValue = [...nationalCenterTrainers, ...regionalTrainersForDisplay];
         trainerOptions = [
           {
             label: 'National Center trainers',
@@ -66,7 +77,7 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
           },
           {
             label: 'Regional trainers',
-            options: regionalTrainers,
+            options: regionalTrainersForDisplay,
           },
         ];
       }
@@ -76,5 +87,5 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
       trainerOptions,
       optionsForValue,
     };
-  }, [eventOrganizer, facilitation, isEvent, nationalCenterTrainers, regionalTrainers]);
+  }, [eventOrganizer, facilitation, isEvent, nationalCenterTrainers, regionalTrainersForDisplay]);
 }
