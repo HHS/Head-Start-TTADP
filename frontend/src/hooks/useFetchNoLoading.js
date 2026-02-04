@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
-export default function useFetch(
+export default function useFetchNoLoading(
   initialValue,
   fetcher,
   dependencies = [],
-  errorMessage = 'An unexpected error occured',
+  errorMessage = 'An unexpected error occurred',
 ) {
   const [data, setData] = useState(initialValue);
   const [error, setError] = useState('');

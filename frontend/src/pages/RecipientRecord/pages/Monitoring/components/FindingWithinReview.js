@@ -9,7 +9,7 @@ import './FindingWithinReview.css';
 
 export default function FindingWithinReview({ finding, regionId }) {
   return (
-    <div className="ttahub-review-card--finding-within-review margin-top-4" key={`review-card-finding-${finding.citation}`}>
+    <div className="ttahub-review-card--finding-within-review margin-top-4">
       <DescriptionList className="ttahub-review-card--finding-within-review-description-list">
         <DescriptionItem title="Citation">
           <CitationDrawer citationNumber={finding.citation} />

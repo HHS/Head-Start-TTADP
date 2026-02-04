@@ -6,7 +6,7 @@ export default function useFetch(
   initialValue,
   fetcher,
   dependencies = [],
-  errorMessage = 'An unexpected error occured',
+  errorMessage = 'An unexpected error occurred',
 ) {
   const [data, setData] = useState(initialValue);
   const [error, setError] = useState('');

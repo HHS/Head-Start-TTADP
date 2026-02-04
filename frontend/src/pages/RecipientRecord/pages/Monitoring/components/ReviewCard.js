@@ -26,7 +26,6 @@ export default function ReviewCard({ review, regionId }) {
   return (
     <DataCard
       testId="review-card"
-      key={review.name}
       className="ttahub-monitoring-review-card"
     >
       <div className="display-flex flex-align-center flex-row">

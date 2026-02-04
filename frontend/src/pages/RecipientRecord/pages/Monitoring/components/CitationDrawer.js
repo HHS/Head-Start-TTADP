@@ -1,20 +1,11 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Drawer from '../../../../../components/Drawer';
 import DrawerTriggerButton from '../../../../../components/DrawerTriggerButton';
 import CitationDrawerContent from '../../../../../components/CitationDrawerContent';
-import { fetchCitationTextByName } from '../../../../../fetchers/citations';
-import useFetchNoLoading from '../../../../../hooks/useFetchNoLoading';
 
 export default function CitationDrawer({ citationNumber, bolded }) {
   const drawerTriggerRef = useRef(null);
-
-  const fetcher = useCallback(
-    () => fetchCitationTextByName([citationNumber]),
-    [citationNumber],
-  );
-  const { data: content } = useFetchNoLoading([], fetcher, [citationNumber]);
-
   return (
     <>
       <DrawerTriggerButton
@@ -29,7 +20,7 @@ export default function CitationDrawer({ citationNumber, bolded }) {
         stickyFooter
         title="Monitoring citations"
       >
-        <CitationDrawerContent citations={content} />
+        <CitationDrawerContent citations={citationNumber} />
       </Drawer>
     </>
   );

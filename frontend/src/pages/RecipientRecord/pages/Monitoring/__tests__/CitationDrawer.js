@@ -25,7 +25,7 @@ describe('CitationDrawer', () => {
   const renderTest = () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-        <CitationDrawer citationNumber="citation1" />
+        <CitationDrawer citationNumber={['citation1']} />
       </AppLoadingContext.Provider>,
     );
   };
