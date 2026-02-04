@@ -543,7 +543,9 @@ const ReviewSection = () => {
             ))[0]?.label || 'None selected',
           },
         },
-        { label: 'Activity description', name: 'description', customValue: { description } },
+        {
+          label: 'Activity description', name: 'description', isRichText: true, customValue: { description },
+        },
       ],
     },
   ];
