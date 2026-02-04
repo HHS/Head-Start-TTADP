@@ -20,7 +20,7 @@ export default function CitationDrawer({ citationNumber, bolded }) {
         stickyFooter
         title="Monitoring citations"
       >
-        <CitationDrawerContent citations={citationNumber} />
+        <CitationDrawerContent citations={[citationNumber]} />
       </Drawer>
     </>
   );
