@@ -1,17 +1,19 @@
 import React, { useCallback } from 'react';
+import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
-import { uniqueId } from 'lodash';
+import useFetchNoLoading from '../hooks/useFetchNoLoading';
 import { fetchCitationTextByName } from '../fetchers/citations';
-import useFetch from '../hooks/useFetch';
 
 export default function CitationDrawerContent({ citations }) {
   const fetcher = useCallback(() => fetchCitationTextByName(citations), [citations]);
-  const { data: content } = useFetch([], fetcher, [citations]);
+  const { data: content } = useFetchNoLoading([], fetcher, [citations]);
+
+  const uniqueContent = uniqBy(content, 'citation');
 
   return (
     <div>
-      {content.map((standard) => (
-        <div key={uniqueId('citation-drawer-content-citation-')} className="margin-bottom-3">
+      {uniqueContent.map((standard) => (
+        <div key={standard.citation} className="margin-bottom-3">
           <p className="text-bold usa-prose margin-0">{standard.citation}</p>
           <p className="usa-prose margin-0">{standard.text}</p>
         </div>
