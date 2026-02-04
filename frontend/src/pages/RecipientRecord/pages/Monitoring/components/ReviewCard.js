@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { uniqueId } from 'lodash';
 import DataCard from '../../../../../components/DataCard';
 import DescriptionItem from './DescriptionItem';
 import DescriptionList from './DescriptionList';
@@ -27,7 +26,7 @@ export default function ReviewCard({ review, regionId }) {
   return (
     <DataCard
       testId="review-card"
-      key={uniqueId('review-card-')}
+      key={review.name}
       className="ttahub-monitoring-review-card"
     >
       <div className="display-flex flex-align-center flex-row">
@@ -42,7 +41,7 @@ export default function ReviewCard({ review, regionId }) {
         <DescriptionItem title="Grants on review">
           <ul className="add-list-reset">
             {review.grants.map((grant) => (
-              <li key={uniqueId('grant-')}>{grant}</li>
+              <li key={`review-${review.name}-${grant}`}>{grant}</li>
             ))}
           </ul>
         </DescriptionItem>
@@ -84,7 +83,7 @@ export default function ReviewCard({ review, regionId }) {
       />
       {expanded && (review.findings.map((finding) => (
         <FindingWithinReview
-          key={uniqueId('review-card-finding-')}
+          key={`finding-${finding.citation}`}
           finding={finding}
           regionId={Number(regionId)}
         />
