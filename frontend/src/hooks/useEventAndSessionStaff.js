@@ -44,7 +44,14 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
       return regionalTrainers;
     }
     return regionalTrainers.filter(
-      (user) => !user.roles?.some((role) => role.name === 'AA'),
+      (user) => {
+        // only filter out users whose ONLY ROLE is AA
+        if (user.roles?.length === 1) {
+          return user.roles[0].name !== 'AA';
+        }
+
+        return true;
+      },
     );
   }, [regionalTrainers, isEvent]);
 
