@@ -18,4 +18,4 @@ get:
                   description: The goal template standard (i.e. "Child Safety")
                 count:
                   type: number
-                  description: The count of distinct session report IDs for this standard goal
+                  description: The count of distinct events (training reports) that have sessions associated with this standard goal

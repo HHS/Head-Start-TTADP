@@ -293,6 +293,17 @@ describe('trStandardGoalList', () => {
     expect(Array.isArray(results)).toBe(true);
   });
 
+  it('returns empty array when no events match the scopes filter', async () => {
+    // Use scopes with a region that doesn't match any test data
+    const query = { 'region.in': ['999'] };
+    const scopes = await filtersToScopes(query);
+
+    const results = await trStandardGoalList(scopes);
+
+    // Should return empty array due to early return when no events found
+    expect(results).toEqual([]);
+  });
+
   it('returns results sorted by count in descending order', async () => {
     const scopes = filtersToScopes({});
 

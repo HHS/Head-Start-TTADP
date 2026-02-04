@@ -4,7 +4,8 @@ import db, { sequelize } from '../models';
 import { CREATION_METHOD } from '../constants';
 import { IScopes } from './types';
 
-export default async function trStandardGoalList(scopes: IScopes) {
+// eslint-disable-next-line max-len
+export default async function trStandardGoalList(scopes: IScopes): Promise<{ name: string; count: number }[]> {
   const events = await db.EventReportPilot.findAll({
     attributes: ['id'],
     where: {
@@ -21,6 +22,10 @@ export default async function trStandardGoalList(scopes: IScopes) {
       ],
     },
   });
+
+  if (events.length === 0) {
+    return [];
+  }
 
   return (await db.GoalTemplate.findAll({
     attributes: [
@@ -60,6 +65,6 @@ export default async function trStandardGoalList(scopes: IScopes) {
       ['standard', 'ASC'],
     ],
   })).map((gt: {
-    toJSON: () => ({ standard: string, count: number })
+    toJSON: () => ({ name: string, count: number })
   }) => gt.toJSON());
 }
