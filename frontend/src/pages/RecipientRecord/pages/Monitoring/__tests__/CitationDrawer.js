@@ -25,7 +25,7 @@ describe('CitationDrawer', () => {
   const renderTest = () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-        <CitationDrawer citationNumber="citation1" />
+        <CitationDrawer citationNumber={['citation1']} />
       </AppLoadingContext.Provider>,
     );
   };
@@ -41,5 +41,15 @@ describe('CitationDrawer', () => {
 
     expect(button).toBeVisible();
     expect(await screen.findByText('text1')).not.toBeVisible();
+  });
+
+  it('handles errors', async () => {
+    fetchMock.get(citationUrl, 500);
+
+    renderTest();
+
+    expect(fetchMock.called(citationUrl)).toBe(true);
+    expect(screen.queryByText('citation1', { selector: 'button' })).toBeInTheDocument();
+    expect(screen.queryByText('text1')).not.toBeInTheDocument();
   });
 });

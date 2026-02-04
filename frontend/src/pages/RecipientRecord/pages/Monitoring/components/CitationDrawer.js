@@ -6,10 +6,12 @@ import CitationDrawerContent from '../../../../../components/CitationDrawerConte
 
 export default function CitationDrawer({ citationNumber, bolded }) {
   const drawerTriggerRef = useRef(null);
-
   return (
     <>
-      <DrawerTriggerButton customClass={bolded ? 'text-bold' : ''} drawerTriggerRef={drawerTriggerRef}>
+      <DrawerTriggerButton
+        customClass={bolded ? 'text-bold' : ''}
+        drawerTriggerRef={drawerTriggerRef}
+      >
         {citationNumber}
       </DrawerTriggerButton>
       <Drawer
