@@ -1,12 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { uniqueId } from 'lodash';
 import ReviewCard from './ReviewCard';
 
 export default function ReviewCards({ data, regionId }) {
   return (
     data.map((review) => (
-      <ReviewCard key={uniqueId('review-card-')} review={review} regionId={regionId} />
+      <ReviewCard key={`review-card-${review.name}`} review={review} regionId={regionId} />
     )));
 }
 
