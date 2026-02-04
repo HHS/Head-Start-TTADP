@@ -18,7 +18,8 @@ describe('recipientSpotlight handlers', () => {
     let req;
     let res;
     const mockUserId = 123;
-    const mockScopes = { someScope: 'value' };
+    const mockGrantScopes = { someScope: 'value' };
+    const mockScopes = { grant: mockGrantScopes };
     const mockRecipientSpotlightData = {
       recipients: [{ id: 1, name: 'Indicator 1' }],
       overview: {
@@ -46,7 +47,7 @@ describe('recipientSpotlight handlers', () => {
 
       currentUserId.mockResolvedValue(mockUserId);
       getUserReadRegions.mockResolvedValue([1, 2, 3]); // User has access to regions 1, 2, 3
-      filtersToScopes.mockResolvedValue({ grant: mockScopes });
+      filtersToScopes.mockResolvedValue(mockScopes);
       getRecipientSpotlightIndicators.mockResolvedValue(mockRecipientSpotlightData);
     });
 
@@ -66,8 +67,11 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         'name',
         'asc',
-        '0',
-        undefined,
+        0,
+        10,
+        ['1'],
+        [],
+        [],
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -86,8 +90,11 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         'name',
         'asc',
-        '0',
-        undefined,
+        0,
+        10,
+        ['1'],
+        [],
+        [],
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -130,8 +137,11 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         'date',
         'desc',
-        '10',
-        undefined,
+        10,
+        10,
+        ['1'],
+        [],
+        [],
       );
     });
 
@@ -148,8 +158,11 @@ describe('recipientSpotlight handlers', () => {
         mockScopes,
         undefined,
         undefined,
-        '0',
-        undefined,
+        0,
+        10,
+        ['1'],
+        [],
+        [],
       );
     });
 
@@ -181,7 +194,7 @@ describe('recipientSpotlight handlers', () => {
       expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
     });
 
-    it('should return 403 FORBIDDEN when no region is specified in the request', async () => {
+    it('should default to all user read regions when no region is specified in the request', async () => {
       req.query = {
         'recipientId.in': '456',
         sortBy: 'name',
@@ -191,8 +204,19 @@ describe('recipientSpotlight handlers', () => {
 
       await getRecipientSpotLight(req, res);
 
-      expect(res.sendStatus).toHaveBeenCalledWith(403);
-      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+      // Should use all user's read regions (1, 2, 3) as strings
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'name',
+        'asc',
+        0,
+        10,
+        ['1', '2', '3'],
+        [],
+        [],
+      );
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+      expect(res.sendStatus).not.toHaveBeenCalledWith(403);
     });
 
     it('should allow access when user requests multiple regions they have access to', async () => {
@@ -276,6 +300,76 @@ describe('recipientSpotlight handlers', () => {
 
       expect(res.sendStatus).toHaveBeenCalledWith(403);
       expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+    });
+
+    it('should pass priorityIndicator.nin as indicatorsToExclude', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'recipientName',
+        direction: 'asc',
+        offset: '0',
+        'priorityIndicator.nin': 'No TTA',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'recipientName',
+        'asc',
+        0,
+        10,
+        ['1'],
+        [],
+        ['No TTA'],
+      );
+    });
+
+    it('should handle priorityIndicator.nin[] array notation', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'recipientName',
+        direction: 'asc',
+        offset: '0',
+        'priorityIndicator.nin[]': ['No TTA', 'Deficiency'],
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'recipientName',
+        'asc',
+        0,
+        10,
+        ['1'],
+        [],
+        ['No TTA', 'Deficiency'],
+      );
+    });
+
+    it('should pass both indicatorsToInclude and indicatorsToExclude when both are provided', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'recipientName',
+        direction: 'asc',
+        offset: '0',
+        'priorityIndicator.in': 'New staff',
+        'priorityIndicator.nin': 'No TTA',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'recipientName',
+        'asc',
+        0,
+        10,
+        ['1'],
+        ['New staff'],
+        ['No TTA'],
+      );
     });
   });
 });

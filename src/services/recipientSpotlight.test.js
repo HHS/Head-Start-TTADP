@@ -3,30 +3,31 @@ import faker from '@faker-js/faker';
 import db from '../models';
 import { getRecipientSpotlightIndicators } from './recipientSpotlight';
 
-// Mock SCOPES for testing
-const SCOPES = {
-  // Use proper structure for Sequelize where conditions - no restrictions
-  adminRead: { grant: { id: { [db.Sequelize.Op.ne]: null } } },
-};
-
 // Helper function to create scopes with region filter
+// Structure matches what filtersToScopes returns: { grant: { where: {...}, include: [...] } }
 const createScopesWithRegion = (regionId) => ({
   grant: {
-    [db.Sequelize.Op.and]: [
-      { id: { [db.Sequelize.Op.ne]: null } },
-      { regionId: { [db.Sequelize.Op.in]: [regionId] } },
-    ],
+    where: {
+      [db.Sequelize.Op.and]: [
+        { id: { [db.Sequelize.Op.ne]: null } },
+        { regionId: { [db.Sequelize.Op.in]: [regionId] } },
+      ],
+    },
+    include: [],
   },
 });
 
 // Helper function to create scopes with recipient and region filter
 const createScopesWithRecipientAndRegion = (recipientId, regionId) => ({
   grant: {
-    [db.Sequelize.Op.and]: [
-      { id: { [db.Sequelize.Op.ne]: null } },
-      { recipientId: { [db.Sequelize.Op.in]: [recipientId] } },
-      { regionId: { [db.Sequelize.Op.in]: [regionId] } },
-    ],
+    where: {
+      [db.Sequelize.Op.and]: [
+        { id: { [db.Sequelize.Op.ne]: null } },
+        { recipientId: { [db.Sequelize.Op.in]: [recipientId] } },
+        { regionId: { [db.Sequelize.Op.in]: [regionId] } },
+      ],
+    },
+    include: [],
   },
 });
 
@@ -288,7 +289,7 @@ describe('recipientSpotlight service', () => {
       effectiveDate: pastYear,
       title: 'New Staff Member',
       programId: 1, // Adding required field
-      role: 'Staff', // Adding required field
+      role: 'director', // Must be 'cfo' or 'director' to match service logic
       active: true, // Adding required field
     });
 
@@ -597,54 +598,59 @@ describe('recipientSpotlight service', () => {
     await db.sequelize.close();
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /* Temporarily commented out for frontend implementation - will be restored when SQL query is updated
   describe('getRecipientSpotlightIndicators', () => {
-    it('returns all recipients when no recipientId is provided', async () => {
+    it('returns recipients with required fields', async () => {
       const scopes = createScopesWithRegion(REGION_ID);
       const result = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
         'ASC',
         0,
+        10,
+        [REGION_ID],
       );
 
-      expect(result).toBeDefined();
-      expect(result.recipients).toBeDefined();
-      expect(Array.isArray(result.recipients)).toBe(true);
-
-      // Check each recipient item if we have any results
-      for (let i = 0; i < result.recipients.length; i += 1) {
-        const item = result.recipients[i];
-        expect(item).toHaveProperty('recipientId');
-        expect(item).toHaveProperty('regionId');
-        expect(item).toHaveProperty('recipientName');
-        expect(item).toHaveProperty('grantIds');
-        expect(item).toHaveProperty('childIncidents');
-        expect(item).toHaveProperty('deficiency');
-        expect(item).toHaveProperty('newRecipients');
-        expect(item).toHaveProperty('newStaff');
-        expect(item).toHaveProperty('noTTA');
-        expect(item).toHaveProperty('DRS');
-        expect(item).toHaveProperty('FEI');
-      }
+      expect(result).toHaveProperty('recipients');
+      expect(result).toHaveProperty('count');
+      expect(result).toHaveProperty('overview');
+      expect(result.recipients.length).toBeGreaterThan(0);
+      expect(result.recipients[0]).toHaveProperty('recipientId');
+      expect(result.recipients[0]).toHaveProperty('regionId');
+      expect(result.recipients[0]).toHaveProperty('recipientName');
+      expect(result.recipients[0]).toHaveProperty('grantIds');
+      expect(result.recipients[0]).toHaveProperty('childIncidents');
+      expect(result.recipients[0]).toHaveProperty('deficiency');
+      expect(result.recipients[0]).toHaveProperty('newRecipients');
+      expect(result.recipients[0]).toHaveProperty('newStaff');
+      expect(result.recipients[0]).toHaveProperty('noTTA');
+      expect(result.recipients[0]).toHaveProperty('DRS');
+      expect(result.recipients[0]).toHaveProperty('FEI');
+      expect(result.overview).toHaveProperty('numRecipients');
+      expect(result.overview).toHaveProperty('totalRecipients');
+      expect(result.overview).toHaveProperty('recipientPercentage');
+      expect(typeof result.overview.numRecipients).toBe('string');
+      expect(typeof result.overview.totalRecipients).toBe('string');
+      expect(typeof result.overview.recipientPercentage).toBe('string');
     });
 
     it('returns a specific recipient when recipientId is provided', async () => {
-      const scopes = createScopesWithRecipientAndRegion(normalRecipient.id, REGION_ID);
+      // Use a recipient with an indicator since we filter out 0-indicator recipients
+      const scopes = createScopesWithRecipientAndRegion(childIncidentsRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
         'ASC',
         0,
+        10,
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
       expect(result.recipients.length).toBe(1);
-      expect(result.recipients[0].recipientId).toBe(normalRecipient.id);
-      expect(result.recipients[0].recipientName).toBe('Normal Recipient');
+      expect(result.recipients[0].recipientId).toBe(childIncidentsRecipient.id);
+      expect(result.recipients[0].recipientName).toBe('Child Incidents Recipient');
     });
 
     it('identifies child incidents correctly', async () => {
@@ -654,6 +660,8 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [REGION_ID],
       );
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
@@ -668,6 +676,8 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -683,6 +693,8 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -698,6 +710,8 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -713,12 +727,35 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        10,
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
       expect(result.recipients[0].noTTA).toBe(true);
+    });
+
+    it('excludes recipients with zero indicators from results', async () => {
+      // normalRecipient has TTA and no other indicators, so indicatorCount = 0
+      // The service should filter it out by default
+      const scopes = createScopesWithRecipientAndRegion(normalRecipient.id, REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        10,
+        [REGION_ID],
+      );
+
+      expect(result).toBeDefined();
+      expect(result.recipients).toBeDefined();
+      expect(Array.isArray(result.recipients)).toBe(true);
+      // normalRecipient should NOT be in results since it has 0 indicators
+      expect(result.recipients.length).toBe(0);
+      expect(result.count).toBe(0);
     });
 
     it('handles pagination correctly', async () => {
@@ -730,14 +767,18 @@ describe('recipientSpotlight service', () => {
         'recipientName',
         'ASC',
         0,
+        100,
+        [REGION_ID],
       );
 
-      // Test with offset 2, limit 2
+      // Test with offset 2
       const secondPage = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
         'ASC',
         2,
+        100,
+        [REGION_ID],
       );
 
       expect(firstPage).toBeDefined();
@@ -761,19 +802,19 @@ describe('recipientSpotlight service', () => {
     it('handles sorting correctly', async () => {
       // Create multiple recipients with different names to ensure sorting works
       const recipientA = await Recipient.create({
-        id: 9001,
+        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
         name: 'AAAA Test Recipient',
         regionId: REGION_ID,
       });
 
       const recipientB = await Recipient.create({
-        id: 9002,
+        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
         name: 'ZZZZ Test Recipient',
         regionId: REGION_ID,
       });
 
       const grantA = await Grant.create({
-        id: 9901,
+        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
         number: 'G-SORT-TEST-A',
         recipientId: recipientA.id,
         regionId: REGION_ID,
@@ -784,7 +825,7 @@ describe('recipientSpotlight service', () => {
       });
 
       const grantB = await Grant.create({
-        id: 9902,
+        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
         number: 'G-SORT-TEST-B',
         recipientId: recipientB.id,
         regionId: REGION_ID,
@@ -803,6 +844,8 @@ describe('recipientSpotlight service', () => {
           'recipientName',
           'ASC',
           0,
+          100,
+          [REGION_ID],
         );
 
         // Test descending order
@@ -811,6 +854,8 @@ describe('recipientSpotlight service', () => {
           'recipientName',
           'DESC',
           0,
+          100,
+          [REGION_ID],
         );
 
         expect(ascResult).toBeDefined();
@@ -842,18 +887,21 @@ describe('recipientSpotlight service', () => {
         );
       } finally {
         // Clean up the test data
-        await Grant.destroy({ where: { id: [9901, 9902] }, force: true });
-        await Recipient.destroy({ where: { id: [9001, 9002] }, force: true });
+        await Grant.destroy({ where: { id: [grantA.id, grantB.id] }, force: true, individualHooks: true });
+        await Recipient.destroy({ where: { id: [recipientA.id, recipientB.id] }, force: true });
       }
     });
 
     it('confirms DRS and FEI are set to false for MVP', async () => {
-      const scopes = createScopesWithRecipientAndRegion(normalRecipient.id, REGION_ID);
+      // Use a recipient with an indicator since we filter out 0-indicator recipients
+      const scopes = createScopesWithRecipientAndRegion(childIncidentsRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
         'ASC',
         0,
+        10,
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
@@ -863,64 +911,9 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients[0].FEI).toBe(false);
     });
 
-    it('returns object with recipients and overview properties', async () => {
-      const scopes = createScopesWithRegion(REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-      );
-
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty('recipients');
-      expect(result).toHaveProperty('overview');
-      expect(Array.isArray(result.recipients)).toBe(true);
-      expect(result.overview).toHaveProperty('numRecipients');
-      expect(result.overview).toHaveProperty('totalRecipients');
-      expect(result.overview).toHaveProperty('recipientPercentage');
-      expect(typeof result.overview.numRecipients).toBe('string');
-      expect(typeof result.overview.totalRecipients).toBe('string');
-      expect(typeof result.overview.recipientPercentage).toBe('string');
-    });
-
-    it('handles no limit parameter (gets all recipients)', async () => {
-      const scopes = createScopesWithRegion(REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        undefined, // no limit
-      );
-
-      expect(result).toBeDefined();
-      expect(result.recipients).toBeDefined();
-      expect(Array.isArray(result.recipients)).toBe(true);
-      // Should return all recipients, not just 10
-      // We created at least 6 test recipients
-      expect(result.recipients.length).toBeGreaterThanOrEqual(6);
-    });
-
-    it('works with no region ID specified (uses userRegions)', async () => {
-      // Test without region filtering in scopes - should return all
-      const result = await getRecipientSpotlightIndicators(
-        SCOPES.adminRead,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-      );
-
-      expect(result).toBeDefined();
-      expect(result.recipients).toBeDefined();
-      expect(Array.isArray(result.recipients)).toBe(true);
-    });
-
     it('works with empty grant list (queries all grants)', async () => {
       // Create a scope that returns no grants initially
-      const emptyGrantScope = { grant: { id: { [db.Sequelize.Op.eq]: -999 } } };
+      const emptyGrantScope = { grant: { where: { id: { [db.Sequelize.Op.eq]: -999 } }, include: [] } };
 
       const result = await getRecipientSpotlightIndicators(
         emptyGrantScope,
@@ -928,45 +921,813 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
+        [REGION_ID],
       );
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(result.overview).toBeDefined();
-      // With scope that matches no grants, recipients should still be returned
-      // (the query uses TRUE when no grant IDs)
+      // With scope that matches no grants, the query uses TRUE as filter
+      // so it returns all recipients in the region
       expect(Array.isArray(result.recipients)).toBe(true);
     });
   });
-  */
 
-  // Placeholder test for static data implementation
-  describe('getRecipientSpotlightIndicators - Static Data', () => {
-    it('returns static data with required fields including lastTTA', async () => {
+  describe('getRecipientSpotlightIndicators - Priority Indicator Filtering', () => {
+    it('filters by single indicator (New staff)', async () => {
       const scopes = createScopesWithRegion(REGION_ID);
       const result = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
         'ASC',
         0,
-        10,
+        100,
+        [REGION_ID],
+        ['New staff'],
       );
 
       expect(result).toHaveProperty('recipients');
-      expect(result).toHaveProperty('overview');
       expect(result.recipients.length).toBeGreaterThan(0);
-      expect(result.recipients[0]).toHaveProperty('lastTTA');
-      expect(result.recipients[0]).toHaveProperty('recipientId');
-      expect(result.recipients[0]).toHaveProperty('regionId');
-      expect(result.recipients[0]).toHaveProperty('recipientName');
-      expect(result.recipients[0]).toHaveProperty('grantIds');
-      expect(result.recipients[0]).toHaveProperty('childIncidents');
-      expect(result.recipients[0]).toHaveProperty('deficiency');
-      expect(result.recipients[0]).toHaveProperty('newRecipients');
-      expect(result.recipients[0]).toHaveProperty('newStaff');
-      expect(result.recipients[0]).toHaveProperty('noTTA');
-      expect(result.recipients[0]).toHaveProperty('DRS');
-      expect(result.recipients[0]).toHaveProperty('FEI');
+
+      // All returned recipients should have newStaff = true
+      result.recipients.forEach((recipient) => {
+        expect(recipient.newStaff).toBe(true);
+      });
+
+      // Our test "New Staff Recipient" should be in the results
+      const newStaffRecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'New Staff Recipient',
+      );
+      expect(newStaffRecipientResult).toBeDefined();
+    });
+
+    it('filters by single indicator (No TTA)', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+        ['No TTA'],
+      );
+
+      expect(result).toHaveProperty('recipients');
+      expect(result.recipients.length).toBeGreaterThan(0);
+
+      // All returned recipients should have noTTA = true
+      result.recipients.forEach((recipient) => {
+        expect(recipient.noTTA).toBe(true);
+      });
+
+      // Our test "No TTA Recipient" should be in the results
+      const noTTARecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'No TTA Recipient',
+      );
+      expect(noTTARecipientResult).toBeDefined();
+    });
+
+    it('filters by multiple indicators with OR logic', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+        ['New staff', 'No TTA'],
+      );
+
+      expect(result).toHaveProperty('recipients');
+      expect(result.recipients.length).toBeGreaterThan(0);
+
+      // All returned recipients should have either newStaff = true OR noTTA = true
+      result.recipients.forEach((recipient) => {
+        expect(recipient.newStaff || recipient.noTTA).toBe(true);
+      });
+
+      // Both test recipients should be in the results
+      const newStaffRecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'New Staff Recipient',
+      );
+      const noTTARecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'No TTA Recipient',
+      );
+      expect(newStaffRecipientResult).toBeDefined();
+      expect(noTTARecipientResult).toBeDefined();
+    });
+
+    it('returns all recipients when indicator filter is empty', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const resultWithoutFilter = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+        [], // empty filter
+      );
+
+      const resultDefault = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+        [], // no filter
+      );
+
+      // Both should return the same results
+      expect(resultWithoutFilter.count).toBe(resultDefault.count);
+      expect(resultWithoutFilter.recipients.length).toBe(resultDefault.recipients.length);
+    });
+
+    it('ignores invalid indicator labels', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const resultWithInvalid = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+        ['Invalid Label', 'Another Invalid'],
+      );
+
+      const resultDefault = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+      );
+
+      // Invalid labels should be filtered out, returning all recipients (default behavior)
+      expect(resultWithInvalid.count).toBe(resultDefault.count);
+    });
+
+    it('handles mixed valid and invalid indicator labels', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+        ['New staff', 'Invalid Label'],
+      );
+
+      expect(result).toHaveProperty('recipients');
+      expect(result.recipients.length).toBeGreaterThan(0);
+
+      // Should filter by the valid indicator only
+      result.recipients.forEach((recipient) => {
+        expect(recipient.newStaff).toBe(true);
+      });
+    });
+
+    it('filters by New recipient indicator', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+        ['New recipient'],
+      );
+
+      expect(result).toHaveProperty('recipients');
+      expect(result.recipients.length).toBeGreaterThan(0);
+
+      // All returned recipients should have newRecipients = true
+      result.recipients.forEach((recipient) => {
+        expect(recipient.newRecipients).toBe(true);
+      });
+
+      // Our test "New Recipient" should be in the results
+      const newRecipientResult = result.recipients.find(
+        (r) => r.recipientName === 'New Recipient',
+      );
+      expect(newRecipientResult).toBeDefined();
+    });
+  });
+
+  describe('state code filtering', () => {
+    it('returns no results when filtering by a state code with no matching grants', async () => {
+      // Create a scope that filters by a non-existent state code
+      // This simulates what happens when filtersToScopes processes stateCode.ctn=ZZ
+      const scopes = {
+        grant: {
+          where: {
+            [db.Sequelize.Op.and]: [
+              { stateCode: { [db.Sequelize.Op.in]: ['ZZ'] } }, // Non-existent state code
+              { regionId: { [db.Sequelize.Op.in]: [REGION_ID] } },
+            ],
+          },
+          include: [],
+        },
+      };
+
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+      );
+
+      // Should return empty results since no grants match 'ZZ' state code
+      expect(result.recipients).toEqual([]);
+      expect(result.count).toBe(0);
+      expect(result.overview.numRecipients).toBe('0');
+    });
+
+    it('returns results only for grants matching the specified state code', async () => {
+      // First, update one of our test grants to have a specific state code
+      await db.Grant.update(
+        { stateCode: 'TX' },
+        { where: { id: childIncidentsGrant.id }, individualHooks: true },
+      );
+
+      try {
+        // Filter by 'TX' state code
+        const scopes = {
+          grant: {
+            where: {
+              [db.Sequelize.Op.and]: [
+                { stateCode: { [db.Sequelize.Op.in]: ['TX'] } },
+                { regionId: { [db.Sequelize.Op.in]: [REGION_ID] } },
+              ],
+            },
+            include: [],
+          },
+        };
+
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          100,
+          [REGION_ID],
+        );
+
+        // Should only return the recipient with the TX grant
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].recipientName).toBe('Child Incidents Recipient');
+      } finally {
+        // Reset the state code
+        await db.Grant.update(
+          { stateCode: null },
+          { where: { id: childIncidentsGrant.id }, individualHooks: true },
+        );
+      }
+    });
+  });
+
+  /// failing block
+  describe('secondary sorting', () => {
+    // Test recipients with different indicator counts and names
+    let sortRecipientA; // Will have 0 indicators
+    let sortRecipientB; // Will have 0 indicators
+    let sortRecipientC; // Will have 1 indicator (noTTA)
+    let sortRecipientD; // Will have 1 indicator (noTTA)
+    let sortGrantA;
+    let sortGrantB;
+    let sortGrantC;
+    let sortGrantD;
+
+    const pastFiveYearsSort = new Date();
+    pastFiveYearsSort.setFullYear(pastFiveYearsSort.getFullYear() - 5);
+    const pastYearSort = new Date();
+    pastYearSort.setMonth(pastYearSort.getMonth() - 6);
+
+    beforeAll(async () => {
+      // Clean up any orphaned data from previous failed test runs using transaction
+      await sequelize.transaction(async (t) => {
+        const sortGrantNumbers = ['G-SORT-SEC-A', 'G-SORT-SEC-B', 'G-SORT-SEC-C', 'G-SORT-SEC-D'];
+        const existingGrants = await Grant.findAll({
+          where: { number: sortGrantNumbers },
+          raw: true,
+          transaction: t,
+        });
+        if (existingGrants.length > 0) {
+          const existingGrantIds = existingGrants.map((g) => g.id);
+          const existingRecipientIds = [...new Set(existingGrants.map((g) => g.recipientId))];
+          await ActivityReportGoal.destroy({ where: { grantId: existingGrantIds }, force: true, transaction: t });
+          await Goal.destroy({ where: { grantId: existingGrantIds }, force: true, transaction: t });
+          await Grant.destroy({
+            where: { id: existingGrantIds },
+            force: true,
+            individualHooks: true,
+            transaction: t,
+          });
+          await Recipient.destroy({
+            where: { id: existingRecipientIds },
+            force: true,
+            transaction: t,
+          });
+        }
+      });
+
+      // Create GrantNumberLinks for test grants
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: 'G-SORT-SEC-A' },
+        { grantNumber: 'G-SORT-SEC-B' },
+        { grantNumber: 'G-SORT-SEC-C' },
+        { grantNumber: 'G-SORT-SEC-D' },
+      ], { ignoreDuplicates: true });
+
+      // Create recipients with names that allow us to verify secondary sort
+      // Zebra and Yak will have 0 indicators (with TTA)
+      // Apple and Banana will have 1 indicator (noTTA)
+      sortRecipientA = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        name: 'Zebra Secondary Sort Recipient',
+        regionId: REGION_ID,
+      });
+
+      sortRecipientB = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        name: 'Yak Secondary Sort Recipient',
+        regionId: REGION_ID,
+      });
+
+      sortRecipientC = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        name: 'Banana Secondary Sort Recipient',
+        regionId: REGION_ID,
+      });
+
+      sortRecipientD = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        name: 'Apple Secondary Sort Recipient',
+        regionId: REGION_ID,
+      });
+
+      // Create grants - all old enough to not trigger newRecipients
+      sortGrantA = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        number: 'G-SORT-SEC-A',
+        recipientId: sortRecipientA.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      sortGrantB = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        number: 'G-SORT-SEC-B',
+        recipientId: sortRecipientB.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      sortGrantC = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        number: 'G-SORT-SEC-C',
+        recipientId: sortRecipientC.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      sortGrantD = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        number: 'G-SORT-SEC-D',
+        recipientId: sortRecipientD.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      // Create goals for TTA - each grant needs its own goal for the join to work
+      const goalA = await Goal.create({
+        name: 'Secondary Sort Test Goal A',
+        status: 'Not Started',
+        onAR: true,
+        onApprovedAR: false,
+        grantId: sortGrantA.id,
+      });
+
+      const goalB = await Goal.create({
+        name: 'Secondary Sort Test Goal B',
+        status: 'Not Started',
+        onAR: true,
+        onApprovedAR: false,
+        grantId: sortGrantB.id,
+      });
+
+      // Create activity reports for Zebra and Yak (so they have TTA, thus 0 indicators)
+      // Apple and Banana will NOT have activity reports (so they have noTTA indicator)
+      const grantsWithGoals = [
+        { grantId: sortGrantA.id, goalId: goalA.id },
+        { grantId: sortGrantB.id, goalId: goalB.id },
+      ];
+      await Promise.all(grantsWithGoals.map(async ({ grantId, goalId }) => {
+        const report = await ActivityReport.create({
+          activityRecipientType: 'recipient',
+          submissionStatus: 'submitted',
+          calculatedStatus: 'approved',
+          userId: testUser.id,
+          regionId: REGION_ID,
+          startDate: pastYearSort,
+          endDate: pastYearSort,
+          approvedAt: pastYearSort,
+          duration: 1,
+        });
+
+        await ActivityReportGoal.create({
+          activityReportId: report.id,
+          grantId,
+          goalId,
+        });
+
+        return report;
+      }));
+    });
+
+    afterAll(async () => {
+      // Clean up activity report goals first (by goalId, since ActivityReportGoal doesn't have grantId)
+      const grantIdsForCleanup = [sortGrantA?.id, sortGrantB?.id, sortGrantC?.id, sortGrantD?.id].filter(Boolean);
+
+      // Get the activity report IDs that are linked to our grants BEFORE deleting ActivityReportGoals
+      let activityReportIds = [];
+      if (grantIdsForCleanup.length > 0) {
+        // First find goals for these grants, then use goalIds to find ActivityReportGoals
+        const goals = await Goal.findAll({
+          where: { grantId: grantIdsForCleanup },
+          attributes: ['id'],
+        });
+        const goalIds = goals.map((g) => g.id);
+
+        if (goalIds.length > 0) {
+          const activityReportGoals = await ActivityReportGoal.findAll({
+            where: { goalId: goalIds },
+            attributes: ['activityReportId'],
+          });
+          activityReportIds = [...new Set(activityReportGoals.map((arg) => arg.activityReportId))];
+
+          await ActivityReportGoal.destroy({
+            where: { goalId: goalIds },
+            force: true,
+          });
+        }
+      }
+
+      // Clean up only the activity reports associated with our test grants
+      if (activityReportIds.length > 0) {
+        await ActivityReport.destroy({
+          where: { id: activityReportIds },
+          force: true,
+        });
+      }
+
+      // Clean up goals (by grantId to get all goals created for these grants)
+      if (grantIdsForCleanup.length > 0) {
+        await Goal.destroy({ where: { grantId: grantIdsForCleanup }, force: true });
+      }
+
+      // Clean up grants
+      const grantIds = [sortGrantA?.id, sortGrantB?.id, sortGrantC?.id, sortGrantD?.id].filter(Boolean);
+      if (grantIds.length > 0) {
+        await Grant.destroy({ where: { id: grantIds }, force: true, individualHooks: true });
+      }
+
+      // Clean up recipients
+      const recipientIds = [
+        sortRecipientA?.id, sortRecipientB?.id, sortRecipientC?.id, sortRecipientD?.id,
+      ].filter(Boolean);
+      if (recipientIds.length > 0) {
+        await Recipient.destroy({ where: { id: recipientIds }, force: true });
+      }
+
+      // Clean up grant number links
+      await db.GrantNumberLink.destroy({
+        where: { grantNumber: ['G-SORT-SEC-A', 'G-SORT-SEC-B', 'G-SORT-SEC-C', 'G-SORT-SEC-D'] },
+      });
+    });
+
+    it('sorts by indicatorCount ASC with recipientName as secondary sort', async () => {
+      const scopes = {
+        grant: {
+          where: {
+            [db.Sequelize.Op.and]: [
+              { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
+              { regionId: REGION_ID },
+            ],
+          },
+          include: [],
+        },
+      };
+
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'indicatorCount',
+        'ASC',
+        0,
+        100,
+        [REGION_ID],
+      );
+
+      const testRecipients = result.recipients.filter(
+        (r) => r.recipientName.includes('Secondary Sort Recipient'),
+      );
+
+      // Only recipients with at least 1 indicator are returned (0-indicator recipients are filtered out)
+      expect(testRecipients.length).toBe(2);
+
+      // Both have 1 indicator, sorted by name ASC: Apple before Banana
+      expect(testRecipients[0].recipientName).toBe('Apple Secondary Sort Recipient');
+      expect(testRecipients[1].recipientName).toBe('Banana Secondary Sort Recipient');
+    });
+
+    it('sorts by indicatorCount DESC with recipientName as secondary sort', async () => {
+      const scopes = {
+        grant: {
+          where: {
+            [db.Sequelize.Op.and]: [
+              { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
+              { regionId: REGION_ID },
+            ],
+          },
+          include: [],
+        },
+      };
+
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'indicatorCount',
+        'DESC',
+        0,
+        100,
+        [REGION_ID],
+      );
+
+      const testRecipients = result.recipients.filter(
+        (r) => r.recipientName.includes('Secondary Sort Recipient'),
+      );
+
+      // Only recipients with at least 1 indicator are returned (0-indicator recipients are filtered out)
+      expect(testRecipients.length).toBe(2);
+
+      // Both have 1 indicator, sorted by name ASC: Apple before Banana
+      expect(testRecipients[0].recipientName).toBe('Apple Secondary Sort Recipient');
+      expect(testRecipients[1].recipientName).toBe('Banana Secondary Sort Recipient');
+    });
+
+    it('sorts by regionId ASC with recipientName as secondary sort', async () => {
+      // Create additional grant number links
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: 'G-REGION-SORT-1' },
+        { grantNumber: 'G-REGION-SORT-2' },
+      ], { ignoreDuplicates: true });
+
+      const recipientRegion1B = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        name: 'Beta Region Sort Recipient',
+      });
+
+      const recipientRegion1A = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        name: 'Alpha Region Sort Recipient',
+      });
+
+      const grantRegion1B = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        number: 'G-REGION-SORT-1',
+        recipientId: recipientRegion1B.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      const grantRegion1A = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        number: 'G-REGION-SORT-2',
+        recipientId: recipientRegion1A.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      try {
+        const scopes = {
+          grant: {
+            where: {
+              [db.Sequelize.Op.and]: [
+                { id: { [db.Sequelize.Op.in]: [grantRegion1A.id, grantRegion1B.id] } },
+                { regionId: REGION_ID },
+              ],
+            },
+            include: [],
+          },
+        };
+
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'regionId',
+          'ASC',
+          0,
+          100,
+          [REGION_ID],
+        );
+
+        const testRecipients = result.recipients.filter(
+          (r) => r.recipientName.includes('Region Sort Recipient'),
+        );
+
+        expect(testRecipients.length).toBe(2);
+
+        // Both in same region, so sorted by name ASC: Alpha before Beta
+        expect(testRecipients[0].recipientName).toBe('Alpha Region Sort Recipient');
+        expect(testRecipients[1].recipientName).toBe('Beta Region Sort Recipient');
+      } finally {
+        await Grant.destroy({ where: { id: [grantRegion1A.id, grantRegion1B.id] }, force: true, individualHooks: true });
+        await Recipient.destroy({ where: { id: [recipientRegion1A.id, recipientRegion1B.id] }, force: true });
+        await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-REGION-SORT-1', 'G-REGION-SORT-2'] } });
+      }
+    });
+
+    it('sorts by regionId DESC with recipientName as secondary sort', async () => {
+      // Create additional grant number links
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: 'G-REGION-SORT-3' },
+        { grantNumber: 'G-REGION-SORT-4' },
+      ], { ignoreDuplicates: true });
+
+      const recipientRegionDescB = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        name: 'Delta Region Sort Recipient',
+      });
+
+      const recipientRegionDescA = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        name: 'Charlie Region Sort Recipient',
+      });
+
+      const grantRegionDescB = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        number: 'G-REGION-SORT-3',
+        recipientId: recipientRegionDescB.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      const grantRegionDescA = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        number: 'G-REGION-SORT-4',
+        recipientId: recipientRegionDescA.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYearsSort,
+        cdi: false,
+      });
+
+      try {
+        const scopes = {
+          grant: {
+            where: {
+              [db.Sequelize.Op.and]: [
+                { id: { [db.Sequelize.Op.in]: [grantRegionDescA.id, grantRegionDescB.id] } },
+                { regionId: REGION_ID },
+              ],
+            },
+            include: [],
+          },
+        };
+
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'regionId',
+          'DESC',
+          0,
+          100,
+          [REGION_ID],
+        );
+
+        const testRecipients = result.recipients.filter(
+          (r) => r.recipientName.includes('Region Sort Recipient'),
+        );
+
+        expect(testRecipients.length).toBe(2);
+
+        // Both in same region, so sorted by name ASC: Charlie before Delta
+        expect(testRecipients[0].recipientName).toBe('Charlie Region Sort Recipient');
+        expect(testRecipients[1].recipientName).toBe('Delta Region Sort Recipient');
+      } finally {
+        await Grant.destroy({ where: { id: [grantRegionDescA.id, grantRegionDescB.id] }, force: true, individualHooks: true });
+        await Recipient.destroy({ where: { id: [recipientRegionDescA.id, recipientRegionDescB.id] }, force: true });
+        await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-REGION-SORT-3', 'G-REGION-SORT-4'] } });
+      }
+    });
+  });
+
+  describe('totalRecipients counts recipient-region pairs', () => {
+    let multiRegionRecipient;
+    let grantRegion1;
+    let grantRegion2;
+    const REGION_1 = 1;
+    const REGION_2 = 2;
+    const pastFiveYearsLocal = new Date();
+    pastFiveYearsLocal.setFullYear(pastFiveYearsLocal.getFullYear() - 5);
+
+    beforeAll(async () => {
+      // Create GrantNumberLinks for our test grant numbers
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: 'G-MULTI-R1' },
+        { grantNumber: 'G-MULTI-R2' },
+      ], { ignoreDuplicates: true });
+
+      // Create a single recipient
+      multiRegionRecipient = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })),
+        name: 'Multi Region Recipient',
+      });
+
+      // Create grants in different regions for same recipient
+      grantRegion1 = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })),
+        number: 'G-MULTI-R1',
+        recipientId: multiRegionRecipient.id,
+        regionId: REGION_1,
+        status: 'Active',
+        startDate: pastFiveYearsLocal,
+      });
+
+      grantRegion2 = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })),
+        number: 'G-MULTI-R2',
+        recipientId: multiRegionRecipient.id,
+        regionId: REGION_2,
+        status: 'Active',
+        startDate: pastFiveYearsLocal,
+      });
+    });
+
+    afterAll(async () => {
+      const grantIdsToDelete = [grantRegion1?.id, grantRegion2?.id].filter(Boolean);
+      if (grantIdsToDelete.length > 0) {
+        await Grant.destroy({ where: { id: grantIdsToDelete }, force: true, individualHooks: true });
+      }
+      if (multiRegionRecipient?.id) {
+        await Recipient.destroy({ where: { id: multiRegionRecipient.id }, force: true });
+      }
+      await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-MULTI-R1', 'G-MULTI-R2'] } });
+    });
+
+    it('counts recipient once per region when querying multiple regions', async () => {
+      const scopes = {
+        grant: {
+          where: {
+            [db.Sequelize.Op.and]: [
+              { id: { [db.Sequelize.Op.ne]: null } },
+              { regionId: { [db.Sequelize.Op.in]: [REGION_1, REGION_2] } },
+              { recipientId: multiRegionRecipient.id },
+            ],
+          },
+          include: [],
+        },
+      };
+
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        10,
+        [REGION_1, REGION_2],
+      );
+
+      // Should return 2 rows (one per region) for the same recipient
+      expect(result.recipients.length).toBe(2);
+      // totalRecipients counts ALL recipient-region pairs in the selected regions,
+      // so it will be >= 2 (includes our test recipient plus any others in those regions)
+      expect(parseInt(result.overview.totalRecipients, 10)).toBeGreaterThanOrEqual(2);
+      // Both rows should be for the same recipient name
+      expect(result.recipients[0].recipientName).toBe('Multi Region Recipient');
+      expect(result.recipients[1].recipientName).toBe('Multi Region Recipient');
+      // But different regions
+      const regions = result.recipients.map((r) => r.regionId).sort();
+      expect(regions).toEqual([REGION_1, REGION_2]);
     });
   });
 });

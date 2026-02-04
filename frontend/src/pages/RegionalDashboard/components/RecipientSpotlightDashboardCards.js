@@ -30,7 +30,32 @@ export default function RecipientSpotlightDashboardCards({
   perPageChange,
   filters,
   userHasOnlyOneRegion,
+  loading,
 }) {
+  // Don't render cards while loading to prevent stale data display
+  if (loading) {
+    return (
+      <Container
+        paddingX={0}
+        paddingY={0}
+        className="maxw-widescreen ttahub-recipient-spotlight-container height-full margin-y-0"
+      >
+        <div className="ttahub-recipient-spotlight-table inline-size-auto maxw-full height-full">
+          <RecipientSpotlightCardsHeader
+            sortConfig={sortConfig}
+            requestSort={requestSort}
+            perPage={perPage}
+            perPageChange={perPageChange}
+            count={count}
+          />
+          <div className="usa-table-container--scrollable padding-x-3 padding-y-2 display-flex flex-justify-center">
+            <span className="text-base-dark">Loading...</span>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
   return (
     <Container
       paddingX={0}
@@ -129,9 +154,11 @@ RecipientSpotlightDashboardCards.propTypes = {
     ]),
   })),
   userHasOnlyOneRegion: PropTypes.bool.isRequired,
+  loading: PropTypes.bool,
 };
 
 RecipientSpotlightDashboardCards.defaultProps = {
   recipients: [],
   filters: [],
+  loading: false,
 };
