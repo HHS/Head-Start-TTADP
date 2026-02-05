@@ -211,6 +211,14 @@ export async function getValidTopicsSet() {
   return new Set(rows.map((r) => r.name));
 }
 
+/**
+ *
+ * Filters an array of program types to only those that are allowed,
+ * expanding any grouped types into their individual components.
+ *
+ * @param programTypes string[]
+ * @returns string[]
+ */
 export function filterToAllowedProgramTypes(programTypes: string[]): string[] {
   // eslint-disable-next-line max-len
   const allowedTypes = programTypes.map((type) => ALLOWED_PROGRAM_TYPE_MAP[type] || null).filter(Boolean).flat();
