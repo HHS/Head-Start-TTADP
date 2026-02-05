@@ -1202,7 +1202,7 @@ export async function csvImport(buffer: Buffer) {
       const allTargetPopulations = [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS];
       const filteredTargetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => allTargetPopulations.includes(target));
       if (!filteredTargetPopulations.length) {
-        throw new Error('Target populations is required!');
+        throw new Error(`'Target populations' is required for Event ID "${eventId}".`);
       }
       data.targetPopulations = filteredTargetPopulations;
 

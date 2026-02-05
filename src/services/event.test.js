@@ -760,7 +760,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       const result = await csvImport(b);
       expect(result.count).toEqual(0);
       expect(result.errors.length).toEqual(1);
-      expect(result.errors).toEqual(['Target populations is required!']);
+      expect(result.errors).toEqual(["'Target populations' is required for Event ID \"R01-TR-9999\"."]);
     });
 
     it('skips rows that have an invalid audience', async () => {
