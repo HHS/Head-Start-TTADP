@@ -1,7 +1,7 @@
 /* istanbul ignore file: tested but not showing up in coverage for some reason */
 /* eslint-disable max-len */
 import Queue from 'bull';
-import { nanoid } from 'nanoid';
+import { randomBytes } from 'crypto';
 import { auditLogger } from '../logger';
 
 const MAX_LISTENERS = 50;
@@ -128,11 +128,12 @@ function registerQueueHandlers(queue) {
 }
 
 export default function newQueue(queueName, timeout = 30000) {
+  const connectionId = randomBytes(8).toString('base64url').slice(0, 10);
   const queue = new Queue(queueName, `redis://${host}:${port}`, {
     ...redisOpts,
     redis: {
       ...(redisOpts?.redis || {}),
-      connectionName: `${queueName}-${process.pid}-${nanoid(10)}`,
+      connectionName: `${queueName}-${process.pid}-${connectionId}`,
     },
     defaultJobOptions: {
       attempts: 10,
