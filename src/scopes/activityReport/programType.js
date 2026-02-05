@@ -1,9 +1,5 @@
 import { filterAssociation } from './utils';
-
-const ALLOWED_PROGRAM_TYPE_MAP = {
-  EHS: ['EHS', 'AIAN EHS'],
-  HS: ['HS', 'AIAN HS'],
-};
+import { filterToAllowedProgramTypes } from '../utils';
 
 // this should return an array of activityReport ids. That where clause will be finished when the
 // function is called
@@ -28,7 +24,7 @@ const programTypes = `
  * @returns an object with a where clause in the sequelize syntax
  */
 export function withProgramTypes(types) {
-  const allowedTypes = types.map((type) => ALLOWED_PROGRAM_TYPE_MAP[type] || type).flat();
+  const allowedTypes = filterToAllowedProgramTypes(types);
   return filterAssociation(programTypes, allowedTypes, false, '~*');
 }
 
@@ -37,6 +33,6 @@ export function withProgramTypes(types) {
  * @returns an object with a where clause in the sequelize syntax
  */
 export function withoutProgramTypes(types) {
-  const allowedTypes = types.map((type) => ALLOWED_PROGRAM_TYPE_MAP[type] || type).flat();
+  const allowedTypes = filterToAllowedProgramTypes(types);
   return filterAssociation(programTypes, allowedTypes, true, '~*');
 }

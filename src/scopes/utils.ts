@@ -13,6 +13,11 @@ const FULL_DATE_FORMATS = [
   'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
 ];
 
+const ALLOWED_PROGRAM_TYPE_MAP = {
+  EHS: ['EHS', 'AIAN EHS'],
+  HS: ['HS', 'AIAN HS'],
+};
+
 function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {
   if (!value || typeof value !== 'string') {
     return null;
@@ -204,4 +209,10 @@ export const scopeToWhere = async (
 export async function getValidTopicsSet() {
   const rows = await Topic.findAll({ attributes: ['name'], raw: true });
   return new Set(rows.map((r) => r.name));
+}
+
+export function filterToAllowedProgramTypes(programTypes: string[]): string[] {
+  // eslint-disable-next-line max-len
+  const allowedTypes = programTypes.map((type) => ALLOWED_PROGRAM_TYPE_MAP[type] || null).filter(Boolean).flat();
+  return Array.from(new Set(allowedTypes));
 }
