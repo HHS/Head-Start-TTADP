@@ -1,8 +1,15 @@
 /* istanbul ignore file: tested but not showing up in coverage for some reason */
 /* eslint-disable max-len */
 import Queue from 'bull';
+import { nanoid } from 'nanoid';
 import { auditLogger } from '../logger';
-import { formatLogObject } from '../processHandler';
+
+const MAX_LISTENERS = 50;
+const QUEUE_LIST = new Set();
+
+// Job retention settings - these limit how many completed/failed jobs are kept in Redis
+export const KEEP_COMPLETED_JOBS = 5;
+export const KEEP_FAILED_JOBS = 10;
 
 export const generateRedisConfig = (enableRateLimiter = false) => {
   if (process.env.VCAP_SERVICES) {
@@ -37,8 +44,9 @@ export const generateRedisConfig = (enableRateLimiter = false) => {
           redisOpts: {
             ...redisSettings.redisOpts,
             limiter: {
+              // limit to 1000 requests per minute by default
               max: process.env.REDIS_LIMITER_MAX || 1000,
-              duration: process.env.REDIS_LIMITER_DURATION || 300000,
+              duration: process.env.REDIS_LIMITER_DURATION || 60000,
             },
           },
         };
@@ -73,149 +81,69 @@ const {
 } = generateRedisConfig(true);
 
 export async function increaseListeners(queue, num = 1) {
-  const MAX_LISTENERS = 20;
-  const redisClient = queue.client;
-  if (redisClient) {
-    const maxListeners = redisClient.getMaxListeners();
-    const currentCounts = queue.eventNames().reduce((counts, eventName) => ({
-      ...counts,
-      [eventName]: queue.listenerCount(eventName),
-    }), {});
-    const totalCount = Object.values(currentCounts).reduce((acc, count) => acc + count, 0);
-    const newListenerCount = Math.min(totalCount + num, MAX_LISTENERS);
-    if (newListenerCount > maxListeners) {
-      redisClient.setMaxListeners(newListenerCount);
-    }
+  if (!queue) {
+    auditLogger.error('Queue is not defined, cannot increase listeners');
+    return;
   }
+  const newMaxListeners = Math.min(
+    queue.getMaxListeners() + num,
+    MAX_LISTENERS,
+  );
+  queue.setMaxListeners(newMaxListeners);
+  auditLogger.info(
+    `Increased max listeners for queue ${queue.name} to ${newMaxListeners}`,
+  );
 }
 
-// Remove event handlers
-export function removeQueueEventHandlers(
-  queue,
-  errorListener,
-  shutdownListener,
-  exceptionListener,
-  rejectionListener,
-) {
-  if (errorListener) queue.removeListener('error', errorListener);
-  if (shutdownListener) {
-    process.removeListener('SIGINT', shutdownListener);
-    process.removeListener('SIGTERM', shutdownListener);
+const gracefulShutdown = async (signal) => {
+  auditLogger.info(`Received ${signal}, closing server...`);
+  try {
+    await Promise.all(Array.from(QUEUE_LIST).map((queue) => queue.close()));
+    process.exit(0);
+  } catch (err) {
+    auditLogger.error('Failed to close queues during shutdown:', err);
+    process.exit(1);
   }
-  if (exceptionListener) process.removeListener('uncaughtException', exceptionListener);
-  if (rejectionListener) process.removeListener('unhandledRejection', rejectionListener);
-}
+};
 
-// Define the handlers so they can be added and removed
-function handleShutdown(queue) {
-  return () => {
-    auditLogger.error(
-      'Shutting down, but queue closing is disabled for now...',
-    );
-    // queue.close().then(() => {
-    //   auditLogger.error('Queue closed successfully.');
-    //   removeQueueEventHandlers(queue);
-    //   process.exit(0);
-    // }).catch((err) => {
-    //   auditLogger.error('Failed to close the queue:', err);
-    //   removeQueueEventHandlers(queue);
-    //   process.exit(1);
-    // });
-  };
-}
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
-function handleException(queue) {
-  return (err) => {
-    auditLogger.error('Uncaught exception:', formatLogObject(err));
-    // queue.close().then(() => {
-    //   auditLogger.error('Queue closed after uncaught exception.');
-    //   removeQueueEventHandlers(queue);
-    //   process.exit(1);
-    // }).catch((closeErr) => {
-    //   auditLogger.error('Failed to close the queue after uncaught exception:', closeErr);
-    //   removeQueueEventHandlers(queue);
-    //   process.exit(1);
-    // });
-  };
-}
-
-function handleRejection(queue) {
-  return (reason, promise) => {
-    auditLogger.error('Unhandled rejection at:', promise, 'reason:', reason);
-    // queue.close().then(() => {
-    //   auditLogger.error('Queue closed after unhandled rejection.');
-    //   removeQueueEventHandlers(queue);
-    //   process.exit(1);
-    // }).catch((closeErr) => {
-    //   auditLogger.error('Failed to close the queue after unhandled rejection:', closeErr);
-    //   removeQueueEventHandlers(queue);
-    //   process.exit(1);
-    // });
-  };
-}
-
-// Setup event handlers
-function setupQueueEventHandlers(queue) {
-  const shutdownListener = handleShutdown(queue);
-  const exceptionListener = handleException(queue);
-  const rejectionListener = handleRejection(queue);
-
-  const errorListener = (err) => {
-    auditLogger.error('Queue encountered an error:', err);
-    queue.close().then(() => {
-      auditLogger.error('Queue closed due to an error.');
-      removeQueueEventHandlers(
-        queue,
-        errorListener,
-        shutdownListener,
-        exceptionListener,
-        rejectionListener,
-      );
-    }).catch((closeErr) => {
-      auditLogger.error('Failed to close the queue after an error:', closeErr);
-      removeQueueEventHandlers(
-        queue,
-        errorListener,
-        shutdownListener,
-        exceptionListener,
-        rejectionListener,
+function registerQueueHandlers(queue) {
+  if (queue) {
+    QUEUE_LIST.add(queue);
+    queue.on('error', (err) => {
+      auditLogger.error(`${queue.name} error`, err);
+    });
+    queue.on('failed', (job, err) => {
+      auditLogger.error(
+        `${queue.name} job failed (${job?.id ?? 'unknown'})`,
+        err,
       );
     });
-  };
-
-  queue.on('error', errorListener);
-  process.on('SIGINT', shutdownListener);
-  process.on('SIGTERM', shutdownListener);
-  process.on('uncaughtException', exceptionListener);
-  process.on('unhandledRejection', rejectionListener);
-}
-
-export function setRedisConnectionName(queue, connectionName) {
-  const { client } = queue;
-  if (client && client.call) {
-    client.call('client', 'setname', connectionName).catch((err) => {
-      auditLogger.error('Failed to set Redis connection name:', err);
+    queue.on('stalled', () => {
+      auditLogger.error(`${queue.name} stalled`);
     });
   }
 }
 
-export default function newQueue(queName, timeout = 30000) {
-  const queue = new Queue(queName, `redis://${host}:${port}`, {
+export default function newQueue(queueName, timeout = 30000) {
+  const queue = new Queue(queueName, `redis://${host}:${port}`, {
     ...redisOpts,
-    maxRetriesPerRequest: 15, // Adjust this value as needed
-    retryStrategy(times) {
-      const delay = Math.min(times * 50, 2000);
-      auditLogger.warn(`Redis retry attempt #${times}, retrying in ${delay}ms`);
-      return delay;
+    redis: {
+      ...(redisOpts?.redis || {}),
+      connectionName: `${queueName}-${process.pid}-${nanoid(10)}`,
     },
-    // Safely merge the timeout into redisOpts.settings
+    defaultJobOptions: {
+      attempts: 10,
+      removeOnFail: KEEP_FAILED_JOBS,
+      removeOnComplete: KEEP_COMPLETED_JOBS,
+    },
     settings: {
-      ...((redisOpts?.settings) || {}), // Preserve existing settings from redisOpts
+      ...(redisOpts?.settings || {}), // Preserve existing settings from redisOpts
       stalledInterval: timeout, // Add or overwrite the timeout for stalled jobs
     },
   });
-
-  setRedisConnectionName(queue, `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${queName}-${process.pid}`);
-  setupQueueEventHandlers(queue);
+  registerQueueHandlers(queue);
   return queue;
 }
