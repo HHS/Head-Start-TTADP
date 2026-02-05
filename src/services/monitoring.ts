@@ -369,7 +369,7 @@ export async function ttaByReviews(
         findings.push({
           citation,
           status,
-          findingType: finding.findingType,
+          findingType: history.determination,
           correctionDeadline: finding.correctionDeadLine ? moment(finding.correctionDeadLine).format('MM/DD/YYYY') : '',
           category: finding.source,
           objectives,
