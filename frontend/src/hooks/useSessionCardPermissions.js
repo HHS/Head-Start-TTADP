@@ -45,12 +45,7 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    // Owner cannot edit (even if they have other roles)
-    if (isOwner) {
-      return false;
-    }
-
-    // Submitted session rules (affects all except admin/owner)
+    // Submitted session rules (affects all except admin)
     if (submitted && !statusIsNeedsAction) {
       // Only approver can edit when submitted and not needs_action
       return isSessionApprover;
@@ -75,8 +70,8 @@ export default function useSessionCardPermissions({
       }
     }
 
-    // Collaborator-specific edit blockers (apply even if user has other roles)
-    if (isCollaborator) {
+    // Owner/Collaborator-specific edit blockers (owners treated as collaborators)
+    if (isCollaborator || isOwner) {
       if (collabComplete && !statusIsNeedsAction) {
         return false;
       }
