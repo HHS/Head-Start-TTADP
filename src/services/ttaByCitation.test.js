@@ -1,4 +1,4 @@
-import { ttaByCitations } from './monitoring';
+import { ttaByCitations, mapFindingType } from './monitoring';
 import {
   createAdditionalMonitoringData,
   createMonitoringData,
@@ -107,7 +107,7 @@ describe('ttaByCitations', () => {
       {
         category: 'source',
         citationNumber: '1234',
-        findingType: 'Finding Type',
+        findingType: 'determination',
         grantNumbers: [
           '01HP044446',
         ],
@@ -194,5 +194,22 @@ describe('ttaByCitations', () => {
         status: 'Complete',
       },
     ]);
+  });
+
+  describe('mapFindingType', () => {
+    it('returns determination when it exists', () => {
+      const result = mapFindingType('Determination Type', 'Original Type');
+      expect(result).toBe('Determination Type');
+    });
+
+    it('returns original type when determination is null', () => {
+      const result = mapFindingType(null, 'Original Type');
+      expect(result).toBe('Original Type');
+    });
+
+    it('maps Concern to Area of Concern', () => {
+      const result = mapFindingType('Concern', 'Original Type');
+      expect(result).toBe('Area of Concern');
+    });
   });
 });
