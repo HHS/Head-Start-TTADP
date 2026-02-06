@@ -305,17 +305,16 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        # To manually bust the cache, increment the version e.g. v7-yarn...
-        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
-        - v16-yarn-deps-
+        - yarn-deps-
     - run: yarn deps
     - save_cache:
         paths:
         - node_modules
         - frontend/node_modules
         - packages/common/node_modules
-        key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
         command: mkdir reports
@@ -351,7 +350,7 @@ jobs:
   test_backend:
     executor: docker-postgres-executor
     resource_class: medium
-    parallelism: 3
+    parallelism: 4
     environment:
       SFTP_EXPOSED_PORT: 2222
     steps:
@@ -378,6 +377,7 @@ jobs:
         name: Check coverage for modified lines
         when: always
         command: |
+          mkdir -p coverage-workspace
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
             node ./tools/check-coverage.js \
@@ -598,8 +598,8 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-        - v16-yarn-deps-
+        - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - yarn-deps-
     - run: |
         yarn deps
         yarn build

@@ -16,6 +16,12 @@ check_and_run_yarn() {
   fi
 }
 
+check_and_validate_circle() {
+    if [[ -x "$(command -v circleci)" ]]; then
+        circleci config validate
+    fi
+}
+
 common_changed=false
 common_package_json_changed=false
 frontend_yarn_lock_changed=false
