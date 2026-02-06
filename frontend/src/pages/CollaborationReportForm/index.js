@@ -370,7 +370,7 @@ function CollaborationReport({ match, location }) {
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
 
-        // Determine if the current user matches any of the approvers for this activity report.
+        // Determine if the current user matches any of the approvers for this collab report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
         if (isMatchingApprover && isMatchingApprover.length > 0) {
           // This user is an approver on the report.
