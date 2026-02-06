@@ -136,7 +136,40 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
     Establishing SSH tunnel with PID: 38115
     Connecting to db replica for tta-smarthub-dev-blue on port 5432...
     cgawsbrokerprodbt584djy6n6cnuz=> 
-    ```
+   ```
+
+#### Accessing Redis in Cloud.gov (service key + SSH tunnel)
+
+Production Redis usually requires TLS and is not reachable directly from a developer workstation.
+Use a service key to get credentials, then tunnel through the app and query via a local `redis-cli`.
+
+1. Create a service key (one-time):
+
+   ```bash
+   cf create-service-key <redis-service-name> redis-diagnostics
+   ```
+
+1. Fetch the credentials:
+
+   ```bash
+   cf service-key <redis-service-name> redis-diagnostics
+   ```
+
+1. Start an SSH tunnel to the app, forwarding the Redis host/port:
+
+   ```bash
+   cf ssh -L 6380:<redis-host>:<redis-port> <app-name>
+   ```
+
+1. In a separate local terminal, query Redis using TLS:
+
+   ```bash
+   redis-cli --tls -h 127.0.0.1 -p 6380 -a <password> INFO MEMORY
+   ```
+
+Notes:
+- If the credentials include a `rediss://` URI, TLS is required (`--tls` or `-u rediss://...`).
+- You must have `redis-cli` installed locally and available in your `$PATH`.
 
 #### Run script as task
 
@@ -383,4 +416,3 @@ ex:
    You may need to connect across spaces (for example, our clamav-api-ttahub-dev app is shared by all of our ephemeral environments). If so, use the -s flag.
    ex:
    `cf add-network-policy tta-smarthub-staging -s ttahub-dev clamav-api-ttahub-dev --protocol tcp --port 9443`
-
