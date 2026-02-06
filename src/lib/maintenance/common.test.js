@@ -46,7 +46,9 @@ jest.mock('../../models', () => ({
 jest.mock('../../logger', () => ({
   auditLogger: {
     error: jest.fn(),
+    info: jest.fn(),
     log: jest.fn(),
+    warn: jest.fn(),
   },
   logger: {
     info: jest.fn(),
