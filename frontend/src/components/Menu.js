@@ -8,6 +8,7 @@
 import React, {
   useState, useEffect, useCallback, useRef,
 } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import './Menu.scss';
@@ -31,6 +32,7 @@ function Menu({
   const [menuPosition, updateMenuPosition] = useState({});
   const defaultClass = 'smart-hub--menu';
   const buttonRef = useRef(null);
+  const menuRef = useRef(null);
 
   const onEscape = useCallback((event) => {
     if (event.keyCode === ESCAPE_KEY_CODE) {
@@ -80,7 +82,7 @@ function Menu({
     }
   }, [fixed, left, menuHeightOffset, menuWidthOffset, up]);
 
-  // watch for window scroll
+  // watch for window scroll and table container scroll
   useEffect(() => {
     // the menu position is based on the button position, but because it is encased in a
     // no-overflow div, we position it using "fixed"
@@ -88,6 +90,19 @@ function Menu({
     // when the user scrolls
     if (fixed) {
       window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
+
+      // Also listen for scroll on the table container for horizontal scrolling
+      const tableContainer = buttonRef.current?.closest('.usa-table-container--scrollable');
+      if (tableContainer) {
+        tableContainer.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
+      }
+
+      return () => {
+        window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
+        if (tableContainer) {
+          tableContainer.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
+        }
+      };
     }
 
     return () => {
@@ -96,10 +111,19 @@ function Menu({
   }, [fixed, recordButtonPositionAndUpdateMenu]);
 
   const onBlur = (e) => {
-    const { currentTarget } = e;
+    const { currentTarget, relatedTarget } = e;
+
+    // When using a portal, relatedTarget will be the element receiving focus
+    // If it's inside our menu, don't close
+    if (relatedTarget && menuRef.current && menuRef.current.contains(relatedTarget)) {
+      return;
+    }
 
     setTimeout(() => {
-      if (!currentTarget.contains(document.activeElement) && shown) {
+      // Check if focus is still within the button container or the portal-rendered menu
+      const focusInContainer = currentTarget.contains(document.activeElement);
+      const focusInMenu = menuRef.current && menuRef.current.contains(document.activeElement);
+      if (!focusInContainer && !focusInMenu && shown) {
         updateShown(false);
       }
     }, 0);
@@ -139,21 +163,25 @@ function Menu({
       >
         {buttonText}
       </button>
-      {shown && (
-      <div data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
-        <ul className="usa-list usa-list--unstyled" role="menu">
-          {menuItems.map((item) => (
-            <li key={item.label} role="menuitem">
-              <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin" aria-label={item.label}>
-                <div className="padding-2 padding-right-3">
-                  {item.label}
-                </div>
-              </Button>
-            </li>
-          ))}
-        </ul>
-      </div>
-      )}
+      {shown && (() => {
+        const menuContent = (
+          <div ref={menuRef} data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
+            <ul className="usa-list usa-list--unstyled" role="menu">
+              {menuItems.map((item) => (
+                <li key={item.label} role="menuitem">
+                  <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin" aria-label={item.label}>
+                    <div className="padding-2 padding-right-3">
+                      {item.label}
+                    </div>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+        // Use portal when fixed to escape stacking context of sticky table columns
+        return fixed ? createPortal(menuContent, document.body) : menuContent;
+      })()}
     </div>
   );
 }
