@@ -1,4 +1,60 @@
 import { test, expect, Page } from '@playwright/test';
+import { SCOPE_IDS } from '@ttahub/common';
+import { query } from '../utils/common';
+
+let originalActivityReportPermissions: Array<{ userId: number; regionId: number; scopeId: number }> = [];
+
+const getCurrentUserId = () => Number(process.env.CURRENT_USER_ID || 1);
+
+test.beforeAll(async ({ request }) => {
+  const userId = getCurrentUserId();
+  const readScopes = [SCOPE_IDS.READ_ACTIVITY_REPORTS, SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS];
+  const selectResponse = await query(
+    request,
+    `SELECT "userId", "regionId", "scopeId"
+     FROM "Permissions"
+     WHERE "userId" = ${userId}
+       AND "scopeId" IN (${readScopes.join(', ')});`,
+  );
+  const [rows] = await selectResponse.json();
+  originalActivityReportPermissions = rows || [];
+
+  await query(
+    request,
+    `DELETE FROM "Permissions"
+     WHERE "userId" = ${userId}
+       AND "scopeId" IN (${readScopes.join(', ')});`,
+  );
+
+  await query(
+    request,
+    `INSERT INTO "Permissions" ("userId", "regionId", "scopeId")
+     VALUES (${userId}, 1, ${SCOPE_IDS.READ_ACTIVITY_REPORTS});`,
+  );
+});
+
+test.afterAll(async ({ request }) => {
+  const userId = getCurrentUserId();
+  const readScopes = [SCOPE_IDS.READ_ACTIVITY_REPORTS, SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS];
+
+  await query(
+    request,
+    `DELETE FROM "Permissions"
+     WHERE "userId" = ${userId}
+       AND "scopeId" IN (${readScopes.join(', ')});`,
+  );
+
+  if (originalActivityReportPermissions.length > 0) {
+    const values = originalActivityReportPermissions
+      .map((p) => `(${p.userId}, ${p.regionId}, ${p.scopeId})`)
+      .join(', ');
+    await query(
+      request,
+      `INSERT INTO "Permissions" ("userId", "regionId", "scopeId")
+       VALUES ${values};`,
+    );
+  }
+});
 
 const openFilters = async (page: Page, condition: string, value: string) => {
   await page.getByRole('button', { name: /open filters for this page/i }).click();
@@ -22,7 +78,7 @@ test.describe('activity reports landing page', () => {
   });
 
   test('only allows access to correct regions despite shared url', async ({ page }) => {
-    // this user only has access to region 1
+    // this user only has access to region 1 (set in beforeAll)
     await page.goto('http://localhost:3000/activity-reports?region.in[]=1&region.in[]=2&region.in[]=3&region.in[]=4&region.in[]=5&region.in[]=6&region.in[]=7&region.in[]=8&region.in[]=9&region.in[]=10&region.in[]=11&region.in[]=12');
 
     // this button confirms the modal is open and the regions have been checked
@@ -31,7 +87,7 @@ test.describe('activity reports landing page', () => {
     await page.getByRole('button', { name: 'Show filter with my regions' }).click();
 
     // assert correct url
-    expect(page.url()).toBe('http://localhost:3000/activity-reports?region.in[]=1');
+    await expect(page).toHaveURL(/\/activity-reports\?region\.in\[\]=1$/);
   });
 
   test('ttaType filter works correctly', async ({ page }) => {
@@ -81,4 +137,3 @@ test.describe('activity reports landing page', () => {
     await expect(page.getByRole('rowheader', { name: 'R01-AR-9999' })).not.toBeVisible();
   });
 });
-
