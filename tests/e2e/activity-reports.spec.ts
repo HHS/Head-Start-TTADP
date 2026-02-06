@@ -1,10 +1,11 @@
 import { test, expect, Page } from '@playwright/test';
 import { SCOPE_IDS } from '@ttahub/common';
 import { query } from '../utils/common';
+import { getEnvNumber } from '../../src/envParser';
 
 let originalActivityReportPermissions: Array<{ userId: number; regionId: number; scopeId: number }> = [];
 
-const getCurrentUserId = () => Number(process.env.CURRENT_USER_ID || 1);
+const getCurrentUserId = () => getEnvNumber('CURRENT_USER_ID', 1, { warnOnDefault: true });
 
 test.beforeAll(async ({ request }) => {
   const userId = getCurrentUserId();
