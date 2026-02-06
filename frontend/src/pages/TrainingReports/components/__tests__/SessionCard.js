@@ -77,7 +77,7 @@ describe('SessionCard', () => {
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
   });
 
-  it('owner cannot edit but can delete', () => {
+  it('owner can both edit and delete (treated as collaborator)', () => {
     renderSessionCard(
       defaultSession,
       TRAINING_REPORT_STATUSES.IN_PROGRESS,
@@ -87,7 +87,7 @@ describe('SessionCard', () => {
       false, // isCollaborator
     );
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
@@ -274,12 +274,13 @@ describe('SessionCard', () => {
     renderSessionCard({
       id: 1,
       approverId: 999,
+      goalTemplates: defaultSession.goalTemplates,
       data: {
         ...defaultSession.data,
         pocComplete: true,
         collabComplete: false,
       },
-    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true, false);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
