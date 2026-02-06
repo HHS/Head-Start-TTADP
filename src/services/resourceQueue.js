@@ -1,4 +1,4 @@
-import newQueue, { increaseListeners } from '../lib/queue';
+import newQueue, { increaseListeners, KEEP_COMPLETED_JOBS, KEEP_FAILED_JOBS } from '../lib/queue';
 import { RESOURCE_ACTIONS } from '../constants';
 import { logger, auditLogger } from '../logger';
 import { getResourceMetaDataJob } from '../lib/resource';
@@ -27,8 +27,8 @@ const addGetResourceMetadataToQueue = async (id, url) => {
     {
       attempts: retries,
       backoff: backOffOpts,
-      removeOnComplete: true,
-      removeOnFail: true,
+      removeOnComplete: KEEP_COMPLETED_JOBS,
+      removeOnFail: KEEP_FAILED_JOBS,
     },
   );
 };

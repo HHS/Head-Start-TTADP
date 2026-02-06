@@ -1,4 +1,4 @@
-import newQueue, { increaseListeners } from '../lib/queue';
+import newQueue, { increaseListeners, KEEP_COMPLETED_JOBS, KEEP_FAILED_JOBS } from '../lib/queue';
 import { logger, auditLogger } from '../logger';
 import processFile from '../workers/files';
 import transactionQueueWrapper from '../workers/transactionWrapper';
@@ -21,8 +21,8 @@ const addToScanQueue = (fileKey) => {
     {
       attempts: retries,
       backoff: backOffOpts,
-      removeOnComplete: true,
-      removeOnFail: true,
+      removeOnComplete: KEEP_COMPLETED_JOBS,
+      removeOnFail: KEEP_FAILED_JOBS,
     },
   );
 };

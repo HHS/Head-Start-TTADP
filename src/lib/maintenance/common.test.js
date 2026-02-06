@@ -189,7 +189,10 @@ describe('Maintenance Queue', () => {
       addQueueProcessor(category, processor);
       maintenanceQueue.add = jest.fn();
       await enqueueMaintenanceJob({ category, data });
-      expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data, {});
+      expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data, expect.objectContaining({
+        removeOnComplete: 5,
+        removeOnFail: 10,
+      }));
     });
 
     it('should default data to {} if not provided', async () => {

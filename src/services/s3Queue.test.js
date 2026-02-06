@@ -7,7 +7,7 @@ import {
   processS3Queue,
 } from './s3Queue';
 import { FILE_STATUSES, S3_ACTIONS } from '../constants';
-import { KEEP_COMPLETED_JOBS, KEEP_FAILED_JOBS } from '../lib/queue';
+
 import db, { File } from '../models';
 import { auditLogger, logger } from '../logger';
 
@@ -66,10 +66,6 @@ describe('s3 queue manager tests', () => {
           transactionId: '',
           userId: '',
         },
-      },
-      {
-        removeOnComplete: KEEP_COMPLETED_JOBS,
-        removeOnFail: KEEP_FAILED_JOBS,
       },
     );
   });

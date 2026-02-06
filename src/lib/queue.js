@@ -80,7 +80,7 @@ const {
   redisOpts,
 } = generateRedisConfig(true);
 
-export async function increaseListeners(queue, num = 1) {
+export function increaseListeners(queue, num = 1) {
   if (!queue) {
     auditLogger.error('Queue is not defined, cannot increase listeners');
     return;
@@ -95,7 +95,10 @@ export async function increaseListeners(queue, num = 1) {
   );
 }
 
+let shuttingDown = false;
 const gracefulShutdown = async (signal) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
   auditLogger.info(`Received ${signal}, closing server...`);
   try {
     await Promise.all(Array.from(QUEUE_LIST).map((queue) => queue.close()));

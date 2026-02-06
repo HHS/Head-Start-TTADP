@@ -36,13 +36,13 @@ describe('increaseListeners', () => {
     };
   });
 
-  it('increases max listeners by the provided amount', async () => {
-    await increaseListeners(queue, 3);
+  it('increases max listeners by the provided amount', () => {
+    increaseListeners(queue, 3);
     expect(queue.setMaxListeners).toHaveBeenCalledWith(13);
   });
 
-  it('logs and returns when queue is undefined', async () => {
-    await increaseListeners(undefined, 1);
+  it('logs and returns when queue is undefined', () => {
+    increaseListeners(undefined, 1);
     expect(auditLogger.error).toHaveBeenCalledWith(
       'Queue is not defined, cannot increase listeners',
     );
