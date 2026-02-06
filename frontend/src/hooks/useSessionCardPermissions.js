@@ -75,6 +75,7 @@ export default function useSessionCardPermissions({
       if (collabComplete && !statusIsNeedsAction) {
         return false;
       }
+
       if (isRegionalWithNationalCenters && facilitationIncludesRegion) {
         return false;
       }

@@ -263,18 +263,6 @@ export default function SessionForm({ match }) {
         });
         reportId.current = session.id;
 
-        const message = {
-          messageTemplate: 'sessionCreated',
-          sessionName: session.data.sessionName,
-          eventId: session.event.data.eventId,
-          dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
-        };
-
-        if (isOwnerFromSession && !isAdminUser) {
-          history.push('/training-reports/in-progress', { message });
-          return;
-        }
-
         history.replace(`/training-report/${trainingReportId}/session/${session.id}`);
       } catch (e) {
         setError('Error creating session');
