@@ -9,7 +9,11 @@ const getCurrentUserId = () => getEnvNumber('CURRENT_USER_ID', 1, { warnOnDefaul
 
 test.beforeAll(async ({ request }) => {
   const userId = getCurrentUserId();
-  const readScopes = [SCOPE_IDS.READ_ACTIVITY_REPORTS, SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS];
+  const readScopes = [
+    SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+    SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
+  ];
   const selectResponse = await query(
     request,
     `SELECT "userId", "regionId", "scopeId"
@@ -36,7 +40,11 @@ test.beforeAll(async ({ request }) => {
 
 test.afterAll(async ({ request }) => {
   const userId = getCurrentUserId();
-  const readScopes = [SCOPE_IDS.READ_ACTIVITY_REPORTS, SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS];
+  const readScopes = [
+    SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+    SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
+  ];
 
   await query(
     request,

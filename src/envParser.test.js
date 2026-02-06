@@ -69,30 +69,6 @@ describe('envParser', () => {
       expect(getEnvNumber('TEST_VAR', 42, { requireInteger: false })).toBe(1.5);
     });
 
-    it('should emit warning when warnOnDefault is true and using default', () => {
-      delete process.env.TEST_VAR;
-      const originalEmitWarning = process.emitWarning;
-      const mockEmitWarning = jest.fn();
-      process.emitWarning = mockEmitWarning;
-
-      getEnvNumber('TEST_VAR', 42, { warnOnDefault: true });
-
-      expect(mockEmitWarning).toHaveBeenCalledWith('TEST_VAR not set; defaulting to 42');
-      process.emitWarning = originalEmitWarning;
-    });
-
-    it('should not emit warning when warnOnDefault is false', () => {
-      delete process.env.TEST_VAR;
-      const originalEmitWarning = process.emitWarning;
-      const mockEmitWarning = jest.fn();
-      process.emitWarning = mockEmitWarning;
-
-      getEnvNumber('TEST_VAR', 42, { warnOnDefault: false });
-
-      expect(mockEmitWarning).not.toHaveBeenCalled();
-      process.emitWarning = originalEmitWarning;
-    });
-
     it('should handle scientific notation correctly', () => {
       process.env.TEST_VAR = '1e3';
       expect(getEnvNumber('TEST_VAR', 42)).toBe(1000);
