@@ -7,7 +7,7 @@ exports.getEnvNumber = (key, defaultValue, options = {}) => {
   const raw = process.env[key];
   if (raw === undefined || raw === '') {
     if (warnOnDefault) {
-      console.warn(`${key} not set; defaulting to ${defaultValue}`);
+      process.emitWarning(`${key} not set; defaulting to ${defaultValue}`);
     }
     return defaultValue;
   }
