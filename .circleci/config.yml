@@ -80,8 +80,7 @@ workflows:
     - dynamic_security_scan:
         requires:
         - build_done
-    - checkpoint:
-        name: tests_done
+    - tests_done:
         requires:
         - test_frontend
         - test_backend
@@ -352,6 +351,7 @@ jobs:
   test_backend:
     executor: docker-postgres-executor
     resource_class: large
+    parallelism: 3
     environment:
       SFTP_EXPOSED_PORT: 2222
     steps:
@@ -375,23 +375,6 @@ jobs:
           chmod 744 ./bin/test-backend-ci
           ./bin/test-backend-ci
     - run:
-        name: Merge coverage & generate report
-        when: always
-        command: |
-          temp_dir="coverage-temp"
-          report_dir="coverage-report"
-          mkdir -p ${temp_dir}
-
-          find . -name "coverage-final.json" -print0 | while IFS= read -r -d $'\0' file; do
-            relative_path="${file#./}"
-            new_name="${relative_path//\//-}"
-            new_path="${temp_dir}/${new_name}"
-            cp "$file" "${new_path}"
-          done
-          npx nyc merge ${temp_dir} ${temp_dir}/merged-coverage.json
-          npx nyc report --temp-dir ${temp_dir} --report-dir ${report_dir} --reporter=html --reporter=json-summary
-          echo "Coverage report: https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/${CIRCLE_NODE_INDEX}/coverage-report/index.html"
-    - run:
         name: Check coverage for modified lines
         when: always
         command: |
@@ -405,13 +388,11 @@ jobs:
             echo "Not a PR build. Skipping coverage check."
           fi
     - run:
-        name: Summarize coverage
+        name: Prepare coverage workspace
         when: always
         command: |
-          chmod +x ./tools/summarize-coverageCLI.js
-          node ./tools/summarize-coverageCLI.js \
-            ./coverage/coverage-final.json \
-            90
+          chmod +x ./tools/ci/prepare-backend-coverage-workspace.sh
+          ./tools/ci/prepare-backend-coverage-workspace.sh
     - run:
         name: Compress coverage artifacts
         command: zip backend-coverage-artifacts.zip coverage/
@@ -419,12 +400,35 @@ jobs:
     - store_artifacts:
         path: backend-coverage-artifacts.zip
     - store_artifacts:
-        path: coverage-report/
-    - store_artifacts:
         path: coverage-artifacts/
         destination: uncovered-lines
+    - persist_to_workspace:
+        root: .
+        paths:
+        - coverage-workspace
     - store_test_results:
         path: reports/
+
+  tests_done:
+    executor: docker-executor
+    resource_class: medium
+    steps:
+    - attach_workspace:
+        at: .
+    - run:
+        name: Merge backend coverage across nodes
+        command: |
+          chmod +x ./tools/ci/merge-backend-coverage-workspace.sh
+          ./tools/ci/merge-backend-coverage-workspace.sh
+    - run:
+        name: Summarize merged coverage
+        command: |
+          chmod +x ./tools/ci/summarize-backend-coverage.sh
+          ./tools/ci/summarize-backend-coverage.sh ./coverage-merge-temp/merged-coverage.json 90
+    - store_artifacts:
+        path: coverage-merge-report/
+    - store_artifacts:
+        path: coverage-merge-temp/merged-coverage.json
 
   test_frontend:
     executor: docker-executor
