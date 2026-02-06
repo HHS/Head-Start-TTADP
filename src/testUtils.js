@@ -54,7 +54,7 @@ function defaultUser() {
   return {
     homeRegionId: 5,
     hsesUsername: faker.internet.email(),
-    hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+    hsesUserId: `fake${faker.datatype.number({ min: 1, max: 100000 })}`,
     email: faker.internet.email(),
     phoneNumber: faker.phone.phoneNumber(),
     name: faker.name.findName(),
@@ -63,13 +63,18 @@ function defaultUser() {
   };
 }
 
+export function getUniqueId(min = 10000000, max = 99999999) {
+  // close enough to unique for testing purposes
+  return crypto.randomInt(min, max);
+}
+
 export async function createUser(user) {
   return User.create({ ...defaultUser(), ...user });
 }
 
 function defaultRegion() {
   // eslint-disable-next-line max-len
-  const number = faker.unique(() => faker.datatype.number({ min: 50, max: 2000 }));
+  const number = getUniqueId(50, 2000);
   return {
     id: number,
     name: `Region ${number}`,
@@ -82,7 +87,7 @@ export async function createRegion(region) {
 
 function defaultGrant() {
   return {
-    id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+    id: getUniqueId(),
     number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
     regionId: 10,
     status: 'Active',
@@ -92,8 +97,9 @@ function defaultGrant() {
 }
 
 export async function createRecipient(recipient) {
+  const recipientId = recipient?.id || getUniqueId();
   return Recipient.create({
-    id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+    id: recipientId,
     // eslint-disable-next-line max-len
     name: faker.company.companyName() + faker.company.companySuffix() + faker.datatype.number({ min: 1, max: 1000 }),
     uei: 'NNA5N2KHMGN2',

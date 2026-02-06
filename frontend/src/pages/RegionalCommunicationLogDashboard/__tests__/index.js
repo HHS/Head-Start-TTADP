@@ -4,6 +4,7 @@ import { createMemoryHistory } from 'history';
 import { MemoryRouter, Route } from 'react-router';
 import {
   render, waitFor, screen, act,
+  within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
@@ -160,11 +161,14 @@ describe('RegionalCommunicationLogDashboard', () => {
     const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
     act(() => userEvent.click(actions));
 
-    await waitFor(() => expect(screen.getByRole('menuitem', { name: /view/i })).toBeInTheDocument());
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /delete/i })[0]).toBeInTheDocument());
+    const menu = await screen.findByRole('menu');
+    expect(menu).toBeVisible();
+
+    await waitFor(() => expect(within(menu).getByRole('menuitem', { name: /view/i })).toBeInTheDocument());
+    await waitFor(() => expect(within(menu).getByRole('button', { name: /delete/i })).toBeInTheDocument());
 
     // click delete
-    const deleteMenuItemButton = screen.getAllByRole('button', { name: /delete/i })[0];
+    const deleteMenuItemButton = within(menu).getByRole('button', { name: /delete/i });
     act(() => userEvent.click(deleteMenuItemButton));
 
     // handle modal
@@ -188,8 +192,11 @@ describe('RegionalCommunicationLogDashboard', () => {
     const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
     act(() => userEvent.click(actions));
 
+    const menu = await screen.findByRole('menu');
+    expect(menu).toBeVisible();
+
     // click delete
-    const deleteMenuItemButton = screen.getAllByRole('button', { name: /delete/i })[0];
+    const deleteMenuItemButton = within(menu).getByRole('button', { name: /delete/i });
     act(() => userEvent.click(deleteMenuItemButton));
 
     // handle modal

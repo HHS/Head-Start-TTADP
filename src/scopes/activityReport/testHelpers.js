@@ -1,9 +1,6 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import {
-  REPORT_STATUSES,
-  APPROVER_STATUSES,
-} from '@ttahub/common';
+import { REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
 import { GOAL_STATUS } from '../../constants';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
@@ -41,16 +38,21 @@ import {
   createGrant,
   createRecipient,
   createGoal,
+  getUniqueId,
 } from '../../testUtils';
-import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
+import {
+  findOrCreateResources,
+  processActivityReportForResourcesById,
+} from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
 import { formatDeliveryMethod } from './deliveryMethod';
 import { myReportsScopes } from './myReports';
 import * as utils from '../utils';
 
 // Mock users
+
 export const mockUser = {
-  id: faker.datatype.number(),
+  id: getUniqueId(),
   homeRegionId: 1,
   name: 'user13706689',
   hsesUsername: 'user13706689',
@@ -59,7 +61,7 @@ export const mockUser = {
 };
 
 export const mockUserTwo = {
-  id: faker.datatype.number(),
+  id: getUniqueId(),
   homeRegionId: 1,
   name: 'user137065478',
   hsesUsername: 'user137065478',
@@ -68,7 +70,7 @@ export const mockUserTwo = {
 };
 
 export const mockManager = {
-  id: faker.datatype.number(),
+  id: getUniqueId(),
   homeRegionId: 1,
   name: 'user50565590',
   hsesUsername: 'user50565590',
@@ -93,7 +95,10 @@ export const submittedReport = {
   endDate: '2000-01-01T12:00:00Z',
   startDate: '2000-01-01T12:00:00Z',
   requester: 'requester',
-  targetPopulations: ['Children with Disabilities', 'Infants and Toddlers (ages birth to 3)'],
+  targetPopulations: [
+    'Children with Disabilities',
+    'Infants and Toddlers (ages birth to 3)',
+  ],
   reason: ['reason'],
   participants: ['participants'],
   topics: ['topics'],
@@ -125,7 +130,13 @@ export const approverRejected = {
   note: 'change x, y, z',
 };
 
-export const validTopics = new Set(['Topic 1', 'Topic 2', 'Topic 3', 'Topic 4', 'another topic']);
+export const validTopics = new Set([
+  'Topic 1',
+  'Topic 2',
+  'Topic 3',
+  'Topic 4',
+  'another topic',
+]);
 
 // Shared test data
 export const sharedTestData = {};
@@ -165,30 +176,52 @@ export async function setupSharedTestData() {
     lastLogin: new Date(),
   });
 
-  sharedTestData.globallyExcludedReport = await ActivityReport.create({
-    ...draftReport, deliveryMethod: 'method', updatedAt: '2000-01-01',
-  }, {
-    silent: true,
-  });
+  sharedTestData.globallyExcludedReport = await ActivityReport.create(
+    {
+      ...draftReport,
+      deliveryMethod: 'method',
+      updatedAt: '2000-01-01',
+    },
+    {
+      silent: true,
+    },
+  );
 
   // Create roles if they don't exist
-  const granteeSpecialist = await Role.findOne({ where: { fullName: 'Grantee Specialist' } });
+  const granteeSpecialist = await Role.findOne({
+    where: { fullName: 'Grantee Specialist' },
+  });
   if (!granteeSpecialist) {
-    await Role.create({ name: 'GS', fullName: 'Grantee Specialist', isSpecialist: true });
+    await Role.create({
+      name: 'GS',
+      fullName: 'Grantee Specialist',
+      isSpecialist: true,
+    });
   }
 
-  const systemSpecialist = await Role.findOne({ where: { fullName: 'System Specialist' } });
+  const systemSpecialist = await Role.findOne({
+    where: { fullName: 'System Specialist' },
+  });
   if (!systemSpecialist) {
-    await Role.create({ name: 'SS', fullName: 'System Specialist', isSpecialist: true });
+    await Role.create({
+      name: 'SS',
+      fullName: 'System Specialist',
+      isSpecialist: true,
+    });
   }
 
-  const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
+  const grantsSpecialist = await Role.findOne({
+    where: { fullName: 'Grants Specialist' },
+  });
   if (!grantsSpecialist) {
-    await Role.create({ name: 'GS', fullName: 'Grants Specialist', isSpecialist: true });
+    await Role.create({
+      name: 'GS',
+      fullName: 'Grants Specialist',
+      isSpecialist: true,
+    });
   }
 
-  jest.spyOn(utils, 'getValidTopicsSet')
-    .mockResolvedValue(validTopics);
+  jest.spyOn(utils, 'getValidTopicsSet').mockResolvedValue(validTopics);
 }
 
 /**
@@ -212,7 +245,10 @@ export async function tearDownSharedTestData() {
   });
 
   const ids = reports.map((report) => report.id);
-  await ActivityReportApprover.destroy({ where: { activityReportId: ids }, force: true });
+  await ActivityReportApprover.destroy({
+    where: { activityReportId: ids },
+    force: true,
+  });
   await ActivityReport.unscoped().destroy({ where: { id: ids } });
   await User.destroy({
     where: {

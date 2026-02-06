@@ -451,10 +451,14 @@ describe('Import TTA plan goals', () => {
       await importGoals(fileName, 9);
 
       const allGoals = await Goal.findAll({
+        where: {
+          isFromSmartsheetTtaPlan: true,
+        },
         include: [{
           model: Grant,
           as: 'grant',
           where: {
+            number: '09HP044444',
             regionId: 9,
           },
           required: true,
