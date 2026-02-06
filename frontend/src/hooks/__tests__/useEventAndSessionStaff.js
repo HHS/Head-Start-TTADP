@@ -16,6 +16,19 @@ const mockRegionalTrainers = [
   { id: 2, fullName: 'Regional Trainer 2', nameWithNationalCenters: 'Regional Trainer 2' },
 ];
 
+// Mock data with roles for AA filtering tests
+const mockRegionalTrainersWithRoles = [
+  {
+    id: 1, fullName: 'Regional Trainer 1', nameWithNationalCenters: 'Regional Trainer 1', roles: [{ name: 'HS' }],
+  },
+  {
+    id: 2, fullName: 'Regional Trainer 2', nameWithNationalCenters: 'Regional Trainer 2', roles: [{ name: 'ECS' }],
+  },
+  {
+    id: 5, fullName: 'AA User', nameWithNationalCenters: 'AA User', roles: [{ name: 'AA' }],
+  },
+];
+
 const mockNationalCenterTrainers = [
   { id: 3, fullName: 'National Trainer 1', nameWithNationalCenters: 'National Trainer 1' },
   { id: 4, fullName: 'National Trainer 2', nameWithNationalCenters: 'National Trainer 2' },
@@ -837,6 +850,95 @@ describe('useEventAndSessionStaff', () => {
       rerender();
 
       expect(result.current).not.toBe(firstResult);
+    });
+  });
+
+  describe('AA Role Filtering', () => {
+    it('includes AA users when isEvent=true (Event Collaborators)', () => {
+      const event = {
+        regionId: 1,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      useFetch.mockReturnValue({
+        data: mockRegionalTrainersWithRoles,
+        loading: false,
+        error: null,
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useEventAndSessionStaff(event, true), { wrapper });
+
+      // AA user should be included for Event Collaborators
+      expect(result.current.optionsForValue).toEqual(mockRegionalTrainersWithRoles);
+      expect(result.current.trainerOptions).toEqual(mockRegionalTrainersWithRoles);
+      expect(result.current.optionsForValue.find((u) => u.id === 5)).toBeDefined();
+    });
+
+    it('excludes AA users when isEvent=false (Session Trainers)', () => {
+      const event = {
+        regionId: 1,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      useFetch.mockReturnValue({
+        data: mockRegionalTrainersWithRoles,
+        loading: false,
+        error: null,
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
+
+      // AA user should NOT be included for Session Trainers
+      const expectedTrainers = mockRegionalTrainersWithRoles.filter((u) => u.id !== 5);
+      expect(result.current.optionsForValue).toEqual(expectedTrainers);
+      expect(result.current.trainerOptions).toEqual(expectedTrainers);
+      expect(result.current.optionsForValue.find((u) => u.id === 5)).toBeUndefined();
+    });
+
+    it('excludes AA users in regional trainers for REGIONAL_PD_WITH_NATIONAL_CENTERS with facilitation=both', () => {
+      const event = {
+        regionId: 1,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+      };
+
+      useFetch
+        .mockReturnValueOnce({ data: mockRegionalTrainersWithRoles, loading: false, error: null })
+        .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
+
+      const wrapper = createWrapper('both');
+      const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
+
+      // AA user should NOT be in the regional trainers group for Session Trainers
+      const expectedRegionalTrainers = mockRegionalTrainersWithRoles.filter((u) => u.id !== 5);
+      expect(result.current.trainerOptions[1].options).toEqual(expectedRegionalTrainers);
+      expect(result.current.optionsForValue.find((u) => u.id === 5)).toBeUndefined();
+    });
+
+    it('handles users with no roles property gracefully', () => {
+      const trainersWithMissingRoles = [
+        { id: 1, fullName: 'Trainer 1' }, // No roles property
+        { id: 2, fullName: 'Trainer 2', roles: null }, // Null roles
+        { id: 3, fullName: 'Trainer 3', roles: [{ name: 'HS' }] }, // Valid roles
+      ];
+
+      const event = {
+        regionId: 1,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      useFetch.mockReturnValue({
+        data: trainersWithMissingRoles,
+        loading: false,
+        error: null,
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
+
+      // All trainers should be included since none have AA role
+      expect(result.current.optionsForValue).toEqual(trainersWithMissingRoles);
     });
   });
 });
