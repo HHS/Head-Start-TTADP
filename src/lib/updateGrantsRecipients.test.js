@@ -1280,9 +1280,13 @@ describe('Update grants, program personnel, and recipients', () => {
       const countAfter = await GroupGrant.count({ transaction });
       expect(countAfter).toBe(2);
 
-      const gg = await GroupGrant.findOne({ transaction });
-      expect(gg.groupId).toBe(group.id);
-      expect(gg.grantId).toBe(grant.id);
+      const ggs = await GroupGrant.findAll({
+        where: { groupId: group.id },
+        order: [['grantId', 'ASC']],
+        transaction,
+      });
+      const grantIds = ggs.map((g) => g.grantId);
+      expect(grantIds).toEqual([grant.id, replacingGrant.id].sort((a, b) => a - b));
     });
 
     it('removes GroupGrants for inactive grants', async () => {
