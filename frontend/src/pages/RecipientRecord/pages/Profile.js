@@ -16,7 +16,7 @@ export default function Profile({
   regionId,
   recipientId,
 }) {
-  const { hasMonitoringData, hasClassData, hasSpotlightData } = useGrantData();
+  const { hasMonitoringData, hasClassData } = useGrantData();
   return (
     <>
       <Helmet>
