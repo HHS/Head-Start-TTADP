@@ -350,7 +350,7 @@ jobs:
 
   test_backend:
     executor: docker-postgres-executor
-    resource_class: large
+    resource_class: medium
     parallelism: 3
     environment:
       SFTP_EXPOSED_PORT: 2222
