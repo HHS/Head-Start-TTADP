@@ -108,11 +108,12 @@ const gracefulShutdown = async (signal) => {
   }
 };
 
+process.once('SIGINT', () => gracefulShutdown('SIGINT'));
+process.once('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
 function registerQueueHandlers(queue) {
   if (queue) {
     QUEUE_LIST.add(queue);
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     queue.on('error', (err) => {
       auditLogger.error(`${queue.name} error`, err);
     });
