@@ -24,6 +24,8 @@ const addGetResourceMetadataToQueue = async (id, url) => {
   return resourceQueue.add(RESOURCE_ACTIONS.GET_METADATA, data, {
     attempts: retries,
     backoff: backOffOpts,
+    removeOnComplete: true,
+    removeOnFail: true,
   });
 };
 

@@ -21,6 +21,8 @@ const addToScanQueue = (fileKey) => {
     {
       attempts: retries,
       backoff: backOffOpts,
+      removeOnComplete: true,
+      removeOnFail: true,
     },
   );
 };
