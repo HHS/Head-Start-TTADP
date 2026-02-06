@@ -384,19 +384,12 @@ jobs:
               --directory-filter=src/,tools/ \
               --fail-on-uncovered=false \
               --output-format=json,html
+            chmod +x ./tools/ci/prepare-backend-coverage-workspace.sh
+            ./tools/ci/prepare-backend-coverage-workspace.sh
+            zip backend-coverage-artifacts.zip coverage/
           else
             echo "Not a PR build. Skipping coverage check."
           fi
-    - run:
-        name: Prepare coverage workspace
-        when: always
-        command: |
-          chmod +x ./tools/ci/prepare-backend-coverage-workspace.sh
-          ./tools/ci/prepare-backend-coverage-workspace.sh
-    - run:
-        name: Compress coverage artifacts
-        command: zip backend-coverage-artifacts.zip coverage/
-        when: always
     - store_artifacts:
         path: backend-coverage-artifacts.zip
     - store_artifacts:
