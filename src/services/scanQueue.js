@@ -1,4 +1,4 @@
-import newQueue, { increaseListeners, KEEP_COMPLETED_JOBS, KEEP_FAILED_JOBS } from '../lib/queue';
+import newQueue, { increaseListeners } from '../lib/queue';
 import { logger, auditLogger } from '../logger';
 import processFile from '../workers/files';
 import transactionQueueWrapper from '../workers/transactionWrapper';
@@ -16,13 +16,11 @@ const addToScanQueue = (fileKey) => {
   return scanQueue.add(
     {
       ...fileKey,
-      ...(referenceData()),
+      ...referenceData(),
     },
     {
       attempts: retries,
       backoff: backOffOpts,
-      removeOnComplete: KEEP_COMPLETED_JOBS,
-      removeOnFail: KEEP_FAILED_JOBS,
     },
   );
 };
@@ -30,9 +28,13 @@ const addToScanQueue = (fileKey) => {
 const onFailedScanQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
 const onCompletedScanQueue = (job, result) => {
   if (result.status === 200) {
-    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    logger.info(
+      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`,
+    );
   } else {
-    auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    auditLogger.error(
+      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`,
+    );
   }
 };
 const processScanQueue = () => {
@@ -41,18 +43,10 @@ const processScanQueue = () => {
   scanQueue.on('completed', onCompletedScanQueue);
   increaseListeners(scanQueue);
   const processFileFromJob = async (job) => processFile(job.data.key);
-  scanQueue.process(
-    transactionQueueWrapper(
-      processFileFromJob,
-      'scan',
-    ),
-  );
+  scanQueue.process(transactionQueueWrapper(processFileFromJob, 'scan'));
 };
 
 export {
-  scanQueue,
-  onFailedScanQueue,
-  onCompletedScanQueue,
-  processScanQueue,
+  scanQueue, onFailedScanQueue, onCompletedScanQueue, processScanQueue,
 };
 export default addToScanQueue;
