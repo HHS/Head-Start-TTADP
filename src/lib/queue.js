@@ -60,12 +60,12 @@ export const generateRedisConfig = (enableRateLimiter = false) => {
   const { REDIS_HOST, REDIS_PASS, REDIS_PORT } = process.env;
   const redisHost = REDIS_HOST || 'localhost';
   const redisPort = REDIS_PORT || 6379;
-  const redisPassFull = REDIS_PASS ? `${REDIS_PASS}@` : '';
+  const redisPassFull = REDIS_PASS ? `:${REDIS_PASS}@` : '';
   const tlsEnabled = false;
 
   return {
     host: redisHost,
-    uri: `redis://:${redisPassFull}${redisHost}:${redisPort}`,
+    uri: `redis://${redisPassFull}${redisHost}:${redisPort}`,
     port: redisPort,
     tlsEnabled,
     redisOpts: {
@@ -77,6 +77,7 @@ export const generateRedisConfig = (enableRateLimiter = false) => {
 const {
   host,
   port,
+  uri,
   redisOpts,
 } = generateRedisConfig(true);
 
@@ -90,9 +91,7 @@ export function increaseListeners(queue, num = 1) {
     MAX_LISTENERS,
   );
   queue.setMaxListeners(newMaxListeners);
-  auditLogger.info(
-    `Increased max listeners for queue ${queue.name} to ${newMaxListeners}`,
-  );
+  auditLogger.info(`Set max listeners for ${queue.name} to ${newMaxListeners}`);
 }
 
 let shuttingDown = false;
@@ -109,12 +108,11 @@ const gracefulShutdown = async (signal) => {
   }
 };
 
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-
 function registerQueueHandlers(queue) {
   if (queue) {
     QUEUE_LIST.add(queue);
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     queue.on('error', (err) => {
       auditLogger.error(`${queue.name} error`, err);
     });
@@ -132,7 +130,7 @@ function registerQueueHandlers(queue) {
 
 export default function newQueue(queueName, timeout = 30000) {
   const connectionId = randomBytes(8).toString('base64url').slice(0, 10);
-  const queue = new Queue(queueName, `redis://${host}:${port}`, {
+  const queue = new Queue(queueName, uri || `redis://${host}:${port}`, {
     ...redisOpts,
     redis: {
       ...(redisOpts?.redis || {}),
