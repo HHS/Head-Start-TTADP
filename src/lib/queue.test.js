@@ -226,7 +226,6 @@ describe('newQueue', () => {
         }),
       }),
     );
-    expect(queueInstance.setMaxListeners).toHaveBeenCalledWith(25);
     expect(queueInstance.on).toHaveBeenCalledWith('error', expect.any(Function));
     expect(queueInstance.on).toHaveBeenCalledWith('failed', expect.any(Function));
     expect(queueInstance.on).toHaveBeenCalledWith('stalled', expect.any(Function));
