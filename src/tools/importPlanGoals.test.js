@@ -13,6 +13,12 @@ jest.mock('../lib/s3');
 describe('Import TTA plan goals', () => {
   beforeEach(async () => {
     downloadFile.mockReset();
+    if (logger.info?.mockReset) {
+      logger.info.mockReset();
+    }
+    if (logger.error?.mockReset) {
+      logger.error.mockReset();
+    }
   });
   afterAll(async () => {
     await db.sequelize.close();
@@ -97,11 +103,12 @@ describe('Import TTA plan goals', () => {
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const goalInProgress = await Goal.findOne({
-        where: { status: 'In Progress' },
+        where: { name: 'Strengthen connections and support for families to improve their well-being utilizing PFCE and SR data.' },
         include: [{
           model: Grant,
           as: 'grant',
           where: {
+            number: '14CH00002',
             regionId,
           },
           required: true,
@@ -147,11 +154,12 @@ describe('Import TTA plan goals', () => {
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
       // Find a goal that was imported as 'Not Started', change to 'Suspended' and update
       const goalNotStarted = await Goal.findOne({
-        where: { status: 'Not Started' },
+        where: { name: 'Expand children\'s experiences with high quality early learning to prepare them for Kindergarten' },
         include: [{
           model: Grant,
           as: 'grant',
           where: {
+            number: '14CH00002',
             regionId,
           },
           required: true,
