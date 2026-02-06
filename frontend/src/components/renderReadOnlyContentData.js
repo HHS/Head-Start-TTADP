@@ -34,7 +34,7 @@ export function renderEditor(heading, data) {
      * for rich HTML content, sanitize with DOMPurify and convert to React elements
      */
   const sanitized = DOMPurify.sanitize(data || '', {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'span', 'div'],
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'del', 'ins', 'u', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'span', 'div'],
     ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
   });
 
