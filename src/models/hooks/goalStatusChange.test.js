@@ -492,7 +492,7 @@ describe('GoalStatusChange hooks', () => {
     });
 
     it('correctly handles a mix of objective statuses', async () => {
-    // Create an additional approved AR objective for testing mixed statuses
+      // Create an additional approved AR objective for testing mixed statuses
       const mixedStatusObjective = await Objective.create({
         name: faker.datatype.string(),
         status: OBJECTIVE_STATUS.IN_PROGRESS,
@@ -547,10 +547,14 @@ describe('GoalStatusChange hooks', () => {
         get: () => GOAL_STATUS.CLOSED,
       };
 
-      // Should throw because we have one IN_PROGRESS objective on approved AR
-      await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow(
-        `Cannot close a goal ${goal.id} with open objectives. ${mixedStatusObjective.id} is open.`,
+      // Should throw because there are open objectives on an approved AR or RTR.
+      const expectedError = new RegExp(
+        `Cannot close a goal ${goal.id} with open objectives\\. `
+          + `(${mixedStatusObjective.id}|${objectiveRTR.id}) is open\\.`,
       );
+      await expect(
+        preventCloseIfObjectivesOpen(sequelize, instance),
+      ).rejects.toThrow(expectedError);
 
       // Clean up
       await ActivityReportObjective.destroy({
