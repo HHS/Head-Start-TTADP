@@ -9,5 +9,4 @@ if [[ ! -f "${coverage_file}" ]]; then
   exit 1
 fi
 
-chmod +x ./tools/summarize-coverageCLI.js
 node ./tools/summarize-coverageCLI.js "${coverage_file}" "${threshold}"
