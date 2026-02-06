@@ -14,6 +14,7 @@ import { Button } from '@trussworks/react-uswds';
 import './Menu.scss';
 
 const ESCAPE_KEY_CODE = 27;
+const TAB_KEY_CODE = 9;
 
 function Menu({
   label,
@@ -31,7 +32,8 @@ function Menu({
   const [shown, updateShown] = useState(false);
   const [menuPosition, updateMenuPosition] = useState({});
   const defaultClass = 'smart-hub--menu';
-  const buttonRef = useRef(null);
+  const containerRef = useRef(null);
+  const triggerRef = useRef(null);
   const menuRef = useRef(null);
 
   const onEscape = useCallback((event) => {
@@ -50,15 +52,15 @@ function Menu({
 
   const recordButtonPositionAndUpdateMenu = useCallback(() => {
     // set initial postition
-    if (fixed && buttonRef.current && buttonRef.current.getBoundingClientRect) {
-      // buttonRef.current.style = 'background: red';
+    if (fixed && containerRef.current && containerRef.current.getBoundingClientRect) {
+      // containerRef.current.style = 'background: red';
       // get the button's position
       const {
         top,
         height,
         left: l,
         width,
-      } = buttonRef.current.getBoundingClientRect();
+      } = containerRef.current.getBoundingClientRect();
 
       // we could be programmatically calculating the height and width offset numbers
       // but a little manual work up front will save on performance in the browser
@@ -92,7 +94,7 @@ function Menu({
       window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
 
       // Also listen for scroll on the table container for horizontal scrolling
-      const tableContainer = buttonRef.current?.closest('.usa-table-container--scrollable');
+      const tableContainer = containerRef.current?.closest('.usa-table-container--scrollable');
       if (tableContainer) {
         tableContainer.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
       }
@@ -119,14 +121,35 @@ function Menu({
       return;
     }
 
+    // Also allow focus to move to the trigger button
+    if (relatedTarget && triggerRef.current && triggerRef.current.contains(relatedTarget)) {
+      return;
+    }
+
     setTimeout(() => {
       // Check if focus is still within the button container or the portal-rendered menu
       const focusInContainer = currentTarget.contains(document.activeElement);
       const focusInMenu = menuRef.current && menuRef.current.contains(document.activeElement);
       if (!focusInContainer && !focusInMenu && shown) {
+        // When tabbing out of a portal menu, focus goes somewhere unexpected
+        // Restore focus to trigger before closing
+        if (fixed && triggerRef.current) {
+          triggerRef.current.focus();
+        }
         updateShown(false);
       }
     }, 0);
+  };
+
+  // Handle Tab key in portal menu - close menu and return focus to trigger
+  const onMenuKeyDown = (event) => {
+    if (event.keyCode === TAB_KEY_CODE && fixed) {
+      event.preventDefault();
+      updateShown(false);
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      }
+    }
   };
 
   const placementClass = (() => {
@@ -147,13 +170,30 @@ function Menu({
     updateShown((previous) => !previous);
   };
 
+  // Manage focus: move to menu when opening, return to trigger when closing
+  const prevShownRef = useRef(false);
+  useEffect(() => {
+    if (shown && menuRef.current) {
+      // Menu just opened - focus first menu item
+      const firstButton = menuRef.current.querySelector('button');
+      if (firstButton) {
+        firstButton.focus();
+      }
+    } else if (!shown && prevShownRef.current && triggerRef.current) {
+      // Menu just closed - return focus to trigger button
+      triggerRef.current.focus();
+    }
+    prevShownRef.current = shown;
+  }, [shown]);
+
   return (
     <div
       onBlur={onBlur}
       className="position-relative smart-hub-menu-container"
-      ref={buttonRef}
+      ref={containerRef}
     >
       <button
+        ref={triggerRef}
         className={`smart-hub--menu-button usa-button usa-button--unstyled smart-hub--button__no-margin ${className}`}
         aria-haspopup
         onClick={onClick}
@@ -166,7 +206,7 @@ function Menu({
       {shown && (() => {
         const menuContent = (
           <div ref={menuRef} data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
-            <ul className="usa-list usa-list--unstyled" role="menu">
+            <ul className="usa-list usa-list--unstyled" role="menu" onKeyDown={onMenuKeyDown}>
               {menuItems.map((item) => (
                 <li key={item.label} role="menuitem">
                   <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin" aria-label={item.label}>
