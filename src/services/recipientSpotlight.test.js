@@ -911,6 +911,130 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients[0].FEI).toBe(false);
     });
 
+    it('filters by singleGrantId correctly', async () => {
+      const singleGrantRecipient = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        name: 'Single Grant Test Recipient',
+        regionId: REGION_ID,
+      });
+
+
+
+      const singleGrantReview = await MonitoringReview.create({
+        reviewId: singleGrantReviewId,
+        contentId: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })).toString(),
+        statusId: monitoringReviewStatus.statusId,
+        reviewType: 'RAN',
+        reportDeliveryDate: pastYear,
+        sourceCreatedAt: createDate,
+        sourceUpdatedAt: createDate,
+      });
+
+      const singleGrantReview2 = await MonitoringReview.create({
+        reviewId: singleGrantReviewId2,
+        contentId: faker.unique(() => faker.datatype.number({ min: 50001, max: 60000 })).toString(),
+        statusId: monitoringReviewStatus.statusId,
+        reviewType: 'RAN',
+        reportDeliveryDate: pastYear,
+        sourceCreatedAt: createDate,
+        sourceUpdatedAt: createDate,
+      });
+
+      await db.MonitoringReviewLink.bulkCreate([
+        { reviewId: singleGrantReviewId },
+        { reviewId: singleGrantReviewId2 },
+      ]);
+
+      await MonitoringReviewGrantee.bulkCreate([
+        {
+          reviewId: singleGrantReview.reviewId,
+          granteeId: singleGrantRecipient.id.toString(),
+          grantNumber: singleGrantWithIndicator.number,
+          createTime: createDate,
+          updateTime: createDate,
+          updateBy: 'test-user',
+          sourceCreatedAt: createDate,
+          sourceUpdatedAt: createDate,
+        },
+        {
+          reviewId: singleGrantReview2.reviewId,
+          granteeId: singleGrantRecipient.id.toString(),
+          grantNumber: singleGrantWithIndicator.number,
+          createTime: createDate,
+          updateTime: createDate,
+          updateBy: 'test-user',
+          sourceCreatedAt: createDate,
+          sourceUpdatedAt: createDate,
+        },
+      ]);
+      // End setup for childIncidents
+
+      try {
+        const scopes = createScopesWithRecipientAndRegion(singleGrantRecipient.id, REGION_ID);
+
+        // Test with the grant that has an indicator
+        const resultWithIndicator = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          [],
+          [],
+          singleGrantWithIndicator.id,
+        );
+
+        expect(resultWithIndicator.recipients.length).toBe(1);
+        expect(resultWithIndicator.recipients[0].recipientId).toBe(singleGrantRecipient.id);
+        expect(resultWithIndicator.recipients[0].childIncidents).toBe(true);
+        expect(resultWithIndicator.recipients[0].indicatorCount).toBeGreaterThan(0);
+
+        // Test with the grant that has no indicator
+        const resultWithoutIndicator = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          [],
+          [],
+          singleGrantWithoutIndicator.id,
+        );
+        // Since no indicators are present, and the default indicatorWhereClause is `indicatorCount > 0`,
+        // this result should be empty.
+        expect(resultWithoutIndicator.recipients.length).toBe(0);
+        expect(resultWithoutIndicator.count).toBe(0);
+      } finally {
+        // Clean up:
+        await MonitoringReviewGrantee.destroy({
+          where: { reviewId: [singleGrantReview.reviewId, singleGrantReview2.reviewId] },
+          force: true,
+        });
+        await MonitoringReview.destroy({
+          where: { reviewId: [singleGrantReview.reviewId, singleGrantReview2.reviewId] },
+          force: true,
+        });
+        await db.MonitoringReviewLink.destroy({
+          where: { reviewId: [singleGrantReview.reviewId, singleGrantReview2.reviewId] },
+          force: true,
+        });
+
+        await Grant.destroy({
+          where: { id: [singleGrantWithIndicator.id, singleGrantWithoutIndicator.id] },
+          force: true,
+          individualHooks: true,
+        });
+        await Recipient.destroy({ where: { id: singleGrantRecipient.id }, force: true });
+
+        await db.GrantNumberLink.destroy({
+          where: { grantNumber: ['G-SINGLE-GRANT-IND-01', 'G-SINGLE-GRANT-NOIND-01'] },
+          force: true,
+        });
+      }
+    });
+
     it('works with empty grant list (queries all grants)', async () => {
       // Create a scope that returns no grants initially
       const emptyGrantScope = { grant: { where: { id: { [db.Sequelize.Op.eq]: -999 } }, include: [] } };

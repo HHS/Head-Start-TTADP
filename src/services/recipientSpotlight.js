@@ -46,6 +46,7 @@ export async function getRecipientSpotlightIndicators(
   regions,
   indicatorsToInclude = [],
   indicatorsToExclude = [],
+  singleGrantId = null,
 ) {
   // Early return if no regions are provided
   if (!regions || regions.length === 0) {
@@ -71,6 +72,7 @@ export async function getRecipientSpotlightIndicators(
       {
         regionId: { [Op.in]: regions.map((r) => parseInt(r, 10)) },
       },
+      singleGrantId ? { id: singleGrantId } : {}, // Add this line
       {
         [Op.or]: [
           { status: 'Active' },
@@ -136,7 +138,10 @@ export async function getRecipientSpotlightIndicators(
 */
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
-  const grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'FALSE';
+  let grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'FALSE';
+  if (singleGrantId) {
+    grantIdFilter = `gr.id = ${singleGrantId}`;
+  }
 
   // Query total distinct recipient-region pairs for the selected regions
   // This counts all recipients with active/recently-inactive grants in the regions,

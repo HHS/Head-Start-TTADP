@@ -22,8 +22,10 @@ getRecipientSpotLight():
 export async function getRecipientSpotLight(req, res) {
   try {
     const {
-      sortBy, direction, offset, limit,
+      sortBy, direction, offset, limit, grantId,
     } = req.query;
+
+    console.log('\n\n\n---- grant id from query:', grantId, '\n\n\n');
 
     // Parse pagination params to integers
     const parsedOffset = offset ? parseInt(offset, DECIMAL_BASE) : 0;
@@ -98,6 +100,7 @@ export async function getRecipientSpotLight(req, res) {
       regionsArray,
       indicatorsToInclude,
       indicatorsToExclude,
+      grantId ? parseInt(grantId, DECIMAL_BASE) : null,
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);
