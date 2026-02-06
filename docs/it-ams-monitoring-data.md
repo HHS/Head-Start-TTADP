@@ -10,8 +10,8 @@ The TTA Hub integrates with IT-AMS to retrieve and process monitoring data relat
 ## How the Integration Works
 1. IT-AMS generates XML data files containing monitoring reviews daily.
 2. The TTA Hub downloads the data via SFTP from IT-AMS host.
-3. Relevant data is processed and stored in the PostgreSQL database at **8:30 AM EST**.
-4. The system matches reviews with grant recipients and auto-generates goals.
+3. Relevant data is processed and stored in the PostgreSQL database at **8:30 AM EST** (workaround schedule).
+4. The system matches reviews with grant recipients and auto-generates monitoring goals when criteria are met.
 5. If an AR has propagated a Monitoring goal to a replacing grant, that goal is marked as 'monitoring' so it can be used like the auto-generated goals.
 6. The HSES system processes its copy at **8:00 AM EST** to ensure visibility.
 7. Specialists can manually add objectives based on compliance citations.
@@ -115,11 +115,9 @@ The TTA Hub integrates with IT-AMS to retrieve and process monitoring data relat
 | 6120       | Follow Up Recs Complete |
 
 ## Import Process
-- **Schedule:** 8:30 AM EST.
+- **Schedule:** 8:30 AM EST (workaround).
 - **Trigger:** Runs automatically but may require manual execution if it fails.
 - **Issue:** The import job is complex, and manual imports are sometimes needed.
-
-*Note: For debugging purposes, the import currently runs on the following schedule: 2:30 AM, 8:30 AM, 2:30 PM, and 8:30 PM.
 
 ## FAQs
 ### Q: What does this feature do?
@@ -136,11 +134,28 @@ A: If the automatic import fails, an engineer must manually run an import comman
 
 ### Q: What needs to happen within monitoring data in order for citations to be selectable on ARs?
 A: The intent is for citations to be available to select within the time period that TTA is being provided and ARs written. So:
-- As a prerequisite, a **Review** needs to reach a `Complete` status while being linked an `Active` **Finding** so a **Monitoring Goal** is created and available for use in ARs
-- The **Finding** must be linked through a **MonitoringFindingStandards** record to a **MonitoringStandards** record, which contains the citation text
-- As long as the **Finding** remains in `Active` or `Elevated Deficiency` status, it will remain selectable on ARs using the monitoring goal.
-- Regardless of **Finding** status, if the _most recent_ **Review** has not reached a `Complete` state with a `reportDeliveryDate` prior to the AR `startDate`, then the citation will remain selectable
-- Once _both_ the most recent **Review** is `Complete` with a `reportDeliveryDate` prior to the AR `startDate` _and_ the **Finding** reaches one of the terminal states (`Corrected`,`Withdrawn`,`Closed`), then the citation will not appear or be selectable.
+- A **Review** must exist and link to a **Finding** through **MonitoringFindingHistories**.
+- The **Finding** must be linked through **MonitoringFindingStandards** to a **MonitoringStandards** record, which contains the citation text.
+- Citations are considered open if either:
+  - the Finding is `Active` or `Elevated Deficiency`, or
+  - the most recent review for the Finding has a `NULL` report delivery date (review not yet delivered).
+- Citations are filtered to reviews delivered after the monitoring cutoff date and before the AR start date.
+- Citations are only returned for grants with an open (not Closed/Suspended) Monitoring goal.
+
+## Monitoring Goal Creation Logic (Current)
+Monitoring goals are created only when all of the following are true:
+- Monitoring goal creation is enabled (`ENABLE_MONITORING_GOAL_CREATION=true`).
+- The review type is in the allowlist: `AIAN-DEF`, `RAN`, `Follow-up`, `FA-1`, `FA1-FR`, `FA-2`, `FA2-CR`, `Special`.
+- The review `reportDeliveryDate` is between the cutoff date (`2025-01-21`) and now.
+- There is an `Active` or `Elevated Deficiency` finding linked to the review and grantee.
+- The grant maps to an active grant via `GrantRelationshipToActive` and is not CDI.
+- There is no existing open monitoring goal on the active or replaced grant.
+
+## Finding Type Display
+Monitoring finding display uses determination first logic:
+- If `determination = Concern`, display **Area of Concern**.
+- Else if `determination` is present, display it.
+- Else fall back to `findingType`.
 
 ## 📎 Additional Documentation
 For developer details, see: [Technical Documentation](monitoring-tech.md)
