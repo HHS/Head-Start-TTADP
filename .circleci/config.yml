@@ -374,19 +374,29 @@ jobs:
           chmod 744 ./bin/test-backend-ci
           ./bin/test-backend-ci
     - run:
-        name: Check coverage for modified lines
+        name: Merge node coverage
+        when: always
+        command: node ./tools/merge-coverage.js
+    - run:
+        name: Prepare coverage workspace
         when: always
         command: |
           mkdir -p coverage-workspace
+          chmod +x ./tools/ci/prepare-backend-coverage-workspace.sh
+          ./tools/ci/prepare-backend-coverage-workspace.sh
+          if [ -f ./coverage/coverage-final.json ]; then
+            zip -r backend-coverage-artifacts.zip coverage/
+          fi
+    - run:
+        name: Check coverage for modified lines
+        when: always
+        command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
             node ./tools/check-coverage.js \
               --directory-filter=src/,tools/ \
               --fail-on-uncovered=false \
               --output-format=json,html
-            chmod +x ./tools/ci/prepare-backend-coverage-workspace.sh
-            ./tools/ci/prepare-backend-coverage-workspace.sh
-            zip backend-coverage-artifacts.zip coverage/
           else
             echo "Not a PR build. Skipping coverage check."
           fi
