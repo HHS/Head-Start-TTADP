@@ -20,22 +20,6 @@ export const getAllTopicsForWidget = async () => Topic.findAll({
   order: [['name', 'ASC']],
 });
 
-export function generateReasonList() {
-  const reasons = [...REASONS, ...DEPRECATED_REASONS]
-    .map((reason) => ({ name: reason, count: 0 }))
-    .sort((a, b) => {
-      if (a.name < b.name) {
-        return -1;
-      }
-      if (a.name > b.name) {
-        return 1;
-      }
-      return 0;
-    });
-
-  return reasons;
-}
-
 export function baseTRScopes(scopes) {
   return {
     where: {

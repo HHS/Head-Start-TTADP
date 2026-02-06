@@ -21,8 +21,6 @@ const overViewUrl = join('api', 'widgets', 'overview');
 const overViewResponse = {
   numReports: '6', numGrants: '6', numOtherEntities: '0', inPerson: '0', sumDuration: '13.0', numParticipants: '86',
 };
-const reasonListUrl = join('api', 'widgets', 'reasonList');
-const reasonListResponse = [{ name: 'Ongoing Quality Improvement', count: 3 }];
 const totalHrsAndRecipientGraphUrl = join('api', 'widgets', 'totalHrsAndRecipientGraph');
 const totalHoursResponse = [{
   name: 'Hours of Training',
@@ -58,7 +56,6 @@ const allRegions = 'region.in[]=1&region.in[]=2';
 const regionInParams = 'region.in[]=1';
 
 const hoursOfTrainingUrl = '/api/widgets/trHoursOfTrainingByNationalCenter';
-const trReasonListUrl = '/api/widgets/trReasonList';
 const overviewUrl = '/api/widgets/trOverview';
 const sessionsByTopicUrl = '/api/widgets/trSessionsByTopic';
 const standardGoalsListUrl = join('api', 'widgets', 'standardGoalsList');
@@ -88,7 +85,6 @@ const feedItemResponse = `<?xml version="1.0" encoding="UTF-8"?>
 describe('Regional Dashboard page', () => {
   beforeEach(async () => {
     fetchMock.get(overViewUrl, overViewResponse);
-    fetchMock.get(reasonListUrl, reasonListResponse);
     fetchMock.get(totalHrsAndRecipientGraphUrl, totalHoursResponse);
     fetchMock.get(topicFrequencyGraphUrl, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10`, activityReportsResponse);
@@ -105,7 +101,6 @@ describe('Regional Dashboard page', () => {
       numParticipants: '0',
       numSessions: '0',
     });
-    fetchMock.get(trReasonListUrl, []);
     fetchMock.get(hoursOfTrainingUrl, []);
     fetchMock.get(sessionsByTopicUrl, []);
   });
@@ -140,7 +135,6 @@ describe('Regional Dashboard page', () => {
 
     // Initial Page Load.
     fetchMock.get(`${overViewUrl}?${allRegions}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${reasonListUrl}?${allRegions}&${lastThirtyDaysParams}`, reasonListResponse);
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${allRegions}&${lastThirtyDaysParams}`, activityReportsResponse);
@@ -148,7 +142,6 @@ describe('Regional Dashboard page', () => {
 
     // Only Region 1.
     fetchMock.get(`${overViewUrl}?${regionInParams}`, overViewResponse);
-    fetchMock.get(`${reasonListUrl}?${regionInParams}`, reasonListResponse);
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}`, activityReportsResponse);
@@ -198,7 +191,6 @@ describe('Regional Dashboard page', () => {
     };
 
     fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${reasonListUrl}?${regionInParams}&${lastThirtyDaysParams}`, reasonListResponse);
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
@@ -218,7 +210,6 @@ describe('Regional Dashboard page', () => {
     };
 
     fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${reasonListUrl}?${regionInParams}&${lastThirtyDaysParams}`, reasonListResponse);
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
@@ -238,7 +229,6 @@ describe('Regional Dashboard page', () => {
     };
 
     fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${reasonListUrl}?${regionInParams}&${lastThirtyDaysParams}`, reasonListResponse);
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
@@ -258,7 +248,6 @@ describe('Regional Dashboard page', () => {
     };
 
     fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${reasonListUrl}?${regionInParams}&${lastThirtyDaysParams}`, reasonListResponse);
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
@@ -270,7 +259,6 @@ describe('Regional Dashboard page', () => {
 
   it('hides specialist name filter if user can approve reports', async () => {
     fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse);
-    fetchMock.get('/api/widgets/reasonList?region.in[]=1&region.in[]=2', reasonListResponse);
     fetchMock.get('/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2', totalHoursResponse);
     fetchMock.get('/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2', topicFrequencyResponse);
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2', activityReportsResponse);
@@ -298,7 +286,6 @@ describe('Regional Dashboard page', () => {
 
   it('shows specialist name filter if user can approve reports', async () => {
     fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse, { overwriteRoutes: true });
-    fetchMock.get('/api/widgets/reasonList?region.in[]=1&region.in[]=2', reasonListResponse, { overwriteRoutes: true });
     fetchMock.get('/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2', totalHoursResponse, { overwriteRoutes: true });
     fetchMock.get('/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2', topicFrequencyResponse, { overwriteRoutes: true });
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2', activityReportsResponse, { overwriteRoutes: true });
@@ -331,7 +318,6 @@ describe('Regional Dashboard page', () => {
 
   it('shows region filter if user has more than one region', async () => {
     fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse, { overwriteRoutes: true });
-    fetchMock.get('/api/widgets/reasonList?region.in[]=1&region.in[]=2', reasonListResponse, { overwriteRoutes: true });
     fetchMock.get('/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2', totalHoursResponse, { overwriteRoutes: true });
     fetchMock.get('/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2', topicFrequencyResponse, { overwriteRoutes: true });
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2', activityReportsResponse, { overwriteRoutes: true });
