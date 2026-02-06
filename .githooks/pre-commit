@@ -18,7 +18,7 @@ check_and_run_yarn() {
 
 # check_and_validate_circle
 if [[ -x "$(command -v circleci)" ]]; then
-  circleci config validate
+  circleci config validate > /dev/null
 fi
 
 common_changed=false
