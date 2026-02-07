@@ -47,7 +47,7 @@ In addition, while experimenting with multiple configuration files, it became cl
 **Backend:**
 ```bash
 yarn build                                  # Build first
-yarn test build/server/src/example.js       # Run single test
+yarn test build/server/src/example.test.js  # Run single test
 yarn test                                   # Run all backend tests
 ```
 
