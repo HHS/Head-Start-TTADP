@@ -31,7 +31,6 @@ The **Office of Head Start TTA Smart Hub** is a full-stack application for manag
 
 ### Other Documentation
 - `bin/README.md`: CLI scripts for backups and operations
-- `src/tools/README.md`: Maintenance and data operation tools
 - `automation/ci/scripts/README.md`: CI pipeline scripts
 - `automation/db-backup/scripts/README.md`: Database backup scripts
 - `deployment_config/README.md`: Deployment configuration
