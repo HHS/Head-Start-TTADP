@@ -95,21 +95,17 @@ export function increaseListeners(queue, num = 1) {
 }
 
 let shuttingDown = false;
-const gracefulShutdown = async (signal) => {
+export const closeAllQueues = async (reason = 'shutdown') => {
   if (shuttingDown) return;
   shuttingDown = true;
-  auditLogger.info(`Received ${signal}, closing server...`);
+  auditLogger.info(`Closing queues due to ${reason}...`);
   try {
     await Promise.all(Array.from(QUEUE_LIST).map((queue) => queue.close()));
-    process.exit(0);
   } catch (err) {
     auditLogger.error('Failed to close queues during shutdown:', err);
-    process.exit(1);
+    throw err;
   }
 };
-
-process.once('SIGINT', () => gracefulShutdown('SIGINT'));
-process.once('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 function registerQueueHandlers(queue) {
   if (queue) {
