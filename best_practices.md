@@ -4,7 +4,7 @@ This document is intended as an onboarding guide for new engineers as they creat
 It should also be leveraged by LLM based code tools for authoring and reviewing code.
 
 ## Code Style
-- Prefer creating new backend files as Typescript
+- Prefer creating new backend files as TypeScript
 - Prefer following existing style in the surrounding code.
 - Ensure changes pass lint checks after work is complete.
 
