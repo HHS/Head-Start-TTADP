@@ -15,7 +15,7 @@
 | --- | --- | --- | --- |
 | Starts the backend and frontend | `yarn docker:start` | | `yarn start:local` |
 | Stops the backend and frontend | `yarn docker:stop` | | |
-| Start only the supporting services | | `yarn docker:dbs:start` | |
+| Start only the supporting services | `yarn docker:dbs:start` | | |
 | Stops the backend and frontend (alias) | | `yarn docker:dbs:stop` | |
 | Starts the backend web process | | `yarn start:web` | `yarn server` |
 | Starts the worker process | | `yarn start:worker` | `yarn worker` |
