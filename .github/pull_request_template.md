@@ -1,5 +1,3 @@
-<!-- See CONTRIBUTING.md for code style, testing, and review expectations. -->
-
 ## Description of change
 
 
