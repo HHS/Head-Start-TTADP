@@ -46,9 +46,16 @@ export default async function getCachedResponse(
         redisClient = new Redis(redisUrl, {
           tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
         });
-        response = await redisClient.get(key);
       } catch (err) {
         auditLogger.error('Error creating & connecting to redis client', { err });
+      }
+
+      if (redisClient) {
+        try {
+          response = await redisClient.get(key);
+        } catch (err) {
+          auditLogger.error('Error getting cache response', { err });
+        }
       }
     }
 
