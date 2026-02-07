@@ -83,7 +83,7 @@ Playwright doesn't support advancing timers (yet). There is an issue being track
 
 This could be useful for testing behaviors that rely on our autosave logic.
 
-`sinon` is already a project dependency, and a helper for adding it to `window` lives in `tests/common.ts` so we can use it to advance timers like this within a test:
+`sinon` is already a project dependency, and a helper for adding it to `window` lives in `tests/e2e/common.ts` so we can use it to advance timers like this within a test:
 
 ```ts
 import { test, expect } from '@playwright/test';
