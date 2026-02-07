@@ -1,152 +1,49 @@
-# agents.md
+# AGENTS.md
 
-This file provides general guidance to all agentic coding assistants.
+This file provides baseline guidance to all agentic coding assistants.
+Instructions here may be overridden by other files or specific instructions from the user.
 
-## Personal Customization
+<!--
+User Notes
 
-For personal instructions or modifications specific to Claude, create a `CLAUDE-mine.md` file in the repository root. This file is gitignored and will be automatically included by Claude Code.
+* Personal Customization *
+For personal instructions or modifications specific to Claude, create a `CLAUDE-mine.md` file in the repository root. That file is gitignored and will be automatically included by Claude Code.
+-->
 
 ## Project Overview
 
 The **Office of Head Start TTA Smart Hub** is a full-stack application for managing Training and Technical Assistance (TTA) activities for Head Start programs. The system tracks activity reports, goals, recipients, events, and collaboration across multiple regions.
 
-## Tech Stack
+## Documentation
 
-- **Backend**: Node.js 20.x, Express, TypeScript
-- **Frontend**: React 17.x, USWDS (U.S. Web Design System)
-- **Database**: PostgreSQL via Sequelize ORM
-- **Queue**: Redis + Bull for background job processing
-- **Testing**: Jest (backend & frontend), Playwright (E2E), Cucumber (BDD)
-- **Infrastructure**: Cloud Foundry, Cloud.gov, CircleCI
-- **Local Development**: Docker
+### Guides
+- `docs/guides/dev-setup.md`: Local development setup (Docker & native)
+- `docs/guides/testing.md`: Testing strategy, patterns, and database state management
+- `docs/guides/infrastructure.md`: Cloud.gov, CI/CD, deployment, and production operations
+- `docs/guides/observability.md`: Monitoring, logging, and analytics
+- `docs/guides/yarn-commands.md`: Quick reference for all yarn commands
 
-## Agent Working Agreements
+### Reference
+- `docs/tech-stack.md`: Technology versions and build variables
+- `best_practices.md`: Code style, testing, and review standards
+- `docs/adr/`: Architecture Decision Records
+- `docs/openapi/`: OpenAPI/Swagger specs (served via Redoc at localhost:5003)
 
-### When to Ask Questions
-- Ask for clarification when acceptance criteria are missing, scope is ambiguous, or constraints (performance, security, data size) are unclear.
-- Pause and ask before making broad refactors or touching many files outside the target area.
+### Other Documentation
+- `bin/README.md`: CLI scripts for backups and operations
+- `src/tools/README.md`: Maintenance and data operation tools
+- `automation/ci/scripts/README.md`: CI pipeline scripts
+- `automation/db-backup/scripts/README.md`: Database backup scripts
+- `deployment_config/README.md`: Deployment configuration
 
-### Testing Expectations
-- Add or update tests for behavior changes unless the change is purely documentation or formatting.
-- Prefer focused unit/integration tests; add E2E only when the user-facing flow changes.
-- If tests are skipped, note why and suggest follow-up coverage.
-
-### Error Handling & Logging
-- Use consistent error handling patterns in the surrounding code; avoid introducing new styles.
-- Log actionable context (request IDs, relevant entity IDs) without leaking PII.
-
-### Database Changes
-- Always include migrations for schema changes; name them clearly (verb + object).
-- Ensure migrations are reversible; include `down` logic.
-- Avoid relying on seed data in tests; create/destroy test data within tests.
-
-### Safe Defaults
-- Prefer transactions for multi-step writes.
-- Avoid raw SQL unless necessary; use Sequelize scopes/models.
-- Avoid network calls in unit tests; mock external services.
-
-### Release Hygiene
-- Update OpenAPI specs when API shape changes.
-- Update docs/ADRs if a decision or architecture change is introduced.
-
-
-## Development Commands
-
-### Local Development with Docker
-
-**Initial Setup:**
-```bash
-yarn docker:reset  # Build, install deps, run migrations & seeders
-yarn docker:start  # Start all services
-yarn docker:stop   # Stop and remove containers
-```
-
-**Running Services:**
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8080
-- API Docs (Redoc): http://localhost:5003
-- Minio (S3): http://localhost:9000
-
-### Native Development (without Docker)
-
-```bash
-yarn deps:local        # Install dependencies locally
-yarn start:local       # Start backend server, frontend, and worker
-yarn server            # Backend only (with hot reload)
-yarn worker            # Worker only (with hot reload)
-yarn client            # Frontend only
-```
-
-### Testing
-
-**Backend:**
-```bash
-yarn test                    # Run all backend tests (requires yarn build first)
-yarn test build/server/src/path/to/file.test.js  # Run single test file
-yarn docker:test backend     # Run backend tests in Docker
-```
-
-**Frontend:**
-```bash
-yarn --cwd frontend test                    # Run frontend tests
-yarn --cwd frontend test -- SomeComponent   # Run specific test
-yarn docker:test frontend                   # Run frontend tests in Docker
-```
-
-**All Tests:**
-```bash
-yarn test:all        # Run both backend and frontend tests
-yarn docker:test     # Run all tests in Docker
-```
-
-**E2E & Integration:**
-```bash
-yarn e2e             # Playwright E2E tests
-yarn e2e:api         # Playwright API tests
-yarn cucumber        # Cucumber BDD tests
-```
-
-### Linting
-
-```bash
-yarn lint:all        # Lint backend and frontend
-yarn lint:fix:all    # Auto-fix linting issues
-yarn lint            # Backend only
-yarn --cwd frontend lint  # Frontend only
-```
-
-### Database Operations
-
-**Migrations:**
-```bash
-yarn db:migrate              # Run migrations
-yarn db:migrate:undo         # Undo last migration
-yarn db:migrate:create       # Create new migration
-yarn docker:db:migrate       # Run migrations in Docker
-```
-
-**Seeders:**
-```bash
-yarn db:seed                 # Run all seeders
-yarn db:seed:undo            # Undo all seeders
-```
-
-**Other DB Commands:**
-```bash
-yarn ldm                     # Run Logical Data Model CLI
-yarn import:system           # Import system data
-```
-
-### Building
-
-```bash
-yarn build                   # Build backend TypeScript
-yarn --cwd frontend build    # Build frontend for production
-```
+## Agent Working Notes
+- Ask before starting work when acceptance criteria are missing, scope is ambiguous, or constraints are unclear.
+- Pause and ask before making broad refactors or touching many files.
+- When presenting choices to the user, provide a recommended option and your reasoning behind the choice
 
 ## Architecture
 
-### Application Structure
+### App Structure
 
 The codebase is a monorepo with three main components:
 
@@ -209,11 +106,7 @@ Workers use `throng` for horizontal scaling. Only instance 0 runs cron jobs.
 - **Migrations**: Stored in `/src/migrations`, run via `sequelize-cli`
 - **Models**: Located in `/src/models`, follow Sequelize conventions
 - Sequelize config: `.sequelizerc` and `config/config.js`
-
-**Important:**
-- All tests run against the same database instance in parallel
-- Always create and destroy test data within tests to avoid conflicts
-- Use transactions where appropriate to maintain data integrity
+- For database testing patterns, see `docs/guides/testing.md`
 
 ### Authentication & Authorization
 
@@ -227,60 +120,23 @@ Workers use `throng` for horizontal scaling. Only instance 0 runs cron jobs.
 - Worker process handles file scanning, resource processing, notifications, etc.
 - Cron jobs run maintenance tasks (only on instance 0 to avoid duplication)
 
+### Monitoring Integration
+
+- IT-AMS monitoring data is imported via CLI tools in `src/tools/`
+- For monitoring architecture, see `docs/monitoring-technical-reference.md` and `docs/monitoring-integration-guide.md`
+- For manual import steps, see `docs/guides/infrastructure.md`
+
 ### API Documentation
 
 - OpenAPI/Swagger specs in `/docs/openapi`
-- Served via Redoc at http://localhost:5003
+- Served locally via Redoc at http://localhost:5003
 - Split across multiple YAML files for maintainability
 
-## Testing Conventions
+## Development Commands
 
-### Coverage Requirements
-
-Backend coverage thresholds (configured in package.json):
-- Statements: 90%
-- Functions: 88%
-- Branches: 80%
-- Lines: 90%
-
-### Test Patterns
-
-1. **Create test data in `beforeAll`/`beforeEach`**, destroy in `afterAll`/`afterEach`
-2. **Use `Promise.all()`** for multiple async operations in setup
-3. **Mock external dependencies** when database interaction isn't required
-4. **Avoid relying on seed data** - create what you need in each test
-5. Files matching `*CLI.js` are excluded from coverage (shell scripts)
-
-### Running Single Tests
-
-**Backend:**
-```bash
-# Build first, then run specific test
-yarn build
-yarn test build/server/src/services/activityReports.test.js
-```
-
-**Frontend:**
-```bash
-yarn --cwd frontend test -- ActivityReport
-```
-
-## Important Files & Conventions
-
-- `.env`: Environment configuration (copy from `.env.example`)
-- `AUTH_CLIENT_ID`: Required from team 1Password for OAuth (ask in acf-head-start-eng Slack)
-- Pre-commit hooks in `.githooks/pre-commit` run ESLint auto-fix on staged files
-- ADRs (Architecture Decision Records) in `/docs/adr` document key technical decisions
+See [Dev Setup](./docs/guides/dev-setup.md) and [Yarn Commands](./docs/guides/yarn-commands.md).
 
 ## Common Workflows
-
-### Creating a New Migration
-
-```bash
-yarn db:migrate:create -- --name add_new_field_to_table
-# Edit the generated file in src/migrations
-yarn db:migrate
-```
 
 ### Adding a New API Endpoint
 
@@ -290,11 +146,15 @@ yarn db:migrate
 4. Write tests in same directory as implementation
 5. Update OpenAPI spec in `docs/openapi/`
 
-### Debugging
+### Creating a New Migration
 
-- Backend server debug: `yarn server:debug` (attaches debugger on port 9229)
-- Check logs in Docker: `docker compose logs -f backend`
-- Frontend proxies API requests to backend automatically
+1. Run `yarn db:migrate:create -- --name add_new_field_to_table`
+2. Edit the generated file in `src/migrations/`
+3. Run `yarn db:migrate`
+
+### CI Parity
+
+CI runs build, lint, migrations/seed, backend/frontend tests, Playwright E2E (including API/util suites), Cucumber, and OWASP ZAP scans. Prefer Docker workflows when possible to match CI.
 
 ## Environment Variables
 
@@ -307,10 +167,5 @@ Key environment variables (see `.env.example`):
 
 ## Deployment Environments
 
-| Environment | URL |
-|------------|-----|
-| Production | https://ttahub.ohs.acf.hhs.gov |
-| Staging | https://tta-smarthub-staging.app.cloud.gov/ |
-| Dev (Red/Blue/Green/Gold/Pink) | https://tta-smarthub-dev-{color}.app.cloud.gov/ |
+See [README.md](./README.md#environments) and [Infrastructure Guide](./docs/guides/infrastructure.md).
 
-Infrastructure is managed via Terraform and deployed to Cloud.gov (see `/docs/guides/infrastructure.md`).

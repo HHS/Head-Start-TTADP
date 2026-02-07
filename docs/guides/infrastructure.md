@@ -23,7 +23,7 @@
 
 ## Continuous Integration (CI)
 
-The bulk of CD configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file, the [application manifest](manifest.yml) and the environment specific [deployment_config](deployment_config/) variable files.  Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
+The bulk of CI configurations can be found in this repo's [.circleci/config.yml](../../.circleci/config.yml) file, the [application manifest](../../manifest.yml) and the environment specific [deployment_config](../../deployment_config/) variable files. Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](../adr/0009-security-scans.md).
 
 ## Continuous Deployment (CD)
 
@@ -58,7 +58,7 @@ Exception:
 There are a few different things you will need to do in order to add a new secret or config variable, depending on whether the value is secret and whether it will change per environment or not.
 
 * First, add it under the `env:` section in `manifest.yml`.  This is what populates values when the application is deployed to cloud.gov
-* Next, add the value to each of the files under [deployment_config/](deployment_config/).
+* Next, add the value to each of the files under [deployment_config/](../../deployment_config/).
   * If the value is non-secret, simply add it in cleartext to these configs, ie `NEW_VAR: false`
   * If the value is secret, for now you will add the var name here with reference to what it will be called in CircleCI. ie `NEW_VAR: "${CIRCLE_VAR_NAME}"`
 * If you created a secret-style var, you will now need to add it as a project-based "environment variable" in CircleCI.
@@ -68,7 +68,7 @@ There are a few different things you will need to do in order to add a new secre
 
 Read [TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations) for information on how production may be accessed.
 
-Our project includes four deployed Postgres databases, one to interact with each application environment (sandbox, dev, staging, prod). For instructions on how to create and modify databases instances within the cloud.gov ecosystem see the [terraform/README.md](terraform/README.md).
+Our project includes four deployed Postgres databases, one to interact with each application environment (sandbox, dev, staging, prod).
 
 ### First, log into Cloud Foundry instance
 
@@ -195,9 +195,38 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
    cf disallow-space-ssh ttahub-prod
    ```
 
-#### Example: Manual import of Monitoring data
+#### Manual Monitoring Import
 
-Importing Monitoring data without the automation uses Option C above across several step and is described further on in the [tools README](https://github.com/HHS/Head-Start-TTADP/tree/main/src/tools).
+These are the steps to manually import monitoring and generate any Goals associated with new monitoring review findings.
+
+**Prerequisites:**
+
+- Cloud Foundry CLI (cf CLI) installed.
+- SSH access to the tta-smarthub-prod application in cloud.gov.
+- Be logged into the production environment using the following command before running the script:
+
+```bash
+cf login -a api.fr.cloud.gov --sso
+```
+and choose the production option (option 2 as of the writing of these instructions)
+
+**Basic command sequence:**
+
+1. `cf ssh tta-smarthub-prod` to connect to the app
+2. `/tmp/lifecycle/shell` to get a shell with the correct environment
+3. `node ./build/server/src/tools/importSystemCLI.js download 1` to fetch the next zip file from ITAMS
+4. `node ./build/server/src/tools/importSystemCLI.js process 1` to process the contents of the zip file into the database
+5. `yarn createMonitoringGoalsCLI` to create any monitoring Goals indicated by the new data
+
+The download and process steps will need to be run once each per day that needs catchup, such as on a Monday after the weekend. Thus, the steps would go: 1,2,3,4,3,4,3,4,5.
+
+**Adding validation via the prod database:**
+
+These are easiest to do in a separate terminal window alongside the one you're using to run the basic command sequence. Otherwise you would have to exit out and rerun steps 1 and 2 above in order to resume.
+
+1. `cf connect-to-service tta-smarthub-prod ttahub-prod` to connect to the production database console
+2. `SELECT "ftpFileInfo"->>'name' filename ,status, "createdAt" FROM "ImportFiles" ORDER BY 3 DESC LIMIT 4;` to inspect the progress of steps 3 and 4 above. This will show the last four files downloaded. If only step 3 has been run, the process is finished if `status` has reached `COLLECTED`. If step 4 has been run, the process is finished if it reaches `PROCESSED`.
+3. `SELECT LEFT(r.name,35) recipient, "regionId" region, COUNT(*) cnt FROM "Goals" g JOIN "Grants" gr ON g."grantId" = gr.id JOIN "Recipients" r ON gr."recipientId" = r.id WHERE "createdVia" = 'monitoring' AND g."createdAt" > (NOW() - INTERVAL '1 hour') GROUP BY 1,2 ORDER BY 2,1;` creates a small report of monitoring goals created in the last hour. It is useful after step 5. This may be important information OHS will want to know if the import is being run manually for some reason.
 
 ## Taking a production backup via CircleCI
 
@@ -212,19 +241,6 @@ In order to keep the non-production environments as close to production as possi
 While process does run every night automatically, it can also be run on-demand via CircleCI or by executing the script directly.
 
 The script can be run using the following:
-
-```
-yarn processData:local
-```
-
-The transformed database can then be restored in the non-production environments.
-For details on how to perform a backup and restore, there is information on the cloud.gov site:
-
-<https://cloud.gov/docs/management/database-backup-restore/>
-
-**Refreshing data in non-production environments**
-
-In order to keep the non-production environments as close to production as possible we developed a way to transform a restored version of the production database locally if using local database. The script can be run using the following:
 
 ```
 yarn processData:local
@@ -302,15 +318,10 @@ An automated script will run in that environment and run updates and migrations 
 
 <!-- Links -->
 
-[aws-config]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-config
-[aws-install]: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
-[cloudgov-bind]: https://cloud.gov/docs/deployment/managed-services/#bind-the-service-instance
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
-[cloudgov-service-keys]: https://cloud.gov/docs/services/s3/#interacting-with-your-s3-bucket-from-outside-cloudgov
 [cf-install]: https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
-[PR#71]: https://github.com/adhocteam/Head-Start-TTADP/pull/71
-[tf]: https://www.terraform.io/downloads.html
-[tf-vars]: https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files
+[cf-run-task]: https://docs.cloudfoundry.org/devguide/using-tasks.html#run-tasks-v7
+[cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
 
 
 
