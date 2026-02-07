@@ -14,7 +14,8 @@ description: Guidelines for GitHub Copilot when evaluating code changes.
 - Highlight problems in order of severity, and include a (high, medium, low) severity rating for each issue
 - Be concise, add detail only when necessary for more complex issues
 - Group multiple comments about the same topic together
-- When reviewing a PR you have already reviewed, focus only on what has changed since your last review and avoid raising new issues unless they are of the highest severity.  
+- When reviewing a PR you have already reviewed or seen before, avoid commenting on the same issues again.  Focus on what has changed since your last review and avoid raising new issues unless they are of the highest severity.
+- Cleanup old comments to keep the review focused on current issues.  Resolve comments about issues that have been resolved in the latest changes, even if they were not resolved in the way you recommended.
 
 # Code Review Focus Areas & Examples
 
