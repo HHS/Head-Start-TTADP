@@ -136,11 +136,15 @@ const enqueueMaintenanceJob = async ({
     if (category in maintenanceQueueProcessors) {
       try {
         // Add the job to the maintenance queue
-        maintenanceQueue.add(category, { ...data, ...referenceData() }, {
-          removeOnComplete: KEEP_COMPLETED_JOBS,
-          removeOnFail: KEEP_FAILED_JOBS,
-          ...jobSettings,
-        });
+        await maintenanceQueue.add(
+          category,
+          { ...data, ...referenceData() },
+          {
+            removeOnComplete: KEEP_COMPLETED_JOBS,
+            removeOnFail: KEEP_FAILED_JOBS,
+            ...jobSettings,
+          },
+        );
       } catch (err) {
         // Log any errors that occur when adding the job to the queue
         auditLogger.error(err);
