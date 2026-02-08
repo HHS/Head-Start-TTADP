@@ -319,11 +319,14 @@ jobs:
         key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
-        command: mkdir reports
+        command: mkdir -p reports frontend/reports
     - run: yarn build
     - run:
         name: Lint backend
         command: yarn lint:ci
+    - run:
+        name: Lint backend with Biome (pilot)
+        command: yarn --silent lint:biome:ci > reports/biome-lint.json || true
     - run:
         name: Audit vulnerability of backend node_modules
         command: |
@@ -332,6 +335,9 @@ jobs:
     - run:
         name: Lint frontend
         command: yarn --cwd frontend lint:ci
+    - run:
+        name: Lint frontend with Biome (pilot)
+        command: yarn --cwd frontend --silent lint:biome:ci > frontend/reports/biome-lint.json || true
     - run:
         name: Audit vulnerability of frontend node_modules
         command: |
@@ -344,6 +350,12 @@ jobs:
     - store_artifacts:
         path: frontend/reports
         destination: frontend-lint.xml
+    - store_artifacts:
+        path: reports/biome-lint.json
+        destination: backend-biome-lint.json
+    - store_artifacts:
+        path: frontend/reports/biome-lint.json
+        destination: frontend-biome-lint.json
     - persist_to_workspace:
         root: .
         paths:

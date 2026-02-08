@@ -76,6 +76,9 @@
     "test": "cross-env TZ=America/New_York craco test",
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/craco test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
     "lint": "eslint src",
+    "lint:biome": "biome lint src",
+    "lint:biome:ci": "biome lint --reporter json src",
+    "lint:biome:fix": "biome lint --write src",
     "lint:fix": "eslint --fix src",
     "lint:fix:single": "eslint --fix",
     "lint:ci": "eslint -f eslint-formatter-multiple src"
@@ -181,6 +184,7 @@
     ]
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
     "@craco/craco": "^7.1.0",
     "@sheerun/mutationobserver-shim": "^0.3.3",
     "@testing-library/dom": "^8.11.1",
