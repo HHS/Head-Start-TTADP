@@ -16,7 +16,7 @@ There are yarn commands for starting/testing/linting the frontend defined a dire
 | `yarn test` | Start the test watcher |
 | `yarn test:ci` | Run unit tests a single time outputting results to xml files |
 | `yarn lint` | Run the linter |
-| `yarn lint:ci` | Run the linter outputting results to xml files |
+| `yarn lint:ci` | Run the linter outputting JUnit XML results |
 
 ## Build Environment Variables
 

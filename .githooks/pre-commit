@@ -55,17 +55,17 @@ do
   if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.jsx ]] || [[ $f == *.ts ]] || [[ $f == *.tsx ]]); then
     if [ "$USE_DOCKER" = true ]; then
       if [[ $f == frontend/* ]]; then
-        docker compose run -T --rm frontend yarn lint:biome:fix:single "${f#frontend/}"
+        docker compose run -T --rm frontend yarn lint:fix:single "${f#frontend/}"
       else
-        docker compose --profile minimal_required_postgres --profile minimal_required_redis run -T --rm backend yarn lint:biome:fix:single "$f"
+        docker compose --profile minimal_required_postgres --profile minimal_required_redis run -T --rm backend yarn lint:fix:single "$f"
       fi
     else
       if [[ $f == frontend/* ]]; then
         check_and_run_yarn frontend
-        (cd frontend && yarn lint:biome:fix:single "${f#frontend/}")
+        (cd frontend && yarn lint:fix:single "${f#frontend/}")
       else
         check_and_run_yarn "."
-        yarn lint:biome:fix:single "$f"
+        yarn lint:fix:single "$f"
       fi
     fi
     git add "$f"

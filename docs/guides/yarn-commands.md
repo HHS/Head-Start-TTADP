@@ -21,7 +21,7 @@
 | Run tests for the backend with coverage and output results to xml files| | `yarn test:ci`| |
 | Run `yarn test:ci` for both the frontend and backend | | `yarn test:all`| |
 | Run the linter only for the backend | | `yarn lint` | |
-| Run the linter for the the backend with results output to xml files | | `yarn lint:ci`| |
+| Run the linter for the backend with JUnit XML output | | `yarn lint:ci`| |
 | Run `yarn lint:ci` for both the frontend and backend | | `yarn lint:all`| |
 | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | | `yarn docs:serve` | |
 | Run cucumber tests | | `yarn cucumber` | |
