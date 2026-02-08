@@ -32,6 +32,7 @@
     "lint:biome:ci": "biome lint --reporter json src",
     "lint:biome:all": "yarn lint:biome:ci && yarn --cwd frontend lint:biome:ci",
     "lint:biome:fix": "biome lint --write src",
+    "lint:biome:fix:single": "biome check --write --no-errors-on-unmatched",
     "lint:fix": "eslint --fix src",
     "lint:fix:single": "eslint --fix",
     "lint:fix:all": "yarn lint:fix && yarn --cwd frontend lint:fix",

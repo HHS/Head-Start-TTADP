@@ -79,6 +79,7 @@
     "lint:biome": "biome lint src",
     "lint:biome:ci": "biome lint --reporter json src",
     "lint:biome:fix": "biome lint --write src",
+    "lint:biome:fix:single": "biome check --write --no-errors-on-unmatched",
     "lint:fix": "eslint --fix src",
     "lint:fix:single": "eslint --fix",
     "lint:ci": "eslint -f eslint-formatter-multiple src"
