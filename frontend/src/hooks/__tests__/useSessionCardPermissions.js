@@ -181,7 +181,7 @@ describe('useSessionCardPermissions', () => {
     });
   });
 
-  describe('owner permissions (treated as collaborator)', () => {
+  describe('owner EDIT permissions (treated as collaborator for edit only)', () => {
     it('returns true when user is owner and session in progress', () => {
       const props = {
         ...baseProps,

@@ -70,7 +70,9 @@ export default function useSessionCardPermissions({
       }
     }
 
-    // Owner/Collaborator-specific edit blockers (owners treated as collaborators)
+    // Owner/Collaborator-specific EDIT blockers
+    // For EDIT permissions, owners are treated identically to collaborators.
+    // For DELETE permissions (see showSessionDelete below), owners are MORE permissive.
     if (isCollaborator || isOwner) {
       if (collabComplete && !statusIsNeedsAction) {
         return false;
@@ -132,6 +134,9 @@ export default function useSessionCardPermissions({
         return false;
       }
     }
+
+    // IMPORTANT: Owners have NO facilitation-based delete restrictions.
+    // Only collaborators are blocked by regional facilitation rules.
 
     // Collaborator-specific delete blockers
     if (isCollaborator) {

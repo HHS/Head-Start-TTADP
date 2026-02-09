@@ -10,11 +10,12 @@ Training Report sessions have a complex permission model based on user roles, se
 
 ### Owner (Creator)
 - The user who created the training event (`event.ownerId`)
-- **Treated functionally as a collaborator** for session edit/delete permissions
 - Can create sessions
-- Can edit sessions (same rules as collaborators)
-- Can delete sessions
 - Can submit sessions (sets `collabComplete`)
+- **For EDIT permissions**: Treated identically to collaborators (same blocking rules apply)
+- **For DELETE permissions**: More permissive than collaborators - NOT blocked by regional facilitation rules
+  - Owners can delete sessions with `regional_tta_staff` or `both` facilitation
+  - Collaborators cannot delete those same sessions in Regional PD with National Centers events
 
 ### Collaborator
 - Users listed in `event.collaboratorIds` array
@@ -61,13 +62,15 @@ Training Report sessions have a complex permission model based on user roles, se
 | Role | Session In Progress | Session Submitted | Session Complete | Event Complete |
 |------|--------------------|--------------------|------------------|----------------|
 | Admin | Yes | Yes | Yes | No |
-| Owner | Yes* | Yes* | No | No |
+| Owner | Yes | Yes | No | No |
 | Collaborator | Yes* | Yes* | No | No |
 | POC | Yes** | Yes** | No | No |
 | Approver Only | No | No | No | No |
 
-\* Subject to facilitation rules
-\** Subject to event organizer and facilitation rules
+\* Collaborators are blocked in Regional PD with National Centers when facilitation is `regional_tta_staff` or `both`
+\** POCs are blocked in Regional TTA No National Centers, or in Regional PD with National Centers when facilitation is `national_center`
+
+**Note:** Unlike collaborators, owners are NOT blocked by facilitation rules for deletion.
 
 ## Event Organizer Types
 
@@ -92,6 +95,25 @@ Training Report sessions have a complex permission model based on user roles, se
 
 \* POC blocked when status is `NEEDS_ACTION`
 \** Only in Regional PD with National Centers events
+
+## Owner vs Collaborator: Key Differences
+
+While owners use the `collabComplete` flag (like collaborators) and share edit restrictions, there is an important difference in **delete permissions**:
+
+| Scenario | Owner Can Delete? | Collaborator Can Delete? |
+|----------|------------------|-------------------------|
+| Regional PD with National Centers + `national_center` facilitation | Yes | Yes |
+| Regional PD with National Centers + `regional_tta_staff` facilitation | **Yes** | **No** |
+| Regional PD with National Centers + `both` facilitation | **Yes** | **No** |
+| Regional TTA No National Centers | Yes | Yes |
+
+### Why the Difference?
+
+The owner is the event creator and has ultimate responsibility for the training event. While they follow the same edit workflow as collaborators (blocked from editing sessions when it's not their turn), they retain the ability to delete sessions regardless of who is currently facilitating.
+
+This means:
+- An owner can always clean up or remove sessions they created
+- Collaborators can only delete sessions they are responsible for facilitating
 
 ## Status-Based Rules
 
