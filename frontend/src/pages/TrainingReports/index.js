@@ -137,6 +137,7 @@ export default function TrainingReports({ match }) {
     regions,
     defaultRegion,
     allRegionsFilters,
+    hasMultipleRegions,
     filters,
     setFilters,
     onApplyFilters,
@@ -171,13 +172,10 @@ export default function TrainingReports({ match }) {
   }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filters]);
 
   const regionLabel = () => {
-    if (defaultRegion === 14) {
-      return 'all regions';
+    if (defaultRegion === 14 || hasMultipleRegions) {
+      return 'your regions';
     }
-    if (defaultRegion > 0) {
-      return `region ${defaultRegion.toString()}`;
-    }
-    return '';
+    return 'your region';
   };
 
   const onRemoveSession = async (session) => {
