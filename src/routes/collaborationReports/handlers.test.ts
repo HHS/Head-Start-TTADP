@@ -355,6 +355,39 @@ describe('Collaboration Reports Handlers', () => {
       expect(mockSendStatus).not.toHaveBeenCalled();
     });
 
+    it('should not reset approver statuses when adding a new approver to a report with existing approvers', async () => {
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        submissionStatus: 'draft',
+        lastUpdatedById: 456,
+        approvers: [{ userId: 111 }],
+      };
+
+      mockRequest.body = { approvers: [{ userId: 111 }, { userId: 222 }] };
+
+      const submittedReport = {
+        ...mockReport,
+        submissionStatus: 'submitted',
+        lastUpdatedById: 123,
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue(submittedReport);
+
+      await submitReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.createOrUpdateReport).toHaveBeenCalledWith({
+        ...mockReport,
+        lastUpdatedById: 123,
+        calculatedStatus: 'submitted',
+        submissionStatus: 'submitted',
+        submittedAt: expect.any(Date),
+        approvers: [{ userId: 111 }, { userId: 222 }],
+      }, mockReport);
+      expect(db.CollabReportApprover.update).not.toHaveBeenCalled();
+    });
+
     it('should return HTTP 404 when report is not found', async () => {
       (CRServices.collabReportById as jest.Mock).mockResolvedValue(null);
 
@@ -432,6 +465,43 @@ describe('Collaboration Reports Handlers', () => {
         mockResponse,
         error,
         { namespace: 'SERVICE:COLLAB_REPORTS' },
+      );
+    });
+
+    it('should reset approver statuses when an initial approver is added', async () => {
+      const existingReport = {
+        id: '1',
+        title: 'Original Report',
+        content: 'Original content',
+        regionId: 1,
+        approvers: [],
+      };
+
+      mockRequest.body = {
+        title: 'Updated Report',
+        approvers: [{ user: { id: 456 } }],
+      };
+
+      const savedReport = {
+        ...existingReport,
+        ...mockRequest.body,
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(existingReport);
+      (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue(savedReport);
+
+      await saveReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.createOrUpdateReport).toHaveBeenCalledWith(
+        { ...existingReport, ...mockRequest.body, lastUpdatedById: 123 },
+        existingReport,
+      );
+      expect(db.CollabReportApprover.update).toHaveBeenCalledWith(
+        { status: null },
+        {
+          where: { status: 'needs_action', collabReportId: '1' },
+          individualHooks: true,
+        },
       );
     });
   });
