@@ -204,7 +204,8 @@ export default function LineGraph({
     import('plotly.js-basic-dist').then((Plotly) => {
       if (lines.current) Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
     });
-  }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle, hasData, lines]);
+  }, [data, hideYAxis, legends, showTabularData,
+    xAxisTitle, yAxisTitle, yAxisTickStep, hasData, lines]);
 
   if (!hasData) {
     return <NoResultsFound />;
