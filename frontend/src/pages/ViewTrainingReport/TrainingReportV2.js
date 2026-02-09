@@ -4,6 +4,7 @@ import { capitalize } from 'lodash';
 import { TRAINING_REPORT_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
 import { Alert } from '@trussworks/react-uswds';
+import { useLocation } from 'react-router-dom';
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
 import ReadOnlyContent from '../../components/ReadOnlyContent';
@@ -140,6 +141,10 @@ export default function TrainingReportV2({
   user,
   isAdminUser,
 }) {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const hideBackLink = searchParams.get('back_link') === 'hide';
+
   const pageTitle = event && event.data && event.data.eventId ? `Training event report ${event.data.eventId}` : 'Training event report';
   const ownerName = formatOwnerName(event);
 
@@ -293,9 +298,11 @@ export default function TrainingReportV2({
           {(event && event.data) ? String(event.data.eventId) : ''}
         </title>
       </Helmet>
-      <BackLink to={backLinkUrl}>
-        Back to Training Reports
-      </BackLink>
+      {!hideBackLink && (
+        <BackLink to={backLinkUrl}>
+          Back to Training Reports
+        </BackLink>
+      )}
       <ApprovedReportSpecialButtons
         showCompleteEvent={canCompleteEvent}
         onCompleteEvent={onCompleteEvent}

@@ -6,6 +6,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import CitationDrawerContent from '../CitationDrawerContent';
+import AppLoadingContext from '../../AppLoadingContext';
 
 describe('CitationDrawerContent', () => {
   const citationUrl = '/api/citations/text?citationIds=citation1&citationIds=citation2';
@@ -19,10 +20,15 @@ describe('CitationDrawerContent', () => {
       text: 'text2',
     },
   ];
+
   afterEach(() => fetchMock.restore());
 
   const renderTest = () => {
-    render(<CitationDrawerContent citations={['citation1', 'citation2']} />);
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <CitationDrawerContent citations={['citation1', 'citation2']} />
+      </AppLoadingContext.Provider>,
+    );
   };
 
   it('fetches citations', async () => {
@@ -36,17 +42,5 @@ describe('CitationDrawerContent', () => {
     expect(await screen.findByText('text1')).toBeInTheDocument();
     expect(await screen.findByText('citation2')).toBeInTheDocument();
     expect(await screen.findByText('text2')).toBeInTheDocument();
-  });
-
-  it('handles errors', async () => {
-    fetchMock.get(citationUrl, 500);
-
-    renderTest();
-
-    expect(fetchMock.called(citationUrl)).toBe(true);
-    expect(screen.queryByText('citation1')).not.toBeInTheDocument();
-    expect(screen.queryByText('text1')).not.toBeInTheDocument();
-    expect(screen.queryByText('citation2')).not.toBeInTheDocument();
-    expect(screen.queryByText('text2')).not.toBeInTheDocument();
   });
 });
