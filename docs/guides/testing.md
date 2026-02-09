@@ -45,8 +45,9 @@ In addition, while experimenting with multiple configuration files, it became cl
 ### Running Tests Natively
 
 **Backend:**
+
+note: `yarn test` will automatically run the build before tests
 ```bash
-yarn build                                  # Build first
 yarn test build/server/src/example.test.js  # Run single test
 yarn test                                   # Run all backend tests
 ```
