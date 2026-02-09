@@ -46,36 +46,38 @@ export default function Profile({
                   </h2>
                 </Grid>
 
-                <Grid
-                  desktop={{ col: 6 }}
-                  tabletLg={{ col: 12 }}
-                  hidden={!hasLeftColumn}
-                >
-                  <div>
-                    <ClassReview
-                      grantNumber={grant.number}
-                      regionId={regionId}
-                      recipientId={recipientId}
-                    />
-                  </div>
-                  <div>
-                    <MonitoringReview
-                      grantNumber={grant.number}
-                      regionId={regionId}
-                      recipientId={recipientId}
-                    />
-                  </div>
-                </Grid>
+                <Grid row gap={3} desktop={{ col: 12 }}>
+                  <Grid
+                    desktop={{ col: 6 }}
+                    tabletLg={{ col: 12 }}
+                    hidden={!hasLeftColumn}
+                  >
+                    <div className="margin-bottom-4">
+                      <ClassReview
+                        grantNumber={grant.number}
+                        regionId={regionId}
+                        recipientId={recipientId}
+                      />
+                    </div>
+                    <div>
+                      <MonitoringReview
+                        grantNumber={grant.number}
+                        regionId={regionId}
+                        recipientId={recipientId}
+                      />
+                    </div>
+                  </Grid>
 
-                <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
-                  <div>
-                    <RecipientSpotlight
-                      grantId={grant.id}
-                      grantNumber={grant.number}
-                      recipientId={recipientId}
-                      regionId={regionId}
-                    />
-                  </div>
+                  <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                    <div>
+                      <RecipientSpotlight
+                        grantId={grant.id}
+                        grantNumber={grant.number}
+                        recipientId={recipientId}
+                        regionId={regionId}
+                      />
+                    </div>
+                  </Grid>
                 </Grid>
               </React.Fragment>
             );

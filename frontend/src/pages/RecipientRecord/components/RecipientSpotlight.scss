@@ -1,7 +1,7 @@
 @use '../../../colors.scss' as *;
 
 .ttahub-recipient-spotlight-content {
-    max-height: 230px;
+    min-height: 230px;
 }
 
 .ttahub-recipient-spotlight-content-cell-good-indicator {
