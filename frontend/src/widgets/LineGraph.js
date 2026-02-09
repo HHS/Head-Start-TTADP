@@ -86,6 +86,7 @@ export default function LineGraph({
   hideYAxis,
   xAxisTitle,
   yAxisTitle,
+  yAxisTickStep,
   legendConfig,
   tableConfig,
   widgetRef,
@@ -162,6 +163,8 @@ export default function LineGraph({
         rangemode: 'tozero',
         tickwidth: 1,
         tickcolor: 'transparent',
+        dtick: yAxisTickStep,
+        tick0: 0,
         tickformat: (n) => {
           // if not a whole number, round to 1 decimal place
           if (n % 1 !== 0) {
@@ -271,6 +274,7 @@ LineGraph.propTypes = {
   hideYAxis: PropTypes.bool,
   xAxisTitle: PropTypes.string,
   yAxisTitle: PropTypes.string,
+  yAxisTickStep: PropTypes.number,
   legendConfig: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string.isRequired,
     id: PropTypes.string.isRequired,
@@ -314,6 +318,7 @@ LineGraph.defaultProps = {
   xAxisTitle: '',
   yAxisTitle: '',
   hideYAxis: false,
+  yAxisTickStep: null,
   data: null,
   legendConfig: [
     {

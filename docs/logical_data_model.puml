@@ -187,6 +187,7 @@ class ActivityReports{
  activityRecipientType : varchar(255)
  additionalNotes : text
  approvedAt : timestamp with time zone
+!issue='column missing from model' <color:#d54309>approvedAtTimezone</color>: varchar(255) : NULL::character varying
  calculatedStatus : enum
  context : text
  creatorRole : enum
@@ -325,9 +326,11 @@ enum enum_CollabReports_participants {
  State and territory adminstrators
  State environmental health and safety systems
  State family engagement systems
+ !issue='value missing from model enum: State health and wellness systems'
  State health and wellness systems
  State homelessness agency/McKinney Vento liason
  TTA staff
+ !issue='value missing from schema enum: State health and welness systems'
 }
 
 enum_CollabReports_participants <|-- CollabReports

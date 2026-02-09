@@ -1,0 +1,65 @@
+.approval-rate-carousel-slide {
+  width: 100%;
+}
+
+.approval-rate-carousel-slide--current {
+  position: relative;
+}
+
+.approval-rate-carousel-slide--outgoing,
+.approval-rate-carousel-slide--incoming {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transition: transform 300ms ease;
+}
+
+.approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--next {
+  transform: translateX(0);
+}
+
+.approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--next {
+  transform: translateX(100%);
+}
+
+.approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--prev {
+  transform: translateX(0);
+}
+
+.approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--prev {
+  transform: translateX(-100%);
+}
+
+.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--next {
+  transform: translateX(-100%);
+}
+
+.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--next {
+  transform: translateX(0);
+}
+
+.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--prev {
+  transform: translateX(100%);
+}
+
+.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--prev {
+  transform: translateX(0);
+}
+
+.approval-rate-carousel-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background-color: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .approval-rate-carousel-slide--outgoing,
+  .approval-rate-carousel-slide--incoming {
+    transition: none;
+  }
+}
