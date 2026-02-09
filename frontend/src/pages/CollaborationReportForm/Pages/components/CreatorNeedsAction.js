@@ -27,10 +27,6 @@ export default function CreatorNeedsAction({
     <>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         <div className="margin-bottom-4">
-          <h3 className={h3classes}>Approval status</h3>
-          <ApproverStatusList approverStatus={initialValue} />
-        </div>
-        <div className="margin-bottom-4">
           <h3 className={h3classes}>Manager notes</h3>
           <DisplayApproverNotes approverStatusList={initialValue} />
         </div>
@@ -53,6 +49,12 @@ export default function CreatorNeedsAction({
             </FormItem>
           </Fieldset>
         </div>
+
+        <div className="margin-bottom-4">
+          <h3 className={h3classes}>Approval status</h3>
+          <ApproverStatusList approverStatus={initialValue} />
+        </div>
+
         <Button type="submit">Update report</Button>
       </Form>
     </>

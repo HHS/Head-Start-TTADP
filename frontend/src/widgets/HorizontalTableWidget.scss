@@ -1,5 +1,10 @@
 @use "../colors.scss" as *;
 
+.smarthub-horizontal-table-widget td .usa-checkbox__label::before {
+  /* this vertically aligns the checkbox in the table cell */
+  top: 4px;
+}
+
 @media (min-width: 60em) {
   .smarthub-horizontal-table-widget
   .smarthub-horizontal-table-first-column-border::after {
@@ -11,7 +16,7 @@
     border-right: 1px solid black;
   }
 
-  .smarthub-horizontal-table-widget .data-header {
+  .smarthub-horizontal-table-widget .data-header.smarthub-horizontal-table--sticky-first-column {
     background: #fff;
     border-bottom: 0px;
     position: sticky;
@@ -123,11 +128,6 @@
   vertical-align: middle;
 }
 
-.smarthub-horizontal-table-widget .left-with-checkbox {
-  left: 44px;
-}
-
-
 .smarthub-horizontal-table-widget tfoot {
   border-top: 1px solid $text-ink;
 }
@@ -153,10 +153,15 @@
 }
 
 // Make sure first column is always sticky.
-.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column {
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
+  left: 0px;
   position: sticky;
   z-index: 1;
   max-width: 330px;
+  
+  &.smarthub-horizontal-table--sticky-first-column-checkboxes-enabled {
+    left: 44px;
+  }
 }
 
 // Ensure cell font size is consistent, even when it's a tooltip wrapper

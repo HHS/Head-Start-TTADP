@@ -103,7 +103,8 @@ export default async function trOverview(
       } = sessionData;
 
       sessionDuration += duration;
-      sessionGrants = sessionGrants.concat(recipients.map((r: { value: number }) => r.value));
+      // eslint-disable-next-line max-len
+      sessionGrants = sessionGrants.concat((recipients || []).map((r: { value: number }) => r.value));
 
       if (deliveryMethod === 'hybrid') {
         sessionParticipants += numberOfParticipantsInPerson + numberOfParticipantsVirtually;
