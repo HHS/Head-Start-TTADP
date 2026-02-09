@@ -52,7 +52,7 @@ export default function Profile({
                     tabletLg={{ col: 12 }}
                     hidden={!hasLeftColumn}
                   >
-                    <div className="margin-bottom-4">
+                    <div className={hasClassData(grant.number) ? 'margin-bottom-4' : ''}>
                       <ClassReview
                         grantNumber={grant.number}
                         regionId={regionId}
