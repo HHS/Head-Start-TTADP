@@ -8,22 +8,17 @@ const { argv } = option('grantId', {
   description: 'Grant id',
   type: 'number',
 })
-  .option('status', {
-    alias: 's',
-    description: 'Goal status (default: Not Started)',
-    type: 'string',
-  })
   .help()
   .alias('help', 'h');
 
-const { grantId, status } = argv;
+const { grantId } = argv;
 
 if (!grantId) {
   auditLogger.error('grantId is required');
   process.exit(1);
 }
 
-addMonitoringGoalForGrant(grantId, status)
+addMonitoringGoalForGrant(grantId)
   .catch((e) => {
     auditLogger.error(e);
     process.exit(1);

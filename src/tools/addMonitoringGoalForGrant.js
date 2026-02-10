@@ -9,7 +9,6 @@ const DEFAULT_STATUS = 'Not Started';
 
 export default async function addMonitoringGoalForGrant(
   grantId,
-  status = DEFAULT_STATUS,
   transaction = null,
 ) {
   if (!grantId) {
@@ -58,7 +57,7 @@ export default async function addMonitoringGoalForGrant(
     const goal = await Goal.create(
       {
         name: monitoringGoalTemplate.templateName,
-        status,
+        status: DEFAULT_STATUS,
         timeframe: null,
         isFromSmartsheetTtaPlan: false,
         goalTemplateId: monitoringGoalTemplate.id,

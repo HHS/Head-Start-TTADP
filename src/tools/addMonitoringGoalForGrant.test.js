@@ -53,7 +53,7 @@ describe('addMonitoringGoalForGrant', () => {
   });
 
   it('creates a monitoring goal and initial status change', async () => {
-    goalId = await addMonitoringGoalForGrant(grant.id, undefined, transaction);
+    goalId = await addMonitoringGoalForGrant(grant.id, transaction);
 
     const goal = await Goal.findByPk(goalId, { paranoid: false, transaction });
     expect(goal).toBeDefined();
@@ -72,7 +72,7 @@ describe('addMonitoringGoalForGrant', () => {
   });
 
   it('does not create a duplicate open monitoring goal', async () => {
-    const sameGoalId = await addMonitoringGoalForGrant(grant.id, undefined, transaction);
+    const sameGoalId = await addMonitoringGoalForGrant(grant.id, transaction);
     expect(sameGoalId).toBe(goalId);
 
     const goals = await Goal.findAll({
