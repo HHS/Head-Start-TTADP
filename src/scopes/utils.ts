@@ -14,8 +14,8 @@ const FULL_DATE_FORMATS = [
 ];
 
 const ALLOWED_PROGRAM_TYPE_MAP = {
-  EHS: ['EHS', 'AIAN EHS'],
-  HS: ['HS', 'AIAN HS'],
+  EHS: ['EHS', 'AIAN EHS', 'Migrant EHS'],
+  HS: ['HS', 'AIAN HS', 'Migrant HS'],
 };
 
 function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {

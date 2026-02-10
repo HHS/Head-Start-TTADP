@@ -14,15 +14,17 @@ describe('filterToAllowedProgramTypes', () => {
     expect(result.sort()).toStrictEqual([
       'AIAN EHS',
       'EHS',
+      'Migrant EHS',
       'AIAN HS',
       'HS',
+      'Migrant HS',
     ].sort());
   });
 
   it('should filter out disallowed program types', () => {
     const input = ['DisallowedType', 'HS'];
     const result = filterToAllowedProgramTypes(input);
-    expect(result.sort()).toStrictEqual(['HS', 'AIAN HS'].sort());
+    expect(result.sort()).toStrictEqual(['HS', 'AIAN HS', 'Migrant HS'].sort());
   });
 });
 
