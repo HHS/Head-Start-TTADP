@@ -614,6 +614,7 @@ describe('User handlers', () => {
         'TTAC',
         'ECM',
         'GSM',
+        'AA',
       ], 1);
       expect(res.json).toHaveBeenCalledWith([...mockRegionalTrainers]);
     });
@@ -732,6 +733,7 @@ describe('User handlers', () => {
         'TTAC',
         'ECM',
         'GSM',
+        'AA',
       ], [1]);
       expect(usersByRoles).toHaveBeenNthCalledWith(2, ['NC']);
       expect(res.json).toHaveBeenCalledWith([...mockRegionalTrainers, ...mockNCTrainers]);
