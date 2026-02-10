@@ -21,6 +21,8 @@ const overViewUrl = join('api', 'widgets', 'overview');
 const overViewResponse = {
   numReports: '6', numGrants: '6', numOtherEntities: '0', inPerson: '0', sumDuration: '13.0', numParticipants: '86',
 };
+const reasonListUrl = join('api', 'widgets', 'reasonList');
+const reasonListResponse = [{ name: 'Ongoing Quality Improvement', count: 3 }];
 const totalHrsAndRecipientGraphUrl = join('api', 'widgets', 'totalHrsAndRecipientGraph');
 const totalHoursResponse = [{
   name: 'Hours of Training',
