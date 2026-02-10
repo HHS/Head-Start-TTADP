@@ -40,7 +40,7 @@ TestComponent.propTypes = {
 TestComponent.defaultProps = {
   initialValue: null,
   errorMessage: undefined,
-  useAppLoading: false,
+  useAppLoading: true,
 };
 
 describe('useFetch', () => {

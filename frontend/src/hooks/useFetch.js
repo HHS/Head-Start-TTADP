@@ -1,5 +1,5 @@
-import { useState, useContext } from 'react';
-import useDeepCompareEffect from 'use-deep-compare-effect';
+import { useContext, useState } from 'react';
+import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 import AppLoadingContext from '../AppLoadingContext';
 
 export default function useFetch(
@@ -7,7 +7,7 @@ export default function useFetch(
   fetcher,
   dependencies = [],
   errorMessage = 'An unexpected error occurred',
-  useAppLoading = false,
+  useAppLoading = true,
 ) {
   const [data, setData] = useState(initialValue);
   const [error, setError] = useState('');
@@ -15,7 +15,7 @@ export default function useFetch(
   const [loading, setLoading] = useState(true);
   const { setIsAppLoading } = useContext(AppLoadingContext) || {};
 
-  useDeepCompareEffect(() => {
+  useDeepCompareEffectNoCheck(() => {
     setLoading(true);
 
     async function fetchData() {
@@ -28,6 +28,8 @@ export default function useFetch(
         setData(response);
         setStatusCode(200);
       } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
         setError(errorMessage);
         setStatusCode(err.status || 500);
       } finally {
@@ -39,7 +41,7 @@ export default function useFetch(
     }
 
     fetchData();
-  }, [dependencies]);
+  }, dependencies);
 
   return {
     data,
