@@ -251,7 +251,6 @@ export function checkIdIdParam(req, res, next) {
  * @param {*} next - next middleware
  */
 export function checkGrantIdQueryParam(req, res, next) {
-  console.log('\n\n\n---- in middleware: ', JSON.stringify(req.query), '\n\n\n');
   const { grantId } = req.query || {};
 
   if (grantId === undefined || grantId === null || grantId === '') {

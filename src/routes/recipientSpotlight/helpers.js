@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 /**
  * Normalizes the dual `param.operator` / `param.operator[]` query format
  * into a flat array.
@@ -11,7 +12,7 @@
  * @param {string} operator - The operator suffix (e.g. "in", "nin")
  * @returns {string[]} Array of filter values, or empty array if not present
  */
-export default function extractFilterArray(query, baseName, operator) {
+export function extractFilterArray(query, baseName, operator) {
   const value = query[`${baseName}.${operator}[]`] || query[`${baseName}.${operator}`];
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
