@@ -72,6 +72,7 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         [],
+        null,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -95,6 +96,7 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         [],
+        null,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -142,6 +144,7 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         [],
+        null,
       );
     });
 
@@ -163,6 +166,7 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         [],
+        null,
       );
     });
 
@@ -214,6 +218,7 @@ describe('recipientSpotlight handlers', () => {
         ['1', '2', '3'],
         [],
         [],
+        null,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
       expect(res.sendStatus).not.toHaveBeenCalledWith(403);
@@ -322,6 +327,7 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         ['No TTA'],
+        null,
       );
     });
 
@@ -345,6 +351,7 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         ['No TTA', 'Deficiency'],
+        null,
       );
     });
 
@@ -369,6 +376,7 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         ['New staff'],
         ['No TTA'],
+        null,
       );
     });
   });
