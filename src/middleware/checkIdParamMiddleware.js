@@ -238,3 +238,34 @@ export function checkGoalGroupIdParam(req, res, next) {
 export function checkIdIdParam(req, res, next) {
   return checkIdParam(req, res, next, 'id');
 }
+
+/**
+ *  Check grantId query param (optional)
+ *
+ * This middleware validates the grantId supplied via req.query.grantId.
+ * If absent or empty, sets req.query.parsedGrantId = null and proceeds.
+ * If present but invalid, returns 400.
+ * If valid, sets req.query.parsedGrantId to the parsed integer and proceeds.
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkGrantIdQueryParam(req, res, next) {
+  console.log('\n\n\n---- in middleware: ', JSON.stringify(req.query), '\n\n\n');
+  const { grantId } = req.query || {};
+
+  if (grantId === undefined || grantId === null || grantId === '') {
+    req.query.parsedGrantId = null;
+    return next();
+  }
+
+  const parsed = Number(grantId);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    const msg = `${errorMessage}: grantId ${String(grantId)}`;
+    auditLogger.error(msg);
+    return res.status(httpCodes.BAD_REQUEST).send(msg);
+  }
+
+  req.query.parsedGrantId = parsed;
+  return next();
+}

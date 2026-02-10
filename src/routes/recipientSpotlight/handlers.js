@@ -1,11 +1,11 @@
 /* eslint-disable import/prefer-default-export */
-import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import filtersToScopes from '../../scopes';
 import { currentUserId } from '../../services/currentUser';
 import handleErrors from '../../lib/apiErrorHandler';
 import { getRecipientSpotlightIndicators } from '../../services/recipientSpotlight';
-import { getUserReadRegions } from '../../services/accessValidation';
+import { setReadRegions } from '../../services/accessValidation';
+import { extractFilterArray } from './helpers';
 
 const namespace = 'SERVICE:RECIPIENT_SPOTLIGHT';
 
@@ -22,18 +22,8 @@ getRecipientSpotLight():
 export async function getRecipientSpotLight(req, res) {
   try {
     const {
-      sortBy, direction, offset, limit, grantId,
+      sortBy, direction, offset, limit, parsedGrantId,
     } = req.query;
-
-    // Validate and parse grantId if provided
-    let parsedGrantId = null;
-    if (grantId !== undefined && grantId !== null && grantId !== '') {
-      parsedGrantId = Number(grantId);
-      if (!Number.isInteger(parsedGrantId) || parsedGrantId < 1) {
-        res.status(httpCodes.BAD_REQUEST).json({ error: 'Invalid grantId: must be a positive integer' });
-        return;
-      }
-    }
 
     // Parse pagination params to integers
     const parsedOffset = offset ? parseInt(offset, DECIMAL_BASE) : 0;
@@ -41,63 +31,26 @@ export async function getRecipientSpotLight(req, res) {
 
     const userId = await currentUserId(req, res);
 
-    // Get user's read regions (deduplicated)
-    const userReadRegions = [...new Set(await getUserReadRegions(userId))];
+    // Normalize region.in[] to region.in for setReadRegions compatibility
+    const regionValues = extractFilterArray(req.query, 'region', 'in');
+    const normalizedQuery = {
+      ...req.query,
+      'region.in': regionValues.length > 0 ? regionValues : undefined,
+    };
+    // Remove bracket key to avoid confusion
+    delete normalizedQuery['region.in[]'];
 
-    // Extract requested regions from query
-    // Support both region.in and region.in[] formats
-    // region.in[] is produced by filtersToQueryString (standard filter system)
-    // region.in is used by manual filter construction (RecipientSpotlight component)
-    const requestedRegions = req.query['region.in[]'] || req.query['region.in'];
-
-    // Determine which regions to use:
-    // If no regions requested, default to all user's read regions
-    // If regions requested, validate user has access to all of them
-    let regionsArray;
-    if (!requestedRegions) {
-      // No regions requested - use all user's read regions
-      regionsArray = userReadRegions.map((r) => r.toString());
-    } else {
-      // Ensure requestedRegions is an array
-      regionsArray = Array.isArray(requestedRegions) ? requestedRegions : [requestedRegions];
-
-      // Check if all requested regions are in user's allowed regions
-      const hasAccess = regionsArray.every(
-        (region) => userReadRegions.includes(parseInt(region, DECIMAL_BASE)),
-      );
-
-      if (!hasAccess) {
-        res.sendStatus(httpCodes.FORBIDDEN);
-        return;
-      }
-    }
+    // Use setReadRegions to filter/default regions (matches widgets pattern)
+    const updatedQuery = await setReadRegions(normalizedQuery, userId);
+    const regionsArray = updatedQuery['region.in'].map((r) => r.toString());
 
     const scopes = await filtersToScopes(
       req.query,
       { userId },
     );
 
-    // Extract indicator filter params
-    // Support both priorityIndicator.in and priorityIndicator.in[] formats
-    const indicatorFilterIn = req.query['priorityIndicator.in[]']
-      || req.query['priorityIndicator.in'];
-    let indicatorsToInclude = [];
-    if (indicatorFilterIn) {
-      indicatorsToInclude = Array.isArray(indicatorFilterIn)
-        ? indicatorFilterIn
-        : [indicatorFilterIn];
-    }
-
-    // Extract indicator exclusion filter params (NOT case)
-    // Support both priorityIndicator.nin and priorityIndicator.nin[] formats
-    const indicatorFilterNin = req.query['priorityIndicator.nin[]']
-      || req.query['priorityIndicator.nin'];
-    let indicatorsToExclude = [];
-    if (indicatorFilterNin) {
-      indicatorsToExclude = Array.isArray(indicatorFilterNin)
-        ? indicatorFilterNin
-        : [indicatorFilterNin];
-    }
+    const indicatorsToInclude = extractFilterArray(req.query, 'priorityIndicator', 'in');
+    const indicatorsToExclude = extractFilterArray(req.query, 'priorityIndicator', 'nin');
 
     const recipientSpotlightData = await getRecipientSpotlightIndicators(
       scopes,
