@@ -18,7 +18,7 @@ export const gracefulShutdown = async (msg) => {
   try {
     await closeAllQueues(msg);
   } catch (err) {
-    auditLogger.error(`Error during queue shutdown through ${msg}: ${err}`);
+    auditLogger.error(`Error during queue shutdown through ${msg}${err}`);
   }
   if (isConnectionOpen()) {
     try {

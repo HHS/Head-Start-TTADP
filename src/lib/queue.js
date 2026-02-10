@@ -99,12 +99,20 @@ export const closeAllQueues = async (reason = 'shutdown') => {
   if (shuttingDown) return;
   shuttingDown = true;
   auditLogger.info(`Closing queues due to ${reason}...`);
-  try {
-    await Promise.all(Array.from(QUEUE_LIST).map((queue) => queue.close()));
-  } catch (err) {
-    auditLogger.error('Failed to close queues during shutdown:', err);
-    throw err;
-  }
+  const queues = Array.from(QUEUE_LIST);
+  const results = await Promise.allSettled(
+    queues.map((queue) => queue.close()),
+  );
+  const failed = results
+    .map((result, index) => ({ result, queue: queues[index] }))
+    .filter(({ result }) => result.status === 'rejected');
+
+  failed.forEach(({ result, queue }) => {
+    auditLogger.error(
+      `Failed to close queue ${queue?.name ?? 'unknown'} during shutdown`,
+      result.reason,
+    );
+  });
 };
 
 function registerQueueHandlers(queue) {
@@ -134,7 +142,6 @@ export default function newQueue(queueName, timeout = 30000) {
       connectionName: `${queueName}-${process.pid}-${connectionId}`,
     },
     defaultJobOptions: {
-      attempts: 10,
       removeOnFail: KEEP_FAILED_JOBS,
       removeOnComplete: KEEP_COMPLETED_JOBS,
     },
