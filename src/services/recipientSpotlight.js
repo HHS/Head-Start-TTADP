@@ -72,7 +72,7 @@ export async function getRecipientSpotlightIndicators(
       {
         regionId: { [Op.in]: regions.map((r) => parseInt(r, 10)) },
       },
-      singleGrantId ? { id: singleGrantId } : {}, // Add this line
+      singleGrantId ? { id: singleGrantId } : {},
       {
         [Op.or]: [
           { status: 'Active' },
