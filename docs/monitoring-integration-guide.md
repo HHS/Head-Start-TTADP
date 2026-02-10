@@ -1,5 +1,7 @@
 # IT-AMS Monitoring Data Integration Guide
 
+> **Audience**: Product owners, program staff, and developers seeking to understand the monitoring data flow.
+
 ## Overview
 The TTA Hub integrates with IT-AMS to retrieve and process monitoring data related to Head Start recipients’ reviews and findings. The main steps are:
 - Monitoring review data is securely transferred from IT-AMS.
@@ -158,5 +160,5 @@ Monitoring finding display uses determination first logic:
 - Else fall back to `findingType`.
 
 ## 📎 Additional Documentation
-For developer details, see: [Technical Documentation](monitoring-tech.md)
+For developer details, see: [Technical Documentation](monitoring-technical-reference.md)
 For diagram, see [High Level Diagram](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/sequence-diagrams/data-ingestion-monitoring-goal.puml)

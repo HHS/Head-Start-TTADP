@@ -23,7 +23,7 @@
 
 ## Continuous Integration (CI)
 
-The bulk of CD configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file, the [application manifest](manifest.yml) and the environment specific [deployment_config](deployment_config/) variable files.  Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
+The bulk of CI configurations can be found in this repo's [.circleci/config.yml](../../.circleci/config.yml) file, the [application manifest](../../manifest.yml) and the environment specific [deployment_config](../../deployment_config/) variable files. Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](../adr/0009-security-scans.md).
 
 ## Continuous Deployment (CD)
 
@@ -58,7 +58,7 @@ Exception:
 There are a few different things you will need to do in order to add a new secret or config variable, depending on whether the value is secret and whether it will change per environment or not.
 
 * First, add it under the `env:` section in `manifest.yml`.  This is what populates values when the application is deployed to cloud.gov
-* Next, add the value to each of the files under [deployment_config/](deployment_config/).
+* Next, add the value to each of the files under [deployment_config/](../../deployment_config/).
   * If the value is non-secret, simply add it in cleartext to these configs, ie `NEW_VAR: false`
   * If the value is secret, for now you will add the var name here with reference to what it will be called in CircleCI. ie `NEW_VAR: "${CIRCLE_VAR_NAME}"`
 * If you created a secret-style var, you will now need to add it as a project-based "environment variable" in CircleCI.
@@ -68,7 +68,7 @@ There are a few different things you will need to do in order to add a new secre
 
 Read [TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations) for information on how production may be accessed.
 
-Our project includes four deployed Postgres databases, one to interact with each application environment (sandbox, dev, staging, prod). For instructions on how to create and modify databases instances within the cloud.gov ecosystem see the [terraform/README.md](terraform/README.md).
+Our project includes four deployed Postgres databases, one to interact with each application environment (sandbox, dev, staging, prod).
 
 ### First, log into Cloud Foundry instance
 
@@ -195,9 +195,38 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
    cf disallow-space-ssh ttahub-prod
    ```
 
-#### Example: Manual import of Monitoring data
+#### Manual Monitoring Import
 
-Importing Monitoring data without the automation uses Option C above across several step and is described further on in the [tools README](https://github.com/HHS/Head-Start-TTADP/tree/main/src/tools).
+These are the steps to manually import monitoring and generate any Goals associated with new monitoring review findings.
+
+**Prerequisites:**
+
+- Cloud Foundry CLI (cf CLI) installed.
+- SSH access to the tta-smarthub-prod application in cloud.gov.
+- Be logged into the production environment using the following command before running the script:
+
+```bash
+cf login -a api.fr.cloud.gov --sso
+```
+and choose the production option (option 2 as of the writing of these instructions)
+
+**Basic command sequence:**
+
+1. `cf ssh tta-smarthub-prod` to connect to the app
+2. `/tmp/lifecycle/shell` to get a shell with the correct environment
+3. `node ./build/server/src/tools/importSystemCLI.js download 1` to fetch the next zip file from ITAMS
+4. `node ./build/server/src/tools/importSystemCLI.js process 1` to process the contents of the zip file into the database
+5. `yarn createMonitoringGoalsCLI` to create any monitoring Goals indicated by the new data
+
+The download and process steps will need to be run once each per day that needs catchup, such as on a Monday after the weekend. Thus, the steps would go: 1,2,3,4,3,4,3,4,5.
+
+**Adding validation via the prod database:**
+
+These are easiest to do in a separate terminal window alongside the one you're using to run the basic command sequence. Otherwise you would have to exit out and rerun steps 1 and 2 above in order to resume.
+
+1. `cf connect-to-service tta-smarthub-prod ttahub-prod` to connect to the production database console
+2. `SELECT "ftpFileInfo"->>'name' filename ,status, "createdAt" FROM "ImportFiles" ORDER BY 3 DESC LIMIT 4;` to inspect the progress of steps 3 and 4 above. This will show the last four files downloaded. If only step 3 has been run, the process is finished if `status` has reached `COLLECTED`. If step 4 has been run, the process is finished if it reaches `PROCESSED`.
+3. `SELECT LEFT(r.name,35) recipient, "regionId" region, COUNT(*) cnt FROM "Goals" g JOIN "Grants" gr ON g."grantId" = gr.id JOIN "Recipients" r ON gr."recipientId" = r.id WHERE "createdVia" = 'monitoring' AND g."createdAt" > (NOW() - INTERVAL '1 hour') GROUP BY 1,2 ORDER BY 2,1;` creates a small report of monitoring goals created in the last hour. It is useful after step 5. This may be important information OHS will want to know if the import is being run manually for some reason.
 
 ## Taking a production backup via CircleCI
 
@@ -212,19 +241,6 @@ In order to keep the non-production environments as close to production as possi
 While process does run every night automatically, it can also be run on-demand via CircleCI or by executing the script directly.
 
 The script can be run using the following:
-
-```
-yarn processData:local
-```
-
-The transformed database can then be restored in the non-production environments.
-For details on how to perform a backup and restore, there is information on the cloud.gov site:
-
-<https://cloud.gov/docs/management/database-backup-restore/>
-
-**Refreshing data in non-production environments**
-
-In order to keep the non-production environments as close to production as possible we developed a way to transform a restored version of the production database locally if using local database. The script can be run using the following:
 
 ```
 yarn processData:local
@@ -302,15 +318,10 @@ An automated script will run in that environment and run updates and migrations 
 
 <!-- Links -->
 
-[aws-config]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-config
-[aws-install]: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
-[cloudgov-bind]: https://cloud.gov/docs/deployment/managed-services/#bind-the-service-instance
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
-[cloudgov-service-keys]: https://cloud.gov/docs/services/s3/#interacting-with-your-s3-bucket-from-outside-cloudgov
 [cf-install]: https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
-[PR#71]: https://github.com/adhocteam/Head-Start-TTADP/pull/71
-[tf]: https://www.terraform.io/downloads.html
-[tf-vars]: https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files
+[cf-run-task]: https://docs.cloudfoundry.org/devguide/using-tasks.html#run-tasks-v7
+[cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
 
 
 
@@ -384,3 +395,164 @@ ex:
    ex:
    `cf add-network-policy tta-smarthub-staging -s ttahub-dev clamav-api-ttahub-dev --protocol tcp --port 9443`
 
+
+## Terraform
+
+The persistent AWS infrastructure is deployed as Cloud.gov assets via Terraform. For a description of persistent infrastructure and how it differs from ephemeral infrastructure see the root README.md.
+
+These docs are verbose because this is technology with which developers will rarely interact. I suggest you settle in for a nice long read with your favorite drink of choice.
+
+### Set up
+
+**Install Terraform**
+
+- On MacOS: `brew install terraform`
+- On other platforms: [Download and install terraform][tf]
+
+**Use githook for formatting**
+
+Terraform has a specific whitespace formatting style that is difficult to maintain. Terraform includes a formatting command, `terraform fmt`, to help developers maintain the correct style. This repository contains a pre-commit hook that runs `terraform fmt` on all staged files so you don't have to remember to run this command.
+
+If you are not using your own custom pre-commit hooks:
+
+```bash
+# start from repo root directory
+
+# make the pre-commit file executable
+chmod 755 .githooks/pre-commit
+
+# change your default hooks directory to `.githooks`.
+git config core.hooksPath .githooks
+```
+
+If you are already using git hooks, add the `.githooks/pre-commit` contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
+
+**Install Version 7 of the Cloud Foundry CLI tool**
+
+- On MacOS: `brew install cloudfoundry/tap/cf-cli@7`
+- On other platforms: [Download and install cf][cf-install]. Be sure to get version 7.x
+
+**Add target environment credentials**
+
+We are using Terraform to create Cloud Foundry resources in a Cloud.gov account. Creating infrastructure on the Cloud.gov platform requires a Cloud.gov service account username and password. These keys are specific to each cloud.gov organization/space, i.e. each deployment environment, and can be generated by developers who have proper Cloud.gov permissions at any time.
+
+Follow the steps below to generate a new set of credentials. If you need more information, check out the [service account docs][cloudgov-deployer].
+
+```bash
+# login
+cf login -a api.fr.cloud.gov --sso
+# follow temporary authorization code prompts
+# select org "hhs-acf-ohs-tta", and the space (env) within which you want to build infrastructure
+# dev = ttahub-dev
+# staging = ttahub-staging
+# prod = ttahub-prod
+
+# create a service instance that can provision service accounts
+# the value for < YOUR-NAME > can be any version of your name, it isn't significant
+cf create-service cloud-gov-service-account space-deployer < YOUR-NAME >
+
+# bind a service key to the service instance
+cf create-service-key < YOUR-NAME > space-deployer-key
+
+# return a username/password pair for the service instance
+cf service-key < YOUR-NAME > space-deployer-key
+```
+
+Add the username and password output from the last command to a `secrets.auto.tfvars` file in each environment directory. Terraform automatically loads this variable definition file. You can also provide variable values via environment variables. For more on this, check out [terraform variable definitions][tf-vars].
+
+For example, your `terraform/dev/secrets.auto.tfvars` file should look something like this:
+
+```
+cf_user = "some-dev-user"
+cf_password = "some-dev-password"
+```
+
+Additionally, for environments other than dev and production, we need to grant the space deployer
+credentials access to the dev space to enable setting up network policies to the dev ClamAV server.
+
+```
+# Grant some-dev-user from previous step SpaceDeveloper access to ttahub-dev
+cf set-space-role <some-dev-user from previous step> hhs-acf-ohs-tta ttahub-dev SpaceDeveloper
+```
+
+**Create S3 bucket credentials**
+
+We are using an S3 bucket created by Cloud Foundry in Cloud.gov as our remote backend for Terraform. The backend maintains the "state" of Terraform and makes it possible for multiple developers to implement changes in a linear fashion.
+
+Follow these directions to create a new service account and generate credentials. If you need more information check out the [services docs][cloudgov-service-keys].
+
+```bash
+# login
+cf login -a api.fr.cloud.gov --sso
+# follow temporary authorization code prompts
+# select org "hhs-acf-ohs-tta", space "infrastructure-config"
+
+# create a service instance
+# the value for < YOUR-NAME > can be any version of your name
+# it can be the same or different from the name you used for environment credentials in the previous step
+cf create-service-key ohs-ttahub-iac-state < YOUR-NAME >
+
+# return a username/password pair for the service instance
+cf service-key ohs-ttahub-iac-state < YOUR-NAME >
+```
+
+These credentials are for an S3 bucket that is used for holding the state of the dev, staging, and prod terraform environments; you only need to create one set of these `ohs-ttahub-iac-state` S3 bucket credentials. If you're already using AWS CLI you may simply add your newly generated `access_key_id`, `secret_access_key` values to `~/.aws/credentials`, and your `region` value to `~/.aws/config`. If this is your first time using AWS CLI [install the tool][aws-install] and then follow the [Quick Configuration with aws configure guide][aws-config].
+
+Your `~/.aws/credentials` file should look something like this:
+
+```
+[default]
+aws_access_key_id = foo
+aws_secret_access_key = bar
+```
+
+Your `~/.aws/config` file should look something like this:
+
+```
+[default]
+region = us-gov-west-1
+```
+
+### Workflow
+
+_Tip: You run terraform files from the directory in which they are stored. For example, to instantiate a database described in `terraform/dev/main.tf` you would run all the commands below from `terraform/dev`._
+
+**Initialize your working directory**
+
+The first time you are working in a new environment, for example, after cloning this repository, you will need to initialize a working directory containing Terraform configuration files using the `init` command. It is safe to run this command multiple times.
+
+```bash
+terraform init
+```
+
+**Check that your state is clean**
+
+Terraform configuration files committed to the `main` branch should describe the infrastructure that is currently in use. This is described as a "clean state". Use the `plan` command to display a list of infrastructure that Terraform will need to update, delete or create to match what is in your local Terraform configuration files.
+
+- If state is clean, `plan` will not display any changes.
+- If state is not clean and you are working on a feature branch try merging in the main branch; your local terraform files might be behind the current/applied state. If `plan` still shows an unclean state, reach out to your fellow developers for clarification and advice on how to proceed. It is very likely that changes were accidentally applied and a developer is currently working on a fix.
+
+```bash
+terraform plan
+```
+
+**Make changes and get feedback**
+
+Make any needed changes to your local Terraform configuration files. Open a PR for those changes. In your PR include the output from `terraform plan` so reviewers can see what resources will be updated, created and destroyed.
+
+**Merge and apply changes immediately**
+
+_Tip: Before you merge your PR ensure you have enough time to sit and work through any unexpected problems that could arise. Database changes can take upwards of ten minutes to apply._
+
+Merge your PR into `main` and then **immediately** apply your changes. Always merge and apply in one sitting.
+
+```bash
+terraform apply
+```
+
+**Bind the infrastructure to the application**
+
+CloudFoundry/cloud.gov requires that some "services" (e.g. AWS infrastructure) be "bound" to the application instance. S3, and Redis are all services that require this "binding" step. See the [cloud.gov documentation][cloudgov-bind] for more direction on this. Also, check out [PR#71][PR#71] for an example of how this was done for the RDS instances.
+
+[cloudgov-bind]: https://cloud.gov/docs/getting-started/your-first-deploy/#bind-a-service
+[PR#71]: https://github.com/HHS/Head-Start-TTADP/pull/71
