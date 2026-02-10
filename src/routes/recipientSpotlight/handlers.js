@@ -28,7 +28,7 @@ export async function getRecipientSpotLight(req, res) {
     // Validate and parse grantId if provided
     let parsedGrantId = null;
     if (grantId !== undefined && grantId !== null && grantId !== '') {
-      parsedGrantId = parseInt(grantId, DECIMAL_BASE);
+      parsedGrantId = Number(grantId);
       if (!Number.isInteger(parsedGrantId) || parsedGrantId < 1) {
         res.status(httpCodes.BAD_REQUEST).json({ error: 'Invalid grantId: must be a positive integer' });
         return;
