@@ -30,7 +30,7 @@ const baseReport = {
     { activityRecipientId: GRANT_ID_ONE },
     { activityRecipientId: GRANT_ID_TWO },
   ],
-  approvingManagerId: 1,
+  approvingManagerId: mockUser.id,
   numberOfParticipants: 11,
   deliveryMethod: 'method',
   duration: 1,
@@ -43,43 +43,110 @@ const baseReport = {
   version: 2,
 };
 
+const created = {
+  user: false,
+  region1: false,
+  region2: false,
+  recipient: false,
+  grant1: false,
+  grant2: false,
+};
+
 describe('approvalRateByDeadline widget', () => {
   beforeAll(async () => {
-    await User.create(mockUser);
-    await Region.bulkCreate([
-      { name: 'office 1', id: 1 },
-      { name: 'office 2', id: 2 },
-    ], { validate: true, individualHooks: true });
-    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
-    await Grant.bulkCreate([{
-      id: GRANT_ID_ONE,
-      number: GRANT_ID_ONE,
-      recipientId: RECIPIENT_ID,
-      regionId: 1,
-      status: 'Active',
-      startDate: new Date('2021/01/01'),
-      endDate: new Date('2021/01/02'),
-    }, {
-      id: GRANT_ID_TWO,
-      number: GRANT_ID_TWO,
-      recipientId: RECIPIENT_ID,
-      regionId: 2,
-      status: 'Active',
-      startDate: new Date('2021/01/01'),
-      endDate: new Date('2021/01/02'),
-    }], { validate: true, individualHooks: true });
+    await db.sequelize.transaction(async (transaction) => {
+      const [, userCreated] = await User.findOrCreate({
+        where: { id: mockUser.id },
+        defaults: mockUser,
+        transaction,
+      });
+      created.user = userCreated;
+      const [, region1Created] = await Region.findOrCreate({
+        where: { id: 1 },
+        defaults: { name: 'office 1', id: 1 },
+        transaction,
+      });
+      created.region1 = region1Created;
+      const [, region2Created] = await Region.findOrCreate({
+        where: { id: 2 },
+        defaults: { name: 'office 2', id: 2 },
+        transaction,
+      });
+      created.region2 = region2Created;
+      const [, recipientCreated] = await Recipient.findOrCreate({
+        where: { id: RECIPIENT_ID },
+        defaults: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' },
+        transaction,
+      });
+      created.recipient = recipientCreated;
+      const [, grant1Created] = await Grant.findOrCreate({
+        where: { id: GRANT_ID_ONE },
+        defaults: {
+          id: GRANT_ID_ONE,
+          number: GRANT_ID_ONE,
+          recipientId: RECIPIENT_ID,
+          regionId: 1,
+          status: 'Active',
+          startDate: new Date('2021/01/01'),
+          endDate: new Date('2021/01/02'),
+        },
+        transaction,
+      });
+      created.grant1 = grant1Created;
+      const [, grant2Created] = await Grant.findOrCreate({
+        where: { id: GRANT_ID_TWO },
+        defaults: {
+          id: GRANT_ID_TWO,
+          number: GRANT_ID_TWO,
+          recipientId: RECIPIENT_ID,
+          regionId: 2,
+          status: 'Active',
+          startDate: new Date('2021/01/01'),
+          endDate: new Date('2021/01/02'),
+        },
+        transaction,
+      });
+      created.grant2 = grant2Created;
+    });
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
-    const ids = reports.map((report) => report.id);
-    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-    await ActivityReport.destroy({ where: { id: ids } });
-    await User.destroy({ where: { id: [mockUser.id] } });
-    await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] }, individualHooks: true });
-    await Recipient.destroy({ where: { id: [RECIPIENT_ID] } });
-    await Region.destroy({ where: { id: [1, 2] } });
+    await db.sequelize.transaction(async (transaction) => {
+      const reports = await ActivityReport
+        .findAll({ where: { userId: [mockUser.id] }, transaction });
+      const ids = reports.map((report) => report.id);
+      await ActivityRecipient.destroy({ where: { activityReportId: ids }, transaction });
+      await ActivityReport.destroy({ where: { id: ids }, transaction });
+      if (created.user) {
+        await User.destroy({ where: { id: [mockUser.id] }, transaction });
+      }
+      if (created.grant1 || created.grant2) {
+        await Grant.destroy({
+          where: {
+            id: [
+              ...(created.grant1 ? [GRANT_ID_ONE] : []),
+              ...(created.grant2 ? [GRANT_ID_TWO] : []),
+            ],
+          },
+          individualHooks: true,
+          transaction,
+        });
+      }
+      if (created.recipient) {
+        await Recipient.destroy({ where: { id: [RECIPIENT_ID] }, transaction });
+      }
+      if (created.region1 || created.region2) {
+        await Region.destroy({
+          where: {
+            id: [
+              ...(created.region1 ? [1] : []),
+              ...(created.region2 ? [2] : []),
+            ],
+          },
+          transaction,
+        });
+      }
+    });
     await db.sequelize.close();
   });
 
@@ -87,6 +154,14 @@ describe('approvalRateByDeadline widget', () => {
     const serviceDate = moment().subtract(1, 'month').startOf('month').add(5, 'days');
     const dateString = serviceDate.format('YYYY-MM-DD');
     const approvedAt = serviceDate.clone().add(20, 'days').toDate();
+    const monthLabel = serviceDate.format('MMM YYYY');
+
+    const baseline = await approvalRateByDeadline(null, { 'region.in': ['1'] });
+    const baselineMonth = baseline.records.find((r) => r.month_label === monthLabel);
+    const baselineNationalTotal = baselineMonth ? Number(baselineMonth.national_total) : 0;
+    const baselineRegionTotal = baselineMonth?.regions?.[1]
+      ? Number(baselineMonth.regions[1].total)
+      : 0;
 
     const reportRegionOne = await createOrUpdate({
       ...baseReport,
@@ -109,11 +184,11 @@ describe('approvalRateByDeadline widget', () => {
     }, { where: { id: [reportRegionOne.id, reportRegionTwo.id] } });
 
     const result = await approvalRateByDeadline(null, { 'region.in': ['1'] });
-    const monthLabel = serviceDate.format('MMM YYYY');
     const monthRecord = result.records.find((r) => r.month_label === monthLabel);
 
     expect(monthRecord).toBeTruthy();
-    expect(Number(monthRecord.region_total)).toBe(1);
-    expect(Number(monthRecord.national_total)).toBe(2);
+    expect(Number(monthRecord.national_total)).toBe(baselineNationalTotal + 2);
+    expect(monthRecord.regions).toBeTruthy();
+    expect(Number(monthRecord.regions[1].total)).toBe(baselineRegionTotal + 1);
   });
 });
