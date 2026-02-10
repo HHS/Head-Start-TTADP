@@ -170,8 +170,8 @@ export default function RecipientSpotlight({
 }
 
 RecipientSpotlight.propTypes = {
-  regionId: PropTypes.number.isRequired,
-  recipientId: PropTypes.number.isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   grantId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   grantNumber: PropTypes.string,
 };
