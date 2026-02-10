@@ -187,7 +187,7 @@ class ActivityReports{
  activityRecipientType : varchar(255)
  additionalNotes : text
  approvedAt : timestamp with time zone
-!issue='column missing from model' <color:#d54309>approvedAtTimezone</color>: varchar(255) : NULL::character varying
+!issue='column default does not match model' approvedAtTimezone : varchar(255) : NULL::character varying
  calculatedStatus : enum
  context : text
  creatorRole : enum
