@@ -43,6 +43,7 @@ describe('recipientSpotlight handlers', () => {
       res = {
         json: jest.fn(),
         sendStatus: jest.fn(),
+        status: jest.fn().mockReturnThis(),
       };
 
       currentUserId.mockResolvedValue(mockUserId);
@@ -378,6 +379,120 @@ describe('recipientSpotlight handlers', () => {
         ['No TTA'],
         null,
       );
+    });
+
+    it('should pass valid grantId as an integer', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        grantId: '123',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'name',
+        'asc',
+        0,
+        10,
+        ['1'],
+        [],
+        [],
+        123,
+      );
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+    });
+
+    it('should return 400 when grantId is not a valid integer', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        grantId: 'invalid',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid grantId: must be a positive integer' });
+      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when grantId is a negative number', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        grantId: '-5',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid grantId: must be a positive integer' });
+      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when grantId is zero', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        grantId: '0',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid grantId: must be a positive integer' });
+      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when grantId is a decimal number', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        grantId: '123.45',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid grantId: must be a positive integer' });
+      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+    });
+
+    it('should pass null for grantId when it is empty string', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        grantId: '',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'name',
+        'asc',
+        0,
+        10,
+        ['1'],
+        [],
+        [],
+        null,
+      );
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
   });
 });

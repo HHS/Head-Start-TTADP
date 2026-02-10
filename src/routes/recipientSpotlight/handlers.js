@@ -25,6 +25,16 @@ export async function getRecipientSpotLight(req, res) {
       sortBy, direction, offset, limit, grantId,
     } = req.query;
 
+    // Validate and parse grantId if provided
+    let parsedGrantId = null;
+    if (grantId !== undefined && grantId !== null && grantId !== '') {
+      parsedGrantId = Number(grantId);
+      if (!Number.isInteger(parsedGrantId) || parsedGrantId < 1) {
+        res.status(httpCodes.BAD_REQUEST).json({ error: 'Invalid grantId: must be a positive integer' });
+        return;
+      }
+    }
+
     // Parse pagination params to integers
     const parsedOffset = offset ? parseInt(offset, DECIMAL_BASE) : 0;
     const parsedLimit = limit ? parseInt(limit, DECIMAL_BASE) : 10;
@@ -98,7 +108,7 @@ export async function getRecipientSpotLight(req, res) {
       regionsArray,
       indicatorsToInclude,
       indicatorsToExclude,
-      grantId ? parseInt(grantId, DECIMAL_BASE) : null,
+      parsedGrantId,
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);
