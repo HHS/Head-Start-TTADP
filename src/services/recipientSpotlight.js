@@ -140,7 +140,15 @@ export async function getRecipientSpotlightIndicators(
   const hasGrantIds = grantIdList.length > 0;
   let grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'FALSE';
   if (singleGrantId) {
-    grantIdFilter = `gr.id = ${singleGrantId}`;
+    // Only allow singleGrantId to further restrict the already-scoped grantIdList.
+    // If it is not part of grantIdList, force the filter to match no rows.
+    const singleGrantIdStr = String(singleGrantId);
+    const scopedGrantIdStrings = grantIdList.map((id) => String(id));
+    if (scopedGrantIdStrings.includes(singleGrantIdStr)) {
+      grantIdFilter = `gr.id = ${singleGrantIdStr}`;
+    } else {
+      grantIdFilter = 'FALSE';
+    }
   }
 
   // Query total distinct recipient-region pairs for the selected regions
