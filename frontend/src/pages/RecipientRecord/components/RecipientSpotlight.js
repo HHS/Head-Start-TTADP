@@ -151,7 +151,7 @@ export default function RecipientSpotlight({
                           {indicator.value ? ' - Active indicator' : ' - Not applicable to this recipient'}
                         </span>
                       </b>
-                      <p className="usa-prose margin-y-0 text-wrap">{indicator.description}</p>
+                      <p className="usa-prose margin-y-0">{indicator.description}</p>
                     </div>
                   </div>
                 ))
