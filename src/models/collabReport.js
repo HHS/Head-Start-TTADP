@@ -89,7 +89,10 @@ export default (sequelize, DataTypes) => {
       },
       participants: {
         allowNull: true,
-        type: DataTypes.ARRAY(DataTypes.ENUM(COLLAB_REPORT_PARTICIPANTS)),
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        validate: {
+          isIn: [COLLAB_REPORT_PARTICIPANTS],
+        },
       },
       otherParticipants: {
         allowNull: true,
