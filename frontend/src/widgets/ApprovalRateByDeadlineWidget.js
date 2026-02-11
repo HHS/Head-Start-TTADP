@@ -1,3 +1,4 @@
+/* global globalThis */
 import React, {
   useEffect,
   useMemo,
@@ -37,13 +38,15 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    const canMatchMedia = typeof window !== 'undefined'
-      && typeof window.matchMedia === 'function';
-    if (!canMatchMedia) {
+    if (typeof globalThis === 'undefined' || typeof globalThis.matchMedia !== 'function') {
       return undefined;
     }
 
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mediaQuery = globalThis.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!mediaQuery) {
+      return undefined;
+    }
+
     const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
     updatePreference();
 
@@ -210,8 +213,6 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     exportRows,
   );
 
-  const hasMultipleRegions = regions.length > 1;
-
   const handleRegionChange = (nextIndex) => {
     if (nextIndex < 0 || nextIndex >= regions.length || nextIndex === activeRegionIndex) {
       return;
@@ -229,6 +230,13 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     });
     setActiveRegionIndex(nextIndex);
   };
+
+  const hasMultipleRegions = regions.length > 1;
+  const atStart = activeRegionIndex <= 0;
+  const atEnd = activeRegionIndex >= regions.length - 1;
+
+  const handleNext = () => handleRegionChange(activeRegionIndex + 1);
+  const handlePrevious = () => handleRegionChange(activeRegionIndex - 1);
 
   const subtitle = (
     <div className="margin-bottom-3">
@@ -437,6 +445,26 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
                   widgetRef={widgetRef}
                 />
               </div>
+            )}
+            {hasMultipleRegions && !atStart && (
+              <button
+                type="button"
+                className="approval-rate-carousel-arrow approval-rate-carousel-arrow--left"
+                onClick={handlePrevious}
+                aria-label="Previous region"
+              >
+                <span className="approval-rate-carousel-arrow-icon approval-rate-carousel-arrow-icon--left" />
+              </button>
+            )}
+            {hasMultipleRegions && !atEnd && (
+              <button
+                type="button"
+                className="approval-rate-carousel-arrow approval-rate-carousel-arrow--right"
+                onClick={handleNext}
+                aria-label="Next region"
+              >
+                <span className="approval-rate-carousel-arrow-icon approval-rate-carousel-arrow-icon--right" />
+              </button>
             )}
           </div>
           {hasMultipleRegions && (
