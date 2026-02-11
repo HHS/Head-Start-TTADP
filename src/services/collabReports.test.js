@@ -1012,7 +1012,7 @@ describe('Collab Reports Service', () => {
 
     afterEach(async () => {
       if (testReport) {
-        testReport.destroy({ force: true });
+        await testReport.destroy({ force: true });
         testReport = null;
       }
     });
