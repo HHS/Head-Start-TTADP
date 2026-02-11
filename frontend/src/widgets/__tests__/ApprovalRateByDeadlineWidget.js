@@ -35,6 +35,10 @@ describe('ApprovalRateByDeadlineWidget', () => {
     }));
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders region carousel controls with dots', () => {
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 
@@ -57,5 +61,38 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
     expect(screen.getByText('Region')).toBeInTheDocument();
     expect(screen.getByText('National average')).toBeInTheDocument();
+  });
+
+  it('renders without matchMedia support', () => {
+    const originalMatchMedia = window.matchMedia;
+    delete window.matchMedia;
+
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+    expect(screen.getByText('Approval rate by deadline')).toBeInTheDocument();
+
+    window.matchMedia = originalMatchMedia;
+  });
+
+  it('handles prefers reduced motion when switching regions', () => {
+    window.matchMedia = jest.fn().mockImplementation(() => ({
+      matches: true,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+    }));
+
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+  });
+
+  it('renders with no regions without dots or arrows', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData([])} loading={false} />);
+
+    expect(screen.getByText('Region')).toBeInTheDocument();
+    expect(document.querySelectorAll('.approval-rate-carousel-dot').length).toBe(0);
+    expect(screen.queryByRole('button', { name: /next region/i })).not.toBeInTheDocument();
   });
 });
