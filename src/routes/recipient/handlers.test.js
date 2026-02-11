@@ -91,6 +91,26 @@ describe('getRecipient', () => {
     expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
 
+  it('passes only active grant scopes to recipientById', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        'region.in': 1,
+        modelType: 'grant',
+      },
+      session: {
+        userId: 1,
+      },
+    };
+    recipientById.mockResolvedValue(recipientWhere);
+    missingStandardGoals.mockResolvedValue([]);
+    await getRecipient(req, mockResponse);
+    const scopesArg = recipientById.mock.calls[recipientById.mock.calls.length - 1][1];
+    expect(scopesArg.where).toEqual(expect.objectContaining({ status: 'Active' }));
+  });
+
   it('returns a 404 when a recipient can\'t be found', async () => {
     const req = {
       params: {
