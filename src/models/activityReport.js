@@ -298,6 +298,7 @@ export default (sequelize, DataTypes) => {
     approvedAtTimezone: {
       allowNull: true,
       type: DataTypes.STRING,
+      defaultValue: null,
       comment: 'IANA timezone used to interpret approvedAt for deadline calculations',
     },
     imported: {
