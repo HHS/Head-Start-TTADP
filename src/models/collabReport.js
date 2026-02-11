@@ -91,7 +91,31 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
         type: DataTypes.ARRAY(DataTypes.STRING),
         validate: {
-          isIn: [COLLAB_REPORT_PARTICIPANTS],
+          participantsValid(value) {
+            if (value === null || value === undefined) {
+              return;
+            }
+            if (!Array.isArray(value)) {
+              throw new Error('Participants must be an array');
+            }
+            if (value.length === 0) {
+              return;
+            }
+            const allowed = new Set(COLLAB_REPORT_PARTICIPANTS);
+            const seen = new Set();
+            for (const participant of value) {
+              if (typeof participant !== 'string') {
+                throw new Error('Participants must be strings');
+              }
+              if (!allowed.has(participant)) {
+                throw new Error(`Invalid participant value: ${participant}`);
+              }
+              if (seen.has(participant)) {
+                throw new Error('Duplicate participants are not allowed');
+              }
+              seen.add(participant);
+            }
+          },
         },
       },
       otherParticipants: {
