@@ -175,6 +175,10 @@ function CollaborationReport({ match, location }) {
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
 
+  // Refs to track the previous page for focus management
+  const previousPageRef = useRef(currentPage);
+  const formRef = useRef(null);
+
   const [lastSaveTime, updateLastSaveTime] = useState(null);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
@@ -239,6 +243,14 @@ function CollaborationReport({ match, location }) {
     updateShowSavedDraft(false);
     hookForm.reset(formData, { errors: true });
   }, [currentPage, formData, hookForm.reset]);
+
+  // Focus the form when a new page is loaded
+  useEffect(() => {
+    if (previousPageRef.current !== currentPage && formRef.current) {
+      formRef.current.focus({ preventScroll: true });
+      previousPageRef.current = currentPage;
+    }
+  }, [currentPage]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -725,7 +737,7 @@ function CollaborationReport({ match, location }) {
   };
 
   return (
-    <div className="smart-hub-collab-report">
+    <div className="smart-hub-collab-report" ref={formRef} tabIndex={-1}>
       { error
       && (
       <Alert type="warning">

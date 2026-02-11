@@ -10,7 +10,7 @@ services:
     environment:
       - SPEC_URL=swagger/index.yaml
   db:
-    image: postgres:15.6
+    image: postgres:15.12
     container_name: postgres_docker
     env_file: .env
     profiles:

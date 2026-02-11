@@ -56,10 +56,10 @@
   $ref: './goals/goal-status.yaml'
 '/widgets/overview':
   $ref: './widgets/overview.yaml'
-'/widgets/reasonList':
-  $ref: './widgets/reasonList.yaml'
 '/widgets/topicAndFrequencyGraph':
   $ref: './widgets/topicAndFrequencyGraph.yaml'
+'/widgets/trStandardGoalsList':
+  $ref: './widgets/trStandardGoalsList.yaml'
 '/settings':
   $ref: './settings/index.yaml'
 '/settings/email':

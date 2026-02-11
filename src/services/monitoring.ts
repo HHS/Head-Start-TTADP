@@ -52,6 +52,27 @@ const {
 const MIN_DELIVERY_DATE = '2025-01-21';
 const REVIEW_STATUS_COMPLETE = 'Complete';
 
+/**
+ * Map finding type based on determination and original type.
+ * Also transforms 'Concern' to 'Area of Concern'.
+ *
+ * @param determination string
+ * @param originalType string
+ * @returns string
+ */
+export function mapFindingType(determination: string | null, originalType: string) {
+  let findingType = originalType;
+  if (determination) {
+    findingType = determination;
+  }
+
+  if (findingType === 'Concern') {
+    return 'Area of Concern';
+  }
+
+  return findingType;
+}
+
 async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
   const grants = await Grant.findAll({
     attributes: ['number'],
@@ -369,7 +390,7 @@ export async function ttaByReviews(
         findings.push({
           citation,
           status,
-          findingType: finding.findingType,
+          findingType: mapFindingType(history.determination, finding.findingType),
           correctionDeadline: finding.correctionDeadLine ? moment(finding.correctionDeadLine).format('MM/DD/YYYY') : '',
           category: finding.source,
           objectives,
@@ -529,7 +550,15 @@ export async function ttaByCitations(
     const [finding] = monitoringFindings;
     const [status] = finding.statusLink.monitoringFindingStatuses;
 
+    let { findingType } = finding;
+
     monitoringFindingHistories.forEach((history) => {
+      const { determination } = history;
+
+      if (determination) {
+        findingType = determination;
+      }
+
       const { monitoringReviewLink, monitoringFindingStatusLink } = history;
       const { monitoringReviews } = monitoringReviewLink;
 
@@ -563,7 +592,7 @@ export async function ttaByCitations(
     return {
       citationNumber: citation.citation,
       status: status.name,
-      findingType: finding.findingType,
+      findingType: mapFindingType(findingType, finding.findingType),
       category: finding.source,
       grantNumbers: uniq(grants.flat()),
       lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : '',

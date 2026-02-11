@@ -1,5 +1,7 @@
 # Import System Documentation
 
+> **Audience**: Developers working on the monitoring import pipeline.
+
 ## Purpose
 
 The import system automatically collects ZIP files from an external SFTP source (e.g., IT-AMS), processes contained XML files, maps them to internal database models, stores them, and optionally runs post-processing (like creating Monitoring Goals).
@@ -106,7 +108,9 @@ A new goal is created if:
 * The review is Complete
 * It is of a type like 'AIAN-DEF', 'RAN', 'FA-1', 'Follow-up', 'FA1-FR',
           'FA-2', 'FA2-CR', 'Special'
-* There is at least one finding with a status name of 'Active' linked to the grant
+* There is at least one valid 'Active' Finding linked to the grant
+  * Findings are considered to be active if they have an 'Active' or 'Elevated Deficiency' status OR if their most recent follow-up review is not yet delivered.
+  * No finding will be considered active if a Monitoring Goal has been closed since the Finding's most recent review's reportDeliveryDate.
 * The grant has no existing goal linked to the Monitoring goal template
 
 In short:
