@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, COLLAB_REPORT_PARTICIPANTS } from '@ttahub/common';
 import db, {
   User,
   CollabReport,
@@ -1004,6 +1004,53 @@ describe('Collab Reports Service', () => {
         expect(dataUsed).toHaveLength(2);
         expect(activityStates).toHaveLength(2);
       });
+    });
+  });
+
+  describe('createOrUpdateReport with Participants', () => {
+    let testReport;
+
+    afterEach(async () => {
+      if (testReport) {
+        testReport.destroy({ force: true });
+        testReport = null;
+      }
+    });
+
+    it('allows a report to be created with 1 participant', async () => {
+      const reportWithParticipants = {
+        ...reportObject,
+        name: 'Test Report with Participants',
+        participants: [COLLAB_REPORT_PARTICIPANTS[0]],
+      };
+
+      const result = await createOrUpdateReport(reportWithParticipants, null);
+      testReport = await CollabReport.findByPk(result.id);
+
+      expect(result.participants).toEqual([COLLAB_REPORT_PARTICIPANTS[0]]);
+    });
+
+    it('allows a report to be created with 2 participants', async () => {
+      const reportWithParticipants = {
+        ...reportObject,
+        name: 'Test Report with Participants',
+        participants: [COLLAB_REPORT_PARTICIPANTS[0], COLLAB_REPORT_PARTICIPANTS[1]],
+      };
+
+      const result = await createOrUpdateReport(reportWithParticipants, null);
+      testReport = await CollabReport.findByPk(result.id);
+
+      expect(result.participants).toEqual([COLLAB_REPORT_PARTICIPANTS[0], COLLAB_REPORT_PARTICIPANTS[1]]);
+    });
+
+    it('does not allow a report to be created with invalid participants', async () => {
+      const reportWithParticipants = {
+        ...reportObject,
+        name: 'Test Report with Participants',
+        participants: ['Not a valid participant'],
+      };
+
+      await expect(createOrUpdateReport(reportWithParticipants, null)).rejects.toThrow();
     });
   });
 });
