@@ -103,7 +103,7 @@ export default (sequelize, DataTypes) => {
             }
             const allowed = new Set(COLLAB_REPORT_PARTICIPANTS);
             const seen = new Set();
-            for (const participant of value) {
+            value.forEach((participant) => {
               if (typeof participant !== 'string') {
                 throw new Error('Participants must be strings');
               }
@@ -114,7 +114,7 @@ export default (sequelize, DataTypes) => {
                 throw new Error('Duplicate participants are not allowed');
               }
               seen.add(participant);
-            }
+            });
           },
         },
       },
