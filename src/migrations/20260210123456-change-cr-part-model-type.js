@@ -19,7 +19,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
         ALTER TABLE "CollabReports"
         ALTER COLUMN "participants" TYPE "enum_CollabReports_participants"[] USING ("participants"::"enum_CollabReports_participants"[]);
-      `);
+      `, { transaction });
     });
   },
 };
