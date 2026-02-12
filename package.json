@@ -138,7 +138,7 @@
     "selenium-webdriver": "^4",
     "json5": "^2.2.3",
     "luxon": "^1.23.1",
-    "qs": "^6.14.1",
+    "qs": "^6.14.2",
     "cookie": "^0.7.0",
     "cookiejar": "^2.1.4",
     "http-cache-semantics": "^4.1.1",

@@ -45,6 +45,7 @@ const determineKeyArray = ({
   isAdminUser,
   isPoc,
   isCollaborator,
+  isOwner,
   eventOrganizer,
   isApprover,
   facilitation = '',
@@ -55,12 +56,15 @@ const determineKeyArray = ({
 
   const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
 
+  // Treat owner as collaborator for field access
+  const isOwnerOrCollaborator = isOwner || isCollaborator;
+
   let keyArray;
-  if (isAdminUser || (isCollaborator && isRegionalNoNationalCenters) || isApprover) {
+  if (isAdminUser || (isOwnerOrCollaborator && isRegionalNoNationalCenters) || isApprover) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc && facilitationIncludesRegion) {
     keyArray = [...istKeys, ...pocKeys];
-  } else if (isCollaborator && isSubmitted) {
+  } else if (isOwnerOrCollaborator && isSubmitted) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc) {
     keyArray = pocKeys;
@@ -85,6 +89,7 @@ const resetFormData = ({
   isPocFromSession,
   isAdminUser,
   isCollaborator,
+  isOwner,
   isApprover,
   eventOrganizer = '',
 }) => {
@@ -92,6 +97,7 @@ const resetFormData = ({
     isAdminUser,
     isPoc: isPocFromSession,
     isCollaborator,
+    isOwner,
     eventOrganizer,
     isApprover,
     facilitation: updatedSession?.data?.facilitation || '',
@@ -239,6 +245,7 @@ export default function SessionForm({ match }) {
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
         // eslint-disable-next-line max-len
         const isCollaboratorFromSession = session.event.collaboratorIds.includes(user.id) && !isAdminUser;
+        const isOwnerFromSession = session.event.ownerId === user.id;
         const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
         const { approverId } = session;
         const isApproverUser = user.id === Number(approverId);
@@ -250,22 +257,11 @@ export default function SessionForm({ match }) {
           isPocFromSession,
           isAdminUser,
           isCollaborator: isCollaboratorFromSession,
+          isOwner: isOwnerFromSession,
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
         });
         reportId.current = session.id;
-
-        const message = {
-          messageTemplate: 'sessionCreated',
-          sessionName: session.data.sessionName,
-          eventId: session.event.data.eventId,
-          dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
-        };
-
-        if (session.event.ownerId === user.id && !isAdminUser) {
-          history.push('/training-reports/in-progress', { message });
-          return;
-        }
 
         history.replace(`/training-report/${trainingReportId}/session/${session.id}`);
       } catch (e) {
@@ -343,6 +339,7 @@ export default function SessionForm({ match }) {
           isPocFromSession,
           isAdminUser,
           isCollaborator: isCollaboratorFromSession,
+          isOwner: isOwnerFromSession,
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
         });
@@ -441,6 +438,7 @@ export default function SessionForm({ match }) {
           isPoc,
           eventOrganizer,
           isCollaborator,
+          isOwner,
           isApprover,
           facilitation: data?.facilitation || '',
           isSubmitted: data?.submitted,
@@ -570,6 +568,7 @@ export default function SessionForm({ match }) {
         isPoc,
         eventOrganizer,
         isCollaborator,
+        isOwner,
         isApprover,
         facilitation: data?.facilitation || '',
         isSubmitted: data?.submitted,
