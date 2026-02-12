@@ -187,7 +187,7 @@ class ActivityReports{
  activityRecipientType : varchar(255)
  additionalNotes : text
  approvedAt : timestamp with time zone
-!issue='column default does not match model' approvedAtTimezone : varchar(255) : NULL::character varying
+ approvedAtTimezone : varchar(255)
  calculatedStatus : enum
  context : text
  creatorRole : enum

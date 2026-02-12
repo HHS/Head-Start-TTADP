@@ -14,7 +14,6 @@ module.exports = {
           comment: 'IANA timezone used to interpret approvedAt for deadline calculations',
           type: Sequelize.STRING,
           allowNull: true,
-          defaultValue: null,
         },
         { transaction },
       );
