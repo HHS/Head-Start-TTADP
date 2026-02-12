@@ -10,7 +10,7 @@ module.exports = {
       return queryInterface.sequelize.query(`
         ALTER TABLE "CollabReports"
         ALTER COLUMN "participants" TYPE VARCHAR(255)[] USING ("participants"::text[]);
-      `);
+      `, { transaction });
     });
   },
 
