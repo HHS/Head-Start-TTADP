@@ -135,5 +135,59 @@ describe('Submit', () => {
       expect(screen.getByRole('option', { name: 'Approver Two' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
     });
+
+    it('filters out event owner from approver list regardless of logged-in user', () => {
+      const defaultValues = {
+        facilitation: 'regional_tta_staff',
+        event: {
+          data: { eventOrganizer: 'REGIONAL_PD_WITH_NATIONAL_CENTERS' },
+          ownerId: 1, // Event owner matches Approver One
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      // Current user is NOT the owner (id: 999)
+      const user = { id: 999 };
+
+      renderSubmit(defaultProps, defaultValues, user);
+
+      // The dropdown should be visible
+      expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
+
+      // Approver One (id: 1, matches event ownerId) should NOT be in the dropdown
+      expect(screen.queryByRole('option', { name: 'Approver One' })).not.toBeInTheDocument();
+
+      // Other approvers should be visible
+      expect(screen.getByRole('option', { name: 'Approver Two' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
+    });
+
+    it('filters out both current user and event owner from approver list', () => {
+      const defaultValues = {
+        facilitation: 'regional_tta_staff',
+        event: {
+          data: { eventOrganizer: 'REGIONAL_PD_WITH_NATIONAL_CENTERS' },
+          ownerId: 1, // Event owner matches Approver One
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      // Current user matches Approver Two
+      const user = { id: 2 };
+
+      renderSubmit(defaultProps, defaultValues, user);
+
+      // The dropdown should be visible
+      expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
+
+      // Approver One (event owner) should NOT be in the dropdown
+      expect(screen.queryByRole('option', { name: 'Approver One' })).not.toBeInTheDocument();
+
+      // Approver Two (current user) should NOT be in the dropdown
+      expect(screen.queryByRole('option', { name: 'Approver Two' })).not.toBeInTheDocument();
+
+      // Only Approver Three should be visible
+      expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
+    });
   });
 });

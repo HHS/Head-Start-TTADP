@@ -181,8 +181,8 @@ describe('useSessionCardPermissions', () => {
     });
   });
 
-  describe('owner restrictions', () => {
-    it('returns false when user is owner', () => {
+  describe('owner EDIT permissions (treated as collaborator for edit only)', () => {
+    it('returns true when user is owner and session in progress', () => {
       const props = {
         ...baseProps,
         isOwner: true,
@@ -193,7 +193,114 @@ describe('useSessionCardPermissions', () => {
         initialProps: { user: mockUser },
       });
 
+      expect(result.current.showSessionEdit).toBe(true);
+    });
+
+    it('returns false when owner and collabComplete is true for non-admin', () => {
+      const props = {
+        ...baseProps,
+        isOwner: true,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            collabComplete: true,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
       expect(result.current.showSessionEdit).toBe(false);
+    });
+
+    it('returns true when owner and collabComplete is true for admin', () => {
+      const props = {
+        ...baseProps,
+        isOwner: true,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            collabComplete: true,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockAdminUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(true);
+    });
+
+    it('returns false when owner, Regional PD with National Centers, and facilitation is regional_tta_staff', () => {
+      const props = {
+        ...baseProps,
+        isOwner: true,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            facilitation: 'regional_tta_staff',
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(false);
+    });
+
+    it('returns false when owner, Regional PD with National Centers, and facilitation is both', () => {
+      const props = {
+        ...baseProps,
+        isOwner: true,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            facilitation: 'both',
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(false);
+    });
+
+    it('returns true when owner with valid conditions', () => {
+      const props = {
+        ...baseProps,
+        isOwner: true,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            facilitation: 'national_center',
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(true);
     });
   });
 
@@ -552,7 +659,7 @@ describe('useSessionCardPermissions', () => {
       expect(result.current.showSessionEdit).toBe(false);
     });
 
-    it('prioritizes owner check over POC permissions', () => {
+    it('owner+POC can edit when both POC and owner conditions allow', () => {
       const props = {
         ...baseProps,
         isPoc: true,
@@ -564,7 +671,7 @@ describe('useSessionCardPermissions', () => {
         initialProps: { user: mockUser },
       });
 
-      expect(result.current.showSessionEdit).toBe(false);
+      expect(result.current.showSessionEdit).toBe(true);
     });
   });
 
@@ -1051,7 +1158,7 @@ describe('useSessionCardPermissions', () => {
         expect(result.current.showSessionDelete).toBe(false);
       });
 
-      it('returns true for delete when Owner+Collaborator', () => {
+      it('returns true for both edit and delete when Owner+Collaborator', () => {
         const props = {
           ...baseProps,
           isOwner: true,
@@ -1063,7 +1170,7 @@ describe('useSessionCardPermissions', () => {
           initialProps: { user: mockUser },
         });
 
-        expect(result.current.showSessionEdit).toBe(false);
+        expect(result.current.showSessionEdit).toBe(true);
         expect(result.current.showSessionDelete).toBe(true);
       });
 
@@ -1091,7 +1198,7 @@ describe('useSessionCardPermissions', () => {
         expect(result.current.showSessionDelete).toBe(false);
       });
 
-      it('returns true for delete and false for edit when Approver+Owner', () => {
+      it('returns true for both edit and delete when Approver+Owner', () => {
         const props = {
           ...baseProps,
           isOwner: true,
@@ -1102,7 +1209,7 @@ describe('useSessionCardPermissions', () => {
           initialProps: { user: mockSessionApprover },
         });
 
-        expect(result.current.showSessionEdit).toBe(false);
+        expect(result.current.showSessionEdit).toBe(true);
         expect(result.current.showSessionDelete).toBe(true);
       });
 
