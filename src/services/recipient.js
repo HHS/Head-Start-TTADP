@@ -195,12 +195,7 @@ export async function recipientById(recipientId, grantScopes) {
           [Op.and]: [
             { [Op.and]: grantsWhereCondition },
             { deleted: { [Op.ne]: true } },
-            {
-              [Op.or]: [
-                { status: 'Active' },
-                { [Op.and]: [{ endDate: { [Op.gt]: '2020-08-31' } }] },
-              ],
-            },
+            { status: 'Active' },
           ],
         }],
         include: [
@@ -351,30 +346,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
         {
           [Op.and]: { '$grants.regionId$': userRegions },
         },
-        {
-          [Op.or]: [
-            {
-              '$grants.status$': 'Active',
-            },
-            {
-              [Op.and]: [
-                {
-                  '$grants.endDate$': {
-                    [Op.gt]: '2020-08-31',
-                  },
-                },
-                {
-                  [Op.or]: [
-                    { '$grants.replacedGrantReplacements.replacementDate$': null },
-                    { '$grants.replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
-                    { '$grants.replacingGrantReplacements.replacementDate$': null },
-                    { '$grants.replacingGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
+        { '$grants.status$': 'Active' },
       ],
     },
     include: [{

@@ -66,14 +66,7 @@ export async function getRecipient(req, res) {
   try {
     const { recipientId } = req.params;
     const { grant: scopes } = await filtersToScopes(req.query);
-    const activeGrantScopes = {
-      ...scopes,
-      where: {
-        ...scopes?.where,
-        status: 'Active',
-      },
-    };
-    const recipient = await recipientById(recipientId, activeGrantScopes);
+    const recipient = await recipientById(recipientId, scopes);
 
     if (!recipient) {
       res.sendStatus(404);
