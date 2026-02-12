@@ -63,6 +63,46 @@ describe('ApprovalRateByDeadlineWidget', () => {
     expect(screen.getByText('National average')).toBeInTheDocument();
   });
 
+  it('keeps the same region when clicking the active dot', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /show region 1/i }));
+    expect(screen.getByText('Region 1')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /previous region/i })).not.toBeInTheDocument();
+  });
+
+  it('switches regions when clicking a dot', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /show region 2/i }));
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+  });
+
+  it('animates when changing regions without reduced motion', () => {
+    jest.useFakeTimers();
+
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    const frame = document.querySelector('.approval-rate-carousel-frame');
+    expect(frame.className).not.toMatch(/is-animating/);
+
+    jest.advanceTimersByTime(0);
+    expect(frame.className).toMatch(/is-animating/);
+
+    jest.advanceTimersByTime(320);
+    expect(frame.className).not.toMatch(/is-animating/);
+
+    jest.useRealTimers();
+  });
+
+  it('handles transitions when a falsy region id is present', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData([0, 2])} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+  });
+
   it('renders without matchMedia support', () => {
     const originalMatchMedia = window.matchMedia;
     delete window.matchMedia;
