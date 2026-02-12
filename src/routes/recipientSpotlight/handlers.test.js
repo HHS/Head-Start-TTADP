@@ -83,6 +83,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
+        undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -108,6 +109,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
+        undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -157,6 +159,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
+        undefined,
       );
     });
 
@@ -180,6 +183,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
+        undefined,
       );
     });
 
@@ -210,6 +214,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
+        undefined,
       );
     });
 
@@ -238,6 +243,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
+        undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -340,6 +346,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         ['No TTA'],
         null,
+        undefined,
       );
     });
 
@@ -365,6 +372,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         ['No TTA', 'Deficiency'],
         null,
+        undefined,
       );
     });
 
@@ -391,6 +399,7 @@ describe('recipientSpotlight handlers', () => {
         ['New staff'],
         ['No TTA'],
         null,
+        undefined,
       );
     });
 
@@ -415,6 +424,34 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         123,
+        undefined,
+      );
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+    });
+
+    it('should pass mustHaveIndicators from query params', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        parsedGrantId: null,
+        mustHaveIndicators: 'true',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'name',
+        'asc',
+        0,
+        10,
+        ['1'],
+        [],
+        [],
+        null,
+        'true',
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -440,6 +477,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
+        undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });

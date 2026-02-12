@@ -47,6 +47,7 @@ export async function getRecipientSpotlightIndicators(
   indicatorsToInclude = [],
   indicatorsToExclude = [],
   singleGrantId = null,
+  mustHaveIndicators = false,
 ) {
   // Early return if no regions are provided
   if (!regions || regions.length === 0) {
@@ -204,6 +205,8 @@ export async function getRecipientSpotlightIndicators(
 
   if (parts.length > 0) {
     indicatorWhereClause = parts.join(' AND ');
+  } else if (mustHaveIndicators) {
+    indicatorWhereClause = '"indicatorCount" > 0';
   } else {
     indicatorWhereClause = 'TRUE';
   }
