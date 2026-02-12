@@ -737,9 +737,9 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients[0].noTTA).toBe(true);
     });
 
-    it('excludes recipients with zero indicators from results', async () => {
+    it('includes recipients with zero indicators in results when no indicator filters are applied', async () => {
       // normalRecipient has TTA and no other indicators, so indicatorCount = 0
-      // The service should filter it out by default
+      // The service should now include it by default when no indicator filters are passed
       const scopes = createScopesWithRecipientAndRegion(normalRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
         scopes,
@@ -753,9 +753,11 @@ describe('recipientSpotlight service', () => {
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
-      // normalRecipient should NOT be in results since it has 0 indicators
-      expect(result.recipients.length).toBe(0);
-      expect(result.count).toBe(0);
+      // normalRecipient should be in results since it has 0 indicators but no filter was applied
+      expect(result.recipients.length).toBe(1);
+      expect(result.recipients[0].recipientId).toBe(normalRecipient.id);
+      expect(result.recipients[0].indicatorCount).toBe(0);
+      expect(result.count).toBe(1);
     });
 
     it('handles pagination correctly', async () => {
@@ -1090,10 +1092,11 @@ describe('recipientSpotlight service', () => {
           [],
           singleGrantWithoutIndicator.id,
         );
-        // Since no indicators are present, and the default indicatorWhereClause is `indicatorCount > 0`,
-        // this result should be empty.
-        expect(resultWithoutIndicator.recipients.length).toBe(0);
-        expect(resultWithoutIndicator.count).toBe(0);
+        // With no explicit indicator filters, recipients with zero indicators should now be included.
+        expect(resultWithoutIndicator.recipients.length).toBe(1);
+        expect(resultWithoutIndicator.recipients[0].recipientId).toBe(noIndicatorRecipient.id);
+        expect(resultWithoutIndicator.recipients[0].indicatorCount).toBe(0);
+        expect(resultWithoutIndicator.count).toBe(1);
       } finally {
         // Clean up:
         await ActivityReportGoal.destroy({
@@ -1688,12 +1691,17 @@ describe('recipientSpotlight service', () => {
         (r) => r.recipientName.includes('Secondary Sort Recipient'),
       );
 
-      // Only recipients with at least 1 indicator are returned (0-indicator recipients are filtered out)
-      expect(testRecipients.length).toBe(2);
+      expect(testRecipients.length).toBe(4);
 
-      // Both have 1 indicator, sorted by name ASC: Apple before Banana
-      expect(testRecipients[0].recipientName).toBe('Apple Secondary Sort Recipient');
-      expect(testRecipients[1].recipientName).toBe('Banana Secondary Sort Recipient');
+      // Sorted by indicatorCount ASC (0-indicators first) then recipientName ASC
+      expect(testRecipients[0].recipientName).toBe('Yak Secondary Sort Recipient');
+      expect(testRecipients[0].indicatorCount).toBe(0);
+      expect(testRecipients[1].recipientName).toBe('Zebra Secondary Sort Recipient');
+      expect(testRecipients[1].indicatorCount).toBe(0);
+      expect(testRecipients[2].recipientName).toBe('Apple Secondary Sort Recipient');
+      expect(testRecipients[2].indicatorCount).toBe(1);
+      expect(testRecipients[3].recipientName).toBe('Banana Secondary Sort Recipient');
+      expect(testRecipients[3].indicatorCount).toBe(1);
     });
 
     it('sorts by indicatorCount DESC with recipientName as secondary sort', async () => {
@@ -1722,12 +1730,17 @@ describe('recipientSpotlight service', () => {
         (r) => r.recipientName.includes('Secondary Sort Recipient'),
       );
 
-      // Only recipients with at least 1 indicator are returned (0-indicator recipients are filtered out)
-      expect(testRecipients.length).toBe(2);
+      expect(testRecipients.length).toBe(4);
 
-      // Both have 1 indicator, sorted by name ASC: Apple before Banana
+      // Sorted by indicatorCount DESC (1-indicators first) then recipientName ASC
       expect(testRecipients[0].recipientName).toBe('Apple Secondary Sort Recipient');
+      expect(testRecipients[0].indicatorCount).toBe(1);
       expect(testRecipients[1].recipientName).toBe('Banana Secondary Sort Recipient');
+      expect(testRecipients[1].indicatorCount).toBe(1);
+      expect(testRecipients[2].recipientName).toBe('Yak Secondary Sort Recipient');
+      expect(testRecipients[2].indicatorCount).toBe(0);
+      expect(testRecipients[3].recipientName).toBe('Zebra Secondary Sort Recipient');
+      expect(testRecipients[3].indicatorCount).toBe(0);
     });
 
     it('sorts by regionId ASC with recipientName as secondary sort', async () => {
