@@ -322,10 +322,18 @@ export async function submitReport(req: Request, res: Response) {
     );
 
     // Resubmitting resets any needs_action status to null ("pending" status)
-    await CollabReportApprover.update({ status: null }, {
-      where: { status: APPROVER_STATUSES.NEEDS_ACTION, collabReportId },
-      individualHooks: true,
-    });
+    // unless we're adding new approvers
+    const newApprovers = (newReport.approvers || []).map((a) => a.user?.id);
+    const oldApprovers = (existingReport.approvers || []).map((a) => a.user?.id);
+    const oldSet = new Set(oldApprovers.filter((id) => id != null));
+    const additions = newApprovers.filter((id) => id != null && !oldSet.has(id));
+
+    if (additions.length === 0) {
+      await CollabReportApprover.update({ status: null }, {
+        where: { status: APPROVER_STATUSES.NEEDS_ACTION, collabReportId },
+        individualHooks: true,
+      });
+    }
 
     res.json(savedReport);
   } catch (error) {
