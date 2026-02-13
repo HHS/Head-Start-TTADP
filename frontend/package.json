@@ -78,7 +78,7 @@
     "lint": "biome lint src",
     "lint:fix": "biome check --write src",
     "lint:fix:single": "biome check --write --no-errors-on-unmatched",
-    "lint:ci": "mkdir -p reports && biome lint --reporter junit src > reports/lint.xml"
+    "lint:ci": "mkdir -p reports; biome lint src; LINT_EXIT=$?; biome lint --reporter junit src > reports/lint.xml; JUNIT_EXIT=$?; [ $LINT_EXIT -eq 0 ] && [ $JUNIT_EXIT -eq 0 ]"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",
