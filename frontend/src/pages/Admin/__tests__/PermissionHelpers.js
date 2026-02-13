@@ -1,36 +1,31 @@
-import _ from 'lodash';
-import { SCOPE_IDS } from '@ttahub/common';
-import { createRegionalScopeObject, userRegionalPermissions, userGlobalPermissions } from '../PermissionHelpers';
+import _ from 'lodash'
+import { SCOPE_IDS } from '@ttahub/common'
+import { createRegionalScopeObject, userRegionalPermissions, userGlobalPermissions } from '../PermissionHelpers'
 
-const {
-  ADMIN,
-  READ_ACTIVITY_REPORTS,
-  READ_WRITE_ACTIVITY_REPORTS,
-  UNLOCK_APPROVED_REPORTS,
-} = SCOPE_IDS;
+const { ADMIN, READ_ACTIVITY_REPORTS, READ_WRITE_ACTIVITY_REPORTS, UNLOCK_APPROVED_REPORTS } = SCOPE_IDS
 
 describe('PermissionHelpers', () => {
   describe('createRegionalScopeObject', () => {
     it('creates an object with scopes as keys and false as values', () => {
-      const obj = createRegionalScopeObject();
+      const obj = createRegionalScopeObject()
       _.forEach((value, scope) => {
-        expect(obj[scope]).toBeFalsy();
-      });
-    });
-  });
+        expect(obj[scope]).toBeFalsy()
+      })
+    })
+  })
 
   describe('userRegionalPermissions', () => {
     it('returns an all false object for a user with no permissions', () => {
-      const regionalPermissions = userRegionalPermissions({});
+      const regionalPermissions = userRegionalPermissions({})
 
-      expect(Object.keys(regionalPermissions).length).toBe(13);
+      expect(Object.keys(regionalPermissions).length).toBe(13)
       _.forEach(regionalPermissions, (scopes) => {
-        expect(_.every(scopes, (scope) => scope === false)).toBeTruthy();
-      });
-    });
+        expect(_.every(scopes, (scope) => scope === false)).toBeTruthy()
+      })
+    })
 
     describe('for a user with permissions', () => {
-      let regionalPermissions;
+      let regionalPermissions
 
       beforeEach(() => {
         const user = {
@@ -40,31 +35,31 @@ describe('PermissionHelpers', () => {
               regionId: 1,
             },
           ],
-        };
+        }
 
-        regionalPermissions = userRegionalPermissions(user);
-      });
+        regionalPermissions = userRegionalPermissions(user)
+      })
 
       it('flags regional permissions the user has as true', () => {
-        expect(regionalPermissions['1'][READ_ACTIVITY_REPORTS]).toBeTruthy();
-      });
+        expect(regionalPermissions['1'][READ_ACTIVITY_REPORTS]).toBeTruthy()
+      })
 
       it('flags regional permissions the user does not have as false', () => {
-        expect(regionalPermissions['1'][READ_WRITE_ACTIVITY_REPORTS]).toBeFalsy();
-      });
+        expect(regionalPermissions['1'][READ_WRITE_ACTIVITY_REPORTS]).toBeFalsy()
+      })
 
       it('flags regional permissions for the correct region', () => {
-        expect(regionalPermissions['2'][READ_ACTIVITY_REPORTS]).toBeFalsy();
-      });
-    });
-  });
+        expect(regionalPermissions['2'][READ_ACTIVITY_REPORTS]).toBeFalsy()
+      })
+    })
+  })
 
   describe('userGlobalPermissions', () => {
     it('returns an all false object for a user with no scopes', () => {
-      const globalPermissions = userGlobalPermissions({});
-      expect(Object.keys(globalPermissions).length).not.toBe(0);
-      expect(_.every(globalPermissions, (p) => p === false)).toBeTruthy();
-    });
+      const globalPermissions = userGlobalPermissions({})
+      expect(Object.keys(globalPermissions).length).not.toBe(0)
+      expect(_.every(globalPermissions, (p) => p === false)).toBeTruthy()
+    })
 
     describe('for a user with permissions', () => {
       it('flags global permissions the user has as true', () => {
@@ -79,20 +74,20 @@ describe('PermissionHelpers', () => {
               regionId: 14,
             },
           ],
-        };
-        const globalPermissions = userGlobalPermissions(user);
-        expect(globalPermissions['2']).toBeTruthy();
-        expect(globalPermissions['6']).toBeTruthy();
-      });
+        }
+        const globalPermissions = userGlobalPermissions(user)
+        expect(globalPermissions['2']).toBeTruthy()
+        expect(globalPermissions['6']).toBeTruthy()
+      })
 
       it('flags global permissions the user does not have as false', () => {
         const user = {
           permissions: [],
-        };
-        const globalPermissions = userGlobalPermissions(user);
-        expect(globalPermissions['2']).toBeFalsy();
-        expect(globalPermissions['6']).toBeFalsy();
-      });
-    });
-  });
-});
+        }
+        const globalPermissions = userGlobalPermissions(user)
+        expect(globalPermissions['2']).toBeFalsy()
+        expect(globalPermissions['6']).toBeFalsy()
+      })
+    })
+  })
+})

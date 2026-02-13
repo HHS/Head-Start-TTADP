@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import {
-  FormGroup, Label, Fieldset, Radio,
-} from '@trussworks/react-uswds';
-import Select from 'react-select';
-import selectOptionsReset from './selectOptionsReset';
-import Req from './Req';
-import { getCourses } from '../fetchers/courses';
+import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { FormGroup, Label, Fieldset, Radio } from '@trussworks/react-uswds'
+import Select from 'react-select'
+import selectOptionsReset from './selectOptionsReset'
+import Req from './Req'
+import { getCourses } from '../fetchers/courses'
 
 export default function ObjectiveCourseSelect({
   error,
@@ -21,28 +19,26 @@ export default function ObjectiveCourseSelect({
   useCoursesInputName,
   className,
 }) {
-  const [options, setOptions] = useState([]);
+  const [options, setOptions] = useState([])
 
   useEffect(() => {
     async function fetchCourses() {
       try {
-        setOptions(await getCourses());
+        setOptions(await getCourses())
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn('Error fetching courses from the API', e);
+        console.warn('Error fetching courses from the API', e)
       }
     }
 
-    fetchCourses();
-  }, []);
+    fetchCourses()
+  }, [])
 
   return (
     <div className={`ttahub-ipd-course-select--container ${className}`}>
       <Fieldset>
         <legend>
-          Did you use an iPD course as a resource?
-          {' '}
-          <Req />
+          Did you use an iPD course as a resource? <Req />
         </legend>
         <Radio
           label="Yes"
@@ -57,8 +53,8 @@ export default function ObjectiveCourseSelect({
           id={`${useCoursesInputName}-no`}
           name={useCoursesInputName}
           onChange={() => {
-            onChangeUseIpdCourses(false);
-            onChange([]);
+            onChangeUseIpdCourses(false)
+            onChange([])
           }}
           checked={useIpdCourse === false}
           onBlur={onBlurUseIpdCourses}
@@ -70,9 +66,7 @@ export default function ObjectiveCourseSelect({
           <div className="display-flex">
             <Label htmlFor={inputName}>
               <>
-                iPD course name
-                {' '}
-                <Req />
+                iPD course name <Req />
               </>
             </Label>
           </div>
@@ -100,7 +94,7 @@ export default function ObjectiveCourseSelect({
         </div>
       </FormGroup>
     </div>
-  );
+  )
 }
 
 ObjectiveCourseSelect.propTypes = {
@@ -109,16 +103,18 @@ ObjectiveCourseSelect.propTypes = {
   isLoading: PropTypes.bool,
   onBlur: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
-  value: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
+  value: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })
+  ).isRequired,
   onChangeUseIpdCourses: PropTypes.func.isRequired,
   onBlurUseIpdCourses: PropTypes.func.isRequired,
   useIpdCourse: PropTypes.bool,
   useCoursesInputName: PropTypes.string,
   className: PropTypes.string,
-};
+}
 
 ObjectiveCourseSelect.defaultProps = {
   error: null,
@@ -127,4 +123,4 @@ ObjectiveCourseSelect.defaultProps = {
   inputName: 'ipdCourseSelect',
   isLoading: false,
   className: '',
-};
+}

@@ -1,30 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { Alert } from '@trussworks/react-uswds';
-import { getSheets } from '../../fetchers/ss';
+import React, { useEffect, useState } from 'react'
+import PropTypes from 'prop-types'
+import { Alert } from '@trussworks/react-uswds'
+import { getSheets } from '../../fetchers/ss'
 
 const SheetList = ({ onSelectSheet }) => {
-  const [sheets, setSheets] = useState();
-  const [error, setError] = useState();
+  const [sheets, setSheets] = useState()
+  const [error, setError] = useState()
 
   useEffect(() => {
     async function fetchSheets() {
-      setError(null);
+      setError(null)
       try {
-        const fetchedSheets = await getSheets();
-        setSheets(fetchedSheets);
+        const fetchedSheets = await getSheets()
+        setSheets(fetchedSheets)
       } catch (e) {
-        setError('Error fetching sheets');
-        setSheets([]);
+        setError('Error fetching sheets')
+        setSheets([])
       }
     }
     if (!sheets) {
-      fetchSheets();
+      fetchSheets()
     }
-  }, [sheets]);
+  }, [sheets])
 
   if (!sheets) {
-    return 'Loading sheets...';
+    return 'Loading sheets...'
   }
 
   return (
@@ -36,14 +36,10 @@ const SheetList = ({ onSelectSheet }) => {
         </Alert>
       )}
       <ul>
-        {(sheets && sheets.data) ? (
+        {sheets && sheets.data ? (
           sheets.data.map((sheet) => (
             <li key={sheet.id}>
-              <button
-                type="button"
-                className="flag-label"
-                onClick={() => onSelectSheet(sheet.permalink.split('/').pop())}
-              >
+              <button type="button" className="flag-label" onClick={() => onSelectSheet(sheet.permalink.split('/').pop())}>
                 <strong>{sheet.name}</strong>
               </button>
             </li>
@@ -53,11 +49,11 @@ const SheetList = ({ onSelectSheet }) => {
         )}
       </ul>
     </div>
-  );
-};
+  )
+}
 
 SheetList.propTypes = {
   onSelectSheet: PropTypes.func.isRequired,
-};
+}
 
-export default SheetList;
+export default SheetList

@@ -19,14 +19,10 @@ import {
   domainEmotionalSupportFilter,
   domainInstructionalSupportFilter,
   regionFilter,
-} from '../../components/filter/activityReportFilters';
-import {
-  createDateFilter,
-  goalNameFilter,
-  statusFilter,
-} from '../../components/filter/goalFilters';
+} from '../../components/filter/activityReportFilters'
+import { createDateFilter, goalNameFilter, statusFilter } from '../../components/filter/goalFilters'
 
-const QA_DASHBOARD_FILTER_KEY = 'qa-dashboard';
+const QA_DASHBOARD_FILTER_KEY = 'qa-dashboard'
 
 const QA_DASHBOARD_FILTER_CONFIG = [
   createDateFilter,
@@ -52,11 +48,8 @@ const QA_DASHBOARD_FILTER_CONFIG = [
   domainEmotionalSupportFilter,
   domainInstructionalSupportFilter,
   statusFilter,
-];
+]
 
-QA_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+QA_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display))
 
-export {
-  QA_DASHBOARD_FILTER_CONFIG,
-  QA_DASHBOARD_FILTER_KEY,
-};
+export { QA_DASHBOARD_FILTER_CONFIG, QA_DASHBOARD_FILTER_KEY }

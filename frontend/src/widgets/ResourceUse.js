@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import WidgetContainer from '../components/WidgetContainer';
-import ResourceUseSparklineGraph from './ResourceUseSparklineGraph';
+import React, { useState } from 'react'
+import PropTypes from 'prop-types'
+import HorizontalTableWidget from './HorizontalTableWidget'
+import WidgetContainer from '../components/WidgetContainer'
+import ResourceUseSparklineGraph from './ResourceUseSparklineGraph'
 
 function ResourceUse({ data, loading }) {
-  const [displayTable, setDisplayTable] = useState(false);
+  const [displayTable, setDisplayTable] = useState(false)
   const menuItems = [
     {
       label: `View as ${displayTable ? 'graph' : 'table'}`,
       onClick: () => setDisplayTable(!displayTable),
     },
-  ];
+  ]
 
   return (
     <WidgetContainer
@@ -26,19 +26,17 @@ function ResourceUse({ data, loading }) {
       titleMargin={{ bottom: 1 }}
     >
       {displayTable && (
-      <HorizontalTableWidget
-        id="resourceUse"
-        headers={data.headers}
-        data={data.resources.map((d) => (
-          { ...d, heading: d.title || d.heading, link: d.heading }))}
-        firstHeading="Resource URL"
-      />
+        <HorizontalTableWidget
+          id="resourceUse"
+          headers={data.headers}
+          data={data.resources.map((d) => ({ ...d, heading: d.title || d.heading, link: d.heading }))}
+          firstHeading="Resource URL"
+        />
       )}
 
-      {(!displayTable) && (<ResourceUseSparklineGraph data={data} />)}
-
+      {!displayTable && <ResourceUseSparklineGraph data={data} />}
     </WidgetContainer>
-  );
+  )
 }
 
 ResourceUse.propTypes = {
@@ -49,15 +47,15 @@ ResourceUse.propTypes = {
         PropTypes.shape({
           title: PropTypes.string,
           value: PropTypes.number,
-        }),
+        })
       ),
     }),
     PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
-};
+}
 ResourceUse.defaultProps = {
   data: { headers: [], resources: [] },
-};
+}
 
-export default ResourceUse;
+export default ResourceUse

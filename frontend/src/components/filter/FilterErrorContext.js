@@ -1,5 +1,5 @@
-import { createContext } from 'react';
+import { createContext } from 'react'
 
-const FilterErrorContext = createContext();
+const FilterErrorContext = createContext()
 
-export default FilterErrorContext;
+export default FilterErrorContext

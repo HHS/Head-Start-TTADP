@@ -1,15 +1,15 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import { ObjectiveSwitch } from '../StandardGoalCard';
-import UserContext from '../../../UserContext';
-import { OBJECTIVE_STATUS } from '../../../Constants';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import { Router } from 'react-router'
+import { createMemoryHistory } from 'history'
+import { GOAL_STATUS } from '@ttahub/common/src/constants'
+import { ObjectiveSwitch } from '../StandardGoalCard'
+import UserContext from '../../../UserContext'
+import { OBJECTIVE_STATUS } from '../../../Constants'
 
 describe('ObjectiveSwitch', () => {
-  const history = createMemoryHistory();
+  const history = createMemoryHistory()
 
   it('renders goal objectives', async () => {
     const objective = {
@@ -30,7 +30,7 @@ describe('ObjectiveSwitch', () => {
           endDate: '2020-01-01',
         },
       ],
-    };
+    }
     render(
       <UserContext.Provider value={{ user: {} }}>
         <Router history={history}>
@@ -43,11 +43,11 @@ describe('ObjectiveSwitch', () => {
             isMonitoringGoal={false}
           />
         </Router>
-      </UserContext.Provider>,
-    );
-    expect(screen.getByText('This is an objective')).toBeInTheDocument();
-    expect(screen.getByText('2020-01-01')).toBeInTheDocument();
-    const link = screen.getByText('r-123');
-    expect(link).toHaveAttribute('href', '/activity-reports/legacy/123');
-  });
-});
+      </UserContext.Provider>
+    )
+    expect(screen.getByText('This is an objective')).toBeInTheDocument()
+    expect(screen.getByText('2020-01-01')).toBeInTheDocument()
+    const link = screen.getByText('r-123')
+    expect(link).toHaveAttribute('href', '/activity-reports/legacy/123')
+  })
+})

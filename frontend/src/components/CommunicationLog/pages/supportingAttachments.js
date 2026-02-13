@@ -1,19 +1,16 @@
-import React from 'react';
-import {
-  Button,
-  Label,
-} from '@trussworks/react-uswds';
-import { pageComplete } from '../constants';
-import { deleteLogFile } from '../../../fetchers/File';
-import SupportingAttachmentsSessionOrCommunication from '../../SupportAttachmentsSessionOrCommunication';
-import IndicatesRequiredField from '../../IndicatesRequiredField';
+import React from 'react'
+import { Button, Label } from '@trussworks/react-uswds'
+import { pageComplete } from '../constants'
+import { deleteLogFile } from '../../../fetchers/File'
+import SupportingAttachmentsSessionOrCommunication from '../../SupportAttachmentsSessionOrCommunication'
+import IndicatesRequiredField from '../../IndicatesRequiredField'
 
-const path = 'supporting-attachments';
-const position = 2;
-const visitedField = `pageVisited-${path}`;
-const fields = [visitedField];
+const path = 'supporting-attachments'
+const position = 2
+const visitedField = `pageVisited-${path}`
+const fields = [visitedField]
 
-export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
+export const isPageComplete = (hookForm) => pageComplete(hookForm, fields)
 
 export default {
   position,
@@ -31,7 +28,7 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    Alert
   ) => (
     <>
       <IndicatesRequiredField />
@@ -49,11 +46,23 @@ export default {
         </SupportingAttachmentsSessionOrCommunication>
         <Alert />
         <div className="display-flex">
-          <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-          <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+          <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>
+            Save and continue
+          </Button>
+          <Button
+            id={`${path}-back`}
+            outline
+            type="button"
+            disabled={isAppLoading}
+            onClick={() => {
+              onUpdatePage(position - 1)
+            }}
+          >
+            Back
+          </Button>
         </div>
       </div>
     </>
   ),
   isPageComplete,
-};
+}

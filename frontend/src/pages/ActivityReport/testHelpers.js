@@ -1,28 +1,24 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable import/no-extraneous-dependencies */
 /* istanbul ignore file: tested elsewhere  */
-import React from 'react';
-import { Router } from 'react-router';
-import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
-import { createMemoryHistory } from 'history';
-import {
-  render,
-} from '@testing-library/react';
-import moment from 'moment';
-import ActivityReport from './index';
-import UserContext from '../../UserContext';
-import AppLoadingContext from '../../AppLoadingContext';
+import React from 'react'
+import { Router } from 'react-router'
+import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common'
+import { createMemoryHistory } from 'history'
+import { render } from '@testing-library/react'
+import moment from 'moment'
+import ActivityReport from './index'
+import UserContext from '../../UserContext'
+import AppLoadingContext from '../../AppLoadingContext'
 
-export const history = createMemoryHistory();
+export const history = createMemoryHistory()
 
 const user = {
   id: 1,
   name: 'Walter Burns',
   roles: [{ fullName: 'Reporter' }],
-  permissions: [
-    { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
-  ],
-};
+  permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+}
 
 export const formData = () => ({
   regionId: 1,
@@ -43,13 +39,15 @@ export const formData = () => ({
   // recipientIdForLookUp: 933,
   // name: 'Ability Connection Colorado, Inc. - 08CH012276  - EHS, HS',
   // activityRecipientId: 14826
-  activityRecipients: [{
-    value: 1,
-    activityRecipientId: 1,
-    label: 'Recipient Name 1',
-    name: 'Recipient Name 1',
-    recipientIdForLookUp: 1,
-  }],
+  activityRecipients: [
+    {
+      value: 1,
+      activityRecipientId: 1,
+      label: 'Recipient Name 1',
+      name: 'Recipient Name 1',
+      recipientIdForLookUp: 1,
+    },
+  ],
   numberOfParticipants: '1',
   activityRecipientType: 'recipient',
   collaborators: [],
@@ -71,52 +69,46 @@ export const formData = () => ({
   creatorNameWithRole: 'test',
   objectivesWithoutGoals: [],
   recipientGroup: null,
-});
+})
 
-export const ReportComponent = ({
-  id,
-  currentPage = 'activity-summary',
-  showLastUpdatedTime = null,
-  userId = 1,
-}) => (
+export const ReportComponent = ({ id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1 }) => (
   <Router history={history}>
-    <AppLoadingContext.Provider value={{
-      setIsAppLoading: jest.fn(),
-      setAppLoadingText: jest.fn(),
-    }}
+    <AppLoadingContext.Provider
+      value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
     >
       <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
         <ActivityReport
           match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
           location={{
-            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+            state: { showLastUpdatedTime },
+            hash: '',
+            pathname: '',
+            search: '',
           }}
           region={1}
         />
       </UserContext.Provider>
     </AppLoadingContext.Provider>
   </Router>
-);
+)
 
 export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
-  render(
-    <ReportComponent
-      id={id}
-      currentPage={currentPage}
-      showLastUpdatedTime={showLastUpdatedTime}
-      userId={userId}
-    />,
-  );
-};
+  render(<ReportComponent id={id} currentPage={currentPage} showLastUpdatedTime={showLastUpdatedTime} userId={userId} />)
+}
 
 export const recipients = {
-  grants: [{
-    id: 1,
-    name: 'Recipient Name',
-    grants: [{ activityRecipientId: 1, name: 'Recipient Name', number: 'number' }],
-  }],
+  grants: [
+    {
+      id: 1,
+      name: 'Recipient Name',
+      grants: [{ activityRecipientId: 1, name: 'Recipient Name', number: 'number' }],
+    },
+  ],
   otherEntities: [{ activityRecipientId: 1, name: 'otherEntity' }],
-};
+}
 
 export const mockGoalsAndObjectives = (isActivelyEdited = false) => [
   {
@@ -183,12 +175,8 @@ export const mockGoalsAndObjectives = (isActivelyEdited = false) => [
       },
     },
     objectives: [],
-    goalNumbers: [
-      'G-37499',
-    ],
-    goalIds: [
-      37499,
-    ],
+    goalNumbers: ['G-37499'],
+    goalIds: [37499],
     grants: [
       {
         id: 12539,
@@ -220,10 +208,8 @@ export const mockGoalsAndObjectives = (isActivelyEdited = false) => [
         goalId: 37499,
       },
     ],
-    grantIds: [
-      12539,
-    ],
+    grantIds: [12539],
     isNew: false,
     initialRttapa: null,
   },
-];
+]

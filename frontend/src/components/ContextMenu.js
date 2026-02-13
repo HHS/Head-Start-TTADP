@@ -5,23 +5,14 @@
   to that label. Be sure to pass in a description of the menu in the `label` prop. This prop
   is used as ellipsis' aria-label.
 */
-import React from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
-import colors from '../colors';
-import Menu from './Menu';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons'
+import colors from '../colors'
+import Menu from './Menu'
 
-function ContextMenu({
-  label,
-  menuItems,
-  backgroundColor,
-  left,
-  up,
-  menuWidthOffset,
-  menuHeightOffset,
-  fixed,
-}) {
+function ContextMenu({ label, menuItems, backgroundColor, left, up, menuWidthOffset, menuHeightOffset, fixed }) {
   return (
     <Menu
       label={label}
@@ -31,33 +22,35 @@ function ContextMenu({
       menuWidthOffset={menuWidthOffset}
       up={up}
       menuHeightOffset={menuHeightOffset}
-      buttonText={(
+      buttonText={
         <>
           <span className="usa-button--unstyled">Actions</span>
           <span>&nbsp;</span>
           <FontAwesomeIcon color={colors.textLink} icon={faChevronDown} />
         </>
-)}
+      }
       buttonTestId="context-menu-actions-btn"
       fixed={fixed}
     />
-  );
+  )
 }
 
 ContextMenu.propTypes = {
   label: PropTypes.string.isRequired,
-  menuItems: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    onClick: PropTypes.func,
-    id: PropTypes.string,
-  })).isRequired,
+  menuItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      onClick: PropTypes.func,
+      id: PropTypes.string,
+    })
+  ).isRequired,
   backgroundColor: PropTypes.string,
   left: PropTypes.bool,
   up: PropTypes.bool,
   menuHeightOffset: PropTypes.number,
   menuWidthOffset: PropTypes.number,
   fixed: PropTypes.bool,
-};
+}
 
 ContextMenu.defaultProps = {
   backgroundColor: 'white',
@@ -66,6 +59,6 @@ ContextMenu.defaultProps = {
   menuHeightOffset: 120,
   menuWidthOffset: 135,
   fixed: false,
-};
+}
 
-export default ContextMenu;
+export default ContextMenu

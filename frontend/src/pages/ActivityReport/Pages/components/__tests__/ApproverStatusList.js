@@ -1,31 +1,37 @@
 /* eslint-disable react/prop-types */
-import '@testing-library/jest-dom';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
-import React from 'react';
-import ApproverStatusList from '../ApproverStatusList';
+import '@testing-library/jest-dom'
+import { render, screen } from '@testing-library/react'
+import React from 'react'
+import ApproverStatusList from '../ApproverStatusList'
 
 describe('Approver Status List', () => {
   it('renders correctly with data', async () => {
     const approverStatus = [
       {
-        id: 1, status: 'approved', note: '', user: { id: 1, fullName: 'Test Approver1' },
+        id: 1,
+        status: 'approved',
+        note: '',
+        user: { id: 1, fullName: 'Test Approver1' },
       },
       {
-        id: 2, status: 'submitted', note: '', user: { id: 2, fullName: 'Test Approver2' },
+        id: 2,
+        status: 'submitted',
+        note: '',
+        user: { id: 2, fullName: 'Test Approver2' },
       },
       {
-        id: 3, status: 'needs_action', note: '', user: { id: 3, fullName: 'Test Approver3' },
+        id: 3,
+        status: 'needs_action',
+        note: '',
+        user: { id: 3, fullName: 'Test Approver3' },
       },
-    ];
+    ]
 
-    render(<ApproverStatusList approverStatus={approverStatus} />);
-    const items = screen.getAllByRole('listitem');
-    expect(items.length).toBe(3);
+    render(<ApproverStatusList approverStatus={approverStatus} />)
+    const items = screen.getAllByRole('listitem')
+    expect(items.length).toBe(3)
 
-    const statusValues = items.map((item) => item.textContent);
+    const statusValues = items.map((item) => item.textContent)
 
     expect(statusValues).toMatchInlineSnapshot(`
       Array [
@@ -33,16 +39,16 @@ describe('Approver Status List', () => {
         "Pending approval from Test Approver2",
         "Needs action from Test Approver3",
       ]
-    `);
+    `)
 
-    await expect(document.querySelector('svg')).toBeInTheDocument();
-  });
+    await expect(document.querySelector('svg')).toBeInTheDocument()
+  })
 
   it('renders correctly without data', async () => {
-    const approverStatus = [];
-    render(<ApproverStatusList approverStatus={approverStatus} />);
-    const list = screen.getByRole('list');
-    expect(list.childNodes.length).toBe(0);
-    await expect(document.querySelector('svg')).toBeNull();
-  });
-});
+    const approverStatus = []
+    render(<ApproverStatusList approverStatus={approverStatus} />)
+    const list = screen.getByRole('list')
+    expect(list.childNodes.length).toBe(0)
+    await expect(document.querySelector('svg')).toBeNull()
+  })
+})

@@ -1,18 +1,13 @@
-import React from 'react';
-import {
-  act,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
-import { GROUP_SHARED_WITH } from '@ttahub/common';
-import userEvent from '@testing-library/user-event';
-import fetchMock from 'fetch-mock';
-import { MemoryRouter } from 'react-router';
-import Groups from '../Groups';
-import UserContext from '../../../../UserContext';
-import AppLoadingContext from '../../../../AppLoadingContext';
-import MyGroupsProvider from '../../../../components/MyGroupsProvider';
+import React from 'react'
+import { act, render, screen, waitFor } from '@testing-library/react'
+import { GROUP_SHARED_WITH } from '@ttahub/common'
+import userEvent from '@testing-library/user-event'
+import fetchMock from 'fetch-mock'
+import { MemoryRouter } from 'react-router'
+import Groups from '../Groups'
+import UserContext from '../../../../UserContext'
+import AppLoadingContext from '../../../../AppLoadingContext'
+import MyGroupsProvider from '../../../../components/MyGroupsProvider'
 
 describe('Groups', () => {
   const renderGroups = () => {
@@ -25,16 +20,16 @@ describe('Groups', () => {
             </UserContext.Provider>
           </AppLoadingContext.Provider>
         </MyGroupsProvider>
-      </MemoryRouter>,
-    );
-  };
+      </MemoryRouter>
+    )
+  }
 
-  afterEach(() => fetchMock.restore());
+  afterEach(() => fetchMock.restore())
   it('renders without crashing', async () => {
-    fetchMock.get('/api/groups', []);
-    act(renderGroups);
-    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
-  });
+    fetchMock.get('/api/groups', [])
+    act(renderGroups)
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument()
+  })
 
   it('renders groups', async () => {
     fetchMock.get('/api/groups', [
@@ -79,37 +74,37 @@ describe('Groups', () => {
           id: 2,
         },
       },
-    ]);
+    ])
 
-    act(renderGroups);
+    act(renderGroups)
 
-    const group1 = await screen.findByText(/group1/i);
-    const group2 = await screen.findByText(/group2/i);
+    const group1 = await screen.findByText(/group1/i)
+    const group2 = await screen.findByText(/group2/i)
 
     // this is a public group from another user
-    const group3 = await screen.findByText(/group3/i);
+    const group3 = await screen.findByText(/group3/i)
 
-    expect(group1).toBeInTheDocument();
-    expect(group2).toBeInTheDocument();
-    expect(group3).toBeInTheDocument();
+    expect(group1).toBeInTheDocument()
+    expect(group2).toBeInTheDocument()
+    expect(group3).toBeInTheDocument()
 
     // group 1 should have the proper buttons for a user owned group
-    const group1row = group1.parentElement.parentElement;
-    expect(group1row.querySelector('a[href="/account/my-groups/1"]')).toBeInTheDocument();
-    const del = group1row.querySelector('button');
-    expect(del).toBeInTheDocument();
-    expect(del.getAttribute('aria-label')).toBe('delete group1');
+    const group1row = group1.parentElement.parentElement
+    expect(group1row.querySelector('a[href="/account/my-groups/1"]')).toBeInTheDocument()
+    const del = group1row.querySelector('button')
+    expect(del).toBeInTheDocument()
+    expect(del.getAttribute('aria-label')).toBe('delete group1')
 
     // group 3 should have the proper buttons for a public group
-    const group3row = group3.parentElement.parentElement;
-    const group3viewLink = group3row.querySelector('a[href="/account/group/3"]');
-    expect(group3viewLink).toBeInTheDocument();
-    expect(group3viewLink.getAttribute('aria-label')).toBe('view group3');
-    expect(group3row.querySelector('button')).toBeNull();
+    const group3row = group3.parentElement.parentElement
+    const group3viewLink = group3row.querySelector('a[href="/account/group/3"]')
+    expect(group3viewLink).toBeInTheDocument()
+    expect(group3viewLink.getAttribute('aria-label')).toBe('view group3')
+    expect(group3row.querySelector('button')).toBeNull()
 
     // and it shows the user's name
-    expect(screen.getByText(/Tim User/i)).toBeInTheDocument();
-  });
+    expect(screen.getByText(/Tim User/i)).toBeInTheDocument()
+  })
 
   it('renders only public groups when the user has not created one', async () => {
     fetchMock.get('/api/groups', [
@@ -126,15 +121,15 @@ describe('Groups', () => {
           name: 'Tim User',
         },
       },
-    ]);
+    ])
 
-    act(renderGroups);
+    act(renderGroups)
     // this is a public group from another user
-    const group3 = await screen.findByText(/group3/i);
-    expect(group3).toBeInTheDocument();
+    const group3 = await screen.findByText(/group3/i)
+    expect(group3).toBeInTheDocument()
 
-    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
-  });
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument()
+  })
 
   it('if a user is both coowner and shared only show the group in the coowners section', async () => {
     fetchMock.get('/api/groups', [
@@ -151,16 +146,16 @@ describe('Groups', () => {
           name: 'Tim User',
         },
       },
-    ]);
+    ])
 
-    act(renderGroups);
+    act(renderGroups)
 
-    const group3 = await screen.findByText(/I am a coowner and individual, but mostly a coowner/i);
-    expect(group3).toBeInTheDocument();
+    const group3 = await screen.findByText(/I am a coowner and individual, but mostly a coowner/i)
+    expect(group3).toBeInTheDocument()
 
-    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
-    expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
-  });
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument()
+    expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument()
+  })
 
   it('if a I am a coowner on a group that is public and shared with everyone only display it once', async () => {
     fetchMock.get('/api/groups', [
@@ -177,16 +172,16 @@ describe('Groups', () => {
           name: 'Tim User',
         },
       },
-    ]);
+    ])
 
-    act(renderGroups);
+    act(renderGroups)
 
-    const group3 = await screen.findByText(/This is public but I am a coowner/i);
-    expect(group3).toBeInTheDocument();
+    const group3 = await screen.findByText(/This is public but I am a coowner/i)
+    expect(group3).toBeInTheDocument()
 
-    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
-    expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
-  });
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument()
+    expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument()
+  })
 
   it('renders only user created groups when there are no public groups', async () => {
     fetchMock.get('/api/groups', [
@@ -204,67 +199,68 @@ describe('Groups', () => {
           id: 1,
         },
       },
-    ]);
+    ])
 
-    act(renderGroups);
+    act(renderGroups)
 
-    const group1 = await screen.findByText(/group1/i);
-    expect(group1).toBeInTheDocument();
+    const group1 = await screen.findByText(/group1/i)
+    expect(group1).toBeInTheDocument()
 
-    expect(screen.getByText(/you don't have any shared groups yet/i)).toBeInTheDocument();
-  });
+    expect(screen.getByText(/you don't have any shared groups yet/i)).toBeInTheDocument()
+  })
 
   it('handles fetch errors', async () => {
-    fetchMock.get('/api/groups', 500);
+    fetchMock.get('/api/groups', 500)
 
-    act(renderGroups);
+    act(renderGroups)
 
     await waitFor(() => {
-      expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument()
+    })
+  })
 
   it('you can delete a group', async () => {
-    fetchMock.get('/api/groups', [{
-      id: 1,
-      name: 'group1',
-      userId: 1,
-      isPublic: false,
-      groupCollaborators: [],
-      coOwners: [],
-      individuals: [],
-      sharedWith: null,
-      creator: {
-        name: 'Tim User',
+    fetchMock.get('/api/groups', [
+      {
         id: 1,
+        name: 'group1',
+        userId: 1,
+        isPublic: false,
+        groupCollaborators: [],
+        coOwners: [],
+        individuals: [],
+        sharedWith: null,
+        creator: {
+          name: 'Tim User',
+          id: 1,
+        },
       },
-    },
-    ]);
-    fetchMock.delete('/api/groups/1', {});
+    ])
+    fetchMock.delete('/api/groups/1', {})
 
-    act(renderGroups);
+    act(renderGroups)
 
     await waitFor(() => {
-      expect(screen.getByText(/group1/i)).toBeInTheDocument();
-    });
+      expect(screen.getByText(/group1/i)).toBeInTheDocument()
+    })
 
     act(() => {
-      userEvent.click(screen.getByText(/delete/i));
-    });
+      userEvent.click(screen.getByText(/delete/i))
+    })
 
     // it shows the modal
-    expect(await screen.findByText(/Are you sure you want to continue\?/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Are you sure you want to continue\?/i)).toBeInTheDocument()
 
-    const continueButton = screen.getByRole('button', { name: /continue/i });
+    const continueButton = screen.getByRole('button', { name: /continue/i })
 
-    expect(fetchMock.called('/api/groups/1', { method: 'delete' })).toBe(false);
+    expect(fetchMock.called('/api/groups/1', { method: 'delete' })).toBe(false)
 
     act(() => {
-      userEvent.click(continueButton);
-    });
+      userEvent.click(continueButton)
+    })
 
-    expect(fetchMock.called('/api/groups/1', { method: 'delete' })).toBe(true);
-  });
+    expect(fetchMock.called('/api/groups/1', { method: 'delete' })).toBe(true)
+  })
 
   it('handles delete errors', async () => {
     fetchMock.get('/api/groups', [
@@ -282,48 +278,48 @@ describe('Groups', () => {
           id: 1,
         },
       },
-    ]);
-    fetchMock.delete('/api/groups/1', 500);
+    ])
+    fetchMock.delete('/api/groups/1', 500)
 
-    act(renderGroups);
-
-    await waitFor(() => {
-      expect(screen.getByText(/group1/i)).toBeInTheDocument();
-    });
-
-    userEvent.click(screen.getByText(/delete/i));
-
-    expect(await screen.findByText(/Are you sure you want to continue\?/i)).toBeInTheDocument();
-
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-
-    act(() => {
-      userEvent.click(cancelButton);
-      userEvent.click(screen.getByText(/delete/i));
-    });
-
-    const continueButton = screen.getByRole('button', { name: /continue/i });
-
-    act(() => {
-      userEvent.click(continueButton);
-    });
+    act(renderGroups)
 
     await waitFor(() => {
-      expect(screen.getByText(/group1/i)).toBeInTheDocument();
-      expect(screen.getByText(/There was an error deleting your group/i)).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByText(/group1/i)).toBeInTheDocument()
+    })
+
+    userEvent.click(screen.getByText(/delete/i))
+
+    expect(await screen.findByText(/Are you sure you want to continue\?/i)).toBeInTheDocument()
+
+    const cancelButton = screen.getByRole('button', { name: /cancel/i })
+
+    act(() => {
+      userEvent.click(cancelButton)
+      userEvent.click(screen.getByText(/delete/i))
+    })
+
+    const continueButton = screen.getByRole('button', { name: /continue/i })
+
+    act(() => {
+      userEvent.click(continueButton)
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/group1/i)).toBeInTheDocument()
+      expect(screen.getByText(/There was an error deleting your group/i)).toBeInTheDocument()
+    })
+  })
 
   it('handles null response', async () => {
-    fetchMock.get('/api/groups', null);
+    fetchMock.get('/api/groups', null)
 
     act(() => {
-      renderGroups();
-    });
-    expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
-    expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
-    expect(screen.getByText(/you don't have any shared groups yet/i)).toBeInTheDocument();
-  });
+      renderGroups()
+    })
+    expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/you don't have any shared groups yet/i)).toBeInTheDocument()
+  })
 
   it('displays groups in creator section', async () => {
     fetchMock.get('/api/groups', [
@@ -351,22 +347,22 @@ describe('Groups', () => {
           id: 1,
         },
       },
-    ]);
+    ])
 
-    act(renderGroups);
+    act(renderGroups)
 
     await waitFor(() => {
-      expect(screen.queryAllByText(/you haven't created any groups yet/i).length).toBe(0);
-      expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
-      expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
-      expect(screen.getByText('group1')).toBeInTheDocument();
-      expect(screen.getByText('Creator User')).toBeInTheDocument();
-      expect(screen.getByText('Public')).toBeInTheDocument();
-      expect(screen.getByText('01/01/2024')).toBeInTheDocument();
-      expect(screen.getByText('Edit group')).toBeInTheDocument();
-      expect(screen.getByText('Delete group')).toBeInTheDocument();
-    });
-  });
+      expect(screen.queryAllByText(/you haven't created any groups yet/i).length).toBe(0)
+      expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument()
+      expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument()
+      expect(screen.getByText('group1')).toBeInTheDocument()
+      expect(screen.getByText('Creator User')).toBeInTheDocument()
+      expect(screen.getByText('Public')).toBeInTheDocument()
+      expect(screen.getByText('01/01/2024')).toBeInTheDocument()
+      expect(screen.getByText('Edit group')).toBeInTheDocument()
+      expect(screen.getByText('Delete group')).toBeInTheDocument()
+    })
+  })
 
   it('displays groups in co-owner section', async () => {
     fetchMock.get('/api/groups', [
@@ -394,22 +390,22 @@ describe('Groups', () => {
           id: 4,
         },
       },
-    ]);
+    ])
 
-    act(renderGroups);
+    act(renderGroups)
 
     await waitFor(() => {
-      expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
-      expect(screen.queryAllByText(/you haven't been added as a co-owner yet/i).length).toBe(0);
-      expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
-      expect(screen.getByText('group1')).toBeInTheDocument();
-      expect(screen.getByText('Creator User')).toBeInTheDocument();
-      expect(screen.getByText('Individuals')).toBeInTheDocument();
-      expect(screen.getByText('01/01/2024')).toBeInTheDocument();
-      expect(screen.getByText('Edit group')).toBeInTheDocument();
-      expect(screen.getByText('Delete group')).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument()
+      expect(screen.queryAllByText(/you haven't been added as a co-owner yet/i).length).toBe(0)
+      expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument()
+      expect(screen.getByText('group1')).toBeInTheDocument()
+      expect(screen.getByText('Creator User')).toBeInTheDocument()
+      expect(screen.getByText('Individuals')).toBeInTheDocument()
+      expect(screen.getByText('01/01/2024')).toBeInTheDocument()
+      expect(screen.getByText('Edit group')).toBeInTheDocument()
+      expect(screen.getByText('Delete group')).toBeInTheDocument()
+    })
+  })
 
   it('displays groups in shared section', async () => {
     fetchMock.get('/api/groups', [
@@ -475,36 +471,36 @@ describe('Groups', () => {
           id: 15,
         },
       },
-    ]);
+    ])
 
-    act(renderGroups);
+    act(renderGroups)
 
     await waitFor(() => {
-      expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
-      expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
-      expect(screen.queryAllByText(/You don't have any shared groups yet/i).length).toBe(0);
+      expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument()
+      expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument()
+      expect(screen.queryAllByText(/You don't have any shared groups yet/i).length).toBe(0)
 
       // Shared collaborator group.
-      expect(screen.getByText('group1')).toBeInTheDocument();
-      expect(screen.getByText('Creator User')).toBeInTheDocument();
-      expect(screen.getByText('Private')).toBeInTheDocument();
-      expect(screen.getByText('01/01/2024')).toBeInTheDocument();
-      expect(screen.queryAllByText('Edit group').length).toBe(0);
-      expect(screen.queryAllByText('Delete group').length).toBe(0);
+      expect(screen.getByText('group1')).toBeInTheDocument()
+      expect(screen.getByText('Creator User')).toBeInTheDocument()
+      expect(screen.getByText('Private')).toBeInTheDocument()
+      expect(screen.getByText('01/01/2024')).toBeInTheDocument()
+      expect(screen.queryAllByText('Edit group').length).toBe(0)
+      expect(screen.queryAllByText('Delete group').length).toBe(0)
 
       // Is public group.
-      expect(screen.getByText('group2')).toBeInTheDocument();
-      expect(screen.getByText('Creator User2')).toBeInTheDocument();
-      expect(screen.getByText('Public')).toBeInTheDocument();
-      expect(screen.getByText('01/02/2024')).toBeInTheDocument();
-      expect(screen.queryAllByText('Edit group').length).toBe(0);
-      expect(screen.queryAllByText('Delete group').length).toBe(0);
+      expect(screen.getByText('group2')).toBeInTheDocument()
+      expect(screen.getByText('Creator User2')).toBeInTheDocument()
+      expect(screen.getByText('Public')).toBeInTheDocument()
+      expect(screen.getByText('01/02/2024')).toBeInTheDocument()
+      expect(screen.queryAllByText('Edit group').length).toBe(0)
+      expect(screen.queryAllByText('Delete group').length).toBe(0)
 
       // Public Group with a different shared collaborator.
-      expect(screen.queryAllByText('group3').length).toBe(0);
+      expect(screen.queryAllByText('group3').length).toBe(0)
 
       // One view for each row.
-      expect(screen.queryAllByText('View group').length).toBe(2);
-    });
-  });
-});
+      expect(screen.queryAllByText('View group').length).toBe(2)
+    })
+  })
+})

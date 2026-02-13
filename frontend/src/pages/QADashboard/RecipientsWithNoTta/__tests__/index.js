@@ -1,28 +1,29 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import fetchMock from 'fetch-mock';
-import RecipientsWithNoTta from '../index';
-import UserContext from '../../../../UserContext';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { Router } from 'react-router-dom'
+import { createMemoryHistory } from 'history'
+import { SCOPE_IDS } from '@ttahub/common'
+import { render, screen, act, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import fetchMock from 'fetch-mock'
+import RecipientsWithNoTta from '../index'
+import UserContext from '../../../../UserContext'
 
-const history = createMemoryHistory();
+const history = createMemoryHistory()
 
 const defaultUser = {
   homeRegionId: 14,
-  permissions: [{
-    regionId: 1,
-    scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-  }, {
-    regionId: 2,
-    scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-  }],
-};
+  permissions: [
+    {
+      regionId: 1,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    },
+    {
+      regionId: 2,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    },
+  ],
+}
 
 const RecipientsWithNoTtaDataEmpty = [
   {
@@ -41,7 +42,7 @@ const RecipientsWithNoTtaDataEmpty = [
     records: '0',
     data: [],
   },
-];
+]
 
 const RecipientsWithNoTtaDataSSdi = [
   {
@@ -79,7 +80,7 @@ const RecipientsWithNoTtaDataSSdi = [
       },
     ],
   },
-];
+]
 
 const renderRecipientsWithNoTta = (user = defaultUser) => {
   render(
@@ -87,80 +88,94 @@ const renderRecipientsWithNoTta = (user = defaultUser) => {
       <Router history={history}>
         <RecipientsWithNoTta />
       </Router>
-    </UserContext.Provider>,
-  );
-};
+    </UserContext.Provider>
+  )
+}
 
 describe('Recipients With Ohs Standard Fei Goal', () => {
-  afterEach(() => fetchMock.restore());
+  afterEach(() => fetchMock.restore())
 
   it('renders correctly without data', async () => {
-    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page', RecipientsWithNoTtaDataEmpty);
-    renderRecipientsWithNoTta();
-    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
-  });
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page',
+      RecipientsWithNoTtaDataEmpty
+    )
+    renderRecipientsWithNoTta()
+    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2)
+    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument()
+  })
 
   it('renders correctly with data', async () => {
-    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page', RecipientsWithNoTtaDataSSdi);
-    renderRecipientsWithNoTta();
-    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page',
+      RecipientsWithNoTtaDataSSdi
+    )
+    renderRecipientsWithNoTta()
+    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2)
+    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument()
 
     await act(async () => {
       await waitFor(async () => {
-        expect(screen.getByText(/test recipient 1/i)).toBeInTheDocument();
-        expect(screen.getByText(/test recipient 2/i)).toBeInTheDocument();
+        expect(screen.getByText(/test recipient 1/i)).toBeInTheDocument()
+        expect(screen.getByText(/test recipient 2/i)).toBeInTheDocument()
 
-        expect(screen.getByText(/date of last tta/i)).toBeInTheDocument();
-        expect(screen.getByText(/days since last tta/i)).toBeInTheDocument();
+        expect(screen.getByText(/date of last tta/i)).toBeInTheDocument()
+        expect(screen.getByText(/days since last tta/i)).toBeInTheDocument()
 
-        expect(screen.getByText('09/01/2021')).toBeInTheDocument();
-        expect(screen.getByText('09/02/2021')).toBeInTheDocument();
+        expect(screen.getByText('09/01/2021')).toBeInTheDocument()
+        expect(screen.getByText('09/02/2021')).toBeInTheDocument()
 
-        expect(screen.getByRole('cell', { name: /90/i })).toBeInTheDocument();
-        expect(screen.getByRole('cell', { name: /91/i })).toBeInTheDocument();
-      });
-    });
-  });
+        expect(screen.getByRole('cell', { name: /90/i })).toBeInTheDocument()
+        expect(screen.getByRole('cell', { name: /91/i })).toBeInTheDocument()
+      })
+    })
+  })
 
   it('handles a user with only one region', async () => {
-    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page', RecipientsWithNoTtaDataSSdi);
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page',
+      RecipientsWithNoTtaDataSSdi
+    )
     const u = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
-    };
-    renderRecipientsWithNoTta(u);
-    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
-    const filters = await screen.findByRole('button', { name: /open filters for this page/i });
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
+    }
+    renderRecipientsWithNoTta(u)
+    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2)
+    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument()
+    const filters = await screen.findByRole('button', { name: /open filters for this page/i })
 
     act(() => {
-      userEvent.click(filters);
-    });
+      userEvent.click(filters)
+    })
 
-    const select = await screen.findByLabelText(/select a filter/i);
+    const select = await screen.findByLabelText(/select a filter/i)
 
     // expect select not to have "region" as an option
-    const option = select.querySelector('option[value="region"]');
-    expect(option).toBeNull();
-  });
+    const option = select.querySelector('option[value="region"]')
+    expect(option).toBeNull()
+  })
 
   it('correctly handles an error on fetch', async () => {
-    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page', 500);
-    renderRecipientsWithNoTta();
-    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page',
+      500
+    )
+    renderRecipientsWithNoTta()
+    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2)
+    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument()
 
     await act(async () => {
       await waitFor(async () => {
-        expect(screen.getByText(/unable to fetch qa data/i)).toBeInTheDocument();
-      });
-    });
-  });
+        expect(screen.getByText(/unable to fetch qa data/i)).toBeInTheDocument()
+      })
+    })
+  })
 
   it('displays a dash when there is no date or days since last tta', async () => {
     const data = [
@@ -187,21 +202,24 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
           },
         ],
       },
-    ];
-    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page', data);
-    renderRecipientsWithNoTta();
-    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+    ]
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page',
+      data
+    )
+    renderRecipientsWithNoTta()
+    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2)
+    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument()
 
     await act(async () => {
       await waitFor(async () => {
-        expect(screen.getByText(/test recipient 1/i)).toBeInTheDocument();
-        expect(screen.getByText(/date of last tta/i)).toBeInTheDocument();
-        expect(screen.getByText(/days since last tta/i)).toBeInTheDocument();
-        expect(screen.queryAllByText('-').length).toBe(2);
-      });
-    });
-  });
+        expect(screen.getByText(/test recipient 1/i)).toBeInTheDocument()
+        expect(screen.getByText(/date of last tta/i)).toBeInTheDocument()
+        expect(screen.getByText(/days since last tta/i)).toBeInTheDocument()
+        expect(screen.queryAllByText('-').length).toBe(2)
+      })
+    })
+  })
 
   it('displays a dash when the last tta date is invalid or days since is negative', async () => {
     const data = [
@@ -228,16 +246,19 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
           },
         ],
       },
-    ];
-    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page', data);
-    renderRecipientsWithNoTta();
-    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
+    ]
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page',
+      data
+    )
+    renderRecipientsWithNoTta()
+    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2)
 
     await act(async () => {
       await waitFor(async () => {
-        expect(screen.getByText(/test recipient invalid/i)).toBeInTheDocument();
-        expect(screen.queryAllByText('-').length).toBe(2);
-      });
-    });
-  });
-});
+        expect(screen.getByText(/test recipient invalid/i)).toBeInTheDocument()
+        expect(screen.queryAllByText('-').length).toBe(2)
+      })
+    })
+  })
+})

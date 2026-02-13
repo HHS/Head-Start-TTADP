@@ -1,29 +1,24 @@
-import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common';
-import UserContext from '../../../UserContext';
-import { canChangeGoalStatus } from '../../../permissions';
-import STATUSES from './StatusDropdownStatuses';
-import StatusDropdown from './StatusDropdown';
+import React, { useContext, useMemo } from 'react'
+import PropTypes from 'prop-types'
+import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common'
+import UserContext from '../../../UserContext'
+import { canChangeGoalStatus } from '../../../permissions'
+import STATUSES from './StatusDropdownStatuses'
+import StatusDropdown from './StatusDropdown'
 
-export default function GoalStatusDropdown({
-  goalId,
-  status,
-  onUpdateGoalStatus,
-  previousStatus,
-  regionId,
-  showReadOnlyStatus,
-  className,
-}) {
-  const { user } = useContext(UserContext);
-  const { icon, display } = STATUSES[status] || STATUSES['Needs Status'];
+export default function GoalStatusDropdown({ goalId, status, onUpdateGoalStatus, previousStatus, regionId, showReadOnlyStatus, className }) {
+  const { user } = useContext(UserContext)
+  const { icon, display } = STATUSES[status] || STATUSES['Needs Status']
 
-  const isReadOnly = useMemo(() => ((
-    status === GOAL_STATUS.DRAFT
-    || status === 'Completed'
-    || status === GOAL_STATUS.CLOSED)
-    || !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE))
-    || showReadOnlyStatus), [status, user, regionId, showReadOnlyStatus]);
+  const isReadOnly = useMemo(
+    () =>
+      status === GOAL_STATUS.DRAFT ||
+      status === 'Completed' ||
+      status === GOAL_STATUS.CLOSED ||
+      !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE)) ||
+      showReadOnlyStatus,
+    [status, user, regionId, showReadOnlyStatus]
+  )
 
   if (isReadOnly) {
     return (
@@ -31,7 +26,7 @@ export default function GoalStatusDropdown({
         {icon}
         {display}
       </div>
-    );
+    )
   }
 
   const getOptions = () => {
@@ -45,10 +40,10 @@ export default function GoalStatusDropdown({
             label: GOAL_STATUS.CLOSED,
             onClick: () => onUpdateGoalStatus(GOAL_STATUS.CLOSED),
           },
-        ];
+        ]
       }
 
-      const statusSuspendedFromDisplay = STATUSES[previousStatus].display;
+      const statusSuspendedFromDisplay = STATUSES[previousStatus].display
       return [
         {
           label: statusSuspendedFromDisplay,
@@ -58,7 +53,7 @@ export default function GoalStatusDropdown({
           label: GOAL_STATUS.CLOSED,
           onClick: () => onUpdateGoalStatus(GOAL_STATUS.CLOSED),
         },
-      ];
+      ]
     }
 
     if (status === GOAL_STATUS.IN_PROGRESS || status === GOAL_STATUS.NOT_STARTED) {
@@ -71,7 +66,7 @@ export default function GoalStatusDropdown({
           label: GOAL_STATUS.SUSPENDED,
           onClick: () => onUpdateGoalStatus(GOAL_STATUS.SUSPENDED),
         },
-      ];
+      ]
     }
 
     return [
@@ -87,10 +82,10 @@ export default function GoalStatusDropdown({
         label: GOAL_STATUS.SUSPENDED,
         onClick: () => onUpdateGoalStatus(GOAL_STATUS.SUSPENDED),
       },
-    ];
-  };
+    ]
+  }
 
-  const options = getOptions();
+  const options = getOptions()
 
   return (
     <StatusDropdown
@@ -101,7 +96,7 @@ export default function GoalStatusDropdown({
       display={display}
       buttonTestId="goal-status-dropdown"
     />
-  );
+  )
 }
 
 GoalStatusDropdown.propTypes = {
@@ -112,11 +107,11 @@ GoalStatusDropdown.propTypes = {
   regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   showReadOnlyStatus: PropTypes.bool,
   className: PropTypes.string,
-};
+}
 
 GoalStatusDropdown.defaultProps = {
   status: '',
   previousStatus: null,
   showReadOnlyStatus: false,
   className: '',
-};
+}

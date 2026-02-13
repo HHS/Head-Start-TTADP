@@ -1,15 +1,10 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from 'react';
-import PropTypes from 'prop-types';
-import './DropdownMenu.css';
-import triangleDown from '../images/triange_down.png';
-import useOnClickOutside from '../hooks/useOnOutsideClick';
+import React, { useEffect, useState, useRef, useCallback } from 'react'
+import PropTypes from 'prop-types'
+import './DropdownMenu.css'
+import triangleDown from '../images/triange_down.png'
+import useOnClickOutside from '../hooks/useOnOutsideClick'
 
-const ESCAPE_KEY_CODE = 27;
+const ESCAPE_KEY_CODE = 27
 
 /**
  *
@@ -44,28 +39,31 @@ export default function DropdownMenu({
   showApplyButton,
   direction,
 }) {
-  const [menuIsOpen, setMenuIsOpen] = useState(false);
-  const menuContents = useRef();
-  const triggerRef = useRef();
+  const [menuIsOpen, setMenuIsOpen] = useState(false)
+  const menuContents = useRef()
+  const triggerRef = useRef()
 
   useOnClickOutside(
     useCallback(() => setMenuIsOpen(false), []),
-    [menuContents, triggerRef],
-  );
+    [menuContents, triggerRef]
+  )
 
-  const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) {
-      setMenuIsOpen(false);
-    }
-  }, [setMenuIsOpen]);
+  const onEscape = useCallback(
+    (event) => {
+      if (event.keyCode === ESCAPE_KEY_CODE) {
+        setMenuIsOpen(false)
+      }
+    },
+    [setMenuIsOpen]
+  )
 
   useEffect(() => {
-    document.addEventListener('keydown', onEscape, false);
+    document.addEventListener('keydown', onEscape, false)
     return () => {
-      document.removeEventListener('keydown', onEscape, false);
-      setMenuIsOpen(false);
-    };
-  }, [onEscape]);
+      document.removeEventListener('keydown', onEscape, false)
+      setMenuIsOpen(false)
+    }
+  }, [onEscape])
   /**
    * Close the menu on blur, with some extenuating circumstance
    *
@@ -73,34 +71,34 @@ export default function DropdownMenu({
    * @returns void
    */
   const onBlur = (e) => {
-    if ((e.relatedTarget && !menuContents.current.contains(e.relatedTarget)) && canBlur(e)) {
-      setMenuIsOpen(false);
+    if (e.relatedTarget && !menuContents.current.contains(e.relatedTarget) && canBlur(e)) {
+      setMenuIsOpen(false)
     }
-  };
+  }
 
   const onClick = () => {
     if (!menuIsOpen) {
-      onOpen();
+      onOpen()
     }
 
-    setMenuIsOpen(!menuIsOpen);
-  };
+    setMenuIsOpen(!menuIsOpen)
+  }
 
   const onApplyClick = () => {
     if (onApply()) {
-      setMenuIsOpen(false);
+      setMenuIsOpen(false)
     }
-  };
+  }
 
   const onCancelClick = () => {
-    onCancel();
-    setMenuIsOpen(false);
-  };
+    onCancel()
+    setMenuIsOpen(false)
+  }
 
-  const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
+  const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button'
 
   // needs position relative for the menu to work properly
-  const classNames = `${className} smart-hub--dropdown-menu position-relative`;
+  const classNames = `${className} smart-hub--dropdown-menu position-relative`
 
   // just to make things a little less verbose below
   function ApplyButton() {
@@ -115,7 +113,7 @@ export default function DropdownMenu({
       >
         {applyButtonText}
       </button>
-    );
+    )
   }
 
   return (
@@ -141,10 +139,8 @@ export default function DropdownMenu({
           ref={triggerRef}
           data-html2canvas-ignore
         >
-          <span>
-            {buttonText}
-          </span>
-          {!styleAsSelect && <img className="margin-left-1" src={triangleDown} alt="" aria-hidden="true" /> }
+          <span>{buttonText}</span>
+          {!styleAsSelect && <img className="margin-left-1" src={triangleDown} alt="" aria-hidden="true" />}
         </button>
       )}
 
@@ -158,34 +154,32 @@ export default function DropdownMenu({
         {children}
         {showApplyButton && (
           <>
-            { showCancel
-              ? (
-                <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
-                  <AlternateActionButton />
-                  <div>
-                    <button
-                      onClick={onCancelClick}
-                      type="button"
-                      className="usa-button usa-button--unstyled margin-right-2"
-                      aria-label={cancelAriaLabel}
-                    >
-                      Cancel
-                    </button>
-                    <ApplyButton />
-                  </div>
-                </div>
-              )
-              : (
-                <div className="margin-2 display-flex flex-justify">
-                  <AlternateActionButton />
+            {showCancel ? (
+              <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
+                <AlternateActionButton />
+                <div>
+                  <button
+                    onClick={onCancelClick}
+                    type="button"
+                    className="usa-button usa-button--unstyled margin-right-2"
+                    aria-label={cancelAriaLabel}
+                  >
+                    Cancel
+                  </button>
                   <ApplyButton />
                 </div>
-              ) }
+              </div>
+            ) : (
+              <div className="margin-2 display-flex flex-justify">
+                <AlternateActionButton />
+                <ApplyButton />
+              </div>
+            )}
           </>
         )}
       </div>
     </div>
-  );
+  )
 }
 
 DropdownMenu.propTypes = {
@@ -205,19 +199,16 @@ DropdownMenu.propTypes = {
   showCancel: PropTypes.bool,
   onCancel: PropTypes.func,
   cancelAriaLabel: PropTypes.string,
-  forwardedRef: PropTypes.oneOfType([
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
-    PropTypes.func,
-  ]),
+  forwardedRef: PropTypes.oneOfType([PropTypes.shape({ current: PropTypes.instanceOf(Element) }), PropTypes.func]),
   AlternateActionButton: PropTypes.func,
   Trigger: PropTypes.func,
   onOpen: PropTypes.func,
   showApplyButton: PropTypes.bool,
   direction: PropTypes.oneOf(['left', 'right']),
-};
+}
 
 function DefaultAlternateActionButton() {
-  return <span />;
+  return <span />
 }
 
 DropdownMenu.defaultProps = {
@@ -237,4 +228,4 @@ DropdownMenu.defaultProps = {
   onOpen: () => {},
   showApplyButton: true,
   direction: 'right',
-};
+}

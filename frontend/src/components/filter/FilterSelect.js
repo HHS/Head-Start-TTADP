@@ -1,37 +1,26 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import Select from 'react-select';
-import './FilterSelect.css';
+import React from 'react'
+import PropTypes from 'prop-types'
+import Select from 'react-select'
+import './FilterSelect.css'
 
-export default function FilterSelect({
-  onApply,
-  labelText,
-  inputId,
-  options,
-  selectedValues,
-  mapByValue,
-  labelProp,
-  valueProp,
-}) {
-  const key = mapByValue ? valueProp : labelProp;
+export default function FilterSelect({ onApply, labelText, inputId, options, selectedValues, mapByValue, labelProp, valueProp }) {
+  const key = mapByValue ? valueProp : labelProp
 
-  const value = [selectedValues].flat().map((selection) => (
-    options.find((option) => option[key] === selection)
-  ));
+  const value = [selectedValues].flat().map((selection) => options.find((option) => option[key] === selection))
 
   const styles = {
     container: (provided, state) => {
       // To match the focus indicator provided by uswds
-      const outline = state.isFocused ? '0.25rem solid #2491ff' : '';
+      const outline = state.isFocused ? '0.25rem solid #2491ff' : ''
       return {
         ...provided,
         outline,
         height: 'auto',
         padding: 0,
-      };
+      }
     },
     control: (provided, state) => {
-      const selected = state.getValue();
+      const selected = state.getValue()
       return {
         ...provided,
         background: state.isFocused || selected.length ? 'white' : 'transparent',
@@ -42,7 +31,7 @@ export default function FilterSelect({
         opacity: state.isDisabled ? '0.7' : '1',
         overflow: state.isFocused ? 'visible' : 'hidden',
         maxHeight: state.isFocused ? 'auto' : '40px',
-      };
+      }
     },
     option: (provided, { isDisabled }) => ({
       ...provided,
@@ -72,59 +61,52 @@ export default function FilterSelect({
       right: 0,
       top: 0,
     }),
-  };
+  }
 
   const onChange = (selected) => {
-    onApply(selected.map((selection) => selection[key]));
-  };
+    onApply(selected.map((selection) => selection[key]))
+  }
 
-  const showTruncated = selectedValues.length > 1;
+  const showTruncated = selectedValues.length > 1
 
-  let coverAll = () => <></>;
+  let coverAll = () => <></>
 
   if (showTruncated) {
     coverAll = () => {
-      let charCount = 0;
-      let andMoreShown = false;
+      let charCount = 0
+      let andMoreShown = false
 
       const truncated = [selectedValues].flat().map((selection, index) => {
         // if the "and x more tags" message has been shown
         if (andMoreShown) {
-          return null;
+          return null
         }
 
         // keep a running total of the characters, but we always have to show the first one
         if (index === 0 || (charCount + selection.length < 18 && index < 3)) {
-          const label = selection.length > 18
-            ? `${selection.slice(0, 9)}...${selection.slice(-5)}` : selection;
+          const label = selection.length > 18 ? `${selection.slice(0, 9)}...${selection.slice(-5)}` : selection
 
-          charCount += label.length;
+          charCount += label.length
 
           return (
-            <span key={selection} className="ttahub-filter-select--label flex-align-self-center">{label}</span>
-          );
+            <span key={selection} className="ttahub-filter-select--label flex-align-self-center">
+              {label}
+            </span>
+          )
         }
 
-        andMoreShown = true;
+        andMoreShown = true
 
         return (
           <span key={selection} className="ttahub-filter-select--label flex-align-self-center">
-            +
-            {' '}
-            {selectedValues.length - index}
-            {' '}
-            more tag
+            + {selectedValues.length - index} more tag
             {selectedValues.length - index > 1 ? 's' : ''}
           </span>
-        );
-      });
+        )
+      })
 
-      return andMoreShown ? (
-        <div className="ttahub-filter-select--cover-all position-absolute padding-x-1">
-          {truncated}
-        </div>
-      ) : <></>;
-    };
+      return andMoreShown ? <div className="ttahub-filter-select--cover-all position-absolute padding-x-1">{truncated}</div> : <></>
+    }
   }
 
   return (
@@ -150,16 +132,13 @@ export default function FilterSelect({
       />
       {coverAll()}
     </div>
-  );
+  )
 }
 
 const option = PropTypes.shape({
   label: PropTypes.string,
-  value: PropTypes.oneOfType([
-    PropTypes.number,
-    PropTypes.string,
-  ]),
-});
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+})
 
 FilterSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
@@ -170,10 +149,10 @@ FilterSelect.propTypes = {
   mapByValue: PropTypes.bool,
   labelProp: PropTypes.string,
   valueProp: PropTypes.string,
-};
+}
 
 FilterSelect.defaultProps = {
   mapByValue: false,
   labelProp: 'label',
   valueProp: 'value',
-};
+}

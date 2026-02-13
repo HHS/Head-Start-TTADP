@@ -1,11 +1,9 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Tag as TrussTag } from '@trussworks/react-uswds';
-import classnames from 'classnames';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Tag as TrussTag } from '@trussworks/react-uswds'
+import classnames from 'classnames'
 
-export default function Tag({
-  children, className, clickable, handleClick,
-}) {
+export default function Tag({ children, className, clickable, handleClick }) {
   const tagClass = classnames(
     className,
     'bg-base-lightest',
@@ -15,13 +13,13 @@ export default function Tag({
     'display-inline-flex',
     'text-normal',
     'text-center',
-    { 'text-underline': clickable },
-  );
+    { 'text-underline': clickable }
+  )
   return (
     <TrussTag className={tagClass} onClick={handleClick}>
       {children}
     </TrussTag>
-  );
+  )
 }
 
 Tag.propTypes = {
@@ -29,9 +27,9 @@ Tag.propTypes = {
   className: PropTypes.string,
   clickable: PropTypes.bool,
   handleClick: PropTypes.func,
-};
+}
 Tag.defaultProps = {
   className: '',
   clickable: false,
   handleClick: undefined,
-};
+}

@@ -1,14 +1,14 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import { Router } from 'react-router-dom';
-import fetchMock from 'fetch-mock';
-import { createMemoryHistory } from 'history';
-import { REPORT_STATUSES } from '@ttahub/common';
-import AppLoadingContext from '../../../AppLoadingContext';
-import ViewCollabReport from '..';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen, act } from '@testing-library/react'
+import { Router } from 'react-router-dom'
+import fetchMock from 'fetch-mock'
+import { createMemoryHistory } from 'history'
+import { REPORT_STATUSES } from '@ttahub/common'
+import AppLoadingContext from '../../../AppLoadingContext'
+import ViewCollabReport from '..'
 
-const history = createMemoryHistory();
+const history = createMemoryHistory()
 
 const mockReport = {
   id: 123,
@@ -45,12 +45,8 @@ const mockReport = {
   createdAt: '2025-01-10T10:00:00.000Z',
   submittedAt: '2025-01-20T15:30:00.000Z',
   approvedAt: '2025-01-25T09:15:00.000Z',
-  activityStates: [
-    { activityStateCode: 'CA' },
-  ],
-  reportReasons: [
-    { reasonId: 'new-staff' },
-  ],
+  activityStates: [{ activityStateCode: 'CA' }],
+  reportReasons: [{ reasonId: 'new-staff' }],
   reportGoals: [
     {
       goalTemplate: {
@@ -58,10 +54,7 @@ const mockReport = {
       },
     },
   ],
-  dataUsed: [
-    { collabReportDatum: 'coaching-data' },
-    { collabReportDatum: 'other' },
-  ],
+  dataUsed: [{ collabReportDatum: 'coaching-data' }, { collabReportDatum: 'other' }],
   steps: [
     {
       collabStepDetail: 'First next step',
@@ -72,113 +65,117 @@ const mockReport = {
       collabStepCompleteDate: '03/01/2025',
     },
   ],
-};
+}
 
 const renderViewCollabReport = (reportId = '123') => {
   const match = {
     params: { collabReportId: reportId },
     path: '/',
     url: '',
-  };
+  }
 
   return render(
     <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
       <Router history={history}>
         <ViewCollabReport match={match} />
       </Router>
-    </AppLoadingContext.Provider>,
-  );
-};
+    </AppLoadingContext.Provider>
+  )
+}
 
 describe('ViewCollabReport', () => {
   beforeEach(() => {
-    fetchMock.get('/api/collaboration-reports/123', mockReport);
-  });
+    fetchMock.get('/api/collaboration-reports/123', mockReport)
+  })
 
   afterEach(() => {
-    fetchMock.restore();
-    jest.clearAllMocks();
-  });
+    fetchMock.restore()
+    jest.clearAllMocks()
+  })
 
   it('renders the page title without display ID when not provided', async () => {
-    fetchMock.restore();
-    fetchMock.get('/api/collaboration-reports/123', { ...mockReport, displayId: null });
+    fetchMock.restore()
+    fetchMock.get('/api/collaboration-reports/123', { ...mockReport, displayId: null })
 
-    renderViewCollabReport();
+    renderViewCollabReport()
 
-    expect(await screen.findByTestId('submitted-collab-report')).toBeInTheDocument();
-  });
+    expect(await screen.findByTestId('submitted-collab-report')).toBeInTheDocument()
+  })
 
   it('calls correct API endpoint with collaboration report ID', async () => {
-    fetchMock.restore();
-    fetchMock.get('/api/collaboration-reports/456', mockReport);
+    fetchMock.restore()
+    fetchMock.get('/api/collaboration-reports/456', mockReport)
 
     act(() => {
-      renderViewCollabReport('456');
-    });
+      renderViewCollabReport('456')
+    })
 
-    await screen.findByTestId('submitted-collab-report');
+    await screen.findByTestId('submitted-collab-report')
 
-    expect(fetchMock.lastUrl()).toBe('/api/collaboration-reports/456');
-  });
+    expect(fetchMock.lastUrl()).toBe('/api/collaboration-reports/456')
+  })
 
   it('handles empty display ID', async () => {
-    fetchMock.restore();
-    fetchMock.get('/api/collaboration-reports/123', { ...mockReport, displayId: '' });
+    fetchMock.restore()
+    fetchMock.get('/api/collaboration-reports/123', { ...mockReport, displayId: '' })
 
-    renderViewCollabReport();
+    renderViewCollabReport()
 
-    expect(await screen.findByTestId('submitted-collab-report')).toBeInTheDocument();
-  });
+    expect(await screen.findByTestId('submitted-collab-report')).toBeInTheDocument()
+  })
 
   it('uses useFetch hook correctly with proper dependencies', async () => {
     // This test ensures the useFetch hook is called with the correct parameters
-    fetchMock.restore();
-    fetchMock.get('/api/collaboration-reports/789', mockReport);
+    fetchMock.restore()
+    fetchMock.get('/api/collaboration-reports/789', mockReport)
 
     act(() => {
-      renderViewCollabReport('789');
-    });
+      renderViewCollabReport('789')
+    })
 
-    await screen.findByTestId('submitted-collab-report');
+    await screen.findByTestId('submitted-collab-report')
 
     // Verify correct API endpoint was called with the ID from the match params
-    expect(fetchMock.lastUrl()).toBe('/api/collaboration-reports/789');
-  });
+    expect(fetchMock.lastUrl()).toBe('/api/collaboration-reports/789')
+  })
 
   it('redirects to error page when fetch fails', async () => {
-    fetchMock.restore();
+    fetchMock.restore()
     fetchMock.get('/api/collaboration-reports/123', {
       status: 500,
       body: { error: 'Internal Server Error' },
-    });
+    })
 
     act(() => {
-      renderViewCollabReport('123');
-    });
+      renderViewCollabReport('123')
+    })
 
     // Wait for the redirect to occur
-    await new Promise((resolve) => { setTimeout(resolve, 100); });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100)
+    })
 
     // Verify redirect to error page with correct status code
-    expect(history.location.pathname).toBe('/something-went-wrong/500');
-  });
+    expect(history.location.pathname).toBe('/something-went-wrong/500')
+  })
 
   it('redirects to error page with 404 when report not found', async () => {
-    fetchMock.restore();
+    fetchMock.restore()
     fetchMock.get('/api/collaboration-reports/999', {
       status: 404,
       body: { error: 'Not Found' },
-    });
+    })
 
     act(() => {
-      renderViewCollabReport('999');
-    });
+      renderViewCollabReport('999')
+    })
 
     // Wait for the redirect to occur
-    await new Promise((resolve) => { setTimeout(resolve, 100); });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100)
+    })
 
     // Verify redirect to error page with 404 status
-    expect(history.location.pathname).toBe('/something-went-wrong/404');
-  });
-});
+    expect(history.location.pathname).toBe('/something-went-wrong/404')
+  })
+})

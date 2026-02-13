@@ -8,13 +8,13 @@
  *
  * Creating a test that checks it renders properly decreases the test suite below the
  * threshold as well.
-*/
+ */
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Controller } from 'react-hook-form';
-import RichEditor from './RichEditor';
-import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Controller } from 'react-hook-form'
+import RichEditor from './RichEditor'
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css'
 
 /**
  * Component that wraps the RichEditor in a react-hook-form controller
@@ -24,33 +24,25 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
  * defaultValue: Default value for the editor
  * ariaLabel: Label describing the editor read by a screen reader
  */
-const HookFormRichEditor = ({
-  name, defaultValue, ariaLabel, required,
-}) => (
+const HookFormRichEditor = ({ name, defaultValue, ariaLabel, required }) => (
   <Controller
     name={name}
     defaultValue={defaultValue}
     rules={{ required }}
-    render={({ onChange, value }) => (
-      <RichEditor
-        value={value}
-        onChange={onChange}
-        ariaLabel={ariaLabel}
-      />
-    )}
+    render={({ onChange, value }) => <RichEditor value={value} onChange={onChange} ariaLabel={ariaLabel} />}
   />
-);
+)
 
 HookFormRichEditor.propTypes = {
   name: PropTypes.string.isRequired,
   defaultValue: PropTypes.string,
   ariaLabel: PropTypes.string.isRequired,
   required: PropTypes.bool,
-};
+}
 
 HookFormRichEditor.defaultProps = {
   defaultValue: '',
   required: false,
-};
+}
 
-export default HookFormRichEditor;
+export default HookFormRichEditor

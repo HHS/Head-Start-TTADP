@@ -1,40 +1,37 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import ReasonList from '../ReasonList';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import ReasonList from '../ReasonList'
 
 const renderReasonList = (data) => {
-  render(<ReasonList
-    data={data}
-    loading={false}
-  />);
-};
+  render(<ReasonList data={data} loading={false} />)
+}
 
 describe('Reason List Widget', () => {
   it('renders correctly without data', async () => {
-    const data = [];
-    renderReasonList(data);
+    const data = []
+    renderReasonList(data)
 
-    expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
-  });
+    expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument()
+  })
 
   it('renders correctly with data', async () => {
     const data = [
       { name: 'reason one', count: 4 },
       { name: 'reason two', count: 2 },
-    ];
-    renderReasonList(data);
+    ]
+    renderReasonList(data)
 
-    expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /reason one/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /4/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /reason two/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /2/i })).toBeInTheDocument();
-  });
+    expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /reason one/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /4/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /reason two/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /2/i })).toBeInTheDocument()
+  })
 
   it('renders large reason and count', async () => {
     const data = [
@@ -48,13 +45,13 @@ describe('Reason List Widget', () => {
       { name: 'reason 8', count: 3 },
       { name: 'reason 9', count: 2 },
       { name: 'reason 10 is a very very very long reason and should not cut off the text', count: '999,999' },
-    ];
-    renderReasonList(data);
+    ]
+    renderReasonList(data)
 
-    expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /reason 10 is a very very very long reason and should not cut off the text/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /999,999/i })).toBeInTheDocument();
-  });
-});
+    expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /reason 10 is a very very very long reason and should not cut off the text/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /999,999/i })).toBeInTheDocument()
+  })
+})

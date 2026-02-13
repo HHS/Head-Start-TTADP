@@ -1,17 +1,13 @@
-import React from 'react';
-import FilterSelect from './FilterSelect';
-import { filterSelectProps } from './props';
+import React from 'react'
+import FilterSelect from './FilterSelect'
+import { filterSelectProps } from './props'
 
-const DELIVERY_METHOD_OPTIONS = ['In Person', 'Virtual', 'Hybrid'].map((label, value) => ({ value, label }));
+const DELIVERY_METHOD_OPTIONS = ['In Person', 'Virtual', 'Hybrid'].map((label, value) => ({ value, label }))
 
-export default function FilterDeliveryMethod({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterDeliveryMethod({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
-    onApply(selected);
-  };
+    onApply(selected)
+  }
   return (
     <FilterSelect
       onApply={onApplyClick}
@@ -20,7 +16,7 @@ export default function FilterDeliveryMethod({
       options={DELIVERY_METHOD_OPTIONS}
       selectedValues={query}
     />
-  );
+  )
 }
 
-FilterDeliveryMethod.propTypes = filterSelectProps;
+FilterDeliveryMethod.propTypes = filterSelectProps

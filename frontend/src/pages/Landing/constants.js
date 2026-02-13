@@ -21,10 +21,10 @@ import {
   ttaTypeFilter,
   activityReportGoalResponseFilter,
   grantStatusFilter,
-} from '../../components/filter/activityReportFilters';
-import { goalNameFilter } from '../../components/filter/goalFilters';
+} from '../../components/filter/activityReportFilters'
+import { goalNameFilter } from '../../components/filter/goalFilters'
 
-import { groupsFilter } from '../../components/filter/grantFilters';
+import { groupsFilter } from '../../components/filter/grantFilters'
 
 export const LANDING_FILTER_CONFIG = (withRegions = false) => {
   const LANDING_BASE_FILTER_CONFIG = [
@@ -50,11 +50,11 @@ export const LANDING_FILTER_CONFIG = (withRegions = false) => {
     topicsFilter,
     ttaTypeFilter,
     grantStatusFilter,
-  ];
+  ]
 
   if (withRegions) {
-    LANDING_BASE_FILTER_CONFIG.push(regionFilter);
+    LANDING_BASE_FILTER_CONFIG.push(regionFilter)
   }
 
-  return LANDING_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
-};
+  return LANDING_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display))
+}

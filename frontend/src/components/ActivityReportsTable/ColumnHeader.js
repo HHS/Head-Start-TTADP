@@ -1,28 +1,22 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from 'react'
+import PropTypes from 'prop-types'
 
-export const getClassNamesFor = (n, sortBy, sortDirection) => (sortBy === n ? sortDirection : '');
+export const getClassNamesFor = (n, sortBy, sortDirection) => (sortBy === n ? sortDirection : '')
 
-function ColumnHeader({
-  displayName,
-  name,
-  sortBy,
-  sortDirection,
-  onUpdateSort,
-}) {
-  const sortClassName = getClassNamesFor(name, sortBy, sortDirection);
-  let fullAriaSort;
+function ColumnHeader({ displayName, name, sortBy, sortDirection, onUpdateSort }) {
+  const sortClassName = getClassNamesFor(name, sortBy, sortDirection)
+  let fullAriaSort
   switch (sortClassName) {
     case 'asc':
-      fullAriaSort = 'ascending';
-      break;
+      fullAriaSort = 'ascending'
+      break
     case 'desc':
-      fullAriaSort = 'descending';
-      break;
+      fullAriaSort = 'descending'
+      break
     default:
-      fullAriaSort = 'none';
-      break;
+      fullAriaSort = 'none'
+      break
   }
 
   return (
@@ -38,7 +32,7 @@ function ColumnHeader({
         {displayName}
       </a>
     </th>
-  );
+  )
 }
 
 ColumnHeader.propTypes = {
@@ -47,6 +41,6 @@ ColumnHeader.propTypes = {
   sortBy: PropTypes.string.isRequired,
   sortDirection: PropTypes.string.isRequired,
   onUpdateSort: PropTypes.func.isRequired,
-};
+}
 
-export default ColumnHeader;
+export default ColumnHeader

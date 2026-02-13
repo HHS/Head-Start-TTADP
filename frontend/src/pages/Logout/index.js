@@ -1,14 +1,14 @@
-import { useEffect, useContext } from 'react';
-import UserContext from '../../UserContext';
+import { useEffect, useContext } from 'react'
+import UserContext from '../../UserContext'
 
 function Logout() {
-  const { logout } = useContext(UserContext);
+  const { logout } = useContext(UserContext)
 
   useEffect(() => {
-    logout(false);
-  }, [logout]);
+    logout(false)
+  }, [logout])
 
-  return null;
+  return null
 }
 
-export default Logout;
+export default Logout

@@ -1,52 +1,45 @@
-import React from 'react';
-import join from 'url-join';
-import {
-  render, screen, act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-import UserContext from '../../../UserContext';
-import AppLoadingContext from '../../../AppLoadingContext';
-import ViewRegionalCommunicationLog from '../ViewRegionalCommunicationLog';
+import React from 'react'
+import join from 'url-join'
+import { render, screen, act } from '@testing-library/react'
+import fetchMock from 'fetch-mock'
+import { Router } from 'react-router'
+import { createMemoryHistory } from 'history'
+import UserContext from '../../../UserContext'
+import AppLoadingContext from '../../../AppLoadingContext'
+import ViewRegionalCommunicationLog from '../ViewRegionalCommunicationLog'
 
-const REGION_ID = 1;
-const LOG_ID = 1;
+const REGION_ID = 1
+const LOG_ID = 1
 
-const communicationLogUrl = join(
-  '/',
-  'api',
-  'communication-logs',
-);
+const communicationLogUrl = join('/', 'api', 'communication-logs')
 
 describe('ViewRegionalCommunicationLog', () => {
-  const history = createMemoryHistory();
+  const history = createMemoryHistory()
 
-  const renderTest = (
-    logId = '1',
-  ) => render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <ViewRegionalCommunicationLog
-            match={{
-              params: {
-                logId,
-                regionId: REGION_ID,
-              },
-              path: '',
-              url: '',
-            }}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
-  );
+  const renderTest = (logId = '1') =>
+    render(
+      <Router history={history}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+            <ViewRegionalCommunicationLog
+              match={{
+                params: {
+                  logId,
+                  regionId: REGION_ID,
+                },
+                path: '',
+                url: '',
+              }}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
+      </Router>
+    )
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    fetchMock.reset();
-  });
+    jest.clearAllMocks()
+    fetchMock.reset()
+  })
 
   it('should render the view', async () => {
     const logData = {
@@ -88,29 +81,29 @@ describe('ViewRegionalCommunicationLog', () => {
           },
         },
       ],
-    };
+    }
 
-    const url = `${communicationLogUrl}/region/${REGION_ID}/log/${LOG_ID}`;
-    fetchMock.get(url, logData);
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/${LOG_ID}`
+    fetchMock.get(url, logData)
 
     await act(async () => {
-      renderTest();
-    });
+      renderTest()
+    })
 
-    expect(await screen.findByText('Ted User')).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Edit' })).toBeInTheDocument();
-  });
+    expect(await screen.findByText('Ted User')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Edit' })).toBeInTheDocument()
+  })
 
   it('shows error message', async () => {
-    const url = `${communicationLogUrl}/region/${REGION_ID}/log/${LOG_ID}`;
-    const spy = jest.spyOn(history, 'push');
-    fetchMock.get(url, 500);
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/${LOG_ID}`
+    const spy = jest.spyOn(history, 'push')
+    fetchMock.get(url, 500)
     await act(async () => {
-      renderTest('1');
-    });
+      renderTest('1')
+    })
 
-    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
-  });
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500')
+  })
 
   it('should render the view without edit button', async () => {
     const logData = {
@@ -143,18 +136,18 @@ describe('ViewRegionalCommunicationLog', () => {
         ],
         otherStaff: [],
       },
-    };
+    }
 
-    const url = `${communicationLogUrl}/region/${REGION_ID}/log/${LOG_ID}`;
-    fetchMock.get(url, logData);
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/${LOG_ID}`
+    fetchMock.get(url, logData)
 
     await act(async () => {
-      renderTest();
-    });
+      renderTest()
+    })
 
-    expect(await screen.findByText('Tedwina User')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
-  });
+    expect(await screen.findByText('Tedwina User')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument()
+  })
 
   it('hides notes when empty', async () => {
     const logData = {
@@ -177,16 +170,16 @@ describe('ViewRegionalCommunicationLog', () => {
         recipientNextSteps: [],
         otherStaff: [],
       },
-    };
+    }
 
-    const url = `${communicationLogUrl}/region/${REGION_ID}/log/${LOG_ID}`;
-    fetchMock.get(url, logData);
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/${LOG_ID}`
+    fetchMock.get(url, logData)
 
     await act(async () => {
-      renderTest();
-    });
+      renderTest()
+    })
 
-    expect(await screen.findByText('Ted User')).toBeInTheDocument();
-    expect(screen.queryByText('Notes')).toBeNull();
-  });
-});
+    expect(await screen.findByText('Ted User')).toBeInTheDocument()
+    expect(screen.queryByText('Notes')).toBeNull()
+  })
+})

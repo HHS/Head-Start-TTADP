@@ -1,14 +1,12 @@
 /* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
-import React, {
-  useState, useContext, useEffect, useRef,
-} from 'react';
-import PropTypes from 'prop-types';
-import { NavLink as Link, withRouter } from 'react-router-dom';
-import SiteNavDisclosureGroup from './SiteNavDisclosureGroup';
-import './SiteNav.scss';
-import FeatureFlag from './FeatureFlag';
-import UserContext from '../UserContext';
-import { allRegionsUserHasPermissionTo } from '../permissions';
+import React, { useState, useContext, useEffect, useRef } from 'react'
+import PropTypes from 'prop-types'
+import { NavLink as Link, withRouter } from 'react-router-dom'
+import SiteNavDisclosureGroup from './SiteNavDisclosureGroup'
+import './SiteNav.scss'
+import FeatureFlag from './FeatureFlag'
+import UserContext from '../UserContext'
+import { allRegionsUserHasPermissionTo } from '../permissions'
 
 const navLinkClasses = [
   'display-block',
@@ -23,78 +21,70 @@ const navLinkClasses = [
   'smart-hub-cursor-pointer',
   'hover:text-white',
   'hover:text-no-underline',
-].join(' ');
+].join(' ')
 
-const activeNavLinkClasses = 'border-left-05 border-white text-bold';
-const disclosureActiveLinkClasses = 'text-bold';
+const activeNavLinkClasses = 'border-left-05 border-white text-bold'
+const disclosureActiveLinkClasses = 'text-bold'
 
 const NavLink = ({ withinDisclosure, ...props }) => (
-  <Link
-    activeClassName={withinDisclosure ? disclosureActiveLinkClasses : activeNavLinkClasses}
-    className={navLinkClasses}
-    {...props}
-  />
-);
+  <Link activeClassName={withinDisclosure ? disclosureActiveLinkClasses : activeNavLinkClasses} className={navLinkClasses} {...props} />
+)
 
 NavLink.propTypes = {
   withinDisclosure: PropTypes.bool,
-};
+}
 
 NavLink.defaultProps = {
   withinDisclosure: false,
-};
+}
 
-const SiteNav = ({
-  authenticated,
-  location,
-  hasAlerts,
-}) => {
-  const { user } = useContext(UserContext);
-  const siteNavContent = useRef(null);
-  const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
+const SiteNav = ({ authenticated, location, hasAlerts }) => {
+  const { user } = useContext(UserContext)
+  const siteNavContent = useRef(null)
+  const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false)
+  const [showSidebar, setShowSidebar] = useState(true)
 
   useEffect(() => {
     if (location.pathname === '/activity-reports' && authenticated) {
-      setShowActivityReportSurveyButton(true);
+      setShowActivityReportSurveyButton(true)
     } else {
-      setShowActivityReportSurveyButton(false);
+      setShowActivityReportSurveyButton(false)
     }
 
-    setShowSidebar(!(location.pathname === '/logout'));
-  }, [location.pathname, authenticated]);
+    setShowSidebar(!(location.pathname === '/logout'))
+  }, [location.pathname, authenticated])
 
   // This resizes the site nav content's gap to account for the header if there is an alert
   useEffect(() => {
     if (hasAlerts && siteNavContent.current) {
-      const header = document.querySelector('.smart-hub-header.has-alerts');
+      const header = document.querySelector('.smart-hub-header.has-alerts')
       if (header) {
-        siteNavContent.current.style.paddingTop = `${siteNavContent.current.style.paddingTop + header.offsetHeight}px`;
+        siteNavContent.current.style.paddingTop = `${siteNavContent.current.style.paddingTop + header.offsetHeight}px`
       }
     }
-  }, [hasAlerts]);
+  }, [hasAlerts])
 
   // Determine Default Region.
-  const regions = allRegionsUserHasPermissionTo(user);
-  const defaultRegion = user.homeRegionId || regions[0] || 0;
-  const hasMultipleRegions = regions && regions.length > 1;
+  const regions = allRegionsUserHasPermissionTo(user)
+  const defaultRegion = user.homeRegionId || regions[0] || 0
+  const hasMultipleRegions = regions && regions.length > 1
 
-  const regionDisplay = regions.join(', ');
+  const regionDisplay = regions.join(', ')
 
   // If user has more than one region, Regions label is plural, else singular
   const regionLabel = () => {
     if (defaultRegion === 14) {
-      return 'All Regions';
+      return 'All Regions'
     }
 
     if (hasMultipleRegions) {
-      return `Regions ${regionDisplay}`;
+      return `Regions ${regionDisplay}`
     }
 
-    return `Region ${regionDisplay}`;
-  };
+    return `Region ${regionDisplay}`
+  }
 
-  if (!showSidebar) return null;
+  if (!showSidebar) return null
 
   return (
     <div>
@@ -108,7 +98,10 @@ const SiteNav = ({
           Please leave feedback
         </a>
       </div>
-      <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
+      <div
+        ref={siteNavContent}
+        className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print"
+      >
         {authenticated && (
           <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">
             <div className="width-full smart-hub-sitenav-separator--after">
@@ -121,34 +114,22 @@ const SiteNav = ({
               <div className="width-full margin-bottom-2 margin-top-2 desktop:margin-top-6">
                 <SiteNavDisclosureGroup title="TTA Reporting">
                   <li>
-                    <NavLink
-                      withinDisclosure
-                      to="/activity-reports"
-                    >
+                    <NavLink withinDisclosure to="/activity-reports">
                       Activity Reports
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink
-                      withinDisclosure
-                      to="/collaboration-reports"
-                    >
+                    <NavLink withinDisclosure to="/collaboration-reports">
                       Collaboration Reports
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink
-                      withinDisclosure
-                      to="/communication-log"
-                    >
+                    <NavLink withinDisclosure to="/communication-log">
                       Communication Log
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink
-                      withinDisclosure
-                      to="/training-reports/not-started"
-                    >
+                    <NavLink withinDisclosure to="/training-reports/not-started">
                       Training Reports
                     </NavLink>
                   </li>
@@ -156,39 +137,25 @@ const SiteNav = ({
                 <SiteNavDisclosureGroup title="Dashboards">
                   <FeatureFlag flag="quality_assurance_dashboard">
                     <li>
-                      <NavLink
-                        withinDisclosure
-                        to="/dashboards/qa-dashboard"
-                      >
+                      <NavLink withinDisclosure to="/dashboards/qa-dashboard">
                         Quality Assurance Dashboard
                       </NavLink>
                     </li>
                   </FeatureFlag>
                   <li>
-                    <NavLink
-                      withinDisclosure
-                      to="/dashboards/regional-dashboard/activity-reports"
-                    >
+                    <NavLink withinDisclosure to="/dashboards/regional-dashboard/activity-reports">
                       Regional Dashboard
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink
-                      withinDisclosure
-                      to="/dashboards/resources-dashboard"
-                    >
+                    <NavLink withinDisclosure to="/dashboards/resources-dashboard">
                       Resource Dashboard
                     </NavLink>
                   </li>
-
                 </SiteNavDisclosureGroup>
                 <ul className="add-list-reset">
                   <li>
-                    <NavLink
-                      to="/recipient-tta-records"
-                    >
-                      Recipient TTA Records
-                    </NavLink>
+                    <NavLink to="/recipient-tta-records">Recipient TTA Records</NavLink>
                   </li>
                 </ul>
               </div>
@@ -197,17 +164,17 @@ const SiteNav = ({
         )}
       </div>
     </div>
-  );
-};
-SiteNav.displayName = 'SiteNav';
+  )
+}
+SiteNav.displayName = 'SiteNav'
 
 SiteNav.propTypes = {
   authenticated: PropTypes.bool,
   location: PropTypes.shape({ pathname: PropTypes.string }).isRequired,
   hasAlerts: PropTypes.bool.isRequired,
-};
+}
 
 SiteNav.defaultProps = {
   authenticated: false,
-};
-export default withRouter(SiteNav);
+}
+export default withRouter(SiteNav)

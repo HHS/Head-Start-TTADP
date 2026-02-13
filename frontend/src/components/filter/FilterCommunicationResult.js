@@ -1,19 +1,14 @@
-import React from 'react';
-import { COMMUNICATION_RESULTS } from '@ttahub/common';
-import FilterSelect from './FilterSelect';
-import { filterSelectProps } from './props';
+import React from 'react'
+import { COMMUNICATION_RESULTS } from '@ttahub/common'
+import FilterSelect from './FilterSelect'
+import { filterSelectProps } from './props'
 
-const COMMUNICATION_RESULT_OPTIONS = COMMUNICATION_RESULTS
-  .map((label, value) => ({ value, label }));
+const COMMUNICATION_RESULT_OPTIONS = COMMUNICATION_RESULTS.map((label, value) => ({ value, label }))
 
-export default function FilterCommunicationResult({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterCommunicationResult({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
-    onApply(selected);
-  };
+    onApply(selected)
+  }
   return (
     <FilterSelect
       onApply={onApplyClick}
@@ -22,7 +17,7 @@ export default function FilterCommunicationResult({
       options={COMMUNICATION_RESULT_OPTIONS}
       selectedValues={query}
     />
-  );
+  )
 }
 
-FilterCommunicationResult.propTypes = filterSelectProps;
+FilterCommunicationResult.propTypes = filterSelectProps

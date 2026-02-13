@@ -45,6 +45,6 @@ const reportFields = {
   createdBy: 'Created By',
   modified: 'Time Modified',
   modifiedBy: 'Modified By',
-};
+}
 
-export default reportFields;
+export default reportFields

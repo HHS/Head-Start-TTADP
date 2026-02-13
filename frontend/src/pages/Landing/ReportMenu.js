@@ -1,14 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
-import { faSortDown } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Button } from '@trussworks/react-uswds';
-import Container from '../../components/Container';
-import './ReportMenu.css';
-import Loader from '../../components/Loader';
-import colors from '../../colors';
+import React, { useEffect, useRef, useState } from 'react'
+import PropTypes from 'prop-types'
+import { faSortDown } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Alert, Button } from '@trussworks/react-uswds'
+import Container from '../../components/Container'
+import './ReportMenu.css'
+import Loader from '../../components/Loader'
+import colors from '../../colors'
 
-export const MAXIMUM_EXPORTED_REPORTS = 2000;
+export const MAXIMUM_EXPORTED_REPORTS = 2000
 
 function ReportMenu({
   onExportAll,
@@ -23,38 +23,38 @@ function ReportMenu({
   downloadSelectedButtonRef,
   exportIdPrefix,
 }) {
-  const [open, updateOpen] = useState(false);
+  const [open, updateOpen] = useState(false)
 
-  const menuRef = useRef();
-  const menuButtonRef = useRef();
+  const menuRef = useRef()
+  const menuButtonRef = useRef()
 
-  let openClass = '';
+  let openClass = ''
 
   useEffect(() => {
     if (open === true) {
-      menuRef.current.focus();
+      menuRef.current.focus()
     }
-  }, [open]);
+  }, [open])
 
   if (open) {
-    openClass = 'smart-hub--menu-button__open';
+    openClass = 'smart-hub--menu-button__open'
   }
 
   const onMenuBlur = (e) => {
     // https://reactjs.org/docs/events.html#detecting-focus-entering-and-leaving
     if (!e.currentTarget.contains(e.relatedTarget)) {
-      updateOpen(false);
+      updateOpen(false)
     }
-  };
+  }
 
   const onMenuKeyDown = (e) => {
     if (['Escape', 'Esc'].includes(e.key)) {
-      updateOpen(false);
-      menuButtonRef.current.focus();
+      updateOpen(false)
+      menuButtonRef.current.focus()
     }
-  };
+  }
 
-  const menuClassNames = `tta-report-menu z-400 position-absolute left-0 ${downloadError ? 'desktop:width-tablet' : 'desktop:width-mobile'}`;
+  const menuClassNames = `tta-report-menu z-400 position-absolute left-0 ${downloadError ? 'desktop:width-tablet' : 'desktop:width-mobile'}`
   return (
     <span className="position-relative">
       <button
@@ -66,15 +66,8 @@ function ReportMenu({
         onClick={() => updateOpen((current) => !current)}
         id={`${exportIdPrefix}export-button`}
       >
-        Export reports
-        {' '}
-        <FontAwesomeIcon
-          size="1x"
-          className="margin-left-1"
-          style={{ paddingBottom: '2px' }}
-          color={colors.ttahubMediumBlue}
-          icon={faSortDown}
-        />
+        Export reports{' '}
+        <FontAwesomeIcon size="1x" className="margin-left-1" style={{ paddingBottom: '2px' }} color={colors.ttahubMediumBlue} icon={faSortDown} />
       </button>
       {open && (
         <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className={menuClassNames}>
@@ -86,76 +79,48 @@ function ReportMenu({
                 type="error"
                 className="margin-bottom-3 ttahub-report-menu-alert"
                 role="alert"
-                cta={(
-                  <Button
-                    autoFocus
-                    outline
-                    onClick={() => setDownloadError(false)}
-                  >
+                cta={
+                  <Button autoFocus outline onClick={() => setDownloadError(false)}>
                     Dismiss
                   </Button>
-                )}
+                }
               >
                 Sorry, something went wrong. Please try your request again.
                 <br />
-                You may export up to
-                  {' '}
-                  {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
-                  {' '}
-                reports at a time.
-                  {' '}
-                <br />
-                For assistance, please
-                  {' '}
-                <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
-                .
+                You may export up to {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')} reports at a time. <br />
+                For assistance, please <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>.
               </Alert>
             )}
             {count > MAXIMUM_EXPORTED_REPORTS ? (
               <>
                 <div className="usa-hint" id="no-exports-please">
                   <p>
-                    This export has
-                    {' '}
-                    {count.toLocaleString('en-US')}
-                    {' '}
-                    reports. You can only export
-                    {' '}
-                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
-                    {' '}
+                    This export has {count.toLocaleString('en-US')} reports. You can only export {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}{' '}
                     reports at a time.
                   </p>
                   <p>
-                    To export more than
-                    {' '}
-                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
-                    {' '}
-                    reports, please
-                    {' '}
-                    <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
-                    {' '}
-                    and specify the filters you need.
+                    To export more than {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')} reports, please{' '}
+                    <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a> and specify the filters you
+                    need.
                   </p>
                 </div>
               </>
-            )
-              : (
-                <>
-                  <Loader loading={isDownloading} loadingLabel="Downloading reports" text="Downloading reports" />
-                  <button
-                    ref={downloadAllButtonRef}
-                    role="menuitem"
-                    onClick={onExportAll}
-                    type="button"
-                    disabled={downloadError || isDownloading}
-                    className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
-                    id={`${exportIdPrefix}export-table`}
-                  >
-                    Export table data
-                  </button>
-
-                </>
-              ) }
+            ) : (
+              <>
+                <Loader loading={isDownloading} loadingLabel="Downloading reports" text="Downloading reports" />
+                <button
+                  ref={downloadAllButtonRef}
+                  role="menuitem"
+                  onClick={onExportAll}
+                  type="button"
+                  disabled={downloadError || isDownloading}
+                  className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
+                  id={`${exportIdPrefix}export-table`}
+                >
+                  Export table data
+                </button>
+              </>
+            )}
             {hasSelectedReports && onExportSelected && (
               <button
                 ref={downloadSelectedButtonRef}
@@ -173,7 +138,7 @@ function ReportMenu({
         </div>
       )}
     </span>
-  );
+  )
 }
 
 ReportMenu.propTypes = {
@@ -184,17 +149,11 @@ ReportMenu.propTypes = {
   count: PropTypes.number,
   downloadError: PropTypes.bool,
   isDownloading: PropTypes.bool,
-  downloadAllButtonRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
-  ]),
-  downloadSelectedButtonRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
-  ]),
+  downloadAllButtonRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.instanceOf(Element) })]),
+  downloadSelectedButtonRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.instanceOf(Element) })]),
   setDownloadError: PropTypes.func.isRequired,
   exportIdPrefix: PropTypes.string.isRequired,
-};
+}
 
 ReportMenu.defaultProps = {
   count: 0,
@@ -204,6 +163,6 @@ ReportMenu.defaultProps = {
   isDownloading: false,
   downloadAllButtonRef: () => {},
   downloadSelectedButtonRef: () => {},
-};
+}
 
-export default ReportMenu;
+export default ReportMenu

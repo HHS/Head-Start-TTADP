@@ -1,30 +1,24 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import withWidgetData from './withWidgetData';
-import TableWidget from './TableWidget';
+import React from 'react'
+import PropTypes from 'prop-types'
+import withWidgetData from './withWidgetData'
+import TableWidget from './TableWidget'
 
 const renderResourceList = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
-    const limitTDWith = { 'word-wrap': 'break-word', 'max-width': '500px' };
+    const limitTDWith = { 'word-wrap': 'break-word', 'max-width': '500px' }
     return data.map((resource) => (
       <tr key={`resource_list_row_${resource.url}`}>
         <td style={limitTDWith}>
           <a href={resource.url}>{resource.name}</a>
         </td>
-        <td>
-          {resource.reportCount}
-        </td>
-        <td>
-          {resource.participantCount}
-        </td>
-        <td>
-          {resource.recipientCount}
-        </td>
+        <td>{resource.reportCount}</td>
+        <td>{resource.participantCount}</td>
+        <td>{resource.recipientCount}</td>
       </tr>
-    ));
+    ))
   }
-  return null;
-};
+  return null
+}
 
 function ResourceList({ data, loading }) {
   return (
@@ -36,7 +30,7 @@ function ResourceList({ data, loading }) {
       title="Resources in Activity Reports"
       renderData={renderResourceList}
     />
-  );
+  )
 }
 
 ResourceList.propTypes = {
@@ -45,14 +39,15 @@ ResourceList.propTypes = {
       PropTypes.shape({
         name: PropTypes.string,
         count: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
-};
+}
 
 ResourceList.defaultProps = {
   data: [],
-};
+}
 
-export default withWidgetData(ResourceList, 'resourceList');
+export default withWidgetData(ResourceList, 'resourceList')

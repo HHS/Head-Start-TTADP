@@ -1,18 +1,18 @@
 // this is an importable config object for the react select/emotion
 // to use this, give the select the "usa-select" classname and pass this as
 // its style object, its meant to match the USDWS styles
-import colors from '../colors';
+import colors from '../colors'
 
 const selectOptionsReset = {
   container: (provided, state) => {
     // To match the focus indicator provided by uswds
-    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
+    const outline = state.isFocused ? '0.25rem solid #2491ff;' : ''
     return {
       ...provided,
       outline,
       padding: 0,
       height: 'auto',
-    };
+    }
   },
   groupHeading: (provided) => ({
     ...provided,
@@ -23,7 +23,7 @@ const selectOptionsReset = {
     lineHeight: '22px',
   }),
   control: (provided, state) => {
-    const selected = state.getValue();
+    const selected = state.getValue()
     return {
       ...provided,
       background: state.isFocused || selected.length ? 'white' : 'transparent',
@@ -32,7 +32,7 @@ const selectOptionsReset = {
       boxShadow: '0',
       // Match uswds disabled style
       opacity: state.isDisabled ? '0.7' : '1',
-    };
+    }
   },
   indicatorsContainer: (provided, state) => ({
     ...provided,
@@ -56,6 +56,6 @@ const selectOptionsReset = {
       color: '#1B1B1B',
     },
   }),
-};
+}
 
-export default selectOptionsReset;
+export default selectOptionsReset

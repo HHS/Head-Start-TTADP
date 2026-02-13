@@ -1,171 +1,134 @@
-import React, {
-  useContext,
-  useMemo,
-  useState,
-  useEffect,
-  useRef,
-} from 'react';
-import PropTypes from 'prop-types';
-import { useHistory } from 'react-router-dom';
-import { DECIMAL_BASE } from '@ttahub/common';
-import { Checkbox, Alert } from '@trussworks/react-uswds';
-import moment from 'moment';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import { goalPropTypes } from './constants';
-import UserContext from '../../UserContext';
-import AppLoadingContext from '../../AppLoadingContext';
-import { deleteGoal, updateGoalStatus } from '../../fetchers/goals';
-import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
-import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions';
-import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
-import DataCard from '../DataCard';
-import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import GoalStatusDropdown from './components/GoalStatusDropdown';
-import ContextMenu from '../ContextMenu';
-import FlagStatus from './FlagStatus';
-import ExpanderButton from '../ExpanderButton';
-import ObjectiveCard from './ObjectiveCard';
-import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
-import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
+import React, { useContext, useMemo, useState, useEffect, useRef } from 'react'
+import PropTypes from 'prop-types'
+import { useHistory } from 'react-router-dom'
+import { DECIMAL_BASE } from '@ttahub/common'
+import { Checkbox, Alert } from '@trussworks/react-uswds'
+import moment from 'moment'
+import { GOAL_STATUS } from '@ttahub/common/src/constants'
+import { goalPropTypes } from './constants'
+import UserContext from '../../UserContext'
+import AppLoadingContext from '../../AppLoadingContext'
+import { deleteGoal, updateGoalStatus } from '../../fetchers/goals'
+import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor'
+import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions'
+import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags'
+import DataCard from '../DataCard'
+import { DATE_DISPLAY_FORMAT } from '../../Constants'
+import GoalStatusDropdown from './components/GoalStatusDropdown'
+import ContextMenu from '../ContextMenu'
+import FlagStatus from './FlagStatus'
+import ExpanderButton from '../ExpanderButton'
+import ObjectiveCard from './ObjectiveCard'
+import GoalStatusChangeAlert from './components/GoalStatusChangeAlert'
+import CloseSuspendReasonModal from '../CloseSuspendReasonModal'
 
-export default function StandardGoalCard({
-  goal,
-  recipientId,
-  regionId,
-  handleGoalCheckboxSelect,
-  isChecked,
-  readonly,
-  erroneouslySelected,
-}) {
-  const {
-    id,
-    ids = [id],
-    status,
-    name,
-    objectives = [],
-    onAR,
-    grant = { number: 'N/A' },
-    statusChanges = [],
-    isReopened,
-    standard,
-    createdAt,
-  } = goal;
+export default function StandardGoalCard({ goal, recipientId, regionId, handleGoalCheckboxSelect, isChecked, readonly, erroneouslySelected }) {
+  const { id, ids = [id], status, name, objectives = [], onAR, grant = { number: 'N/A' }, statusChanges = [], isReopened, standard, createdAt } = goal
 
-  const lastStatusChange = statusChanges[statusChanges.length - 1]
-    || { oldStatus: GOAL_STATUS.NOT_STARTED };
-  const previousStatus = lastStatusChange.oldStatus;
+  const lastStatusChange = statusChanges[statusChanges.length - 1] || { oldStatus: GOAL_STATUS.NOT_STARTED }
+  const previousStatus = lastStatusChange.oldStatus
 
-  const isMonitoringGoal = standard === 'Monitoring';
-  const isPreStandard = goal.prestandard === true;
-  const { user } = useContext(UserContext);
-  const { setIsAppLoading } = useContext(AppLoadingContext);
-  const [localStatus, setLocalStatus] = useState(status);
-  const [localObjectives, setLocalObjectives] = useState(objectives);
-  const [targetStatusForModal, setTargetStatusForModal] = useState('');
-  const [statusChangeError, setStatusChangeError] = useState(false);
-  const closeSuspendModalRef = useRef();
-  const [resetModalValues, setResetModalValues] = useState(false);
+  const isMonitoringGoal = standard === 'Monitoring'
+  const isPreStandard = goal.prestandard === true
+  const { user } = useContext(UserContext)
+  const { setIsAppLoading } = useContext(AppLoadingContext)
+  const [localStatus, setLocalStatus] = useState(status)
+  const [localObjectives, setLocalObjectives] = useState(objectives)
+  const [targetStatusForModal, setTargetStatusForModal] = useState('')
+  const [statusChangeError, setStatusChangeError] = useState(false)
+  const closeSuspendModalRef = useRef()
+  const [resetModalValues, setResetModalValues] = useState(false)
 
-  const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState(false);
-  const sortedObjectives = [...localObjectives];
-  sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
-  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
-  const {
-    atLeastOneObjectiveIsNotCompleted,
-    dispatchStatusChange,
-  } = useObjectiveStatusMonitor(objectives);
+  const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState(false)
+  const sortedObjectives = [...localObjectives]
+  sortedObjectives.sort((a, b) => (new Date(a.endDate) < new Date(b.endDate) ? 1 : -1))
+  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE))
+  const { atLeastOneObjectiveIsNotCompleted, dispatchStatusChange } = useObjectiveStatusMonitor(objectives)
 
   // Sync local status if goal prop changes externally
   useEffect(() => {
-    setLocalStatus(status);
-  }, [status]);
+    setLocalStatus(status)
+  }, [status])
 
   useEffect(() => {
     if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompleted) {
-      setInvalidStatusChangeAttempted(false);
+      setInvalidStatusChangeAttempted(false)
     }
-  }, [atLeastOneObjectiveIsNotCompleted, invalidStatusChangeAttempted]);
+  }, [atLeastOneObjectiveIsNotCompleted, invalidStatusChangeAttempted])
 
-  const [deleteError, setDeleteError] = useState(false);
+  const [deleteError, setDeleteError] = useState(false)
 
   const lastTTA = useMemo(() => {
-    const latestDate = objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), '');
-    return latestDate ? moment(latestDate).format(DATE_DISPLAY_FORMAT) : '';
-  }, [objectives]);
-  const history = useHistory();
-  const goalNumber = goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${id}`;
+    const latestDate = objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), '')
+    return latestDate ? moment(latestDate).format(DATE_DISPLAY_FORMAT) : ''
+  }, [objectives])
+  const history = useHistory()
+  const goalNumber = goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${id}`
 
-  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}`;
-  const reopenLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}/restart`;
-  const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${id}`;
+  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}`
+  const reopenLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}/restart`
+  const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${id}`
 
   const changeGoalStatus = async (newStatus, reason = null, context = null) => {
     try {
-      setStatusChangeError(false);
+      setStatusChangeError(false)
       // API expects: goalIds (array), newStatus, oldStatus, closeSuspendReason, closeSuspendContext
-      await updateGoalStatus(ids, newStatus, localStatus, reason, context);
-      setLocalStatus(newStatus);
+      await updateGoalStatus(ids, newStatus, localStatus, reason, context)
+      setLocalStatus(newStatus)
       if (newStatus === GOAL_STATUS.SUSPENDED) {
-        const statusesNeedUpdating = [
-          GOAL_STATUS.NOT_STARTED,
-          GOAL_STATUS.IN_PROGRESS,
-        ];
-        setLocalObjectives((prevObjectives) => prevObjectives.map((objective) => {
-          if (statusesNeedUpdating.includes(objective.status)) {
-            return {
-              ...objective,
-              status: GOAL_STATUS.SUSPENDED,
-            };
-          }
+        const statusesNeedUpdating = [GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS]
+        setLocalObjectives((prevObjectives) =>
+          prevObjectives.map((objective) => {
+            if (statusesNeedUpdating.includes(objective.status)) {
+              return {
+                ...objective,
+                status: GOAL_STATUS.SUSPENDED,
+              }
+            }
 
-          return objective;
-        }));
+            return objective
+          })
+        )
       }
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Error updating goal status:', err);
-      setStatusChangeError(true);
+      console.error('Error updating goal status:', err)
+      setStatusChangeError(true)
     }
-  };
+  }
 
   const onUpdateGoalStatus = (newStatus) => {
     // prevent closing if objectives aren't complete/suspended
     if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompleted) {
-      setInvalidStatusChangeAttempted(true);
-      return;
+      setInvalidStatusChangeAttempted(true)
+      return
     }
 
-    setInvalidStatusChangeAttempted(false);
+    setInvalidStatusChangeAttempted(false)
 
     // check if the new status requires a reason modal
     if ([GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED].includes(newStatus)) {
-      setTargetStatusForModal(newStatus);
-      setResetModalValues(!resetModalValues);
-      closeSuspendModalRef.current.toggleModal(true);
+      setTargetStatusForModal(newStatus)
+      setResetModalValues(!resetModalValues)
+      closeSuspendModalRef.current.toggleModal(true)
     } else {
-      changeGoalStatus(newStatus);
+      changeGoalStatus(newStatus)
     }
-  };
+  }
 
-  const handleModalSubmit = (
-    goalIdsFromModal,
-    statusFromModal,
-    oldStatusFromModal,
-    reason,
-    context,
-  ) => {
-    changeGoalStatus(statusFromModal, reason, context);
-    closeSuspendModalRef.current.toggleModal(false);
-  };
+  const handleModalSubmit = (goalIdsFromModal, statusFromModal, oldStatusFromModal, reason, context) => {
+    changeGoalStatus(statusFromModal, reason, context)
+    closeSuspendModalRef.current.toggleModal(false)
+  }
 
-  const [objectivesExpanded, setObjectivesExpanded] = useState(false);
+  const [objectivesExpanded, setObjectivesExpanded] = useState(false)
 
   const closeOrOpenObjectives = () => {
-    setObjectivesExpanded(!objectivesExpanded);
-  };
+    setObjectivesExpanded(!objectivesExpanded)
+  }
 
-  const contextMenuLabel = `Actions for goal ${id}`;
-  const menuItems = [];
+  const contextMenuLabel = `Actions for goal ${id}`
+  const menuItems = []
 
   /**
    * Checks if the current user created the goal by finding the 'Creation' context
@@ -176,153 +139,155 @@ export default function StandardGoalCard({
    */
   const isGoalCreator = (goalObj, userObj) => {
     if (!userObj?.id || !goalObj?.statusChanges?.length) {
-      return false;
+      return false
     }
 
-    const creationChange = goalObj.statusChanges.find((sc) => sc.context === 'Creation');
-    return creationChange?.userId === userObj.id;
-  };
+    const creationChange = goalObj.statusChanges.find((sc) => sc.context === 'Creation')
+    return creationChange?.userId === userObj.id
+  }
 
   // For monitoring goals, only admins can delete
-  const hasAdminPermissions = isAdmin(user);
-  const editableStatuses = [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS];
+  const hasAdminPermissions = isAdmin(user)
+  const editableStatuses = [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS]
   if (editableStatuses.includes(localStatus) && !isPreStandard && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
       onClick: () => {
-        history.push(editLink);
+        history.push(editLink)
       },
-    });
-  } else if (localStatus === GOAL_STATUS.CLOSED
-    && !isPreStandard && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
+    })
+  } else if (localStatus === GOAL_STATUS.CLOSED && !isPreStandard && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
     // For monitoring goals, only admins can reopen
     menuItems.push({
       label: 'Reopen',
       onClick: () => {
-        history.push(reopenLink);
+        history.push(reopenLink)
       },
-    });
+    })
   }
 
   menuItems.push({
     label: 'View details',
     onClick: () => {
-      history.push(viewLink);
+      history.push(viewLink)
     },
-  });
+  })
 
   const canDeleteQualifiedGoals = (() => {
     // Admin can delete any goal (unless on AR or prestandard - checked at line 226)
     if (isAdmin(user)) {
-      return true;
+      return true
     }
 
     // Existing permission: Non-monitoring goals can be deleted by approvers
-    const canDeleteAsApprover = !isMonitoringGoal
-      && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
+    const canDeleteAsApprover = !isMonitoringGoal && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE))
 
     // New permission: Goal creator can delete their own NOT_STARTED goals if they have
     // write permissions in the region
-    const canDeleteAsCreator = !isMonitoringGoal
-      && localStatus === GOAL_STATUS.NOT_STARTED
-      && canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE))
-      && isGoalCreator(goal, user);
+    const canDeleteAsCreator =
+      !isMonitoringGoal &&
+      localStatus === GOAL_STATUS.NOT_STARTED &&
+      canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE)) &&
+      isGoalCreator(goal, user)
 
-    return canDeleteAsApprover || canDeleteAsCreator;
-  })();
+    return canDeleteAsApprover || canDeleteAsCreator
+  })()
 
-  if (canDeleteQualifiedGoals && !onAR && !isPreStandard
-    && [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED].includes(localStatus)) {
+  if (canDeleteQualifiedGoals && !onAR && !isPreStandard && [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED].includes(localStatus)) {
     menuItems.push({
       label: 'Delete',
       onClick: async () => {
         try {
-          setDeleteError(false);
-          setIsAppLoading(true);
-          await deleteGoal(ids, regionId);
-          history.push(
-            `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`,
-            { message: 'Goal deleted successfully', refreshRecipient: true },
-          );
+          setDeleteError(false)
+          setIsAppLoading(true)
+          await deleteGoal(ids, regionId)
+          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, {
+            message: 'Goal deleted successfully',
+            refreshRecipient: true,
+          })
         } catch (e) {
-          setDeleteError(true);
+          setDeleteError(true)
         } finally {
-          setIsAppLoading(false);
+          setIsAppLoading(false)
         }
       },
-    });
+    })
   }
 
   // Determine the status change label based on current status
   const getStatusChangeLabel = () => {
     if (statusChanges.length === 1 && isReopened) {
-      return 'Reopened on';
+      return 'Reopened on'
     }
 
     switch (localStatus) {
       case GOAL_STATUS.NOT_STARTED:
-        return 'Added on';
+        return 'Added on'
       case GOAL_STATUS.IN_PROGRESS:
-        return 'Started on';
+        return 'Started on'
       case GOAL_STATUS.SUSPENDED:
-        return 'Suspended on';
+        return 'Suspended on'
       case GOAL_STATUS.CLOSED:
-        return 'Closed on';
+        return 'Closed on'
       default:
-        return 'Added on'; // Default or Draft status
+        return 'Added on' // Default or Draft status
     }
-  };
+  }
 
   // Determine who changed the status
   const getStatusChangeBy = () => {
     if (statusChanges.length === 1 && isReopened) {
-      return 'Reopened by';
+      return 'Reopened by'
     }
 
     switch (localStatus) {
       case GOAL_STATUS.NOT_STARTED:
-        return 'Added by';
+        return 'Added by'
       case GOAL_STATUS.IN_PROGRESS:
-        return 'Started by';
+        return 'Started by'
       case GOAL_STATUS.SUSPENDED:
-        return 'Suspended by';
+        return 'Suspended by'
       case GOAL_STATUS.CLOSED:
-        return 'Closed by';
+        return 'Closed by'
       default:
-        return 'Added by'; // Default or Draft status
+        return 'Added by' // Default or Draft status
     }
-  };
+  }
 
   const renderEnteredBy = () => {
     if (isMonitoringGoal && (!lastStatusChange || !lastStatusChange.user)) {
       return (
         <SpecialistTags
-          specialists={[{
-            name: 'System-generated',
-            roles: ['OHS'],
-          }]}
+          specialists={[
+            {
+              name: 'System-generated',
+              roles: ['OHS'],
+            },
+          ]}
         />
-      );
+      )
     }
 
     if (lastStatusChange && lastStatusChange.user) {
       return (
         <SpecialistTags
-          specialists={[{
-            name: lastStatusChange.user.name,
-            roles: lastStatusChange.user.roles.map((r) => r.name),
-          }]}
+          specialists={[
+            {
+              name: lastStatusChange.user.name,
+              roles: lastStatusChange.user.roles.map((r) => r.name),
+            },
+          ]}
         />
-      );
+      )
     }
 
-    return null;
-  };
+    return null
+  }
 
   const getResponses = () => {
-    const responses = goal.responses && goal.responses.length ? goal.responses[0].response : [];
-    return responses.map((r) => r).join(', ');
-  };
+    const responses = goal.responses && goal.responses.length ? goal.responses[0].response : []
+    return responses.map((r) => r).join(', ')
+  }
 
   return (
     <DataCard testId="goalCard" className="ttahub-goal-card position-relative" errorBorder={erroneouslySelected || deleteError || statusChangeError}>
@@ -353,13 +318,7 @@ export default function StandardGoalCard({
                   previousStatus={previousStatus}
                   regionId={regionId}
                 />
-                {!readonly && (
-                  <ContextMenu
-                    label={contextMenuLabel}
-                    menuItems={menuItems}
-                    menuWidthOffset={100}
-                  />
-                )}
+                {!readonly && <ContextMenu label={contextMenuLabel} menuItems={menuItems} menuWidthOffset={100} />}
               </div>
             </div>
           </div>
@@ -370,36 +329,18 @@ export default function StandardGoalCard({
             </Alert>
           )}
           {/* Alert for invalid status change attempt */}
-          <GoalStatusChangeAlert
-            internalLeftMargin="3rem"
-            invalidStatusChangeAttempted={invalidStatusChangeAttempted}
-          />
+          <GoalStatusChangeAlert internalLeftMargin="3rem" invalidStatusChangeAttempted={invalidStatusChangeAttempted} />
           <div className="grid-row mobile-tablet-space-y-2">
             {/* Left section - Goal number and name */}
             <div className="desktop:grid-col-4 tablet-lg:grid-col-12 tablet:grid-col-12 padding-right-3">
-              <p className="usa-prose text-bold margin-y-0">
-                Goal
-                {' '}
-                {goalNumber}
-              </p>
+              <p className="usa-prose text-bold margin-y-0">Goal {goalNumber}</p>
               <p className="usa-prose text-wrap margin-y-0">
-                {name}
-                {' '}
-                {isMonitoringGoal && (
-                  <FlagStatus
-                    reasons={['Monitoring Goal']}
-                    goalNumbers={goalNumber}
-                  />
-                )}
+                {name} {isMonitoringGoal && <FlagStatus reasons={['Monitoring Goal']} goalNumbers={goalNumber} />}
               </p>
               {goal.responses && goal.responses.length ? (
                 <div className="grid-row margin-top-1">
-                  <p className="usa-prose text-bold margin-bottom-0 margin-top-0 margin-right-1">
-                    Root cause:
-                  </p>
-                  <p className="usa-prose margin-bottom-0 margin-top-0">
-                    {getResponses()}
-                  </p>
+                  <p className="usa-prose text-bold margin-bottom-0 margin-top-0 margin-right-1">Root cause:</p>
+                  <p className="usa-prose margin-bottom-0 margin-top-0">{getResponses()}</p>
                 </div>
               ) : null}
             </div>
@@ -427,9 +368,7 @@ export default function StandardGoalCard({
 
                   <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
                     <p className="usa-prose text-bold margin-y-0">{getStatusChangeBy()}</p>
-                    <div className="usa-prose margin-y-0">
-                      {renderEnteredBy()}
-                    </div>
+                    <div className="usa-prose margin-y-0">{renderEnteredBy()}</div>
                   </div>
                 </div>
               </div>
@@ -468,7 +407,7 @@ export default function StandardGoalCard({
         resetValues={resetModalValues}
       />
     </DataCard>
-  );
+  )
 }
 
 StandardGoalCard.propTypes = {
@@ -479,21 +418,14 @@ StandardGoalCard.propTypes = {
   isChecked: PropTypes.bool.isRequired,
   readonly: PropTypes.bool,
   erroneouslySelected: PropTypes.bool,
-};
+}
 
 StandardGoalCard.defaultProps = {
   readonly: false,
   erroneouslySelected: false,
-};
+}
 
-export const ObjectiveSwitch = ({
-  objective,
-  objectivesExpanded,
-  regionId,
-  goalStatus,
-  dispatchStatusChange,
-  isMonitoringGoal,
-}) => (
+export const ObjectiveSwitch = ({ objective, objectivesExpanded, regionId, goalStatus, dispatchStatusChange, isMonitoringGoal }) => (
   <ObjectiveCard
     objective={objective}
     objectivesExpanded={objectivesExpanded}
@@ -502,7 +434,7 @@ export const ObjectiveSwitch = ({
     dispatchStatusChange={dispatchStatusChange}
     isMonitoringGoal={isMonitoringGoal}
   />
-);
+)
 
 ObjectiveSwitch.propTypes = {
   objective: PropTypes.shape({
@@ -514,4 +446,4 @@ ObjectiveSwitch.propTypes = {
   goalStatus: PropTypes.string.isRequired,
   dispatchStatusChange: PropTypes.func.isRequired,
   isMonitoringGoal: PropTypes.bool.isRequired,
-};
+}

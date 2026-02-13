@@ -1,73 +1,69 @@
 /* eslint-disable react/no-array-index-key */
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { uniqueId } from 'lodash';
-import PropTypes from 'prop-types';
-import { Table, Checkbox } from '@trussworks/react-uswds';
-import { parseCheckboxEvent } from '../Constants';
-import './HorizontalTableWidget.scss';
-import ContextMenu from '../components/ContextMenu';
-import HorizontalTableWidgetCell from './HorizontalTableWidgetCell';
+import React, { useState, useEffect, useLayoutEffect } from 'react'
+import { uniqueId } from 'lodash'
+import PropTypes from 'prop-types'
+import { Table, Checkbox } from '@trussworks/react-uswds'
+import { parseCheckboxEvent } from '../Constants'
+import './HorizontalTableWidget.scss'
+import ContextMenu from '../components/ContextMenu'
+import HorizontalTableWidgetCell from './HorizontalTableWidgetCell'
 
-export default function HorizontalTableWidget(
-  {
-    headers,
-    data,
-    firstHeading,
-    enableSorting,
-    lastHeading,
-    sortConfig,
-    requestSort,
-    enableCheckboxes,
-    checkboxes,
-    setCheckboxes,
-    showTotalColumn,
-    hideFirstColumnBorder,
-    caption,
-    footerData,
-    selectAllIdPrefix,
-    showDashForNullValue,
-    stickyFirstColumn,
-    stickyLastColumn,
-  },
-) {
-  const [menuWidthOffset, setMenuWidthOffset] = useState(110);
+export default function HorizontalTableWidget({
+  headers,
+  data,
+  firstHeading,
+  enableSorting,
+  lastHeading,
+  sortConfig,
+  requestSort,
+  enableCheckboxes,
+  checkboxes,
+  setCheckboxes,
+  showTotalColumn,
+  hideFirstColumnBorder,
+  caption,
+  footerData,
+  selectAllIdPrefix,
+  showDashForNullValue,
+  stickyFirstColumn,
+  stickyLastColumn,
+}) {
+  const [menuWidthOffset, setMenuWidthOffset] = useState(110)
 
   useLayoutEffect(() => {
     // get first menuContainer
-    const menuContainer = document.querySelector('.smart-hub-menu-container');
+    const menuContainer = document.querySelector('.smart-hub-menu-container')
 
     if (menuContainer) {
-      const { width } = menuContainer.getBoundingClientRect();
+      const { width } = menuContainer.getBoundingClientRect()
       // 12 is an eyeball, since we want it aligned to part of the svg chevron
-      const newOffset = width + 12;
+      const newOffset = width + 12
       if (newOffset !== menuWidthOffset) {
-        setMenuWidthOffset(newOffset);
+        setMenuWidthOffset(newOffset)
       }
     }
-  }, [menuWidthOffset]);
+  }, [menuWidthOffset])
 
   // State for select all check box.
-  const [allCheckBoxesChecked, setAllCheckBoxesChecked] = useState(false);
+  const [allCheckBoxesChecked, setAllCheckBoxesChecked] = useState(false)
 
-  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '')
 
-  const makeCheckboxes = (itemsArr, checked) => (
-    itemsArr.reduce((obj, d) => ({ ...obj, [d.id]: checked }), {})
-  );
+  const makeCheckboxes = (itemsArr, checked) => itemsArr.reduce((obj, d) => ({ ...obj, [d.id]: checked }), {})
 
   const renderSortableColumnHeader = (displayName, key, name, classValues) => {
-    const sortClassName = getClassNamesFor(key);
-    let fullAriaSort;
+    const sortClassName = getClassNamesFor(key)
+    let fullAriaSort
     switch (sortClassName) {
       case 'asc':
-        fullAriaSort = 'ascending';
-        break;
+        fullAriaSort = 'ascending'
+        break
       case 'desc':
-        fullAriaSort = 'descending';
-        break;
+        fullAriaSort = 'descending'
+        break
       default:
-        fullAriaSort = 'none';
-        break;
+        fullAriaSort = 'none'
+        break
     }
 
     return (
@@ -76,64 +72,63 @@ export default function HorizontalTableWidget(
           type="button"
           tabIndex={0}
           onClick={() => {
-            requestSort(key);
+            requestSort(key)
           }}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
-          aria-label={`${name}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
+          aria-label={`${name}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
         >
           {displayName}
         </button>
       </th>
-    );
-  };
+    )
+  }
 
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
-    setAllCheckBoxesChecked(false);
-    setCheckboxes(makeCheckboxes(data, false));
-  }, [data, setCheckboxes]);
+    setAllCheckBoxesChecked(false)
+    setCheckboxes(makeCheckboxes(data, false))
+  }, [data, setCheckboxes])
 
   const toggleSelectAll = (event) => {
-    const { checked } = parseCheckboxEvent(event);
+    const { checked } = parseCheckboxEvent(event)
 
     if (checked === true) {
-      setCheckboxes(makeCheckboxes(data, true));
-      setAllCheckBoxesChecked(true);
+      setCheckboxes(makeCheckboxes(data, true))
+      setAllCheckBoxesChecked(true)
     } else {
-      setCheckboxes(makeCheckboxes(data, false));
-      setAllCheckBoxesChecked(false);
+      setCheckboxes(makeCheckboxes(data, false))
+      setAllCheckBoxesChecked(false)
     }
-  };
+  }
 
   const handleReportSelect = (event) => {
-    const { checked, value } = parseCheckboxEvent(event);
+    const { checked, value } = parseCheckboxEvent(event)
     if (checked === true) {
-      setCheckboxes({ ...checkboxes, [value]: true });
+      setCheckboxes({ ...checkboxes, [value]: true })
     } else {
       if (allCheckBoxesChecked) {
-        setAllCheckBoxesChecked(false);
+        setAllCheckBoxesChecked(false)
       }
-      setCheckboxes({ ...checkboxes, [value]: false });
+      setCheckboxes({ ...checkboxes, [value]: false })
     }
-  };
+  }
 
   const Header = ({ header, sortingEnabled }) => {
-    let displayName = header;
-    let name = header;
+    let displayName = header
+    let name = header
 
     if (header.displayName) {
-      displayName = header.displayName;
+      displayName = header.displayName
     }
 
     if (header.name) {
-      name = header.name;
+      name = header.name
     }
 
-    const key = displayName.replaceAll(' ', '_');
+    const key = displayName.replaceAll(' ', '_')
 
     if (sortingEnabled) {
-      return renderSortableColumnHeader(displayName, key, name);
+      return renderSortableColumnHeader(displayName, key, name)
     }
 
     return (
@@ -141,8 +136,8 @@ export default function HorizontalTableWidget(
         <span className="usa-sr-only">{name}</span>
         <span aria-hidden="true">{displayName}</span>
       </th>
-    );
-  };
+    )
+  }
 
   Header.propTypes = {
     sortingEnabled: PropTypes.bool.isRequired,
@@ -153,34 +148,31 @@ export default function HorizontalTableWidget(
         name: PropTypes.string,
       }),
     ]).isRequired,
-  };
+  }
 
   const firstHeadingClasses = () => {
-    const classes = [
-      'smarthub-horizontal-table-first-column',
-      'smarthub-horizontal-table-first-column-border',
-    ];
+    const classes = ['smarthub-horizontal-table-first-column', 'smarthub-horizontal-table-first-column-border']
 
     if (!enableSorting) {
-      classes.push('data-header');
+      classes.push('data-header')
     }
 
     if (enableCheckboxes) {
-      classes.push('left-with-checkbox');
+      classes.push('left-with-checkbox')
     } else {
-      classes.push('left-0');
+      classes.push('left-0')
     }
 
     if (stickyFirstColumn) {
-      classes.push('smarthub-horizontal-table--sticky-first-column');
+      classes.push('smarthub-horizontal-table--sticky-first-column')
     }
 
     if (stickyFirstColumn && enableCheckboxes) {
-      classes.push('smarthub-horizontal-table--sticky-first-column-checkboxes-enabled');
+      classes.push('smarthub-horizontal-table--sticky-first-column-checkboxes-enabled')
     }
 
-    return classes.join(' ');
-  };
+    return classes.join(' ')
+  }
 
   return (
     <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
@@ -188,8 +180,7 @@ export default function HorizontalTableWidget(
         <caption className="usa-sr-only">{caption}</caption>
         <thead>
           <tr className="bg-white border-bottom-0 text-bold">
-            {
-            enableCheckboxes && (
+            {enableCheckboxes && (
               <th className="width-8 checkbox-column">
                 <Checkbox
                   id={`${selectAllIdPrefix}check-all-checkboxes`}
@@ -200,87 +191,76 @@ export default function HorizontalTableWidget(
                   aria-label="Select or de-select all"
                 />
               </th>
-            )
-            }
-            {
-              enableSorting
-                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), firstHeading, firstHeadingClasses())
-                : (
-                  <th className={firstHeadingClasses()}>
-                    {firstHeading}
-                  </th>
-                )
-            }
-            {
-            headers.map((h) => (<Header header={h} key={`header-${uniqueId()}`} sortingEnabled={enableSorting} />))
-            }
-            {
-            data.some((r) => r.actions) && (
+            )}
+            {enableSorting ? (
+              renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), firstHeading, firstHeadingClasses())
+            ) : (
+              <th className={firstHeadingClasses()}>{firstHeading}</th>
+            )}
+            {headers.map((h) => (
+              <Header header={h} key={`header-${uniqueId()}`} sortingEnabled={enableSorting} />
+            ))}
+            {data.some((r) => r.actions) && (
               <th scope="col" aria-label="context menu" className={`${stickyLastColumn ? 'smarthub-horizontal-table-last-column' : ''} fixed-th`}>
                 Actions
               </th>
-            )
-            }
-            {
-            showTotalColumn && (
-              enableSorting
-                ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'total', 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
-                : (
-                  <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">
-                    {lastHeading}
-                  </th>
+            )}
+            {showTotalColumn &&
+              (enableSorting ? (
+                renderSortableColumnHeader(
+                  lastHeading,
+                  lastHeading.replaceAll(' ', '_'),
+                  'total',
+                  'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0'
                 )
-            )
-            }
+              ) : (
+                <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">{lastHeading}</th>
+              ))}
           </tr>
         </thead>
         <tbody>
-          {
-            data.map((r, index) => (
-              <tr className="bg-white border-bottom-0 text-bold" key={`horizontal_table_row_${index}`}>
-                {
-                  enableCheckboxes && (
-                    <td className="width-8 checkbox-column" data-label="Select report">
-                      <Checkbox
-                        id={r.id}
-                        label=""
-                        value={r.id}
-                        checked={checkboxes[r.id] || false}
-                        onChange={handleReportSelect}
-                        aria-label={(() => `Select ${r.title || r.heading}`)()}
-                      />
-                    </td>
-                  )
-                }
-                <HorizontalTableWidgetCell
-                  data={r}
-                  showDashForNullValue={showDashForNullValue}
-                  isFirstColumn
-                  enableCheckboxes={enableCheckboxes}
-                  hideFirstColumnBorder={hideFirstColumnBorder}
-                  stickyFirstColumn={stickyFirstColumn}
-                />
-                {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
+          {data.map((r, index) => (
+            <tr className="bg-white border-bottom-0 text-bold" key={`horizontal_table_row_${index}`}>
+              {enableCheckboxes && (
+                <td className="width-8 checkbox-column" data-label="Select report">
+                  <Checkbox
+                    id={r.id}
+                    label=""
+                    value={r.id}
+                    checked={checkboxes[r.id] || false}
+                    onChange={handleReportSelect}
+                    aria-label={(() => `Select ${r.title || r.heading}`)()}
+                  />
+                </td>
+              )}
+              <HorizontalTableWidgetCell
+                data={r}
+                showDashForNullValue={showDashForNullValue}
+                isFirstColumn
+                enableCheckboxes={enableCheckboxes}
+                hideFirstColumnBorder={hideFirstColumnBorder}
+                stickyFirstColumn={stickyFirstColumn}
+              />
+              {(r.data || [])
+                .filter((d) => !d.hidden)
+                .map((d, cellIndex) => (
                   <HorizontalTableWidgetCell
                     key={`horizontal_table_cell_${cellIndex}`}
                     data={{ ...d, title: d.title }}
                     showDashForNullValue={showDashForNullValue}
                   />
                 ))}
-                {r.actions && r.actions.length ? (
-                  <td data-label={`Row actions for ${r.title || r.heading}`} key={`horizontal_table_row_actions_${index}`} className={`${stickyLastColumn ? 'smarthub-horizontal-table-last-column' : ''} text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
-                    <ContextMenu
-                      fixed
-                      left
-                      label={`Actions for ${r.title || r.heading}`}
-                      menuItems={r.actions}
-                      menuWidthOffset={menuWidthOffset}
-                    />
-                  </td>
-                ) : null}
-              </tr>
-            ))
-            }
+              {r.actions && r.actions.length ? (
+                <td
+                  data-label={`Row actions for ${r.title || r.heading}`}
+                  key={`horizontal_table_row_actions_${index}`}
+                  className={`${stickyLastColumn ? 'smarthub-horizontal-table-last-column' : ''} text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}
+                >
+                  <ContextMenu fixed left label={`Actions for ${r.title || r.heading}`} menuItems={r.actions} menuWidthOffset={menuWidthOffset} />
+                </td>
+              ) : null}
+            </tr>
+          ))}
         </tbody>
         {footerData && (
           <tfoot>
@@ -293,7 +273,7 @@ export default function HorizontalTableWidget(
         )}
       </Table>
     </div>
-  );
+  )
 }
 
 HorizontalTableWidget.propTypes = {
@@ -304,12 +284,15 @@ HorizontalTableWidget.propTypes = {
         name: PropTypes.string,
         count: PropTypes.number,
         label: PropTypes.string,
-        actions: PropTypes.arrayOf(PropTypes.shape({
-          label: PropTypes.string,
-          onClick: PropTypes.func,
-        })),
-      }),
-    ), PropTypes.shape({}),
+        actions: PropTypes.arrayOf(
+          PropTypes.shape({
+            label: PropTypes.string,
+            onClick: PropTypes.func,
+          })
+        ),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   firstHeading: PropTypes.string.isRequired,
   selectAllIdPrefix: PropTypes.string,
@@ -328,14 +311,11 @@ HorizontalTableWidget.propTypes = {
   showTotalColumn: PropTypes.bool,
   hideFirstColumnBorder: PropTypes.bool,
   caption: PropTypes.string,
-  footerData: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.arrayOf(PropTypes.string),
-  ]),
+  footerData: PropTypes.oneOfType([PropTypes.bool, PropTypes.arrayOf(PropTypes.string)]),
   showDashForNullValue: PropTypes.bool,
   stickyFirstColumn: PropTypes.bool,
   stickyLastColumn: PropTypes.bool,
-};
+}
 
 HorizontalTableWidget.defaultProps = {
   footerData: false,
@@ -359,4 +339,4 @@ HorizontalTableWidget.defaultProps = {
   showDashForNullValue: false,
   stickyFirstColumn: true,
   stickyLastColumn: true,
-};
+}

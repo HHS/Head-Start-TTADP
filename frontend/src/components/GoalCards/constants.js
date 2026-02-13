@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import PropTypes from 'prop-types'
 
 export const objectivePropTypes = PropTypes.shape({
   id: PropTypes.number,
@@ -8,7 +8,7 @@ export const objectivePropTypes = PropTypes.shape({
   endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.string,
-});
+})
 
 export const goalPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
@@ -23,9 +23,11 @@ export const goalPropTypes = PropTypes.shape({
   grant: PropTypes.shape({
     number: PropTypes.string,
   }),
-  statusChanges: PropTypes.arrayOf(PropTypes.shape({
-    oldStatus: PropTypes.string,
-    newStatus: PropTypes.string,
-  })),
+  statusChanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      oldStatus: PropTypes.string,
+      newStatus: PropTypes.string,
+    })
+  ),
   isReopened: PropTypes.bool,
-});
+})

@@ -1,38 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { RECIPIENTS_WITH_NO_TTA_PER_PAGE } from '../Constants';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import WidgetContainer from '../components/WidgetContainer';
-import useWidgetPaging from '../hooks/useWidgetPaging';
-import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { RECIPIENTS_WITH_NO_TTA_PER_PAGE } from '../Constants'
+import HorizontalTableWidget from './HorizontalTableWidget'
+import WidgetContainer from '../components/WidgetContainer'
+import useWidgetPaging from '../hooks/useWidgetPaging'
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle'
 
 const defaultSortConfig = {
   sortBy: 'Days_Since_Last_TTA',
   direction: 'desc',
   activePage: 1,
-};
+}
 
-function RecipientsWithNoTtaWidget({
-  data,
-  loading,
-  resetPagination,
-  setResetPagination,
-}) {
-  const { pageData, widgetData } = data;
-  const [allRecipientData, setAllRecipientData] = useState([]);
-  const [recipientCount, setRecipientCount] = useState(0);
-  const [localLoading, setLocalLoading] = useState(false);
-  const [recipientsPerPage, setRecipientsPerPage] = useState([]);
-  const [checkBoxes, setCheckBoxes] = useState({});
+function RecipientsWithNoTtaWidget({ data, loading, resetPagination, setResetPagination }) {
+  const { pageData, widgetData } = data
+  const [allRecipientData, setAllRecipientData] = useState([])
+  const [recipientCount, setRecipientCount] = useState(0)
+  const [localLoading, setLocalLoading] = useState(false)
+  const [recipientsPerPage, setRecipientsPerPage] = useState([])
+  const [checkBoxes, setCheckBoxes] = useState({})
 
-  const {
-    offset,
-    activePage,
-    handlePageChange,
-    requestSort,
-    exportRows,
-    sortConfig,
-  } = useWidgetPaging(
+  const { offset, activePage, handlePageChange, requestSort, exportRows, sortConfig } = useWidgetPaging(
     pageData ? pageData.headers : [],
     'recipientsWithNoTta',
     defaultSortConfig,
@@ -47,52 +35,50 @@ function RecipientsWithNoTtaWidget({
     setRecipientsPerPage,
     ['Recipient'],
     ['Date_of_Last_TTA'],
-    'recipientsWithNoTta.csv',
-  );
+    'recipientsWithNoTta.csv'
+  )
 
   useEffect(() => {
     try {
       // Set local data.
-      setLocalLoading(true);
-      setAllRecipientData(pageData ? pageData.RecipientsWithNoTta : []); // TODO: Put this back.
-      setRecipientCount(pageData ? pageData.RecipientsWithNoTta.length : 0);
+      setLocalLoading(true)
+      setAllRecipientData(pageData ? pageData.RecipientsWithNoTta : []) // TODO: Put this back.
+      setRecipientCount(pageData ? pageData.RecipientsWithNoTta.length : 0)
     } finally {
-      setLocalLoading(false);
+      setLocalLoading(false)
     }
-  }, [pageData, widgetData]);
+  }, [pageData, widgetData])
 
   const getSubtitleWithPct = () => {
-    const totalRecipients = widgetData ? widgetData.total : 0;
-    const recipientsWithoutTTA = widgetData ? widgetData['recipients without tta'] : 0;
-    const pct = widgetData ? widgetData['% recipients without tta'] : 0;
-    return `${recipientsWithoutTTA} of ${totalRecipients} (${pct}%) recipients`;
-  };
+    const totalRecipients = widgetData ? widgetData.total : 0
+    const recipientsWithoutTTA = widgetData ? widgetData['recipients without tta'] : 0
+    const pct = widgetData ? widgetData['% recipients without tta'] : 0
+    return `${recipientsWithoutTTA} of ${totalRecipients} (${pct}%) recipients`
+  }
 
   const menuItems = [
     {
       label: 'Export selected rows',
       onClick: () => {
-        exportRows('selected');
+        exportRows('selected')
       },
     },
     {
       label: 'Export table',
       onClick: () => {
-        exportRows('all');
+        exportRows('all')
       },
     },
-  ];
+  ]
 
   const subtitle = (
     <div className="margin-bottom-3">
-      <WidgetContainerSubtitle>
-        Recipients without Activity Reports or Training Reports for more than 90 days.
-      </WidgetContainerSubtitle>
+      <WidgetContainerSubtitle>Recipients without Activity Reports or Training Reports for more than 90 days.</WidgetContainerSubtitle>
       <p className="usa-prose margin-x-0 margin-top-0 margin-bottom-1">
         <strong>{getSubtitleWithPct()}</strong>
       </p>
     </div>
-  );
+  )
 
   return (
     <WidgetContainer
@@ -124,7 +110,7 @@ function RecipientsWithNoTtaWidget({
         showDashForNullValue
       />
     </WidgetContainer>
-  );
+  )
 }
 
 RecipientsWithNoTtaWidget.propTypes = {
@@ -137,7 +123,7 @@ RecipientsWithNoTtaWidget.propTypes = {
             recipient: PropTypes.string,
             dateOfLastTta: PropTypes.date,
             daysSinceLastTta: PropTypes.number,
-          }),
+          })
         ),
       }),
       PropTypes.shape({}),
@@ -151,12 +137,12 @@ RecipientsWithNoTtaWidget.propTypes = {
   resetPagination: PropTypes.bool,
   setResetPagination: PropTypes.func,
   loading: PropTypes.bool.isRequired,
-};
+}
 
 RecipientsWithNoTtaWidget.defaultProps = {
   data: { headers: [], RecipientsWithNoTta: [] },
   resetPagination: false,
   setResetPagination: () => {},
-};
+}
 
-export default RecipientsWithNoTtaWidget;
+export default RecipientsWithNoTtaWidget

@@ -1,17 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import _ from 'lodash';
-import {
-  Checkbox, Grid, Fieldset,
-} from '@trussworks/react-uswds';
-import { DECIMAL_BASE } from '@ttahub/common';
-import {
-  REGIONAL_SCOPES, READ_ONLY_SCOPES, READ_WRITE_SCOPES, ALL_REGIONS,
-} from '../../Constants';
-import PermissionCheckboxLabel from './components/PermissionCheckboxLabel';
-import CurrentPermissions from './components/CurrentPermissions';
-import RegionDropdown from '../../components/RegionDropdown';
-import { createRegionalScopeObject, scopeFromId } from './PermissionHelpers';
+import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import _ from 'lodash'
+import { Checkbox, Grid, Fieldset } from '@trussworks/react-uswds'
+import { DECIMAL_BASE } from '@ttahub/common'
+import { REGIONAL_SCOPES, READ_ONLY_SCOPES, READ_WRITE_SCOPES, ALL_REGIONS } from '../../Constants'
+import PermissionCheckboxLabel from './components/PermissionCheckboxLabel'
+import CurrentPermissions from './components/CurrentPermissions'
+import RegionDropdown from '../../components/RegionDropdown'
+import { createRegionalScopeObject, scopeFromId } from './PermissionHelpers'
 
 /**
  * Display the current permissions for the selected user
@@ -23,33 +19,27 @@ import { createRegionalScopeObject, scopeFromId } from './PermissionHelpers';
  * @param {Object<string, {Object<string, bool>>}} permissions
  */
 function renderUserPermissions(permissions) {
-  const currentPermissions = _.mapValues(REGIONAL_SCOPES, () => (
-    []
-  ));
+  const currentPermissions = _.mapValues(REGIONAL_SCOPES, () => [])
 
-  const allRegionPermissions = _.pickBy(_.pick(permissions, [ALL_REGIONS])[ALL_REGIONS]);
-  const otherRegionPermissions = _.pickBy(_.omit(permissions, [ALL_REGIONS]));
+  const allRegionPermissions = _.pickBy(_.pick(permissions, [ALL_REGIONS])[ALL_REGIONS])
+  const otherRegionPermissions = _.pickBy(_.omit(permissions, [ALL_REGIONS]))
 
   _.forEach(otherRegionPermissions, (scopes, region) => {
     // Grab the scopes that are true. I.E. from {"3": true, "4": true, "5": false} to
     // {"3": true, "4": true}
     // console.log(_.pickBy(scopes, individualRegionallyTrueOrAllRegionsTrue))
-    const trueScopes = _.pickBy({ ...scopes, ...allRegionPermissions });
+    const trueScopes = _.pickBy({ ...scopes, ...allRegionPermissions })
     // _.keys gives us an array of keys of the object, so ["3", "4"]
     _.keys(trueScopes).forEach((scope) => {
-      currentPermissions[scope].push(region);
-    });
-  });
+      currentPermissions[scope].push(region)
+    })
+  })
 
   // regions.length being zero means the user does not have the scope in any region. Remove the
   // scope to keep the UI less cluttered
-  const prunedPermissions = _.pickBy(currentPermissions, (regions) => (
-    regions.length > 0
-  ));
+  const prunedPermissions = _.pickBy(currentPermissions, (regions) => regions.length > 0)
 
-  return _.map(prunedPermissions, (regions, scope) => (
-    <CurrentPermissions key={scope} regions={regions} scope={scope} />
-  ));
+  return _.map(prunedPermissions, (regions, scope) => <CurrentPermissions key={scope} regions={regions} scope={scope} />)
 }
 
 /**
@@ -57,100 +47,86 @@ function renderUserPermissions(permissions) {
  * and passing any updates up to the UserSection component. The Admin can set permissions for a
  * single region at a time.
  */
-function UserPermissions({
-  userId,
-  globalPermissions,
-  onGlobalPermissionChange,
-  regionalPermissions,
-  onRegionalPermissionChange,
-}) {
+function UserPermissions({ userId, globalPermissions, onGlobalPermissionChange, regionalPermissions, onRegionalPermissionChange }) {
   // State of the region select dropdown
-  const [selectedRegion, updateSelectedRegion] = useState();
+  const [selectedRegion, updateSelectedRegion] = useState()
   // State of the regional permissions checkboxes, I.E. {"3": true, ...}
-  const [permissionsForRegion, updatePermissionsForRegion] = useState(createRegionalScopeObject());
-  const enablePermissions = selectedRegion !== undefined;
+  const [permissionsForRegion, updatePermissionsForRegion] = useState(createRegionalScopeObject())
+  const enablePermissions = selectedRegion !== undefined
 
   // We need to reset the selected region and the state of regional checkboxes when
   // another user is selected
   useEffect(() => {
-    updateSelectedRegion();
-    updatePermissionsForRegion(createRegionalScopeObject());
-  }, [userId]);
+    updateSelectedRegion()
+    updatePermissionsForRegion(createRegionalScopeObject())
+  }, [userId])
 
   // The user has selected a new region in the regional dropdown so we need to update
   // what regional permissions are shown
   useEffect(() => {
-    const allRegionPermissions = _.pickBy(regionalPermissions[ALL_REGIONS]);
+    const allRegionPermissions = _.pickBy(regionalPermissions[ALL_REGIONS])
 
     updatePermissionsForRegion({
       ...createRegionalScopeObject(),
       ...regionalPermissions[selectedRegion],
       ...allRegionPermissions,
-    });
-  }, [regionalPermissions, selectedRegion]);
+    })
+  }, [regionalPermissions, selectedRegion])
 
   const onSelectedRegionChange = (e) => {
-    const { value } = e.target;
-    updateSelectedRegion(parseInt(value, DECIMAL_BASE));
-  };
+    const { value } = e.target
+    updateSelectedRegion(parseInt(value, DECIMAL_BASE))
+  }
 
-  const PermissionsCheckboxes = ({ scopeGroup }) => _.map(
-    _.pick(permissionsForRegion, scopeGroup),
-    (checked, scopeId) => {
-      const { name, description } = scopeFromId(scopeId);
+  const PermissionsCheckboxes = ({ scopeGroup }) =>
+    _.map(_.pick(permissionsForRegion, scopeGroup), (checked, scopeId) => {
+      const { name, description } = scopeFromId(scopeId)
       return (
         <Grid key={name} col={12}>
           <Checkbox
             id={name}
             name={scopeId}
             checked={checked}
-            onChange={(e) => { onRegionalPermissionChange(e, selectedRegion); }}
+            onChange={(e) => {
+              onRegionalPermissionChange(e, selectedRegion)
+            }}
             description={description}
             disabled={!enablePermissions}
-            label={(<PermissionCheckboxLabel name={name} description={description} />)}
+            label={<PermissionCheckboxLabel name={name} description={description} />}
           />
         </Grid>
-      );
-    },
-  );
+      )
+    })
 
   PermissionsCheckboxes.propTypes = {
     scopeGroup: PropTypes.arrayOf(PropTypes.string).isRequired,
-  };
+  }
 
   return (
     <>
       <Fieldset legend="Global Permissions">
         <Grid row gap className="margin-top-3">
           {_.map(globalPermissions, (checked, scopeId) => {
-            const { name, description } = scopeFromId(scopeId);
+            const { name, description } = scopeFromId(scopeId)
             return (
               <Grid className="margin-bottom-2" key={name} col={12}>
                 <Checkbox
                   checked={checked}
                   onChange={onGlobalPermissionChange}
                   id={name}
-                  label={(<PermissionCheckboxLabel name={name} description={description} />)}
+                  label={<PermissionCheckboxLabel name={name} description={description} />}
                   name={scopeId}
                   disabled={false}
                 />
               </Grid>
-            );
+            )
           })}
         </Grid>
       </Fieldset>
       <Fieldset legend="Regional Permissions">
         <h2>Current Permissions</h2>
-        <ul>
-          {renderUserPermissions(regionalPermissions)}
-        </ul>
-        <RegionDropdown
-          id="permission-region"
-          name="permission-region"
-          includeAll
-          value={selectedRegion}
-          onChange={onSelectedRegionChange}
-        />
+        <ul>{renderUserPermissions(regionalPermissions)}</ul>
+        <RegionDropdown id="permission-region" name="permission-region" includeAll value={selectedRegion} onChange={onSelectedRegionChange} />
         <Grid row gap className="margin-top-3">
           <h2>Read only</h2>
           <PermissionsCheckboxes scopeGroup={READ_ONLY_SCOPES} />
@@ -159,7 +135,7 @@ function UserPermissions({
         </Grid>
       </Fieldset>
     </>
-  );
+  )
 }
 
 UserPermissions.propTypes = {
@@ -168,10 +144,10 @@ UserPermissions.propTypes = {
   onGlobalPermissionChange: PropTypes.func.isRequired,
   regionalPermissions: PropTypes.objectOf(PropTypes.objectOf(PropTypes.bool)).isRequired,
   onRegionalPermissionChange: PropTypes.func.isRequired,
-};
+}
 
 UserPermissions.defaultProps = {
   userId: null,
-};
+}
 
-export default UserPermissions;
+export default UserPermissions

@@ -6,13 +6,11 @@
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import PropTypes from 'prop-types';
+import React from 'react'
+import { v4 as uuidv4 } from 'uuid'
+import PropTypes from 'prop-types'
 
-const FileRejections = ({
-  fileRejections,
-}) => {
+const FileRejections = ({ fileRejections }) => {
   const fileRejectionItems = fileRejections.map(({ file, errors }) => (
     <span key={uuidv4()}>
       <strong>{file.path}</strong>
@@ -27,14 +25,10 @@ const FileRejections = ({
         </ul>
       </span>
     </span>
-  ));
+  ))
 
-  return (
-    <div>
-      { fileRejectionItems }
-    </div>
-  );
-};
+  return <div>{fileRejectionItems}</div>
+}
 
 FileRejections.propTypes = {
   fileRejections: PropTypes.oneOfType([
@@ -44,11 +38,11 @@ FileRejections.propTypes = {
           PropTypes.shape({
             code: PropTypes.string.isRequired,
             message: PropTypes.string.isRequired,
-          }),
+          })
         ),
-      }),
+      })
     ),
   ]).isRequired,
-};
+}
 
-export default FileRejections;
+export default FileRejections

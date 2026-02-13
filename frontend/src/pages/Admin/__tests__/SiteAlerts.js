@@ -1,50 +1,45 @@
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-} from '@testing-library/react';
-import join from 'url-join';
-import fetchMock from 'fetch-mock';
-import userEvent from '@testing-library/user-event';
-import { ALERT_SIZES, ALERT_VARIANTS } from '@ttahub/common';
-import SiteAlerts from '../SiteAlerts';
+import React from 'react'
+import { render, screen, act, waitFor } from '@testing-library/react'
+import join from 'url-join'
+import fetchMock from 'fetch-mock'
+import userEvent from '@testing-library/user-event'
+import { ALERT_SIZES, ALERT_VARIANTS } from '@ttahub/common'
+import SiteAlerts from '../SiteAlerts'
 
 describe('SiteAlerts', () => {
   const renderSiteAlerts = () => {
-    render(<SiteAlerts />);
-  };
+    render(<SiteAlerts />)
+  }
 
-  const alertsUrl = join('api', 'admin', 'alerts');
+  const alertsUrl = join('api', 'admin', 'alerts')
 
-  afterEach(() => fetchMock.restore());
+  afterEach(() => fetchMock.restore())
 
   it('renders the SiteAlerts component', () => {
-    fetchMock.get(alertsUrl, []);
-    act(renderSiteAlerts);
+    fetchMock.get(alertsUrl, [])
+    act(renderSiteAlerts)
 
-    expect(screen.getByRole('heading', { name: 'Site alerts' })).toBeInTheDocument();
-  });
+    expect(screen.getByRole('heading', { name: 'Site alerts' })).toBeInTheDocument()
+  })
 
   it('handles an error fetching alerts', async () => {
-    fetchMock.get(alertsUrl, 500);
-    act(renderSiteAlerts);
+    fetchMock.get(alertsUrl, 500)
+    act(renderSiteAlerts)
 
-    expect(await screen.findByText('There was an error fetching alerts')).toBeInTheDocument();
-  });
+    expect(await screen.findByText('There was an error fetching alerts')).toBeInTheDocument()
+  })
 
   it('can create a new alert', async () => {
-    fetchMock.get(alertsUrl, []);
+    fetchMock.get(alertsUrl, [])
 
-    act(renderSiteAlerts);
+    act(renderSiteAlerts)
 
     act(() => {
-      userEvent.click(screen.getByRole('button', { name: 'Create new alert' }));
-    });
+      userEvent.click(screen.getByRole('button', { name: 'Create new alert' }))
+    })
 
-    await waitFor(() => expect(screen.getByRole('checkbox')).toBeInTheDocument());
-  });
+    await waitFor(() => expect(screen.getByRole('checkbox')).toBeInTheDocument())
+  })
 
   it('renders the alerts', async () => {
     const alerts = [
@@ -58,14 +53,14 @@ describe('SiteAlerts', () => {
         variant: ALERT_VARIANTS.INFO,
         size: ALERT_SIZES.STANDARD,
       },
-    ];
+    ]
 
-    fetchMock.get(alertsUrl, alerts);
+    fetchMock.get(alertsUrl, alerts)
 
-    act(renderSiteAlerts);
+    act(renderSiteAlerts)
 
-    expect(await screen.findByText('Alert 1')).toBeInTheDocument();
-  });
+    expect(await screen.findByText('Alert 1')).toBeInTheDocument()
+  })
 
   it('allows deleting alerts', async () => {
     const alerts = [
@@ -79,25 +74,25 @@ describe('SiteAlerts', () => {
         variant: ALERT_VARIANTS.INFO,
         size: ALERT_SIZES.STANDARD,
       },
-    ];
+    ]
 
-    fetchMock.get(alertsUrl, alerts);
-    fetchMock.delete(join(alertsUrl, '1'), 204);
+    fetchMock.get(alertsUrl, alerts)
+    fetchMock.delete(join(alertsUrl, '1'), 204)
 
-    act(renderSiteAlerts);
+    act(renderSiteAlerts)
 
-    expect(await screen.findByText('Alert 1')).toBeInTheDocument();
-
-    act(() => {
-      userEvent.click(screen.getByRole('checkbox', { name: 'Edit?' }));
-    });
+    expect(await screen.findByText('Alert 1')).toBeInTheDocument()
 
     act(() => {
-      screen.getByRole('button', { name: 'Delete' }).click();
-    });
+      userEvent.click(screen.getByRole('checkbox', { name: 'Edit?' }))
+    })
 
-    expect(await screen.findByText('Alert 1')).not.toBeInTheDocument();
-  });
+    act(() => {
+      screen.getByRole('button', { name: 'Delete' }).click()
+    })
+
+    expect(await screen.findByText('Alert 1')).not.toBeInTheDocument()
+  })
 
   it('handles an error deleting an alert', async () => {
     const alerts = [
@@ -111,23 +106,23 @@ describe('SiteAlerts', () => {
         variant: ALERT_VARIANTS.INFO,
         size: ALERT_SIZES.STANDARD,
       },
-    ];
+    ]
 
-    fetchMock.get(alertsUrl, alerts);
-    fetchMock.delete(join(alertsUrl, '1'), 500);
+    fetchMock.get(alertsUrl, alerts)
+    fetchMock.delete(join(alertsUrl, '1'), 500)
 
-    act(renderSiteAlerts);
+    act(renderSiteAlerts)
 
-    expect(await screen.findByText('Alert 1')).toBeInTheDocument();
-
-    act(() => {
-      userEvent.click(screen.getByRole('checkbox', { name: 'Edit?' }));
-    });
+    expect(await screen.findByText('Alert 1')).toBeInTheDocument()
 
     act(() => {
-      screen.getByRole('button', { name: 'Delete' }).click();
-    });
+      userEvent.click(screen.getByRole('checkbox', { name: 'Edit?' }))
+    })
 
-    expect(await screen.findByText('There was an error deleting an alert')).toBeInTheDocument();
-  });
-});
+    act(() => {
+      screen.getByRole('button', { name: 'Delete' }).click()
+    })
+
+    expect(await screen.findByText('There was an error deleting an alert')).toBeInTheDocument()
+  })
+})

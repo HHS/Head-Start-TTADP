@@ -1,28 +1,21 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import {
-  Button,
-  Fieldset,
-  Form,
-  FormGroup,
-  Label,
-  TextInput,
-} from '@trussworks/react-uswds';
-import { createCourseByName } from '../../fetchers/courses';
+import React, { useState } from 'react'
+import PropTypes from 'prop-types'
+import { Button, Fieldset, Form, FormGroup, Label, TextInput } from '@trussworks/react-uswds'
+import { createCourseByName } from '../../fetchers/courses'
 
 function CourseAdd({ refresh }) {
-  const [courseName, setCourseName] = useState('');
+  const [courseName, setCourseName] = useState('')
 
   const create = async () => {
-    await createCourseByName(courseName);
-    refresh();
-    setCourseName('');
-  };
+    await createCourseByName(courseName)
+    refresh()
+    setCourseName('')
+  }
 
   const onSubmit = (e) => {
-    e.preventDefault();
-    create();
-  };
+    e.preventDefault()
+    create()
+  }
 
   return (
     <div>
@@ -41,20 +34,16 @@ function CourseAdd({ refresh }) {
             />
           </Fieldset>
         </FormGroup>
-        <Button
-          type="submit"
-          data-testid="add-course"
-          className="margin-top-2"
-        >
+        <Button type="submit" data-testid="add-course" className="margin-top-2">
           Add course
         </Button>
       </Form>
     </div>
-  );
+  )
 }
 
 CourseAdd.propTypes = {
   refresh: PropTypes.func.isRequired,
-};
+}
 
-export default CourseAdd;
+export default CourseAdd

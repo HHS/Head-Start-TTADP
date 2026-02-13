@@ -1,18 +1,14 @@
-import React, { useContext } from 'react';
-import FilterSelect from './FilterSelect';
-import { filterSelectProps } from './props';
-import { StaffContext } from '../StaffProvider';
+import React, { useContext } from 'react'
+import FilterSelect from './FilterSelect'
+import { filterSelectProps } from './props'
+import { StaffContext } from '../StaffProvider'
 
-export default function FilterTrainingReportStaff({
-  onApply,
-  inputId,
-  query,
-}) {
-  const { staff } = useContext(StaffContext);
+export default function FilterTrainingReportStaff({ onApply, inputId, query }) {
+  const { staff } = useContext(StaffContext)
 
   const onApplyClick = (selected) => {
-    onApply(selected);
-  };
+    onApply(selected)
+  }
 
   return (
     <FilterSelect
@@ -25,9 +21,9 @@ export default function FilterTrainingReportStaff({
       valueProp="id"
       mapByValue
     />
-  );
+  )
 }
 
 FilterTrainingReportStaff.propTypes = {
   ...filterSelectProps,
-};
+}

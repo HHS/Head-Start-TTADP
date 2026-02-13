@@ -1,22 +1,17 @@
 /* eslint-disable max-len */
 /* istanbul ignore file: most of what is needed to be tested here is already tested in Navigator component */
-import React, {
-  useContext,
-  useState,
-  useEffect,
-  useMemo,
-} from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
-import { useHistory } from 'react-router-dom';
-import { getCommunicationLogById, updateCommunicationLogById } from '../../../fetchers/communicationLog';
-import { resetFormData } from '../constants';
-import useHookFormPageState from '../../../hooks/useHookFormPageState';
-import AppLoadingContext from '../../../AppLoadingContext';
-import UserContext from '../../../UserContext';
-import { LogProvider } from './LogContext';
-import Navigator from '../../Navigator';
-import { NOOP } from '../../../Constants';
+import React, { useContext, useState, useEffect, useMemo } from 'react'
+import PropTypes from 'prop-types'
+import { useFormContext } from 'react-hook-form'
+import { useHistory } from 'react-router-dom'
+import { getCommunicationLogById, updateCommunicationLogById } from '../../../fetchers/communicationLog'
+import { resetFormData } from '../constants'
+import useHookFormPageState from '../../../hooks/useHookFormPageState'
+import AppLoadingContext from '../../../AppLoadingContext'
+import UserContext from '../../../UserContext'
+import { LogProvider } from './LogContext'
+import Navigator from '../../Navigator'
+import { NOOP } from '../../../Constants'
 
 const LogFormNavigator = ({
   shouldFetch,
@@ -37,28 +32,24 @@ const LogFormNavigator = ({
   setError,
 }) => {
   // for redirects if a page is not provided
-  const history = useHistory();
+  const history = useHistory()
 
   // this is the error that appears in the sidebar
-  const [errorMessage, updateErrorMessage] = useState();
+  const [errorMessage, updateErrorMessage] = useState()
 
-  const { user } = useContext(UserContext);
+  const { user } = useContext(UserContext)
 
   // this holds the key for the date pickers to force re-render
   // as the truss component doesn't re-render when the default value changes
-  const [datePickerKey, setDatePickerKey] = useState(`i${Date.now().toString()}`);
+  const [datePickerKey, setDatePickerKey] = useState(`i${Date.now().toString()}`)
   /* ============ */
 
-  const hookForm = useFormContext();
-  const {
-    getValues,
-    reset,
-    register,
-  } = hookForm;
+  const hookForm = useFormContext()
+  const { getValues, reset, register } = hookForm
 
-  const formData = getValues();
+  const formData = getValues()
 
-  const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext)
 
   useEffect(() => {
     // fetch communication log data
@@ -67,81 +58,72 @@ const LogFormNavigator = ({
       // 1. reportFetched flag prevents refetching after initial load
       // 2. This effect only runs when meaningful dependencies change (reportId, currentPage, etc.)
       // 3. Not checking isAppLoading prevents unnecessary effect re-runs during saves
-      if (!shouldFetch({
-        communicationLogId: reportId.current,
-        regionId,
-        reportFetched,
-        isAppLoading: false, // Always pass false - reportFetched handles preventing concurrent fetches
-        currentPage,
-        recipientId,
-      })) {
-        return;
+      if (
+        !shouldFetch({
+          communicationLogId: reportId.current,
+          regionId,
+          reportFetched,
+          isAppLoading: false, // Always pass false - reportFetched handles preventing concurrent fetches
+          currentPage,
+          recipientId,
+        })
+      ) {
+        return
       }
 
       try {
-        setIsAppLoading(true);
-        const log = await getCommunicationLogById(regionId, reportId.current);
+        setIsAppLoading(true)
+        const log = await getCommunicationLogById(regionId, reportId.current)
         resetFormData(reset, {
           ...log,
           data: {
             ...log.data,
             isEditing: true,
           },
-        });
+        })
       } catch (e) {
-        setError('Error fetching communication log');
+        setError('Error fetching communication log')
       } finally {
-        setDatePickerKey(`f${Date.now().toString()}`);
-        setReportFetched(true);
-        setIsAppLoading(false);
+        setDatePickerKey(`f${Date.now().toString()}`)
+        setReportFetched(true)
+        setIsAppLoading(false)
       }
     }
-    fetchLog();
-  }, [
-    reportId,
-    reset,
-    regionId,
-    reportFetched,
-    setIsAppLoading,
-    currentPage,
-    setError,
-    shouldFetch,
-    setReportFetched,
-    recipientId,
-  ]);
+    fetchLog()
+  }, [reportId, reset, regionId, reportFetched, setIsAppLoading, currentPage, setError, shouldFetch, setReportFetched, recipientId])
 
   // hook to update the page state in the sidebar
-  useHookFormPageState(hookForm, pages, currentPage);
+  useHookFormPageState(hookForm, pages, currentPage)
 
-  const reportCreator = useMemo(() => ({ name: user.name, roles: user.roles }), [user]);
+  const reportCreator = useMemo(() => ({ name: user.name, roles: user.roles }), [user])
 
   // retrieve the last time the data was saved to local storage
-  const savedToStorageTime = useMemo(() => (formData ? formData.savedToStorageTime : null), [formData]);
+  const savedToStorageTime = useMemo(() => (formData ? formData.savedToStorageTime : null), [formData])
 
   const updatePage = (position) => {
-    const state = {};
+    const state = {}
     if (reportId.current) {
-      state.showLastUpdatedTime = true;
+      state.showLastUpdatedTime = true
     }
 
-    const page = pages.find((p) => p.position === position);
-    const newPath = `${redirectPathOnSave()}${page.path}`;
-    history.push(newPath, state);
-  };
+    const page = pages.find((p) => p.position === position)
+    const newPath = `${redirectPathOnSave()}${page.path}`
+    history.push(newPath, state)
+  }
 
   const onSaveAndContinue = async () => {
-    const valid = await hookForm.trigger();
+    const valid = await hookForm.trigger()
     if (!valid) {
-      return;
+      return
     }
-    await onSave();
-    updateShowSavedDraft(false);
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
+    await onSave()
+    updateShowSavedDraft(false)
+    const whereWeAre = pages.find((p) => p.path === currentPage)
+    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1)
     if (nextPage) {
-      updatePage(nextPage.position);
+      updatePage(nextPage.position)
     }
-  };
+  }
 
   const preFlight = async () => {
     /**
@@ -150,42 +132,36 @@ const LogFormNavigator = ({
      * since we don't want to save the form if the date
      * is invalid
      */
-    const whereWeAre = pages.find((p) => p.path === currentPage);
+    const whereWeAre = pages.find((p) => p.path === currentPage)
     if (whereWeAre.position === 1) {
-      return hookForm.trigger('communicationDate');
+      return hookForm.trigger('communicationDate')
     }
-    return true;
-  };
+    return true
+  }
 
   const onFormSubmit = async () => {
     try {
-      const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm));
+      const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm))
 
       if (!allPagesComplete) {
-        return;
+        return
       }
 
-      setIsAppLoading(true);
+      setIsAppLoading(true)
 
       // grab the newest data from the form
-      const data = hookForm.getValues();
+      const data = hookForm.getValues()
 
       // PUT it to the backend
-      await updateCommunicationLogById(
-        reportId.current,
-        data,
-      );
+      await updateCommunicationLogById(reportId.current, data)
 
-      history.push(
-        redirectToOnSubmit,
-        { message: 'You successfully saved the communication log.' },
-      );
+      history.push(redirectToOnSubmit, { message: 'You successfully saved the communication log.' })
     } catch (err) {
-      setError('There was an error saving the communication log. Please try again later.');
+      setError('There was an error saving the communication log. Please try again later.')
     } finally {
-      setIsAppLoading(false);
+      setIsAppLoading(false)
     }
-  };
+  }
 
   return (
     <LogProvider regionId={regionId}>
@@ -222,18 +198,20 @@ const LogFormNavigator = ({
         preFlightForNavigation={preFlight}
       />
     </LogProvider>
-  );
-};
+  )
+}
 
 LogFormNavigator.propTypes = {
   shouldFetch: PropTypes.func.isRequired,
   reportId: PropTypes.shape({
     current: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    position: PropTypes.number.isRequired,
-    label: PropTypes.string.isRequired,
-  })).isRequired,
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      position: PropTypes.number.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ).isRequired,
   currentPage: PropTypes.string.isRequired,
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -247,11 +225,11 @@ LogFormNavigator.propTypes = {
   showSavedDraft: PropTypes.bool.isRequired,
   updateShowSavedDraft: PropTypes.func.isRequired,
   setError: PropTypes.func.isRequired,
-};
+}
 
 LogFormNavigator.defaultProps = {
   lastSaveTime: null,
   recipientId: null,
-};
+}
 
-export default LogFormNavigator;
+export default LogFormNavigator

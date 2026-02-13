@@ -1,22 +1,18 @@
-import React, { useContext } from 'react';
-import FilterSelect from './FilterSelect';
-import { filterSelectProps } from './props';
-import { MyGroupsContext } from '../MyGroupsProvider';
+import React, { useContext } from 'react'
+import FilterSelect from './FilterSelect'
+import { filterSelectProps } from './props'
+import { MyGroupsContext } from '../MyGroupsProvider'
 
-export default function FilterGroups({
-  onApply,
-  inputId,
-  query,
-}) {
-  const { myGroups } = useContext(MyGroupsContext);
+export default function FilterGroups({ onApply, inputId, query }) {
+  const { myGroups } = useContext(MyGroupsContext)
   const groups = myGroups.map((g) => ({
     value: g.id,
     label: g.name,
-  }));
+  }))
 
   const onApplyClick = (selected) => {
-    onApply(selected);
-  };
+    onApply(selected)
+  }
   return (
     <FilterSelect
       onApply={onApplyClick}
@@ -26,7 +22,7 @@ export default function FilterGroups({
       selectedValues={query}
       mapByValue // this returns the value instead of the label through "selected" via onApplyClick
     />
-  );
+  )
 }
 
-FilterGroups.propTypes = filterSelectProps;
+FilterGroups.propTypes = filterSelectProps

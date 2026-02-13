@@ -1,22 +1,14 @@
-import React, { useState } from 'react';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import PropTypes from 'prop-types';
-import ConditionalMultiselect from './ConditionalMultiselect';
-import CONDITIONAL_FIELD_CONSTANTS from './condtionalFieldConstants';
+import React, { useState } from 'react'
+import useDeepCompareEffect from 'use-deep-compare-effect'
+import PropTypes from 'prop-types'
+import ConditionalMultiselect from './ConditionalMultiselect'
+import CONDITIONAL_FIELD_CONSTANTS from './condtionalFieldConstants'
 
-const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS;
+const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS
 
 export const FIELD_DICTIONARY = {
   multiselect: {
-    render: ({
-      error,
-      field,
-      validations,
-      value,
-      onChange,
-      onBlur,
-      userCanEdit,
-    }) => (
+    render: ({ error, field, validations, value, onChange, onBlur, userCanEdit }) => (
       <ConditionalMultiselect
         fieldData={field}
         validations={validations}
@@ -30,58 +22,52 @@ export const FIELD_DICTIONARY = {
       />
     ),
   },
-};
+}
 
-export default function ConditionalFields({
-  prompts,
-  setPrompts,
-  validatePrompts,
-  errors,
-  userCanEdit,
-}) {
-  const [initialValues, setInitialValues] = useState([]);
+export default function ConditionalFields({ prompts, setPrompts, validatePrompts, errors, userCanEdit }) {
+  const [initialValues, setInitialValues] = useState([])
 
   useDeepCompareEffect(() => {
-    const newPromptValues = updateRefToInitialValues(initialValues, prompts);
+    const newPromptValues = updateRefToInitialValues(initialValues, prompts)
 
     // save the new prompts to initialValues
-    setInitialValues(newPromptValues);
-  }, [prompts, initialValues]);
+    setInitialValues(newPromptValues)
+  }, [prompts, initialValues])
 
   if (!prompts) {
-    return null;
+    return null
   }
 
   return (
     <div>
       {prompts.map((prompt) => {
-        const field = FIELD_DICTIONARY[prompt.fieldType];
+        const field = FIELD_DICTIONARY[prompt.fieldType]
         if (!field) {
-          return null;
+          return null
         }
 
-        const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.fieldType];
-        const rules = validationsAndCompletions.transformValidationsIntoRules(prompt.validations);
+        const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.fieldType]
+        const rules = validationsAndCompletions.transformValidationsIntoRules(prompt.validations)
 
         const onChange = (updatedValue) => {
-          const newPrompts = [...prompts.map((p) => ({ ...p }))];
-          const promptToUpdate = newPrompts.find((p) => p.title === prompt.title);
-          promptToUpdate.response = updatedValue;
-          setPrompts(newPrompts);
-        };
+          const newPrompts = [...prompts.map((p) => ({ ...p }))]
+          const promptToUpdate = newPrompts.find((p) => p.title === prompt.title)
+          promptToUpdate.response = updatedValue
+          setPrompts(newPrompts)
+        }
 
         // on blur should be returning the current value so that we can validate it
         const onBlur = (newSelections) => {
           Object.keys(rules.validate).every((rule) => {
-            const validation = rules.validate[rule](newSelections);
+            const validation = rules.validate[rule](newSelections)
             if (validation !== true) {
-              validatePrompts(prompt.title, true, validation);
-              return false;
+              validatePrompts(prompt.title, true, validation)
+              return false
             }
-            validatePrompts(prompt.title, false, '');
-            return validation;
-          });
-        };
+            validatePrompts(prompt.title, false, '')
+            return validation
+          })
+        }
 
         const fieldData = {
           error: errors[prompt.title] || <></>,
@@ -91,12 +77,12 @@ export default function ConditionalFields({
           onChange,
           onBlur,
           userCanEdit,
-        };
+        }
 
-        return field.render(fieldData);
+        return field.render(fieldData)
       })}
     </div>
-  );
+  )
 }
 
 ConditionalFields.propTypes = {
@@ -106,13 +92,13 @@ ConditionalFields.propTypes = {
     PropTypes.shape({
       fieldType: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool,
-};
+}
 
 ConditionalFields.defaultProps = {
   userCanEdit: false,
-};
+}

@@ -1,5 +1,5 @@
-import React from 'react';
+import React from 'react'
 
-const AriaLiveContext = React.createContext();
+const AriaLiveContext = React.createContext()
 
-export default AriaLiveContext;
+export default AriaLiveContext

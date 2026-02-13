@@ -1,29 +1,30 @@
-import { useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { allRegionsUserHasPermissionTo } from '../permissions';
-import { buildDefaultRegionFilters } from '../pages/regionHelpers';
+import { useMemo } from 'react'
+import { v4 as uuidv4 } from 'uuid'
+import { allRegionsUserHasPermissionTo } from '../permissions'
+import { buildDefaultRegionFilters } from '../pages/regionHelpers'
 
-const ADMIN_REGION = 14;
+const ADMIN_REGION = 14
 
 export default function useUserDefaultRegionFilters(user, manageRegions) {
-  const regions = allRegionsUserHasPermissionTo(user);
-  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
+  const regions = allRegionsUserHasPermissionTo(user)
+  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions])
 
-  const defaultRegion = user.homeRegionId || regions[0] || 0;
-  const hasMultipleRegions = regions && regions.length > 1;
+  const defaultRegion = user.homeRegionId || regions[0] || 0
+  const hasMultipleRegions = regions && regions.length > 1
 
-  let defaultFilters = () => [];
+  let defaultFilters = () => []
   if (manageRegions) {
-    defaultFilters = () => ((defaultRegion !== ADMIN_REGION
-    && defaultRegion !== 0
-    && hasMultipleRegions)
-      ? [{
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      }]
-      : allRegionsFilters);
+    defaultFilters = () =>
+      defaultRegion !== ADMIN_REGION && defaultRegion !== 0 && hasMultipleRegions
+        ? [
+            {
+              id: uuidv4(),
+              topic: 'region',
+              condition: 'is',
+              query: defaultRegion,
+            },
+          ]
+        : allRegionsFilters
   }
 
   return {
@@ -32,5 +33,5 @@ export default function useUserDefaultRegionFilters(user, manageRegions) {
     hasMultipleRegions,
     allRegionsFilters,
     defaultFilters: defaultFilters(),
-  };
+  }
 }

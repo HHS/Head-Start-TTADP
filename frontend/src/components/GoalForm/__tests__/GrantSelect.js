@@ -1,16 +1,12 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import GrantSelect from '../GrantSelect';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import GrantSelect from '../GrantSelect'
 
 describe('GrantSelect', () => {
-  const renderGrantSelect = (
-    validateGrantNumbers = jest.fn(),
-  ) => {
-    render((
+  const renderGrantSelect = (validateGrantNumbers = jest.fn()) => {
+    render(
       <div>
         <GrantSelect
           error={<></>}
@@ -32,17 +28,18 @@ describe('GrantSelect', () => {
           ]}
         />
         <button type="button">Blur me</button>
-      </div>));
-  };
+      </div>
+    )
+  }
 
   it('calls the on change handler', async () => {
-    const validateGrantNumbers = jest.fn();
-    renderGrantSelect(validateGrantNumbers);
-    const select = await screen.findByLabelText(/select grants/i);
+    const validateGrantNumbers = jest.fn()
+    renderGrantSelect(validateGrantNumbers)
+    const select = await screen.findByLabelText(/select grants/i)
 
-    userEvent.click(select);
-    userEvent.click(await screen.findByText('Blur me'));
+    userEvent.click(select)
+    userEvent.click(await screen.findByText('Blur me'))
 
-    expect(validateGrantNumbers).toHaveBeenCalled();
-  });
-});
+    expect(validateGrantNumbers).toHaveBeenCalled()
+  })
+})

@@ -1,24 +1,13 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faAngleUp,
-  faAngleDown,
-} from '@fortawesome/free-solid-svg-icons';
-import colors from '../colors';
+import React, { forwardRef } from 'react'
+import PropTypes from 'prop-types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faAngleUp, faAngleDown } from '@fortawesome/free-solid-svg-icons'
+import colors from '../colors'
 
-const ExpanderButton = forwardRef(({
-  closeOrOpen,
-  count,
-  expanded,
-  type,
-  ariaLabel,
-  pluralize,
-  showCount,
-}, ref) => {
+const ExpanderButton = forwardRef(({ closeOrOpen, count, expanded, type, ariaLabel, pluralize, showCount }, ref) => {
   if (count < 1) {
-    return null;
+    return null
   }
 
   return (
@@ -30,21 +19,13 @@ const ExpanderButton = forwardRef(({
       data-testid="expander-button"
       ref={ref}
     >
-      {expanded ? 'Hide' : 'View'}
-      {' '}
-      {type}
+      {expanded ? 'Hide' : 'View'} {type}
       {count > 1 && pluralize ? 's' : ''}
-      {showCount && (
-      <strong className="margin-left-1">
-        (
-        {count}
-        )
-      </strong>
-      )}
+      {showCount && <strong className="margin-left-1">({count})</strong>}
       <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.ttahubMediumBlue} icon={expanded ? faAngleUp : faAngleDown} />
     </button>
-  );
-});
+  )
+})
 
 ExpanderButton.propTypes = {
   type: PropTypes.string.isRequired,
@@ -54,11 +35,11 @@ ExpanderButton.propTypes = {
   expanded: PropTypes.bool.isRequired,
   pluralize: PropTypes.bool,
   showCount: PropTypes.bool,
-};
+}
 
 ExpanderButton.defaultProps = {
   pluralize: true,
   showCount: true,
-};
+}
 
-export default ExpanderButton;
+export default ExpanderButton

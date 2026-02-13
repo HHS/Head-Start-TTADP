@@ -1,118 +1,35 @@
-import '@testing-library/jest-dom';
-import React, { createRef } from 'react';
-import {
-  render,
-  waitFor,
-  act,
-  screen,
-} from '@testing-library/react';
-import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
-import LineGraph from '../LineGraph';
+import '@testing-library/jest-dom'
+import React, { createRef } from 'react'
+import { render, waitFor, act, screen } from '@testing-library/react'
+import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants'
+import LineGraph from '../LineGraph'
 
 const traces = [
   {
-    x: [
-      'Jan 23',
-      'Feb 23',
-      'Mar 23',
-      'Apr 23',
-      'May 23',
-      'Jun 23',
-      'Jul 23',
-      'Aug 23',
-      'Sep 23',
-      'Oct 23',
-      'Nov 23',
-      'Dec 23',
-    ],
-    y: [
-      80,
-      83,
-      83,
-      77,
-      77,
-      83,
-      84,
-      76,
-      73,
-      82,
-      79,
-      69,
-    ],
+    x: ['Jan 23', 'Feb 23', 'Mar 23', 'Apr 23', 'May 23', 'Jun 23', 'Jul 23', 'Aug 23', 'Sep 23', 'Oct 23', 'Nov 23', 'Dec 23'],
+    y: [80, 83, 83, 77, 77, 83, 84, 76, 73, 82, 79, 69],
     name: 'In person',
     traceOrder: 1,
     trace: 'circle',
     id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.IN_PERSON,
   },
   {
-    x: [
-      'Jan 23',
-      'Feb 23',
-      'Mar 23',
-      'Apr 23',
-      'May 23',
-      'Jun 23',
-      'Jul 23',
-      'Aug 23',
-      'Sep 23',
-      'Oct 23',
-      'Nov 23',
-      'Dec 23',
-    ],
-    y: [
-      20,
-      17,
-      16,
-      16,
-      20,
-      13,
-      13,
-      21,
-      26,
-      17,
-      16,
-      29,
-    ],
+    x: ['Jan 23', 'Feb 23', 'Mar 23', 'Apr 23', 'May 23', 'Jun 23', 'Jul 23', 'Aug 23', 'Sep 23', 'Oct 23', 'Nov 23', 'Dec 23'],
+    y: [20, 17, 16, 16, 20, 13, 13, 21, 26, 17, 16, 29],
     name: 'Virtual',
     traceOrder: 2,
     trace: 'square',
     id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.VIRTUAL,
   },
   {
-    x: [
-      'Jan 23',
-      'Feb 23',
-      'Mar 23',
-      'Apr 23',
-      'May 23',
-      'Jun 23',
-      'Jul 23',
-      'Aug 23',
-      'Sep 23',
-      'Oct 23',
-      'Nov 23',
-      'Dec 23',
-    ],
-    y: [
-      0,
-      0,
-      1,
-      1,
-      3,
-      4,
-      2,
-      2,
-      0,
-      1,
-      5,
-      2,
-    ],
+    x: ['Jan 23', 'Feb 23', 'Mar 23', 'Apr 23', 'May 23', 'Jun 23', 'Jul 23', 'Aug 23', 'Sep 23', 'Oct 23', 'Nov 23', 'Dec 23'],
+    y: [0, 0, 1, 1, 3, 4, 2, 2, 0, 1, 5, 2],
     name: 'Hybrid',
     traceOrder: 3,
     trace: 'triangle',
     id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.HYBRID,
   },
-];
+]
 
 const tableConfig = {
   title: 'Delivery method',
@@ -573,28 +490,12 @@ const tableConfig = {
   },
   checkboxes: {},
   firstHeading: 'Months',
-  headings: [
-    "In person (AR's)",
-    'In person (Percentage)',
-    "Virtual (AR's)",
-    'Virtual (Percentage)',
-    "Hybrid (AR's)",
-    'Hybrid (Percentage)',
-  ],
+  headings: ["In person (AR's)", 'In person (Percentage)', "Virtual (AR's)", 'Virtual (Percentage)', "Hybrid (AR's)", 'Hybrid (Percentage)'],
   footer: {
     showFooter: true,
-    data: [
-      '',
-      'Total',
-      '8420',
-      '73',
-      '2734',
-      '24',
-      '356',
-      '3',
-    ],
+    data: ['', 'Total', '8420', '73', '2734', '24', '356', '3'],
   },
-};
+}
 
 describe('LineGraph', () => {
   const renderTest = (showTabularData = false, data = traces) => {
@@ -628,54 +529,54 @@ describe('LineGraph', () => {
           tableConfig={tableConfig}
           widgetRef={createRef()}
           showTabularData={showTabularData}
-        />,
-      );
-    });
-  };
+        />
+      )
+    })
+  }
 
   it('switches legends', () => {
-    renderTest();
+    renderTest()
 
-    const inPersonCheckbox = document.getElementById('show-in-person-checkbox');
-    const hybridCheckbox = document.getElementById('show-hybrid-checkbox');
-    const virtualCheckbox = document.getElementById('show-virtual-checkbox');
-    expect(inPersonCheckbox).toBeChecked();
-    expect(hybridCheckbox).toBeChecked();
-    expect(virtualCheckbox).toBeChecked();
-
-    act(() => {
-      inPersonCheckbox.click();
-    });
+    const inPersonCheckbox = document.getElementById('show-in-person-checkbox')
+    const hybridCheckbox = document.getElementById('show-hybrid-checkbox')
+    const virtualCheckbox = document.getElementById('show-virtual-checkbox')
+    expect(inPersonCheckbox).toBeChecked()
+    expect(hybridCheckbox).toBeChecked()
+    expect(virtualCheckbox).toBeChecked()
 
     act(() => {
-      hybridCheckbox.click();
-    });
+      inPersonCheckbox.click()
+    })
 
     act(() => {
-      virtualCheckbox.click();
-    });
+      hybridCheckbox.click()
+    })
 
-    expect(inPersonCheckbox).not.toBeChecked();
-    expect(hybridCheckbox).not.toBeChecked();
-    expect(virtualCheckbox).not.toBeChecked();
-  });
+    act(() => {
+      virtualCheckbox.click()
+    })
+
+    expect(inPersonCheckbox).not.toBeChecked()
+    expect(hybridCheckbox).not.toBeChecked()
+    expect(virtualCheckbox).not.toBeChecked()
+  })
 
   it('displays tabular data', async () => {
-    const showTabularData = true;
-    renderTest(showTabularData);
+    const showTabularData = true
+    renderTest(showTabularData)
 
     await waitFor(() => {
-      expect(document.querySelector('.smarthub-horizontal-table-widget')).toBeInTheDocument();
-    });
-  });
+      expect(document.querySelector('.smarthub-horizontal-table-widget')).toBeInTheDocument()
+    })
+  })
 
   it('shows no results found', async () => {
-    renderTest(false, []);
+    renderTest(false, [])
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /no results found\./i })).toBeVisible();
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible();
-      expect(screen.getByRole('button', { name: /get help using filters/i })).toBeInTheDocument();
-    });
-  });
-});
+      expect(screen.getByRole('heading', { name: /no results found\./i })).toBeVisible()
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible()
+      expect(screen.getByRole('button', { name: /get help using filters/i })).toBeInTheDocument()
+    })
+  })
+})

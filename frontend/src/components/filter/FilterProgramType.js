@@ -1,17 +1,13 @@
-import React from 'react';
-import FilterSelect from './FilterSelect';
-import { filterSelectProps } from './props';
+import React from 'react'
+import FilterSelect from './FilterSelect'
+import { filterSelectProps } from './props'
 
-const PROGRAM_TYPE_OPTIONS = ['EHS', 'HS'].map((label, value) => ({ value, label }));
+const PROGRAM_TYPE_OPTIONS = ['EHS', 'HS'].map((label, value) => ({ value, label }))
 
-export default function FilterProgramType({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterProgramType({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
-    onApply(selected);
-  };
+    onApply(selected)
+  }
   return (
     <FilterSelect
       onApply={onApplyClick}
@@ -20,7 +16,7 @@ export default function FilterProgramType({
       options={PROGRAM_TYPE_OPTIONS}
       selectedValues={query}
     />
-  );
+  )
 }
 
-FilterProgramType.propTypes = filterSelectProps;
+FilterProgramType.propTypes = filterSelectProps

@@ -1,87 +1,70 @@
-import React, {
-  useState, useContext, useRef,
-} from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { useFormContext, useController, Controller } from 'react-hook-form';
-import {
-  Fieldset,
-  Radio,
-  Grid,
-  TextInput,
-  Checkbox,
-  Label,
-  Alert as USWDSAlert,
-} from '@trussworks/react-uswds';
-import moment from 'moment';
-import {
-  TARGET_POPULATIONS as targetPopulations,
-  LANGUAGES,
-  ACTIVITY_REASONS,
-} from '@ttahub/common';
-import Select from 'react-select';
-import ReviewPage from './Review/ReviewPage';
-import MultiSelect from '../../../components/MultiSelect';
-import {
-  recipientParticipants, MODAL_CONFIG,
-} from '../constants';
-import FormItem from '../../../components/FormItem';
-import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import ConnectionError from '../../../components/ConnectionError';
-import NetworkContext from '../../../NetworkContext';
-import HookFormRichEditor from '../../../components/HookFormRichEditor';
-import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
-import './activitySummary.scss';
-import SingleRecipientSelect from './components/SingleRecipientSelect';
-import selectOptionsReset from '../../../components/selectOptionsReset';
-import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
-import { fetchCitationsByGrant } from '../../../fetchers/citations';
-import ModalWithCancel from '../../../components/ModalWithCancel';
-import { getGoalTemplates } from '../../../fetchers/goalTemplates';
-import Drawer from '../../../components/Drawer';
-import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
-import FormItemWithDrawerTriggerLabel from '../../../components/FormItemWithDrawerTriggerLabel';
+import React, { useState, useContext, useRef } from 'react'
+import PropTypes from 'prop-types'
+import { Helmet } from 'react-helmet'
+import { useFormContext, useController, Controller } from 'react-hook-form'
+import { Fieldset, Radio, Grid, TextInput, Checkbox, Label, Alert as USWDSAlert } from '@trussworks/react-uswds'
+import moment from 'moment'
+import { TARGET_POPULATIONS as targetPopulations, LANGUAGES, ACTIVITY_REASONS } from '@ttahub/common'
+import Select from 'react-select'
+import ReviewPage from './Review/ReviewPage'
+import MultiSelect from '../../../components/MultiSelect'
+import { recipientParticipants, MODAL_CONFIG } from '../constants'
+import FormItem from '../../../components/FormItem'
+import ControlledDatePicker from '../../../components/ControlledDatePicker'
+import ConnectionError from '../../../components/ConnectionError'
+import NetworkContext from '../../../NetworkContext'
+import HookFormRichEditor from '../../../components/HookFormRichEditor'
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField'
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons'
+import './activitySummary.scss'
+import SingleRecipientSelect from './components/SingleRecipientSelect'
+import selectOptionsReset from '../../../components/selectOptionsReset'
+import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants'
+import { fetchCitationsByGrant } from '../../../fetchers/citations'
+import ModalWithCancel from '../../../components/ModalWithCancel'
+import { getGoalTemplates } from '../../../fetchers/goalTemplates'
+import Drawer from '../../../components/Drawer'
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag'
+import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey'
+import FormItemWithDrawerTriggerLabel from '../../../components/FormItemWithDrawerTriggerLabel'
 
 export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
-  const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
+  const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()))
 
-  return existingGoals.some((goal) => (goal.objectives || [])
-    .some((obj) => (obj.citations || []).some((c) => {
-      const citationText = c.citation?.trim();
-      return !fetchedCitationStrings.has(citationText);
-    })));
-};
+  return existingGoals.some((goal) =>
+    (goal.objectives || []).some((obj) =>
+      (obj.citations || []).some((c) => {
+        const citationText = c.citation?.trim()
+        return !fetchedCitationStrings.has(citationText)
+      })
+    )
+  )
+}
 
 export const checkRecipientsAndGoals = (data, hasMonitoringGoals) => {
-  const goalsAndObjectives = data.goalsAndObjectives || [];
-  const recipients = data.activityRecipients || [];
-  const goalTemplates = data.goalTemplates || [];
-  const citationsByGrant = data.citationsByGrant || [];
+  const goalsAndObjectives = data.goalsAndObjectives || []
+  const recipients = data.activityRecipients || []
+  const goalTemplates = data.goalTemplates || []
+  const citationsByGrant = data.citationsByGrant || []
 
   if (recipients.length === 0 && goalsAndObjectives.length > 0) {
-    return 'EMPTY_RECIPIENTS_WITH_GOALS';
+    return 'EMPTY_RECIPIENTS_WITH_GOALS'
   }
   // Only show modal if none of the selected grants have Monitoring goals
-  const hasAtLeastOneMonitoringGoal = goalTemplates.some((gt) => gt.standard === 'Monitoring');
+  const hasAtLeastOneMonitoringGoal = goalTemplates.some((gt) => gt.standard === 'Monitoring')
 
   if (hasMonitoringGoals && !hasAtLeastOneMonitoringGoal) {
-    return 'MISSING_MONITORING_GOAL';
+    return 'MISSING_MONITORING_GOAL'
   }
   if (hasMonitoringGoals && citationsDiffer(goalsAndObjectives, citationsByGrant)) {
-    return 'DIFFERENT_CITATIONS';
+    return 'DIFFERENT_CITATIONS'
   }
 
-  return null; // no modal needed
-};
+  return null // no modal needed
+}
 
-const ActivitySummary = ({
-  recipients,
-  collaborators,
-  setShouldAutoSave,
-}) => {
-  const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
+const ActivitySummary = ({ recipients, collaborators, setShouldAutoSave }) => {
+  const { endDateKey, setEndDate } = useHookFormEndDateWithKey()
 
   const {
     register,
@@ -90,13 +73,11 @@ const ActivitySummary = ({
     control,
     getValues,
     // clearErrors,
-  } = useFormContext();
+  } = useFormContext()
 
-  const goalsAndObjectives = watch('goalsAndObjectives');
+  const goalsAndObjectives = watch('goalsAndObjectives')
 
-  const hasMonitoringGoals = (goalsAndObjectives || []).some(
-    (g) => g.name?.trim().toLowerCase().startsWith('(monitoring)'),
-  );
+  const hasMonitoringGoals = (goalsAndObjectives || []).some((g) => g.name?.trim().toLowerCase().startsWith('(monitoring)'))
 
   const {
     field: {
@@ -113,26 +94,26 @@ const ActivitySummary = ({
         notEmpty: (value) => (value && value.length) || 'Please select a recipient and grant',
       },
     },
-  });
+  })
 
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
-  const deliveryMethod = watch('deliveryMethod');
+  const startDate = watch('startDate')
+  const endDate = watch('endDate')
+  const deliveryMethod = watch('deliveryMethod')
 
-  const modalRef = useRef();
-  const activityReasonRef = useRef(null);
-  const recipientSelectRef = useRef(null);
-  const [previousStartDate, setPreviousStartDate] = useState(startDate);
-  const [modalScenario, setModalScenario] = useState(null);
-  const [currentRecipient, setCurrentRecipient] = useState(null);
-  const [selectedGrantCheckboxes] = useState([]);
+  const modalRef = useRef()
+  const activityReasonRef = useRef(null)
+  const recipientSelectRef = useRef(null)
+  const [previousStartDate, setPreviousStartDate] = useState(startDate)
+  const [modalScenario, setModalScenario] = useState(null)
+  const [currentRecipient, setCurrentRecipient] = useState(null)
+  const [selectedGrantCheckboxes] = useState([])
 
-  const selectedGoals = watch('goals');
-  const goalForEditing = watch('goalForEditing');
+  const selectedGoals = watch('goals')
+  const goalForEditing = watch('goalForEditing')
 
-  const { grants: rawGrants } = recipients;
+  const { grants: rawGrants } = recipients
 
-  const { connectionActive } = useContext(NetworkContext);
+  const { connectionActive } = useContext(NetworkContext)
   const grants = rawGrants.map((recipient) => ({
     id: recipient.id,
     label: recipient.name,
@@ -141,29 +122,25 @@ const ActivitySummary = ({
       label: grant.name,
       recipientIdForLookUp: recipient.id,
     })),
-  }));
-  const selectedRecipients = grants;
-  const placeholderText = '- Select -';
+  }))
+  const selectedRecipients = grants
+  const placeholderText = '- Select -'
 
   const handleRecipientChange = async (newRecipient) => {
-    setCurrentRecipient(activityRecipients);
-    onChangeActivityRecipients(newRecipient);
+    setCurrentRecipient(activityRecipients)
+    onChangeActivityRecipients(newRecipient)
 
-    const newRecipientGrantIds = newRecipient?.map((r) => r?.value).filter(Boolean);
+    const newRecipientGrantIds = newRecipient?.map((r) => r?.value).filter(Boolean)
 
-    let newGoalTemplates = [];
-    let citations = [];
+    let newGoalTemplates = []
+    let citations = []
     try {
-      newGoalTemplates = newRecipientGrantIds.length > 0
-        ? await getGoalTemplates(newRecipientGrantIds)
-        : [];
+      newGoalTemplates = newRecipientGrantIds.length > 0 ? await getGoalTemplates(newRecipientGrantIds) : []
 
-      citations = newRecipientGrantIds.length > 0 ? await fetchCitationsByGrant(getValues('regionId'),
-        newRecipientGrantIds, startDate)
-        : [];
+      citations = newRecipientGrantIds.length > 0 ? await fetchCitationsByGrant(getValues('regionId'), newRecipientGrantIds, startDate) : []
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Failed to fetch goal templates or citations:', err);
+      console.error('Failed to fetch goal templates or citations:', err)
     }
 
     const data = {
@@ -171,39 +148,39 @@ const ActivitySummary = ({
       activityRecipients: newRecipient,
       goalTemplates: newGoalTemplates,
       citationsByGrant: citations,
-    };
-    const scenario = checkRecipientsAndGoals(data, hasMonitoringGoals);
+    }
+    const scenario = checkRecipientsAndGoals(data, hasMonitoringGoals)
 
     if (scenario) {
-      setShouldAutoSave(false);
-      setModalScenario(scenario);
+      setShouldAutoSave(false)
+      setModalScenario(scenario)
       setTimeout(() => {
-        modalRef.current?.toggleModal();
-      }, 0);
+        modalRef.current?.toggleModal()
+      }, 0)
     }
-  };
+  }
 
   // User clicks YES (keep new recipient)
   const handleConfirmChange = () => {
-    modalRef.current?.toggleModal();
-    setModalScenario(null);
-    setShouldAutoSave(true);
+    modalRef.current?.toggleModal()
+    setModalScenario(null)
+    setShouldAutoSave(true)
     setTimeout(() => {
-      recipientSelectRef.current?.blur();
-      recipientSelectRef.current?.focus();
-    }, 10);
-  };
+      recipientSelectRef.current?.blur()
+      recipientSelectRef.current?.focus()
+    }, 10)
+  }
 
   // User clicks NO (revert back)
   const handleCancelChange = () => {
-    onChangeActivityRecipients(currentRecipient);
-    setModalScenario(null);
-    setShouldAutoSave(true);
+    onChangeActivityRecipients(currentRecipient)
+    setModalScenario(null)
+    setShouldAutoSave(true)
     setTimeout(() => {
-      recipientSelectRef.current?.blur();
-      recipientSelectRef.current?.focus();
-    }, 10);
-  };
+      recipientSelectRef.current?.blur()
+      recipientSelectRef.current?.focus()
+    }, 10)
+  }
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
     <Checkbox
@@ -213,44 +190,39 @@ const ActivitySummary = ({
       name={name}
       className="smart-hub--report-checkbox"
       inputRef={register({
-        validate: () => (
-          getValues(name).length ? true : requiredMessage
-        ),
+        validate: () => (getValues(name).length ? true : requiredMessage),
       })}
     />
-  );
+  )
 
   const validateCitations = () => {
-    const allGoals = [selectedGoals, goalForEditing].flat().filter((g) => g !== null);
+    const allGoals = [selectedGoals, goalForEditing].flat().filter((g) => g !== null)
     // If we have a monitoring goal.
-    const selectedMonitoringGoal = allGoals.filter((gf) => gf && gf.standard).find((goal) => goal.standard === 'Monitoring');
+    const selectedMonitoringGoal = allGoals.filter((gf) => gf && gf.standard).find((goal) => goal.standard === 'Monitoring')
     if (selectedMonitoringGoal) {
       // Get all the citations in a single array from all the goal objectives.
       const allCitations = (selectedMonitoringGoal.objectives || [])
-        .map((objective) => objective.citations)
-        .flat()
-        .filter((citation) => citation !== null);
+        .flatMap((objective) => objective.citations)
+        .filter((citation) => citation !== null)
       // If we have selected citations
       if (allCitations.length) {
-        const start = moment(startDate, 'MM/DD/YYYY');
-        const invalidCitations = allCitations.filter(
-          (citation) => citation.monitoringReferences.some(
-            (monitoringReference) => moment(monitoringReference.reportDeliveryDate, 'YYYY-MM-DD').isAfter(start),
-          ),
-        );
+        const start = moment(startDate, 'MM/DD/YYYY')
+        const invalidCitations = allCitations.filter((citation) =>
+          citation.monitoringReferences.some((monitoringReference) => moment(monitoringReference.reportDeliveryDate, 'YYYY-MM-DD').isAfter(start))
+        )
         // If any of the citations are invalid given the new date.
         if (invalidCitations.length) {
           // Rollback the start date.
-          setValue('startDate', previousStartDate);
+          setValue('startDate', previousStartDate)
           // Display monitoring citation warning and keep start date.
-          return 'The date entered is not valid with the selected citations.';
+          return 'The date entered is not valid with the selected citations.'
         }
       }
     }
     // Save the last good start date.
-    setPreviousStartDate(startDate);
-    return null;
-  };
+    setPreviousStartDate(startDate)
+    return null
+  }
 
   return (
     <>
@@ -276,14 +248,10 @@ const ActivitySummary = ({
       <IndicatesRequiredField />
       <Fieldset className="smart-hub-activity-summary smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
         <div className="margin-top-2 margin-bottom-0">
-          {!connectionActive
-         && !selectedRecipients.length
-            ? <ConnectionError />
-            : null}
+          {!connectionActive && !selectedRecipients.length ? <ConnectionError /> : null}
           {hasMonitoringGoals && (
             <USWDSAlert type="info" className="margin-bottom-2">
-              Changing the recipient after selecting the Monitoring goal
-              may cause unintended loss of goal and objective data.
+              Changing the recipient after selecting the Monitoring goal may cause unintended loss of goal and objective data.
             </USWDSAlert>
           )}
           <SingleRecipientSelect
@@ -297,28 +265,19 @@ const ActivitySummary = ({
         </div>
         <div id="other-participants" />
         <div className="margin-top-2">
-          <FormItem
-            label="Recipient participants"
-            name="participants"
-          >
+          <FormItem label="Recipient participants" name="participants">
             <MultiSelect
               name="participants"
               control={control}
               placeholderText={placeholderText}
-              options={
-            recipientParticipants.map((participant) => ({ value: participant, label: participant }))
-            }
+              options={recipientParticipants.map((participant) => ({ value: participant, label: participant }))}
               required="Select at least one"
             />
           </FormItem>
         </div>
         <div className="margin-top-2">
-          {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
-          <FormItem
-            label="Collaborating specialists "
-            name="activityReportCollaborators"
-            required={false}
-          >
+          {!connectionActive && !collaborators.length ? <ConnectionError /> : null}
+          <FormItem label="Collaborating specialists " name="activityReportCollaborators" required={false}>
             <MultiSelect
               name="activityReportCollaborators"
               control={control}
@@ -330,18 +289,15 @@ const ActivitySummary = ({
               options={collaborators.map((user) => ({
                 // we want the role construction here to match what later is returned from the
                 // database, so we do this weirdo mapping thing here
-                value: user.id, label: user.name, roles: user.roles.map((r) => r.fullName),
+                value: user.id,
+                label: user.name,
+                roles: user.roles.map((r) => r.fullName),
               }))}
             />
           </FormItem>
         </div>
         <div className="margin-top-2">
-          <Drawer
-            triggerRef={activityReasonRef}
-            stickyHeader
-            stickyFooter
-            title="Why was this activity requested?"
-          >
+          <Drawer triggerRef={activityReasonRef} stickyHeader stickyFooter title="Why was this activity requested?">
             <ContentFromFeedByTag tagName="ttahub-tta-request-option" className="ttahub-drawer--objective-topics-guidance" contentSelector="table" />
           </Drawer>
           <FormItemWithDrawerTriggerLabel
@@ -373,11 +329,12 @@ const ActivitySummary = ({
                     DropdownIndicator: null,
                   }}
                   onChange={(selected) => {
-                    controllerOnChange(selected ? selected.value : null);
+                    controllerOnChange(selected ? selected.value : null)
                   }}
                   inputRef={register({ required: 'Select a reason why this activity was requested' })}
                   options={ACTIVITY_REASONS.map((reason) => ({
-                    value: reason, label: reason,
+                    value: reason,
+                    label: reason,
                   }))}
                   onBlur={onBlur}
                   required
@@ -388,23 +345,18 @@ const ActivitySummary = ({
               rules={{
                 validate: (value) => {
                   if (!value || value.length === 0) {
-                    return 'Select a reason why this activity was requested';
+                    return 'Select a reason why this activity was requested'
                   }
-                  return true;
+                  return true
                 },
               }}
               name="activityReason"
               defaultValue={null}
             />
           </FormItemWithDrawerTriggerLabel>
-
         </div>
         <div className="margin-top-2">
-          <FormItem
-            label="Target populations addressed "
-            name="targetPopulations"
-            required
-          >
+          <FormItem label="Target populations addressed " name="targetPopulations" required>
             <MultiSelect
               name="targetPopulations"
               control={control}
@@ -420,17 +372,8 @@ const ActivitySummary = ({
         <div>
           <Grid row>
             <Grid col={8}>
-              <FormItem
-                label="Start date"
-                name="startDate"
-                id="startDate-label"
-                htmlFor="startDate"
-              >
-                <div
-                  className="usa-hint"
-                >
-                  mm/dd/yyyy
-                </div>
+              <FormItem label="Start date" name="startDate" id="startDate-label" htmlFor="startDate">
+                <div className="usa-hint">mm/dd/yyyy</div>
                 <ControlledDatePicker
                   control={control}
                   name="startDate"
@@ -446,35 +389,15 @@ const ActivitySummary = ({
           </Grid>
           <Grid row>
             <Grid col={8}>
-              <FormItem
-                label="End date"
-                name="endDate"
-                id="endDate-label"
-                htmlFor="endDate"
-              >
-                <div
-                  className="usa-hint"
-                >
-                  mm/dd/yyyy
-                </div>
-                <ControlledDatePicker
-                  control={control}
-                  name="endDate"
-                  inputId="endDate"
-                  value={endDate}
-                  minDate={startDate}
-                  key={endDateKey}
-                />
+              <FormItem label="End date" name="endDate" id="endDate-label" htmlFor="endDate">
+                <div className="usa-hint">mm/dd/yyyy</div>
+                <ControlledDatePicker control={control} name="endDate" inputId="endDate" value={endDate} minDate={startDate} key={endDateKey} />
               </FormItem>
             </Grid>
           </Grid>
           <Grid row>
             <Grid col={5}>
-              <FormItem
-                label="Duration in hours (round to the nearest half hour)"
-                name="duration"
-                required
-              >
+              <FormItem label="Duration in hours (round to the nearest half hour)" name="duration" required>
                 <TextInput
                   id="duration"
                   name="duration"
@@ -483,15 +406,13 @@ const ActivitySummary = ({
                   max={99.5}
                   step={0.5}
                   required
-                  inputRef={
-                    register({
-                      required: 'Enter duration',
-                      valueAsNumber: true,
-                      pattern: { value: /^\d+(\.0|\.5)?$/, message: 'Duration must be rounded to the nearest half hour' },
-                      min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
-                      max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
-                    })
-                  }
+                  inputRef={register({
+                    required: 'Enter duration',
+                    valueAsNumber: true,
+                    pattern: { value: /^\d+(\.0|\.5)?$/, message: 'Duration must be rounded to the nearest half hour' },
+                    min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
+                    max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
+                  })}
                 />
               </FormItem>
             </Grid>
@@ -507,21 +428,13 @@ const ActivitySummary = ({
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Training or Technical Assistance">
         <div id="tta" />
         <div className="margin-top-2">
-          <FormItem
-            label="What type of TTA was provided?"
-            name="ttaType"
-            fieldSetWrapper
-          >
+          <FormItem label="What type of TTA was provided?" name="ttaType" fieldSetWrapper>
             {renderCheckbox('ttaType', 'training', 'Training', 'Select at least one')}
             {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Select at least one')}
           </FormItem>
         </div>
         <div className="margin-top-2">
-          <FormItem
-            label="Language used"
-            name="language"
-            required
-          >
+          <FormItem label="Language used" name="language" required>
             <MultiSelect
               name="language"
               control={control}
@@ -532,11 +445,7 @@ const ActivitySummary = ({
           </FormItem>
         </div>
         <div className="margin-top-2">
-          <FormItem
-            label="What was the delivery method for this activity?"
-            name="deliveryMethod"
-            fieldSetWrapper
-          >
+          <FormItem label="What was the delivery method for this activity?" name="deliveryMethod" fieldSetWrapper>
             <Radio
               id="delivery-method-in-person"
               name="deliveryMethod"
@@ -574,15 +483,15 @@ const ActivitySummary = ({
         </div>
       </Fieldset>
     </>
-  );
-};
+  )
+}
 
 ActivitySummary.propTypes = {
   collaborators: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       id: PropTypes.number.isRequired,
-    }),
+    })
   ).isRequired,
   recipients: PropTypes.shape({
     grants: PropTypes.arrayOf(
@@ -592,35 +501,31 @@ ActivitySummary.propTypes = {
           PropTypes.shape({
             name: PropTypes.string.isRequired,
             activityRecipientId: PropTypes.number.isRequired,
-          }),
+          })
         ),
-      }),
+      })
     ),
     otherEntities: PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string.isRequired,
         activityRecipientId: PropTypes.number.isRequired,
-      }),
+      })
     ),
   }).isRequired,
   setShouldAutoSave: PropTypes.func.isRequired,
-};
+}
 
 const getNumberOfParticipants = (deliveryMethod) => {
-  const labelToUse = deliveryMethod === 'hybrid' ? 'Number of participants attending in person' : 'Number of participants';
-  const numberOfParticipants = [
-    { label: labelToUse, name: 'numberOfParticipants' },
-  ];
+  const labelToUse = deliveryMethod === 'hybrid' ? 'Number of participants attending in person' : 'Number of participants'
+  const numberOfParticipants = [{ label: labelToUse, name: 'numberOfParticipants' }]
   if (deliveryMethod === 'hybrid') {
-    numberOfParticipants.push(
-      { label: 'Number of participants attending virtually', name: 'numberOfParticipantsVirtually' },
-    );
+    numberOfParticipants.push({ label: 'Number of participants attending virtually', name: 'numberOfParticipantsVirtually' })
   }
-  return numberOfParticipants;
-};
+  return numberOfParticipants
+}
 
 const getSections = (formData) => {
-  const { deliveryMethod } = formData;
+  const { deliveryMethod } = formData
   return [
     {
       title: 'Who was the activity for?',
@@ -630,10 +535,14 @@ const getSections = (formData) => {
         { label: 'Recipient', name: 'activityRecipients', path: 'name' },
         { label: 'Recipient participants', name: 'participants', sort: true },
         {
-          label: 'Collaborating specialists', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
+          label: 'Collaborating specialists',
+          name: 'activityReportCollaborators',
+          path: 'user.fullName',
+          sort: true,
         },
         {
-          label: 'Why activity requested', name: 'activityReason',
+          label: 'Why activity requested',
+          name: 'activityReason',
         },
         { label: 'Target populations', name: 'targetPopulations', sort: true },
       ],
@@ -666,27 +575,22 @@ const getSections = (formData) => {
         { label: 'Language used', name: 'language' },
         { label: 'Delivery method', name: 'deliveryMethod' },
         ...getNumberOfParticipants(deliveryMethod),
-
       ],
     },
-  ];
-};
+  ]
+}
 
 const ReviewSection = () => {
-  const { watch } = useFormContext();
-  const {
-    deliveryMethod,
-  } = watch();
+  const { watch } = useFormContext()
+  const { deliveryMethod } = watch()
 
-  return (
-    <ReviewPage sections={getSections({ deliveryMethod })} path="activity-summary" />
-  );
-};
+  return <ReviewPage sections={getSections({ deliveryMethod })} path="activity-summary" />
+}
 
 export const isPageComplete = (formData, formState) => {
-  const { isValid } = formState;
+  const { isValid } = formState
   if (isValid) {
-    return true;
+    return true
   }
 
   const {
@@ -711,60 +615,45 @@ export const isPageComplete = (formData, formState) => {
     // dates
     startDate,
     endDate,
-  } = formData;
+  } = formData
 
-  const stringsToValidate = [
-    activityRecipientType,
-    deliveryMethod,
-    activityReason,
-  ];
+  const stringsToValidate = [activityRecipientType, deliveryMethod, activityReason]
 
   if (!stringsToValidate.every((str) => str)) {
-    return false;
+    return false
   }
 
   // If language is null return false for now.
   if (!language) {
-    return false;
+    return false
   }
 
-  const arraysToValidate = [
-    activityRecipients,
-    targetPopulationsArray,
-    ttaType,
-    participants,
-    language,
-  ];
+  const arraysToValidate = [activityRecipients, targetPopulationsArray, ttaType, participants, language]
 
   if (!arraysToValidate.every((arr) => arr.length)) {
-    return false;
+    return false
   }
 
-  const numbersToValidate = [
-    duration,
-  ];
+  const numbersToValidate = [duration]
 
   if (!numbersToValidate.every((num) => num && Number.isNaN(num) === false)) {
-    return false;
+    return false
   }
 
   // Handle custom validation for number of participants.
-  let participantsToValidate = [];
+  let participantsToValidate = []
   if (deliveryMethod === 'hybrid') {
-    participantsToValidate = [
-      numberOfParticipantsInPerson,
-      numberOfParticipantsVirtually,
-    ];
+    participantsToValidate = [numberOfParticipantsInPerson, numberOfParticipantsVirtually]
   } else {
-    participantsToValidate = [numberOfParticipants];
+    participantsToValidate = [numberOfParticipants]
   }
 
   if (!participantsToValidate.every((num) => num && Number.isNaN(num) === false)) {
-    return false;
+    return false
   }
 
-  return [startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid());
-};
+  return [startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid())
+}
 
 export default {
   position: 1,
@@ -784,17 +673,12 @@ export default {
     _datePickerKey,
     _onFormSubmit,
     Alert,
-    setShouldAutoSave,
+    setShouldAutoSave
   ) => {
-    const { recipients, collaborators, groups } = additionalData;
+    const { recipients, collaborators, groups } = additionalData
     return (
       <>
-        <ActivitySummary
-          recipients={recipients}
-          collaborators={collaborators}
-          groups={groups}
-          setShouldAutoSave={setShouldAutoSave}
-        />
+        <ActivitySummary recipients={recipients} collaborators={collaborators} groups={groups} setShouldAutoSave={setShouldAutoSave} />
         <Alert />
         <NavigatorButtons
           isAppLoading={isAppLoading}
@@ -805,7 +689,7 @@ export default {
           onUpdatePage={onUpdatePage}
         />
       </>
-    );
+    )
   },
   isPageComplete,
-};
+}

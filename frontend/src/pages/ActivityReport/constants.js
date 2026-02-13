@@ -1,11 +1,6 @@
-import React from 'react';
+import React from 'react'
 
-export const reasonsToMonitor = [
-  'Monitoring | Deficiency',
-  'Monitoring | Noncompliance',
-  'Monitoring | Area of Concern',
-  'Monitoring Goal',
-];
+export const reasonsToMonitor = ['Monitoring | Deficiency', 'Monitoring | Noncompliance', 'Monitoring | Area of Concern', 'Monitoring Goal']
 
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
@@ -25,7 +20,7 @@ export const reasons = [
   'Planning/Coordination',
   'School Readiness Goals',
   ...reasonsToMonitor,
-];
+]
 
 /*
   Please keep in sync with:
@@ -47,7 +42,7 @@ export const recipientParticipants = [
   'Program Support / Administrative Assistant',
   'Teacher / Infant-Toddler Caregiver',
   'Volunteer',
-];
+]
 
 export const otherEntityParticipants = [
   'HSCO',
@@ -59,7 +54,7 @@ export const otherEntityParticipants = [
   'State Early Learning System',
   'State Head Start Association',
   'Other',
-];
+]
 
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
@@ -106,17 +101,14 @@ export const topics = [
   'Training and Professional Development',
   'Transition Practices',
   'Transportation',
-];
+]
 
 export const MODAL_CONFIG = {
   EMPTY_RECIPIENTS_WITH_GOALS: {
     title: 'You may lose data',
     body: (
       <>
-        <p>
-          If you do not select at least one grant, any goals, objectives and TTA provided content
-          will be lost.
-        </p>
+        <p>If you do not select at least one grant, any goals, objectives and TTA provided content will be lost.</p>
         <p>Do you want to proceed?</p>
       </>
     ),
@@ -128,10 +120,7 @@ export const MODAL_CONFIG = {
     body: (
       <>
         <p>The recipient you selected does not have the monitoring goal.</p>
-        <p>
-          If you change the recipient, the monitoring goal, its objectives and TTA provided content
-          will be lost.
-        </p>
+        <p>If you change the recipient, the monitoring goal, its objectives and TTA provided content will be lost.</p>
         <p>Do you want to proceed?</p>
       </>
     ),
@@ -150,4 +139,4 @@ export const MODAL_CONFIG = {
     confirmLabel: 'Yes, change recipient',
     cancelLabel: 'No, cancel',
   },
-};
+}

@@ -43,6 +43,6 @@ const colors = {
   textLink: '#46789B',
   textVisited: '#8C39DB',
   responseCode: '#71767A',
-};
+}
 
-module.exports = colors;
+module.exports = colors

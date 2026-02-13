@@ -1,14 +1,14 @@
-import React, { useRef, useLayoutEffect } from 'react';
-import { useMediaQuery } from 'react-responsive';
-import PropTypes from 'prop-types';
-import { Dropdown, Label, Pagination } from '@trussworks/react-uswds';
-import './PaginationCard.css';
-import { getPageInfo } from '../utils';
+import React, { useRef, useLayoutEffect } from 'react'
+import { useMediaQuery } from 'react-responsive'
+import PropTypes from 'prop-types'
+import { Dropdown, Label, Pagination } from '@trussworks/react-uswds'
+import './PaginationCard.css'
+import { getPageInfo } from '../utils'
 
-const MAX_WIDTH_MOBILE = 500;
-const MIN_UNBOUNDED_PAGES = 25;
-const MOBILE_MAX_SLOTS = 5;
-const MAX_SLOTS = 7;
+const MAX_WIDTH_MOBILE = 500
+const MIN_UNBOUNDED_PAGES = 25
+const MOBILE_MAX_SLOTS = 5
+const MAX_SLOTS = 7
 
 function PaginationCard({
   currentPage,
@@ -23,8 +23,8 @@ function PaginationCard({
   paginationClassName,
   noXofX,
 }) {
-  const el = useRef();
-  const isMobile = useMediaQuery({ maxWidth: MAX_WIDTH_MOBILE });
+  const el = useRef()
+  const isMobile = useMediaQuery({ maxWidth: MAX_WIDTH_MOBILE })
   /**
    * there is an unlabeled svg that is used to render the chevron icons
    * within the pagination component
@@ -35,43 +35,43 @@ function PaginationCard({
    */
   useLayoutEffect(() => {
     if (!el.current) {
-      return;
+      return
     }
 
     // at the end of the DOM parsing we will add a classlist to the link so that
     // we do not need to traverse the DOM over and over again within this effect
-    const paginationLinks = el.current.querySelectorAll('.usa-pagination__link:not(.usa-pagination__link--assigned)');
+    const paginationLinks = el.current.querySelectorAll('.usa-pagination__link:not(.usa-pagination__link--assigned)')
 
     Array.from(paginationLinks).forEach((link) => {
-      const svg = link.querySelector('svg');
+      const svg = link.querySelector('svg')
       if (svg) {
-        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('aria-hidden', 'true')
       }
-    });
+    })
 
     // Remove role="presentation" from list items
     // This code can be removed when we can upgrade to react-uswds to more recent versions
     // pending react, create react app updates
-    const presenters = el.current.querySelectorAll('[role="presentation"]');
+    const presenters = el.current.querySelectorAll('[role="presentation"]')
     Array.from(presenters).forEach((presenter) => {
-      presenter.removeAttribute('role');
-    });
-  });
+      presenter.removeAttribute('role')
+    })
+  })
 
   const getTotalPages = () => {
-    const totalPages = Math.floor(totalCount / perPage);
-    return totalCount % perPage > 0 ? totalPages + 1 : totalPages;
-  };
+    const totalPages = Math.floor(totalCount / perPage)
+    return totalCount % perPage > 0 ? totalPages + 1 : totalPages
+  }
 
-  const totalPages = getTotalPages();
+  const totalPages = getTotalPages()
 
   // leaving the 2 instead of using a magic number
   // because I think that clarifies the meaning/purpose
   if (hideInfo && totalPages < 2) {
-    return null;
+    return null
   }
 
-  const shouldBeUnbounded = totalPages > MIN_UNBOUNDED_PAGES;
+  const shouldBeUnbounded = totalPages > MIN_UNBOUNDED_PAGES
 
   return (
     <div ref={el} className="smart-hub--pagination-card flex-align-self-end display-block">
@@ -96,33 +96,28 @@ function PaginationCard({
                 <option value={totalCount}>all</option>
               </Dropdown>
             </div>
-          ) : null }
-          { (!noXofX && (totalCount > 0 || !hideCountHeaderOnEmpty)) && (
+          ) : null}
+          {!noXofX && (totalCount > 0 || !hideCountHeaderOnEmpty) && (
             <span className={totalPages < 2 ? 'margin-right-1' : ''} data-testid="pagination-card-count-header">
-              {getPageInfo(
-                offset,
-                totalCount,
-                currentPage,
-                perPage,
-              )}
+              {getPageInfo(offset, totalCount, currentPage, perPage)}
             </span>
           )}
         </div>
       )}
       {totalPages > 1 && (
-      <Pagination
-        className={paginationClassName}
-        currentPage={currentPage}
-        totalPages={shouldBeUnbounded ? null : totalPages}
-        onClickNext={() => handlePageChange(currentPage + 1)}
-        onClickPrevious={() => handlePageChange(currentPage - 1)}
-        onClickPageNumber={(_e, page) => handlePageChange(page)}
-        aria-label={accessibleLandmarkName}
-        maxSlots={isMobile ? MOBILE_MAX_SLOTS : MAX_SLOTS}
-      />
+        <Pagination
+          className={paginationClassName}
+          currentPage={currentPage}
+          totalPages={shouldBeUnbounded ? null : totalPages}
+          onClickNext={() => handlePageChange(currentPage + 1)}
+          onClickPrevious={() => handlePageChange(currentPage - 1)}
+          onClickPageNumber={(_e, page) => handlePageChange(page)}
+          aria-label={accessibleLandmarkName}
+          maxSlots={isMobile ? MOBILE_MAX_SLOTS : MAX_SLOTS}
+        />
       )}
     </div>
-  );
+  )
 }
 PaginationCard.propTypes = {
   currentPage: PropTypes.number,
@@ -136,7 +131,7 @@ PaginationCard.propTypes = {
   paginationClassName: PropTypes.string,
   hideCountHeaderOnEmpty: PropTypes.bool,
   noXofX: PropTypes.bool,
-};
+}
 
 PaginationCard.defaultProps = {
   totalCount: 0,
@@ -150,6 +145,6 @@ PaginationCard.defaultProps = {
   paginationClassName: 'margin-bottom-0 margin-top-0',
   hideCountHeaderOnEmpty: false,
   noXofX: false,
-};
+}
 
-export default PaginationCard;
+export default PaginationCard

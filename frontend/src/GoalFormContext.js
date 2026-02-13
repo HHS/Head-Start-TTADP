@@ -1,5 +1,5 @@
-import React from 'react';
+import React from 'react'
 
-const GoalFormContext = React.createContext({});
+const GoalFormContext = React.createContext({})
 
-export default GoalFormContext;
+export default GoalFormContext

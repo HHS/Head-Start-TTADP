@@ -1,14 +1,11 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import Modal from '../Modal';
+import React from 'react'
+import PropTypes from 'prop-types'
+import Modal from '../Modal'
 
-const DeleteFileModal = ({
-  modalRef, onFileRemoved, files, index,
-}) => {
+const DeleteFileModal = ({ modalRef, onFileRemoved, files, index }) => {
   const onDeleteFile = () => {
-    onFileRemoved(index)
-      .then(modalRef.current.toggleModal(false));
-  };
+    onFileRemoved(index).then(modalRef.current.toggleModal(false))
+  }
 
   return (
     <>
@@ -20,32 +17,23 @@ const DeleteFileModal = ({
         okButtonText="Delete"
         okButtonAriaLabel="Confirm delete"
       >
-        <p>
-          Are you sure you want to delete
-          {' '}
-          {files[index] ? files[index].originalFileName : null}
-          {' '}
-          ?
-        </p>
+        <p>Are you sure you want to delete {files[index] ? files[index].originalFileName : null} ?</p>
         <p>This action cannot be undone.</p>
       </Modal>
     </>
-  );
-};
+  )
+}
 
 DeleteFileModal.propTypes = {
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape(),
-  ]).isRequired,
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]).isRequired,
   onFileRemoved: PropTypes.func.isRequired,
   index: PropTypes.number,
   // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object).isRequired,
-};
+}
 
 DeleteFileModal.defaultProps = {
   index: null,
-};
+}
 
-export default DeleteFileModal;
+export default DeleteFileModal

@@ -1,15 +1,9 @@
-import { isEqual } from 'lodash';
-import moment from 'moment';
-import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  DATE_DISPLAY_FORMAT,
-  DATEPICKER_VALUE_FORMAT,
-} from '../../Constants';
+import { isEqual } from 'lodash'
+import moment from 'moment'
+import { REPORT_STATUSES } from '@ttahub/common'
+import { DATE_DISPLAY_FORMAT, DATEPICKER_VALUE_FORMAT } from '../../Constants'
 
-const ALLOWED_STATUSES_FOR_GOAL_EDITING = [
-  REPORT_STATUSES.DRAFT,
-  REPORT_STATUSES.NEEDS_ACTION,
-];
+const ALLOWED_STATUSES_FOR_GOAL_EDITING = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.NEEDS_ACTION]
 
 /**
  * compares two objects using lodash "isEqual" and returns the difference
@@ -21,14 +15,14 @@ export const findWhatsChanged = (object, base) => {
   function reduction(accumulator, current) {
     if (current === 'startDate' || current === 'endDate') {
       if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
-        delete accumulator[current];
-        return accumulator;
+        delete accumulator[current]
+        return accumulator
       }
     }
 
     if (current === 'creatorRole' && !object[current]) {
-      accumulator[current] = null;
-      return accumulator;
+      accumulator[current] = null
+      return accumulator
     }
 
     // this block intends to fix an issue where multi recipients are removed from a report
@@ -36,69 +30,66 @@ export const findWhatsChanged = (object, base) => {
     // to the activity report/goals will be severed on the backend
     if (current === 'activityRecipients' && !isEqual(base[current], object[current])) {
       // eslint-disable-next-line max-len
-      const grantIds = object.activityRecipients.map((activityRecipient) => activityRecipient.activityRecipientId);
+      const grantIds = object.activityRecipients.map((activityRecipient) => activityRecipient.activityRecipientId)
       // eslint-disable-next-line max-len
-      accumulator.recipientsWhoHaveGoalsThatShouldBeRemoved = base.activityRecipients.filter((baseData) => (
-        !grantIds.includes(baseData.activityRecipientId)
-      )).map((activityRecipient) => activityRecipient.activityRecipientId);
+      accumulator.recipientsWhoHaveGoalsThatShouldBeRemoved = base.activityRecipients
+        .filter((baseData) => !grantIds.includes(baseData.activityRecipientId))
+        .map((activityRecipient) => activityRecipient.activityRecipientId)
 
       // if we change activity recipients we should always ship the goals up as well
       // we do hit recipients first, so if they were somehow both changed before the API was hit
       // (unlikely since they are on different parts of the form)
       // the goals that were changed would overwrite the next line
 
-      let currentlyEditing = false;
+      let currentlyEditing = false
 
-      accumulator.goals = [
-        (base.goalForEditing || null),
-        ...(base.goals || []),
-      ].filter((g) => g).map((goal) => ({
-        ...goal,
-        grantIds,
-        isActivelyEdited: (() => {
-          // we only want one to be currently editing, so if we've already set this variable,
-          // then we return true
-          if (currentlyEditing) {
-            return false;
-          }
+      accumulator.goals = [base.goalForEditing || null, ...(base.goals || [])]
+        .filter((g) => g)
+        .map((goal) => ({
+          ...goal,
+          grantIds,
+          isActivelyEdited: (() => {
+            // we only want one to be currently editing, so if we've already set this variable,
+            // then we return true
+            if (currentlyEditing) {
+              return false
+            }
 
-          // otherwise, we if the goal has activityReportGoals, and any of them are actively edited
-          // we affirm this as the case when we send it to the DB.
-          if (goal.activityReportGoals
-            && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
-          ) {
-            currentlyEditing = true;
-          }
+            // otherwise, we if the goal has activityReportGoals, and any of them are actively edited
+            // we affirm this as the case when we send it to the DB.
+            if (goal.activityReportGoals && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)) {
+              currentlyEditing = true
+            }
 
-          return true;
-        })(),
-        prompts: goal.prompts || [],
-      }));
+            return true
+          })(),
+          prompts: goal.prompts || [],
+        }))
     }
 
     if (!isEqual(base[current], object[current])) {
-      accumulator[current] = object[current];
+      accumulator[current] = object[current]
     }
 
     if (Number.isNaN(accumulator[current])) {
-      delete accumulator[current];
+      delete accumulator[current]
     }
 
-    return accumulator;
+    return accumulator
   }
 
   // we sort these so they traverse in a particular order
   // (ActivityRecipients before goals, in particular)
-  return Object.keys(object).sort().reduce(reduction, {});
-};
+  return Object.keys(object).sort().reduce(reduction, {})
+}
 
 export const unflattenResourcesUsed = (array) => {
   if (!array) {
-    return [];
+    return []
   }
 
-  return array.map((value) => ({ value }));
-};
+  return array.map((value) => ({ value }))
+}
 
 /**
  * Extract goal IDs in their current display order to preserve user-arranged ordering
@@ -118,15 +109,11 @@ export const unflattenResourcesUsed = (array) => {
  * packagedGoals = [{id: 3, name: "Goal A"}, {id: 1, name: "Goal B"}, {id: 2, name: "Goal C"}]
  * Returns: [3, 1, 2] - preserving the display order regardless of IDs
  */
-export const extractGoalIdsInOrder = (packagedGoals) => packagedGoals
-  .map((g) => g.id)
-  .filter((id) => id); // Filter out any undefined/null IDs (for new goals not yet saved)
+export const extractGoalIdsInOrder = (packagedGoals) => packagedGoals.map((g) => g.id).filter((id) => id) // Filter out any undefined/null IDs (for new goals not yet saved)
 
 export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = null) => {
-  const getUseIpdCoursesFlag = (objective) => objective.useIpdCourses
-    ?? !!(objective.courses && objective.courses.length);
-  const getUseFilesFlag = (objective) => objective.useFiles
-    ?? !!(objective.files && objective.files.length);
+  const getUseIpdCoursesFlag = (objective) => objective.useIpdCourses ?? !!(objective.courses && objective.courses.length)
+  const getUseFilesFlag = (objective) => objective.useFiles ?? !!(objective.files && objective.files.length)
 
   const packagedGoals = [
     // we make sure to mark all the read only goals as "ActivelyEdited: false"
@@ -164,7 +151,7 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
         goalId: g.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
       })),
     })),
-  ];
+  ]
 
   if (goal && goal.name) {
     const goalToPackage = {
@@ -204,7 +191,7 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
       })),
       grantIds,
       prompts: prompts || [],
-    };
+    }
 
     // IN-PLACE EDITING: If originalIndex is provided, insert goal at that position
     // This is crucial for the "edit goals in place" feature - when a user edits a goal,
@@ -217,16 +204,16 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
     // - packagedGoals currently has 4 goals (the edited one was removed)
     // - We insert at position 1, putting it back where it was
     if (originalIndex !== null && originalIndex !== undefined && originalIndex >= 0) {
-      const insertIndex = Math.min(originalIndex, packagedGoals.length);
-      packagedGoals.splice(insertIndex, 0, goalToPackage);
+      const insertIndex = Math.min(originalIndex, packagedGoals.length)
+      packagedGoals.splice(insertIndex, 0, goalToPackage)
     } else {
       // No originalIndex means this is a NEW goal, append to end
-      packagedGoals.push(goalToPackage);
+      packagedGoals.push(goalToPackage)
     }
   }
 
-  return packagedGoals;
-};
+  return packagedGoals
+}
 
 // this function takes goals returned from the API and parses them appropriately,
 // setting the editable goal (or at least doing its best guess)
@@ -240,14 +227,12 @@ export const packageGoals = (goals, goal, grantIds, prompts, originalIndex = nul
  * displays properly
  * @returns { goal[], goalForEditing }
  */
-export const convertGoalsToFormData = (
-  goals, grantIds, calculatedStatus = REPORT_STATUSES.DRAFT, goalOrder = null,
-) => {
+export const convertGoalsToFormData = (goals, grantIds, calculatedStatus = REPORT_STATUSES.DRAFT, goalOrder = null) => {
   const addUseIpdFlag = (objective = {}) => ({
     ...objective,
     useIpdCourses: objective.useIpdCourses ?? !!(objective.courses && objective.courses.length),
     useFiles: objective.useFiles ?? !!(objective.files && objective.files.length),
-  });
+  })
 
   // GOAL ORDER RESTORATION: Re-sort goals to match user's intended order
   //
@@ -262,77 +247,81 @@ export const convertGoalsToFormData = (
   // - Backend returns: [Goal B (id:2, createdAt: older), Goal A (id:1, createdAt: newer)]
   // - goalOrder: [1, 2] (user wants Goal A first)
   // - After sorting: [Goal A (id:1), Goal B (id:2)] ✓
-  let sortedGoals = goals;
+  let sortedGoals = goals
   if (goalOrder && Array.isArray(goalOrder) && goalOrder.length > 0) {
     sortedGoals = [...goals].sort((a, b) => {
-      const indexA = goalOrder.indexOf(a.id);
-      const indexB = goalOrder.indexOf(b.id);
+      const indexA = goalOrder.indexOf(a.id)
+      const indexB = goalOrder.indexOf(b.id)
       // If goal not in goalOrder, put it at the end (shouldn't happen, but defensive)
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
+      if (indexA === -1 && indexB === -1) return 0
+      if (indexA === -1) return 1
+      if (indexB === -1) return -1
+      return indexA - indexB
+    })
   }
 
-  return sortedGoals.reduce((accumulatedData, goal, currentIndex) => {
-    // we are relying on the backend to have properly captured the goalForEditing
-    // if there is some breakdown happening, and we have two set,
-    // we will just fall back to just using the first matching goal
-    if (
-      // if any of the goals ids are included in the activelyEditedGoals id array
-      goal.activityReportGoals
-      && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
-      && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
-      && !accumulatedData.goalForEditing) {
-      // we set it as the goal for editing
-      // eslint-disable-next-line no-param-reassign
-      accumulatedData.goalForEditing = {
-        ...goal,
-        grantIds,
-        objectives: goal.objectives?.map(addUseIpdFlag) || [],
-        prompts: goal.prompts || [],
-        // Preserve the original index so the goal appears in the correct position
-        // when editing in place, even after navigating away and returning
-        originalIndex: currentIndex,
-      };
-    } else {
-      // otherwise we add it to the list of goals, formatting it with the correct
-      // grant ids
-      accumulatedData.goals.push({
-        ...goal,
-        grantIds,
-        prompts: goal.prompts || [],
-        objectives: goal.objectives?.map(addUseIpdFlag) || [],
-      });
-    }
+  return sortedGoals.reduce(
+    (accumulatedData, goal, currentIndex) => {
+      // we are relying on the backend to have properly captured the goalForEditing
+      // if there is some breakdown happening, and we have two set,
+      // we will just fall back to just using the first matching goal
+      if (
+        // if any of the goals ids are included in the activelyEditedGoals id array
+        goal.activityReportGoals &&
+        goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited) &&
+        ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus) &&
+        !accumulatedData.goalForEditing
+      ) {
+        // we set it as the goal for editing
+        // eslint-disable-next-line no-param-reassign
+        accumulatedData.goalForEditing = {
+          ...goal,
+          grantIds,
+          objectives: goal.objectives?.map(addUseIpdFlag) || [],
+          prompts: goal.prompts || [],
+          // Preserve the original index so the goal appears in the correct position
+          // when editing in place, even after navigating away and returning
+          originalIndex: currentIndex,
+        }
+      } else {
+        // otherwise we add it to the list of goals, formatting it with the correct
+        // grant ids
+        accumulatedData.goals.push({
+          ...goal,
+          grantIds,
+          prompts: goal.prompts || [],
+          objectives: goal.objectives?.map(addUseIpdFlag) || [],
+        })
+      }
 
-    return accumulatedData;
-  }, { goals: [], goalForEditing: null });
-};
+      return accumulatedData
+    },
+    { goals: [], goalForEditing: null }
+  )
+}
 
 export const convertReportToFormData = (fetchedReport) => {
-  let grantIds = [];
+  let grantIds = []
   if (fetchedReport.activityRecipients) {
-    grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
+    grantIds = fetchedReport.activityRecipients.map(({ id }) => id)
   }
   const activityRecipients = fetchedReport.activityRecipients.map((ar) => ({
     activityRecipientId: ar.id,
     name: ar.name,
     recipientIdForLookUp: ar.recipientIdForLookUp,
-  }));
+  }))
 
   const { goals, goalForEditing } = convertGoalsToFormData(
     fetchedReport.goalsAndObjectives,
     grantIds,
     fetchedReport.calculatedStatus,
-    fetchedReport.goalOrder,
-  );
+    fetchedReport.goalOrder
+  )
 
-  const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
-  const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-  const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
-  const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
+  const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed)
+  const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed)
+  const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : ''
+  const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : ''
   return {
     ...fetchedReport,
     activityRecipients,
@@ -342,7 +331,7 @@ export const convertReportToFormData = (fetchedReport) => {
     goalForEditing,
     endDate,
     startDate,
-  };
-};
+  }
+}
 
-export const formatTitleForHtmlAttribute = (title) => (title ? title.replace(/\s/g, '-').toLowerCase() : '');
+export const formatTitleForHtmlAttribute = (title) => (title ? title.replace(/\s/g, '-').toLowerCase() : '')

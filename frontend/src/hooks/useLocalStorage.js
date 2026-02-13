@@ -1,16 +1,16 @@
-import { useMemo, useState, useEffect } from 'react';
-import { storageAvailable } from './helpers';
-import { HTTPError } from '../fetchers';
+import { useMemo, useState, useEffect } from 'react'
+import { storageAvailable } from './helpers'
+import { HTTPError } from '../fetchers'
 
 export function setConnectionActiveWithError(e, setConnectionActive) {
-  let connection = false;
+  let connection = false
   // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
   // display the "network is unavailable" message
   if (e instanceof HTTPError && [403, 404].includes(e.status)) {
-    connection = true;
+    connection = true
   }
-  setConnectionActive(connection);
-  return connection;
+  setConnectionActive(connection)
+  return connection
 }
 
 /**
@@ -25,32 +25,32 @@ export function setConnectionActiveWithError(e, setConnectionActive) {
  * @returns [getter, setter, boolean: isLocalStorageAvailable]
  */
 export default function useLocalStorage(key, defaultValue, save = true) {
-  const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
+  const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), [])
   const value = useMemo(() => {
     try {
-      const curr = window.localStorage.getItem(key);
+      const curr = window.localStorage.getItem(key)
       if (curr) {
-        return JSON.parse(curr);
+        return JSON.parse(curr)
       }
     } catch (error) {
-      return defaultValue;
+      return defaultValue
     }
 
-    return defaultValue;
-  }, [defaultValue, key]);
+    return defaultValue
+  }, [defaultValue, key])
 
-  const [storedValue, setStoredValue] = useState(value);
+  const [storedValue, setStoredValue] = useState(value)
 
   useEffect(() => {
     if (save && localStorageAvailable) {
       try {
-        window.localStorage.setItem(key, JSON.stringify(storedValue));
+        window.localStorage.setItem(key, JSON.stringify(storedValue))
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.log('local storage unavailable', error);
+        console.log('local storage unavailable', error)
       }
     }
-  }, [key, localStorageAvailable, save, storedValue]);
+  }, [key, localStorageAvailable, save, storedValue])
 
-  return [storedValue, setStoredValue, localStorageAvailable];
+  return [storedValue, setStoredValue, localStorageAvailable]
 }

@@ -1,13 +1,13 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
-import { useHistory } from 'react-router';
-import TopAlert from './TopAlert';
-import { Accordion } from '../../../components/Accordion';
-import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import Submit from './Submit';
-import Approve from './Approve';
-import NeedsAction from './NeedsAction';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { useFormContext } from 'react-hook-form'
+import { useHistory } from 'react-router'
+import TopAlert from './TopAlert'
+import { Accordion } from '../../../components/Accordion'
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField'
+import Submit from './Submit'
+import Approve from './Approve'
+import NeedsAction from './NeedsAction'
 
 const Review = ({
   reviewItems,
@@ -24,19 +24,19 @@ const Review = ({
   isNeedsAction,
   reviewSubmitPagePosition,
 }) => {
-  let FormComponent = Submit;
+  let FormComponent = Submit
 
   if (isApprover && isSubmitted && !isNeedsAction) {
-    FormComponent = Approve;
+    FormComponent = Approve
   }
 
   if (isNeedsAction) {
-    FormComponent = NeedsAction;
+    FormComponent = NeedsAction
   }
 
-  const { getValues } = useFormContext();
-  const { id, eventId, submitter } = getValues();
-  const history = useHistory();
+  const { getValues } = useFormContext()
+  const { id, eventId, submitter } = getValues()
+  const history = useHistory()
 
   return (
     <>
@@ -44,17 +44,13 @@ const Review = ({
 
       <IndicatesRequiredField />
 
-      {(!isApprover && !isNeedsAction) && (
-        <p className="usa-prose margin-top-2 margin-bottom-4">Review the information in each section before submitting for approval. Once submitted, you will no longer be able to edit the report.</p>
+      {!isApprover && !isNeedsAction && (
+        <p className="usa-prose margin-top-2 margin-bottom-4">
+          Review the information in each section before submitting for approval. Once submitted, you will no longer be able to edit the report.
+        </p>
       )}
 
-      {isSubmitted && (
-      <TopAlert
-        isNeedsAction={isNeedsAction}
-        submitter={submitter}
-        approver={approver}
-      />
-      )}
+      {isSubmitted && <TopAlert isNeedsAction={isNeedsAction} submitter={submitter} approver={approver} />}
       {reviewItems && reviewItems.length > 0 && (
         <div className="margin-bottom-4">
           <Accordion
@@ -66,7 +62,7 @@ const Review = ({
             pages={pages.map((page) => ({
               ...page,
               onNavigation: () => {
-                history.push(`/training-report/${eventId}/session/${id}/${page.path}`);
+                history.push(`/training-report/${eventId}/session/${id}/${page.path}`)
               },
             }))}
             multiselectable
@@ -87,26 +83,30 @@ const Review = ({
         isAdmin={isAdmin}
       />
     </>
-  );
-};
+  )
+}
 
 Review.propTypes = {
   onFormReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    state: PropTypes.string,
-    review: PropTypes.bool,
-    label: PropTypes.string,
-  })).isRequired,
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      state: PropTypes.string,
+      review: PropTypes.bool,
+      label: PropTypes.string,
+    })
+  ).isRequired,
   approver: PropTypes.shape({
     id: PropTypes.number,
     fullName: PropTypes.string,
   }).isRequired,
-  reviewItems: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    content: PropTypes.node.isRequired,
-  })).isRequired,
+  reviewItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      content: PropTypes.node.isRequired,
+    })
+  ).isRequired,
   isPoc: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
   isApprover: PropTypes.bool.isRequired,
@@ -118,6 +118,6 @@ Review.propTypes = {
   }).isRequired,
   reviewSubmitPagePosition: PropTypes.number.isRequired,
   isAdmin: PropTypes.bool.isRequired,
-};
+}
 
-export default Review;
+export default Review

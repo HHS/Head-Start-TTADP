@@ -1,20 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import {
-  Form, Button,
-} from '@trussworks/react-uswds';
-import { DECIMAL_BASE } from '@ttahub/common';
-import UserInfo from './UserInfo';
-import UserPermissions from './UserPermissions';
-import UserFeatureFlags from './UserFeatureFlags';
-import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
-import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
-import { storageAvailable } from '../../hooks/helpers';
-import isAdmin from '../../permissions';
+import React, { useState, useEffect, useMemo } from 'react'
+import PropTypes from 'prop-types'
+import { Form, Button } from '@trussworks/react-uswds'
+import { DECIMAL_BASE } from '@ttahub/common'
+import UserInfo from './UserInfo'
+import UserPermissions from './UserPermissions'
+import UserFeatureFlags from './UserFeatureFlags'
+import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers'
+import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants'
+import { storageAvailable } from '../../hooks/helpers'
+import isAdmin from '../../permissions'
 
-const NUMBER_FIELDS = [
-  'homeRegionId',
-];
+const NUMBER_FIELDS = ['homeRegionId']
 
 /**
  * The user section of the Admin UI. Editing existing users is done inside this component.
@@ -23,55 +19,52 @@ const NUMBER_FIELDS = [
  * automatically the first time they attempt to login to the Smart Hub
  */
 function UserSection({ user, onSave, features }) {
-  const [formUser, updateUser] = useState();
-  const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
+  const [formUser, updateUser] = useState()
+  const haveStorage = useMemo(() => storageAvailable('sessionStorage'), [])
 
   useEffect(() => {
-    updateUser(user);
-  }, [user]);
+    updateUser(user)
+  }, [user])
 
   const impersonateUserId = () => {
-    if (!haveStorage || !formUser || typeof formUser.id !== 'number') return;
-    window.sessionStorage.setItem(SESSION_STORAGE_IMPERSONATION_KEY, formUser.id);
-    window.location.href = '/';
-  };
+    if (!haveStorage || !formUser || typeof formUser.id !== 'number') return
+    window.sessionStorage.setItem(SESSION_STORAGE_IMPERSONATION_KEY, formUser.id)
+    window.location.href = '/'
+  }
 
   const onUserChange = (e) => {
     if (Array.isArray(e)) {
       updateUser({
         ...formUser,
         roles: e.map((obj) => ({ fullName: obj.value })),
-      });
-      return;
+      })
+      return
     }
-    const { name, value } = e.target;
+    const { name, value } = e.target
     updateUser({
       ...formUser,
       [name]: NUMBER_FIELDS.includes(name) ? parseInt(value, DECIMAL_BASE) : value,
-    });
-  };
+    })
+  }
 
   const onFeaturesChange = (e, flag) => {
     if (e.target.checked) {
       updateUser({
         ...formUser,
-        flags: [
-          ...formUser.flags,
-          flag,
-        ],
-      });
+        flags: [...formUser.flags, flag],
+      })
     } else {
       updateUser({
         ...formUser,
         flags: formUser.flags.filter((f) => f !== flag),
-      });
+      })
     }
-  };
+  }
 
   const onPermissionChange = (e, strRegion) => {
-    const scope = parseInt(e.target.name, DECIMAL_BASE);
-    const region = parseInt(strRegion, DECIMAL_BASE);
-    const { checked } = e.target;
+    const scope = parseInt(e.target.name, DECIMAL_BASE)
+    const region = parseInt(strRegion, DECIMAL_BASE)
+    const { checked } = e.target
 
     if (checked && region === ALL_REGIONS) {
       updateUser({
@@ -79,70 +72,59 @@ function UserSection({ user, onSave, features }) {
         permissions: [
           ...formUser.permissions,
           { userId: user.id, scopeId: scope, regionId: region },
-          ...REGIONS.map((r) => (
-            { userId: user.id, scopeId: scope, regionId: r }
-          )),
+          ...REGIONS.map((r) => ({ userId: user.id, scopeId: scope, regionId: r })),
         ],
-      });
+      })
     } else if (checked) {
       updateUser({
         ...formUser,
-        permissions: [
-          ...formUser.permissions,
-          { userId: user.id, scopeId: scope, regionId: region },
-        ],
-      });
+        permissions: [...formUser.permissions, { userId: user.id, scopeId: scope, regionId: region }],
+      })
     } else if (region === ALL_REGIONS) {
       updateUser({
         ...formUser,
-        permissions: formUser.permissions.filter((permission) => (
-          // We are removing permissions (because checked is false). Only keep
-          // permissions that do not have the "unchecked" scope
-          !(permission.scopeId === scope)
-        )),
-      });
+        permissions: formUser.permissions.filter(
+          (permission) =>
+            // We are removing permissions (because checked is false). Only keep
+            // permissions that do not have the "unchecked" scope
+            !(permission.scopeId === scope)
+        ),
+      })
     } else {
       updateUser({
         ...formUser,
-        permissions: formUser.permissions.filter((permission) => (
-          // We are removing permissions (because checked is false). Only keep
-          // permissions that do not have the "unchecked" scope and region
-          !(permission.scopeId === scope && permission.regionId === region)
-        )),
-      });
+        permissions: formUser.permissions.filter(
+          (permission) =>
+            // We are removing permissions (because checked is false). Only keep
+            // permissions that do not have the "unchecked" scope and region
+            !(permission.scopeId === scope && permission.regionId === region)
+        ),
+      })
     }
-  };
+  }
 
   const onGlobalPermissionChange = (e) => {
-    onPermissionChange(e, 14);
-  };
+    onPermissionChange(e, 14)
+  }
 
   const onRegionalPermissionChange = (e, region) => {
-    onPermissionChange(e, region);
-  };
+    onPermissionChange(e, region)
+  }
 
   if (!formUser) {
-    return (
-      <div>
-        Loading...
-      </div>
-    );
+    return <div>Loading...</div>
   }
 
   return (
     <Form
-      onSubmit={(e) => { e.preventDefault(); onSave(formUser); }}
+      onSubmit={(e) => {
+        e.preventDefault()
+        onSave(formUser)
+      }}
       large
     >
-      <UserInfo
-        user={formUser}
-        onUserChange={onUserChange}
-      />
-      <Button
-        className="margin-bottom-6"
-        onClick={impersonateUserId}
-        disabled={isAdmin(user)}
-      >
+      <UserInfo user={formUser} onUserChange={onUserChange} />
+      <Button className="margin-bottom-6" onClick={impersonateUserId} disabled={isAdmin(user)}>
         Impersonate user
       </Button>
       <UserPermissions
@@ -152,16 +134,10 @@ function UserSection({ user, onSave, features }) {
         regionalPermissions={userRegionalPermissions(formUser)}
         onRegionalPermissionChange={onRegionalPermissionChange}
       />
-      <UserFeatureFlags
-        onFeaturesChange={onFeaturesChange}
-        features={features}
-        flags={formUser.flags}
-      />
-      <Button>
-        Save
-      </Button>
+      <UserFeatureFlags onFeaturesChange={onFeaturesChange} features={features} flags={formUser.flags} />
+      <Button>Save</Button>
     </Form>
-  );
+  )
 }
 
 UserSection.propTypes = {
@@ -175,19 +151,23 @@ UserSection.propTypes = {
     homeRegionId: PropTypes.number,
     title: PropTypes.string,
     flags: PropTypes.arrayOf(PropTypes.string),
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      regionId: PropTypes.number.isRequired,
-      scopeId: PropTypes.number.isRequired,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        regionId: PropTypes.number.isRequired,
+        scopeId: PropTypes.number.isRequired,
+      })
+    ),
   }).isRequired,
-  features: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.string,
-  })),
-};
+  features: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.string,
+    })
+  ),
+}
 
 UserSection.defaultProps = {
   features: [],
-};
+}
 
-export default UserSection;
+export default UserSection

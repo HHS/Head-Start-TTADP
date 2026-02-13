@@ -1,7 +1,7 @@
-import React from 'react';
-import { NOT_STARTED } from '../../components/Navigator/constants';
+import React from 'react'
+import { NOT_STARTED } from '../../components/Navigator/constants'
 
-export const NO_ERROR = <></>;
+export const NO_ERROR = <></>
 
 export const sessionSummaryRequiredFields = {
   sessionName: '',
@@ -12,7 +12,7 @@ export const sessionSummaryRequiredFields = {
   objectiveSupportType: '',
   regionId: '',
   ttaProvided: '',
-};
+}
 
 export const sessionSummaryFields = {
   // not including start date or end date
@@ -23,27 +23,27 @@ export const sessionSummaryFields = {
   courses: [],
   files: [],
   context: '',
-};
+}
 
 export const participantsFields = {
   deliveryMethod: '',
   numberOfParticipants: '',
   language: [],
   ttaType: [],
-};
+}
 
 export const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
   pocComplete: false,
   collabComplete: false,
-};
+}
 
 export const defaultFormValues = {
   ...sessionSummaryFields,
   ...participantsFields,
   ...nextStepsFields,
-};
+}
 
 export const defaultValues = {
   ...defaultFormValues,
@@ -63,7 +63,7 @@ export const defaultValues = {
     3: NOT_STARTED,
     4: NOT_STARTED,
   },
-};
+}
 
 export const baseDefaultValues = {
   id: 0,
@@ -83,21 +83,19 @@ export const baseDefaultValues = {
   managerNotes: '',
   approver: null,
   dateSubmitted: '',
-};
+}
 
-export const pageComplete = (
-  hookForm,
-  fields,
-) => fields.every((field) => {
-  const val = hookForm.getValues(field);
+export const pageComplete = (hookForm, fields) =>
+  fields.every((field) => {
+    const val = hookForm.getValues(field)
 
-  if (Array.isArray(val)) {
-    return val.length > 0;
-  }
-  return !!(val);
-});
+    if (Array.isArray(val)) {
+      return val.length > 0
+    }
+    return !!val
+  })
 
-export const supportingAttachmentsVisitedField = 'pageVisited-supporting-attachments';
+export const supportingAttachmentsVisitedField = 'pageVisited-supporting-attachments'
 
 export const defaultKeys = [
   'id',
@@ -121,7 +119,7 @@ export const defaultKeys = [
   'reviewStatus',
   'approvalStatus',
   'trainers',
-];
+]
 
 export const istKeys = [
   ...defaultKeys,
@@ -140,7 +138,7 @@ export const istKeys = [
   'files',
   'ttaProvided',
   'objectiveSupportType',
-];
+]
 
 export const pocKeys = [
   ...defaultKeys,
@@ -159,4 +157,4 @@ export const pocKeys = [
   'specialistNextSteps',
   'istSelectionComplete',
   supportingAttachmentsVisitedField,
-];
+]

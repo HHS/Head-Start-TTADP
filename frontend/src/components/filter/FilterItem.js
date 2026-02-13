@@ -1,13 +1,13 @@
-import React, { useRef, useContext } from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import './FilterItem.scss';
-import FilterErrorContext from './FilterErrorContext';
-import { filterProp } from './props';
-import colors from '../../colors';
+import React, { useRef, useContext } from 'react'
+import PropTypes from 'prop-types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons'
+import './FilterItem.scss'
+import FilterErrorContext from './FilterErrorContext'
+import { filterProp } from './props'
+import colors from '../../colors'
 
-const CANCEL_ARIA = 'discard changes and close filter menu';
+const CANCEL_ARIA = 'discard changes and close filter menu'
 
 /**
  * The individual filter controls with the set of dropdowns
@@ -15,66 +15,55 @@ const CANCEL_ARIA = 'discard changes and close filter menu';
  * @param {Object} props
  * @returns a JSX object
  */
-export default function FilterItem({
-  filter,
-  onRemoveFilter,
-  onUpdateFilter,
-  topicOptions,
-  selectedTopic,
-}) {
-  const {
-    id,
-    topic,
-    condition,
-    query,
-  } = filter;
+export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter, topicOptions, selectedTopic }) {
+  const { id, topic, condition, query } = filter
 
-  const { error, setError } = useContext(FilterErrorContext);
+  const { error, setError } = useContext(FilterErrorContext)
 
   const validate = () => {
     if (!topic) {
-      return 'Please enter a filter';
+      return 'Please enter a filter'
     }
 
     if (!condition) {
-      return 'Please enter a condition';
+      return 'Please enter a condition'
     }
 
     if (!query || !query.toString().length) {
-      return 'Please enter a value';
+      return 'Please enter a value'
     }
 
-    return '';
-  };
+    return ''
+  }
 
-  const fieldset = useRef();
+  const fieldset = useRef()
 
   const onBlur = (e) => {
-    let willValidate = true;
+    let willValidate = true
 
     // no validation if you are clicking on something within the filter item
     if (fieldset.current.contains(e.relatedTarget)) {
-      willValidate = false;
+      willValidate = false
     }
 
     // no validation if you are clicking on the cancel button
     if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === CANCEL_ARIA) {
-      willValidate = false;
+      willValidate = false
     }
 
     if (topic === 'startDate') {
-      willValidate = false;
+      willValidate = false
     }
 
     if (willValidate) {
-      const message = validate();
+      const message = validate()
       // if there is an error (either new or existing), we want to refresh
       // the validation message that's there
       if (message) {
-        setError(message);
+        setError(message)
       }
     }
-  };
+  }
 
   /**
    * changing the condition should clear the query
@@ -83,68 +72,65 @@ export default function FilterItem({
    * function below
    */
   const onUpdate = (name, value) => {
-    onUpdateFilter(id, name, value);
-  };
+    onUpdateFilter(id, name, value)
+  }
 
   const DummySelect = () => (
     <select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" />
-  );
+  )
 
   const onApplyQuery = (q) => {
-    onUpdate('query', q);
-  };
+    onUpdate('query', q)
+  }
 
-  const conditions = selectedTopic ? selectedTopic.conditions : [];
+  const conditions = selectedTopic ? selectedTopic.conditions : []
 
   const onRemove = () => {
-    onRemoveFilter(id);
-  };
+    onRemoveFilter(id)
+  }
 
-  let readableFilterName = '';
+  let readableFilterName = ''
   if (selectedTopic) {
-    readableFilterName = selectedTopic.display;
+    readableFilterName = selectedTopic.display
   }
 
   const buttonAriaLabel = readableFilterName
     ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
-    : 'remove this filter. click apply filters to make your changes';
+    : 'remove this filter. click apply filters to make your changes'
 
-  const fieldsetBaseClass = 'usa-form-group ttahub-filter-menu-item gap-1 desktop:display-flex padding-0 position-relative';
-  let fieldsetErrorClass = '';
+  const fieldsetBaseClass = 'usa-form-group ttahub-filter-menu-item gap-1 desktop:display-flex padding-0 position-relative'
+  let fieldsetErrorClass = ''
 
   switch (error) {
     case 'Please enter a valid date':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
-      break;
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value'
+      break
     case 'Please enter a valid date range':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
-      break;
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value'
+      break
     case 'Please enter a value':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
-      break;
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value'
+      break
     case 'Please enter a condition':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
-      break;
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition'
+      break
     case 'Please enter a filter':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
-      break;
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter'
+      break
     default:
-      break;
+      break
   }
 
-  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass} ${!fieldsetErrorClass ? 'margin-0' : ''}`;
-  const errorId = `error-message-${id}`;
+  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass} ${!fieldsetErrorClass ? 'margin-0' : ''}`
+  const errorId = `error-message-${id}`
   return (
     <div className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
-      {
-        error
-        && (
-          <span className="usa-error-message padding-0 ttahub-filter-menu-error" id={errorId}>
-            {error}
-          </span>
-        )
-      }
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      {error && (
+        <span className="usa-error-message padding-0 ttahub-filter-menu-error" id={errorId}>
+          {error}
+        </span>
+      )}
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="usa-sr-only" htmlFor={`topic-${id}`}>
         Select a filter
       </label>
@@ -156,10 +142,12 @@ export default function FilterItem({
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="" disabled hidden>- Select -</option>
+        <option value="" disabled hidden>
+          - Select -
+        </option>
         {topicOptions}
       </select>
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="usa-sr-only" htmlFor={`condition-${id}`}>
         Select a condition
       </label>
@@ -171,19 +159,26 @@ export default function FilterItem({
         disabled={!topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
-
       >
-        <option value="" disabled hidden>- Select -</option>
-        {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
+        <option value="" disabled hidden>
+          - Select -
+        </option>
+        {conditions.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
       </select>
-      { selectedTopic && condition
-        ? selectedTopic.renderInput(
+      {selectedTopic && condition ? (
+        selectedTopic.renderInput(
           id, // filter id
           condition, // filter condition
           query, // filter query
-          onApplyQuery, // the on apply query function handler
+          onApplyQuery // the on apply query function handler
         )
-        : <DummySelect /> }
+      ) : (
+        <DummySelect />
+      )}
       <button
         type="button"
         aria-label={buttonAriaLabel}
@@ -194,7 +189,7 @@ export default function FilterItem({
         <FontAwesomeIcon color={colors.baseDark} icon={faTimesCircle} />
       </button>
     </div>
-  );
+  )
 }
 
 FilterItem.propTypes = {
@@ -207,4 +202,4 @@ FilterItem.propTypes = {
     renderInput: PropTypes.func,
     conditions: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
-};
+}

@@ -1,7 +1,7 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import RenderReviewCitations from '../RenderReviewCitations';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import RenderReviewCitations from '../RenderReviewCitations'
 
 describe('RenderReviewCitations', () => {
   const activityRecipients = [
@@ -15,7 +15,7 @@ describe('RenderReviewCitations', () => {
       activityRecipientId: 11966,
       name: 'R1 - GRANT2 - EHS',
     },
-  ];
+  ]
 
   const citations = [
     {
@@ -71,23 +71,25 @@ describe('RenderReviewCitations', () => {
       ],
       name: 'AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
     },
-  ];
+  ]
 
   it('renders the citations', async () => {
-    render(<RenderReviewCitations citations={citations} activityRecipients={activityRecipients} />);
+    render(<RenderReviewCitations citations={citations} activityRecipients={activityRecipients} />)
 
-    const recipient1 = screen.getByText('R1 - GRANT1 - HS');
-    expect(recipient1).toBeVisible();
+    const recipient1 = screen.getByText('R1 - GRANT1 - HS')
+    expect(recipient1).toBeVisible()
 
-    const recipient2 = screen.getByText('R1 - GRANT2 - EHS');
-    expect(recipient2).toBeVisible();
+    const recipient2 = screen.getByText('R1 - GRANT2 - EHS')
+    expect(recipient2).toBeVisible()
 
-    const labels = await screen.findAllByTestId('review-citation-label');
-    expect(labels).toHaveLength(2);
+    const labels = await screen.findAllByTestId('review-citation-label')
+    expect(labels).toHaveLength(2)
 
-    const listItems = await screen.findAllByTestId('review-citation-listitem');
-    expect(listItems).toHaveLength(2);
+    const listItems = await screen.findAllByTestId('review-citation-listitem')
+    expect(listItems).toHaveLength(2)
 
-    expect(await screen.findAllByText('AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance')).toHaveLength(2);
-  });
-});
+    expect(
+      await screen.findAllByText('AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance')
+    ).toHaveLength(2)
+  })
+})

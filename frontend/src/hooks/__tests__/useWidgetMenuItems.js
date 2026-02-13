@@ -1,17 +1,11 @@
-import { renderHook } from '@testing-library/react-hooks';
-import useWidgetMenuItems from '../useWidgetMenuItems';
+import { renderHook } from '@testing-library/react-hooks'
+import useWidgetMenuItems from '../useWidgetMenuItems'
 
 describe('useWidgetMenuItems', () => {
   it('should return menu items', () => {
-    const { result } = renderHook(() => useWidgetMenuItems(
-      false,
-      jest.fn(),
-      jest.fn(),
-      {},
-      jest.fn(),
-    ));
+    const { result } = renderHook(() => useWidgetMenuItems(false, jest.fn(), jest.fn(), {}, jest.fn()))
 
-    const menuItems = result.current;
+    const menuItems = result.current
     expect(menuItems).toEqual([
       {
         label: 'Display table',
@@ -21,19 +15,13 @@ describe('useWidgetMenuItems', () => {
         label: 'Save screenshot',
         onClick: expect.any(Function),
       },
-    ]);
-  });
+    ])
+  })
 
   it('should display menu items for tabular data', () => {
-    const { result } = renderHook(() => useWidgetMenuItems(
-      true,
-      jest.fn(),
-      jest.fn(),
-      {},
-      jest.fn(),
-    ));
+    const { result } = renderHook(() => useWidgetMenuItems(true, jest.fn(), jest.fn(), {}, jest.fn()))
 
-    const menuItems = result.current;
+    const menuItems = result.current
     expect(menuItems).toEqual([
       {
         label: 'Display graph',
@@ -43,19 +31,13 @@ describe('useWidgetMenuItems', () => {
         label: 'Export table',
         onClick: expect.any(Function),
       },
-    ]);
-  });
+    ])
+  })
 
   it('should display menu items for selected rows', () => {
-    const { result } = renderHook(() => useWidgetMenuItems(
-      true,
-      jest.fn(),
-      jest.fn(),
-      { 1: true },
-      jest.fn(),
-    ));
+    const { result } = renderHook(() => useWidgetMenuItems(true, jest.fn(), jest.fn(), { 1: true }, jest.fn()))
 
-    const menuItems = result.current;
+    const menuItems = result.current
     expect(menuItems).toEqual([
       {
         label: 'Display graph',
@@ -69,6 +51,6 @@ describe('useWidgetMenuItems', () => {
         label: 'Export selected rows',
         onClick: expect.any(Function),
       },
-    ]);
-  });
-});
+    ])
+  })
+})

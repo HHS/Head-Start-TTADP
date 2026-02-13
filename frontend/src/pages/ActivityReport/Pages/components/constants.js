@@ -1,10 +1,10 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { v4 as uuidv4 } from 'uuid';
-import { OBJECTIVE_STATUS } from '../../../../Constants';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { v4 as uuidv4 } from 'uuid'
+import { OBJECTIVE_STATUS } from '../../../../Constants'
 
-export const NO_ERROR = <></>;
-export const ERROR_FORMAT = (message) => <span className="usa-error-message">{message}</span>;
+export const NO_ERROR = <></>
+export const ERROR_FORMAT = (message) => <span className="usa-error-message">{message}</span>
 
 export const NEW_OBJECTIVE = (isMonitoring = false) => ({
   value: uuidv4(),
@@ -22,7 +22,7 @@ export const NEW_OBJECTIVE = (isMonitoring = false) => ({
   closeSuspendReason: null,
   closeSuspendContext: null,
   objectiveCreatedHere: true,
-});
+})
 
 export const OBJECTIVE_PROP = PropTypes.shape({
   title: PropTypes.string,
@@ -31,17 +31,21 @@ export const OBJECTIVE_PROP = PropTypes.shape({
   value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   label: PropTypes.string,
   id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  topics: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  })),
-  resources: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    label: PropTypes.string,
-  })),
+  topics: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })
+  ),
+  resources: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      label: PropTypes.string,
+    })
+  ),
   activityReports: PropTypes.arrayOf(
     PropTypes.shape({
       status: PropTypes.string,
-    }),
+    })
   ),
-});
+})

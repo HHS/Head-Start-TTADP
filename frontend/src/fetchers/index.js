@@ -1,28 +1,28 @@
-import { isNaN } from 'lodash';
-import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
+import { isNaN } from 'lodash'
+import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants'
 
 export class HTTPError extends Error {
   constructor(statusCode, message, ...params) {
-    super(message, ...params);
-    this.name = 'HTTPError';
-    this.status = statusCode;
-    this.statusText = message;
+    super(message, ...params)
+    this.name = 'HTTPError'
+    this.status = statusCode
+    this.statusText = message
   }
 }
 
 const impersonationHeader = () => {
-  if (!window.sessionStorage) return {};
+  if (!window.sessionStorage) return {}
 
-  const impersonationId = window.sessionStorage.getItem(SESSION_STORAGE_IMPERSONATION_KEY);
+  const impersonationId = window.sessionStorage.getItem(SESSION_STORAGE_IMPERSONATION_KEY)
 
   if (isNaN(impersonationId) || typeof impersonationId === 'undefined') {
-    return {};
+    return {}
   }
 
   return {
     'Auth-Impersonation-Id': impersonationId,
-  };
-};
+  }
+}
 
 export const get = async (url, signal = null) => {
   const res = await fetch(url, {
@@ -33,12 +33,12 @@ export const get = async (url, signal = null) => {
       ...impersonationHeader(),
     },
     ...(signal ? { signal } : {}),
-  });
+  })
   if (!res.ok) {
-    throw new HTTPError(res.status, res.statusText);
+    throw new HTTPError(res.status, res.statusText)
   }
-  return res;
-};
+  return res
+}
 
 export const put = async (url, data) => {
   const res = await fetch(url, {
@@ -49,12 +49,12 @@ export const put = async (url, data) => {
       ...impersonationHeader(),
     },
     body: JSON.stringify(data),
-  });
+  })
   if (!res.ok) {
-    throw new Error(res.statusText);
+    throw new Error(res.statusText)
   }
-  return res;
-};
+  return res
+}
 
 export const post = async (url, data) => {
   const res = await fetch(url, {
@@ -65,12 +65,12 @@ export const post = async (url, data) => {
       ...impersonationHeader(),
     },
     body: JSON.stringify(data),
-  });
+  })
   if (!res.ok) {
-    throw new Error(res.statusText);
+    throw new Error(res.statusText)
   }
-  return res;
-};
+  return res
+}
 
 /*
  * Note: Due to `delete` being a keyword, we'll settle with `destroy`
@@ -84,10 +84,10 @@ export const destroy = async (url, data) => {
       ...impersonationHeader(),
     },
     body: data ? JSON.stringify(data) : '',
-  });
+  })
 
   if (!res.ok) {
-    throw new Error(res.statusText);
+    throw new Error(res.statusText)
   }
-  return res;
-};
+  return res
+}

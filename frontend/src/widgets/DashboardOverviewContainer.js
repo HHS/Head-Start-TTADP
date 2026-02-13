@@ -1,8 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
-import Loader from '../components/Loader';
-import { OverviewWidgetField } from './OverviewWidgetField';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Grid } from '@trussworks/react-uswds'
+import Loader from '../components/Loader'
+import { OverviewWidgetField } from './OverviewWidgetField'
 
 export function DashboardOverviewContainer({ fieldData, loading }) {
   return (
@@ -24,10 +24,10 @@ export function DashboardOverviewContainer({ fieldData, loading }) {
           route={
             field.route
               ? {
-                to: `/dashboards/${field.route}`,
-                label: 'Display details',
-                ariaLabel: field.ariaLabel,
-              }
+                  to: `/dashboards/${field.route}`,
+                  label: 'Display details',
+                  ariaLabel: field.ariaLabel,
+                }
               : null
           }
           filterApplicable={field.filterApplicable}
@@ -37,7 +37,7 @@ export function DashboardOverviewContainer({ fieldData, loading }) {
         />
       ))}
     </Grid>
-  );
+  )
 }
 
 DashboardOverviewContainer.propTypes = {
@@ -54,13 +54,13 @@ DashboardOverviewContainer.propTypes = {
       route: PropTypes.string,
       filterApplicable: PropTypes.bool,
       iconSize: PropTypes.string,
-    }),
+    })
   ),
-};
+}
 
 DashboardOverviewContainer.defaultProps = {
   fieldData: [],
   loading: false,
-};
+}
 
-export default DashboardOverviewContainer;
+export default DashboardOverviewContainer

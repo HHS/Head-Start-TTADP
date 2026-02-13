@@ -1,41 +1,31 @@
-import React, {
-  useContext, useRef,
-} from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { useFormContext, Controller } from 'react-hook-form';
-import {
-  Fieldset,
-  Radio,
-  Grid,
-  Textarea,
-  TextInput,
-  Checkbox,
-  Label,
-} from '@trussworks/react-uswds';
-import Select from 'react-select';
-import moment from 'moment';
-import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
-import Drawer from '../../../components/Drawer';
-import MultiSelect from '../../../components/MultiSelect';
-import selectOptionsReset from '../../../components/selectOptionsReset';
-import FormItem from '../../../components/FormItem';
-import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import ConnectionError from '../../../components/ConnectionError';
-import NetworkContext from '../../../NetworkContext';
-import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import Req from '../../../components/Req';
-import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
-import StateMultiSelect from '../../../components/StateMultiSelect';
-import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
-import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
-import { COLLAB_REPORT_REASONS, STATES, COLLAB_REPORT_CONDUCT_METHODS } from '../../../Constants';
+import React, { useContext, useRef } from 'react'
+import PropTypes from 'prop-types'
+import { Helmet } from 'react-helmet'
+import { useFormContext, Controller } from 'react-hook-form'
+import { Fieldset, Radio, Grid, Textarea, TextInput, Checkbox, Label } from '@trussworks/react-uswds'
+import Select from 'react-select'
+import moment from 'moment'
+import DrawerTriggerButton from '../../../components/DrawerTriggerButton'
+import Drawer from '../../../components/Drawer'
+import MultiSelect from '../../../components/MultiSelect'
+import selectOptionsReset from '../../../components/selectOptionsReset'
+import FormItem from '../../../components/FormItem'
+import ControlledDatePicker from '../../../components/ControlledDatePicker'
+import ConnectionError from '../../../components/ConnectionError'
+import NetworkContext from '../../../NetworkContext'
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField'
+import Req from '../../../components/Req'
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons'
+import StateMultiSelect from '../../../components/StateMultiSelect'
+import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey'
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage'
+import { COLLAB_REPORT_REASONS, STATES, COLLAB_REPORT_CONDUCT_METHODS } from '../../../Constants'
 
-const position = 1;
-const path = 'activity-summary';
+const position = 1
+const path = 'activity-summary'
 
 const ActivitySummary = ({ collaborators = [] }) => {
-  const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
+  const { endDateKey, setEndDate } = useHookFormEndDateWithKey()
 
   const {
     register,
@@ -44,37 +34,37 @@ const ActivitySummary = ({ collaborators = [] }) => {
     formState: { errors },
     setError,
     clearErrors,
-  } = useFormContext();
+  } = useFormContext()
 
-  const isStateActivity = watch('isStateActivity');
-  const showStates = isStateActivity === 'true';
+  const isStateActivity = watch('isStateActivity')
+  const showStates = isStateActivity === 'true'
 
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
-  const { connectionActive } = useContext(NetworkContext);
-  const placeholderText = '- Select -';
-  const drawerTriggerRef = useRef(null);
+  const startDate = watch('startDate')
+  const endDate = watch('endDate')
+  const { connectionActive } = useContext(NetworkContext)
+  const placeholderText = '- Select -'
+  const drawerTriggerRef = useRef(null)
 
-  const descriptionError = errors?.description?.message;
-  const reasonError = errors?.reportReasons?.message;
+  const descriptionError = errors?.description?.message
+  const reasonError = errors?.reportReasons?.message
 
   const checkForDescription = (el) => {
-    const { value } = el.target;
+    const { value } = el.target
     if (!value || value.trim() === '') {
-      setError('description', { type: 'required', message: 'Describe the activity' });
+      setError('description', { type: 'required', message: 'Describe the activity' })
     } else {
-      clearErrors('description');
+      clearErrors('description')
     }
-  };
+  }
 
   const checkForReasons = () => {
-    const reasons = watch('reportReasons');
+    const reasons = watch('reportReasons')
     if (!reasons || reasons.length === 0) {
-      setError('reportReasons', { type: 'required', message: 'Select at least one' });
+      setError('reportReasons', { type: 'required', message: 'Select at least one' })
     } else {
-      clearErrors('reportReasons');
+      clearErrors('reportReasons')
     }
-  };
+  }
 
   return (
     <>
@@ -85,11 +75,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
         <IndicatesRequiredField />
       </div>
       <Fieldset className="smart-hub-activity-summary smart-hub--report-legend">
-        <FormItem
-          label="Activity name"
-          name="name"
-          fieldSetWrapper
-        >
+        <FormItem label="Activity name" name="name" fieldSetWrapper>
           <TextInput
             id="name"
             name="name"
@@ -102,7 +88,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
           />
         </FormItem>
         <div className="margin-y-2">
-          {!connectionActive ? <ConnectionError /> : null }
+          {!connectionActive ? <ConnectionError /> : null}
           <FormItem
             label="Collaborating specialists "
             name="collabReportSpecialists"
@@ -120,7 +106,9 @@ const ActivitySummary = ({ collaborators = [] }) => {
               options={collaborators.map((user) => ({
                 // we want the role construction here to match what later is returned from the
                 // database, so we do this weirdo mapping thing here
-                value: user.id, label: user.name, roles: user.roles.map((r) => r.fullName),
+                value: user.id,
+                label: user.name,
+                roles: user.roles.map((r) => r.fullName),
               }))}
             />
           </FormItem>
@@ -131,17 +119,8 @@ const ActivitySummary = ({ collaborators = [] }) => {
         <div>
           <Grid row>
             <Grid col={8}>
-              <FormItem
-                label="Start date"
-                name="startDate"
-                id="startDate-label"
-                htmlFor="startDate"
-              >
-                <div
-                  className="usa-hint"
-                >
-                  mm/dd/yyyy
-                </div>
+              <FormItem label="Start date" name="startDate" id="startDate-label" htmlFor="startDate">
+                <div className="usa-hint">mm/dd/yyyy</div>
                 <ControlledDatePicker
                   control={control}
                   name="startDate"
@@ -156,36 +135,15 @@ const ActivitySummary = ({ collaborators = [] }) => {
           </Grid>
           <Grid row>
             <Grid col={8}>
-              <FormItem
-                label="End date"
-                name="endDate"
-                id="endDate-label"
-                htmlFor="endDate"
-              >
-                <div
-                  className="usa-hint"
-                >
-                  mm/dd/yyyy
-                </div>
-                <ControlledDatePicker
-                  control={control}
-                  name="endDate"
-                  inputId="endDate"
-                  value={endDate}
-                  minDate={startDate}
-                  key={endDateKey}
-                />
+              <FormItem label="End date" name="endDate" id="endDate-label" htmlFor="endDate">
+                <div className="usa-hint">mm/dd/yyyy</div>
+                <ControlledDatePicker control={control} name="endDate" inputId="endDate" value={endDate} minDate={startDate} key={endDateKey} />
               </FormItem>
             </Grid>
           </Grid>
           <Grid row>
             <Grid col={5}>
-              <FormItem
-                label="Duration in hours"
-                hint="Round to the nearest half hour"
-                name="duration"
-                required
-              >
+              <FormItem label="Duration in hours" hint="Round to the nearest half hour" name="duration" required>
                 <TextInput
                   id="duration"
                   name="duration"
@@ -194,15 +152,13 @@ const ActivitySummary = ({ collaborators = [] }) => {
                   max={99.5}
                   step={0.5}
                   required
-                  inputRef={
-                    register({
-                      required: 'Enter duration',
-                      valueAsNumber: true,
-                      pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
-                      min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
-                      max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
-                    })
-                  }
+                  inputRef={register({
+                    required: 'Enter duration',
+                    valueAsNumber: true,
+                    pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
+                    min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
+                    max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
+                  })}
                 />
               </FormItem>
             </Grid>
@@ -224,44 +180,35 @@ const ActivitySummary = ({ collaborators = [] }) => {
           {/* eslint-disable max-len */}
           <Drawer title="Purpose guidance" triggerRef={drawerTriggerRef}>
             <p>
-              <strong>
-                Participate in national, regional, state, and local work groups and meetings
-              </strong>
+              <strong>Participate in national, regional, state, and local work groups and meetings</strong>
             </p>
             <p>Your purpose in attending is to observe, gather information, and share insights.</p>
             <p>Examples include attending OCC State Administrators Meetings, CCTAN meetings, state initiative meetings, or QRIS advisory groups.</p>
             <p>
-              <strong>
-                Support partnerships, coordination, and collaboration with state/regional partners
-              </strong>
+              <strong>Support partnerships, coordination, and collaboration with state/regional partners</strong>
             </p>
             <p>
               Your purpose in attending is to take an active role in planning, coordinating, or supporting collaboration between TTA and the partners.
             </p>
             <p>
-              Examples include participating in state HSA meetings to help plan conferences, supporting state health advisory groups, or supporting HSCO work.
+              Examples include participating in state HSA meetings to help plan conferences, supporting state health advisory groups, or supporting
+              HSCO work.
             </p>
             <p>
-              <strong>
-                Aggregate, analyze, and/or present regional data
-              </strong>
+              <strong>Aggregate, analyze, and/or present regional data</strong>
+            </p>
+            <p>Your purpose in attending is to share data about Head Start recipients or TTA to inform the work of the group.</p>
+            <p>
+              Examples include sharing TTA about PIR data around family engagement with a family engagement initiative, sharing TTA data to inform the
+              state PD system about recipient needs, or prepare data reports for RO.
             </p>
             <p>
-              Your purpose in attending is to share data about Head Start recipients or TTA to inform the work of the group.
+              <strong>Develop and provide presentations, training, and resources to RO and/or state/regional partners</strong>
             </p>
+            <p>Your purpose in attending is to conduct a training and present content.</p>
             <p>
-              Examples include sharing TTA about PIR data around family engagement with a family engagement initiative, sharing TTA data to inform the state PD system about recipient needs, or prepare data reports for RO.
-            </p>
-            <p>
-              <strong>
-                Develop and provide presentations, training, and resources to RO and/or state/regional partners
-              </strong>
-            </p>
-            <p>
-              Your purpose in attending is to conduct a training and present content.
-            </p>
-            <p>
-              Examples include training for PSs about licensing in the states, presenting content at a state health advisory group meeting, or a presentation for RPM/RPD.
+              Examples include training for PSs about licensing in the states, presenting content at a state health advisory group meeting, or a
+              presentation for RPM/RPD.
             </p>
           </Drawer>
           {/* eslint-enable max-len */}
@@ -305,11 +252,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
         </FormItem>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend">
-        <FormItem
-          label="Was this a regional or state activity?"
-          name="isStateActivity"
-          required
-        >
+        <FormItem label="Was this a regional or state activity?" name="isStateActivity" required>
           <Radio
             id="regional"
             name="isStateActivity"
@@ -331,38 +274,24 @@ const ActivitySummary = ({ collaborators = [] }) => {
       </Fieldset>
       {showStates && (
         <Fieldset className="smart-hub--report-legend">
-          <FormItem
-            label="Choose the states involved"
-            name="statesInvolved"
-            required
-          >
-            <StateMultiSelect
-              name="statesInvolved"
-              control={control}
-              required
-            />
+          <FormItem label="Choose the states involved" name="statesInvolved" required>
+            <StateMultiSelect name="statesInvolved" control={control} required />
           </FormItem>
         </Fieldset>
       )}
       <Fieldset className="smart-hub--report-legend">
-        <FormItem
-          label="How was the activity conducted?"
-          name="conductMethod"
-          required
-        >
+        <FormItem label="How was the activity conducted?" name="conductMethod" required>
           <Controller
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
                 value={
-                    value
-                      ? {
+                  value
+                    ? {
                         value,
-                        label: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => (
-                          m.value === value
-                        ))[0]?.label || null,
+                        label: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => m.value === value)[0]?.label || null,
                       }
-                      : null
-}
+                    : null
+                }
                 inputId="conductMethodSelect"
                 name="conductMethodSelect"
                 className="usa-select"
@@ -378,7 +307,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
                   }),
                 }}
                 onChange={(selected) => {
-                  controllerOnChange(selected ? selected.value : null);
+                  controllerOnChange(selected ? selected.value : null)
                 }}
                 inputRef={register({ required: 'How was the activity conducted?' })}
                 options={COLLAB_REPORT_CONDUCT_METHODS}
@@ -391,9 +320,9 @@ const ActivitySummary = ({ collaborators = [] }) => {
             rules={{
               validate: (value) => {
                 if (!value) {
-                  return 'Select how the activity was conducted';
+                  return 'Select how the activity was conducted'
                 }
-                return true;
+                return true
               },
             }}
             name="conductMethod"
@@ -403,13 +332,13 @@ const ActivitySummary = ({ collaborators = [] }) => {
       </Fieldset>
       <Fieldset className={`smart-hub--report-legend ${descriptionError ? 'usa-form-group--error' : ''}`}>
         <Label htmlFor="description">
-          Activity description
-          {' '}
-          <Req />
+          Activity description <Req />
         </Label>
 
         {descriptionError && (
-        <span className="usa-error-message" role="alert">{descriptionError}</span>
+          <span className="usa-error-message" role="alert">
+            {descriptionError}
+          </span>
         )}
 
         <Textarea
@@ -425,21 +354,21 @@ const ActivitySummary = ({ collaborators = [] }) => {
         />
       </Fieldset>
     </>
-  );
-};
+  )
+}
 
 ActivitySummary.propTypes = {
   collaborators: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       id: PropTypes.number.isRequired,
-    }),
+    })
   ).isRequired,
-};
+}
 
 export const isPageComplete = (hookForm) => {
-  const { getValues } = hookForm;
-  const formData = getValues();
+  const { getValues } = hookForm
+  const formData = getValues()
 
   const {
     // strings
@@ -460,73 +389,59 @@ export const isPageComplete = (hookForm) => {
     // dates
     startDate,
     endDate,
-  } = formData;
+  } = formData
 
-  const stringsToValidate = [
-    name,
-    description,
-    conductMethod,
-  ];
+  const stringsToValidate = [name, description, conductMethod]
 
   if (!stringsToValidate.every((str) => str)) {
-    return false;
+    return false
   }
 
-  const arraysToValidate = [
-    reportReasons,
-  ];
+  const arraysToValidate = [reportReasons]
 
   if (!arraysToValidate.every((arr) => arr.length)) {
-    return false;
+    return false
   }
 
   if (isStateActivity === null) {
-    return false;
+    return false
   }
 
   if (isStateActivity === 'true' && (!statesInvolved || !statesInvolved.length)) {
-    return false;
+    return false
   }
 
-  const numbersToValidate = [
-    duration,
-  ];
+  const numbersToValidate = [duration]
 
   if (!numbersToValidate.every((num) => num && Number.isNaN(num) === false)) {
-    return false;
+    return false
   }
 
   if (![startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid())) {
-    return false;
+    return false
   }
 
-  return true;
-};
+  return true
+}
 
 const ReviewSection = () => {
-  const { getValues } = useFormContext();
-  const {
-    name,
-    collabReportSpecialists,
-    startDate,
-    endDate,
-    duration,
-    description,
-    reportReasons,
-    isStateActivity,
-    statesInvolved,
-    conductMethod,
-  } = getValues();
+  const { getValues } = useFormContext()
+  const { name, collabReportSpecialists, startDate, endDate, duration, description, reportReasons, isStateActivity, statesInvolved, conductMethod } =
+    getValues()
 
   // eslint-disable-next-line no-nested-ternary
-  const isStateDisplay = isStateActivity === null ? 'None provided' : (isStateActivity === 'true' ? 'State' : 'Regional');
+  const isStateDisplay = isStateActivity === null ? 'None provided' : isStateActivity === 'true' ? 'State' : 'Regional'
 
   const sections = [
     {
       anchor: 'activity-for',
       items: [
         { label: 'Activity name', name: 'name', customValue: { name } },
-        { label: 'Collaborating specialists', name: 'collabReportSpecialists', customValue: { collabReportSpecialists: collabReportSpecialists?.map(({ specialist }) => specialist.fullName).join(', ') || '' } },
+        {
+          label: 'Collaborating specialists',
+          name: 'collabReportSpecialists',
+          customValue: { collabReportSpecialists: collabReportSpecialists?.map(({ specialist }) => specialist.fullName).join(', ') || '' },
+        },
       ],
     },
     {
@@ -542,27 +457,35 @@ const ReviewSection = () => {
       title: 'Reason for activity',
       anchor: 'reasons',
       items: [
-        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: Array.isArray(reportReasons) ? reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') : '' } },
+        {
+          label: 'Activity purpose',
+          name: 'purpose',
+          customValue: { purpose: Array.isArray(reportReasons) ? reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') : '' },
+        },
         { label: 'Activity type', name: 'type', customValue: { type: isStateDisplay } },
-        ...(isStateActivity === 'true' ? [
-          { label: 'States involved', name: 'states', customValue: { states: Array.isArray(statesInvolved) ? statesInvolved?.map((s) => STATES[s.value] || '').join(', ') : '' } },
-        ] : []),
+        ...(isStateActivity === 'true'
+          ? [
+              {
+                label: 'States involved',
+                name: 'states',
+                customValue: { states: Array.isArray(statesInvolved) ? statesInvolved?.map((s) => STATES[s.value] || '').join(', ') : '' },
+              },
+            ]
+          : []),
         {
           label: 'Activity method',
           name: 'conductMethod',
           customValue: {
-            conductMethod: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => (
-              m.value === conductMethod
-            ))[0]?.label || 'None selected',
+            conductMethod: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => m.value === conductMethod)[0]?.label || 'None selected',
           },
         },
         { label: 'Activity description', name: 'description', customValue: { description } },
       ],
     },
-  ];
+  ]
 
-  return <ReviewPage sections={sections} path={path} isCustomValue />;
-};
+  return <ReviewPage sections={sections} path={path} isCustomValue />
+}
 
 export default {
   position,
@@ -581,14 +504,12 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    DraftAlert,
+    DraftAlert
   ) => {
-    const { collaborators } = additionalData;
+    const { collaborators } = additionalData
     return (
       <>
-        <ActivitySummary
-          collaborators={collaborators}
-        />
+        <ActivitySummary collaborators={collaborators} />
         <DraftAlert />
         <NavigatorButtons
           isAppLoading={isAppLoading}
@@ -599,7 +520,7 @@ export default {
           onUpdatePage={onUpdatePage}
         />
       </>
-    );
+    )
   },
   isPageComplete,
-};
+}

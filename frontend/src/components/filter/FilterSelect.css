@@ -19,11 +19,11 @@
 }
 
 .ttahub-filter-select__value-container {
-    position: absolute;
+  position: absolute;
 }
 
 .ttahub-filter-select--cover-all {
-    display: none;
+  display: none;
 }
 
 /**
@@ -35,29 +35,29 @@
 **/
 
 .ttahub-filter-select:not(:focus-within) .ttahub-filter-select--cover-all {
-    background: white;
-    display: flex;
-    pointer-events: none;
-    bottom: 1px;
-    right: 1px;
-    top: 10px;
-    left: 1px;
+  background: white;
+  display: flex;
+  pointer-events: none;
+  bottom: 1px;
+  right: 1px;
+  top: 10px;
+  left: 1px;
 }
 
-.ttahub-filter-select__control--menu-is-open .ttahub-filter-select__value-container{
-    position: relative;
+.ttahub-filter-select__control--menu-is-open .ttahub-filter-select__value-container {
+  position: relative;
 }
 
 .ttahub-filter-select__has-cover-all:not(:focus-within) .ttahub-filter-select__clear-indicator {
-    display: none;
+  display: none;
 }
 
 .ttahub-filter-select__has-cover-all:not(:focus-within) .ttahub-filter-select__multi-value,
 .ttahub-filter-select__has-cover-all:not(:focus-within) .ttahub-filter-select__multi-value__remove {
-    display: none;
+  display: none;
 }
 
 .ttahub-filter-select__has-cover-all:focus-within .ttahub-filter-select__multi-value,
 .ttahub-filter-select__has-cover-all:focus-within .ttahub-filter-select__multi-value__remove {
-    display: flex;
+  display: flex;
 }

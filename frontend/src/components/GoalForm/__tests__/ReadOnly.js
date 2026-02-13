@@ -1,9 +1,7 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import ReadOnly from '../ReadOnly';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import ReadOnly from '../ReadOnly'
 
 describe('ReadOnly', () => {
   const createdGoals = [
@@ -13,22 +11,16 @@ describe('ReadOnly', () => {
       objectives: [],
       endDate: null,
     },
-  ];
+  ]
 
   const renderReadOnly = () => {
-    render((
-      <ReadOnly
-        createdGoals={createdGoals}
-        onEdit={jest.fn()}
-        onRemove={jest.fn()}
-      />
-    ));
-  };
+    render(<ReadOnly createdGoals={createdGoals} onEdit={jest.fn()} onRemove={jest.fn()} />)
+  }
 
   it('can render with a null endDate no problem', async () => {
-    renderReadOnly();
-    expect(await screen.findByText('Sample goal')).toBeVisible();
-  });
+    renderReadOnly()
+    expect(await screen.findByText('Sample goal')).toBeVisible()
+  })
 
   it('renders multiple goals with the same goalTemplateId correctly using unique goal.id keys', async () => {
     // This test verifies the fix for the bug where goals would disappear when
@@ -50,18 +42,12 @@ describe('ReadOnly', () => {
         objectives: [],
         endDate: null,
       },
-    ];
+    ]
 
-    render((
-      <ReadOnly
-        createdGoals={multipleGoalsWithSameTemplate}
-        onEdit={jest.fn()}
-        onRemove={jest.fn()}
-      />
-    ));
+    render(<ReadOnly createdGoals={multipleGoalsWithSameTemplate} onEdit={jest.fn()} onRemove={jest.fn()} />)
 
     // Both goals should be visible even though they share the same goalTemplateId
-    expect(await screen.findByText('First goal from template')).toBeVisible();
-    expect(await screen.findByText('Second goal from template')).toBeVisible();
-  });
-});
+    expect(await screen.findByText('First goal from template')).toBeVisible()
+    expect(await screen.findByText('Second goal from template')).toBeVisible()
+  })
+})

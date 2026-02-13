@@ -1,38 +1,24 @@
 /* eslint-disable max-len */
-import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
-import { Alert } from '@trussworks/react-uswds';
-import { REPORT_STATUSES } from '@ttahub/common';
-import Review from './Review';
-import Container from '../../../components/Container';
-import UserContext from '../../../UserContext';
-import isAdmin from '../../../permissions';
+import React, { useContext, useMemo } from 'react'
+import PropTypes from 'prop-types'
+import { useFormContext } from 'react-hook-form'
+import { Alert } from '@trussworks/react-uswds'
+import { REPORT_STATUSES } from '@ttahub/common'
+import Review from './Review'
+import Container from '../../../components/Container'
+import UserContext from '../../../UserContext'
+import isAdmin from '../../../permissions'
 
-const ReviewSubmitSession = ({
-  onReview,
-  formData,
-  error,
-  onUpdatePage,
-  onSaveDraft,
-  onSubmit,
-  pages,
-  reviewSubmitPagePosition,
-}) => {
-  const {
-    status,
-    approverId,
-    approver,
-    event,
-  } = formData;
+const ReviewSubmitSession = ({ onReview, formData, error, onUpdatePage, onSaveDraft, onSubmit, pages, reviewSubmitPagePosition }) => {
+  const { status, approverId, approver, event } = formData
 
-  const { user } = useContext(UserContext);
-  const { register, watch } = useFormContext();
-  const isAdminUser = useMemo(() => !!(isAdmin(user)), [user]);
+  const { user } = useContext(UserContext)
+  const { register, watch } = useFormContext()
+  const isAdminUser = useMemo(() => !!isAdmin(user), [user])
 
-  const pocComplete = watch('pocComplete');
-  const collabComplete = watch('collabComplete');
-  const isSubmitted = !!(pocComplete && collabComplete && approverId);
+  const pocComplete = watch('pocComplete')
+  const collabComplete = watch('collabComplete')
+  const isSubmitted = !!(pocComplete && collabComplete && approverId)
 
   // The logic for redirecting users has been hoisted all the way up the
   // fetch at the top level CollaborationForm/index.js file
@@ -41,11 +27,11 @@ const ReviewSubmitSession = ({
   // or if the current user is an approver, whether or not
   // the report has been approved
 
-  const isNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
-  const isApprover = Number(approverId) === user.id;
+  const isNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION
+  const isApprover = Number(approverId) === user.id
 
-  const isPoc = (event?.pocIds || []).includes(user.id);
-  const reviewPages = pages.filter(({ review }) => Boolean(!review));
+  const isPoc = (event?.pocIds || []).includes(user.id)
+  const reviewPages = pages.filter(({ review }) => Boolean(!review))
 
   return (
     <>
@@ -85,11 +71,10 @@ const ReviewSubmitSession = ({
           reviewSubmitPagePosition={reviewSubmitPagePosition}
           isPoc={isPoc}
         />
-
       </Container>
     </>
-  );
-};
+  )
+}
 
 ReviewSubmitSession.propTypes = {
   reviewSubmitPagePosition: PropTypes.number.isRequired,
@@ -122,16 +107,18 @@ ReviewSubmitSession.propTypes = {
   }).isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    review: PropTypes.bool,
-    path: PropTypes.string,
-    label: PropTypes.string,
-    reviewSection: PropTypes.func,
-  })).isRequired,
-};
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      review: PropTypes.bool,
+      path: PropTypes.string,
+      label: PropTypes.string,
+      reviewSection: PropTypes.func,
+    })
+  ).isRequired,
+}
 
 ReviewSubmitSession.defaultProps = {
   error: '',
-};
+}
 
-export default ReviewSubmitSession;
+export default ReviewSubmitSession

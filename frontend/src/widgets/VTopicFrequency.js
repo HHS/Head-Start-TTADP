@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import { TopicFrequencyGraphWidget } from './TopicFrequencyGraph';
-import withWidgetData from './withWidgetData';
+import { TopicFrequencyGraphWidget } from './TopicFrequencyGraph'
+import withWidgetData from './withWidgetData'
 
-export default withWidgetData(TopicFrequencyGraphWidget, 'trSessionsByTopic');
+export default withWidgetData(TopicFrequencyGraphWidget, 'trSessionsByTopic')

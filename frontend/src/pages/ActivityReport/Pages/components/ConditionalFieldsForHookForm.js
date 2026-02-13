@@ -1,27 +1,18 @@
-import React, { useState } from 'react';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import PropTypes from 'prop-types';
-import { useController } from 'react-hook-form';
-import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
-import ConditionalMultiselectForHookForm from './ConditionalMultiselectForHookForm';
-import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldConstants';
+import React, { useState } from 'react'
+import useDeepCompareEffect from 'use-deep-compare-effect'
+import PropTypes from 'prop-types'
+import { useController } from 'react-hook-form'
+import { formatTitleForHtmlAttribute } from '../../formDataHelpers'
+import ConditionalMultiselectForHookForm from './ConditionalMultiselectForHookForm'
+import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldConstants'
 
-const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS;
+const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS
 
-const formatPromptTitle = (field) => `${field.grantId}-${formatTitleForHtmlAttribute(field.title)}`;
+const formatPromptTitle = (field) => `${field.grantId}-${formatTitleForHtmlAttribute(field.title)}`
 
 export const FIELD_DICTIONARY = {
   multiselect: {
-    render: (
-      field,
-      validations,
-      value,
-      userCanEdit,
-      drawerButtonText,
-      drawerTitle,
-      drawerTagName,
-      drawerClassName,
-    ) => (
+    render: (field, validations, value, userCanEdit, drawerButtonText, drawerTitle, drawerTagName, drawerClassName) => (
       <ConditionalMultiselectForHookForm
         validations={validations}
         fieldData={field}
@@ -37,7 +28,7 @@ export const FIELD_DICTIONARY = {
       />
     ),
   },
-};
+}
 
 export default function ConditionalFieldsForHookForm({
   prompts,
@@ -49,32 +40,33 @@ export default function ConditionalFieldsForHookForm({
   drawerClassName,
 }) {
   const {
-    field: {
-      onChange: onUpdateGoalPrompts,
-    },
+    field: { onChange: onUpdateGoalPrompts },
   } = useController({
     name: 'goalPrompts',
     defaultValue: [],
-  });
+  })
 
-  const [initialValues, setInitialValues] = useState([]);
+  const [initialValues, setInitialValues] = useState([])
 
   useDeepCompareEffect(() => {
-    const newPromptValues = updateRefToInitialValues(initialValues, prompts);
+    const newPromptValues = updateRefToInitialValues(initialValues, prompts)
 
     // save the new prompts to initialValues
-    setInitialValues(newPromptValues);
-  }, [prompts, initialValues]);
+    setInitialValues(newPromptValues)
+  }, [prompts, initialValues])
 
   useDeepCompareEffect(() => {
     // on mount, update the goal conditional fields
     // with the prompt data
 
     const goalPrompts = (prompts || []).map(({ promptId, title, grantId }) => ({
-      promptId, title, fieldName: formatPromptTitle({ title, grantId }), grantId,
-    }));
-    onUpdateGoalPrompts(goalPrompts);
-  }, [onUpdateGoalPrompts, prompts]);
+      promptId,
+      title,
+      fieldName: formatPromptTitle({ title, grantId }),
+      grantId,
+    }))
+    onUpdateGoalPrompts(goalPrompts)
+  }, [onUpdateGoalPrompts, prompts])
 
   const fields = (prompts || []).map((prompt) => {
     if (FIELD_DICTIONARY[prompt.fieldType]) {
@@ -86,40 +78,39 @@ export default function ConditionalFieldsForHookForm({
         drawerButtonText,
         drawerTitle,
         drawerTagName,
-        drawerClassName,
-      );
+        drawerClassName
+      )
     }
 
-    return null;
-  });
+    return null
+  })
 
   return (
     <>
-      {
-      heading
-      && prompts
-      && prompts.length > 0
-      && (<h3>{heading}</h3>)
-      }
+      {heading && prompts && prompts.length > 0 && <h3>{heading}</h3>}
       {fields}
     </>
-  );
+  )
 }
 
 ConditionalFieldsForHookForm.propTypes = {
-  prompts: PropTypes.arrayOf(PropTypes.shape({
-    fieldType: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    prompt: PropTypes.string.isRequired,
-    options: PropTypes.arrayOf(PropTypes.string).isRequired,
-  }.isRequired)).isRequired,
+  prompts: PropTypes.arrayOf(
+    PropTypes.shape(
+      {
+        fieldType: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        prompt: PropTypes.string.isRequired,
+        options: PropTypes.arrayOf(PropTypes.string).isRequired,
+      }.isRequired
+    )
+  ).isRequired,
   userCanEdit: PropTypes.bool,
   heading: PropTypes.string,
   drawerButtonText: PropTypes.string,
   drawerTitle: PropTypes.string,
   drawerTagName: PropTypes.string,
   drawerClassName: PropTypes.string,
-};
+}
 
 ConditionalFieldsForHookForm.defaultProps = {
   userCanEdit: false,
@@ -128,4 +119,4 @@ ConditionalFieldsForHookForm.defaultProps = {
   drawerTitle: '',
   drawerTagName: '',
   drawerClassName: '',
-};
+}

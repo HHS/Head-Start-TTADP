@@ -1,16 +1,10 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import {
-  faLink,
-  faCube,
-  faUser,
-  faUserFriends,
-  faFolder,
-} from '@fortawesome/free-solid-svg-icons';
-import { DashboardOverviewContainer } from './DashboardOverviewContainer';
-import colors from '../colors';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { faLink, faCube, faUser, faUserFriends, faFolder } from '@fortawesome/free-solid-svg-icons'
+import { DashboardOverviewContainer } from './DashboardOverviewContainer'
+import colors from '../colors'
 
-const createOverviewFieldArray = (data) => ([
+const createOverviewFieldArray = (data) => [
   {
     key: 'report-resources',
     icon: faLink,
@@ -64,17 +58,10 @@ const createOverviewFieldArray = (data) => ([
     data: data.ipdCourses.percentReports,
     route: 'ipd-courses',
   },
-]);
+]
 
-export function ResourcesDashboardOverviewWidget({
-  data, loading,
-}) {
-  return (
-    <DashboardOverviewContainer
-      fieldData={createOverviewFieldArray(data)}
-      loading={loading}
-    />
-  );
+export function ResourcesDashboardOverviewWidget({ data, loading }) {
+  return <DashboardOverviewContainer fieldData={createOverviewFieldArray(data)} loading={loading} />
 }
 
 ResourcesDashboardOverviewWidget.propTypes = {
@@ -95,10 +82,9 @@ ResourcesDashboardOverviewWidget.propTypes = {
     participant: PropTypes.shape({
       numParticipants: PropTypes.string,
     }),
-
   }),
   loading: PropTypes.bool,
-};
+}
 
 ResourcesDashboardOverviewWidget.defaultProps = {
   data: {
@@ -123,6 +109,6 @@ ResourcesDashboardOverviewWidget.defaultProps = {
     },
   },
   loading: false,
-};
+}
 
-export default ResourcesDashboardOverviewWidget;
+export default ResourcesDashboardOverviewWidget

@@ -1,21 +1,13 @@
-import React from 'react';
-import FilterSelect from './FilterSelect';
-import { filterSelectProps } from './props';
+import React from 'react'
+import FilterSelect from './FilterSelect'
+import { filterSelectProps } from './props'
 
-const OPTIONS = [
-  'Above all thresholds',
-  'Below quality',
-  'Below competitive',
-].map((label, value) => ({ value, label }));
+const OPTIONS = ['Above all thresholds', 'Below quality', 'Below competitive'].map((label, value) => ({ value, label }))
 
-export default function FilterDomainResultSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterDomainResultSelect({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
-    onApply(selected);
-  };
+    onApply(selected)
+  }
   return (
     <FilterSelect
       onApply={onApplyClick}
@@ -24,7 +16,7 @@ export default function FilterDomainResultSelect({
       options={OPTIONS}
       selectedValues={query}
     />
-  );
+  )
 }
 
-FilterDomainResultSelect.propTypes = filterSelectProps;
+FilterDomainResultSelect.propTypes = filterSelectProps

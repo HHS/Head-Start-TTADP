@@ -1,16 +1,12 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  fireEvent,
-  screen,
-} from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, fireEvent, screen } from '@testing-library/react'
+import { Router } from 'react-router'
+import { createMemoryHistory } from 'history'
 
-import RecipientResults from '../RecipientResults';
+import RecipientResults from '../RecipientResults'
 
-const history = createMemoryHistory();
+const history = createMemoryHistory()
 
 const recipients = [
   {
@@ -52,19 +48,15 @@ const recipients = [
     updatedAt: '2021-09-21T19:16:15.842Z',
     programSpecialists: [],
   },
-];
+]
 
 describe('Recipient Search > RecipientResults', () => {
   const config = {
     sortBy: 'name',
     direction: 'desc',
-  };
+  }
 
-  const renderRecipientResults = (
-    handlePageChange,
-    requestSort,
-    sortConfig = config,
-  ) => (
+  const renderRecipientResults = (handlePageChange, requestSort, sortConfig = config) =>
     render(
       <Router history={history}>
         <RecipientResults
@@ -78,45 +70,46 @@ describe('Recipient Search > RecipientResults', () => {
           requestSort={requestSort}
           sortConfig={sortConfig}
         />
-      </Router>,
+      </Router>
     )
-  );
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => jest.clearAllMocks())
 
   it('renders the component', async () => {
-    const handlePageChange = jest.fn();
-    const requestSort = jest.fn();
-    renderRecipientResults(handlePageChange, requestSort);
-    expect(screen.getByRole('button', { name: /region\. activate to sort ascending/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', {
-      name: /agency 1\.a in region 1, inc\./i,
-    })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /candyman, tony todd/i })).toBeInTheDocument();
-  });
+    const handlePageChange = jest.fn()
+    const requestSort = jest.fn()
+    renderRecipientResults(handlePageChange, requestSort)
+    expect(screen.getByRole('button', { name: /region\. activate to sort ascending/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', {
+        name: /agency 1\.a in region 1, inc\./i,
+      })
+    ).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /candyman, tony todd/i })).toBeInTheDocument()
+  })
 
   it('calls the sort function', async () => {
-    const handlePageChange = jest.fn();
-    const requestSort = jest.fn();
-    renderRecipientResults(handlePageChange, requestSort);
-    const button = screen.getByRole('button', { name: /program specialist\. activate to sort ascending/i });
-    fireEvent.click(button);
-    expect(requestSort).toHaveBeenCalledWith('programSpecialist');
-  });
+    const handlePageChange = jest.fn()
+    const requestSort = jest.fn()
+    renderRecipientResults(handlePageChange, requestSort)
+    const button = screen.getByRole('button', { name: /program specialist\. activate to sort ascending/i })
+    fireEvent.click(button)
+    expect(requestSort).toHaveBeenCalledWith('programSpecialist')
+  })
 
   it('sorts in reverse', async () => {
     const sortConfig = {
       sortBy: 'name',
       direction: 'asc',
-    };
+    }
 
-    const handlePageChange = jest.fn();
-    const requestSort = jest.fn();
-    renderRecipientResults(handlePageChange, requestSort, sortConfig);
-    const tds = document.querySelectorAll('td');
-    expect(tds[1]).toHaveTextContent('Agency 2 in region 1, Inc.');
-    const button = screen.getByRole('button', { name: /recipient name\. activate to sort descending/i });
-    fireEvent.click(button);
-    expect(requestSort).toHaveBeenCalledWith('name');
-  });
-});
+    const handlePageChange = jest.fn()
+    const requestSort = jest.fn()
+    renderRecipientResults(handlePageChange, requestSort, sortConfig)
+    const tds = document.querySelectorAll('td')
+    expect(tds[1]).toHaveTextContent('Agency 2 in region 1, Inc.')
+    const button = screen.getByRole('button', { name: /recipient name\. activate to sort descending/i })
+    fireEvent.click(button)
+    expect(requestSort).toHaveBeenCalledWith('name')
+  })
+})

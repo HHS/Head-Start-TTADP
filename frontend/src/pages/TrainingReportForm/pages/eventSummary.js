@@ -1,138 +1,102 @@
-import React, {
-  useState,
-  useContext,
-} from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import Select from 'react-select';
-import {
-  TARGET_POPULATIONS,
-  EVENT_TARGET_POPULATIONS,
-  TRAINING_REPORT_STATUSES,
-  ALL_STATES_FLATTENED,
-} from '@ttahub/common';
-import { useFormContext, Controller } from 'react-hook-form';
-import {
-  Label,
-  Dropdown,
-  Fieldset,
-  Radio,
-  TextInput,
-  Button,
-  Textarea,
-} from '@trussworks/react-uswds';
-import { sortBy } from 'lodash';
-import MultiSelect from '../../../components/MultiSelect';
-import FormItem from '../../../components/FormItem';
-import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import ReadOnlyField from '../../../components/ReadOnlyField';
-import selectOptionsReset from '../../../components/selectOptionsReset';
-import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import Req from '../../../components/Req';
-import UserContext from '../../../UserContext';
-import isAdmin from '../../../permissions';
-import { EVENT_PARTNERSHIP, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
-import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
+import React, { useState, useContext } from 'react'
+import PropTypes from 'prop-types'
+import { Helmet } from 'react-helmet'
+import Select from 'react-select'
+import { TARGET_POPULATIONS, EVENT_TARGET_POPULATIONS, TRAINING_REPORT_STATUSES, ALL_STATES_FLATTENED } from '@ttahub/common'
+import { useFormContext, Controller } from 'react-hook-form'
+import { Label, Dropdown, Fieldset, Radio, TextInput, Button, Textarea } from '@trussworks/react-uswds'
+import { sortBy } from 'lodash'
+import MultiSelect from '../../../components/MultiSelect'
+import FormItem from '../../../components/FormItem'
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField'
+import ReadOnlyField from '../../../components/ReadOnlyField'
+import selectOptionsReset from '../../../components/selectOptionsReset'
+import ControlledDatePicker from '../../../components/ControlledDatePicker'
+import Req from '../../../components/Req'
+import UserContext from '../../../UserContext'
+import isAdmin from '../../../permissions'
+import { EVENT_PARTNERSHIP, TRAINING_EVENT_ORGANIZER } from '../../../Constants'
+import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff'
 
 // Get the first three values in TARGET_POPULATIONS.
-const tgtPop = [...TARGET_POPULATIONS];
-const firstThree = tgtPop.splice(0, 3);
+const tgtPop = [...TARGET_POPULATIONS]
+const firstThree = tgtPop.splice(0, 3)
 
-const targetPopulations = [
-  ...tgtPop,
-  ...EVENT_TARGET_POPULATIONS,
-];
+const targetPopulations = [...tgtPop, ...EVENT_TARGET_POPULATIONS]
 
 // Sort the reasons alphabetically.
-targetPopulations.sort();
+targetPopulations.sort()
 
 // Move the first three values in TARGET_POPULATIONS to the top of the list.
-targetPopulations.unshift(...firstThree);
+targetPopulations.unshift(...firstThree)
 
 const eventOrganizerOptions = [
   TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
   TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
-].map((option) => ({ value: option, label: option }));
+].map((option) => ({ value: option, label: option }))
 
-const EventSummary = ({
-  additionalData,
-  datePickerKey,
-  isAppLoading,
-  showSubmitModal,
-  onSaveDraft,
-}) => {
-  const {
-    register,
-    control,
-    getValues,
-    watch,
-    setValue,
-  } = useFormContext();
+const EventSummary = ({ additionalData, datePickerKey, isAppLoading, showSubmitModal, onSaveDraft }) => {
+  const { register, control, getValues, watch, setValue } = useFormContext()
 
-  const data = getValues();
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
-  const eventOrganizer = watch('eventOrganizer');
+  const data = getValues()
+  const startDate = watch('startDate')
+  const endDate = watch('endDate')
+  const eventOrganizer = watch('eventOrganizer')
 
-  const { trainerOptions, optionsForValue } = useEventAndSessionStaff(data, true);
+  const { trainerOptions, optionsForValue } = useEventAndSessionStaff(data, true)
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
-  const [endDateKey, setEndDateKey] = useState('endDate-');
+  const [endDateKey, setEndDateKey] = useState('endDate-')
 
   const setEndDate = (newEnd) => {
-    setValue('endDate', newEnd);
+    setValue('endDate', newEnd)
 
     // this will trigger the re-render of the
     // uncontrolled end date input
     // it's a little clumsy, but it does work
-    setEndDateKey(`endDate-${newEnd}`);
-  };
+    setEndDateKey(`endDate-${newEnd}`)
+  }
 
+  const { eventName, owner, status } = data
+
+  const { user } = useContext(UserContext)
+
+  const hasAdminRights = isAdmin(user)
   const {
-    eventName,
-    owner,
-    status,
-  } = data;
-
-  const { user } = useContext(UserContext);
-
-  const hasAdminRights = isAdmin(user);
-  const { users: { pointOfContact, creators } } = additionalData;
-  const adminCanEdit = hasAdminRights && (status !== TRAINING_REPORT_STATUSES.COMPLETE);
-  const ownerName = owner && owner.name ? owner.name : '';
+    users: { pointOfContact, creators },
+  } = additionalData
+  const adminCanEdit = hasAdminRights && status !== TRAINING_REPORT_STATUSES.COMPLETE
+  const ownerName = owner && owner.name ? owner.name : ''
 
   const getIntendedAudience = (value) => {
-    let audience = '';
+    let audience = ''
     if (value) {
-      audience = data.eventIntendedAudience.charAt(0).toUpperCase()
-              + data.eventIntendedAudience.slice(1);
+      audience = data.eventIntendedAudience.charAt(0).toUpperCase() + data.eventIntendedAudience.slice(1)
     }
-    return audience;
-  };
+    return audience
+  }
 
   const getPointOfContacts = (pocs) => {
-    let pocsToDisplay = [];
+    let pocsToDisplay = []
     if (pocs && pocs.length) {
-      pocsToDisplay = pointOfContact.filter(
-        (poc) => pocs.includes(poc.id),
-      ).map((poc) => poc.fullName);
+      pocsToDisplay = pointOfContact.filter((poc) => pocs.includes(poc.id)).map((poc) => poc.fullName)
     }
-    return pocsToDisplay.join(', ');
-  };
+    return pocsToDisplay.join(', ')
+  }
 
   const getReadOnlyReasons = (reasons) => {
     if (!reasons || reasons.length === 0) {
-      return '';
+      return ''
     }
-    return reasons.join(', ');
-  };
+    return reasons.join(', ')
+  }
 
   const getReadOnlyTargetPopulations = (tvalue) => {
     if (!tvalue || tvalue.length === 0) {
-      return '';
+      return ''
     }
-    return tvalue.join(', ');
-  };
+    return tvalue.join(', ')
+  }
 
   return (
     <div className="bg-white radius-md shadow-2">
@@ -146,35 +110,13 @@ const EventSummary = ({
           {adminCanEdit ? (
             <>
               <div className="margin-top-3">
-                <FormItem
-                  label="Event id "
-                  name="eventId"
-                  htmlFor="eventId"
-                  required
-                >
-                  <TextInput
-                    id="eventId"
-                    name="eventId"
-                    type="text"
-                    required
-                    inputRef={register({ required: 'Enter event id' })}
-                  />
+                <FormItem label="Event id " name="eventId" htmlFor="eventId" required>
+                  <TextInput id="eventId" name="eventId" type="text" required inputRef={register({ required: 'Enter event id' })} />
                 </FormItem>
               </div>
               <div className="margin-top-3">
-                <FormItem
-                  label="Event name "
-                  name="eventName"
-                  htmlFor="eventName"
-                  required
-                >
-                  <TextInput
-                    id="eventName"
-                    name="eventName"
-                    type="text"
-                    required
-                    inputRef={register({ required: 'Enter event name' })}
-                  />
+                <FormItem label="Event name " name="eventName" htmlFor="eventName" required>
+                  <TextInput id="eventName" name="eventName" type="text" required inputRef={register({ required: 'Enter event name' })} />
                 </FormItem>
               </div>
               <div className="margin-top-3" data-testid="creator-select">
@@ -194,7 +136,7 @@ const EventSummary = ({
                         DropdownIndicator: null,
                       }}
                       onChange={(s) => {
-                        controllerOnChange(s.id);
+                        controllerOnChange(s.id)
                       }}
                       inputRef={register({ required: 'Select an event creator' })}
                       options={creators || []}
@@ -208,9 +150,9 @@ const EventSummary = ({
                   rules={{
                     validate: (value) => {
                       if (!value || value.length === 0) {
-                        return 'Select an event organizer';
+                        return 'Select an event organizer'
                       }
-                      return true;
+                      return true
                     },
                   }}
                   name="ownerId"
@@ -223,18 +165,9 @@ const EventSummary = ({
                   Event organizer
                   <Req />
                 </Label>
-                <Dropdown
-                  required
-                  id="eventOrganizer"
-                  name="eventOrganizer"
-                  inputRef={register({ required: 'Select an event organizer' })}
-                >
+                <Dropdown required id="eventOrganizer" name="eventOrganizer" inputRef={register({ required: 'Select an event organizer' })}>
                   {eventOrganizerOptions.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                      selected={option.value === data.eventOrganizer}
-                    >
+                    <option key={option.value} value={option.value} selected={option.value === data.eventOrganizer}>
                       {option.label}
                     </option>
                   ))}
@@ -242,9 +175,7 @@ const EventSummary = ({
               </div>
 
               <div className="margin-top-3" data-testid="additional-states">
-                <Label htmlFor="additionalStates">
-                  Addtional states involved
-                </Label>
+                <Label htmlFor="additionalStates">Addtional states involved</Label>
                 <Controller
                   render={({ onChange: controllerOnChange, value: states, onBlur }) => (
                     <Select
@@ -255,11 +186,9 @@ const EventSummary = ({
                         // instead of "Massachusetts"
                         ALL_STATES_FLATTENED.filter((option) => {
                           if (!states || states.length === 0) {
-                            return false;
+                            return false
                           }
-                          return states.some(
-                            (s) => option.label.includes(s),
-                          );
+                          return states.some((s) => option.label.includes(s))
                         })
                       }
                       inputId="additionalStates"
@@ -270,7 +199,7 @@ const EventSummary = ({
                         DropdownIndicator: null,
                       }}
                       onChange={(s) => {
-                        controllerOnChange(s.map((option) => option.label));
+                        controllerOnChange(s.map((option) => option.label))
                       }}
                       inputRef={register()}
                       options={sortBy(ALL_STATES_FLATTENED, 'label')}
@@ -284,32 +213,18 @@ const EventSummary = ({
                 />
               </div>
             </>
-          )
-            : (
-              <>
-                <ReadOnlyField label="Event name">
-                  {eventName}
-                </ReadOnlyField>
-                <ReadOnlyField label="Event creator">
-                  {ownerName}
-                </ReadOnlyField>
-                <ReadOnlyField label="Event organizer">
-                  {data.eventOrganizer}
-                </ReadOnlyField>
-                <ReadOnlyField label="Additional states involved">
-                  {data.additionalStates ? data.additionalStates.join(', ') : ''}
-                </ReadOnlyField>
-              </>
-            )}
+          ) : (
+            <>
+              <ReadOnlyField label="Event name">{eventName}</ReadOnlyField>
+              <ReadOnlyField label="Event creator">{ownerName}</ReadOnlyField>
+              <ReadOnlyField label="Event organizer">{data.eventOrganizer}</ReadOnlyField>
+              <ReadOnlyField label="Additional states involved">{data.additionalStates ? data.additionalStates.join(', ') : ''}</ReadOnlyField>
+            </>
+          )}
         </div>
 
         <div className="margin-top-3">
-          <FormItem
-            label="Is this event in partnership with a Head Start Association (HSA)? "
-            name="eventPartnership"
-            required
-            fieldSetWrapper
-          >
+          <FormItem label="Is this event in partnership with a Head Start Association (HSA)? " name="eventPartnership" required fieldSetWrapper>
             <Radio
               id="eventPartnership-regional-hsa"
               name="eventPartnership"
@@ -334,18 +249,12 @@ const EventSummary = ({
           </FormItem>
         </div>
         <div className="margin-top-3" data-testid="collaborator-select">
-          <FormItem
-            label="Event collaborators "
-            name="collaboratorIds"
-            required
-          >
+          <FormItem label="Event collaborators " name="collaboratorIds" required>
             <Controller
               render={({ onChange: controllerOnChange, value, onBlur }) => (
                 <Select
                   isMulti
-                  value={(optionsForValue).filter((option) => (
-                    value.includes(option.id)
-                  ))}
+                  value={optionsForValue.filter((option) => value.includes(option.id))}
                   inputId="collaboratorIds"
                   name="collaboratorIds"
                   className="usa-select"
@@ -354,7 +263,7 @@ const EventSummary = ({
                     DropdownIndicator: null,
                   }}
                   onChange={(s) => {
-                    controllerOnChange(s.map((option) => option.id));
+                    controllerOnChange(s.map((option) => option.id))
                   }}
                   onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
@@ -368,33 +277,25 @@ const EventSummary = ({
               rules={{
                 validate: (value) => {
                   if (!value || value.length === 0) {
-                    return 'Select at least one collaborator';
+                    return 'Select at least one collaborator'
                   }
-                  return true;
+                  return true
                 },
               }}
               name="collaboratorIds"
               defaultValue={[]}
             />
-
           </FormItem>
         </div>
         <div className={adminCanEdit ? 'margin-top-2' : 'margin-top-2 margin-bottom-3'}>
-          { adminCanEdit ? (
+          {adminCanEdit ? (
             <>
               <div className="margin-top-2">
-                <FormItem
-                  label="Event region point of contact "
-                  name="pocIds"
-                  required
-                >
-
+                <FormItem label="Event region point of contact " name="pocIds" required>
                   <Controller
                     render={({ onChange: controllerOnChange, value, onBlur }) => (
                       <Select
-                        value={pointOfContact.filter((option) => (
-                          value.includes(option.id)
-                        ))}
+                        value={pointOfContact.filter((option) => value.includes(option.id))}
                         inputId="pocIds"
                         name="pocIds"
                         className="usa-select"
@@ -403,11 +304,10 @@ const EventSummary = ({
                           DropdownIndicator: null,
                         }}
                         onChange={(s) => {
-                          controllerOnChange(s.map((option) => option.id));
+                          controllerOnChange(s.map((option) => option.id))
                         }}
                         inputRef={register({
-                          required:
-                            'Select at least one event region point of contact',
+                          required: 'Select at least one event region point of contact',
                         })}
                         getOptionLabel={(option) => option.fullName}
                         getOptionValue={(option) => option.id}
@@ -421,12 +321,9 @@ const EventSummary = ({
                     rules={{
                       validate: (value) => {
                         if (!value || value.length === 0) {
-                          return (
-                            'Select at least one event region '
-                            + 'point of contact'
-                          );
+                          return 'Select at least one event region ' + 'point of contact'
                         }
-                        return true;
+                        return true
                       },
                     }}
                     name="pocIds"
@@ -436,11 +333,7 @@ const EventSummary = ({
               </div>
               <Fieldset>
                 <div className="margin-top-3">
-                  <FormItem
-                    label="Event intended audience"
-                    name="eventIntendedAudience"
-                    fieldSetWrapper
-                  >
+                  <FormItem label="Event intended audience" name="eventIntendedAudience" fieldSetWrapper>
                     <Radio
                       id="category-recipients"
                       name="eventIntendedAudience"
@@ -465,29 +358,16 @@ const EventSummary = ({
           ) : (
             <div className="margin-top-3">
               {eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && (
-              <ReadOnlyField label="Event region point of contact">
-                {getPointOfContacts(data.pocIds)}
-              </ReadOnlyField>
+                <ReadOnlyField label="Event region point of contact">{getPointOfContacts(data.pocIds)}</ReadOnlyField>
               )}
-              <ReadOnlyField label="Event intended audience">
-                {getIntendedAudience(data.eventIntendedAudience)}
-              </ReadOnlyField>
+              <ReadOnlyField label="Event intended audience">{getIntendedAudience(data.eventIntendedAudience)}</ReadOnlyField>
             </div>
           )}
         </div>
 
         <div className="margin-top-2 margin-bottom-3 maxw-mobile">
-          <FormItem
-            label="Event start date"
-            name="startDate"
-            id="startDate-label"
-            htmlFor="startDate"
-          >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
+          <FormItem label="Event start date" name="startDate" id="startDate-label" htmlFor="startDate">
+            <div className="usa-hint">mm/dd/yyyy</div>
             <ControlledDatePicker
               key={`startDate-${datePickerKey}`}
               control={control}
@@ -500,17 +380,8 @@ const EventSummary = ({
             />
           </FormItem>
 
-          <FormItem
-            label="Event end date"
-            name="endDate"
-            id="endDate-label"
-            htmlFor="endDate"
-          >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
+          <FormItem label="Event end date" name="endDate" id="endDate-label" htmlFor="endDate">
+            <div className="usa-hint">mm/dd/yyyy</div>
             <ControlledDatePicker
               control={control}
               name="endDate"
@@ -535,11 +406,7 @@ const EventSummary = ({
               </Dropdown>
             </div>
             <div className="margin-top-2">
-              <FormItem
-                label="Target populations addressed"
-                name="targetPopulations"
-                required
-              >
+              <FormItem label="Target populations addressed" name="targetPopulations" required>
                 <MultiSelect
                   name="targetPopulations"
                   control={control}
@@ -550,11 +417,7 @@ const EventSummary = ({
               </FormItem>
             </div>
             <div className="margin-top-2">
-              <FormItem
-                label="Event vision "
-                name="vision"
-                required
-              >
+              <FormItem label="Event vision " name="vision" required>
                 <Textarea
                   id="vision"
                   name="vision"
@@ -568,33 +431,41 @@ const EventSummary = ({
           </>
         ) : (
           <>
-            <ReadOnlyField label="Training type">
-              {data.trainingType || 'Series'}
-            </ReadOnlyField>
-            <ReadOnlyField label="Reasons">
-              {getReadOnlyReasons(data.reasons)}
-            </ReadOnlyField>
-            <ReadOnlyField label="Target populations addressed">
-              {getReadOnlyTargetPopulations(data.targetPopulations)}
-            </ReadOnlyField>
-            <ReadOnlyField label="Event vision">
-              {data.vision}
-            </ReadOnlyField>
+            <ReadOnlyField label="Training type">{data.trainingType || 'Series'}</ReadOnlyField>
+            <ReadOnlyField label="Reasons">{getReadOnlyReasons(data.reasons)}</ReadOnlyField>
+            <ReadOnlyField label="Target populations addressed">{getReadOnlyTargetPopulations(data.targetPopulations)}</ReadOnlyField>
+            <ReadOnlyField label="Event vision">{data.vision}</ReadOnlyField>
           </>
         )}
         <div className="display-flex margin-top-4">
-          <Button id="review-and-submit" className="usa-button--no-margin-top margin-right-1" type="button" disabled={isAppLoading} onClick={() => showSubmitModal()}>Review and submit</Button>
-          <Button id="save-draft" className="usa-button--no-margin-top usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveDraft()}>Save draft</Button>
+          <Button
+            id="review-and-submit"
+            className="usa-button--no-margin-top margin-right-1"
+            type="button"
+            disabled={isAppLoading}
+            onClick={() => showSubmitModal()}
+          >
+            Review and submit
+          </Button>
+          <Button
+            id="save-draft"
+            className="usa-button--no-margin-top usa-button--outline"
+            type="button"
+            disabled={isAppLoading}
+            onClick={() => onSaveDraft()}
+          >
+            Save draft
+          </Button>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const userProp = {
   id: PropTypes.number,
   name: PropTypes.string,
-};
+}
 
 EventSummary.propTypes = {
   additionalData: PropTypes.shape({
@@ -608,6 +479,6 @@ EventSummary.propTypes = {
   isAppLoading: PropTypes.bool.isRequired,
   showSubmitModal: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
-};
+}
 
-export default EventSummary;
+export default EventSummary

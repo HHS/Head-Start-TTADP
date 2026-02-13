@@ -1,25 +1,20 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
-import TrainingReportsTable from '../components/TrainingReportsTable';
+import React from 'react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
+import TrainingReportsTable from '../components/TrainingReportsTable'
 
 // Mock the session fetchers
 jest.mock('../../../fetchers/session', () => ({
   getSessionReportsCSV: jest.fn(),
   getSessionReportsCSVById: jest.fn(),
-}));
+}))
 
-const { getSessionReportsCSV, getSessionReportsCSVById } = require('../../../fetchers/session');
+const { getSessionReportsCSV, getSessionReportsCSVById } = require('../../../fetchers/session')
 
 describe('TrainingReportsTable', () => {
-  const mockSetSortConfig = jest.fn();
+  const mockSetSortConfig = jest.fn()
 
   const mockReportData = {
     rows: [
@@ -45,7 +40,7 @@ describe('TrainingReportsTable', () => {
       },
     ],
     count: 2,
-  };
+  }
 
   const defaultProps = {
     data: { rows: [], count: 0 },
@@ -60,46 +55,46 @@ describe('TrainingReportsTable', () => {
     },
     setSortConfig: mockSetSortConfig,
     filters: [],
-  };
+  }
 
   beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    jest.clearAllMocks()
+  })
 
   it('renders the title', () => {
-    render(<TrainingReportsTable {...defaultProps} />);
-    expect(screen.getByText('Training Reports')).toBeInTheDocument();
-  });
+    render(<TrainingReportsTable {...defaultProps} />)
+    expect(screen.getByText('Training Reports')).toBeInTheDocument()
+  })
 
   it('renders empty message when no reports', () => {
-    render(<TrainingReportsTable {...defaultProps} emptyMsg="No reports available" />);
-    expect(screen.getByText('No reports available')).toBeInTheDocument();
-  });
+    render(<TrainingReportsTable {...defaultProps} emptyMsg="No reports available" />)
+    expect(screen.getByText('No reports available')).toBeInTheDocument()
+  })
 
   it('renders table when reports are present', () => {
     render(
       <MemoryRouter>
         <TrainingReportsTable {...defaultProps} data={mockReportData} />
-      </MemoryRouter>,
-    );
-    expect(screen.getByRole('table')).toBeInTheDocument();
-  });
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('table')).toBeInTheDocument()
+  })
 
   it('shows loading state when loading is true', () => {
-    render(<TrainingReportsTable {...defaultProps} loading />);
-    expect(screen.getByLabelText('Training reports table loading')).toBeInTheDocument();
-  });
+    render(<TrainingReportsTable {...defaultProps} loading />)
+    expect(screen.getByLabelText('Training reports table loading')).toBeInTheDocument()
+  })
 
   it('renders event IDs as links', () => {
     render(
       <MemoryRouter>
         <TrainingReportsTable {...defaultProps} data={mockReportData} />
-      </MemoryRouter>,
-    );
+      </MemoryRouter>
+    )
 
-    const link = screen.getByRole('link', { name: 'R01-TR-23-1037' });
-    expect(link).toHaveAttribute('href', '/training-report/view/1037?back_link=hide');
-  });
+    const link = screen.getByRole('link', { name: 'R01-TR-23-1037' })
+    expect(link).toHaveAttribute('href', '/training-report/view/1037?back_link=hide')
+  })
 
   describe('handlePageChange', () => {
     it('updates sortConfig with new activePage and offset on page change', () => {
@@ -115,123 +110,116 @@ describe('TrainingReportsTable', () => {
           goalTemplates: [{ standard: 'Goal 1' }],
         })),
         count: 25,
-      };
+      }
 
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={manyRowsData} />
-        </MemoryRouter>,
-      );
+        </MemoryRouter>
+      )
 
       // Click page 2
-      const page2Button = screen.getByRole('button', { name: /page 2/i });
-      fireEvent.click(page2Button);
+      const page2Button = screen.getByRole('button', { name: /page 2/i })
+      fireEvent.click(page2Button)
 
-      expect(mockSetSortConfig).toHaveBeenCalledWith(expect.any(Function));
+      expect(mockSetSortConfig).toHaveBeenCalledWith(expect.any(Function))
 
-      const updateFunction = mockSetSortConfig.mock.calls[0][0];
-      const result = updateFunction(defaultProps.sortConfig);
+      const updateFunction = mockSetSortConfig.mock.calls[0][0]
+      const result = updateFunction(defaultProps.sortConfig)
 
       expect(result).toEqual({
         ...defaultProps.sortConfig,
         activePage: 2,
         offset: 10,
-      });
-    });
-  });
+      })
+    })
+  })
 
   describe('Export functionality', () => {
     it('renders Export table menu item', () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
-      );
+        </MemoryRouter>
+      )
 
-      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i });
-      fireEvent.click(menuButton);
+      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i })
+      fireEvent.click(menuButton)
 
-      expect(screen.getByText('Export table')).toBeInTheDocument();
-    });
+      expect(screen.getByText('Export table')).toBeInTheDocument()
+    })
 
     it('calls getSessionReportsCSV when Export table is clicked', async () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
-      );
+        </MemoryRouter>
+      )
 
-      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i });
-      fireEvent.click(menuButton);
+      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i })
+      fireEvent.click(menuButton)
 
-      const exportAllButton = screen.getByText('Export table');
-      fireEvent.click(exportAllButton);
+      const exportAllButton = screen.getByText('Export table')
+      fireEvent.click(exportAllButton)
 
       await waitFor(() => {
-        expect(getSessionReportsCSV).toHaveBeenCalledWith(
-          defaultProps.sortConfig,
-          defaultProps.filters,
-        );
-      });
-    });
+        expect(getSessionReportsCSV).toHaveBeenCalledWith(defaultProps.sortConfig, defaultProps.filters)
+      })
+    })
 
     it('does not show Export selected when no reports are selected', () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
-      );
+        </MemoryRouter>
+      )
 
-      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i });
-      fireEvent.click(menuButton);
+      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i })
+      fireEvent.click(menuButton)
 
-      expect(screen.queryByText('Export selected rows')).not.toBeInTheDocument();
-    });
-  });
+      expect(screen.queryByText('Export selected rows')).not.toBeInTheDocument()
+    })
+  })
 
   describe('Checkbox functionality', () => {
     it('shows Export selected when reports are selected', async () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
-      );
+        </MemoryRouter>
+      )
 
-      const checkbox = screen.getByDisplayValue('1');
-      userEvent.click(checkbox);
+      const checkbox = screen.getByDisplayValue('1')
+      userEvent.click(checkbox)
 
-      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i });
-      fireEvent.click(menuButton);
+      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i })
+      fireEvent.click(menuButton)
 
-      expect(screen.getByText('Export selected rows')).toBeInTheDocument();
-    });
+      expect(screen.getByText('Export selected rows')).toBeInTheDocument()
+    })
 
     it('calls getSessionReportsCSVById when Export selected is clicked', async () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
-      );
+        </MemoryRouter>
+      )
 
-      const checkbox1 = screen.getByDisplayValue('1');
-      const checkbox2 = screen.getByDisplayValue('2');
+      const checkbox1 = screen.getByDisplayValue('1')
+      const checkbox2 = screen.getByDisplayValue('2')
 
-      userEvent.click(checkbox1);
-      userEvent.click(checkbox2);
+      userEvent.click(checkbox1)
+      userEvent.click(checkbox2)
 
-      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i });
-      fireEvent.click(menuButton);
+      const menuButton = screen.getByRole('button', { name: /open actions for training reports/i })
+      fireEvent.click(menuButton)
 
-      const exportSelectedButton = screen.getByText('Export selected rows');
-      fireEvent.click(exportSelectedButton);
+      const exportSelectedButton = screen.getByText('Export selected rows')
+      fireEvent.click(exportSelectedButton)
 
       await waitFor(() => {
-        expect(getSessionReportsCSVById).toHaveBeenCalledWith(
-          ['1', '2'],
-          defaultProps.sortConfig,
-          defaultProps.filters,
-        );
-      });
-    });
-  });
-});
+        expect(getSessionReportsCSVById).toHaveBeenCalledWith(['1', '2'], defaultProps.sortConfig, defaultProps.filters)
+      })
+    })
+  })
+})

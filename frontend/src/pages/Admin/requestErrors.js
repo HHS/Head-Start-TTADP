@@ -1,22 +1,13 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import {
-  List,
-  Datagrid,
-  TextField,
-  DateField,
-  Show,
-  SimpleShowLayout,
-  TopToolbar,
-  ListButton,
-} from 'react-admin';
+import React from 'react'
+import { List, Datagrid, TextField, DateField, Show, SimpleShowLayout, TopToolbar, ListButton } from 'react-admin'
 
 // eslint-disable-next-line react/prop-types
 const RequestErrorShowActions = ({ basePath }) => (
   <TopToolbar>
     <ListButton basePath={basePath} />
   </TopToolbar>
-);
+)
 
 const RequestErrorList = (props) => (
   <List {...props} className="smart-hub--overflow-auto">
@@ -30,7 +21,7 @@ const RequestErrorList = (props) => (
       <DateField source="updatedAt" />
     </Datagrid>
   </List>
-);
+)
 
 export const RequestErrorShow = (props) => (
   <Show actions={<RequestErrorShowActions />} {...props}>
@@ -46,6 +37,6 @@ export const RequestErrorShow = (props) => (
       <DateField source="updatedAt" />
     </SimpleShowLayout>
   </Show>
-);
+)
 
-export default RequestErrorList;
+export default RequestErrorList

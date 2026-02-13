@@ -1,68 +1,60 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import {
-  Button,
-  ButtonGroup,
-  Label,
-  TextInput,
-} from '@trussworks/react-uswds';
-import { useHistory } from 'react-router-dom';
-import { deleteCourseById, getCourseById, updateCourseById } from '../../fetchers/courses';
-import Modal from '../../components/Modal';
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import ReactRouterPropTypes from 'react-router-prop-types'
+import { Button, ButtonGroup, Label, TextInput } from '@trussworks/react-uswds'
+import { useHistory } from 'react-router-dom'
+import { deleteCourseById, getCourseById, updateCourseById } from '../../fetchers/courses'
+import Modal from '../../components/Modal'
 
 function CourseEdit({ match }) {
-  const { params: { courseId } } = match;
-  const [course, setCourse] = useState();
-  const [newCourse, setNewCourse] = useState();
-  const modalRef = useRef();
-  const history = useHistory();
+  const {
+    params: { courseId },
+  } = match
+  const [course, setCourse] = useState()
+  const [newCourse, setNewCourse] = useState()
+  const modalRef = useRef()
+  const history = useHistory()
 
   useEffect(() => {
     async function fetchCourse() {
-      const c = await getCourseById(courseId);
-      setCourse({ ...c });
-      setNewCourse({ ...c });
+      const c = await getCourseById(courseId)
+      setCourse({ ...c })
+      setNewCourse({ ...c })
     }
 
     if (!course) {
-      fetchCourse();
+      fetchCourse()
     }
-  }, [course, courseId]);
+  }, [course, courseId])
 
   const askConfirmDelete = useCallback(() => {
     if (modalRef.current) {
-      modalRef.current.toggleModal(true);
+      modalRef.current.toggleModal(true)
     }
-  }, []);
+  }, [])
 
   if (!course || !newCourse) {
-    return <div>Loading course...</div>;
+    return <div>Loading course...</div>
   }
 
   const onChange = (e) => {
-    setNewCourse((prevCourse) => ({ ...prevCourse, name: e.target.value }));
-  };
+    setNewCourse((prevCourse) => ({ ...prevCourse, name: e.target.value }))
+  }
 
   const saveChanges = async () => {
-    const updated = await updateCourseById(courseId, { name: newCourse.name });
-    setCourse({ ...updated });
-    history.replace(`/admin/course/${updated.id}`);
-  };
+    const updated = await updateCourseById(courseId, { name: newCourse.name })
+    setCourse({ ...updated })
+    history.replace(`/admin/course/${updated.id}`)
+  }
 
   const confirmDelete = async () => {
     if (modalRef.current) {
-      modalRef.current.toggleModal(false);
+      modalRef.current.toggleModal(false)
     }
 
-    await deleteCourseById(courseId);
+    await deleteCourseById(courseId)
 
-    history.push('/admin/courses');
-  };
+    history.push('/admin/courses')
+  }
 
   return (
     <div>
@@ -80,7 +72,9 @@ function CourseEdit({ match }) {
 
       <ButtonGroup type="default" style={{ marginTop: '8px' }}>
         <Button onClick={saveChanges}>Save changes</Button>
-        <Button id="delete-course-button" onClick={askConfirmDelete} secondary>Delete course</Button>
+        <Button id="delete-course-button" onClick={askConfirmDelete} secondary>
+          Delete course
+        </Button>
       </ButtonGroup>
 
       <Modal
@@ -96,11 +90,11 @@ function CourseEdit({ match }) {
         This action cannot be undone.
       </Modal>
     </div>
-  );
+  )
 }
 
 CourseEdit.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
-};
+}
 
-export default CourseEdit;
+export default CourseEdit

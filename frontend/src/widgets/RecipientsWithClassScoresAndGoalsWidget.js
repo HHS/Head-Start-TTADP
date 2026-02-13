@@ -1,53 +1,39 @@
-import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
-import {
-  Dropdown,
-  Checkbox,
-  Label,
-  Button,
-} from '@trussworks/react-uswds';
-import { v4 as uuidv4 } from 'uuid';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import colors from '../colors';
-import { RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE } from '../Constants';
-import WidgetContainer from '../components/WidgetContainer';
-import useWidgetPaging from '../hooks/useWidgetPaging';
-import DrawerTriggerButton from '../components/DrawerTriggerButton';
-import Drawer from '../components/Drawer';
-import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
-import RecipientCard from '../pages/QADashboard/Components/RecipientCard';
-import './QaDetailsDrawer.scss';
+import React, { useState, useEffect, useRef } from 'react'
+import PropTypes from 'prop-types'
+import { DECIMAL_BASE } from '@ttahub/common'
+import { Dropdown, Checkbox, Label, Button } from '@trussworks/react-uswds'
+import { v4 as uuidv4 } from 'uuid'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons'
+import colors from '../colors'
+import { RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE } from '../Constants'
+import WidgetContainer from '../components/WidgetContainer'
+import useWidgetPaging from '../hooks/useWidgetPaging'
+import DrawerTriggerButton from '../components/DrawerTriggerButton'
+import Drawer from '../components/Drawer'
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag'
+import RecipientCard from '../pages/QADashboard/Components/RecipientCard'
+import './QaDetailsDrawer.scss'
 
-function RecipientsWithClassScoresAndGoalsWidget({
-  data,
-  parentLoading,
-}) {
-  const { widgetData, pageData } = data;
-  const titleDrawerRef = useRef(null);
-  const subtitleRef = useRef(null);
-  const [loading, setLoading] = useState(false);
-  const [allRecipientsData, setAllRecipientsData] = useState([]);
-  const [recipientsDataToDisplay, setRecipientsDataToDisplay] = useState([]);
-  const [selectedRecipientCheckBoxes, setSelectedRecipientCheckBoxes] = useState({});
-  const [allRecipientsChecked, setAllRecipientsChecked] = useState(false);
-  const [resetPagination, setResetPagination] = useState(false);
-  const [perPage, setPerPage] = useState([RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE]);
+function RecipientsWithClassScoresAndGoalsWidget({ data, parentLoading }) {
+  const { widgetData, pageData } = data
+  const titleDrawerRef = useRef(null)
+  const subtitleRef = useRef(null)
+  const [loading, setLoading] = useState(false)
+  const [allRecipientsData, setAllRecipientsData] = useState([])
+  const [recipientsDataToDisplay, setRecipientsDataToDisplay] = useState([])
+  const [selectedRecipientCheckBoxes, setSelectedRecipientCheckBoxes] = useState({})
+  const [allRecipientsChecked, setAllRecipientsChecked] = useState(false)
+  const [resetPagination, setResetPagination] = useState(false)
+  const [perPage, setPerPage] = useState([RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE])
 
   const defaultSort = {
     sortBy: 'name',
     direction: 'asc',
     activePage: 1,
-  };
+  }
 
-  const {
-    handlePageChange,
-    requestSort,
-    exportRows,
-    sortConfig,
-    setSortConfig,
-  } = useWidgetPaging(
+  const { handlePageChange, requestSort, exportRows, sortConfig, setSortConfig } = useWidgetPaging(
     ['lastArStartDate', 'emotionalSupport', 'classroomOrganization', 'instructionalSupport', 'reportReceivedDate'],
     'recipientsWithClassScoresAndGoals',
     defaultSort,
@@ -63,122 +49,107 @@ function RecipientsWithClassScoresAndGoalsWidget({
     ['name'],
     ['lastARStartDate', 'reportDeliveryDate'],
     'recipientsWithClassScoresAndGoals.csv',
-    'dataForExport',
-  );
+    'dataForExport'
+  )
 
   const perPageChange = (e) => {
-    const perPageValue = parseInt(e.target.value, DECIMAL_BASE);
+    const perPageValue = parseInt(e.target.value, DECIMAL_BASE)
     setSortConfig({
       ...sortConfig,
       activePage: 1,
       offset: 0,
-    });
+    })
 
     // Use splice to get the new data to display.
-    setRecipientsDataToDisplay(allRecipientsData.slice(0, perPageValue));
-    setPerPage(perPageValue);
-  };
+    setRecipientsDataToDisplay(allRecipientsData.slice(0, perPageValue))
+    setPerPage(perPageValue)
+  }
 
   const setSortBy = (e) => {
-    const [sortBy, direction] = e.target.value.split('-');
-    requestSort(sortBy, direction);
-  };
+    const [sortBy, direction] = e.target.value.split('-')
+    requestSort(sortBy, direction)
+  }
 
   const getSubtitleWithPct = () => {
-    const totalRecipients = widgetData ? widgetData.total : 0;
-    const grants = widgetData ? widgetData['grants with class'] : 0;
-    const pct = widgetData ? widgetData['% recipients with class'] : 0;
-    const recipoientsWithClass = widgetData ? widgetData['recipients with class'] : 0;
-    return `${recipoientsWithClass} of ${totalRecipients} (${pct}%) recipients (${grants} grants)`;
-  };
+    const totalRecipients = widgetData ? widgetData.total : 0
+    const grants = widgetData ? widgetData['grants with class'] : 0
+    const pct = widgetData ? widgetData['% recipients with class'] : 0
+    const recipoientsWithClass = widgetData ? widgetData['recipients with class'] : 0
+    return `${recipoientsWithClass} of ${totalRecipients} (${pct}%) recipients (${grants} grants)`
+  }
 
-  const makeRecipientCheckboxes = (goalsArr, checked) => (
-    goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
-  );
+  const makeRecipientCheckboxes = (goalsArr, checked) => goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
 
   const selectAllRecipientsCheckboxSelect = (event) => {
-    const { target: { checked = null } = {} } = event;
+    const { target: { checked = null } = {} } = event
     // Preserve checked recipients on other pages.
-    const thisPagesRecipientIds = allRecipientsData.map((g) => g.id);
+    const thisPagesRecipientIds = allRecipientsData.map((g) => g.id)
     const preservedCheckboxes = Object.keys(selectedRecipientCheckBoxes).reduce((obj, key) => {
       if (!thisPagesRecipientIds.includes(parseInt(key, DECIMAL_BASE))) {
-        return { ...obj, [key]: selectedRecipientCheckBoxes[key] };
+        return { ...obj, [key]: selectedRecipientCheckBoxes[key] }
       }
-      return { ...obj };
-    }, {});
+      return { ...obj }
+    }, {})
 
     if (checked === true) {
-      setSelectedRecipientCheckBoxes(
-        {
-          ...makeRecipientCheckboxes(allRecipientsData, true), ...preservedCheckboxes,
-        },
-      );
+      setSelectedRecipientCheckBoxes({
+        ...makeRecipientCheckboxes(allRecipientsData, true),
+        ...preservedCheckboxes,
+      })
     } else {
       setSelectedRecipientCheckBoxes({
-        ...makeRecipientCheckboxes(allRecipientsData, false), ...preservedCheckboxes,
-      });
+        ...makeRecipientCheckboxes(allRecipientsData, false),
+        ...preservedCheckboxes,
+      })
     }
-  };
+  }
 
   useEffect(() => {
     try {
       // Set local data.
-      setLoading(true);
-      setAllRecipientsData(pageData || []);
+      setLoading(true)
+      setAllRecipientsData(pageData || [])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [pageData]);
+  }, [pageData])
 
   useEffect(() => {
-    const recipientIds = allRecipientsData.map((g) => g.id);
-    const countOfCheckedOnThisPage = recipientIds.filter(
-      (id) => selectedRecipientCheckBoxes[id],
-    ).length;
+    const recipientIds = allRecipientsData.map((g) => g.id)
+    const countOfCheckedOnThisPage = recipientIds.filter((id) => selectedRecipientCheckBoxes[id]).length
     if (allRecipientsData.length === countOfCheckedOnThisPage) {
-      setAllRecipientsChecked(true);
+      setAllRecipientsChecked(true)
     } else {
-      setAllRecipientsChecked(false);
+      setAllRecipientsChecked(false)
     }
-  }, [selectedRecipientCheckBoxes, allRecipientsData]);
+  }, [selectedRecipientCheckBoxes, allRecipientsData])
 
   const handleRecipientCheckboxSelect = (event) => {
-    const { target: { checked = null, value = null } = {} } = event;
+    const { target: { checked = null, value = null } = {} } = event
     if (checked === true) {
-      setSelectedRecipientCheckBoxes({ ...selectedRecipientCheckBoxes, [value]: true });
+      setSelectedRecipientCheckBoxes({ ...selectedRecipientCheckBoxes, [value]: true })
     } else {
-      setSelectedRecipientCheckBoxes({ ...selectedRecipientCheckBoxes, [value]: false });
+      setSelectedRecipientCheckBoxes({ ...selectedRecipientCheckBoxes, [value]: false })
     }
-  };
+  }
 
   /* istanbul ignore next: hard to test */
   const handleExportRows = () => {
-    const selectedRecipientIds = Object.keys(
-      selectedRecipientCheckBoxes,
-    ).filter((key) => selectedRecipientCheckBoxes[key]);
+    const selectedRecipientIds = Object.keys(selectedRecipientCheckBoxes).filter((key) => selectedRecipientCheckBoxes[key])
     if (selectedRecipientIds.length > 0) {
-      exportRows('selected');
+      exportRows('selected')
     } else {
-      exportRows('all');
+      exportRows('all')
     }
-  };
+  }
 
-  const selectedRecipientCheckBoxesCount = Object.keys(selectedRecipientCheckBoxes).filter(
-    (key) => selectedRecipientCheckBoxes[key],
-  ).length;
+  const selectedRecipientCheckBoxesCount = Object.keys(selectedRecipientCheckBoxes).filter((key) => selectedRecipientCheckBoxes[key]).length
 
   const subtitle = (
     <>
       <div className="margin-bottom-2">
-        <DrawerTriggerButton drawerTriggerRef={titleDrawerRef}>
-          Learn about the OHS standard CLASS&reg; goal
-        </DrawerTriggerButton>
-        <Drawer
-          triggerRef={titleDrawerRef}
-          stickyHeader
-          stickyFooter
-          title="OHS standard CLASS&reg; goal"
-        >
+        <DrawerTriggerButton drawerTriggerRef={titleDrawerRef}>Learn about the OHS standard CLASS&reg; goal</DrawerTriggerButton>
+        <Drawer triggerRef={titleDrawerRef} stickyHeader stickyFooter title="OHS standard CLASS&reg; goal">
           <ContentFromFeedByTag tagName="ttahub-ohs-standard-class-goal" />
         </Drawer>
       </div>
@@ -186,20 +157,13 @@ function RecipientsWithClassScoresAndGoalsWidget({
         <DrawerTriggerButton drawerTriggerRef={subtitleRef} removeLeftMargin>
           How are thresholds met?
         </DrawerTriggerButton>
-        <Drawer
-          triggerRef={subtitleRef}
-          stickyHeader
-          stickyFooter
-          title="CLASS&reg; review thresholds"
-        >
+        <Drawer triggerRef={subtitleRef} stickyHeader stickyFooter title="CLASS&reg; review thresholds">
           <ContentFromFeedByTag tagName="ttahub-class-thresholds" />
         </Drawer>
       </div>
-      <p className="margin-top-0 margin-bottom-3 usa-prose text-bold">
-        {getSubtitleWithPct()}
-      </p>
+      <p className="margin-top-0 margin-bottom-3 usa-prose text-bold">{getSubtitleWithPct()}</p>
     </>
-  );
+  )
 
   return (
     <WidgetContainer
@@ -228,7 +192,9 @@ function RecipientsWithClassScoresAndGoalsWidget({
         <div className="desktop:display-flex flex-justify smart-hub-border-base-lighter border-bottom">
           <div className="flex-align-center margin-bottom-3 display-flex">
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
+            <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">
+              Sort by
+            </label>
             <Dropdown
               onChange={setSortBy}
               value={`${sortConfig.sortBy}-${sortConfig.direction}`}
@@ -247,7 +213,9 @@ function RecipientsWithClassScoresAndGoalsWidget({
           </div>
           <div className="flex-align-center margin-bottom-3 display-flex">
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <Label className="display-block margin-right-1 margin-y-0" style={{ minWidth: 'max-content' }} htmlFor="perPage">Show</Label>
+            <Label className="display-block margin-right-1 margin-y-0" style={{ minWidth: 'max-content' }} htmlFor="perPage">
+              Show
+            </Label>
             <Dropdown
               className="margin-top-0 margin-right-1 width-auto"
               id="perPage"
@@ -272,38 +240,30 @@ function RecipientsWithClassScoresAndGoalsWidget({
               checked={allRecipientsChecked}
               onChange={selectAllRecipientsCheckboxSelect}
             />
-            {selectedRecipientCheckBoxesCount > 0
-            && (
+            {selectedRecipientCheckBoxesCount > 0 && (
               <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-left-2 margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
-                <span>
-                  {selectedRecipientCheckBoxesCount}
-                  {' '}
-                  selected
-                  {' '}
-                </span>
+                <span>{selectedRecipientCheckBoxesCount} selected </span>
                 <Button
                   className="smart-hub--select-tag__button"
                   unstyled
                   aria-label="deselect all goals"
                   onClick={() => {
-                    selectAllRecipientsCheckboxSelect({ target: { checked: false } });
+                    selectAllRecipientsCheckboxSelect({ target: { checked: false } })
                   }}
                 >
-                  <FontAwesomeIcon className="margin-left-1 margin-top-2px filter-pills-cursor" color={colors.ttahubMediumBlue} icon={faTimesCircle} />
+                  <FontAwesomeIcon
+                    className="margin-left-1 margin-top-2px filter-pills-cursor"
+                    color={colors.ttahubMediumBlue}
+                    icon={faTimesCircle}
+                  />
                 </Button>
               </span>
             )}
-            {
-                selectedRecipientCheckBoxesCount > 0 && (
-                  <Button
-                    unstyled
-                    onClick={handleExportRows}
-                    className="margin-left-3"
-                  >
-                    Export selected
-                  </Button>
-                )
-              }
+            {selectedRecipientCheckBoxesCount > 0 && (
+              <Button unstyled onClick={handleExportRows} className="margin-left-3">
+                Export selected
+              </Button>
+            )}
           </div>
           {recipientsDataToDisplay.map((r, index) => (
             <RecipientCard
@@ -317,7 +277,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
         </div>
       </div>
     </WidgetContainer>
-  );
+  )
 }
 
 RecipientsWithClassScoresAndGoalsWidget.propTypes = {
@@ -338,21 +298,23 @@ RecipientsWithClassScoresAndGoalsWidget.propTypes = {
         classroomOrganization: PropTypes.number,
         instructionalSupport: PropTypes.number,
         reportReceivedDate: PropTypes.string,
-        goals: PropTypes.arrayOf(PropTypes.shape({
-          goalNumber: PropTypes.string,
-          status: PropTypes.string,
-          creator: PropTypes.string,
-          collaborator: PropTypes.string,
-        })),
+        goals: PropTypes.arrayOf(
+          PropTypes.shape({
+            goalNumber: PropTypes.string,
+            status: PropTypes.string,
+            creator: PropTypes.string,
+            collaborator: PropTypes.string,
+          })
+        ),
       }),
       PropTypes.shape({}),
     ]),
   }),
   parentLoading: PropTypes.bool.isRequired,
-};
+}
 
 RecipientsWithClassScoresAndGoalsWidget.defaultProps = {
   data: { headers: [], RecipientsWithOhsStandardFeiGoal: [] },
-};
+}
 
-export default RecipientsWithClassScoresAndGoalsWidget;
+export default RecipientsWithClassScoresAndGoalsWidget

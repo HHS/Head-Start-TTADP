@@ -1,29 +1,30 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import fetchMock from 'fetch-mock';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import RecipientsWithOhsStandardFeiGoal, { mapGoalStatusKey } from '../index';
-import UserContext from '../../../../UserContext';
-import { mockRSSData } from '../../../../testHelpers';
+import '@testing-library/jest-dom'
+import React from 'react'
+import fetchMock from 'fetch-mock'
+import { Router } from 'react-router-dom'
+import { createMemoryHistory } from 'history'
+import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common'
+import { render, screen, act, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import RecipientsWithOhsStandardFeiGoal, { mapGoalStatusKey } from '../index'
+import UserContext from '../../../../UserContext'
+import { mockRSSData } from '../../../../testHelpers'
 
-const history = createMemoryHistory();
+const history = createMemoryHistory()
 
 const defaultUser = {
   homeRegionId: 14,
-  permissions: [{
-    regionId: 1,
-    scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-  }, {
-    regionId: 2,
-    scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-  }],
-};
+  permissions: [
+    {
+      regionId: 1,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    },
+    {
+      regionId: 2,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    },
+  ],
+}
 
 const recipientsWithOhsStandardFeiGoalEmptyData = [
   {
@@ -43,7 +44,7 @@ const recipientsWithOhsStandardFeiGoalEmptyData = [
     records: '0',
     data: [],
   },
-];
+]
 
 const recipientsWithOhsStandardFeiGoalSsdiData = [
   {
@@ -91,7 +92,7 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
       },
     ],
   },
-];
+]
 
 const renderRecipientsWithOhsStandardFeiGoal = (user = defaultUser) => {
   render(
@@ -99,109 +100,123 @@ const renderRecipientsWithOhsStandardFeiGoal = (user = defaultUser) => {
       <UserContext.Provider value={{ user }}>
         <RecipientsWithOhsStandardFeiGoal />
       </UserContext.Provider>
-    </Router>,
-  );
-};
+    </Router>
+  )
+}
 
 describe('Recipients With Ohs Standard Fei Goal', () => {
   afterEach(() => {
-    fetchMock.restore();
-  });
+    fetchMock.restore()
+  })
 
   beforeEach(() => {
-    fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-fei-goal', mockRSSData());
-    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-fei-filters', mockRSSData());
-    fetchMock.get('/api/feeds/item?tag=ttahub-fei-root-causes', mockRSSData());
-  });
+    fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-fei-goal', mockRSSData())
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-fei-filters', mockRSSData())
+    fetchMock.get('/api/feeds/item?tag=ttahub-fei-root-causes', mockRSSData())
+  })
   it('renders correctly without data', async () => {
-    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', recipientsWithOhsStandardFeiGoalEmptyData);
-    renderRecipientsWithOhsStandardFeiGoal();
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page',
+      recipientsWithOhsStandardFeiGoalEmptyData
+    )
+    renderRecipientsWithOhsStandardFeiGoal()
 
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 1 }).length).toBe(1);
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 2 }).length).toBe(1);
-    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
-  });
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 1 }).length).toBe(1)
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 2 }).length).toBe(1)
+    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument()
+  })
 
   it('renders correctly with data', async () => {
-    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', recipientsWithOhsStandardFeiGoalSsdiData);
-    renderRecipientsWithOhsStandardFeiGoal();
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page',
+      recipientsWithOhsStandardFeiGoalSsdiData
+    )
+    renderRecipientsWithOhsStandardFeiGoal()
 
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 1 }).length).toBe(1);
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 2 }).length).toBe(1);
-    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 1 }).length).toBe(1)
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 2 }).length).toBe(1)
+    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument()
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText(/Test Recipient 1/i)).toBeInTheDocument();
-        expect(screen.getByText(/Test Recipient 2/i)).toBeInTheDocument();
-        expect(screen.getByText(/Test Recipient 3/i)).toBeInTheDocument();
+        expect(screen.getByText(/Test Recipient 1/i)).toBeInTheDocument()
+        expect(screen.getByText(/Test Recipient 2/i)).toBeInTheDocument()
+        expect(screen.getByText(/Test Recipient 3/i)).toBeInTheDocument()
 
-        expect(screen.getByText('09/01/2021')).toBeInTheDocument();
-        expect(screen.getByText('09/02/2021')).toBeInTheDocument();
-        expect(screen.getByText('09/03/2021')).toBeInTheDocument();
+        expect(screen.getByText('09/01/2021')).toBeInTheDocument()
+        expect(screen.getByText('09/02/2021')).toBeInTheDocument()
+        expect(screen.getByText('09/03/2021')).toBeInTheDocument()
 
-        expect(screen.getByText(/G-20628/i)).toBeInTheDocument();
-        expect(screen.getByText(/G-359813/i)).toBeInTheDocument();
-        expect(screen.getByText(/G-457825/i)).toBeInTheDocument();
+        expect(screen.getByText(/G-20628/i)).toBeInTheDocument()
+        expect(screen.getByText(/G-359813/i)).toBeInTheDocument()
+        expect(screen.getByText(/G-457825/i)).toBeInTheDocument()
 
-        expect(screen.queryAllByText(/In progress/i).length).toBe(2);
-        expect(screen.getByText(/Not started/i)).toBeInTheDocument();
-        expect(screen.getByText(/Community Partnership, Workforce/i)).toBeInTheDocument();
-        expect(screen.getByText(/Testing/i)).toBeInTheDocument();
-        expect(screen.getByText(/Facilities/i)).toBeInTheDocument();
+        expect(screen.queryAllByText(/In progress/i).length).toBe(2)
+        expect(screen.getByText(/Not started/i)).toBeInTheDocument()
+        expect(screen.getByText(/Community Partnership, Workforce/i)).toBeInTheDocument()
+        expect(screen.getByText(/Testing/i)).toBeInTheDocument()
+        expect(screen.getByText(/Facilities/i)).toBeInTheDocument()
 
         // Check all grant numbers are displayed.
-        expect(screen.getByText(/234234/i)).toBeInTheDocument();
-        expect(screen.getByText(/4234232/i)).toBeInTheDocument();
-        expect(screen.getByText(/5678856/i)).toBeInTheDocument();
-      });
-    });
-  });
+        expect(screen.getByText(/234234/i)).toBeInTheDocument()
+        expect(screen.getByText(/4234232/i)).toBeInTheDocument()
+        expect(screen.getByText(/5678856/i)).toBeInTheDocument()
+      })
+    })
+  })
 
   it('handles a user with only one region', async () => {
     const u = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
-    };
-    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', recipientsWithOhsStandardFeiGoalSsdiData);
-    renderRecipientsWithOhsStandardFeiGoal(u);
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
+    }
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page',
+      recipientsWithOhsStandardFeiGoalSsdiData
+    )
+    renderRecipientsWithOhsStandardFeiGoal(u)
 
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 1 }).length).toBe(1);
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 2 }).length).toBe(1);
-    const filters = await screen.findByRole('button', { name: /open filters for this page/i });
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 1 }).length).toBe(1)
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 2 }).length).toBe(1)
+    const filters = await screen.findByRole('button', { name: /open filters for this page/i })
 
     act(() => {
-      userEvent.click(filters);
-    });
+      userEvent.click(filters)
+    })
 
-    const select = await screen.findByLabelText(/select a filter/i);
+    const select = await screen.findByLabelText(/select a filter/i)
 
     // expect select not to have "region" as an option
-    const option = select.querySelector('option[value="region"]');
-    expect(option).toBeNull();
-  });
+    const option = select.querySelector('option[value="region"]')
+    expect(option).toBeNull()
+  })
 
   it('handles error on fetch', async () => {
-    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', 500);
-    renderRecipientsWithOhsStandardFeiGoal();
+    fetchMock.get(
+      '/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page',
+      500
+    )
+    renderRecipientsWithOhsStandardFeiGoal()
 
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 1 }).length).toBe(1);
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 2 }).length).toBe(1);
-    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 1 }).length).toBe(1)
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i, level: 2 }).length).toBe(1)
+    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument()
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText(/unable to fetch qa data/i)).toBeInTheDocument();
-      });
-    });
-  });
+        expect(screen.getByText(/unable to fetch qa data/i)).toBeInTheDocument()
+      })
+    })
+  })
 
   it('returns correct sort order from mapGoalStatusKey', () => {
-    expect(mapGoalStatusKey(GOAL_STATUS.NOT_STARTED)).toBe(4);
-    expect(mapGoalStatusKey(GOAL_STATUS.IN_PROGRESS)).toBe(3);
-    expect(mapGoalStatusKey(GOAL_STATUS.SUSPENDED)).toBe(2);
-    expect(mapGoalStatusKey(GOAL_STATUS.CLOSED)).toBe(1);
-    expect(mapGoalStatusKey('')).toBe(0);
-  });
-});
+    expect(mapGoalStatusKey(GOAL_STATUS.NOT_STARTED)).toBe(4)
+    expect(mapGoalStatusKey(GOAL_STATUS.IN_PROGRESS)).toBe(3)
+    expect(mapGoalStatusKey(GOAL_STATUS.SUSPENDED)).toBe(2)
+    expect(mapGoalStatusKey(GOAL_STATUS.CLOSED)).toBe(1)
+    expect(mapGoalStatusKey('')).toBe(0)
+  })
+})

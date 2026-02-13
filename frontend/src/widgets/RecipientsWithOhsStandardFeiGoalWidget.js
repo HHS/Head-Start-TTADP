@@ -1,44 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE } from '../Constants';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import WidgetContainer from '../components/WidgetContainer';
-import useWidgetPaging from '../hooks/useWidgetPaging';
-import DrawerTriggerButton from '../components/DrawerTriggerButton';
-import Drawer from '../components/Drawer';
-import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
-import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import React, { useState, useEffect, useRef } from 'react'
+import PropTypes from 'prop-types'
+import { RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE } from '../Constants'
+import HorizontalTableWidget from './HorizontalTableWidget'
+import WidgetContainer from '../components/WidgetContainer'
+import useWidgetPaging from '../hooks/useWidgetPaging'
+import DrawerTriggerButton from '../components/DrawerTriggerButton'
+import Drawer from '../components/Drawer'
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag'
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle'
 
-function RecipientsWithOhsStandardFeiGoalWidget({
-  data,
-  loading,
-  resetPagination,
-  setResetPagination,
-}) {
-  const { pageData, widgetData } = data;
+function RecipientsWithOhsStandardFeiGoalWidget({ data, loading, resetPagination, setResetPagination }) {
+  const { pageData, widgetData } = data
   const defaultSortConfig = {
     sortBy: 'Goal_status',
     direction: 'desc',
     activePage: 1,
-  };
+  }
 
-  const [recipientDataToUse, setRecipientDataToUse] = useState([]);
-  const [recipientCount, setRecipientCount] = useState(0);
-  const [localLoading, setLocalLoading] = useState(false);
-  const [recipientsPerPage, setRecipientsPerPage] = useState([]);
-  const [checkBoxes, setCheckBoxes] = useState({});
+  const [recipientDataToUse, setRecipientDataToUse] = useState([])
+  const [recipientCount, setRecipientCount] = useState(0)
+  const [localLoading, setLocalLoading] = useState(false)
+  const [recipientsPerPage, setRecipientsPerPage] = useState([])
+  const [checkBoxes, setCheckBoxes] = useState({})
 
-  const titleDrawerRef = useRef(null);
-  const subtitleDrawerLinkRef = useRef(null);
+  const titleDrawerRef = useRef(null)
+  const subtitleDrawerLinkRef = useRef(null)
 
-  const {
-    offset,
-    activePage,
-    handlePageChange,
-    requestSort,
-    exportRows,
-    sortConfig,
-  } = useWidgetPaging(
+  const { offset, activePage, handlePageChange, requestSort, exportRows, sortConfig } = useWidgetPaging(
     pageData ? pageData.headers : [],
     'recipientsWithOhsStandardFeiGoal',
     defaultSortConfig,
@@ -55,60 +43,53 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     ['Goal_created_on'],
     'recipientsWithOhsStandardFeiGoal.csv',
     null,
-    ['Goal_status'],
-  );
+    ['Goal_status']
+  )
 
   useEffect(() => {
     try {
       // Set local data.
-      setLocalLoading(true);
-      const recipientToUse = pageData ? pageData.RecipientsWithOhsStandardFeiGoal : [];
-      setRecipientDataToUse(recipientToUse);
-      setRecipientCount(recipientToUse.length);
+      setLocalLoading(true)
+      const recipientToUse = pageData ? pageData.RecipientsWithOhsStandardFeiGoal : []
+      setRecipientDataToUse(recipientToUse)
+      setRecipientCount(recipientToUse.length)
     } finally {
-      setLocalLoading(false);
+      setLocalLoading(false)
     }
-  }, [pageData, widgetData]);
+  }, [pageData, widgetData])
 
   const getSubtitleWithPct = () => {
-    const totalRecipients = widgetData ? widgetData.total : 0;
-    const pct = widgetData ? widgetData['% recipients with fei'] : 0;
-    const recipientsWithFei = widgetData ? widgetData['recipients with fei'] : 0;
-    const numberOfGrants = widgetData ? widgetData['grants with fei'] : 0;
-    return `${recipientsWithFei} of ${totalRecipients} (${pct}%) recipients (${numberOfGrants} grants)`;
-  };
+    const totalRecipients = widgetData ? widgetData.total : 0
+    const pct = widgetData ? widgetData['% recipients with fei'] : 0
+    const recipientsWithFei = widgetData ? widgetData['recipients with fei'] : 0
+    const numberOfGrants = widgetData ? widgetData['grants with fei'] : 0
+    return `${recipientsWithFei} of ${totalRecipients} (${pct}%) recipients (${numberOfGrants} grants)`
+  }
 
   const menuItems = [
     {
       label: 'Export selected rows',
       onClick: () => {
-        exportRows('selected');
+        exportRows('selected')
       },
     },
     {
       label: 'Export table',
       onClick: () => {
-        exportRows('all');
+        exportRows('all')
       },
     },
-  ];
+  ]
 
   const subtitle = (
     <>
       <DrawerTriggerButton drawerTriggerRef={titleDrawerRef} customClass="margin-bottom-2">
         Learn about the OHS standard goal
       </DrawerTriggerButton>
-      <Drawer
-        triggerRef={titleDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="OHS standard FEI goal"
-      >
+      <Drawer triggerRef={titleDrawerRef} stickyHeader stickyFooter title="OHS standard FEI goal">
         <ContentFromFeedByTag tagName="ttahub-ohs-standard-fei-goal" />
       </Drawer>
-      <WidgetContainerSubtitle>
-        Root causes were identified through self-reported data.
-      </WidgetContainerSubtitle>
+      <WidgetContainerSubtitle>Root causes were identified through self-reported data.</WidgetContainerSubtitle>
       <p className="usa-prose margin-x-0 margin-top-0 margin-bottom-2">
         <strong>{getSubtitleWithPct()}</strong>
       </p>
@@ -116,17 +97,12 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
           Learn about root causes
         </DrawerTriggerButton>
-        <Drawer
-          triggerRef={subtitleDrawerLinkRef}
-          stickyHeader
-          stickyFooter
-          title="FEI root cause"
-        >
+        <Drawer triggerRef={subtitleDrawerLinkRef} stickyHeader stickyFooter title="FEI root cause">
           <ContentFromFeedByTag tagName="ttahub-fei-root-causes" />
         </Drawer>
       </div>
     </>
-  );
+  )
 
   return (
     <>
@@ -163,7 +139,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         />
       </WidgetContainer>
     </>
-  );
+  )
 }
 
 RecipientsWithOhsStandardFeiGoalWidget.propTypes = {
@@ -178,7 +154,7 @@ RecipientsWithOhsStandardFeiGoalWidget.propTypes = {
             goalStatus: PropTypes.string,
             rootCause: PropTypes.string,
             createdAt: PropTypes.string,
-          }),
+          })
         ),
       }),
       PropTypes.shape({}),
@@ -193,12 +169,12 @@ RecipientsWithOhsStandardFeiGoalWidget.propTypes = {
   resetPagination: PropTypes.bool,
   setResetPagination: PropTypes.func,
   loading: PropTypes.bool.isRequired,
-};
+}
 
 RecipientsWithOhsStandardFeiGoalWidget.defaultProps = {
   data: { headers: [], RecipientsWithOhsStandardFeiGoal: [] },
   resetPagination: false,
   setResetPagination: () => {},
-};
+}
 
-export default RecipientsWithOhsStandardFeiGoalWidget;
+export default RecipientsWithOhsStandardFeiGoalWidget

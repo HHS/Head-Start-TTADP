@@ -1,26 +1,23 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import ResourceList from '../ResourceList';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import ResourceList from '../ResourceList'
 
 const renderResourceList = (data) => {
-  render(<ResourceList
-    data={data}
-    loading={false}
-  />);
-};
+  render(<ResourceList data={data} loading={false} />)
+}
 
 describe('Resource List Widget', () => {
   it('renders correctly without data', async () => {
-    const data = [];
-    renderResourceList(data);
+    const data = []
+    renderResourceList(data)
 
-    expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3);
-    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument();
-  });
+    expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3)
+    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument()
+  })
 
   it('renders correctly with data', async () => {
     const data = [
@@ -38,23 +35,23 @@ describe('Resource List Widget', () => {
         participantCount: 8,
         recipientCount: 3,
       },
-    ];
-    renderResourceList(data);
+    ]
+    renderResourceList(data)
 
-    expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3);
-    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /resource one/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /4/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /6/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /2/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /resource two/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /2/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /8/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /2/i })).toBeInTheDocument();
-  });
+    expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3)
+    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /resource one/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /4/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /6/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /2/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /resource two/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /2/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /8/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /2/i })).toBeInTheDocument()
+  })
 
   it('renders large resource and count', async () => {
     const data = [
@@ -128,17 +125,17 @@ describe('Resource List Widget', () => {
         participantCount: '777,777',
         recipientCount: '888,888',
       },
-    ];
-    renderResourceList(data);
+    ]
+    renderResourceList(data)
 
-    expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3);
-    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /resource 10 is a very very very long resource and should not cut off the text/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /999,999/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /777,777/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /888,888/i })).toBeInTheDocument();
-  });
-});
+    expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3)
+    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /resource 10 is a very very very long resource and should not cut off the text/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /999,999/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /777,777/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /888,888/i })).toBeInTheDocument()
+  })
+})

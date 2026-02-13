@@ -1,4 +1,4 @@
-import { OBJECTIVE_STATUS } from '../../../../../Constants';
+import { OBJECTIVE_STATUS } from '../../../../../Constants'
 
 const reviewData = [
   {
@@ -8,10 +8,7 @@ const reviewData = [
     outcome: 'Compliant',
     lastTTADate: '',
     specialists: [],
-    grants: [
-      '14CH123456',
-      '14HP141234',
-    ],
+    grants: ['14CH123456', '14HP141234'],
     findings: [
       {
         citation: '1392.47(b)(5)(i)',
@@ -45,10 +42,7 @@ const reviewData = [
     reviewReceived: '06/21/2024',
     outcome: 'Deficiency',
     lastTTADate: '07/12/2024',
-    grants: [
-      '14CH123456',
-      '14HP141234',
-    ],
+    grants: ['14CH123456', '14HP141234'],
     specialists: [
       {
         name: 'Specialist 1',
@@ -64,7 +58,8 @@ const reviewData = [
         correctionDeadline: '07/25/2024',
         objectives: [
           {
-            title: 'The TTA Specialist will assist the recipient with developing a QIP and/or corrective action plan to address the finding with correction strategies, timeframes, and evidence of the correction.',
+            title:
+              'The TTA Specialist will assist the recipient with developing a QIP and/or corrective action plan to address the finding with correction strategies, timeframes, and evidence of the correction.',
             activityReports: [{ displayId: '14AR12345', id: 12345 }],
             endDate: '07/12/2024',
             topics: ['Communication', 'Quality Improvement Plan/QIP', 'Safety Practices', 'Transportation'],
@@ -80,10 +75,7 @@ const reviewData = [
     reviewReceived: '05/20/2024',
     outcome: 'Noncompliant',
     lastTTADate: '03/27/2024',
-    grants: [
-      '14CH123456',
-      '14HP141234',
-    ],
+    grants: ['14CH123456', '14HP141234'],
     specialists: [
       {
         name: 'Specialist 1',
@@ -103,7 +95,8 @@ const reviewData = [
         correctionDeadline: '09/18/2024',
         objectives: [
           {
-            title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
+            title:
+              'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
             activityReports: [{ displayId: '14AR12345', id: 12345 }],
             endDate: '06/24/2024',
             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
@@ -119,7 +112,8 @@ const reviewData = [
         correctionDeadline: '09/18/2024',
         objectives: [
           {
-            title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
+            title:
+              'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
             activityReports: [{ displayId: '14AR12345', id: 12345 }],
             endDate: '06/24/2024',
             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
@@ -135,7 +129,8 @@ const reviewData = [
         correctionDeadline: '09/18/2024',
         objectives: [
           {
-            title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
+            title:
+              'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
             activityReports: [{ displayId: '14AR12345', id: 12345 }],
             endDate: '06/24/2024',
             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
@@ -145,7 +140,7 @@ const reviewData = [
       },
     ],
   },
-];
+]
 
 const citationData = [
   {
@@ -153,10 +148,7 @@ const citationData = [
     status: 'Corrected',
     findingType: 'Noncompliance',
     category: 'Program Management and Quality Improvement',
-    grantNumbers: [
-      '14CH123456',
-      '14HP141234',
-    ],
+    grantNumbers: ['14CH123456', '14HP141234'],
     lastTTADate: '06/24/2024',
     reviews: [
       {
@@ -186,7 +178,8 @@ const citationData = [
         ],
         objectives: [
           {
-            title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
+            title:
+              'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
             activityReports: [{ displayId: '14AR12345', id: 12345 }],
             endDate: '06/24/2024',
             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
@@ -201,10 +194,7 @@ const citationData = [
     findingType: 'Noncompliance',
     status: 'Corrected',
     category: 'Monitoring and Implementing Quality Health Services',
-    grantNumbers: [
-      '14CH123456',
-      '14HP141234',
-    ],
+    grantNumbers: ['14CH123456', '14HP141234'],
     lastTTADate: '05/22/2022',
     reviews: [
       {
@@ -234,7 +224,8 @@ const citationData = [
         ],
         objectives: [
           {
-            title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
+            title:
+              'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
             activityReports: [{ displayId: '14AR12345', id: 12345 }],
             endDate: '06/24/2024',
             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
@@ -266,7 +257,8 @@ const citationData = [
         ],
         objectives: [
           {
-            title: 'The TTA Specialist will assist the recipient with developing a QIP and/or corrective action plan to address the finding with correction strategies, timeframes, and evidence of the correction.',
+            title:
+              'The TTA Specialist will assist the recipient with developing a QIP and/or corrective action plan to address the finding with correction strategies, timeframes, and evidence of the correction.',
             activityReports: [{ displayId: '14AR12345', id: 12345 }],
             endDate: '07/12/2024',
             topics: ['Communication', 'Quality Improvement Plan/QIP', 'Safety Practices', 'Transportation'],
@@ -311,7 +303,8 @@ const citationData = [
         ],
         objectives: [
           {
-            title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
+            title:
+              'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
             activityReports: [{ displayId: '14AR12345', id: 12345 }],
             endDate: '06/24/2024',
             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
@@ -321,6 +314,6 @@ const citationData = [
       },
     ],
   },
-];
+]
 
-export { reviewData, citationData };
+export { reviewData, citationData }

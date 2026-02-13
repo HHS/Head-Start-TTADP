@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from 'react'
 
 // POCs can select approver when facilitation includes regional staff
 
@@ -10,10 +10,10 @@ import { useMemo } from 'react';
  * @returns
  */
 export default function useCanSelectApprover({ isPoc, watch }) {
-  const facilitation = watch('facilitation');
+  const facilitation = watch('facilitation')
 
   return useMemo(() => {
-    const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
-    return !isPoc || (isPoc && facilitationIncludesRegion);
-  }, [facilitation, isPoc]);
+    const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both'
+    return !isPoc || (isPoc && facilitationIncludesRegion)
+  }, [facilitation, isPoc])
 }

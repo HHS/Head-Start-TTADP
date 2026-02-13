@@ -1,20 +1,17 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useRef, useContext } from 'react';
-import PropTypes from 'prop-types';
-import {
-  DatePicker,
-  Dropdown,
-} from '@trussworks/react-uswds';
-import moment from 'moment';
-import DateRangePicker from './DateRangePicker';
-import { formatDateRange } from '../../utils';
-import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import FilterErrorContext from './FilterErrorContext';
+import React, { useRef, useContext } from 'react'
+import PropTypes from 'prop-types'
+import { DatePicker, Dropdown } from '@trussworks/react-uswds'
+import moment from 'moment'
+import DateRangePicker from './DateRangePicker'
+import { formatDateRange } from '../../utils'
+import { DATE_DISPLAY_FORMAT } from '../../Constants'
+import FilterErrorContext from './FilterErrorContext'
 
-const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
-const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD';
-const MIN_DATE = '2020-09-01';
-const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
+const QUERY_DATE_FORMAT = 'YYYY/MM/DD'
+const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD'
+const MIN_DATE = '2020-09-01'
+const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT)
 
 const DATE_OPTIONS = [
   {
@@ -25,50 +22,45 @@ const DATE_OPTIONS = [
     label: 'Year to date',
     value: formatDateRange({ yearToDate: true, forDateTime: true }),
   },
-];
+]
 
-export default function FilterDateRange({
-  condition,
-  onApplyDateRange,
-  query,
-  customDateOptions,
-}) {
-  const { setError } = useContext(FilterErrorContext);
+export default function FilterDateRange({ condition, onApplyDateRange, query, customDateOptions }) {
+  const { setError } = useContext(FilterErrorContext)
 
   // If we have any additional date options, we'll need to include and sort them
-  const DateOptionsToUse = customDateOptions || DATE_OPTIONS;
+  const DateOptionsToUse = customDateOptions || DATE_OPTIONS
 
   // we'll need this to do some of that vanilla stuff
-  const container = useRef();
+  const container = useRef()
 
-  const isOnChange = (e) => onApplyDateRange(e.target.value);
+  const isOnChange = (e) => onApplyDateRange(e.target.value)
 
   const onChange = (date) => {
-    const d = moment(date, DATE_DISPLAY_FORMAT);
+    const d = moment(date, DATE_DISPLAY_FORMAT)
 
     if (!d.isValid()) {
-      setError('Please enter a valid date');
-      return;
+      setError('Please enter a valid date')
+      return
     }
 
     if (d.isBefore(moment(MIN_DATE).format(DATEPICKER_DATE_FORMAT))) {
-      setError('Please enter a valid date');
-      return;
+      setError('Please enter a valid date')
+      return
     }
 
     if (d.isAfter(moment(MAX_DATE).format(DATEPICKER_DATE_FORMAT))) {
-      setError('Please enter a valid date');
-      return;
+      setError('Please enter a valid date')
+      return
     }
 
-    onApplyDateRange(d.format(QUERY_DATE_FORMAT));
-    setError('');
-  };
+    onApplyDateRange(d.format(QUERY_DATE_FORMAT))
+    setError('')
+  }
 
-  let defaultValue = '';
+  let defaultValue = ''
 
   if (query && moment(query, QUERY_DATE_FORMAT).isValid()) {
-    defaultValue = moment(query, QUERY_DATE_FORMAT).format(DATEPICKER_DATE_FORMAT);
+    defaultValue = moment(query, QUERY_DATE_FORMAT).format(DATEPICKER_DATE_FORMAT)
   }
 
   switch (condition) {
@@ -78,32 +70,18 @@ export default function FilterDateRange({
           <label htmlFor="filter-date-range" className="usa-sr-only">
             date
           </label>
-          <Dropdown
-            id="filter-date-range"
-            name="filter-date-range"
-            onChange={isOnChange}
-          >
-            {DateOptionsToUse.map(
-              (dateOption) => (
-                <option
-                  key={dateOption.value}
-                  value={dateOption.value}
-                >
-                  {dateOption.label}
-                </option>
-              ),
-            )}
+          <Dropdown id="filter-date-range" name="filter-date-range" onChange={isOnChange}>
+            {DateOptionsToUse.map((dateOption) => (
+              <option key={dateOption.value} value={dateOption.value}>
+                {dateOption.label}
+              </option>
+            ))}
           </Dropdown>
         </>
-      );
+      )
 
     case 'is within':
-      return (
-        <DateRangePicker
-          query={query}
-          onApply={onApplyDateRange}
-        />
-      );
+      return <DateRangePicker query={query} onApply={onApplyDateRange} />
     case 'is on or before':
       return (
         <span ref={container}>
@@ -120,7 +98,7 @@ export default function FilterDateRange({
             defaultValue={defaultValue}
           />
         </span>
-      );
+      )
     case 'is on or after':
       return (
         <span ref={container}>
@@ -137,9 +115,9 @@ export default function FilterDateRange({
             defaultValue={defaultValue}
           />
         </span>
-      );
+      )
     default:
-      return <input />;
+      return <input />
   }
 }
 
@@ -147,12 +125,14 @@ FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
   query: PropTypes.string.isRequired,
-  customDateOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    value: PropTypes.string.isRequired,
-  })),
-};
+  customDateOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      value: PropTypes.string.isRequired,
+    })
+  ),
+}
 
 FilterDateRange.defaultProps = {
   customDateOptions: null,
-};
+}

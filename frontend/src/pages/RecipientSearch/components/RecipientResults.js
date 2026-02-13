@@ -1,47 +1,40 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import PropTypes from 'prop-types';
-import Container from '../../../components/Container';
-import './RecipientResults.scss';
-import TableHeader from '../../../components/TableHeader';
+import React from 'react'
+import { Link } from 'react-router-dom'
+import PropTypes from 'prop-types'
+import Container from '../../../components/Container'
+import './RecipientResults.scss'
+import TableHeader from '../../../components/TableHeader'
 
-export default function RecipientResults({
-  recipients,
-  activePage,
-  offset,
-  perPage,
-  count,
-  handlePageChange,
-  requestSort,
-  sortConfig,
-}) {
-  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+export default function RecipientResults({ recipients, activePage, offset, perPage, count, handlePageChange, requestSort, sortConfig }) {
+  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '')
 
   const renderRecipient = (recipient) => {
-    const { regionId, programSpecialists } = recipient;
+    const { regionId, programSpecialists } = recipient
 
     return (
       <tr key={`${recipient.id} ${regionId}`}>
         <td>{regionId}</td>
-        <td><Link to={`/recipient-tta-records/${recipient.id}/region/${regionId}/profile`}>{recipient.name}</Link></td>
+        <td>
+          <Link to={`/recipient-tta-records/${recipient.id}/region/${regionId}/profile`}>{recipient.name}</Link>
+        </td>
         <td className="maxw-3">{programSpecialists}</td>
       </tr>
-    );
-  };
+    )
+  }
 
   const renderColumnHeader = (displayName, name) => {
-    const sortClassName = getClassNamesFor(name);
-    let fullAriaSort;
+    const sortClassName = getClassNamesFor(name)
+    let fullAriaSort
     switch (sortClassName) {
       case 'asc':
-        fullAriaSort = 'ascending';
-        break;
+        fullAriaSort = 'ascending'
+        break
       case 'desc':
-        fullAriaSort = 'descending';
-        break;
+        fullAriaSort = 'descending'
+        break
       default:
-        fullAriaSort = 'none';
-        break;
+        fullAriaSort = 'none'
+        break
     }
 
     return (
@@ -51,15 +44,13 @@ export default function RecipientResults({
           tabIndex={0}
           onClick={() => requestSort(name)}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
-          aria-label={`${displayName}. Activate to sort ${
-            sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
+          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
         >
           {displayName}
         </button>
       </th>
-    );
-  };
+    )
+  }
 
   return (
     <Container className="landing ttahub-recipient-results maxw-desktop" paddingX={0} paddingY={0}>
@@ -76,9 +67,7 @@ export default function RecipientResults({
         handlePageChange={handlePageChange}
       />
       <table aria-live="polite" className="usa-table usa-table--borderless usa-table--striped width-full maxw-full margin-y-0">
-        <caption className="usa-sr-only">
-          Recipient search results with sorting and pagination
-        </caption>
+        <caption className="usa-sr-only">Recipient search results with sorting and pagination</caption>
         <thead>
           <tr>
             {renderColumnHeader('Region', 'regionId')}
@@ -86,23 +75,25 @@ export default function RecipientResults({
             {renderColumnHeader('Program specialist', 'programSpecialist')}
           </tr>
         </thead>
-        <tbody>
-          {recipients.map((recipient) => renderRecipient(recipient))}
-        </tbody>
+        <tbody>{recipients.map((recipient) => renderRecipient(recipient))}</tbody>
       </table>
     </Container>
-  );
+  )
 }
 
 RecipientResults.propTypes = {
-  recipients: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    id: PropTypes.number,
-    grants: PropTypes.arrayOf(PropTypes.shape({
-      regionId: PropTypes.number,
-      programSpecialistName: PropTypes.string,
-    })),
-  })),
+  recipients: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      id: PropTypes.number,
+      grants: PropTypes.arrayOf(
+        PropTypes.shape({
+          regionId: PropTypes.number,
+          programSpecialistName: PropTypes.string,
+        })
+      ),
+    })
+  ),
   activePage: PropTypes.number.isRequired,
   offset: PropTypes.number.isRequired,
   perPage: PropTypes.number.isRequired,
@@ -113,8 +104,8 @@ RecipientResults.propTypes = {
     sortBy: PropTypes.string,
     direction: PropTypes.string,
   }).isRequired,
-};
+}
 
 RecipientResults.defaultProps = {
   recipients: [],
-};
+}

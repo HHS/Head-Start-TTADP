@@ -1,29 +1,24 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import join from 'url-join';
-import moment from 'moment';
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { useForm, FormProvider } from 'react-hook-form';
-import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
-import participants, { isPageComplete } from '../participants';
-import NetworkContext from '../../../../NetworkContext';
-import UserContext from '../../../../UserContext';
-import { NOT_STARTED } from '../../../../components/Navigator/constants';
-import AppLoadingContext from '../../../../AppLoadingContext';
+import React from 'react'
+import join from 'url-join'
+import moment from 'moment'
+import { render, screen, act, waitFor } from '@testing-library/react'
+import fetchMock from 'fetch-mock'
+import { useForm, FormProvider } from 'react-hook-form'
+import userEvent from '@testing-library/user-event'
+import selectEvent from 'react-select-event'
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants'
+import participants, { isPageComplete } from '../participants'
+import NetworkContext from '../../../../NetworkContext'
+import UserContext from '../../../../UserContext'
+import { NOT_STARTED } from '../../../../components/Navigator/constants'
+import AppLoadingContext from '../../../../AppLoadingContext'
 
-const sessionsUrl = join('/', 'api', 'session-reports');
-const participantsUrl = join(sessionsUrl, 'participants', '1');
-const groupsUrl = join(sessionsUrl, 'groups', '?region=1');
+const sessionsUrl = join('/', 'api', 'session-reports')
+const participantsUrl = join(sessionsUrl, 'participants', '1')
+const groupsUrl = join(sessionsUrl, 'groups', '?region=1')
 function mockRecipients(howMany) {
-  const mock = [];
+  const mock = []
   // eslint-disable-next-line no-plusplus
   for (let i = 0; i < howMany; i++) {
     mock.push({
@@ -43,10 +38,10 @@ function mockRecipients(howMany) {
           name: `R${i} G${i + 2}`,
         },
       ],
-    });
+    })
   }
 
-  return mock;
+  return mock
 }
 
 describe('participants', () => {
@@ -58,194 +53,232 @@ describe('participants', () => {
       ttaType: ['training'],
       recipients: [{ id: 1, label: 'Recipient 1' }],
       participants: ['Home Visitor'],
-    });
+    })
 
     const createValidVirtualData = () => ({
       ...createValidBaseFields(),
       deliveryMethod: 'virtual',
       numberOfParticipants: 10,
-    });
+    })
 
     const createValidInPersonData = () => ({
       ...createValidBaseFields(),
       deliveryMethod: 'in-person',
       numberOfParticipants: 15,
-    });
+    })
 
     const createValidHybridData = () => ({
       ...createValidBaseFields(),
       deliveryMethod: 'hybrid',
       numberOfParticipantsInPerson: 8,
       numberOfParticipantsVirtually: 7,
-    });
+    })
 
     describe('virtual delivery', () => {
       it('returns true when all required fields are present', () => {
-        const data = createValidVirtualData();
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(true);
-      });
+        const data = createValidVirtualData()
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(true)
+      })
 
       it('returns false when numberOfParticipants is missing', () => {
-        const data = createValidVirtualData();
-        delete data.numberOfParticipants;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidVirtualData()
+        delete data.numberOfParticipants
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when hybrid fields are present instead', () => {
-        const data = createValidVirtualData();
-        delete data.numberOfParticipants;
-        data.numberOfParticipantsInPerson = 5;
-        data.numberOfParticipantsVirtually = 5;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
-    });
+        const data = createValidVirtualData()
+        delete data.numberOfParticipants
+        data.numberOfParticipantsInPerson = 5
+        data.numberOfParticipantsVirtually = 5
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
+    })
 
     describe('in-person delivery', () => {
       it('returns true when all required fields are present', () => {
-        const data = createValidInPersonData();
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(true);
-      });
+        const data = createValidInPersonData()
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(true)
+      })
 
       it('returns false when numberOfParticipants is missing', () => {
-        const data = createValidInPersonData();
-        delete data.numberOfParticipants;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
-    });
+        const data = createValidInPersonData()
+        delete data.numberOfParticipants
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
+    })
 
     describe('hybrid delivery', () => {
       it('returns true when all required fields including both hybrid participant counts are present', () => {
-        const data = createValidHybridData();
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(true);
-      });
+        const data = createValidHybridData()
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(true)
+      })
 
       it('returns false when numberOfParticipantsInPerson is missing', () => {
-        const data = createValidHybridData();
-        delete data.numberOfParticipantsInPerson;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidHybridData()
+        delete data.numberOfParticipantsInPerson
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when numberOfParticipantsVirtually is missing', () => {
-        const data = createValidHybridData();
-        delete data.numberOfParticipantsVirtually;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidHybridData()
+        delete data.numberOfParticipantsVirtually
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when both hybrid participant counts are missing', () => {
-        const data = createValidHybridData();
-        delete data.numberOfParticipantsInPerson;
-        delete data.numberOfParticipantsVirtually;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidHybridData()
+        delete data.numberOfParticipantsInPerson
+        delete data.numberOfParticipantsVirtually
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when numberOfParticipants is present instead of hybrid fields', () => {
-        const data = createValidHybridData();
-        delete data.numberOfParticipantsInPerson;
-        delete data.numberOfParticipantsVirtually;
-        data.numberOfParticipants = 10;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
-    });
+        const data = createValidHybridData()
+        delete data.numberOfParticipantsInPerson
+        delete data.numberOfParticipantsVirtually
+        data.numberOfParticipants = 10
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
+    })
 
     describe('base field validation', () => {
       it('returns false when deliveryMethod is missing', () => {
-        const data = createValidVirtualData();
-        delete data.deliveryMethod;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidVirtualData()
+        delete data.deliveryMethod
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when language is missing', () => {
-        const data = createValidVirtualData();
-        delete data.language;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidVirtualData()
+        delete data.language
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when language is empty array', () => {
-        const data = createValidVirtualData();
-        data.language = [];
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidVirtualData()
+        data.language = []
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when ttaType is missing', () => {
-        const data = createValidVirtualData();
-        delete data.ttaType;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidVirtualData()
+        delete data.ttaType
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when ttaType is empty array', () => {
-        const data = createValidVirtualData();
-        data.ttaType = [];
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidVirtualData()
+        data.ttaType = []
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when recipients is missing', () => {
-        const data = createValidVirtualData();
-        delete data.recipients;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidVirtualData()
+        delete data.recipients
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when recipients is empty array', () => {
-        const data = createValidVirtualData();
-        data.recipients = [];
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidVirtualData()
+        data.recipients = []
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when participants is missing', () => {
-        const data = createValidVirtualData();
-        delete data.participants;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
+        const data = createValidVirtualData()
+        delete data.participants
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
 
       it('returns false when participants is empty array', () => {
-        const data = createValidVirtualData();
-        data.participants = [];
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
-      });
-    });
-  });
+        const data = createValidVirtualData()
+        data.participants = []
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false)
+      })
+    })
+  })
 
   describe('render', () => {
-    const userId = 1;
-    const todaysDate = moment().format('YYYY-MM-DD');
-    const onSaveDraft = jest.fn();
+    const userId = 1
+    const todaysDate = moment().format('YYYY-MM-DD')
+    const onSaveDraft = jest.fn()
 
     const defaultFormValues = {
       id: 1,
@@ -261,94 +294,76 @@ describe('participants', () => {
         1: NOT_STARTED,
         2: NOT_STARTED,
       },
-    };
+    }
 
     // eslint-disable-next-line react/prop-types
     const RenderParticipants = ({ formValues = defaultFormValues, additionalData = { status: 'In progress' } }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
-      });
+      })
 
       return (
-        <AppLoadingContext.Provider value={{
-          setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
-        }}
+        <AppLoadingContext.Provider
+          value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+          }}
         >
           <UserContext.Provider value={{ user: { id: userId } }}>
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
-                {participants.render(
-                  additionalData,
-                  formValues,
-                  1,
-                  false,
-                  jest.fn(),
-                  onSaveDraft,
-                  jest.fn(),
-                  false,
-                  'key',
-                  jest.fn(),
-                  () => <></>,
-                )}
+                {participants.render(additionalData, formValues, 1, false, jest.fn(), onSaveDraft, jest.fn(), false, 'key', jest.fn(), () => (
+                  <></>
+                ))}
               </NetworkContext.Provider>
             </FormProvider>
           </UserContext.Provider>
         </AppLoadingContext.Provider>
-      );
-    };
+      )
+    }
 
     beforeEach(async () => {
       // Mock recipients.
-      fetchMock.get(participantsUrl, mockRecipients(3));
+      fetchMock.get(participantsUrl, mockRecipients(3))
       // Mock groups.
-      const mockGroups = [{ id: 1, name: 'group 1', grants: [{ id: 0 }, { id: 1 }] }, { id: 2, name: 'group 2', grants: [{ id: 2 }, { id: 3 }] }];
-      fetchMock.get(groupsUrl, mockGroups);
-    });
+      const mockGroups = [
+        { id: 1, name: 'group 1', grants: [{ id: 0 }, { id: 1 }] },
+        { id: 2, name: 'group 2', grants: [{ id: 2 }, { id: 3 }] },
+      ]
+      fetchMock.get(groupsUrl, mockGroups)
+    })
 
     afterEach(async () => {
-      fetchMock.restore();
-    });
+      fetchMock.restore()
+    })
 
     it('renders participants', async () => {
       act(() => {
-        render(<RenderParticipants />);
-      });
-      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
-      await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0');
+        render(<RenderParticipants />)
+      })
+      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy())
+      await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0')
       act(() => {
-        userEvent.click(
-          screen.getByLabelText(/in person/i),
-        );
-      });
+        userEvent.click(screen.getByLabelText(/in person/i))
+      })
 
       act(() => {
-        userEvent.type(
-          screen.getByLabelText(/number of participants/i),
-          '1',
-        );
-      });
+        userEvent.type(screen.getByLabelText(/number of participants/i), '1')
+      })
 
       act(() => {
-        userEvent.click(
-          screen.getByLabelText(/hybrid/i),
-        );
-      });
+        userEvent.click(screen.getByLabelText(/hybrid/i))
+      })
 
       act(() => {
-        userEvent.type(
-          screen.getByLabelText(/Number of participants attending in person/i),
-          '1.75',
-        );
-      });
+        userEvent.type(screen.getByLabelText(/Number of participants attending in person/i), '1.75')
+      })
 
       act(() => {
-        userEvent.type(
-          screen.getByLabelText(/Number of participants attending virtually/i),
-          '2',
-        );
-      });
-    });
+        userEvent.type(screen.getByLabelText(/Number of participants attending virtually/i), '2')
+      })
+    })
 
     it('shows read only mode correctly for hybrid', async () => {
       const readOnlyFormValues = {
@@ -372,23 +387,23 @@ describe('participants', () => {
         participants: ['Home Visitor'],
         language: ['English'],
         isIstVisit: 'no',
-      };
+      }
 
       act(() => {
-        render(<RenderParticipants formValues={readOnlyFormValues} />);
-      });
-      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
+        render(<RenderParticipants formValues={readOnlyFormValues} />)
+      })
+      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible())
 
       // confirm hybrid is capitalized
-      const inPerson = await screen.findByText('Hybrid');
-      expect(inPerson).toBeVisible();
+      const inPerson = await screen.findByText('Hybrid')
+      expect(inPerson).toBeVisible()
 
       // confirm data is "headed" correctly
-      const inPersonLabel = await screen.findByText(/Number of participants attending in person/i);
-      expect(inPersonLabel).toBeVisible();
-      const virtuallyLabel = await screen.findByText(/Number of participants attending virtually/i);
-      expect(virtuallyLabel).toBeVisible();
-    });
+      const inPersonLabel = await screen.findByText(/Number of participants attending in person/i)
+      expect(inPersonLabel).toBeVisible()
+      const virtuallyLabel = await screen.findByText(/Number of participants attending virtually/i)
+      expect(virtuallyLabel).toBeVisible()
+    })
 
     it('only shows the continue button when the session status is complete', async () => {
       const readOnlyFormValues = {
@@ -412,90 +427,87 @@ describe('participants', () => {
         participants: ['Home Visitor'],
         language: ['English'],
         isIstVisit: 'no',
-      };
+      }
 
       act(() => {
-        render(<RenderParticipants
-          formValues={readOnlyFormValues}
-          additionalData={{ status: TRAINING_REPORT_STATUSES.COMPLETE }}
-        />);
-      });
-      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
-      expect(screen.queryByRole('button', { name: 'Save and continue' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Continue' })).toBeInTheDocument();
-    });
+        render(<RenderParticipants formValues={readOnlyFormValues} additionalData={{ status: TRAINING_REPORT_STATUSES.COMPLETE }} />)
+      })
+      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible())
+      expect(screen.queryByRole('button', { name: 'Save and continue' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Continue' })).toBeInTheDocument()
+    })
 
     describe('groups', () => {
       it('correctly shows and hides all group options', async () => {
-        render(<RenderParticipants />);
+        render(<RenderParticipants />)
 
         // Click the use group checkbox.
-        let useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
+        let useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i })
 
         act(() => {
-          userEvent.click(useGroupCheckbox);
-        });
+          userEvent.click(useGroupCheckbox)
+        })
 
         // Correctly shows the group drop down.
-        const groupOption = screen.getByRole('combobox', { name: /group name required/i });
-        expect(groupOption).toBeInTheDocument();
+        const groupOption = screen.getByRole('combobox', { name: /group name required/i })
+        expect(groupOption).toBeInTheDocument()
 
         // Uncheck the use group checkbox.
-        useGroupCheckbox = screen.getByRole('checkbox', { name: /use group/i });
+        useGroupCheckbox = screen.getByRole('checkbox', { name: /use group/i })
         act(() => {
-          userEvent.click(useGroupCheckbox);
-        });
+          userEvent.click(useGroupCheckbox)
+        })
 
         // Assert that the group drop down is no longer visible.
-        expect(groupOption).not.toBeInTheDocument();
-      });
+        expect(groupOption).not.toBeInTheDocument()
+      })
 
       it('hides the use group check box if we dont have any groups', async () => {
-        fetchMock.get(groupsUrl, [], { overwriteRoutes: true });
-        render(<RenderParticipants />);
-        expect(screen.queryAllByRole('checkbox', { name: /use group/i }).length).toBe(0);
-      });
+        fetchMock.get(groupsUrl, [], { overwriteRoutes: true })
+        render(<RenderParticipants />)
+        expect(screen.queryAllByRole('checkbox', { name: /use group/i }).length).toBe(0)
+      })
 
       it('correctly shows message if group recipients are changed', async () => {
         act(() => {
-          render(<RenderParticipants />);
-        });
-        await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
-        await waitFor(() => expect(fetchMock.called(groupsUrl)).toBeTruthy());
+          render(<RenderParticipants />)
+        })
+        await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy())
+        await waitFor(() => expect(fetchMock.called(groupsUrl)).toBeTruthy())
 
-        await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0 G0');
-        expect(screen.getByText(/R0 G0/i)).toBeVisible();
+        await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0 G0')
+        expect(screen.getByText(/R0 G0/i)).toBeVisible()
 
         // Click the use group checkbox.
-        const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
+        const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i })
         act(() => {
-          userEvent.click(useGroupCheckbox);
-        });
+          userEvent.click(useGroupCheckbox)
+        })
 
         // Correctly shows the group drop down.
-        const groupOption = screen.getByRole('combobox', { name: /group name required/i });
-        expect(groupOption).toBeInTheDocument();
+        const groupOption = screen.getByRole('combobox', { name: /group name required/i })
+        expect(groupOption).toBeInTheDocument()
 
         await act(async () => {
-          const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
-          userEvent.selectOptions(groupSelectBox, 'group 1');
+          const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i })
+          userEvent.selectOptions(groupSelectBox, 'group 1')
           await waitFor(() => {
-          // expect Group 2 to be visible.
-            expect(screen.getByText('group 1')).toBeVisible();
-          });
-        });
+            // expect Group 2 to be visible.
+            expect(screen.getByText('group 1')).toBeVisible()
+          })
+        })
 
-        await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0 G2');
-        expect(screen.getByText(/you've successfully modified the group/i)).toBeInTheDocument();
+        await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0 G2')
+        expect(screen.getByText(/you've successfully modified the group/i)).toBeInTheDocument()
 
         // Make sure reset works.
-        const resetButton = screen.getByRole('button', { name: /reset or select a different group\./i });
-        userEvent.click(resetButton);
+        const resetButton = screen.getByRole('button', { name: /reset or select a different group\./i })
+        userEvent.click(resetButton)
 
         // Assert use group check box is checked.
-        expect(useGroupCheckbox).toBeChecked();
-      });
-    });
+        expect(useGroupCheckbox).toBeChecked()
+      })
+    })
 
     it('uses event regionId when form regionId is not provided', async () => {
       const formValues = {
@@ -515,37 +527,37 @@ describe('participants', () => {
         event: {
           regionId: 2,
         },
-      };
+      }
 
       const additionalData = {
         status: 'In progress',
-      };
+      }
 
-      const participantsUrlRegion2 = join(sessionsUrl, 'participants', '2');
-      fetchMock.get(participantsUrlRegion2, []);
+      const participantsUrlRegion2 = join(sessionsUrl, 'participants', '2')
+      fetchMock.get(participantsUrlRegion2, [])
 
-      const groupsUrlRegion2 = join(sessionsUrl, 'groups', '?region=2');
-      fetchMock.get(groupsUrlRegion2, []);
+      const groupsUrlRegion2 = join(sessionsUrl, 'groups', '?region=2')
+      fetchMock.get(groupsUrlRegion2, [])
 
       act(() => {
-        render(<RenderParticipants formValues={formValues} additionalData={additionalData} />);
-      });
+        render(<RenderParticipants formValues={formValues} additionalData={additionalData} />)
+      })
 
       await waitFor(() => {
-        expect(fetchMock.called(groupsUrlRegion2)).toBe(true);
-        expect(fetchMock.called(participantsUrlRegion2)).toBe(true);
-      });
-    });
-  });
+        expect(fetchMock.called(groupsUrlRegion2)).toBe(true)
+        expect(fetchMock.called(participantsUrlRegion2)).toBe(true)
+      })
+    })
+  })
 
   describe('ReviewSection', () => {
     it('exports a reviewSection function', () => {
-      expect(typeof participants.reviewSection).toBe('function');
-      expect(participants.reviewSection).toBeDefined();
-    });
+      expect(typeof participants.reviewSection).toBe('function')
+      expect(participants.reviewSection).toBeDefined()
+    })
 
     it('has the correct review property', () => {
-      expect(participants.review).toBe(false);
-    });
-  });
-});
+      expect(participants.review).toBe(false)
+    })
+  })
+})

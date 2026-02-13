@@ -1,10 +1,10 @@
-import PropTypes from 'prop-types';
+import PropTypes from 'prop-types'
 
 export const filterSelectProps = {
   query: PropTypes.arrayOf(PropTypes.string),
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-};
+}
 
 export const filterConfigProp = PropTypes.shape({
   id: PropTypes.string,
@@ -18,14 +18,12 @@ export const filterConfigProp = PropTypes.shape({
   }),
   displayQuery: PropTypes.func,
   renderInput: PropTypes.func,
-});
+})
 
 // save this to cut down on repeated boilerplate in PropTypes
 export const filterProp = PropTypes.shape({
   topic: PropTypes.string,
   condition: PropTypes.string,
-  query: PropTypes.oneOfType([
-    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
-  ]),
+  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number]),
   id: PropTypes.string,
-});
+})

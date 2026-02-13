@@ -21,9 +21,9 @@ import {
   activityReportGoalResponseFilter,
   regionFilter,
   grantStatusFilter,
-} from '../../components/filter/activityReportFilters';
-import { goalNameFilter } from '../../components/filter/goalFilters';
-import { groupsFilter } from '../../components/filter/grantFilters';
+} from '../../components/filter/activityReportFilters'
+import { goalNameFilter } from '../../components/filter/goalFilters'
+import { groupsFilter } from '../../components/filter/grantFilters'
 
 const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
@@ -49,9 +49,9 @@ const DASHBOARD_FILTER_CONFIG = [
   topicsFilter,
   ttaTypeFilter,
   grantStatusFilter,
-];
+]
 
 // sort by display prop
-DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display))
 
-export { DASHBOARD_FILTER_CONFIG };
+export { DASHBOARD_FILTER_CONFIG }

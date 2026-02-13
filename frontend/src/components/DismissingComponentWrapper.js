@@ -1,33 +1,23 @@
-import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect } from 'react'
+import PropTypes from 'prop-types'
 
-function DismissingComponentWrapper({
-  shown, timeVisibleInSec, hideFromScreenReader, children, updateShown,
-}) {
+function DismissingComponentWrapper({ shown, timeVisibleInSec, hideFromScreenReader, children, updateShown }) {
   useEffect(() => {
-    let id;
+    let id
     if (shown) {
       id = setTimeout(() => {
-        updateShown(false);
-      }, [timeVisibleInSec * 1000]);
+        updateShown(false)
+      }, [timeVisibleInSec * 1000])
     } else {
-      clearTimeout(id);
+      clearTimeout(id)
     }
 
     return () => {
-      clearTimeout(id);
-    };
-  });
+      clearTimeout(id)
+    }
+  })
 
-  return (
-    <>
-      {shown && (
-      <div aria-hidden={hideFromScreenReader}>
-        {children}
-      </div>
-      )}
-    </>
-  );
+  return <>{shown && <div aria-hidden={hideFromScreenReader}>{children}</div>}</>
 }
 
 DismissingComponentWrapper.propTypes = {
@@ -36,12 +26,12 @@ DismissingComponentWrapper.propTypes = {
   hideFromScreenReader: PropTypes.bool,
   updateShown: PropTypes.func.isRequired,
   children: PropTypes.node,
-};
+}
 
 DismissingComponentWrapper.defaultProps = {
   timeVisibleInSec: 30,
   hideFromScreenReader: true,
   children: null,
-};
+}
 
-export default DismissingComponentWrapper;
+export default DismissingComponentWrapper

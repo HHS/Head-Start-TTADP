@@ -1,42 +1,31 @@
-import React, {
-  useContext,
-  useState,
-  useRef,
-} from 'react';
-import { Link } from 'react-router-dom';
-import moment from 'moment';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
-import colors from '../../../colors';
-import RecipientsWithNoTtaWidget from '../../../widgets/RecipientsWithNoTtaWidget';
-import FilterPanel from '../../../components/filter/FilterPanel';
-import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
-import useFilters from '../../../hooks/useFilters';
-import Drawer from '../../../components/Drawer';
-import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
-import UserContext from '../../../UserContext';
-import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
-import { getSelfServiceData } from '../../../fetchers/ssdi';
+import React, { useContext, useState, useRef } from 'react'
+import { Link } from 'react-router-dom'
+import moment from 'moment'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import useDeepCompareEffect from 'use-deep-compare-effect'
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import PropTypes from 'prop-types'
+import { Helmet } from 'react-helmet'
+import { Grid, Alert } from '@trussworks/react-uswds'
+import colors from '../../../colors'
+import RecipientsWithNoTtaWidget from '../../../widgets/RecipientsWithNoTtaWidget'
+import FilterPanel from '../../../components/filter/FilterPanel'
+import FilterPanelContainer from '../../../components/filter/FilterPanelContainer'
+import useFilters from '../../../hooks/useFilters'
+import Drawer from '../../../components/Drawer'
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag'
+import DrawerTriggerButton from '../../../components/DrawerTriggerButton'
+import UserContext from '../../../UserContext'
+import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants'
+import { getSelfServiceData } from '../../../fetchers/ssdi'
 
-const ALLOWED_SUBFILTERS = [
-  'region',
-  'startDate',
-  'endDate',
-  'grantNumber',
-  'recipient',
-  'stateCode',
-];
+const ALLOWED_SUBFILTERS = ['region', 'startDate', 'endDate', 'grantNumber', 'recipient', 'stateCode']
 export default function RecipientsWithNoTta() {
-  const pageDrawerRef = useRef(null);
-  const [error, updateError] = useState();
-  const [isLoading, setIsLoading] = useState(false);
-  const [recipientsWithNoTTA, setRecipientsWithNoTTA] = useState([]);
-  const { user } = useContext(UserContext);
+  const pageDrawerRef = useRef(null)
+  const [error, updateError] = useState()
+  const [isLoading, setIsLoading] = useState(false)
+  const [recipientsWithNoTTA, setRecipientsWithNoTTA] = useState([])
+  const { user } = useContext(UserContext)
   const {
     // from useUserDefaultRegionFilters
     regions,
@@ -46,47 +35,32 @@ export default function RecipientsWithNoTta() {
     onApplyFilters,
     onRemoveFilter,
     filterConfig,
-  } = useFilters(
-    user,
-    QA_DASHBOARD_FILTER_KEY,
-    true,
-    [],
-    QA_DASHBOARD_FILTER_CONFIG,
-  );
+  } = useFilters(user, QA_DASHBOARD_FILTER_KEY, true, [], QA_DASHBOARD_FILTER_CONFIG)
 
   useDeepCompareEffect(() => {
     async function fetchQaData() {
-      setIsLoading(true);
+      setIsLoading(true)
       // Filters passed also contains region.
       try {
-        const data = await getSelfServiceData(
-          'recipients-with-no-tta',
-          filters,
-          ['no_tta_widget', 'no_tta_page'],
-        );
+        const data = await getSelfServiceData('recipients-with-no-tta', filters, ['no_tta_widget', 'no_tta_page'])
 
         // Get summary and row data.
-        const pageData = data.filter((d) => d.data_set === 'no_tta_page');
-        const widgetData = data.filter((d) => d.data_set === 'no_tta_widget');
+        const pageData = data.filter((d) => d.data_set === 'no_tta_page')
+        const widgetData = data.filter((d) => d.data_set === 'no_tta_widget')
 
         // Format the recipient data for the generic widget.
         let formattedRecipientPageData = pageData[0].data.map((item) => {
-          const recipientId = item['recipient id'];
-          const regionId = item['region id'];
-          const recipientName = item['recipient name'];
-          const dateOfLastTta = item['last tta'];
-          const daysSinceLastTta = item['days since last tta'];
+          const recipientId = item['recipient id']
+          const regionId = item['region id']
+          const recipientName = item['recipient name']
+          const dateOfLastTta = item['last tta']
+          const daysSinceLastTta = item['days since last tta']
 
-          const parsedDate = dateOfLastTta ? moment(dateOfLastTta) : null;
-          const formattedDate = parsedDate && parsedDate.isValid()
-            ? parsedDate.format('MM/DD/YYYY')
-            : null;
+          const parsedDate = dateOfLastTta ? moment(dateOfLastTta) : null
+          const formattedDate = parsedDate && parsedDate.isValid() ? parsedDate.format('MM/DD/YYYY') : null
 
-          const numericDaysSinceLastTta = Number(daysSinceLastTta);
-          const safeDaysSinceLastTta = Number.isFinite(numericDaysSinceLastTta)
-            && numericDaysSinceLastTta >= 0
-            ? numericDaysSinceLastTta
-            : null;
+          const numericDaysSinceLastTta = Number(daysSinceLastTta)
+          const safeDaysSinceLastTta = Number.isFinite(numericDaysSinceLastTta) && numericDaysSinceLastTta >= 0 ? numericDaysSinceLastTta : null
 
           return {
             id: recipientId,
@@ -106,32 +80,32 @@ export default function RecipientsWithNoTta() {
                 value: safeDaysSinceLastTta,
               },
             ],
-          };
-        });
+          }
+        })
 
         // Sort formattedRecipientPageData by Days Since Last TTA desc.
-        formattedRecipientPageData.sort((a, b) => b.data[1].value - a.data[1].value);
+        formattedRecipientPageData.sort((a, b) => b.data[1].value - a.data[1].value)
 
         // Add headers.
         formattedRecipientPageData = {
           headers: ['Date of Last TTA', 'Days Since Last TTA'],
           RecipientsWithNoTta: [...formattedRecipientPageData],
-        };
+        }
 
         setRecipientsWithNoTTA({
           pageData: formattedRecipientPageData,
           widgetData: widgetData[0].data[0],
-        });
-        updateError('');
+        })
+        updateError('')
       } catch (e) {
-        updateError('Unable to fetch QA data');
+        updateError('Unable to fetch QA data')
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     }
     // Call resources fetch.
-    fetchQaData();
-  }, [filters]);
+    fetchQaData()
+  }, [filters])
 
   return (
     <div className="ttahub-recipients-with-no-tta">
@@ -142,14 +116,12 @@ export default function RecipientsWithNoTta() {
       <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/dashboards/qa-dashboard">
         Back to Quality Assurance Dashboard
       </Link>
-      <h1 className="landing margin-top-0">
-        Recipients with no TTA
-      </h1>
+      <h1 className="landing margin-top-0">Recipients with no TTA</h1>
       <Grid row>
         {error && (
-        <Alert className="margin-bottom-2" type="error" role="alert">
-          {error}
-        </Alert>
+          <Alert className="margin-bottom-2" type="error" role="alert">
+            {error}
+          </Alert>
         )}
       </Grid>
       <FilterPanelContainer>
@@ -166,20 +138,12 @@ export default function RecipientsWithNoTta() {
       <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
         Learn how filters impact the data displayed
       </DrawerTriggerButton>
-      <Drawer
-        triggerRef={pageDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="QA dashboard filters"
-      >
+      <Drawer triggerRef={pageDrawerRef} stickyHeader stickyFooter title="QA dashboard filters">
         <ContentFromFeedByTag tagName="ttahub-qa-dash-recipients-no-tta-filter" />
       </Drawer>
-      <RecipientsWithNoTtaWidget
-        data={recipientsWithNoTTA}
-        loading={isLoading}
-      />
+      <RecipientsWithNoTtaWidget data={recipientsWithNoTTA} loading={isLoading} />
     </div>
-  );
+  )
 }
 
 RecipientsWithNoTta.propTypes = {
@@ -188,14 +152,16 @@ RecipientsWithNoTta.propTypes = {
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
     homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-      scopeId: PropTypes.number,
-      regionId: PropTypes.number,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number,
+        scopeId: PropTypes.number,
+        regionId: PropTypes.number,
+      })
+    ),
   }),
-};
+}
 
 RecipientsWithNoTta.defaultProps = {
   user: null,
-};
+}

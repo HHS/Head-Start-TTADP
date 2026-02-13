@@ -1,15 +1,13 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { NavLink as Link } from 'react-router-dom';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { NavLink as Link } from 'react-router-dom'
 
-function NavLink({
-  children, to, exact, fn,
-}) {
+function NavLink({ children, to, exact, fn }) {
   return (
     <Link className="usa-nav__link" to={to} activeClassName="usa-current" exact={exact} onClick={fn}>
-      { children }
+      {children}
     </Link>
-  );
+  )
 }
 
 NavLink.propTypes = {
@@ -17,11 +15,11 @@ NavLink.propTypes = {
   to: PropTypes.string.isRequired,
   exact: PropTypes.bool,
   fn: PropTypes.func,
-};
+}
 
 NavLink.defaultProps = {
   exact: false,
   fn: () => {},
-};
+}
 
-export default NavLink;
+export default NavLink

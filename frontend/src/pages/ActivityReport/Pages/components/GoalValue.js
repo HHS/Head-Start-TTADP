@@ -5,18 +5,14 @@
  */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/prop-types */
-import React from 'react';
+import React from 'react'
 
-const SingleValue = (
-  props,
-) => {
-  const {
-    className, cx, data, getStyles, isDisabled, innerProps, children,
-  } = props;
+const SingleValue = (props) => {
+  const { className, cx, data, getStyles, isDisabled, innerProps, children } = props
 
-  const { name } = data;
+  const { name } = data
 
-  const label = children || name;
+  const label = children || name
 
   return (
     <div
@@ -26,13 +22,13 @@ const SingleValue = (
           'single-value': true,
           'single-value--is-disabled': isDisabled,
         },
-        className,
+        className
       )}
       {...innerProps}
     >
-      { label }
+      {label}
     </div>
-  );
-};
+  )
+}
 
-export default SingleValue;
+export default SingleValue

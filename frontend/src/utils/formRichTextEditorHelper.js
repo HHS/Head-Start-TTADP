@@ -34,13 +34,13 @@
 export const shouldUpdateFormData = (isAutoSave) => {
   // Manual saves should always update form data
   if (!isAutoSave) {
-    return true;
+    return true
   }
 
   // Check if cursor is currently in any rich text editor
-  const richTextEditors = document.querySelectorAll('.rdw-editor-main');
-  const selection = document.getSelection();
+  const richTextEditors = document.querySelectorAll('.rdw-editor-main')
+  const selection = document.getSelection()
 
   // Return false (don't update) if cursor is within a rich text editor
-  return !(Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode)));
-};
+  return !Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode))
+}

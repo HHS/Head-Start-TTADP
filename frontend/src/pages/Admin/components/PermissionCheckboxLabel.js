@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from 'react'
+import PropTypes from 'prop-types'
 
 function PermissionCheckboxLabel({ name, description }) {
   return (
@@ -8,12 +8,12 @@ function PermissionCheckboxLabel({ name, description }) {
       {': '}
       {description}
     </>
-  );
+  )
 }
 
 PermissionCheckboxLabel.propTypes = {
   name: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
-};
+}
 
-export default PermissionCheckboxLabel;
+export default PermissionCheckboxLabel

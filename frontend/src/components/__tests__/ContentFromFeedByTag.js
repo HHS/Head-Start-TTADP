@@ -1,13 +1,8 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import ContentFromFeedByTag from '../ContentFromFeedByTag';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen, act, waitFor } from '@testing-library/react'
+import fetchMock from 'fetch-mock'
+import ContentFromFeedByTag from '../ContentFromFeedByTag'
 
 const DEFAULT_RESPONSE = `<?xml version="1.0" encoding="UTF-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -40,52 +35,43 @@ const DEFAULT_RESPONSE = `<?xml version="1.0" encoding="UTF-8"?>
   &lt;/div&gt;</summary>
       <dc:creator>Anonymous Hub User</dc:creator>
       <dc:date>2023-03-22T21:03:16Z</dc:date>
-    </entry></feed>`;
+    </entry></feed>`
 
 describe('ContentFromFeedByTag', () => {
-  afterEach(() => fetchMock.restore());
+  afterEach(() => fetchMock.restore())
 
-  const renderContentFromFeed = (
-    tag = 'tag',
-    content = DEFAULT_RESPONSE,
-    selector = null,
-    openLinksInNewTab = false,
-  ) => {
-    fetchMock.get(`/api/feeds/item?tag=${tag}`, content);
+  const renderContentFromFeed = (tag = 'tag', content = DEFAULT_RESPONSE, selector = null, openLinksInNewTab = false) => {
+    fetchMock.get(`/api/feeds/item?tag=${tag}`, content)
     // eslint-disable-next-line max-len
-    render(<ContentFromFeedByTag tagName={tag} contentSelector={selector} openLinksInNewTab={openLinksInNewTab} />);
-  };
+    render(<ContentFromFeedByTag tagName={tag} contentSelector={selector} openLinksInNewTab={openLinksInNewTab} />)
+  }
 
   it('renders a feed', async () => {
     act(() => {
-      renderContentFromFeed();
-    });
+      renderContentFromFeed()
+    })
 
-    expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
-  });
+    expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument()
+  })
 
   it('renders an extract from a feed', async () => {
     act(() => {
-      renderContentFromFeed(
-        'tag',
-        DEFAULT_RESPONSE,
-        '[data-linked-resource-id="8028231"]',
-      );
-    });
+      renderContentFromFeed('tag', DEFAULT_RESPONSE, '[data-linked-resource-id="8028231"]')
+    })
 
-    expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
-  });
+    expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument()
+  })
 
   it('handles an error', async () => {
     act(() => {
-      renderContentFromFeed('test', 500);
-    });
+      renderContentFromFeed('test', 500)
+    })
 
     await waitFor(() => {
-      const readOnly = document.querySelector('.ttahub-single-feed-item--by-tag');
-      expect(readOnly).toBeTruthy();
-    });
-  });
+      const readOnly = document.querySelector('.ttahub-single-feed-item--by-tag')
+      expect(readOnly).toBeTruthy()
+    })
+  })
 
   it('renders a feed with no content', async () => {
     const response = `<?xml version="1.0" encoding="UTF-8"?>
@@ -107,17 +93,17 @@ describe('ContentFromFeedByTag', () => {
       <summary type="html"></summary>
       <dc:creator>Anonymous Hub User</dc:creator>
       <dc:date>2023-03-22T21:03:16Z</dc:date>
-    </entry></feed>`;
+    </entry></feed>`
 
     act(() => {
-      renderContentFromFeed('tag', response);
-    });
+      renderContentFromFeed('tag', response)
+    })
 
     await waitFor(() => {
-      const readOnly = document.querySelector('.ttahub-single-feed-item--by-tag');
-      expect(readOnly).toBeTruthy();
-    });
-  });
+      const readOnly = document.querySelector('.ttahub-single-feed-item--by-tag')
+      expect(readOnly).toBeTruthy()
+    })
+  })
 
   it('properly formats support type response (as an example)', async () => {
     const supportTypeResponse = `<?xml version="1.0" encoding="UTF-8"?>
@@ -158,38 +144,33 @@ describe('ContentFromFeedByTag', () => {
     <dc:creator>User Author</dc:creator>
     <dc:date>2024-09-13T15:11:34Z</dc:date>
   </entry>
-</feed>`;
+</feed>`
 
     act(() => {
-      renderContentFromFeed(
-        'tag',
-        supportTypeResponse,
-        null,
-        true,
-      );
-    });
+      renderContentFromFeed('tag', supportTypeResponse, null, true)
+    })
 
-    const article = document.querySelector('.ttahub-feed-article-content');
-    expect(article).not.toBeNull();
-    const lists = article.querySelectorAll('ul');
+    const article = document.querySelector('.ttahub-feed-article-content')
+    expect(article).not.toBeNull()
+    const lists = article.querySelectorAll('ul')
     lists.forEach((list) => {
-      expect(list).toHaveClass('usa-list');
-    });
+      expect(list).toHaveClass('usa-list')
+    })
 
-    const tables = article.querySelectorAll('table');
+    const tables = article.querySelectorAll('table')
     tables.forEach((table) => {
-      expect(table).toHaveClass('usa-table');
-    });
+      expect(table).toHaveClass('usa-table')
+    })
 
-    const paragraphs = article.querySelectorAll('p');
+    const paragraphs = article.querySelectorAll('p')
     paragraphs.forEach((paragraph) => {
-      expect(paragraph).toHaveClass('usa-prose');
-    });
+      expect(paragraph).toHaveClass('usa-prose')
+    })
 
-    const links = article.querySelectorAll('a');
+    const links = article.querySelectorAll('a')
     links.forEach((link) => {
-      expect(link).toHaveAttribute('target', '_blank');
-      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-    });
-  });
-});
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    })
+  })
+})

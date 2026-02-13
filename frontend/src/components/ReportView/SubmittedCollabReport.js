@@ -1,16 +1,10 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import moment from 'moment-timezone';
-import { REPORT_STATUSES } from '@ttahub/common/src/constants';
-import Container from '../Container';
-import {
-  DATE_DISPLAY_FORMAT,
-  STATES,
-  COLLAB_REPORT_REASONS,
-  COLLAB_REPORT_DATA,
-  COLLAB_REPORT_CONDUCT_METHODS,
-} from '../../Constants';
-import ReadOnlyContent from '../ReadOnlyContent';
+import React from 'react'
+import PropTypes from 'prop-types'
+import moment from 'moment-timezone'
+import { REPORT_STATUSES } from '@ttahub/common/src/constants'
+import Container from '../Container'
+import { DATE_DISPLAY_FORMAT, STATES, COLLAB_REPORT_REASONS, COLLAB_REPORT_DATA, COLLAB_REPORT_CONDUCT_METHODS } from '../../Constants'
+import ReadOnlyContent from '../ReadOnlyContent'
 
 export function formatNextSteps(nextSteps) {
   return nextSteps.map((step, index) => ({
@@ -19,7 +13,7 @@ export function formatNextSteps(nextSteps) {
       'Anticipated completion': step.collabStepCompleteDate,
     },
     striped: false,
-  }));
+  }))
 }
 
 export default function SubmittedCollabReport({ report }) {
@@ -47,97 +41,89 @@ export default function SubmittedCollabReport({ report }) {
     dataUsed,
     otherDataUsed,
     steps,
-  } = report;
+  } = report
 
   // Format dates
-  const formattedStartDate = moment(startDate).format(DATE_DISPLAY_FORMAT);
-  const formattedEndDate = moment(endDate).format(DATE_DISPLAY_FORMAT);
-  const formattedDuration = `${duration} hours`;
-  const formattedCreatedAt = moment(createdAt).format(DATE_DISPLAY_FORMAT);
-  const formattedSubmittedAt = moment(submittedAt).format(DATE_DISPLAY_FORMAT);
-  const formattedApprovedAt = moment(approvedAt).format(DATE_DISPLAY_FORMAT);
+  const formattedStartDate = moment(startDate).format(DATE_DISPLAY_FORMAT)
+  const formattedEndDate = moment(endDate).format(DATE_DISPLAY_FORMAT)
+  const formattedDuration = `${duration} hours`
+  const formattedCreatedAt = moment(createdAt).format(DATE_DISPLAY_FORMAT)
+  const formattedSubmittedAt = moment(submittedAt).format(DATE_DISPLAY_FORMAT)
+  const formattedApprovedAt = moment(approvedAt).format(DATE_DISPLAY_FORMAT)
 
   // Process collaborating specialists
   const collaboratingSpecialists = collabReportSpecialists?.length
-    ? collabReportSpecialists.map((cs) => cs.specialist?.fullName || cs.specialist?.name).filter(Boolean).join(', ')
-    : 'None provided';
+    ? collabReportSpecialists
+        .map((cs) => cs.specialist?.fullName || cs.specialist?.name)
+        .filter(Boolean)
+        .join(', ')
+    : 'None provided'
 
   // Process approvers
   const approvingManagers = approvers
-    ? approvers.map((a) => a.user?.fullName).filter(Boolean).join(', ')
-    : 'None provided';
+    ? approvers
+        .map((a) => a.user?.fullName)
+        .filter(Boolean)
+        .join(', ')
+    : 'None provided'
 
-  const creator = author?.fullName || 'Unknown';
+  const creator = author?.fullName || 'Unknown'
 
-  const formattedMethod = COLLAB_REPORT_CONDUCT_METHODS.filter((m) => (
-    m.value === report.conductMethod
-  ))[0]?.label || '';
-  const formattedStates = statesInvolved?.map((activityStateCode) => STATES[activityStateCode] || '').join(', ') || '';
-  const formattedReasons = reportReasons?.map((reasonId) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ');
-  const formattedGoals = reportGoals?.map((goal) => goal?.goalTemplate?.standard || '').join(', ') || 'None';
-  const formattedDataUsed = dataUsed?.map(({ collabReportDatum }) => {
-    if (collabReportDatum === 'other') {
-      return `Other: ${otherDataUsed}`;
-    }
+  const formattedMethod = COLLAB_REPORT_CONDUCT_METHODS.filter((m) => m.value === report.conductMethod)[0]?.label || ''
+  const formattedStates = statesInvolved?.map((activityStateCode) => STATES[activityStateCode] || '').join(', ') || ''
+  const formattedReasons = reportReasons?.map((reasonId) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ')
+  const formattedGoals = reportGoals?.map((goal) => goal?.goalTemplate?.standard || '').join(', ') || 'None'
+  const formattedDataUsed =
+    dataUsed
+      ?.map(({ collabReportDatum }) => {
+        if (collabReportDatum === 'other') {
+          return `Other: ${otherDataUsed}`
+        }
 
-    return COLLAB_REPORT_DATA[collabReportDatum] || '';
-  }).join(', ') || 'None';
-  const formattedParticipants = participants?.map((p) => {
-    if (p === 'Other' && otherParticipants) {
-      return `Other: ${otherParticipants}`;
-    }
-    return p;
-  }).join(', ');
+        return COLLAB_REPORT_DATA[collabReportDatum] || ''
+      })
+      .join(', ') || 'None'
+  const formattedParticipants = participants
+    ?.map((p) => {
+      if (p === 'Other' && otherParticipants) {
+        return `Other: ${otherParticipants}`
+      }
+      return p
+    })
+    .join(', ')
 
-  const activityType = isStateActivity ? 'State' : 'Regional';
+  const activityType = isStateActivity ? 'State' : 'Regional'
 
   return (
     <div data-testid="submitted-collab-report">
       <Container className="ttahub-collab-report-view margin-top-2">
         <h1 className="landing margin-top-0 margin-bottom-4">
           Collaboration report
-          {displayId && (
-          <>
-            {' '}
-            {displayId}
-          </>
-          )}
+          {displayId && <> {displayId}</>}
         </h1>
 
         <div className="ttahub-collab-report-view-creator-data margin-bottom-4">
           <p>
-            <strong>Creator:</strong>
-            {' '}
-            {creator}
+            <strong>Creator:</strong> {creator}
           </p>
           <p>
-            <strong>Collaborators:</strong>
-            {' '}
-            {collaboratingSpecialists}
+            <strong>Collaborators:</strong> {collaboratingSpecialists}
           </p>
           <p>
-            <strong>Managers:</strong>
-            {' '}
-            {approvingManagers}
+            <strong>Managers:</strong> {approvingManagers}
           </p>
           <p>
-            <strong>Date created:</strong>
-            {' '}
-            {formattedCreatedAt}
+            <strong>Date created:</strong> {formattedCreatedAt}
           </p>
-          {(submissionStatus === REPORT_STATUSES.SUBMITTED) && (
-          <p>
-            <strong>Date submitted:</strong>
-            {' '}
-            {formattedSubmittedAt}
-          </p>
+          {submissionStatus === REPORT_STATUSES.SUBMITTED && (
+            <p>
+              <strong>Date submitted:</strong> {formattedSubmittedAt}
+            </p>
           )}
-          {(calculatedStatus === REPORT_STATUSES.APPROVED) && (
-          <p>
-            <strong>Date approved:</strong>
-            {' '}
-            {formattedApprovedAt}
-          </p>
+          {calculatedStatus === REPORT_STATUSES.APPROVED && (
+            <p>
+              <strong>Date approved:</strong> {formattedApprovedAt}
+            </p>
           )}
         </div>
 
@@ -163,8 +149,7 @@ export default function SubmittedCollabReport({ report }) {
               data: {
                 'Activity purpose': formattedReasons,
                 'Activity type': activityType,
-                ...(isStateActivity ? { 'States involved': formattedStates } : {}
-                ),
+                ...(isStateActivity ? { 'States involved': formattedStates } : {}),
                 'Activity method': formattedMethod,
                 'Activity description': description,
               },
@@ -187,14 +172,10 @@ export default function SubmittedCollabReport({ report }) {
           ]}
         />
 
-        <ReadOnlyContent
-          title="Next steps"
-          sections={formatNextSteps(steps)}
-        />
-
+        <ReadOnlyContent title="Next steps" sections={formatNextSteps(steps)} />
       </Container>
     </div>
-  );
+  )
 }
 
 SubmittedCollabReport.propTypes = {
@@ -246,7 +227,7 @@ SubmittedCollabReport.propTypes = {
         createdAt: PropTypes.string,
         updatedAt: PropTypes.string,
         deletedAt: PropTypes.string,
-      }),
+      })
     ),
     dataUsed: PropTypes.arrayOf(
       PropTypes.shape({
@@ -256,7 +237,7 @@ SubmittedCollabReport.propTypes = {
         createdAt: PropTypes.string,
         updatedAt: PropTypes.string,
         deletedAt: PropTypes.string,
-      }),
+      })
     ),
     otherDataUsed: PropTypes.string,
     participants: PropTypes.arrayOf(PropTypes.string),
@@ -265,14 +246,10 @@ SubmittedCollabReport.propTypes = {
       PropTypes.shape({
         collabStepCompleteDate: PropTypes.string,
         collabStepDetail: PropTypes.string,
-      }),
+      })
     ),
-    reportReasons: PropTypes.arrayOf(
-      PropTypes.string,
-    ),
-    statesInvolved: PropTypes.arrayOf(
-      PropTypes.string,
-    ),
+    reportReasons: PropTypes.arrayOf(PropTypes.string),
+    statesInvolved: PropTypes.arrayOf(PropTypes.string),
     collabReportSpecialists: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number,
@@ -296,7 +273,7 @@ SubmittedCollabReport.propTypes = {
           createdAt: PropTypes.string,
           updatedAt: PropTypes.string,
         }),
-      }),
+      })
     ),
     approvers: PropTypes.arrayOf(
       PropTypes.shape({
@@ -308,7 +285,7 @@ SubmittedCollabReport.propTypes = {
           id: PropTypes.number,
           name: PropTypes.string,
         }),
-      }),
+      })
     ),
   }).isRequired,
-};
+}

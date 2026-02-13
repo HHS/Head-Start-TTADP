@@ -1,14 +1,14 @@
 .smart-hub--dropdown-menu-toggle-btn {
-    justify-content: space-between;
+  justify-content: space-between;
 }
 
 .smart-hub--dropdown-menu--contents {
-    background-color: #fff;
-    border-radius: 4px;
-    margin-bottom: 8px;
-    margin-top: 8px;
-    position: absolute;
-    min-width: 200px;
-    z-index: 2;
-    box-sizing: border-box;
+  background-color: #fff;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  margin-top: 8px;
+  position: absolute;
+  min-width: 200px;
+  z-index: 2;
+  box-sizing: border-box;
 }

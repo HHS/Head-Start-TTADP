@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { getSingleFeedItemByTag } from '../fetchers/feed';
-import { parseFeedIntoDom } from '../utils';
-import FeedArticle from './FeedArticle';
+import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { getSingleFeedItemByTag } from '../fetchers/feed'
+import { parseFeedIntoDom } from '../utils'
+import FeedArticle from './FeedArticle'
 
 /**
  * This component fetches a single item from the Confluence RSS feed, the first matching item
@@ -16,66 +16,61 @@ import FeedArticle from './FeedArticle';
  * @param {props} props
  * @returns <ReactStuff (*tm) />
  */
-export default function ContentFromFeedByTag({
-  tagName,
-  contentSelector,
-  className,
-  openLinksInNewTab,
-}) {
-  const [content, setContent] = useState('');
+export default function ContentFromFeedByTag({ tagName, contentSelector, className, openLinksInNewTab }) {
+  const [content, setContent] = useState('')
 
   useEffect(() => {
-    const abortController = new AbortController();
+    const abortController = new AbortController()
     async function fetchSingleItemByTag() {
       try {
-        const response = await getSingleFeedItemByTag(tagName, abortController.signal);
-        const dom = parseFeedIntoDom(response);
+        const response = await getSingleFeedItemByTag(tagName, abortController.signal)
+        const dom = parseFeedIntoDom(response)
 
         // get individual entries
-        const [entry] = Array.from(dom.querySelectorAll('entry'));
+        const [entry] = Array.from(dom.querySelectorAll('entry'))
         if (entry) {
-          const summaryContent = entry.querySelector('summary').textContent;
+          const summaryContent = entry.querySelector('summary').textContent
           if (contentSelector) {
-            const div = document.createElement('div');
-            div.innerHTML = summaryContent;
+            const div = document.createElement('div')
+            div.innerHTML = summaryContent
 
-            const contentElement = div.querySelector(contentSelector);
+            const contentElement = div.querySelector(contentSelector)
             if (contentElement) {
-              setContent(contentElement.outerHTML);
+              setContent(contentElement.outerHTML)
             } else {
               // eslint-disable-next-line no-console
-              console.log('No content element found with selector', contentSelector, 'displaying entire contents instead: ', tagName);
-              setContent(summaryContent);
+              console.log('No content element found with selector', contentSelector, 'displaying entire contents instead: ', tagName)
+              setContent(summaryContent)
             }
           } else if (summaryContent) {
-            setContent(summaryContent);
+            setContent(summaryContent)
           }
         }
       } catch (err) {
         // ignore abort error
         if (err.name === 'AbortError') {
           // eslint-disable-next-line no-console
-          console.log('Fetch aborted');
-          return;
+          console.log('Fetch aborted')
+          return
         }
         // eslint-disable-next-line no-console
-        console.log('There was an error fetching content with tag', tagName, err);
+        console.log('There was an error fetching content with tag', tagName, err)
       }
     }
 
-    fetchSingleItemByTag();
+    fetchSingleItemByTag()
 
     return () => {
-      abortController.abort();
-    };
-  }, [contentSelector, tagName]);
+      abortController.abort()
+    }
+  }, [contentSelector, tagName])
 
-  const classNames = `${className} ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
+  const classNames = `${className} ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`
   return (
     <div className={classNames}>
       <FeedArticle title="" content={content} unread={false} key={content} openLinksInNewTab={openLinksInNewTab} partial />
     </div>
-  );
+  )
 }
 
 ContentFromFeedByTag.propTypes = {
@@ -83,10 +78,10 @@ ContentFromFeedByTag.propTypes = {
   contentSelector: PropTypes.string,
   className: PropTypes.string,
   openLinksInNewTab: PropTypes.bool,
-};
+}
 
 ContentFromFeedByTag.defaultProps = {
   contentSelector: '',
   className: '',
   openLinksInNewTab: false,
-};
+}

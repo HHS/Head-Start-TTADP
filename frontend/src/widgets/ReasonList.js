@@ -1,28 +1,22 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import withWidgetData from './withWidgetData';
-import TableWidget from './TableWidget';
-import './ReasonsList.scss';
+import React from 'react'
+import PropTypes from 'prop-types'
+import withWidgetData from './withWidgetData'
+import TableWidget from './TableWidget'
+import './ReasonsList.scss'
 
 const renderReasonList = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
     return data.map((reason) => (
       <tr key={`reason_list_row_${reason.name}`}>
-        <td>
-          {reason.name}
-        </td>
-        <td>
-          {reason.count}
-        </td>
+        <td>{reason.name}</td>
+        <td>{reason.count}</td>
       </tr>
-    ));
+    ))
   }
-  return null;
-};
+  return null
+}
 
-export function ReasonListTable({
-  data, loading, title,
-}) {
+export function ReasonListTable({ data, loading, title }) {
   return (
     <div className="smarthub-reasons-list">
       <TableWidget
@@ -35,7 +29,7 @@ export function ReasonListTable({
         renderData={renderReasonList}
       />
     </div>
-  );
+  )
 }
 
 ReasonListTable.propTypes = {
@@ -44,16 +38,17 @@ ReasonListTable.propTypes = {
       PropTypes.shape({
         name: PropTypes.string,
         count: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
   title: PropTypes.string,
-};
+}
 
 ReasonListTable.defaultProps = {
   data: [],
   title: 'Reasons in Activity Reports',
-};
+}
 
-export default withWidgetData(ReasonListTable, 'reasonList');
+export default withWidgetData(ReasonListTable, 'reasonList')

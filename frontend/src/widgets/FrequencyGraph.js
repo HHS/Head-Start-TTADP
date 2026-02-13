@@ -1,38 +1,38 @@
-import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
-import withWidgetData from './withWidgetData';
-import Container from '../components/Container';
-import AccessibleWidgetData from './AccessibleWidgetData';
-import BarGraph from './BarGraph';
-import DisplayTableToggle from '../components/DisplayTableToggleButton';
-import './FrequencyGraph.css';
+import React, { useRef, useState } from 'react'
+import PropTypes from 'prop-types'
+import { Grid } from '@trussworks/react-uswds'
+import withWidgetData from './withWidgetData'
+import Container from '../components/Container'
+import AccessibleWidgetData from './AccessibleWidgetData'
+import BarGraph from './BarGraph'
+import DisplayTableToggle from '../components/DisplayTableToggleButton'
+import './FrequencyGraph.css'
 
 function sortData(data, isTabular) {
-  const sortedData = [...data];
-  sortedData.sort((a, b) => b.count - a.count);
+  const sortedData = [...data]
+  sortedData.sort((a, b) => b.count - a.count)
   if (!isTabular) {
-    sortedData.reverse();
+    sortedData.reverse()
   }
-  return sortedData;
+  return sortedData
 }
 
-const TOPIC_STR = 'topics';
+const TOPIC_STR = 'topics'
 
 const HEADINGS = {
   [TOPIC_STR]: ['Topic', 'Count'],
-};
+}
 
 export function FreqGraph({ data, loading }) {
   // whether to show the data as accessible widget data or not
-  const [showAccessibleData, updateShowAccessibleData] = useState(false);
-  const widgetRef = useRef(null);
+  const [showAccessibleData, updateShowAccessibleData] = useState(false)
+  const widgetRef = useRef(null)
 
-  const selectedData = data[TOPIC_STR];
-  const sortedData = sortData(selectedData, showAccessibleData);
-  const accessibleRows = sortedData.map((row) => ({ data: [row.category, row.count] }));
+  const selectedData = data[TOPIC_STR]
+  const sortedData = sortData(selectedData, showAccessibleData)
+  const accessibleRows = sortedData.map((row) => ({ data: [row.category, row.count] }))
 
-  const columnHeadings = HEADINGS[TOPIC_STR];
+  const columnHeadings = HEADINGS[TOPIC_STR]
 
   return (
     <Container className="ttahub--frequency-graph position-relative" loading={loading} loadingLabel="Topics frequency loading">
@@ -50,23 +50,13 @@ export function FreqGraph({ data, loading }) {
           />
         </Grid>
       </Grid>
-      { showAccessibleData
-        ? (
-          <AccessibleWidgetData
-            caption="Number of Activity Reports by Topics Table"
-            columnHeadings={columnHeadings}
-            rows={accessibleRows}
-          />
-        )
-        : (
-          <BarGraph
-            data={sortedData}
-            xAxisLabel="Topics"
-            widgetRef={widgetRef}
-          />
-        )}
+      {showAccessibleData ? (
+        <AccessibleWidgetData caption="Number of Activity Reports by Topics Table" columnHeadings={columnHeadings} rows={accessibleRows} />
+      ) : (
+        <BarGraph data={sortedData} xAxisLabel="Topics" widgetRef={widgetRef} />
+      )}
     </Container>
-  );
+  )
 }
 
 FreqGraph.propTypes = {
@@ -75,14 +65,15 @@ FreqGraph.propTypes = {
       PropTypes.shape({
         topic: PropTypes.string,
         count: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
-};
+}
 
 FreqGraph.defaultProps = {
   data: { [TOPIC_STR]: [] },
-};
+}
 
-export default withWidgetData(FreqGraph, 'frequencyGraph');
+export default withWidgetData(FreqGraph, 'frequencyGraph')

@@ -1,18 +1,16 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
-import SessionObjectiveResource from '../SessionObjectiveResource';
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import { useForm, FormProvider } from 'react-hook-form'
+import SessionObjectiveResource from '../SessionObjectiveResource'
 
 describe('SessionObjectiveResource', () => {
   const TestComponent = ({ index, fieldErrors, errors }) => {
     const hookForm = useForm({
       mode: 'onBlur',
       defaultValues: {},
-    });
+    })
 
     return (
       <FormProvider {...hookForm}>
@@ -25,22 +23,22 @@ describe('SessionObjectiveResource', () => {
           showRemoveButton
         />
       </FormProvider>
-    );
-  };
+    )
+  }
 
   const renderSessionObjectiveResource = (fieldErrors = null) => {
-    const index = 0;
-    const errors = {};
+    const index = 0
+    const errors = {}
 
     if (fieldErrors) {
-      errors[`objectiveResources.${index}.value`] = fieldErrors;
+      errors[`objectiveResources.${index}.value`] = fieldErrors
     }
 
-    render(<TestComponent index={index} fieldErrors={fieldErrors} errors={errors} />);
-  };
+    render(<TestComponent index={index} fieldErrors={fieldErrors} errors={errors} />)
+  }
 
   it('shows an error message', () => {
-    renderSessionObjectiveResource({ message: 'This is an error message' });
-    expect(screen.getByText('This is an error message')).toBeInTheDocument();
-  });
-});
+    renderSessionObjectiveResource({ message: 'This is an error message' })
+    expect(screen.getByText('This is an error message')).toBeInTheDocument()
+  })
+})

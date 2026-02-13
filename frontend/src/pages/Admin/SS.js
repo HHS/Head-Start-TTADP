@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import '@silevis/reactgrid/styles.css';
-import SheetList from './SheetList';
-import SheetDetails from './SheetDetails';
-import './SS.scss';
+import React, { useState } from 'react'
+import '@silevis/reactgrid/styles.css'
+import SheetList from './SheetList'
+import SheetDetails from './SheetDetails'
+import './SS.scss'
 
 function SS() {
-  const [selectedSheetId, setSelectedSheetId] = useState(null);
+  const [selectedSheetId, setSelectedSheetId] = useState(null)
 
   return (
     <div className="ttahub-SS-grid">
@@ -16,6 +16,6 @@ function SS() {
         <SheetDetails sheetId={selectedSheetId} />
       </div>
     </div>
-  );
+  )
 }
-export default SS;
+export default SS

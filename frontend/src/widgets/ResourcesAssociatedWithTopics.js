@@ -1,114 +1,108 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import WidgetContainer from '../components/WidgetContainer';
-import useSessionSort from '../hooks/useSessionSort';
-import { TOPICS_PER_PAGE } from '../Constants';
+import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { DECIMAL_BASE } from '@ttahub/common'
+import HorizontalTableWidget from './HorizontalTableWidget'
+import WidgetContainer from '../components/WidgetContainer'
+import useSessionSort from '../hooks/useSessionSort'
+import { TOPICS_PER_PAGE } from '../Constants'
 
 export const parseValue = (value) => {
-  const noCommasValue = value.replaceAll(',', '');
-  const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
+  const noCommasValue = value.replaceAll(',', '')
+  const parsedValue = parseInt(noCommasValue, DECIMAL_BASE)
   if (Number.isNaN(parsedValue)) {
-    return value;
+    return value
   }
-  return parsedValue;
-};
-function ResourcesAssociatedWithTopics({
-  data,
-  loading,
-  resetPagination,
-  setResetPagination,
-  perPageNumber,
-}) {
-  const [topicUse, setTopicUse] = useState([]);
-  const [topicCount, setTopicCount] = useState(0);
-  const [localLoading, setLocalLoading] = useState(false);
-  const [perPage] = useState(perPageNumber);
-  const [sortConfig, setSortConfig] = useSessionSort({
-    sortBy: '1',
-    direction: 'desc',
-    activePage: 1,
-  }, 'activityReportsTable');
+  return parsedValue
+}
+function ResourcesAssociatedWithTopics({ data, loading, resetPagination, setResetPagination, perPageNumber }) {
+  const [topicUse, setTopicUse] = useState([])
+  const [topicCount, setTopicCount] = useState(0)
+  const [localLoading, setLocalLoading] = useState(false)
+  const [perPage] = useState(perPageNumber)
+  const [sortConfig, setSortConfig] = useSessionSort(
+    {
+      sortBy: '1',
+      direction: 'desc',
+      activePage: 1,
+    },
+    'activityReportsTable'
+  )
 
-  const { activePage } = sortConfig;
+  const { activePage } = sortConfig
 
-  const [offset, setOffset] = useState((activePage - 1) * perPage);
+  const [offset, setOffset] = useState((activePage - 1) * perPage)
 
   useEffect(() => {
     try {
       // Set local data.
-      setLocalLoading(true);
-      const topicsToUse = data.topics || [];
-      setTopicUse(topicsToUse);
-      setTopicCount(topicsToUse.length);
+      setLocalLoading(true)
+      const topicsToUse = data.topics || []
+      setTopicUse(topicsToUse)
+      setTopicCount(topicsToUse.length)
     } finally {
-      setLocalLoading(false);
+      setLocalLoading(false)
     }
-  }, [data]);
+  }, [data])
 
   // a side effect that resets the pagination when the filters change
   useEffect(() => {
     if (resetPagination) {
-      setSortConfig({ ...sortConfig, activePage: 1 });
-      setOffset(0); // 0 times perpage = 0
-      setResetPagination(false);
+      setSortConfig({ ...sortConfig, activePage: 1 })
+      setOffset(0) // 0 times perpage = 0
+      setResetPagination(false)
     }
-  }, [activePage, perPage, resetPagination, setResetPagination, setSortConfig, sortConfig, data]);
+  }, [activePage, perPage, resetPagination, setResetPagination, setSortConfig, sortConfig, data])
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
       // copy state
-      const sort = { ...sortConfig };
+      const sort = { ...sortConfig }
 
       // mutate
-      sort.activePage = pageNumber;
+      sort.activePage = pageNumber
 
       // store it
-      setSortConfig(sort);
-      setOffset((pageNumber - 1) * perPage);
+      setSortConfig(sort)
+      setOffset((pageNumber - 1) * perPage)
     }
-  };
+  }
 
   const requestSort = (sortBy) => {
     // Get sort direction.
-    let direction = 'asc';
-    if (
-      sortConfig
-      && sortConfig.sortBy === sortBy
-      && sortConfig.direction === 'asc'
-    ) {
-      direction = 'desc';
+    let direction = 'asc'
+    if (sortConfig && sortConfig.sortBy === sortBy && sortConfig.direction === 'asc') {
+      direction = 'desc'
     }
 
     // Set the value we want to sort by.
-    const valuesToSort = sortBy === 'Topic'
-      ? topicUse.map((t) => ({
-        ...t,
-        sortBy: t.heading,
-      }))
-      : topicUse.map((t) => (
-        {
-          ...t,
-          sortBy: parseValue(t.data.find((tp) => tp.title === sortBy).value),
-        }));
+    const valuesToSort =
+      sortBy === 'Topic'
+        ? topicUse.map((t) => ({
+            ...t,
+            sortBy: t.heading,
+          }))
+        : topicUse.map((t) => ({
+            ...t,
+            sortBy: parseValue(t.data.find((tp) => tp.title === sortBy).value),
+          }))
 
     // Value sort.
-    const sortValueA = direction === 'asc' ? 1 : -1;
-    const sortValueB = direction === 'asc' ? -1 : 1;
+    const sortValueA = direction === 'asc' ? 1 : -1
+    const sortValueB = direction === 'asc' ? -1 : 1
     valuesToSort.sort((a, b) => {
       if (a.sortBy > b.sortBy) {
-        return sortValueA;
-      } if (b.sortBy > a.sortBy) {
-        return sortValueB;
+        return sortValueA
       }
-      return 0;
-    });
+      if (b.sortBy > a.sortBy) {
+        return sortValueB
+      }
+      return 0
+    })
 
-    setTopicUse(valuesToSort);
-    setOffset(0);
-    setSortConfig({ sortBy, direction, activePage: 1 });
-  };
+    setTopicUse(valuesToSort)
+    setOffset(0)
+    setSortConfig({ sortBy, direction, activePage: 1 })
+  }
 
   return (
     <WidgetContainer
@@ -133,7 +127,7 @@ function ResourcesAssociatedWithTopics({
         requestSort={requestSort}
       />
     </WidgetContainer>
-  );
+  )
 }
 
 ResourcesAssociatedWithTopics.propTypes = {
@@ -144,7 +138,7 @@ ResourcesAssociatedWithTopics.propTypes = {
         PropTypes.shape({
           title: PropTypes.string,
           value: PropTypes.number,
-        }),
+        })
       ),
     }),
     PropTypes.shape({}),
@@ -153,13 +147,13 @@ ResourcesAssociatedWithTopics.propTypes = {
   setResetPagination: PropTypes.func,
   perPageNumber: PropTypes.number,
   loading: PropTypes.bool.isRequired,
-};
+}
 
 ResourcesAssociatedWithTopics.defaultProps = {
   data: { headers: [], topicUse: [] },
   resetPagination: false,
   setResetPagination: () => {},
   perPageNumber: TOPICS_PER_PAGE,
-};
+}
 
-export default ResourcesAssociatedWithTopics;
+export default ResourcesAssociatedWithTopics

@@ -1,25 +1,19 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import ReactSelect from 'react-select';
+import React from 'react'
+import PropTypes from 'prop-types'
+import ReactSelect from 'react-select'
 
-import { DropdownIndicator } from './MultiSelect';
-import colors from '../colors';
+import { DropdownIndicator } from './MultiSelect'
+import colors from '../colors'
 
-function Select({
-  name,
-  options,
-  onChange,
-  value,
-  className,
-}) {
+function Select({ name, options, onChange, value, className }) {
   const styles = {
     container: (provided, state) => {
       // To match the focus indicator provided by uswds
-      const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
+      const outline = state.isFocused ? '0.25rem solid #2491ff;' : ''
       return {
         ...provided,
         outline,
-      };
+      }
     },
     groupHeading: (provided) => ({
       ...provided,
@@ -45,7 +39,7 @@ function Select({
       marginRight: '4px',
     }),
     indicatorSeparator: () => ({ display: 'none' }),
-  };
+  }
 
   return (
     <ReactSelect
@@ -57,13 +51,10 @@ function Select({
       components={{ DropdownIndicator }}
       options={options}
     />
-  );
+  )
 }
 
-const value = PropTypes.oneOfType([
-  PropTypes.string,
-  PropTypes.number,
-]);
+const value = PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 
 Select.propTypes = {
   name: PropTypes.string.isRequired,
@@ -79,16 +70,16 @@ Select.propTypes = {
         PropTypes.shape({
           label: PropTypes.string.isRequired,
           value: value.isRequired,
-        }),
+        })
       ),
       label: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   className: PropTypes.string,
-};
+}
 
 Select.defaultProps = {
   className: '',
-};
+}
 
-export default Select;
+export default Select

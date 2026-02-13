@@ -1,7 +1,7 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import ReadOnlyField from '../ReadOnlyField';
-import FormFieldThatIsSometimesReadOnlyContext from '../../FormFieldThatIsSometimesReadOnlyContext';
+import React from 'react'
+import PropTypes from 'prop-types'
+import ReadOnlyField from '../ReadOnlyField'
+import FormFieldThatIsSometimesReadOnlyContext from '../../FormFieldThatIsSometimesReadOnlyContext'
 
 /**
  *
@@ -19,41 +19,26 @@ import FormFieldThatIsSometimesReadOnlyContext from '../../FormFieldThatIsSometi
  */
 
 const FormFieldThatIsSometimesReadOnlyProvider = ({ readOnly, children }) => (
-  <FormFieldThatIsSometimesReadOnlyContext.Provider value={{ readOnly }}>
-    {children}
-  </FormFieldThatIsSometimesReadOnlyContext.Provider>
-);
+  <FormFieldThatIsSometimesReadOnlyContext.Provider value={{ readOnly }}>{children}</FormFieldThatIsSometimesReadOnlyContext.Provider>
+)
 
 FormFieldThatIsSometimesReadOnlyProvider.propTypes = {
   readOnly: PropTypes.bool.isRequired,
   children: PropTypes.node.isRequired,
-};
+}
 
-export default function FormFieldThatIsSometimesReadOnly({
-  permissions,
-  label,
-  value,
-  children,
-}) {
-  const readOnly = !permissions.every((p) => Boolean(p));
+export default function FormFieldThatIsSometimesReadOnly({ permissions, label, value, children }) {
+  const readOnly = !permissions.every((p) => Boolean(p))
 
   if (readOnly) {
     return (
       <FormFieldThatIsSometimesReadOnlyProvider readOnly={readOnly}>
-        <ReadOnlyField
-          label={label}
-        >
-          {value}
-        </ReadOnlyField>
+        <ReadOnlyField label={label}>{value}</ReadOnlyField>
       </FormFieldThatIsSometimesReadOnlyProvider>
-    );
+    )
   }
 
-  return (
-    <FormFieldThatIsSometimesReadOnlyProvider readOnly={readOnly}>
-      {children}
-    </FormFieldThatIsSometimesReadOnlyProvider>
-  );
+  return <FormFieldThatIsSometimesReadOnlyProvider readOnly={readOnly}>{children}</FormFieldThatIsSometimesReadOnlyProvider>
 }
 
 FormFieldThatIsSometimesReadOnly.propTypes = {
@@ -61,4 +46,4 @@ FormFieldThatIsSometimesReadOnly.propTypes = {
   label: PropTypes.string.isRequired,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   children: PropTypes.node.isRequired,
-};
+}

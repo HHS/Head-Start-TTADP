@@ -1,6 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import TabsNav from '../../../components/TabsNav';
+import React from 'react'
+import PropTypes from 'prop-types'
+import TabsNav from '../../../components/TabsNav'
 
 export default function RecipientTabs({ region, recipientId, backLink }) {
   const links = [
@@ -24,19 +24,17 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
       to: `/recipient-tta-records/${recipientId}/region/${region}/monitoring/review`,
       label: 'Monitoring',
     },
-  ];
+  ]
 
-  return (
-    <TabsNav ariaLabel="Recipient tabs" links={links} backLink={backLink} />
-  );
+  return <TabsNav ariaLabel="Recipient tabs" links={links} backLink={backLink} />
 }
 
 RecipientTabs.propTypes = {
   region: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
   backLink: PropTypes.node,
-};
+}
 
 RecipientTabs.defaultProps = {
   backLink: null,
-};
+}

@@ -1,40 +1,40 @@
-import { Alert } from '@trussworks/react-uswds';
-import React, { useContext, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { verifyEmailToken } from '../../fetchers/users';
-import UserContext from '../../UserContext';
+import { Alert } from '@trussworks/react-uswds'
+import React, { useContext, useEffect, useState } from 'react'
+import PropTypes from 'prop-types'
+import { verifyEmailToken } from '../../fetchers/users'
+import UserContext from '../../UserContext'
 
 export default function EmailVerifier({ token, updateUser }) {
-  const { user } = useContext(UserContext);
-  const [verified, setVerified] = useState(null);
+  const { user } = useContext(UserContext)
+  const [verified, setVerified] = useState(null)
 
   useEffect(() => {
-    if (verified) return;
-    if (!token) return;
+    if (verified) return
+    if (!token) return
 
     verifyEmailToken(token)
       .then(() => {
-        setVerified(true);
+        setVerified(true)
         // Get the first validationStatus object in user.validationStatus where type is email.
         // There should only ever be one of these anyways.
-        const validation = user.validationStatus.find((s) => s.type === 'email');
+        const validation = user.validationStatus.find((s) => s.type === 'email')
 
         // Set the verified field to true. This is hacky because normally this would
         // be a date - but for now this avoids having to making another API call to update the user,
         // and validatedAt (in date form) isn't used by the UI.
-        validation.validatedAt = true;
+        validation.validatedAt = true
 
         const newUser = {
           ...user,
           validationStatus: user.validationStatus.filter((s) => s.type !== 'email').concat(validation),
-        };
+        }
 
-        updateUser(newUser);
+        updateUser(newUser)
       })
       .catch(() => {
-        setVerified(false);
-      });
-  }, [token, updateUser, user, verified]);
+        setVerified(false)
+      })
+  }, [token, updateUser, user, verified])
 
   return (
     <>
@@ -46,8 +46,7 @@ export default function EmailVerifier({ token, updateUser }) {
 
       {verified === false && (
         <Alert type="error" className="margin-bottom-3">
-          Your email could not be verified.
-          Please return to account management to request a new verification email.
+          Your email could not be verified. Please return to account management to request a new verification email.
         </Alert>
       )}
 
@@ -57,14 +56,14 @@ export default function EmailVerifier({ token, updateUser }) {
         </Alert>
       )}
     </>
-  );
+  )
 }
 
 EmailVerifier.propTypes = {
   updateUser: PropTypes.func.isRequired,
   token: PropTypes.string,
-};
+}
 
 EmailVerifier.defaultProps = {
   token: null,
-};
+}

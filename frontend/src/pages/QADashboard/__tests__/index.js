@@ -1,47 +1,45 @@
 /* eslint-disable max-len */
-import '@testing-library/jest-dom';
-import React from 'react';
-import moment from 'moment';
-import { SCOPE_IDS } from '@ttahub/common';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import userEvent from '@testing-library/user-event';
-import QADashboard from '../index';
-import UserContext from '../../../UserContext';
-import AriaLiveContext from '../../../AriaLiveContext';
+import '@testing-library/jest-dom'
+import React from 'react'
+import moment from 'moment'
+import { SCOPE_IDS } from '@ttahub/common'
+import { Router } from 'react-router-dom'
+import { createMemoryHistory } from 'history'
+import { render, screen, act, waitFor } from '@testing-library/react'
+import fetchMock from 'fetch-mock'
+import userEvent from '@testing-library/user-event'
+import QADashboard from '../index'
+import UserContext from '../../../UserContext'
+import AriaLiveContext from '../../../AriaLiveContext'
 
-const history = createMemoryHistory();
-const mockAnnounce = jest.fn();
+const history = createMemoryHistory()
+const mockAnnounce = jest.fn()
 
 const defaultUser = {
   homeRegionId: 14,
-  permissions: [{
-    regionId: 1,
-    scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-  }, {
-    regionId: 2,
-    scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-  }],
-};
+  permissions: [
+    {
+      regionId: 1,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    },
+    {
+      regionId: 2,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    },
+  ],
+}
 
-const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
-const today = moment().format('YYYY/MM/DD');
+const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD')
+const today = moment().format('YYYY/MM/DD')
 
 // Convert todayMinus12Months to the format used in the API.
-const combinedDates = `${encodeURIComponent(todayMinus12Months)}-${encodeURIComponent(today)}`;
+const combinedDates = `${encodeURIComponent(todayMinus12Months)}-${encodeURIComponent(today)}`
 
-const baseSsdiApi = '/api/ssdi/api/dashboards/qa/';
-const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=no_tta_widget`;
-const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
-const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
-const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_class_widget`;
+const baseSsdiApi = '/api/ssdi/api/dashboards/qa/'
+const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=no_tta_widget`
+const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`
+const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`
+const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_class_widget`
 const RECIPIENTS_WITH_NO_TTA_DATA = [
   {
     data_set: 'no_tta_widget',
@@ -54,7 +52,7 @@ const RECIPIENTS_WITH_NO_TTA_DATA = [
       },
     ],
   },
-];
+]
 
 const RECIPIENT_CLASS_DATA = [
   {
@@ -67,12 +65,9 @@ const RECIPIENT_CLASS_DATA = [
         '% recipients with class': 18.26,
       },
     ],
-    active_filters: [
-      'regionIds',
-      'currentUserId',
-    ],
+    active_filters: ['regionIds', 'currentUserId'],
   },
-];
+]
 
 const DASHBOARD_DATA = [
   {
@@ -138,7 +133,7 @@ const DASHBOARD_DATA = [
       },
     ],
   },
-];
+]
 
 const ROOT_CAUSE_FEI_GOALS_DATA = [
   {
@@ -176,10 +171,7 @@ const ROOT_CAUSE_FEI_GOALS_DATA = [
         response_count: 295,
       },
     ],
-    active_filters: [
-      'regionIds',
-      'currentUserId',
-    ],
+    active_filters: ['regionIds', 'currentUserId'],
   },
   {
     data_set: 'with_fei_widget',
@@ -191,29 +183,26 @@ const ROOT_CAUSE_FEI_GOALS_DATA = [
         '% recipients with fei': 55.35,
       },
     ],
-    active_filters: [
-      'regionIds',
-      'currentUserId',
-    ],
+    active_filters: ['regionIds', 'currentUserId'],
   },
-];
+]
 
 describe('Resource Dashboard page', () => {
   beforeEach(() => {
     // Mock Recipients with no TTA data.
-    fetchMock.get(noTtaApi, RECIPIENTS_WITH_NO_TTA_DATA);
+    fetchMock.get(noTtaApi, RECIPIENTS_WITH_NO_TTA_DATA)
 
     // Mock Recipients with OHS standard FEI goal data.
-    fetchMock.get(feiApi, ROOT_CAUSE_FEI_GOALS_DATA);
+    fetchMock.get(feiApi, ROOT_CAUSE_FEI_GOALS_DATA)
 
     // Mock Recipients with OHS standard CLASS data.
-    fetchMock.get(classApi, RECIPIENT_CLASS_DATA);
+    fetchMock.get(classApi, RECIPIENT_CLASS_DATA)
 
     // Mock Dashboard data.
-    fetchMock.get(dashboardApi, DASHBOARD_DATA);
-  });
+    fetchMock.get(dashboardApi, DASHBOARD_DATA)
+  })
 
-  afterEach(() => fetchMock.restore());
+  afterEach(() => fetchMock.restore())
 
   const renderQADashboard = (user = defaultUser) => {
     render(
@@ -223,64 +212,66 @@ describe('Resource Dashboard page', () => {
             <QADashboard user={user} />
           </Router>
         </AriaLiveContext.Provider>
-      </UserContext.Provider>,
-    );
-  };
+      </UserContext.Provider>
+    )
+  }
 
   it('renders correctly', async () => {
-    renderQADashboard();
+    renderQADashboard()
 
     // Header
-    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
+    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible()
 
     // Overview
-    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
-    expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
-    expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
+    expect(await screen.findByText('Recipients with no TTA')).toBeVisible()
+    expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible()
+    expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible()
 
     // Assert test data.
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText('54.38%')).toBeVisible();
-        expect(screen.getByText('18.26%')).toBeVisible();
-        expect(screen.getByText('55.35%')).toBeVisible();
-      });
-    });
-  });
+        expect(screen.getByText('54.38%')).toBeVisible()
+        expect(screen.getByText('18.26%')).toBeVisible()
+        expect(screen.getByText('55.35%')).toBeVisible()
+      })
+    })
+  })
 
   it('removes region filter when user has only one region', async () => {
     const u = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
-    };
-    renderQADashboard(u);
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
+    }
+    renderQADashboard(u)
 
     // Header
-    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
+    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible()
 
-    const filters = await screen.findByRole('button', { name: /open filters for this page , 2 currently applied/i });
+    const filters = await screen.findByRole('button', { name: /open filters for this page , 2 currently applied/i })
 
     act(() => {
-      userEvent.click(filters);
-    });
+      userEvent.click(filters)
+    })
 
     // click the button 'Add new filter'.
-    const addFilter = await screen.findByRole('button', { name: /add new filter/i });
+    const addFilter = await screen.findByRole('button', { name: /add new filter/i })
     act(() => {
-      userEvent.click(addFilter);
-    });
-    const select = screen.queryAllByLabelText(/select a filter/i)[2];
+      userEvent.click(addFilter)
+    })
+    const select = screen.queryAllByLabelText(/select a filter/i)[2]
 
     // expect select not to have "region" as an option
-    const option = select.querySelector('option[value="region"]');
-    expect(option).toBeNull();
-  });
+    const option = select.querySelector('option[value="region"]')
+    expect(option).toBeNull()
+  })
 
   it('renders the graphs correctly if the records are null', async () => {
-    fetchMock.restore();
+    fetchMock.restore()
     // Mock Recipients with no TTA data.
     fetchMock.get(noTtaApi, [
       {
@@ -294,7 +285,7 @@ describe('Resource Dashboard page', () => {
           },
         ],
       },
-    ]);
+    ])
 
     // Mock Recipients with OHS standard FEI goal data.
     fetchMock.get(feiApi, [
@@ -333,9 +324,7 @@ describe('Resource Dashboard page', () => {
             response_count: 295,
           },
         ],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
       {
         data_set: 'with_fei_widget',
@@ -348,11 +337,9 @@ describe('Resource Dashboard page', () => {
             '% recipients with fei': null,
           },
         ],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
-    ]);
+    ])
 
     // Mock Recipients with OHS standard CLASS data.
     fetchMock.get(classApi, [
@@ -367,11 +354,9 @@ describe('Resource Dashboard page', () => {
             '% recipients with class': null,
           },
         ],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
-    ]);
+    ])
 
     // Mock Dashboard data.
     fetchMock.get(dashboardApi, [
@@ -404,29 +389,29 @@ describe('Resource Dashboard page', () => {
           },
         ],
       },
-    ]);
-    renderQADashboard();
+    ])
+    renderQADashboard()
 
     // Header
-    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
+    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible()
 
     // Overview
-    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
-    expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
-    expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
+    expect(await screen.findByText('Recipients with no TTA')).toBeVisible()
+    expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible()
+    expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible()
 
     // Assert test data.
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText('Delivery method')).toBeVisible();
-        expect(screen.getByText('Percentage of activity reports by role')).toBeVisible();
-        expect(screen.getByText('Root cause on FEI goals')).toBeVisible();
-      });
-    });
-  });
+        expect(screen.getByText('Delivery method')).toBeVisible()
+        expect(screen.getByText('Percentage of activity reports by role')).toBeVisible()
+        expect(screen.getByText('Root cause on FEI goals')).toBeVisible()
+      })
+    })
+  })
 
   it('renders the graphs correctly with empty data', async () => {
-    fetchMock.restore();
+    fetchMock.restore()
     // Mock Recipients with no TTA data.
     fetchMock.get(noTtaApi, [
       {
@@ -434,7 +419,7 @@ describe('Resource Dashboard page', () => {
         records: '1',
         data: [],
       },
-    ]);
+    ])
 
     // Mock Recipients with OHS standard FEI goal data.
     fetchMock.get(feiApi, [
@@ -473,19 +458,15 @@ describe('Resource Dashboard page', () => {
             response_count: 295,
           },
         ],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
       {
         data_set: 'with_fei_widget',
         records: '1',
         data: [],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
-    ]);
+    ])
 
     // Mock Recipients with OHS standard CLASS data.
     fetchMock.get(classApi, [
@@ -493,11 +474,9 @@ describe('Resource Dashboard page', () => {
         data_set: 'with_class_widget',
         records: '1',
         data: [],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
-    ]);
+    ])
 
     // Mock Dashboard data.
     fetchMock.get(dashboardApi, [
@@ -530,24 +509,24 @@ describe('Resource Dashboard page', () => {
           },
         ],
       },
-    ]);
-    renderQADashboard();
+    ])
+    renderQADashboard()
 
     // Header
-    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
+    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible()
 
     // Overview
-    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
-    expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
-    expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
+    expect(await screen.findByText('Recipients with no TTA')).toBeVisible()
+    expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible()
+    expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible()
 
     // Assert test data.
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText('Delivery method')).toBeVisible();
-        expect(screen.getByText('Percentage of activity reports by role')).toBeVisible();
-        expect(screen.getByText('Root cause on FEI goals')).toBeVisible();
-      });
-    });
-  });
-});
+        expect(screen.getByText('Delivery method')).toBeVisible()
+        expect(screen.getByText('Percentage of activity reports by role')).toBeVisible()
+        expect(screen.getByText('Root cause on FEI goals')).toBeVisible()
+      })
+    })
+  })
+})

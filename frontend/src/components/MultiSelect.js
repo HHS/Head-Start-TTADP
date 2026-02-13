@@ -20,35 +20,35 @@
   through to react-select. If the selected value is not in the options prop the multiselect box will
   display an empty tag.
 */
-import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
-import Select, { components } from 'react-select';
-import Creatable from 'react-select/creatable';
-import { Controller } from 'react-hook-form';
-import _ from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
-import arrowBoth from '../images/arrow-both.svg';
-import colors from '../colors';
+import React, { useRef } from 'react'
+import PropTypes from 'prop-types'
+import Select, { components } from 'react-select'
+import Creatable from 'react-select/creatable'
+import { Controller } from 'react-hook-form'
+import _ from 'lodash'
+import { v4 as uuidv4 } from 'uuid'
+import arrowBoth from '../images/arrow-both.svg'
+import colors from '../colors'
 
 export const DropdownIndicator = (props) => (
   // eslint-disable-next-line react/jsx-props-no-spreading
   <components.DropdownIndicator {...props}>
     <img alt="" style={{ width: '8px' }} src={arrowBoth} />
   </components.DropdownIndicator>
-);
+)
 
 export function sortSelect(a, b) {
-  return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
+  return a.label.toLowerCase().localeCompare(b.label.toLowerCase())
 }
 
 export const styles = (singleRowInput = null) => ({
   container: (provided, state) => {
     // To match the focus indicator provided by uswds
-    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
+    const outline = state.isFocused ? '0.25rem solid #2491ff;' : ''
     return {
       ...provided,
       outline,
-    };
+    }
   },
   placeholder: (provided) => ({
     ...provided,
@@ -91,7 +91,7 @@ export const styles = (singleRowInput = null) => ({
       color: '#1B1B1B',
     },
   }),
-});
+})
 function MultiSelect({
   name,
   options,
@@ -111,8 +111,8 @@ function MultiSelect({
   components: componentReplacements,
   onClick = () => {},
 }) {
-  const inputId = `select-${uuidv4()}`;
-  const selectorRef = useRef(null);
+  const inputId = `select-${uuidv4()}`
+  const selectorRef = useRef(null)
 
   /*
    * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
@@ -123,15 +123,16 @@ function MultiSelect({
   const getValues = (value) => {
     if (simple) {
       return value.map((v) => ({
-        value: v, label: v,
-      }));
+        value: v,
+        label: v,
+      }))
     }
     return value.map((item) => ({
       ...item,
       label: _.get(item, labelProperty),
       value: _.get(item, valueProperty),
-    }));
-  };
+    }))
+  }
 
   /*
    * @param {*} - event. Contains values in the react-select format, an array of
@@ -141,35 +142,35 @@ function MultiSelect({
    */
   const onChange = (event, controllerOnChange) => {
     // sorts alphabetically by label
-    event.sort(sortSelect);
+    event.sort(sortSelect)
 
     if (simple) {
-      controllerOnChange(event.map((v) => v.value));
+      controllerOnChange(event.map((v) => v.value))
     } else {
       controllerOnChange(
         event.map((item) => {
-          const tempItem = { ...item };
-          _.set(tempItem, labelProperty, item.label);
-          _.set(tempItem, valueProperty, item.value);
-          return tempItem;
-        }),
-      );
+          const tempItem = { ...item }
+          _.set(tempItem, labelProperty, item.label)
+          _.set(tempItem, valueProperty, item.value)
+          return tempItem
+        })
+      )
     }
-  };
+  }
 
   const onKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
-      selectorRef.current.focus();
-      if (onClick) onClick();
+      selectorRef.current.focus()
+      if (onClick) onClick()
     }
-  };
+  }
 
-  const Selector = canCreate ? Creatable : Select;
+  const Selector = canCreate ? Creatable : Select
 
   return (
     <Controller
       render={({ onChange: controllerOnChange, value, onBlur }) => {
-        const values = value ? getValues(value) : value;
+        const values = value ? getValues(value) : value
         return (
           // eslint-disable-next-line jsx-a11y/no-static-element-interactions
           <div
@@ -188,11 +189,11 @@ function MultiSelect({
                 onBlur={onBlur}
                 onChange={(event) => {
                   if (onItemSelected) {
-                    onItemSelected(event);
+                    onItemSelected(event)
                   } else if (event) {
-                    onChange(event, controllerOnChange);
+                    onChange(event, controllerOnChange)
                   } else {
-                    controllerOnChange([]);
+                    controllerOnChange([])
                   }
                 }}
                 inputId={inputId}
@@ -208,32 +209,29 @@ function MultiSelect({
                 placeholder={placeholderText || ''}
                 onCreateOption={onCreateOption}
                 isMulti
-                required={!!(required)}
+                required={!!required}
               />
             </div>
           </div>
-        );
+        )
       }}
       control={control}
       rules={{
         validate: (value) => {
           if (required && (!value || value.length === 0)) {
-            return required;
+            return required
           }
-          return true;
+          return true
         },
         ...rules,
       }}
       name={name}
       defaultValue={[]}
     />
-  );
+  )
 }
 
-const value = PropTypes.oneOfType([
-  PropTypes.string,
-  PropTypes.number,
-]);
+const value = PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 
 MultiSelect.propTypes = {
   name: PropTypes.string.isRequired,
@@ -247,10 +245,10 @@ MultiSelect.propTypes = {
         PropTypes.shape({
           label: PropTypes.string.isRequired,
           value: value.isRequired,
-        }),
+        })
       ),
       label: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   canCreate: PropTypes.bool,
   onCreateOption: PropTypes.func,
@@ -272,10 +270,9 @@ MultiSelect.propTypes = {
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
   placeholderText: PropTypes.string,
   onClick: PropTypes.func,
-};
+}
 
 MultiSelect.defaultProps = {
-
   canCreate: false,
   disabled: false,
   singleRowInput: false,
@@ -290,6 +287,6 @@ MultiSelect.defaultProps = {
   onCreateOption: null,
   placeholderText: null,
   onClick: null,
-};
+}
 
-export default MultiSelect;
+export default MultiSelect

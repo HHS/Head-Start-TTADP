@@ -21,8 +21,8 @@ import {
   ttaTypeFilter,
   activityReportGoalResponseFilter,
   grantStatusFilter,
-} from '../../components/filter/activityReportFilters';
-import { goalNameFilter } from '../../components/filter/goalFilters';
+} from '../../components/filter/activityReportFilters'
+import { goalNameFilter } from '../../components/filter/goalFilters'
 
 const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
@@ -47,8 +47,8 @@ const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   topicsFilter,
   ttaTypeFilter,
   grantStatusFilter,
-];
+]
 
-RESOURCES_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+RESOURCES_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display))
 
-export { RESOURCES_DASHBOARD_FILTER_CONFIG };
+export { RESOURCES_DASHBOARD_FILTER_CONFIG }

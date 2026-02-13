@@ -1,20 +1,13 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Modal, ModalHeading } from '@trussworks/react-uswds';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Modal, ModalHeading } from '@trussworks/react-uswds'
 
-export default function VanillaModal({
-  heading,
-  children,
-  modalRef,
-  className,
-  id,
-  forceAction,
-}) {
+export default function VanillaModal({ heading, children, modalRef, className, id, forceAction }) {
   // strip everything but letters and numbers
-  const regex = /[^a-zA-Z0-9]/g;
+  const regex = /[^a-zA-Z0-9]/g
 
-  const textForHeadingId = id || heading;
-  const modalId = `modal-${textForHeadingId.toLowerCase().replace(regex, '-')}`;
+  const textForHeadingId = id || heading
+  const modalId = `modal-${textForHeadingId.toLowerCase().replace(regex, '-')}`
 
   return (
     <Modal
@@ -25,30 +18,23 @@ export default function VanillaModal({
       aria-describedby={`${modalId}-description`}
       forceAction={forceAction}
     >
-      <ModalHeading id={`${modalId}-heading`}>
-        {heading}
-      </ModalHeading>
-      <div id={`${modalId}-description`}>
-        {children}
-      </div>
+      <ModalHeading id={`${modalId}-heading`}>{heading}</ModalHeading>
+      <div id={`${modalId}-description`}>{children}</div>
     </Modal>
-  );
+  )
 }
 
 VanillaModal.propTypes = {
   heading: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   children: PropTypes.node.isRequired,
   className: PropTypes.string,
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape(),
-  ]).isRequired,
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]).isRequired,
   id: PropTypes.string,
   forceAction: PropTypes.bool,
-};
+}
 
 VanillaModal.defaultProps = {
   className: '',
   id: '',
   forceAction: false,
-};
+}

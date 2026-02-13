@@ -1,15 +1,11 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import {
-  Textarea,
-} from '@trussworks/react-uswds';
+import React, { useState } from 'react'
+import PropTypes from 'prop-types'
+import { Textarea } from '@trussworks/react-uswds'
 
-const DEFAULT_TEXTAREA_HEIGHT = 160;
+const DEFAULT_TEXTAREA_HEIGHT = 160
 
-export default function AutomaticResizingTextarea({
-  onUpdateText, onBlur, inputName, disabled, value, className,
-}) {
-  const [height, setHeight] = useState(`${DEFAULT_TEXTAREA_HEIGHT}px`);
+export default function AutomaticResizingTextarea({ onUpdateText, onBlur, inputName, disabled, value, className }) {
+  const [height, setHeight] = useState(`${DEFAULT_TEXTAREA_HEIGHT}px`)
 
   return (
     <Textarea
@@ -31,17 +27,13 @@ export default function AutomaticResizingTextarea({
         // the value has been updated
         setTimeout(() => {
           /* istanbul ignore next: can't test with jest */
-          if (
-            e.target
-            && e.target.scrollHeight
-            && e.target.scrollHeight > DEFAULT_TEXTAREA_HEIGHT
-          ) {
-            setHeight(`${e.target.scrollHeight}px`);
+          if (e.target && e.target.scrollHeight && e.target.scrollHeight > DEFAULT_TEXTAREA_HEIGHT) {
+            setHeight(`${e.target.scrollHeight}px`)
           }
-        }, 0);
+        }, 0)
       }}
     />
-  );
+  )
 }
 
 AutomaticResizingTextarea.propTypes = {
@@ -51,9 +43,9 @@ AutomaticResizingTextarea.propTypes = {
   disabled: PropTypes.bool,
   value: PropTypes.string.isRequired,
   className: PropTypes.string,
-};
+}
 
 AutomaticResizingTextarea.defaultProps = {
   disabled: false,
   className: '',
-};
+}

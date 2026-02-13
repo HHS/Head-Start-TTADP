@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import {
-  Table,
-  Checkbox,
-} from '@trussworks/react-uswds';
-import Container from '../Container';
-import TableHeader from '../TableHeader';
-import ReportRow from './ReportRow';
-import { parseCheckboxEvent, REPORTS_PER_PAGE } from '../../Constants';
-import './ReportsTable.css';
+import React, { useState, useEffect, useRef } from 'react'
+import PropTypes from 'prop-types'
+import { Table, Checkbox } from '@trussworks/react-uswds'
+import Container from '../Container'
+import TableHeader from '../TableHeader'
+import ReportRow from './ReportRow'
+import { parseCheckboxEvent, REPORTS_PER_PAGE } from '../../Constants'
+import './ReportsTable.css'
 
 export default function ReportsTable({
   loading,
@@ -24,104 +21,98 @@ export default function ReportsTable({
   handleDownloadAllReports,
   handleDownloadClick,
 }) {
-  const [reportCheckboxes, setReportCheckboxes] = useState({});
-  const [allReportsChecked, setAllReportsChecked] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadError, setDownloadError] = useState(false);
-  const downloadAllButtonRef = useRef();
-  const downloadSelectedButtonRef = useRef();
+  const [reportCheckboxes, setReportCheckboxes] = useState({})
+  const [allReportsChecked, setAllReportsChecked] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadError, setDownloadError] = useState(false)
+  const downloadAllButtonRef = useRef()
+  const downloadSelectedButtonRef = useRef()
 
-  const makeReportCheckboxes = (reportsArr, checked) => (
-    reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
-  );
+  const makeReportCheckboxes = (reportsArr, checked) => reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
 
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
-    setReportCheckboxes(makeReportCheckboxes(reports, false));
-  }, [reports]);
+    setReportCheckboxes(makeReportCheckboxes(reports, false))
+  }, [reports])
 
   useEffect(() => {
-    const checkValues = Object.values(reportCheckboxes);
+    const checkValues = Object.values(reportCheckboxes)
     if (checkValues.every((v) => v === true)) {
-      setAllReportsChecked(true);
+      setAllReportsChecked(true)
     } else if (allReportsChecked === true) {
-      setAllReportsChecked(false);
+      setAllReportsChecked(false)
     }
-  }, [reportCheckboxes, allReportsChecked]);
+  }, [reportCheckboxes, allReportsChecked])
 
   // The all-reports checkbox can select/deselect all visible reports
   const toggleSelectAll = (event) => {
-    const { checked } = parseCheckboxEvent(event);
+    const { checked } = parseCheckboxEvent(event)
 
     if (checked === true) {
-      setReportCheckboxes(makeReportCheckboxes(reports, true));
-      setAllReportsChecked(true);
+      setReportCheckboxes(makeReportCheckboxes(reports, true))
+      setAllReportsChecked(true)
     } else {
-      setReportCheckboxes(makeReportCheckboxes(reports, false));
-      setAllReportsChecked(false);
+      setReportCheckboxes(makeReportCheckboxes(reports, false))
+      setAllReportsChecked(false)
     }
-  };
+  }
 
   const handleReportSelect = (event) => {
-    const { checked, value } = parseCheckboxEvent(event);
+    const { checked, value } = parseCheckboxEvent(event)
     if (checked === true) {
-      setReportCheckboxes({ ...reportCheckboxes, [value]: true });
+      setReportCheckboxes({ ...reportCheckboxes, [value]: true })
     } else {
-      setReportCheckboxes({ ...reportCheckboxes, [value]: false });
+      setReportCheckboxes({ ...reportCheckboxes, [value]: false })
     }
-  };
+  }
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
       // copy state
-      const sort = { ...sortConfig };
+      const sort = { ...sortConfig }
 
       // mutate
-      sort.activePage = pageNumber;
+      sort.activePage = pageNumber
 
       // store it
-      setSortConfig(sort);
-      setOffset((pageNumber - 1) * REPORTS_PER_PAGE);
+      setSortConfig(sort)
+      setOffset((pageNumber - 1) * REPORTS_PER_PAGE)
     }
-  };
+  }
 
   const requestSort = (sortBy) => {
-    let direction = 'asc';
-    if (
-      sortConfig
-          && sortConfig.sortBy === sortBy
-          && sortConfig.direction === 'asc'
-    ) {
-      direction = 'desc';
+    let direction = 'asc'
+    if (sortConfig && sortConfig.sortBy === sortBy && sortConfig.direction === 'asc') {
+      direction = 'desc'
     }
 
-    setOffset(0);
-    setSortConfig({ sortBy, direction, activePage: 1 });
-  };
+    setOffset(0)
+    setSortConfig({ sortBy, direction, activePage: 1 })
+  }
 
   // Handle keyboard events for sortable headers, but only Enter and Space
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      e.stopPropagation();
-      e.target.click();
+      e.preventDefault()
+      e.stopPropagation()
+      e.target.click()
     }
-  };
+  }
 
-  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '')
   const renderColumnHeader = (displayName, name) => {
-    const sortClassName = getClassNamesFor(name);
-    let fullAriaSort;
+    const sortClassName = getClassNamesFor(name)
+    let fullAriaSort
     switch (sortClassName) {
       case 'asc':
-        fullAriaSort = 'ascending';
-        break;
+        fullAriaSort = 'ascending'
+        break
       case 'desc':
-        fullAriaSort = 'descending';
-        break;
+        fullAriaSort = 'descending'
+        break
       default:
-        fullAriaSort = 'none';
-        break;
+        fullAriaSort = 'none'
+        break
     }
     return (
       <th scope="col" aria-sort={fullAriaSort} className="tta-smarthub--report-heading">
@@ -129,38 +120,34 @@ export default function ReportsTable({
           tabIndex={0}
           type="button"
           onClick={() => {
-            requestSort(name);
+            requestSort(name)
           }}
           onKeyDown={handleKeyDown}
           className={`sortable ${sortClassName} ttahub-button--unstyled text-bold`}
-          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
+          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
         >
           {displayName}
         </button>
       </th>
-    );
-  };
-  const displayReports = reports.length ? reports : [];
-  const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
+    )
+  }
+  const displayReports = reports.length ? reports : []
+  const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length
 
   return (
-    <Container className="landing inline-size-auto maxw-full position-relative" paddingX={0} paddingY={0} loading={loading} loadingLabel="Activity reports table loading">
+    <Container
+      className="landing inline-size-auto maxw-full position-relative"
+      paddingX={0}
+      paddingY={0}
+      loading={loading}
+      loadingLabel="Activity reports table loading"
+    >
       <TableHeader
         title={tableCaption}
         numberOfSelected={numberOfSelectedReports}
         toggleSelectAll={toggleSelectAll}
-        handleDownloadAll={async () => handleDownloadAllReports(
-          setIsDownloading,
-          setDownloadError,
-          downloadAllButtonRef,
-        )}
-        handleDownloadClick={async () => handleDownloadClick(
-          reportCheckboxes,
-          setIsDownloading,
-          setDownloadError,
-          downloadSelectedButtonRef,
-        )}
+        handleDownloadAll={async () => handleDownloadAllReports(setIsDownloading, setDownloadError, downloadAllButtonRef)}
+        handleDownloadClick={async () => handleDownloadClick(reportCheckboxes, setIsDownloading, setDownloadError, downloadSelectedButtonRef)}
         count={reportsCount}
         activePage={activePage}
         offset={offset}
@@ -181,10 +168,7 @@ export default function ReportsTable({
           </caption>
           <thead>
             <tr>
-              <th
-                className="width-8 tta-smarthub--report-heading"
-                aria-label="Select"
-              >
+              <th className="width-8 tta-smarthub--report-heading" aria-label="Select">
                 <Checkbox
                   id="all-reports"
                   label=""
@@ -221,7 +205,7 @@ export default function ReportsTable({
         </Table>
       </div>
     </Container>
-  );
+  )
 }
 
 ReportsTable.propTypes = {
@@ -230,11 +214,9 @@ ReportsTable.propTypes = {
     PropTypes.shape({
       id: PropTypes.number,
       regionId: PropTypes.number, // JSON parsed into a number
-      activityRecipients: PropTypes.arrayOf(PropTypes.shape(
-        { activityRecipientId: PropTypes.number },
-      )),
+      activityRecipients: PropTypes.arrayOf(PropTypes.shape({ activityRecipientId: PropTypes.number })),
       startDate: PropTypes.string,
-    }),
+    })
   ).isRequired,
   sortConfig: PropTypes.shape({
     sortBy: PropTypes.string,
@@ -250,4 +232,4 @@ ReportsTable.propTypes = {
   handleDownloadAllReports: PropTypes.func.isRequired,
   handleDownloadClick: PropTypes.func.isRequired,
   activePage: PropTypes.number.isRequired,
-};
+}

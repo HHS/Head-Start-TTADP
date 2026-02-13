@@ -2,7 +2,7 @@
 /*
   Collaboration Report Pages index
 */
-import formPages from './pages';
-import reviewPage from './reviewSubmit';
+import formPages from './pages'
+import reviewPage from './reviewSubmit'
 
-export default [...formPages, reviewPage];
+export default [...formPages, reviewPage]

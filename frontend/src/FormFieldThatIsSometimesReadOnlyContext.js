@@ -1,7 +1,7 @@
-import { createContext } from 'react';
+import { createContext } from 'react'
 
 const FormFieldThatIsSometimesReadOnlyContext = createContext({
   readOnly: true,
-});
+})
 
-export default FormFieldThatIsSometimesReadOnlyContext;
+export default FormFieldThatIsSometimesReadOnlyContext

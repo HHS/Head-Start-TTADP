@@ -1,36 +1,24 @@
-import React, { forwardRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { forwardRef } from 'react'
+import PropTypes from 'prop-types'
 
-import Loader from './Loader';
+import Loader from './Loader'
 
-const classes = 'bg-white radius-md shadow-2 margin-bottom-3';
+const classes = 'bg-white radius-md shadow-2 margin-bottom-3'
 
 const Container = forwardRef((props, ref) => {
-  const {
-    children,
-    className,
-    skipTopPadding,
-    skipBottomPadding,
-    loading,
-    loadingLabel,
-    paddingX,
-    paddingY,
-    positionRelative,
-  } = props;
+  const { children, className, skipTopPadding, skipBottomPadding, loading, loadingLabel, paddingX, paddingY, positionRelative } = props
 
-  const skipTop = skipTopPadding ? 'padding-top-0' : '';
-  const skipBottom = skipBottomPadding ? 'padding-bottom-0' : '';
-  const relative = positionRelative ? 'position-relative' : '';
+  const skipTop = skipTopPadding ? 'padding-top-0' : ''
+  const skipBottom = skipBottomPadding ? 'padding-bottom-0' : ''
+  const relative = positionRelative ? 'position-relative' : ''
 
   return (
     <div className={`${classes} ${className}`} ref={ref}>
       <Loader loading={loading} loadingLabel={loadingLabel} />
-      <div className={`padding-x-${paddingX} padding-y-${paddingY} ${relative} ${skipTop} ${skipBottom}`}>
-        {children}
-      </div>
+      <div className={`padding-x-${paddingX} padding-y-${paddingY} ${relative} ${skipTop} ${skipBottom}`}>{children}</div>
     </div>
-  );
-});
+  )
+})
 
 Container.propTypes = {
   children: PropTypes.node.isRequired,
@@ -42,7 +30,7 @@ Container.propTypes = {
   loading: PropTypes.bool,
   loadingLabel: PropTypes.string,
   positionRelative: PropTypes.bool,
-};
+}
 
 Container.defaultProps = {
   className: '',
@@ -53,6 +41,6 @@ Container.defaultProps = {
   loading: false,
   loadingLabel: 'loading',
   positionRelative: false,
-};
+}
 
-export default Container;
+export default Container

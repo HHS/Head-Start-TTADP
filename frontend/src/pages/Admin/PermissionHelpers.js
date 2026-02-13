@@ -1,19 +1,13 @@
-import _ from 'lodash';
-import { DECIMAL_BASE } from '@ttahub/common';
-import {
-  REGIONAL_SCOPES,
-  GLOBAL_SCOPES,
-  REGIONS,
-  ALL_REGIONS,
-  CENTRAL_OFFICE,
-} from '../../Constants';
+import _ from 'lodash'
+import { DECIMAL_BASE } from '@ttahub/common'
+import { REGIONAL_SCOPES, GLOBAL_SCOPES, REGIONS, ALL_REGIONS, CENTRAL_OFFICE } from '../../Constants'
 
-const regionalScopeIds = Object.keys(REGIONAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE));
-const globalScopeIds = Object.keys(GLOBAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE));
-const allScopes = { ...REGIONAL_SCOPES, ...GLOBAL_SCOPES };
+const regionalScopeIds = Object.keys(REGIONAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE))
+const globalScopeIds = Object.keys(GLOBAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE))
+const allScopes = { ...REGIONAL_SCOPES, ...GLOBAL_SCOPES }
 
 export function scopeFromId(scopeId) {
-  return _.find(allScopes, (value, id) => scopeId === id);
+  return _.find(allScopes, (value, id) => scopeId === id)
 }
 
 /**
@@ -21,7 +15,7 @@ export function scopeFromId(scopeId) {
  * @returns {Object<string, bool>} An object with scope ids as keys and bool as values
  */
 export function createRegionalScopeObject() {
-  return _.mapValues(REGIONAL_SCOPES, () => false);
+  return _.mapValues(REGIONAL_SCOPES, () => false)
 }
 
 /**
@@ -33,23 +27,22 @@ export function createRegionalScopeObject() {
  * @returns {Object<string, {Object<string, bool>>}}
  */
 export function userRegionalPermissions(user) {
-  const regionalPermissions = {};
-  [...REGIONS, ALL_REGIONS].forEach((region) => {
-    regionalPermissions[region] = createRegionalScopeObject();
-  });
+  const regionalPermissions = {}
+  ;[...REGIONS, ALL_REGIONS].forEach((region) => {
+    regionalPermissions[region] = createRegionalScopeObject()
+  })
 
   if (!user.permissions) {
-    return regionalPermissions;
+    return regionalPermissions
   }
 
-  user.permissions.filter((permission) => (
-    regionalScopeIds.includes(permission.scopeId)
-    && ![CENTRAL_OFFICE].includes(permission.regionId)
-  )).forEach(({ regionId, scopeId }) => {
-    regionalPermissions[regionId][scopeId] = true;
-  });
+  user.permissions
+    .filter((permission) => regionalScopeIds.includes(permission.scopeId) && ![CENTRAL_OFFICE].includes(permission.regionId))
+    .forEach(({ regionId, scopeId }) => {
+      regionalPermissions[regionId][scopeId] = true
+    })
 
-  return regionalPermissions;
+  return regionalPermissions
 }
 
 /**
@@ -61,16 +54,17 @@ export function userRegionalPermissions(user) {
  * @returns {Object<string, bool>>}
  */
 export function userGlobalPermissions(user) {
-  const globals = _.mapValues(GLOBAL_SCOPES, () => false);
+  const globals = _.mapValues(GLOBAL_SCOPES, () => false)
 
   if (!user.permissions) {
-    return globals;
+    return globals
   }
 
-  user.permissions.filter((permission) => globalScopeIds.includes(permission.scopeId))
+  user.permissions
+    .filter((permission) => globalScopeIds.includes(permission.scopeId))
     .forEach(({ scopeId }) => {
-      globals[scopeId] = true;
-    });
+      globals[scopeId] = true
+    })
 
-  return globals;
+  return globals
 }

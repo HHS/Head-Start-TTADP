@@ -1,8 +1,8 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import ResourceUse from '../ResourceUse';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import ResourceUse from '../ResourceUse'
 
 const headers = [
   {
@@ -17,7 +17,7 @@ const headers = [
     name: 'March 2022',
     displayName: 'Mar-22',
   },
-];
+]
 
 const testData = {
   headers,
@@ -90,83 +90,79 @@ const testData = {
       ],
     },
   ],
-};
+}
 
 const renderResourceUse = (data) => {
-  render(
-    <ResourceUse
-      data={data}
-    />,
-  );
-};
+  render(<ResourceUse data={data} />)
+}
 
 describe('Resource Use Widget', () => {
   it('renders correctly without data', async () => {
-    const data = { headers, resources: [] };
-    renderResourceUse(data);
+    const data = { headers, resources: [] }
+    renderResourceUse(data)
 
-    const button = await screen.findByRole('button', { name: /Open Actions for Resource use/i });
-
-    act(() => {
-      userEvent.click(button);
-    });
-
-    const viewAsTable = await screen.findByRole('button', { name: /view as table/i });
+    const button = await screen.findByRole('button', { name: /Open Actions for Resource use/i })
 
     act(() => {
-      userEvent.click(viewAsTable);
-    });
+      userEvent.click(button)
+    })
 
-    expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
-    expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument();
-    expect(screen.getByText(/Resource URL/i)).toBeInTheDocument();
-    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/Mar-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
-  });
+    const viewAsTable = await screen.findByRole('button', { name: /view as table/i })
+
+    act(() => {
+      userEvent.click(viewAsTable)
+    })
+
+    expect(screen.getByText(/Resource use/i)).toBeInTheDocument()
+    expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument()
+    expect(screen.getByText(/Resource URL/i)).toBeInTheDocument()
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument()
+    expect(screen.getByText(/Mar-22/i)).toBeInTheDocument()
+    expect(screen.getByText(/Feb-22/i)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument()
+  })
 
   it('renders correctly with data', async () => {
-    renderResourceUse(testData);
+    renderResourceUse(testData)
 
-    const button = await screen.findByRole('button', { name: /Open Actions for Resource use/i });
-
-    act(() => {
-      userEvent.click(button);
-    });
-
-    const viewAsTable = await screen.findByRole('button', { name: /view as table/i });
+    const button = await screen.findByRole('button', { name: /Open Actions for Resource use/i })
 
     act(() => {
-      userEvent.click(viewAsTable);
-    });
+      userEvent.click(button)
+    })
 
-    expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
-    expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument();
-    expect(screen.getByText(/Resource URL/i)).toBeInTheDocument();
-    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/Mar-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
+    const viewAsTable = await screen.findByRole('button', { name: /view as table/i })
 
-    const link = screen.getByRole('link', { name: /eclkc Sample Title Test/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides');
-    expect(screen.getByRole('cell', { name: /17/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /18/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /19/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /20/i })).toBeInTheDocument();
+    act(() => {
+      userEvent.click(viewAsTable)
+    })
 
-    expect(screen.getByRole('link', { name: /https:\/\/test1\.gov/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /21/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /22/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /23/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /24/i })).toBeInTheDocument();
+    expect(screen.getByText(/Resource use/i)).toBeInTheDocument()
+    expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument()
+    expect(screen.getByText(/Resource URL/i)).toBeInTheDocument()
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument()
+    expect(screen.getByText(/Mar-22/i)).toBeInTheDocument()
+    expect(screen.getByText(/Feb-22/i)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument()
 
-    expect(screen.getByRole('cell', { name: /non url/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /25/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /26/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /27/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /28/i })).toBeInTheDocument();
-  });
-});
+    const link = screen.getByRole('link', { name: /eclkc Sample Title Test/i })
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute('href', 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides')
+    expect(screen.getByRole('cell', { name: /17/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /18/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /19/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /20/i })).toBeInTheDocument()
+
+    expect(screen.getByRole('link', { name: /https:\/\/test1\.gov/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /21/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /22/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /23/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /24/i })).toBeInTheDocument()
+
+    expect(screen.getByRole('cell', { name: /non url/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /25/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /26/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /27/i })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: /28/i })).toBeInTheDocument()
+  })
+})

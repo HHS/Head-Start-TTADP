@@ -1,9 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import fetchWidget from '../fetchers/Widgets';
-import { filtersToQueryString } from '../utils';
+import React, { useState } from 'react'
+import PropTypes from 'prop-types'
+import useDeepCompareEffect from 'use-deep-compare-effect'
+import fetchWidget from '../fetchers/Widgets'
+import { filtersToQueryString } from '../utils'
 
 /*
   `withWidgetData` wraps widgets providing the widget with data
@@ -12,55 +12,53 @@ import { filtersToQueryString } from '../utils';
 */
 const withWidgetData = (Widget, widgetId) => {
   const WidgetWrapper = (props) => {
-    const [loading, updateLoading] = useState(true);
-    const [error, updateError] = useState('');
-    const [data, updateData] = useState();
+    const [loading, updateLoading] = useState(true)
+    const [error, updateError] = useState('')
+    const [data, updateData] = useState()
 
-    const { filters } = props;
+    const { filters } = props
 
     useDeepCompareEffect(() => {
       const fetch = async () => {
         try {
-          updateLoading(true);
-          const query = filtersToQueryString(filters);
-          const fetchedData = await fetchWidget(widgetId, query);
-          updateData(fetchedData);
-          updateError('');
+          updateLoading(true)
+          const query = filtersToQueryString(filters)
+          const fetchedData = await fetchWidget(widgetId, query)
+          updateData(fetchedData)
+          updateError('')
         } catch (e) {
-          updateError('Unable to load widget');
+          updateError('Unable to load widget')
         } finally {
-          updateLoading(false);
+          updateLoading(false)
         }
-      };
+      }
 
-      fetch();
-    }, [filters]);
+      fetch()
+    }, [filters])
 
     if (error) {
-      return (
-        <div>
-          {error}
-        </div>
-      );
+      return <div>{error}</div>
     }
 
-    return <Widget data={data} loading={loading} {...props} />;
-  };
+    return <Widget data={data} loading={loading} {...props} />
+  }
 
   WidgetWrapper.propTypes = {
-    filters: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.string,
-      topic: PropTypes.string,
-      condition: PropTypes.string,
-      query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    })),
-  };
+    filters: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        topic: PropTypes.string,
+        condition: PropTypes.string,
+        query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      })
+    ),
+  }
 
   WidgetWrapper.defaultProps = {
     filters: [],
-  };
+  }
 
-  return WidgetWrapper;
-};
+  return WidgetWrapper
+}
 
-export default withWidgetData;
+export default withWidgetData

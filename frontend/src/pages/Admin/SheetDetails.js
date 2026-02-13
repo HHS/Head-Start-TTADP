@@ -1,42 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { ReactGrid } from '@silevis/reactgrid';
-import PropTypes from 'prop-types';
-import '@silevis/reactgrid/styles.css';
-import { Alert } from '@trussworks/react-uswds';
-import { getSheetById } from '../../fetchers/ss';
+import React, { useEffect, useState } from 'react'
+import { ReactGrid } from '@silevis/reactgrid'
+import PropTypes from 'prop-types'
+import '@silevis/reactgrid/styles.css'
+import { Alert } from '@trussworks/react-uswds'
+import { getSheetById } from '../../fetchers/ss'
 
 const SheetDetails = ({ sheetId }) => {
-  const [activeSheet, setActiveSheet] = useState(null);
-  const [error, setError] = useState();
-  let rows;
+  const [activeSheet, setActiveSheet] = useState(null)
+  const [error, setError] = useState()
+  let rows
 
   useEffect(() => {
     const loadSheetDetails = async () => {
-      setError(null);
+      setError(null)
       try {
-        const data = await getSheetById(sheetId);
-        setActiveSheet(data);
+        const data = await getSheetById(sheetId)
+        setActiveSheet(data)
       } catch (e) {
-        setError(`Error fetching sheet: ${sheetId}`);
-        setActiveSheet(null);
+        setError(`Error fetching sheet: ${sheetId}`)
+        setActiveSheet(null)
       }
-    };
+    }
 
     if (sheetId) {
-      loadSheetDetails();
+      loadSheetDetails()
     }
-  }, [sheetId]);
+  }, [sheetId])
 
   if (activeSheet) {
     const getCells = () => {
-      const col = activeSheet.columns;
-      return col ? col.map((el) => ({ type: 'header', text: el.title })) : [];
-    };
+      const col = activeSheet.columns
+      return col ? col.map((el) => ({ type: 'header', text: el.title })) : []
+    }
 
     const headerRow = {
       rowId: 'header',
       cells: getCells(),
-    };
+    }
 
     const getSheetRows = (entries = []) => [
       headerRow,
@@ -44,9 +44,9 @@ const SheetDetails = ({ sheetId }) => {
         rowId: idx,
         cells: entry.cells.map((el) => ({ type: 'text', text: el.value ? el.value.toString() : '' })),
       })),
-    ];
+    ]
 
-    rows = getSheetRows(activeSheet.rows);
+    rows = getSheetRows(activeSheet.rows)
   }
 
   return (
@@ -65,14 +65,14 @@ const SheetDetails = ({ sheetId }) => {
         <p>Sheet details will show here...</p>
       )}
     </div>
-  );
-};
+  )
+}
 
 SheetDetails.propTypes = {
   sheetId: PropTypes.string,
-};
+}
 SheetDetails.defaultProps = {
   sheetId: null,
-};
+}
 
-export default SheetDetails;
+export default SheetDetails

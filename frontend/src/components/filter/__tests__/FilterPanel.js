@@ -1,35 +1,32 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import FilterPanel from '../FilterPanel';
-import UserContext from '../../../UserContext';
-import { formatDateRange } from '../../../utils';
-import { LANDING_FILTER_CONFIG } from '../../../pages/Landing/constants';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { SCOPE_IDS } from '@ttahub/common'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import FilterPanel from '../FilterPanel'
+import UserContext from '../../../UserContext'
+import { formatDateRange } from '../../../utils'
+import { LANDING_FILTER_CONFIG } from '../../../pages/Landing/constants'
 
-const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
-const LANDING_FILTER_CONFIG_WITH_REGIONS = LANDING_FILTER_CONFIG(true);
+const { READ_ACTIVITY_REPORTS } = SCOPE_IDS
+const LANDING_FILTER_CONFIG_WITH_REGIONS = LANDING_FILTER_CONFIG(true)
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
   forDateTime: true,
-});
+})
 
 describe('Filter Panel', () => {
   afterAll(() => {
-    jest.restoreAllMocks();
-  });
+    jest.restoreAllMocks()
+  })
 
   const renderFilterPanel = (
     filters = [],
     allUserRegions = [1],
     onApplyFilters = jest.fn(),
     onRemoveFilter = jest.fn(),
-    filterConfig = LANDING_FILTER_CONFIG_WITH_REGIONS,
+    filterConfig = LANDING_FILTER_CONFIG_WITH_REGIONS
   ) => {
     const user = {
       permissions: [
@@ -38,7 +35,7 @@ describe('Filter Panel', () => {
           scopeId: READ_ACTIVITY_REPORTS,
         },
       ],
-    };
+    }
 
     render(
       <UserContext.Provider value={{ user }}>
@@ -53,70 +50,82 @@ describe('Filter Panel', () => {
             allUserRegions={allUserRegions}
           />
         </div>
-      </UserContext.Provider>,
-    );
-  };
+      </UserContext.Provider>
+    )
+  }
   it('Removing last region pill adds back all regions', async () => {
-    const filters = [{
-      id: 1,
-      topic: 'region',
-      condition: 'is',
-      query: 1,
-    },
-    {
-      id: 2,
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    }];
-    const onRemovePill = jest.fn();
-    const onApplyFilters = jest.fn();
-    const userAllRegions = [1, 2];
-    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+    const filters = [
+      {
+        id: 1,
+        topic: 'region',
+        condition: 'is',
+        query: 1,
+      },
+      {
+        id: 2,
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
+      },
+    ]
+    const onRemovePill = jest.fn()
+    const onApplyFilters = jest.fn()
+    const userAllRegions = [1, 2]
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill)
 
     // Remove region pill.
-    const regionPill = await screen.findByRole('button', { name: /this button removes the filter: region is 1/i });
-    userEvent.click(regionPill);
+    const regionPill = await screen.findByRole('button', { name: /this button removes the filter: region is 1/i })
+    userEvent.click(regionPill)
 
     // Verify adds back all regions.
-    expect(onRemovePill).toHaveBeenCalledWith(1, true);
-  });
+    expect(onRemovePill).toHaveBeenCalledWith(1, true)
+  })
 
   it('Removing the last region filter menu item adds back all regions', async () => {
-    const filters = [{
-      id: 1,
-      topic: 'region',
-      condition: 'is',
-      query: 1,
-    },
-    {
-      id: 2,
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    }];
-    const onRemovePill = jest.fn();
-    const onApplyFilters = jest.fn();
-    const userAllRegions = [1, 2];
-    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+    const filters = [
+      {
+        id: 1,
+        topic: 'region',
+        condition: 'is',
+        query: 1,
+      },
+      {
+        id: 2,
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
+      },
+    ]
+    const onRemovePill = jest.fn()
+    const onApplyFilters = jest.fn()
+    const userAllRegions = [1, 2]
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill)
 
     // Open filters.
-    const filtersMenu = await screen.findByText(/filters \(2\)/i);
-    userEvent.click(filtersMenu);
+    const filtersMenu = await screen.findByText(/filters \(2\)/i)
+    userEvent.click(filtersMenu)
 
     // Remove region filter item.
-    const regionItem = await screen.findByRole('button', { name: /remove region is 1 filter\. click apply filters to make your changes/i });
-    userEvent.click(regionItem);
+    const regionItem = await screen.findByRole('button', { name: /remove region is 1 filter\. click apply filters to make your changes/i })
+    userEvent.click(regionItem)
 
     // Apply filter change.
-    const apply = await screen.findByRole('button', { name: /apply filters for activity reports/i });
-    userEvent.click(apply);
+    const apply = await screen.findByRole('button', { name: /apply filters for activity reports/i })
+    userEvent.click(apply)
 
     // Verify adds back all regions.
-    expect(onApplyFilters).toHaveBeenCalledWith([{
-      condition: 'is within', id: 2, query: defaultDate, topic: 'startDate',
-    }], true);
-  });
+    expect(onApplyFilters).toHaveBeenCalledWith(
+      [
+        {
+          condition: 'is within',
+          id: 2,
+          query: defaultDate,
+          topic: 'startDate',
+        },
+      ],
+      true
+    )
+  })
 
   it('Adding region filter via menu prevents adding back all regions', async () => {
     const filters = [
@@ -125,32 +134,41 @@ describe('Filter Panel', () => {
         topic: 'startDate',
         condition: 'is within',
         query: defaultDate,
-      }];
-    const onRemovePill = jest.fn();
-    const onApplyFilters = jest.fn();
-    const userAllRegions = [1, 2];
-    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+      },
+    ]
+    const onRemovePill = jest.fn()
+    const onApplyFilters = jest.fn()
+    const userAllRegions = [1, 2]
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill)
 
     // Open filters.
-    const filtersMenu = await screen.findByText(/filters \(1\)/i);
-    userEvent.click(filtersMenu);
+    const filtersMenu = await screen.findByText(/filters \(1\)/i)
+    userEvent.click(filtersMenu)
 
     // Get filter group.
-    const topic = await screen.findByRole('combobox', { name: /topic/i });
-    userEvent.selectOptions(topic, 'region');
+    const topic = await screen.findByRole('combobox', { name: /topic/i })
+    userEvent.selectOptions(topic, 'region')
 
-    const condition = await screen.findByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'is');
+    const condition = await screen.findByRole('combobox', { name: 'condition' })
+    userEvent.selectOptions(condition, 'is')
 
     // Apply filter change.
-    const apply = await screen.findByRole('button', { name: /apply filters for activity reports/i });
-    userEvent.click(apply);
+    const apply = await screen.findByRole('button', { name: /apply filters for activity reports/i })
+    userEvent.click(apply)
 
     // Verify adds back all regions.
-    expect(onApplyFilters).toHaveBeenCalledWith([{
-      condition: 'is', id: 1, query: '1', topic: 'region',
-    }], false);
-  });
+    expect(onApplyFilters).toHaveBeenCalledWith(
+      [
+        {
+          condition: 'is',
+          id: 1,
+          query: '1',
+          topic: 'region',
+        },
+      ],
+      false
+    )
+  })
 
   it('Adding a filter with all users regions hides region pills', async () => {
     const filters = [
@@ -172,19 +190,19 @@ describe('Filter Panel', () => {
         condition: 'is',
         query: 2,
       },
-    ];
-    const onRemovePill = jest.fn();
-    const onApplyFilters = jest.fn();
-    const userAllRegions = [1, 2];
-    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+    ]
+    const onRemovePill = jest.fn()
+    const onApplyFilters = jest.fn()
+    const userAllRegions = [1, 2]
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill)
 
     // Date filter pill exists.
-    expect(await screen.findByRole('button', { name: /this button removes the filter: date started \(ar\) is within/i })).toBeVisible();
+    expect(await screen.findByRole('button', { name: /this button removes the filter: date started \(ar\) is within/i })).toBeVisible()
 
     // Region filter pills are hidden.
-    expect(screen.queryByRole('button', { name: /this button removes the filter: region is 1/i })).toBeNull();
-    expect(screen.queryByRole('button', { name: /this button removes the filter: region is 2/i })).toBeNull();
-  });
+    expect(screen.queryByRole('button', { name: /this button removes the filter: region is 1/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /this button removes the filter: region is 2/i })).toBeNull()
+  })
 
   it('Adding a filter with all users regions hides region filter menu items', async () => {
     const filters = [
@@ -206,36 +224,37 @@ describe('Filter Panel', () => {
         condition: 'is',
         query: 2,
       },
-    ];
-    const onRemovePill = jest.fn();
-    const onApplyFilters = jest.fn();
-    const userAllRegions = [1, 2];
-    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+    ]
+    const onRemovePill = jest.fn()
+    const onApplyFilters = jest.fn()
+    const userAllRegions = [1, 2]
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill)
 
     // Verify menu contains one filter.
-    expect(await screen.findByText(/filters \(1\)/i)).toBeVisible();
+    expect(await screen.findByText(/filters \(1\)/i)).toBeVisible()
 
     // Open filters.
-    const filtersMenu = await screen.findByText(/filters \(1\)/i);
-    userEvent.click(filtersMenu);
-    expect(screen.getAllByText(/date started/i).length).toBe(2);
-  });
+    const filtersMenu = await screen.findByText(/filters \(1\)/i)
+    userEvent.click(filtersMenu)
+    expect(screen.getAllByText(/date started/i).length).toBe(2)
+  })
 
   it('Filters with region arrays parse correctly', async () => {
-    const filters = [{
-      id: 1,
-      topic: 'region',
-      condition: 'is',
-      query: ['1'],
-    },
-    ];
-    const onRemovePill = jest.fn();
-    const onApplyFilters = jest.fn();
-    const userAllRegions = [1, 2];
-    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+    const filters = [
+      {
+        id: 1,
+        topic: 'region',
+        condition: 'is',
+        query: ['1'],
+      },
+    ]
+    const onRemovePill = jest.fn()
+    const onApplyFilters = jest.fn()
+    const userAllRegions = [1, 2]
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill)
     // If this pill exists we know it parsed the region correctly.
-    expect(await screen.findByRole('button', { name: /this button removes the filter: region is 1/i })).toBeVisible();
-  });
+    expect(await screen.findByRole('button', { name: /this button removes the filter: region is 1/i })).toBeVisible()
+  })
 
   it('Using a shared singleOrMultiRecipient link renders correctly', async () => {
     const filters = [
@@ -245,11 +264,11 @@ describe('Filter Panel', () => {
         condition: 'is',
         query: ['multi-recipients'],
       },
-    ];
-    const onRemovePill = jest.fn();
-    const onApplyFilters = jest.fn();
-    const userAllRegions = [1];
-    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
-    expect(screen.queryAllByText('Multiple recipient reports').length).toBe(2);
-  });
-});
+    ]
+    const onRemovePill = jest.fn()
+    const onApplyFilters = jest.fn()
+    const userAllRegions = [1]
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill)
+    expect(screen.queryAllByText('Multiple recipient reports').length).toBe(2)
+  })
+})

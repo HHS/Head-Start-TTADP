@@ -1,60 +1,47 @@
-import React, { useMemo, useEffect } from 'react';
-import moment from 'moment';
-import PropTypes from 'prop-types';
-import Container from '../../../components/Container';
-import FeedArticle from '../../../components/FeedArticle';
-import { parseFeedIntoDom } from '../../../utils';
-import './WhatsNew.scss';
+import React, { useMemo, useEffect } from 'react'
+import moment from 'moment'
+import PropTypes from 'prop-types'
+import Container from '../../../components/Container'
+import FeedArticle from '../../../components/FeedArticle'
+import { parseFeedIntoDom } from '../../../utils'
+import './WhatsNew.scss'
 
-const LOCAL_STORAGE_KEY = 'whatsnew-read-notifications';
+const LOCAL_STORAGE_KEY = 'whatsnew-read-notifications'
 
-const CURRENT_YEAR = moment().year();
-const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3];
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+const CURRENT_YEAR = moment().year()
+const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3]
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 export const formatWhatsNew = (feed) => {
-  const dom = parseFeedIntoDom(feed);
+  const dom = parseFeedIntoDom(feed)
   if (!dom) {
-    return null;
+    return null
   }
 
-  let alreadyRead = [];
+  let alreadyRead = []
 
   try {
-    const storage = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    const storage = window.localStorage.getItem(LOCAL_STORAGE_KEY)
     if (storage) {
-      alreadyRead = JSON.parse(storage);
+      alreadyRead = JSON.parse(storage)
     }
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log('local storage unavailable', error);
+    console.log('local storage unavailable', error)
   }
 
   // get individual entries
-  const entries = dom.querySelectorAll('entry');
+  const entries = dom.querySelectorAll('entry')
 
   const articles = Array.from(entries).map((entry) => {
     // first we need to get the date tag from the provπided tags
-    const tags = Array.from(entry.querySelectorAll('category')).map((category) => category.getAttribute('term'));
-    const date = tags.filter((tag) => tag !== 'whatsnew')[0];
+    const tags = Array.from(entry.querySelectorAll('category')).map((category) => category.getAttribute('term'))
+    const date = tags.filter((tag) => tag !== 'whatsnew')[0]
 
     // given a string like january2021, split it into an array of ['january', '2021']
-    const [month, year] = date.split(/(\d+)/).filter((s) => s);
-    const id = entry.querySelector('id') ? entry.querySelector('id').textContent : null;
-    const unread = !alreadyRead.includes(id);
+    const [month, year] = date.split(/(\d+)/).filter((s) => s)
+    const id = entry.querySelector('id') ? entry.querySelector('id').textContent : null
+    const unread = !alreadyRead.includes(id)
 
     return {
       title: entry.querySelector('title').textContent,
@@ -63,68 +50,68 @@ export const formatWhatsNew = (feed) => {
       id,
       year,
       unread,
-    };
-  });
+    }
+  })
 
   // sort into year and month like { 2021: { January: [articles] } }
   const sortedArticles = articles.reduce((acc, article) => {
-    const { year, month } = article;
+    const { year, month } = article
     if (!acc[year]) {
-      acc[year] = {};
+      acc[year] = {}
     }
     if (!acc[year][month]) {
-      acc[year][month] = [];
+      acc[year][month] = []
     }
-    acc[year][month].push(article);
-    acc[year][month].sort((a, b) => b.published - a.published);
-    return acc;
-  }, {});
+    acc[year][month].push(article)
+    acc[year][month].sort((a, b) => b.published - a.published)
+    return acc
+  }, {})
 
   // sort arrays by year and month
   Object.keys(sortedArticles).forEach((year) => {
-    const months = Object.keys(sortedArticles[year]);
-    months.sort((a, b) => MONTHS.indexOf(b) - MONTHS.indexOf(a));
+    const months = Object.keys(sortedArticles[year])
+    months.sort((a, b) => MONTHS.indexOf(b) - MONTHS.indexOf(a))
     sortedArticles[year] = months.reduce((acc, month) => {
-      acc[month] = sortedArticles[year][month];
-      return acc;
-    }, {});
-  });
+      acc[month] = sortedArticles[year][month]
+      return acc
+    }, {})
+  })
 
-  return sortedArticles;
-};
+  return sortedArticles
+}
 
 export default function WhatsNew({ data }) {
   const articles = useMemo(() => {
     if (!data) {
-      return {};
+      return {}
     }
-    return formatWhatsNew(data);
-  }, [data]);
+    return formatWhatsNew(data)
+  }, [data])
 
   useEffect(() => {
     try {
       // set the loaded articles as seen
       const articleIds = Object.values(articles).reduce((acc, year) => {
-        const months = Object.values(year);
+        const months = Object.values(year)
         months.forEach((month) => {
           month.forEach((article) => {
-            acc.push(article.id);
-          });
-        });
-        return acc;
-      }, []);
+            acc.push(article.id)
+          })
+        })
+        return acc
+      }, [])
 
       // we don't need to save anything if there are no articles
       if (!articleIds.length) {
-        return;
+        return
       }
 
-      window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(articleIds));
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(articleIds))
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.log('local storage unavailable', error);
+      console.log('local storage unavailable', error)
     }
-  }, [articles]);
+  }, [articles])
 
   return (
     <Container>
@@ -132,25 +119,17 @@ export default function WhatsNew({ data }) {
       <div className="ttahub-feed ttahub-feed-whats-new">
         {YEARS.map((year) => (
           <div key={year}>
-            {articles[`${year}`] && (
+            {articles[`${year}`] &&
               Object.keys(articles[`${year}`]).map((month) => (
                 <div key={month}>
                   <h3 className="font-sans-lg margin-top-4">
-                    {month}
-                    {' '}
-                    {year}
+                    {month} {year}
                   </h3>
                   {articles[`${year}`][month].map((article) => (
-                    <FeedArticle
-                      key={article.title}
-                      title={article.title}
-                      content={article.content}
-                      unread={article.unread}
-                    />
+                    <FeedArticle key={article.title} title={article.title} content={article.content} unread={article.unread} />
                   ))}
                 </div>
-              ))
-            )}
+              ))}
           </div>
         ))}
         <div>
@@ -160,9 +139,9 @@ export default function WhatsNew({ data }) {
         </div>
       </div>
     </Container>
-  );
+  )
 }
 
 WhatsNew.propTypes = {
   data: PropTypes.string.isRequired,
-};
+}

@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
-import { DECIMAL_BASE } from '@ttahub/common';
-import useWidgetSorting from './useWidgetSorting';
-import useWidgetExport from './useWidgetExport';
+import { useCallback, useEffect, useState } from 'react'
+import { DECIMAL_BASE } from '@ttahub/common'
+import useWidgetSorting from './useWidgetSorting'
+import useWidgetExport from './useWidgetExport'
 
 export const parseValue = (value) => {
-  const noCommasValue = value.replaceAll(',', '');
-  const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
+  const noCommasValue = value.replaceAll(',', '')
+  const parsedValue = parseInt(noCommasValue, DECIMAL_BASE)
   if (Number.isNaN(parsedValue)) {
-    return value;
+    return value
   }
-  return parsedValue;
-};
+  return parsedValue
+}
 
 export default function useWidgetPaging(
   headers,
@@ -29,71 +29,64 @@ export default function useWidgetPaging(
   dateColumns = [],
   exportName,
   exportDataName = null,
-  keyColumns = [],
+  keyColumns = []
 ) {
-  const {
-    sortConfig,
-    setSortConfig,
-    requestSort,
-  } = useWidgetSorting(
+  const { sortConfig, setSortConfig, requestSort } = useWidgetSorting(
     localStorageKey,
     defaultSortConfig,
     dataToUse,
     setDataToUse,
     stringColumns,
     dateColumns,
-    keyColumns,
-  );
+    keyColumns
+  )
 
-  const {
-    exportRows,
-  } = useWidgetExport(
-    dataToUse,
-    headers,
-    checkBoxes,
-    exportHeading,
-    exportName,
-    exportDataName,
-  );
+  const { exportRows } = useWidgetExport(dataToUse, headers, checkBoxes, exportHeading, exportName, exportDataName)
 
-  const { activePage } = sortConfig;
-  const [offset, setOffset] = useState((activePage - 1) * perPageNumber);
+  const { activePage } = sortConfig
+  const [offset, setOffset] = useState((activePage - 1) * perPageNumber)
 
   // a side effect that resets the pagination when the filters change
   useEffect(() => {
     if (resetPagination) {
-      setSortConfig((prevSortConfig) => ({ ...prevSortConfig, activePage: 1 }));
-      setOffset(0); // 0 times perpage = 0
-      setResetPagination(false);
+      setSortConfig((prevSortConfig) => ({ ...prevSortConfig, activePage: 1 }))
+      setOffset(0) // 0 times perpage = 0
+      setResetPagination(false)
     }
-  }, [resetPagination, setResetPagination, setSortConfig]);
+  }, [resetPagination, setResetPagination, setSortConfig])
 
   useEffect(() => {
-    setDataPerPage(dataToUse.slice(offset, offset + perPageNumber));
-  }, [offset, perPageNumber, dataToUse, setDataPerPage]);
+    setDataPerPage(dataToUse.slice(offset, offset + perPageNumber))
+  }, [offset, perPageNumber, dataToUse, setDataPerPage])
 
-  const handlePageChange = useCallback((pageNumber) => {
-    if (!loading) {
-      // copy state
-      const sort = { ...sortConfig };
+  const handlePageChange = useCallback(
+    (pageNumber) => {
+      if (!loading) {
+        // copy state
+        const sort = { ...sortConfig }
 
-      // mutate
-      sort.activePage = pageNumber;
+        // mutate
+        sort.activePage = pageNumber
 
-      // store it
-      setSortConfig(sort);
-      setOffset((pageNumber - 1) * perPageNumber);
-    }
-  }, [loading, perPageNumber, setSortConfig, sortConfig]);
+        // store it
+        setSortConfig(sort)
+        setOffset((pageNumber - 1) * perPageNumber)
+      }
+    },
+    [loading, perPageNumber, setSortConfig, sortConfig]
+  )
 
-  const sort = useCallback((sortBy, direction) => {
-    requestSort(sortBy, direction);
-    setOffset(0);
-  }, [requestSort]);
+  const sort = useCallback(
+    (sortBy, direction) => {
+      requestSort(sortBy, direction)
+      setOffset(0)
+    },
+    [requestSort]
+  )
 
   useEffect(() => {
-    setDataPerPage(dataToUse.slice(offset, offset + perPageNumber));
-  }, [offset, perPageNumber, dataToUse, setDataPerPage]);
+    setDataPerPage(dataToUse.slice(offset, offset + perPageNumber))
+  }, [offset, perPageNumber, dataToUse, setDataPerPage])
 
   return {
     offset,
@@ -103,5 +96,5 @@ export default function useWidgetPaging(
     exportRows,
     sortConfig,
     setSortConfig,
-  };
+  }
 }

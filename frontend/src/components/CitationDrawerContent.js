@@ -1,14 +1,14 @@
-import React, { useCallback } from 'react';
-import { uniqBy } from 'lodash';
-import PropTypes from 'prop-types';
-import useFetchNoLoading from '../hooks/useFetchNoLoading';
-import { fetchCitationTextByName } from '../fetchers/citations';
+import React, { useCallback } from 'react'
+import { uniqBy } from 'lodash'
+import PropTypes from 'prop-types'
+import useFetchNoLoading from '../hooks/useFetchNoLoading'
+import { fetchCitationTextByName } from '../fetchers/citations'
 
 export default function CitationDrawerContent({ citations }) {
-  const fetcher = useCallback(() => fetchCitationTextByName(citations), [citations]);
-  const { data: content } = useFetchNoLoading([], fetcher, [citations]);
+  const fetcher = useCallback(() => fetchCitationTextByName(citations), [citations])
+  const { data: content } = useFetchNoLoading([], fetcher, [citations])
 
-  const uniqueContent = uniqBy(content, 'citation');
+  const uniqueContent = uniqBy(content, 'citation')
 
   return (
     <div>
@@ -19,9 +19,9 @@ export default function CitationDrawerContent({ citations }) {
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 CitationDrawerContent.propTypes = {
   citations: PropTypes.arrayOf(PropTypes.string).isRequired,
-};
+}

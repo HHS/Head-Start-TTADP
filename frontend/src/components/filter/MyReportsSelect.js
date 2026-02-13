@@ -1,18 +1,14 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import FilterSelect from './FilterSelect';
-import { MY_REPORT_ROLES } from '../../Constants';
+import React from 'react'
+import PropTypes from 'prop-types'
+import FilterSelect from './FilterSelect'
+import { MY_REPORT_ROLES } from '../../Constants'
 
-const MY_REPORTS_OPTIONS = MY_REPORT_ROLES.map((label, value) => ({ value, label }));
+const MY_REPORTS_OPTIONS = MY_REPORT_ROLES.map((label, value) => ({ value, label }))
 
-export default function MyReportsSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function MyReportsSelect({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
-    onApply(selected);
-  };
+    onApply(selected)
+  }
 
   return (
     <FilterSelect
@@ -22,14 +18,11 @@ export default function MyReportsSelect({
       options={MY_REPORTS_OPTIONS}
       selectedValues={query}
     />
-  );
+  )
 }
 
 MyReportsSelect.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  query: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.string),
-    PropTypes.string,
-  ]).isRequired,
-};
+  query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]).isRequired,
+}

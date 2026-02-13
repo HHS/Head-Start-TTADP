@@ -1,66 +1,56 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import PropTypes from 'prop-types';
-import FocusTrap from 'focus-trap-react';
-import { uniqueId } from 'lodash';
-import './Drawer.scss';
-import useOnClickOutside from '../hooks/useOnOutsideClick';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import PropTypes from 'prop-types'
+import FocusTrap from 'focus-trap-react'
+import { uniqueId } from 'lodash'
+import './Drawer.scss'
+import useOnClickOutside from '../hooks/useOnOutsideClick'
 
-const ESCAPE_KEY_CODE = 27;
+const ESCAPE_KEY_CODE = 27
 
-export default function Drawer({
-  title,
-  footer,
-  stickyHeader,
-  stickyFooter,
-  children,
-  triggerRef,
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const elementRef = useRef(null);
-  const closeButtonRef = useRef(null);
+export default function Drawer({ title, footer, stickyHeader, stickyFooter, children, triggerRef }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const elementRef = useRef(null)
+  const closeButtonRef = useRef(null)
 
   const headerHeight = useMemo(() => {
-    const header = document.querySelector('.smart-hub-header');
-    return header ? header.offsetHeight : 0;
-  }, []);
+    const header = document.querySelector('.smart-hub-header')
+    return header ? header.offsetHeight : 0
+  }, [])
 
-  useOnClickOutside(useCallback(() => setIsOpen(false), []), [elementRef, triggerRef]);
+  useOnClickOutside(
+    useCallback(() => setIsOpen(false), []),
+    [elementRef, triggerRef]
+  )
 
   useEffect(() => {
-    const triggerElement = triggerRef ? triggerRef.current : null;
+    const triggerElement = triggerRef ? triggerRef.current : null
 
-    const openDrawer = () => setIsOpen(true);
+    const openDrawer = () => setIsOpen(true)
 
     if (triggerElement) {
-      triggerElement.addEventListener('click', openDrawer);
+      triggerElement.addEventListener('click', openDrawer)
     }
     return () => {
       if (triggerElement) {
-        triggerElement.removeEventListener('click', openDrawer);
+        triggerElement.removeEventListener('click', openDrawer)
       }
-    };
-  }, [triggerRef]);
+    }
+  }, [triggerRef])
 
   useEffect(() => {
     if (isOpen) {
       if (closeButtonRef.current) {
-        closeButtonRef.current.focus();
+        closeButtonRef.current.focus()
       }
 
       const onKeyDown = (event) => {
-        if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
-      };
-      document.addEventListener('keydown', onKeyDown);
-      return () => document.removeEventListener('keydown', onKeyDown);
+        if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false)
+      }
+      document.addEventListener('keydown', onKeyDown)
+      return () => document.removeEventListener('keydown', onKeyDown)
     }
-    return undefined;
-  }, [isOpen]);
+    return undefined
+  }, [isOpen])
 
   const classNames = [
     'smart-hub-drawer',
@@ -73,14 +63,14 @@ export default function Drawer({
     'shadow-3',
     'flex-column',
     'flex-justify',
-  ];
+  ]
 
   if (isOpen) {
-    classNames.push('display-flex');
-    classNames.push('slide-in-right');
+    classNames.push('display-flex')
+    classNames.push('slide-in-right')
   }
 
-  const uniqueDrawerID = uniqueId('smart-hub-drawer-');
+  const uniqueDrawerID = uniqueId('smart-hub-drawer-')
 
   return (
     <div
@@ -98,19 +88,21 @@ export default function Drawer({
         <div>
           <div>
             {title && (
-            <div
-              className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
-            >
-              <span className="text-bold font-serif-lg" id={uniqueDrawerID} role="heading" aria-level={1}>{title}</span>
-              <button
-                ref={closeButtonRef}
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="usa-button usa-button--outline smart-hub-button--no-margin"
+              <div
+                className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
               >
-                Close
-              </button>
-            </div>
+                <span className="text-bold font-serif-lg" id={uniqueDrawerID} role="heading" aria-level={1}>
+                  {title}
+                </span>
+                <button
+                  ref={closeButtonRef}
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="usa-button usa-button--outline smart-hub-button--no-margin"
+                >
+                  Close
+                </button>
+              </div>
             )}
 
             <div
@@ -122,19 +114,11 @@ export default function Drawer({
             </div>
           </div>
 
-          {footer && (
-          <div
-            className={`bg-base-lightest padding-105 ${
-              stickyFooter ? 'position-sticky pin-bottom' : ''
-            }`}
-          >
-            {footer}
-          </div>
-          )}
+          {footer && <div className={`bg-base-lightest padding-105 ${stickyFooter ? 'position-sticky pin-bottom' : ''}`}>{footer}</div>}
         </div>
       </FocusTrap>
     </div>
-  );
+  )
 }
 
 Drawer.propTypes = {
@@ -144,7 +128,7 @@ Drawer.propTypes = {
   footer: PropTypes.string,
   triggerRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   children: PropTypes.node,
-};
+}
 
 Drawer.defaultProps = {
   stickyHeader: false,
@@ -153,4 +137,4 @@ Drawer.defaultProps = {
   footer: '',
   triggerRef: null,
   children: null,
-};
+}

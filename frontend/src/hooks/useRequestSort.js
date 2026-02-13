@@ -1,20 +1,23 @@
-import { useCallback } from 'react';
+import { useCallback } from 'react'
 
 export default function useRequestSort(setSortConfig) {
-  return useCallback((sortBy) => {
-    setSortConfig((previousConfig) => {
-      let direction = 'desc';
-      if (previousConfig.sortBy === sortBy && previousConfig.direction === 'desc') {
-        direction = 'asc';
-      }
+  return useCallback(
+    (sortBy) => {
+      setSortConfig((previousConfig) => {
+        let direction = 'desc'
+        if (previousConfig.sortBy === sortBy && previousConfig.direction === 'desc') {
+          direction = 'asc'
+        }
 
-      setSortConfig({
-        ...previousConfig,
-        sortBy,
-        direction,
-        activePage: 1,
-        offset: 0,
-      });
-    });
-  }, [setSortConfig]);
+        setSortConfig({
+          ...previousConfig,
+          sortBy,
+          direction,
+          activePage: 1,
+          offset: 0,
+        })
+      })
+    },
+    [setSortConfig]
+  )
 }

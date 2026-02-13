@@ -1,23 +1,16 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { Checkbox } from '@trussworks/react-uswds';
-import { Link, useHistory } from 'react-router-dom';
-import moment from 'moment';
-import ContextMenu from '../ContextMenu';
-import { getReportsDownloadURL } from '../../fetchers/helpers';
-import TooltipWithCollection from '../TooltipWithCollection';
-import Tooltip from '../Tooltip';
-import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import './ReportRow.css';
+import React, { useState } from 'react'
+import PropTypes from 'prop-types'
+import { Checkbox } from '@trussworks/react-uswds'
+import { Link, useHistory } from 'react-router-dom'
+import moment from 'moment'
+import ContextMenu from '../ContextMenu'
+import { getReportsDownloadURL } from '../../fetchers/helpers'
+import TooltipWithCollection from '../TooltipWithCollection'
+import Tooltip from '../Tooltip'
+import { DATE_DISPLAY_FORMAT } from '../../Constants'
+import './ReportRow.css'
 
-function ReportRow({
-  report,
-  openMenuUp,
-  handleReportSelect,
-  isChecked,
-  numberOfSelectedReports,
-  exportSelected,
-}) {
+function ReportRow({ report, openMenuUp, handleReportSelect, isChecked, numberOfSelectedReports, exportSelected }) {
   const {
     id,
     displayId,
@@ -31,52 +24,50 @@ function ReportRow({
     legacyId,
     creatorName,
     activityReportCollaborators,
-  } = report;
+  } = report
 
-  const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
+  const [trClassname, setTrClassname] = useState('tta-smarthub--report-row')
 
-  const history = useHistory();
-  const recipients = activityRecipients && activityRecipients.map((ar) => (
-    ar.name
-  ));
+  const history = useHistory()
+  const recipients = activityRecipients && activityRecipients.map((ar) => ar.name)
 
-  const collaboratorNames = activityReportCollaborators
-    ? activityReportCollaborators.map((collaborator) => (
-      collaborator.fullName)) : [];
+  const collaboratorNames = activityReportCollaborators ? activityReportCollaborators.map((collaborator) => collaborator.fullName) : []
 
-  const viewOrEditLink = calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
-  const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink;
+  const viewOrEditLink = calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`
+  const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink
 
   const menuItems = [
     {
       label: 'View',
-      onClick: () => { history.push(linkTarget); },
+      onClick: () => {
+        history.push(linkTarget)
+      },
     },
-  ];
+  ]
 
   if (navigator.clipboard) {
     menuItems.push({
       label: 'Copy URL',
       onClick: async () => {
-        await navigator.clipboard.writeText(`${window.location.origin}${linkTarget}`);
+        await navigator.clipboard.writeText(`${window.location.origin}${linkTarget}`)
       },
-    });
+    })
   }
 
   if (!legacyId) {
     const downloadMenuItem = {
       label: 'Download',
       onClick: () => {
-        const downloadURL = getReportsDownloadURL([id]);
-        window.location.assign(downloadURL);
+        const downloadURL = getReportsDownloadURL([id])
+        window.location.assign(downloadURL)
       },
-    };
-    menuItems.push(downloadMenuItem);
+    }
+    menuItems.push(downloadMenuItem)
   }
 
-  const contextMenuLabel = `Actions for activity report ${displayId}`;
+  const contextMenuLabel = `Actions for activity report ${displayId}`
 
-  const selectId = `report-${id}`;
+  const selectId = `report-${id}`
 
   /**
    * we manage the class of the row as a sort of "focus-within" workaround
@@ -84,52 +75,34 @@ function ReportRow({
    * not blast screen-reader only users with a bunch of redundant buttons
    */
 
-  const onFocus = () => setTrClassname('tta-smarthub--report-row focused');
+  const onFocus = () => setTrClassname('tta-smarthub--report-row focused')
 
   const onBlur = (e) => {
     if (e.relatedTarget && e.relatedTarget.matches('.tta-smarthub--report-row *')) {
-      return;
+      return
     }
-    setTrClassname('tta-smarthub--report-row');
-  };
+    setTrClassname('tta-smarthub--report-row')
+  }
 
   return (
     <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`landing_${id}`}>
       <td className="width-8" data-label="Select report">
         <Checkbox id={selectId} label="" value={id} checked={isChecked} onChange={handleReportSelect} aria-label={`Select ${displayId}`} />
-        { numberOfSelectedReports > 0 && (
-        <button
-          type="button"
-          className="usa-button usa-button--outline ttahub-export-reports"
-          onClick={exportSelected}
-        >
-          Export
-          {' '}
-          {numberOfSelectedReports}
-          {' '}
-          selected reports
-        </button>
-        ) }
+        {numberOfSelectedReports > 0 && (
+          <button type="button" className="usa-button usa-button--outline ttahub-export-reports" onClick={exportSelected}>
+            Export {numberOfSelectedReports} selected reports
+          </button>
+        )}
       </td>
       <th data-label="Report ID" scope="row" className="smart-hub--blue">
-        <Link
-          to={linkTarget}
-        >
-          {displayId}
-        </Link>
+        <Link to={linkTarget}>{displayId}</Link>
       </th>
       <td data-label="Recipients">
         <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} position={openMenuUp ? 'top' : 'bottom'} />
       </td>
       <td data-label="Date started">{startDate}</td>
       <td data-label="Creator">
-        {creatorName ? (
-          <Tooltip
-            displayText={creatorName}
-            tooltipText={creatorName}
-            buttonLabel="click to reveal author name"
-          />
-        ) : '' }
+        {creatorName ? <Tooltip displayText={creatorName} tooltipText={creatorName} buttonLabel="click to reveal author name" /> : ''}
       </td>
       <td data-label="Created date">{moment(createdAt).format(DATE_DISPLAY_FORMAT)}</td>
       <td data-label="Topics">
@@ -144,20 +117,22 @@ function ReportRow({
         <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={openMenuUp} fixed />
       </td>
     </tr>
-  );
+  )
 }
 
 export const reportPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   displayId: PropTypes.string.isRequired,
-  activityRecipients: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    grant: PropTypes.shape({
-      recipient: PropTypes.shape({
-        name: PropTypes.string,
+  activityRecipients: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      grant: PropTypes.shape({
+        recipient: PropTypes.shape({
+          name: PropTypes.string,
+        }),
       }),
-    }),
-  })).isRequired,
+    })
+  ).isRequired,
   approvedAt: PropTypes.string,
   createdAt: PropTypes.string,
   startDate: PropTypes.string.isRequired,
@@ -167,13 +142,13 @@ export const reportPropTypes = PropTypes.shape({
       user: PropTypes.shape({
         fullName: PropTypes.string,
       }),
-    }),
+    })
   ),
   lastSaved: PropTypes.string,
   calculatedStatus: PropTypes.string,
   legacyId: PropTypes.string,
   creatorName: PropTypes.string,
-});
+})
 
 ReportRow.propTypes = {
   report: reportPropTypes.isRequired,
@@ -182,10 +157,10 @@ ReportRow.propTypes = {
   isChecked: PropTypes.bool.isRequired,
   numberOfSelectedReports: PropTypes.number,
   exportSelected: PropTypes.func.isRequired,
-};
+}
 
 ReportRow.defaultProps = {
   numberOfSelectedReports: 0,
-};
+}
 
-export default ReportRow;
+export default ReportRow

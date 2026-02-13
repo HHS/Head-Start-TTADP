@@ -1,32 +1,17 @@
-import { useCallback } from 'react';
-import { GOAL_STATUS } from '@ttahub/common';
-import {
-  updateGoalStatus,
-  createGoalsFromTemplate,
-  reopenGoal,
-  createOrUpdateGoals,
-} from '../fetchers/goals';
+import { useCallback } from 'react'
+import { GOAL_STATUS } from '@ttahub/common'
+import { updateGoalStatus, createGoalsFromTemplate, reopenGoal, createOrUpdateGoals } from '../fetchers/goals'
 
 export default function useNewGoalAction() {
-/**
- *
- * @param {number} recipientId
- * @param {number} regionId
- * @param {*} data
- * @returns {Promise<number[]>} goalIds
- */
+  /**
+   *
+   * @param {number} recipientId
+   * @param {number} regionId
+   * @param {*} data
+   * @returns {Promise<number[]>} goalIds
+   */
   return useCallback(async (recipientId, regionId, isExistingGoal, data) => {
-    const {
-      useOhsInitiativeGoal,
-      goalIds,
-      goalStatus,
-      selectedGrant,
-      goalTemplate,
-      goalName,
-      reason,
-      context,
-      modalRef,
-    } = data;
+    const { useOhsInitiativeGoal, goalIds, goalStatus, selectedGrant, goalTemplate, goalName, reason, context, modalRef } = data
 
     if (isExistingGoal && goalName) {
       // update existing goal
@@ -41,62 +26,51 @@ export default function useNewGoalAction() {
             ids: goalIds,
             skipObjectiveCleanup: true,
           },
-        ]);
+        ])
 
-        return goals.map((g) => g.id);
+        return goals.map((g) => g.id)
       } catch (err) {
-        return [];
+        return []
       }
     }
 
     if (goalStatus === GOAL_STATUS.CLOSED) {
       try {
         // reopen the goal(s) and redirect to the edit goal form for those goals
-        const updatedGoals = await Promise.all(
-          goalIds.map((id) => reopenGoal(id, reason, context)),
-        );
+        const updatedGoals = await Promise.all(goalIds.map((id) => reopenGoal(id, reason, context)))
 
-        modalRef.current.toggleModal(false);
-        return updatedGoals.map((g) => g.id);
+        modalRef.current.toggleModal(false)
+        return updatedGoals.map((g) => g.id)
       } catch (err) {
-        modalRef.current.toggleModal(false);
-        return [];
+        modalRef.current.toggleModal(false)
+        return []
       }
     }
 
     if (goalStatus === GOAL_STATUS.SUSPENDED) {
       try {
         // reopen the goal(s) and redirect to the edit goal form for those goals
-        const updatedGoals = await updateGoalStatus(
-          goalIds,
-          GOAL_STATUS.IN_PROGRESS,
-          GOAL_STATUS.SUSPENDED,
-          null,
-          null,
-        );
+        const updatedGoals = await updateGoalStatus(goalIds, GOAL_STATUS.IN_PROGRESS, GOAL_STATUS.SUSPENDED, null, null)
 
-        return (updatedGoals.map((g) => g.id));
+        return updatedGoals.map((g) => g.id)
       } catch (err) {
-        return [];
+        return []
       }
     }
 
     if (useOhsInitiativeGoal) {
       if (goalTemplate) {
         try {
-        // create goal from template (backend will check for existing)
-        // and redirect to the edit goal form for that goal
-          const createdGoals = await createGoalsFromTemplate(
-            goalTemplate.id,
-            {
-              grants: [selectedGrant.id],
-              regionId,
-            },
-          );
+          // create goal from template (backend will check for existing)
+          // and redirect to the edit goal form for that goal
+          const createdGoals = await createGoalsFromTemplate(goalTemplate.id, {
+            grants: [selectedGrant.id],
+            regionId,
+          })
 
-          return createdGoals;
+          return createdGoals
         } catch (err) {
-          return [];
+          return []
         }
       }
     }
@@ -104,7 +78,7 @@ export default function useNewGoalAction() {
     // goal exists, is not closed or suspended
     if (goalIds && goalIds.length) {
       // we just redirect to the edit goal form for the goal
-      return goalIds;
+      return goalIds
     }
 
     if (goalName) {
@@ -119,15 +93,15 @@ export default function useNewGoalAction() {
             recipientId,
             regionId,
           },
-        ]);
+        ])
 
-        return goals.map((g) => g.id);
+        return goals.map((g) => g.id)
       } catch (err) {
-        return [];
+        return []
       }
     }
 
     // error state, will be caught by "forwardToGoalWithIds"
-    return [];
-  }, []);
+    return []
+  }, [])
 }

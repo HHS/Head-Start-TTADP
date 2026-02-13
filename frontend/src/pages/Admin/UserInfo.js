@@ -1,51 +1,47 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, {
-  useEffect, useState, useMemo, memo,
-} from 'react';
-import PropTypes from 'prop-types';
-import {
-  Label, TextInput, Grid, Fieldset,
-} from '@trussworks/react-uswds';
-import moment from 'moment';
-import RegionDropdown from '../../components/RegionDropdown';
-import AdminMultiSelect from '../../components/AdminMultiSelect';
-import { getRoles } from '../../fetchers/Admin';
+import React, { useEffect, useState, useMemo, memo } from 'react'
+import PropTypes from 'prop-types'
+import { Label, TextInput, Grid, Fieldset } from '@trussworks/react-uswds'
+import moment from 'moment'
+import RegionDropdown from '../../components/RegionDropdown'
+import AdminMultiSelect from '../../components/AdminMultiSelect'
+import { getRoles } from '../../fetchers/Admin'
 
 const AuthoritiesList = memo(({ authorities }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(false)
 
   const { alwaysVisible, hidden } = useMemo(() => {
     if (!Array.isArray(authorities) || authorities.length === 0) {
-      return { alwaysVisible: [], hidden: [] };
+      return { alwaysVisible: [], hidden: [] }
     }
 
     // First ROLE_* authority (if any)
-    const roleAuth = authorities.find((a) => a && a.startsWith('ROLE_'));
+    const roleAuth = authorities.find((a) => a && a.startsWith('ROLE_'))
 
     // First two authorities in original order, excluding the ROLE_* if it’s one of them
-    const firstTwo = authorities.slice(0, 2).filter((a) => a !== roleAuth);
+    const firstTwo = authorities.slice(0, 2).filter((a) => a !== roleAuth)
 
-    const visibleBase = [];
-    const seen = new Set();
+    const visibleBase = []
+    const seen = new Set()
 
     const pushUnique = (val) => {
-      if (val == null) return;
+      if (val == null) return
       if (!seen.has(val)) {
-        visibleBase.push(val);
-        seen.add(val);
+        visibleBase.push(val)
+        seen.add(val)
       }
-    };
+    }
 
-    if (roleAuth) pushUnique(roleAuth);
-    firstTwo.forEach(pushUnique);
+    if (roleAuth) pushUnique(roleAuth)
+    firstTwo.forEach(pushUnique)
 
     // Hidden = everything not already in visibleBase (preserve original order)
-    const hiddenRest = authorities.filter((a) => !seen.has(a));
+    const hiddenRest = authorities.filter((a) => !seen.has(a))
 
-    return { alwaysVisible: visibleBase, hidden: hiddenRest };
-  }, [authorities]);
+    return { alwaysVisible: visibleBase, hidden: hiddenRest }
+  }, [authorities])
 
-  const visible = expanded ? [...alwaysVisible, ...hidden] : alwaysVisible;
+  const visible = expanded ? [...alwaysVisible, ...hidden] : alwaysVisible
 
   return (
     <>
@@ -66,37 +62,37 @@ const AuthoritiesList = memo(({ authorities }) => {
         </button>
       )}
     </>
-  );
-});
+  )
+})
 
 AuthoritiesList.propTypes = {
   authorities: PropTypes.arrayOf(PropTypes.string).isRequired,
-};
+}
 
 function UserInfo({ user, onUserChange }) {
-  let { lastLogin } = user;
+  let { lastLogin } = user
 
   if (lastLogin && lastLogin !== '') {
-    lastLogin = moment(lastLogin).format('lll Z');
+    lastLogin = moment(lastLogin).format('lll Z')
   }
 
-  const [roleOptions, setRoleOptions] = useState([]);
-  const [fetchError, setFetchError] = useState(false);
+  const [roleOptions, setRoleOptions] = useState([])
+  const [fetchError, setFetchError] = useState(false)
 
   useEffect(() => {
     async function fetchRoles() {
       try {
-        const rolesFromApi = await getRoles();
-        setRoleOptions(rolesFromApi.map((r) => r.fullName));
+        const rolesFromApi = await getRoles()
+        setRoleOptions(rolesFromApi.map((r) => r.fullName))
       } catch (error) {
-        setFetchError(true);
+        setFetchError(true)
       }
     }
 
     if (!fetchError && roleOptions.length < 1) {
-      fetchRoles();
+      fetchRoles()
     }
-  }, [fetchError, roleOptions.length]);
+  }, [fetchError, roleOptions.length])
 
   return (
     <>
@@ -104,23 +100,11 @@ function UserInfo({ user, onUserChange }) {
         <Grid row gap>
           <Grid col={12}>
             <Label htmlFor="input-email-name">Email</Label>
-            <TextInput
-              id="input-email-name"
-              type="text"
-              name="email"
-              value={user.email || ''}
-              onChange={onUserChange}
-            />
+            <TextInput id="input-email-name" type="text" name="email" value={user.email || ''} onChange={onUserChange} />
           </Grid>
           <Grid col={12}>
             <Label htmlFor="input-full-name">Full Name</Label>
-            <TextInput
-              id="input-full-name"
-              type="text"
-              name="name"
-              value={user.name || ''}
-              onChange={onUserChange}
-            />
+            <TextInput id="input-full-name" type="text" name="name" value={user.name || ''} onChange={onUserChange} />
           </Grid>
         </Grid>
         <Grid row gap>
@@ -163,11 +147,7 @@ function UserInfo({ user, onUserChange }) {
               </dd>
               <dt className="text-bold">HSES Authorities</dt>
               <dd className="margin-bottom-1" data-testid="hses-authorities">
-                {user.hsesAuthorities && user.hsesAuthorities.length > 0 ? (
-                  <AuthoritiesList authorities={user.hsesAuthorities} />
-                ) : (
-                  <span>None</span>
-                )}
+                {user.hsesAuthorities && user.hsesAuthorities.length > 0 ? <AuthoritiesList authorities={user.hsesAuthorities} /> : <span>None</span>}
               </dd>
               <dt className="text-bold">Last Login</dt>
               <dd data-testid="last-login">{lastLogin}</dd>
@@ -176,7 +156,7 @@ function UserInfo({ user, onUserChange }) {
         </Grid>
       </Fieldset>
     </>
-  );
+  )
 }
 
 UserInfo.propTypes = {
@@ -184,9 +164,11 @@ UserInfo.propTypes = {
     email: PropTypes.string,
     name: PropTypes.string,
     homeRegionId: PropTypes.number,
-    roles: PropTypes.arrayOf(PropTypes.shape({
-      fullName: PropTypes.string,
-    })),
+    roles: PropTypes.arrayOf(
+      PropTypes.shape({
+        fullName: PropTypes.string,
+      })
+    ),
     hsesUserId: PropTypes.string,
     hsesUsername: PropTypes.string,
     hsesAuthorities: PropTypes.arrayOf(PropTypes.string),
@@ -194,6 +176,6 @@ UserInfo.propTypes = {
     lastLogin: PropTypes.string,
   }).isRequired,
   onUserChange: PropTypes.func.isRequired,
-};
+}
 
-export default UserInfo;
+export default UserInfo

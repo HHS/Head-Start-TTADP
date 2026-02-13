@@ -1,7 +1,7 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import ResourceUseSparklineGraph from '../ResourceUseSparklineGraph';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen, act } from '@testing-library/react'
+import ResourceUseSparklineGraph from '../ResourceUseSparklineGraph'
 
 const testData = {
   headers: ['Jan-22', 'Feb-22', 'Mar-22'],
@@ -122,34 +122,30 @@ const testData = {
       ],
     },
   ],
-};
+}
 
 const renderResourceUseSparklineGraph = (data) => {
-  render(
-    <ResourceUseSparklineGraph
-      data={data}
-    />,
-  );
-};
+  render(<ResourceUseSparklineGraph data={data} />)
+}
 
 describe('ResourceUseSparklineGraph', () => {
   it('renders correctly without data', async () => {
-    const data = { headers: ['Jan-22', 'Feb-22', 'Mar-22'], resources: [] };
+    const data = { headers: ['Jan-22', 'Feb-22', 'Mar-22'], resources: [] }
     act(() => {
-      renderResourceUseSparklineGraph(data);
-    });
+      renderResourceUseSparklineGraph(data)
+    })
 
-    expect(screen.getByText(/Activity reports citing resource/i)).toBeInTheDocument();
-    expect(screen.getByText(/Highest count during date range/i)).toBeInTheDocument();
+    expect(screen.getByText(/Activity reports citing resource/i)).toBeInTheDocument()
+    expect(screen.getByText(/Highest count during date range/i)).toBeInTheDocument()
 
-    expect(document.querySelector('svg')).toBe(null);
-  });
+    expect(document.querySelector('svg')).toBe(null)
+  })
 
   it('renders correctly with data', async () => {
     expect(() => {
       act(() => {
-        renderResourceUseSparklineGraph(testData);
-      });
-    }).not.toThrow();
-  });
-});
+        renderResourceUseSparklineGraph(testData)
+      })
+    }).not.toThrow()
+  })
+})

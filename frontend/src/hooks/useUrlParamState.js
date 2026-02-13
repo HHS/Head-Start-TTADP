@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { useMemo, useState, useEffect } from 'react'
+import { DECIMAL_BASE } from '@ttahub/common'
 
 /**
  * Takes in a url param, and returns a state variable, a setter for that state variable,
@@ -12,23 +12,26 @@ import { DECIMAL_BASE } from '@ttahub/common';
  *  setValue: a function to set the value of the url param
  */
 export default function useUrlParamState(param) {
-  const params = useMemo(() => new URLSearchParams(document.location.search), []);
+  const params = useMemo(() => new URLSearchParams(document.location.search), [])
   // we are storing in an array because that way we don't have to handle commas in the string
   // in a special way
   const initial = useMemo(() => {
     try {
-      return params.get(param).split(',').map((id) => parseInt(id, DECIMAL_BASE));
+      return params
+        .get(param)
+        .split(',')
+        .map((id) => parseInt(id, DECIMAL_BASE))
     } catch (e) {
-      return []; // if empty, something above will error (e.g. params.get will return null
+      return [] // if empty, something above will error (e.g. params.get will return null
       // and be unable to call split)
     }
-  }, [param, params]);
+  }, [param, params])
 
-  const [values, setValues] = useState(initial || []);
+  const [values, setValues] = useState(initial || [])
 
   useEffect(() => {
-    params.set(param, values.join(','));
-  }, [values, param, params]);
+    params.set(param, values.join(','))
+  }, [values, param, params])
 
-  return [values, setValues, params];
+  return [values, setValues, params]
 }

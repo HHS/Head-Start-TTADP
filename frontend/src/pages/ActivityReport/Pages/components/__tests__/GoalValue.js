@@ -1,10 +1,8 @@
 /* eslint-disable react/prop-types */
-import '@testing-library/jest-dom';
-import {
-  render, screen,
-} from '@testing-library/react';
-import React from 'react';
-import GoalValue from '../GoalValue';
+import '@testing-library/jest-dom'
+import { render, screen } from '@testing-library/react'
+import React from 'react'
+import GoalValue from '../GoalValue'
 
 describe('GoalValue', () => {
   const defaultProps = {
@@ -18,31 +16,32 @@ describe('GoalValue', () => {
       current: '',
     },
     innerProps: {},
-  };
+  }
 
   const renderGoalValue = (data, passedProps = null) => {
-    const props = passedProps ? { ...passedProps, data }
+    const props = passedProps
+      ? { ...passedProps, data }
       : {
-        ...defaultProps,
-        data,
-      };
+          ...defaultProps,
+          data,
+        }
 
     // eslint-disable-next-line react/jsx-props-no-spreading
-    return render(<GoalValue {...props} />);
-  };
+    return render(<GoalValue {...props} />)
+  }
 
   it('with no number, is not bold', async () => {
-    const data = {};
-    renderGoalValue(data);
-    expect(document.querySelector('strong')).toBeFalsy();
-  });
+    const data = {}
+    renderGoalValue(data)
+    expect(document.querySelector('strong')).toBeFalsy()
+  })
 
   it('displays label at data name', async () => {
     const data = {
       name: 'sample name label',
       goalIds: [1, 2, 3],
-    };
-    renderGoalValue(data, { ...defaultProps, children: null });
-    expect(await screen.findByText(/sample name label/i)).toBeVisible();
-  });
-});
+    }
+    renderGoalValue(data, { ...defaultProps, children: null })
+    expect(await screen.findByText(/sample name label/i)).toBeVisible()
+  })
+})

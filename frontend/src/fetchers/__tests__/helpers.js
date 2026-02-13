@@ -1,44 +1,44 @@
-import { getReportsDownloadURL, getAllReportsDownloadURL, getAllAlertsDownloadURL } from '../helpers';
+import { getReportsDownloadURL, getAllReportsDownloadURL, getAllAlertsDownloadURL } from '../helpers'
 
 describe('getReportsDownloadURL', () => {
   it('Creates a URL for downloading a single report', () => {
-    const dlURL = getReportsDownloadURL([1]);
-    expect(dlURL).toMatch('report[]=1');
-  });
+    const dlURL = getReportsDownloadURL([1])
+    expect(dlURL).toMatch('report[]=1')
+  })
 
   it('Creates a URL for downloading multiple reports', () => {
-    const dlURL = getReportsDownloadURL([1, 23, 42]);
-    expect(dlURL).toMatch('report[]=1');
-    expect(dlURL).toMatch('report[]=23');
-    expect(dlURL).toMatch('report[]=42');
-  });
+    const dlURL = getReportsDownloadURL([1, 23, 42])
+    expect(dlURL).toMatch('report[]=1')
+    expect(dlURL).toMatch('report[]=23')
+    expect(dlURL).toMatch('report[]=42')
+  })
 
   it('Ouputs no report query params if no reports provided', () => {
-    const dlURL = getReportsDownloadURL([]);
-    expect(dlURL).not.toMatch('report[]=');
-  });
-});
+    const dlURL = getReportsDownloadURL([])
+    expect(dlURL).not.toMatch('report[]=')
+  })
+})
 
 describe('getAllReportsDownloadURL', () => {
   it('creates a URL for downloading all reports', () => {
-    const url = getAllReportsDownloadURL();
-    expect(url).toMatch('/api/activity-reports/download-all');
-  });
+    const url = getAllReportsDownloadURL()
+    expect(url).toMatch('/api/activity-reports/download-all')
+  })
 
   it('creates a URL for downloading all reports with a filter', () => {
-    const url = getAllReportsDownloadURL('filter');
-    expect(url).toMatch('/api/activity-reports/download-all?filter');
-  });
-});
+    const url = getAllReportsDownloadURL('filter')
+    expect(url).toMatch('/api/activity-reports/download-all?filter')
+  })
+})
 
 describe('getAllAlertsDownloadURL', () => {
   it('creates a URL for downloading all reports', () => {
-    const url = getAllAlertsDownloadURL();
-    expect(url).toMatch('/api/activity-reports/alerts/download-all');
-  });
+    const url = getAllAlertsDownloadURL()
+    expect(url).toMatch('/api/activity-reports/alerts/download-all')
+  })
 
   it('creates a URL for downloading all reports with a filter', () => {
-    const url = getAllAlertsDownloadURL('filter');
-    expect(url).toMatch('/api/activity-reports/alerts/download-all?filter');
-  });
-});
+    const url = getAllAlertsDownloadURL('filter')
+    expect(url).toMatch('/api/activity-reports/alerts/download-all?filter')
+  })
+})

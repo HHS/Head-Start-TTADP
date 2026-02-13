@@ -1,30 +1,24 @@
-import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { GridContainer } from '@trussworks/react-uswds';
-import ActivityReportDashboard from './ActivityReportDashboard';
-import TrainingReportDashboard from './TrainingReportDashboard';
-import AllReports from './AllReports';
-import { expandFilters } from '../../../utils';
+import React, { useMemo } from 'react'
+import PropTypes from 'prop-types'
+import { GridContainer } from '@trussworks/react-uswds'
+import ActivityReportDashboard from './ActivityReportDashboard'
+import TrainingReportDashboard from './TrainingReportDashboard'
+import AllReports from './AllReports'
+import { expandFilters } from '../../../utils'
 
-export default function Dashboard({
-  reportType,
-  filters,
-  resetPagination,
-  setResetPagination,
-  filterKey,
-}) {
-  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+export default function Dashboard({ reportType, filters, resetPagination, setResetPagination, filterKey }) {
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters])
 
-  let DashboardComponent = ActivityReportDashboard;
+  let DashboardComponent = ActivityReportDashboard
   switch (reportType) {
     case 'training-reports':
-      DashboardComponent = TrainingReportDashboard;
-      break;
+      DashboardComponent = TrainingReportDashboard
+      break
     case 'all-reports':
-      DashboardComponent = AllReports;
-      break;
+      DashboardComponent = AllReports
+      break
     default:
-      break;
+      break
   }
 
   return (
@@ -36,7 +30,7 @@ export default function Dashboard({
         filterKey={filterKey}
       />
     </GridContainer>
-  );
+  )
 }
 
 Dashboard.propTypes = {
@@ -45,8 +39,8 @@ Dashboard.propTypes = {
   setResetPagination: PropTypes.func.isRequired,
   filterKey: PropTypes.string.isRequired,
   reportType: PropTypes.string,
-};
+}
 
 Dashboard.defaultProps = {
   reportType: 'activityReport',
-};
+}

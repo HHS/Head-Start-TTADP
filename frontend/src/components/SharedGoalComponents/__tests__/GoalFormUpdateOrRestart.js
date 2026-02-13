@@ -1,11 +1,11 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
-import { FormProvider, useForm } from 'react-hook-form';
-import { MemoryRouter } from 'react-router';
-import GoalFormUpdateOrRestart from '../GoalFormUpdateOrRestart';
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom/extend-expect'
+import { FormProvider, useForm } from 'react-hook-form'
+import { MemoryRouter } from 'react-router'
+import GoalFormUpdateOrRestart from '../GoalFormUpdateOrRestart'
 
 const mockRecipient = {
   id: 1,
@@ -16,7 +16,7 @@ const mockRecipient = {
       numberWithProgramTypes: 'Grant 1',
     },
   ],
-};
+}
 
 const mockGoal = {
   id: 1,
@@ -24,7 +24,7 @@ const mockGoal = {
   grant: {
     numberWithProgramTypes: 'Grant 1',
   },
-};
+}
 
 const mockButtons = [
   {
@@ -34,7 +34,7 @@ const mockButtons = [
     label: 'Submit',
     to: '#',
   },
-];
+]
 
 const mockGoalTemplatePrompts = [
   {
@@ -47,13 +47,13 @@ const mockGoalTemplatePrompts = [
       },
     ],
   },
-];
+]
 
-const mockOnSubmit = jest.fn();
+const mockOnSubmit = jest.fn()
 
 describe('GoalFormUpdateOrRestart', () => {
   const RenderTest = ({ goalTemplatePrompts = null, isRestart = false }) => {
-    const hookForm = useForm();
+    const hookForm = useForm()
     return (
       <MemoryRouter>
         <FormProvider {...hookForm}>
@@ -69,29 +69,29 @@ describe('GoalFormUpdateOrRestart', () => {
           />
         </FormProvider>
       </MemoryRouter>
-    );
-  };
+    )
+  }
   it('renders correctly with required props', () => {
-    render(<RenderTest />);
-    expect(screen.getByText('Recipient grant numbers')).toBeInTheDocument();
-    expect(screen.getByText('Recipient\'s goal')).toBeInTheDocument();
-    expect(screen.getByText('Goal Name')).toBeInTheDocument();
-    expect(screen.getByText('Grant 1')).toBeInTheDocument();
-    expect(screen.getByText('Submit')).toBeInTheDocument();
-  });
+    render(<RenderTest />)
+    expect(screen.getByText('Recipient grant numbers')).toBeInTheDocument()
+    expect(screen.getByText("Recipient's goal")).toBeInTheDocument()
+    expect(screen.getByText('Goal Name')).toBeInTheDocument()
+    expect(screen.getByText('Grant 1')).toBeInTheDocument()
+    expect(screen.getByText('Submit')).toBeInTheDocument()
+  })
 
   it('renders goal template prompts when provided', () => {
-    render(<RenderTest goalTemplatePrompts={mockGoalTemplatePrompts} />);
-    expect(screen.getByLabelText(/Prompts/i)).toBeInTheDocument();
-  });
+    render(<RenderTest goalTemplatePrompts={mockGoalTemplatePrompts} />)
+    expect(screen.getByLabelText(/Prompts/i)).toBeInTheDocument()
+  })
 
   it('renders ObjectivesSection when isRestart is false', () => {
-    render(<RenderTest isRestart={false} />);
-    expect(screen.getByTestId('objectives-section')).toBeInTheDocument();
-  });
+    render(<RenderTest isRestart={false} />)
+    expect(screen.getByTestId('objectives-section')).toBeInTheDocument()
+  })
 
   it('renders RestartStandardGoalObjectives when isRestart is true', () => {
-    render(<RenderTest isRestart />);
-    expect(screen.getByTestId('restart-standard-goal-objectives')).toBeInTheDocument();
-  });
-});
+    render(<RenderTest isRestart />)
+    expect(screen.getByTestId('restart-standard-goal-objectives')).toBeInTheDocument()
+  })
+})

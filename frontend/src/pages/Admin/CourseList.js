@@ -1,28 +1,24 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { Label, TextInput } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react'
+import PropTypes from 'prop-types'
+import { Label, TextInput } from '@trussworks/react-uswds'
+import { Link } from 'react-router-dom'
 
 function CourseList({ courses }) {
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState('')
 
   if (!courses) {
-    return null;
+    return null
   }
 
   const onFilterChange = (e) => {
-    setFilter(e.target.value);
-  };
+    setFilter(e.target.value)
+  }
 
-  const filteredCourses = courses.filter(
-    (course) => course.name.toLowerCase().includes(filter.toLowerCase()),
-  );
+  const filteredCourses = courses.filter((course) => course.name.toLowerCase().includes(filter.toLowerCase()))
 
   return (
     <div>
-      <Label htmlFor="courses-filter">
-        Filter courses by name
-      </Label>
+      <Label htmlFor="courses-filter">Filter courses by name</Label>
       <TextInput
         type="text"
         id="courses-filter"
@@ -38,17 +34,19 @@ function CourseList({ courses }) {
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 CourseList.propTypes = {
-  courses: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    id: PropTypes.number,
-  })),
-};
+  courses: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      id: PropTypes.number,
+    })
+  ),
+}
 CourseList.defaultProps = {
   courses: undefined,
-};
+}
 
-export default CourseList;
+export default CourseList

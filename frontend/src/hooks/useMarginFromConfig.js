@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo } from 'react'
 
 const DEFAULT_MARGIN_CONFIG = {
   top: 0,
   right: 0,
   bottom: 0,
   left: 0,
-};
+}
 /**
  *
  * @param {object} config
@@ -16,15 +16,18 @@ const DEFAULT_MARGIN_CONFIG = {
  * @returns {string}
  */
 export default function useMarginFromConfig(config) {
-  const resolvedConfig = useMemo(() => ({
-    ...DEFAULT_MARGIN_CONFIG,
-    ...config,
-  }), [config]);
+  const resolvedConfig = useMemo(
+    () => ({
+      ...DEFAULT_MARGIN_CONFIG,
+      ...config,
+    }),
+    [config]
+  )
 
   return [
     `margin-top-${resolvedConfig.top}`,
     `margin-right-${resolvedConfig.right}`,
     `margin-bottom-${resolvedConfig.bottom}`,
     `margin-left-${resolvedConfig.left}`,
-  ].join(' ');
+  ].join(' ')
 }

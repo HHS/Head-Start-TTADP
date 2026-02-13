@@ -1,26 +1,26 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-import fetchMock from 'fetch-mock';
-import SessionReportFacilitation from '../index';
-import UserContext from '../../../UserContext';
-import isAdmin from '../../../permissions';
-import AppLoadingContext from '../../../AppLoadingContext';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { Router } from 'react-router'
+import { createMemoryHistory } from 'history'
+import fetchMock from 'fetch-mock'
+import SessionReportFacilitation from '../index'
+import UserContext from '../../../UserContext'
+import isAdmin from '../../../permissions'
+import AppLoadingContext from '../../../AppLoadingContext'
 
 jest.mock('../../../permissions', () => ({
   __esModule: true,
   default: jest.fn(() => false),
-}));
+}))
 
-const TRAINING_REPORT_URL = '/training-reports/not-started';
-const IN_PROGRESS = '/training-reports/in-progress';
+const TRAINING_REPORT_URL = '/training-reports/not-started'
+const IN_PROGRESS = '/training-reports/in-progress'
 
 describe('SessionReportFacilitation', () => {
-  const trainingReportId = '1';
-  const history = createMemoryHistory();
+  const trainingReportId = '1'
+  const history = createMemoryHistory()
 
   const mockTrainingReport = {
     id: 1,
@@ -32,162 +32,163 @@ describe('SessionReportFacilitation', () => {
       eventId: 'R01-TR-1234',
       eventName: 'Test Training Event',
     },
-  };
+  }
 
-  const renderComponent = (reportId = trainingReportId) => render(
-    <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-      <UserContext.Provider value={{ user: { id: 1 } }}>
-        <Router history={history}>
-          <SessionReportFacilitation
-            match={{
-              params: { trainingReportId: reportId },
-              path: '',
-              url: '',
-            }}
-          />
-        </Router>
-      </UserContext.Provider>
-    </AppLoadingContext.Provider>,
-  );
+  const renderComponent = (reportId = trainingReportId) =>
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <UserContext.Provider value={{ user: { id: 1 } }}>
+          <Router history={history}>
+            <SessionReportFacilitation
+              match={{
+                params: { trainingReportId: reportId },
+                path: '',
+                url: '',
+              }}
+            />
+          </Router>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
+    )
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    fetchMock.reset();
-  });
+    jest.clearAllMocks()
+    fetchMock.reset()
+  })
 
   afterEach(() => {
-    fetchMock.restore();
-  });
+    fetchMock.restore()
+  })
 
   describe('Initial render', () => {
     it('displays loading state', () => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport, { delay: 100 });
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport, { delay: 100 })
 
-      renderComponent();
+      renderComponent()
 
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
-    });
+      expect(screen.getByText('Loading...')).toBeInTheDocument()
+    })
 
     it('fetches and displays training report data', async () => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport)
 
-      renderComponent();
+      renderComponent()
 
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-        expect(screen.getByText('R01-TR-1234', { exact: false })).toBeInTheDocument();
-        expect(screen.getByText('Test Training Event', { exact: false })).toBeInTheDocument();
-      });
-    });
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+        expect(screen.getByText('R01-TR-1234', { exact: false })).toBeInTheDocument()
+        expect(screen.getByText('Test Training Event', { exact: false })).toBeInTheDocument()
+      })
+    })
 
     it('sets document title', async () => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport)
 
-      renderComponent();
+      renderComponent()
 
       await waitFor(() => {
-        expect(document.title).toBe('Training Report - Create a session');
-      });
-    });
+        expect(document.title).toBe('Training Report - Create a session')
+      })
+    })
 
     it('displays back link to training reports', async () => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport)
 
-      renderComponent();
+      renderComponent()
 
       await waitFor(() => {
-        const backLink = screen.getByText('Back to Training Reports');
-        expect(backLink).toBeInTheDocument();
-        expect(backLink.closest('a')).toHaveAttribute('href', TRAINING_REPORT_URL);
-      });
-    });
-  });
+        const backLink = screen.getByText('Back to Training Reports')
+        expect(backLink).toBeInTheDocument()
+        expect(backLink.closest('a')).toHaveAttribute('href', TRAINING_REPORT_URL)
+      })
+    })
+  })
 
   describe('Error handling', () => {
     it('redirects to error page on fetch failure', async () => {
-      const spy = jest.spyOn(history, 'replace');
-      fetchMock.get(`/api/events/id/${trainingReportId}`, 500);
+      const spy = jest.spyOn(history, 'replace')
+      fetchMock.get(`/api/events/id/${trainingReportId}`, 500)
 
-      renderComponent();
+      renderComponent()
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
-      });
-    });
+        expect(spy).toHaveBeenCalledWith('/something-went-wrong/500')
+      })
+    })
 
     it('redirects to error page on 404', async () => {
-      const spy = jest.spyOn(history, 'replace');
-      fetchMock.get(`/api/events/id/${trainingReportId}`, 404);
+      const spy = jest.spyOn(history, 'replace')
+      fetchMock.get(`/api/events/id/${trainingReportId}`, 404)
 
-      renderComponent();
+      renderComponent()
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/something-went-wrong/404');
-      });
-    });
-  });
+        expect(spy).toHaveBeenCalledWith('/something-went-wrong/404')
+      })
+    })
+  })
 
   describe('Form display', () => {
     beforeEach(async () => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
-      renderComponent();
-    });
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport)
+      renderComponent()
+    })
 
     it('displays required field indicator', async () => {
       await waitFor(() => {
-        expect(screen.getByText('indicates required field', { exact: false })).toBeInTheDocument();
-      });
-    });
+        expect(screen.getByText('indicates required field', { exact: false })).toBeInTheDocument()
+      })
+    })
 
     it('displays form legend with required indicator', () => {
-      expect(screen.getByText('Who is providing the training?')).toBeInTheDocument();
-      expect(screen.getByText('Required', { exact: false })).toBeInTheDocument();
-    });
+      expect(screen.getByText('Who is providing the training?')).toBeInTheDocument()
+      expect(screen.getByText('Required', { exact: false })).toBeInTheDocument()
+    })
 
     it('displays all radio options', () => {
-      expect(screen.getByLabelText('National Center')).toBeInTheDocument();
-      expect(screen.getByLabelText('Regional TTA staff')).toBeInTheDocument();
-      expect(screen.getByLabelText('Both (National Center and Regional TTA staff)')).toBeInTheDocument();
-    });
+      expect(screen.getByLabelText('National Center')).toBeInTheDocument()
+      expect(screen.getByLabelText('Regional TTA staff')).toBeInTheDocument()
+      expect(screen.getByLabelText('Both (National Center and Regional TTA staff)')).toBeInTheDocument()
+    })
 
     it('displays create session button', () => {
-      expect(screen.getByRole('button', { name: 'Create session' })).toBeInTheDocument();
-    });
+      expect(screen.getByRole('button', { name: 'Create session' })).toBeInTheDocument()
+    })
 
     it('displays cancel button', () => {
-      const cancelButton = screen.getByText('Cancel');
-      expect(cancelButton).toBeInTheDocument();
-      expect(cancelButton.closest('a')).toHaveAttribute('href', TRAINING_REPORT_URL);
-    });
-  });
+      const cancelButton = screen.getByText('Cancel')
+      expect(cancelButton).toBeInTheDocument()
+      expect(cancelButton.closest('a')).toHaveAttribute('href', TRAINING_REPORT_URL)
+    })
+  })
 
   describe('Form validation', () => {
     beforeEach(() => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
-    });
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport)
+    })
 
     it('shows validation error when submitting without selection', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
 
-      userEvent.click(submitButton);
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(screen.getByText('Select who is providing the training')).toBeInTheDocument();
-      });
-    });
+        expect(screen.getByText('Select who is providing the training')).toBeInTheDocument()
+      })
+    })
 
     it('does not show error initially', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      expect(screen.queryByText('Select who is providing the training')).not.toBeInTheDocument();
-    });
-  });
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      expect(screen.queryByText('Select who is providing the training')).not.toBeInTheDocument()
+    })
+  })
 
   describe('Permissions check', () => {
     beforeEach(() => {
@@ -197,20 +198,20 @@ describe('SessionReportFacilitation', () => {
           id: 3,
         },
         collaboratorIds: [],
-      });
-    });
+      })
+    })
     it('redirects', async () => {
-      const spy = jest.spyOn(history, 'replace');
-      renderComponent();
+      const spy = jest.spyOn(history, 'replace')
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/something-went-wrong/401');
-      });
-    });
-  });
+        expect(spy).toHaveBeenCalledWith('/something-went-wrong/401')
+      })
+    })
+  })
 
   describe('Form submission, collaborator', () => {
     beforeEach(() => {
@@ -220,30 +221,30 @@ describe('SessionReportFacilitation', () => {
           id: 3,
         },
         collaboratorIds: [1],
-      });
-    });
+      })
+    })
     it('submits form with both', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const sessionResponse = { id: 3 };
-      fetchMock.post('/api/session-reports', sessionResponse);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const sessionResponse = { id: 3 }
+      fetchMock.post('/api/session-reports', sessionResponse)
+      const spy = jest.spyOn(history, 'push')
 
-      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)');
-      userEvent.click(bothRadio);
+      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)')
+      userEvent.click(bothRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
 
-      const [, options] = fetchMock.lastCall('/api/session-reports');
-      const requestBody = JSON.parse(options.body);
-      expect(requestBody.data.facilitation).toBe('both');
+      const [, options] = fetchMock.lastCall('/api/session-reports')
+      const requestBody = JSON.parse(options.body)
+      expect(requestBody.data.facilitation).toBe('both')
 
       await waitFor(() => {
         expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
@@ -253,31 +254,31 @@ describe('SessionReportFacilitation', () => {
             messageTemplate: 'sessionCreated',
             sessionName: '',
           },
-        });
-      });
-    });
+        })
+      })
+    })
     it('submits form with regional tta', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const sessionResponse = { id: 3 };
-      fetchMock.post('/api/session-reports', sessionResponse);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const sessionResponse = { id: 3 }
+      fetchMock.post('/api/session-reports', sessionResponse)
+      const spy = jest.spyOn(history, 'push')
 
-      const regionalRadio = screen.getByLabelText('Regional TTA staff');
-      userEvent.click(regionalRadio);
+      const regionalRadio = screen.getByLabelText('Regional TTA staff')
+      userEvent.click(regionalRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
 
-      const [, options] = fetchMock.lastCall('/api/session-reports');
-      const requestBody = JSON.parse(options.body);
-      expect(requestBody.data.facilitation).toBe('regional_tta_staff');
+      const [, options] = fetchMock.lastCall('/api/session-reports')
+      const requestBody = JSON.parse(options.body)
+      expect(requestBody.data.facilitation).toBe('regional_tta_staff')
 
       await waitFor(() => {
         expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
@@ -287,65 +288,65 @@ describe('SessionReportFacilitation', () => {
             messageTemplate: 'sessionCreated',
             sessionName: '',
           },
-        });
-      });
-    });
+        })
+      })
+    })
     it('submits form with national center', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const sessionResponse = { id: 3, eventId: 1 };
-      fetchMock.post('/api/session-reports', sessionResponse);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const sessionResponse = { id: 3, eventId: 1 }
+      fetchMock.post('/api/session-reports', sessionResponse)
+      const spy = jest.spyOn(history, 'push')
 
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      userEvent.click(nationalCenterRadio);
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      userEvent.click(nationalCenterRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
-
-      const [, options] = fetchMock.lastCall('/api/session-reports');
-      const requestBody = JSON.parse(options.body);
-      expect(requestBody.data.facilitation).toBe('national_center');
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3');
-      });
-    });
-  });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
+
+      const [, options] = fetchMock.lastCall('/api/session-reports')
+      const requestBody = JSON.parse(options.body)
+      expect(requestBody.data.facilitation).toBe('national_center')
+
+      await waitFor(() => {
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3')
+      })
+    })
+  })
 
   describe('Form submission', () => {
     beforeEach(() => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
-    });
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport)
+    })
 
     it('submits form with national_center selection', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const sessionResponse = { id: 1, eventId: 1 };
-      fetchMock.post('/api/session-reports', sessionResponse);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const sessionResponse = { id: 1, eventId: 1 }
+      fetchMock.post('/api/session-reports', sessionResponse)
+      const spy = jest.spyOn(history, 'push')
 
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      userEvent.click(nationalCenterRadio);
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      userEvent.click(nationalCenterRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
 
-      const [, options] = fetchMock.lastCall('/api/session-reports');
-      const requestBody = JSON.parse(options.body);
-      expect(requestBody.data.facilitation).toBe('national_center');
+      const [, options] = fetchMock.lastCall('/api/session-reports')
+      const requestBody = JSON.parse(options.body)
+      expect(requestBody.data.facilitation).toBe('national_center')
 
       await waitFor(() => {
         expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
@@ -355,32 +356,32 @@ describe('SessionReportFacilitation', () => {
             messageTemplate: 'sessionCreated',
             sessionName: '',
           },
-        });
-      });
-    });
+        })
+      })
+    })
 
     it('submits form with regional_tta_staff selection', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const sessionResponse = { id: 2, eventId: 1 };
-      fetchMock.post('/api/session-reports', sessionResponse);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const sessionResponse = { id: 2, eventId: 1 }
+      fetchMock.post('/api/session-reports', sessionResponse)
+      const spy = jest.spyOn(history, 'push')
 
-      const regionalRadio = screen.getByLabelText('Regional TTA staff');
-      userEvent.click(regionalRadio);
+      const regionalRadio = screen.getByLabelText('Regional TTA staff')
+      userEvent.click(regionalRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
 
-      const [, options] = fetchMock.lastCall('/api/session-reports');
-      const requestBody = JSON.parse(options.body);
-      expect(requestBody.data.facilitation).toBe('regional_tta_staff');
+      const [, options] = fetchMock.lastCall('/api/session-reports')
+      const requestBody = JSON.parse(options.body)
+      expect(requestBody.data.facilitation).toBe('regional_tta_staff')
 
       await waitFor(() => {
         expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
@@ -390,32 +391,32 @@ describe('SessionReportFacilitation', () => {
             messageTemplate: 'sessionCreated',
             sessionName: '',
           },
-        });
-      });
-    });
+        })
+      })
+    })
 
     it('submits form with both selection', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const sessionResponse = { id: 3, eventId: 1 };
-      fetchMock.post('/api/session-reports', sessionResponse);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const sessionResponse = { id: 3, eventId: 1 }
+      fetchMock.post('/api/session-reports', sessionResponse)
+      const spy = jest.spyOn(history, 'push')
 
-      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)');
-      userEvent.click(bothRadio);
+      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)')
+      userEvent.click(bothRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
 
-      const [, options] = fetchMock.lastCall('/api/session-reports');
-      const requestBody = JSON.parse(options.body);
-      expect(requestBody.data.facilitation).toBe('both');
+      const [, options] = fetchMock.lastCall('/api/session-reports')
+      const requestBody = JSON.parse(options.body)
+      expect(requestBody.data.facilitation).toBe('both')
 
       await waitFor(() => {
         expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
@@ -425,267 +426,267 @@ describe('SessionReportFacilitation', () => {
             messageTemplate: 'sessionCreated',
             sessionName: '',
           },
-        });
-      });
-    });
+        })
+      })
+    })
 
     it('redirects to error page on submission failure', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      fetchMock.post('/api/session-reports', 500);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      fetchMock.post('/api/session-reports', 500)
+      const spy = jest.spyOn(history, 'push')
 
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      userEvent.click(nationalCenterRadio);
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      userEvent.click(nationalCenterRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
 
       await waitFor(() => {
         // Note: Component uses statusCode from fetch state (200) not error status
         // This is a bug in the component but test matches actual behavior
-        expect(spy).toHaveBeenCalledWith('/something-went-wrong/200');
-      });
-    });
-  });
+        expect(spy).toHaveBeenCalledWith('/something-went-wrong/200')
+      })
+    })
+  })
 
   describe('Form submission, is admin', () => {
     beforeEach(() => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
-      isAdmin.mockReturnValue(true);
-    });
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport)
+      isAdmin.mockReturnValue(true)
+    })
 
     afterEach(() => {
-      isAdmin.mockClear();
-    });
+      isAdmin.mockClear()
+    })
 
     it('submits form with national_center selection', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const sessionResponse = { id: 1, eventId: 1 };
-      fetchMock.post('/api/session-reports', sessionResponse);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const sessionResponse = { id: 1, eventId: 1 }
+      fetchMock.post('/api/session-reports', sessionResponse)
+      const spy = jest.spyOn(history, 'push')
 
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      userEvent.click(nationalCenterRadio);
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      userEvent.click(nationalCenterRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
-
-      const [, options] = fetchMock.lastCall('/api/session-reports');
-      const requestBody = JSON.parse(options.body);
-      expect(requestBody.data.facilitation).toBe('national_center');
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/1');
-      });
-    });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
+
+      const [, options] = fetchMock.lastCall('/api/session-reports')
+      const requestBody = JSON.parse(options.body)
+      expect(requestBody.data.facilitation).toBe('national_center')
+
+      await waitFor(() => {
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/1')
+      })
+    })
 
     it('submits form with regional_tta_staff selection', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const sessionResponse = { id: 2, eventId: 1 };
-      fetchMock.post('/api/session-reports', sessionResponse);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const sessionResponse = { id: 2, eventId: 1 }
+      fetchMock.post('/api/session-reports', sessionResponse)
+      const spy = jest.spyOn(history, 'push')
 
-      const regionalRadio = screen.getByLabelText('Regional TTA staff');
-      userEvent.click(regionalRadio);
+      const regionalRadio = screen.getByLabelText('Regional TTA staff')
+      userEvent.click(regionalRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
-
-      const [, options] = fetchMock.lastCall('/api/session-reports');
-      const requestBody = JSON.parse(options.body);
-      expect(requestBody.data.facilitation).toBe('regional_tta_staff');
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/2');
-      });
-    });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
+
+      const [, options] = fetchMock.lastCall('/api/session-reports')
+      const requestBody = JSON.parse(options.body)
+      expect(requestBody.data.facilitation).toBe('regional_tta_staff')
+
+      await waitFor(() => {
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/2')
+      })
+    })
 
     it('submits form with both selection', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const sessionResponse = { id: 3, eventId: 1 };
-      fetchMock.post('/api/session-reports', sessionResponse);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const sessionResponse = { id: 3, eventId: 1 }
+      fetchMock.post('/api/session-reports', sessionResponse)
+      const spy = jest.spyOn(history, 'push')
 
-      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)');
-      userEvent.click(bothRadio);
+      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)')
+      userEvent.click(bothRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
-
-      const [, options] = fetchMock.lastCall('/api/session-reports');
-      const requestBody = JSON.parse(options.body);
-      expect(requestBody.data.facilitation).toBe('both');
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3');
-      });
-    });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
+
+      const [, options] = fetchMock.lastCall('/api/session-reports')
+      const requestBody = JSON.parse(options.body)
+      expect(requestBody.data.facilitation).toBe('both')
+
+      await waitFor(() => {
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3')
+      })
+    })
 
     it('redirects to error page on submission failure', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      fetchMock.post('/api/session-reports', 500);
-      const spy = jest.spyOn(history, 'push');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      fetchMock.post('/api/session-reports', 500)
+      const spy = jest.spyOn(history, 'push')
 
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      userEvent.click(nationalCenterRadio);
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      userEvent.click(nationalCenterRadio)
 
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
-      userEvent.click(submitButton);
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
-      });
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true)
+      })
 
       await waitFor(() => {
         // Note: Component uses statusCode from fetch state (200) not error status
         // This is a bug in the component but test matches actual behavior
-        expect(spy).toHaveBeenCalledWith('/something-went-wrong/200');
-      });
-    });
-  });
+        expect(spy).toHaveBeenCalledWith('/something-went-wrong/200')
+      })
+    })
+  })
 
   describe('Radio button interactions', () => {
     beforeEach(() => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
-    });
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport)
+    })
 
     it('allows selecting a radio option', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      expect(nationalCenterRadio).not.toBeChecked();
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      expect(nationalCenterRadio).not.toBeChecked()
 
-      userEvent.click(nationalCenterRadio);
+      userEvent.click(nationalCenterRadio)
 
-      expect(nationalCenterRadio).toBeChecked();
-    });
+      expect(nationalCenterRadio).toBeChecked()
+    })
 
     it('allows switching between radio options', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      const regionalRadio = screen.getByLabelText('Regional TTA staff');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      const regionalRadio = screen.getByLabelText('Regional TTA staff')
 
-      userEvent.click(nationalCenterRadio);
-      expect(nationalCenterRadio).toBeChecked();
-      expect(regionalRadio).not.toBeChecked();
+      userEvent.click(nationalCenterRadio)
+      expect(nationalCenterRadio).toBeChecked()
+      expect(regionalRadio).not.toBeChecked()
 
-      userEvent.click(regionalRadio);
-      expect(nationalCenterRadio).not.toBeChecked();
-      expect(regionalRadio).toBeChecked();
-    });
+      userEvent.click(regionalRadio)
+      expect(nationalCenterRadio).not.toBeChecked()
+      expect(regionalRadio).toBeChecked()
+    })
 
     it('clears validation error when option is selected', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const submitButton = screen.getByRole('button', { name: 'Create session' });
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const submitButton = screen.getByRole('button', { name: 'Create session' })
 
       // Trigger validation error
-      userEvent.click(submitButton);
+      userEvent.click(submitButton)
 
       await waitFor(() => {
-        expect(screen.getByText('Select who is providing the training')).toBeInTheDocument();
-      });
+        expect(screen.getByText('Select who is providing the training')).toBeInTheDocument()
+      })
 
       // Select an option
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      userEvent.click(nationalCenterRadio);
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      userEvent.click(nationalCenterRadio)
 
       // Tab away to trigger onBlur validation
-      userEvent.tab();
+      userEvent.tab()
 
       await waitFor(() => {
-        expect(screen.queryByText('Select who is providing the training')).not.toBeInTheDocument();
-      });
-    });
-  });
+        expect(screen.queryByText('Select who is providing the training')).not.toBeInTheDocument()
+      })
+    })
+  })
 
   describe('Accessibility', () => {
     beforeEach(() => {
-      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
-    });
+      fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport)
+    })
 
     it('has proper fieldset structure', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const fieldset = screen.getByRole('group');
-      expect(fieldset).toBeInTheDocument();
-    });
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const fieldset = screen.getByRole('group')
+      expect(fieldset).toBeInTheDocument()
+    })
 
     it('has proper legend for radio group', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const legend = screen.getByText('Who is providing the training?');
-      expect(legend.tagName).toBe('LEGEND');
-    });
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const legend = screen.getByText('Who is providing the training?')
+      expect(legend.tagName).toBe('LEGEND')
+    })
 
     it('radio buttons have unique ids', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      const regionalRadio = screen.getByLabelText('Regional TTA staff');
-      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      const regionalRadio = screen.getByLabelText('Regional TTA staff')
+      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)')
 
-      expect(nationalCenterRadio).toHaveAttribute('id', 'facilitation-national_center');
-      expect(regionalRadio).toHaveAttribute('id', 'facilitation-regional_tta_staff');
-      expect(bothRadio).toHaveAttribute('id', 'facilitation-both');
-    });
+      expect(nationalCenterRadio).toHaveAttribute('id', 'facilitation-national_center')
+      expect(regionalRadio).toHaveAttribute('id', 'facilitation-regional_tta_staff')
+      expect(bothRadio).toHaveAttribute('id', 'facilitation-both')
+    })
 
     it('radio buttons share the same name', async () => {
-      renderComponent();
+      renderComponent()
       await waitFor(() => {
-        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
-      });
-      const nationalCenterRadio = screen.getByLabelText('National Center');
-      const regionalRadio = screen.getByLabelText('Regional TTA staff');
-      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)');
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument()
+      })
+      const nationalCenterRadio = screen.getByLabelText('National Center')
+      const regionalRadio = screen.getByLabelText('Regional TTA staff')
+      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)')
 
-      expect(nationalCenterRadio).toHaveAttribute('name', 'facilitation');
-      expect(regionalRadio).toHaveAttribute('name', 'facilitation');
-      expect(bothRadio).toHaveAttribute('name', 'facilitation');
-    });
-  });
-});
+      expect(nationalCenterRadio).toHaveAttribute('name', 'facilitation')
+      expect(regionalRadio).toHaveAttribute('name', 'facilitation')
+      expect(bothRadio).toHaveAttribute('name', 'facilitation')
+    })
+  })
+})

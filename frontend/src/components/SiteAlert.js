@@ -1,11 +1,9 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { SiteAlert as BaseSiteAlert } from '@trussworks/react-uswds';
-import './SiteAlert.scss';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { SiteAlert as BaseSiteAlert } from '@trussworks/react-uswds'
+import './SiteAlert.scss'
 
-export default function SiteAlert({
-  heading, children, style, variant, size,
-}) {
+export default function SiteAlert({ heading, children, style, variant, size }) {
   return (
     <span aria-live="polite">
       <BaseSiteAlert
@@ -18,7 +16,7 @@ export default function SiteAlert({
         {children}
       </BaseSiteAlert>
     </span>
-  );
+  )
 }
 
 SiteAlert.propTypes = {
@@ -27,8 +25,8 @@ SiteAlert.propTypes = {
   style: PropTypes.shape({}),
   variant: PropTypes.string.isRequired,
   size: PropTypes.string.isRequired,
-};
+}
 
 SiteAlert.defaultProps = {
   style: {},
-};
+}

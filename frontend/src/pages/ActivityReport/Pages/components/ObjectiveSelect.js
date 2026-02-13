@@ -1,57 +1,39 @@
-import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
-import Select from 'react-select';
-import { Label, ModalToggleButton } from '@trussworks/react-uswds';
-import Req from '../../../../components/Req';
-import selectOptionsReset from '../../../../components/selectOptionsReset';
-import { OBJECTIVE_PROP } from './constants';
-import './ObjectiveSelect.css';
-import Modal from '../../../../components/Modal';
+import React, { useRef } from 'react'
+import PropTypes from 'prop-types'
+import Select from 'react-select'
+import { Label, ModalToggleButton } from '@trussworks/react-uswds'
+import Req from '../../../../components/Req'
+import selectOptionsReset from '../../../../components/selectOptionsReset'
+import { OBJECTIVE_PROP } from './constants'
+import './ObjectiveSelect.css'
+import Modal from '../../../../components/Modal'
 
-export default function ObjectiveSelect({
-  onChange,
-  selectedObjectives,
-  options,
-  onRemove,
-  noObjectiveError,
-}) {
-  const modalRef = useRef(null);
+export default function ObjectiveSelect({ onChange, selectedObjectives, options, onRemove, noObjectiveError }) {
+  const modalRef = useRef(null)
 
   // Do not mutate function parameters directly; instead, prepare a derived value
   const updatedSelectedObjectives = React.useMemo(() => {
     if (Array.isArray(selectedObjectives)) {
-      return selectedObjectives.map((obj) => (
-        obj && !obj.label
-          ? { ...obj, label: 'Create a new objective' }
-          : obj
-      ));
+      return selectedObjectives.map((obj) => (obj && !obj.label ? { ...obj, label: 'Create a new objective' } : obj))
     }
     if (selectedObjectives && !selectedObjectives.label) {
-      return { ...selectedObjectives, label: 'Create a new objective' };
+      return { ...selectedObjectives, label: 'Create a new objective' }
     }
-    return selectedObjectives;
-  }, [selectedObjectives]);
+    return selectedObjectives
+  }, [selectedObjectives])
 
   return (
     <>
       <div className="display-flex flex-justify maxw-mobile-lg margin-top-4">
         <h3 className="margin-0">Objective summary</h3>
-        { onRemove && (
-          <ModalToggleButton
-            modalRef={modalRef}
-            type="button"
-            opener
-            className="ttahub-objective-select-remove-objective"
-            unstyled
-          >
+        {onRemove && (
+          <ModalToggleButton modalRef={modalRef} type="button" opener className="ttahub-objective-select-remove-objective" unstyled>
             Remove this objective
           </ModalToggleButton>
         )}
       </div>
       <Label>
-        Select TTA objective&nbsp;
-        {' '}
-        <Req />
+        Select TTA objective&nbsp; <Req />
         {noObjectiveError}
         <Select
           name="objectives"
@@ -76,26 +58,18 @@ export default function ObjectiveSelect({
         <p>Any information you entered will be lost.</p>
       </Modal>
     </>
-  );
+  )
 }
 
 ObjectiveSelect.propTypes = {
   onChange: PropTypes.func.isRequired,
-  selectedObjectives: PropTypes.oneOfType([
-    PropTypes.arrayOf(OBJECTIVE_PROP),
-    OBJECTIVE_PROP,
-  ]).isRequired,
-  options: PropTypes.arrayOf(
-    OBJECTIVE_PROP,
-  ).isRequired,
-  onRemove: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.func,
-  ]),
+  selectedObjectives: PropTypes.oneOfType([PropTypes.arrayOf(OBJECTIVE_PROP), OBJECTIVE_PROP]).isRequired,
+  options: PropTypes.arrayOf(OBJECTIVE_PROP).isRequired,
+  onRemove: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
   noObjectiveError: PropTypes.node,
-};
+}
 
 ObjectiveSelect.defaultProps = {
   onRemove: false,
   noObjectiveError: <></>,
-};
+}

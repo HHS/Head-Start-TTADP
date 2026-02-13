@@ -1,57 +1,48 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/prop-types */
-import React from 'react';
-import '@testing-library/jest-dom';
-import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { FormProvider, useForm } from 'react-hook-form';
-import moment from 'moment';
-import ApproverReview from '../ApproverReview';
-import { DATE_DISPLAY_FORMAT } from '../../../../../Constants';
+import React from 'react'
+import '@testing-library/jest-dom'
+import { APPROVER_STATUSES } from '@ttahub/common/src/constants'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { FormProvider, useForm } from 'react-hook-form'
+import moment from 'moment'
+import ApproverReview from '../ApproverReview'
+import { DATE_DISPLAY_FORMAT } from '../../../../../Constants'
 
 // Mock dependencies
-jest.mock('moment');
+jest.mock('moment')
 jest.mock('../../../../../Constants', () => ({
   managerReportStatuses: ['needs_action', 'approved'],
   DATE_DISPLAY_FORMAT: 'MM/DD/YYYY',
-}));
+}))
 
-jest.mock('../../../../../components/FormItem', () => function MockFormItem({ children, label }) {
-  return (
-    <div data-testid="form-item">
-      <label>{label}</label>
-      {children}
-    </div>
-  );
-});
+jest.mock(
+  '../../../../../components/FormItem',
+  () =>
+    function MockFormItem({ children, label }) {
+      return (
+        <div data-testid="form-item">
+          <label>{label}</label>
+          {children}
+        </div>
+      )
+    }
+)
 
-jest.mock('../../../../../components/HookFormRichEditor', () => function MockHookFormRichEditor({
-  id,
-  name,
-  defaultValue,
-  ariaLabel,
-}) {
-  return (
-    <textarea
-      id={id}
-      name={name}
-      defaultValue={defaultValue || ''}
-      aria-label={ariaLabel}
-      data-testid="rich-editor"
-    />
-  );
-});
+jest.mock(
+  '../../../../../components/HookFormRichEditor',
+  () =>
+    function MockHookFormRichEditor({ id, name, defaultValue, ariaLabel }) {
+      return <textarea id={id} name={name} defaultValue={defaultValue || ''} aria-label={ariaLabel} data-testid="rich-editor" />
+    }
+)
 
 // Test wrapper component
 const TestWrapper = ({ children, defaultValues = {} }) => {
-  const methods = useForm({ defaultValues });
-  return (
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
-  );
-};
+  const methods = useForm({ defaultValues })
+  return <FormProvider {...methods}>{children}</FormProvider>
+}
 
 describe('ApproverReview Component', () => {
   const defaultProps = {
@@ -76,196 +67,185 @@ describe('ApproverReview Component', () => {
     ],
     onSaveDraft: jest.fn(),
     isNeedsAction: false,
-  };
+  }
 
   const mockMoment = {
     format: jest.fn(() => '01/15/2024'),
-  };
+  }
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    moment.mockReturnValue(mockMoment);
-  });
+    jest.clearAllMocks()
+    moment.mockReturnValue(mockMoment)
+  })
 
-  const renderComponent = (props = {}) => render(
-    <TestWrapper>
-      <ApproverReview {...defaultProps} {...props} />
-    </TestWrapper>,
-  );
+  const renderComponent = (props = {}) =>
+    render(
+      <TestWrapper>
+        <ApproverReview {...defaultProps} {...props} />
+      </TestWrapper>
+    )
 
   describe('Manager Notes Display', () => {
     it('renders manager notes section when otherManagerNotes exists', () => {
       const otherManagerNotes = [
         { note: 'First note', status: 'approved', user: { fullName: 'User 1' } },
         { note: 'Second note', status: 'needs_action', user: { fullName: 'User 2' } },
-      ];
+      ]
 
-      renderComponent({ otherManagerNotes });
+      renderComponent({ otherManagerNotes })
 
-      expect(screen.getByText('Manager notes')).toBeInTheDocument();
-    });
+      expect(screen.getByText('Manager notes')).toBeInTheDocument()
+    })
 
     it('hides manager notes section when otherManagerNotes is empty', () => {
-      renderComponent({ otherManagerNotes: [] });
+      renderComponent({ otherManagerNotes: [] })
 
-      expect(screen.queryByText('Manager notes')).not.toBeInTheDocument();
-    });
+      expect(screen.queryByText('Manager notes')).not.toBeInTheDocument()
+    })
 
     it('hides manager notes section when otherManagerNotes is null', () => {
-      renderComponent({ otherManagerNotes: null });
+      renderComponent({ otherManagerNotes: null })
 
-      expect(screen.queryByText('Manager notes')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('display-approver-notes')).not.toBeInTheDocument();
-    });
-  });
+      expect(screen.queryByText('Manager notes')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('display-approver-notes')).not.toBeInTheDocument()
+    })
+  })
 
   describe('Date Formatting and Display', () => {
     it('formats and displays dateSubmitted correctly', () => {
-      renderComponent();
+      renderComponent()
 
-      expect(moment).toHaveBeenCalledWith('2024-01-15T10:30:00Z');
-      expect(mockMoment.format).toHaveBeenCalledWith(DATE_DISPLAY_FORMAT);
-      expect(screen.getByText('Date submitted')).toBeInTheDocument();
+      expect(moment).toHaveBeenCalledWith('2024-01-15T10:30:00Z')
+      expect(mockMoment.format).toHaveBeenCalledWith(DATE_DISPLAY_FORMAT)
+      expect(screen.getByText('Date submitted')).toBeInTheDocument()
       // Check that the formatted date paragraph exists
-      const dateParagraphs = document.querySelectorAll('p.margin-top-0');
-      expect(dateParagraphs.length).toBeGreaterThan(0);
-    });
+      const dateParagraphs = document.querySelectorAll('p.margin-top-0')
+      expect(dateParagraphs.length).toBeGreaterThan(0)
+    })
 
     it('hides date section when dateSubmitted is null', () => {
-      renderComponent({ dateSubmitted: null });
+      renderComponent({ dateSubmitted: null })
 
-      expect(screen.queryByText('Date Submitted')).not.toBeInTheDocument();
-      expect(moment).not.toHaveBeenCalled();
-    });
+      expect(screen.queryByText('Date Submitted')).not.toBeInTheDocument()
+      expect(moment).not.toHaveBeenCalled()
+    })
 
     it('hides date section when dateSubmitted is empty string', () => {
-      renderComponent({ dateSubmitted: '' });
+      renderComponent({ dateSubmitted: '' })
 
-      expect(screen.queryByText('Date Submitted')).not.toBeInTheDocument();
-      expect(moment).not.toHaveBeenCalled();
-    });
-  });
+      expect(screen.queryByText('Date Submitted')).not.toBeInTheDocument()
+      expect(moment).not.toHaveBeenCalled()
+    })
+  })
 
   describe('Status Dropdown Configuration', () => {
     it('sets correct defaultValue when hasBeenReviewed is true', () => {
       renderComponent({
         hasBeenReviewed: true,
         thisApprovingManager: [{ status: 'approved' }],
-      });
+      })
 
-      const dropdown = screen.getByRole('combobox');
-      expect(dropdown).toHaveValue('approved');
-    });
+      const dropdown = screen.getByRole('combobox')
+      expect(dropdown).toHaveValue('approved')
+    })
 
     it('sets empty defaultValue when hasBeenReviewed is false', () => {
-      renderComponent({ hasBeenReviewed: false });
+      renderComponent({ hasBeenReviewed: false })
 
-      const dropdown = screen.getByRole('combobox');
-      expect(dropdown).toHaveValue('');
-    });
+      const dropdown = screen.getByRole('combobox')
+      expect(dropdown).toHaveValue('')
+    })
 
     it('renders Choose approval status label', () => {
-      renderComponent();
+      renderComponent()
 
-      expect(screen.getByText('Choose approval status')).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByText('Choose approval status')).toBeInTheDocument()
+    })
+  })
 
   describe('Button State and Form Submission', () => {
     it('enables submit button when hasIncompletePages is false', async () => {
-      renderComponent({ hasIncompletePages: false });
+      renderComponent({ hasIncompletePages: false })
 
-      const submitButton = await screen.findByRole('button', { name: 'Submit' });
-      expect(submitButton).toBeEnabled();
-      expect(submitButton).toHaveAttribute('type', 'submit');
-    });
+      const submitButton = await screen.findByRole('button', { name: 'Submit' })
+      expect(submitButton).toBeEnabled()
+      expect(submitButton).toHaveAttribute('type', 'submit')
+    })
 
     it('triggers form submission on submit button click', () => {
-      const mockOnFormReview = jest.fn();
-      renderComponent({ onFormReview: mockOnFormReview });
+      const mockOnFormReview = jest.fn()
+      renderComponent({ onFormReview: mockOnFormReview })
 
-      const form = document.querySelector('form');
-      fireEvent.submit(form);
+      const form = document.querySelector('form')
+      fireEvent.submit(form)
 
       // Note: The actual form submission is handled by react-hook-form
       // We're testing that the form exists and can be submitted
-      expect(form).toBeInTheDocument();
-    });
-  });
+      expect(form).toBeInTheDocument()
+    })
+  })
   describe('Manager Notes Editor Conditional Display', () => {
     it('shows manager notes editor when status is needs_action', () => {
       const TestWrapperWithStatus = ({ children }) => {
         const methods = useForm({
           defaultValues: { status: APPROVER_STATUSES.NEEDS_ACTION },
-        });
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
-      };
+        })
+        return <FormProvider {...methods}>{children}</FormProvider>
+      }
 
       render(
         <TestWrapperWithStatus>
           <ApproverReview {...defaultProps} />
-        </TestWrapperWithStatus>,
-      );
+        </TestWrapperWithStatus>
+      )
 
-      expect(screen.getByText('Add manager notes')).toBeInTheDocument();
-      expect(screen.getByTestId('rich-editor')).toBeInTheDocument();
-    });
+      expect(screen.getByText('Add manager notes')).toBeInTheDocument()
+      expect(screen.getByTestId('rich-editor')).toBeInTheDocument()
+    })
 
     it('hides manager notes editor when status is not needs_action', () => {
       const TestWrapperWithStatus = ({ children }) => {
         const methods = useForm({
           defaultValues: { status: 'approved' },
-        });
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
-      };
+        })
+        return <FormProvider {...methods}>{children}</FormProvider>
+      }
 
       render(
         <TestWrapperWithStatus>
           <ApproverReview {...defaultProps} />
-        </TestWrapperWithStatus>,
-      );
+        </TestWrapperWithStatus>
+      )
 
-      expect(screen.queryByText('Add manager notes')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('rich-editor')).not.toBeInTheDocument();
-    });
+      expect(screen.queryByText('Add manager notes')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('rich-editor')).not.toBeInTheDocument()
+    })
 
     it('hides manager notes editor when no status is selected', () => {
       const TestWrapperWithStatus = ({ children }) => {
         const methods = useForm({
           defaultValues: { status: '' },
-        });
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
-      };
+        })
+        return <FormProvider {...methods}>{children}</FormProvider>
+      }
 
       render(
         <TestWrapperWithStatus>
           <ApproverReview {...defaultProps} />
-        </TestWrapperWithStatus>,
-      );
+        </TestWrapperWithStatus>
+      )
 
-      expect(screen.queryByText('Add manager notes')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('rich-editor')).not.toBeInTheDocument();
-    });
-  });
+      expect(screen.queryByText('Add manager notes')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('rich-editor')).not.toBeInTheDocument()
+    })
+  })
 
   describe('Form Structure and Classes', () => {
     it('renders form with correct CSS classes', () => {
-      renderComponent();
+      renderComponent()
 
-      const form = document.querySelector('form');
-      expect(form).toHaveClass('smart-hub--form-large');
-    });
-  });
-});
+      const form = document.querySelector('form')
+      expect(form).toHaveClass('smart-hub--form-large')
+    })
+  })
+})

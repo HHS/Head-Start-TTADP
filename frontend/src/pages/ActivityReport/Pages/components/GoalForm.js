@@ -1,42 +1,31 @@
-import React, {
-  useEffect, useMemo, useContext, useState,
-} from 'react';
-import PropTypes from 'prop-types';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import { useController, useFormContext } from 'react-hook-form';
-import { DECIMAL_BASE } from '@ttahub/common';
-import { getGoalTemplateObjectiveOptions } from '../../../../fetchers/goals';
-import Objectives from './Objectives';
-import ConditionalFields from './ConditionalFieldsForHookForm';
-import {
-  GOAL_NAME_ERROR,
-} from '../../../../components/GoalForm/constants';
-import { NO_ERROR, ERROR_FORMAT } from './constants';
-import AppLoadingContext from '../../../../AppLoadingContext';
-import { combinePrompts } from '../../../../components/condtionalFieldConstants';
-import useGoalTemplatePrompts from '../../../../hooks/useGoalTemplatePrompts';
-import ReadOnlyField from '../../../../components/ReadOnlyField';
+import React, { useEffect, useMemo, useContext, useState } from 'react'
+import PropTypes from 'prop-types'
+import useDeepCompareEffect from 'use-deep-compare-effect'
+import { useController, useFormContext } from 'react-hook-form'
+import { DECIMAL_BASE } from '@ttahub/common'
+import { getGoalTemplateObjectiveOptions } from '../../../../fetchers/goals'
+import Objectives from './Objectives'
+import ConditionalFields from './ConditionalFieldsForHookForm'
+import { GOAL_NAME_ERROR } from '../../../../components/GoalForm/constants'
+import { NO_ERROR, ERROR_FORMAT } from './constants'
+import AppLoadingContext from '../../../../AppLoadingContext'
+import { combinePrompts } from '../../../../components/condtionalFieldConstants'
+import useGoalTemplatePrompts from '../../../../hooks/useGoalTemplatePrompts'
+import ReadOnlyField from '../../../../components/ReadOnlyField'
 
-export default function GoalForm({
-  goal,
-  topicOptions,
-  reportId,
-  citationOptions,
-  rawCitations,
-  isMonitoringGoal,
-}) {
+export default function GoalForm({ goal, topicOptions, reportId, citationOptions, rawCitations, isMonitoringGoal }) {
   // pull the errors out of the form context
-  const { errors, watch } = useFormContext();
+  const { errors, watch } = useFormContext()
 
   // App Loading Context.
-  const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
+  const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext)
 
   // This ensures we always have the prompts and responses for the template.
   const [templateResponses, templatePrompts] = useGoalTemplatePrompts(
     goal.goalTemplateId,
     goal.goalIds,
-    true, // isForActivityReport (looks like it is)
-  );
+    true // isForActivityReport (looks like it is)
+  )
 
   /**
    * add controllers for all the controlled fields
@@ -45,17 +34,14 @@ export default function GoalForm({
    * if at all possible
    */
 
-  const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
-  const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
+  const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal])
+  const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal])
 
   // activityRecipientId is the grantId for the goal.
-  const activityRecipients = watch('activityRecipients');
+  const activityRecipients = watch('activityRecipients')
 
   const {
-    field: {
-      onChange: onUpdateText,
-      value: goalText,
-    },
+    field: { onChange: onUpdateText, value: goalText },
   } = useController({
     name: 'goalName',
     rules: {
@@ -65,21 +51,17 @@ export default function GoalForm({
       },
     },
     defaultValue: defaultName,
-  });
+  })
 
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
   useEffect(() => {
-    onUpdateText(goal.name ? goal.name : defaultName);
-  }, [
-    defaultName,
-    goal.name,
-    onUpdateText,
-  ]);
+    onUpdateText(goal.name ? goal.name : defaultName)
+  }, [defaultName, goal.name, onUpdateText])
 
   // objectives for the objective select, blood for the blood god, etc
-  const [objectiveOptions, setObjectiveOptions] = useState([]);
-  const [objectiveOptionsLoaded, setObjectiveOptionsLoaded] = useState(false);
+  const [objectiveOptions, setObjectiveOptions] = useState([])
+  const [objectiveOptionsLoaded, setObjectiveOptionsLoaded] = useState(false)
 
   /*
    * this use effect fetches
@@ -88,41 +70,31 @@ export default function GoalForm({
   useDeepCompareEffect(() => {
     async function fetchData() {
       try {
-        setIsAppLoading(true);
-        setAppLoadingText('Loading');
-        const allObjectiveOptions = await getGoalTemplateObjectiveOptions(
-          reportId,
-          goal.goalTemplateId,
-        );
-        setObjectiveOptions(allObjectiveOptions);
-        setObjectiveOptionsLoaded(true);
+        setIsAppLoading(true)
+        setAppLoadingText('Loading')
+        const allObjectiveOptions = await getGoalTemplateObjectiveOptions(reportId, goal.goalTemplateId)
+        setObjectiveOptions(allObjectiveOptions)
+        setObjectiveOptionsLoaded(true)
       } finally {
-        setIsAppLoading(false);
+        setIsAppLoading(false)
       }
     }
 
     if (goal.goalTemplateId) {
-      fetchData();
+      fetchData()
     } else {
-      setObjectiveOptions([]);
-      setObjectiveOptionsLoaded(true); // Even though we didn't make the async call we are done.
+      setObjectiveOptions([])
+      setObjectiveOptionsLoaded(true) // Even though we didn't make the async call we are done.
     }
-  }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
+  }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading])
 
   // We need to combine responses for all grants that already have responses
   // and add prompts for any grants that don't have responses yet.
-  const prompts = combinePrompts(
-    goal.prompts,
-    templateResponses,
-    templatePrompts,
-    activityRecipients,
-  );
+  const prompts = combinePrompts(goal.prompts, templateResponses, templatePrompts, activityRecipients)
 
   return (
     <>
-      <ReadOnlyField>
-        {goalText}
-      </ReadOnlyField>
+      <ReadOnlyField>{goalText}</ReadOnlyField>
 
       <ConditionalFields
         prompts={prompts}
@@ -138,8 +110,9 @@ export default function GoalForm({
         objectiveOptions={objectiveOptions}
         topicOptions={topicOptions}
         goalStatus={status}
-        noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
-          ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
+        noObjectiveError={
+          errors.goalForEditing && errors.goalForEditing.objectives ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR
+        }
         reportId={parseInt(reportId, DECIMAL_BASE)}
         citationOptions={citationOptions}
         rawCitations={rawCitations}
@@ -147,17 +120,14 @@ export default function GoalForm({
         objectiveOptionsLoaded={objectiveOptionsLoaded}
       />
     </>
-  );
+  )
 }
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
     goalTemplateId: PropTypes.number.isRequired,
     goalIds: PropTypes.arrayOf(PropTypes.number),
-    value: PropTypes.oneOfType([
-      PropTypes.number,
-      PropTypes.string,
-    ]),
+    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     grantIds: PropTypes.arrayOf(PropTypes.number),
     oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
@@ -169,39 +139,51 @@ GoalForm.propTypes = {
     status: PropTypes.string,
     source: PropTypes.string,
     createdVia: PropTypes.string,
-    prompts: PropTypes.arrayOf(PropTypes.shape({
-      type: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      prompt: PropTypes.string.isRequired,
-      options: PropTypes.arrayOf(PropTypes.string).isRequired,
-    }.isRequired)),
+    prompts: PropTypes.arrayOf(
+      PropTypes.shape(
+        {
+          type: PropTypes.string.isRequired,
+          title: PropTypes.string.isRequired,
+          prompt: PropTypes.string.isRequired,
+          options: PropTypes.arrayOf(PropTypes.string).isRequired,
+        }.isRequired
+      )
+    ),
   }).isRequired,
-  topicOptions: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  })).isRequired,
-  citationOptions: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  })),
+  topicOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })
+  ).isRequired,
+  citationOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })
+  ),
   isMonitoringGoal: PropTypes.bool,
-  rawCitations: PropTypes.arrayOf(PropTypes.shape({
-    standardId: PropTypes.number,
-    citation: PropTypes.string,
-    // Create array of jsonb objects
-    grants: PropTypes.arrayOf(PropTypes.shape({
-      grantId: PropTypes.number,
-      findingId: PropTypes.string,
-      reviewName: PropTypes.string,
-      grantNumber: PropTypes.string,
-      reportDeliveryDate: PropTypes.string,
-    })),
-  })),
+  rawCitations: PropTypes.arrayOf(
+    PropTypes.shape({
+      standardId: PropTypes.number,
+      citation: PropTypes.string,
+      // Create array of jsonb objects
+      grants: PropTypes.arrayOf(
+        PropTypes.shape({
+          grantId: PropTypes.number,
+          findingId: PropTypes.string,
+          reviewName: PropTypes.string,
+          grantNumber: PropTypes.string,
+          reportDeliveryDate: PropTypes.string,
+        })
+      ),
+    })
+  ),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-};
+}
 
 GoalForm.defaultProps = {
   citationOptions: [],
   rawCitations: [],
   isMonitoringGoal: false,
-};
+}

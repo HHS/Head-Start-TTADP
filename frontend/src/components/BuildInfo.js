@@ -1,25 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 
 function BuildInfo() {
-  const [buildInfo, setBuildInfo] = useState(null);
-  const [error, setError] = useState(false);
+  const [buildInfo, setBuildInfo] = useState(null)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/buildInfo')
       .then((response) => {
-        if (!response.ok) throw new Error('Build info not accessible');
-        return response.json();
+        if (!response.ok) throw new Error('Build info not accessible')
+        return response.json()
       })
       .then((data) => {
-        setBuildInfo(data);
-        setError(false);
+        setBuildInfo(data)
+        setError(false)
       })
       .catch(() => {
-        setError(true); // Set error state if fetch fails
-      });
-  }, []);
+        setError(true) // Set error state if fetch fails
+      })
+  }, [])
 
-  if (error || !buildInfo) return null; // Show nothing if there's an error or no build info
+  if (error || !buildInfo) return null // Show nothing if there's an error or no build info
 
   return (
     <footer
@@ -45,7 +45,7 @@ function BuildInfo() {
         <br />
       </p>
     </footer>
-  );
+  )
 }
 
-export default BuildInfo;
+export default BuildInfo

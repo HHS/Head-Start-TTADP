@@ -1,19 +1,17 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
-import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
-import {
-  Label, FormGroup, ErrorMessage, Fieldset,
-} from '@trussworks/react-uswds';
-import Req from './Req';
-import QuestionTooltip from './QuestionTooltip';
-import './FormItem.scss';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { useFormContext } from 'react-hook-form'
+import { ErrorMessage as ReactHookFormError } from '@hookform/error-message'
+import { Label, FormGroup, ErrorMessage, Fieldset } from '@trussworks/react-uswds'
+import Req from './Req'
+import QuestionTooltip from './QuestionTooltip'
+import './FormItem.scss'
 
 const labelPropTypes = {
   label: PropTypes.node.isRequired,
   children: PropTypes.node.isRequired,
   className: PropTypes.string.isRequired,
-};
+}
 
 function FieldSetWrapper({ label, children, className }) {
   return (
@@ -21,14 +19,12 @@ function FieldSetWrapper({ label, children, className }) {
       <legend>{label}</legend>
       {children}
     </Fieldset>
-  );
+  )
 }
 
-FieldSetWrapper.propTypes = labelPropTypes;
+FieldSetWrapper.propTypes = labelPropTypes
 
-function LabelWrapper({
-  label, children, className, htmlFor, toolTipText = null,
-}) {
+function LabelWrapper({ label, children, className, htmlFor, toolTipText = null }) {
   /**
    * The date picker component renders two inputs. This seemed to create
    * inconsistent behavior as far as which input was being referenced by the enclosing label
@@ -41,16 +37,11 @@ function LabelWrapper({
       <Label className={className} htmlFor={htmlFor}>
         <div>
           {label}
-          {toolTipText && (
-            <QuestionTooltip
-              text={toolTipText}
-              customClass="margin-left-0"
-            />
-          )}
+          {toolTipText && <QuestionTooltip text={toolTipText} customClass="margin-left-0" />}
         </div>
         {children}
       </Label>
-    );
+    )
   }
 
   return (
@@ -58,34 +49,24 @@ function LabelWrapper({
       {label}
       {children}
     </Label>
-  );
+  )
 }
 
 LabelWrapper.propTypes = {
   ...labelPropTypes,
   htmlFor: PropTypes.string,
-};
+}
 
 LabelWrapper.defaultProps = {
   htmlFor: '',
-};
+}
 
-function FormItem({
-  label,
-  hint,
-  children,
-  required,
-  name,
-  fieldSetWrapper,
-  className,
-  formGroupClassName,
-  htmlFor,
-  toolTipText,
-  customLabel,
-}) {
-  const { formState: { errors } } = useFormContext();
+function FormItem({ label, hint, children, required, name, fieldSetWrapper, className, formGroupClassName, htmlFor, toolTipText, customLabel }) {
+  const {
+    formState: { errors },
+  } = useFormContext()
 
-  const fieldErrors = errors[name];
+  const fieldErrors = errors[name]
   const labelWithRequiredTag = (
     <>
       {label}
@@ -95,44 +76,28 @@ function FormItem({
           <Req announce />
         </>
       )}
-      {toolTipText && !htmlFor && (
-      <QuestionTooltip
-        text={toolTipText}
-        customClass="margin-right-1 no-print"
-      />
-      )}
+      {toolTipText && !htmlFor && <QuestionTooltip text={toolTipText} customClass="margin-right-1 no-print" />}
     </>
-  );
+  )
 
-  const LabelType = fieldSetWrapper ? FieldSetWrapper : LabelWrapper;
+  const LabelType = fieldSetWrapper ? FieldSetWrapper : LabelWrapper
 
   return (
     <FormGroup className={`tttahub-form-item ${formGroupClassName}`} error={fieldErrors}>
-      {
-        !label && (customLabel)
-       }
-      <LabelType
-        htmlFor={htmlFor}
-        label={labelWithRequiredTag}
-        className={className}
-        toolTipText={toolTipText}
-      >
+      {!label && customLabel}
+      <LabelType htmlFor={htmlFor} label={labelWithRequiredTag} className={className} toolTipText={toolTipText}>
         {hint && (
-        <>
-          <br />
-          <span className="usa-hint">{hint}</span>
-          <br />
-        </>
+          <>
+            <br />
+            <span className="usa-hint">{hint}</span>
+            <br />
+          </>
         )}
-        <ReactHookFormError
-          errors={errors}
-          name={name}
-          render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
-        />
+        <ReactHookFormError errors={errors} name={name} render={({ message }) => <ErrorMessage>{message}</ErrorMessage>} />
         {children}
       </LabelType>
     </FormGroup>
-  );
+  )
 }
 
 FormItem.propTypes = {
@@ -147,7 +112,7 @@ FormItem.propTypes = {
   hint: PropTypes.string,
   toolTipText: PropTypes.string,
   formGroupClassName: PropTypes.string,
-};
+}
 
 FormItem.defaultProps = {
   customLabel: null,
@@ -158,6 +123,6 @@ FormItem.defaultProps = {
   hint: '',
   toolTipText: null,
   formGroupClassName: '',
-};
+}
 
-export default FormItem;
+export default FormItem

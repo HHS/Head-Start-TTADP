@@ -1,35 +1,33 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
-import {
-  render, screen,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { Router } from 'react-router'
+import { createMemoryHistory } from 'history'
 
-import MyAlerts from '../MyAlerts';
-import activityReports from '../mocks';
-import { ALERTS_PER_PAGE } from '../../../Constants';
-import UserContext from '../../../UserContext';
+import MyAlerts from '../MyAlerts'
+import activityReports from '../mocks'
+import { ALERTS_PER_PAGE } from '../../../Constants'
+import UserContext from '../../../UserContext'
 
 const user = {
   name: 'test@test.com',
   fullName: 'a',
   id: 999,
-};
+}
 
 const renderMyAlerts = (report = false) => {
-  const history = createMemoryHistory();
-  const newBtn = true;
-  const alertsSortConfig = { sortBy: 'startDate', direction: 'desc' };
-  const alertsOffset = 0;
-  const alertsPerPage = ALERTS_PER_PAGE;
-  const alertsActivePage = 1;
-  const alertReportsCount = 10;
-  const updateReportAlerts = jest.fn();
-  const setAlertReportsCount = jest.fn();
-  const requestAlertsSort = jest.fn();
+  const history = createMemoryHistory()
+  const newBtn = true
+  const alertsSortConfig = { sortBy: 'startDate', direction: 'desc' }
+  const alertsOffset = 0
+  const alertsPerPage = ALERTS_PER_PAGE
+  const alertsActivePage = 1
+  const alertReportsCount = 10
+  const updateReportAlerts = jest.fn()
+  const setAlertReportsCount = jest.fn()
+  const requestAlertsSort = jest.fn()
 
   render(
     <Router history={history}>
@@ -46,86 +44,86 @@ const renderMyAlerts = (report = false) => {
           sortHandler={requestAlertsSort}
           updateReportAlerts={updateReportAlerts}
           setAlertReportsCount={setAlertReportsCount}
-          fetchReports={() => { }}
-          updateReportFilters={() => { }}
-          handleDownloadAllAlerts={() => { }}
+          fetchReports={() => {}}
+          updateReportFilters={() => {}}
+          handleDownloadAllAlerts={() => {}}
         />
       </UserContext.Provider>
-    </Router>,
-  );
-  return history;
-};
+    </Router>
+  )
+  return history
+}
 
 describe('My Alerts', () => {
   test('displays report id column', async () => {
-    renderMyAlerts();
+    renderMyAlerts()
     const reportIdColumnHeader = await screen.findByRole('columnheader', {
       name: /report id/i,
-    });
-    expect(reportIdColumnHeader).toBeVisible();
-  });
+    })
+    expect(reportIdColumnHeader).toBeVisible()
+  })
 
   test('displays recipient column', async () => {
-    renderMyAlerts();
+    renderMyAlerts()
     const recipientColumnHeader = await screen.findByRole('columnheader', {
       name: /recipient/i,
-    });
-    expect(recipientColumnHeader).toBeVisible();
-  });
+    })
+    expect(recipientColumnHeader).toBeVisible()
+  })
 
   test('displays date started column', async () => {
-    renderMyAlerts();
+    renderMyAlerts()
     const startDateColumnHeader = await screen.findByRole('columnheader', {
       name: /date started/i,
-    });
-    expect(startDateColumnHeader).toBeVisible();
-  });
+    })
+    expect(startDateColumnHeader).toBeVisible()
+  })
 
   test('displays approvers column', async () => {
-    renderMyAlerts();
-    expect(await screen.findByText(/Approver manager 1/i)).toBeVisible();
-    expect(await screen.findByText(/Approver manager 2/i)).toBeVisible();
-    expect(await screen.findByText(/Approver manager 3/i)).toBeVisible();
-  });
+    renderMyAlerts()
+    expect(await screen.findByText(/Approver manager 1/i)).toBeVisible()
+    expect(await screen.findByText(/Approver manager 2/i)).toBeVisible()
+    expect(await screen.findByText(/Approver manager 3/i)).toBeVisible()
+  })
 
   test('displays creator column', async () => {
-    renderMyAlerts();
+    renderMyAlerts()
     const creatorColumnHeader = await screen.findByRole('columnheader', {
       name: /creator/i,
-    });
-    expect(creatorColumnHeader).toBeVisible();
-  });
+    })
+    expect(creatorColumnHeader).toBeVisible()
+  })
 
   test('displays the correct recipients', async () => {
-    renderMyAlerts();
-    const recipients = await screen.findByRole('button', { name: /click to visually reveal the recipients for r14-ar-1/i });
-    expect(recipients.textContent).toContain('Johnston-Romaguera');
+    renderMyAlerts()
+    const recipients = await screen.findByRole('button', { name: /click to visually reveal the recipients for r14-ar-1/i })
+    expect(recipients.textContent).toContain('Johnston-Romaguera')
     const otherEntity = await screen.findByRole('cell', {
       name: /qris system/i,
-    });
+    })
 
-    expect(recipients).toBeVisible();
-    expect(otherEntity).toBeVisible();
-  });
+    expect(recipients).toBeVisible()
+    expect(otherEntity).toBeVisible()
+  })
 
   test('displays the correct start date', async () => {
-    renderMyAlerts();
+    renderMyAlerts()
     const startDate = await screen.findByRole('cell', {
       name: /02\/08\/2021/i,
-    });
+    })
 
-    expect(startDate).toBeVisible();
-  });
+    expect(startDate).toBeVisible()
+  })
 
   test('displays the correct collaborators', async () => {
-    renderMyAlerts();
-    const collaborators = await screen.findByRole('button', { name: /click to visually reveal the collaborators for r14-ar-1/i });
-    expect(collaborators).toBeVisible();
-    expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis');
-    const truncated = collaborators.firstChild.firstChild.firstChild;
-    expect(truncated).toHaveClass('smart-hub-tooltip--truncated');
-    expect(truncated).toHaveTextContent('Orange, GS');
-  });
+    renderMyAlerts()
+    const collaborators = await screen.findByRole('button', { name: /click to visually reveal the collaborators for r14-ar-1/i })
+    expect(collaborators).toBeVisible()
+    expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis')
+    const truncated = collaborators.firstChild.firstChild.firstChild
+    expect(truncated).toHaveClass('smart-hub-tooltip--truncated')
+    expect(truncated).toHaveTextContent('Orange, GS')
+  })
 
   test('displays the reviewed status', async () => {
     const report = {
@@ -192,13 +190,13 @@ describe('My Alerts', () => {
           },
         },
       ],
-    };
+    }
 
-    renderMyAlerts(report);
+    renderMyAlerts(report)
 
-    const reviewed = await screen.findByText(/reviewed/i);
-    expect(reviewed).toBeVisible();
-  });
+    const reviewed = await screen.findByText(/reviewed/i)
+    expect(reviewed).toBeVisible()
+  })
 
   test('displays the needs action status', async () => {
     const report = {
@@ -265,30 +263,30 @@ describe('My Alerts', () => {
           },
         },
       ],
-    };
+    }
 
-    renderMyAlerts(report);
+    renderMyAlerts(report)
 
-    const needsAction = await screen.findByText(/needs action/i);
-    expect(needsAction).toBeVisible();
-  });
+    const needsAction = await screen.findByText(/needs action/i)
+    expect(needsAction).toBeVisible()
+  })
 
   test('shows both context menu items when I am creator or collaborator', async () => {
-    renderMyAlerts(false);
-    const menuButtons = await screen.findAllByTestId('context-menu-actions-btn');
-    userEvent.click(menuButtons[0]);
+    renderMyAlerts(false)
+    const menuButtons = await screen.findAllByTestId('context-menu-actions-btn')
+    userEvent.click(menuButtons[0])
 
     const viewButton = await screen.findAllByRole('button', {
       name: 'View',
-    });
+    })
 
     const deleteButton = await screen.findAllByRole('button', {
       name: 'Delete',
-    });
+    })
 
-    expect(viewButton.length).toBe(1);
-    expect(deleteButton.length).toBe(1);
-  });
+    expect(viewButton.length).toBe(1)
+    expect(deleteButton.length).toBe(1)
+  })
 
   test('does not show Delete when I am not a creator or collaborator', async () => {
     const report = {
@@ -342,34 +340,34 @@ describe('My Alerts', () => {
         homeRegionId: 14,
       },
       collaborators: [],
-    };
+    }
 
-    renderMyAlerts(report);
+    renderMyAlerts(report)
 
-    const menuButtons = await screen.findAllByTestId('context-menu-actions-btn');
-    userEvent.click(menuButtons[0]);
+    const menuButtons = await screen.findAllByTestId('context-menu-actions-btn')
+    userEvent.click(menuButtons[0])
 
     const viewButton = await screen.findAllByRole('button', {
       name: 'View',
-    });
+    })
 
-    expect(viewButton.length).toBe(1);
+    expect(viewButton.length).toBe(1)
 
-    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
-  });
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
+  })
 
   test('redirects to view activity report when clicked from context menu', async () => {
-    const history = renderMyAlerts();
-    const menuButtons = await screen.findAllByTestId('context-menu-actions-btn');
-    userEvent.click(menuButtons[0]);
+    const history = renderMyAlerts()
+    const menuButtons = await screen.findAllByTestId('context-menu-actions-btn')
+    userEvent.click(menuButtons[0])
 
     const viewButton = await screen.findByRole('button', {
       name: 'View',
-    });
-    userEvent.click(viewButton);
+    })
+    userEvent.click(viewButton)
 
-    expect(history.location.pathname).toBe('/activity-reports/1');
-  });
+    expect(history.location.pathname).toBe('/activity-reports/1')
+  })
 
   test('Deletes selected report', async () => {
     const report = {
@@ -430,23 +428,23 @@ describe('My Alerts', () => {
         homeRegionId: 14,
       },
       collaborators: [],
-    };
+    }
 
-    renderMyAlerts(report);
-    const menuButtons = await screen.findAllByTestId('context-menu-actions-btn');
-    userEvent.click(menuButtons[0]);
+    renderMyAlerts(report)
+    const menuButtons = await screen.findAllByTestId('context-menu-actions-btn')
+    userEvent.click(menuButtons[0])
 
     const viewButton = await screen.findByRole('button', {
       name: 'Delete',
-    });
-    userEvent.click(viewButton);
+    })
+    userEvent.click(viewButton)
 
-    const contextMenu = await screen.findAllByTestId('context-menu-actions-btn');
-    expect(contextMenu).toBeTruthy();
-    const button = await screen.findByRole('button', { name: /this button will permanently delete the report\./i, hidden: true });
-    userEvent.click(button);
+    const contextMenu = await screen.findAllByTestId('context-menu-actions-btn')
+    expect(contextMenu).toBeTruthy()
+    const button = await screen.findByRole('button', { name: /this button will permanently delete the report\./i, hidden: true })
+    userEvent.click(button)
 
-    const modal = document.querySelector('#DeleteReportModal');
-    expect(modal).toHaveClass('is-hidden');
-  });
-});
+    const modal = document.querySelector('#DeleteReportModal')
+    expect(modal).toHaveClass('is-hidden')
+  })
+})

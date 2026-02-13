@@ -1,15 +1,11 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import {
-  faPersonChalkboard,
-  faBus,
-  faUser,
-} from '@fortawesome/free-solid-svg-icons';
-import colors from '../colors';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { faPersonChalkboard, faBus, faUser } from '@fortawesome/free-solid-svg-icons'
+import colors from '../colors'
 
-import { DashboardOverviewContainer } from './DashboardOverviewContainer';
+import { DashboardOverviewContainer } from './DashboardOverviewContainer'
 
-const createOverviewFieldArray = (data) => ([
+const createOverviewFieldArray = (data) => [
   {
     key: 'recipients-with-no-tta',
     icon: faUser,
@@ -30,9 +26,7 @@ const createOverviewFieldArray = (data) => ([
     label1: 'Recipients with OHS standard FEI goal',
     iconColor: colors.ttahubOrange,
     backgroundColor: colors.ttahubOrangeLight,
-    data: data && data.recipientsWithOhsStandardFeiGoals
-      ? `${data.recipientsWithOhsStandardFeiGoals.pct}%`
-      : '0%',
+    data: data && data.recipientsWithOhsStandardFeiGoals ? `${data.recipientsWithOhsStandardFeiGoals.pct}%` : '0%',
     route: 'qa-dashboard/recipients-with-ohs-standard-fei-goal',
     filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
     showNoResults: true,
@@ -45,29 +39,20 @@ const createOverviewFieldArray = (data) => ([
     label1: 'Recipients with OHS standard CLASS goal',
     iconColor: colors.success,
     backgroundColor: colors.ttahubDeepTealLight,
-    data: data && data.recipientsWithOhsStandardClass
-      ? `${data.recipientsWithOhsStandardClass.pct}%`
-      : '0%',
+    data: data && data.recipientsWithOhsStandardClass ? `${data.recipientsWithOhsStandardClass.pct}%` : '0%',
     route: 'qa-dashboard/recipients-with-class-scores-and-goals',
     filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
     showNoResults: true,
     ariaLabel: 'Display details about recipients with OHS standard CLASS goals',
   },
-]);
+]
 
-export function QualityAssuranceDashboardOverview({
-  data, loading,
-}) {
+export function QualityAssuranceDashboardOverview({ data, loading }) {
   if (!data) {
-    return null;
+    return null
   }
-  const DASHBOARD_FIELDS = createOverviewFieldArray(data);
-  return (
-    <DashboardOverviewContainer
-      fieldData={DASHBOARD_FIELDS}
-      loading={loading}
-    />
-  );
+  const DASHBOARD_FIELDS = createOverviewFieldArray(data)
+  return <DashboardOverviewContainer fieldData={DASHBOARD_FIELDS} loading={loading} />
 }
 
 QualityAssuranceDashboardOverview.propTypes = {
@@ -83,7 +68,7 @@ QualityAssuranceDashboardOverview.propTypes = {
     }),
   }),
   loading: PropTypes.bool,
-};
+}
 
 QualityAssuranceDashboardOverview.defaultProps = {
   data: {
@@ -101,6 +86,6 @@ QualityAssuranceDashboardOverview.defaultProps = {
     },
   },
   loading: false,
-};
+}
 
-export default QualityAssuranceDashboardOverview;
+export default QualityAssuranceDashboardOverview

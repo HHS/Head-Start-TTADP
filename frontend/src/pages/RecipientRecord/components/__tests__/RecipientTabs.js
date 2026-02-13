@@ -1,9 +1,9 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { SCOPE_IDS } from '@ttahub/common';
-import RecipientTabs from '../RecipientTabs';
-import UserContext from '../../../../UserContext';
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { SCOPE_IDS } from '@ttahub/common'
+import RecipientTabs from '../RecipientTabs'
+import UserContext from '../../../../UserContext'
 
 const DEFAULT_USER = {
   name: 'test@test.com',
@@ -15,35 +15,31 @@ const DEFAULT_USER = {
     },
   ],
   flags: [],
-};
+}
 
 describe('RecipientTabs', () => {
   const renderRecipientTabs = (backLink = null, user = DEFAULT_USER) => {
     render(
       <MemoryRouter>
         <UserContext.Provider value={{ user }}>
-          <RecipientTabs
-            region="1"
-            recipientId="1"
-            backLink={backLink}
-          />
+          <RecipientTabs region="1" recipientId="1" backLink={backLink} />
         </UserContext.Provider>
-      </MemoryRouter>,
-    );
-  };
+      </MemoryRouter>
+    )
+  }
 
   it('does not show the icon if there is no back link', () => {
-    renderRecipientTabs();
-    expect(screen.queryByTestId('back-link-icon')).not.toBeInTheDocument();
-  });
+    renderRecipientTabs()
+    expect(screen.queryByTestId('back-link-icon')).not.toBeInTheDocument()
+  })
 
   it('does not show the icon if the backlink is a fragment', () => {
-    renderRecipientTabs(<></>);
-    expect(screen.queryByTestId('back-link-icon')).not.toBeInTheDocument();
-  });
+    renderRecipientTabs(<></>)
+    expect(screen.queryByTestId('back-link-icon')).not.toBeInTheDocument()
+  })
 
   it('shows the icon if the backlink is a <Link>', () => {
-    renderRecipientTabs(<a href="/">Back</a>);
-    expect(screen.queryByTestId('back-link-icon')).toBeInTheDocument();
-  });
-});
+    renderRecipientTabs(<a href="/">Back</a>)
+    expect(screen.queryByTestId('back-link-icon')).toBeInTheDocument()
+  })
+})

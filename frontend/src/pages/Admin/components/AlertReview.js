@@ -1,63 +1,58 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState, useEffect } from 'react';
-import moment from 'moment';
-import PropTypes from 'prop-types';
-import {
-  Button,
-  Checkbox,
-  DatePicker,
-  Alert,
-} from '@trussworks/react-uswds';
-import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
-import draftToHtml from 'draftjs-to-html';
-import { Editor } from 'react-draft-wysiwyg';
-import { getEditorState } from '../../../utils';
-import SiteAlert from '../../../components/SiteAlert';
-import Req from '../../../components/Req';
-import { saveSiteAlert, createSiteAlert } from '../../../fetchers/Admin';
-import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
-import './AlertReview.scss';
+import React, { useState, useEffect } from 'react'
+import moment from 'moment'
+import PropTypes from 'prop-types'
+import { Button, Checkbox, DatePicker, Alert } from '@trussworks/react-uswds'
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common'
+import draftToHtml from 'draftjs-to-html'
+import { Editor } from 'react-draft-wysiwyg'
+import { getEditorState } from '../../../utils'
+import SiteAlert from '../../../components/SiteAlert'
+import Req from '../../../components/Req'
+import { saveSiteAlert, createSiteAlert } from '../../../fetchers/Admin'
+import ReadOnlyEditor from '../../../components/ReadOnlyEditor'
+import './AlertReview.scss'
 
-const BASE_EDITOR_HEIGHT = '10rem';
+const BASE_EDITOR_HEIGHT = '10rem'
 
 export default function AlertReview({ alert, onDelete }) {
-  const [id, setId] = useState(alert.id);
-  const [notification, setNotification] = useState(null);
-  const [isNew, setIsNew] = useState(alert.isNew);
-  const [isEditable, setIsEditable] = useState(alert.isNew);
-  const [message, setMessage] = useState(alert.message);
-  const [title, setTitle] = useState(alert.title);
-  const [variant, setVariant] = useState(alert.variant);
-  const [startDate, setStartDate] = useState(alert.startDate);
-  const [endDate, setEndDate] = useState(alert.endDate);
-  const [status, setStatus] = useState(alert.status);
-  const [size, setSize] = useState(alert.size);
-  const [isFetching, setIsFetching] = useState(false);
-  const [offset, setOffset] = useState(71);
+  const [id, setId] = useState(alert.id)
+  const [notification, setNotification] = useState(null)
+  const [isNew, setIsNew] = useState(alert.isNew)
+  const [isEditable, setIsEditable] = useState(alert.isNew)
+  const [message, setMessage] = useState(alert.message)
+  const [title, setTitle] = useState(alert.title)
+  const [variant, setVariant] = useState(alert.variant)
+  const [startDate, setStartDate] = useState(alert.startDate)
+  const [endDate, setEndDate] = useState(alert.endDate)
+  const [status, setStatus] = useState(alert.status)
+  const [size, setSize] = useState(alert.size)
+  const [isFetching, setIsFetching] = useState(false)
+  const [offset, setOffset] = useState(71)
 
   useEffect(() => {
     if (isEditable) {
-      const header = document.querySelector('.smart-hub-header.has-alerts');
+      const header = document.querySelector('.smart-hub-header.has-alerts')
       if (header) {
-        const headerHeight = header.offsetHeight;
-        setOffset(headerHeight);
+        const headerHeight = header.offsetHeight
+        setOffset(headerHeight)
       }
     }
-  }, [isEditable]);
+  }, [isEditable])
 
-  let defaultEditorState;
+  let defaultEditorState
   if (alert.message) {
-    defaultEditorState = getEditorState(message);
+    defaultEditorState = getEditorState(message)
   }
 
   const onInternalChange = (currentContentState) => {
-    const html = draftToHtml(currentContentState);
-    setMessage(html);
-  };
+    const html = draftToHtml(currentContentState)
+    setMessage(html)
+  }
 
   const onSubmit = async (e) => {
-    e.preventDefault();
-    setNotification(null);
+    e.preventDefault()
+    setNotification(null)
 
     const newAlert = {
       startDate,
@@ -67,46 +62,46 @@ export default function AlertReview({ alert, onDelete }) {
       status,
       variant,
       size,
-    };
+    }
 
     if (isNew) {
       try {
-        setIsFetching(true);
-        const createdAlert = await createSiteAlert(newAlert);
-        setIsNew(false);
-        setIsEditable(false);
-        setId(createdAlert.id);
+        setIsFetching(true)
+        const createdAlert = await createSiteAlert(newAlert)
+        setIsNew(false)
+        setIsEditable(false)
+        setId(createdAlert.id)
         setNotification({
           state: 'success',
           message: 'Your alert was created successfully',
-        });
+        })
       } catch (err) {
         setNotification({
           state: 'error',
           message: 'There was an error creating this alert.',
-        });
+        })
       } finally {
-        setIsFetching(false);
+        setIsFetching(false)
       }
     } else {
       try {
-        setIsFetching(true);
-        await saveSiteAlert({ id, ...newAlert });
-        setIsEditable(false);
+        setIsFetching(true)
+        await saveSiteAlert({ id, ...newAlert })
+        setIsEditable(false)
         setNotification({
           state: 'success',
           message: 'Your alert was saved successfully',
-        });
+        })
       } catch (err) {
         setNotification({
           state: 'error',
           message: 'There was an error updating this alert.',
-        });
+        })
       } finally {
-        setIsFetching(false);
+        setIsFetching(false)
       }
     }
-  };
+  }
 
   return (
     <div className="margin-y-3 padding-2 position-relative shadow-2 radius-md has-alerts">
@@ -125,7 +120,7 @@ export default function AlertReview({ alert, onDelete }) {
         >
           <ReadOnlyEditor key={message} value={message} ariaLabel={`message for alert ${alert.id}`} />
         </SiteAlert>
-      ) : null }
+      ) : null}
 
       <div
         className="desktop:display-flex position-relative maxw-desktop margin-x-auto ttahub-date-indicator"
@@ -133,30 +128,24 @@ export default function AlertReview({ alert, onDelete }) {
           paddingLeft: '4.75rem',
         }}
       >
-        { !isEditable && (startDate || endDate) ? (
+        {!isEditable && (startDate || endDate) ? (
           <>
             <p className="usa-prose margin-right-3">
-              <span className="text-bold">Start date:</span>
-              {' '}
-              {startDate}
+              <span className="text-bold">Start date:</span> {startDate}
             </p>
             <p className="usa-prose">
-              <span className="text-bold">End date:</span>
-              {' '}
-              {endDate}
+              <span className="text-bold">End date:</span> {endDate}
             </p>
-
           </>
-        )
-          : null }
+        ) : null}
         <Checkbox
           id={`is-editable-${alert.id}`}
           name={`is-editable-${alert.id}`}
           className="position-absolute right-0 top-0 margin-top-2 margin-right-1"
           label="Edit?"
           onChange={() => {
-            setIsEditable(!isEditable);
-            setNotification(null);
+            setIsEditable(!isEditable)
+            setNotification(null)
           }}
           checked={isEditable}
           aria-label="Edit?"
@@ -166,11 +155,8 @@ export default function AlertReview({ alert, onDelete }) {
 
       {isEditable ? (
         <form onSubmit={onSubmit} className="maxw-tablet smart-hub-admin__create-alert-form">
-
           <div className="margin-top-3">
-            <label htmlFor={`alert-${alert.id}-title`}>
-              Title
-            </label>
+            <label htmlFor={`alert-${alert.id}-title`}>Title</label>
             <input
               id={`alert-${alert.id}-title`}
               type="text"
@@ -247,7 +233,6 @@ export default function AlertReview({ alert, onDelete }) {
                 },
               }}
             />
-
           </div>
 
           <div className="margin-top-3">
@@ -301,26 +286,26 @@ export default function AlertReview({ alert, onDelete }) {
             </select>
           </div>
           <div className="margin-top-2">
-            <Button type="submit" disabled={isFetching}>Save changes</Button>
+            <Button type="submit" disabled={isFetching}>
+              Save changes
+            </Button>
             <Button type="button" disabled={isFetching} onClick={() => onDelete(alert)} secondary>
               Delete
             </Button>
           </div>
         </form>
-      ) : null }
-      { notification && notification.message && notification.state ? (
+      ) : null}
+      {notification && notification.message && notification.state ? (
         <div className="margin-top-3">
           <Alert type={notification.state} slim>
             <div className="usa-alert__body">
-              <p className="usa-alert__text">
-                {notification.message}
-              </p>
+              <p className="usa-alert__text">{notification.message}</p>
             </div>
           </Alert>
         </div>
       ) : null}
     </div>
-  );
+  )
 }
 
 AlertReview.propTypes = {
@@ -336,4 +321,4 @@ AlertReview.propTypes = {
     variant: PropTypes.string,
     size: PropTypes.string,
   }).isRequired,
-};
+}

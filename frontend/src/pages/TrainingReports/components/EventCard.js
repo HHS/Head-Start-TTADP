@@ -1,136 +1,124 @@
-import React, { useState, useContext, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { Alert } from '@trussworks/react-uswds';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import { v4 as uuidv4 } from 'uuid';
-import { Link, useHistory } from 'react-router-dom';
-import { completeEvent, resumeEvent, suspendEvent } from '../../../fetchers/event';
-import UserContext from '../../../UserContext';
-import { eventPropTypes } from '../constants';
-import ContextMenu from '../../../components/ContextMenu';
-import { checkForDate } from '../../../utils';
-import ExpanderButton from '../../../components/ExpanderButton';
-import SessionCard from './SessionCard';
-import Modal from '../../../components/Modal';
-import isAdmin from '../../../permissions';
-import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
-import './EventCard.scss';
+import React, { useState, useContext, useRef } from 'react'
+import PropTypes from 'prop-types'
+import { Alert } from '@trussworks/react-uswds'
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common'
+import { v4 as uuidv4 } from 'uuid'
+import { Link, useHistory } from 'react-router-dom'
+import { completeEvent, resumeEvent, suspendEvent } from '../../../fetchers/event'
+import UserContext from '../../../UserContext'
+import { eventPropTypes } from '../constants'
+import ContextMenu from '../../../components/ContextMenu'
+import { checkForDate } from '../../../utils'
+import ExpanderButton from '../../../components/ExpanderButton'
+import SessionCard from './SessionCard'
+import Modal from '../../../components/Modal'
+import isAdmin from '../../../permissions'
+import { TRAINING_EVENT_ORGANIZER } from '../../../Constants'
+import './EventCard.scss'
 
-function EventCard({
-  event,
-  onRemoveSession,
-  onDeleteEvent,
-  zIndex,
-  alerts,
-  removeEventFromDisplay,
-}) {
-  const modalRef = useRef(null);
-  const { user } = useContext(UserContext);
-  const history = useHistory();
-  const hasAdminRights = isAdmin(user);
-  const {
-    id,
-    data,
-    sessionReports,
-  } = event;
+function EventCard({ event, onRemoveSession, onDeleteEvent, zIndex, alerts, removeEventFromDisplay }) {
+  const modalRef = useRef(null)
+  const { user } = useContext(UserContext)
+  const history = useHistory()
+  const hasAdminRights = isAdmin(user)
+  const { id, data, sessionReports } = event
 
-  const { eventOrganizer } = data;
+  const { eventOrganizer } = data
 
   const [message, setMessage] = useState({
     text: '',
     type: 'error',
-  });
-  const [eventStatus, setEventStatus] = useState(data.status);
+  })
+  const [eventStatus, setEventStatus] = useState(data.status)
 
-  const { eventId, eventSubmitted } = data;
-  const idForLink = eventId.split('-').pop();
-  const isOwner = event.ownerId === user.id;
-  const isPoc = event.pocIds && event.pocIds.includes(user.id);
-  const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
-  const isOwnerOrCollaborator = isOwner || isCollaborator;
-  const isSuspended = data.status === TRAINING_REPORT_STATUSES.SUSPENDED;
-  const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE;
-  const isNotCompleteOrSuspended = !isComplete && !isSuspended;
+  const { eventId, eventSubmitted } = data
+  const idForLink = eventId.split('-').pop()
+  const isOwner = event.ownerId === user.id
+  const isPoc = event.pocIds && event.pocIds.includes(user.id)
+  const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id)
+  const isOwnerOrCollaborator = isOwner || isCollaborator
+  const isSuspended = data.status === TRAINING_REPORT_STATUSES.SUSPENDED
+  const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE
+  const isNotCompleteOrSuspended = !isComplete && !isSuspended
 
-  const canEditEvent = ((isOwner && !eventSubmitted && isNotCompleteOrSuspended)
-    || (hasAdminRights && isNotCompleteOrSuspended));
-  const canCreateSession = (isNotCompleteOrSuspended && isOwnerOrCollaborator) || hasAdminRights;
-  const canDeleteEvent = hasAdminRights && (data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
-  || data.status === TRAINING_REPORT_STATUSES.SUSPENDED);
-  const menuItems = [];
+  const canEditEvent = (isOwner && !eventSubmitted && isNotCompleteOrSuspended) || (hasAdminRights && isNotCompleteOrSuspended)
+  const canCreateSession = (isNotCompleteOrSuspended && isOwnerOrCollaborator) || hasAdminRights
+  const canDeleteEvent =
+    hasAdminRights && (data.status === TRAINING_REPORT_STATUSES.NOT_STARTED || data.status === TRAINING_REPORT_STATUSES.SUSPENDED)
+  const menuItems = []
 
   const setParentMessage = (msg) => {
-    alerts.setParentMessage(null);
-    alerts.setMessage(msg);
-  };
+    alerts.setParentMessage(null)
+    alerts.setMessage(msg)
+  }
 
   const canCompleteEvent = (() => {
     if (!isOwner) {
-      return false;
+      return false
     }
 
     if (!isNotCompleteOrSuspended) {
-      return false;
+      return false
     }
 
     if (!eventSubmitted) {
-      return false;
+      return false
     }
 
     // eslint-disable-next-line max-len
     if (sessionReports.length === 0 || !sessionReports.every((session) => session.data.status === TRAINING_REPORT_STATUSES.COMPLETE)) {
-      return false;
+      return false
     }
 
-    return true;
-  })();
+    return true
+  })()
 
   if (canCreateSession) {
     // Create session.
     menuItems.push({
       label: 'Create session',
       onClick: () => {
-        let url = `/training-report/${idForLink}/session/new/`;
+        let url = `/training-report/${idForLink}/session/new/`
         if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
-          url += 'choose-facilitation';
+          url += 'choose-facilitation'
         }
-        history.push(url);
+        history.push(url)
       },
-    });
+    })
   }
 
   if (canCompleteEvent) {
-  // Complete event.
+    // Complete event.
     menuItems.push({
       label: 'Complete event',
       onClick: async () => {
         try {
-          const { sessionReports: sessions, ...eventReport } = event;
-          await completeEvent(idForLink, eventReport);
-          setEventStatus(TRAINING_REPORT_STATUSES.COMPLETE);
+          const { sessionReports: sessions, ...eventReport } = event
+          await completeEvent(idForLink, eventReport)
+          setEventStatus(TRAINING_REPORT_STATUSES.COMPLETE)
           setParentMessage({
             text: 'Event completed successfully',
             type: 'success',
-          });
-          removeEventFromDisplay(id);
-          window.scrollTo(0, 0);
+          })
+          removeEventFromDisplay(id)
+          window.scrollTo(0, 0)
         } catch (err) {
           setMessage({
             text: 'Error completing event',
             type: 'error',
-          });
+          })
         }
       },
-    });
+    })
   }
 
   if (canDeleteEvent) {
     menuItems.push({
       label: 'Delete event',
       onClick: () => {
-        modalRef.current.toggleModal();
+        modalRef.current.toggleModal()
       },
-    });
+    })
   }
 
   if (canEditEvent) {
@@ -138,9 +126,9 @@ function EventCard({
     menuItems.push({
       label: 'Edit event',
       onClick: () => {
-        history.push(`/training-report/${idForLink}/event-summary`);
+        history.push(`/training-report/${idForLink}/event-summary`)
       },
-    });
+    })
   }
 
   if (isSuspended && (isOwner || hasAdminRights)) {
@@ -148,28 +136,28 @@ function EventCard({
       label: 'Resume event',
       onClick: async () => {
         try {
-          const { sessionReports: sessions, ...eventReport } = event;
+          const { sessionReports: sessions, ...eventReport } = event
           await resumeEvent(
             idForLink,
             eventReport,
             // eslint-disable-next-line max-len
-            sessions.length ? TRAINING_REPORT_STATUSES.IN_PROGRESS : TRAINING_REPORT_STATUSES.NOT_STARTED,
-          );
-          setEventStatus(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+            sessions.length ? TRAINING_REPORT_STATUSES.IN_PROGRESS : TRAINING_REPORT_STATUSES.NOT_STARTED
+          )
+          setEventStatus(TRAINING_REPORT_STATUSES.IN_PROGRESS)
           setParentMessage({
             text: 'Event resumed successfully',
             type: 'success',
-          });
-          removeEventFromDisplay(id);
-          window.scrollTo(0, 0);
+          })
+          removeEventFromDisplay(id)
+          window.scrollTo(0, 0)
         } catch (err) {
           setMessage({
             text: 'Error resuming event',
             type: 'error',
-          });
+          })
         }
       },
-    });
+    })
   }
 
   if (isNotCompleteOrSuspended && (isOwner || hasAdminRights)) {
@@ -177,42 +165,42 @@ function EventCard({
       label: 'Suspend event',
       onClick: async () => {
         try {
-          const { sessionReports: sessions, ...eventReport } = event;
-          await suspendEvent(idForLink, eventReport);
-          setEventStatus(TRAINING_REPORT_STATUSES.SUSPENDED);
+          const { sessionReports: sessions, ...eventReport } = event
+          await suspendEvent(idForLink, eventReport)
+          setEventStatus(TRAINING_REPORT_STATUSES.SUSPENDED)
           setParentMessage({
             text: 'Event suspended successfully',
             type: 'success',
-          });
-          removeEventFromDisplay(id);
-          window.scrollTo(0, 0);
+          })
+          removeEventFromDisplay(id)
+          window.scrollTo(0, 0)
         } catch (err) {
           setMessage({
             text: 'Error suspending event',
             type: 'error',
-          });
+          })
         }
       },
-    });
+    })
   }
 
   // View/Print event.
   menuItems.push({
     label: 'View/Print event',
     onClick: () => {
-      history.push(`/training-report/view/${idForLink}`);
+      history.push(`/training-report/view/${idForLink}`)
     },
-  });
+  })
 
-  const [reportsExpanded, setReportsExpanded] = useState(false);
+  const [reportsExpanded, setReportsExpanded] = useState(false)
 
   const closeOrOpenReports = () => {
-    setReportsExpanded(!reportsExpanded);
-  };
+    setReportsExpanded(!reportsExpanded)
+  }
 
   // get the last four digits of the event id
-  const link = canEditEvent && !eventSubmitted ? `/training-report/${idForLink}/event-summary` : `/training-report/view/${idForLink}`;
-  const contextMenuLabel = `Actions for event ${eventId}`;
+  const link = canEditEvent && !eventSubmitted ? `/training-report/${idForLink}/event-summary` : `/training-report/view/${idForLink}`
+  const contextMenuLabel = `Actions for event ${eventId}`
 
   return (
     <>
@@ -222,9 +210,9 @@ function EventCard({
         style={{ zIndex }}
       >
         {message.text && (
-        <Alert type={message.type} className="margin-bottom-2">
-          {message.text}
-        </Alert>
+          <Alert type={message.type} className="margin-bottom-2">
+            {message.text}
+          </Alert>
         )}
 
         <div className="ttahub-event-card__row position-relative">
@@ -235,9 +223,7 @@ function EventCard({
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__id padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Event ID</p>
             <p className="usa-prose margin-y-0">
-              <Link to={link}>
-                {data.eventId}
-              </Link>
+              <Link to={link}>{data.eventId}</Link>
             </p>
           </div>
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__organizer padding-right-3">
@@ -253,12 +239,7 @@ function EventCard({
             <p className="usa-prose margin-y-0">{checkForDate(data.endDate)}</p>
           </div>
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__menu">
-            {menuItems.length > 0 && (
-            <ContextMenu
-              label={contextMenuLabel}
-              menuItems={menuItems}
-            />
-            )}
+            {menuItems.length > 0 && <ContextMenu label={contextMenuLabel} menuItems={menuItems} />}
             <Modal
               modalRef={modalRef}
               title="Are you sure you want to delete this event?"
@@ -299,9 +280,8 @@ function EventCard({
           />
         ))}
       </article>
-
     </>
-  );
+  )
 }
 
 EventCard.propTypes = {
@@ -318,6 +298,6 @@ EventCard.propTypes = {
     setMessage: PropTypes.func.isRequired,
     setParentMessage: PropTypes.func.isRequired,
   }).isRequired,
-};
+}
 
-export default EventCard;
+export default EventCard

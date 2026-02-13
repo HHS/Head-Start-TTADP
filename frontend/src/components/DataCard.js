@@ -1,11 +1,9 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import './DataCard.css';
+import React from 'react'
+import PropTypes from 'prop-types'
+import './DataCard.css'
 
-export default function DataCard({
-  children, testId, className, errorBorder,
-}) {
-  const borderClass = errorBorder ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
+export default function DataCard({ children, testId, className, errorBorder }) {
+  const borderClass = errorBorder ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter'
   return (
     <article
       data-testid={testId}
@@ -13,7 +11,7 @@ export default function DataCard({
     >
       {children}
     </article>
-  );
+  )
 }
 
 DataCard.propTypes = {
@@ -21,10 +19,10 @@ DataCard.propTypes = {
   testId: PropTypes.string,
   className: PropTypes.string,
   errorBorder: PropTypes.bool,
-};
+}
 
 DataCard.defaultProps = {
   testId: 'data-card-container',
   className: '',
   errorBorder: false,
-};
+}

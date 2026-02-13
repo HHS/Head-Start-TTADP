@@ -1,17 +1,15 @@
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
-import {
-  Checkbox, Button, Dropdown, Alert,
-} from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory } from 'react-router-dom';
-import UserContext from '../../UserContext';
-import { canEditOrCreateGoals } from '../../permissions';
-import colors from '../../colors';
-import PaginationCard from '../PaginationCard';
-import './GoalsCardsHeader.css';
+import React, { useContext } from 'react'
+import PropTypes from 'prop-types'
+import { DECIMAL_BASE } from '@ttahub/common'
+import { Checkbox, Button, Dropdown, Alert } from '@trussworks/react-uswds'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons'
+import { Link, useHistory } from 'react-router-dom'
+import UserContext from '../../UserContext'
+import { canEditOrCreateGoals } from '../../permissions'
+import colors from '../../colors'
+import PaginationCard from '../PaginationCard'
+import './GoalsCardsHeader.css'
 
 export default function GoalCardsHeader({
   title,
@@ -35,56 +33,53 @@ export default function GoalCardsHeader({
   perPageChange,
   allSelectedGoalIds,
 }) {
-  const history = useHistory();
-  const { user } = useContext(UserContext);
-  const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
-  const showAddNewButton = hasActiveGrants && hasButtonPermissions && hasMissingStandardGoals;
+  const history = useHistory()
+  const { user } = useContext(UserContext)
+  const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE))
+  const showAddNewButton = hasActiveGrants && hasButtonPermissions && hasMissingStandardGoals
   const onPrint = () => {
     // See if we have goals selected.
-    let goalsToPrint = Object.keys(allSelectedGoalIds).filter(
-      (key) => allSelectedGoalIds[key],
-    ).map((key) => parseInt(key, DECIMAL_BASE));
+    let goalsToPrint = Object.keys(allSelectedGoalIds)
+      .filter((key) => allSelectedGoalIds[key])
+      .map((key) => parseInt(key, DECIMAL_BASE))
 
     // If we don't just print the page.
     if (!goalsToPrint.length) {
-      goalsToPrint = pageGoalIds;
+      goalsToPrint = pageGoalIds
     }
 
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
-      sortConfig, selectedGoalIds: goalsToPrint,
-    });
-  };
+      sortConfig,
+      selectedGoalIds: goalsToPrint,
+    })
+  }
   const setSortBy = (e) => {
-    const [sortBy, direction] = e.target.value.split('-');
-    requestSort(sortBy, direction);
-  };
+    const [sortBy, direction] = e.target.value.split('-')
+    requestSort(sortBy, direction)
+  }
 
-  const hasGoalsSelected = pageSelectedGoalIds ? pageSelectedGoalIds.length > 0 : false;
-  const showClearAllAlert = numberOfSelectedGoals === count;
+  const hasGoalsSelected = pageSelectedGoalIds ? pageSelectedGoalIds.length > 0 : false
+  const showClearAllAlert = numberOfSelectedGoals === count
 
   return (
     <div className="ttahub-goal-cards-header padding-x-3 position-relative">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white margin-y-1 desktop:margin-0">
         <h2 className="font-body-lg desktop:margin-left-2 margin-right-1 desktop:margin-y-3">{title}</h2>
-        { showAddNewButton ? (
+        {showAddNewButton ? (
           <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 display-flex flex-row flex-align-center">
-            <Link
-              to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`}
-              className="display-flex flex-justify usa-button"
-            >
-              <FontAwesomeIcon
-                color="white"
-                icon={faPlus}
-              />
+            <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`} className="display-flex flex-justify usa-button">
+              <FontAwesomeIcon color="white" icon={faPlus} />
               <span className="margin-x-1">Add new goals</span>
             </Link>
           </span>
-        ) : null }
+        ) : null}
       </div>
       <div className="ttahub-goal-cards-header--sort-and-pagination">
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
+          <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">
+            Sort by
+          </label>
           <Dropdown
             onChange={setSortBy}
             value={`${sortConfig.sortBy}-${sortConfig.direction}`}
@@ -121,59 +116,37 @@ export default function GoalCardsHeader({
           checked={allGoalsChecked}
           onChange={selectAllGoalCheckboxSelect}
         />
-        {numberOfSelectedGoals > 0
-            && (
-              <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-left-2 margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
-                <span>
-                  {numberOfSelectedGoals}
-                  {' '}
-                  selected
-                  {' '}
-                </span>
-                <Button
-                  className="smart-hub--select-tag__button"
-                  unstyled
-                  aria-label="deselect all goals"
-                  onClick={() => {
-                    selectAllGoalCheckboxSelect({ target: { checked: false } });
-                  }}
-                >
-                  <FontAwesomeIcon className="margin-left-1 margin-top-2px filter-pills-cursor" color={colors.ttahubMediumBlue} icon={faTimesCircle} />
-                </Button>
-              </span>
-            )}
-        <Button
-          unstyled
-          className="display-flex flex-align-center margin-left-3 margin-y-0"
-          onClick={onPrint}
-        >
+        {numberOfSelectedGoals > 0 && (
+          <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-left-2 margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
+            <span>{numberOfSelectedGoals} selected </span>
+            <Button
+              className="smart-hub--select-tag__button"
+              unstyled
+              aria-label="deselect all goals"
+              onClick={() => {
+                selectAllGoalCheckboxSelect({ target: { checked: false } })
+              }}
+            >
+              <FontAwesomeIcon className="margin-left-1 margin-top-2px filter-pills-cursor" color={colors.ttahubMediumBlue} icon={faTimesCircle} />
+            </Button>
+          </span>
+        )}
+        <Button unstyled className="display-flex flex-align-center margin-left-3 margin-y-0" onClick={onPrint}>
           {`Preview and print ${hasGoalsSelected ? 'selected' : ''}`}
         </Button>
       </div>
       <div>
-        {
-          allGoalsChecked
-            ? (
-              <Alert className="margin-top-3" type="info" slim>
-                {showClearAllAlert
-                  ? `All ${count} goals are selected.`
-                  : `All ${pageSelectedGoalIds.length} goals on this page are selected.`}
-                <button
-                  type="button"
-                  className="usa-button usa-button--unstyled margin-left-1"
-                  onClick={() => selectAllGoals(showClearAllAlert)}
-                >
-                  {showClearAllAlert
-                    ? 'Clear selection'
-                    : `Select all ${count} goals`}
-                </button>
-              </Alert>
-            )
-            : null
-            }
+        {allGoalsChecked ? (
+          <Alert className="margin-top-3" type="info" slim>
+            {showClearAllAlert ? `All ${count} goals are selected.` : `All ${pageSelectedGoalIds.length} goals on this page are selected.`}
+            <button type="button" className="usa-button usa-button--unstyled margin-left-1" onClick={() => selectAllGoals(showClearAllAlert)}>
+              {showClearAllAlert ? 'Clear selection' : `Select all ${count} goals`}
+            </button>
+          </Alert>
+        ) : null}
       </div>
     </div>
-  );
+  )
 }
 
 GoalCardsHeader.propTypes = {
@@ -202,7 +175,7 @@ GoalCardsHeader.propTypes = {
   pageSelectedGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   allSelectedGoalIds: PropTypes.shape({ id: PropTypes.bool }).isRequired,
   perPageChange: PropTypes.func.isRequired,
-};
+}
 
 GoalCardsHeader.defaultProps = {
   allGoalsChecked: false,
@@ -210,4 +183,4 @@ GoalCardsHeader.defaultProps = {
   selectAllGoalCheckboxSelect: () => {},
   selectAllGoals: () => {},
   numberOfSelectedGoals: 0,
-};
+}

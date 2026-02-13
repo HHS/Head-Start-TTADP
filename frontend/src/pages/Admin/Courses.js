@@ -1,50 +1,46 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Grid, GridContainer } from '@trussworks/react-uswds';
-import CsvImport from './components/CsvImport';
-import { getCourses } from '../../fetchers/courses';
-import Container from '../../components/Container';
-import CourseList from './CourseList';
-import CourseAdd from './CourseAdd';
+import React, { useCallback, useEffect, useState } from 'react'
+import { Button, Grid, GridContainer } from '@trussworks/react-uswds'
+import CsvImport from './components/CsvImport'
+import { getCourses } from '../../fetchers/courses'
+import Container from '../../components/Container'
+import CourseList from './CourseList'
+import CourseAdd from './CourseAdd'
 
 function Courses() {
-  const [courses, setCourses] = useState();
-  const primaryIdColumn = 'course name';
-  const typeName = 'courses';
-  const apiPathName = 'courses';
+  const [courses, setCourses] = useState()
+  const primaryIdColumn = 'course name'
+  const typeName = 'courses'
+  const apiPathName = 'courses'
 
   const refresh = useCallback(async () => {
-    const response = await getCourses();
-    setCourses(response);
-  }, []);
+    const response = await getCourses()
+    setCourses(response)
+  }, [])
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    refresh()
+  }, [refresh])
 
   const exportCourses = () => {
     // export courses as CSV
-    let csv = 'course name\n';
+    let csv = 'course name\n'
     courses.forEach((course) => {
-      csv += `"${course.name}"\n`;
-    });
+      csv += `"${course.name}"\n`
+    })
 
-    const hiddenElement = document.createElement('a');
-    hiddenElement.href = `data:text/csv;charset=utf-8,${encodeURI(csv)}`;
-    hiddenElement.target = '_blank';
-    hiddenElement.download = 'courses.csv';
-    hiddenElement.click();
+    const hiddenElement = document.createElement('a')
+    hiddenElement.href = `data:text/csv;charset=utf-8,${encodeURI(csv)}`
+    hiddenElement.target = '_blank'
+    hiddenElement.download = 'courses.csv'
+    hiddenElement.click()
 
     // cleanup el
-    hiddenElement.remove();
-  };
+    hiddenElement.remove()
+  }
 
-  const validCsvHeaders = [
-    'course name',
-  ];
+  const validCsvHeaders = ['course name']
 
-  const requiredCsvHeaders = [
-    'course name',
-  ];
+  const requiredCsvHeaders = ['course name']
 
   return (
     <>
@@ -79,6 +75,6 @@ function Courses() {
         </Grid>
       </GridContainer>
     </>
-  );
+  )
 }
-export default Courses;
+export default Courses

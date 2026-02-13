@@ -1,12 +1,8 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import RootCauseFeiGoals from '../RootCauseFeiGoals';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import RootCauseFeiGoals from '../RootCauseFeiGoals'
 
 const ROOT_CAUSE_FEI_GOALS_DATA = {
   totalNumberOfGoals: 11510,
@@ -43,25 +39,25 @@ const ROOT_CAUSE_FEI_GOALS_DATA = {
       percentage: 90,
     },
   ],
-};
+}
 
 describe('RootCauseFeiGoals', () => {
   it('should switch to tabular data', async () => {
-    render(<RootCauseFeiGoals data={ROOT_CAUSE_FEI_GOALS_DATA} />);
+    render(<RootCauseFeiGoals data={ROOT_CAUSE_FEI_GOALS_DATA} />)
 
-    const button = await screen.findByRole('button', { name: /open actions/i });
-
-    act(() => {
-      userEvent.click(button);
-    });
-
-    const tabularDataButton = await screen.findByRole('button', { name: /display table/i });
+    const button = await screen.findByRole('button', { name: /open actions/i })
 
     act(() => {
-      userEvent.click(tabularDataButton);
-    });
+      userEvent.click(button)
+    })
 
-    const table = await screen.findByRole('table');
-    expect(table).toBeVisible();
-  });
-});
+    const tabularDataButton = await screen.findByRole('button', { name: /display table/i })
+
+    act(() => {
+      userEvent.click(tabularDataButton)
+    })
+
+    const table = await screen.findByRole('table')
+    expect(table).toBeVisible()
+  })
+})

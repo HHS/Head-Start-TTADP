@@ -1,14 +1,12 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import ReadOnlyObjective from '../ReadOnlyObjective';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import ReadOnlyObjective from '../ReadOnlyObjective'
 
 describe('ReadOnlyObjective', () => {
   const renderReadOnlyObjective = (objective) => {
-    render(<ReadOnlyObjective objective={objective} />);
-  };
+    render(<ReadOnlyObjective objective={objective} />)
+  }
 
   it('doesnt fail no matter what', async () => {
     const objective = {
@@ -32,13 +30,13 @@ describe('ReadOnlyObjective', () => {
           },
         },
       ],
-    };
+    }
 
-    renderReadOnlyObjective(objective);
-    expect(await screen.findByText('This is TTA provided')).toBeInTheDocument();
-    expect(await screen.findByText('file1.pdf')).toBeInTheDocument();
-    expect(await screen.findByText('Objective 1')).toBeInTheDocument();
-  });
+    renderReadOnlyObjective(objective)
+    expect(await screen.findByText('This is TTA provided')).toBeInTheDocument()
+    expect(await screen.findByText('file1.pdf')).toBeInTheDocument()
+    expect(await screen.findByText('Objective 1')).toBeInTheDocument()
+  })
 
   it('displays path if name is not set', async () => {
     const objective = {
@@ -62,11 +60,11 @@ describe('ReadOnlyObjective', () => {
           },
         },
       ],
-    };
+    }
 
-    renderReadOnlyObjective(objective);
-    expect(await screen.findByText('This is TTA provided')).toBeInTheDocument();
-    expect(await screen.findByText('file1.pdf')).toBeInTheDocument();
-    expect(await screen.findByText('file2.pdf')).toBeInTheDocument();
-  });
-});
+    renderReadOnlyObjective(objective)
+    expect(await screen.findByText('This is TTA provided')).toBeInTheDocument()
+    expect(await screen.findByText('file1.pdf')).toBeInTheDocument()
+    expect(await screen.findByText('file2.pdf')).toBeInTheDocument()
+  })
+})

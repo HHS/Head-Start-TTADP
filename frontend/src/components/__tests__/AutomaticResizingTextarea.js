@@ -1,7 +1,7 @@
-import React from 'react';
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import AutomaticResizingTextarea from '../AutomaticResizingTextarea';
+import React from 'react'
+import { render } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import AutomaticResizingTextarea from '../AutomaticResizingTextarea'
 
 describe('AutomaticResizingTextarea', () => {
   const poem = `When the flush of a newborn sun fell first on Eden's green and gold,   
@@ -42,36 +42,34 @@ describe('AutomaticResizingTextarea', () => {
     Now, if we could win to the Eden Tree where the four great rivers flow,   
     And the wreath of Eve is red on the turf as she left it long ago, 
     And if we could come when the sentry slept, and softly scurry through,   
-    By the favor of God we might know as much—as our father Adam knew`;
+    By the favor of God we might know as much—as our father Adam knew`
 
   const TextArea = () => {
-    const [value, setValue] = React.useState('test');
-    const onChange = (e) => setValue(e.target.value);
-    return (
-      <AutomaticResizingTextarea onUpdateText={onChange} onBlur={jest.fn()} inputName="test" value={value} />
-    );
-  };
+    const [value, setValue] = React.useState('test')
+    const onChange = (e) => setValue(e.target.value)
+    return <AutomaticResizingTextarea onUpdateText={onChange} onBlur={jest.fn()} inputName="test" value={value} />
+  }
 
   beforeAll(() => {
-    jest.useFakeTimers();
-    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', { configurable: true, value: 500 });
-  });
+    jest.useFakeTimers()
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', { configurable: true, value: 500 })
+  })
 
   afterAll(() => {
-    jest.useRealTimers();
-  });
+    jest.useRealTimers()
+  })
 
   it('resizes', async () => {
-    render(<TextArea />);
+    render(<TextArea />)
 
-    const textarea = document.querySelector('textarea');
-    expect(textarea).toBeTruthy();
+    const textarea = document.querySelector('textarea')
+    expect(textarea).toBeTruthy()
 
-    expect(textarea.style.height).toBe('160px');
-    userEvent.clear(textarea);
-    userEvent.paste(textarea, poem);
-    jest.advanceTimersByTime(1000);
-    expect(textarea).toHaveValue(poem);
-    expect(textarea.style.height).toBe('500px');
-  });
-});
+    expect(textarea.style.height).toBe('160px')
+    userEvent.clear(textarea)
+    userEvent.paste(textarea, poem)
+    jest.advanceTimersByTime(1000)
+    expect(textarea).toHaveValue(poem)
+    expect(textarea.style.height).toBe('500px')
+  })
+})

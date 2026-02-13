@@ -1,52 +1,41 @@
-import React, { useRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import Select from 'react-select';
-import { useController } from 'react-hook-form';
-import _ from 'lodash';
-import { DropdownIndicator, sortSelect, styles } from '../../../../../../components/MultiSelect';
-import useExistingApprovers from '../../../../../../hooks/useExistingApprovers';
+import React, { useRef, useMemo } from 'react'
+import PropTypes from 'prop-types'
+import Select from 'react-select'
+import { useController } from 'react-hook-form'
+import _ from 'lodash'
+import { DropdownIndicator, sortSelect, styles } from '../../../../../../components/MultiSelect'
+import useExistingApprovers from '../../../../../../hooks/useExistingApprovers'
 
-function ApproverSelect({
-  name,
-  options,
-  labelProperty,
-  valueProperty,
-  filterInitialValue = false,
-  required = true,
-}) {
-  let rules = {};
+function ApproverSelect({ name, options, labelProperty, valueProperty, filterInitialValue = false, required = true }) {
+  let rules = {}
 
   if (required) {
     rules = {
       validate: {
         notEmpty: (value) => (value && value.length) || 'Select at least one',
       },
-    };
+    }
   }
 
   const {
-    field: {
-      onChange: onSelect,
-      value: selectValue,
-      onBlur: onBlurSelect,
-    },
+    field: { onChange: onSelect, value: selectValue, onBlur: onBlurSelect },
   } = useController({
     name,
     rules,
     defaultValue: null,
-  });
+  })
 
-  const { filteredOptions, filteredValues } = useExistingApprovers(options);
+  const { filteredOptions, filteredValues } = useExistingApprovers(options)
 
-  const initialValueRef = useRef(selectValue);
+  const initialValueRef = useRef(selectValue)
 
   const opts = useMemo(() => {
     if (!filterInitialValue || !initialValueRef.current) {
-      return options;
+      return options
     }
 
-    return filteredOptions;
-  }, [filterInitialValue, filteredOptions, options]);
+    return filteredOptions
+  }, [filterInitialValue, filteredOptions, options])
 
   /*
    * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
@@ -56,20 +45,20 @@ function ApproverSelect({
    */
   const getValues = (value) => {
     if (!value) {
-      return [];
+      return []
     }
 
     // Filter out initial values from display if filterInitialValue is true
     if (filterInitialValue) {
-      return filteredValues;
+      return filteredValues
     }
 
     return value.map((item) => ({
       ...item,
       label: _.get(item, labelProperty),
       value: _.get(item, valueProperty),
-    }));
-  };
+    }))
+  }
 
   /*
    * @param {*} - event. Contains values in the react-select format, an array of
@@ -79,15 +68,15 @@ function ApproverSelect({
    */
   const onChange = (newValues) => {
     // sorts alphabetically by label
-    newValues.sort(sortSelect);
+    newValues.sort(sortSelect)
     const mappedNewValues = newValues.map((item) => {
-      const tempItem = { ...item };
-      _.set(tempItem, labelProperty, item.label);
-      _.set(tempItem, valueProperty, item.value);
-      return tempItem;
-    });
-    onSelect(mappedNewValues);
-  };
+      const tempItem = { ...item }
+      _.set(tempItem, labelProperty, item.label)
+      _.set(tempItem, valueProperty, item.value)
+      return tempItem
+    })
+    onSelect(mappedNewValues)
+  }
 
   return (
     <Select
@@ -108,13 +97,10 @@ function ApproverSelect({
       required={required}
       isMulti
     />
-  );
+  )
 }
 
-const value = PropTypes.oneOfType([
-  PropTypes.string,
-  PropTypes.number,
-]);
+const value = PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 
 ApproverSelect.propTypes = {
   name: PropTypes.string.isRequired,
@@ -128,19 +114,19 @@ ApproverSelect.propTypes = {
         PropTypes.shape({
           label: PropTypes.string.isRequired,
           value: value.isRequired,
-        }),
+        })
       ),
       label: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   required: PropTypes.bool,
-};
+}
 
 ApproverSelect.defaultProps = {
   labelProperty: 'label',
   valueProperty: 'value',
   filterInitialValue: false,
   required: true,
-};
+}
 
-export default ApproverSelect;
+export default ApproverSelect

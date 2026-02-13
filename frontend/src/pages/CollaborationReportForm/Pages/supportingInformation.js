@@ -1,77 +1,65 @@
 // istanbul ignore file - too hard to test because of the hookForm instance
-import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form';
-import {
-  Fieldset,
-  Radio,
-  TextInput,
-} from '@trussworks/react-uswds';
-import { COLLAB_REPORT_PARTICIPANTS } from '@ttahub/common';
-import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import MultiSelect from '../../../components/MultiSelect';
-import FormItem from '../../../components/FormItem';
-import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
-import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
-import { COLLAB_REPORT_DATA } from '../../../Constants';
+import React, { useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { Helmet } from 'react-helmet'
+import { useFormContext } from 'react-hook-form'
+import { Fieldset, Radio, TextInput } from '@trussworks/react-uswds'
+import { COLLAB_REPORT_PARTICIPANTS } from '@ttahub/common'
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField'
+import MultiSelect from '../../../components/MultiSelect'
+import FormItem from '../../../components/FormItem'
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons'
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage'
+import { COLLAB_REPORT_DATA } from '../../../Constants'
 
-const path = 'supporting-information';
-const position = 2;
+const path = 'supporting-information'
+const position = 2
 
 const SupportingInformation = ({ goalTemplates = [] }) => {
-  const {
-    register,
-    watch,
-    control,
-  } = useFormContext();
+  const { register, watch, control } = useFormContext()
 
   // Watch the participants field to determine if "other" is selected
-  const selectedParticipants = watch('participants');
-  const showOtherParticipant = selectedParticipants && selectedParticipants.some((p) => p.value === 'Other'); // note that 'Other' needs to be uppercase for this collection
+  const selectedParticipants = watch('participants')
+  const showOtherParticipant = selectedParticipants && selectedParticipants.some((p) => p.value === 'Other') // note that 'Other' needs to be uppercase for this collection
 
   // Map the participants to a format suitable for the MultiSelect component
-  const participantOptions = COLLAB_REPORT_PARTICIPANTS?.map(
-    (participant) => ({ label: participant, value: participant }),
-  ) || [];
+  const participantOptions = COLLAB_REPORT_PARTICIPANTS?.map((participant) => ({ label: participant, value: participant })) || []
 
   // Watch the hasDataUsed field to conditionally require data selections
-  const hasDataUsed = watch('hasDataUsed');
-  const showDataUsedOptions = hasDataUsed === 'true';
+  const hasDataUsed = watch('hasDataUsed')
+  const showDataUsedOptions = hasDataUsed === 'true'
 
   useEffect(() => {
     if (hasDataUsed !== 'true') {
       // Clear dataUsed and otherDataUsed if hasDataUsed is not "true"
-      control.setValue('dataUsed', []);
-      control.setValue('otherDataUsed', '');
+      control.setValue('dataUsed', [])
+      control.setValue('otherDataUsed', '')
     }
-  }, [hasDataUsed, control]);
+  }, [hasDataUsed, control])
 
   // Map the "Data Used" options for the MultiSelect component
-  const dataUsedOptions = Object.entries(COLLAB_REPORT_DATA).map(
-    ([key, value]) => ({ label: value, value: key }),
-  );
+  const dataUsedOptions = Object.entries(COLLAB_REPORT_DATA).map(([key, value]) => ({ label: value, value: key }))
 
   // Watch the dataUsed field to determine if "other" is selected
-  const selectedDataUsed = watch('dataUsed');
-  const showOtherDataUsed = selectedDataUsed?.some((d) => d.value === 'other'); // note that 'other' needs to be lowercase for the dataUsed collection
+  const selectedDataUsed = watch('dataUsed')
+  const showOtherDataUsed = selectedDataUsed?.some((d) => d.value === 'other') // note that 'other' needs to be lowercase for the dataUsed collection
 
   // Watch the hasDataUsed field to conditionally require data selections
-  const hasGoals = watch('hasGoals');
-  const showGoalsOptions = hasGoals === 'true';
+  const hasGoals = watch('hasGoals')
+  const showGoalsOptions = hasGoals === 'true'
 
   useEffect(() => {
     if (hasGoals !== 'true') {
       // Clear dataUsed and otherDataUsed if hasDataUsed is not "true"
-      control.setValue('goals', []);
+      control.setValue('goals', [])
     }
-  }, [hasGoals, control]);
+  }, [hasGoals, control])
 
   // Fetch goal templates using the custom hook
   const goalsOptions = (goalTemplates || []).map((template) => ({
     label: template.standard,
     value: template.id,
-  }));
+  }))
 
   return (
     <>
@@ -82,11 +70,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
         <IndicatesRequiredField />
       </div>
       <Fieldset className="smart-hub--report-legend">
-        <FormItem
-          label="Who participated in the activity?"
-          name="participants"
-          required
-        >
+        <FormItem label="Who participated in the activity?" name="participants" required>
           <MultiSelect
             name="participants"
             control={control}
@@ -97,9 +81,9 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
             rules={{
               validate: (value) => {
                 if (!value.length) {
-                  return 'Select at least one';
+                  return 'Select at least one'
                 }
-                return true;
+                return true
               },
             }}
             required
@@ -108,11 +92,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
       </Fieldset>
       {showOtherParticipant && (
         <Fieldset className="smart-hub--report-legend">
-          <FormItem
-            label="Others who participated"
-            name="otherParticipants"
-            fieldSetWrapper
-          >
+          <FormItem label="Others who participated" name="otherParticipants" fieldSetWrapper>
             <TextInput
               id="otherParticipants"
               name="otherParticipants"
@@ -125,11 +105,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
         </Fieldset>
       )}
       <Fieldset className="smart-hub--report-legend">
-        <FormItem
-          label="Did you collect, use, and/or share data during this activity?"
-          name="hasDataUsed"
-          required
-        >
+        <FormItem label="Did you collect, use, and/or share data during this activity?" name="hasDataUsed" required>
           <Radio
             id="yesDataUsed"
             name="hasDataUsed"
@@ -151,11 +127,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
       </Fieldset>
       {showDataUsedOptions && (
         <Fieldset className="smart-hub--report-legend">
-          <FormItem
-            label="What data did you collect, use, and/or share during this activity?"
-            name="dataUsed"
-            required
-          >
+          <FormItem label="What data did you collect, use, and/or share during this activity?" name="dataUsed" required>
             <MultiSelect
               name="dataUsed"
               control={control}
@@ -166,9 +138,9 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
               rules={{
                 validate: (value) => {
                   if (!value.length) {
-                    return 'Select at least one';
+                    return 'Select at least one'
                   }
-                  return true;
+                  return true
                 },
               }}
               required
@@ -178,12 +150,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
       )}
       {showOtherDataUsed && (
         <Fieldset className="smart-hub--report-legend">
-          <FormItem
-            label="Other data collected"
-            name="otherDataUsed"
-            fieldSetWrapper
-            required
-          >
+          <FormItem label="Other data collected" name="otherDataUsed" fieldSetWrapper required>
             <TextInput
               id="otherDataUsed"
               name="otherDataUsed"
@@ -196,11 +163,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
         </Fieldset>
       )}
       <Fieldset className="smart-hub--report-legend">
-        <FormItem
-          label="Does the content of this activity help recipients in your region support their goals?"
-          name="hasGoals"
-          required
-        >
+        <FormItem label="Does the content of this activity help recipients in your region support their goals?" name="hasGoals" required>
           <Radio
             id="yesGoals"
             name="hasGoals"
@@ -222,11 +185,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
       </Fieldset>
       {showGoalsOptions && (
         <Fieldset className="smart-hub--report-legend">
-          <FormItem
-            label="Select the goals that this activity supports"
-            name="goals"
-            required
-          >
+          <FormItem label="Select the goals that this activity supports" name="goals" required>
             <MultiSelect
               name="goals"
               control={control}
@@ -237,9 +196,9 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
               rules={{
                 validate: (value) => {
                   if (!value.length) {
-                    return 'Select at least one';
+                    return 'Select at least one'
                   }
-                  return true;
+                  return true
                 },
               }}
               required
@@ -248,111 +207,99 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
         </Fieldset>
       )}
     </>
-  );
-};
+  )
+}
 
 SupportingInformation.propTypes = {
-  goalTemplates: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    standard: PropTypes.string.isRequired,
-  })).isRequired,
-};
+  goalTemplates: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      standard: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+}
 
 // istanbul ignore next - too hard to test because of the hookForm instance
 export const isPageComplete = (hookForm) => {
-  const { getValues } = hookForm;
-  const formData = getValues();
-  const {
-    participants,
-    otherParticipants,
-    hasDataUsed,
-    dataUsed,
-    otherDataUsed,
-    hasGoals,
-    goals,
-  } = formData;
+  const { getValues } = hookForm
+  const formData = getValues()
+  const { participants, otherParticipants, hasDataUsed, dataUsed, otherDataUsed, hasGoals, goals } = formData
 
   // Check if participants is provided
   if (!participants || participants.length === 0) {
-    return false;
+    return false
   }
 
   // Check if "Other" is selected in participants but not provided
   if (participants.some((p) => p.value === 'Other') && !otherParticipants) {
-    return false;
+    return false
   }
 
   // Check if hasDataUsed is not null
   if (hasDataUsed === null) {
-    return false;
+    return false
   }
 
   // Check if hasDataUsed and dataUsed is provided
   if (hasDataUsed === 'true' && (!dataUsed || dataUsed.length === 0)) {
-    return false;
+    return false
   }
 
   // Check if data used and "other" selected but not provided
   if (hasDataUsed === 'true' && dataUsed.some((d) => d.value === 'other') && !otherDataUsed) {
-    return false;
+    return false
   }
 
   // Check if hasGoals is not null
   if (hasGoals === null) {
-    return false;
+    return false
   }
 
   // Check if hasGoals and goals is provided
   if (hasGoals === 'true' && (!goals || goals.length === 0)) {
-    return false;
+    return false
   }
 
   // Otherwise, all looks good!
-  return true;
-};
+  return true
+}
 
 const ReviewSection = () => {
-  const { watch } = useFormContext();
-  const {
-    participants,
-    otherParticipants,
-    hasDataUsed,
-    dataUsed,
-    otherDataUsed,
-    hasGoals,
-    goals,
-  } = watch();
+  const { watch } = useFormContext()
+  const { participants, otherParticipants, hasDataUsed, dataUsed, otherDataUsed, hasGoals, goals } = watch()
 
-  let participantsToDisplay = 'None provided';
+  let participantsToDisplay = 'None provided'
   if (participants && participants.length > 0) {
-    participantsToDisplay = participants.map((p) => p.label).join(', ');
+    participantsToDisplay = participants.map((p) => p.label).join(', ')
     if (participants.some((p) => p.value === 'Other') && otherParticipants) {
-      participantsToDisplay += `: ${otherParticipants}`;
+      participantsToDisplay += `: ${otherParticipants}`
     }
   }
 
-  let dataToDisplay = '';
+  let dataToDisplay = ''
   if (dataUsed && dataUsed.length > 0) {
-    dataToDisplay = dataUsed.map((d) => {
-      if (!Object.keys(COLLAB_REPORT_DATA).includes(d.value)) return '';
-      return d.label;
-    }).join(', ');
+    dataToDisplay = dataUsed
+      .map((d) => {
+        if (!Object.keys(COLLAB_REPORT_DATA).includes(d.value)) return ''
+        return d.label
+      })
+      .join(', ')
     if (dataUsed.some((d) => d.value === 'other') && otherDataUsed) {
-      dataToDisplay += `: ${otherDataUsed}`;
+      dataToDisplay += `: ${otherDataUsed}`
     }
   } else if (hasDataUsed === null) {
-    dataToDisplay = 'None provided';
+    dataToDisplay = 'None provided'
   } else {
-    dataToDisplay = 'None';
+    dataToDisplay = 'None'
   }
 
-  let goalsToDisplay = '';
+  let goalsToDisplay = ''
   if (goals && goals.length > 0) {
-    goalsToDisplay = goals.map((g) => g.label).join(', ');
+    goalsToDisplay = goals.map((g) => g.label).join(', ')
   } else if (hasGoals === null) {
-    goalsToDisplay = 'None provided';
+    goalsToDisplay = 'None provided'
   } else {
-    goalsToDisplay = 'None';
+    goalsToDisplay = 'None'
   }
 
   const sections = [
@@ -364,10 +311,10 @@ const ReviewSection = () => {
         { label: 'Supporting goals', name: 'goals', customValue: { goals: goalsToDisplay } },
       ],
     },
-  ];
+  ]
 
-  return <ReviewPage sections={sections} path={path} isCustomValue />;
-};
+  return <ReviewPage sections={sections} path={path} isCustomValue />
+}
 
 export default {
   position,
@@ -386,9 +333,9 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    Alert
   ) => {
-    const { goalTemplates } = additionalData;
+    const { goalTemplates } = additionalData
     return (
       <>
         <SupportingInformation goalTemplates={goalTemplates} />
@@ -402,7 +349,7 @@ export default {
           onUpdatePage={onUpdatePage}
         />
       </>
-    );
+    )
   },
   isPageComplete,
-};
+}

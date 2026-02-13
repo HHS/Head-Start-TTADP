@@ -1,28 +1,28 @@
-import React, { useEffect } from 'react';
-import { Helmet } from 'react-helmet';
-import { Fieldset } from '@trussworks/react-uswds';
-import { useFormContext } from 'react-hook-form';
-import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import NextStepsRepeater from './components/NextStepsRepeater';
-import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
-import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
-import { isValidDate } from '../../../utils';
+import React, { useEffect } from 'react'
+import { Helmet } from 'react-helmet'
+import { Fieldset } from '@trussworks/react-uswds'
+import { useFormContext } from 'react-hook-form'
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField'
+import NextStepsRepeater from './components/NextStepsRepeater'
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage'
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons'
+import { isValidDate } from '../../../utils'
 
-const path = 'next-steps';
-const position = 3;
+const path = 'next-steps'
+const position = 3
 
 const NextSteps = () => {
-  const { watch, setValue } = useFormContext();
-  const steps = watch('steps');
+  const { watch, setValue } = useFormContext()
+  const steps = watch('steps')
 
   useEffect(() => {
     if (!steps || steps.length === 0) {
-      const stepsToAdd = [];
+      const stepsToAdd = []
       // If no steps, add an empty one.
-      stepsToAdd.push({ collabStepDetail: '', collabStepCompleteDate: '' });
-      setValue('steps', stepsToAdd);
+      stepsToAdd.push({ collabStepDetail: '', collabStepCompleteDate: '' })
+      setValue('steps', stepsToAdd)
     }
-  }, [steps, setValue]);
+  }, [steps, setValue])
 
   return (
     <>
@@ -31,40 +31,38 @@ const NextSteps = () => {
       </Helmet>
       <IndicatesRequiredField />
       <Fieldset id="next-steps-field-set" className="smart-hub--report-legend margin-top-4" legend="What have you agreed to do next?">
-        <NextStepsRepeater
-          id="next-steps-repeater-id"
-          name="steps"
-          ariaName="Next Steps"
-        />
+        <NextStepsRepeater id="next-steps-repeater-id" name="steps" ariaName="Next Steps" />
       </Fieldset>
     </>
-  );
-};
+  )
+}
 
 const getNextStepsSections = (steps) => {
-  const nextStepItems = steps?.[0]?.collabStepDetail ? (steps).map((step, index) => ([
-    {
-      label: `Step ${index + 1}`,
-      name: 'step',
-      customValue: { step: step.collabStepDetail },
-    },
-    {
-      label: 'Anticipated completion',
-      name: 'date',
-      customValue: { date: step.collabStepCompleteDate },
-    },
-  ])) : [
-    {
-      label: 'Step 1',
-      name: 'step',
-      customValue: { step: 'None provided' },
-    },
-    {
-      label: 'Anticipated completion',
-      name: 'date',
-      customValue: { date: 'None provided' },
-    },
-  ];
+  const nextStepItems = steps?.[0]?.collabStepDetail
+    ? steps.map((step, index) => [
+        {
+          label: `Step ${index + 1}`,
+          name: 'step',
+          customValue: { step: step.collabStepDetail },
+        },
+        {
+          label: 'Anticipated completion',
+          name: 'date',
+          customValue: { date: step.collabStepCompleteDate },
+        },
+      ])
+    : [
+        {
+          label: 'Step 1',
+          name: 'step',
+          customValue: { step: 'None provided' },
+        },
+        {
+          label: 'Anticipated completion',
+          name: 'date',
+          customValue: { date: 'None provided' },
+        },
+      ]
 
   return [
     {
@@ -72,49 +70,43 @@ const getNextStepsSections = (steps) => {
       anchor: 'next-steps',
       items: [...nextStepItems.flatMap((item) => item)],
     },
-  ];
-};
+  ]
+}
 
 export const isPageComplete = (hookForm) => {
-  const { getValues } = hookForm;
-  const { steps } = getValues();
+  const { getValues } = hookForm
+  const { steps } = getValues()
 
   if (!steps || steps.length === 0) {
-    return false;
+    return false
   }
 
-  const allStepsComplete = steps.every((
-    { collabStepDetail: detail, collabStepCompleteDate: date },
-  ) => (
-    detail !== null && detail !== '' && date !== null && date !== ''));
-  if (!allStepsComplete) return false;
+  const allStepsComplete = steps.every(
+    ({ collabStepDetail: detail, collabStepCompleteDate: date }) => detail !== null && detail !== '' && date !== null && date !== ''
+  )
+  if (!allStepsComplete) return false
 
   const eachDateValid = steps.every((step) => {
-    if (!step.collabStepCompleteDate) return false;
-    return Boolean(isValidDate(step.collabStepCompleteDate));
-  });
-  if (!eachDateValid) return false;
+    if (!step.collabStepCompleteDate) return false
+    return Boolean(isValidDate(step.collabStepCompleteDate))
+  })
+  if (!eachDateValid) return false
 
-  return true;
-};
+  return true
+}
 
 const ReviewSection = () => {
-  const { watch } = useFormContext();
-  const {
-    steps,
-  } = watch();
-  return (
-    <ReviewPage sections={getNextStepsSections(steps)} path="next-steps" />);
-};
+  const { watch } = useFormContext()
+  const { steps } = watch()
+  return <ReviewPage sections={getNextStepsSections(steps)} path="next-steps" />
+}
 
 export default {
   position,
   label: 'Next steps',
   path,
   review: false,
-  reviewSection: () => (
-    <ReviewSection />
-  ),
+  reviewSection: () => <ReviewSection />,
   render: (
     _additionalData,
     _formData,
@@ -126,7 +118,7 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    Alert
   ) => (
     <>
       <NextSteps />
@@ -142,4 +134,4 @@ export default {
     </>
   ),
   isPageComplete,
-};
+}

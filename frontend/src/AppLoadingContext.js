@@ -1,6 +1,5 @@
-import React from 'react';
+import React from 'react'
 
-const AppLoadingContext = React.createContext({
-});
+const AppLoadingContext = React.createContext({})
 
-export default AppLoadingContext;
+export default AppLoadingContext

@@ -1,21 +1,11 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Table } from '@trussworks/react-uswds';
-import Container from '../components/Container';
-import './TableWidget.css';
-import WidgetH2 from '../components/WidgetH2';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Table } from '@trussworks/react-uswds'
+import Container from '../components/Container'
+import './TableWidget.css'
+import WidgetH2 from '../components/WidgetH2'
 
-export default function TableWidget(
-  {
-    data,
-    headings,
-    loading,
-    loadingLabel,
-    title,
-    renderData,
-    className,
-  },
-) {
+export default function TableWidget({ data, headings, loading, loadingLabel, title, renderData, className }) {
   return (
     <Container className={`smarthub-table-widget shadow-2 ${className}`} loading={loading} loadingLabel={loadingLabel}>
       {/* a scrollable element must be keyboard accessible */}
@@ -24,23 +14,23 @@ export default function TableWidget(
         <Table fullWidth striped bordered={false}>
           <caption className="smart-hub--table-widget-caption">
             <div className="display-flex flex-wrap flex-align-center">
-              <WidgetH2>
-                {title}
-              </WidgetH2>
+              <WidgetH2>{title}</WidgetH2>
             </div>
           </caption>
           <thead>
             <tr>
-              {headings.map((heading) => <th key={heading.replace(' ', '_')} scope="col" className="text-left">{heading}</th>)}
+              {headings.map((heading) => (
+                <th key={heading.replace(' ', '_')} scope="col" className="text-left">
+                  {heading}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody>
-            { renderData(data) }
-          </tbody>
+          <tbody>{renderData(data)}</tbody>
         </Table>
       </div>
     </Container>
-  );
+  )
 }
 
 TableWidget.propTypes = {
@@ -49,8 +39,9 @@ TableWidget.propTypes = {
       PropTypes.shape({
         name: PropTypes.string,
         count: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
   loadingLabel: PropTypes.string.isRequired,
@@ -58,9 +49,9 @@ TableWidget.propTypes = {
   headings: PropTypes.arrayOf(PropTypes.string).isRequired,
   renderData: PropTypes.func.isRequired,
   className: PropTypes.string,
-};
+}
 
 TableWidget.defaultProps = {
   data: [],
   className: '',
-};
+}

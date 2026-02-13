@@ -1,12 +1,12 @@
 /* eslint-disable import/prefer-default-export */
-import React from 'react';
-import moment from 'moment';
-import { FILTER_CONDITIONS, EMPTY_MULTI_SELECT, WITHOUT_ACTIVITY_DATE_CONDITIONS } from '../../Constants';
-import FilterGroups from './FilterGroups';
-import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
-import { formatDateRange } from '../../utils';
-import FilterDateRange from './FilterDateRange';
-import GrantStatus, { displayGrantsStatus } from './GrantStatus';
+import React from 'react'
+import moment from 'moment'
+import { FILTER_CONDITIONS, EMPTY_MULTI_SELECT, WITHOUT_ACTIVITY_DATE_CONDITIONS } from '../../Constants'
+import FilterGroups from './FilterGroups'
+import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils'
+import { formatDateRange } from '../../utils'
+import FilterDateRange from './FilterDateRange'
+import GrantStatus, { displayGrantsStatus } from './GrantStatus'
 
 export const groupsFilter = {
   id: 'group',
@@ -14,21 +14,15 @@ export const groupsFilter = {
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: useDisplayGroups,
-  renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterGroups
-      inputId={`group-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
-  ),
-};
+  renderInput: (id, condition, query, onApplyQuery) => <FilterGroups inputId={`group-${condition}-${id}`} onApply={onApplyQuery} query={query} />,
+}
 
-const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
+const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true })
 
 const withoutActivityDateValues = {
   is: LAST_THIRTY_DAYS,
   'is within': '',
-};
+}
 
 const RECIPIENT_WITHOUT_TTA_DATE_OPTIONS = [
   {
@@ -47,7 +41,7 @@ const RECIPIENT_WITHOUT_TTA_DATE_OPTIONS = [
     label: 'Year to date',
     value: formatDateRange({ yearToDate: true, forDateTime: true }),
   },
-];
+]
 
 export const recipientsWithoutTTA = {
   id: 'recipientsWithoutTTA',
@@ -56,14 +50,14 @@ export const recipientsWithoutTTA = {
   defaultValues: withoutActivityDateValues,
   displayQuery: (query) => {
     // we need to handle array vs string case here
-    const smushed = fixQueryWhetherStringOrArray(query);
+    const smushed = fixQueryWhetherStringOrArray(query)
     if (smushed.includes('-')) {
       return formatDateRange({
         string: smushed,
         withSpaces: false,
-      });
+      })
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY')
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange
@@ -74,7 +68,7 @@ export const recipientsWithoutTTA = {
       customDateOptions={RECIPIENT_WITHOUT_TTA_DATE_OPTIONS}
     />
   ),
-};
+}
 
 export const grantStatusFilter = {
   id: 'grantStatus',
@@ -86,10 +80,6 @@ export const grantStatusFilter = {
   },
   displayQuery: displayGrantsStatus,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <GrantStatus
-      inputId={`grantStatus-${condition.replace(/ /g, '-')}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <GrantStatus inputId={`grantStatus-${condition.replace(/ /g, '-')}-${id}`} onApply={onApplyQuery} query={query} />
   ),
-};
+}

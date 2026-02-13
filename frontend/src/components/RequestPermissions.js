@@ -1,11 +1,16 @@
-import React from 'react';
+import React from 'react'
 
-import HubIdentifier from './HubIdentifier';
+import HubIdentifier from './HubIdentifier'
 
 function RequestPermissions() {
   return (
     <div className="display-flex flex-column height-viewport">
-      <div role="dialog" aria-labelledby="permissions-message" aria-describedby="permissions-description" className="position-relative margin-x-auto margin-top-7 z-top flex-1">
+      <div
+        role="dialog"
+        aria-labelledby="permissions-message"
+        aria-describedby="permissions-description"
+        className="position-relative margin-x-auto margin-top-7 z-top flex-1"
+      >
         <div className="maxw-mobile-lg margin-x-auto padding-y-7">
           <h1 id="permissions-message" className="font-serif-xl text-center margin-y-4 margin-x-2">
             You need permission to access the TTA Hub.
@@ -16,18 +21,14 @@ function RequestPermissions() {
                 Request Permission
               </a>
             </p>
-            <p className="text-bold">
-              First time logging in?
-            </p>
-            <p id="permissions-description">
-              Request permission to use the system.
-            </p>
+            <p className="text-bold">First time logging in?</p>
+            <p id="permissions-description">Request permission to use the system.</p>
           </div>
         </div>
       </div>
       <HubIdentifier />
     </div>
-  );
+  )
 }
 
-export default RequestPermissions;
+export default RequestPermissions

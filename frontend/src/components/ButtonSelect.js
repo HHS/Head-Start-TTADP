@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
-import DropdownMenu from './DropdownMenu';
-import './ButtonSelect.scss';
-import colors from '../colors';
+import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCheck } from '@fortawesome/free-solid-svg-icons'
+import DropdownMenu from './DropdownMenu'
+import './ButtonSelect.scss'
+import colors from '../colors'
 
 /**
  *
@@ -13,21 +13,10 @@ import colors from '../colors';
  */
 
 function ButtonSelect(props) {
-  const {
-    options,
-    onApply,
-    labelId,
-    styleAsSelect,
-    initialValue,
-    applied,
-    labelText,
-    ariaName,
-    disabled,
-    className,
-  } = props;
+  const { options, onApply, labelId, styleAsSelect, initialValue, applied, labelText, ariaName, disabled, className } = props
 
-  const [checked, setChecked] = useState(applied);
-  const [selectedItem, setSelectedItem] = useState(initialValue);
+  const [checked, setChecked] = useState(applied)
+  const [selectedItem, setSelectedItem] = useState(initialValue)
 
   /**
    * To calculate where the checkmark should go :)
@@ -35,37 +24,37 @@ function ButtonSelect(props) {
 
   useEffect(() => {
     if (selectedItem && selectedItem.value !== applied) {
-      setChecked(selectedItem.value);
+      setChecked(selectedItem.value)
     } else {
-      setChecked(applied);
+      setChecked(applied)
     }
-  }, [applied, selectedItem]);
+  }, [applied, selectedItem])
 
   /**
    * apply the selected item and close the menu
    *
    */
   const onApplyClick = () => {
-    onApply(selectedItem);
-    return true;
-  };
+    onApply(selectedItem)
+    return true
+  }
 
   // get label text
   const label = () => {
-    const selected = options.find((option) => option.value === applied);
+    const selected = options.find((option) => option.value === applied)
 
     if (selected) {
-      return selected.label;
+      return selected.label
     }
 
     if (options[0] && options[0].label) {
-      return options[0].label;
+      return options[0].label
     }
 
-    return '';
-  };
+    return ''
+  }
 
-  const ariaLabel = `toggle ${ariaName}`;
+  const ariaLabel = `toggle ${ariaName}`
 
   return (
     <DropdownMenu
@@ -83,7 +72,7 @@ function ButtonSelect(props) {
           <strong>{labelText}</strong>
         </span>
         <fieldset className="margin-0 border-0 padding-0" data-testid="button-select-button-group">
-          { options.map((option) => (
+          {options.map((option) => (
             <button
               type="button"
               aria-pressed={option.value === checked}
@@ -92,24 +81,25 @@ function ButtonSelect(props) {
               data-value={option.value}
               aria-label={`Select to view data from ${option.label}. Select Apply filters button to apply selection`}
               onClick={() => {
-                setSelectedItem(option);
+                setSelectedItem(option)
               }}
             >
               {option.label}
-              {option.value === checked ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color={colors.ttahubMediumBlue} icon={faCheck} /> : null}
+              {option.value === checked ? (
+                <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color={colors.ttahubMediumBlue} icon={faCheck} />
+              ) : null}
             </button>
           ))}
         </fieldset>
-
       </div>
     </DropdownMenu>
-  );
+  )
 }
 
 const optionProp = PropTypes.shape({
   value: PropTypes.number,
   label: PropTypes.string,
-});
+})
 
 ButtonSelect.propTypes = {
   options: PropTypes.arrayOf(optionProp).isRequired,
@@ -124,12 +114,12 @@ ButtonSelect.propTypes = {
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
-};
+}
 
 ButtonSelect.defaultProps = {
   styleAsSelect: false,
   disabled: false,
   className: '',
-};
+}
 
-export default ButtonSelect;
+export default ButtonSelect

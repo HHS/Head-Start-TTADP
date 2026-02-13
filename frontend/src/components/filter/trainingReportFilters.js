@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
-import React from 'react';
-import moment from 'moment';
-import { formatDateRange } from '../../utils';
+import React from 'react'
+import moment from 'moment'
+import { formatDateRange } from '../../utils'
 import {
   DATE_CONDITIONS,
   REGION_CONDITIONS,
@@ -9,42 +9,42 @@ import {
   EMPTY_MULTI_SELECT,
   SELECT_CONDITIONS,
   FILTER_CONDITIONS,
-} from '../../Constants';
-import FilterInput from './FilterInput';
-import FilterDateRange from './FilterDateRange';
-import FilterRegionalSelect from './FilterRegionSelect';
-import { useDisplayStaff } from './utils';
-import FilterTrainingReportStaff from './FilterTrainingReportStaff';
-import { handleArrayQuery } from './helpers';
-import FilterGoalStandard from './FilterGoalStandard';
+} from '../../Constants'
+import FilterInput from './FilterInput'
+import FilterDateRange from './FilterDateRange'
+import FilterRegionalSelect from './FilterRegionSelect'
+import { useDisplayStaff } from './utils'
+import FilterTrainingReportStaff from './FilterTrainingReportStaff'
+import { handleArrayQuery } from './helpers'
+import FilterGoalStandard from './FilterGoalStandard'
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
   'is not': '',
-};
+}
 
 const EMPTY_TEXT_INPUT = {
   contains: '',
   'does not contain': '',
-};
+}
 
-const handleStringQuery = (q) => q;
+const handleStringQuery = (q) => q
 
-const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
+const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true })
 
 const defaultDateValues = {
   is: LAST_THIRTY_DAYS,
   'is within': '',
   'is on or after': '',
   'is on or before': '',
-};
+}
 
 export const fixQueryWhetherStringOrArray = (query) => {
   if (Array.isArray(query)) {
-    return query.join(', ');
+    return query.join(', ')
   }
-  return query;
-};
+  return query
+}
 
 export const startDateFilter = {
   id: 'startDate',
@@ -54,25 +54,20 @@ export const startDateFilter = {
   displayQuery: (query) => {
     // we need to handle array vs string case here
 
-    const smushed = fixQueryWhetherStringOrArray(query);
+    const smushed = fixQueryWhetherStringOrArray(query)
 
     if (smushed.includes('-')) {
       return formatDateRange({
         string: smushed,
         withSpaces: false,
-      });
+      })
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY')
   },
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterDateRange
-      condition={condition}
-      query={query}
-      updateSingleDate={onApplyQuery}
-      onApplyDateRange={onApplyQuery}
-    />
+    <FilterDateRange condition={condition} query={query} updateSingleDate={onApplyQuery} onApplyDateRange={onApplyQuery} />
   ),
-};
+}
 
 export const regionFilter = {
   id: 'region',
@@ -80,13 +75,8 @@ export const regionFilter = {
   conditions: REGION_CONDITIONS,
   defaultValues: EMPTY_SINGLE_SELECT,
   displayQuery: handleStringQuery,
-  renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterRegionalSelect
-      appliedRegion={query}
-      onApply={onApplyQuery}
-    />
-  ),
-};
+  renderInput: (id, condition, query, onApplyQuery) => <FilterRegionalSelect appliedRegion={query} onApply={onApplyQuery} />,
+}
 
 export const collaboratorsFilter = {
   id: 'collaborators',
@@ -95,13 +85,9 @@ export const collaboratorsFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: useDisplayStaff,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterTrainingReportStaff
-      inputId={`collaborators-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <FilterTrainingReportStaff inputId={`collaborators-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
-};
+}
 
 export const creatorFilter = {
   id: 'creator',
@@ -110,13 +96,9 @@ export const creatorFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: useDisplayStaff,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterTrainingReportStaff
-      inputId={`creator-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <FilterTrainingReportStaff inputId={`creator-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
-};
+}
 
 export const eventIdFilter = {
   id: 'eventId',
@@ -125,14 +107,9 @@ export const eventIdFilter = {
   defaultValues: EMPTY_TEXT_INPUT,
   displayQuery: handleStringQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterInput
-      query={query}
-      inputId={`eventId-${condition}-${id}`}
-      onApply={onApplyQuery}
-      label="Enter a event id"
-    />
+    <FilterInput query={query} inputId={`eventId-${condition}-${id}`} onApply={onApplyQuery} label="Enter a event id" />
   ),
-};
+}
 
 export const goalCategoryFilter = {
   id: 'standard',
@@ -141,11 +118,6 @@ export const goalCategoryFilter = {
   defaultValues: EMPTY_TEXT_INPUT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterGoalStandard
-      query={query}
-      inputId={`goalCategory-${condition}-${id}`}
-      onApply={onApplyQuery}
-      label="Enter a goal category"
-    />
+    <FilterGoalStandard query={query} inputId={`goalCategory-${condition}-${id}`} onApply={onApplyQuery} label="Enter a goal category" />
   ),
-};
+}

@@ -1,22 +1,15 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { Controller, useFormContext } from 'react-hook-form';
-import { Helmet } from 'react-helmet';
-import {
-  ErrorMessage,
-  Fieldset,
-  FormGroup,
-  Label,
-} from '@trussworks/react-uswds';
-import ReviewPage from './Review/ReviewPage';
-import ActivityReportFileUploader from '../../../components/FileUploader/ActivityReportFileUploader';
-import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
-import './supportingAttachments.scss';
+import React, { useState } from 'react'
+import PropTypes from 'prop-types'
+import { Controller, useFormContext } from 'react-hook-form'
+import { Helmet } from 'react-helmet'
+import { ErrorMessage, Fieldset, FormGroup, Label } from '@trussworks/react-uswds'
+import ReviewPage from './Review/ReviewPage'
+import ActivityReportFileUploader from '../../../components/FileUploader/ActivityReportFileUploader'
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons'
+import './supportingAttachments.scss'
 
-const SupportingAttachments = ({
-  reportId,
-}) => {
-  const [fileError, setFileError] = useState();
+const SupportingAttachments = ({ reportId }) => {
+  const [fileError, setFileError] = useState()
 
   return (
     <>
@@ -37,7 +30,7 @@ const SupportingAttachments = ({
           </Label>
 
           <span className="usa-hint font-sans-3xs">Example: .doc, .pdf, .txt, .csv (max size 30 MB)</span>
-          { fileError && (<ErrorMessage>{fileError}</ErrorMessage>)}
+          {fileError && <ErrorMessage>{fileError}</ErrorMessage>}
           <Controller
             name="files"
             defaultValue={[]}
@@ -47,27 +40,27 @@ const SupportingAttachments = ({
           />
         </FormGroup>
       </Fieldset>
-
     </>
-  );
-};
+  )
+}
 
 SupportingAttachments.propTypes = {
   reportId: PropTypes.node.isRequired,
-};
+}
 
 export const getAttachmentsSections = (files) => {
-  const hasAttachments = files && files.length > 0;
+  const hasAttachments = files && files.length > 0
 
   // Create HTML content that matches what the test expects
   const fileContents = hasAttachments
     ? files.map((file) => {
-      if (file.url && file.url.url) {
-        return `<a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a>`;
-      }
+        if (file.url && file.url.url) {
+          return `<a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a>`
+        }
 
-      return file.originalFileName;
-    }) : ['None provided'];
+        return file.originalFileName
+      })
+    : ['None provided']
 
   return [
     {
@@ -82,19 +75,17 @@ export const getAttachmentsSections = (files) => {
           customValue: {
             // If there are attachments, use our custom HTML
             // If no attachments, show "None provided"
-            attachmentFiles: hasAttachments
-              ? `${fileContents.join(', ')}`
-              : 'None provided',
+            attachmentFiles: hasAttachments ? `${fileContents.join(', ')}` : 'None provided',
           },
         },
       ],
     },
-  ];
-};
+  ]
+}
 
 const ReviewSection = () => {
-  const { watch } = useFormContext();
-  const { files } = watch();
+  const { watch } = useFormContext()
+  const { files } = watch()
 
   return (
     <ReviewPage
@@ -103,8 +94,8 @@ const ReviewSection = () => {
       path="supporting-attachments"
       isCustomValue
     />
-  );
-};
+  )
+}
 
 export default {
   position: 3,
@@ -124,12 +115,10 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    Alert
   ) => (
     <>
-      <SupportingAttachments
-        reportId={reportId}
-      />
+      <SupportingAttachments reportId={reportId} />
       <Alert />
       <NavigatorButtons
         isAppLoading={isAppLoading}
@@ -141,4 +130,4 @@ export default {
       />
     </>
   ),
-};
+}

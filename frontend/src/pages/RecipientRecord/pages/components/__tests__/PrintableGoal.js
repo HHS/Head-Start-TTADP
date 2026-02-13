@@ -1,14 +1,12 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import PrintableGoal from '../PrintableGoal';
-import { OBJECTIVE_STATUS } from '../../../../../Constants';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import { GOAL_STATUS } from '@ttahub/common/src/constants'
+import PrintableGoal from '../PrintableGoal'
+import { OBJECTIVE_STATUS } from '../../../../../Constants'
 
 describe('PrintableGoal', () => {
-  const renderPrintableGoal = (goal) => render(<PrintableGoal goal={goal} />);
+  const renderPrintableGoal = (goal) => render(<PrintableGoal goal={goal} />)
 
   it('will display a goal with an uncertain status', async () => {
     const goal = {
@@ -18,10 +16,10 @@ describe('PrintableGoal', () => {
       grant: { number: '3' },
       goalTopics: ['Topic'],
       objectives: [],
-    };
-    renderPrintableGoal(goal);
-    expect(await screen.findByText('Uncertain')).toBeInTheDocument();
-  });
+    }
+    renderPrintableGoal(goal)
+    expect(await screen.findByText('Uncertain')).toBeInTheDocument()
+  })
 
   it('will display a goal with no status', async () => {
     const goal = {
@@ -30,10 +28,10 @@ describe('PrintableGoal', () => {
       grant: { number: '3' },
       goalTopics: ['Topic'],
       objectives: [],
-    };
-    renderPrintableGoal(goal);
-    expect(await screen.findByText(/Needs Status/i)).toBeInTheDocument();
-  });
+    }
+    renderPrintableGoal(goal)
+    expect(await screen.findByText(/Needs Status/i)).toBeInTheDocument()
+  })
 
   it('displays objectives and topics', async () => {
     const goal = {
@@ -76,19 +74,19 @@ describe('PrintableGoal', () => {
           reasons: [],
         },
       ],
-    };
-    renderPrintableGoal(goal);
-    expect(await screen.findByText('Objective 1')).toBeInTheDocument();
-    expect(await screen.findByText('Objective 2')).toBeInTheDocument();
-    expect(await screen.findByText('Topics')).toBeInTheDocument();
-    expect(await screen.findByText('Topic A')).toBeInTheDocument();
-    expect(await screen.findByText('Topic B')).toBeInTheDocument();
-    expect(await screen.findByText('Topic C')).toBeInTheDocument();
+    }
+    renderPrintableGoal(goal)
+    expect(await screen.findByText('Objective 1')).toBeInTheDocument()
+    expect(await screen.findByText('Objective 2')).toBeInTheDocument()
+    expect(await screen.findByText('Topics')).toBeInTheDocument()
+    expect(await screen.findByText('Topic A')).toBeInTheDocument()
+    expect(await screen.findByText('Topic B')).toBeInTheDocument()
+    expect(await screen.findByText('Topic C')).toBeInTheDocument()
     // check that Topic B only appears once
-    expect(screen.queryAllByText('Topic B').length).toBe(1);
+    expect(screen.queryAllByText('Topic B').length).toBe(1)
     // check objective heading
-    expect(await screen.findByText(/Objectives for goal G-123/i)).toBeInTheDocument();
-  });
+    expect(await screen.findByText(/Objectives for goal G-123/i)).toBeInTheDocument()
+  })
 
   it('displays goal id when goalNumbers is missing', async () => {
     const goal = {
@@ -97,8 +95,8 @@ describe('PrintableGoal', () => {
       name: 'Goal without goalNumbers',
       grant: { number: 'Grant-2' },
       objectives: [],
-    };
-    renderPrintableGoal(goal);
-    expect(await screen.findByText('Goal G-456')).toBeInTheDocument();
-  });
-});
+    }
+    renderPrintableGoal(goal)
+    expect(await screen.findByText('Goal G-456')).toBeInTheDocument()
+  })
+})

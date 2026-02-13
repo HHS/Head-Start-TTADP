@@ -1,10 +1,10 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import Tag from '../../../../../components/Tag';
-import Tooltip from '../../../../../components/Tooltip';
+import React from 'react'
+import PropTypes from 'prop-types'
+import Tag from '../../../../../components/Tag'
+import Tooltip from '../../../../../components/Tooltip'
 
 export default function SpecialistTags({ specialists }) {
-  const tags = [];
+  const tags = []
 
   if (!specialists || specialists.length === 0) {
     // legacy goal, no collaborators data
@@ -19,11 +19,11 @@ export default function SpecialistTags({ specialists }) {
           buttonClassName="display-flex"
           className="ttahub-goal-card__entered-by-tooltip"
         />
-      </Tag>,
-    );
+      </Tag>
+    )
   } else {
     specialists.forEach((specialist) => {
-      if (!specialist.name) return;
+      if (!specialist.name) return
 
       // monitoring goals: show a single "System-generated" tag with "OHS" role
       if (specialist.name === 'System-generated') {
@@ -38,9 +38,9 @@ export default function SpecialistTags({ specialists }) {
               buttonClassName="display-flex"
               className="ttahub-goal-card__entered-by-tooltip"
             />
-          </Tag>,
-        );
-        return;
+          </Tag>
+        )
+        return
       }
 
       // handle specialists with roles
@@ -48,17 +48,17 @@ export default function SpecialistTags({ specialists }) {
         // convert string roles to array if needed
         const roleArray = Array.isArray(specialist.roles)
           ? specialist.roles.flatMap((role) => {
-            if (typeof role === 'string' && role.includes(',')) {
-              return role.split(',').map((r) => r.trim());
-            }
-            return role;
-          })
-          : specialist.roles.split(',').map((role) => role.trim());
+              if (typeof role === 'string' && role.includes(',')) {
+                return role.split(',').map((r) => r.trim())
+              }
+              return role
+            })
+          : specialist.roles.split(',').map((role) => role.trim())
 
         // separate tag for each role
         roleArray.forEach((r) => {
-          if (!r) return;
-          const roleName = typeof r === 'string' ? r : r.role.name;
+          if (!r) return
+          const roleName = typeof r === 'string' ? r : r.role.name
           tags.push(
             <Tag key={`${specialist.name}-${roleName}`} clickable>
               <Tooltip
@@ -70,9 +70,9 @@ export default function SpecialistTags({ specialists }) {
                 buttonClassName="display-flex"
                 className="ttahub-goal-card__entered-by-tooltip"
               />
-            </Tag>,
-          );
-        });
+            </Tag>
+          )
+        })
       } else {
         // user has no roles
         tags.push(
@@ -86,13 +86,13 @@ export default function SpecialistTags({ specialists }) {
               buttonClassName="display-flex"
               className="ttahub-goal-card__entered-by-tooltip"
             />
-          </Tag>,
-        );
+          </Tag>
+        )
       }
-    });
+    })
   }
 
-  return <>{tags}</>;
+  return <>{tags}</>
 }
 
 SpecialistTags.propTypes = {
@@ -100,10 +100,10 @@ SpecialistTags.propTypes = {
     PropTypes.shape({
       name: PropTypes.string,
       roles: PropTypes.arrayOf(PropTypes.string),
-    }),
+    })
   ),
-};
+}
 
 SpecialistTags.defaultProps = {
   specialists: [],
-};
+}

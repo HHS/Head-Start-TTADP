@@ -1,20 +1,20 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import RecipientLeadership from '../RecipientLeadership';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import fetchMock from 'fetch-mock'
+import RecipientLeadership from '../RecipientLeadership'
 
 describe('RecipientLeadership', () => {
-  const recipientUrl = '/api/recipient/1/region/12/leadership';
+  const recipientUrl = '/api/recipient/1/region/12/leadership'
   const renderRecipientLeadership = () => {
     render(
       <div data-testid="recipient-leadership-container">
         <RecipientLeadership recipientId={1} regionId={12} />
-      </div>,
-    );
-  };
+      </div>
+    )
+  }
 
-  beforeEach(() => fetchMock.restore());
+  beforeEach(() => fetchMock.restore())
 
   it('renders the recipient summary appropriately', async () => {
     fetchMock.get(recipientUrl, [
@@ -34,12 +34,12 @@ describe('RecipientLeadership', () => {
         effectiveDate: new Date(),
         nameAndRole: 'Frog Person - Frog Stuff',
       },
-    ]);
-    renderRecipientLeadership();
-    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true);
+    ])
+    renderRecipientLeadership()
+    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true)
 
-    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument();
-  });
+    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument()
+  })
 
   it('will sort goals', async () => {
     fetchMock.get(recipientUrl, [
@@ -59,13 +59,13 @@ describe('RecipientLeadership', () => {
         effectiveDate: new Date(),
         nameAndRole: 'Frog Person - Frog Commander',
       },
-    ]);
-    renderRecipientLeadership();
-    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true);
+    ])
+    renderRecipientLeadership()
+    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true)
 
-    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument();
-    expect(await screen.findByText(/frog commander/i)).toBeInTheDocument();
-  });
+    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument()
+    expect(await screen.findByText(/frog commander/i)).toBeInTheDocument()
+  })
 
   it('handles null effective dates', async () => {
     fetchMock.get(recipientUrl, [
@@ -77,13 +77,13 @@ describe('RecipientLeadership', () => {
         effectiveDate: null,
         nameAndRole: 'Frog Person - Frog Stuff',
       },
-    ]);
-    renderRecipientLeadership();
-    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true);
+    ])
+    renderRecipientLeadership()
+    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true)
 
-    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument();
-    expect(await screen.findByText('unavailable')).toBeInTheDocument();
-  });
+    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument()
+    expect(await screen.findByText('unavailable')).toBeInTheDocument()
+  })
 
   it('handles undefined effective dates', async () => {
     fetchMock.get(recipientUrl, [
@@ -94,18 +94,18 @@ describe('RecipientLeadership', () => {
         email: 'frog@pond.net',
         nameAndRole: 'Frog Person - Frog Stuff',
       },
-    ]);
-    renderRecipientLeadership();
-    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true);
+    ])
+    renderRecipientLeadership()
+    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true)
 
-    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument();
-    expect(await screen.findByText('unavailable')).toBeInTheDocument();
-  });
+    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument()
+    expect(await screen.findByText('unavailable')).toBeInTheDocument()
+  })
 
   it('handles errors', async () => {
-    fetchMock.get(recipientUrl, 500);
-    renderRecipientLeadership();
-    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true);
-    expect(await screen.findByRole('heading', { name: 'Recipient leadership' })).toBeInTheDocument();
-  });
-});
+    fetchMock.get(recipientUrl, 500)
+    renderRecipientLeadership()
+    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true)
+    expect(await screen.findByRole('heading', { name: 'Recipient leadership' })).toBeInTheDocument()
+  })
+})

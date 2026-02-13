@@ -1,47 +1,42 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { uniqueId, uniq } from 'lodash';
-import ContextMenu from '../ContextMenu';
-import ReadOnlyObjective from './ReadOnlyObjective';
-import './ReadOnly.scss';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { uniqueId, uniq } from 'lodash'
+import ContextMenu from '../ContextMenu'
+import ReadOnlyObjective from './ReadOnlyObjective'
+import './ReadOnly.scss'
 
 const formatPrompts = (prompts) => {
-  const ps = Array.isArray(prompts) ? prompts : Object.values(prompts);
-  return ps.filter((prompt) => (
-    prompt.response && prompt.response.length)).map((prompt) => ({
-    key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
-    title: prompt.grantDisplayName,
-    response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
-  }));
-};
+  const ps = Array.isArray(prompts) ? prompts : Object.values(prompts)
+  return ps
+    .filter((prompt) => prompt.response && prompt.response.length)
+    .map((prompt) => ({
+      key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
+      title: prompt.grantDisplayName,
+      response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
+    }))
+}
 
 export const parseObjectValuesOrString = (d) => {
   try {
-  // if null or undefined, return empty string
+    // if null or undefined, return empty string
     if (!d) {
-      return '';
+      return ''
     }
 
     if (typeof d === 'string') {
-      return d;
+      return d
     }
 
     // this gets arrays and numbers
     // (although numbers are not expected
     // and will be converted to empty arrays by Object.values)
-    return uniq(Object.values(d)).join(', ');
+    return uniq(Object.values(d)).join(', ')
   } catch (e) {
-    return ''; // honestly, try breaking this function now, you can't
+    return '' // honestly, try breaking this function now, you can't
   }
-};
+}
 
-export default function ReadOnlyGoal({
-  onEdit,
-  onRemove,
-  hideEdit,
-  goal,
-  index,
-}) {
+export default function ReadOnlyGoal({ onEdit, onRemove, hideEdit, goal, index }) {
   let menuItems = [
     {
       label: 'Edit',
@@ -51,7 +46,7 @@ export default function ReadOnlyGoal({
       label: 'Remove',
       onClick: () => onRemove(goal),
     },
-  ];
+  ]
 
   if (hideEdit) {
     menuItems = [
@@ -59,7 +54,7 @@ export default function ReadOnlyGoal({
         label: 'Remove',
         onClick: () => onRemove(goal),
       },
-    ];
+    ]
   }
 
   return (
@@ -70,27 +65,21 @@ export default function ReadOnlyGoal({
             <h2 className="margin-top-0 margin-bottom-3">Recipient TTA goal</h2>
           </div>
           <div className="margin-left-2">
-            <ContextMenu
-              label={`Actions for Goal ${goal.id}`}
-              menuItems={menuItems}
-              menuClassName="width-card"
-            />
+            <ContextMenu label={`Actions for Goal ${goal.id}`} menuItems={menuItems} menuClassName="width-card" />
           </div>
         </div>
         <h3 className="margin-top-0 margin-bottom-2">Goal summary</h3>
-        { goal.grants && goal.grants.length
-          ? (
-            <div className="margin-bottom-2">
-              <h4 className="margin-0">Recipient grant numbers</h4>
-              <p className="usa-prose margin-0">{goal.grants.map((grant) => grant.numberWithProgramTypes).join(', ')}</p>
-            </div>
-          )
-          : null }
+        {goal.grants && goal.grants.length ? (
+          <div className="margin-bottom-2">
+            <h4 className="margin-0">Recipient grant numbers</h4>
+            <p className="usa-prose margin-0">{goal.grants.map((grant) => grant.numberWithProgramTypes).join(', ')}</p>
+          </div>
+        ) : null}
         <div className="margin-bottom-3">
           <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
-        {(goal.source) ? (
+        {goal.source ? (
           <div className="margin-bottom-2" key={uniqueId('goal-source-read-only-')}>
             <h4 className="margin-0">Goal source</h4>
             <p className="usa-prose margin-0">{parseObjectValuesOrString(goal.source)}</p>
@@ -107,12 +96,12 @@ export default function ReadOnlyGoal({
             ))}
           </>
         )}
-        { goal.objectives.map((objective) => (
+        {goal.objectives.map((objective) => (
           <ReadOnlyObjective key={`read-only-objective-${objective.id}`} objective={objective} />
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 ReadOnlyGoal.propTypes = {
@@ -124,11 +113,8 @@ ReadOnlyGoal.propTypes = {
     prompts: PropTypes.arrayOf(
       PropTypes.shape({
         title: PropTypes.string,
-        response: PropTypes.oneOfType([
-          PropTypes.arrayOf(PropTypes.string),
-          PropTypes.string,
-        ]),
-      }),
+        response: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]),
+      })
     ),
     source: PropTypes.string,
     id: PropTypes.number,
@@ -136,36 +122,42 @@ ReadOnlyGoal.propTypes = {
       PropTypes.shape({
         label: PropTypes.string,
         value: PropTypes.number,
-      }),
+      })
     ),
     objectives: PropTypes.arrayOf(
       PropTypes.shape({
         ttaProvided: PropTypes.string,
-        resources: PropTypes.arrayOf(PropTypes.shape({
-          key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-          value: PropTypes.string,
-        })),
-        topics: PropTypes.arrayOf(PropTypes.shape({
-          label: PropTypes.string,
-        })),
-        files: PropTypes.arrayOf(PropTypes.shape({
-          originalFileName: PropTypes.string,
-          fileSize: PropTypes.number,
-          status: PropTypes.string,
-          url: PropTypes.shape({
-            url: PropTypes.string,
-          }),
-        })),
+        resources: PropTypes.arrayOf(
+          PropTypes.shape({
+            key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+            value: PropTypes.string,
+          })
+        ),
+        topics: PropTypes.arrayOf(
+          PropTypes.shape({
+            label: PropTypes.string,
+          })
+        ),
+        files: PropTypes.arrayOf(
+          PropTypes.shape({
+            originalFileName: PropTypes.string,
+            fileSize: PropTypes.number,
+            status: PropTypes.string,
+            url: PropTypes.shape({
+              url: PropTypes.string,
+            }),
+          })
+        ),
         title: PropTypes.string,
         id: PropTypes.number,
         status: PropTypes.string,
-      }),
+      })
     ),
     name: PropTypes.string,
     isRttapa: PropTypes.string,
   }).isRequired,
-};
+}
 
 ReadOnlyGoal.defaultProps = {
   hideEdit: false,
-};
+}

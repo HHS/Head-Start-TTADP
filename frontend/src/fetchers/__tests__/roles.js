@@ -1,20 +1,20 @@
-import fetchMock from 'fetch-mock';
-import { getRoles, getSpecialistRoles } from '../roles';
+import fetchMock from 'fetch-mock'
+import { getRoles, getSpecialistRoles } from '../roles'
 
 describe('roles fetcher', () => {
-  beforeEach(() => fetchMock.reset());
+  beforeEach(() => fetchMock.reset())
 
   it('fetches roles', async () => {
-    fetchMock.get('/api/role', []);
-    await getRoles();
+    fetchMock.get('/api/role', [])
+    await getRoles()
 
-    expect(fetchMock.called()).toBeTruthy();
-  });
+    expect(fetchMock.called()).toBeTruthy()
+  })
 
   it('fetches specialist roles', async () => {
-    fetchMock.get('/api/role/specialists', []);
-    await getSpecialistRoles();
+    fetchMock.get('/api/role/specialists', [])
+    await getSpecialistRoles()
 
-    expect(fetchMock.called()).toBeTruthy();
-  });
-});
+    expect(fetchMock.called()).toBeTruthy()
+  })
+})

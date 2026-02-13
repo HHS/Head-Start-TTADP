@@ -1,15 +1,12 @@
-import React, {
-  useState,
-  useEffect,
-} from 'react';
-import PropTypes from 'prop-types';
-import { v4 as uuidv4 } from 'uuid';
-import DropdownMenu from '../DropdownMenu';
-import FilterItem from './FilterItem';
-import usePrevious from '../../hooks/usePrevious';
-import { filterProp, filterConfigProp } from './props';
-import FilterErrorContext from './FilterErrorContext';
-import './FilterMenu.css';
+import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { v4 as uuidv4 } from 'uuid'
+import DropdownMenu from '../DropdownMenu'
+import FilterItem from './FilterItem'
+import usePrevious from '../../hooks/usePrevious'
+import { filterProp, filterConfigProp } from './props'
+import FilterErrorContext from './FilterErrorContext'
+import './FilterMenu.css'
 
 /**
  * Renders the entire filter menu and contains the logic for toggling it's visibility
@@ -17,164 +14,163 @@ import './FilterMenu.css';
  * @returns JSX Object
  */
 
-export default function FilterMenu({
-  filters,
-  onApplyFilters,
-  applyButtonAria,
-  filterConfig,
-}) {
-  const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
-  const [errors, setErrors] = useState(filters.map(() => ''));
+export default function FilterMenu({ filters, onApplyFilters, applyButtonAria, filterConfig }) {
+  const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))])
+  const [errors, setErrors] = useState(filters.map(() => ''))
 
-  const itemLength = usePrevious(items.length);
+  const itemLength = usePrevious(items.length)
 
   // filters currently selected. these will be excluded from filter selection
-  const selectedFilters = items.map((filter) => filter.topic);
+  const selectedFilters = items.map((filter) => filter.topic)
 
   // If filters were changed outside of this component, we need to update the items
   // (for example, the "remove filter" button on the filter pills)
   useEffect(() => {
-    setItems(filters);
-  }, [filters]);
+    setItems(filters)
+  }, [filters])
 
   // focus on the first topic if we add more
   useEffect(() => {
     if (items.length > itemLength) {
-      const [topic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+      const [topic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1)
 
       if (topic && !topic.value) {
-        topic.focus();
+        topic.focus()
       }
     }
-  }, [itemLength, items.length]);
+  }, [itemLength, items.length])
 
   const totalValidation = () => {
     // If we don't have any filter's no need to validate.
     if (!items.length) {
-      return true;
+      return true
     }
 
     const hasErrors = errors.reduce((acc, curr) => {
       if (acc || curr) {
-        return true;
+        return true
       }
 
-      return false;
-    }, false);
+      return false
+    }, false)
 
     // return whether or not there are errors
-    return !hasErrors;
-  };
+    return !hasErrors
+  }
 
   const onApply = () => {
     // first, we validate
     if (!totalValidation()) {
-      return false;
+      return false
     }
 
     // otherwise, we apply
-    onApplyFilters(items);
-    return true;
-  };
+    onApplyFilters(items)
+    return true
+  }
 
   const onRemoveFilter = (id) => {
-    const newItems = items.map((item) => ({ ...item }));
-    const index = newItems.findIndex((item) => item.id === id);
+    const newItems = items.map((item) => ({ ...item }))
+    const index = newItems.findIndex((item) => item.id === id)
 
     if (index !== -1) {
-      const newErrors = [...errors];
-      newErrors.splice(index, 1);
-      newItems.splice(index, 1);
-      setItems(newItems);
-      setErrors(newErrors);
+      const newErrors = [...errors]
+      newErrors.splice(index, 1)
+      newItems.splice(index, 1)
+      setItems(newItems)
+      setErrors(newErrors)
     }
-  };
+  }
 
   // reset state if we hit cancel
   const onCancel = () => {
-    const copyOfFilters = filters.map((filter) => ({ ...filter }));
-    setItems(copyOfFilters);
-  };
+    const copyOfFilters = filters.map((filter) => ({ ...filter }))
+    setItems(copyOfFilters)
+  }
 
   const onUpdateFilter = (id, name, value) => {
-    const newItems = items.map((item) => ({ ...item }));
-    const index = newItems.findIndex((item) => item.id === id);
-    const toUpdate = newItems.find((item) => item.id === id);
+    const newItems = items.map((item) => ({ ...item }))
+    const index = newItems.findIndex((item) => item.id === id)
+    const toUpdate = newItems.find((item) => item.id === id)
 
     if (toUpdate[name] === value) {
-      return;
+      return
     }
 
-    toUpdate[name] = value;
+    toUpdate[name] = value
 
     if (name === 'condition') {
       /**
        * if the condition is changed, we need to do a lookup in the filter config
        * and set the query to the new default value
        */
-      const f = filterConfig.find(((config) => config.id === toUpdate.topic));
-      const defaultQuery = f.defaultValues[value];
+      const f = filterConfig.find((config) => config.id === toUpdate.topic)
+      const defaultQuery = f.defaultValues[value]
       if (defaultQuery) {
-        toUpdate.query = defaultQuery;
+        toUpdate.query = defaultQuery
       } else {
-        toUpdate.query = '';
+        toUpdate.query = ''
       }
     }
 
     if (name === 'topic') {
-      const f = filterConfig.find(((config) => config.id === toUpdate.topic));
-      const defaultQuery = f.defaultValues[value];
+      const f = filterConfig.find((config) => config.id === toUpdate.topic)
+      const defaultQuery = f.defaultValues[value]
 
-      toUpdate.condition = '';
-      toUpdate.query = defaultQuery;
+      toUpdate.condition = ''
+      toUpdate.query = defaultQuery
     }
-    setItems(newItems);
+    setItems(newItems)
 
     if (index !== -1) {
-      const newErrors = [...errors];
-      newErrors.splice(index, 1);
-      setErrors(newErrors);
+      const newErrors = [...errors]
+      newErrors.splice(index, 1)
+      setErrors(newErrors)
     }
-  };
+  }
 
   const onAddFilter = () => {
     // validating will trigger any error states visually
     // and also prevent the adding of new items when previous ones are in error
     if (totalValidation()) {
-      const newItems = [...items.map((item) => ({ ...item }))];
+      const newItems = [...items.map((item) => ({ ...item }))]
       const newItem = {
         id: uuidv4(),
         display: '',
         conditions: [],
-      };
-      newItems.push(newItem);
+      }
+      newItems.push(newItem)
 
-      const newErrors = [...errors, ''];
-      setErrors(newErrors);
+      const newErrors = [...errors, '']
+      setErrors(newErrors)
 
-      setItems(newItems);
+      setItems(newItems)
     }
-  };
+  }
 
   const clearAllFilters = () => {
-    setItems([]);
-  };
+    setItems([])
+  }
 
-  const canBlur = () => false;
+  const canBlur = () => false
 
-  const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
+  const ClearAllButton = () => (
+    <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">
+      Clear all filters
+    </button>
+  )
 
   const onOpen = () => {
     // The onOpen is passed into the DropdownMenu component
     // this will add an empty item into the list if there
     // are no filters, to cut down on user clicking
     if (!items.length) {
-      setErrors([]); // Reset errors.
-      onAddFilter();
+      setErrors([]) // Reset errors.
+      onAddFilter()
     }
-  };
+  }
 
-  const hasMultipleFilters = filters && filters.length > 0;
+  const hasMultipleFilters = filters && filters.length > 0
   return (
     <DropdownMenu
       buttonText={`Filters${hasMultipleFilters ? ` (${filters.length})` : ''}`}
@@ -191,46 +187,40 @@ export default function FilterMenu({
       onOpen={onOpen}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2" data-testid="filters">
-        <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
+        <p className="margin-bottom-2">
+          <strong>Show results for the following filters.</strong>
+        </p>
         <div>
           <div className="margin-bottom-1">
             {items.map((filter, index) => {
-              const { topic } = filter;
+              const { topic } = filter
               // this is some jujitsu
               const topicOptions = filterConfig
                 // filter out the bad topics
-                .filter((config) => (
-                  topic === config.id || !selectedFilters.includes(config.id)
-                ))
+                .filter((config) => topic === config.id || !selectedFilters.includes(config.id))
                 // return a new array of option elements
                 .map(({ id: filterId, display }) => (
-                  <option
-                    key={filterId}
-                    value={filterId}
-                  >
+                  <option key={filterId} value={filterId}>
                     {display}
                   </option>
-                ));
+                ))
 
               const newTopic = {
                 display: '',
                 renderInput: () => {},
                 conditions: [],
-              };
+              }
 
-              const selectedTopic = filterConfig.find((f) => f.id === topic);
+              const selectedTopic = filterConfig.find((f) => f.id === topic)
 
               const setError = (message) => {
-                const newErrors = [...errors];
-                newErrors.splice(index, 1, message);
-                setErrors(newErrors);
-              };
+                const newErrors = [...errors]
+                newErrors.splice(index, 1, message)
+                setErrors(newErrors)
+              }
 
               return (
-                <FilterErrorContext.Provider
-                  key={filter.id}
-                  value={{ setError, error: errors[index] }}
-                >
+                <FilterErrorContext.Provider key={filter.id} value={{ setError, error: errors[index] }}>
                   <FilterItem
                     onRemoveFilter={onRemoveFilter}
                     onUpdateFilter={onUpdateFilter}
@@ -241,14 +231,16 @@ export default function FilterMenu({
                     selectedTopic={selectedTopic || newTopic}
                   />
                 </FilterErrorContext.Provider>
-              );
+              )
             })}
           </div>
-          <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
+          <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>
+            Add new filter
+          </button>
         </div>
       </div>
     </DropdownMenu>
-  );
+  )
 }
 
 FilterMenu.propTypes = {
@@ -256,4 +248,4 @@ FilterMenu.propTypes = {
   onApplyFilters: PropTypes.func.isRequired,
   applyButtonAria: PropTypes.string.isRequired,
   filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
-};
+}

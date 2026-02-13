@@ -1,17 +1,15 @@
-import '@testing-library/jest-dom';
-import React from 'react';
-import fetchMock from 'fetch-mock';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import RecipientsWithClassScoresAndGoals from '../index';
-import UserContext from '../../../../UserContext';
-import { mockRSSData } from '../../../../testHelpers';
+import '@testing-library/jest-dom'
+import React from 'react'
+import fetchMock from 'fetch-mock'
+import { render, screen, act, waitFor } from '@testing-library/react'
+import { Router } from 'react-router'
+import { createMemoryHistory } from 'history'
+import { GOAL_STATUS } from '@ttahub/common/src/constants'
+import RecipientsWithClassScoresAndGoals from '../index'
+import UserContext from '../../../../UserContext'
+import { mockRSSData } from '../../../../testHelpers'
 
-const dashboardApi = '/api/ssdi/api/dashboards/qa/class.sql?&dataSetSelection[]=with_class_widget&dataSetSelection[]=with_class_page';
+const dashboardApi = '/api/ssdi/api/dashboards/qa/class.sql?&dataSetSelection[]=with_class_widget&dataSetSelection[]=with_class_page'
 
 const recipientsWithClassScoresAndGoalsData = [
   {
@@ -31,10 +29,10 @@ const recipientsWithClassScoresAndGoalsData = [
     records: 3,
     data: [
       {
-        classroomOrganization: 5.0430,
-        emotionalSupport: 6.0430,
+        classroomOrganization: 5.043,
+        emotionalSupport: 6.043,
         grantNumber: '90CI010073',
-        instructionalSupport: 4.0430,
+        instructionalSupport: 4.043,
         lastARStartDate: '2021-01-02',
         recipientId: 1,
         recipientName: 'Abernathy, Mraz and Bogan',
@@ -47,10 +45,10 @@ const recipientsWithClassScoresAndGoalsData = [
         goalStatus: GOAL_STATUS.IN_PROGRESS,
       },
       {
-        classroomOrganization: 5.0430,
-        emotionalSupport: 6.0430,
+        classroomOrganization: 5.043,
+        emotionalSupport: 6.043,
         grantNumber: '90CI010073',
-        instructionalSupport: 4.0430,
+        instructionalSupport: 4.043,
         lastARStartDate: '2021-01-02',
         recipientId: 1,
         recipientName: 'Abernathy, Mraz and Bogan',
@@ -112,120 +110,120 @@ const recipientsWithClassScoresAndGoalsData = [
       },
     ],
   },
-];
+]
 
 const renderRecipientsWithClassScoresAndGoals = () => {
-  const history = createMemoryHistory();
+  const history = createMemoryHistory()
   render(
     <UserContext.Provider value={{ user: { id: 1 } }}>
       <Router history={history}>
         <RecipientsWithClassScoresAndGoals />
       </Router>
-    </UserContext.Provider>,
-  );
-};
+    </UserContext.Provider>
+  )
+}
 
 describe('Recipients With Class and Scores and Goals', () => {
   afterEach(() => {
-    fetchMock.restore();
-  });
+    fetchMock.restore()
+  })
 
   beforeEach(() => {
-    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-class-filters', mockRSSData());
-    fetchMock.get('/api/feeds/item?tag=ttahub-class-thresholds', mockRSSData());
-    fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-class-goal', mockRSSData());
-  });
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-class-filters', mockRSSData())
+    fetchMock.get('/api/feeds/item?tag=ttahub-class-thresholds', mockRSSData())
+    fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-class-goal', mockRSSData())
+  })
 
   it('renders correctly with data', async () => {
-    fetchMock.get(dashboardApi, recipientsWithClassScoresAndGoalsData);
-    renderRecipientsWithClassScoresAndGoals();
+    fetchMock.get(dashboardApi, recipientsWithClassScoresAndGoalsData)
+    renderRecipientsWithClassScoresAndGoals()
 
-    expect(screen.queryAllByText(/Recipients with CLASS® scores/i).length).toBe(2);
+    expect(screen.queryAllByText(/Recipients with CLASS® scores/i).length).toBe(2)
 
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText(/1-3 of 3/i)).toBeInTheDocument();
-      });
-    });
+        expect(screen.getByText(/1-3 of 3/i)).toBeInTheDocument()
+      })
+    })
 
-    expect(screen.getByText('Abernathy, Mraz and Bogan')).toBeInTheDocument();
-    expect(screen.getByText('01/02/2021')).toBeInTheDocument();
-    expect(screen.getByText(/6\.043/i)).toBeInTheDocument();
-    expect(screen.getByText(/5\.043/i)).toBeInTheDocument();
-    expect(screen.getByText(/4\.043/i)).toBeInTheDocument();
-    expect(screen.getByText('03/01/2022')).toBeInTheDocument();
-
-    // Expand goals.
-    let goalsButton = screen.getByRole('button', { name: /view goals for recipient Abernathy, Mraz and Bogan/i });
-    goalsButton.click();
-
-    expect(screen.getByText('G-45641')).toBeInTheDocument();
-    expect(screen.getByText(GOAL_STATUS.IN_PROGRESS)).toBeInTheDocument();
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-    expect(screen.getByText('G-25858')).toBeInTheDocument();
-    expect(screen.getByText(GOAL_STATUS.SUSPENDED)).toBeInTheDocument();
-    expect(screen.getByText('Bill Smith')).toBeInTheDocument();
-    expect(screen.getByText('Bob Jones')).toBeInTheDocument();
-
-    expect(screen.getByText('Recipient 2')).toBeInTheDocument();
-    expect(screen.getByText('04/02/2021')).toBeInTheDocument();
-    expect(screen.getByText('5.254')).toBeInTheDocument();
-    expect(screen.getByText('8.458')).toBeInTheDocument();
-    expect(screen.getByText('1.214')).toBeInTheDocument();
-    expect(screen.getByText('05/01/2022')).toBeInTheDocument();
+    expect(screen.getByText('Abernathy, Mraz and Bogan')).toBeInTheDocument()
+    expect(screen.getByText('01/02/2021')).toBeInTheDocument()
+    expect(screen.getByText(/6\.043/i)).toBeInTheDocument()
+    expect(screen.getByText(/5\.043/i)).toBeInTheDocument()
+    expect(screen.getByText(/4\.043/i)).toBeInTheDocument()
+    expect(screen.getByText('03/01/2022')).toBeInTheDocument()
 
     // Expand goals.
-    goalsButton = screen.getByRole('button', { name: /view goals for recipient recipient 2/i });
-    goalsButton.click();
+    let goalsButton = screen.getByRole('button', { name: /view goals for recipient Abernathy, Mraz and Bogan/i })
+    goalsButton.click()
 
-    expect(screen.getByText('G-68745')).toBeInTheDocument();
-    expect(screen.getByText(GOAL_STATUS.CLOSED)).toBeInTheDocument();
-    expect(screen.getByText('Bill Parks')).toBeInTheDocument();
-    expect(screen.getByText('Jack Jones')).toBeInTheDocument();
-  });
+    expect(screen.getByText('G-45641')).toBeInTheDocument()
+    expect(screen.getByText(GOAL_STATUS.IN_PROGRESS)).toBeInTheDocument()
+    expect(screen.getByText('John Doe')).toBeInTheDocument()
+    expect(screen.getByText('Jane Doe')).toBeInTheDocument()
+    expect(screen.getByText('G-25858')).toBeInTheDocument()
+    expect(screen.getByText(GOAL_STATUS.SUSPENDED)).toBeInTheDocument()
+    expect(screen.getByText('Bill Smith')).toBeInTheDocument()
+    expect(screen.getByText('Bob Jones')).toBeInTheDocument()
+
+    expect(screen.getByText('Recipient 2')).toBeInTheDocument()
+    expect(screen.getByText('04/02/2021')).toBeInTheDocument()
+    expect(screen.getByText('5.254')).toBeInTheDocument()
+    expect(screen.getByText('8.458')).toBeInTheDocument()
+    expect(screen.getByText('1.214')).toBeInTheDocument()
+    expect(screen.getByText('05/01/2022')).toBeInTheDocument()
+
+    // Expand goals.
+    goalsButton = screen.getByRole('button', { name: /view goals for recipient recipient 2/i })
+    goalsButton.click()
+
+    expect(screen.getByText('G-68745')).toBeInTheDocument()
+    expect(screen.getByText(GOAL_STATUS.CLOSED)).toBeInTheDocument()
+    expect(screen.getByText('Bill Parks')).toBeInTheDocument()
+    expect(screen.getByText('Jack Jones')).toBeInTheDocument()
+  })
 
   it('selects and unselects all recipients', async () => {
-    fetchMock.get(dashboardApi, recipientsWithClassScoresAndGoalsData);
-    renderRecipientsWithClassScoresAndGoals();
+    fetchMock.get(dashboardApi, recipientsWithClassScoresAndGoalsData)
+    renderRecipientsWithClassScoresAndGoals()
 
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText(/1-3 of 3/i)).toBeInTheDocument();
-      });
-    });
+        expect(screen.getByText(/1-3 of 3/i)).toBeInTheDocument()
+      })
+    })
 
-    const selectAllButton = screen.getByRole('checkbox', { name: /select all recipients/i });
-    selectAllButton.click();
-    expect(screen.getByText(/3 selected/i)).toBeInTheDocument();
-    selectAllButton.click();
-    expect(screen.queryAllByText(/3 selected/i).length).toBe(0);
-  });
+    const selectAllButton = screen.getByRole('checkbox', { name: /select all recipients/i })
+    selectAllButton.click()
+    expect(screen.getByText(/3 selected/i)).toBeInTheDocument()
+    selectAllButton.click()
+    expect(screen.queryAllByText(/3 selected/i).length).toBe(0)
+  })
 
   it('Shows the selected pill and unselects when pill is removed', async () => {
-    fetchMock.get(dashboardApi, recipientsWithClassScoresAndGoalsData);
-    renderRecipientsWithClassScoresAndGoals();
+    fetchMock.get(dashboardApi, recipientsWithClassScoresAndGoalsData)
+    renderRecipientsWithClassScoresAndGoals()
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText(/1-3 of 3/i)).toBeInTheDocument();
-      });
-    });
-    const selectAllButton = screen.getByRole('checkbox', { name: /select all recipients/i });
-    selectAllButton.click();
-    expect(screen.getByText(/3 selected/i)).toBeInTheDocument();
-    const pillRemoveButton = screen.getByRole('button', { name: /deselect all goals/i });
-    pillRemoveButton.click();
-    expect(screen.queryAllByText(/3 selected/i).length).toBe(0);
-  });
+        expect(screen.getByText(/1-3 of 3/i)).toBeInTheDocument()
+      })
+    })
+    const selectAllButton = screen.getByRole('checkbox', { name: /select all recipients/i })
+    selectAllButton.click()
+    expect(screen.getByText(/3 selected/i)).toBeInTheDocument()
+    const pillRemoveButton = screen.getByRole('button', { name: /deselect all goals/i })
+    pillRemoveButton.click()
+    expect(screen.queryAllByText(/3 selected/i).length).toBe(0)
+  })
 
   it('handles error on fetch', async () => {
-    fetchMock.get(dashboardApi, 500);
-    renderRecipientsWithClassScoresAndGoals();
+    fetchMock.get(dashboardApi, 500)
+    renderRecipientsWithClassScoresAndGoals()
 
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText(/Unable to fetch QA data/i)).toBeInTheDocument();
-      });
-    });
-  });
-});
+        expect(screen.getByText(/Unable to fetch QA data/i)).toBeInTheDocument()
+      })
+    })
+  })
+})

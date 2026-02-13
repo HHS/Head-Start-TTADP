@@ -1,20 +1,15 @@
-import React from 'react';
-import activitySummary from './activitySummary';
-import supportingAttachments from './supportingAttachments';
-import nextSteps from './nextSteps';
-import goalsObjectives from './goalsObjectives';
-import ReviewSubmit from './Review';
+import React from 'react'
+import activitySummary from './activitySummary'
+import supportingAttachments from './supportingAttachments'
+import nextSteps from './nextSteps'
+import goalsObjectives from './goalsObjectives'
+import ReviewSubmit from './Review'
 
 /*
   Note these are not react nodes but objects used by the navigator to render out
   each page of the activity report.
 */
-const pages = [
-  activitySummary,
-  goalsObjectives,
-  supportingAttachments,
-  nextSteps,
-];
+const pages = [activitySummary, goalsObjectives, supportingAttachments, nextSteps]
 
 /*
   Each page defines the sections/fields to show in the review section. Each page
@@ -25,38 +20,24 @@ const reviewPage = {
   review: true,
   label: 'Review and submit',
   path: 'review',
-  render:
-    (
-      _formData,
-      onSubmit,
-      additionalData,
-      onReview,
-      isApprover,
-      isPendingApprover,
-      onSaveForm,
-      allPages,
-      reportCreator,
-      lastSaveTime,
-    ) => (
-      <ReviewSubmit
-        availableApprovers={additionalData.availableApprovers}
-        onSubmit={onSubmit}
-        onSaveForm={onSaveForm}
-        onReview={onReview}
-        isApprover={isApprover}
-        isPendingApprover={isPendingApprover}
-        lastSaveTime={lastSaveTime}
-        reviewItems={
-          pages.map((p) => ({
-            id: p.path,
-            title: p.label,
-            content: p.reviewSection(),
-          }))
-        }
-        pages={allPages}
-        reportCreator={reportCreator}
-      />
-    ),
-};
+  render: (_formData, onSubmit, additionalData, onReview, isApprover, isPendingApprover, onSaveForm, allPages, reportCreator, lastSaveTime) => (
+    <ReviewSubmit
+      availableApprovers={additionalData.availableApprovers}
+      onSubmit={onSubmit}
+      onSaveForm={onSaveForm}
+      onReview={onReview}
+      isApprover={isApprover}
+      isPendingApprover={isPendingApprover}
+      lastSaveTime={lastSaveTime}
+      reviewItems={pages.map((p) => ({
+        id: p.path,
+        title: p.label,
+        content: p.reviewSection(),
+      }))}
+      pages={allPages}
+      reportCreator={reportCreator}
+    />
+  ),
+}
 
-export default [...pages, reviewPage];
+export default [...pages, reviewPage]

@@ -6,87 +6,71 @@
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import PropTypes from 'prop-types';
-import { deleteObjectiveFile, deleteFile, removeActivityReportObjectiveFile } from '../../fetchers/File';
-import FileTable from './FileTable';
-import Dropzone from './Dropzone';
-import './FileUploader.scss';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { deleteObjectiveFile, deleteFile, removeActivityReportObjectiveFile } from '../../fetchers/File'
+import FileTable from './FileTable'
+import Dropzone from './Dropzone'
+import './FileUploader.scss'
 
-const ObjectiveFileUploader = ({
-  onChange,
-  files,
-  objective,
-  id,
-  upload,
-  index,
-  inputName,
-  onBlur,
-  setError,
-  reportId,
-}) => {
+const ObjectiveFileUploader = ({ onChange, files, objective, id, upload, index, inputName, onBlur, setError, reportId }) => {
   const onFileRemoved = async (removedFileIndex) => {
-    const file = files[removedFileIndex];
-    const fileHasObjectiveFile = file.ObjectiveFile && file.ObjectiveFile.objectiveId;
-    const objectiveHasBeenSaved = objective.ids && objective.ids.length && objective.ids.length > 0;
-    const uploaderIsOnReport = reportId > 0 && objectiveHasBeenSaved;
+    const file = files[removedFileIndex]
+    const fileHasObjectiveFile = file.ObjectiveFile && file.ObjectiveFile.objectiveId
+    const objectiveHasBeenSaved = objective.ids && objective.ids.length && objective.ids.length > 0
+    const uploaderIsOnReport = reportId > 0 && objectiveHasBeenSaved
     try {
       if (uploaderIsOnReport) {
         // remove from activity report objective file only
-        await removeActivityReportObjectiveFile(reportId, file.id, objective.ids);
+        await removeActivityReportObjectiveFile(reportId, file.id, objective.ids)
       } else if (objectiveHasBeenSaved) {
         // remove objective file and delete file
-        await deleteObjectiveFile(file.id, objective.ids);
+        await deleteObjectiveFile(file.id, objective.ids)
       } else if (fileHasObjectiveFile) {
         // remove objective file and delete file
-        await deleteObjectiveFile(file.id, [file.ObjectiveFile.objectiveId]);
+        await deleteObjectiveFile(file.id, [file.ObjectiveFile.objectiveId])
       } else {
         // remove the file entirely
-        await deleteFile(file.id);
+        await deleteFile(file.id)
       }
 
       // remove from the UI if the network request was successful
-      const copyOfFiles = [...files];
-      copyOfFiles.splice(removedFileIndex, 1);
-      onChange(copyOfFiles);
+      const copyOfFiles = [...files]
+      copyOfFiles.splice(removedFileIndex, 1)
+      onChange(copyOfFiles)
     } catch (error) {
-      setError('There was an error deleting the file. Please try again.');
+      setError('There was an error deleting the file. Please try again.')
     }
-  };
+  }
 
   const handleDrop = async (e) => {
-    const newFiles = await upload(e, objective, setError, index);
+    const newFiles = await upload(e, objective, setError, index)
 
     // this is entirely a concession to the inability to accurately
     // mock the upload function in the tests
-    const updatedInfo = newFiles || {};
+    const updatedInfo = newFiles || {}
 
-    const {
-      setObjectives,
-      objectives,
-      index: objectiveIndex,
-      objectiveIds,
-    } = updatedInfo;
+    const { setObjectives, objectives, index: objectiveIndex, objectiveIds } = updatedInfo
 
-    const allFilesIncludingTheNewOnes = [...files, ...(newFiles || [])];
+    const allFilesIncludingTheNewOnes = [...files, ...(newFiles || [])]
 
     // on the goals and objectives form, we have this extra step to update the objectives
     if (objectives && setObjectives) {
-      const copyOfObjectives = objectives.map((o) => ({ ...o }));
-      copyOfObjectives[objectiveIndex].files = allFilesIncludingTheNewOnes;
-      copyOfObjectives[objectiveIndex].ids = objectiveIds;
-      setObjectives(copyOfObjectives);
+      const copyOfObjectives = objectives.map((o) => ({ ...o }))
+      copyOfObjectives[objectiveIndex].files = allFilesIncludingTheNewOnes
+      copyOfObjectives[objectiveIndex].ids = objectiveIds
+      setObjectives(copyOfObjectives)
     } else {
       // else we just update the files array for local display
       // this method could conceivably lead to orphaned files
-      onChange(allFilesIncludingTheNewOnes);
+      onChange(allFilesIncludingTheNewOnes)
     }
-  };
+  }
 
   const filesForTable = files.map((file) => {
-    const status = 'PENDING';
-    const fileId = file.id || file.lastModified;
-    const showDelete = !file.onAnyReport;
+    const status = 'PENDING'
+    const fileId = file.id || file.lastModified
+    const showDelete = !file.onAnyReport
 
     return {
       ...file,
@@ -95,21 +79,16 @@ const ObjectiveFileUploader = ({
       status: file.status || status,
       id: fileId,
       showDelete,
-    };
-  });
+    }
+  })
 
   return (
     <>
-      <Dropzone
-        handleDrop={handleDrop}
-        onBlur={onBlur}
-        inputName={inputName || id}
-        setErrorMessage={setError}
-      />
+      <Dropzone handleDrop={handleDrop} onBlur={onBlur} inputName={inputName || id} setErrorMessage={setError} />
       <FileTable onFileRemoved={onFileRemoved} files={filesForTable} />
     </>
-  );
-};
+  )
+}
 
 ObjectiveFileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
@@ -117,32 +96,37 @@ ObjectiveFileUploader.propTypes = {
   files: PropTypes.arrayOf(PropTypes.object),
   objective: PropTypes.shape({
     isNew: PropTypes.bool,
-    id: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number,
-    ]),
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     ids: PropTypes.arrayOf(PropTypes.number),
     title: PropTypes.string,
-    topics: PropTypes.arrayOf(PropTypes.shape({
-      label: PropTypes.string,
-      value: PropTypes.number,
-    })),
-    files: PropTypes.arrayOf(PropTypes.shape({
-      originalFileName: PropTypes.string,
-      fileSize: PropTypes.number,
-      status: PropTypes.string,
-      url: PropTypes.shape({
-        url: PropTypes.string,
-      }),
-    })),
+    topics: PropTypes.arrayOf(
+      PropTypes.shape({
+        label: PropTypes.string,
+        value: PropTypes.number,
+      })
+    ),
+    files: PropTypes.arrayOf(
+      PropTypes.shape({
+        originalFileName: PropTypes.string,
+        fileSize: PropTypes.number,
+        status: PropTypes.string,
+        url: PropTypes.shape({
+          url: PropTypes.string,
+        }),
+      })
+    ),
     roles: PropTypes.arrayOf(PropTypes.string),
-    activityReports: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number,
-    })),
-    resources: PropTypes.arrayOf(PropTypes.shape({
-      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      value: PropTypes.string,
-    })),
+    activityReports: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+      })
+    ),
+    resources: PropTypes.arrayOf(
+      PropTypes.shape({
+        key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        value: PropTypes.string,
+      })
+    ),
     status: PropTypes.string,
   }).isRequired,
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
@@ -152,11 +136,11 @@ ObjectiveFileUploader.propTypes = {
   onBlur: PropTypes.func.isRequired,
   setError: PropTypes.func.isRequired,
   reportId: PropTypes.number,
-};
+}
 
 ObjectiveFileUploader.defaultProps = {
   files: [],
   reportId: 0,
-};
+}
 
-export default ObjectiveFileUploader;
+export default ObjectiveFileUploader

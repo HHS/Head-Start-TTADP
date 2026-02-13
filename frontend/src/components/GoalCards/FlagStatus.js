@@ -1,13 +1,13 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFlag } from '@fortawesome/free-solid-svg-icons';
-import colors from '../../colors';
-import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
-import Tooltip from '../Tooltip';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faFlag } from '@fortawesome/free-solid-svg-icons'
+import colors from '../../colors'
+import { reasonsToMonitor } from '../../pages/ActivityReport/constants'
+import Tooltip from '../Tooltip'
 
 const FlagStatus = ({ reasons, goalNumbers }) => {
-  const reasonsToWatch = reasons.find((t) => reasonsToMonitor.includes(t));
+  const reasonsToWatch = reasons.find((t) => reasonsToMonitor.includes(t))
   if (reasonsToWatch) {
     return (
       <>
@@ -19,19 +19,19 @@ const FlagStatus = ({ reasons, goalNumbers }) => {
           hideUnderline
         />
       </>
-    );
+    )
   }
-  return null;
-};
+  return null
+}
 
 FlagStatus.propTypes = {
   reasons: PropTypes.arrayOf(PropTypes.string),
   goalNumbers: PropTypes.string,
-};
+}
 
 FlagStatus.defaultProps = {
   reasons: [],
   goalNumbers: '',
-};
+}
 
-export default FlagStatus;
+export default FlagStatus

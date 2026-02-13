@@ -2,23 +2,22 @@
 - create a container context
 **/
 .ttahub-goal-cards-header {
-    container: ttahub-goal-cards-header / inline-size;
+  container: ttahub-goal-cards-header / inline-size;
 }
 
-
 .ttahub-goal-cards-header--sort-and-pagination {
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
 }
 
 /**
-** first min-width breakpoint, the entire contents is now aligned horizontally
-*/
+ ** first min-width breakpoint, the entire contents is now aligned horizontally
+ */
 @container ttahub-goal-cards-header (min-width: 740px) {
-    .ttahub-goal-cards-header--sort-and-pagination {
-        align-items: center;
-        flex-direction: row;
-        justify-content: space-between;
-    }
+  .ttahub-goal-cards-header--sort-and-pagination {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
 }

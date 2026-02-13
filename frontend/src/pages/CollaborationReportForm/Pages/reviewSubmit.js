@@ -1,12 +1,12 @@
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
-import { Alert } from '@trussworks/react-uswds';
-import { REPORT_STATUSES } from '@ttahub/common';
-import formPages from './pages';
-import Review from './components/Review';
-import Container from '../../../components/Container';
-import UserContext from '../../../UserContext';
-import { draftValuesPropType } from './components/constants';
+import React, { useContext } from 'react'
+import PropTypes from 'prop-types'
+import { Alert } from '@trussworks/react-uswds'
+import { REPORT_STATUSES } from '@ttahub/common'
+import formPages from './pages'
+import Review from './components/Review'
+import Container from '../../../components/Container'
+import UserContext from '../../../UserContext'
+import { draftValuesPropType } from './components/constants'
 
 const ReviewSubmit = ({
   onReview,
@@ -21,17 +21,9 @@ const ReviewSubmit = ({
   onSubmit,
   draftValues,
 }) => {
-  const {
-    calculatedStatus,
-    submissionStatus,
-    approvers,
-    submittedAt,
-    author,
-    userId,
-    collabReportSpecialists,
-  } = formData;
+  const { calculatedStatus, submissionStatus, approvers, submittedAt, author, userId, collabReportSpecialists } = formData
 
-  const { user } = useContext(UserContext);
+  const { user } = useContext(UserContext)
 
   // The logic for redirecting users has been hoisted all the way up the
   // fetch at the top level CollaborationForm/index.js file
@@ -41,16 +33,16 @@ const ReviewSubmit = ({
   // the report has been approved
 
   // store some values for readability
-  const isCreator = userId === user.id;
+  const isCreator = userId === user.id
   // eslint-disable-next-line max-len
-  const isCollaborator = collabReportSpecialists?.some(({ specialistId }) => user.id === specialistId);
-  const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
-  const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
-  const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
-  const isApprover = approvers && approvers.some((a) => a.user.id === user.id);
+  const isCollaborator = collabReportSpecialists?.some(({ specialistId }) => user.id === specialistId)
+  const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED
+  const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED
+  const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+  const isApprover = approvers && approvers.some((a) => a.user.id === user.id)
 
-  const pendingOtherApprovals = (isNeedsAction || isSubmitted) && !isPendingApprover;
-  const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
+  const pendingOtherApprovals = (isNeedsAction || isSubmitted) && !isPendingApprover
+  const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0
 
   return (
     <>
@@ -86,18 +78,17 @@ const ReviewSubmit = ({
           pendingApprovalCount={pendingApprovalCount}
           isCollaborator={isCollaborator}
         />
-
       </Container>
     </>
-  );
-};
+  )
+}
 
 ReviewSubmit.propTypes = {
   availableApprovers: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
       name: PropTypes.string,
-    }),
+    })
   ).isRequired,
   onReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
@@ -105,9 +96,11 @@ ReviewSubmit.propTypes = {
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     userId: PropTypes.number,
-    collabReportSpecialists: PropTypes.arrayOf(PropTypes.shape({
-      specialistId: PropTypes.number,
-    })).isRequired,
+    collabReportSpecialists: PropTypes.arrayOf(
+      PropTypes.shape({
+        specialistId: PropTypes.number,
+      })
+    ).isRequired,
     additionalNotes: PropTypes.string,
     calculatedStatus: PropTypes.string,
     submissionStatus: PropTypes.string,
@@ -115,7 +108,7 @@ ReviewSubmit.propTypes = {
     approvers: PropTypes.arrayOf(
       PropTypes.shape({
         status: PropTypes.string,
-      }),
+      })
     ),
     author: PropTypes.shape({
       name: PropTypes.string,
@@ -130,63 +123,60 @@ ReviewSubmit.propTypes = {
       id: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
       content: PropTypes.node.isRequired,
-    }),
+    })
   ).isRequired,
   onSaveForm: PropTypes.func.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   draftValues: draftValuesPropType.isRequired,
-};
+}
 
 ReviewSubmit.defaultProps = {
   error: '',
-};
+}
 
 const reviewPage = {
   position: 4,
   review: true,
   label: 'Review and submit',
   path: 'review',
-  render:
-    (
-      formData,
-      onFormSubmit,
-      additionalData,
-      onReview,
-      isApprover,
-      isPendingApprover,
-      onSave,
-      navigatorPages,
-      reportCreator,
-      lastSaveTime,
-      onUpdatePage,
-      onSaveDraft,
-      draftValues,
-    ) => (
-      <ReviewSubmit
-        availableApprovers={additionalData.approvers}
-        onSubmit={onFormSubmit}
-        onSaveForm={onSave}
-        onSaveDraft={onSaveDraft}
-        draftValues={draftValues}
-        onUpdatePage={onUpdatePage}
-        onReview={onReview}
-        isApprover={isApprover}
-        isPendingApprover={isPendingApprover}
-        lastSaveTime={lastSaveTime}
-        reviewItems={
-          formPages.map((p) => ({
-            id: p.path,
-            title: p.label,
-            content: p.reviewSection(),
-          }))
-        }
-        formData={formData}
-        pages={navigatorPages}
-        reportCreator={reportCreator}
-      />
-    ),
-};
+  render: (
+    formData,
+    onFormSubmit,
+    additionalData,
+    onReview,
+    isApprover,
+    isPendingApprover,
+    onSave,
+    navigatorPages,
+    reportCreator,
+    lastSaveTime,
+    onUpdatePage,
+    onSaveDraft,
+    draftValues
+  ) => (
+    <ReviewSubmit
+      availableApprovers={additionalData.approvers}
+      onSubmit={onFormSubmit}
+      onSaveForm={onSave}
+      onSaveDraft={onSaveDraft}
+      draftValues={draftValues}
+      onUpdatePage={onUpdatePage}
+      onReview={onReview}
+      isApprover={isApprover}
+      isPendingApprover={isPendingApprover}
+      lastSaveTime={lastSaveTime}
+      reviewItems={formPages.map((p) => ({
+        id: p.path,
+        title: p.label,
+        content: p.reviewSection(),
+      }))}
+      formData={formData}
+      pages={navigatorPages}
+      reportCreator={reportCreator}
+    />
+  ),
+}
 
-export { ReviewSubmit };
-export default reviewPage;
+export { ReviewSubmit }
+export default reviewPage

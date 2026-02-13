@@ -1,34 +1,34 @@
-import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
-import VBarGraph from './VBarGraph';
-import withWidgetData from './withWidgetData';
-import WidgetContainer from '../components/WidgetContainer';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import useMediaCapture from '../hooks/useMediaCapture';
-import { NOOP } from '../Constants';
+import React, { useRef, useState } from 'react'
+import PropTypes from 'prop-types'
+import VBarGraph from './VBarGraph'
+import withWidgetData from './withWidgetData'
+import WidgetContainer from '../components/WidgetContainer'
+import HorizontalTableWidget from './HorizontalTableWidget'
+import useMediaCapture from '../hooks/useMediaCapture'
+import { NOOP } from '../Constants'
 
-const FIRST_HEADING = 'National Center';
-const HEADINGS = ['Hours'];
+const FIRST_HEADING = 'National Center'
+const HEADINGS = ['Hours']
 
-const TITLE = 'Hours of training by National Center';
+const TITLE = 'Hours of training by National Center'
 
-const TRHoursWidget = ({
-  data,
-}) => {
-  const widgetRef = useRef(null);
-  const [showTabularData, setShowTabularData] = useState(false);
-  const capture = useMediaCapture(widgetRef, TITLE);
+const TRHoursWidget = ({ data }) => {
+  const widgetRef = useRef(null)
+  const [showTabularData, setShowTabularData] = useState(false)
+  const capture = useMediaCapture(widgetRef, TITLE)
 
-  const menuItems = [{
-    label: showTabularData ? 'Display graph' : 'Display table',
-    onClick: () => setShowTabularData(!showTabularData),
-  }];
+  const menuItems = [
+    {
+      label: showTabularData ? 'Display graph' : 'Display table',
+      onClick: () => setShowTabularData(!showTabularData),
+    },
+  ]
 
   if (!showTabularData) {
     menuItems.push({
       label: 'Save screenshot',
       onClick: capture,
-    });
+    })
   }
 
   const tabularData = data.map((row, index) => ({
@@ -41,7 +41,7 @@ const TRHoursWidget = ({
         sortKey: 'Hours',
       },
     ],
-  }));
+  }))
 
   return (
     <WidgetContainer
@@ -66,26 +66,23 @@ const TRHoursWidget = ({
           />
         </div>
       ) : (
-        <VBarGraph
-          xAxisLabel="National Center"
-          yAxisLabel="Number of hours"
-          data={data}
-          widgetRef={widgetRef}
-        />
+        <VBarGraph xAxisLabel="National Center" yAxisLabel="Number of hours" data={data} widgetRef={widgetRef} />
       )}
     </WidgetContainer>
-  );
-};
+  )
+}
 
 TRHoursWidget.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    count: PropTypes.number,
-  })),
-};
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      count: PropTypes.number,
+    })
+  ),
+}
 
 TRHoursWidget.defaultProps = {
   data: [],
-};
+}
 
-export default withWidgetData(TRHoursWidget, 'trHoursOfTrainingByNationalCenter');
+export default withWidgetData(TRHoursWidget, 'trHoursOfTrainingByNationalCenter')

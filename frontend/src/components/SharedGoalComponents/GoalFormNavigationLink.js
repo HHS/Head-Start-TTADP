@@ -1,9 +1,9 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import colors from '../../colors';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Link } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import colors from '../../colors'
 
 export default function GoalFormNavigationLink({ recipient, regionId }) {
   return (
@@ -14,7 +14,7 @@ export default function GoalFormNavigationLink({ recipient, regionId }) {
       <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
       <span>Back to RTTAPA</span>
     </Link>
-  );
+  )
 }
 
 GoalFormNavigationLink.propTypes = {
@@ -25,8 +25,8 @@ GoalFormNavigationLink.propTypes = {
       PropTypes.shape({
         id: PropTypes.number,
         numberWithProgramTypes: PropTypes.string,
-      }),
+      })
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
-};
+}

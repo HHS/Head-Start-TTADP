@@ -1,14 +1,7 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import {
-  Button,
-  Modal as TrussWorksModal,
-  ModalHeading,
-  ModalFooter,
-  ButtonGroup,
-  ModalToggleButton,
-} from '@trussworks/react-uswds';
-import './Modal.css';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Button, Modal as TrussWorksModal, ModalHeading, ModalFooter, ButtonGroup, ModalToggleButton } from '@trussworks/react-uswds'
+import './Modal.css'
 
 const ModalWithCancel = ({
   modalRef,
@@ -25,18 +18,18 @@ const ModalWithCancel = ({
   forceAction,
 }) => {
   const handleCancel = (e) => {
-    if (onCancel) onCancel(e);
+    if (onCancel) onCancel(e)
     if (modalRef?.current) {
-      modalRef.current.toggleModal();
+      modalRef.current.toggleModal()
     }
-  };
+  }
 
   const handleOk = (e) => {
-    if (onOk) onOk(e);
+    if (onOk) onOk(e)
     if (modalRef?.current) {
-      modalRef.current.toggleModal();
+      modalRef.current.toggleModal()
     }
-  };
+  }
 
   return (
     <TrussWorksModal
@@ -53,40 +46,25 @@ const ModalWithCancel = ({
         </ModalHeading>
       </div>
 
-      <div>
-        {children}
-      </div>
+      <div>{children}</div>
 
       <ModalFooter>
         <ButtonGroup>
-          <Button
-            className={okButtonCss || 'usa-button usa-button--secondary'}
-            onClick={handleOk}
-            type="button"
-          >
+          <Button className={okButtonCss || 'usa-button usa-button--secondary'} onClick={handleOk} type="button">
             {okButtonText || 'Continue'}
           </Button>
-          <ModalToggleButton
-            className={cancelButtonCss || 'usa-button'}
-            modalRef={modalRef}
-            closer
-            type="button"
-            onClick={handleCancel}
-          >
+          <ModalToggleButton className={cancelButtonCss || 'usa-button'} modalRef={modalRef} closer type="button" onClick={handleCancel}>
             {cancelButtonText || 'Cancel'}
           </ModalToggleButton>
         </ButtonGroup>
       </ModalFooter>
     </TrussWorksModal>
-  );
-};
+  )
+}
 
 ModalWithCancel.propTypes = {
   modalRef: PropTypes.shape({
-    current: PropTypes.oneOfType([
-      PropTypes.instanceOf(Element),
-      PropTypes.instanceOf(HTMLElement),
-    ]),
+    current: PropTypes.oneOfType([PropTypes.instanceOf(Element), PropTypes.instanceOf(HTMLElement)]),
   }),
   modalId: PropTypes.string.isRequired,
   onOk: PropTypes.func,
@@ -99,7 +77,7 @@ ModalWithCancel.propTypes = {
   cancelButtonCss: PropTypes.string,
   isLarge: PropTypes.bool,
   forceAction: PropTypes.bool,
-};
+}
 
 ModalWithCancel.defaultProps = {
   modalRef: null,
@@ -111,6 +89,6 @@ ModalWithCancel.defaultProps = {
   cancelButtonCss: '',
   isLarge: false,
   forceAction: false,
-};
+}
 
-export default ModalWithCancel;
+export default ModalWithCancel
