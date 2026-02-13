@@ -8,7 +8,6 @@ import {
   Fieldset,
   Radio,
   Grid,
-  Textarea,
   TextInput,
   Checkbox,
   Label,
@@ -28,6 +27,7 @@ import Req from '../../../components/Req';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import StateMultiSelect from '../../../components/StateMultiSelect';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { COLLAB_REPORT_REASONS, STATES, COLLAB_REPORT_CONDUCT_METHODS } from '../../../Constants';
 
@@ -57,15 +57,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
 
   const descriptionError = errors?.description?.message;
   const reasonError = errors?.reportReasons?.message;
-
-  const checkForDescription = (el) => {
-    const { value } = el.target;
-    if (!value || value.trim() === '') {
-      setError('description', { type: 'required', message: 'Describe the activity' });
-    } else {
-      clearErrors('description');
-    }
-  };
 
   const checkForReasons = () => {
     const reasons = watch('reportReasons');
@@ -407,22 +398,18 @@ const ActivitySummary = ({ collaborators = [] }) => {
           {' '}
           <Req />
         </Label>
-
-        {descriptionError && (
-        <span className="usa-error-message" role="alert">{descriptionError}</span>
-        )}
-
-        <Textarea
-          id="description"
-          className="height-10 minh-5 smart-hub--text-area__resize-vertical"
-          name="description"
-          defaultValue=""
-          data-testid="description-input"
-          error={!!descriptionError}
-          inputRef={register({ required: 'Describe the activity' })}
-          onBlur={checkForDescription}
-          required
-        />
+        <div className="smart-hub--text-area__resize-vertical margin-top-1">
+          {descriptionError && (
+          <span className="usa-error-message" role="alert">{descriptionError}</span>
+          )}
+          <HookFormRichEditor
+            ariaLabel="Description"
+            name="description"
+            id="description"
+            required
+            errorMessage="Describe the activity"
+          />
+        </div>
       </Fieldset>
     </>
   );
@@ -556,7 +543,9 @@ const ReviewSection = () => {
             ))[0]?.label || 'None selected',
           },
         },
-        { label: 'Activity description', name: 'description', customValue: { description } },
+        {
+          label: 'Activity description', name: 'description', isRichText: true, customValue: { description },
+        },
       ],
     },
   ];
