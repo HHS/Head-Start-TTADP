@@ -118,7 +118,7 @@ export default function RecipientSpotlight({
         <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto" tabIndex={0}>
           <div className="display-flex flex-align-center">
             <div className="display-flex flex-column">
-              <div className="display-flex flex-align-center">
+              <div className="display-flex flex-align-start">
                 {hasIndicators
                   ? <FontAwesomeIcon className="margin-right-1" color={colors.error} icon={faCircleExclamation} style={{ fontSize: '20px' }} />
                   : (

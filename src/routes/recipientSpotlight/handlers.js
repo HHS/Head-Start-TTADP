@@ -22,7 +22,7 @@ getRecipientSpotLight():
 export async function getRecipientSpotLight(req, res) {
   try {
     const {
-      sortBy, direction, offset, limit, parsedGrantId,
+      sortBy, direction, offset, limit, parsedGrantId, mustHaveIndicators,
     } = req.query;
 
     // Parse pagination params to integers
@@ -51,7 +51,6 @@ export async function getRecipientSpotLight(req, res) {
 
     const indicatorsToInclude = extractFilterArray(req.query, 'priorityIndicator', 'in');
     const indicatorsToExclude = extractFilterArray(req.query, 'priorityIndicator', 'nin');
-
     const recipientSpotlightData = await getRecipientSpotlightIndicators(
       scopes,
       sortBy,
@@ -62,6 +61,7 @@ export async function getRecipientSpotLight(req, res) {
       indicatorsToInclude,
       indicatorsToExclude,
       parsedGrantId,
+      mustHaveIndicators,
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);

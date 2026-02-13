@@ -46,6 +46,7 @@ import usePresenceData from '../../hooks/usePresenceData';
 import { getApprovers } from '../../fetchers/activityReports';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import './index.scss';
+import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
@@ -370,7 +371,7 @@ function CollaborationReport({ match, location }) {
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
 
-        // Determine if the current user matches any of the approvers for this activity report.
+        // Determine if the current user matches any of the approvers for this collab report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
         if (isMatchingApprover && isMatchingApprover.length > 0) {
           // This user is an approver on the report.
@@ -526,7 +527,10 @@ function CollaborationReport({ match, location }) {
 
         const currentPageState = hookForm.getValues('pageState');
         const convertedReport = convertReportToFormData(updatedReport);
-        updateFormData({ ...convertedReport, pageState: currentPageState }, true);
+        const allowUpdateForm = shouldUpdateFormData(false);
+        if (allowUpdateForm) {
+          updateFormData({ ...convertedReport, pageState: currentPageState }, true);
+        }
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
