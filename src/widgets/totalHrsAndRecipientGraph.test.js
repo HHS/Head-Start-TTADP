@@ -360,4 +360,82 @@ describe('Total Hrs and Recipient Graph widget', () => {
       ActivityReport.findAll = originalFindAll;
     }
   });
+
+  it('handles reports with null startDate', async () => {
+    // Mock the findAll method to return a report with null startDate
+    const originalFindAll = ActivityReport.findAll;
+    ActivityReport.findAll = jest.fn().mockImplementation(async () => [
+      {
+        id: 99998,
+        startDate: null, // This tests the null startDate code path
+        ttaType: ['training'],
+        duration: 5,
+      },
+      {
+        id: 99997,
+        startDate: new Date('2021-05-15'),
+        ttaType: ['training'],
+        duration: 3,
+      },
+    ]);
+
+    try {
+      const query = { 'region.in': ['177'], 'startDate.win': '2021/05/01-2021/05/31' };
+      const scopes = await filtersToScopes(query);
+      const data = await totalHrsAndRecipientGraph(scopes, query);
+
+      // Should not throw and should only include the report with valid startDate
+      expect(data.length).toBe(3);
+      // The report with null startDate should be skipped
+      const mayEntry = data[2].x.find((x) => x.startsWith('May-'));
+      expect(mayEntry).toBeDefined();
+    } finally {
+      ActivityReport.findAll = originalFindAll;
+    }
+  });
+
+  it('handles query without startDate.win filter', async () => {
+    // Create some reports for this test
+    await createOrUpdate({
+      ...regionOneReport,
+      regionId: 133,
+      startDate: '2021-09-15',
+      duration: 2,
+      ttaType: ['training'],
+    });
+
+    // Query without startDate.win - this tests the branch where dateRange is undefined
+    const query = { 'region.in': ['133'] };
+    const scopes = await filtersToScopes(query);
+    const data = await totalHrsAndRecipientGraph(scopes, query);
+
+    // Should return data without throwing
+    expect(data.length).toBe(3);
+    // When no date range is provided, multipleYrs should be true and useDays should be false
+  });
+
+  it('handles start date only (partial date range)', async () => {
+    // Test case where only startDate is provided (no end date after split)
+    const originalFindAll = ActivityReport.findAll;
+    ActivityReport.findAll = jest.fn().mockImplementation(async () => [
+      {
+        id: 99996,
+        startDate: new Date('2021-08-15'),
+        ttaType: ['training'],
+        duration: 2,
+      },
+    ]);
+
+    try {
+      // Query with a date range that has only start date
+      const query = { 'region.in': ['177'], 'startDate.win': '2021/08/01' };
+      const scopes = await filtersToScopes(query);
+      const data = await totalHrsAndRecipientGraph(scopes, query);
+
+      // Should handle gracefully
+      expect(data.length).toBe(3);
+    } finally {
+      ActivityReport.findAll = originalFindAll;
+    }
+  });
 });

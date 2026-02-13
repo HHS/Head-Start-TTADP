@@ -21,40 +21,25 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 ## Getting Started
 
-- [Tech Stack](./docs/tech-stack.md)
-- [Dev Setup](./docs/guides/dev-setup.md)
-- [Testing](./docs/guides/testing.md)
-- [Infrastructure](./docs/guides/infrastructure.md)
-- [Architecture Decisions](./docs/adr)
-
-### Environment Reference
-
-This application consists of multiple deployed environments:
-
-| Environment | URL                                           
-| :---------- | :--------------------------------------------  
-| prod        | https://ttahub.ohs.acf.hhs.gov                 
-| staging     | https://tta-smarthub-staging.app.cloud.gov/    
-| dev-red     | https://tta-smarthub-dev-red.app.cloud.gov/    
-| dev-blue    | https://tta-smarthub-dev-blue.app.cloud.gov/   
-| dev-green   | https://tta-smarthub-dev-green.app.cloud.gov/  
-| dev-gold    | https://tta-smarthub-dev-gold.app.cloud.gov/   
-| dev-pink    | https://tta-smarthub-dev-pink.app.cloud.gov/   
+- [Tech Stack](./docs/tech-stack.md) — Technology versions
+- [Dev Setup](./docs/guides/dev-setup.md) — Local environment setup (Docker & native)
+- [Infrastructure](./docs/guides/infrastructure.md) — Environments, CI/CD, production ops
+- [Testing](./docs/guides/testing.md) — Running and writing tests
+- [Observability](./docs/guides/observability.md) — Monitoring, logging, analytics
+- [Contributing Guide](./CONTRIBUTING.md) for code style, testing expectations, and PR workflow.
+- [Best Practices](./best_practices.md) — Code style and review standards
+- [AGENTS.md](./AGENTS.md) comprehensive project context
+- [ADRs](./docs/adr) — Architecture Decisions
 
 
-<!-- Links -->
+## Environments
 
-[hhs-main]: https://github.com/HHS/Head-Start-TTADP/tree/main
-[TTAHUB-System-Operations]: https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations
-[circleci-envvar]: https://app.circleci.com/settings/project/github/HHS/Head-Start-TTADP/environment-variables?return-to=https%3A%2F%2Fcircleci.com%2Fdashboard
-[cloudgov]: https://dashboard.fr.cloud.gov/home
-[cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
-[cf-install]: https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
-[cf-run-task]: https://docs.cloudfoundry.org/devguide/using-tasks.html#run-tasks-v7
-[cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
-[hhs-main]: https://github.com/HHS/Head-Start-TTADP/tree/main
-[hhs-prod]: https://github.com/HHS/Head-Start-TTADP/tree/production
-[frontend]: http://localhost:3000
-[backend]: http://localhost:8080
-[API documentation]: http://localhost:5003
-[minio]: http://localhost:3000
+| Environment | URL |
+| :---------- | :-------------------------------------------- |
+| prod        | https://ttahub.ohs.acf.hhs.gov |
+| staging     | https://tta-smarthub-staging.app.cloud.gov/ |
+| dev-red     | https://tta-smarthub-dev-red.app.cloud.gov/ |
+| dev-blue    | https://tta-smarthub-dev-blue.app.cloud.gov/ |
+| dev-green   | https://tta-smarthub-dev-green.app.cloud.gov/ |
+| dev-gold    | https://tta-smarthub-dev-gold.app.cloud.gov/ |
+| dev-pink    | https://tta-smarthub-dev-pink.app.cloud.gov/ |
