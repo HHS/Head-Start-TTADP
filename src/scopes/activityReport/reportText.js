@@ -1,14 +1,14 @@
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 import {
   filterAssociation,
   nextStepsIncludeExclude,
   argsIncludeExclude,
   objectiveTitleAndTtaProvidedIncludeExclude,
   activityReportContextandAdditionalNotesIncludeExclude,
-} from './utils';
+} from './utils'
 
 export function withReportText(searchText) {
-  const search = [`%${searchText.map((st) => st.toLowerCase())}%`];
+  const search = [`%${searchText.map((st) => st.toLowerCase())}%`]
 
   return {
     [Op.or]: [
@@ -17,11 +17,11 @@ export function withReportText(searchText) {
       filterAssociation(objectiveTitleAndTtaProvidedIncludeExclude(true), search, false, 'LIKE'),
       filterAssociation(activityReportContextandAdditionalNotesIncludeExclude(true), search, false, 'LIKE'),
     ],
-  };
+  }
 }
 
 export function withoutReportText(searchText) {
-  const search = [`%${searchText.map((st) => st.toLowerCase())}%`];
+  const search = [`%${searchText.map((st) => st.toLowerCase())}%`]
 
   return {
     [Op.and]: [
@@ -30,5 +30,5 @@ export function withoutReportText(searchText) {
       filterAssociation(objectiveTitleAndTtaProvidedIncludeExclude(false), search, false, 'NOT LIKE'),
       filterAssociation(activityReportContextandAdditionalNotesIncludeExclude(false), search, false, 'NOT LIKE'),
     ],
-  };
+  }
 }

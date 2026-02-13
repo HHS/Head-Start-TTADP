@@ -1,11 +1,12 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         UPDATE "Goals"
         SET "goalTemplateId" = 19017
         WHERE "goalTemplateId" is null AND "id" IN (
@@ -17,13 +18,13 @@ module.exports = {
           WHERE g."goalTemplateId" is null AND gfft."goalTemplateId" = 19017
         );
 
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-    },
-  ),
-};
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+    }),
+}

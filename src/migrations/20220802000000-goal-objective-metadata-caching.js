@@ -18,24 +18,24 @@
  *
  */
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
+        const loggedUser = '0'
         // const transactionId = '';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
+        const sessionSig = __filename
+        const auditDescriptor = 'RUN MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Disable logging while doing mass updates
@@ -44,50 +44,80 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
-        await queryInterface.addColumn('ActivityReportGoals', 'name', {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'ActivityReportGoals',
+          'name',
+          {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('ActivityReportGoals', 'status', {
-          type: Sequelize.STRING,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'ActivityReportGoals',
+          'status',
+          {
+            type: Sequelize.STRING,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('ActivityReportGoals', 'timeframe', {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'ActivityReportGoals',
+          'timeframe',
+          {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('ActivityReportGoals', 'closeSuspendReason', {
-          type: Sequelize.ENUM([
-            'Duplicate goal',
-            'Recipient request',
-            'TTA complete',
-            'Key staff turnover / vacancies',
-            'Recipient is not responding',
-            'Regional Office request',
-          ]),
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'ActivityReportGoals',
+          'closeSuspendReason',
+          {
+            type: Sequelize.ENUM([
+              'Duplicate goal',
+              'Recipient request',
+              'TTA complete',
+              'Key staff turnover / vacancies',
+              'Recipient is not responding',
+              'Regional Office request',
+            ]),
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('ActivityReportGoals', 'closeSuspendContext', {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'ActivityReportGoals',
+          'closeSuspendContext',
+          {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('ActivityReportGoals', 'endDate', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'ActivityReportGoals',
+          'endDate',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
         await queryInterface.sequelize.query(
           `UPDATE ONLY "ActivityReportGoals" arg
@@ -100,23 +130,33 @@ module.exports = {
             "closeSuspendContext" = g."closeSuspendContext"
           FROM "Goals" g
           WHERE arg."goalId" = g.id;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
-        await queryInterface.addColumn('ActivityReportObjectives', 'title', {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'ActivityReportObjectives',
+          'title',
+          {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('ActivityReportObjectives', 'status', {
-          type: Sequelize.STRING,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'ActivityReportObjectives',
+          'status',
+          {
+            type: Sequelize.STRING,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
         await queryInterface.sequelize.query(
           ` UPDATE ONLY "ActivityReportObjectives" aro
@@ -125,11 +165,11 @@ module.exports = {
             "status" = o.status
           FROM "Objectives" o
           WHERE aro."objectiveId" = o.id;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -138,11 +178,11 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -150,53 +190,57 @@ module.exports = {
           fields: ['activityReportObjectiveId', 'fileId'],
           type: 'unique',
           transaction,
-        });
+        })
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
-        await queryInterface.createTable('ActivityReportObjectiveResources', {
-          id: {
-            allowNull: false,
-            autoIncrement: true,
-            primaryKey: true,
-            type: Sequelize.INTEGER,
-          },
-          activityReportObjectiveId: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            references: {
-              model: {
-                tableName: 'ActivityReportObjectives',
-              },
-              key: 'id',
+        await queryInterface.createTable(
+          'ActivityReportObjectiveResources',
+          {
+            id: {
+              allowNull: false,
+              autoIncrement: true,
+              primaryKey: true,
+              type: Sequelize.INTEGER,
             },
-            onUpdate: 'CASCADE',
-            onDelete: 'CASCADE',
+            activityReportObjectiveId: {
+              type: Sequelize.INTEGER,
+              allowNull: false,
+              references: {
+                model: {
+                  tableName: 'ActivityReportObjectives',
+                },
+                key: 'id',
+              },
+              onUpdate: 'CASCADE',
+              onDelete: 'CASCADE',
+            },
+            userProvidedUrl: {
+              type: Sequelize.STRING,
+              allowNull: false,
+              onUpdate: 'CASCADE',
+              onDelete: 'CASCADE',
+            },
+            createdAt: {
+              allowNull: false,
+              type: Sequelize.DATE,
+            },
+            updatedAt: {
+              allowNull: false,
+              type: Sequelize.DATE,
+            },
           },
-          userProvidedUrl: {
-            type: Sequelize.STRING,
-            allowNull: false,
-            onUpdate: 'CASCADE',
-            onDelete: 'CASCADE',
-          },
-          createdAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-          },
-          updatedAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-          },
-        }, { transaction });
+          { transaction }
+        )
 
         await queryInterface.addConstraint('ActivityReportObjectiveResources', {
           fields: ['activityReportObjectiveId', 'userProvidedUrl'],
           type: 'unique',
           transaction,
-        });
+        })
 
         await queryInterface.sequelize.query(
           `INSERT INTO "ActivityReportObjectiveResources"
@@ -214,60 +258,64 @@ module.exports = {
           FROM "ActivityReportObjectives" aro
           JOIN "ObjectiveResources" r
           ON aro."objectiveId" = r."objectiveId";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
-        await queryInterface.createTable('ActivityReportObjectiveRoles', {
-          id: {
-            allowNull: false,
-            autoIncrement: true,
-            primaryKey: true,
-            type: Sequelize.INTEGER,
-          },
-          activityReportObjectiveId: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            references: {
-              model: {
-                tableName: 'ActivityReportObjectives',
-              },
-              key: 'id',
+        await queryInterface.createTable(
+          'ActivityReportObjectiveRoles',
+          {
+            id: {
+              allowNull: false,
+              autoIncrement: true,
+              primaryKey: true,
+              type: Sequelize.INTEGER,
             },
-            onUpdate: 'CASCADE',
-            onDelete: 'CASCADE',
-          },
-          roleId: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            references: {
-              model: {
-                tableName: 'Roles',
+            activityReportObjectiveId: {
+              type: Sequelize.INTEGER,
+              allowNull: false,
+              references: {
+                model: {
+                  tableName: 'ActivityReportObjectives',
+                },
+                key: 'id',
               },
-              key: 'id',
+              onUpdate: 'CASCADE',
+              onDelete: 'CASCADE',
             },
-            onUpdate: 'CASCADE',
-            onDelete: 'CASCADE',
+            roleId: {
+              type: Sequelize.INTEGER,
+              allowNull: false,
+              references: {
+                model: {
+                  tableName: 'Roles',
+                },
+                key: 'id',
+              },
+              onUpdate: 'CASCADE',
+              onDelete: 'CASCADE',
+            },
+            createdAt: {
+              allowNull: false,
+              type: Sequelize.DATE,
+            },
+            updatedAt: {
+              allowNull: false,
+              type: Sequelize.DATE,
+            },
           },
-          createdAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-          },
-          updatedAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-          },
-        }, { transaction });
+          { transaction }
+        )
 
         await queryInterface.addConstraint('"ActivityReportObjectiveRoles"', {
           fields: ['activityReportObjectiveId', 'roleId'],
           type: 'unique',
           transaction,
-        });
+        })
 
         await queryInterface.sequelize.query(
           `INSERT INTO "ActivityReportObjectiveRoles"
@@ -285,60 +333,64 @@ module.exports = {
           FROM "ActivityReportObjectives" aro
           JOIN "ObjectiveRoles" r
           ON aro."objectiveId" = r."objectiveId";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
-        await queryInterface.createTable('ActivityReportObjectiveTopics', {
-          id: {
-            allowNull: false,
-            autoIncrement: true,
-            primaryKey: true,
-            type: Sequelize.INTEGER,
-          },
-          activityReportObjectiveId: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            references: {
-              model: {
-                tableName: 'ActivityReportObjectives',
-              },
-              key: 'id',
+        await queryInterface.createTable(
+          'ActivityReportObjectiveTopics',
+          {
+            id: {
+              allowNull: false,
+              autoIncrement: true,
+              primaryKey: true,
+              type: Sequelize.INTEGER,
             },
-            onUpdate: 'CASCADE',
-            onDelete: 'CASCADE',
-          },
-          topicId: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            references: {
-              model: {
-                tableName: 'Topics',
+            activityReportObjectiveId: {
+              type: Sequelize.INTEGER,
+              allowNull: false,
+              references: {
+                model: {
+                  tableName: 'ActivityReportObjectives',
+                },
+                key: 'id',
               },
-              key: 'id',
+              onUpdate: 'CASCADE',
+              onDelete: 'CASCADE',
             },
-            onUpdate: 'CASCADE',
-            onDelete: 'CASCADE',
+            topicId: {
+              type: Sequelize.INTEGER,
+              allowNull: false,
+              references: {
+                model: {
+                  tableName: 'Topics',
+                },
+                key: 'id',
+              },
+              onUpdate: 'CASCADE',
+              onDelete: 'CASCADE',
+            },
+            createdAt: {
+              allowNull: false,
+              type: Sequelize.DATE,
+            },
+            updatedAt: {
+              allowNull: false,
+              type: Sequelize.DATE,
+            },
           },
-          createdAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-          },
-          updatedAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-          },
-        }, { transaction });
+          { transaction }
+        )
 
         await queryInterface.addConstraint('"ActivityReportObjectiveTopics"', {
           fields: ['activityReportObjectiveId', 'topicId'],
           type: 'unique',
           transaction,
-        });
+        })
 
         await queryInterface.sequelize.query(
           `INSERT INTO "ActivityReportObjectiveTopics"
@@ -356,44 +408,42 @@ module.exports = {
           FROM "ActivityReportObjectives" aro
           JOIN "ObjectiveTopics" ot
           ON aro."objectiveId" = ot."objectiveId";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+    }),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
+        const loggedUser = '0'
         // const transactionId = '';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
+        const sessionSig = __filename
+        const auditDescriptor = 'RUN MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
-        await queryInterface.removeColumn('ActivityReportGoals', 'status', { transaction });
-        await queryInterface.removeColumn('ActivityReportObjectives', 'status', { transaction });
-        await queryInterface.dropTable('ActivityReportObjectiveResources', { transaction });
-        await queryInterface.dropTable('ActivityReportObjectiveRoles', { transaction });
-        await queryInterface.dropTable('ActivityReportObjectiveTopics', { transaction });
+        await queryInterface.removeColumn('ActivityReportGoals', 'status', { transaction })
+        await queryInterface.removeColumn('ActivityReportObjectives', 'status', { transaction })
+        await queryInterface.dropTable('ActivityReportObjectiveResources', { transaction })
+        await queryInterface.dropTable('ActivityReportObjectiveRoles', { transaction })
+        await queryInterface.dropTable('ActivityReportObjectiveTopics', { transaction })
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
-};
+    }),
+}

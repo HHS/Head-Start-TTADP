@@ -1,8 +1,8 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
 
 export function myReportsScopes(userId, roles, exclude) {
-  let reportSql = '';
+  let reportSql = ''
   if (roles.includes('Creator')) {
     reportSql += `
       SELECT DISTINCT "ActivityReportGoals"."goalId"
@@ -10,7 +10,7 @@ export function myReportsScopes(userId, roles, exclude) {
       INNER JOIN "ActivityReports"
       ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
       WHERE "ActivityReports"."userId" = '${userId}'
-    `;
+    `
   }
 
   if (roles.includes('Collaborator')) {
@@ -23,7 +23,7 @@ export function myReportsScopes(userId, roles, exclude) {
       INNER JOIN "ActivityReportCollaborators"
       ON "ActivityReportCollaborators"."activityReportId" = "ActivityReports"."id"
       WHERE "ActivityReportCollaborators"."userId" = '${userId}'
-    `;
+    `
   }
 
   if (roles.includes('Approver')) {
@@ -36,22 +36,20 @@ export function myReportsScopes(userId, roles, exclude) {
       INNER JOIN "ActivityReportApprovers"
       ON "ActivityReports"."id" = "ActivityReportApprovers"."activityReportId"
       WHERE "ActivityReportApprovers"."userId" = '${userId}'
-    `;
+    `
   }
 
-  reportSql = `"Goal"."id" ${exclude ? ' NOT ' : ''} IN (${reportSql})`;
+  reportSql = `"Goal"."id" ${exclude ? ' NOT ' : ''} IN (${reportSql})`
 
   return {
-    [Op.or]: [
-      sequelize.literal(reportSql),
-    ],
-  };
+    [Op.or]: [sequelize.literal(reportSql)],
+  }
 }
 
 export function withMyReports(roles, _options, userId) {
-  return myReportsScopes(userId, roles, false);
+  return myReportsScopes(userId, roles, false)
 }
 
 export function withoutMyReports(roles, _options, userId) {
-  return myReportsScopes(userId, roles, true);
+  return myReportsScopes(userId, roles, true)
 }

@@ -1,22 +1,22 @@
-import faker from '@faker-js/faker';
-import { Model } from 'sequelize';
-import db, { User, ZALUser } from '..';
-import { auditLogger } from '../../logger';
-import { generateAuditModel } from '../auditModelGenerator';
+import faker from '@faker-js/faker'
+import { Model } from 'sequelize'
+import db, { User, ZALUser } from '..'
+import { auditLogger } from '../../logger'
+import { generateAuditModel } from '../auditModelGenerator'
 
 describe('Audit System', () => {
-  let t;
-  let transactionVariables;
+  let t
+  let transactionVariables
 
   beforeEach(async () => {
-    t = await db.sequelize.transaction();
+    t = await db.sequelize.transaction()
     transactionVariables = {
       loggedUser: `${faker.datatype.number()}`,
       transactionId: faker.datatype.uuid(),
       sessionSig: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, ''),
       auditDescriptor: 'Audit System Test',
       impersonationUserId: '3',
-    };
+    }
 
     const query = `SELECT
       set_config('audit.loggedUser', '${transactionVariables.loggedUser}', TRUE) as "loggedUser",
@@ -24,24 +24,21 @@ describe('Audit System', () => {
       set_config('audit.sessionSig', '${transactionVariables.sessionSig}', TRUE) as "sessionSig",
       set_config('audit.auditDescriptor', '${transactionVariables.auditDescriptor}', TRUE) as "auditDescriptor",
       set_config('audit.impersonationUserId', '${transactionVariables.impersonationUserId}', TRUE) as "impersonationUserId";
-      `;
+      `
 
-    await db.sequelize.queryInterface.sequelize.query(
-      query,
-      { transaction: t },
-    );
-  });
+    await db.sequelize.queryInterface.sequelize.query(query, { transaction: t })
+  })
 
   afterEach(async () => {
     if (t) {
       // await t.commit();
-      await t.rollback();
+      await t.rollback()
     }
-  });
+  })
 
   afterAll(async () => {
-    await db.sequelize.close();
-  });
+    await db.sequelize.close()
+  })
 
   describe('General Audit System', () => {
     it('Transaction variables', async () => {
@@ -51,18 +48,15 @@ describe('Audit System', () => {
       current_setting('audit.sessionSig', true) as "sessionSig",
       current_setting('audit.auditDescriptor', true) as "auditDescriptor",
       current_setting('audit.impersonationUserId', true) as "impersonationUserId";
-      `;
+      `
 
-      const values = await db.sequelize.queryInterface.sequelize.query(
-        query,
-        {
-          type: db.sequelize.QueryTypes.SELECT,
-          transaction: t,
-        },
-      );
+      const values = await db.sequelize.queryInterface.sequelize.query(query, {
+        type: db.sequelize.QueryTypes.SELECT,
+        transaction: t,
+      })
 
-      expect(values[0]).toEqual(transactionVariables);
-    });
+      expect(values[0]).toEqual(transactionVariables)
+    })
 
     describe('Automatic Audit New Tables', () => {
       it('Audit Triggers Automatic added to New Tables', async () => {
@@ -87,17 +81,17 @@ describe('Audit System', () => {
             createdAt: false,
             updatedAt: false,
             transaction: t,
-          },
-        );
+          }
+        )
 
         try {
-          await Test.sync({ force: true, alter: true, transaction: t });
+          await Test.sync({ force: true, alter: true, transaction: t })
         } catch (err) {
-          auditLogger.error(err);
-          throw (err);
+          auditLogger.error(err)
+          throw err
         }
 
-        let data;
+        let data
         try {
           data = await db.sequelize.queryInterface.sequelize.query(
             `SELECT
@@ -108,25 +102,27 @@ describe('Audit System', () => {
             {
               type: db.sequelize.QueryTypes.SELECT,
               transaction: t,
-            },
-          );
+            }
+          )
         } catch (err) {
-          auditLogger.error(err);
-          throw (err);
+          auditLogger.error(err)
+          throw err
         }
 
-        expect(data.sort((a, b) => a.table_name.localeCompare(b.table_name)))
-          .toEqual([{
+        expect(data.sort((a, b) => a.table_name.localeCompare(b.table_name))).toEqual([
+          {
             table_catalog: 'ttasmarthub',
             table_name: 'Tests',
-          }, {
+          },
+          {
             table_catalog: 'ttasmarthub',
             table_name: 'ZALTests',
-          }]);
+          },
+        ])
 
         // Postgres information_schema.triggers table does not include any triggers on truncate so
         // to find them the following simulates the same data including all the triggers.
-        let triggers;
+        let triggers
         try {
           triggers = await db.sequelize.queryInterface.sequelize.query(
             `SELECT
@@ -149,34 +145,39 @@ describe('Audit System', () => {
             {
               type: db.sequelize.QueryTypes.SELECT,
               transaction: t,
-            },
-          );
+            }
+          )
         } catch (err) {
-          auditLogger.error(err);
-          throw (err);
+          auditLogger.error(err)
+          throw err
         }
 
-        triggers.sort();
+        triggers.sort()
 
-        expect(triggers)
-          .toEqual([{
+        expect(triggers).toEqual([
+          {
             name: 'ZALNoDeleteTTests',
             action: 'DELETE',
-          }, {
+          },
+          {
             name: 'ZALNoTruncateTTests',
             action: 'TRUNCATE',
-          }, {
+          },
+          {
             name: 'ZALNoUpdateTTests',
             action: 'UPDATE',
-          }, {
+          },
+          {
             name: 'ZALTTests',
             action: 'INSERT DELETE UPDATE',
-          }, {
+          },
+          {
             name: 'ZALTruncateTTests',
             action: 'TRUNCATE',
-          }]);
+          },
+        ])
 
-        let routines;
+        let routines
         try {
           routines = await db.sequelize.queryInterface.sequelize.query(
             `SELECT
@@ -187,19 +188,19 @@ describe('Audit System', () => {
             {
               type: db.sequelize.QueryTypes.SELECT,
               transaction: t,
-            },
-          );
+            }
+          )
         } catch (err) {
-          auditLogger.error(err);
-          throw (err);
+          auditLogger.error(err)
+          throw err
         }
 
-        const routineNames = routines.map((routine) => routine.name);
-        expect(routineNames).toContain('ZALFTests');
-        expect(routineNames).toContain('ZALNoDeleteFTests');
-        expect(routineNames).toContain('ZALNoTruncateFTests');
-        expect(routineNames).toContain('ZALNoUpdateFTests');
-        expect(routineNames).toContain('ZALTruncateFTests');
+        const routineNames = routines.map((routine) => routine.name)
+        expect(routineNames).toContain('ZALFTests')
+        expect(routineNames).toContain('ZALNoDeleteFTests')
+        expect(routineNames).toContain('ZALNoTruncateFTests')
+        expect(routineNames).toContain('ZALNoUpdateFTests')
+        expect(routineNames).toContain('ZALTruncateFTests')
 
         const hooks = [
           'beforeBulkCreate',
@@ -211,44 +212,40 @@ describe('Audit System', () => {
           'beforeUpdate',
           'beforeSave',
           'beforeUpsert',
-        ];
-        hooks.map((hook) => expect(db.sequelize.hasHook(hook)).toEqual(true));
+        ]
+        hooks.map((hook) => expect(db.sequelize.hasHook(hook)).toEqual(true))
 
-        const ZALTest = generateAuditModel(db.sequelize, Test);
+        const ZALTest = generateAuditModel(db.sequelize, Test)
 
-        let addTest;
+        let addTest
         try {
-          addTest = await Test.create(
-            { value: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, '') },
-            { transaction: t },
-          );
+          addTest = await Test.create({ value: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, '') }, { transaction: t })
         } catch (err) {
-          auditLogger.error(err);
-          throw (err);
+          auditLogger.error(err)
+          throw err
         }
 
-        let auditTest;
+        let auditTest
         try {
           auditTest = await ZALTest.findAll({
             where: { data_id: addTest.id },
             transaction: t,
-          });
+          })
         } catch (err) {
-          auditLogger.error(err);
-          throw (err);
+          auditLogger.error(err)
+          throw err
         }
 
         expect({
           id: auditTest[0].data_id,
           value: auditTest[0].new_row_data.value,
-        })
-          .toEqual(addTest.dataValues);
+        }).toEqual(addTest.dataValues)
 
         const updateTo = {
           id: addTest.id,
           oldValue: addTest.value,
           newValue: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, ''),
-        };
+        }
 
         try {
           await Test.update(
@@ -256,113 +253,108 @@ describe('Audit System', () => {
             {
               where: { id: addTest.id },
               transaction: t,
-            },
-          );
+            }
+          )
         } catch (err) {
-          auditLogger.error(err);
-          throw (err);
+          auditLogger.error(err)
+          throw err
         }
 
-        let auditTestUpdate;
+        let auditTestUpdate
         try {
           auditTestUpdate = await ZALTest.findAll({
             where: { data_id: addTest.id, dml_type: 'UPDATE' },
             transaction: t,
-          });
+          })
         } catch (err) {
-          auditLogger.error(err);
-          throw (err);
+          auditLogger.error(err)
+          throw err
         }
 
         expect({
           id: auditTestUpdate[0].data_id,
           oldValue: auditTestUpdate[0].old_row_data.value,
           newValue: auditTestUpdate[0].new_row_data.value,
-        })
-          .toEqual(updateTo);
+        }).toEqual(updateTo)
 
         try {
-          await Test.destroy(
-            {
-              where: { id: addTest.id },
-              transaction: t,
-            },
-          );
+          await Test.destroy({
+            where: { id: addTest.id },
+            transaction: t,
+          })
         } catch (err) {
-          auditLogger.error(err);
-          throw (err);
+          auditLogger.error(err)
+          throw err
         }
 
         const auditTestDestroy = await ZALTest.findAll({
           where: { data_id: addTest.id, dml_type: 'DELETE' },
           transaction: t,
-        });
+        })
 
         expect({
           id: auditTestDestroy[0].data_id,
           oldValue: auditTestDestroy[0].old_row_data.value,
+        }).toEqual({
+          id: updateTo.id,
+          oldValue: updateTo.newValue,
         })
-          .toEqual({
-            id: updateTo.id,
-            oldValue: updateTo.newValue,
-          });
 
-        Test.drop().catch((err) => auditLogger.error(err));
-      });
-    });
-  });
+        Test.drop().catch((err) => auditLogger.error(err))
+      })
+    })
+  })
 
   describe('audit user model', () => {
-    let addedUser;
+    let addedUser
 
     beforeEach(async () => {
-      addedUser = await User.create({
-        name: faker.name.findName(),
-        email: faker.internet.exampleEmail(),
-        hsesUserId: faker.datatype.number(),
-        hsesUsername: faker.internet.userName(),
-        lastLogin: new Date(),
-      }, { transaction: t });
-    });
+      addedUser = await User.create(
+        {
+          name: faker.name.findName(),
+          email: faker.internet.exampleEmail(),
+          hsesUserId: faker.datatype.number(),
+          hsesUsername: faker.internet.userName(),
+          lastLogin: new Date(),
+        },
+        { transaction: t }
+      )
+    })
 
     it('Added user in audit record', async () => {
       const auditUsers = await ZALUser.findAll({
         where: { data_id: addedUser.id },
         transaction: t,
-      });
+      })
 
-      expect(auditUsers[0].dml_type).toEqual('INSERT');
+      expect(auditUsers[0].dml_type).toEqual('INSERT')
 
       expect({
         id: parseInt(auditUsers[0].data_id, 10),
         name: auditUsers[0].new_row_data.name,
+      }).toEqual({
+        id: addedUser.id,
+        name: addedUser.name,
       })
-        .toEqual({
-          id: addedUser.id,
-          name: addedUser.name,
-        });
-    });
+    })
 
     it('Modified users in audit record', async () => {
       const updateData = {
         name: faker.name.findName(),
         email: faker.internet.exampleEmail(),
         hsesUsername: faker.internet.userName(),
-      };
+      }
 
-      await User.update(
-        updateData,
-        {
-          where: { id: addedUser.id },
-          transaction: t,
-          individualHooks: true,
-        },
-      );
+      await User.update(updateData, {
+        where: { id: addedUser.id },
+        transaction: t,
+        individualHooks: true,
+      })
 
       const auditUsers = await ZALUser.findAll({
         where: { data_id: addedUser.id, dml_type: 'UPDATE' },
         transaction: t,
-      });
+      })
 
       expect({
         id: parseInt(auditUsers[0].data_id, 10),
@@ -372,39 +364,35 @@ describe('Audit System', () => {
         newEmail: auditUsers[0].new_row_data.email,
         oldUsername: auditUsers[0].old_row_data.hsesUsername,
         newUsername: auditUsers[0].new_row_data.hsesUsername,
+      }).toEqual({
+        id: addedUser.id,
+        oldName: addedUser.name,
+        newName: updateData.name,
+        oldEmail: addedUser.email,
+        newEmail: updateData.email,
+        oldUsername: addedUser.hsesUsername,
+        newUsername: updateData.hsesUsername,
       })
-        .toEqual({
-          id: addedUser.id,
-          oldName: addedUser.name,
-          newName: updateData.name,
-          oldEmail: addedUser.email,
-          newEmail: updateData.email,
-          oldUsername: addedUser.hsesUsername,
-          newUsername: updateData.hsesUsername,
-        });
-    });
+    })
 
     it('Deleted users in audit record', async () => {
-      await User.destroy(
-        {
-          where: { id: addedUser.id },
-          transaction: t,
-        },
-      );
+      await User.destroy({
+        where: { id: addedUser.id },
+        transaction: t,
+      })
 
       const auditUsers = await ZALUser.findAll({
         where: { data_id: addedUser.id, dml_type: 'DELETE' },
         transaction: t,
-      });
+      })
 
       expect({
         id: parseInt(auditUsers[0].data_id, 10),
         name: auditUsers[0].old_row_data.name,
+      }).toEqual({
+        id: addedUser.id,
+        name: addedUser.name,
       })
-        .toEqual({
-          id: addedUser.id,
-          name: addedUser.name,
-        });
-    });
-  });
-});
+    })
+  })
+})

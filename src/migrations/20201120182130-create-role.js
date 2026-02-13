@@ -22,9 +22,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
-    });
+    })
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('Roles');
+    await queryInterface.dropTable('Roles')
   },
-};
+}

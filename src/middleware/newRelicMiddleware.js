@@ -1,11 +1,9 @@
-import { isTestingOrCI } from './testingOnlyMiddleware';
+import { isTestingOrCI } from './testingOnlyMiddleware'
 // New Relic's automatic transaction naming doesn't always produce
 // desired results. These middleware functions were created for cases
 // where we want to separate routes that were automatically grouped.
 
-const nr = isTestingOrCI()
-  ? { setTransactionName: () => {} }
-  : require('newrelic');
+const nr = isTestingOrCI() ? { setTransactionName: () => {} } : require('newrelic')
 
 /**
  * Set transaction name by request method, baseUrl, and asterisk
@@ -17,8 +15,8 @@ const nr = isTestingOrCI()
  * @param {*} next - call next middleware
  */
 export function nameTransactionByBase(req, res, next) {
-  nr.setTransactionName(`${req.method} ${req.baseUrl}/*`);
-  next();
+  nr.setTransactionName(`${req.method} ${req.baseUrl}/*`)
+  next()
 }
 
 /**
@@ -32,6 +30,6 @@ export function nameTransactionByBase(req, res, next) {
  * @param {*} next - call next middleware
  */
 export function nameTransactionByPath(req, res, next) {
-  nr.setTransactionName(`${req.method} ${req.baseUrl}${req.path}`);
-  next();
+  nr.setTransactionName(`${req.method} ${req.baseUrl}${req.path}`)
+  next()
 }

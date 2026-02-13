@@ -1,9 +1,9 @@
-import { Redis } from 'ioredis';
-import { generateRedisConfig } from './queue';
-import { auditLogger } from '../logger';
+import { Redis } from 'ioredis'
+import { generateRedisConfig } from './queue'
+import { auditLogger } from '../logger'
 
 interface CacheOptions {
-  EX?: number; // time in seconds
+  EX?: number // time in seconds
 }
 
 /**
@@ -20,56 +20,53 @@ export default async function getCachedResponse(
   outputCallback: ((foo: string) => string) | JSON['parse'] = (foo: string) => foo,
   options: CacheOptions = {
     EX: 600,
-  },
+  }
 ): Promise<string | null> {
-  const {
-    uri: redisUrl,
-    tlsEnabled,
-  } = generateRedisConfig();
+  const { uri: redisUrl, tlsEnabled } = generateRedisConfig()
 
   // you can set ignore cache in your .env file to ignore the cache
   // for debugging and testing purposes
-  const ignoreCache = process.env.IGNORE_CACHE === 'true';
+  const ignoreCache = process.env.IGNORE_CACHE === 'true'
 
   if (ignoreCache) {
-    auditLogger.info(`Ignoring cache for ${key}`);
+    auditLogger.info(`Ignoring cache for ${key}`)
   }
 
   // we create a fake redis client because we don't want to fail the request if redis is down
   // or if we can't connect to it, or whatever else might go wrong
-  let redisClient: Redis | null = null;
-  let response: string | null = null;
+  let redisClient: Redis | null = null
+  let response: string | null = null
 
   try {
     if (!ignoreCache) {
       redisClient = new Redis(redisUrl, {
         tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
-      });
-      response = await redisClient.get(key);
+      })
+      response = await redisClient.get(key)
     }
   } catch (err) {
-    auditLogger.error('Error creating & connecting to redis client', { err });
+    auditLogger.error('Error creating & connecting to redis client', { err })
   }
 
   // if we do not have a response, we need to call the callback
   if (!response) {
-    response = await responseCallback();
+    response = await responseCallback()
     // and then, if we have a response and we have a redis client, we need to set the cache
     if (response && redisClient) {
       try {
-        await redisClient.set(key, response, 'EX', options.EX || 600);
+        await redisClient.set(key, response, 'EX', options.EX || 600)
       } catch (err) {
-        auditLogger.error('Error setting cache response', { err });
+        auditLogger.error('Error setting cache response', { err })
       } finally {
-        await redisClient.quit();
+        await redisClient.quit()
       }
     }
   }
 
   if (outputCallback) {
-    return outputCallback(response);
+    return outputCallback(response)
   }
 
   /* istanbul ignore next: not possible to test */
-  return response;
+  return response
 }

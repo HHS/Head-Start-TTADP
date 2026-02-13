@@ -1,8 +1,8 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
 
 const enteredByRole = (roles, options) => {
-  const roleConditions = `r."name" <> '' AND r."name" IN (${roles.map((r) => sequelize.escape(r)).join(',')})`;
+  const roleConditions = `r."name" <> '' AND r."name" IN (${roles.map((r) => sequelize.escape(r)).join(',')})`
 
   return `(
           SELECT DISTINCT "Goal".id FROM "Goals" "Goal"
@@ -12,15 +12,15 @@ const enteredByRole = (roles, options) => {
             INNER JOIN "UserRoles" "ur" ON u.id = ur."userId"
             INNER JOIN "Roles" "r" ON ur."roleId" = r.id
             WHERE ${roleConditions}
-        )`;
-};
+        )`
+}
 
 export function withEnteredByRole(roles, options) {
   return {
     id: {
       [Op.in]: sequelize.literal(enteredByRole(roles, options)),
     },
-  };
+  }
 }
 
 export function withoutEnteredByRole(roles, options) {
@@ -28,5 +28,5 @@ export function withoutEnteredByRole(roles, options) {
     id: {
       [Op.notIn]: sequelize.literal(enteredByRole(roles, options)),
     },
-  };
+  }
 }

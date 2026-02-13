@@ -1,10 +1,10 @@
-import express from 'express';
-import { getWidget } from './handlers';
-import { nameTransactionByPath } from '../../middleware/newRelicMiddleware';
-import transactionWrapper from '../transactionWrapper';
+import express from 'express'
+import { getWidget } from './handlers'
+import { nameTransactionByPath } from '../../middleware/newRelicMiddleware'
+import transactionWrapper from '../transactionWrapper'
 
-const router = express.Router();
+const router = express.Router()
 
-router.get('/:widgetId', nameTransactionByPath, transactionWrapper(getWidget));
+router.get('/:widgetId', nameTransactionByPath, transactionWrapper(getWidget))
 
-export default router;
+export default router

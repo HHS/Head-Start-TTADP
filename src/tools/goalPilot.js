@@ -1,23 +1,19 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
-import parse from 'csv-parse/lib/sync';
-import { downloadFile } from '../lib/s3';
-import {
-  Goal,
-  Grant,
-  GoalTemplate,
-} from '../models';
-import { logger } from '../logger';
+import parse from 'csv-parse/lib/sync'
+import { downloadFile } from '../lib/s3'
+import { Goal, Grant, GoalTemplate } from '../models'
+import { logger } from '../logger'
 
 async function parseCsv(fileKey) {
-  let recipients = {};
-  const { Body: csv } = await downloadFile(fileKey);
-  [...recipients] = parse(csv, {
+  let recipients = {}
+  const { Body: csv } = await downloadFile(fileKey)
+  ;[...recipients] = parse(csv, {
     skipEmptyLines: true,
     columns: true,
     from_line: 2,
-  });
-  return recipients;
+  })
+  return recipients
 }
 
 /**
@@ -27,8 +23,8 @@ async function parseCsv(fileKey) {
  */
 export default async function createGoal(fileKey) {
   try {
-    const recipients = await parseCsv(fileKey);
-    const goalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
+    const recipients = await parseCsv(fileKey)
+    const goalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)'
 
     const goal = {
       name: goalName,
@@ -37,39 +33,37 @@ export default async function createGoal(fileKey) {
       onApprovedAR: false,
       isFromSmartsheetTtaPlan: false,
       createdVia: 'rtr',
-    };
+    }
 
-    let successRecipients = 0;
+    let successRecipients = 0
     const [dbGoalTemplate] = await GoalTemplate.findOrCreate({
       where: { templateName: goalName },
       defaults: { templateName: goalName },
-    });
+    })
 
     for await (const el of recipients) {
-      let number = '';
+      let number = ''
 
-      number = el['Grant Number'];
+      number = el['Grant Number']
 
-      const grant = await Grant.findOne(
-        {
-          where: { number },
-          attributes: ['id'],
-        },
-      );
+      const grant = await Grant.findOne({
+        where: { number },
+        attributes: ['id'],
+      })
       if (grant) {
         await Goal.unscoped().findOrCreate({
           where: { name: goalName, grantId: grant.id },
           defaults: { ...goal, grantId: grant.id, goalTemplateId: dbGoalTemplate.id },
-        });
-        successRecipients += 1;
+        })
+        successRecipients += 1
       } else {
-        logger.info(`Unable to find grant ${number}`);
+        logger.info(`Unable to find grant ${number}`)
       }
     }
 
-    return successRecipients;
+    return successRecipients
   } catch (err) {
-    logger.error(err);
-    throw new Error(err);
+    logger.error(err)
+    throw new Error(err)
   }
 }

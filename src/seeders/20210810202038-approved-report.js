@@ -23,7 +23,7 @@ const recipients = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+]
 
 const reports = [
   {
@@ -43,7 +43,10 @@ const reports = [
     participants: ['Regional Head Start Association'],
     ttaType: ['technical-assistance'],
     pageState: JSON.stringify({
-      1: 'Complete', 2: 'Complete', 3: 'Complete', 4: 'Complete',
+      1: 'Complete',
+      2: 'Complete',
+      3: 'Complete',
+      4: 'Complete',
     }),
     userId: 1,
     lastUpdatedById: 1,
@@ -76,7 +79,10 @@ const reports = [
     participants: ['Regional Head Start Association'],
     ttaType: ['training'],
     pageState: JSON.stringify({
-      1: 'Complete', 2: 'Complete', 3: 'Complete', 4: 'Complete',
+      1: 'Complete',
+      2: 'Complete',
+      3: 'Complete',
+      4: 'Complete',
     }),
     userId: 1,
     lastUpdatedById: 1,
@@ -109,7 +115,10 @@ const reports = [
     participants: ['Regional Head Start Association'],
     ttaType: ['training,technical-assistance'],
     pageState: JSON.stringify({
-      1: 'Complete', 2: 'Complete', 3: 'Complete', 4: 'Complete',
+      1: 'Complete',
+      2: 'Complete',
+      3: 'Complete',
+      4: 'Complete',
     }),
     userId: 1,
     lastUpdatedById: 1,
@@ -142,7 +151,10 @@ const reports = [
     participants: ['Regional Head Start Association'],
     ttaType: ['training,technical-assistance'],
     pageState: JSON.stringify({
-      1: 'Complete', 2: 'Complete', 3: 'Complete', 4: 'Complete',
+      1: 'Complete',
+      2: 'Complete',
+      3: 'Complete',
+      4: 'Complete',
     }),
     userId: 1,
     lastUpdatedById: 1,
@@ -158,7 +170,7 @@ const reports = [
     version: 1,
     topics: ['Fruit', 'Math', 'Friendship'],
   },
-];
+]
 
 const approvers = [
   {
@@ -176,20 +188,20 @@ const approvers = [
     userId: 1,
     status: 'approved',
   },
-];
+]
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('ActivityReports', reports);
-    await queryInterface.bulkInsert('ActivityRecipients', recipients);
-    await queryInterface.bulkInsert('ActivityReportApprovers', approvers);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "ActivityReports_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "ActivityParticipants_id_seq" RESTART WITH ${recipients[recipients.length - 1].id + 1};`);
+    await queryInterface.bulkInsert('ActivityReports', reports)
+    await queryInterface.bulkInsert('ActivityRecipients', recipients)
+    await queryInterface.bulkInsert('ActivityReportApprovers', approvers)
+    await queryInterface.sequelize.query(`ALTER SEQUENCE "ActivityReports_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`)
+    await queryInterface.sequelize.query(`ALTER SEQUENCE "ActivityParticipants_id_seq" RESTART WITH ${recipients[recipients.length - 1].id + 1};`)
   },
 
   down: async (queryInterface) => {
-    await queryInterface.bulkDelete('ActivityReports', null);
-    await queryInterface.bulkDelete('ActivityRecipients', null);
-    await queryInterface.bulkDelete('ActivityReportApprovers', null);
+    await queryInterface.bulkDelete('ActivityReports', null)
+    await queryInterface.bulkDelete('ActivityRecipients', null)
+    await queryInterface.bulkDelete('ActivityReportApprovers', null)
   },
-};
+}

@@ -1,11 +1,11 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       return queryInterface.sequelize.query(`
         -- Remove extra GoalStatusChange entries that:
         --  - were inserted when Goals didn't actually change status
@@ -120,11 +120,11 @@ module.exports = {
         GROUP BY 1
         ORDER BY 1
         ;
-      `);
-    });
+      `)
+    })
   },
 
   async down() {
     // no rollbacks
   },
-};
+}

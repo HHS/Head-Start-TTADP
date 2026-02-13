@@ -1,13 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, _Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       await queryInterface.sequelize.query(
         `
         -- Delete communications log records as desired by a customer.
@@ -121,10 +119,10 @@ module.exports = {
           ON clf."communicationLogId" = cl.id
         GROUP BY 4;
         `,
-        { transaction },
-      );
-    });
+        { transaction }
+      )
+    })
   },
 
   down: async () => {},
-};
+}

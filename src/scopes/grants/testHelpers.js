@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
-import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
-import filtersToScopes from '../index';
+import { Op } from 'sequelize'
+import faker from '@faker-js/faker'
+import { REPORT_STATUSES } from '@ttahub/common'
+import filtersToScopes from '../index'
 import {
   Recipient,
   Grant,
@@ -16,10 +16,8 @@ import {
   GroupCollaborator,
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
-} from '../../models';
-import {
-  createGrant,
-} from '../../testUtils';
+} from '../../models'
+import { createGrant } from '../../testUtils'
 
 // Re-export for convenience
 export {
@@ -41,21 +39,21 @@ export {
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
   createGrant,
-};
+}
 
 // Shared constants
 export const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
   regionId: 1,
   version: 1,
-};
+}
 
-export const recipientOneName = 'Gibson, Hammes and Schuster - White-Beaked Dolphin - 98464';
-export const recipientTwoName = 'Flatley, Kling and Olson - Longman\'s Beaked Whale - 6796';
-export const recipientThreeName = 'Kris, Hoeger and Ward - Southern Bottlenose Whale - 9393';
-export const recipientFourName = 'Grant LLC - Irrawaddy Dolphin - 39678';
+export const recipientOneName = 'Gibson, Hammes and Schuster - White-Beaked Dolphin - 98464'
+export const recipientTwoName = "Flatley, Kling and Olson - Longman's Beaked Whale - 6796"
+export const recipientThreeName = 'Kris, Hoeger and Ward - Southern Bottlenose Whale - 9393'
+export const recipientFourName = 'Grant LLC - Irrawaddy Dolphin - 39678'
 
-export const seed = 45997;
+export const seed = 45997
 export const recipients = [
   {
     id: seed,
@@ -81,13 +79,13 @@ export const recipients = [
     id: seed + 5,
     name: recipientFourName,
   },
-];
+]
 
-export const possibleIds = recipients.map((recipient) => recipient.id);
+export const possibleIds = recipients.map((recipient) => recipient.id)
 
-export const groupName = 'Hickle - Graham - Southern Bottlenose Whale - 96089';
-export const publicGroupName = 'Gulgowski and Sons - Australian Snubfin Dolphin - 9916';
-export const specialGrantNumber = '29971';
+export const groupName = 'Hickle - Graham - Southern Bottlenose Whale - 96089'
+export const publicGroupName = 'Gulgowski and Sons - Australian Snubfin Dolphin - 9916'
+export const specialGrantNumber = '29971'
 
 // Shared setup data that will be populated
 export const sharedTestData = {
@@ -101,7 +99,7 @@ export const sharedTestData = {
   activityReports: null,
   activityRecipients: null,
   programs: null,
-};
+}
 
 /**
  * Sets up all the shared test data for grants tests
@@ -114,7 +112,7 @@ export async function setupSharedTestData() {
     hsesUsername: '|2$t)rb5=83',
     hsesUserId: 'U;!?-X>FzF4',
     lastLogin: new Date(),
-  });
+  })
 
   sharedTestData.mockUserTwo = await User.create({
     id: seed + 7,
@@ -122,9 +120,9 @@ export async function setupSharedTestData() {
     hsesUsername: 'Qk$B!O0VxW6',
     hsesUserId: '%d)""y`lRU8',
     lastLogin: new Date(),
-  });
+  })
 
-  await Promise.all(recipients.map((g) => Recipient.create(g)));
+  await Promise.all(recipients.map((g) => Recipient.create(g)))
 
   sharedTestData.grants = await Promise.all([
     Grant.create({
@@ -206,7 +204,7 @@ export async function setupSharedTestData() {
       programSpecialistName: 'Joe Bob',
       stateCode: 'AR',
     }),
-  ]);
+  ])
 
   // Create Activity Reports.
   sharedTestData.activityReports = await Promise.all([
@@ -258,7 +256,7 @@ export async function setupSharedTestData() {
       startDate: new Date('04/01/2022'),
       endDate: new Date('04/02/2022'),
     }),
-  ]);
+  ])
 
   // Create Activity Recipients.
   sharedTestData.activityRecipients = await Promise.all([
@@ -290,7 +288,7 @@ export async function setupSharedTestData() {
       activityReportId: sharedTestData.activityReports[6].id,
       grantId: sharedTestData.grants[6].id,
     }),
-  ]);
+  ])
 
   sharedTestData.programs = await Promise.all([
     Program.create({
@@ -329,67 +327,58 @@ export async function setupSharedTestData() {
       createdAt: new Date(),
       updatedAt: new Date(),
     }),
-  ]);
+  ])
 
   sharedTestData.group = await Group.create({
     name: groupName,
     isPublic: false,
-  });
+  })
 
   await GroupCollaborator.create({
     userId: sharedTestData.mockUser.id,
     groupId: sharedTestData.group.id,
     collaboratorTypeId: 1,
-  });
+  })
 
   sharedTestData.publicGroup = await Group.create({
     name: publicGroupName,
     isPublic: true,
-  });
+  })
 
   await GroupCollaborator.create({
     userId: sharedTestData.mockUserTwo.id,
     groupId: sharedTestData.publicGroup.id,
     collaboratorTypeId: 1,
-  });
+  })
 
   sharedTestData.grantGroupOne = await GroupGrant.create({
     groupId: sharedTestData.group.id,
     grantId: sharedTestData.grants[0].id,
-  });
+  })
 
   sharedTestData.grantGroupTwo = await GroupGrant.create({
     groupId: sharedTestData.group.id,
     grantId: sharedTestData.grants[1].id,
-  });
+  })
 
   await GroupGrant.create({
     groupId: sharedTestData.publicGroup.id,
     grantId: sharedTestData.grants[0].id,
-  });
+  })
 
   await GroupGrant.create({
     groupId: sharedTestData.publicGroup.id,
     grantId: sharedTestData.grants[1].id,
-  });
+  })
 
-  return sharedTestData;
+  return sharedTestData
 }
 
 /**
  * Tears down all shared test data
  */
 export async function tearDownSharedTestData() {
-  const {
-    grants,
-    activityReports,
-    activityRecipients,
-    programs,
-    group,
-    publicGroup,
-    mockUser,
-    mockUserTwo,
-  } = sharedTestData;
+  const { grants, activityReports, activityRecipients, programs, group, publicGroup, mockUser, mockUserTwo } = sharedTestData
 
   await GroupGrant.destroy({
     where: {
@@ -412,7 +401,7 @@ export async function tearDownSharedTestData() {
         },
       ],
     },
-  });
+  })
 
   await GroupCollaborator.destroy({
     where: {
@@ -429,7 +418,7 @@ export async function tearDownSharedTestData() {
         },
       ],
     },
-  });
+  })
 
   await Group.destroy({
     where: {
@@ -444,45 +433,45 @@ export async function tearDownSharedTestData() {
         },
       ],
     },
-  });
+  })
 
   await Program.destroy({
     where: {
       id: programs.map((p) => p.id),
     },
-  });
+  })
 
   await ActivityRecipient.destroy({
     where: {
       id: activityRecipients.map((ar) => ar.id),
     },
-  });
+  })
 
   await ActivityReport.destroy({
     where: {
       id: activityReports.map((ar) => ar.id),
     },
-  });
+  })
 
-  await GoalFieldResponse.destroy({ where: {}, force: true });
-  await Goal.destroy({ where: {}, force: true });
+  await GoalFieldResponse.destroy({ where: {}, force: true })
+  await Goal.destroy({ where: {}, force: true })
 
   await Grant.destroy({
     where: {
       id: grants.map((g) => g.id),
     },
     individualHooks: true,
-  });
+  })
 
   await Recipient.destroy({
     where: {
       id: possibleIds,
     },
-  });
+  })
 
   await User.destroy({
     where: {
       id: [mockUser.id, mockUserTwo.id],
     },
-  });
+  })
 }

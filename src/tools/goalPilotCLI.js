@@ -1,7 +1,7 @@
-import {} from 'dotenv/config';
-import { option } from 'yargs';
-import createGoal from './goalPilot';
-import { logger } from '../logger';
+import {} from 'dotenv/config'
+import { option } from 'yargs'
+import createGoal from './goalPilot'
+import { logger } from '../logger'
 
 const { argv } = option('file', {
   alias: 'f',
@@ -9,20 +9,20 @@ const { argv } = option('file', {
   type: 'string',
 })
   .help()
-  .alias('help', 'h');
+  .alias('help', 'h')
 
-const { file } = argv;
+const { file } = argv
 
 if (!file) {
-  logger.error('File not provided to script');
-  process.exit(1);
+  logger.error('File not provided to script')
+  process.exit(1)
 }
 
 createGoal(file).then((recCount) => {
   if (!recCount) {
-    logger.error('Error occurred.');
+    logger.error('Error occurred.')
   }
-  logger.info(`Processed ${recCount} Recipients`);
+  logger.info(`Processed ${recCount} Recipients`)
 
-  process.exit(0);
-});
+  process.exit(0)
+})

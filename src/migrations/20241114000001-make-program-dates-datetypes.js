@@ -1,10 +1,10 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
       // Add monitor goal template.
       await queryInterface.sequelize.query(
         `-- change Programs startDate and endDate types to date
@@ -15,14 +15,13 @@ module.exports = {
         USING (NULLIF("endDate", '')::date)
         ;
         `,
-        { transaction },
-      );
-    },
-  ),
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
       await queryInterface.sequelize.query(
         `-- change Programs startDate and endDate types back to varchar
         ALTER TABLE "Programs" ALTER COLUMN "startDate" TYPE VARCHAR(255)
@@ -32,8 +31,7 @@ module.exports = {
         USING ("endDate"::varchar(255))
         ;
         `,
-        { transaction },
-      );
-    },
-  ),
-};
+        { transaction }
+      )
+    }),
+}

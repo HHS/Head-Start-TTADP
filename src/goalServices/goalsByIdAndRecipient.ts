@@ -1,12 +1,9 @@
-import db from '../models';
-import { CREATION_METHOD } from '../constants';
-import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
-import { reduceGoals } from './reduceGoals';
-import {
-  IGoalModelInstance,
-  IObjectiveModelInstance,
-} from './types';
-import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
+import db from '../models'
+import { CREATION_METHOD } from '../constants'
+import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed'
+import { reduceGoals } from './reduceGoals'
+import type { IGoalModelInstance, IObjectiveModelInstance } from './types'
+import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives'
 
 const {
   Goal,
@@ -31,17 +28,9 @@ const {
   Role,
   CollaboratorType,
   Course,
-} = db;
+} = db
 
-export const OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR = [
-  'id',
-  'title',
-  'status',
-  'goalId',
-  'onApprovedAR',
-  'onAR',
-  'rtrOrder',
-];
+export const OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR = ['id', 'title', 'status', 'goalId', 'onApprovedAR', 'onAR', 'rtrOrder']
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number) => ({
   attributes: [
@@ -157,13 +146,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
     {
       model: Grant,
       as: 'grant',
-      attributes: [
-        'id',
-        'number',
-        'regionId',
-        'recipientId',
-        'numberWithProgramTypes',
-      ],
+      attributes: ['id', 'number', 'regionId', 'recipientId', 'numberWithProgramTypes'],
       include: [
         {
           attributes: ['programType'],
@@ -190,16 +173,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
     {
       model: GoalTemplateFieldPrompt,
       as: 'prompts',
-      attributes: [
-        ['id', 'promptId'],
-        'ordinal',
-        'title',
-        'prompt',
-        'hint',
-        'fieldType',
-        'options',
-        'validations',
-      ],
+      attributes: [['id', 'promptId'], 'ordinal', 'title', 'prompt', 'hint', 'fieldType', 'options', 'validations'],
       required: false,
       include: [
         {
@@ -214,48 +188,36 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
           as: 'reportResponses',
           attributes: ['response'],
           required: false,
-          include: [{
-            model: ActivityReportGoal,
-            as: 'activityReportGoal',
-            attributes: ['activityReportId', ['id', 'activityReportGoalId']],
-            required: true,
-            where: { goalId: id },
-          }],
+          include: [
+            {
+              model: ActivityReportGoal,
+              as: 'activityReportGoal',
+              attributes: ['activityReportId', ['id', 'activityReportGoalId']],
+              required: true,
+              where: { goalId: id },
+            },
+          ],
         },
       ],
     },
   ],
-});
+})
 
 export default async function goalsByIdAndRecipient(ids: number | number[], recipientId: number) {
-  const goals = await Goal
-    .findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId)) as IGoalModelInstance[];
+  const goals = (await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId))) as IGoalModelInstance[]
 
   const reformattedGoals = goals.map((goal) => ({
     ...goal,
     isSourceEditable: goal.isSourceEditable,
     isReopenedGoal: wasGoalPreviouslyClosed(goal),
-    objectives: goal.objectives
-      .map((objective: IObjectiveModelInstance) => ({
-        ...objective.toJSON(),
-        topics: extractObjectiveAssociationsFromActivityReportObjectives(
-          objective.activityReportObjectives,
-          'topics',
-        ),
-        courses: extractObjectiveAssociationsFromActivityReportObjectives(
-          objective.activityReportObjectives,
-          'courses',
-        ),
-        resources: extractObjectiveAssociationsFromActivityReportObjectives(
-          objective.activityReportObjectives,
-          'resources',
-        ),
-        files: extractObjectiveAssociationsFromActivityReportObjectives(
-          objective.activityReportObjectives,
-          'files',
-        ),
-      })),
-  }));
+    objectives: goal.objectives.map((objective: IObjectiveModelInstance) => ({
+      ...objective.toJSON(),
+      topics: extractObjectiveAssociationsFromActivityReportObjectives(objective.activityReportObjectives, 'topics'),
+      courses: extractObjectiveAssociationsFromActivityReportObjectives(objective.activityReportObjectives, 'courses'),
+      resources: extractObjectiveAssociationsFromActivityReportObjectives(objective.activityReportObjectives, 'resources'),
+      files: extractObjectiveAssociationsFromActivityReportObjectives(objective.activityReportObjectives, 'files'),
+    })),
+  }))
 
-  return reduceGoals(reformattedGoals);
+  return reduceGoals(reformattedGoals)
 }

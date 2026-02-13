@@ -1,17 +1,17 @@
-import httpCodes from 'http-codes';
-import httpContext from 'express-http-context';
-import { v4 as uuidv4 } from 'uuid';
+import httpCodes from 'http-codes'
+import httpContext from 'express-http-context'
+import { v4 as uuidv4 } from 'uuid'
 
-import { logger, auditLogger } from '../logger';
-import findOrCreateUser from './findOrCreateUser';
-import handleErrors from '../lib/apiErrorHandler';
-import { validateUserAuthForAdmin } from './accessValidation';
+import { logger, auditLogger } from '../logger'
+import findOrCreateUser from './findOrCreateUser'
+import handleErrors from '../lib/apiErrorHandler'
+import { validateUserAuthForAdmin } from './accessValidation'
 
-const namespace = 'MIDDLEWARE:CURRENT USER';
+const namespace = 'MIDDLEWARE:CURRENT USER'
 
 const logContext = {
   namespace,
-};
+}
 
 /**
  * Get Current User ID
@@ -31,80 +31,80 @@ const logContext = {
 export async function currentUserId(req, res) {
   function idFromSessionOrLocals() {
     if (req.session && req.session.userId) {
-      httpContext.set('impersonationUserId', Number(req.session.userId));
-      return Number(req.session.userId);
+      httpContext.set('impersonationUserId', Number(req.session.userId))
+      return Number(req.session.userId)
     }
     if (res.locals && res.locals.userId) {
-      httpContext.set('impersonationUserId', Number(res.locals.userId));
-      return Number(res.locals.userId);
+      httpContext.set('impersonationUserId', Number(res.locals.userId))
+      return Number(res.locals.userId)
     }
 
     // bypass authorization, used for cucumber UAT and axe accessibility testing
     if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
-      const userId = process.env.CURRENT_USER_ID;
-      auditLogger.warn(`Bypassing authentication in authMiddleware - using User ${userId}`);
+      const userId = process.env.CURRENT_USER_ID
+      auditLogger.warn(`Bypassing authentication in authMiddleware - using User ${userId}`)
       if (req.session) {
-        req.session.userId = userId;
-        req.session.uuid = uuidv4();
+        req.session.userId = userId
+        req.session.uuid = uuidv4()
       }
-      httpContext.set('impersonationUserId', Number(userId));
-      return Number(userId);
+      httpContext.set('impersonationUserId', Number(userId))
+      return Number(userId)
     }
-    return null;
+    return null
   }
 
   // There will be an Auth-Impersonation-Id header if the user is impersonating another user.
   // If that is the case, we want to use the impersonated user's ID.
   if (req.headers && req.headers['auth-impersonation-id']) {
     try {
-      const impersonatedUserId = JSON.parse(req.headers['auth-impersonation-id']);
+      const impersonatedUserId = JSON.parse(req.headers['auth-impersonation-id'])
       if (impersonatedUserId) {
         // Verify admin access.
         try {
-          const userId = idFromSessionOrLocals();
+          const userId = idFromSessionOrLocals()
 
           if (userId === null) {
-            auditLogger.error('Impersonation failure. No valid user ID found in session or locals.');
-            return res.sendStatus(httpCodes.UNAUTHORIZED);
+            auditLogger.error('Impersonation failure. No valid user ID found in session or locals.')
+            return res.sendStatus(httpCodes.UNAUTHORIZED)
           }
 
           if (!(await validateUserAuthForAdmin(Number(userId)))) {
-            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
-            return res.sendStatus(httpCodes.UNAUTHORIZED);
+            auditLogger.error(
+              `Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`
+            )
+            return res.sendStatus(httpCodes.UNAUTHORIZED)
           }
 
           if (await validateUserAuthForAdmin(Number(impersonatedUserId))) {
-            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the impersonated user is an admin.`);
-            return res.sendStatus(httpCodes.UNAUTHORIZED);
+            auditLogger.error(
+              `Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the impersonated user is an admin.`
+            )
+            return res.sendStatus(httpCodes.UNAUTHORIZED)
           }
         } catch (e) {
-          return handleErrors(req, res, e, logContext);
+          return handleErrors(req, res, e, logContext)
         }
 
-        httpContext.set('impersonationUserId', Number(impersonatedUserId));
-        return Number(impersonatedUserId);
+        httpContext.set('impersonationUserId', Number(impersonatedUserId))
+        return Number(impersonatedUserId)
       }
     } catch (e) {
-      auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`);
-      return handleErrors(req, res, e, logContext);
+      auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`)
+      return handleErrors(req, res, e, logContext)
     }
   }
 
-  if (
-    process.env.NODE_ENV !== 'production'
-    && process.env.BYPASS_AUTH === 'true'
-    && req.headers && req.headers['playwright-user-id']
-  ) {
-    const userId = req.headers['playwright-user-id'];
-    auditLogger.warn(`Bypassing authentication in authMiddleware. Using user id ${userId} from playwright-user-id header.`);
+  if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true' && req.headers && req.headers['playwright-user-id']) {
+    const userId = req.headers['playwright-user-id']
+    auditLogger.warn(`Bypassing authentication in authMiddleware. Using user id ${userId} from playwright-user-id header.`)
     if (req.session) {
-      req.session.userId = userId;
-      req.session.uuid = uuidv4();
+      req.session.userId = userId
+      req.session.uuid = uuidv4()
     }
-    return Number(userId);
+    return Number(userId)
   }
 
-  return idFromSessionOrLocals();
+  return idFromSessionOrLocals()
 }
 
 /**
@@ -113,19 +113,21 @@ export async function currentUserId(req, res) {
  * This method retrieves the current user details from HSES and finds or creates the TTA Hub user
  */
 export async function retrieveUserDetails(data) {
-  logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
+  logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`)
 
-  const name = [data?.given_name, data?.family_name].filter(Boolean).join(' ') || null;
+  const name = [data?.given_name, data?.family_name].filter(Boolean).join(' ') || null
 
-  const email = data?.email ? data.email.toString() : null;
-  const hsesUsername = data?.sub ? data.sub.toString() : null;
-  const hsesUserId = data?.userId ? data.userId.toString() : null;
-  const hsesAuthorities = data?.roles || [];
+  const email = data?.email ? data.email.toString() : null
+  const hsesUsername = data?.sub ? data.sub.toString() : null
+  const hsesUserId = data?.userId ? data.userId.toString() : null
+  const hsesAuthorities = data?.roles || []
   if (!hsesUsername) {
-    auditLogger.error('OIDC: missing hsesUsername (sub) from HSES; user not created');
-    throw new Error(`Missing required user info from HSES: ${JSON.stringify({
-      hsesUsername,
-    })}`);
+    auditLogger.error('OIDC: missing hsesUsername (sub) from HSES; user not created')
+    throw new Error(
+      `Missing required user info from HSES: ${JSON.stringify({
+        hsesUsername,
+      })}`
+    )
   }
 
   return findOrCreateUser({
@@ -134,5 +136,5 @@ export async function retrieveUserDetails(data) {
     hsesUsername,
     hsesAuthorities,
     hsesUserId,
-  });
+  })
 }

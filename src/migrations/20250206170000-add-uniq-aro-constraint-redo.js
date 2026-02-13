@@ -1,11 +1,11 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       await queryInterface.sequelize.query(`
         -- This is an updated version of the ARO deduplication logic
         -- written to accommodate records without audit log entries
@@ -590,21 +590,26 @@ module.exports = {
         -- ERROR:  division by zero
         -- if any dupe pairs remain
         SELECT 1/ (LEAST(1,(SELECT COUNT(*) FROM dupe_aro_pairs_after)) - 1);
-      `);
-      await queryInterface.sequelize.query(`
+      `)
+      await queryInterface.sequelize.query(
+        `
         DROP INDEX IF EXISTS "activity_report_objectives_activity_report_id_objective_id";
         CREATE UNIQUE INDEX  "activity_report_objectives_activity_report_id_objective_id_unique" ON "ActivityReportObjectives" ("activityReportId","objectiveId");
-       `, { transaction });
-    });
+       `,
+        { transaction }
+      )
+    })
   },
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(`
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.sequelize.query(
+        `
         DROP INDEX IF EXISTS "activity_report_objectives_activity_report_id_objective_id_unique";
         CREATE INDEX "activity_report_objectives_activity_report_id_objective_id" ON "ActivityReportObjectives" ("activityReportId","objectiveId");
-      `, { transaction });
-    },
-  ),
-};
+      `,
+        { transaction }
+      )
+    }),
+}

@@ -1,14 +1,13 @@
-const { prepMigration, removeTables } = require('../lib/migration');
+const { prepMigration, removeTables } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await removeTables(queryInterface, transaction, [
-        'EventReportPilotGoals',
-      ]);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await removeTables(queryInterface, transaction, ['EventReportPilotGoals'])
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         -- Goal 83050 is explicitly excluded from this migration. Decided by OHS during refinement on 8/7/2024.
         -- Force failure if any of these TR goals have been used on an AR.
         -- Credit to Nathan for this one.
@@ -49,13 +48,13 @@ module.exports = {
         -- Remove goals that were createdVia 'tr':
         DELETE FROM "Goals"
         WHERE "createdVia"::text = 'tr' AND id != 83050;
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-    },
-  ),
-};
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+    }),
+}

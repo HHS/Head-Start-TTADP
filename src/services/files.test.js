@@ -1,20 +1,15 @@
-import faker from '@faker-js/faker';
-import db, {
-  File,
-} from '../models';
-import {
-  updateStatusByKey,
-  createFileMetaData,
-} from './files';
+import faker from '@faker-js/faker'
+import db, { File } from '../models'
+import { updateStatusByKey, createFileMetaData } from './files'
 
 describe('files service', () => {
   afterAll(async () => {
-    await db.sequelize.close();
-  });
+    await db.sequelize.close()
+  })
 
   describe('updateStatusByKey', () => {
-    const key = 'file123';
-    const fileStatus = 'processed';
+    const key = 'file123'
+    const fileStatus = 'processed'
     const mockUpdatedFile = {
       dataValues: {
         key,
@@ -24,60 +19,51 @@ describe('files service', () => {
         key,
         status: fileStatus,
       }),
-    };
+    }
 
     // Assuming File.update is a Sequelize method, we need to spy on it instead of mocking
-    const updateSpy = jest.spyOn(File, 'update');
+    const updateSpy = jest.spyOn(File, 'update')
 
     beforeEach(() => {
-      updateSpy.mockClear();
-    });
+      updateSpy.mockClear()
+    })
 
     afterAll(() => {
-      updateSpy.mockRestore();
-    });
+      updateSpy.mockRestore()
+    })
 
     it('should update the file status and return the updated file object', async () => {
-      updateSpy.mockResolvedValue([1, [mockUpdatedFile]]); // Mocking sequelize update response
+      updateSpy.mockResolvedValue([1, [mockUpdatedFile]]) // Mocking sequelize update response
 
-      const result = await updateStatusByKey(key, fileStatus);
+      const result = await updateStatusByKey(key, fileStatus)
 
-      expect(updateSpy).toHaveBeenCalledWith(
-        { status: fileStatus },
-        { where: { key }, individualHooks: true },
-      );
-      expect(result).toEqual(mockUpdatedFile.toJSON());
-    });
+      expect(updateSpy).toHaveBeenCalledWith({ status: fileStatus }, { where: { key }, individualHooks: true })
+      expect(result).toEqual(mockUpdatedFile.toJSON())
+    })
 
     it('should throw an error when the update operation fails', async () => {
-      const mockError = new Error('Update failed');
-      updateSpy.mockRejectedValue(mockError);
+      const mockError = new Error('Update failed')
+      updateSpy.mockRejectedValue(mockError)
 
-      await expect(updateStatusByKey(key, fileStatus)).rejects.toEqual(mockError);
+      await expect(updateStatusByKey(key, fileStatus)).rejects.toEqual(mockError)
 
-      expect(updateSpy).toHaveBeenCalledWith(
-        { status: fileStatus },
-        { where: { key }, individualHooks: true },
-      );
-    });
+      expect(updateSpy).toHaveBeenCalledWith({ status: fileStatus }, { where: { key }, individualHooks: true })
+    })
 
     it('should handle the case when no file is updated', async () => {
-      updateSpy.mockResolvedValue([0, []]); // No files updated
+      updateSpy.mockResolvedValue([0, []]) // No files updated
 
-      const result = await updateStatusByKey(key, fileStatus);
+      const result = await updateStatusByKey(key, fileStatus)
 
-      expect(updateSpy).toHaveBeenCalledWith(
-        { status: fileStatus },
-        { where: { key }, individualHooks: true },
-      );
+      expect(updateSpy).toHaveBeenCalledWith({ status: fileStatus }, { where: { key }, individualHooks: true })
       // Depending on the actual behavior, this might need to be adjusted
       // If the function is supposed to return undefined or an empty object when no file is updated
-      expect(result).toEqual(undefined);
-    });
-  });
+      expect(result).toEqual(undefined)
+    })
+  })
 
   describe('createFileMetaData', () => {
-    let filesForCreateFileMetaData;
+    let filesForCreateFileMetaData
     beforeAll(async () => {
       filesForCreateFileMetaData = await Promise.all([
         File.create({
@@ -86,33 +72,29 @@ describe('files service', () => {
           status: 'APPROVED',
           fileSize: 12345,
         }),
-      ]);
-    });
+      ])
+    })
 
     afterAll(async () => {
       await File.destroy({
         where: {
           id: filesForCreateFileMetaData.map((file) => file.id),
         },
-      });
-    });
+      })
+    })
 
     it('creates a file where needed', async () => {
-      const newFile = await createFileMetaData('test2.pdf', faker.datatype.uuid(), 99);
-      filesForCreateFileMetaData = [...filesForCreateFileMetaData, newFile];
-      expect(newFile.originalFileName).toBe('test2.pdf');
-    });
+      const newFile = await createFileMetaData('test2.pdf', faker.datatype.uuid(), 99)
+      filesForCreateFileMetaData = [...filesForCreateFileMetaData, newFile]
+      expect(newFile.originalFileName).toBe('test2.pdf')
+    })
 
     it('returns an existing file', async () => {
-      const [existingFile] = filesForCreateFileMetaData;
+      const [existingFile] = filesForCreateFileMetaData
 
-      const newFile = await createFileMetaData(
-        existingFile.originalFileName,
-        existingFile.key,
-        existingFile.fileSize,
-      );
+      const newFile = await createFileMetaData(existingFile.originalFileName, existingFile.key, existingFile.fileSize)
 
-      expect(newFile.id).toEqual(existingFile.id);
-    });
-  });
-});
+      expect(newFile.id).toEqual(existingFile.id)
+    })
+  })
+})

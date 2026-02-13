@@ -1,60 +1,51 @@
-import db from '../models';
-import {
-  baseTRScopes,
-  getAllTopicsForWidget,
-} from './helpers';
-import { IScopes } from './types';
+import db from '../models'
+import { baseTRScopes, getAllTopicsForWidget } from './helpers'
+import type { IScopes } from './types'
 
-const {
-  EventReportPilot: TrainingReport,
-} = db;
+const { EventReportPilot: TrainingReport } = db
 
-export default async function trSessionByTopic(
-  scopes: IScopes,
-) {
-  const [reports, topics] = await Promise.all([
+export default async function trSessionByTopic(scopes: IScopes) {
+  const [reports, topics] = (await Promise.all([
     TrainingReport.findAll({
-      attributes: [
-        'data',
-      ],
+      attributes: ['data'],
       ...baseTRScopes(scopes),
     }),
     getAllTopicsForWidget(),
-  ]) as [
+  ])) as [
     {
       data: {
-        eventId: string,
-      },
+        eventId: string
+      }
       sessionReports: {
         data: {
-          objectiveTopics: string[],
+          objectiveTopics: string[]
         }
       }[]
     }[],
     {
-      name: string,
+      name: string
     }[],
-  ];
+  ]
 
   const dataStruct = topics.map((topic: { name: string }) => ({
     topic: topic.name,
     count: 0,
-  })) as { topic: string, count: number }[];
+  })) as { topic: string; count: number }[]
 
   const response = reports.reduce((acc, report) => {
-    const { sessionReports } = report;
+    const { sessionReports } = report
     sessionReports.forEach((sessionReport) => {
-      const { objectiveTopics } = sessionReport.data;
+      const { objectiveTopics } = sessionReport.data
 
       objectiveTopics.forEach((topic) => {
-        const d = dataStruct.find((c) => c.topic === topic);
+        const d = dataStruct.find((c) => c.topic === topic)
         if (d) {
-          d.count += 1;
+          d.count += 1
         }
-      });
-    });
-    return acc;
-  }, dataStruct);
+      })
+    })
+    return acc
+  }, dataStruct)
 
-  return response;
+  return response
 }

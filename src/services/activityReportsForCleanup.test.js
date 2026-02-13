@@ -1,25 +1,15 @@
-import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  ActivityReport,
-  ActivityReportApprover,
-  ActivityReportCollaborator,
-  User,
-  Recipient,
-  Grant,
-  sequelize,
-} from '../models';
-import {
-  activityReportsForCleanup,
-} from './activityReports';
-import { createReport, destroyReport } from '../testUtils';
+import faker from '@faker-js/faker'
+import { REPORT_STATUSES } from '@ttahub/common'
+import { ActivityReport, ActivityReportApprover, ActivityReportCollaborator, User, Recipient, Grant, sequelize } from '../models'
+import { activityReportsForCleanup } from './activityReports'
+import { createReport, destroyReport } from '../testUtils'
 
-const RECIPIENT_ID = faker.datatype.number({ min: 900 });
+const RECIPIENT_ID = faker.datatype.number({ min: 900 })
 
-const MOCK_AUTHOR_ID = faker.datatype.number({ min: 11111111 });
-const MOCK_COLLABORATOR_ID = faker.datatype.number({ min: 11111111 });
-const MOCK_APPROVER_ID = faker.datatype.number({ min: 11111111 });
-const MOCK_PHANTOM_USER_ID = faker.datatype.number({ min: 11111111 });
+const MOCK_AUTHOR_ID = faker.datatype.number({ min: 11111111 })
+const MOCK_COLLABORATOR_ID = faker.datatype.number({ min: 11111111 })
+const MOCK_APPROVER_ID = faker.datatype.number({ min: 11111111 })
+const MOCK_PHANTOM_USER_ID = faker.datatype.number({ min: 11111111 })
 
 const mockAuthor = {
   id: MOCK_AUTHOR_ID,
@@ -29,7 +19,7 @@ const mockAuthor = {
   hsesUserId: `USER-${MOCK_AUTHOR_ID}`,
   role: ['Grants Specialist', 'Health Specialist'],
   lastLogin: new Date(),
-};
+}
 
 const mockCollaborator = {
   id: MOCK_COLLABORATOR_ID,
@@ -39,7 +29,7 @@ const mockCollaborator = {
   hsesUsername: `USER-${MOCK_COLLABORATOR_ID}`,
   role: ['COR'],
   lastLogin: new Date(),
-};
+}
 
 const mockApprover = {
   id: MOCK_APPROVER_ID,
@@ -49,7 +39,7 @@ const mockApprover = {
   hsesUserId: `USER-${MOCK_APPROVER_ID}`,
   role: [],
   lastLogin: new Date(),
-};
+}
 
 const mockPhantomUser = {
   id: MOCK_PHANTOM_USER_ID,
@@ -59,7 +49,7 @@ const mockPhantomUser = {
   hsesUsername: `USER-${MOCK_PHANTOM_USER_ID}`,
   role: [],
   lastLogin: new Date(),
-};
+}
 
 const reportObject = {
   activityRecipientType: 'recipient',
@@ -71,7 +61,7 @@ const reportObject = {
   activityRecipients: [{ grantId: RECIPIENT_ID }],
   createdAt: new Date(),
   version: 2,
-};
+}
 
 const submittedReport = {
   ...reportObject,
@@ -87,24 +77,22 @@ const submittedReport = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
-};
+}
 
 const approvedReport = {
   ...submittedReport,
   calculatedStatus: REPORT_STATUSES.APPROVED,
-};
+}
 
 describe('Activity report cleanup service', () => {
   beforeAll(async () => {
     await Promise.all([
-      User.bulkCreate([
-        mockAuthor,
-        mockCollaborator,
-        mockApprover,
-        mockPhantomUser,
-      ], { validate: true, individualHooks: true }),
+      User.bulkCreate([mockAuthor, mockCollaborator, mockApprover, mockPhantomUser], {
+        validate: true,
+        individualHooks: true,
+      }),
       Recipient.create({ name: faker.word.noun(), id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' }),
-    ]);
+    ])
     await Grant.create({
       id: RECIPIENT_ID,
       number: 1,
@@ -113,37 +101,37 @@ describe('Activity report cleanup service', () => {
       status: 'Active',
       startDate: new Date(),
       endDate: new Date(),
-    });
+    })
 
     // submitted report
-    await createReport(submittedReport);
+    await createReport(submittedReport)
 
     // approved report
-    await createReport(approvedReport);
+    await createReport(approvedReport)
 
     // draft report
-    await createReport(reportObject);
+    await createReport(reportObject)
 
     // report by wrong author
-    await createReport({ ...submittedReport, userId: mockPhantomUser.id });
+    await createReport({ ...submittedReport, userId: mockPhantomUser.id })
 
     // report that is too old
-    await createReport({ ...submittedReport, createdAt: '2020-09-01T12:00:00Z' });
+    await createReport({ ...submittedReport, createdAt: '2020-09-01T12:00:00Z' })
 
-    const reportByMockAuthorWithMockCollaborator = await createReport(submittedReport);
+    const reportByMockAuthorWithMockCollaborator = await createReport(submittedReport)
 
     await ActivityReportCollaborator.create({
       activityReportId: reportByMockAuthorWithMockCollaborator.id,
       userId: mockCollaborator.id,
-    });
+    })
 
-    const reportByMockAuthorWithMockApprover = await createReport(submittedReport);
+    const reportByMockAuthorWithMockApprover = await createReport(submittedReport)
 
     await ActivityReportApprover.create({
       activityReportId: reportByMockAuthorWithMockApprover.id,
       userId: mockApprover.id,
-    });
-  });
+    })
+  })
 
   afterAll(async () => {
     await ActivityReportApprover.destroy({
@@ -152,41 +140,41 @@ describe('Activity report cleanup service', () => {
       },
       force: true,
       individualHooks: true,
-    });
+    })
     await ActivityReportCollaborator.destroy({
       where: {
         userId: mockCollaborator.id,
       },
       individualHooks: true,
-    });
+    })
     const reportsToDestroy = await ActivityReport.findAll({
       where: {
         userId: [mockAuthor.id, mockPhantomUser.id],
       },
-    });
-    await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
-    await Grant.destroy({ where: { id: RECIPIENT_ID }, individualHooks: true });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID } });
+    })
+    await Promise.all(reportsToDestroy.map((r) => destroyReport(r)))
+    await Grant.destroy({ where: { id: RECIPIENT_ID }, individualHooks: true })
+    await Recipient.destroy({ where: { id: RECIPIENT_ID } })
     await User.destroy({
       where: {
         id: [mockAuthor.id, mockApprover.id, mockCollaborator.id, mockPhantomUser.id],
       },
-    });
-    await sequelize.close();
-  });
+    })
+    await sequelize.close()
+  })
 
   it('returns reports by author', async () => {
-    const reports = await activityReportsForCleanup(mockAuthor.id);
-    expect(reports.length).toBe(4);
-  });
+    const reports = await activityReportsForCleanup(mockAuthor.id)
+    expect(reports.length).toBe(4)
+  })
 
   it('returns reports by collaborator', async () => {
-    const reports = await activityReportsForCleanup(mockCollaborator.id);
-    expect(reports.length).toBe(1);
-  });
+    const reports = await activityReportsForCleanup(mockCollaborator.id)
+    expect(reports.length).toBe(1)
+  })
 
   it('returns reports by approver', async () => {
-    const reports = await activityReportsForCleanup(mockApprover.id);
-    expect(reports.length).toBe(1);
-  });
-});
+    const reports = await activityReportsForCleanup(mockApprover.id)
+    expect(reports.length).toBe(1)
+  })
+})

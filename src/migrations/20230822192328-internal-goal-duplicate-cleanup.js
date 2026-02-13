@@ -1,15 +1,14 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       try {
         // Delete duplicate goals based on trimmed_hashes, keeping the one with the lowest id
-        await queryInterface.sequelize.query(`
+        await queryInterface.sequelize.query(
+          `
         DROP TABLE IF EXISTS "PreCountStatsByRegion";
         CREATE TEMP TABLE "PreCountStatsByRegion" AS (
             SELECT
@@ -2821,7 +2820,9 @@ module.exports = {
         FROM "CollectStats"
         ORDER BY id;
         DROP TABLE IF EXISTS  "PreCountStatsByRegion" ;
-          `, { transaction });
+          `,
+          { transaction }
+        )
 
         const auditColumns = [
           'id',
@@ -2835,9 +2836,10 @@ module.exports = {
           'dml_txid',
           'session_sig',
           'descriptor_id',
-        ];
+        ]
 
-        const cascade = await queryInterface.sequelize.query(`
+        const cascade = await queryInterface.sequelize.query(
+          `
           WITH
           "xZALGoals" AS ( SELECT 'Goals' AS "table", ${auditColumns.join(', ')} FROM "ZALGoals" z WHERE session_sig = '${sessionSig}' AND dml_by = -1),
           "xZALGoalResources" AS ( SELECT 'GoalResources' AS "table", ${auditColumns.join(', ')} FROM "ZALGoalResources" z WHERE session_sig = '${sessionSig}' AND dml_by = -1),
@@ -2876,14 +2878,17 @@ module.exports = {
           GROUP BY 1
           HAVING COUNT(DISTINCT "table") > 1
           ORDER BY 1,2;
-          `, { raw: true, type: queryInterface.sequelize.QueryTypes.SELECT, transaction });
+          `,
+          { raw: true, type: queryInterface.sequelize.QueryTypes.SELECT, transaction }
+        )
 
         if (Array.isArray(cascade) && cascade.length > 0) {
-          throw new Error('Cascade error, unexpected entires found:', cascade);
+          throw new Error('Cascade error, unexpected entires found:', cascade)
         }
 
         // Remove "Root Cause" from non-FEI goal
-        await queryInterface.sequelize.query(`
+        await queryInterface.sequelize.query(
+          `
           DELETE
           FROM "GoalFieldResponses"
           WHERE "goalId" = 54671;
@@ -2893,13 +2898,14 @@ module.exports = {
           USING "ActivityReportGoals" arg
           WHERE argfr."activityReportGoalId" = arg.id
           AND arg."goalId" = 54671;
-        `, { transaction });
+        `,
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
+    }),
   // Reverting the deletion is not possible, as the deleted records are lost
   down: () => {},
-};
+}

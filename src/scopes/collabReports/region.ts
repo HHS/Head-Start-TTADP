@@ -1,11 +1,11 @@
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 
 export function withRegion(regions: number[]) {
   return {
     regionId: {
       [Op.in]: regions,
     },
-  };
+  }
 }
 
 export function withoutRegion(regions: number[]) {
@@ -13,5 +13,5 @@ export function withoutRegion(regions: number[]) {
     regionId: {
       [Op.notIn]: regions,
     },
-  };
+  }
 }

@@ -1,6 +1,6 @@
-const { Model } = require('sequelize');
-const { SOURCE_FIELD } = require('../constants');
-const { afterCreate, afterDestroy } = require('./hooks/activityReportGoalResource');
+const { Model } = require('sequelize')
+const { SOURCE_FIELD } = require('../constants')
+const { afterCreate, afterDestroy } = require('./hooks/activityReportGoalResource')
 
 export default (sequelize, DataTypes) => {
   class ActivityReportGoalResource extends Model {
@@ -14,45 +14,51 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'activityReportGoalId',
         onDelete: 'cascade',
         as: 'activityReportGoal',
-      });
-      ActivityReportGoalResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
+      })
+      ActivityReportGoalResource.belongsTo(models.Resource, {
+        foreignKey: 'resourceId',
+        as: 'resource',
+      })
     }
   }
-  ActivityReportGoalResource.init({
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    activityReportGoalId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    resourceId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    sourceFields: {
-      allowNull: true,
-      default: null,
-      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL)))),
-    },
-    isAutoDetected: {
-      type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
-      get() {
-        // eslint-disable-next-line global-require
-        const { calculateIsAutoDetectedForActivityReportGoal } = require('../services/resource');
-        return calculateIsAutoDetectedForActivityReportGoal(this.get('sourceFields'));
+  ActivityReportGoalResource.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      activityReportGoalId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      resourceId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      sourceFields: {
+        allowNull: true,
+        default: null,
+        type: DataTypes.ARRAY(DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL))),
+      },
+      isAutoDetected: {
+        type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
+        get() {
+          // eslint-disable-next-line global-require
+          const { calculateIsAutoDetectedForActivityReportGoal } = require('../services/resource')
+          return calculateIsAutoDetectedForActivityReportGoal(this.get('sourceFields'))
+        },
       },
     },
-  }, {
-    sequelize,
-    modelName: 'ActivityReportGoalResource',
-    hooks: {
-      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
-      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    },
-  });
-  return ActivityReportGoalResource;
-};
+    {
+      sequelize,
+      modelName: 'ActivityReportGoalResource',
+      hooks: {
+        afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+        afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+      },
+    }
+  )
+  return ActivityReportGoalResource
+}

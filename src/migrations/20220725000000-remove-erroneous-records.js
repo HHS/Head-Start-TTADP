@@ -1,22 +1,22 @@
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
+        const loggedUser = '0'
         // const transactionId = '';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
+        const sessionSig = __filename
+        const auditDescriptor = 'RUN MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Disable logging while doing mass updates
@@ -25,11 +25,11 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -162,11 +162,11 @@ module.exports = {
               "erroneousObjectives",
               "erroneousGoals";
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Enable logging after mass updates
@@ -175,13 +175,12 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
+    }),
   down: async () => {},
-};
+}

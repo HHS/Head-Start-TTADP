@@ -6,10 +6,10 @@ module.exports = {
       EXCEPTION
         WHEN duplicate_object THEN null;
       END $$;
-    `);
+    `)
   },
 
   down: async () => {
     // Is there a way to revert this? Not sure
   },
-};
+}

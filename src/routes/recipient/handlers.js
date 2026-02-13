@@ -1,4 +1,4 @@
-import httpCodes from 'http-codes';
+import httpCodes from 'http-codes'
 import {
   getGoalsByActivityRecipient,
   recipientById,
@@ -6,155 +6,150 @@ import {
   recipientsByUserId,
   recipientLeadership,
   missingStandardGoals,
-} from '../../services/recipient';
-import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
-import handleErrors from '../../lib/apiErrorHandler';
-import filtersToScopes from '../../scopes';
-import Recipient from '../../policies/recipient';
-import Users from '../../policies/user';
-import { userById } from '../../services/users';
-import { getUserReadRegions } from '../../services/accessValidation';
-import { currentUserId } from '../../services/currentUser';
-import { checkRecipientAccessAndExistence as checkAccessAndExistence } from '../utils';
-import { standardGoalsForRecipient } from '../../services/standardGoals';
+} from '../../services/recipient'
+import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient'
+import handleErrors from '../../lib/apiErrorHandler'
+import filtersToScopes from '../../scopes'
+import Recipient from '../../policies/recipient'
+import Users from '../../policies/user'
+import { userById } from '../../services/users'
+import { getUserReadRegions } from '../../services/accessValidation'
+import { currentUserId } from '../../services/currentUser'
+import { checkRecipientAccessAndExistence as checkAccessAndExistence } from '../utils'
+import { standardGoalsForRecipient } from '../../services/standardGoals'
 
-const namespace = 'SERVICE:RECIPIENT';
+const namespace = 'SERVICE:RECIPIENT'
 
 const logContext = {
   namespace,
-};
+}
 
 export async function getGoalsByIdandRecipient(req, res) {
   try {
-    const { recipientId } = req.params;
-    const { goalIds } = req.query;
+    const { recipientId } = req.params
+    const { goalIds } = req.query
 
-    const goals = await goalsByIdAndRecipient(goalIds, recipientId);
+    const goals = await goalsByIdAndRecipient(goalIds, recipientId)
 
     if (!goals.length) {
-      res.sendStatus(404);
+      res.sendStatus(404)
     }
 
-    res.json(goals);
+    res.json(goals)
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext)
   }
 }
 
 export async function getRecipientAndGrantsByUser(req, res) {
   try {
-    const userId = await currentUserId(req, res);
+    const userId = await currentUserId(req, res)
 
     if (!userId) {
-      res.sendStatus(httpCodes.UNAUTHORIZED);
-      return;
+      res.sendStatus(httpCodes.UNAUTHORIZED)
+      return
     }
 
-    const recipients = await recipientsByUserId(userId);
+    const recipients = await recipientsByUserId(userId)
     if (!recipients || !recipients.length) {
-      res.sendStatus(httpCodes.NOT_FOUND);
-      return;
+      res.sendStatus(httpCodes.NOT_FOUND)
+      return
     }
 
-    res.json(recipients);
+    res.json(recipients)
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext)
   }
 }
 
 export async function getRecipient(req, res) {
   try {
-    const { recipientId } = req.params;
-    const { grant: scopes } = await filtersToScopes(req.query);
-    const recipient = await recipientById(recipientId, scopes);
+    const { recipientId } = req.params
+    const { grant: scopes } = await filtersToScopes(req.query)
+    const recipient = await recipientById(recipientId, scopes)
 
     if (!recipient) {
-      res.sendStatus(404);
-      return;
+      res.sendStatus(404)
+      return
     }
 
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
-    const policy = new Recipient(user, recipient);
+    const userId = await currentUserId(req, res)
+    const user = await userById(userId)
+    const policy = new Recipient(user, recipient)
 
     if (!policy.canView()) {
-      res.sendStatus(401);
-      return;
+      res.sendStatus(401)
+      return
     }
 
     // Get any goals missing for this recipient.
     // We need this on the frontend to determine if they can create new goals.
-    const missingGoals = await missingStandardGoals(recipient);
+    const missingGoals = await missingStandardGoals(recipient)
 
     // Add a NEW property for the missing goals to the recipient object.
     if (recipient.dataValues) {
-      recipient.dataValues.missingStandardGoals = missingGoals;
+      recipient.dataValues.missingStandardGoals = missingGoals
     } else {
-      recipient.missingStandardGoals = missingGoals;
+      recipient.missingStandardGoals = missingGoals
     }
 
-    res.json(recipient);
+    res.json(recipient)
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext)
   }
 }
 
 export async function searchRecipients(req, res) {
   try {
-    const {
-      s, sortBy, direction, offset,
-    } = req.query;
+    const { s, sortBy, direction, offset } = req.query
 
-    const userId = await currentUserId(req, res);
-    const userRegions = await getUserReadRegions(userId);
+    const userId = await currentUserId(req, res)
+    const userRegions = await getUserReadRegions(userId)
 
-    const { grant: scopes } = await filtersToScopes(
-      req.query,
-      { userId },
-    );
-    const recipients = await recipientsByName(s, scopes, sortBy, direction, offset, userRegions);
+    const { grant: scopes } = await filtersToScopes(req.query, { userId })
+    const recipients = await recipientsByName(s, scopes, sortBy, direction, offset, userRegions)
     if (!recipients) {
-      res.sendStatus(404);
-      return;
+      res.sendStatus(404)
+      return
     }
-    res.json(recipients);
+    res.json(recipients)
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext)
   }
 }
 
 export async function getGoalsByRecipient(req, res) {
   try {
-    const proceedQuestionMark = await checkAccessAndExistence(req, res);
+    const proceedQuestionMark = await checkAccessAndExistence(req, res)
 
     if (!proceedQuestionMark) {
-      return;
+      return
     }
 
-    const { recipientId, regionId } = req.params;
+    const { recipientId, regionId } = req.params
 
     // Get goals for recipient.
-    const recipientGoals = await standardGoalsForRecipient(recipientId, regionId, req.query, true);
-    res.json(recipientGoals);
+    const recipientGoals = await standardGoalsForRecipient(recipientId, regionId, req.query, true)
+    res.json(recipientGoals)
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext)
   }
 }
 
 export async function getRecipientLeadership(req, res) {
   try {
-    const proceedQuestionMark = await checkAccessAndExistence(req, res);
+    const proceedQuestionMark = await checkAccessAndExistence(req, res)
 
     if (!proceedQuestionMark) {
-      return;
+      return
     }
 
-    const { recipientId, regionId } = req.params;
+    const { recipientId, regionId } = req.params
 
     // Get goals for recipient.
-    const leadership = await recipientLeadership(recipientId, regionId);
-    res.json(leadership);
+    const leadership = await recipientLeadership(recipientId, regionId)
+    res.json(leadership)
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext)
   }
 }

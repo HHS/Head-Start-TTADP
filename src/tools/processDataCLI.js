@@ -1,7 +1,7 @@
-import processData from './processData';
-import { auditLogger } from '../logger';
+import processData from './processData'
+import { auditLogger } from '../logger'
 
 processData().catch((e) => {
-  auditLogger.error(e);
-  process.exit(1);
-});
+  auditLogger.error(e)
+  process.exit(1)
+})

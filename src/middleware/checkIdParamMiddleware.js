@@ -1,10 +1,10 @@
-import httpCodes from 'http-codes';
-import { auditLogger } from '../logger';
+import httpCodes from 'http-codes'
+import { auditLogger } from '../logger'
 
-const errorMessage = 'Received malformed request params';
+const errorMessage = 'Received malformed request params'
 
 function canBeInt(str) {
-  return Number.isInteger(Number(str)) && Number(str) > 0;
+  return Number.isInteger(Number(str)) && Number(str) > 0
 }
 
 /**
@@ -18,12 +18,12 @@ function canBeInt(str) {
  */
 export function checkActivityReportIdParam(req, res, next) {
   if (req.params && req.params.activityReportId && canBeInt(req.params.activityReportId)) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: activityReportId ${String(req?.params?.activityReportId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: activityReportId ${String(req?.params?.activityReportId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 /**
@@ -37,12 +37,12 @@ export function checkActivityReportIdParam(req, res, next) {
  */
 export function checkCollabReportIdParam(req, res, next) {
   if (req.params && req.params.collabReportId && canBeInt(req.params.collabReportId)) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: collabReportId ${String(req?.params?.collabReportId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: collabReportId ${String(req?.params?.collabReportId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 /**
@@ -55,17 +55,13 @@ export function checkCollabReportIdParam(req, res, next) {
  * @param {*} next - next middleware
  */
 export function checkFileIdParam(req, res, next) {
-  if (
-    req.params
-    && req.params.fileId
-    && canBeInt(req.params.fileId)
-  ) {
-    return next();
+  if (req.params && req.params.fileId && canBeInt(req.params.fileId)) {
+    return next()
   }
 
-  const msg = `${errorMessage}: fileId ${String(req?.params?.fileId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: fileId ${String(req?.params?.fileId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 /**
@@ -79,12 +75,12 @@ export function checkFileIdParam(req, res, next) {
  */
 export function checkReportIdParam(req, res, next) {
   if (req.params && req.params.reportId && canBeInt(req.params.reportId)) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: reportId ${String(req?.params?.reportId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: reportId ${String(req?.params?.reportId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 /**
@@ -98,12 +94,12 @@ export function checkReportIdParam(req, res, next) {
  */
 export function checkObjectiveIdParam(req, res, next) {
   if (req.params && req.params.objectiveId && canBeInt(req.params.objectiveId)) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: objectiveId ${String(req?.params?.objectiveId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: objectiveId ${String(req?.params?.objectiveId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 /**
@@ -117,12 +113,12 @@ export function checkObjectiveIdParam(req, res, next) {
  */
 export function checkObjectiveTemplateIdParam(req, res, next) {
   if (req.params && req.params.objectiveTemplateId && canBeInt(req.params.objectiveTemplateId)) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: objectiveTemplateId ${String(req?.params?.objectiveTemplateId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: objectiveTemplateId ${String(req?.params?.objectiveTemplateId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 /**
@@ -136,12 +132,12 @@ export function checkObjectiveTemplateIdParam(req, res, next) {
  */
 export function checkGroupIdParam(req, res, next) {
   if (req.params && req.params.groupId && (req.params.groupId === 'new' || canBeInt(req.params.groupId))) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: groupId ${String(req?.params?.groupId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: groupId ${String(req?.params?.groupId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 /**
@@ -155,12 +151,12 @@ export function checkGroupIdParam(req, res, next) {
  */
 export function checkGrantIdParam(req, res, next) {
   if (req.params && req.params.grantId && canBeInt(req.params.grantId)) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: grantId ${String(req?.params?.grantId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: grantId ${String(req?.params?.grantId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 /**
@@ -174,12 +170,12 @@ export function checkGrantIdParam(req, res, next) {
  */
 export function checkAlertIdParam(req, res, next) {
   if (req.params && req.params.alertId && canBeInt(req.params.alertId)) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: alertId ${String(req?.params?.alertId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: alertId ${String(req?.params?.alertId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 /**
@@ -193,48 +189,48 @@ export function checkAlertIdParam(req, res, next) {
  */
 export function checkGoalTemplateIdParam(req, res, next) {
   if (req.params && req.params.goalTemplateId && canBeInt(req.params.goalTemplateId)) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: goalTemplateId ${String(req?.params?.goalTemplateId)}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: goalTemplateId ${String(req?.params?.goalTemplateId)}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 export function checkIdParam(req, res, next, paramName) {
   if (req.params && req.params[paramName] && canBeInt(req.params[paramName])) {
-    return next();
+    return next()
   }
 
-  const msg = `${errorMessage}: ${paramName} ${req.params ? (req.params[paramName] || 'undefined') : 'undefined'}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
+  const msg = `${errorMessage}: ${paramName} ${req.params ? req.params[paramName] || 'undefined' : 'undefined'}`
+  auditLogger.error(msg)
+  return res.status(httpCodes.BAD_REQUEST).send(msg)
 }
 
 export function checkCommunicationLogIdParam(req, res, next) {
-  return checkIdParam(req, res, next, 'communicationLogId');
+  return checkIdParam(req, res, next, 'communicationLogId')
 }
 
 export function checkSessionAttachmentIdParam(req, res, next) {
-  return checkIdParam(req, res, next, 'sessionAttachmentId');
+  return checkIdParam(req, res, next, 'sessionAttachmentId')
 }
 
 export function checkRegionIdParam(req, res, next) {
-  return checkIdParam(req, res, next, 'regionId');
+  return checkIdParam(req, res, next, 'regionId')
 }
 
 export function checkRecipientIdParam(req, res, next) {
-  return checkIdParam(req, res, next, 'recipientId');
+  return checkIdParam(req, res, next, 'recipientId')
 }
 
 export function checkUserIdParam(req, res, next) {
-  return checkIdParam(req, res, next, 'userId');
+  return checkIdParam(req, res, next, 'userId')
 }
 
 export function checkGoalGroupIdParam(req, res, next) {
-  return checkIdParam(req, res, next, 'goalGroupId');
+  return checkIdParam(req, res, next, 'goalGroupId')
 }
 
 export function checkIdIdParam(req, res, next) {
-  return checkIdParam(req, res, next, 'id');
+  return checkIdParam(req, res, next, 'id')
 }

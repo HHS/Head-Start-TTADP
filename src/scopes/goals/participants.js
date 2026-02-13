@@ -1,12 +1,12 @@
-import { ALL_PARTICIPANTS } from '@ttahub/common';
-import filterArray, { filterAssociation } from './utils';
+import { ALL_PARTICIPANTS } from '@ttahub/common'
+import filterArray, { filterAssociation } from './utils'
 
 export function onlyValidParticipants(query) {
   if (!Array.isArray(query)) {
-    return [query].filter((participant) => ALL_PARTICIPANTS.includes(participant));
+    return [query].filter((participant) => ALL_PARTICIPANTS.includes(participant))
   }
 
-  return query.filter((participant) => ALL_PARTICIPANTS.includes(participant));
+  return query.filter((participant) => ALL_PARTICIPANTS.includes(participant))
 }
 
 const baseQuery = `
@@ -15,28 +15,28 @@ const baseQuery = `
   INNER JOIN "ActivityReports"
   ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
   WHERE ARRAY_TO_STRING("ActivityReports"."participants", ',')
-`;
+`
 
 export function withParticipants(query) {
-  let participants = onlyValidParticipants(query);
+  let participants = onlyValidParticipants(query)
 
   if (!participants.length) {
-    return {};
+    return {}
   }
 
-  participants = participants.map((participant) => `%${participant}%`);
+  participants = participants.map((participant) => `%${participant}%`)
 
-  return filterAssociation(baseQuery, participants, false, 'ILIKE');
+  return filterAssociation(baseQuery, participants, false, 'ILIKE')
 }
 
 export function withoutParticipants(query) {
-  let participants = onlyValidParticipants(query);
+  let participants = onlyValidParticipants(query)
 
   if (!participants.length) {
-    return {};
+    return {}
   }
 
-  participants = participants.map((participant) => `%${participant}%`);
+  participants = participants.map((participant) => `%${participant}%`)
 
-  return filterAssociation(baseQuery, participants, false, 'NOT ILIKE');
+  return filterAssociation(baseQuery, participants, false, 'NOT ILIKE')
 }

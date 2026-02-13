@@ -1,5 +1,5 @@
-import bootstrapAdmin from './bootstrapAdmin';
-import { auditLogger } from '../logger';
+import bootstrapAdmin from './bootstrapAdmin'
+import { auditLogger } from '../logger'
 
 /**
  * bootstrapAdminCLI is responsible for setting the first ADMIN for TTA Smart Hub.
@@ -11,6 +11,6 @@ import { auditLogger } from '../logger';
  * Open a new issue and PR to update the ADMIN_EMAIL constant within bootstrapAdmin.js
  */
 bootstrapAdmin().catch((e) => {
-  auditLogger.error(e);
-  return process.exit(1);
-});
+  auditLogger.error(e)
+  return process.exit(1)
+})

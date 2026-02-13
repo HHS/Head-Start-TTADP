@@ -65,9 +65,7 @@ const userInfoClassicLogin = {
   },
   oauth2Request: {
     clientId: 'test-client-id',
-    scope: [
-      'user_info',
-    ],
+    scope: ['user_info'],
     requestParameters: {
       code: 'TestCode',
       grant_type: 'authorization_code',
@@ -86,15 +84,13 @@ const userInfoClassicLogin = {
     approved: true,
     refresh: false,
     redirectUri: 'http://localhost:8080/oauth2-client/login/oauth2/code/',
-    responseTypes: [
-      'code',
-    ],
+    responseTypes: ['code'],
     extensions: {},
     grantType: 'authorization_code',
     refreshTokenRequest: null,
   },
   clientOnly: false,
   name: 'testUser@adhocteam.us',
-};
+}
 
-export default userInfoClassicLogin;
+export default userInfoClassicLogin

@@ -8,21 +8,21 @@ import {
   sharedTestData,
   withStatus,
   withoutStatus,
-} from './testHelpers';
+} from './testHelpers'
 
 describe('goals/status', () => {
   beforeAll(async () => {
-    await setupSharedTestData();
-  });
+    await setupSharedTestData()
+  })
 
   afterAll(async () => {
-    await tearDownSharedTestData();
-    await sequelize.close();
-  });
+    await tearDownSharedTestData()
+    await sequelize.close()
+  })
 
   it('filters in by status', async () => {
-    const filters = { 'status.in': ['In Progress', 'Needs status'] };
-    const { goal: scope } = await filtersToScopes(filters, 'goal');
+    const filters = { 'status.in': ['In Progress', 'Needs status'] }
+    const { goal: scope } = await filtersToScopes(filters, 'goal')
     const found = await Goal.findAll({
       where: {
         [Op.and]: [
@@ -32,14 +32,14 @@ describe('goals/status', () => {
           },
         ],
       },
-    });
+    })
 
-    expect(found.length).toBe(1);
-    expect(found.map((g) => g.name)).toContain('Goal 3');
-  });
+    expect(found.length).toBe(1)
+    expect(found.map((g) => g.name)).toContain('Goal 3')
+  })
   it('filters out by status', async () => {
-    const filters = { 'status.nin': ['Suspended'] };
-    const { goal: scope } = await filtersToScopes(filters);
+    const filters = { 'status.nin': ['Suspended'] }
+    const { goal: scope } = await filtersToScopes(filters)
     const found = await Goal.findAll({
       where: {
         [Op.and]: [
@@ -49,35 +49,33 @@ describe('goals/status', () => {
           },
         ],
       },
-    });
+    })
 
-    expect(found.length).toBe(5);
-    expect(found.map((g) => g.name)).toContain('Goal 1');
-    expect(found.map((g) => g.name)).toContain('Goal 2');
-    expect(found.map((g) => g.name)).toContain('Goal 3');
-    expect(found.map((g) => g.name)).toContain('Goal 4');
-  });
+    expect(found.length).toBe(5)
+    expect(found.map((g) => g.name)).toContain('Goal 1')
+    expect(found.map((g) => g.name)).toContain('Goal 2')
+    expect(found.map((g) => g.name)).toContain('Goal 3')
+    expect(found.map((g) => g.name)).toContain('Goal 4')
+  })
 
   it('withStatus, when statuses does not include Needs status', () => {
-    const out = withStatus([]);
+    const out = withStatus([])
     expect(out).toMatchObject({
       [Op.or]: [],
-    });
-  });
+    })
+  })
 
   it('withoutStatus, when status includes Needs status', () => {
-    const out = withoutStatus(['Needs status']);
+    const out = withoutStatus(['Needs status'])
     expect(out).toMatchObject({
       [Op.or]: [
         {
-          [Op.and]: [
-            { status: { [Op.notILike]: '%Needs status%' } },
-          ],
+          [Op.and]: [{ status: { [Op.notILike]: '%Needs status%' } }],
         },
         {
           status: { [Op.not]: null },
         },
       ],
-    });
-  });
-});
+    })
+  })
+})

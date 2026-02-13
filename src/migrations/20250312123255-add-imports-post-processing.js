@@ -1,13 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       // Add column postProcessingActions to table Imports of JSONB type.
       await queryInterface.addColumn(
@@ -17,23 +15,26 @@ module.exports = {
           type: Sequelize.JSONB,
           allowNull: true,
         },
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Update Imports set the postProcessingActions column to the object.
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
               UPDATE "Imports"
               SET "postProcessingActions" = '[{"name": "Monitoring Goal CRON job", "function": "createMonitoringGoals"}]'
               WHERE "name" = 'ITAMS Monitoring Data';
-          `, { transaction });
-    });
+          `,
+        { transaction }
+      )
+    })
   },
 
   down: async (queryInterface) => {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.removeColumn('Imports', 'postProcessingActions', { transaction });
-    });
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
+      await queryInterface.removeColumn('Imports', 'postProcessingActions', { transaction })
+    })
   },
-};
+}

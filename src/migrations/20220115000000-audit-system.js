@@ -44,24 +44,24 @@ An optional descriptor can be passed and will be recorded with any log generated
 */
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
+        const loggedUser = '0'
         // const transactionId = '';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
+        const sessionSig = __filename
+        const auditDescriptor = 'RUN MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Define a type to use for identifying INSERT, UPDATE, and DELETE
@@ -73,32 +73,36 @@ module.exports = {
                   CREATE TYPE dml_type AS ENUM ('INSERT', 'UPDATE', 'DELETE');
               END IF;
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Define a table and function to store, access, and add descriptors to aid in identifying
       //  the cause of date modification or data definition changes. Add a descriptor to use for
       //  archival of audit logs.
       try {
-        await queryInterface.createTable('ZADescriptor', {
-          id: {
-            allowNull: false,
-            autoIncrement: true,
-            primaryKey: true,
-            type: Sequelize.INTEGER,
+        await queryInterface.createTable(
+          'ZADescriptor',
+          {
+            id: {
+              allowNull: false,
+              autoIncrement: true,
+              primaryKey: true,
+              type: Sequelize.INTEGER,
+            },
+            descriptor: {
+              allowNull: false,
+              type: Sequelize.TEXT,
+            },
           },
-          descriptor: {
-            allowNull: false,
-            type: Sequelize.TEXT,
-          },
-        }, { transaction });
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -121,11 +125,11 @@ module.exports = {
               RETURN Did;
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -135,11 +139,11 @@ module.exports = {
             PERFORM "ZAFDescriptorToID"('ARCHIVE AUDIT LOG');
           END;
           $$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Define a table to allow for filtering on which fields with a change in value will be used
@@ -147,37 +151,41 @@ module.exports = {
       //  filter to not log a change if the only field that has changed is the 'updatedAt' column
       //  on any table.
       try {
-        await queryInterface.createTable('ZAFilter', {
-          id: {
-            allowNull: false,
-            autoIncrement: true,
-            primaryKey: true,
-            type: Sequelize.INTEGER,
+        await queryInterface.createTable(
+          'ZAFilter',
+          {
+            id: {
+              allowNull: false,
+              autoIncrement: true,
+              primaryKey: true,
+              type: Sequelize.INTEGER,
+            },
+            tableName: {
+              allowNull: true,
+              default: null,
+              type: Sequelize.STRING,
+            },
+            columnName: {
+              allowNull: false,
+              type: Sequelize.STRING,
+            },
           },
-          tableName: {
-            allowNull: true,
-            default: null,
-            type: Sequelize.STRING,
-          },
-          columnName: {
-            allowNull: false,
-            type: Sequelize.STRING,
-          },
-        }, { transaction });
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
         await queryInterface.sequelize.query(
           `INSERT INTO "ZAFilter" ("tableName", "columnName")
           VALUES ( NULL, 'updatedAt');`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Define three functions to dynamically create function/trigger to prevent modification or
@@ -211,11 +219,11 @@ module.exports = {
                 'ZALNoUpdateF' || t_name);
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -289,11 +297,11 @@ module.exports = {
                   'ZALNoDeleteF' || t_name);
             END
             $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -324,76 +332,80 @@ module.exports = {
                 'ZALNoTruncateF' || t_name);
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Define a table/function/triggers to log all data definition language commands, this covers
       //  all create/alter/drop commands for functions/tables/triggers/types.
       try {
-        await queryInterface.createTable('ZALDDL', {
-          id: {
-            allowNull: false,
-            primaryKey: true,
-            type: Sequelize.BIGINT,
-            autoIncrement: true,
+        await queryInterface.createTable(
+          'ZALDDL',
+          {
+            id: {
+              allowNull: false,
+              primaryKey: true,
+              type: Sequelize.BIGINT,
+              autoIncrement: true,
+            },
+            command_tag: {
+              allowNull: true,
+              default: null,
+              type: Sequelize.STRING,
+            },
+            object_type: {
+              allowNull: true,
+              default: null,
+              type: Sequelize.STRING,
+            },
+            schema_name: {
+              allowNull: true,
+              default: null,
+              type: Sequelize.STRING,
+            },
+            object_identity: {
+              allowNull: true,
+              default: null,
+              type: Sequelize.STRING,
+            },
+            ddl_timestamp: {
+              allowNull: false,
+              type: Sequelize.DATE,
+            },
+            ddl_by: {
+              type: Sequelize.INTEGER,
+              allowNull: true,
+              defaultValue: null,
+              comment: null,
+            },
+            ddl_txid: {
+              type: Sequelize.UUID,
+              allowNull: false,
+              validate: { isUUID: 'all' },
+            },
+            session_sig: {
+              type: Sequelize.TEXT,
+              allowNull: true,
+              defaultValue: null,
+            },
+            descriptor_id: {
+              type: Sequelize.INTEGER,
+              allowNull: true,
+              defaultValue: null,
+            },
           },
-          command_tag: {
-            allowNull: true,
-            default: null,
-            type: Sequelize.STRING,
-          },
-          object_type: {
-            allowNull: true,
-            default: null,
-            type: Sequelize.STRING,
-          },
-          schema_name: {
-            allowNull: true,
-            default: null,
-            type: Sequelize.STRING,
-          },
-          object_identity: {
-            allowNull: true,
-            default: null,
-            type: Sequelize.STRING,
-          },
-          ddl_timestamp: {
-            allowNull: false,
-            type: Sequelize.DATE,
-          },
-          ddl_by: {
-            type: Sequelize.INTEGER,
-            allowNull: true,
-            defaultValue: null,
-            comment: null,
-          },
-          ddl_txid: {
-            type: Sequelize.UUID,
-            allowNull: false,
-            validate: { isUUID: 'all' },
-          },
-          session_sig: {
-            type: Sequelize.TEXT,
-            allowNull: true,
-            defaultValue: null,
-          },
-          descriptor_id: {
-            type: Sequelize.INTEGER,
-            allowNull: true,
-            defaultValue: null,
-          },
-        }, {
-          transaction,
-          createdAt: false,
-          updatedAt: false,
-        });
+          {
+            transaction,
+            createdAt: false,
+            updatedAt: false,
+          }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -450,11 +462,11 @@ module.exports = {
               END LOOP;
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -463,11 +475,11 @@ module.exports = {
           ON ddl_command_end
           WHEN TAG IN ('ALTER FUNCTION', 'ALTER TABLE', 'ALTER TRIGGER', 'ALTER TYPE')
           EXECUTE FUNCTION "ZAFAuditDDLCommand"();`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -476,11 +488,11 @@ module.exports = {
           ON ddl_command_end
           WHEN TAG IN ('CREATE FUNCTION', 'CREATE TABLE', 'CREATE TABLE AS', 'CREATE TRIGGER', 'CREATE TYPE', 'SELECT INTO')
           EXECUTE FUNCTION "ZAFAuditDDLCommand"();`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -489,11 +501,11 @@ module.exports = {
           ON ddl_command_end
           WHEN TAG IN ('DROP FUNCTION', 'DROP TABLE', 'DROP TRIGGER', 'DROP TYPE')
           EXECUTE FUNCTION "ZAFAuditDDLCommand"();`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -502,11 +514,11 @@ module.exports = {
             "ZAFCreateALNoUpdate"('DDL'),
             "ZAFCreateALNoDelete"('DDL'),
             "ZAFCreateALNoTruncate"('DDL');`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Define functions to generate the audit table/functions/triggers for a specified table.
@@ -537,11 +549,11 @@ module.exports = {
                     'ZAL' || t_name);
             END
             $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -686,11 +698,11 @@ module.exports = {
                 'ZAL' || t_name);
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -709,11 +721,11 @@ module.exports = {
                 'ZALF' || t_name);
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -789,11 +801,11 @@ module.exports = {
                 'ZALTruncateF' || t_name);
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Define functions for adding/removing audit monitoring to a table. Removing auditing does
@@ -815,11 +827,11 @@ module.exports = {
             PERFORM "ZAFCreateALNoTruncate"(t_name);
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -844,11 +856,11 @@ module.exports = {
               END LOOP;
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -857,11 +869,11 @@ module.exports = {
             ON ddl_command_end
             WHEN TAG IN ('SELECT INTO', 'CREATE TABLE', 'CREATE TABLE AS')
             EXECUTE FUNCTION "ZAFAuditCreateTable"();`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -873,11 +885,11 @@ module.exports = {
             AND table_name != 'SequelizeMeta'
             AND table_name != 'RequestErrors'
             AND table_name NOT LIKE 'ZAL%';`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -908,11 +920,11 @@ module.exports = {
                 'ZALTruncateF' || t_name);
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -934,11 +946,11 @@ module.exports = {
               END LOOP;
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -947,11 +959,11 @@ module.exports = {
           ON sql_drop
           WHEN TAG IN ('DROP TABLE')
           EXECUTE FUNCTION "ZAFAuditDropTable"();`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // enabled states withing the db are:
@@ -1035,42 +1047,41 @@ module.exports = {
             END IF;
           END
           $func$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+    }),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
-        const sessionSig = __filename;
-        const auditDescriptor = 'REMOVE MIGRATIONS';
+        const loggedUser = '0'
+        const sessionSig = __filename
+        const auditDescriptor = 'REMOVE MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
         await queryInterface.sequelize.query(
           `SELECT
           "ZAFSetTriggerState"(null, null, null, 'DISABLE');`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -1091,11 +1102,11 @@ module.exports = {
               SELECT "ZAFRemoveAuditingOnTable"(obj."tableName");
             END LOOP;
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -1114,11 +1125,11 @@ module.exports = {
               execute format('DROP EVENT TRIGGER IF EXISTS %I CASCADE;', obj."triggerName");
             END LOOP;
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -1143,12 +1154,11 @@ module.exports = {
               execute format('DROP FUNCTION IF EXISTS %I;', obj."fuctionName");
             END LOOP;
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
-};
+    }),
+}

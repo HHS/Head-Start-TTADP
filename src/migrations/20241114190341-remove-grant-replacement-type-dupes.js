@@ -1,13 +1,13 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       // Find duplicate GrantReplacementTypes, keeping the oldest
       const [duplicates] = await queryInterface.sequelize.query(
@@ -17,13 +17,13 @@ module.exports = {
           GROUP BY "name"
           HAVING COUNT(*) > 1
         `,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Resolve duplicates in GrantReplacementTypes
       for (const dup of duplicates) {
-        const { ids } = dup;
-        const [idToKeep, ...idsToRemove] = ids;
+        const { ids } = dup
+        const [idToKeep, ...idsToRemove] = ids
 
         // Update GrantReplacements to the idToKeep
         await queryInterface.sequelize.query(
@@ -32,8 +32,8 @@ module.exports = {
             SET "grantReplacementTypeId" = ${idToKeep}
             WHERE "grantReplacementTypeId" = ANY(array[${idsToRemove.join(',')}])
           `,
-          { transaction },
-        );
+          { transaction }
+        )
 
         // Delete duplicate ids from GrantReplacementTypes
         await queryInterface.sequelize.query(
@@ -41,8 +41,8 @@ module.exports = {
             DELETE FROM "GrantReplacementTypes"
             WHERE id = ANY(array[${idsToRemove.join(',')}])
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       }
 
       // Remove exact duplicate GrantReplacements entries, keeping the oldest
@@ -64,10 +64,10 @@ module.exports = {
           AND gr. "replacingGrantId" = subquery."replacingGrantId"
           AND gr. "grantReplacementTypeId" = subquery."grantReplacementTypeId"
         `,
-        { transaction },
-      );
-    });
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface) {},
-};
+}

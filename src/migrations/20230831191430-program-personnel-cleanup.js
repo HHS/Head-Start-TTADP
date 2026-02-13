@@ -1,16 +1,14 @@
-const {
-  prepMigration,
-  setAuditLoggingState,
-} = require('../lib/migration');
+const { prepMigration, setAuditLoggingState } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
 
         /* 1. Create a temp table of dedupe. */
          DROP TABLE IF EXISTS "ProgramPersonnelToKeep";
@@ -36,35 +34,46 @@ module.exports = {
                  "grantId",
                  "programId",
                  "email" -- We want entries on email change.
-         );`, { transaction });
+         );`,
+        { transaction }
+      )
 
       /* 2. Disable audit trail. */
-      await setAuditLoggingState(queryInterface, transaction, false);
+      await setAuditLoggingState(queryInterface, transaction, false)
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
          /* 3. Truncate botht the ZALProgramPersonnel and ProgramPersonnel tables. */
          TRUNCATE TABLE "ZALProgramPersonnel";
          TRUNCATE TABLE "ProgramPersonnel";
-       `, { transaction });
+       `,
+        { transaction }
+      )
 
       /* 4. Enable audit trail. */
-      await setAuditLoggingState(queryInterface, transaction, true);
+      await setAuditLoggingState(queryInterface, transaction, true)
 
       /* 5. Add column 'mapsTo' to ProgramPersonnel as a FK to ProgramPersonnel.id. */
-      await queryInterface.addColumn('ProgramPersonnel', 'mapsTo', {
-        type: 'INTEGER',
-        allowNull: true,
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
-        references: {
-          model: {
-            tableName: 'ProgramPersonnel',
+      await queryInterface.addColumn(
+        'ProgramPersonnel',
+        'mapsTo',
+        {
+          type: 'INTEGER',
+          allowNull: true,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ProgramPersonnel',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      }, { transaction });
+        { transaction }
+      )
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       /* 5a. Drop old column */
       ALTER TABLE "ProgramPersonnel"
       DROP COLUMN "originalPersonnelId";
@@ -154,11 +163,13 @@ module.exports = {
             FROM set_inactive_pp
         )
         SELECT *
-        FROM results;`, { transaction });
-    });
+        FROM results;`,
+        { transaction }
+      )
+    })
   },
 
   down: async () => {
     // it doesn't make sense to roll this back to bad data.
   },
-};
+}

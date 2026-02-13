@@ -1,100 +1,112 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
       // Create GrantReplacementTypes table
-      await queryInterface.createTable('GrantReplacementTypes', {
-        id: {
-          type: Sequelize.INTEGER,
-          autoIncrement: true,
-          primaryKey: true,
-        },
-        name: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-        },
-        createdAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        updatedAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        deletedAt: {
-          type: Sequelize.DATE,
-          allowNull: true,
-        },
-        mapsTo: {
-          type: Sequelize.INTEGER,
-          references: {
-            model: 'GrantReplacementTypes',
-            key: 'id',
+      await queryInterface.createTable(
+        'GrantReplacementTypes',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
           },
-          allowNull: true,
+          name: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+          },
+          createdAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.fn('NOW'),
+          },
+          updatedAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.fn('NOW'),
+          },
+          deletedAt: {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          mapsTo: {
+            type: Sequelize.INTEGER,
+            references: {
+              model: 'GrantReplacementTypes',
+              key: 'id',
+            },
+            allowNull: true,
+          },
         },
-      }, { transaction });
+        { transaction }
+      )
 
       // Create initial GrantReplacementTypes from distinct inactivation reasons
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         INSERT INTO "GrantReplacementTypes" ("name")
           SELECT DISTINCT gr."inactivationReason"
           FROM "Grants" gr
           WHERE gr."inactivationReason" IS NOT NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      )
 
       // Create GrantReplacement table
-      await queryInterface.createTable('GrantReplacements', {
-        id: {
-          type: Sequelize.INTEGER,
-          autoIncrement: true,
-          primaryKey: true,
-        },
-        replacedGrantId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: 'Grants',
-            key: 'id',
+      await queryInterface.createTable(
+        'GrantReplacements',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+          },
+          replacedGrantId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: 'Grants',
+              key: 'id',
+            },
+          },
+          replacingGrantId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: 'Grants',
+              key: 'id',
+            },
+          },
+          grantReplacementTypeId: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+              model: 'GrantReplacementTypes',
+              key: 'id',
+            },
+          },
+          replacementDate: {
+            type: Sequelize.DATEONLY,
+            allowNull: true,
+          },
+          createdAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.fn('NOW'),
+          },
+          updatedAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.fn('NOW'),
           },
         },
-        replacingGrantId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: 'Grants',
-            key: 'id',
-          },
-        },
-        grantReplacementTypeId: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: {
-            model: 'GrantReplacementTypes',
-            key: 'id',
-          },
-        },
-        replacementDate: {
-          type: Sequelize.DATEONLY,
-          allowNull: true,
-        },
-        createdAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        updatedAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-      }, { transaction });
+        { transaction }
+      )
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         INSERT INTO "GrantReplacements" (
           "replacedGrantId",
           "replacingGrantId",
@@ -116,22 +128,27 @@ module.exports = {
         LEFT JOIN "GrantReplacementTypes" grt
         ON gr1."inactivationReason"::text = grt.name
         WHERE gr1."oldGrantId" IS NOT NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      )
 
-      await queryInterface.removeColumn('Grants', 'oldGrantId', { transaction });
-    },
-  ),
+      await queryInterface.removeColumn('Grants', 'oldGrantId', { transaction })
+    }),
 
-  down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.addColumn('Grants', 'oldGrantId', {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      }, { transaction });
+  down: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.addColumn(
+        'Grants',
+        'oldGrantId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        { transaction }
+      )
 
-      await queryInterface.dropTable('GrantReplacements', { transaction });
-      await queryInterface.dropTable('GrantReplacementTypes', { transaction });
-    },
-  ),
-};
+      await queryInterface.dropTable('GrantReplacements', { transaction })
+      await queryInterface.dropTable('GrantReplacementTypes', { transaction })
+    }),
+}

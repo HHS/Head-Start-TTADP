@@ -1,18 +1,18 @@
 /* eslint-disable import/prefer-default-export */
-import sequelize, { Op } from 'sequelize';
-import { map, pickBy } from 'lodash';
-import { activeBefore, activeAfter, activeWithinDates } from './activeWithin';
-import { withRegion, withoutRegion } from './region';
-import { withRecipientName, withoutRecipientName } from './recipient';
-import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
-import { withProgramTypes, withoutProgramTypes } from './programType';
-import { withStateCode } from './stateCode';
-import { withGrantNumber, withoutGrantNumber } from './grantNumber';
-import { withGroup, withoutGroup } from './group';
-import { noActivityWithin } from './recipientsWithoutTTA';
-import { withGoalName, withoutGoalName } from './goalName';
-import { withGrantStatus, withoutGrantStatus } from './grantStatus';
-import { withGoalResponse, withoutGoalResponse } from './goalResponse';
+import sequelize, { Op } from 'sequelize'
+import { map, pickBy } from 'lodash'
+import { activeBefore, activeAfter, activeWithinDates } from './activeWithin'
+import { withRegion, withoutRegion } from './region'
+import { withRecipientName, withoutRecipientName } from './recipient'
+import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist'
+import { withProgramTypes, withoutProgramTypes } from './programType'
+import { withStateCode } from './stateCode'
+import { withGrantNumber, withoutGrantNumber } from './grantNumber'
+import { withGroup, withoutGroup } from './group'
+import { noActivityWithin } from './recipientsWithoutTTA'
+import { withGoalName, withoutGoalName } from './goalName'
+import { withGrantStatus, withoutGrantStatus } from './grantStatus'
+import { withGoalResponse, withoutGoalResponse } from './goalResponse'
 
 export const topicToQuery = {
   recipient: {
@@ -64,38 +64,38 @@ export const topicToQuery = {
     in: (query) => withGoalResponse(query),
     nin: (query) => withoutGoalResponse(query),
   },
-};
+}
 
 export function grantsFiltersToScopes(filters, options, userId) {
-  const isSubset = options && options.subset;
+  const isSubset = options && options.subset
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
-    const [topic, condition] = topicAndCondition.split('.');
+    const [topic, condition] = topicAndCondition.split('.')
     if ((topic === 'startDate' || topic === 'endDate') && isSubset) {
-      return condition in topicToQuery.activeWithin;
+      return condition in topicToQuery.activeWithin
     }
 
     if (!(topic in topicToQuery)) {
-      return false;
+      return false
     }
 
-    return condition in topicToQuery[topic];
-  });
+    return condition in topicToQuery[topic]
+  })
 
   const scopes = map(validFilters, (query, topicAndCondition) => {
-    const [topic, condition] = topicAndCondition.split('.');
+    const [topic, condition] = topicAndCondition.split('.')
 
     if ((topic === 'startDate' || topic === 'endDate') && isSubset) {
-      return topicToQuery.activeWithin[condition]([query].flat());
+      return topicToQuery.activeWithin[condition]([query].flat())
     }
 
-    return topicToQuery[topic][condition]([query].flat(), options, userId);
-  });
+    return topicToQuery[topic][condition]([query].flat(), options, userId)
+  })
 
-  const whereClauses = scopes.map((scope) => scope.where);
-  const includeClauses = scopes.map((scope) => scope.include).filter(Boolean);
+  const whereClauses = scopes.map((scope) => scope.where)
+  const includeClauses = scopes.map((scope) => scope.include).filter(Boolean)
 
   return {
     where: whereClauses.length > 0 ? { [Op.and]: whereClauses } : {},
     include: includeClauses.length > 0 ? includeClauses : [],
-  };
+  }
 }

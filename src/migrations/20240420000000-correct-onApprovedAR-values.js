@@ -1,12 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(/* sql */`
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.sequelize.query(
+        /* sql */ `
 
       --  1. Calculate correct onApprovedAR values for objectives
       DROP TABLE IF EXISTS objectives_on_ars;
@@ -319,13 +318,13 @@ module.exports = {
       SELECT 12,'goal onAR ending stats', * FROM final_goal_onar_stats
       ORDER BY 1
       ;
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-    },
-  ),
-};
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+    }),
+}

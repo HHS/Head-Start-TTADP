@@ -1,5 +1,5 @@
-import { Op } from 'sequelize';
-import { filterAssociation } from './utils';
+import { Op } from 'sequelize'
+import { filterAssociation } from './utils'
 
 export default function withRecipientId(id) {
   const query = `
@@ -10,9 +10,9 @@ export default function withRecipientId(id) {
   ON "Grants"."recipientId" = "Recipients"."id"
   INNER JOIN "ActivityRecipients" "ActivityRecipients"
   ON "ActivityRecipients"."grantId" = "Grants"."id"
-  WHERE "Recipients".id`;
+  WHERE "Recipients".id`
 
   return {
     [Op.and]: filterAssociation(query, id, false, '='),
-  };
+  }
 }

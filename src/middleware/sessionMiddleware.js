@@ -1,9 +1,9 @@
-import session from 'express-session';
-import connectRedis from 'connect-redis';
-import { getRedis } from '../lib/redisClient';
+import session from 'express-session'
+import connectRedis from 'connect-redis'
+import { getRedis } from '../lib/redisClient'
 
-const RedisStore = connectRedis(session);
-const EIGHT_HOURS = 1000 * 60 * 60 * 8;
+const RedisStore = connectRedis(session)
+const EIGHT_HOURS = 1000 * 60 * 60 * 8
 
 export default session({
   store: new RedisStore({
@@ -23,4 +23,4 @@ export default session({
     secure: process.env.NODE_ENV === 'production',
     maxAge: EIGHT_HOURS,
   },
-});
+})

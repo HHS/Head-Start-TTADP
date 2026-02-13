@@ -1,13 +1,6 @@
-import { REPORT_STATUSES } from '@ttahub/common';
-import db, {
-  ActivityReport,
-  ActivityRecipient,
-  User,
-  Recipient,
-  OtherEntity,
-  Grant,
-} from '..';
-import { auditLogger } from '../../logger';
+import { REPORT_STATUSES } from '@ttahub/common'
+import db, { ActivityReport, ActivityRecipient, User, Recipient, OtherEntity, Grant } from '..'
+import { auditLogger } from '../../logger'
 
 const mockUser = {
   name: 'Joe Green',
@@ -30,18 +23,18 @@ const mockUser = {
     },
   ],
   flags: [],
-};
+}
 
 const mockRecipient = {
   id: 65535,
   uei: 'NNA5N2KHMGM2',
   name: 'Tooth Brushing Academy',
   recipientType: 'Community Action Agency (CAA)',
-};
+}
 
 const mockOtherEntity = {
   name: 'Regional TTA/Other Specialists',
-};
+}
 
 const mockGrant = {
   id: 65535,
@@ -55,7 +48,7 @@ const mockGrant = {
   grantSpecialistEmail: null,
   stateCode: 'NY',
   annualFundingMonth: 'October',
-};
+}
 
 const sampleReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
@@ -80,27 +73,27 @@ const sampleReport = {
     homeRegionId: 1,
   },
   version: 2,
-};
+}
 
 describe('Activity Reports model', () => {
-  let user;
-  let recipient;
-  let otherEntity;
-  let grant;
-  let report;
-  let activityRecipients;
+  let user
+  let recipient
+  let otherEntity
+  let grant
+  let report
+  let activityRecipients
   beforeAll(async () => {
-    user = await User.create({ ...mockUser });
-    recipient = await Recipient.create({ ...mockRecipient });
-    otherEntity = await OtherEntity.create({ ...mockOtherEntity });
+    user = await User.create({ ...mockUser })
+    recipient = await Recipient.create({ ...mockRecipient })
+    otherEntity = await OtherEntity.create({ ...mockOtherEntity })
     await Grant.create({
       ...mockGrant,
       recipientId: recipient.id,
       programSpecialistName: user.name,
       programSpecialistEmail: user.email,
-    });
-    grant = await Grant.findOne({ where: { id: mockGrant.id } });
-    report = await ActivityReport.create({ ...sampleReport });
+    })
+    grant = await Grant.findOne({ where: { id: mockGrant.id } })
+    report = await ActivityReport.create({ ...sampleReport })
     activityRecipients = await Promise.all([
       await ActivityRecipient.create({ activityReportId: report.id, grantId: grant.id }),
       await ActivityRecipient.create({
@@ -108,43 +101,49 @@ describe('Activity Reports model', () => {
         otherEntityId: otherEntity.id,
       }),
       await ActivityRecipient.create({ activityReportId: report.id }, { validation: false }),
-    ]);
-  });
+    ])
+  })
   afterAll(async () => {
     if (activityRecipients) {
-      await Promise.all(activityRecipients
-        .map(async (activityRecipient) => ActivityRecipient.destroy({
+      await Promise.all(
+        activityRecipients.map(async (activityRecipient) =>
+          ActivityRecipient.destroy({
+            where: {
+              activityReportId: activityRecipient.activityReportId,
+              grantId: activityRecipient.grantId,
+              otherEntityId: activityRecipient.otherEntityId,
+            },
+          })
+        )
+      )
+      await ActivityReport.destroy({ where: { id: report.id } })
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true })
+      await OtherEntity.destroy({ where: { id: otherEntity.id } })
+      await Recipient.destroy({ where: { id: recipient.id } })
+      await User.destroy({ where: { id: user.id } })
+      await db.sequelize.close()
+    }
+  })
+
+  it('activityRecipientId', async () => {
+    expect(activityRecipients[0].activityRecipientId).toEqual(grant.id)
+    expect(activityRecipients[1].activityRecipientId).toEqual(otherEntity.id)
+    expect(activityRecipients[2].activityRecipientId).toEqual(null)
+  })
+  it('name', async () => {
+    const arr = await Promise.all(
+      activityRecipients.map(async (activityRecipient) =>
+        ActivityRecipient.findOne({
           where: {
             activityReportId: activityRecipient.activityReportId,
             grantId: activityRecipient.grantId,
             otherEntityId: activityRecipient.otherEntityId,
           },
-        })));
-      await ActivityReport.destroy({ where: { id: report.id } });
-      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
-      await OtherEntity.destroy({ where: { id: otherEntity.id } });
-      await Recipient.destroy({ where: { id: recipient.id } });
-      await User.destroy({ where: { id: user.id } });
-      await db.sequelize.close();
-    }
-  });
-
-  it('activityRecipientId', async () => {
-    expect(activityRecipients[0].activityRecipientId).toEqual(grant.id);
-    expect(activityRecipients[1].activityRecipientId).toEqual(otherEntity.id);
-    expect(activityRecipients[2].activityRecipientId).toEqual(null);
-  });
-  it('name', async () => {
-    const arr = await Promise.all(activityRecipients
-      .map(async (activityRecipient) => ActivityRecipient.findOne({
-        where: {
-          activityReportId: activityRecipient.activityReportId,
-          grantId: activityRecipient.grantId,
-          otherEntityId: activityRecipient.otherEntityId,
-        },
-      })));
-    expect(arr[0].name).toEqual(grant.name);
-    expect(arr[1].name).toEqual(otherEntity.name);
-    expect(arr[2].name).toEqual(null);
-  });
-});
+        })
+      )
+    )
+    expect(arr[0].name).toEqual(grant.name)
+    expect(arr[1].name).toEqual(otherEntity.name)
+    expect(arr[2].name).toEqual(null)
+  })
+})

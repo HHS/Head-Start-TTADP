@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import faker from '@faker-js/faker';
+import faker from '@faker-js/faker'
 
 // Mock user data
 export const mockUser = {
@@ -9,4 +9,4 @@ export const mockUser = {
   hsesUsername: faker.datatype.string(10),
   hsesUserId: faker.datatype.string(10),
   lastLogin: new Date(),
-};
+}

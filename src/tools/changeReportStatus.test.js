@@ -1,11 +1,8 @@
-import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  sequelize,
-  ActivityReport,
-} from '../models';
-import changeReportStatus from './changeReportStatus';
+import { REPORT_STATUSES } from '@ttahub/common'
+import { sequelize, ActivityReport } from '../models'
+import changeReportStatus from './changeReportStatus'
 
-jest.mock('../logger');
+jest.mock('../logger')
 
 const reportObject = {
   activityRecipientType: 'recipient',
@@ -25,27 +22,27 @@ const reportObject = {
   topics: ['topics'],
   ttaType: ['type'],
   version: 2,
-};
+}
 
 describe('changeStatus', () => {
   afterAll(async () => {
-    await sequelize.close();
-  });
+    await sequelize.close()
+  })
 
   it('changes activity report(s) status to deleted', async () => {
-    const report = await ActivityReport.create(reportObject);
+    const report = await ActivityReport.create(reportObject)
 
-    expect(report.calculatedStatus).toBe(REPORT_STATUSES.APPROVED);
-    await changeReportStatus(report.id.toString(), 'deleted');
+    expect(report.calculatedStatus).toBe(REPORT_STATUSES.APPROVED)
+    await changeReportStatus(report.id.toString(), 'deleted')
 
-    const deletedReport = await ActivityReport.unscoped().findOne({ where: { id: report.id } });
+    const deletedReport = await ActivityReport.unscoped().findOne({ where: { id: report.id } })
 
-    expect(deletedReport.calculatedStatus).toBe(REPORT_STATUSES.DELETED);
+    expect(deletedReport.calculatedStatus).toBe(REPORT_STATUSES.DELETED)
 
-    await ActivityReport.destroy({ where: { id: deletedReport.id } });
-  });
+    await ActivityReport.destroy({ where: { id: deletedReport.id } })
+  })
 
   it('handles unknown ids', async () => {
-    await expect(changeReportStatus('-1', 'deleted')).resolves.not.toThrowError();
-  });
-});
+    await expect(changeReportStatus('-1', 'deleted')).resolves.not.toThrowError()
+  })
+})

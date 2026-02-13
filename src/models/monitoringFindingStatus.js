@@ -1,8 +1,5 @@
-import { Model } from 'sequelize';
-import {
-  beforeCreate,
-  beforeUpdate,
-} from './hooks/monitoringFindingStatus';
+import { Model } from 'sequelize'
+import { beforeCreate, beforeUpdate } from './hooks/monitoringFindingStatus'
 
 export default (sequelize, DataTypes) => {
   class MonitoringFindingStatus extends Model {
@@ -13,59 +10,56 @@ export default (sequelize, DataTypes) => {
        *  status: statusId -< MonitoringFindingStatusLink.statusId
        */
 
-      models.MonitoringFindingStatusLink.hasMany(
-        models.MonitoringFindingStatus,
-        {
-          foreignKey: 'statusId',
-          as: 'monitoringFindingStatuses',
-        },
-      );
+      models.MonitoringFindingStatusLink.hasMany(models.MonitoringFindingStatus, {
+        foreignKey: 'statusId',
+        as: 'monitoringFindingStatuses',
+      })
 
-      models.MonitoringFindingStatus.belongsTo(
-        models.MonitoringFindingStatusLink,
-        {
-          foreignKey: 'statusId',
-          as: 'statusLink',
-        },
-      );
+      models.MonitoringFindingStatus.belongsTo(models.MonitoringFindingStatusLink, {
+        foreignKey: 'statusId',
+        as: 'statusLink',
+      })
     }
   }
-  MonitoringFindingStatus.init({
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement: true,
+  MonitoringFindingStatus.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      statusId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      name: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      sourceCreatedAt: {
+        allowNull: false,
+        type: DataTypes.DATE,
+      },
+      sourceUpdatedAt: {
+        allowNull: false,
+        type: DataTypes.DATE,
+      },
+      sourceDeletedAt: {
+        allowNull: true,
+        type: DataTypes.DATE,
+      },
     },
-    statusId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    name: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    sourceCreatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-    },
-    sourceUpdatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-    },
-    sourceDeletedAt: {
-      allowNull: true,
-      type: DataTypes.DATE,
-    },
-  }, {
-    sequelize,
-    modelName: 'MonitoringFindingStatus',
-    tableName: 'MonitoringFindingStatuses',
-    paranoid: true,
-    hooks: {
-      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
-      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
-    },
-  });
-  return MonitoringFindingStatus;
-};
+    {
+      sequelize,
+      modelName: 'MonitoringFindingStatus',
+      tableName: 'MonitoringFindingStatuses',
+      paranoid: true,
+      hooks: {
+        beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
+        beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      },
+    }
+  )
+  return MonitoringFindingStatus
+}

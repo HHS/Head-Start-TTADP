@@ -1,11 +1,11 @@
-const { Model } = require('sequelize');
+const { Model } = require('sequelize')
 
 /**
-   * ObjectiveTopic table. Junction table
-   * between Objectives and topics
-   * @param {} sequelize
-   * @param {*} DataTypes
-   */
+ * ObjectiveTopic table. Junction table
+ * between Objectives and topics
+ * @param {} sequelize
+ * @param {*} DataTypes
+ */
 export default (sequelize, DataTypes) => {
   class ActivityReportObjectiveTopic extends Model {
     static associate(models) {
@@ -13,28 +13,35 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         onDelete: 'cascade',
         as: 'activityReportObjective',
-      });
-      ActivityReportObjectiveTopic.belongsTo(models.Topic, { foreignKey: 'topicId', onDelete: 'cascade', as: 'topic' });
+      })
+      ActivityReportObjectiveTopic.belongsTo(models.Topic, {
+        foreignKey: 'topicId',
+        onDelete: 'cascade',
+        as: 'topic',
+      })
     }
   }
-  ActivityReportObjectiveTopic.init({
-    id: {
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-      type: DataTypes.INTEGER,
+  ActivityReportObjectiveTopic.init(
+    {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: DataTypes.INTEGER,
+      },
+      activityReportObjectiveId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      topicId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
     },
-    activityReportObjectiveId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    topicId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-  }, {
-    sequelize,
-    modelName: 'ActivityReportObjectiveTopic',
-  });
-  return ActivityReportObjectiveTopic;
-};
+    {
+      sequelize,
+      modelName: 'ActivityReportObjectiveTopic',
+    }
+  )
+  return ActivityReportObjectiveTopic
+}

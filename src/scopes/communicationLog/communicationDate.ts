@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
-import db from '../../models';
+import { Op } from 'sequelize'
+import db from '../../models'
 
-const { sequelize } = db;
+const { sequelize } = db
 
 export function beforeCommunicationDate(dates: string[]) {
   return {
@@ -12,7 +12,7 @@ export function beforeCommunicationDate(dates: string[]) {
         AND ("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone <= ${sequelize.escape(dates[0])}::timestamp with time zone
       `),
     ],
-  };
+  }
 }
 
 export function afterCommunicationDate(dates: string[]) {
@@ -24,16 +24,16 @@ export function afterCommunicationDate(dates: string[]) {
         AND ("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone >= ${sequelize.escape(dates[0])}::timestamp with time zone
       `),
     ],
-  };
+  }
 }
 
 export function withinCommunicationDate(dates: string[]) {
-  const splitDates = dates[0].split('-');
+  const splitDates = dates[0].split('-')
   if (splitDates.length !== 2) {
-    return {};
+    return {}
   }
-  const startDate = splitDates[0];
-  const endDate = splitDates[1];
+  const startDate = splitDates[0]
+  const endDate = splitDates[1]
 
   return {
     [Op.and]: [
@@ -45,5 +45,5 @@ export function withinCommunicationDate(dates: string[]) {
         AND ${sequelize.escape(endDate)}::timestamp with time zone
       `),
     ],
-  };
+  }
 }

@@ -1,11 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require('fs')
+const path = require('path')
+const { execSync } = require('child_process')
 
 describe('clean-zap-report.js', () => {
-  const sourceFile = path.join(__dirname, 'sample_owasp_report.html');
-  const destinationFile = path.join(__dirname, 'owasp_report_cleaned.html');
-  const cleanZapReportScript = path.join(__dirname, '../tools/clean-zap-report.js');
+  const sourceFile = path.join(__dirname, 'sample_owasp_report.html')
+  const destinationFile = path.join(__dirname, 'owasp_report_cleaned.html')
+  const cleanZapReportScript = path.join(__dirname, '../tools/clean-zap-report.js')
 
   beforeAll(() => {
     // Create a sample HTML report for testing
@@ -36,29 +36,29 @@ describe('clean-zap-report.js', () => {
                 </table>
             </body>
             </html>
-        `;
-    fs.writeFileSync(sourceFile, sampleReport);
-  });
+        `
+    fs.writeFileSync(sourceFile, sampleReport)
+  })
 
   afterAll(() => {
     // Clean up the test files
-    fs.unlinkSync(sourceFile);
+    fs.unlinkSync(sourceFile)
     if (fs.existsSync(destinationFile)) {
-      fs.unlinkSync(destinationFile);
+      fs.unlinkSync(destinationFile)
     }
-  });
+  })
 
   it('should remove findings with ID 10096 and adjust the low risk count', () => {
     // Run the clean-zap-report.js script
-    execSync(`node ${cleanZapReportScript} ${sourceFile} ${destinationFile}`);
+    execSync(`node ${cleanZapReportScript} ${sourceFile} ${destinationFile}`)
 
     // Load the cleaned report
-    const cleanedReport = fs.readFileSync(destinationFile, 'utf8');
+    const cleanedReport = fs.readFileSync(destinationFile, 'utf8')
 
     // Check that the ignored finding is removed
-    expect(cleanedReport).not.toContain('Some Alert to Ignore');
+    expect(cleanedReport).not.toContain('Some Alert to Ignore')
 
     // Check that the count of low risk findings is decremented
-    expect(cleanedReport).toContain('<div>1</div>');
-  });
-});
+    expect(cleanedReport).toContain('<div>1</div>')
+  })
+})

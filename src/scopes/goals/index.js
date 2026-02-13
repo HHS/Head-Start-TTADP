@@ -1,32 +1,30 @@
-import { createFiltersToScopes } from '../utils';
-import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
-import { withoutStatus, withStatus } from './status';
-import { withTopics, withoutTopics } from './topics';
-import { withReasons, withoutReasons } from './reasons';
-import { withRecipientName, withoutRecipientName } from './recipient';
-import { withRecipientId } from './recipientId';
-import { withRegion, withoutRegion } from './region';
-import {
-  containsGrantNumber, doesNotContainGrantNumber, withGrantNumber, withoutGrantNumber,
-} from './grantNumber';
-import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
-import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
-import { withMyReports, withoutMyReports } from './myReports';
-import { withParticipants, withoutParticipants } from './participants';
-import { withoutTtaType, withTtaType } from './ttaType';
-import { withoutProgramSpecialist, withProgramSpecialist } from './programSpecialist';
-import { withProgramTypes, withoutProgramTypes } from './programType';
-import { withoutReportIds, withReportIds } from './reportId';
-import withStateCode from './stateCode';
-import { withReportText, withoutReportText } from './reportText';
-import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
-import { withGoalType, withoutGoalType } from './goalType';
-import { withGroup, withoutGroup } from './group';
-import { withResourceUrl, withoutResourceUrl } from './resouceUrl';
-import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
-import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole';
-import { withGoalName, withoutGoalName } from './goalName';
-import { withGoalResponse, withoutGoalResponse } from './goalResponse';
+import { createFiltersToScopes } from '../utils'
+import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate'
+import { withoutStatus, withStatus } from './status'
+import { withTopics, withoutTopics } from './topics'
+import { withReasons, withoutReasons } from './reasons'
+import { withRecipientName, withoutRecipientName } from './recipient'
+import { withRecipientId } from './recipientId'
+import { withRegion, withoutRegion } from './region'
+import { containsGrantNumber, doesNotContainGrantNumber, withGrantNumber, withoutGrantNumber } from './grantNumber'
+import { afterStartDate, beforeStartDate, withinStartDates } from './startDate'
+import { afterEndDate, beforeEndDate, withinEndDates } from './endDate'
+import { withMyReports, withoutMyReports } from './myReports'
+import { withParticipants, withoutParticipants } from './participants'
+import { withoutTtaType, withTtaType } from './ttaType'
+import { withoutProgramSpecialist, withProgramSpecialist } from './programSpecialist'
+import { withProgramTypes, withoutProgramTypes } from './programType'
+import { withoutReportIds, withReportIds } from './reportId'
+import withStateCode from './stateCode'
+import { withReportText, withoutReportText } from './reportText'
+import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations'
+import { withGoalType, withoutGoalType } from './goalType'
+import { withGroup, withoutGroup } from './group'
+import { withResourceUrl, withoutResourceUrl } from './resouceUrl'
+import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment'
+import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole'
+import { withGoalName, withoutGoalName } from './goalName'
+import { withGoalResponse, withoutGoalResponse } from './goalResponse'
 
 export const topicToQuery = {
   createDate: {
@@ -57,12 +55,7 @@ export const topicToQuery = {
   },
   topic: {
     in: (query, options, _userId, validTopics) => withTopics(query, options, _userId, validTopics),
-    nin: (query, options, _userId, validTopics) => withoutTopics(
-      query,
-      options,
-      _userId,
-      validTopics,
-    ),
+    nin: (query, options, _userId, validTopics) => withoutTopics(query, options, _userId, validTopics),
   },
   reason: {
     in: (query, options) => withReasons(query, options),
@@ -144,8 +137,8 @@ export const topicToQuery = {
     in: (query) => withGoalResponse(query),
     nin: (query) => withoutGoalResponse(query),
   },
-};
+}
 
 export function goalsFiltersToScopes(filters, options, userId, validTopics) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
+  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics)
 }

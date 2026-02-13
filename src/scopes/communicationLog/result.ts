@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 
 export function withResult(results: string[]) {
   return {
@@ -7,7 +7,7 @@ export function withResult(results: string[]) {
         [Op.in]: results,
       },
     },
-  };
+  }
 }
 
 export function withoutResult(results: string[]) {
@@ -17,5 +17,5 @@ export function withoutResult(results: string[]) {
         [Op.notIn]: results,
       },
     },
-  };
+  }
 }

@@ -1,4 +1,4 @@
-import { filterAssociation } from './utils';
+import { filterAssociation } from './utils'
 
 export default function withStateCode(stateCode) {
   const query = `
@@ -6,7 +6,7 @@ export default function withStateCode(stateCode) {
   FROM "Goals"
   INNER JOIN "Grants"
   ON "Grants"."id" = "Goals"."grantId"
-  WHERE "Grants"."stateCode"`;
+  WHERE "Grants"."stateCode"`
 
-  return filterAssociation(query, stateCode, false, '=');
+  return filterAssociation(query, stateCode, false, '=')
 }

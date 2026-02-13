@@ -1,10 +1,10 @@
 /* eslint-disable no-multi-str */
 /* eslint-disable no-console */
 
-import { sequelize } from '../models';
+import { sequelize } from '../models'
 
 const maintainMonitoringData = async () => {
-  console.info('Starting Monitoring data maintenance');
+  console.info('Starting Monitoring data maintenance')
   const result = await sequelize.query(
     `
     -------------------------------------------------------------
@@ -171,9 +171,9 @@ const maintainMonitoringData = async () => {
     
     -- COMMIT;
     `,
-    { raw: true },
-  );
-  console.info(`Recent Finding Deletion or Undeletions: ${JSON.stringify(result[0])}`);
-};
+    { raw: true }
+  )
+  console.info(`Recent Finding Deletion or Undeletions: ${JSON.stringify(result[0])}`)
+}
 
-export default maintainMonitoringData;
+export default maintainMonitoringData

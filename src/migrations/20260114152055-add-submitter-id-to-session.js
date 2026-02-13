@@ -1,11 +1,11 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       await queryInterface.addColumn(
         'SessionReportPilots',
@@ -20,14 +20,14 @@ module.exports = {
           onUpdate: 'CASCADE',
           onDelete: 'SET NULL',
         },
-        { transaction },
-      );
-    });
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      await queryInterface.removeColumn('SessionReportPilots', 'submitterId', { transaction });
-    });
+      await queryInterface.removeColumn('SessionReportPilots', 'submitterId', { transaction })
+    })
   },
-};
+}

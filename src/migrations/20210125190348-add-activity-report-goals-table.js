@@ -35,10 +35,10 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.fn('NOW'),
       },
-    });
+    })
   },
 
   down: async (queryInterface) => {
-    await queryInterface.dropTable('ActivityReportGoals');
+    await queryInterface.dropTable('ActivityReportGoals')
   },
-};
+}

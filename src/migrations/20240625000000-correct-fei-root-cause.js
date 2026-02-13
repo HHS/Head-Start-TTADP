@@ -1,12 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(/* sql */`
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.sequelize.query(
+        /* sql */ `
 
       -- Find all the ActivityReportGoalFieldResponses that have the
       -- invalid 'Transportation' value
@@ -111,14 +110,14 @@ module.exports = {
       ;
       
 
-        `, { transaction });
-    },
-  ),
+        `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
       // Reversing this should be a separate migration
-    },
-  ),
-};
+    }),
+}

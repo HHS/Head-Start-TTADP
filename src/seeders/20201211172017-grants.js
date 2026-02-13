@@ -1,5 +1,5 @@
-const { default: faker } = require('@faker-js/faker');
-const { sample } = require('lodash');
+const { default: faker } = require('@faker-js/faker')
+const { sample } = require('lodash')
 
 const grants = [
   {
@@ -128,23 +128,16 @@ const grants = [
     startDate: new Date(),
     endDate: new Date(),
   },
-];
+]
 
 const baseGrant = {
   startYear: 2021,
   startDate: '2021-01-01',
   status: 'Active',
   endDate: '2032-09-01',
-};
+}
 
-const programTypes = [
-  'Migrant HS',
-  'Migrant EHS',
-  'EHS',
-  'HS',
-  'AIAN HS',
-  'AIAN EHS',
-];
+const programTypes = ['Migrant HS', 'Migrant EHS', 'EHS', 'HS', 'AIAN HS', 'AIAN EHS']
 
 const programs = grants.map((grant) => ({
   ...baseGrant,
@@ -152,16 +145,16 @@ const programs = grants.map((grant) => ({
   id: grant.id,
   grantId: grant.id,
   programType: sample(programTypes),
-}));
+}))
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('Grants', grants, {});
-    await queryInterface.bulkInsert('Programs', programs, {});
+    await queryInterface.bulkInsert('Grants', grants, {})
+    await queryInterface.bulkInsert('Programs', programs, {})
   },
 
   down: async (queryInterface) => {
-    await queryInterface.bulkDelete('Programs', null, {});
-    await queryInterface.bulkDelete('Grants', null, {});
+    await queryInterface.bulkDelete('Programs', null, {})
+    await queryInterface.bulkDelete('Grants', null, {})
   },
-};
+}

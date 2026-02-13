@@ -1,410 +1,438 @@
 /* eslint-disable max-len */
 // Resources Phase 1: Create and Populate Resources table from all explicitly and implicitly included resources from across ActivityReports, NextSteps, & Objectives
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(async (transaction) => {
-    const SOURCE_FIELD = {
-      REPORT: {
-        NONECLKC: 'nonECLKCResourcesUsed',
-        ECLKC: 'ECLKCResourcesUsed',
-        CONTEXT: 'context',
-        NOTES: 'additionalNotes',
-        RESOURCE: 'resource',
-      },
-      NEXTSTEPS: {
-        NOTE: 'note',
-        RESOURCE: 'resource',
-      },
-      GOAL: {
-        NAME: 'name',
-        TIMEFRAME: 'timeframe',
-        RESOURCE: 'resource',
-      },
-      GOALTEMPLATE: {
-        NAME: 'name',
-        TIMEFRAME: 'timeframe',
-        RESOURCE: 'resource',
-      },
-      REPORTGOAL: {
-        NAME: 'name',
-        TIMEFRAME: 'timeframe',
-        RESOURCE: 'resource',
-      },
-      OBJECTIVE: {
-        TITLE: 'title',
-        RESOURCE: 'resource',
-      },
-      OBJECTIVETEMPLATE: {
-        TITLE: 'title',
-        RESOURCE: 'resource',
-      },
-      REPORTOBJECTIVE: {
-        TITLE: 'title',
-        TTAPROVIDED: 'ttaProvided',
-        RESOURCE: 'resource',
-      },
-    };
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      const SOURCE_FIELD = {
+        REPORT: {
+          NONECLKC: 'nonECLKCResourcesUsed',
+          ECLKC: 'ECLKCResourcesUsed',
+          CONTEXT: 'context',
+          NOTES: 'additionalNotes',
+          RESOURCE: 'resource',
+        },
+        NEXTSTEPS: {
+          NOTE: 'note',
+          RESOURCE: 'resource',
+        },
+        GOAL: {
+          NAME: 'name',
+          TIMEFRAME: 'timeframe',
+          RESOURCE: 'resource',
+        },
+        GOALTEMPLATE: {
+          NAME: 'name',
+          TIMEFRAME: 'timeframe',
+          RESOURCE: 'resource',
+        },
+        REPORTGOAL: {
+          NAME: 'name',
+          TIMEFRAME: 'timeframe',
+          RESOURCE: 'resource',
+        },
+        OBJECTIVE: {
+          TITLE: 'title',
+          RESOURCE: 'resource',
+        },
+        OBJECTIVETEMPLATE: {
+          TITLE: 'title',
+          RESOURCE: 'resource',
+        },
+        REPORTOBJECTIVE: {
+          TITLE: 'title',
+          TTAPROVIDED: 'ttaProvided',
+          RESOURCE: 'resource',
+        },
+      }
 
-    const loggedUser = '0';
-    const sessionSig = __filename;
-    const auditDescriptor = 'RUN MIGRATIONS';
-    await queryInterface.sequelize.query(
-      `SELECT
+      const loggedUser = '0'
+      const sessionSig = __filename
+      const auditDescriptor = 'RUN MIGRATIONS'
+      await queryInterface.sequelize.query(
+        `SELECT
           set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
           set_config('audit.transactionId', NULL, TRUE) as "transactionId",
           set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
           set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-      { transaction },
-    );
+        { transaction }
+      )
 
-    // make table to hold resource data
-    await queryInterface.createTable('Resources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      url: {
-        allowNull: false,
-        type: Sequelize.TEXT,
-      },
-      domain: {
-        allowNull: false,
-        type: Sequelize.TEXT,
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-
-    // make table to link resources to activity reports
-    await queryInterface.createTable('ActivityReportResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      activityReportId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'ActivityReports',
+      // make table to hold resource data
+      await queryInterface.createTable(
+        'Resources',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
           },
-          key: 'id',
-        },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+          url: {
+            allowNull: false,
+            type: Sequelize.TEXT,
           },
-          key: 'id',
-        },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-
-    // make table to link resources to next steps
-    await queryInterface.createTable('NextStepResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      nextStepId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'NextSteps',
+          domain: {
+            allowNull: false,
+            type: Sequelize.TEXT,
           },
-          key: 'id',
-        },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
-          key: 'id',
-        },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.NEXTSTEPS))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-
-    // make table to link resources to goals
-    await queryInterface.createTable('GoalResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      goalId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Goals',
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
-          key: 'id',
         },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+        { transaction }
+      )
+
+      // make table to link resources to activity reports
+      await queryInterface.createTable(
+        'ActivityReportResources',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
           },
-          key: 'id',
-        },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.GOAL))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      onAR: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-        allowNull: false,
-      },
-      onApprovedAR: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-        allowNull: false,
-      },
-    }, { transaction });
-
-    // make table to link resources to goals
-    await queryInterface.createTable('GoalTemplateResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      goalTemplateId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'GoalTemplates',
+          activityReportId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'ActivityReports',
+              },
+              key: 'id',
+            },
           },
-          key: 'id',
-        },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+          resourceId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Resources',
+              },
+              key: 'id',
+            },
           },
-          key: 'id',
-        },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.GOALTEMPLATE))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-
-    // make table to link resources to goals
-    await queryInterface.createTable('ActivityReportGoalResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      activityReportGoalId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'ActivityReportGoals',
+          sourceFields: {
+            allowNull: true,
+            default: null,
+            type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT))),
           },
-          key: 'id',
-        },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
-          key: 'id',
-        },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-
-    // add columns to objective resources to link to resources and identify its source
-    await queryInterface.addColumn(
-      'ObjectiveResources',
-      'resourceId',
-      {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: {
-            tableName: 'Resources',
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
-          key: 'id',
         },
-      },
-      { transaction },
-    );
+        { transaction }
+      )
 
-    await queryInterface.addColumn(
-      'ObjectiveResources',
-      'sourceFields',
-      {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVE))),
-      },
-      { transaction },
-    );
-
-    // add columns to objective template resources to link to resources and identify its source
-    await queryInterface.addColumn(
-      'ObjectiveTemplateResources',
-      'resourceId',
-      {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: {
-            tableName: 'Resources',
+      // make table to link resources to next steps
+      await queryInterface.createTable(
+        'NextStepResources',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
           },
-          key: 'id',
-        },
-      },
-      { transaction },
-    );
-
-    await queryInterface.addColumn(
-      'ObjectiveTemplateResources',
-      'sourceFields',
-      {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVETEMPLATE))),
-      },
-      { transaction },
-    );
-
-    // add columns to activity report objective resources to link to resources and identify its source
-    await queryInterface.addColumn(
-      'ActivityReportObjectiveResources',
-      'resourceId',
-      {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: {
-            tableName: 'Resources',
+          nextStepId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'NextSteps',
+              },
+              key: 'id',
+            },
           },
-          key: 'id',
+          resourceId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Resources',
+              },
+              key: 'id',
+            },
+          },
+          sourceFields: {
+            allowNull: true,
+            default: null,
+            type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.NEXTSTEPS))),
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
         },
-      },
-      { transaction },
-    );
+        { transaction }
+      )
 
-    await queryInterface.addColumn(
-      'ActivityReportObjectiveResources',
-      'sourceFields',
-      {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
-      },
-      { transaction },
-    );
+      // make table to link resources to goals
+      await queryInterface.createTable(
+        'GoalResources',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          goalId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Goals',
+              },
+              key: 'id',
+            },
+          },
+          resourceId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Resources',
+              },
+              key: 'id',
+            },
+          },
+          sourceFields: {
+            allowNull: true,
+            default: null,
+            type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.GOAL))),
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          onAR: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+            allowNull: false,
+          },
+          onApprovedAR: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+            allowNull: false,
+          },
+        },
+        { transaction }
+      )
 
-    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9\'\'@\\:%_\\+.,~#&\\/=()]*[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()])?)?(?:[?](?:[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()]*))*)';
-    const domainRegex = '^(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?([a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|((?:[0-9]{1,3}\\.){3}[0-9]{1,3})))';
+      // make table to link resources to goals
+      await queryInterface.createTable(
+        'GoalTemplateResources',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          goalTemplateId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'GoalTemplates',
+              },
+              key: 'id',
+            },
+          },
+          resourceId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Resources',
+              },
+              key: 'id',
+            },
+          },
+          sourceFields: {
+            allowNull: true,
+            default: null,
+            type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.GOALTEMPLATE))),
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+        },
+        { transaction }
+      )
 
-    // populate "Resources" and "ActivityReportResources" from current data from reports via nonECLKCResourcesUsed, ECLKCResourcesUsed, context, & additionalNotes
-    // 1. Generate a list of all reports where either nonECLKCResourcesUsed or ECLKCResourcesUsed is populated.
-    // 2. Collect all urls from nonECLKCResourcesUsed.
-    // 3. Collect all urls from ECLKCResourcesUsed.
-    // 4. Collect all urls from context.
-    // 5. Collect all urls from additionalNotes.
-    // 6. Collect all urls found in steps two through five.
-    // 7. Extract domain from urls.
-    // 8. Insert distinct domains and urls into "Resources" table.
-    // 9. Insert all records into "ActivityReportResources" linking the reports to their corresponding records in "Resources".
-    await queryInterface.sequelize.query(`
+      // make table to link resources to goals
+      await queryInterface.createTable(
+        'ActivityReportGoalResources',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          activityReportGoalId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'ActivityReportGoals',
+              },
+              key: 'id',
+            },
+          },
+          resourceId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Resources',
+              },
+              key: 'id',
+            },
+          },
+          sourceFields: {
+            allowNull: true,
+            default: null,
+            type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL))),
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+        },
+        { transaction }
+      )
+
+      // add columns to objective resources to link to resources and identify its source
+      await queryInterface.addColumn(
+        'ObjectiveResources',
+        'resourceId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
+          },
+        },
+        { transaction }
+      )
+
+      await queryInterface.addColumn(
+        'ObjectiveResources',
+        'sourceFields',
+        {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVE))),
+        },
+        { transaction }
+      )
+
+      // add columns to objective template resources to link to resources and identify its source
+      await queryInterface.addColumn(
+        'ObjectiveTemplateResources',
+        'resourceId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
+          },
+        },
+        { transaction }
+      )
+
+      await queryInterface.addColumn(
+        'ObjectiveTemplateResources',
+        'sourceFields',
+        {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVETEMPLATE))),
+        },
+        { transaction }
+      )
+
+      // add columns to activity report objective resources to link to resources and identify its source
+      await queryInterface.addColumn(
+        'ActivityReportObjectiveResources',
+        'resourceId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
+          },
+        },
+        { transaction }
+      )
+
+      await queryInterface.addColumn(
+        'ActivityReportObjectiveResources',
+        'sourceFields',
+        {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
+        },
+        { transaction }
+      )
+
+      const urlRegex =
+        "(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9''@\\:%_\\+.,~#&\\/=()]*[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()])?)?(?:[?](?:[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()]*))*)"
+      const domainRegex =
+        '^(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?([a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|((?:[0-9]{1,3}\\.){3}[0-9]{1,3})))'
+
+      // populate "Resources" and "ActivityReportResources" from current data from reports via nonECLKCResourcesUsed, ECLKCResourcesUsed, context, & additionalNotes
+      // 1. Generate a list of all reports where either nonECLKCResourcesUsed or ECLKCResourcesUsed is populated.
+      // 2. Collect all urls from nonECLKCResourcesUsed.
+      // 3. Collect all urls from ECLKCResourcesUsed.
+      // 4. Collect all urls from context.
+      // 5. Collect all urls from additionalNotes.
+      // 6. Collect all urls found in steps two through five.
+      // 7. Extract domain from urls.
+      // 8. Insert distinct domains and urls into "Resources" table.
+      // 9. Insert all records into "ActivityReportResources" linking the reports to their corresponding records in "Resources".
+      await queryInterface.sequelize.query(
+        `
     WITH
       "ARResources" AS (
         SELECT
@@ -532,17 +560,20 @@ module.exports = {
         nr."resourceId",
         MIN(aarr."createdAt"),
         MAX(aarr."updatedAt");
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" and "NextStepResources" from current data from "NextSteps" via note
-    // 1. Collect all urls from note column in "NextSteps".
-    // 2. Extract domain from urls.
-    // 3. Generate a distinct list of collected urls.
-    // 4. Update "Resources" for all existing urls.
-    // 5. Insert distinct domains and urls into "Resources" table.
-    // 6. Collect all affected "Resources" records.
-    // 7. Insert all records into "NextStepResources" linking the "NextSteps" records to their corresponding records in "Resources".
-    await queryInterface.sequelize.query(`
+      // populate "Resources" and "NextStepResources" from current data from "NextSteps" via note
+      // 1. Collect all urls from note column in "NextSteps".
+      // 2. Extract domain from urls.
+      // 3. Generate a distinct list of collected urls.
+      // 4. Update "Resources" for all existing urls.
+      // 5. Insert distinct domains and urls into "Resources" table.
+      // 6. Collect all affected "Resources" records.
+      // 7. Insert all records into "NextStepResources" linking the "NextSteps" records to their corresponding records in "Resources".
+      await queryInterface.sequelize.query(
+        `
     WITH
       "NextStepsUrls" AS (
         SELECT
@@ -644,18 +675,21 @@ module.exports = {
         ar."resourceId",
         nsud."createdAt",
         nsud."updatedAt";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" and "GoalResources" from current data from "Goals" via name and timeframe
-    // 1. Collect all urls from name and timeframe columns in "Goals".
-    // 2. Extract domain from urls.
-    // 3. Generate a distinct resource per goal.
-    // 4. Generate a distinct list of collected urls.
-    // 5. Update "Resources" for all existing urls.
-    // 6. Insert distinct domains and urls into "Resources" table.
-    // 7. Collect all affected "Resources" records.
-    // 8. Insert all records into "GoalResources" linking the "Goals" records to their corresponding records in "Resources".
-    await queryInterface.sequelize.query(`
+      // populate "Resources" and "GoalResources" from current data from "Goals" via name and timeframe
+      // 1. Collect all urls from name and timeframe columns in "Goals".
+      // 2. Extract domain from urls.
+      // 3. Generate a distinct resource per goal.
+      // 4. Generate a distinct list of collected urls.
+      // 5. Update "Resources" for all existing urls.
+      // 6. Insert distinct domains and urls into "Resources" table.
+      // 7. Collect all affected "Resources" records.
+      // 8. Insert all records into "GoalResources" linking the "Goals" records to their corresponding records in "Resources".
+      await queryInterface.sequelize.query(
+        `
     WITH
       "GoalUrls" AS (
         SELECT
@@ -783,18 +817,21 @@ module.exports = {
         ar."resourceId",
         fgr."createdAt",
         fgr."updatedAt";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" and "GoalTemplateResources" from current data from "GoalTemplates" via name and timeframe
-    // 1. Collect all urls from name and timeframe columns in "GoalTemplates".
-    // 2. Extract domain from urls.
-    // 3. Generate a distinct resource per goalTemplate.
-    // 4. Generate a distinct list of collected urls.
-    // 5. Update "Resources" for all existing urls.
-    // 6. Insert distinct domains and urls into "Resources" table.
-    // 7. Collect all affected "Resources" records.
-    // 8. Insert all records into "GoalTemplateResources" linking the "GoalTemplates" records to their corresponding records in "Resources".
-    await queryInterface.sequelize.query(`
+      // populate "Resources" and "GoalTemplateResources" from current data from "GoalTemplates" via name and timeframe
+      // 1. Collect all urls from name and timeframe columns in "GoalTemplates".
+      // 2. Extract domain from urls.
+      // 3. Generate a distinct resource per goalTemplate.
+      // 4. Generate a distinct list of collected urls.
+      // 5. Update "Resources" for all existing urls.
+      // 6. Insert distinct domains and urls into "Resources" table.
+      // 7. Collect all affected "Resources" records.
+      // 8. Insert all records into "GoalTemplateResources" linking the "GoalTemplates" records to their corresponding records in "Resources".
+      await queryInterface.sequelize.query(
+        `
     WITH
       "GoalTemplateUrls" AS (
         SELECT
@@ -914,18 +951,21 @@ module.exports = {
         ar."resourceId",
         fgr."createdAt",
         fgr."updatedAt";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" and "ActivityReportGoalResources" from current data from "ActivityReportGoals" via name and timeframe
-    // 1. Collect all urls from name and timeframe columns in "ActivityReportGoals".
-    // 2. Extract domain from urls.
-    // 3. Generate a distinct resource per goal.
-    // 4. Generate a distinct list of collected urls.
-    // 5. Update "Resources" for all existing urls.
-    // 6. Insert distinct domains and urls into "Resources" table.
-    // 7. Collect all affected "Resources" records.
-    // 8. Insert all records into "ActivityReportGoalResources" linking the "ActivityReportGoals" records to their corresponding records in "Resources".
-    await queryInterface.sequelize.query(`
+      // populate "Resources" and "ActivityReportGoalResources" from current data from "ActivityReportGoals" via name and timeframe
+      // 1. Collect all urls from name and timeframe columns in "ActivityReportGoals".
+      // 2. Extract domain from urls.
+      // 3. Generate a distinct resource per goal.
+      // 4. Generate a distinct list of collected urls.
+      // 5. Update "Resources" for all existing urls.
+      // 6. Insert distinct domains and urls into "Resources" table.
+      // 7. Collect all affected "Resources" records.
+      // 8. Insert all records into "ActivityReportGoalResources" linking the "ActivityReportGoals" records to their corresponding records in "Resources".
+      await queryInterface.sequelize.query(
+        `
     WITH
       "GoalUrls" AS (
         SELECT
@@ -1053,17 +1093,20 @@ module.exports = {
         ar."resourceId",
         fgr."createdAt",
         fgr."updatedAt";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" from current data from "ObjectiveResources" via userProvidedUrl
-    // 1. Collect all urls from userProvidedUrl column in "ObjectiveResources".
-    // 2. Extract domain from urls.
-    // 3. Generate a distinct list of collected urls.
-    // 4. Update "Resources" for all existing urls.
-    // 5. Insert distinct domains and urls into "Resources" table.
-    // 6. Collect all affected "Resources" records.
-    // 7. Update "ObjectiveResources" records to their corresponding records in "Resources".
-    await queryInterface.sequelize.query(`
+      // populate "Resources" from current data from "ObjectiveResources" via userProvidedUrl
+      // 1. Collect all urls from userProvidedUrl column in "ObjectiveResources".
+      // 2. Extract domain from urls.
+      // 3. Generate a distinct list of collected urls.
+      // 4. Update "Resources" for all existing urls.
+      // 5. Insert distinct domains and urls into "Resources" table.
+      // 6. Collect all affected "Resources" records.
+      // 7. Update "ObjectiveResources" records to their corresponding records in "Resources".
+      await queryInterface.sequelize.query(
+        `
     WITH
       "ObjectiveResourcesURLs" AS (
         SELECT
@@ -1152,23 +1195,26 @@ module.exports = {
       ON orud."domain" = ar."domain"
       AND orud.url = ar.url
       WHERE "or".id = orud."objectiveResourceId";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" and "ObjectiveResources" from current data from "Objectives" via title
-    // 1. Collect all urls from title column in "Objectives".
-    // 2. Extract domain from urls.
-    // 3. Collect all current resource records in the format of the incoming records.
-    // 4. Union the incoming and current resource records.
-    // 5. Group the incoming and current records to correctly populate the sourceFields
-    // 6. Generate a distinct list of collected urls excluding records solely from a current record.
-    // 4. Update "Resources" for all existing urls.
-    // 5. Insert distinct domains and urls into "Resources" table.
-    // 6. Collect all affected "Resources" records.
-    // 7. Update "ObjectiveResources" for all exiting urls.
-    // 8. Insert "ObjectiveResources" for newly found urls.
-    // 9. Collect all records that have been affected.
-    // 10. Return statistics form operation.
-    await queryInterface.sequelize.query(`
+      // populate "Resources" and "ObjectiveResources" from current data from "Objectives" via title
+      // 1. Collect all urls from title column in "Objectives".
+      // 2. Extract domain from urls.
+      // 3. Collect all current resource records in the format of the incoming records.
+      // 4. Union the incoming and current resource records.
+      // 5. Group the incoming and current records to correctly populate the sourceFields
+      // 6. Generate a distinct list of collected urls excluding records solely from a current record.
+      // 4. Update "Resources" for all existing urls.
+      // 5. Insert distinct domains and urls into "Resources" table.
+      // 6. Collect all affected "Resources" records.
+      // 7. Update "ObjectiveResources" for all exiting urls.
+      // 8. Insert "ObjectiveResources" for newly found urls.
+      // 9. Collect all records that have been affected.
+      // 10. Return statistics form operation.
+      await queryInterface.sequelize.query(
+        `
     WITH
       "ObjectiveUrls" AS (
         SELECT
@@ -1359,17 +1405,20 @@ module.exports = {
         count("objectiveResourceId")
       FROM "AffectedObjectiveResources"
       GROUP BY "action";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" from current data from "ObjectiveTemplateResources" via userProvidedUrl
-    // 1. Collect all urls from userProvidedUrl column in "ObjectiveTemplateResources".
-    // 2. Extract domain from urls.
-    // 3. Generate a distinct list of collected urls.
-    // 4. Update "Resources" for all existing urls.
-    // 5. Insert distinct domains and urls into "Resources" table.
-    // 6. Collect all affected "Resources" records.
-    // 7. Update "ObjectiveTemplateResources" records to their corresponding records in "Resources".
-    await queryInterface.sequelize.query(`
+      // populate "Resources" from current data from "ObjectiveTemplateResources" via userProvidedUrl
+      // 1. Collect all urls from userProvidedUrl column in "ObjectiveTemplateResources".
+      // 2. Extract domain from urls.
+      // 3. Generate a distinct list of collected urls.
+      // 4. Update "Resources" for all existing urls.
+      // 5. Insert distinct domains and urls into "Resources" table.
+      // 6. Collect all affected "Resources" records.
+      // 7. Update "ObjectiveTemplateResources" records to their corresponding records in "Resources".
+      await queryInterface.sequelize.query(
+        `
     WITH
       "ObjectiveTemplateResourcesURLs" AS (
         SELECT
@@ -1458,23 +1507,26 @@ module.exports = {
       ON orud."domain" = ar."domain"
       AND orud.url = ar.url
       WHERE "or".id = orud."objectiveTemplateResourceId";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" and "ObjectiveTemplateResources" from current data from "ObjectiveTemplates" via title
-    // 1. Collect all urls from title column in "ObjectiveTemplates".
-    // 2. Extract domain from urls.
-    // 3. Collect all current resource records in the format of the incoming records.
-    // 4. Union the incoming and current resource records.
-    // 5. Group the incoming and current records to correctly populate the sourceFields
-    // 6. Generate a distinct list of collected urls excluding records solely from a current record.
-    // 4. Update "Resources" for all existing urls.
-    // 5. Insert distinct domains and urls into "Resources" table.
-    // 6. Collect all affected "Resources" records.
-    // 7. Update "ObjectiveTemplateResources" for all exiting urls.
-    // 8. Insert "ObjectiveTemplateResources" for newly found urls.
-    // 9. Collect all records that have been affected.
-    // 10. Return statistics form operation.
-    await queryInterface.sequelize.query(`
+      // populate "Resources" and "ObjectiveTemplateResources" from current data from "ObjectiveTemplates" via title
+      // 1. Collect all urls from title column in "ObjectiveTemplates".
+      // 2. Extract domain from urls.
+      // 3. Collect all current resource records in the format of the incoming records.
+      // 4. Union the incoming and current resource records.
+      // 5. Group the incoming and current records to correctly populate the sourceFields
+      // 6. Generate a distinct list of collected urls excluding records solely from a current record.
+      // 4. Update "Resources" for all existing urls.
+      // 5. Insert distinct domains and urls into "Resources" table.
+      // 6. Collect all affected "Resources" records.
+      // 7. Update "ObjectiveTemplateResources" for all exiting urls.
+      // 8. Insert "ObjectiveTemplateResources" for newly found urls.
+      // 9. Collect all records that have been affected.
+      // 10. Return statistics form operation.
+      await queryInterface.sequelize.query(
+        `
     WITH
       "ObjectiveTemplateUrls" AS (
         SELECT
@@ -1651,17 +1703,20 @@ module.exports = {
         count("objectiveTemplateResourceId")
       FROM "AffectedObjectiveTemplateResources"
       GROUP BY "action";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" from current data from "ActivityReportObjectiveResources" via userProvidedUrl
-    // 1. Collect all urls from userProvidedUrl column in "ActivityReportObjectiveResources".
-    // 2. Extract domain from urls.
-    // 3. Generate a distinct list of collected urls.
-    // 4. Update "Resources" for all existing urls.
-    // 5. Insert distinct domains and urls into "Resources" table.
-    // 6. Collect all affected "Resources" records.
-    // 7. Update "ObjectiveResources" records to their corresponding records in "Resources".
-    await queryInterface.sequelize.query(`
+      // populate "Resources" from current data from "ActivityReportObjectiveResources" via userProvidedUrl
+      // 1. Collect all urls from userProvidedUrl column in "ActivityReportObjectiveResources".
+      // 2. Extract domain from urls.
+      // 3. Generate a distinct list of collected urls.
+      // 4. Update "Resources" for all existing urls.
+      // 5. Insert distinct domains and urls into "Resources" table.
+      // 6. Collect all affected "Resources" records.
+      // 7. Update "ObjectiveResources" records to their corresponding records in "Resources".
+      await queryInterface.sequelize.query(
+        `
     WITH
       "ObjectiveResourcesURLs" AS (
         SELECT
@@ -1750,25 +1805,28 @@ module.exports = {
       ON orud."domain" = ar."domain"
       AND orud.url = ar.url
       WHERE "or".id = orud."objectiveResourceId";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // populate "Resources" and "ActivityReportObjectiveResources" from current data from "ActivityReportObjectives" via title and ttaProvided
-    // 1. Collect all urls from title column in "ActivityReportObjective".
-    // 2. Collect all urls from ttaProvided column in "ActivityReportObjective".
-    // 3. Union the collected resources and current resources.
-    // 2. Extract domain from urls.
-    // 3. Collect all current resource records in the format of the incoming records.
-    // 4. Union the incoming and current resource records.
-    // 5. Group the incoming and current records to correctly populate the sourceFields
-    // 6. Generate a distinct list of collected urls excluding records solely from a current record.
-    // 4. Update "Resources" for all existing urls.
-    // 5. Insert distinct domains and urls into "Resources" table.
-    // 6. Collect all affected "Resources" records.
-    // 7. Update "ObjectiveResources" for all exiting urls.
-    // 8. Insert "ObjectiveResources" for newly found urls.
-    // 9. Collect all records that have been affected.
-    // 10. Return statistics form operation.
-    await queryInterface.sequelize.query(`
+      // populate "Resources" and "ActivityReportObjectiveResources" from current data from "ActivityReportObjectives" via title and ttaProvided
+      // 1. Collect all urls from title column in "ActivityReportObjective".
+      // 2. Collect all urls from ttaProvided column in "ActivityReportObjective".
+      // 3. Union the collected resources and current resources.
+      // 2. Extract domain from urls.
+      // 3. Collect all current resource records in the format of the incoming records.
+      // 4. Union the incoming and current resource records.
+      // 5. Group the incoming and current records to correctly populate the sourceFields
+      // 6. Generate a distinct list of collected urls excluding records solely from a current record.
+      // 4. Update "Resources" for all existing urls.
+      // 5. Insert distinct domains and urls into "Resources" table.
+      // 6. Collect all affected "Resources" records.
+      // 7. Update "ObjectiveResources" for all exiting urls.
+      // 8. Insert "ObjectiveResources" for newly found urls.
+      // 9. Collect all records that have been affected.
+      // 10. Return statistics form operation.
+      await queryInterface.sequelize.query(
+        `
     WITH
       "ObjectiveTitleUrls" AS (
         SELECT
@@ -1962,87 +2020,106 @@ module.exports = {
         count("activityReportObjectiveResourceId")
       FROM "AffectedObjectiveResources"
       GROUP BY "action";
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    // Remove unneeded columns
-    await queryInterface.removeColumn('ActivityReportObjectiveResources', 'userProvidedUrl', { transaction });
-    await queryInterface.removeColumn('ObjectiveTemplateResources', 'userProvidedUrl', { transaction });
-    await queryInterface.removeColumn('ObjectiveResources', 'userProvidedUrl', { transaction });
+      // Remove unneeded columns
+      await queryInterface.removeColumn('ActivityReportObjectiveResources', 'userProvidedUrl', {
+        transaction,
+      })
+      await queryInterface.removeColumn('ObjectiveTemplateResources', 'userProvidedUrl', {
+        transaction,
+      })
+      await queryInterface.removeColumn('ObjectiveResources', 'userProvidedUrl', { transaction })
 
-    // Set columns to not allow null
-    await queryInterface.changeColumn(
-      'ActivityReportObjectiveResources',
-      'resourceId',
-      {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      { transaction },
-    );
-    await queryInterface.changeColumn(
-      'ObjectiveTemplateResources',
-      'resourceId',
-      {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      { transaction },
-    );
-    await queryInterface.changeColumn(
-      'ObjectiveResources',
-      'resourceId',
-      {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      { transaction },
-    );
-  }),
-  down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(async (transaction) => {
-    await queryInterface.addColumn(
-      'ObjectiveResources',
-      'userProvidedUrl',
-      {
-        allowNull: false,
-        type: Sequelize.TEXT,
-      },
-      { transaction },
-    );
+      // Set columns to not allow null
+      await queryInterface.changeColumn(
+        'ActivityReportObjectiveResources',
+        'resourceId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
+        { transaction }
+      )
+      await queryInterface.changeColumn(
+        'ObjectiveTemplateResources',
+        'resourceId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
+        { transaction }
+      )
+      await queryInterface.changeColumn(
+        'ObjectiveResources',
+        'resourceId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
+        { transaction }
+      )
+    }),
+  down: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.addColumn(
+        'ObjectiveResources',
+        'userProvidedUrl',
+        {
+          allowNull: false,
+          type: Sequelize.TEXT,
+        },
+        { transaction }
+      )
 
-    await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
     UPDATE "ObjectiveResources" "or"
     SET
       "userProvidedUrl" = r."url"
     FROM "Resources" r
     WHERE "or"."resourceId" = r.id;
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    await queryInterface.addColumn(
-      'ActivityReportObjectiveResources',
-      'userProvidedUrl',
-      {
-        allowNull: false,
-        type: Sequelize.TEXT,
-      },
-      { transaction },
-    );
+      await queryInterface.addColumn(
+        'ActivityReportObjectiveResources',
+        'userProvidedUrl',
+        {
+          allowNull: false,
+          type: Sequelize.TEXT,
+        },
+        { transaction }
+      )
 
-    await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
     UPDATE "ActivityReportObjectiveResources" "or"
     SET
       "userProvidedUrl" = r."url"
     FROM "Resources" r
     WHERE "or"."resourceId" = r.id;
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
-    await queryInterface.removeColumn('ActivityReportObjectiveResources', 'sourceFields', { transaction });
-    await queryInterface.removeColumn('ActivityReportObjectiveResources', 'isAutoDetected', { transaction });
-    await queryInterface.removeColumn('ActivityReportObjectiveResources', 'resourceId', { transaction });
-    await queryInterface.removeColumn('ObjectiveResources', 'sourceFields', { transaction });
-    await queryInterface.removeColumn('ObjectiveResources', 'isAutoDetected', { transaction });
-    await queryInterface.removeColumn('ObjectiveResources', 'resourceId', { transaction });
-    await queryInterface.dropTable('NextStepResources', { transaction });
-    await queryInterface.dropTable('ActivityReportResources', { transaction });
-    await queryInterface.dropTable('Resources', { transaction });
-  }),
-};
+      await queryInterface.removeColumn('ActivityReportObjectiveResources', 'sourceFields', {
+        transaction,
+      })
+      await queryInterface.removeColumn('ActivityReportObjectiveResources', 'isAutoDetected', {
+        transaction,
+      })
+      await queryInterface.removeColumn('ActivityReportObjectiveResources', 'resourceId', {
+        transaction,
+      })
+      await queryInterface.removeColumn('ObjectiveResources', 'sourceFields', { transaction })
+      await queryInterface.removeColumn('ObjectiveResources', 'isAutoDetected', { transaction })
+      await queryInterface.removeColumn('ObjectiveResources', 'resourceId', { transaction })
+      await queryInterface.dropTable('NextStepResources', { transaction })
+      await queryInterface.dropTable('ActivityReportResources', { transaction })
+      await queryInterface.dropTable('Resources', { transaction })
+    }),
+}

@@ -1,5 +1,5 @@
-const { FEATURE_FLAGS } = require('../constants');
-const { prepMigration } = require('../lib/migration');
+const { FEATURE_FLAGS } = require('../constants')
+const { prepMigration } = require('../lib/migration')
 
 const goalIds = [
   // Sunbeam Family Services Inc
@@ -14,44 +14,52 @@ const goalIds = [
   // Lutheran Social Services of the South, Inc. dba Upbring
   51115, // 06CH010884
   51105, // 06CH011065
-];
+]
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
-      await Promise.all(goalIds.map(async (goalId) => queryInterface.sequelize.query(/* sql */`
+      await Promise.all(
+        goalIds.map(async (goalId) =>
+          queryInterface.sequelize.query(/* sql */ `
       UPDATE "Goals" g
       SET status = 'In Progress'
       WHERE g.id = ${goalId};
-      `)));
+      `)
+        )
+      )
 
       // Prep for merging goals 51094 and 73270 for City of Albuquerque Early Head Start 06CH010672
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(/* sql */ `
       UPDATE "ActivityReportGoals" arg
       SET source = 'Regional office priority'
       WHERE arg.id = 99676;
-      `);
-      await queryInterface.sequelize.query(/* sql */`
+      `)
+      await queryInterface.sequelize.query(/* sql */ `
       DELETE FROM "ActivityReportGoals" arg
       WHERE arg.id = 99685;
-      `);
-    });
+      `)
+    })
   },
 
   async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
-      await Promise.all(goalIds.map(async (goalId) => queryInterface.sequelize.query(/* sql */`
+      await Promise.all(
+        goalIds.map(async (goalId) =>
+          queryInterface.sequelize.query(/* sql */ `
       UPDATE "Goals" g
       SET status = 'Closed'
       WHERE g.id = ${goalId};
-      `)));
-    });
+      `)
+        )
+      )
+    })
   },
-};
+}

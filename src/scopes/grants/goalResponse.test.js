@@ -10,23 +10,23 @@ import {
   setupSharedTestData,
   tearDownSharedTestData,
   sharedTestData,
-} from './testHelpers';
+} from './testHelpers'
 
 describe('grants/goalResponse', () => {
-  let prompt;
-  let goal1;
-  let goal2;
-  let goal3;
-  let response1;
-  let response2;
-  let response3;
+  let prompt
+  let goal1
+  let goal2
+  let goal3
+  let response1
+  let response2
+  let response3
 
   beforeAll(async () => {
-    await setupSharedTestData();
+    await setupSharedTestData()
 
     prompt = await GoalTemplateFieldPrompt.findOne({
       where: { title: 'FEI root cause' },
-    });
+    })
 
     goal1 = await Goal.create({
       name: 'Goal 6',
@@ -36,7 +36,7 @@ describe('grants/goalResponse', () => {
       createdAt: new Date('2021-01-20'),
       grantId: sharedTestData.grants[1].id,
       createdVia: 'rtr',
-    });
+    })
 
     goal2 = await Goal.create({
       name: 'Goal 7',
@@ -46,7 +46,7 @@ describe('grants/goalResponse', () => {
       createdAt: new Date('2021-01-20'),
       grantId: sharedTestData.grants[2].id,
       createdVia: 'rtr',
-    });
+    })
 
     goal3 = await Goal.create({
       name: 'Goal 8',
@@ -56,32 +56,32 @@ describe('grants/goalResponse', () => {
       createdAt: new Date('2021-01-20'),
       grantId: sharedTestData.grants[3].id,
       createdVia: 'rtr',
-    });
+    })
 
     response1 = await GoalFieldResponse.create({
       goalId: goal1.id,
       goalTemplateFieldPromptId: prompt.id,
       response: ['Community Partnerships'],
-    });
+    })
 
     response2 = await GoalFieldResponse.create({
       goalId: goal2.id,
       goalTemplateFieldPromptId: prompt.id,
       response: ['Workforce', 'Family circumstances'],
-    });
+    })
 
     response3 = await GoalFieldResponse.create({
       goalId: goal3.id,
       goalTemplateFieldPromptId: prompt.id,
       response: ['Facilities'],
-    });
-  });
+    })
+  })
 
   afterAll(async () => {
-    const idsToDelete = [response1?.id, response2?.id, response3?.id].filter(Boolean);
+    const idsToDelete = [response1?.id, response2?.id, response3?.id].filter(Boolean)
 
     if (idsToDelete.length > 0) {
-      await GoalFieldResponse.destroy({ where: { id: idsToDelete } });
+      await GoalFieldResponse.destroy({ where: { id: idsToDelete } })
     }
 
     await Goal.destroy({
@@ -89,45 +89,64 @@ describe('grants/goalResponse', () => {
         id: [goal1.id, goal2.id, goal3.id],
       },
       individualHooks: true,
-    });
+    })
 
-    await tearDownSharedTestData();
-    await sequelize.close();
-  });
+    await tearDownSharedTestData()
+    await sequelize.close()
+  })
 
   it('finds goals with responses', async () => {
-    const filters = { 'goalResponse.in': ['Workforce'] };
-    const { grant: scope } = await filtersToScopes(filters, 'goal');
+    const filters = { 'goalResponse.in': ['Workforce'] }
+    const { grant: scope } = await filtersToScopes(filters, 'goal')
     const found = await Grant.findAll({
-      where: { [Op.and]: [scope.where, { id: [sharedTestData.grants[1].id, sharedTestData.grants[2].id, sharedTestData.grants[3].id] }] },
-    });
-    expect(found.length).toBe(1);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([sharedTestData.grants[2].id]));
-  });
+      where: {
+        [Op.and]: [
+          scope.where,
+          {
+            id: [sharedTestData.grants[1].id, sharedTestData.grants[2].id, sharedTestData.grants[3].id],
+          },
+        ],
+      },
+    })
+    expect(found.length).toBe(1)
+    expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([sharedTestData.grants[2].id]))
+  })
 
   it('finds goals without responses', async () => {
-    const filters = { 'goalResponse.nin': ['Workforce'] };
-    const { grant: scope } = await filtersToScopes(filters, 'goal');
+    const filters = { 'goalResponse.nin': ['Workforce'] }
+    const { grant: scope } = await filtersToScopes(filters, 'goal')
     const found = await Grant.findAll({
-      where: { [Op.and]: [scope.where, { id: [sharedTestData.grants[1].id, sharedTestData.grants[2].id, sharedTestData.grants[3].id] }] },
-    });
-    expect(found.length).toBe(2);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([sharedTestData.grants[1].id, sharedTestData.grants[3].id]));
-  });
+      where: {
+        [Op.and]: [
+          scope.where,
+          {
+            id: [sharedTestData.grants[1].id, sharedTestData.grants[2].id, sharedTestData.grants[3].id],
+          },
+        ],
+      },
+    })
+    expect(found.length).toBe(2)
+    expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([sharedTestData.grants[1].id, sharedTestData.grants[3].id]))
+  })
 
   it('prevents SQL injection via goalResponse.in parameter', async () => {
-    const injectedInput = ['Workforce', "' OR 1=1 --"];
+    const injectedInput = ['Workforce', "' OR 1=1 --"]
 
-    const filters = { 'goalResponse.in': injectedInput };
-    const { grant: scope } = await filtersToScopes(filters, 'goal');
+    const filters = { 'goalResponse.in': injectedInput }
+    const { grant: scope } = await filtersToScopes(filters, 'goal')
 
     const found = await Grant.findAll({
-      where: { [Op.and]: [scope.where, { id: [sharedTestData.grants[1].id, sharedTestData.grants[2].id, sharedTestData.grants[3].id] }] },
-    });
+      where: {
+        [Op.and]: [
+          scope.where,
+          {
+            id: [sharedTestData.grants[1].id, sharedTestData.grants[2].id, sharedTestData.grants[3].id],
+          },
+        ],
+      },
+    })
 
-    expect(found.length).toBe(1);
-    expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([sharedTestData.grants[2].id]));
-  });
-});
+    expect(found.length).toBe(1)
+    expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([sharedTestData.grants[2].id]))
+  })
+})

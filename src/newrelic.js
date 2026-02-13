@@ -43,16 +43,10 @@ exports.config = {
    * in the audit_log: { section of your app's newrelic.js configuration file.
    */
   audit_log: {
-    enabled: process.env.NEW_RELIC_AUDIT_LOG_ENABLED
-      ? process.env.NEW_RELIC_AUDIT_LOG_ENABLED
-      : false,
+    enabled: process.env.NEW_RELIC_AUDIT_LOG_ENABLED ? process.env.NEW_RELIC_AUDIT_LOG_ENABLED : false,
     endpoints: process.env.NEW_RELIC_AUDIT_LOG_ENDPOINTS
       ? process.env.NEW_RELIC_AUDIT_LOG_ENDPOINTS
-      : [
-        'error_data',
-        'error_event_data',
-        'sql_trace_data',
-      ],
+      : ['error_data', 'error_event_data', 'sql_trace_data'],
   },
   /**
    * When true, all request headers except for those listed in attributes.exclude
@@ -98,10 +92,7 @@ exports.config = {
     ],
   },
   error_collector: {
-    expected_status_codes: [
-      '401',
-      '403',
-    ],
+    expected_status_codes: ['401', '403'],
   },
   /**
    * [Transaction tracer variables](https://docs.newrelic.com/docs/apm/agents/nodejs-agent/installation-configuration/nodejs-agent-configuration/#tx_tracer_config)
@@ -114,12 +105,8 @@ exports.config = {
    * the transaction_tracer: { section of your app's newrelic.js configuration file.
    */
   transaction_tracer: {
-    enabled: process.env.NEW_RELIC_TRACER_ENABLED
-      ? process.env.NEW_RELIC_TRACER_ENABLED
-      : false,
-    record_sql: process.env.NEW_RELIC_RECORD_SQL
-      ? process.env.NEW_RELIC_RECORD_SQL
-      : 'raw',
+    enabled: process.env.NEW_RELIC_TRACER_ENABLED ? process.env.NEW_RELIC_TRACER_ENABLED : false,
+    record_sql: process.env.NEW_RELIC_RECORD_SQL ? process.env.NEW_RELIC_RECORD_SQL : 'raw',
   },
   /**
    * [Slow queries variables](https://docs.newrelic.com/docs/apm/agents/nodejs-agent/installation-configuration/nodejs-agent-configuration/#slow-queries)
@@ -128,11 +115,7 @@ exports.config = {
    * behavior for slow queries, but do not affect SQL nodes in transaction traces.
    */
   slow_sql: {
-    enabled: process.env.NEW_RELIC_SLOW_SQL_ENABLED
-      ? process.env.NEW_RELIC_SLOW_SQL_ENABLED
-      : false,
-    max_samples: process.env.NEW_RELIC_MAX_SQL_SAMPLES
-      ? process.env.NEW_RELIC_MAX_SQL_SAMPLES
-      : 100,
+    enabled: process.env.NEW_RELIC_SLOW_SQL_ENABLED ? process.env.NEW_RELIC_SLOW_SQL_ENABLED : false,
+    max_samples: process.env.NEW_RELIC_MAX_SQL_SAMPLES ? process.env.NEW_RELIC_MAX_SQL_SAMPLES : 100,
   },
-};
+}

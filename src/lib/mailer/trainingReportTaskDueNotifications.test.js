@@ -1,20 +1,20 @@
-import moment from 'moment';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import { trainingReportTaskDueNotifications } from '.';
-import { userById } from '../../services/users';
-import { getTrainingReportAlerts } from '../../services/event';
-import { EMAIL_DIGEST_FREQ } from '../../constants';
+import moment from 'moment'
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common'
+import { trainingReportTaskDueNotifications } from '.'
+import { userById } from '../../services/users'
+import { getTrainingReportAlerts } from '../../services/event'
+import { EMAIL_DIGEST_FREQ } from '../../constants'
 
-jest.mock('bull');
-jest.mock('../../services/event', () => ({ getTrainingReportAlerts: jest.fn() }));
-jest.mock('../../services/users', () => ({ userById: jest.fn() }));
+jest.mock('bull')
+jest.mock('../../services/event', () => ({ getTrainingReportAlerts: jest.fn() }))
+jest.mock('../../services/users', () => ({ userById: jest.fn() }))
 
 describe('trainingReportTaskDueNotifications', () => {
-  const today = moment().format('MM/DD/YYYY');
+  const today = moment().format('MM/DD/YYYY')
 
   it('requires a date', async () => {
-    await expect(trainingReportTaskDueNotifications()).rejects.toThrow('date is null');
-  });
+    await expect(trainingReportTaskDueNotifications()).rejects.toThrow('date is null')
+  })
 
   it('handles invalid alert type', async () => {
     getTrainingReportAlerts.mockResolvedValue([
@@ -32,14 +32,14 @@ describe('trainingReportTaskDueNotifications', () => {
         startDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
         endDate: today,
       },
-    ]);
+    ])
 
-    userById.mockResolvedValue({ id: 1, email: 'email@email.com' });
+    userById.mockResolvedValue({ id: 1, email: 'email@email.com' })
 
-    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY)
 
-    expect(emails).toEqual([]);
-  });
+    expect(emails).toEqual([])
+  })
 
   it('adds noSessionsCreated jobs to the queue', async () => {
     getTrainingReportAlerts.mockResolvedValue([
@@ -155,11 +155,11 @@ describe('trainingReportTaskDueNotifications', () => {
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: false,
       },
-    ]);
+    ])
 
-    userById.mockResolvedValue({ id: 1, email: 'email@email.com' });
+    userById.mockResolvedValue({ id: 1, email: 'email@email.com' })
 
-    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY)
 
     expect(emails).toEqual([
       {
@@ -168,9 +168,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_owner_reminder_no_sessions',
@@ -181,9 +179,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_collaborator_reminder_no_sessions',
@@ -194,9 +190,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_collaborator_reminder_no_sessions',
@@ -207,9 +201,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_owner_reminder_no_sessions',
@@ -220,9 +212,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_collaborator_reminder_no_sessions',
@@ -233,9 +223,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_owner_reminder_no_sessions',
@@ -246,15 +234,13 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_collaborator_reminder_no_sessions',
       },
-    ]);
-  });
+    ])
+  })
 
   it('adds missingEventInfo jobs to the queue', async () => {
     getTrainingReportAlerts.mockResolvedValue([
@@ -370,11 +356,11 @@ describe('trainingReportTaskDueNotifications', () => {
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: false,
       },
-    ]);
+    ])
 
-    userById.mockResolvedValue({ id: 1, email: 'email@email.com' });
+    userById.mockResolvedValue({ id: 1, email: 'email@email.com' })
 
-    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY)
 
     expect(emails).toEqual([
       {
@@ -383,9 +369,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/1234',
         templatePath: 'tr_owner_reminder_event',
@@ -396,9 +380,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/1234',
         templatePath: 'tr_collaborator_reminder_event',
@@ -409,9 +391,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1238',
         templatePath: 'tr_owner_reminder_event',
@@ -422,9 +402,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1238',
         templatePath: 'tr_collaborator_reminder_event',
@@ -435,9 +413,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1239',
         templatePath: 'tr_owner_reminder_event',
@@ -448,15 +424,13 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1239',
         templatePath: 'tr_collaborator_reminder_event',
       },
-    ]);
-  });
+    ])
+  })
   it('adds missingSessionInfo jobs to the queue', async () => {
     getTrainingReportAlerts.mockResolvedValue([
       // 20 days past session startDate: should send email
@@ -571,11 +545,11 @@ describe('trainingReportTaskDueNotifications', () => {
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: 7,
       },
-    ]);
+    ])
 
-    userById.mockResolvedValue({ id: 1, email: 'email@email.com' });
+    userById.mockResolvedValue({ id: 1, email: 'email@email.com' })
 
-    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY)
 
     expect(emails).toEqual([
       {
@@ -584,9 +558,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/1234/session/1',
         templatePath: 'tr_owner_reminder_session',
@@ -597,9 +569,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/1234/session/1',
         templatePath: 'tr_collaborator_reminder_session',
@@ -610,9 +580,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/1234/session/1',
         templatePath: 'tr_poc_reminder_session',
@@ -623,9 +591,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/1234/session/1',
         templatePath: 'tr_poc_reminder_session',
@@ -636,9 +602,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1238/session/5',
         templatePath: 'tr_owner_reminder_session',
@@ -649,9 +613,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1238/session/5',
         templatePath: 'tr_collaborator_reminder_session',
@@ -662,9 +624,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1238/session/5',
         templatePath: 'tr_poc_reminder_session',
@@ -675,9 +635,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1239/session/6',
         templatePath: 'tr_owner_reminder_session',
@@ -688,9 +646,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1239/session/6',
         templatePath: 'tr_collaborator_reminder_session',
@@ -701,15 +657,13 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/1239/session/6',
         templatePath: 'tr_poc_reminder_session',
       },
-    ]);
-  });
+    ])
+  })
   it('adds eventNotCompleted jobs to the queue', async () => {
     getTrainingReportAlerts.mockResolvedValue([
       // 20 days past event endDate: should send email
@@ -824,11 +778,11 @@ describe('trainingReportTaskDueNotifications', () => {
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: false,
       },
-    ]);
+    ])
 
-    userById.mockResolvedValue({ id: 1, email: 'email@email.com' });
+    userById.mockResolvedValue({ id: 1, email: 'email@email.com' })
 
-    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY)
 
     expect(emails).toEqual([
       {
@@ -837,9 +791,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/view/1234',
         templatePath: 'tr_owner_reminder_event_not_completed',
@@ -850,9 +802,7 @@ describe('trainingReportTaskDueNotifications', () => {
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/view/1238',
         templatePath: 'tr_owner_reminder_event_not_completed',
@@ -863,15 +813,13 @@ describe('trainingReportTaskDueNotifications', () => {
           displayId: 'RO1-012-1239',
         },
         displayId: 'RO1-012-1239',
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/view/1239',
         templatePath: 'tr_owner_reminder_event_not_completed',
       },
-    ]);
-  });
+    ])
+  })
 
   it('return null if the user is not found', async () => {
     getTrainingReportAlerts.mockResolvedValue([
@@ -889,16 +837,16 @@ describe('trainingReportTaskDueNotifications', () => {
         startDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
         endDate: today,
       },
-    ]);
+    ])
 
-    userById.mockResolvedValue(null);
+    userById.mockResolvedValue(null)
 
-    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY)
 
-    expect(emails).toEqual([null, null]);
-    expect(userById).toHaveBeenCalledWith(1, true);
-    expect(userById).toHaveBeenCalledWith(3, true);
-  });
+    expect(emails).toEqual([null, null])
+    expect(userById).toHaveBeenCalledWith(1, true)
+    expect(userById).toHaveBeenCalledWith(3, true)
+  })
 
   it('return null if the user email is not found', async () => {
     getTrainingReportAlerts.mockResolvedValue([
@@ -916,14 +864,14 @@ describe('trainingReportTaskDueNotifications', () => {
         startDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
         endDate: today,
       },
-    ]);
+    ])
 
-    userById.mockResolvedValue({ id: 1, email: null });
+    userById.mockResolvedValue({ id: 1, email: null })
 
-    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY)
 
-    expect(emails).toEqual([null, null]);
-    expect(userById).toHaveBeenCalledWith(1, true);
-    expect(userById).toHaveBeenCalledWith(3, true);
-  });
-});
+    expect(emails).toEqual([null, null])
+    expect(userById).toHaveBeenCalledWith(1, true)
+    expect(userById).toHaveBeenCalledWith(3, true)
+  })
+})

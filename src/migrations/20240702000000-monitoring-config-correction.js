@@ -1,13 +1,12 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
       // Correct column configuration
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         WITH 
           reconfigure AS (
             SELECT
@@ -34,9 +33,12 @@ module.exports = {
           SET "definitions" = r."definitions"
           FROM "reconfigure" r
           WHERE i."name" = r."name";
-      `, { transaction });
+      `,
+        { transaction }
+      )
       // Remove erroneous duplicate records
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         WITH
           erroneous_records AS (
             SELECT DISTINCT if2.id 
@@ -48,17 +50,22 @@ module.exports = {
         DELETE FROM "ImportFiles" i
         USING erroneous_records er
         WHERE i.id = er.id;
-      `, { transaction });
+      `,
+        { transaction }
+      )
       // Add a unique constraint to prevent future duplicate entires
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         CREATE UNIQUE INDEX "ImportFiles_ftpFileInfo_name_unique" ON "ImportFiles" (("ftpFileInfo" -> 'name'));
-      `, { transaction });
-    },
-  ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(/* sql */`
+      `,
+        { transaction }
+      )
+    }),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.sequelize.query(
+        /* sql */ `
         WITH 
           reconfigure AS (
             SELECT
@@ -85,7 +92,8 @@ module.exports = {
           SET "definitions" = r."definitions"
           FROM "reconfigure" r
           WHERE i."name" = r."name";
-      `, { transaction });
-    },
-  ),
-};
+      `,
+        { transaction }
+      )
+    }),
+}

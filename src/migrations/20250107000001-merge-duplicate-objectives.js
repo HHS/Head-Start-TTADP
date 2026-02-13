@@ -1,11 +1,11 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       return queryInterface.sequelize.query(`
         -- This merges duplicate Objectives that were EITHER:
         -- - created on the same AR
@@ -825,11 +825,11 @@ module.exports = {
         ;
 
 
-      `);
-    });
+      `)
+    })
   },
 
   async down() {
     // no rollbacks
   },
-};
+}

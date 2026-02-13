@@ -1,9 +1,9 @@
-const { Model } = require('sequelize');
+const { Model } = require('sequelize')
 
 export default (sequelize, DataTypes) => {
   class UserValidationStatus extends Model {
     static associate(models) {
-      UserValidationStatus.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      UserValidationStatus.belongsTo(models.User, { foreignKey: 'userId', as: 'user' })
     }
   }
 
@@ -20,8 +20,8 @@ export default (sequelize, DataTypes) => {
       validatedAt: { allowNull: true, type: DataTypes.DATE },
     },
     // freezeTableName because it wants to pluralize to UserValidationStatuses.
-    { sequelize, modelName: 'UserValidationStatus', freezeTableName: true },
-  );
+    { sequelize, modelName: 'UserValidationStatus', freezeTableName: true }
+  )
 
-  return UserValidationStatus;
-};
+  return UserValidationStatus
+}

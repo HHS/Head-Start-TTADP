@@ -1,23 +1,20 @@
 /* eslint-disable max-len */
-import { Op, QueryTypes } from 'sequelize';
-import moment from 'moment';
-import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  ActivityReport,
-  sequelize,
-} from '../../models';
+import { Op, QueryTypes } from 'sequelize'
+import moment from 'moment'
+import { REPORT_STATUSES } from '@ttahub/common'
+import { ActivityReport, sequelize } from '../../models'
 
 export async function rollUpCourseUrlData(data) {
-  const cutOffDate = new Date('2024-03-07');
-  const headers = [];
+  const cutOffDate = new Date('2024-03-07')
+  const headers = []
   const rolledUpCourseData = data.reduce((accumulator, c) => {
     // Add the header to the headers array if it doesn't exist.
-    const existsHeader = headers.find((h) => h.rollUpDate === c.rollUpDate);
+    const existsHeader = headers.find((h) => h.rollUpDate === c.rollUpDate)
     if (!existsHeader) {
-      headers.push({ rollUpDate: c.rollUpDate, date: new Date(c.date) });
+      headers.push({ rollUpDate: c.rollUpDate, date: new Date(c.date) })
     }
-    const exists = accumulator.find((e) => e.course === c.course);
-    const beforeCutOff = new Date(c.date) <= cutOffDate;
+    const exists = accumulator.find((e) => e.course === c.course)
+    const beforeCutOff = new Date(c.date) <= cutOffDate
     if (!exists) {
       // Add a property with the resource's URL.
       return [
@@ -32,49 +29,47 @@ export async function rollUpCourseUrlData(data) {
           isUrl: false,
           data: [{ title: c.rollUpDate, value: beforeCutOff ? '-' : c.count, date: c.date }],
         },
-      ];
+      ]
     }
 
-    exists.data.push({ title: c.rollUpDate, value: beforeCutOff ? '-' : c.count, date: c.date });
+    exists.data.push({ title: c.rollUpDate, value: beforeCutOff ? '-' : c.count, date: c.date })
 
-    return accumulator;
-  }, []);
+    return accumulator
+  }, [])
 
   // Sort each resource's data by date.
   rolledUpCourseData.forEach((course) => {
-    course.data.sort((d1, d2) => new Date(d1.date) - new Date(d2.date));
-  });
+    course.data.sort((d1, d2) => new Date(d1.date) - new Date(d2.date))
+  })
 
   // Loop through the rolled up resources and add a total.
   rolledUpCourseData.forEach((course) => {
-    course.data.push({ title: 'Total', value: course.total });
-  });
+    course.data.push({ title: 'Total', value: course.total })
+  })
 
   // Sort by total and course name.
-  rolledUpCourseData.sort((r1, r2) => r2.total - r1.total || r1.course.localeCompare(r2.course));
+  rolledUpCourseData.sort((r1, r2) => r2.total - r1.total || r1.course.localeCompare(r2.course))
 
   // Sort headers by date and return an array of rollUpDate.
-  headers.sort((h1, h2) => h1.date - h2.date);
+  headers.sort((h1, h2) => h1.date - h2.date)
 
   // Return the headers and rolled up data.
   const sortedHeaders = headers.map((h) => ({
     name: moment(h.rollUpDate, 'MMM-YY').format('MMMM YYYY'),
     displayName: h.rollUpDate,
-  }));
+  }))
 
-  return { headers: sortedHeaders, courses: rolledUpCourseData };
+  return { headers: sortedHeaders, courses: rolledUpCourseData }
 }
 
 export async function getCourseUrlWidgetData(scopes) {
   // Date to retrieve report data from.
-  const reportCreatedAtDate = '2022-12-01';
+  const reportCreatedAtDate = '2022-12-01'
 
   // Get report ids using the scopes.
   // TODO: We could speed this up by using utils.scopeToWhere to get the where clause.
   const reportIds = await ActivityReport.findAll({
-    attributes: [
-      'id',
-    ],
+    attributes: ['id'],
     where: {
       [Op.and]: [
         scopes.activityReport,
@@ -85,11 +80,11 @@ export async function getCourseUrlWidgetData(scopes) {
         },
       ],
     },
-  });
+  })
 
   // Make sure we have at least one report id.
   if (reportIds.length === 0) {
-    reportIds.push({ id: 0 });
+    reportIds.push({ id: 0 })
   }
 
   // Calculate widget data.
@@ -145,18 +140,15 @@ export async function getCourseUrlWidgetData(scopes) {
         LEFT JOIN "counts" c
           ON cor."name" = c."name" AND to_char(d."date", 'Mon-YY')  = c."rollUpDate"
         ORDER BY c."name" ASC, d."date" ASC;
-  `;
+  `
 
   // Execute the query.
-  const courseData = await sequelize.query(
-    flatCourseSql,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
+  const courseData = await sequelize.query(flatCourseSql, {
+    type: QueryTypes.SELECT,
+  })
 
   // Return rollup.
   return {
     coursesAssociatedWithActivityReports: await rollUpCourseUrlData(courseData),
-  };
+  }
 }

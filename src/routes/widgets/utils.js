@@ -1,13 +1,13 @@
-import { DECIMAL_BASE } from '@ttahub/common';
-import { topicToQuery } from '../../scopes/activityReport';
+import { DECIMAL_BASE } from '@ttahub/common'
+import { topicToQuery } from '../../scopes/activityReport'
 
 /**
  *
  * @returns an array of string representing every possible supported scope
  */
 function getAllowedKeys() {
-  const allowedKeys = [];
-  const conditions = Object.keys(topicToQuery);
+  const allowedKeys = []
+  const conditions = Object.keys(topicToQuery)
   /**
    *
    *   topicToQuery is an object that looks like this
@@ -26,11 +26,11 @@ function getAllowedKeys() {
    * */
 
   conditions.forEach((condition) => {
-    const operators = Object.keys(topicToQuery[condition]);
-    operators.forEach((operator) => allowedKeys.push(`${condition}.${operator}`));
-  });
+    const operators = Object.keys(topicToQuery[condition])
+    operators.forEach((operator) => allowedKeys.push(`${condition}.${operator}`))
+  })
 
-  return allowedKeys;
+  return allowedKeys
 }
 
 /**
@@ -41,25 +41,26 @@ function getAllowedKeys() {
 
 export function formatQuery(query) {
   /**
-     * if
-     * - region.in is in the query
-     * - region.in is an array
-     * - and there is a first element in the array
-     *
-     * return the parsed int form of that first element
-     *
-     * else
-     *
-     * return 0
-     *
-     */
+   * if
+   * - region.in is in the query
+   * - region.in is an array
+   * - and there is a first element in the array
+   *
+   * return the parsed int form of that first element
+   *
+   * else
+   *
+   * return 0
+   *
+   */
 
-  const region = ('region.in' in query && Array.isArray(query['region.in']) && query['region.in'][0]) ? parseInt(query['region.in'][0], DECIMAL_BASE) : 0;
+  const region =
+    'region.in' in query && Array.isArray(query['region.in']) && query['region.in'][0] ? parseInt(query['region.in'][0], DECIMAL_BASE) : 0
 
   return {
     ...query,
     region,
-  };
+  }
 }
 
 /**
@@ -68,15 +69,15 @@ export function formatQuery(query) {
  * @returns the query, but with only the keys supported by the scopes
  */
 export function onlyAllowedKeys(query) {
-  const allowedKeys = getAllowedKeys();
+  const allowedKeys = getAllowedKeys()
 
-  const sanitizedQuery = {};
+  const sanitizedQuery = {}
 
   allowedKeys.forEach((key) => {
     if (query[key]) {
-      sanitizedQuery[key] = query[key];
+      sanitizedQuery[key] = query[key]
     }
-  });
+  })
 
-  return sanitizedQuery;
+  return sanitizedQuery
 }

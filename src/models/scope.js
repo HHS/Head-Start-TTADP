@@ -1,6 +1,4 @@
-const {
-  Model,
-} = require('sequelize');
+const { Model } = require('sequelize')
 
 export default (sequelize, DataTypes) => {
   class Scope extends Model {
@@ -10,28 +8,31 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'regionId',
         as: 'regions',
         timestamps: false,
-      });
+      })
       Scope.belongsToMany(models.User, {
         through: models.Permission,
         foreignKey: 'scopeId',
         as: 'users',
         timestamps: false,
-      });
-      Scope.hasMany(models.Permission, { foreignKey: 'scopeId', as: 'permissions' });
+      })
+      Scope.hasMany(models.Permission, { foreignKey: 'scopeId', as: 'permissions' })
     }
   }
-  Scope.init({
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
+  Scope.init(
+    {
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      description: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
     },
-    description: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-  }, {
-    sequelize,
-    modelName: 'Scope',
-  });
-  return Scope;
-};
+    {
+      sequelize,
+      modelName: 'Scope',
+    }
+  )
+  return Scope
+}

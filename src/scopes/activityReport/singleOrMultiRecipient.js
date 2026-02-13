@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
 
-const recipientSql = (singleOrMulti) => (`SELECT
+const recipientSql = (singleOrMulti) => `SELECT
   "ActivityRecipients"."activityReportId"
   FROM "Recipients" "Recipients"
   INNER JOIN "Grants" "Grants"
@@ -12,7 +12,6 @@ const recipientSql = (singleOrMulti) => (`SELECT
   HAVING
     COUNT(DISTINCT COALESCE(NULLIF("Recipients"."uei",''),"Recipients"."name"))
     ${singleOrMulti === 'single-recipient' ? '=' : '>'} 1`
-);
 
 // eslint-disable-next-line import/prefer-default-export
 export function withSingleOrMultiRecipients(singleOrMulti) {
@@ -22,5 +21,5 @@ export function withSingleOrMultiRecipients(singleOrMulti) {
         ${recipientSql(singleOrMulti[0])}
       )`),
     },
-  };
+  }
 }

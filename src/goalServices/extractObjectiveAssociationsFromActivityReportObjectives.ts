@@ -1,11 +1,11 @@
-import {
+import type {
   IActivityReportObjectivesModelInstance,
   IFileModelInstance,
   IResourceModelInstance,
   ITopicModelInstance,
   ICourseModelInstance,
   ICitationModelInstance,
-} from './types';
+} from './types'
 
 /**
  *
@@ -15,13 +15,11 @@ import {
  */
 export default function extractObjectiveAssociationsFromActivityReportObjectives(
   activityReportObjectives: IActivityReportObjectivesModelInstance[],
-  associationName: 'topics' | 'resources' | 'files' | 'courses' | 'activityReportObjectiveCitations',
+  associationName: 'topics' | 'resources' | 'files' | 'courses' | 'activityReportObjectiveCitations'
 ) {
-  return activityReportObjectives.map((aro) => aro[associationName].map((
-    a: ITopicModelInstance |
-    IResourceModelInstance |
-    IFileModelInstance |
-    ICourseModelInstance |
-    ICitationModelInstance,
-  ) => a.toJSON())).flat();
+  return activityReportObjectives.flatMap((aro) =>
+    aro[associationName].map((a: ITopicModelInstance | IResourceModelInstance | IFileModelInstance | ICourseModelInstance | ICitationModelInstance) =>
+      a.toJSON()
+    )
+  )
 }

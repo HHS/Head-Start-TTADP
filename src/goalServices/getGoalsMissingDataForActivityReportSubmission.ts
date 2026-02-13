@@ -1,13 +1,7 @@
-import { Op } from 'sequelize';
-import db from '../models';
+import { Op } from 'sequelize'
+import db from '../models'
 
-const {
-  sequelize,
-  Goal,
-  Grant,
-  GoalFieldResponse,
-  Recipient,
-} = db;
+const { sequelize, Goal, Grant, GoalFieldResponse, Recipient } = db
 
 export default async function getGoalsMissingDataForActivityReportSubmission(goalIds: number[]) {
   return Goal.findAll({
@@ -41,28 +35,30 @@ export default async function getGoalsMissingDataForActivityReportSubmission(goa
         as: 'grant',
         attributes: [],
         required: true,
-        include: [{
-          model: Recipient,
-          required: true,
-          as: 'recipient',
-          attributes: [],
-        }],
+        include: [
+          {
+            model: Recipient,
+            required: true,
+            as: 'recipient',
+            attributes: [],
+          },
+        ],
       },
     ],
   }) as Array<{
-    id: number;
+    id: number
     responses: Array<{
-      response: string;
-      goalId: number;
-    }>;
+      response: string
+      goalId: number
+    }>
     grant: {
-      regionId: number;
-      number: string;
+      regionId: number
+      number: string
       recipient: {
-        id: number;
-        name: string;
-      };
-      id: number;
-    };
-  }>;
+        id: number
+        name: string
+      }
+      id: number
+    }
+  }>
 }

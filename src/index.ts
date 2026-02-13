@@ -1,31 +1,27 @@
 /* eslint-disable import/first */
 if (process.env.NODE_ENV === 'production') {
   // eslint-disable-next-line global-require
-  require('newrelic');
+  require('newrelic')
 }
 
-// @ts-ignore
-import { MeshServer } from '@mesh-kit/core/server';
-import app from './app';
-import { auditLogger } from './logger';
-import { generateRedisConfig } from './lib/queue';
+// @ts-expect-error
+import { MeshServer } from '@mesh-kit/core/server'
+import app from './app'
+import { auditLogger } from './logger'
+import { generateRedisConfig } from './lib/queue'
 
-const bypassSockets = !!process.env.BYPASS_SOCKETS;
-Error.stackTraceLimit = 50;
+const bypassSockets = !!process.env.BYPASS_SOCKETS
+Error.stackTraceLimit = 50
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 8080
 const server = app.listen(port, () => {
-  auditLogger.info(`Listening on port ${port}`);
-});
+  auditLogger.info(`Listening on port ${port}`)
+})
 
-let meshServerInstance: MeshServer | null = null;
+let meshServerInstance: MeshServer | null = null
 
 if (!bypassSockets) {
-  const {
-    uri: redisUrl,
-    tlsEnabled,
-    redisOpts,
-  } = generateRedisConfig();
+  const { uri: redisUrl, tlsEnabled, redisOpts } = generateRedisConfig()
 
   const mesh = new MeshServer({
     server,
@@ -35,25 +31,26 @@ if (!bypassSockets) {
       password: redisUrl ? redisOpts?.redis?.password || undefined : undefined,
       tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
     },
-  });
+  })
 
-  meshServerInstance = mesh;
+  meshServerInstance = mesh
 
-  mesh.ready()
+  mesh
+    .ready()
     .then(() => {
       // allow mesh to track presence for rooms that are prefixed with 'ar-'
-      mesh.trackPresence(/^ar-.*$/);
+      mesh.trackPresence(/^ar-.*$/)
 
       process.on('SIGINT', async () => {
         // disconnects any active connections, cleans up redis, and then closes the server
-        await mesh.close();
+        await mesh.close()
 
-        process.exit(0);
-      });
+        process.exit(0)
+      })
     })
     .catch((err: unknown) => {
-      auditLogger.error('Failed to initialize Mesh server:', err);
-    });
+      auditLogger.error('Failed to initialize Mesh server:', err)
+    })
 }
 
 /**
@@ -61,7 +58,7 @@ if (!bypassSockets) {
  * @returns The mesh server instance or null if it doesn't exist
  */
 export function getMeshServer(): MeshServer | null {
-  return meshServerInstance;
+  return meshServerInstance
 }
 
-export default server;
+export default server

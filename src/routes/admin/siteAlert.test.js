@@ -1,21 +1,10 @@
-import faker from '@faker-js/faker';
-import moment from 'moment';
-import httpCodes from 'http-codes';
-import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
-import SCOPES from '../../middleware/scopeConstants';
-import {
-  User,
-  SiteAlert,
-  Permission,
-  sequelize,
-} from '../../models';
-import {
-  getAlerts,
-  getAlert,
-  deleteAlert,
-  createAlert,
-  saveAlert,
-} from './siteAlert';
+import faker from '@faker-js/faker'
+import moment from 'moment'
+import httpCodes from 'http-codes'
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common'
+import SCOPES from '../../middleware/scopeConstants'
+import { User, SiteAlert, Permission, sequelize } from '../../models'
+import { getAlerts, getAlert, deleteAlert, createAlert, saveAlert } from './siteAlert'
 
 const mockResponse = {
   json: jest.fn(),
@@ -23,10 +12,10 @@ const mockResponse = {
   status: jest.fn(() => ({
     end: jest.fn(),
   })),
-};
+}
 
 describe('site alert admin handler', () => {
-  let adminUser;
+  let adminUser
   beforeAll(async () => {
     adminUser = await User.create({
       hsesUserId: faker.datatype.string(),
@@ -35,13 +24,13 @@ describe('site alert admin handler', () => {
       homeRegionId: 1,
       hsesUsername: faker.internet.userName(),
       lastLogin: new Date(),
-    });
+    })
 
     await Permission.create({
       userId: adminUser.id,
       scopeId: SCOPES.ADMIN,
       regionId: 1,
-    });
+    })
 
     await SiteAlert.create({
       userId: adminUser.id,
@@ -52,7 +41,7 @@ describe('site alert admin handler', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    });
+    })
 
     await SiteAlert.create({
       userId: adminUser.id,
@@ -63,7 +52,7 @@ describe('site alert admin handler', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    });
+    })
 
     await SiteAlert.create({
       userId: adminUser.id,
@@ -74,49 +63,49 @@ describe('site alert admin handler', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    });
-  });
+    })
+  })
 
   afterAll(async () => {
     await SiteAlert.destroy({
       where: {
         userId: adminUser.id,
       },
-    });
+    })
 
     await Permission.destroy({
       where: {
         userId: adminUser.id,
       },
-    });
+    })
     await User.destroy({
       where: {
         id: adminUser.id,
       },
-    });
+    })
 
-    await sequelize.close();
-  });
+    await sequelize.close()
+  })
 
   afterEach(async () => {
-    jest.clearAllMocks();
-  });
+    jest.clearAllMocks()
+  })
 
   describe('getAlerts', () => {
     it('should return all alerts', async () => {
-      await getAlerts({}, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalled();
-    });
+      await getAlerts({}, mockResponse)
+      expect(mockResponse.json).toHaveBeenCalled()
+    })
 
     it('handles errors', async () => {
-      const oldFindAll = SiteAlert.findAll;
-      const mockFindAll = jest.fn().mockRejectedValue(new Error('error'));
-      SiteAlert.findAll = mockFindAll;
-      await getAlerts({}, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-      SiteAlert.findAll = oldFindAll;
-    });
-  });
+      const oldFindAll = SiteAlert.findAll
+      const mockFindAll = jest.fn().mockRejectedValue(new Error('error'))
+      SiteAlert.findAll = mockFindAll
+      await getAlerts({}, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+      SiteAlert.findAll = oldFindAll
+    })
+  })
 
   describe('getAlert', () => {
     it('should return a single alert', async () => {
@@ -125,9 +114,9 @@ describe('site alert admin handler', () => {
           userId: adminUser.id,
           status: ALERT_STATUSES.UNPUBLISHED,
         },
-      });
+      })
 
-      await getAlert({ params: { alertId: existingAlert.id } }, mockResponse);
+      await getAlert({ params: { alertId: existingAlert.id } }, mockResponse)
 
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -139,19 +128,19 @@ describe('site alert admin handler', () => {
           status: ALERT_STATUSES.UNPUBLISHED,
           title: expect.any(String),
           size: ALERT_SIZES.STANDARD,
-        }),
-      );
-    });
+        })
+      )
+    })
 
     it('handles errors', async () => {
-      const oldFindByPk = SiteAlert.findByPk;
-      const mockFindByPk = jest.fn().mockRejectedValue(new Error('error'));
-      SiteAlert.findByPk = mockFindByPk;
-      await getAlert({ params: { alertId: 1 } }, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-      SiteAlert.findByPk = oldFindByPk;
-    });
-  });
+      const oldFindByPk = SiteAlert.findByPk
+      const mockFindByPk = jest.fn().mockRejectedValue(new Error('error'))
+      SiteAlert.findByPk = mockFindByPk
+      await getAlert({ params: { alertId: 1 } }, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+      SiteAlert.findByPk = oldFindByPk
+    })
+  })
 
   describe('deleteAlert', () => {
     it('should delete a single alert', async () => {
@@ -160,25 +149,25 @@ describe('site alert admin handler', () => {
           userId: adminUser.id,
           status: ALERT_STATUSES.PUBLISHED,
         },
-      });
+      })
 
-      await deleteAlert({ params: { alertId: existingAlert.id } }, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.NO_CONTENT);
-    });
+      await deleteAlert({ params: { alertId: existingAlert.id } }, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.NO_CONTENT)
+    })
 
     it('handles errors', async () => {
-      const oldFindOne = SiteAlert.findOne;
-      const oldDestroy = SiteAlert.destroy;
-      const mockFindOne = jest.fn().mockResolvedValue({ id: 1 });
-      const mockDestroy = jest.fn().mockRejectedValue(new Error('error'));
-      SiteAlert.destroy = mockDestroy;
-      SiteAlert.findOne = mockFindOne;
-      await deleteAlert({ params: { alertId: 1 } }, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-      SiteAlert.destroy = oldDestroy;
-      SiteAlert.findOne = oldFindOne;
-    });
-  });
+      const oldFindOne = SiteAlert.findOne
+      const oldDestroy = SiteAlert.destroy
+      const mockFindOne = jest.fn().mockResolvedValue({ id: 1 })
+      const mockDestroy = jest.fn().mockRejectedValue(new Error('error'))
+      SiteAlert.destroy = mockDestroy
+      SiteAlert.findOne = mockFindOne
+      await deleteAlert({ params: { alertId: 1 } }, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+      SiteAlert.destroy = oldDestroy
+      SiteAlert.findOne = oldFindOne
+    })
+  })
 
   describe('createAlert', () => {
     it('should create an alert', async () => {
@@ -190,22 +179,22 @@ describe('site alert admin handler', () => {
         title: faker.lorem.sentence(),
         variant: ALERT_VARIANTS.INFO,
         size: ALERT_SIZES.STANDARD,
-      };
+      }
 
-      await createAlert({ body: newAlert, session: { userId: adminUser.id } }, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining(newAlert));
-    });
+      await createAlert({ body: newAlert, session: { userId: adminUser.id } }, mockResponse)
+      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining(newAlert))
+    })
 
-    it('errors if a required field isn\'t provided', async () => {
+    it("errors if a required field isn't provided", async () => {
       const newAlert = {
         endDate: faker.date.future(),
         startDate: faker.date.past(),
         message: faker.lorem.sentence(),
-      };
+      }
 
-      await createAlert({ body: newAlert }, mockResponse, true);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
-    });
+      await createAlert({ body: newAlert }, mockResponse, true)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST)
+    })
 
     it('handles generic errors', async () => {
       const newAlert = {
@@ -217,15 +206,15 @@ describe('site alert admin handler', () => {
         userId: adminUser.id,
         variant: ALERT_VARIANTS.INFO,
         size: ALERT_SIZES.STANDARD,
-      };
-      const oldCreate = SiteAlert.create;
-      const mockCreate = jest.fn().mockRejectedValue(new Error('error'));
-      SiteAlert.create = mockCreate;
-      await createAlert({ body: newAlert }, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-      SiteAlert.create = oldCreate;
-    });
-  });
+      }
+      const oldCreate = SiteAlert.create
+      const mockCreate = jest.fn().mockRejectedValue(new Error('error'))
+      SiteAlert.create = mockCreate
+      await createAlert({ body: newAlert }, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+      SiteAlert.create = oldCreate
+    })
+  })
 
   describe('saveAlert', () => {
     it('updates an existing alert', async () => {
@@ -234,10 +223,10 @@ describe('site alert admin handler', () => {
           userId: adminUser.id,
           status: ALERT_STATUSES.UNPUBLISHED,
         },
-      });
+      })
 
-      const message = faker.lorem.sentence();
-      const title = faker.lorem.sentence();
+      const message = faker.lorem.sentence()
+      const title = faker.lorem.sentence()
 
       await saveAlert(
         {
@@ -249,8 +238,8 @@ describe('site alert admin handler', () => {
             alertId: existingAlert.id,
           },
         },
-        mockResponse,
-      );
+        mockResponse
+      )
 
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -262,30 +251,30 @@ describe('site alert admin handler', () => {
           title,
           variant: existingAlert.variant,
           size: ALERT_SIZES.STANDARD,
-        }),
-      );
-    });
+        })
+      )
+    })
 
     it('handles generic errors', async () => {
-      const oldUpdate = SiteAlert.update;
-      const oldFindByPk = SiteAlert.findByPk;
-      const mockUpdate = jest.fn().mockRejectedValue(new Error('error'));
-      const mockFindByPk = jest.fn().mockResolvedValue({ id: 1 });
-      SiteAlert.update = mockUpdate;
-      SiteAlert.findByPk = mockFindByPk;
-      await saveAlert({ params: { alertId: 1 } }, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-      SiteAlert.update = oldUpdate;
-      SiteAlert.findByPk = oldFindByPk;
-    });
+      const oldUpdate = SiteAlert.update
+      const oldFindByPk = SiteAlert.findByPk
+      const mockUpdate = jest.fn().mockRejectedValue(new Error('error'))
+      const mockFindByPk = jest.fn().mockResolvedValue({ id: 1 })
+      SiteAlert.update = mockUpdate
+      SiteAlert.findByPk = mockFindByPk
+      await saveAlert({ params: { alertId: 1 } }, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+      SiteAlert.update = oldUpdate
+      SiteAlert.findByPk = oldFindByPk
+    })
 
-    it('handles errors if the alert doesn\'t exist', async () => {
-      const oldFindByPk = SiteAlert.findByPk;
-      const mockFindByPk = jest.fn().mockResolvedValue(null);
-      SiteAlert.findByPk = mockFindByPk;
-      await saveAlert({ params: { alertId: 1 } }, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.NOT_FOUND);
-      SiteAlert.findByPk = oldFindByPk;
-    });
-  });
-});
+    it("handles errors if the alert doesn't exist", async () => {
+      const oldFindByPk = SiteAlert.findByPk
+      const mockFindByPk = jest.fn().mockResolvedValue(null)
+      SiteAlert.findByPk = mockFindByPk
+      await saveAlert({ params: { alertId: 1 } }, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.NOT_FOUND)
+      SiteAlert.findByPk = oldFindByPk
+    })
+  })
+})

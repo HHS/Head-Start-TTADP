@@ -49,14 +49,14 @@ const grants = [
     startDate: new Date(),
     endDate: new Date(),
   },
-];
+]
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('Grants', grants, {});
+    await queryInterface.bulkInsert('Grants', grants, {})
   },
 
   down: async (queryInterface) => {
-    await queryInterface.bulkDelete('Grants', null, {});
+    await queryInterface.bulkDelete('Grants', null, {})
   },
-};
+}

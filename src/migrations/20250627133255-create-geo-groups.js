@@ -1,15 +1,15 @@
-const { prepMigration } = require('../lib/migration');
-const { REGIONS } = require('../constants');
+const { prepMigration } = require('../lib/migration')
+const { REGIONS } = require('../constants')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
-      const CREATOR_ID = 765;
-      const COLLABORATOR_ID = 654;
+      const CREATOR_ID = 765
+      const COLLABORATOR_ID = 654
 
       // Insert users if missing
       await queryInterface.sequelize.query(
@@ -20,11 +20,15 @@ module.exports = {
         `,
         {
           replacements: {
-            id: CREATOR_ID, name: 'Heather', hsesUserId: '55174', hsesUsername: 'heather@example.com', email: 'heather@example.com',
+            id: CREATOR_ID,
+            name: 'Heather',
+            hsesUserId: '55174',
+            hsesUsername: 'heather@example.com',
+            email: 'heather@example.com',
           },
           transaction,
-        },
-      );
+        }
+      )
 
       await queryInterface.sequelize.query(
         `
@@ -34,11 +38,15 @@ module.exports = {
         `,
         {
           replacements: {
-            id: COLLABORATOR_ID, name: 'Tammy', hsesUserId: '53719', hsesUsername: 'tammy@example.com', email: 'tammy@example.com',
+            id: COLLABORATOR_ID,
+            name: 'Tammy',
+            hsesUserId: '53719',
+            hsesUsername: 'tammy@example.com',
+            email: 'tammy@example.com',
           },
           transaction,
-        },
-      );
+        }
+      )
 
       // Lookup collaborator type IDs from database
       const collaboratorTypes = await queryInterface.sequelize.query(
@@ -52,39 +60,41 @@ module.exports = {
         {
           type: Sequelize.QueryTypes.SELECT,
           transaction,
-        },
-      );
+        }
+      )
 
       // Extract collaborator type IDs
-      const creatorTypeId = collaboratorTypes.find((type) => type.name === 'Creator')?.id;
-      const coOwnerTypeId = collaboratorTypes.find((type) => type.name === 'Co-Owner')?.id;
+      const creatorTypeId = collaboratorTypes.find((type) => type.name === 'Creator')?.id
+      const coOwnerTypeId = collaboratorTypes.find((type) => type.name === 'Co-Owner')?.id
 
       if (!creatorTypeId || !coOwnerTypeId) {
-        throw new Error('Required collaborator types not found in database');
+        throw new Error('Required collaborator types not found in database')
       }
 
       // Insert Groups, returning ids
       const insertedGroupResults = await Promise.all(
-        REGIONS.map((region) => queryInterface.sequelize.query(
-          `
+        REGIONS.map((region) =>
+          queryInterface.sequelize.query(
+            `
             INSERT INTO "Groups" ("name", "isPublic", "createdAt", "updatedAt")
             VALUES (:name, true, NOW(), NOW())
             ON CONFLICT ("name") DO UPDATE SET "isPublic" = EXCLUDED."isPublic"
             RETURNING "id";
             `,
-          {
-            replacements: { name: region },
-            type: Sequelize.QueryTypes.SELECT,
-            transaction,
-          },
-        )),
-      );
+            {
+              replacements: { name: region },
+              type: Sequelize.QueryTypes.SELECT,
+              transaction,
+            }
+          )
+        )
+      )
 
       // Extract ids
-      const groupIds = insertedGroupResults.map((rows) => rows[0].id);
+      const groupIds = insertedGroupResults.map((rows) => rows[0].id)
 
       // Build all collaborators in bulk
-      const now = new Date();
+      const now = new Date()
       const collaborators = groupIds.flatMap((groupId) => [
         {
           groupId,
@@ -100,16 +110,16 @@ module.exports = {
           createdAt: now,
           updatedAt: now,
         },
-      ]);
+      ])
 
-      await queryInterface.bulkInsert('GroupCollaborators', collaborators, { transaction });
-    });
+      await queryInterface.bulkInsert('GroupCollaborators', collaborators, { transaction })
+    })
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       // Remove all GroupCollaborators for these groups
       await queryInterface.sequelize.query(
@@ -122,13 +132,17 @@ module.exports = {
         {
           replacements: { regions: REGIONS },
           transaction,
-        },
-      );
+        }
+      )
 
       // Remove the groups
-      await queryInterface.bulkDelete('Groups', {
-        name: { [Sequelize.Op.in]: REGIONS },
-      }, { transaction });
-    });
+      await queryInterface.bulkDelete(
+        'Groups',
+        {
+          name: { [Sequelize.Op.in]: REGIONS },
+        },
+        { transaction }
+      )
+    })
   },
-};
+}

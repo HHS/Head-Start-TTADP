@@ -1,8 +1,8 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
-const OLD_VALUE = 'State health and welness systems';
-const NEW_VALUE = 'State health and wellness systems';
-const ENUM_NAME = 'enum_CollabReports_participants';
+const OLD_VALUE = 'State health and welness systems'
+const NEW_VALUE = 'State health and wellness systems'
+const ENUM_NAME = 'enum_CollabReports_participants'
 
 const COLLAB_REPORT_PARTICIPANTS = [
   'Child Care and Development Fund',
@@ -25,19 +25,20 @@ const COLLAB_REPORT_PARTICIPANTS = [
   'State Professional development system',
   'TTA staff',
   'Other',
-];
+]
 
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       // Recreate the enum and transform the data in one operation
       // Pattern from 20230629000000-fix-some-column-issues.js
-      const enumValues = COLLAB_REPORT_PARTICIPANTS.map((v) => `'${v}'`).join(',\n          ');
+      const enumValues = COLLAB_REPORT_PARTICIPANTS.map((v) => `'${v}'`).join(',\n          ')
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         -- Step 1: Rename the old enum type
         ALTER TYPE "${ENUM_NAME}" RENAME TO "${ENUM_NAME}_OLD";
 
@@ -69,11 +70,13 @@ module.exports = {
 
         -- Step 7: Drop the old enum type
         DROP TYPE IF EXISTS "${ENUM_NAME}_OLD";
-      `, { transaction });
-    });
+      `,
+        { transaction }
+      )
+    })
   },
 
   down: async () => {
     // Intentionally empty - we don't want to revert to the typo
   },
-};
+}

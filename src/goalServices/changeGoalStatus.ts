@@ -1,30 +1,25 @@
-import moment from 'moment';
-import * as Sequelize from 'sequelize';
-import db from '../models';
+import moment from 'moment'
+import type * as Sequelize from 'sequelize'
+import db from '../models'
 
 interface GoalStatusChangeParams {
-  goalId: number;
-  userId: number;
-  newStatus: string;
-  reason: string;
-  context: string;
-  performedAt?: string,
-  forceStatusChange?: boolean;
-  transaction?: Sequelize.Transaction;
+  goalId: number
+  userId: number
+  newStatus: string
+  reason: string
+  context: string
+  performedAt?: string
+  forceStatusChange?: boolean
+  transaction?: Sequelize.Transaction
 }
 
-export async function changeGoalStatusWithSystemUser({
-  goalId,
-  newStatus,
-  reason,
-  context,
-}: GoalStatusChangeParams) {
+export async function changeGoalStatusWithSystemUser({ goalId, newStatus, reason, context }: GoalStatusChangeParams) {
   // Lookup goal.
-  const goal = await db.Goal.findByPk(goalId);
+  const goal = await db.Goal.findByPk(goalId)
 
   // Error if goal not found.
   if (!goal) {
-    throw new Error('Goal not found');
+    throw new Error('Goal not found')
   }
 
   // Only create status change if status is actually changing
@@ -39,12 +34,12 @@ export async function changeGoalStatusWithSystemUser({
       reason,
       context,
       performedAt: null,
-    });
+    })
 
-    await goal.reload();
+    await goal.reload()
   }
 
-  return goal;
+  return goal
 }
 
 export default async function changeGoalStatus({
@@ -72,13 +67,13 @@ export default async function changeGoalStatus({
       ],
     }),
     db.Goal.findByPk(goalId),
-  ]);
+  ])
 
   if (!goal || !user) {
-    throw new Error('Goal or user not found');
+    throw new Error('Goal or user not found')
   }
 
-  const oldStatus = goal.status;
+  const oldStatus = goal.status
 
   const change = {
     goalId,
@@ -90,12 +85,12 @@ export default async function changeGoalStatus({
     reason,
     context,
     performedAt: performedAt ? moment.utc(performedAt).toDate() : new Date(),
-  };
-
-  if (oldStatus !== newStatus || forceStatusChange) {
-    await db.GoalStatusChange.create(change);
-    await goal.reload();
   }
 
-  return goal;
+  if (oldStatus !== newStatus || forceStatusChange) {
+    await db.GoalStatusChange.create(change)
+    await goal.reload()
+  }
+
+  return goal
 }

@@ -1,22 +1,22 @@
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
+        const loggedUser = '0'
         // const transactionId = '';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
+        const sessionSig = __filename
+        const auditDescriptor = 'RUN MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
@@ -24,18 +24,38 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
         // Add columns to track when an entity is used on an AR with any status
-        await queryInterface.addColumn('Goals', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction });
-        await queryInterface.addColumn('Objectives', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction });
-        await queryInterface.addColumn('ObjectiveFiles', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction });
-        await queryInterface.addColumn('ObjectiveResources', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction });
-        await queryInterface.addColumn('ObjectiveTopics', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction });
+        await queryInterface.addColumn('Goals', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction })
+        await queryInterface.addColumn('Objectives', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction })
+        await queryInterface.addColumn('ObjectiveFiles', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction })
+        await queryInterface.addColumn(
+          'ObjectiveResources',
+          'onAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true },
+          { transaction }
+        )
+        await queryInterface.addColumn('ObjectiveTopics', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction })
         // Add columns to track when an entity is used on an Approved AR
-        await queryInterface.addColumn('ObjectiveFiles', 'onApprovedAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction });
-        await queryInterface.addColumn('ObjectiveResources', 'onApprovedAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction });
-        await queryInterface.addColumn('ObjectiveTopics', 'onApprovedAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true }, { transaction });
+        await queryInterface.addColumn(
+          'ObjectiveFiles',
+          'onApprovedAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true },
+          { transaction }
+        )
+        await queryInterface.addColumn(
+          'ObjectiveResources',
+          'onApprovedAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true },
+          { transaction }
+        )
+        await queryInterface.addColumn(
+          'ObjectiveTopics',
+          'onApprovedAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: true },
+          { transaction }
+        )
         // Populate onAR for Goals
         await queryInterface.sequelize.query(
           `WITH
@@ -51,8 +71,8 @@ module.exports = {
           SET "onAR" = goa."onAR"
           FROM "GoalsOnARs" goa
           WHERE g.id = goa.id;`,
-          { transaction },
-        );
+          { transaction }
+        )
         // Populate onAR for Objectives
         await queryInterface.sequelize.query(
           `WITH
@@ -68,8 +88,8 @@ module.exports = {
           SET "onAR" = ooa."onAR"
           FROM "ObjectivesOnARs" ooa
           WHERE o.id = ooa.id;`,
-          { transaction },
-        );
+          { transaction }
+        )
         // Populate onAR and onApprovedAR for ObjectiveFiles
         await queryInterface.sequelize.query(
           `WITH
@@ -94,8 +114,8 @@ module.exports = {
             "onApprovedAR" = ofoa."onApprovedAR"
           FROM "ObjectiveFilesOnARs" ofoa
           WHERE "of".id = ofoa.id;`,
-          { transaction },
-        );
+          { transaction }
+        )
         // Populate onAR and onApprovedAR for ObjectiveResources
         await queryInterface.sequelize.query(
           `WITH
@@ -120,8 +140,8 @@ module.exports = {
             "onApprovedAR" = oroa."onApprovedAR"
           FROM "ObjectiveResourcesOnARs" oroa
           WHERE "or".id = oroa.id;`,
-          { transaction },
-        );
+          { transaction }
+        )
         // Populate onAR and onApprovedAR for ObjectiveTopics
         await queryInterface.sequelize.query(
           `WITH
@@ -146,74 +166,102 @@ module.exports = {
             "onApprovedAR" = otoa."onApprovedAR"
           FROM "ObjectiveTopicsOnARs" otoa
           WHERE ot.id = otoa.id;`,
-          { transaction },
-        );
+          { transaction }
+        )
         // Change settings to not allow null for onAR and onApprovedAR
-        await queryInterface.changeColumn('Goals', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction });
-        await queryInterface.changeColumn('Objectives', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction });
-        await queryInterface.changeColumn('ObjectiveFiles', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction });
-        await queryInterface.changeColumn('ObjectiveResources', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction });
-        await queryInterface.changeColumn('ObjectiveTopics', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction });
-        await queryInterface.changeColumn('ObjectiveFiles', 'onApprovedAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction });
-        await queryInterface.changeColumn('ObjectiveResources', 'onApprovedAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction });
-        await queryInterface.changeColumn('ObjectiveTopics', 'onApprovedAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction });
+        await queryInterface.changeColumn('Goals', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction })
+        await queryInterface.changeColumn('Objectives', 'onAR', { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false }, { transaction })
+        await queryInterface.changeColumn(
+          'ObjectiveFiles',
+          'onAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false },
+          { transaction }
+        )
+        await queryInterface.changeColumn(
+          'ObjectiveResources',
+          'onAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false },
+          { transaction }
+        )
+        await queryInterface.changeColumn(
+          'ObjectiveTopics',
+          'onAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false },
+          { transaction }
+        )
+        await queryInterface.changeColumn(
+          'ObjectiveFiles',
+          'onApprovedAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false },
+          { transaction }
+        )
+        await queryInterface.changeColumn(
+          'ObjectiveResources',
+          'onApprovedAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false },
+          { transaction }
+        )
+        await queryInterface.changeColumn(
+          'ObjectiveTopics',
+          'onApprovedAR',
+          { type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false },
+          { transaction }
+        )
         await queryInterface.sequelize.query(
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+    }),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
+        const loggedUser = '0'
         // const transactionId = '';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
+        const sessionSig = __filename
+        const auditDescriptor = 'RUN MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
       try {
         await queryInterface.sequelize.query(
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
         // Remove added columns
-        await queryInterface.removeColumn('Goals', 'onAR', { transaction });
-        await queryInterface.removeColumn('Objectives', 'onAR', { transaction });
-        await queryInterface.removeColumn('ObjectiveFiles', 'onAR', { transaction });
-        await queryInterface.removeColumn('ObjectiveResources', 'onAR', { transaction });
-        await queryInterface.removeColumn('ObjectiveTopics', 'onAR', { transaction });
-        await queryInterface.removeColumn('ObjectiveFiles', 'onApprovedAR', { transaction });
-        await queryInterface.removeColumn('ObjectiveResources', 'onApprovedAR', { transaction });
-        await queryInterface.removeColumn('ObjectiveTopics', 'onApprovedAR', { transaction });
+        await queryInterface.removeColumn('Goals', 'onAR', { transaction })
+        await queryInterface.removeColumn('Objectives', 'onAR', { transaction })
+        await queryInterface.removeColumn('ObjectiveFiles', 'onAR', { transaction })
+        await queryInterface.removeColumn('ObjectiveResources', 'onAR', { transaction })
+        await queryInterface.removeColumn('ObjectiveTopics', 'onAR', { transaction })
+        await queryInterface.removeColumn('ObjectiveFiles', 'onApprovedAR', { transaction })
+        await queryInterface.removeColumn('ObjectiveResources', 'onApprovedAR', { transaction })
+        await queryInterface.removeColumn('ObjectiveTopics', 'onApprovedAR', { transaction })
         await queryInterface.sequelize.query(
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
-};
+    }),
+}

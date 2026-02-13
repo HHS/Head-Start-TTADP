@@ -1,7 +1,4 @@
-import {
-  reduceGoals, reduceObjectivesForActivityReport,
-  reduceRelationThroughActivityReportObjectives,
-} from './reduceGoals';
+import { reduceGoals, reduceObjectivesForActivityReport, reduceRelationThroughActivityReportObjectives } from './reduceGoals'
 
 describe('reduceGoals', () => {
   const goals = [
@@ -51,22 +48,22 @@ describe('reduceGoals', () => {
       createdVia: 'rtr',
       source: 'Source',
     },
-  ];
+  ]
 
   beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    jest.clearAllMocks()
+  })
 
   it('should return undefined if no goals are provided', () => {
-    const result = reduceGoals([]);
-    expect(result).toEqual([]);
-  });
+    const result = reduceGoals([])
+    expect(result).toEqual([])
+  })
 
   it('should return ...something', () => {
-    // @ts-ignore
-    const result = reduceGoals(goals);
-    expect(result.length).toEqual(1);
-  });
+    // @ts-expect-error
+    const result = reduceGoals(goals)
+    expect(result.length).toEqual(1)
+  })
 
   it('should handle objectives with otherEntityId', () => {
     const goalsWithObjectives = [
@@ -108,13 +105,13 @@ describe('reduceGoals', () => {
         createdVia: 'rtr',
         source: 'Source',
       },
-    ];
+    ]
 
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-    const result = reduceGoals(goalsWithObjectives as any);
-    expect(result.length).toEqual(1);
-    expect(result[0].objectives[0].recipientIds).toEqual([123]);
-  });
+    const result = reduceGoals(goalsWithObjectives as any)
+    expect(result.length).toEqual(1)
+    expect(result[0].objectives[0].recipientIds).toEqual([123])
+  })
 
   it('should add otherEntityId to existing recipientIds', () => {
     const goalsWithExistingObjectives = [
@@ -170,13 +167,13 @@ describe('reduceGoals', () => {
         createdVia: 'rtr',
         source: 'Source',
       },
-    ];
+    ]
 
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-    const result = reduceGoals(goalsWithExistingObjectives as any);
-    expect(result.length).toEqual(1);
-    expect(result[0].objectives[0].recipientIds).toEqual([123, 456]);
-  });
+    const result = reduceGoals(goalsWithExistingObjectives as any)
+    expect(result.length).toEqual(1)
+    expect(result[0].objectives[0].recipientIds).toEqual([123, 456])
+  })
 
   it('should set objectiveCreatedHere to true if objectiveCreatedHere is true and exists.objectiveCreatedHere is false', () => {
     const newObjectives = [
@@ -205,7 +202,7 @@ describe('reduceGoals', () => {
           },
         ],
       },
-    ];
+    ]
 
     const currentObjectives = [
       {
@@ -221,13 +218,13 @@ describe('reduceGoals', () => {
         courses: [],
         citations: [],
       },
-    ];
+    ]
 
-    // @ts-ignore
-    const result = reduceObjectivesForActivityReport(newObjectives, currentObjectives);
-    expect(result.length).toEqual(1);
-    expect(result[0].objectiveCreatedHere).toEqual(true);
-  });
+    // @ts-expect-error
+    const result = reduceObjectivesForActivityReport(newObjectives, currentObjectives)
+    expect(result.length).toEqual(1)
+    expect(result[0].objectiveCreatedHere).toEqual(true)
+  })
 
   it('should properly reduce objectives for activity report with activityReportObjectiveCitations', () => {
     const newObjectives = [
@@ -313,7 +310,7 @@ describe('reduceGoals', () => {
           },
         ],
       },
-    ];
+    ]
 
     const currentObjectives = [
       {
@@ -329,11 +326,11 @@ describe('reduceGoals', () => {
         courses: [],
         citations: [],
       },
-    ];
+    ]
 
-    // @ts-ignore
-    const result = reduceObjectivesForActivityReport(newObjectives, currentObjectives);
-    expect(result.length).toEqual(2);
+    // @ts-expect-error
+    const result = reduceObjectivesForActivityReport(newObjectives, currentObjectives)
+    expect(result.length).toEqual(2)
     expect(result[0].citations).toEqual([
       {
         id: 1,
@@ -343,15 +340,15 @@ describe('reduceGoals', () => {
         id: 2,
         name: 'ANC - Citation 2 - Source 2',
       },
-    ]);
+    ])
 
     expect(result[1].citations).toEqual([
       {
         id: 3,
         name: 'ANC - Citation 3 - Source 3',
       },
-    ]);
-  });
+    ])
+  })
 
   it('returns useIpdCourses and useFiles flags from activity report objectives', () => {
     const goalsWithFlags = [
@@ -415,13 +412,13 @@ describe('reduceGoals', () => {
         createdVia: 'rtr',
         source: 'Source',
       },
-    ];
+    ]
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = reduceGoals(goalsWithFlags as any, true);
-    expect(result[0].objectives[0].useIpdCourses).toBe(true);
-    expect(result[0].objectives[0].useFiles).toBe(true);
-  });
+    const result = reduceGoals(goalsWithFlags as any, true)
+    expect(result[0].objectives[0].useIpdCourses).toBe(true)
+    expect(result[0].objectives[0].useFiles).toBe(true)
+  })
   describe('reduceRelationThroughActivityReportObjectives', () => {
     it('should handle null topic values without crashing', () => {
       // Mock objective with an activity report that has a null topic
@@ -460,42 +457,43 @@ describe('reduceGoals', () => {
             activityReportObjectiveResources: [],
             activityReportObjectiveTopics: [
               { topic: null }, // This simulates a topic that is null
-              { topic: { dataValues: { id: 73, name: 'Family Support Services' }, id: 73, name: 'Family Support Services' } }, // Valid topic
+              {
+                topic: {
+                  dataValues: { id: 73, name: 'Family Support Services' },
+                  id: 73,
+                  name: 'Family Support Services',
+                },
+              }, // Valid topic
             ],
             activityReportObjectiveFiles: [],
             activityReportObjectiveCourses: [],
             activityReportObjectiveCitations: [],
-            toJSON() { return this; },
+            toJSON() {
+              return this
+            },
             dataValues: this,
           },
         ],
         resources: [],
-        topics: [
-          { id: 82, name: 'Parent and Family Engagement' },
-        ],
+        topics: [{ id: 82, name: 'Parent and Family Engagement' }],
         files: [],
         courses: [],
-      };
+      }
 
       const exists = {
         topics: [
           { id: 82, name: 'Parent and Family Engagement' }, // Pre-existing topic
         ],
-      };
+      }
 
       // Call the function
-      const result = reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveTopics',
-        'topic',
-        exists,
-      );
+      const result = reduceRelationThroughActivityReportObjectives(objective, 'activityReportObjectiveTopics', 'topic', exists)
 
       // Expected result should exclude null topics
       expect(result).toEqual([
         { id: 82, name: 'Parent and Family Engagement' }, // Existing
         { id: 73, name: 'Family Support Services' }, // From objective
-      ]);
-    });
-  });
-});
+      ])
+    })
+  })
+})

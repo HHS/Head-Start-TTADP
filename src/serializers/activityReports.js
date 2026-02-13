@@ -1,12 +1,12 @@
-import yayson from 'yayson';
+import yayson from 'yayson'
 
-const { Presenter } = yayson({ adapter: 'sequelize' });
+const { Presenter } = yayson({ adapter: 'sequelize' })
 
 class ActivityReportsPresenter extends Presenter {}
-ActivityReportsPresenter.prototype.type = 'activityReports';
+ActivityReportsPresenter.prototype.type = 'activityReports'
 ActivityReportsPresenter.prototype.attributes = function attributes(instance) {
   // eslint-disable-next-line prefer-rest-params
-  const attrs = Presenter.prototype.attributes.apply(this, arguments);
+  const attrs = Presenter.prototype.attributes.apply(this, arguments)
   return {
     author: {
       id: attrs.author.id.toString(),
@@ -24,13 +24,13 @@ ActivityReportsPresenter.prototype.attributes = function attributes(instance) {
     reportLastUpdated: attrs.updatedAt,
     startDate: instance.getDataValue('startDate'),
     topics: attrs.topics,
-  };
-};
+  }
+}
 ActivityReportsPresenter.prototype.selfLinks = function selfLinks(instance) {
   return {
     self: `${process.env.TTA_SMART_HUB_URI}/api/v1/activity-reports/display/${instance.get('displayId')}`,
     html: `${process.env.TTA_SMART_HUB_URI}/activity-reports/view/${instance.id}`,
-  };
-};
+  }
+}
 
-export default ActivityReportsPresenter;
+export default ActivityReportsPresenter

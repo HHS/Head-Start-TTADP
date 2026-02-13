@@ -1,28 +1,28 @@
 /* eslint-disable import/prefer-default-export */
-import { sequelize } from '../../models';
-import { filterAssociation as filter } from '../utils';
+import { sequelize } from '../../models'
+import { filterAssociation as filter } from '../utils'
 
 export function selectDistinctActivityReportGoalIds(join, having) {
   return `SELECT DISTINCT "ActivityReportGoals"."goalId"
 FROM "ActivityReportGoals"
 ${join}
 GROUP BY "ActivityReportGoals"."goalId"
-HAVING ${having}`;
+HAVING ${having}`
 }
 
 function goalInSubQuery(baseQuery, searchTerms, operator, comparator, escape = true) {
   if (comparator.toLowerCase() === 'between') {
-    const [min, max] = searchTerms;
+    const [min, max] = searchTerms
     return {
       [operator]: sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${min} AND ${max})`),
-    };
+    }
   }
 
   if (!escape) {
-    return searchTerms.map((term) => sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${String(term).trim()})`));
+    return searchTerms.map((term) => sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${String(term).trim()})`))
   }
 
-  return searchTerms.map((term) => sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`));
+  return searchTerms.map((term) => sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`))
 }
 
 /**
@@ -37,5 +37,5 @@ function goalInSubQuery(baseQuery, searchTerms, operator, comparator, escape = t
  */
 
 export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*', escape = true) {
-  return filter(baseQuery, searchTerms, exclude, goalInSubQuery, comparator, escape);
+  return filter(baseQuery, searchTerms, exclude, goalInSubQuery, comparator, escape)
 }

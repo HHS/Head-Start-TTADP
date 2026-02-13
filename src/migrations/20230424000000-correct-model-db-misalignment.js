@@ -1,17 +1,17 @@
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      const loggedUser = '0';
-      const sessionSig = __filename;
-      const auditDescriptor = 'RUN MIGRATIONS';
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      const loggedUser = '0'
+      const sessionSig = __filename
+      const auditDescriptor = 'RUN MIGRATIONS'
       await queryInterface.sequelize.query(
         `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Updating the audit log function to use timestamp with time zone.
       await queryInterface.sequelize.query(
@@ -39,8 +39,8 @@ module.exports = {
                   'ZAL' || t_name);
           END
           $func$;`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Remove the current audit system from all tables
       await queryInterface.sequelize.query(
@@ -72,39 +72,47 @@ module.exports = {
 
           PERFORM "ZAFSetTriggerState"(null, null, null, 'ENABLE');
         END$$;`,
-        { transaction },
-      );
+        { transaction }
+      )
 
-      await queryInterface.changeColumn('ActivityReportGoals', 'endDate', { type: Sequelize.DATEONLY, allowNull: true, defaultValue: null }, { transaction });
+      await queryInterface.changeColumn(
+        'ActivityReportGoals',
+        'endDate',
+        { type: Sequelize.DATEONLY, allowNull: true, defaultValue: null },
+        { transaction }
+      )
 
       await queryInterface.sequelize.query(
         `
         SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
         `,
-        { transaction },
-      );
+        { transaction }
+      )
       // clean up orphan tables
-      await Promise.all(['ObjectiveTemplateRoles', 'DisconnectedGoals'].map(async (table) => {
-        await queryInterface.sequelize.query(
-          ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
-          { raw: true, transaction },
-        );
-        // Drop old audit log table
-        await queryInterface.dropTable(`ZAL${table}`, { transaction });
-        await queryInterface.dropTable(table, { transaction });
-      }));
+      await Promise.all(
+        ['ObjectiveTemplateRoles', 'DisconnectedGoals'].map(async (table) => {
+          await queryInterface.sequelize.query(` SELECT "ZAFRemoveAuditingOnTable"('${table}');`, {
+            raw: true,
+            transaction,
+          })
+          // Drop old audit log table
+          await queryInterface.dropTable(`ZAL${table}`, { transaction })
+          await queryInterface.dropTable(table, { transaction })
+        })
+      )
 
       // clean up orphan audit tables
-      await Promise.all(['ZALTopicGoals', 'ZALGrantGoals'].map(async (table) => {
-        await queryInterface.dropTable(`${table}`, { transaction });
-      }));
+      await Promise.all(
+        ['ZALTopicGoals', 'ZALGrantGoals'].map(async (table) => {
+          await queryInterface.dropTable(`${table}`, { transaction })
+        })
+      )
       await queryInterface.sequelize.query(
         `
         SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
         `,
-        { transaction },
-      );
-    },
-  ),
+        { transaction }
+      )
+    }),
   down: async () => {},
-};
+}

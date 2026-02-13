@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import stringify from 'csv-stringify/lib/sync';
-import httpCodes from 'http-codes';
-import { DECIMAL_BASE } from '@ttahub/common';
-import handleErrors from '../../lib/apiErrorHandler';
-import { findEventBySmartsheetIdSuffix } from '../../services/event';
+import type { Request, Response } from 'express'
+import stringify from 'csv-stringify/lib/sync'
+import httpCodes from 'http-codes'
+import { DECIMAL_BASE } from '@ttahub/common'
+import handleErrors from '../../lib/apiErrorHandler'
+import { findEventBySmartsheetIdSuffix } from '../../services/event'
 import {
   createSession,
   findSessionsByEventId,
@@ -12,18 +12,18 @@ import {
   destroySession,
   getPossibleSessionParticipants,
   getSessionReports,
-} from '../../services/sessionReports';
-import { SessionReportTableRow, GetSessionReportsResponse } from '../../services/types/sessionReport';
-import EventReport from '../../policies/event';
-import { userById } from '../../services/users';
-import { getEventAuthorization } from '../events/handlers';
-import { currentUserId } from '../../services/currentUser';
-import { groupsByRegion } from '../../services/groups';
-import { getUserReadRegions } from '../../services/accessValidation';
+} from '../../services/sessionReports'
+import type { SessionReportTableRow, GetSessionReportsResponse } from '../../services/types/sessionReport'
+import EventReport from '../../policies/event'
+import { userById } from '../../services/users'
+import { getEventAuthorization } from '../events/handlers'
+import { currentUserId } from '../../services/currentUser'
+import { groupsByRegion } from '../../services/groups'
+import { getUserReadRegions } from '../../services/accessValidation'
 
-const namespace = 'SERVICE:SESSIONREPORTS';
+const namespace = 'SERVICE:SESSIONREPORTS'
 
-const logContext = { namespace };
+const logContext = { namespace }
 
 async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response) {
   const options = {
@@ -72,108 +72,103 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
         header: 'Duration (hours)',
       },
     ],
-  };
+  }
 
   // Transform goalTemplates array to comma-separated string of standard values
   const transformedRows = rows.map((row) => ({
     ...row,
-    objectiveTopics: Array.isArray(row.objectiveTopics)
-      ? row.objectiveTopics.join(', ')
-      : '',
-    goalTemplates: Array.isArray(row.goalTemplates)
-      ? row.goalTemplates.map((gt) => gt.standard).join(', ')
-      : '',
-    recipients: Array.isArray(row.recipients)
-      ? row.recipients.map((r) => r.label).join(', ')
-      : '',
-    participants: Array.isArray(row.participants)
-      ? row.participants.join(', ')
-      : '',
-  }));
+    objectiveTopics: Array.isArray(row.objectiveTopics) ? row.objectiveTopics.join(', ') : '',
+    goalTemplates: Array.isArray(row.goalTemplates) ? row.goalTemplates.map((gt) => gt.standard).join(', ') : '',
+    recipients: Array.isArray(row.recipients) ? row.recipients.map((r) => r.label).join(', ') : '',
+    participants: Array.isArray(row.participants) ? row.participants.join(', ') : '',
+  }))
 
-  const csvData = stringify(transformedRows, options);
+  const csvData = stringify(transformedRows, options)
 
-  res.attachment('training-reports.csv');
-  return res.send(`\ufeff${csvData}`);
+  res.attachment('training-reports.csv')
+  return res.send(`\ufeff${csvData}`)
 }
 
 export const getHandler = async (req: Request, res: Response) => {
   try {
-    let session;
+    let session
 
-    const {
-      id,
-      eventId,
-    } = req.params;
+    const { id, eventId } = req.params
 
-    let sessionEventId = eventId;
-    const params = [id, eventId];
+    let sessionEventId = eventId
+    const params = [id, eventId]
 
     if (params.every((param) => typeof param === 'undefined')) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' })
     }
 
     if (id) {
-      session = await findSessionById(Number(id));
+      session = await findSessionById(Number(id))
       if (session.event && session.event && session.event.data && session.event.data.status === 'Complete') {
-        return res.status(httpCodes.FORBIDDEN).send({ message: 'Sessions on completed training events cannot be edited.' });
+        return res.status(httpCodes.FORBIDDEN).send({ message: 'Sessions on completed training events cannot be edited.' })
       }
 
-      sessionEventId = session.eventId;
+      sessionEventId = session.eventId
     } else if (eventId) {
-      sessionEventId = eventId;
+      sessionEventId = eventId
     }
 
     // Event auth.
-    const event = await findEventBySmartsheetIdSuffix(sessionEventId);
+    const event = await findEventBySmartsheetIdSuffix(sessionEventId)
     if (event.data && event.data.status === 'Complete') {
-      return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' });
+      return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' })
     }
-    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-    const eventAuth = await getEventAuthorization(req, res, event, session);
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' })
+    }
+    const eventAuth = await getEventAuthorization(req, res, event, session)
     if (!eventAuth.canEditSession()) {
-      return res.sendStatus(403);
+      return res.sendStatus(403)
     }
 
     if (!session && eventId) {
-      session = await findSessionsByEventId(event.id);
+      session = await findSessionsByEventId(event.id)
     }
 
     if (!session) {
-      return res.status(httpCodes.NOT_FOUND).send({ message: 'Session Report not found' });
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Session Report not found' })
     }
 
     if (!sessionEventId) {
-      sessionEventId = session.eventId;
+      sessionEventId = session.eventId
     }
 
     if (sessionEventId === undefined) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' })
     }
 
-    return res.status(httpCodes.OK).send(session);
+    return res.status(httpCodes.OK).send(session)
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    return handleErrors(req, res, error, logContext)
   }
-};
+}
 
 export const createHandler = async (req: Request, res: Response) => {
   try {
     if (!req.body) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Request body is empty' });
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Request body is empty' })
     }
 
-    const { eventId, data } = req.body;
+    const { eventId, data } = req.body
 
     if (eventId === undefined) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' })
     }
 
     // Get associated event to use for authorization for region write
-    const event = await findEventBySmartsheetIdSuffix(eventId);
-    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-    const auth = await getEventAuthorization(req, res, event);
-    if (!auth.canCreateSession()) { return res.sendStatus(httpCodes.FORBIDDEN); }
+    const event = await findEventBySmartsheetIdSuffix(eventId)
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' })
+    }
+    const auth = await getEventAuthorization(req, res, event)
+    if (!auth.canCreateSession()) {
+      return res.sendStatus(httpCodes.FORBIDDEN)
+    }
 
     const session = await createSession({
       eventId: event.id,
@@ -184,137 +179,136 @@ export const createHandler = async (req: Request, res: Response) => {
         regionId: event.regionId,
         eventOwner: event.ownerId,
       },
-    });
-    return res.status(httpCodes.CREATED).send(session);
+    })
+    return res.status(httpCodes.CREATED).send(session)
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    return handleErrors(req, res, error, logContext)
   }
-};
+}
 
 export const updateHandler = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params
 
     if (!req.body) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Request body is empty' });
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Request body is empty' })
     }
 
     if (id === undefined) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' });
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' })
     }
 
-    const { eventId } = req.body;
+    const { eventId } = req.body
     if (eventId === undefined) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' })
     }
 
     // Authorization is through the associated event
-    const event = await findEventBySmartsheetIdSuffix(eventId);
-    const session = await findSessionById(Number(id));
-    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-    const eventAuth = await getEventAuthorization(req, res, event, session);
+    const event = await findEventBySmartsheetIdSuffix(eventId)
+    const session = await findSessionById(Number(id))
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' })
+    }
+    const eventAuth = await getEventAuthorization(req, res, event, session)
 
-    if (!eventAuth.canEditSession()) { return res.sendStatus(httpCodes.FORBIDDEN); }
+    if (!eventAuth.canEditSession()) {
+      return res.sendStatus(httpCodes.FORBIDDEN)
+    }
 
-    const updatedSession = await updateSession(Number(id), req.body);
-    return res.status(httpCodes.CREATED).send(updatedSession);
+    const updatedSession = await updateSession(Number(id), req.body)
+    return res.status(httpCodes.CREATED).send(updatedSession)
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    return handleErrors(req, res, error, logContext)
   }
-};
+}
 
 export const deleteHandler = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params
 
     if (id === undefined) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' });
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' })
     }
 
-    const session = await findSessionById(Number(id));
-    if (!session) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' }); }
+    const session = await findSessionById(Number(id))
+    if (!session) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' })
+    }
 
     // Authorization is through the associated event
     // so we need to get the event first
-    const event = await findEventBySmartsheetIdSuffix(String(session.eventId));
-    const eventAuth = await getEventAuthorization(req, res, event);
-    if (!eventAuth.canDeleteSession()) { return res.sendStatus(403); }
+    const event = await findEventBySmartsheetIdSuffix(String(session.eventId))
+    const eventAuth = await getEventAuthorization(req, res, event)
+    if (!eventAuth.canDeleteSession()) {
+      return res.sendStatus(403)
+    }
 
     // Delete the session
-    await destroySession(Number(id));
-    return res.status(httpCodes.OK).send({ message: 'Session report deleted' });
+    await destroySession(Number(id))
+    return res.status(httpCodes.OK).send({ message: 'Session report deleted' })
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    return handleErrors(req, res, error, logContext)
   }
-};
+}
 
 export const getParticipants = async (req: Request, res: Response) => {
   try {
-    const { regionId } = req.params; // checked by middleware
-    const participants = await getPossibleSessionParticipants(Number(regionId));
-    return res.status(httpCodes.OK).send(participants);
+    const { regionId } = req.params // checked by middleware
+    const participants = await getPossibleSessionParticipants(Number(regionId))
+    return res.status(httpCodes.OK).send(participants)
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    return handleErrors(req, res, error, logContext)
   }
-};
+}
 
 export async function getGroups(req: Request, res: Response): Promise<void> {
-  const { region } = req.query as { region: string };
-  const userId = await currentUserId(req, res);
-  const user = await userById(userId);
-  const regionNumber = parseInt(region, DECIMAL_BASE);
-  const eventPolicy = new EventReport(user, { regionId: regionNumber });
+  const { region } = req.query as { region: string }
+  const userId = await currentUserId(req, res)
+  const user = await userById(userId)
+  const regionNumber = parseInt(region, DECIMAL_BASE)
+  const eventPolicy = new EventReport(user, { regionId: regionNumber })
   // Has correct TR permissions.
-  if (
-    !eventPolicy.canGetGroupsForEditingSession()
-  ) {
-    res.sendStatus(403);
-    return;
+  if (!eventPolicy.canGetGroupsForEditingSession()) {
+    res.sendStatus(403)
+    return
   }
   try {
     // Get groups for shared users and region.
-    const groups = await groupsByRegion(regionNumber, userId);
-    res.json(groups);
+    const groups = await groupsByRegion(regionNumber, userId)
+    res.json(groups)
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext)
   }
 }
 
 export const getSessionReportsHandler = async (req: Request, res: Response) => {
   try {
-    const userId = await currentUserId(req, res);
+    const userId = await currentUserId(req, res)
 
     // Get user's readable regions for authorization
-    const userReadRegions = await getUserReadRegions(userId);
+    const userReadRegions = await getUserReadRegions(userId)
 
     // Return FORBIDDEN if user has no readable regions
     if (!userReadRegions.length) {
-      return res.sendStatus(httpCodes.FORBIDDEN);
+      return res.sendStatus(httpCodes.FORBIDDEN)
     }
 
     // Extract query parameters
-    const {
-      sortBy,
-      sortDir,
-      offset,
-      limit,
-      format,
-      ...filterParams
-    } = req.query as Record<string, string | undefined>;
+    const { sortBy, sortDir, offset, limit, format, ...filterParams } = req.query as Record<string, string | undefined>
 
     // Build params object for service
     // Service layer filters will handle region filtering based on userReadRegions
     // For CSV export, don't apply limit/offset to get all rows
 
-    let offsetValue = offset ? Number(offset) : 0;
-    let limitValue: number | 'all' = limit ? Number(limit) : 10;
+    let offsetValue = offset ? Number(offset) : 0
+    let limitValue: number | 'all' = limit ? Number(limit) : 10
 
-    const formatValue = format ? format.toLowerCase() : 'json';
-    const isCSV = format === 'csv';
+    const formatValue = format ? format.toLowerCase() : 'json'
+    const isCSV = format === 'csv'
 
     if (isCSV) {
-      offsetValue = 0;
-      limitValue = 'all';
+      offsetValue = 0
+      limitValue = 'all'
     }
 
     const serviceParams = {
@@ -324,18 +318,18 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       limit: limitValue,
       format: formatValue as 'json' | 'csv',
       ...filterParams,
-    };
+    }
 
-    const result: GetSessionReportsResponse = await getSessionReports(serviceParams);
+    const result: GetSessionReportsResponse = await getSessionReports(serviceParams)
 
     // Handle CSV response
     if (format === 'csv') {
-      return await sendSessionReportCSV(result.rows, res);
+      return await sendSessionReportCSV(result.rows, res)
     }
 
     // Return JSON response
-    return res.json(result);
+    return res.json(result)
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    return handleErrors(req, res, error, logContext)
   }
-};
+}

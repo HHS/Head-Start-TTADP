@@ -29,21 +29,23 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
       },
     ],
     transaction: options.transaction,
-  });
-  if (file.reportFiles.length === 0
-    && file.reportObjectiveFiles.length === 0
-    && file.sessionFiles.length === 0
-    && file.communicationLogFiles.length === 0
-    && file.importFile === null) {
+  })
+  if (
+    file.reportFiles.length === 0 &&
+    file.reportObjectiveFiles.length === 0 &&
+    file.sessionFiles.length === 0 &&
+    file.communicationLogFiles.length === 0 &&
+    file.importFile === null
+  ) {
     await sequelize.models.File.destroy({
       where: { id: file.id },
       individualHooks: true,
       transaction: options.transaction,
-    });
+    })
   }
-};
+}
 
 export {
   // eslint-disable-next-line import/prefer-default-export
   propagateDestroyToFile,
-};
+}

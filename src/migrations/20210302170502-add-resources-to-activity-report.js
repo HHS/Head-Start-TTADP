@@ -8,7 +8,7 @@ module.exports = {
           {
             type: Sequelize.ARRAY(Sequelize.TEXT),
           },
-          { transaction },
+          { transaction }
         ),
         queryInterface.removeColumn('ActivityReports', 'resourcesUsed', { transaction }),
         queryInterface.addColumn(
@@ -17,10 +17,10 @@ module.exports = {
           {
             type: Sequelize.ARRAY(Sequelize.TEXT),
           },
-          { transaction },
+          { transaction }
         ),
-      ]);
-    });
+      ])
+    })
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -29,7 +29,7 @@ module.exports = {
         queryInterface.removeColumn('ActivityReports', 'nonECLKCResourcesUsed', { transaction }),
         queryInterface.removeColumn('ActivityReports', 'ECLKCResourcesUsed', { transaction }),
         queryInterface.addColumn('ActivityReports', 'resourcesUsed', { type: Sequelize.TEXT }, { transaction }),
-      ]);
-    });
+      ])
+    })
   },
-};
+}

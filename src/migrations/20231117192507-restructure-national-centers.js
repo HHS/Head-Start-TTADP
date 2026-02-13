@@ -1,15 +1,14 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
 
       -- Change national centers id to type INT.
       ALTER TABLE "NationalCenters"
@@ -25,47 +24,53 @@ module.exports = {
         (2, 'HBHS', NOW(), NOW()),
         (3, 'PFCE', NOW(), NOW()),
         (4, 'PFMO', NOW(), NOW());
-      `, { transaction });
+      `,
+        { transaction }
+      )
 
       // Create table 'NationalCenterUsers'.
-      await queryInterface.createTable('NationalCenterUsers', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        nationalCenterId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'NationalCenters',
+      await queryInterface.createTable(
+        'NationalCenterUsers',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          nationalCenterId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'NationalCenters',
+              },
+              key: 'id',
             },
-            key: 'id',
+          },
+          userId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Users',
+              },
+              key: 'id',
+            },
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
         },
-        userId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'Users',
-            },
-            key: 'id',
-          },
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
-    });
+        { transaction }
+      )
+    })
   },
 
   down: async () => {},
-};
+}

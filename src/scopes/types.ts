@@ -1,17 +1,17 @@
 export interface Filters {
-  region: string;
+  region: string
 }
 
 export interface QueryOptions {
-  userId: number;
+  userId: number
 
   activityReport: {
-    subset: boolean;
+    subset: boolean
   }
   grant?: {
-    subset: boolean;
+    subset: boolean
   }
   goal: {
-    subset: boolean;
+    subset: boolean
   }
 }

@@ -44,10 +44,10 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.fn('NOW'),
       },
-    });
+    })
   },
 
   down: async (queryInterface) => {
-    await queryInterface.dropTable('ActivityParticipants');
+    await queryInterface.dropTable('ActivityParticipants')
   },
-};
+}

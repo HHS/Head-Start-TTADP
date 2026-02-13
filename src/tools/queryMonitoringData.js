@@ -1,10 +1,10 @@
 /* eslint-disable no-multi-str */
 /* eslint-disable no-console */
 
-import { sequelize } from '../models';
+import { sequelize } from '../models'
 
 const queryMonitoringData = async () => {
-  console.info('Getting recent monitoring updates');
+  console.info('Getting recent monitoring updates')
   const result = await sequelize.query(
     `-- The prepends either 'New Goals: ' or 'New CLASS: ' to
     -- the recipients column so that minimal changes are needed in
@@ -73,9 +73,9 @@ const queryMonitoringData = async () => {
       cnt
     FROM newclass
     ORDER BY 2,1;`,
-    { raw: true },
-  );
-  console.info(`Recent Monitoring Updates: ${JSON.stringify(result[0])}`);
-};
+    { raw: true }
+  )
+  console.info(`Recent Monitoring Updates: ${JSON.stringify(result[0])}`)
+}
 
-export default queryMonitoringData;
+export default queryMonitoringData

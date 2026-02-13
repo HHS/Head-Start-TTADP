@@ -39,9 +39,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
-    });
+    })
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('RoleTopics');
+    await queryInterface.dropTable('RoleTopics')
   },
-};
+}

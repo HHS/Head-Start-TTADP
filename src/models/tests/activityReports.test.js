@@ -1,11 +1,11 @@
-import { REPORT_STATUSES } from '@ttahub/common';
-import db, { User, ActivityReport } from '..';
-import { activityReportAndRecipientsById } from '../../services/activityReports';
+import { REPORT_STATUSES } from '@ttahub/common'
+import db, { User, ActivityReport } from '..'
+import { activityReportAndRecipientsById } from '../../services/activityReports'
 
 describe('Activity Reports model', () => {
   afterAll(async () => {
-    await db.sequelize.close();
-  });
+    await db.sequelize.close()
+  })
 
   const mockUser = {
     name: 'Joe Green',
@@ -28,9 +28,9 @@ describe('Activity Reports model', () => {
       },
     ],
     flags: [],
-  };
+  }
 
-  const reportIds = [60, 61, 62];
+  const reportIds = [60, 61, 62]
 
   const sampleReport = {
     submissionStatus: REPORT_STATUSES.DRAFT,
@@ -55,10 +55,10 @@ describe('Activity Reports model', () => {
       homeRegionId: 1,
     },
     version: 2,
-  };
+  }
 
   describe('default scope', () => {
-    let user;
+    let user
 
     const reports = [
       {
@@ -73,42 +73,44 @@ describe('Activity Reports model', () => {
         id: 62,
         creatorRole: 'Early Childhood Manager',
       },
-    ];
+    ]
 
     beforeEach(async () => {
-      user = await User.create(mockUser);
+      user = await User.create(mockUser)
 
       await Promise.all(
-        reports.map((r) => ActivityReport.create({
-          ...sampleReport,
-          id: r.id,
-          userId: user.id,
-          author: { name: 'abc 123' },
-          creatorRole: r.creatorRole,
-        })),
-      );
-    });
+        reports.map((r) =>
+          ActivityReport.create({
+            ...sampleReport,
+            id: r.id,
+            userId: user.id,
+            author: { name: 'abc 123' },
+            creatorRole: r.creatorRole,
+          })
+        )
+      )
+    })
 
     afterEach(async () => {
-      await ActivityReport.destroy({ where: { id: reportIds } });
-      await User.destroy({ where: { id: user.id } });
-    });
+      await ActivityReport.destroy({ where: { id: reportIds } })
+      await User.destroy({ where: { id: user.id } })
+    })
 
     it('Properly generates creator with role', async () => {
       // Has both creator and role.
-      let [foundReport] = await activityReportAndRecipientsById(60);
-      expect(foundReport.creatorNameWithRole).toEqual('Joe Green, TTAC');
-      expect(foundReport.creatorName).toEqual('Joe Green, TTAC');
+      let [foundReport] = await activityReportAndRecipientsById(60)
+      expect(foundReport.creatorNameWithRole).toEqual('Joe Green, TTAC')
+      expect(foundReport.creatorName).toEqual('Joe Green, TTAC')
 
       // Has only creator.
-      [foundReport] = await activityReportAndRecipientsById(61);
-      expect(foundReport.creatorNameWithRole).toEqual('Joe Green');
-      expect(foundReport.creatorName).toEqual('Joe Green');
+      ;[foundReport] = await activityReportAndRecipientsById(61)
+      expect(foundReport.creatorNameWithRole).toEqual('Joe Green')
+      expect(foundReport.creatorName).toEqual('Joe Green')
 
       // Properly converts role to acronym.
-      [foundReport] = await activityReportAndRecipientsById(62);
-      expect(foundReport.creatorNameWithRole).toEqual('Joe Green, ECM');
-      expect(foundReport.creatorName).toEqual('Joe Green, ECM');
-    });
-  });
-});
+      ;[foundReport] = await activityReportAndRecipientsById(62)
+      expect(foundReport.creatorNameWithRole).toEqual('Joe Green, ECM')
+      expect(foundReport.creatorName).toEqual('Joe Green, ECM')
+    })
+  })
+})

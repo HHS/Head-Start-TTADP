@@ -1,7 +1,7 @@
-import express from 'express';
-import { allRecipients } from '../../services/recipient';
-import handleErrors from '../../lib/apiErrorHandler';
-import transactionWrapper from '../transactionWrapper';
+import express from 'express'
+import { allRecipients } from '../../services/recipient'
+import handleErrors from '../../lib/apiErrorHandler'
+import transactionWrapper from '../transactionWrapper'
 /**
  * Gets all recipients from the database.
  *
@@ -10,15 +10,15 @@ import transactionWrapper from '../transactionWrapper';
  */
 export async function getRecipients(req, res) {
   try {
-    const recipients = await allRecipients();
-    res.json(recipients);
+    const recipients = await allRecipients()
+    res.json(recipients)
   } catch (error) {
-    await handleErrors(req, res, error, { namespace: 'SERVICE:RECIPIENTS' });
+    await handleErrors(req, res, error, { namespace: 'SERVICE:RECIPIENTS' })
   }
 }
 
-const router = express.Router();
+const router = express.Router()
 
-router.get('/', transactionWrapper(getRecipients));
+router.get('/', transactionWrapper(getRecipients))
 
-export default router;
+export default router

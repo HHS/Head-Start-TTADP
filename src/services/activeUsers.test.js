@@ -1,15 +1,13 @@
-import db, {
-  User, sequelize,
-} from '../models';
+import db, { User, sequelize } from '../models'
 
-import activeUsers from './activeUsers';
+import activeUsers from './activeUsers'
 
 describe('Active users DB service', () => {
   afterAll(async () => {
-    const conn = await sequelize.connectionManager.getConnection();
-    await sequelize.connectionManager.releaseConnection(conn);
-    await db.sequelize.close();
-  });
+    const conn = await sequelize.connectionManager.getConnection()
+    await sequelize.connectionManager.releaseConnection(conn)
+    await db.sequelize.close()
+  })
 
   describe('activeUsers', () => {
     beforeEach(async () => {
@@ -19,23 +17,23 @@ describe('Active users DB service', () => {
         hsesUsername: 'user.54',
         hsesUserId: '54',
         lastLogin: new Date(),
-      });
+      })
       await User.create({
         id: 55,
         name: 'user 55',
         hsesUsername: 'user.55',
         hsesUserId: '55',
         lastLogin: new Date(),
-      });
-    });
+      })
+    })
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [54, 55] } });
-    });
+      await User.destroy({ where: { id: [54, 55] } })
+    })
 
     it('returns a readable stream', async () => {
-      const usersStream = await activeUsers();
-      expect(usersStream).toBeDefined();
-    });
-  });
-});
+      const usersStream = await activeUsers()
+      expect(usersStream).toBeDefined()
+    })
+  })
+})

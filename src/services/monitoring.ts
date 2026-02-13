@@ -1,22 +1,19 @@
 /* eslint-disable max-len */
-import { Op } from 'sequelize';
-import moment from 'moment';
-import { uniq, uniqBy } from 'lodash';
-import { REPORT_STATUSES } from '@ttahub/common';
-import db from '../models';
-import {
+import { Op } from 'sequelize'
+import moment from 'moment'
+import { uniq, uniqBy } from 'lodash'
+import { REPORT_STATUSES } from '@ttahub/common'
+import db from '../models'
+import type {
   ITTAByReviewResponse,
   IMonitoringReview,
   IMonitoringReviewGrantee,
   IMonitoringResponse,
   ITTAByCitationResponse,
-} from './types/monitoring';
-import { MonitoringStandard as MonitoringStandardType } from './types/ttaByCitationTypes';
-import { MonitoringReview as MonitoringReviewType } from './types/ttaByReviewTypes';
-import {
-  ActivityReportObjectiveCitationResponse,
-  Objective as ObjectiveType,
-} from './types/activityReportObjectiveCitations';
+} from './types/monitoring'
+import type { MonitoringStandard as MonitoringStandardType } from './types/ttaByCitationTypes'
+import type { MonitoringReview as MonitoringReviewType } from './types/ttaByReviewTypes'
+import type { ActivityReportObjectiveCitationResponse, Objective as ObjectiveType } from './types/activityReportObjectiveCitations'
 
 const {
   Grant,
@@ -47,10 +44,10 @@ const {
   User,
   Objective,
   Role,
-} = db;
+} = db
 
-const MIN_DELIVERY_DATE = '2025-01-21';
-const REVIEW_STATUS_COMPLETE = 'Complete';
+const MIN_DELIVERY_DATE = '2025-01-21'
+const REVIEW_STATUS_COMPLETE = 'Complete'
 
 /**
  * Map finding type based on determination and original type.
@@ -61,54 +58,44 @@ const REVIEW_STATUS_COMPLETE = 'Complete';
  * @returns string
  */
 export function mapFindingType(determination: string | null, originalType: string) {
-  let findingType = originalType;
+  let findingType = originalType
   if (determination) {
-    findingType = determination;
+    findingType = determination
   }
 
   if (findingType === 'Concern') {
-    return 'Area of Concern';
+    return 'Area of Concern'
   }
 
-  return findingType;
+  return findingType
 }
 
 async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
-  const grants = await Grant.findAll({
+  const grants = (await Grant.findAll({
     attributes: ['number'],
     where: {
       recipientId,
       regionId,
     },
-  }) as { number: string }[];
+  })) as { number: string }[]
 
-  return grants.map((gr) => gr.number);
+  return grants.map((gr) => gr.number)
 }
 
 async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<ActivityReportObjectiveCitationResponse[]> {
-  const objectives = await Objective.findAll({
-    attributes: [
-      'id',
-      'title',
-      'status',
-    ],
+  const objectives = (await Objective.findAll({
+    attributes: ['id', 'title', 'status'],
     include: [
       {
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
-        attributes: [
-          'activityReportId',
-          'objectiveId',
-        ],
+        attributes: ['activityReportId', 'objectiveId'],
         required: true,
         include: [
           {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
-            attributes: [
-              'activityReportObjectiveId',
-              'topicId',
-            ],
+            attributes: ['activityReportObjectiveId', 'topicId'],
             include: [
               {
                 attributes: ['name'],
@@ -120,13 +107,7 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
           {
             model: ActivityReport,
             as: 'activityReport',
-            attributes: [
-              'displayId',
-              'endDate',
-              'calculatedStatus',
-              'id',
-              'userId',
-            ],
+            attributes: ['displayId', 'endDate', 'calculatedStatus', 'id', 'userId'],
             where: {
               calculatedStatus: REPORT_STATUSES.APPROVED,
             },
@@ -175,51 +156,50 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
         ],
       },
     ],
-  }) as ObjectiveType[];
+  })) as ObjectiveType[]
 
   return objectives.map((objective) => {
-    let findingIds = [];
-    let reviewNames = [];
-    let endDate = null;
-    const grants = [];
-    const activityReports = [];
-    const specialists = [];
-    const topics = [];
+    let findingIds = []
+    let reviewNames = []
+    let endDate = null
+    const grants = []
+    const activityReports = []
+    const specialists = []
+    const topics = []
 
-    const { activityReportObjectives } = objective;
+    const { activityReportObjectives } = objective
 
     activityReportObjectives.forEach((activityReportObjective) => {
-      const {
-        activityReportObjectiveCitations,
-        activityReport,
-        activityReportObjectiveTopics,
-      } = activityReportObjective;
-      const { activityReportCollaborators, author } = activityReport;
+      const { activityReportObjectiveCitations, activityReport, activityReportObjectiveTopics } = activityReportObjective
+      const { activityReportCollaborators, author } = activityReport
 
       activityReportObjectiveCitations.forEach((citation) => {
-        findingIds = findingIds.concat(citation.findingIds);
-        grants.push(citation.grantNumber);
-        reviewNames = reviewNames.concat(citation.reviewNames);
-      });
+        findingIds = findingIds.concat(citation.findingIds)
+        grants.push(citation.grantNumber)
+        reviewNames = reviewNames.concat(citation.reviewNames)
+      })
 
-      specialists.push({ name: author.fullName, roles: author.roles.map((role) => role.name) });
+      specialists.push({ name: author.fullName, roles: author.roles.map((role) => role.name) })
       activityReportCollaborators.forEach((collaborator) => {
-        specialists.push({ name: collaborator.user.fullName, roles: collaborator.user.roles.map((role) => role.name) });
-      });
+        specialists.push({
+          name: collaborator.user.fullName,
+          roles: collaborator.user.roles.map((role) => role.name),
+        })
+      })
 
       activityReportObjectiveTopics.forEach((topic) => {
-        topics.push(topic.topic.name);
-      });
+        topics.push(topic.topic.name)
+      })
 
       activityReports.push({
         id: activityReport.id,
         displayId: activityReport.displayId,
-      });
+      })
 
       if (!endDate || moment(activityReport.endDate).isAfter(endDate)) {
-        endDate = moment(activityReport.endDate);
+        endDate = moment(activityReport.endDate)
       }
-    });
+    })
 
     return {
       findingIds,
@@ -231,43 +211,34 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
       topics: uniq(topics),
       status: objective.status,
       specialists,
-    };
-  });
+    }
+  })
 }
 
 async function extractExternalData(recipientId: number, regionId: number) {
-  const grantNumbers = await grantNumbersByRecipientAndRegion(recipientId, regionId) as string[];
-  const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
+  const grantNumbers = (await grantNumbersByRecipientAndRegion(recipientId, regionId)) as string[]
+  const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers)
 
-  const monitoringReviewGrantees = await MonitoringReviewGrantee.findAll({
-    attributes: [
-      'granteeId',
-    ],
+  const monitoringReviewGrantees = (await MonitoringReviewGrantee.findAll({
+    attributes: ['granteeId'],
     where: {
       grantNumber: grantNumbers,
     },
-  }) as { granteeId: string }[];
+  })) as { granteeId: string }[]
 
-  const granteeIds = monitoringReviewGrantees.map(({ granteeId }) => granteeId);
+  const granteeIds = monitoringReviewGrantees.map(({ granteeId }) => granteeId)
 
   return {
     grantNumbers,
     citationsOnActivityReports,
     granteeIds,
-  };
+  }
 }
 
-export async function ttaByReviews(
-  recipientId: number,
-  regionId: number,
-): Promise<ITTAByReviewResponse[]> {
-  const {
-    grantNumbers,
-    citationsOnActivityReports,
-    granteeIds,
-  } = await extractExternalData(recipientId, regionId);
+export async function ttaByReviews(recipientId: number, regionId: number): Promise<ITTAByReviewResponse[]> {
+  const { grantNumbers, citationsOnActivityReports, granteeIds } = await extractExternalData(recipientId, regionId)
 
-  const reviews = await MonitoringReview.findAll({
+  const reviews = (await MonitoringReview.findAll({
     order: [['reportDeliveryDate', 'DESC']],
     where: {
       reportDeliveryDate: {
@@ -359,33 +330,33 @@ export async function ttaByReviews(
         ],
       },
     ],
-  }) as MonitoringReviewType[];
+  })) as MonitoringReviewType[]
 
   return reviews.map((review) => {
-    const { monitoringReviewGrantees, monitoringFindingHistories } = review.monitoringReviewLink;
-    let lastTTADate = null;
-    const findings = [];
-    let specialists = [];
+    const { monitoringReviewGrantees, monitoringFindingHistories } = review.monitoringReviewLink
+    let lastTTADate = null
+    const findings = []
+    let specialists = []
 
     monitoringFindingHistories.forEach((history) => {
-      let citation = '';
-      const [findingStandards] = history.monitoringFindingLink.monitoringFindingStandards;
+      let citation = ''
+      const [findingStandards] = history.monitoringFindingLink.monitoringFindingStandards
       if (findingStandards) {
-        const [standard] = findingStandards.standardLink.monitoringStandards;
-        citation = standard.citation;
+        const [standard] = findingStandards.standardLink.monitoringStandards
+        citation = standard.citation
       }
 
       history.monitoringFindingLink.monitoringFindings.forEach((finding) => {
-        const { findingId } = finding;
-        const status = finding.statusLink.monitoringFindingStatuses[0].name;
-        const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(findingId));
+        const { findingId } = finding
+        const status = finding.statusLink.monitoringFindingStatuses[0].name
+        const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(findingId))
 
         objectives.forEach(({ endDate }) => {
           if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
-            lastTTADate = moment(endDate, 'MM/DD/YYYY');
+            lastTTADate = moment(endDate, 'MM/DD/YYYY')
           }
-          specialists = specialists.concat(objectives.map((o) => o.specialists).flat());
-        });
+          specialists = specialists.concat(objectives.flatMap((o) => o.specialists))
+        })
 
         findings.push({
           citation,
@@ -394,9 +365,9 @@ export async function ttaByReviews(
           correctionDeadline: finding.correctionDeadLine ? moment(finding.correctionDeadLine).format('MM/DD/YYYY') : '',
           category: finding.source,
           objectives,
-        });
-      });
-    });
+        })
+      })
+    })
 
     return {
       name: review.name,
@@ -408,21 +379,14 @@ export async function ttaByReviews(
       grants: monitoringReviewGrantees.map((grantee) => grantee.grantNumber),
       specialists: uniqBy(specialists, 'name'),
       findings,
-    };
-  });
+    }
+  })
 }
 
-export async function ttaByCitations(
-  recipientId: number,
-  regionId: number,
-): Promise<ITTAByCitationResponse[]> {
-  const {
-    grantNumbers,
-    citationsOnActivityReports,
-    granteeIds,
-  } = await extractExternalData(recipientId, regionId);
+export async function ttaByCitations(recipientId: number, regionId: number): Promise<ITTAByCitationResponse[]> {
+  const { grantNumbers, citationsOnActivityReports, granteeIds } = await extractExternalData(recipientId, regionId)
 
-  const citations = await MonitoringStandard.findAll({
+  const citations = (await MonitoringStandard.findAll({
     order: [['citation', 'ASC']],
     include: [
       {
@@ -535,59 +499,62 @@ export async function ttaByCitations(
         ],
       },
     ],
-  }) as MonitoringStandardType[];
+  })) as MonitoringStandardType[]
 
   return citations.map((citation) => {
-    const [findingStandard] = citation.standardLink.monitoringFindingStandards;
-    const { findingLink } = findingStandard;
+    const [findingStandard] = citation.standardLink.monitoringFindingStandards
+    const { findingLink } = findingStandard
 
-    let lastTTADate = null;
+    let lastTTADate = null
 
-    const grants = [];
-    const reviews = [];
+    const grants = []
+    const reviews = []
 
-    const { monitoringFindingHistories, monitoringFindings } = findingLink;
-    const [finding] = monitoringFindings;
-    const [status] = finding.statusLink.monitoringFindingStatuses;
+    const { monitoringFindingHistories, monitoringFindings } = findingLink
+    const [finding] = monitoringFindings
+    const [status] = finding.statusLink.monitoringFindingStatuses
 
-    let { findingType } = finding;
+    let { findingType } = finding
 
     monitoringFindingHistories.forEach((history) => {
-      const { determination } = history;
+      const { determination } = history
 
       if (determination) {
-        findingType = determination;
+        findingType = determination
       }
 
-      const { monitoringReviewLink, monitoringFindingStatusLink } = history;
-      const { monitoringReviews } = monitoringReviewLink;
+      const { monitoringReviewLink, monitoringFindingStatusLink } = history
+      const { monitoringReviews } = monitoringReviewLink
 
-      const [monitoringStatus] = monitoringFindingStatusLink.monitoringFindingHistoryStatuses;
+      const [monitoringStatus] = monitoringFindingStatusLink.monitoringFindingHistoryStatuses
 
-      const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(finding.findingId));
+      const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(finding.findingId))
       objectives.forEach(({ endDate }) => {
         if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
-          lastTTADate = moment(endDate, 'MM/DD/YYYY');
+          lastTTADate = moment(endDate, 'MM/DD/YYYY')
         }
-      });
+      })
 
       monitoringReviews.forEach((review) => {
-        const { monitoringReviewGrantees } = monitoringReviewLink;
-        const gr = monitoringReviewGrantees.map((grantee) => grantee.grantNumber);
+        const { monitoringReviewGrantees } = monitoringReviewLink
+        const gr = monitoringReviewGrantees.map((grantee) => grantee.grantNumber)
 
-        grants.push(gr);
+        grants.push(gr)
 
         reviews.push({
           name: review.name,
           reviewType: review.reviewType,
           reviewReceived: moment(review.reportDeliveryDate).format('MM/DD/YYYY'),
           outcome: review.outcome,
-          specialists: uniqBy(objectives.map((o) => o.specialists).flat(), 'name'),
+          specialists: uniqBy(
+            objectives.flatMap((o) => o.specialists),
+            'name'
+          ),
           objectives: objectives.filter((o) => o.reviewNames.includes(review.name)),
           findingStatus: monitoringStatus.name,
-        });
-      });
-    });
+        })
+      })
+    })
 
     return {
       citationNumber: citation.citation,
@@ -597,8 +564,8 @@ export async function ttaByCitations(
       grantNumbers: uniq(grants.flat()),
       lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : '',
       reviews,
-    };
-  });
+    }
+  })
 }
 
 export async function monitoringData({
@@ -606,9 +573,9 @@ export async function monitoringData({
   regionId,
   grantNumber,
 }: {
-  recipientId: number;
-  regionId: number;
-  grantNumber: string;
+  recipientId: number
+  regionId: number
+  grantNumber: string
 }): Promise<IMonitoringResponse> {
   /**
    *
@@ -643,14 +610,7 @@ export async function monitoringData({
                   {
                     model: MonitoringReview,
                     as: 'monitoringReviews',
-                    attributes: [
-                      'reportDeliveryDate',
-                      'id',
-                      'reviewType',
-                      'reviewId',
-                      'statusId',
-                      'outcome',
-                    ],
+                    attributes: ['reportDeliveryDate', 'id', 'reviewType', 'reviewId', 'statusId', 'outcome'],
                     required: true,
                     include: [
                       {
@@ -676,37 +636,32 @@ export async function monitoringData({
         ],
       },
     ],
-  });
+  })
 
   // get the first grant (remember, there can only be one)
-  const grant = (grants[0]?.toJSON() || null);
+  const grant = grants[0]?.toJSON() || null
 
   if (!grant) {
     // not an error, it's valid for there to be no findings for a grant
-    // @ts-ignore
-    return null;
+    // @ts-expect-error
+    return null
   }
 
   // since all the joins made in the query above are inner joins
   // we can count on the rest of this data being present
-  const { monitoringReviewGrantees } = grant.grantNumberLink;
+  const { monitoringReviewGrantees } = grant.grantNumberLink
 
   // get the most recent review
   // - 1) first extract from the join tables
-  const monitoringReviews = monitoringReviewGrantees.map(
-    (review: IMonitoringReviewGrantee) => review.monitoringReviewLink.monitoringReviews,
-  ).flat();
+  const monitoringReviews = monitoringReviewGrantees.flatMap((review: IMonitoringReviewGrantee) => review.monitoringReviewLink.monitoringReviews)
 
   // - 2) then sort to get the most recent
-  const monitoringReview = monitoringReviews.reduce((
-    a: IMonitoringReview,
-    b: IMonitoringReview,
-  ) => {
+  const monitoringReview = monitoringReviews.reduce((a: IMonitoringReview, b: IMonitoringReview) => {
     if (a.reportDeliveryDate > b.reportDeliveryDate) {
-      return a;
+      return a
     }
-    return b;
-  }, monitoringReviews[0]);
+    return b
+  }, monitoringReviews[0])
 
   return {
     recipientId: grant.recipientId,
@@ -715,37 +670,31 @@ export async function monitoringData({
     reviewDate: moment(monitoringReview.reportDeliveryDate).format('MM/DD/YYYY'),
     reviewType: monitoringReview.reviewType,
     grant: grant.number,
-  };
+  }
 }
 
-export async function classScore({ recipientId, grantNumber, regionId }: {
-  recipientId: number;
-  grantNumber: string;
-  regionId: number;
-}) {
-  const score = await MonitoringClassSummary.findOne({
-    where: {
-      grantNumber,
+export async function classScore({ recipientId, grantNumber, regionId }: { recipientId: number; grantNumber: string; regionId: number }) {
+  const score = await MonitoringClassSummary.findOne(
+    {
+      where: {
+        grantNumber,
+      },
+      attributes: ['emotionalSupport', 'classroomOrganization', 'instructionalSupport', 'reportDeliveryDate'],
     },
-    attributes: [
-      'emotionalSupport',
-      'classroomOrganization',
-      'instructionalSupport',
-      'reportDeliveryDate',
-    ],
-  }, {
-    raw: true,
-  });
+    {
+      raw: true,
+    }
+  )
 
   if (!score) {
-    return {};
+    return {}
   }
 
-  const received = moment(score.reportDeliveryDate);
+  const received = moment(score.reportDeliveryDate)
 
   // Do not show scores that are before Nov 9, 2020.
   if (received.isBefore('2020-11-09')) {
-    return {};
+    return {}
   }
 
   // Do not show scores for CDI grants.
@@ -754,10 +703,10 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
       number: grantNumber,
       cdi: true,
     },
-  });
+  })
 
   if (isCDIGrant) {
-    return {};
+    return {}
   }
 
   return {
@@ -768,5 +717,5 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
     ES: score.emotionalSupport,
     CO: score.classroomOrganization,
     IS: score.instructionalSupport,
-  };
+  }
 }

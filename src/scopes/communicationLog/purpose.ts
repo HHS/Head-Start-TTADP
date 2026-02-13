@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 
 export function withPurpose(purposes: string[]) {
   return {
@@ -7,7 +7,7 @@ export function withPurpose(purposes: string[]) {
         [Op.in]: purposes,
       },
     },
-  };
+  }
 }
 
 export function withoutPurpose(purposes: string[]) {
@@ -17,5 +17,5 @@ export function withoutPurpose(purposes: string[]) {
         [Op.notIn]: purposes,
       },
     },
-  };
+  }
 }

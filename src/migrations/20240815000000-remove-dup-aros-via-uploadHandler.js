@@ -1,11 +1,12 @@
-const { prepMigration, removeTables } = require('../lib/migration');
+const { prepMigration, removeTables } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         -- This dedupes the AROs for three ARs (46116, 46266, 45907) in active support cases
         -- other ARO deduping will come in a subsequent migration after the
         -- team has reached agreement on how to handle ttaProvided values
@@ -530,13 +531,13 @@ module.exports = {
         DROP TABLE IF EXISTS temp_updated_objectives;
         DROP TABLE IF EXISTS temp_inserted_objectives;
         DROP TABLE IF EXISTS temp_deleted_objectives;
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-    },
-  ),
-};
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+    }),
+}

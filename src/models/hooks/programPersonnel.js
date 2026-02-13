@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 
 const autoPopulateMapsTo = async (sequelize, instance, _options) => {
   if (instance.active === true) {
@@ -16,19 +16,15 @@ const autoPopulateMapsTo = async (sequelize, instance, _options) => {
           role: instance.role,
           id: { [Op.ne]: instance.id },
         },
-      },
-    );
+      }
+    )
   }
-  return Promise.resolve();
-};
+  return Promise.resolve()
+}
 
 const afterBulkCreate = async (sequelize, instances, options) => {
   // Loop all instances and call autoPopulateMapsTo.
-  await Promise.all(
-    instances.map(async (instance) => autoPopulateMapsTo(sequelize, instance, options)),
-  );
-};
+  await Promise.all(instances.map(async (instance) => autoPopulateMapsTo(sequelize, instance, options)))
+}
 
-export {
-  afterBulkCreate,
-};
+export { afterBulkCreate }

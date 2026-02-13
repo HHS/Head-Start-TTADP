@@ -1,5 +1,5 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
 
 const acceptedOtherEntities = [
   'CCDF / Child Care Administrator',
@@ -13,7 +13,7 @@ const acceptedOtherEntities = [
   'State Head Start Association',
   'State Health System',
   'State Professional Development / Continuing Education',
-];
+]
 
 function otherEntityReportIdQUery(otherEntitiesIn) {
   return `
@@ -24,58 +24,56 @@ function otherEntityReportIdQUery(otherEntitiesIn) {
   ON "ActivityReports".id = "ActivityRecipients"."activityReportId"
   INNER JOIN "OtherEntities" "OtherEntities"
   ON "ActivityRecipients"."otherEntityId" = "OtherEntities".id
-  WHERE "OtherEntities"."name" IN (${otherEntitiesIn})`;
+  WHERE "OtherEntities"."name" IN (${otherEntitiesIn})`
 }
 
 function generateWhere(escapedSearchTerms, exclude) {
-  const userSubQuery = otherEntityReportIdQUery(escapedSearchTerms);
+  const userSubQuery = otherEntityReportIdQUery(escapedSearchTerms)
 
   if (exclude) {
     return {
-      [Op.and]: [
-        sequelize.literal(`("ActivityReport"."id" NOT IN (${userSubQuery}))`),
-      ],
-    };
+      [Op.and]: [sequelize.literal(`("ActivityReport"."id" NOT IN (${userSubQuery}))`)],
+    }
   }
 
   return {
-    [Op.or]: [
-      sequelize.literal(`("ActivityReport"."id" IN (${userSubQuery}))`),
-    ],
-  };
+    [Op.or]: [sequelize.literal(`("ActivityReport"."id" IN (${userSubQuery}))`)],
+  }
 }
 
 function validateOtherEntity(otherEntityType) {
   if (!acceptedOtherEntities.includes(otherEntityType)) {
-    return '';
+    return ''
   }
-  return `'${otherEntityType}'`;
+  return `'${otherEntityType}'`
 }
 
 export function withOtherEntities(otherEntities) {
   // Removes empty strings.
-  const otherEntitiesIn = otherEntities.map(
-    (oe) => validateOtherEntity(oe),
-  ).filter((oe) => oe).join(', ');
+  const otherEntitiesIn = otherEntities
+    .map((oe) => validateOtherEntity(oe))
+    .filter((oe) => oe)
+    .join(', ')
 
   // Empty array shan't not pass!
   if (otherEntitiesIn.length === 0) {
-    return {};
+    return {}
   }
 
-  return generateWhere(otherEntitiesIn, false);
+  return generateWhere(otherEntitiesIn, false)
 }
 
 export function withoutOtherEntities(otherEntities) {
   // filter removes empty strings
-  const otherEntitiesIn = otherEntities.map(
-    (oe) => validateOtherEntity(oe),
-  ).filter((oe) => oe).join(', ');
+  const otherEntitiesIn = otherEntities
+    .map((oe) => validateOtherEntity(oe))
+    .filter((oe) => oe)
+    .join(', ')
 
   // Empty array shan't not pass!
   if (otherEntitiesIn.length === 0) {
-    return {};
+    return {}
   }
 
-  return generateWhere(otherEntitiesIn, true);
+  return generateWhere(otherEntitiesIn, true)
 }

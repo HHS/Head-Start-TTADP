@@ -159,7 +159,7 @@ const getReports = (queryInterface) => [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+]
 
 const specialists = [
   {
@@ -198,7 +198,7 @@ const specialists = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+]
 
 const reasons = [
   {
@@ -237,7 +237,7 @@ const reasons = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+]
 
 const approvers = [
   {
@@ -288,7 +288,7 @@ const approvers = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+]
 
 const activityStates = [
   {
@@ -327,7 +327,7 @@ const activityStates = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+]
 
 const dataUsed = [
   {
@@ -366,7 +366,7 @@ const dataUsed = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+]
 
 const goals = [
   {
@@ -405,7 +405,7 @@ const goals = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+]
 
 const steps = [
   {
@@ -478,31 +478,31 @@ const steps = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-];
+]
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
-    const reports = getReports(queryInterface);
-    await queryInterface.bulkInsert('CollabReports', reports);
-    await queryInterface.bulkInsert('CollabReportSpecialists', specialists);
-    await queryInterface.bulkInsert('CollabReportReasons', reasons);
-    await queryInterface.bulkInsert('CollabReportApprovers', approvers);
-    await queryInterface.bulkInsert('CollabReportActivityStates', activityStates);
-    await queryInterface.bulkInsert('CollabReportDataUsed', dataUsed);
-    await queryInterface.bulkInsert('CollabReportGoals', goals);
-    await queryInterface.bulkInsert('CollabReportSteps', steps);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "CollabReports_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);
+    const reports = getReports(queryInterface)
+    await queryInterface.bulkInsert('CollabReports', reports)
+    await queryInterface.bulkInsert('CollabReportSpecialists', specialists)
+    await queryInterface.bulkInsert('CollabReportReasons', reasons)
+    await queryInterface.bulkInsert('CollabReportApprovers', approvers)
+    await queryInterface.bulkInsert('CollabReportActivityStates', activityStates)
+    await queryInterface.bulkInsert('CollabReportDataUsed', dataUsed)
+    await queryInterface.bulkInsert('CollabReportGoals', goals)
+    await queryInterface.bulkInsert('CollabReportSteps', steps)
+    await queryInterface.sequelize.query(`ALTER SEQUENCE "CollabReports_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`)
   },
 
   async down(queryInterface) {
-    await queryInterface.bulkDelete('CollabReportSteps', null);
-    await queryInterface.bulkDelete('CollabReportGoals', null);
-    await queryInterface.bulkDelete('CollabReportDataUsed', null);
-    await queryInterface.bulkDelete('CollabReportActivityStates', null);
-    await queryInterface.bulkDelete('CollabReportApprovers', null);
-    await queryInterface.bulkDelete('CollabReportReasons', null);
-    await queryInterface.bulkDelete('CollabReportSpecialists', null);
-    await queryInterface.bulkDelete('CollabReports', null);
+    await queryInterface.bulkDelete('CollabReportSteps', null)
+    await queryInterface.bulkDelete('CollabReportGoals', null)
+    await queryInterface.bulkDelete('CollabReportDataUsed', null)
+    await queryInterface.bulkDelete('CollabReportActivityStates', null)
+    await queryInterface.bulkDelete('CollabReportApprovers', null)
+    await queryInterface.bulkDelete('CollabReportReasons', null)
+    await queryInterface.bulkDelete('CollabReportSpecialists', null)
+    await queryInterface.bulkDelete('CollabReports', null)
   },
-};
+}

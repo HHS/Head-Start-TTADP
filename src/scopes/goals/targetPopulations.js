@@ -1,5 +1,5 @@
-import { TARGET_POPULATIONS } from '@ttahub/common';
-import { filterAssociation } from './utils';
+import { TARGET_POPULATIONS } from '@ttahub/common'
+import { filterAssociation } from './utils'
 
 const baseQuery = `
   SELECT DISTINCT "ActivityReportGoals"."goalId"
@@ -7,40 +7,40 @@ const baseQuery = `
   INNER JOIN "ActivityReports"
   ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
   WHERE ARRAY_TO_STRING("ActivityReports"."targetPopulations", ',')
-`;
+`
 
 export function allowedPopulations(populations) {
   function filterPopulations(population) {
-    return TARGET_POPULATIONS.includes(population);
+    return TARGET_POPULATIONS.includes(population)
   }
 
   if (!Array.isArray(populations)) {
-    return [populations].filter((population) => filterPopulations(population));
+    return [populations].filter((population) => filterPopulations(population))
   }
 
-  return populations.filter((population) => filterPopulations(population));
+  return populations.filter((population) => filterPopulations(population))
 }
 
 export function withTargetPopulations(targetPopulations) {
-  let populations = allowedPopulations(targetPopulations);
+  let populations = allowedPopulations(targetPopulations)
 
   if (populations.length < 1) {
-    return {};
+    return {}
   }
 
-  populations = populations.map((population) => `%${population}%`);
+  populations = populations.map((population) => `%${population}%`)
 
-  return filterAssociation(baseQuery, populations, false, 'ILIKE');
+  return filterAssociation(baseQuery, populations, false, 'ILIKE')
 }
 
 export function withoutTargetPopulations(targetPopulations) {
-  let populations = allowedPopulations(targetPopulations);
+  let populations = allowedPopulations(targetPopulations)
 
   if (populations.length < 1) {
-    return {};
+    return {}
   }
 
-  populations = populations.map((population) => `%${population}%`);
+  populations = populations.map((population) => `%${population}%`)
 
-  return filterAssociation(baseQuery, populations, false, 'NOT ILIKE');
+  return filterAssociation(baseQuery, populations, false, 'NOT ILIKE')
 }

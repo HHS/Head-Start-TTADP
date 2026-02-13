@@ -1,19 +1,18 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
-const originalGoalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
-const updatedGoalName = '(Monitoring) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
-const sharedGoalTemplateId = 18172;
+const originalGoalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)'
+const updatedGoalName = '(Monitoring) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)'
+const sharedGoalTemplateId = 18172
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       -- update goal text for class goal
         UPDATE "Goals"
           SET
@@ -34,9 +33,11 @@ module.exports = {
             "creationMethod" = 'Curated'::"enum_GoalTemplates_creationMethod",
             "templateName" = '${updatedGoalName}',
             "hash" = MD5(TRIM('${updatedGoalName}'))
-          WHERE "id" = ${sharedGoalTemplateId};`, { transaction });
-    });
+          WHERE "id" = ${sharedGoalTemplateId};`,
+        { transaction }
+      )
+    })
   },
 
   down: async () => {},
-};
+}

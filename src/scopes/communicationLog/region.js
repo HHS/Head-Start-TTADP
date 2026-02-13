@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
-import db from '../../models';
+import { Op } from 'sequelize'
+import db from '../../models'
 
-const { sequelize } = db;
+const { sequelize } = db
 
 export function withRegion(regions) {
   return {
@@ -10,7 +10,7 @@ export function withRegion(regions) {
         ("CommunicationLog"."data"#>>'{regionId}')::integer IN (${regions.map((regionId) => sequelize.escape(regionId)).join(',')})
       `),
     ],
-  };
+  }
 }
 
 export function withoutRegion(regions) {
@@ -20,5 +20,5 @@ export function withoutRegion(regions) {
         ("CommunicationLog"."data"#>>'{regionId}')::integer NOT IN (${regions.map((regionId) => sequelize.escape(regionId)).join(',')})
       `),
     ],
-  };
+  }
 }

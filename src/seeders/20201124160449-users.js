@@ -1,11 +1,11 @@
 /* eslint-disable quotes */
-const moment = require('moment');
+const moment = require('moment')
 
-const SITE_ACCESS = 1;
-const ADMIN = 2;
-const READ_WRITE_REPORTS = 3;
-const READ_REPORTS = 4;
-const APPROVE_REPORTS = 5;
+const SITE_ACCESS = 1
+const ADMIN = 2
+const READ_WRITE_REPORTS = 3
+const READ_REPORTS = 4
+const APPROVE_REPORTS = 5
 
 const staticUserPermissions = [
   {
@@ -153,7 +153,7 @@ const staticUserPermissions = [
     regionId: 3,
     scopeId: READ_REPORTS,
   },
-];
+]
 
 const hsesUsernames = [
   'test.tta.adam',
@@ -169,7 +169,7 @@ const hsesUsernames = [
   'test.tta.patrice',
   'test.tta.ryan',
   'test.tta.sarah-jaine',
-];
+]
 const staticUsers = [
   {
     id: 1,
@@ -261,7 +261,7 @@ const staticUsers = [
     homeRegionId: 3,
     lastLogin: moment().toISOString(),
   },
-];
+]
 
 const generatedUsers = hsesUsernames.map((u, i) => ({
   hsesUserId: `${i + 10}`,
@@ -271,16 +271,18 @@ const generatedUsers = hsesUsernames.map((u, i) => ({
   phoneNumber: '555-555-5554',
   homeRegionId: 1,
   lastLogin: moment().toISOString(),
-}));
+}))
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('Users', staticUsers, {});
-    await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 10;');
-    const generatedUserIds = await queryInterface.bulkInsert('Users', generatedUsers, { returning: ['id'] });
-    await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 100;');
+    await queryInterface.bulkInsert('Users', staticUsers, {})
+    await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 10;')
+    const generatedUserIds = await queryInterface.bulkInsert('Users', generatedUsers, {
+      returning: ['id'],
+    })
+    await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 100;')
 
-    await queryInterface.bulkDelete('Roles', null, {});
+    await queryInterface.bulkDelete('Roles', null, {})
     await queryInterface.bulkInsert('Roles', [
       {
         id: 11,
@@ -426,7 +428,7 @@ module.exports = {
         updatedAt: moment().toISOString(),
         isSpecialist: false,
       },
-    ]);
+    ])
 
     await queryInterface.bulkInsert('UserRoles', [
       {
@@ -477,7 +479,7 @@ module.exports = {
         createdAt: moment().toISOString(),
         updatedAt: moment().toISOString(),
       })),
-    ]);
+    ])
 
     const generatedUserPermissions = generatedUserIds.map(({ id }) => [
       {
@@ -500,14 +502,14 @@ module.exports = {
         regionId: 1,
         scopeId: APPROVE_REPORTS,
       },
-    ]);
+    ])
 
-    await queryInterface.bulkInsert('Permissions', staticUserPermissions, {});
-    await queryInterface.bulkInsert('Permissions', generatedUserPermissions.flat(), {});
+    await queryInterface.bulkInsert('Permissions', staticUserPermissions, {})
+    await queryInterface.bulkInsert('Permissions', generatedUserPermissions.flat(), {})
   },
 
   down: async (queryInterface) => {
-    await queryInterface.bulkDelete('Permissions', null, {});
-    await queryInterface.bulkDelete('Users', null, {});
+    await queryInterface.bulkDelete('Permissions', null, {})
+    await queryInterface.bulkDelete('Users', null, {})
   },
-};
+}

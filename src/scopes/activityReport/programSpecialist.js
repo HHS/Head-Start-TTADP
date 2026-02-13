@@ -1,4 +1,4 @@
-import { filterAssociation } from './utils';
+import { filterAssociation } from './utils'
 
 const programSpecialist = `
 SELECT
@@ -6,12 +6,12 @@ SELECT
 FROM "ActivityRecipients" "ActivityRecipients"
 INNER JOIN "Grants" "Grants"
 ON "Grants"."id" = "ActivityRecipients"."grantId"
-WHERE "Grants"."programSpecialistName"`;
+WHERE "Grants"."programSpecialistName"`
 
 export function withProgramSpecialist(names) {
-  return filterAssociation(programSpecialist, names, false);
+  return filterAssociation(programSpecialist, names, false)
 }
 
 export function withoutProgramSpecialist(names) {
-  return filterAssociation(programSpecialist, names, true);
+  return filterAssociation(programSpecialist, names, true)
 }

@@ -1,13 +1,6 @@
-import httpCodes from 'http-codes';
-import { Op } from 'sequelize';
-import {
-  User,
-  GoalTemplate,
-  Recipient,
-  Group,
-  Grant,
-  sequelize,
-} from '../../models';
+import httpCodes from 'http-codes'
+import { Op } from 'sequelize'
+import { User, GoalTemplate, Recipient, Group, Grant, sequelize } from '../../models'
 import {
   logById,
   logsByRecipientAndScopes,
@@ -17,9 +10,9 @@ import {
   createLog,
   logsByScopes,
   csvLogsByScopes,
-} from '../../services/communicationLog';
-import { userById, usersByRoles } from '../../services/users';
-import { currentUserId } from '../../services/currentUser';
+} from '../../services/communicationLog'
+import { userById, usersByRoles } from '../../services/users'
+import { currentUserId } from '../../services/currentUser'
 import {
   communicationLogById,
   communicationLogsByRecipientId,
@@ -30,14 +23,14 @@ import {
   getAvailableUsersRecipientsAndGoals,
   communicationLogs,
   createLogByRegionId,
-} from './handlers';
-import SCOPES from '../../middleware/scopeConstants';
-import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
+} from './handlers'
+import SCOPES from '../../middleware/scopeConstants'
+import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation'
 
-jest.mock('../../services/currentUser');
-jest.mock('../../services/users');
-jest.mock('../../services/communicationLog');
-jest.mock('../../services/accessValidation');
+jest.mock('../../services/currentUser')
+jest.mock('../../services/users')
+jest.mock('../../services/communicationLog')
+jest.mock('../../services/accessValidation')
 jest.mock('../../logger', () => ({
   logger: {
     warn: jest.fn(),
@@ -57,7 +50,7 @@ jest.mock('../../logger', () => ({
     info: jest.fn(),
     debug: jest.fn(),
   },
-}));
+}))
 jest.mock('../../models', () => ({
   User: {
     findAll: jest.fn(),
@@ -76,10 +69,10 @@ jest.mock('../../models', () => ({
   Group: {
     findAll: jest.fn(),
   },
-}));
+}))
 
 describe('communicationLog handlers', () => {
-  const REGION_ID = 15;
+  const REGION_ID = 15
 
   const authorizedToCreate = {
     id: 1,
@@ -89,7 +82,7 @@ describe('communicationLog handlers', () => {
         scopeId: SCOPES.READ_WRITE_REPORTS,
       },
     ],
-  };
+  }
 
   const authorizedToReadOnly = {
     id: 2,
@@ -99,12 +92,12 @@ describe('communicationLog handlers', () => {
         scopeId: SCOPES.READ_REPORTS,
       },
     ],
-  };
+  }
 
   const unauthorized = {
     id: 3,
     permissions: [],
-  };
+  }
 
   const admin = {
     id: 4,
@@ -114,10 +107,10 @@ describe('communicationLog handlers', () => {
         scopeId: SCOPES.ADMIN,
       },
     ],
-  };
+  }
 
-  const statusJson = jest.fn();
-  const send = jest.fn();
+  const statusJson = jest.fn()
+  const send = jest.fn()
 
   const mockResponse = {
     sendStatus: jest.fn(),
@@ -129,18 +122,18 @@ describe('communicationLog handlers', () => {
       send: jest.fn(),
     })),
     type: jest.fn(),
-  };
+  }
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    currentUserId.mockImplementation(async (req) => req.session.userId);
-  });
+    jest.clearAllMocks()
+    currentUserId.mockImplementation(async (req) => req.session.userId)
+  })
 
-  afterAll(() => sequelize.close());
+  afterAll(() => sequelize.close())
   describe('communicationLogById', () => {
     afterEach(async () => {
-      jest.restoreAllMocks();
-    });
+      jest.restoreAllMocks()
+    })
     it('success', async () => {
       const mockRequest = {
         session: {
@@ -150,12 +143,12 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logById.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await communicationLogById(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      logById.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await communicationLogById(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 })
+    })
 
     it('unauthorized', async () => {
       const mockRequest = {
@@ -166,12 +159,12 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(unauthorized));
-      logById.mockImplementation(() => Promise.resolve({ id: 2 }));
-      await communicationLogById(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(unauthorized))
+      logById.mockImplementation(() => Promise.resolve({ id: 2 }))
+      await communicationLogById(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN)
+    })
 
     it('error', async () => {
       const mockRequest = {
@@ -182,12 +175,12 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logById.mockRejectedValue(new Error('error'));
-      await communicationLogById(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      logById.mockRejectedValue(new Error('error'))
+      await communicationLogById(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+    })
 
     it('admin', async () => {
       const mockRequest = {
@@ -198,17 +191,17 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(admin));
-      logById.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await communicationLogById(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
-    });
-  });
+      }
+      userById.mockImplementation(() => Promise.resolve(admin))
+      logById.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await communicationLogById(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 })
+    })
+  })
   describe('communicationLogsByRecipientId', () => {
     afterEach(async () => {
-      jest.restoreAllMocks();
-    });
+      jest.restoreAllMocks()
+    })
     it('success', async () => {
       const mockRequest = {
         session: {
@@ -223,13 +216,13 @@ describe('communicationLog handlers', () => {
           sortyBy: 'communicationDate',
           direction: 'asc',
         },
-      };
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
-      await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
-    });
+      }
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]))
+      await communicationLogsByRecipientId(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }])
+    })
 
     it('with limit', async () => {
       const mockRequest = {
@@ -246,13 +239,13 @@ describe('communicationLog handlers', () => {
           direction: 'asc',
           limit: '20',
         },
-      };
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
-      await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
-    });
+      }
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]))
+      await communicationLogsByRecipientId(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }])
+    })
 
     it('csv', async () => {
       const mockRequest = {
@@ -269,13 +262,13 @@ describe('communicationLog handlers', () => {
           direction: 'asc',
           format: 'csv',
         },
-      };
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      csvLogsByRecipientAndScopes.mockImplementation(() => Promise.resolve('id\n1'));
-      await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
-      expect(send).toHaveBeenCalledWith('id\n1');
-    });
+      }
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      csvLogsByRecipientAndScopes.mockImplementation(() => Promise.resolve('id\n1'))
+      await communicationLogsByRecipientId(mockRequest, { ...mockResponse })
+      expect(send).toHaveBeenCalledWith('id\n1')
+    })
 
     it('unauthorized', async () => {
       const mockRequest = {
@@ -291,12 +284,12 @@ describe('communicationLog handlers', () => {
           sortyBy: 'communicationDate',
           direction: 'asc',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(unauthorized));
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(unauthorized))
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      await communicationLogsByRecipientId(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN)
+    })
 
     it('error', async () => {
       const mockRequest = {
@@ -312,13 +305,13 @@ describe('communicationLog handlers', () => {
           sortyBy: 'communicationDate',
           direction: 'asc',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logsByRecipientAndScopes.mockRejectedValue(new Error('error'));
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      logsByRecipientAndScopes.mockRejectedValue(new Error('error'))
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      await communicationLogsByRecipientId(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+    })
 
     it('admin', async () => {
       const mockRequest = {
@@ -334,19 +327,19 @@ describe('communicationLog handlers', () => {
           sortyBy: 'communicationDate',
           direction: 'asc',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(admin));
-      logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
-    });
-  });
+      }
+      userById.mockImplementation(() => Promise.resolve(admin))
+      logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]))
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      await communicationLogsByRecipientId(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }])
+    })
+  })
 
   describe('communicationLogs', () => {
     afterEach(async () => {
-      jest.restoreAllMocks();
-    });
+      jest.restoreAllMocks()
+    })
     it('success', async () => {
       const mockRequest = {
         session: {
@@ -360,13 +353,13 @@ describe('communicationLog handlers', () => {
           sortyBy: 'communicationDate',
           direction: 'asc',
         },
-      };
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
-      await communicationLogs(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
-    });
+      }
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]))
+      await communicationLogs(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }])
+    })
 
     it('with limit', async () => {
       const mockRequest = {
@@ -382,13 +375,13 @@ describe('communicationLog handlers', () => {
           direction: 'asc',
           limit: '20',
         },
-      };
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
-      await communicationLogs(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
-    });
+      }
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]))
+      await communicationLogs(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }])
+    })
 
     it('csv', async () => {
       const mockRequest = {
@@ -404,13 +397,13 @@ describe('communicationLog handlers', () => {
           direction: 'asc',
           format: 'csv',
         },
-      };
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      csvLogsByScopes.mockImplementation(() => Promise.resolve('id\n1'));
-      await communicationLogs(mockRequest, { ...mockResponse });
-      expect(send).toHaveBeenCalledWith('id\n1');
-    });
+      }
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      csvLogsByScopes.mockImplementation(() => Promise.resolve('id\n1'))
+      await communicationLogs(mockRequest, { ...mockResponse })
+      expect(send).toHaveBeenCalledWith('id\n1')
+    })
 
     it('error', async () => {
       const mockRequest = {
@@ -425,13 +418,13 @@ describe('communicationLog handlers', () => {
           sortyBy: 'communicationDate',
           direction: 'asc',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logsByScopes.mockRejectedValue(new Error('error'));
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      await communicationLogs(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      logsByScopes.mockRejectedValue(new Error('error'))
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      await communicationLogs(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+    })
 
     it('admin', async () => {
       const mockRequest = {
@@ -446,19 +439,19 @@ describe('communicationLog handlers', () => {
           sortyBy: 'communicationDate',
           direction: 'asc',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(admin));
-      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
-      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
-      await communicationLogs(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
-    });
-  });
+      }
+      userById.mockImplementation(() => Promise.resolve(admin))
+      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]))
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}))
+      await communicationLogs(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }])
+    })
+  })
 
   describe('createLogByRecipientId', () => {
     afterEach(async () => {
-      jest.restoreAllMocks();
-    });
+      jest.restoreAllMocks()
+    })
 
     it('success', async () => {
       const mockRequest = {
@@ -473,12 +466,12 @@ describe('communicationLog handlers', () => {
           recipientId: 1,
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await createLogByRecipientId(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      createLog.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await createLogByRecipientId(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 })
+    })
 
     it('unauthorized', async () => {
       const mockRequest = {
@@ -492,11 +485,11 @@ describe('communicationLog handlers', () => {
         body: {
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      await createLogByRecipientId(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      await createLogByRecipientId(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN)
+    })
 
     it('error', async () => {
       const mockRequest = {
@@ -510,12 +503,12 @@ describe('communicationLog handlers', () => {
         body: {
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      createLog.mockRejectedValue(new Error('error'));
-      await createLogByRecipientId(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      createLog.mockRejectedValue(new Error('error'))
+      await createLogByRecipientId(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+    })
 
     it('admin', async () => {
       const mockRequest = {
@@ -529,16 +522,16 @@ describe('communicationLog handlers', () => {
         body: {
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(admin));
-      createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await createLogByRecipientId(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
-    });
-  });
+      }
+      userById.mockImplementation(() => Promise.resolve(admin))
+      createLog.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await createLogByRecipientId(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 })
+    })
+  })
 
   describe('updateLogById', () => {
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => jest.restoreAllMocks())
 
     it('success', async () => {
       const mockRequest = {
@@ -553,13 +546,13 @@ describe('communicationLog handlers', () => {
           recipientId: 1,
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      updateLog.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await updateLogById(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }))
+      updateLog.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await updateLogById(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 })
+    })
 
     it('error', async () => {
       const mockRequest = {
@@ -574,13 +567,13 @@ describe('communicationLog handlers', () => {
           recipientId: 1,
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      updateLog.mockRejectedValue(new Error('error'));
-      await updateLogById(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }))
+      updateLog.mockRejectedValue(new Error('error'))
+      await updateLogById(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+    })
 
     it('unauthorized', async () => {
       const mockRequest = {
@@ -595,12 +588,12 @@ describe('communicationLog handlers', () => {
           recipientId: 1,
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      await updateLogById(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }))
+      await updateLogById(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN)
+    })
 
     it('admin', async () => {
       const mockRequest = {
@@ -615,17 +608,17 @@ describe('communicationLog handlers', () => {
           recipientId: 1,
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(admin));
-      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      updateLog.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await updateLogById(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
-    });
-  });
+      }
+      userById.mockImplementation(() => Promise.resolve(admin))
+      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }))
+      updateLog.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await updateLogById(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 })
+    })
+  })
 
   describe('deleteLogById', () => {
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => jest.restoreAllMocks())
 
     it('success', async () => {
       const mockRequest = {
@@ -640,13 +633,13 @@ describe('communicationLog handlers', () => {
           recipientId: 1,
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      deleteLog.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await deleteLogById(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }))
+      deleteLog.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await deleteLogById(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT)
+    })
 
     it('error', async () => {
       const mockRequest = {
@@ -661,13 +654,13 @@ describe('communicationLog handlers', () => {
           recipientId: 1,
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      deleteLog.mockResolvedValue(0);
-      await deleteLogById(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }))
+      deleteLog.mockResolvedValue(0)
+      await deleteLogById(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+    })
 
     it('unauthorized', async () => {
       const mockRequest = {
@@ -682,12 +675,12 @@ describe('communicationLog handlers', () => {
           recipientId: 1,
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      deleteLog.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      await deleteLogById(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      deleteLog.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }))
+      await deleteLogById(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN)
+    })
 
     it('admin', async () => {
       const mockRequest = {
@@ -702,17 +695,17 @@ describe('communicationLog handlers', () => {
           recipientId: 1,
           message: 'test',
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(admin));
-      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      deleteLog.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await deleteLogById(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT);
-    });
-  });
+      }
+      userById.mockImplementation(() => Promise.resolve(admin))
+      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }))
+      deleteLog.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await deleteLogById(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT)
+    })
+  })
 
   describe('getAvailableUsersAndGoals', () => {
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => jest.restoreAllMocks())
 
     it('returns users and goals', async () => {
       const mockRequest = {
@@ -722,16 +715,25 @@ describe('communicationLog handlers', () => {
         params: {
           regionId: REGION_ID,
         },
-      };
-      const mockUsers = [{ id: 1, name: 'UserA' }, { id: 2, name: 'UserB' }];
-      const mockGoals = [{ value: 1, label: 'GoalA' }, { value: 2, label: 'GoalB' }];
-      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }, { value: 2, label: 'RecipientB', grants: [] }];
-      userById.mockResolvedValue(authorizedToReadOnly);
-      usersByRoles.mockResolvedValue(mockUsers);
-      GoalTemplate.findAll.mockResolvedValue(mockGoals);
-      Recipient.findAll.mockResolvedValue(mockRecipients);
-      Group.findAll.mockResolvedValue([]);
-      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+      }
+      const mockUsers = [
+        { id: 1, name: 'UserA' },
+        { id: 2, name: 'UserB' },
+      ]
+      const mockGoals = [
+        { value: 1, label: 'GoalA' },
+        { value: 2, label: 'GoalB' },
+      ]
+      const mockRecipients = [
+        { value: 1, label: 'RecipientA', grants: [] },
+        { value: 2, label: 'RecipientB', grants: [] },
+      ]
+      userById.mockResolvedValue(authorizedToReadOnly)
+      usersByRoles.mockResolvedValue(mockUsers)
+      GoalTemplate.findAll.mockResolvedValue(mockGoals)
+      Recipient.findAll.mockResolvedValue(mockRecipients)
+      Group.findAll.mockResolvedValue([])
+      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse })
       // eslint-disable-next-line max-len
       expect(result).toEqual({
         regionalUsers: mockUsers.map((u) => ({ label: u.name, value: u.id })),
@@ -741,8 +743,8 @@ describe('communicationLog handlers', () => {
           { value: 2, label: 'RecipientB' },
         ],
         groups: [],
-      });
-    });
+      })
+    })
 
     it('only returns recipients with active grants', async () => {
       const mockRequest = {
@@ -752,18 +754,18 @@ describe('communicationLog handlers', () => {
         params: {
           regionId: REGION_ID,
         },
-      };
-      const mockUsers = [{ value: 1, label: 'UserA' }];
-      const mockGoals = [{ value: 1, label: 'GoalA' }];
-      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }];
+      }
+      const mockUsers = [{ value: 1, label: 'UserA' }]
+      const mockGoals = [{ value: 1, label: 'GoalA' }]
+      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }]
 
-      userById.mockResolvedValue(authorizedToReadOnly);
-      usersByRoles.mockResolvedValue(mockUsers);
-      GoalTemplate.findAll.mockResolvedValue(mockGoals);
-      Recipient.findAll.mockResolvedValue(mockRecipients);
-      Group.findAll.mockResolvedValue([]);
+      userById.mockResolvedValue(authorizedToReadOnly)
+      usersByRoles.mockResolvedValue(mockUsers)
+      GoalTemplate.findAll.mockResolvedValue(mockGoals)
+      Recipient.findAll.mockResolvedValue(mockRecipients)
+      Group.findAll.mockResolvedValue([])
 
-      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse })
 
       // Verify that Recipient.findAll was called with the correct query parameters
       expect(Recipient.findAll).toHaveBeenCalledWith({
@@ -800,16 +802,16 @@ describe('communicationLog handlers', () => {
           },
         ],
         order: [['label', 'ASC']],
-      });
+      })
 
       // Verify that the inactivationDate filter is set to 365 days ago
-      const callArgs = Recipient.findAll.mock.calls[0][0];
-      const whereClause = callArgs.include[0].where[Op.or][1][Op.and][2];
-      const inactivationDateCondition = whereClause.inactivationDate[Op.gte];
-      const timeDiff = Date.now() - inactivationDateCondition.getTime();
-      const daysDifference = timeDiff / (24 * 60 * 60 * 1000);
-      expect(daysDifference).toBeCloseTo(365, 1);
-    });
+      const callArgs = Recipient.findAll.mock.calls[0][0]
+      const whereClause = callArgs.include[0].where[Op.or][1][Op.and][2]
+      const inactivationDateCondition = whereClause.inactivationDate[Op.gte]
+      const timeDiff = Date.now() - inactivationDateCondition.getTime()
+      const daysDifference = timeDiff / (24 * 60 * 60 * 1000)
+      expect(daysDifference).toBeCloseTo(365, 1)
+    })
 
     it('includes recipients with inactive grants that have inactivationDate within 365 days', async () => {
       const mockRequest = {
@@ -819,21 +821,21 @@ describe('communicationLog handlers', () => {
         params: {
           regionId: REGION_ID,
         },
-      };
-      const mockUsers = [{ value: 1, label: 'UserA' }];
-      const mockGoals = [{ value: 1, label: 'GoalA' }];
-      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }];
+      }
+      const mockUsers = [{ value: 1, label: 'UserA' }]
+      const mockGoals = [{ value: 1, label: 'GoalA' }]
+      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }]
 
-      userById.mockResolvedValue(authorizedToReadOnly);
-      usersByRoles.mockResolvedValue(mockUsers);
-      GoalTemplate.findAll.mockResolvedValue(mockGoals);
-      Recipient.findAll.mockResolvedValue(mockRecipients);
-      Group.findAll.mockResolvedValue([]);
+      userById.mockResolvedValue(authorizedToReadOnly)
+      usersByRoles.mockResolvedValue(mockUsers)
+      GoalTemplate.findAll.mockResolvedValue(mockGoals)
+      Recipient.findAll.mockResolvedValue(mockRecipients)
+      Group.findAll.mockResolvedValue([])
 
-      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse })
 
-      const callArgs = Recipient.findAll.mock.calls[0][0];
-      const whereCondition = callArgs.include[0].where;
+      const callArgs = Recipient.findAll.mock.calls[0][0]
+      const whereCondition = callArgs.include[0].where
 
       // Verify the where condition includes both active and recently inactive grants
       expect(whereCondition).toEqual({
@@ -852,8 +854,8 @@ describe('communicationLog handlers', () => {
             ],
           },
         ],
-      });
-    });
+      })
+    })
 
     it('excludes recipients with inactive grants that have null inactivationDate', async () => {
       const mockRequest = {
@@ -863,22 +865,22 @@ describe('communicationLog handlers', () => {
         params: {
           regionId: REGION_ID,
         },
-      };
+      }
 
-      userById.mockResolvedValue(authorizedToReadOnly);
-      usersByRoles.mockResolvedValue([]);
-      GoalTemplate.findAll.mockResolvedValue([]);
-      Recipient.findAll.mockResolvedValue([]);
-      Group.findAll.mockResolvedValue([]);
+      userById.mockResolvedValue(authorizedToReadOnly)
+      usersByRoles.mockResolvedValue([])
+      GoalTemplate.findAll.mockResolvedValue([])
+      Recipient.findAll.mockResolvedValue([])
+      Group.findAll.mockResolvedValue([])
 
-      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse })
 
-      const callArgs = Recipient.findAll.mock.calls[0][0];
-      const inactiveCondition = callArgs.include[0].where[Op.or][1][Op.and];
+      const callArgs = Recipient.findAll.mock.calls[0][0]
+      const inactiveCondition = callArgs.include[0].where[Op.or][1][Op.and]
 
       // Verify that inactive grants must have a non-null inactivationDate
-      expect(inactiveCondition).toContainEqual({ inactivationDate: { [Op.ne]: null } });
-    });
+      expect(inactiveCondition).toContainEqual({ inactivationDate: { [Op.ne]: null } })
+    })
 
     it('excludes recipients with inactive grants older than 365 days', async () => {
       const mockRequest = {
@@ -888,29 +890,29 @@ describe('communicationLog handlers', () => {
         params: {
           regionId: REGION_ID,
         },
-      };
+      }
 
-      userById.mockResolvedValue(authorizedToReadOnly);
-      usersByRoles.mockResolvedValue([]);
-      GoalTemplate.findAll.mockResolvedValue([]);
-      Recipient.findAll.mockResolvedValue([]);
-      Group.findAll.mockResolvedValue([]);
+      userById.mockResolvedValue(authorizedToReadOnly)
+      usersByRoles.mockResolvedValue([])
+      GoalTemplate.findAll.mockResolvedValue([])
+      Recipient.findAll.mockResolvedValue([])
+      Group.findAll.mockResolvedValue([])
 
-      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse })
 
-      const callArgs = Recipient.findAll.mock.calls[0][0];
-      const whereClause = callArgs.include[0].where[Op.or][1][Op.and][2];
-      const inactivationDateCondition = whereClause.inactivationDate[Op.gte];
+      const callArgs = Recipient.findAll.mock.calls[0][0]
+      const whereClause = callArgs.include[0].where[Op.or][1][Op.and][2]
+      const inactivationDateCondition = whereClause.inactivationDate[Op.gte]
 
       // Verify that the date filter excludes grants older than 365 days
-      const cutoffDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
-      const actualCutoffTime = inactivationDateCondition.getTime();
-      const expectedCutoffTime = cutoffDate.getTime();
+      const cutoffDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
+      const actualCutoffTime = inactivationDateCondition.getTime()
+      const expectedCutoffTime = cutoffDate.getTime()
 
       // Allow for small time differences due to test execution time
-      const timeDifference = Math.abs(actualCutoffTime - expectedCutoffTime);
-      expect(timeDifference).toBeLessThan(1000); // 1 second tolerance
-    });
+      const timeDifference = Math.abs(actualCutoffTime - expectedCutoffTime)
+      expect(timeDifference).toBeLessThan(1000) // 1 second tolerance
+    })
 
     it('appends (inactive) to recipient names when all grants are inactive', async () => {
       const mockRequest = {
@@ -920,7 +922,7 @@ describe('communicationLog handlers', () => {
         params: {
           regionId: REGION_ID,
         },
-      };
+      }
 
       const mockRecipients = [
         {
@@ -943,23 +945,23 @@ describe('communicationLog handlers', () => {
           label: 'Recipient with Multiple Inactive Grants',
           grants: [{ status: 'Inactive' }, { status: 'Inactive' }],
         },
-      ];
+      ]
 
-      userById.mockResolvedValue(authorizedToReadOnly);
-      usersByRoles.mockResolvedValue([]);
-      GoalTemplate.findAll.mockResolvedValue([]);
-      Recipient.findAll.mockResolvedValue(mockRecipients);
-      Group.findAll.mockResolvedValue([]);
+      userById.mockResolvedValue(authorizedToReadOnly)
+      usersByRoles.mockResolvedValue([])
+      GoalTemplate.findAll.mockResolvedValue([])
+      Recipient.findAll.mockResolvedValue(mockRecipients)
+      Group.findAll.mockResolvedValue([])
 
-      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse })
 
       expect(result.recipients).toEqual([
         { value: 1, label: 'Recipient with Active Grant' },
         { value: 2, label: 'Recipient with Inactive Grant (inactive)' },
         { value: 3, label: 'Recipient with Mixed Grants' },
         { value: 4, label: 'Recipient with Multiple Inactive Grants (inactive)' },
-      ]);
-    });
+      ])
+    })
 
     it('returns null if unauthorized', async () => {
       const mockRequest = {
@@ -969,15 +971,15 @@ describe('communicationLog handlers', () => {
         params: {
           regionId: REGION_ID,
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(unauthorized));
-      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
-      expect(result).toBeNull();
-    });
-  });
+      }
+      userById.mockImplementation(() => Promise.resolve(unauthorized))
+      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse })
+      expect(result).toBeNull()
+    })
+  })
 
   describe('communicationLogAdditionalData', () => {
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => jest.restoreAllMocks())
 
     it('returns additional data', async () => {
       const mockRequest = {
@@ -987,29 +989,28 @@ describe('communicationLog handlers', () => {
         params: {
           regionId: REGION_ID,
         },
-      };
-      const mockUsers = [{ id: 1, name: 'UserA' }];
-      const mockGoals = [{ value: 1, label: 'Goal' }];
-      userById.mockResolvedValue(authorizedToReadOnly);
-      usersByRoles.mockResolvedValue(mockUsers);
-      GoalTemplate.findAll.mockResolvedValue(mockGoals);
-      Recipient.findAll.mockResolvedValue([]);
-      Group.findAll.mockResolvedValue([]);
-      await communicationLogAdditionalData(mockRequest, { ...mockResponse });
+      }
+      const mockUsers = [{ id: 1, name: 'UserA' }]
+      const mockGoals = [{ value: 1, label: 'Goal' }]
+      userById.mockResolvedValue(authorizedToReadOnly)
+      usersByRoles.mockResolvedValue(mockUsers)
+      GoalTemplate.findAll.mockResolvedValue(mockGoals)
+      Recipient.findAll.mockResolvedValue([])
+      Group.findAll.mockResolvedValue([])
+      await communicationLogAdditionalData(mockRequest, { ...mockResponse })
       expect(statusJson).toHaveBeenCalledWith({
         regionalUsers: mockUsers.map((u) => ({ label: u.name, value: u.id })),
-        standardGoals:
-        mockGoals,
+        standardGoals: mockGoals,
         groups: [],
         recipients: [],
-      });
-    });
-  });
+      })
+    })
+  })
 
   describe('createLogByRegionId', () => {
     afterEach(async () => {
-      jest.restoreAllMocks();
-    });
+      jest.restoreAllMocks()
+    })
 
     it('success', async () => {
       const mockRequest = {
@@ -1025,13 +1026,13 @@ describe('communicationLog handlers', () => {
             message: 'test',
           },
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
-      expect(createLog).toHaveBeenCalledWith([1, 2], authorizedToCreate.id, { message: 'test' });
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      createLog.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await createLogByRegionId(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 })
+      expect(createLog).toHaveBeenCalledWith([1, 2], authorizedToCreate.id, { message: 'test' })
+    })
 
     it('unauthorized', async () => {
       const mockRequest = {
@@ -1047,11 +1048,11 @@ describe('communicationLog handlers', () => {
             message: 'test',
           },
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly))
+      await createLogByRegionId(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN)
+    })
 
     it('error', async () => {
       const mockRequest = {
@@ -1067,12 +1068,12 @@ describe('communicationLog handlers', () => {
             message: 'test',
           },
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      createLog.mockRejectedValue(new Error('error'));
-      await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      createLog.mockRejectedValue(new Error('error'))
+      await createLogByRegionId(mockRequest, { ...mockResponse })
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR)
+    })
 
     it('creates a log when recipients are missing', async () => {
       const mockRequest = {
@@ -1087,13 +1088,13 @@ describe('communicationLog handlers', () => {
             message: 'test',
           },
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      createLog.mockResolvedValue({ id: 44 });
-      await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
-      expect(statusJson).toHaveBeenCalledWith({ id: 44 });
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      createLog.mockResolvedValue({ id: 44 })
+      await createLogByRegionId(mockRequest, { ...mockResponse })
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' })
+      expect(statusJson).toHaveBeenCalledWith({ id: 44 })
+    })
 
     it('filters out invalid recipients before creating a log', async () => {
       const mockRequest = {
@@ -1109,13 +1110,13 @@ describe('communicationLog handlers', () => {
             message: 'test',
           },
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
-      createLog.mockResolvedValue({ id: 55 });
-      await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
-      expect(statusJson).toHaveBeenCalledWith({ id: 55 });
-    });
+      }
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate))
+      createLog.mockResolvedValue({ id: 55 })
+      await createLogByRegionId(mockRequest, { ...mockResponse })
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' })
+      expect(statusJson).toHaveBeenCalledWith({ id: 55 })
+    })
 
     it('admin', async () => {
       const mockRequest = {
@@ -1131,11 +1132,11 @@ describe('communicationLog handlers', () => {
             message: 'test',
           },
         },
-      };
-      userById.mockImplementation(() => Promise.resolve(admin));
-      createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
-      await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
-    });
-  });
-});
+      }
+      userById.mockImplementation(() => Promise.resolve(admin))
+      createLog.mockImplementation(() => Promise.resolve({ id: 1 }))
+      await createLogByRegionId(mockRequest, { ...mockResponse })
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 })
+    })
+  })
+})

@@ -1,11 +1,11 @@
-const { prepMigration, removeTables } = require('../lib/migration');
+const { prepMigration, removeTables } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       await queryInterface.createTable('EventReportPilotNationalCenterUsers', {
         id: {
           type: Sequelize.INTEGER,
@@ -55,20 +55,23 @@ module.exports = {
           allowNull: false,
           defaultValue: Sequelize.fn('now'),
         },
-      });
+      })
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       ALTER TABLE "EventReportPilotNationalCenterUsers"
       ADD CONSTRAINT "EventReportPilotNationalCenterUsers_nationalCenterId_userId_eventReportPilotId_unique" UNIQUE ("nationalCenterId", "eventReportPilotId", "userId");
-  `, { transaction });
-    });
+  `,
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
-      await removeTables(queryInterface, transaction, ['EventReportPilotNationalCenterUsers']);
-    });
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
+      await removeTables(queryInterface, transaction, ['EventReportPilotNationalCenterUsers'])
+    })
   },
-};
+}

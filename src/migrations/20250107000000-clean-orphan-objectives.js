@@ -1,11 +1,11 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       return queryInterface.sequelize.query(`
         -- This marks as deleted any objectives for which all of the following are true:
         -- - created within an AR
@@ -50,11 +50,11 @@ module.exports = {
         ) a
         ORDER BY 1
         ;
-      `);
-    });
+      `)
+    })
   },
 
   async down() {
     // no rollbacks
   },
-};
+}

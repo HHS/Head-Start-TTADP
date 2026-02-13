@@ -1,13 +1,11 @@
-import { Op, WhereOptions } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op, type WhereOptions } from 'sequelize'
+import { sequelize } from '../../models'
 
 // WARNING: Do not interpolate unvalidated input. Escaping is critical here.
 function getSql(responses: string[]) {
-  const validatedResponses = responses
-    .filter((s) => typeof s === 'string' && s.trim().length > 0)
-    .map((s) => `'${s.replace(/'/g, "''")}'`); // escape single quotes
+  const validatedResponses = responses.filter((s) => typeof s === 'string' && s.trim().length > 0).map((s) => `'${s.replace(/'/g, "''")}'`) // escape single quotes
 
-  const placeholders = validatedResponses.length > 0 ? validatedResponses.join(', ') : '\'\'';
+  const placeholders = validatedResponses.length > 0 ? validatedResponses.join(', ') : "''"
 
   return sequelize.literal(`(
     WITH unnested_responses AS (
@@ -19,7 +17,7 @@ function getSql(responses: string[]) {
     INNER JOIN unnested_responses arr
       ON arr."goalId" = "Goals"."id"
     WHERE arr."res" IN (${placeholders})
-  )`);
+  )`)
 }
 
 export function withGoalResponse(searchText: string[]): WhereOptions {
@@ -29,7 +27,7 @@ export function withGoalResponse(searchText: string[]): WhereOptions {
         [Op.in]: getSql(searchText),
       },
     },
-  };
+  }
 }
 
 export function withoutGoalResponse(searchText: string[]) {
@@ -39,5 +37,5 @@ export function withoutGoalResponse(searchText: string[]) {
         [Op.notIn]: getSql(searchText),
       },
     },
-  };
+  }
 }

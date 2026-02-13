@@ -4,11 +4,9 @@ const SCOPES = {
   READ_WRITE_REPORTS: 3,
   READ_REPORTS: 4,
   APPROVE_REPORTS: 5,
-};
+}
 
-const {
-  READ_WRITE_REPORTS, APPROVE_REPORTS,
-} = SCOPES;
+const { READ_WRITE_REPORTS, APPROVE_REPORTS } = SCOPES
 
 const permissions = [
   {
@@ -31,14 +29,14 @@ const permissions = [
     regionId: 3,
     scopeId: APPROVE_REPORTS,
   },
-];
+]
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('Permissions', permissions, {});
+    await queryInterface.bulkInsert('Permissions', permissions, {})
   },
 
   down: async (queryInterface) => {
-    await queryInterface.bulkDelete('Permissions', null, {});
+    await queryInterface.bulkDelete('Permissions', null, {})
   },
-};
+}

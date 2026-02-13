@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.dropTable('ActivityReportGoals', { force: true });
+    await queryInterface.dropTable('ActivityReportGoals', { force: true })
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -39,6 +39,6 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.fn('NOW'),
       },
-    });
+    })
   },
-};
+}

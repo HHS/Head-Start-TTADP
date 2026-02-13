@@ -1,5 +1,5 @@
-import models, { sequelize } from '../models';
-import { auditLogger } from '../logger';
+import models, { sequelize } from '../models'
+import { auditLogger } from '../logger'
 
 /* eslint-disable import/prefer-default-export */
 /**
@@ -14,27 +14,25 @@ import { auditLogger } from '../logger';
  * @param {*} result - result
  *
  */
-export async function createMailerLog({
-  jobId,
-  emailTo,
-  action,
-  subject,
-  activityReports,
-  success,
-  result,
-}) {
-  let logResult = null;
+export async function createMailerLog({ jobId, emailTo, action, subject, activityReports, success, result }) {
+  let logResult = null
   try {
     const mailerLogEntry = {
-      jobId, emailTo, action, subject: subject.slice(0, 255), activityReports, success, result,
-    };
+      jobId,
+      emailTo,
+      action,
+      subject: subject.slice(0, 255),
+      activityReports,
+      success,
+      result,
+    }
 
     logResult = await sequelize.transaction(async (t) => {
-      const mailerLog = await models.MailerLogs.create(mailerLogEntry, { transaction: t });
-      return mailerLog;
-    });
+      const mailerLog = await models.MailerLogs.create(mailerLogEntry, { transaction: t })
+      return mailerLog
+    })
   } catch (err) {
-    auditLogger.error(`Error creating a MailerLog entry for job id: ${jobId} error ${err}`);
+    auditLogger.error(`Error creating a MailerLog entry for job id: ${jobId} error ${err}`)
   }
-  return logResult;
+  return logResult
 }

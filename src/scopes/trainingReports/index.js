@@ -1,12 +1,12 @@
 /* eslint-disable import/prefer-default-export */
-import { createFiltersToScopes } from '../utils';
-import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
-import { withRegion, withoutRegion } from './region';
-import { withCollaborators } from './collaborators';
-import { withCreators } from './creator';
-import { withoutEventId, withEventId } from './eventId';
-import { withGoalName, withoutGoalName } from './goalName';
-import { withoutStandard, withStandard } from './standard';
+import { createFiltersToScopes } from '../utils'
+import { beforeStartDate, afterStartDate, withinStartDates } from './startDate'
+import { withRegion, withoutRegion } from './region'
+import { withCollaborators } from './collaborators'
+import { withCreators } from './creator'
+import { withoutEventId, withEventId } from './eventId'
+import { withGoalName, withoutGoalName } from './goalName'
+import { withoutStandard, withStandard } from './standard'
 
 export const topicToQuery = {
   startDate: {
@@ -37,8 +37,8 @@ export const topicToQuery = {
     in: (query) => withStandard(query),
     nin: (query) => withoutStandard(query),
   },
-};
+}
 
 export function trainingReportsFiltersToScopes(filters, options, userId, validTopics) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
+  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics)
 }

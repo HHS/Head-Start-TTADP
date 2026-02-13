@@ -1,20 +1,12 @@
 /* eslint-disable max-len */
-import { v4 as uuidv4 } from 'uuid';
-import { Op, QueryTypes } from 'sequelize';
-import { DECIMAL_BASE } from '@ttahub/common';
-import SCOPES from '../middleware/scopeConstants';
-import { formatNumber } from '../widgets/helpers';
-import {
-  User,
-  Permission,
-  Role,
-  sequelize,
-  UserValidationStatus,
-  EventReportPilot,
-  NationalCenter,
-} from '../models';
+import { v4 as uuidv4 } from 'uuid'
+import { Op, QueryTypes } from 'sequelize'
+import { DECIMAL_BASE } from '@ttahub/common'
+import SCOPES from '../middleware/scopeConstants'
+import { formatNumber } from '../widgets/helpers'
+import { User, Permission, Role, sequelize, UserValidationStatus, EventReportPilot, NationalCenter } from '../models'
 
-const { SITE_ACCESS } = SCOPES;
+const { SITE_ACCESS } = SCOPES
 
 export const userAttributes = [
   'id',
@@ -29,29 +21,21 @@ export const userAttributes = [
   'flags',
   'createdAt',
   'fullName',
-];
+]
 
 export async function usersByRoles(roles = [], regionId = null) {
   return User.findAll({
     where: {
-      ...(regionId ? {
-        homeRegionId: regionId,
-      } : {}),
+      ...(regionId
+        ? {
+            homeRegionId: regionId,
+          }
+        : {}),
     },
-    attributes: [
-      'id',
-      'name',
-      'fullName',
-      'email',
-      'homeRegionId',
-    ],
+    attributes: ['id', 'name', 'fullName', 'email', 'homeRegionId'],
     include: [
       {
-        attributes: [
-          'id',
-          'name',
-          'fullName',
-        ],
+        attributes: ['id', 'name', 'fullName'],
         model: Role,
         as: 'roles',
         required: true,
@@ -69,10 +53,8 @@ export async function usersByRoles(roles = [], regionId = null) {
         required: true,
       },
     ],
-    order: [
-      [sequelize.fn('CONCAT', sequelize.col('User."name"'), sequelize.col('User."email"')), 'ASC'],
-    ],
-  });
+    order: [[sequelize.fn('CONCAT', sequelize.col('User."name"'), sequelize.col('User."email"')), 'ASC']],
+  })
 }
 
 export async function userById(userId, onlyActiveUsers = false) {
@@ -80,13 +62,13 @@ export async function userById(userId, onlyActiveUsers = false) {
     model: Permission,
     as: 'permissions',
     attributes: ['userId', 'scopeId', 'regionId'],
-  };
+  }
 
   if (onlyActiveUsers) {
     permissionInclude = {
       ...permissionInclude,
       where: { scopeId: SITE_ACCESS },
-    };
+    }
   }
   return User.findOne({
     attributes: userAttributes,
@@ -100,13 +82,17 @@ export async function userById(userId, onlyActiveUsers = false) {
         ...permissionInclude,
       },
       { model: Role, as: 'roles' },
-      { model: UserValidationStatus, as: 'validationStatus', attributes: ['userId', 'type', 'validatedAt'] },
+      {
+        model: UserValidationStatus,
+        as: 'validationStatus',
+        attributes: ['userId', 'type', 'validatedAt'],
+      },
     ],
     order: [
       [{ model: Permission, as: 'permissions' }, 'regionId', 'ASC'],
       [sequelize.fn('CONCAT', sequelize.col('User."name"'), sequelize.col('User."email"')), 'ASC'],
     ],
-  });
+  })
 }
 
 export async function userByEmail(email) {
@@ -115,41 +101,36 @@ export async function userByEmail(email) {
     where: {
       email: { [Op.iLike]: email },
     },
-  });
+  })
 }
 
 export async function usersWithPermissions(regions, scopes) {
   return User.findAll({
     attributes: ['id', 'name'],
     where: {
-      [Op.and]: [
-        { '$permissions.scopeId$': scopes },
-        { '$permissions.regionId$': regions },
-      ],
+      [Op.and]: [{ '$permissions.scopeId$': scopes }, { '$permissions.regionId$': regions }],
     },
     include: [
       { model: Permission, as: 'permissions', attributes: [] },
       { model: Role, as: 'roles' },
     ],
-  });
+  })
 }
 
 /**
  * @param {User} user
  */
 export async function userEmailIsVerified(user) {
-  if (!user || !user.validationStatus || !user.validationStatus.length) return false;
-  return user.validationStatus.some((status) => status.type === 'email' && status.validatedAt);
+  if (!user || !user.validationStatus || !user.validationStatus.length) return false
+  return user.validationStatus.some((status) => status.type === 'email' && status.validatedAt)
 }
 
 /**
  * @param {number} userId
  */
 export async function userEmailIsVerifiedByUserId(userId) {
-  const user = await userById(userId);
-  return user
-    ? userEmailIsVerified(user)
-    : false;
+  const user = await userById(userId)
+  return user ? userEmailIsVerified(user) : false
 }
 
 /**
@@ -180,10 +161,10 @@ export async function setFlag(flag, on = true) {
         WHEN ${!!on} THEN NOT flags @> ARRAY ['${flag}'::"enum_Users_flags"]
         ELSE flags @> ARRAY ['${flag}'::"enum_Users_flags"]
     END;
-  `;
+  `
 
-  const result = sequelize.query(query, { type: QueryTypes.UPDATE });
-  return result;
+  const result = sequelize.query(query, { type: QueryTypes.UPDATE })
+  return result
 }
 
 /**
@@ -194,25 +175,15 @@ export async function setFlag(flag, on = true) {
 export async function getTrainingReportUsersByRegion(regionId, eventId) {
   // this is weird (poc = collaborators, collaborators = read/write)? but it is the case
   // as far as I understand it
-  const pointOfContactScope = SCOPES.POC_TRAINING_REPORTS; // regional poc collab
-  const collaboratorScope = SCOPES.READ_WRITE_TRAINING_REPORTS; // ist collab
+  const pointOfContactScope = SCOPES.POC_TRAINING_REPORTS // regional poc collab
+  const collaboratorScope = SCOPES.READ_WRITE_TRAINING_REPORTS // ist collab
 
   const users = await User.findAll({
-    exclude: [
-      'email',
-      'phoneNumber',
-      'hsesUserId',
-      'lastLogin',
-      'hsesAuthorities',
-      'hsesUsername',
-    ],
+    exclude: ['email', 'phoneNumber', 'hsesUserId', 'lastLogin', 'hsesAuthorities', 'hsesUsername'],
     where: {
       [Op.or]: {
         '$permissions.scopeId$': {
-          [Op.in]: [
-            pointOfContactScope,
-            collaboratorScope,
-          ],
+          [Op.in]: [pointOfContactScope, collaboratorScope],
         },
       },
     },
@@ -227,12 +198,7 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
         as: 'nationalCenters',
       },
       {
-        attributes: [
-          'id',
-          'scopeId',
-          'regionId',
-          'userId',
-        ],
+        attributes: ['id', 'scopeId', 'regionId', 'userId'],
         model: Permission,
         as: 'permissions',
         required: true,
@@ -245,24 +211,24 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
       ['name', 'ASC'],
       ['email', 'ASC'],
     ],
-  });
+  })
 
   const results = {
     pointOfContact: [],
     collaborators: [],
     creators: [],
-  };
+  }
 
   users.forEach((user) => {
     if (user.permissions.some((permission) => permission.scopeId === pointOfContactScope)) {
-      results.pointOfContact.push(user);
+      results.pointOfContact.push(user)
     } else {
-      results.collaborators.push(user);
+      results.collaborators.push(user)
     }
-  });
+  })
 
   // Copy collaborators to creators.
-  results.creators = [...results.collaborators];
+  results.creators = [...results.collaborators]
 
   if (eventId) {
     // get event report pilot that has the id event id.
@@ -275,20 +241,20 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
           },
         },
       },
-    });
+    })
 
     if (eventReportPilot) {
       // Check if creators contains the current ownerId.
-      const currentOwner = results.creators.find((creator) => creator.id === eventReportPilot.ownerId);
+      const currentOwner = results.creators.find((creator) => creator.id === eventReportPilot.ownerId)
       if (!currentOwner) {
         // If the current ownerId is not in the creators array, add it.
-        const owner = await userById(eventReportPilot.ownerId);
-        results.creators.push({ id: owner.id, name: owner.name });
+        const owner = await userById(eventReportPilot.ownerId)
+        results.creators.push({ id: owner.id, name: owner.name })
       }
     }
   }
 
-  return results;
+  return results
 }
 
 export async function getUserNamesByIds(ids) {
@@ -304,22 +270,24 @@ export async function getUserNamesByIds(ids) {
     where: {
       id: ids,
     },
-  });
+  })
 
-  return users.map((u) => u.fullName);
+  return users.map((u) => u.fullName)
 }
 
 export async function findAllUsersWithScope(scope) {
   if (!Object.values(SCOPES).includes(scope)) {
-    return [];
+    return []
   }
   return User.findAll({
     attributes: ['id', 'name'],
-    include: [{
-      attributes: [],
-      model: Permission,
-      as: 'permissions',
-      where: { scopeId: scope },
-    }],
-  });
+    include: [
+      {
+        attributes: [],
+        model: Permission,
+        as: 'permissions',
+        where: { scopeId: scope },
+      },
+    ],
+  })
 }

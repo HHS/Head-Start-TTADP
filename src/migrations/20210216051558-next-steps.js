@@ -32,10 +32,10 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
-    });
+    })
   },
 
   down: async (queryInterface) => {
-    await queryInterface.dropTable('NextSteps');
+    await queryInterface.dropTable('NextSteps')
   },
-};
+}

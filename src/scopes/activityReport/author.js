@@ -1,4 +1,4 @@
-import { filterAssociation } from './utils';
+import { filterAssociation } from './utils'
 
 const author = `
 SELECT
@@ -6,12 +6,12 @@ SELECT
 FROM "Users" "Users"
 INNER JOIN "ActivityReports" "ActivityReports"
 ON "ActivityReports"."userId" = "Users"."id"
-WHERE "Users".name`;
+WHERE "Users".name`
 
 export function withAuthor(names) {
-  return filterAssociation(author, names, false);
+  return filterAssociation(author, names, false)
 }
 
 export function withoutAuthor(names) {
-  return filterAssociation(author, names, true);
+  return filterAssociation(author, names, true)
 }

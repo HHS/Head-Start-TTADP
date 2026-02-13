@@ -1,15 +1,14 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         WITH
           incidents AS (
             SELECT
@@ -59,9 +58,11 @@ module.exports = {
           FROM responses r
           WHERE argfr."id" = r."activityReportGoalFieldResponseId"
           AND r.current_response != COALESCE(r.last_valid_response, ARRAY[]::text[]);
-     `, { transaction });
-    });
+     `,
+        { transaction }
+      )
+    })
   },
 
   down: async () => {},
-};
+}

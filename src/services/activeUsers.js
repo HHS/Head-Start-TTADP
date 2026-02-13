@@ -1,9 +1,7 @@
-import { Query } from 'pg';
-import through2 from 'through2';
+import { Query } from 'pg'
+import through2 from 'through2'
 
-import {
-  sequelize,
-} from '../models';
+import { sequelize } from '../models'
 
 const arrayFields = [
   'Roles',
@@ -16,7 +14,7 @@ const arrayFields = [
   'POC_TRAINING_REPORTS',
   'POC_TRAINING_REPORTS regions',
   'Flags',
-];
+]
 
 /**
  * Transform function to convert the data to the right format.
@@ -25,13 +23,14 @@ const arrayFields = [
  */
 function convertToCSV(user) {
   // Surround array fields with double quotes
-  const mappedUser = {};
-  Object.keys(user)
-    .forEach((k) => { mappedUser[k] = (arrayFields.includes(k) && user[k] ? `"${user[k]}"` : user[k]); });
+  const mappedUser = {}
+  Object.keys(user).forEach((k) => {
+    mappedUser[k] = arrayFields.includes(k) && user[k] ? `"${user[k]}"` : user[k]
+  })
 
-  const result = Object.values(mappedUser).toString();
+  const result = Object.values(mappedUser).toString()
 
-  return `${result}\n`;
+  return `${result}\n`
 }
 
 /**
@@ -42,32 +41,32 @@ function convertToCSV(user) {
  * @returns {Promise<object>} - a new stream
  */
 const streamable = async (sql, transform) => {
-  const conn = await sequelize.connectionManager.getConnection();
-  const stream = through2.obj();
-  const query = conn.query(new Query(sql));
+  const conn = await sequelize.connectionManager.getConnection()
+  const stream = through2.obj()
+  const query = conn.query(new Query(sql))
 
-  let writeHeader = true;
+  let writeHeader = true
 
   const end = async () => {
-    await sequelize.connectionManager.releaseConnection(conn);
-    stream.end();
-  };
+    await sequelize.connectionManager.releaseConnection(conn)
+    stream.end()
+  }
   query.on('row', (r) => {
     if (writeHeader) {
-      writeHeader = false;
-      const header = Object.keys(r).toString();
-      stream.push(`${header}\n`);
+      writeHeader = false
+      const header = Object.keys(r).toString()
+      stream.push(`${header}\n`)
     }
-    stream.push(transform ? transform(r) : r);
-  });
+    stream.push(transform ? transform(r) : r)
+  })
   query.once('error', (err) => {
-    stream.emit('error', err);
-    end();
-  });
-  query.once('end', end);
+    stream.emit('error', err)
+    end()
+  })
+  query.once('end', end)
 
-  return stream;
-};
+  return stream
+}
 
 /**
  * Retrieves users that have permissions.
@@ -129,7 +128,7 @@ GROUP BY
     "ActiveUsers"."lastLogin",
     "ActiveUsers"."days",
     "ActiveUsers"."flags";
-      `;
-  const src = streamable(sql, convertToCSV);
-  return src;
+      `
+  const src = streamable(sql, convertToCSV)
+  return src
 }

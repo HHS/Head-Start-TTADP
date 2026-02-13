@@ -1,39 +1,36 @@
-import { Op } from 'sequelize';
-import {
-  sequelize,
-  GoalTemplate,
-  Goal,
-} from '../models';
-import { auditLogger } from '../logger';
+import { Op } from 'sequelize'
+import { sequelize, GoalTemplate, Goal } from '../models'
+import { auditLogger } from '../logger'
 
 const createMonitoringGoals = async () => {
   // This section is here to temporarily disable monitoring goal creation
   // To re-enable, we can set ENABLE_MONITORING_GOALS_CREATION=true or just remove
   // this block if we don't think we'll ever use it again
   if (process.env.ENABLE_MONITORING_GOAL_CREATION !== 'true') {
-    auditLogger.info('Monitoring goals creation is temporarily disabled');
-    return;
+    auditLogger.info('Monitoring goals creation is temporarily disabled')
+    return
   }
 
   try {
-    const cutOffDate = '2025-01-21';
+    const cutOffDate = '2025-01-21'
     // Verify that the monitoring goal template exists.
     const monitoringGoalTemplate = await GoalTemplate.findOne({
       where: {
         standard: 'Monitoring',
       },
-    });
+    })
 
     // If the monitoring goal template does not exist, throw an error.
     if (!monitoringGoalTemplate) {
-      auditLogger.error('Monitoring Goal template not found');
-      return;
+      auditLogger.error('Monitoring Goal template not found')
+      return
     }
 
     // 1. Create monitoring goals for grants that need them.
-    let goals = [];
+    let goals = []
     await sequelize.transaction(async (transaction) => {
-      [goals] = await sequelize.query(`
+      ;[goals] = await sequelize.query(
+        `
       WITH
       -- making a convenient single source for monitoring dates that
       -- get used in the logic
@@ -190,17 +187,19 @@ const createMonitoringGoals = async () => {
       SELECT
         "name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "goalTemplateId", "grantId", "onApprovedAR", "createdVia", "isRttapa", "onAR", "source"
       FROM new_goals;
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
       // Bulk insert the goals returned from the above query using sequelize Goal.bulkCreate.
       // We need to do this to ensure we enter the Goal Status Change on create.
-      auditLogger.info(`Creating ${goals.length} monitoring goals`);
+      auditLogger.info(`Creating ${goals.length} monitoring goals`)
       await Goal.bulkCreate(goals, {
         individualHooks: true,
         transaction,
         userId: null,
         ignoreHooks: ['autoPopulateCreator'], // Skip creator population for CLI scripts
-      });
+      })
       // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
       // or open Objectives
       /* Commenting out as temporarily not-needed (See [TTAHUB-4049](https://jira.acf.gov/browse/TTAHUB-4049))
@@ -306,8 +305,9 @@ const createMonitoringGoals = async () => {
       //    grants that already have properly marked Goals. This is intended to address cases
       //    where follow-up TTA is being performed beyond the initial review, which will usually
       //    be recorded on the currently active grant anyway.
-      auditLogger.info('Marking monitoring goals for follow-up TTA eligibility');
-      await sequelize.query(`
+      auditLogger.info('Marking monitoring goals for follow-up TTA eligibility')
+      await sequelize.query(
+        `
       WITH eligible_grants AS (
       SELECT DISTINCT
         gr."replacingGrantId" grid
@@ -336,14 +336,16 @@ const createMonitoringGoals = async () => {
       FROM goals_to_update
       WHERE id = gid
       ;
-    `, { transaction });
-    });
+    `,
+        { transaction }
+      )
+    })
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
-    auditLogger.error(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
-    throw error;
+    console.log(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`)
+    auditLogger.error(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`)
+    throw error
   }
-};
+}
 
-export default createMonitoringGoals;
+export default createMonitoringGoals

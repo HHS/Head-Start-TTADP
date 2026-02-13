@@ -1,12 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(/* sql */`
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.sequelize.query(
+        /* sql */ `
       --  1. Identify the affected reports/grants/goals
       DROP TABLE IF EXISTS tmp_affected_reports_grants_goals;
       CREATE TEMP TABLE tmp_affected_reports_grants_goals
@@ -1032,13 +1031,13 @@ module.exports = {
       DROP TABLE IF EXISTS tmp_flags_update_for_unlinked_objectives;
       DROP TABLE IF EXISTS tmp_deleted_objectives;
       DROP TABLE IF EXISTS tmp_flags_update_for_unlinked_goals;
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-    },
-  ),
-};
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+    }),
+}

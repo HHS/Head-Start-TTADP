@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 
 export function withMethod(methods: string[]) {
   return {
@@ -7,7 +7,7 @@ export function withMethod(methods: string[]) {
         [Op.in]: methods,
       },
     },
-  };
+  }
 }
 
 export function withoutMethod(methods: string[]) {
@@ -17,5 +17,5 @@ export function withoutMethod(methods: string[]) {
         [Op.notIn]: methods,
       },
     },
-  };
+  }
 }

@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 
 export function withRegion(regions) {
   return {
@@ -7,7 +7,7 @@ export function withRegion(regions) {
         [Op.in]: regions,
       },
     },
-  };
+  }
 }
 
 export function withoutRegion(regions) {
@@ -17,5 +17,5 @@ export function withoutRegion(regions) {
         [Op.in]: regions,
       },
     },
-  };
+  }
 }

@@ -1,27 +1,19 @@
-import faker from '@faker-js/faker';
-import {
-  updateGoalStatusById,
-  verifyAllowedGoalStatusTransition,
-} from './goals';
-import {
-  Goal,
-  Grant,
-  Recipient,
-  sequelize,
-} from '../models';
-import { GOAL_STATUS } from '../constants';
+import faker from '@faker-js/faker'
+import { updateGoalStatusById, verifyAllowedGoalStatusTransition } from './goals'
+import { Goal, Grant, Recipient, sequelize } from '../models'
+import { GOAL_STATUS } from '../constants'
 
 describe('Change Goal Status', () => {
-  let goal;
-  let grant;
-  let recipient;
+  let goal
+  let grant
+  let recipient
 
   beforeAll(async () => {
     // create recipient
     recipient = await Recipient.create({
       id: faker.datatype.number(),
       name: faker.name.firstName(),
-    });
+    })
 
     // create grant
     grant = await Grant.create({
@@ -31,7 +23,7 @@ describe('Change Goal Status', () => {
       regionId: 1,
       startDate: new Date(),
       endDate: new Date(),
-    });
+    })
 
     // create goal
     goal = await Goal.create({
@@ -42,8 +34,8 @@ describe('Change Goal Status', () => {
       createdAt: new Date('2021-01-02'),
       grantId: grant.id,
       previousStatus: null,
-    });
-  });
+    })
+  })
 
   afterAll(async () => {
     // Cleanup Goal.
@@ -52,7 +44,7 @@ describe('Change Goal Status', () => {
         grantId: grant.id,
       },
       force: true,
-    });
+    })
 
     // Cleanup Grant.
     await Grant.destroy({
@@ -60,162 +52,93 @@ describe('Change Goal Status', () => {
         id: grant.id,
       },
       individualHooks: true,
-    });
+    })
 
     // Cleanup Recipient.
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
-    });
+    })
 
-    await sequelize.close();
-  });
+    await sequelize.close()
+  })
   describe('verifyAllowedGoalStatusTransition', () => {
     it('returns false if the goal status change is not allowed', async () => {
-    // can't change from not started to in progress
-      let result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.NOT_STARTED,
-        GOAL_STATUS.IN_PROGRESS,
-        [],
-      );
-      expect(result).toEqual(false);
+      // can't change from not started to in progress
+      let result = verifyAllowedGoalStatusTransition(GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS, [])
+      expect(result).toEqual(false)
 
       // can change from not started to closed
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.NOT_STARTED,
-        GOAL_STATUS.CLOSED,
-        [],
-      );
-      expect(result).toEqual(true);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.NOT_STARTED, GOAL_STATUS.CLOSED, [])
+      expect(result).toEqual(true)
 
       // can change from not started to suspended
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.NOT_STARTED,
-        GOAL_STATUS.SUSPENDED,
-        [],
-      );
-      expect(result).toEqual(true);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.NOT_STARTED, GOAL_STATUS.SUSPENDED, [])
+      expect(result).toEqual(true)
 
       // can't change from draft to not started
-      result = verifyAllowedGoalStatusTransition(
-
-        GOAL_STATUS.DRAFT,
-        GOAL_STATUS.NOT_STARTED,
-        [],
-      );
-      expect(result).toEqual(false);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, [])
+      expect(result).toEqual(false)
 
       // can't change from draft to in progress
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.DRAFT,
-        GOAL_STATUS.IN_PROGRESS,
-        [],
-      );
-      expect(result).toEqual(false);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.DRAFT, GOAL_STATUS.IN_PROGRESS, [])
+      expect(result).toEqual(false)
 
       // can't change from draft to suspended
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.DRAFT,
-        GOAL_STATUS.SUSPENDED,
-        [],
-      );
-      expect(result).toEqual(false);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.DRAFT, GOAL_STATUS.SUSPENDED, [])
+      expect(result).toEqual(false)
 
       // can't change from in progress to not started
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.IN_PROGRESS,
-        GOAL_STATUS.NOT_STARTED,
-        [],
-      );
-      expect(result).toEqual(false);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.IN_PROGRESS, GOAL_STATUS.NOT_STARTED, [])
+      expect(result).toEqual(false)
 
       // can't change from in progress to draft
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.IN_PROGRESS,
-        GOAL_STATUS.DRAFT,
-        [],
-      );
-      expect(result).toEqual(false);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.IN_PROGRESS, GOAL_STATUS.DRAFT, [])
+      expect(result).toEqual(false)
 
       // can change from in progress to closed
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.IN_PROGRESS,
-        GOAL_STATUS.CLOSED,
-        [],
-      );
-      expect(result).toEqual(true);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.IN_PROGRESS, GOAL_STATUS.CLOSED, [])
+      expect(result).toEqual(true)
 
       // can change from in progress to suspended
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.IN_PROGRESS,
-        GOAL_STATUS.SUSPENDED,
-        [],
-      );
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.IN_PROGRESS, GOAL_STATUS.SUSPENDED, [])
 
       // can't change from suspended to not started
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.SUSPENDED,
-        GOAL_STATUS.NOT_STARTED,
-        [],
-      );
-      expect(result).toEqual(false);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.NOT_STARTED, [])
+      expect(result).toEqual(false)
 
       // cant change from suspended to draft
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.SUSPENDED,
-        GOAL_STATUS.DRAFT,
-        [],
-      );
-      expect(result).toEqual(false);
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.DRAFT, [])
+      expect(result).toEqual(false)
 
       // can change from suspended to in progress
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.SUSPENDED,
-        GOAL_STATUS.IN_PROGRESS,
-        [],
-      );
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.IN_PROGRESS, [])
 
-      expect(result).toEqual(true);
+      expect(result).toEqual(true)
 
       // can change from suspended to closed
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.SUSPENDED,
-        GOAL_STATUS.CLOSED,
-        [],
-      );
-      expect(result).toEqual(true);
-    });
+      result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.CLOSED, [])
+      expect(result).toEqual(true)
+    })
 
     it('queries the previous status when the old status is suspended', async () => {
       // can't change from suspended to in progress
-      const result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.SUSPENDED,
-        GOAL_STATUS.IN_PROGRESS,
-        [GOAL_STATUS.IN_PROGRESS],
-      );
+      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.IN_PROGRESS, [GOAL_STATUS.IN_PROGRESS])
 
-      expect(result).toEqual(true);
-    });
-  });
+      expect(result).toEqual(true)
+    })
+  })
 
   it('Updates goal status with reason', async () => {
-    const newStatus = GOAL_STATUS.CLOSED;
-    const oldStatus = GOAL_STATUS.IN_PROGRESS;
-    const reason = 'TTA complete';
-    const context = 'This goal has been completed.';
-    const updatedGoals = await updateGoalStatusById(
-      [goal.id],
-      5,
-      oldStatus,
-      newStatus,
-      reason,
-      context,
-      [],
-    );
+    const newStatus = GOAL_STATUS.CLOSED
+    const oldStatus = GOAL_STATUS.IN_PROGRESS
+    const reason = 'TTA complete'
+    const context = 'This goal has been completed.'
+    const updatedGoals = await updateGoalStatusById([goal.id], 5, oldStatus, newStatus, reason, context, [])
 
-    expect(updatedGoals.length).toEqual(1);
-    const updatedGoal = updatedGoals[0];
-    expect(updatedGoal.status).toEqual(newStatus);
-  });
-});
+    expect(updatedGoals.length).toEqual(1)
+    const updatedGoal = updatedGoals[0]
+    expect(updatedGoal.status).toEqual(newStatus)
+  })
+})

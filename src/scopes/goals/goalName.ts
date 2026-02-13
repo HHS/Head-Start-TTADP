@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 
 export function withGoalName(searchText: string[]) {
-  const search = `%${searchText}%`;
+  const search = `%${searchText}%`
 
   return {
     [Op.and]: {
@@ -9,11 +9,11 @@ export function withGoalName(searchText: string[]) {
         [Op.iLike]: search,
       },
     },
-  };
+  }
 }
 
 export function withoutGoalName(searchText: string[]) {
-  const search = `%${searchText}%`;
+  const search = `%${searchText}%`
 
   return {
     [Op.and]: {
@@ -21,5 +21,5 @@ export function withoutGoalName(searchText: string[]) {
         [Op.notILike]: search,
       },
     },
-  };
+  }
 }

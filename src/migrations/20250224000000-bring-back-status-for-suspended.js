@@ -1,11 +1,11 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       return queryInterface.sequelize.query(`
         -- As a result of the previous migration, we lost the ability to track
         -- the status of Goals that are suspended. This migration will bring
@@ -20,11 +20,11 @@ module.exports = {
           AND gsc."newStatus" = 'Suspended'
           AND gsc."updatedAt" >= '2025-02-14 00:00:00'::timestamp
           AND gsc."updatedAt" < '2025-02-15 00:00:00'::timestamp;
-      `);
-    });
+      `)
+    })
   },
 
   async down() {
     // no rollbacks
   },
-};
+}

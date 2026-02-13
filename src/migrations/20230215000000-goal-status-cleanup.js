@@ -1,26 +1,27 @@
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
+        const loggedUser = '0'
         // const transactionId = '';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
+        const sessionSig = __filename
+        const auditDescriptor = 'RUN MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
       try {
         // set status of draft for non-imported goals without a status.
-        await queryInterface.sequelize.query(`
+        await queryInterface.sequelize.query(
+          `
           WITH
             "GoalFixes" AS (
               select
@@ -40,10 +41,13 @@ module.exports = {
           SET "status" = gf."status"
           FROM "GoalFixes" gf
           WHERE g.id = gf.id;
-          `, { transaction });
+          `,
+          { transaction }
+        )
 
         // set status of not started for imported goals without a status.
-        await queryInterface.sequelize.query(`
+        await queryInterface.sequelize.query(
+          `
           WITH
             "GoalFixes" AS (
               select
@@ -63,10 +67,13 @@ module.exports = {
           SET "status" = gf."status"
           FROM "GoalFixes" gf
           WHERE g.id = gf.id;
-          `, { transaction });
+          `,
+          { transaction }
+        )
 
         // copy the createdVia from goal this goal was cloned from
-        await queryInterface.sequelize.query(`
+        await queryInterface.sequelize.query(
+          `
           WITH
             "GoalFixes" AS (
               select
@@ -90,14 +97,15 @@ module.exports = {
           SET "createdVia" = gf."createdVia"
           FROM "GoalFixes" gf
           WHERE g.id = gf.id;
-          `, { transaction });
+          `,
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
+    }),
   // no structral changed to undo, once updates are made the record are unidentifiable from all
   // others, so a clearing of values set is not posable.
   down: () => {},
-};
+}

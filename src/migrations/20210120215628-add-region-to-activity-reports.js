@@ -6,9 +6,9 @@ module.exports = {
         model: 'Regions',
         key: 'id',
       },
-    });
+    })
   },
   down: async (queryInterface) => {
-    await queryInterface.removeColumn('ActivityReports', 'regionId');
+    await queryInterface.removeColumn('ActivityReports', 'regionId')
   },
-};
+}

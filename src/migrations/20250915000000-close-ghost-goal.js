@@ -1,12 +1,13 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
+      await queryInterface.sequelize.query(
+        /* sql */ `
         ---------- The steps -------------------------------------------------
         -- 1: Make sure it's the correct ghost goal
         -- 2: Complete any In Progress Objectives on that Goal
@@ -137,11 +138,13 @@ module.exports = {
         JOIN afterstats a
           ON a.entity=b.entity
         ;
-    `, { transaction });
-    });
+    `,
+        { transaction }
+      )
+    })
   },
 
   async down() {
     // no rollbacks of data fixes
   },
-};
+}

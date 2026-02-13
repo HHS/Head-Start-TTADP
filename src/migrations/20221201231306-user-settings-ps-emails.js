@@ -10,45 +10,47 @@ const ACTIONS = [
   'changesRequestedDigest',
   'approverAssignedDigest',
   'reportApprovedDigest',
-];
+]
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  up: (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
-    // insert a new row into the UserSettings table
-    await queryInterface.sequelize.query(
-      `
+  up: (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      // insert a new row into the UserSettings table
+      await queryInterface.sequelize.query(
+        `
         INSERT INTO "UserSettings" ("class", "key", "default", "createdAt", "updatedAt")
         VALUES ('email', 'emailWhenRecipientReportApprovedProgramSpecialist', '"never"', current_timestamp, current_timestamp)
       `,
-      { transaction },
-    );
+        { transaction }
+      )
 
-    await queryInterface.sequelize.query(
-      `
+      await queryInterface.sequelize.query(
+        `
         ALTER TYPE "enum_MailerLogs_action" ADD VALUE 'recipientReportApproved';
         ALTER TYPE "enum_MailerLogs_action" ADD VALUE 'recipientReportApprovedDigest';
-      `,
-    );
-  }),
-  down: (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
-    const [[{ id }]] = await queryInterface.sequelize.query(
       `
+      )
+    }),
+  down: (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      const [[{ id }]] = await queryInterface.sequelize.query(
+        `
         SELECT "id" FROM "UserSettings" WHERE "class" = 'email' AND "key" = 'emailWhenRecipientReportApprovedProgramSpecialist'
       `,
-      { transaction },
-    );
+        { transaction }
+      )
 
-    await queryInterface.sequelize.query(
-      `
+      await queryInterface.sequelize.query(
+        `
         DELETE FROM "UserSettingOverrides" WHERE "userSettingId" = ${id};
         DELETE FROM "UserSettings" WHERE "class" = 'email' AND "key" = 'emailWhenRecipientReportApprovedProgramSpecialist'
       `,
-      { transaction },
-    );
+        { transaction }
+      )
 
-    await queryInterface.sequelize.query(
-      `
+      await queryInterface.sequelize.query(
+        `
         -- remove references to the deprecated value
         DELETE FROM "MailerLogs" WHERE "action" = 'recipientReportApproved';
         DELETE FROM "MailerLogs" WHERE "action" = 'recipientReportApprovedDigest';
@@ -57,14 +59,14 @@ module.exports = {
         ALTER TYPE "enum_MailerLogs_action" RENAME TO "enum_MailerLogs_action_old";
 
         -- create the new type using ACTIONS:
-        CREATE TYPE "enum_MailerLogs_action" AS ENUM('${ACTIONS.join('\', \'')}');
+        CREATE TYPE "enum_MailerLogs_action" AS ENUM('${ACTIONS.join("', '")}');
 
         -- update the columns to use the new type
         ALTER TABLE "MailerLogs" ALTER COLUMN "action" TYPE "enum_MailerLogs_action" USING "action"::text::"enum_MailerLogs_action";
 
         -- remove the old type
         DROP TYPE "enum_MailerLogs_action_old";
-      `,
-    );
-  }),
-};
+      `
+      )
+    }),
+}

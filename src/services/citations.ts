@@ -1,11 +1,9 @@
 /* eslint-disable no-plusplus */
-import db, { sequelize } from '../models';
+import db, { sequelize } from '../models'
 
-const { MonitoringStandard } = db;
+const { MonitoringStandard } = db
 
-export async function textByCitation(
-  citationIds: string[],
-): Promise<{ text: string, citation: string }[]> {
+export async function textByCitation(citationIds: string[]): Promise<{ text: string; citation: string }[]> {
   return MonitoringStandard.findAll({
     attributes: ['text', 'citation'],
     where: {
@@ -13,10 +11,10 @@ export async function textByCitation(
     },
     group: ['text', 'citation'],
     order: ['citation'],
-  });
+  })
 }
 
-const cutOffStartDate = '2025-01-21';
+const cutOffStartDate = '2025-01-21'
 /*
   The purpose of this function is to get citations by grant id.
   We then need to format the response for how it needs to be
@@ -24,27 +22,24 @@ const cutOffStartDate = '2025-01-21';
 */
 
 export interface CitationsByGrantId {
-  standardId: number;
-  citation: string;
+  standardId: number
+  citation: string
   grants: {
-    acro: string;
-    grantId: number;
-    citation: string;
-    severity: number;
-    findingId: string;
-    reviewName: string;
-    findingType: string;
-    grantNumber: string;
-    findingSource: string;
-    reportDeliveryDate: Date;
-    monitoringFindingStatusName: string;
-  }[];
+    acro: string
+    grantId: number
+    citation: string
+    severity: number
+    findingId: string
+    reviewName: string
+    findingType: string
+    grantNumber: string
+    findingSource: string
+    reportDeliveryDate: Date
+    monitoringFindingStatusName: string
+  }[]
 }
 
-export async function getCitationsByGrantIds(
-  grantIds: number[],
-  reportStartDate: string,
-): Promise<CitationsByGrantId[]> {
+export async function getCitationsByGrantIds(grantIds: number[], reportStartDate: string): Promise<CitationsByGrantId[]> {
   // Query to get the citations by grant id.
   const grantsByCitations = await sequelize.query(
     /* sql */
@@ -261,8 +256,8 @@ export async function getCitationsByGrantIds(
       ON mfs."standardId" = ms."standardId"
     GROUP BY 1,2
     ORDER BY 2,1;
-    `,
-  );
+    `
+  )
 
-  return grantsByCitations[0];
+  return grantsByCitations[0]
 }

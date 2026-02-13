@@ -12,37 +12,30 @@ import {
   setupSharedTestData,
   tearDownSharedTestData,
   sharedTestData,
-} from './testHelpers';
+} from './testHelpers'
 
 describe('resourceUrl filtersToScopes', () => {
   beforeAll(async () => {
-    await setupSharedTestData();
-  });
+    await setupSharedTestData()
+  })
 
   afterAll(async () => {
-    await tearDownSharedTestData();
-  });
+    await tearDownSharedTestData()
+  })
   describe('resourceUrl', () => {
-    let reportOne;
-    let reportTwo;
-    let reportOneWasCreated;
-    let reportTwoWasCreated;
-    let arOneResources;
-    let arTwoResources;
+    let reportOne
+    let reportTwo
+    let reportOneWasCreated
+    let reportTwoWasCreated
+    let arOneResources
+    let arTwoResources
 
-    const reportOneUrls = [
-      'http://google.com',
-      'http://github.com',
-      'http://cloud.gov',
-      'https://adhocteam.us/',
-    ];
+    const reportOneUrls = ['http://google.com', 'http://github.com', 'http://cloud.gov', 'https://adhocteam.us/']
 
-    const reportTwoUrls = [
-      'http://www.crayola.com',
-    ];
+    const reportTwoUrls = ['http://www.crayola.com']
 
     beforeAll(async () => {
-      [reportOne, reportOneWasCreated] = await ActivityReport.findOrCreate({
+      ;[reportOne, reportOneWasCreated] = await ActivityReport.findOrCreate({
         where: {
           id: 99_998,
         },
@@ -62,14 +55,11 @@ describe('resourceUrl filtersToScopes', () => {
         },
         individualHooks: true,
         raw: true,
-      });
-      await findOrCreateResources(reportOneUrls);
-      arOneResources = await processActivityReportForResourcesById(
-        reportOne.id,
-        reportOneUrls,
-      );
+      })
+      await findOrCreateResources(reportOneUrls)
+      arOneResources = await processActivityReportForResourcesById(reportOne.id, reportOneUrls)
 
-      [reportTwo, reportTwoWasCreated] = await ActivityReport.findOrCreate({
+      ;[reportTwo, reportTwoWasCreated] = await ActivityReport.findOrCreate({
         where: {
           id: 99_999,
         },
@@ -89,69 +79,60 @@ describe('resourceUrl filtersToScopes', () => {
         },
         individualHooks: true,
         raw: true,
-      });
-      await findOrCreateResources(reportTwoUrls);
-      arTwoResources = await processActivityReportForResourcesById(
-        reportTwo.id,
-        reportTwoUrls,
-      );
-    });
+      })
+      await findOrCreateResources(reportTwoUrls)
+      arTwoResources = await processActivityReportForResourcesById(reportTwo.id, reportTwoUrls)
+    })
 
     afterAll(async () => {
       await ActivityReportResource.destroy({
         where: { activityReportId: reportOne.id },
         individualHooks: true,
-      });
+      })
       await ActivityReportResource.destroy({
         where: { activityReportId: reportTwo.id },
         individualHooks: true,
-      });
+      })
       await Resource.destroy({
         where: { url: { [Op.in]: [...reportOneUrls, ...reportTwoUrls] } },
         individualHooks: true,
-      });
+      })
       if (reportOneWasCreated) {
         await ActivityReport.destroy({
           where: { id: reportOne.id },
           individualHooks: true,
-        });
+        })
       }
       if (reportTwoWasCreated) {
         await ActivityReport.destroy({
           where: { id: reportTwo.id },
           individualHooks: true,
-        });
+        })
       }
-    });
+    })
 
     it('returns correct resource url filter search results', async () => {
-      const filters = { 'resourceUrl.ctn': ['google'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
+      const filters = { 'resourceUrl.ctn': ['google'] }
+      const { activityReport: scope } = await filtersToScopes(filters)
       const found = await ActivityReport.findAll({
         where: {
-          [Op.and]: [
-            scope,
-            { id: [reportOne.id, reportTwo.id] },
-          ],
+          [Op.and]: [scope, { id: [reportOne.id, reportTwo.id] }],
         },
-      });
-      expect(found.length).toBe(1);
-      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportOne.id]));
-    });
+      })
+      expect(found.length).toBe(1)
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportOne.id]))
+    })
 
     it('excludes correct resource url filter search results', async () => {
-      const filters = { 'resourceUrl.nctn': ['http'] };
-      const { activityReport: scope } = await filtersToScopes(filters);
+      const filters = { 'resourceUrl.nctn': ['http'] }
+      const { activityReport: scope } = await filtersToScopes(filters)
 
       const found = await ActivityReport.findAll({
         where: {
-          [Op.and]: [
-            scope,
-            { id: [reportOne.id, reportTwo.id] },
-          ],
+          [Op.and]: [scope, { id: [reportOne.id, reportTwo.id] }],
         },
-      });
-      expect(found.length).toBe(0);
-    });
-  });
-});
+      })
+      expect(found.length).toBe(0)
+    })
+  })
+})

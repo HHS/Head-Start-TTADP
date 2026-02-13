@@ -1,4 +1,4 @@
-import { sanitizeActivityReportPageState } from './activityReportPageState';
+import { sanitizeActivityReportPageState } from './activityReportPageState'
 
 describe('sanitizeActivityReportPageState', () => {
   const buildBaseReport = (overrides = {}) => ({
@@ -34,34 +34,34 @@ describe('sanitizeActivityReportPageState', () => {
     specialistNextSteps: [{ note: 'Do something', completeDate: '2024-01-10' }],
     recipientNextSteps: [{ note: 'Recipient action', completeDate: '2024-01-11' }],
     ...overrides,
-  });
+  })
 
   it('marks every section complete when all data are present', () => {
-    const report = buildBaseReport();
+    const report = buildBaseReport()
 
-    const pageState = sanitizeActivityReportPageState(report, { 3: 'Complete' });
+    const pageState = sanitizeActivityReportPageState(report, { 3: 'Complete' })
 
     expect(pageState).toEqual({
       1: 'Complete',
       2: 'Complete',
       3: 'Complete',
       4: 'Complete',
-    });
-  });
+    })
+  })
 
   it('returns "In progress" for summary when only partial data exist', () => {
     const report = buildBaseReport({
       startDate: null,
       endDate: null,
       duration: null,
-    });
+    })
 
-    const pageState = sanitizeActivityReportPageState(report, {});
+    const pageState = sanitizeActivityReportPageState(report, {})
 
-    expect(pageState[1]).toBe('In progress');
-    expect(pageState[2]).toBe('Complete');
-    expect(pageState[4]).toBe('Complete');
-  });
+    expect(pageState[1]).toBe('In progress')
+    expect(pageState[2]).toBe('Complete')
+    expect(pageState[4]).toBe('Complete')
+  })
 
   it('returns "Not started" when there is no data for a section', () => {
     const report = buildBaseReport({
@@ -83,17 +83,17 @@ describe('sanitizeActivityReportPageState', () => {
       deliveryMethod: null,
       activityReason: null,
       context: null,
-    });
+    })
 
-    const pageState = sanitizeActivityReportPageState(report, { 3: 'Something Else' });
+    const pageState = sanitizeActivityReportPageState(report, { 3: 'Something Else' })
 
     expect(pageState).toEqual({
       1: 'Not started',
       2: 'Not started',
       3: 'Not started',
       4: 'Not started',
-    });
-  });
+    })
+  })
 
   it('treats invalid resources as incomplete goals', () => {
     const report = buildBaseReport({
@@ -110,21 +110,21 @@ describe('sanitizeActivityReportPageState', () => {
           ],
         },
       ],
-    });
+    })
 
-    const pageState = sanitizeActivityReportPageState(report, { 3: 'Complete' });
+    const pageState = sanitizeActivityReportPageState(report, { 3: 'Complete' })
 
-    expect(pageState[2]).toBe('In progress');
-  });
+    expect(pageState[2]).toBe('In progress')
+  })
 
   it('requires valid next steps notes and dates to mark section complete', () => {
     const report = buildBaseReport({
       specialistNextSteps: [{ note: ' ', completeDate: 'not-a-date' }],
       recipientNextSteps: [],
-    });
+    })
 
-    const pageState = sanitizeActivityReportPageState(report, {});
+    const pageState = sanitizeActivityReportPageState(report, {})
 
-    expect(pageState[4]).toBe('In progress');
-  });
-});
+    expect(pageState[4]).toBe('In progress')
+  })
+})

@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 
 export function withStateCode(stateCodes) {
   return {
@@ -8,5 +8,5 @@ export function withStateCode(stateCodes) {
         [Op.in]: stateCodes,
       },
     },
-  };
+  }
 }

@@ -1,5 +1,5 @@
-import dataValidation from './dataValidation';
-import { auditLogger } from '../logger';
+import dataValidation from './dataValidation'
+import { auditLogger } from '../logger'
 
 /**
  * dataValidationCLI runs basic queries against the DB to verify that the db state
@@ -9,6 +9,6 @@ import { auditLogger } from '../logger';
  */
 
 dataValidation().catch((e) => {
-  auditLogger.error(e);
-  return process.exit(1);
-});
+  auditLogger.error(e)
+  return process.exit(1)
+})

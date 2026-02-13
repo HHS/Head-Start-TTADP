@@ -1,14 +1,14 @@
-import { CLOSE_SUSPEND_REASONS, GOAL_STATUS } from '@ttahub/common';
-import { Op } from 'sequelize';
-import { OBJECTIVE_STATUS } from '../../constants';
+import { CLOSE_SUSPEND_REASONS, GOAL_STATUS } from '@ttahub/common'
+import { Op } from 'sequelize'
+import { OBJECTIVE_STATUS } from '../../constants'
 
 const setPerformedAt = (instance) => {
-  const { performedAt } = instance;
+  const { performedAt } = instance
 
   if (!performedAt) {
-    instance.set('performedAt', new Date());
+    instance.set('performedAt', new Date())
   }
-};
+}
 
 const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
   if (instance.get('newStatus') === GOAL_STATUS.CLOSED) {
@@ -20,7 +20,9 @@ const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
           [Op.not]: [OBJECTIVE_STATUS.COMPLETE],
         },
         [Op.or]: [
-          sequelize.literal('NOT EXISTS (SELECT 1 FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objective"."id")'),
+          sequelize.literal(
+            'NOT EXISTS (SELECT 1 FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objective"."id")'
+          ),
           { '$activityReportObjectives.activityReport.calculatedStatus$': 'approved' },
         ],
       },
@@ -38,66 +40,62 @@ const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
           ],
         },
       ],
-    });
+    })
 
     if (objectives.length > 0) {
-      throw new Error(`Cannot close a goal ${instance.goalId} with open objectives. ${objectives[0].id} is open.`);
+      throw new Error(`Cannot close a goal ${instance.goalId} with open objectives. ${objectives[0].id} is open.`)
     }
   }
-};
+}
 
 const updateGoalStatus = async (sequelize, instance) => {
   // Get the GoalStatusChange instance, and the current values of oldStatus and newStatus.
-  const { oldStatus, newStatus } = instance;
+  const { oldStatus, newStatus } = instance
 
   // If the status is not changing, do nothing.
   if (oldStatus === newStatus) {
-    return;
+    return
   }
 
-  const { Goal } = sequelize.models;
-  const goal = await Goal.findByPk(instance.goalId);
+  const { Goal } = sequelize.models
+  const goal = await Goal.findByPk(instance.goalId)
 
   if (goal) {
-    goal.status = newStatus;
-    await goal.save();
+    goal.status = newStatus
+    await goal.save()
   }
-};
+}
 
 const updateObjectiveStatusIfSuspended = async (sequelize, instance) => {
-  const { oldStatus, newStatus, reason } = instance;
+  const { oldStatus, newStatus, reason } = instance
 
   if (reason === 'Goal created' || oldStatus === newStatus || newStatus !== GOAL_STATUS.SUSPENDED) {
-    return;
+    return
   }
 
-  const { Objective } = sequelize.models;
-  await Objective.update({
-    status: OBJECTIVE_STATUS.SUSPENDED,
-    closeSuspendReason: CLOSE_SUSPEND_REASONS.includes(instance.reason) ? instance.reason : null,
-  }, {
-    where: {
-      goalId: instance.goalId,
-      status: [
-        OBJECTIVE_STATUS.NOT_STARTED,
-        OBJECTIVE_STATUS.IN_PROGRESS,
-      ],
+  const { Objective } = sequelize.models
+  await Objective.update(
+    {
+      status: OBJECTIVE_STATUS.SUSPENDED,
+      closeSuspendReason: CLOSE_SUSPEND_REASONS.includes(instance.reason) ? instance.reason : null,
     },
-  });
-};
+    {
+      where: {
+        goalId: instance.goalId,
+        status: [OBJECTIVE_STATUS.NOT_STARTED, OBJECTIVE_STATUS.IN_PROGRESS],
+      },
+    }
+  )
+}
 
 const beforeCreate = async (sequelize, instance) => {
-  setPerformedAt(instance);
-  await preventCloseIfObjectivesOpen(sequelize, instance);
-};
+  setPerformedAt(instance)
+  await preventCloseIfObjectivesOpen(sequelize, instance)
+}
 
 const afterCreate = async (sequelize, instance, options) => {
-  await updateGoalStatus(sequelize, instance);
-  await updateObjectiveStatusIfSuspended(sequelize, instance);
-};
+  await updateGoalStatus(sequelize, instance)
+  await updateObjectiveStatusIfSuspended(sequelize, instance)
+}
 
-export {
-  afterCreate,
-  beforeCreate,
-  preventCloseIfObjectivesOpen,
-};
+export { afterCreate, beforeCreate, preventCloseIfObjectivesOpen }

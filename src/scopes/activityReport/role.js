@@ -1,5 +1,5 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
 
 function userQuery(escapedRoles) {
   return `
@@ -12,7 +12,7 @@ function userQuery(escapedRoles) {
   ON "UserRoles"."userId" = "Users"."id"
   INNER JOIN "Roles" "Roles"
   ON "Roles"."id" = "UserRoles"."roleId"
-  WHERE "Roles"."fullName" IN (${escapedRoles})`;
+  WHERE "Roles"."fullName" IN (${escapedRoles})`
 }
 
 function collaboratorQuery(escapedRoles) {
@@ -26,12 +26,12 @@ function collaboratorQuery(escapedRoles) {
   ON "UserRoles"."userId" = "Users"."id"
   INNER JOIN "Roles" "Roles"
   ON "Roles"."id" = "UserRoles"."roleId"
-  WHERE "Roles"."fullName" IN (${escapedRoles})`;
+  WHERE "Roles"."fullName" IN (${escapedRoles})`
 }
 
 function generateWhere(escapedSearchTerms, exclude) {
-  const userSubQuery = userQuery(escapedSearchTerms);
-  const collaboratorSubQuery = collaboratorQuery(escapedSearchTerms);
+  const userSubQuery = userQuery(escapedSearchTerms)
+  const collaboratorSubQuery = collaboratorQuery(escapedSearchTerms)
 
   if (exclude) {
     return {
@@ -39,7 +39,7 @@ function generateWhere(escapedSearchTerms, exclude) {
         sequelize.literal(`("ActivityReport"."id" NOT IN (${userSubQuery}))`),
         sequelize.literal(`("ActivityReport"."id" NOT IN (${collaboratorSubQuery}))`),
       ],
-    };
+    }
   }
 
   return {
@@ -47,7 +47,7 @@ function generateWhere(escapedSearchTerms, exclude) {
       sequelize.literal(`("ActivityReport"."id" IN (${userSubQuery}))`),
       sequelize.literal(`("ActivityReport"."id" IN (${collaboratorSubQuery}))`),
     ],
-  };
+  }
 }
 
 function escapeRole(role) {
@@ -58,37 +58,37 @@ function escapeRole(role) {
     'Grantee Specialist',
     'Health Specialist',
     'System Specialist',
-  ];
+  ]
 
   // is our role amongst them?
   if (!acceptableRoles.includes(role)) {
-    return ''; // if not, then no string
+    return '' // if not, then no string
   }
 
   // finally, escape output using built in sequelize function
-  return sequelize.escape(role);
+  return sequelize.escape(role)
 }
 
 export function withRole(roles) {
   // filter removes empty strings
-  const acceptableRoles = roles.map((role) => escapeRole(role)).filter((role) => role);
+  const acceptableRoles = roles.map((role) => escapeRole(role)).filter((role) => role)
 
   // we shan't pass sequelize an empty array
   if (acceptableRoles.length === 0) {
-    return {};
+    return {}
   }
 
-  return generateWhere(acceptableRoles, false);
+  return generateWhere(acceptableRoles, false)
 }
 
 export function withoutRole(roles) {
   // filter removes empty strings
-  const acceptableRoles = roles.map((role) => escapeRole(role)).filter((role) => role);
+  const acceptableRoles = roles.map((role) => escapeRole(role)).filter((role) => role)
 
   // we shan't pass sequelize an empty array
   if (acceptableRoles.length === 0) {
-    return {};
+    return {}
   }
 
-  return generateWhere(acceptableRoles, true);
+  return generateWhere(acceptableRoles, true)
 }

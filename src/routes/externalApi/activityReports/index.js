@@ -1,12 +1,10 @@
-import express from 'express';
+import express from 'express'
 
-import {
-  getReportByDisplayId,
-} from './handlers';
-import transactionWrapper from '../../transactionWrapper';
+import { getReportByDisplayId } from './handlers'
+import transactionWrapper from '../../transactionWrapper'
 
-const router = express.Router();
+const router = express.Router()
 
-router.get('/display/:displayId', transactionWrapper(getReportByDisplayId));
+router.get('/display/:displayId', transactionWrapper(getReportByDisplayId))
 
-export default router;
+export default router

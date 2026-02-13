@@ -1,68 +1,57 @@
-import db from '../models';
-import {
-  baseTRScopes,
-} from './helpers';
-import { IScopes } from './types';
+import db from '../models'
+import { baseTRScopes } from './helpers'
+import type { IScopes } from './types'
 
-const {
-  EventReportPilot: TrainingReport,
-  NationalCenter,
-} = db;
+const { EventReportPilot: TrainingReport, NationalCenter } = db
 
-export default async function trHoursOfTrainingByNationalCenter(
-  scopes: IScopes,
-) {
-  const [reports, nationalCenters] = await Promise.all([
+export default async function trHoursOfTrainingByNationalCenter(scopes: IScopes) {
+  const [reports, nationalCenters] = (await Promise.all([
     TrainingReport.findAll({
-      attributes: [
-        'data',
-      ],
+      attributes: ['data'],
       ...baseTRScopes(scopes),
     }),
     NationalCenter.findAll({
-      attributes: [
-        'name',
-      ],
+      attributes: ['name'],
     }),
-  ]) as [
+  ])) as [
     {
       data: {
-        eventId: string,
-      },
+        eventId: string
+      }
       sessionReports: {
         data: {
-          objectiveTrainers: string[],
-          duration: number,
+          objectiveTrainers: string[]
+          duration: number
         }
       }[]
     }[],
     {
-      name: string,
+      name: string
     }[],
-  ];
+  ]
 
   const dataStruct = nationalCenters.map((center: { name: string }) => ({
     name: center.name,
     count: 0,
-  })) as { name: string, count: number }[];
+  })) as { name: string; count: number }[]
 
   const response = reports.reduce((acc, report) => {
-    const { sessionReports } = report;
+    const { sessionReports } = report
     sessionReports.forEach((sessionReport) => {
-      const { objectiveTrainers, duration } = sessionReport.data;
+      const { objectiveTrainers, duration } = sessionReport.data
 
-      (objectiveTrainers || []).forEach((trainer) => {
+      ;(objectiveTrainers || []).forEach((trainer) => {
         // trainers were originally and are now stored by the national center abbrev.
         // but looking at the data, there was a period where they were stored as
         // abbrev - user name, so we need to check for that
-        const center = dataStruct.find((c) => trainer.includes(c.name));
+        const center = dataStruct.find((c) => trainer.includes(c.name))
         if (center) {
-          center.count += duration;
+          center.count += duration
         }
-      });
-    });
-    return acc;
-  }, dataStruct);
+      })
+    })
+    return acc
+  }, dataStruct)
 
-  return response;
+  return response
 }

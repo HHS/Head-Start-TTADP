@@ -1,4 +1,4 @@
-import { Model } from 'sequelize';
+import { Model } from 'sequelize'
 
 /**
  * The incoming data does not have traditional primary keys that can be used in
@@ -26,23 +26,26 @@ export default (sequelize, DataTypes) => {
        */
     }
   }
-  MonitoringReviewLink.init({
-    // Note: id column is only here for the audit log
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
+  MonitoringReviewLink.init(
+    {
+      // Note: id column is only here for the audit log
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+      },
+      reviewId: {
+        primaryKey: true,
+        allowNull: false,
+        type: DataTypes.TEXT,
+      },
     },
-    reviewId: {
-      primaryKey: true,
-      allowNull: false,
-      type: DataTypes.TEXT,
-    },
-  }, {
-    sequelize,
-    modelName: 'MonitoringReviewLink',
-    tableName: 'MonitoringReviewLinks',
-    paranoid: true,
-  });
-  return MonitoringReviewLink;
-};
+    {
+      sequelize,
+      modelName: 'MonitoringReviewLink',
+      tableName: 'MonitoringReviewLinks',
+      paranoid: true,
+    }
+  )
+  return MonitoringReviewLink
+}

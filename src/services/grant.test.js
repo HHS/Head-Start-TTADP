@@ -1,7 +1,5 @@
-import db, { Grant, Region, Recipient } from '../models';
-import {
-  grantById, statesByGrantRegion,
-} from './grant';
+import db, { Grant, Region, Recipient } from '../models'
+import { grantById, statesByGrantRegion } from './grant'
 
 const grants = [
   {
@@ -71,51 +69,47 @@ const grants = [
     startDate: new Date(),
     endDate: new Date(),
   },
-];
+]
 
 describe('Grant DB service', () => {
   beforeAll(async () => {
-    await Recipient.create({ name: 'recipient', id: 129129, uei: 'NNA5N2KHMGN2' });
-    await Region.create(
-      {
-        id: 129129,
-        name: 'office 14',
-      },
-    );
-    await Region.create(
-      {
-        id: 129130,
-        name: 'office 15',
-      },
-    );
-    await Promise.all(grants.map((g) => Grant.create(g)));
-  });
+    await Recipient.create({ name: 'recipient', id: 129129, uei: 'NNA5N2KHMGN2' })
+    await Region.create({
+      id: 129129,
+      name: 'office 14',
+    })
+    await Region.create({
+      id: 129130,
+      name: 'office 15',
+    })
+    await Promise.all(grants.map((g) => Grant.create(g)))
+  })
 
   afterAll(async () => {
     await Grant.unscoped().destroy({
       where: { id: grants.map((g) => g.id) },
       individualHooks: true,
-    });
+    })
     await Region.destroy({
       where: {
         id: [129129, 129130],
       },
-    });
-    await Recipient.unscoped().destroy({ where: { id: 129129 } });
-    await db.sequelize.close();
-  });
+    })
+    await Recipient.unscoped().destroy({ where: { id: 129129 } })
+    await db.sequelize.close()
+  })
 
   describe('grantById', () => {
     it('returns the grant', async () => {
-      const grant = await grantById(90);
-      expect(grant.number).toEqual('zz123');
-    });
-  });
+      const grant = await grantById(90)
+      expect(grant.number).toEqual('zz123')
+    })
+  })
 
   describe('statesByGrantRegion', () => {
     it('returns the correct state codes given a region', async () => {
-      const codes = await statesByGrantRegion([129129]);
-      expect(codes).toStrictEqual(['FM', 'GA']);
-    });
-  });
-});
+      const codes = await statesByGrantRegion([129129])
+      expect(codes).toStrictEqual(['FM', 'GA'])
+    })
+  })
+})

@@ -51,9 +51,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
-    });
+    })
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('GrantGoals');
+    await queryInterface.dropTable('GrantGoals')
   },
-};
+}

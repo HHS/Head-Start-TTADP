@@ -1,36 +1,35 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
-import parse from 'csv-parse/lib/sync';
-import { GOAL_STATUS } from '../constants';
-import { downloadFile } from '../lib/s3';
-import {
-  Goal,
-  Grant,
-} from '../models';
-import { logger } from '../logger';
-import changeGoalStatus from '../goalServices/changeGoalStatus';
+import parse from 'csv-parse/lib/sync'
+import { GOAL_STATUS } from '../constants'
+import { downloadFile } from '../lib/s3'
+import { Goal, Grant } from '../models'
+import { logger } from '../logger'
+import changeGoalStatus from '../goalServices/changeGoalStatus'
 
 async function parseCsv(fileKey) {
-  let recipients = {};
-  const { Body: csv } = await downloadFile(fileKey);
-  [...recipients] = parse(csv, {
+  let recipients = {}
+  const { Body: csv } = await downloadFile(fileKey)
+  ;[...recipients] = parse(csv, {
     skipEmptyLines: true,
     columns: true,
-  });
-  return recipients;
+  })
+  return recipients
 }
 
-const grantNumRE = /\s(?<grantNumber>[0-9]{2}[A-Z]{2}[0-9]+)(?:[,\s]|$)/g;
+const grantNumRE = /\s(?<grantNumber>[0-9]{2}[A-Z]{2}[0-9]+)(?:[,\s]|$)/g
 const parseGrantNumbers = (value) => {
-  const matchIter = value.matchAll(grantNumRE);
-  const results = [];
-  for (const { groups: { grantNumber } } of matchIter) {
+  const matchIter = value.matchAll(grantNumRE)
+  const results = []
+  for (const {
+    groups: { grantNumber },
+  } of matchIter) {
     if (grantNumber) {
-      results.push(grantNumber);
+      results.push(grantNumber)
     }
   }
-  return results;
-};
+  return results
+}
 
 /**
  * Updates status of the existing goal based on whether the incoming
@@ -40,19 +39,19 @@ const parseGrantNumbers = (value) => {
  * @param {Object} dbgoal - existing goal
  */
 export async function updateStatus(goal, dbgoal) {
-  const dbGoalStatusIdx = Object.values(GOAL_STATUS).indexOf(dbgoal.status);
-  const goalStatusIdx = Object.values(GOAL_STATUS).indexOf(goal.status);
+  const dbGoalStatusIdx = Object.values(GOAL_STATUS).indexOf(dbgoal.status)
+  const goalStatusIdx = Object.values(GOAL_STATUS).indexOf(goal.status)
 
   if (dbGoalStatusIdx < goalStatusIdx) {
-    logger.info(`Updating goal ${dbgoal.id}: Changing status from ${dbgoal.status} to ${goal.status}`);
+    logger.info(`Updating goal ${dbgoal.id}: Changing status from ${dbgoal.status} to ${goal.status}`)
     await changeGoalStatus({
       goalId: dbgoal.id,
       userId: 1,
       newStatus: goal.status,
       reason: 'Imported from Smartsheet',
-    });
+    })
   } else {
-    logger.info(`Skipping goal status update for ${dbgoal.id}: goal status ${dbgoal.status} is newer or equal to ${goal.status}`);
+    logger.info(`Skipping goal status update for ${dbgoal.id}: goal status ${dbgoal.status} is newer or equal to ${goal.status}`)
   }
 }
 
@@ -75,47 +74,50 @@ export async function updateStatus(goal, dbgoal) {
  * (Total 5 goals. Some of them could be empty)
  */
 export default async function importGoals(fileKey, region) {
-  const recipients = await parseCsv(fileKey);
-  const regionId = region;
+  const recipients = await parseCsv(fileKey)
+  const regionId = region
   try {
     for await (const el of recipients) {
-      let currentGrants = [];
-      let currentGoals = [];
-      let currentGoalName = '';
-      let currentGoalNum = 0;
-      let currentLastEditedDate;
+      let currentGrants = []
+      let currentGoals = []
+      let currentGoalName = ''
+      let currentGoalNum = 0
+      let currentLastEditedDate
 
       for await (const key of Object.keys(el)) {
         if (key && (key.trim().startsWith('Grantee (distinct') || key.trim().startsWith('Grantee Name'))) {
-          currentGrants = parseGrantNumbers(el[key]);
+          currentGrants = parseGrantNumbers(el[key])
         } else if (key && key.startsWith('Last Edited (Date)')) {
-          currentLastEditedDate = el[key].trim();
+          currentLastEditedDate = el[key].trim()
         } else if (key && key.startsWith('Goal')) {
-          const goalColumn = key.split(' ');
-          let column;
-          if (goalColumn.length === 2) { // Column name is "Goal X" representing goal's name
-            currentGoalName = el[key].trim();
+          const goalColumn = key.split(' ')
+          let column
+          if (goalColumn.length === 2) {
+            // Column name is "Goal X" representing goal's name
+            currentGoalName = el[key].trim()
             if (currentGoalName.match(/(no goals?|none)( identified)? at this time\.?/i)) {
-              currentGoalName = '';
+              currentGoalName = ''
             }
-            if (currentGoalName !== '') { // Ignore empty goals
+            if (currentGoalName !== '') {
+              // Ignore empty goals
               // eslint-disable-next-line prefer-destructuring
-              currentGoalNum = goalColumn[1];
+              currentGoalNum = goalColumn[1]
               currentGoals[currentGoalNum] = {
                 ...currentGoals[currentGoalNum],
                 name: currentGoalName,
-              };
+              }
             }
           } else if (currentGoalName !== '') {
             // column will be either "topics", "timeframe" or "status"
-            column = goalColumn[2].toLowerCase();
-            if (column !== 'topics') { // ignore topics
+            column = goalColumn[2].toLowerCase()
+            if (column !== 'topics') {
+              // ignore topics
               // it's either "timeframe" or "status"
               // both "timeframe" and "status" column names will be reused as goal's object keys
               currentGoals[currentGoalNum] = {
                 ...currentGoals[currentGoalNum],
                 [column]: el[key].trim(),
-              };
+              }
             }
           }
         }
@@ -124,45 +126,49 @@ export default async function importGoals(fileKey, region) {
       // 'Completed' to 'Closed'
       currentGoals = currentGoals.map((goal) => {
         if (goal.status === 'Ceased/Suspended') {
-          const modifiedGoal = { ...goal };
-          modifiedGoal.status = 'Suspended';
-          return modifiedGoal;
+          const modifiedGoal = { ...goal }
+          modifiedGoal.status = 'Suspended'
+          return modifiedGoal
         }
         if (goal.status === 'Completed') {
-          const modifiedGoal = { ...goal };
-          modifiedGoal.status = 'Closed';
-          return modifiedGoal;
+          const modifiedGoal = { ...goal }
+          modifiedGoal.status = 'Closed'
+          return modifiedGoal
         }
-        return goal;
-      });
+        return goal
+      })
 
       for await (const goal of currentGoals) {
-        if (goal) { // ignore the dummy element at index 0
+        if (goal) {
+          // ignore the dummy element at index 0
           for await (const grant of currentGrants) {
-            const fullGrant = { number: grant.trim(), regionId };
-            const dbGrant = await Grant.findOne({ where: { ...fullGrant }, attributes: ['id', 'recipientId'] });
+            const fullGrant = { number: grant.trim(), regionId }
+            const dbGrant = await Grant.findOne({
+              where: { ...fullGrant },
+              attributes: ['id', 'recipientId'],
+            })
             if (!dbGrant) {
               // eslint-disable-next-line no-console
-              logger.error(`Couldn't find grant: ${fullGrant.number}. Exiting...`);
-              throw new Error('error');
+              logger.error(`Couldn't find grant: ${fullGrant.number}. Exiting...`)
+              throw new Error('error')
             }
-            const grantId = dbGrant.id;
+            const grantId = dbGrant.id
             const dbGoals = await Goal.findAll({
               where: { grantId, name: goal.name },
-            });
+            })
 
             if (dbGoals.length > 1) {
-              logger.info(`Found multiples of goal id: ${dbGoals[0].id}`);
-              logger.info(`Incoming status: ${goal.status}`);
-              logger.info(`Incoming last edited date: ${currentLastEditedDate}`);
-              logger.info(`Incoming timeframe: ${goal.timeframe}`);
+              logger.info(`Found multiples of goal id: ${dbGoals[0].id}`)
+              logger.info(`Incoming status: ${goal.status}`)
+              logger.info(`Incoming last edited date: ${currentLastEditedDate}`)
+              logger.info(`Incoming timeframe: ${goal.timeframe}`)
               for await (const dbgoal of dbGoals) {
                 // Unable to determine a reliable update; Skipping
-                logger.info(`Skipping updates for goal: ${dbgoal.id}`);
-                logger.info(`db goal status: ${dbgoal.status}, createdAt: ${dbgoal.createdAt}`);
+                logger.info(`Skipping updates for goal: ${dbgoal.id}`)
+                logger.info(`db goal status: ${dbgoal.status}, createdAt: ${dbgoal.createdAt}`)
               }
             } else if (dbGoals.length === 1) {
-              const dbGoal = dbGoals[0];
+              const dbGoal = dbGoals[0]
               // update timeframe
               await dbGoal.update(
                 {
@@ -172,10 +178,10 @@ export default async function importGoals(fileKey, region) {
                 {
                   // where: { id: dbgoal.id },
                   individualHooks: true,
-                },
-              );
+                }
+              )
               // determine if status needs to be updated
-              await updateStatus(goal, dbGoal);
+              await updateStatus(goal, dbGoal)
             } else {
               const newGoal = await Goal.create({
                 grantId,
@@ -183,8 +189,8 @@ export default async function importGoals(fileKey, region) {
                 isFromSmartsheetTtaPlan: true,
                 createdVia: 'imported',
                 isRttapa: 'Yes',
-              });
-              logger.info(`Created goal: ${newGoal.id} with status: ${newGoal.status}`);
+              })
+              logger.info(`Created goal: ${newGoal.id} with status: ${newGoal.status}`)
             }
           }
         }
@@ -192,6 +198,6 @@ export default async function importGoals(fileKey, region) {
     }
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error(err);
+    console.error(err)
   }
 }

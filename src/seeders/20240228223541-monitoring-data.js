@@ -1,4 +1,4 @@
-const { updateSequence } = require('../lib/migration');
+const { updateSequence } = require('../lib/migration')
 
 const reviews = [
   {
@@ -38,7 +38,7 @@ const reviews = [
     deletedAt: null,
     name: 'REVIEW!!!',
   },
-];
+]
 
 const reviewStatuses = [
   {
@@ -63,7 +63,7 @@ const reviewStatuses = [
     updatedAt: new Date(),
     deletedAt: null,
   },
-];
+]
 
 const reviewGrantees = [
   {
@@ -100,7 +100,7 @@ const reviewGrantees = [
     updatedAt: new Date('2023/11/16'),
     deletedAt: null,
   },
-];
+]
 
 const reviewFindingHistories = [
   {
@@ -127,7 +127,7 @@ const reviewFindingHistories = [
     updatedAt: new Date('2023/01/15'),
     deletedAt: null,
   },
-];
+]
 
 const reviewClassSummaries = [
   {
@@ -147,7 +147,7 @@ const reviewClassSummaries = [
     updatedAt: new Date('2023/05/24'),
     deletedAt: null,
   },
-];
+]
 
 const grantNumberLinks = [
   {
@@ -166,7 +166,7 @@ const grantNumberLinks = [
     updatedAt: new Date('2023/11/16'),
     deletedAt: null,
   },
-];
+]
 
 const monitoringReviewLinks = [
   {
@@ -183,7 +183,7 @@ const monitoringReviewLinks = [
     updatedAt: new Date('2023/01/14'),
     deletedAt: null,
   },
-];
+]
 
 const monitoringReviewStatusLinks = [
   {
@@ -200,50 +200,47 @@ const monitoringReviewStatusLinks = [
     updatedAt: new Date(),
     deletedAt: null,
   },
-];
+]
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('GrantNumberLinks', grantNumberLinks);
-    await queryInterface.bulkInsert('MonitoringGranteeLinks', reviewGrantees
-      .map(({
+    await queryInterface.bulkInsert('GrantNumberLinks', grantNumberLinks)
+    await queryInterface.bulkInsert(
+      'MonitoringGranteeLinks',
+      reviewGrantees.map(({ granteeId, createdAt, updatedAt, deletedAt }) => ({
         granteeId,
         createdAt,
         updatedAt,
         deletedAt,
-      }) => ({
-        granteeId,
-        createdAt,
-        updatedAt,
-        deletedAt,
-      })));
-    await queryInterface.bulkInsert('MonitoringReviewLinks', monitoringReviewLinks);
-    await queryInterface.bulkInsert('MonitoringReviewStatusLinks', monitoringReviewStatusLinks);
-    await queryInterface.bulkInsert('MonitoringReviewStatuses', reviewStatuses);
-    await queryInterface.bulkInsert('MonitoringReviews', reviews);
-    await queryInterface.bulkInsert('MonitoringReviewGrantees', reviewGrantees);
-    await queryInterface.bulkInsert('MonitoringFindingHistories', reviewFindingHistories);
-    await queryInterface.bulkInsert('MonitoringClassSummaries', reviewClassSummaries);
+      }))
+    )
+    await queryInterface.bulkInsert('MonitoringReviewLinks', monitoringReviewLinks)
+    await queryInterface.bulkInsert('MonitoringReviewStatusLinks', monitoringReviewStatusLinks)
+    await queryInterface.bulkInsert('MonitoringReviewStatuses', reviewStatuses)
+    await queryInterface.bulkInsert('MonitoringReviews', reviews)
+    await queryInterface.bulkInsert('MonitoringReviewGrantees', reviewGrantees)
+    await queryInterface.bulkInsert('MonitoringFindingHistories', reviewFindingHistories)
+    await queryInterface.bulkInsert('MonitoringClassSummaries', reviewClassSummaries)
 
-    await updateSequence(queryInterface, 'GrantNumberLinks');
-    await updateSequence(queryInterface, 'MonitoringGranteeLinks');
-    await updateSequence(queryInterface, 'MonitoringReviewLinks');
-    await updateSequence(queryInterface, 'MonitoringReviewStatusLinks');
-    await updateSequence(queryInterface, 'MonitoringReviewStatuses');
-    await updateSequence(queryInterface, 'MonitoringReviews');
-    await updateSequence(queryInterface, 'MonitoringReviewGrantees');
-    await updateSequence(queryInterface, 'MonitoringFindingHistories');
-    await updateSequence(queryInterface, 'MonitoringClassSummaries');
+    await updateSequence(queryInterface, 'GrantNumberLinks')
+    await updateSequence(queryInterface, 'MonitoringGranteeLinks')
+    await updateSequence(queryInterface, 'MonitoringReviewLinks')
+    await updateSequence(queryInterface, 'MonitoringReviewStatusLinks')
+    await updateSequence(queryInterface, 'MonitoringReviewStatuses')
+    await updateSequence(queryInterface, 'MonitoringReviews')
+    await updateSequence(queryInterface, 'MonitoringReviewGrantees')
+    await updateSequence(queryInterface, 'MonitoringFindingHistories')
+    await updateSequence(queryInterface, 'MonitoringClassSummaries')
   },
 
   down: async (queryInterface) => {
-    await queryInterface.bulkDelete('MonitoringReviewGrantees', null);
-    await queryInterface.bulkDelete('MonitoringReviews', null);
-    await queryInterface.bulkDelete('MonitoringReviewStatuses', null);
-    await queryInterface.bulkDelete('MonitoringFindingHistories', null);
-    await queryInterface.bulkDelete('MonitoringClassSummaries', null);
-    await queryInterface.bulkDelete('GrantNumberLinks', null);
-    await queryInterface.bulkDelete('MonitoringReviewLinks', null);
-    await queryInterface.bulkDelete('MonitoringReviewStatusLinks', null);
+    await queryInterface.bulkDelete('MonitoringReviewGrantees', null)
+    await queryInterface.bulkDelete('MonitoringReviews', null)
+    await queryInterface.bulkDelete('MonitoringReviewStatuses', null)
+    await queryInterface.bulkDelete('MonitoringFindingHistories', null)
+    await queryInterface.bulkDelete('MonitoringClassSummaries', null)
+    await queryInterface.bulkDelete('GrantNumberLinks', null)
+    await queryInterface.bulkDelete('MonitoringReviewLinks', null)
+    await queryInterface.bulkDelete('MonitoringReviewStatusLinks', null)
   },
-};
+}

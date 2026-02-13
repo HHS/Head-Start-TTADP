@@ -1,10 +1,13 @@
-const { Model } = require('sequelize');
+const { Model } = require('sequelize')
 
 export default (sequelize, DataTypes) => {
   class UserSettingOverrides extends Model {
     static associate(models) {
-      UserSettingOverrides.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-      UserSettingOverrides.belongsTo(models.UserSettings, { foreignKey: 'userSettingId', as: 'setting' });
+      UserSettingOverrides.belongsTo(models.User, { foreignKey: 'userId', as: 'user' })
+      UserSettingOverrides.belongsTo(models.UserSettings, {
+        foreignKey: 'userSettingId',
+        as: 'setting',
+      })
     }
   }
 
@@ -18,8 +21,8 @@ export default (sequelize, DataTypes) => {
       userSettingId: { type: DataTypes.INTEGER, allowNull: false },
       value: { type: DataTypes.JSONB, allowNull: false },
     },
-    { sequelize, modelName: 'UserSettingOverrides' },
-  );
+    { sequelize, modelName: 'UserSettingOverrides' }
+  )
 
-  return UserSettingOverrides;
-};
+  return UserSettingOverrides
+}

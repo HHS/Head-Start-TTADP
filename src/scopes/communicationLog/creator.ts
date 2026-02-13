@@ -1,4 +1,4 @@
-import { filterAssociation } from './utils';
+import { filterAssociation } from './utils'
 
 const collaborators = `
 SELECT
@@ -6,12 +6,12 @@ SELECT
 FROM "CommunicationLogs" log
 INNER JOIN "Users" users
 ON users.id = log."userId"
-WHERE users.name`;
+WHERE users.name`
 
 export function withCreator(names: string[]) {
-  return filterAssociation(collaborators, names, false);
+  return filterAssociation(collaborators, names, false)
 }
 
 export function withoutCreator(names: string[]) {
-  return filterAssociation(collaborators, names, true);
+  return filterAssociation(collaborators, names, true)
 }

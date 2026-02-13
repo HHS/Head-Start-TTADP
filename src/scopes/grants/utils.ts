@@ -1,32 +1,34 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
-import { filterAssociation as filter } from '../utils';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
+import { filterAssociation as filter } from '../utils'
 
 export function grantInSubQuery(
   baseQuery: string,
   searchTerms: string[],
   operator: string,
-  comparator: 'LIKE' | 'NOT LIKE' | '~*' | '!~*' | 'ILIKE' | 'NOT ILIKE' = 'LIKE',
+  comparator: 'LIKE' | 'NOT LIKE' | '~*' | '!~*' | 'ILIKE' | 'NOT ILIKE' = 'LIKE'
 ) {
-  return searchTerms.map((term) => sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${String(term).trim()}%`)})`));
+  return searchTerms.map((term) =>
+    sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${String(term).trim()}%`)})`)
+  )
 }
 
 export function expandArrayContains(key: string, array: string[], exclude: boolean) {
-  const comparator = exclude ? Op.notILike : Op.iLike;
+  const comparator = exclude ? Op.notILike : Op.iLike
   const scopes = array.map((member) => {
-    const normalizedMember = `%${member.trim()}%`;
+    const normalizedMember = `%${member.trim()}%`
     return {
       [key]: {
         [comparator]: normalizedMember, // sequelize escapes this automatically :)
       },
-    };
-  });
+    }
+  })
 
   return {
     where: {
       [Op.or]: scopes,
     },
-  };
+  }
 }
 
 /**
@@ -40,5 +42,5 @@ export function expandArrayContains(key: string, array: string[], exclude: boole
  */
 
 export function filterAssociation(baseQuery: string, searchTerms: string[], exclude: boolean, comparator = 'LIKE') {
-  return filter(baseQuery, searchTerms, exclude, grantInSubQuery, comparator);
+  return filter(baseQuery, searchTerms, exclude, grantInSubQuery, comparator)
 }

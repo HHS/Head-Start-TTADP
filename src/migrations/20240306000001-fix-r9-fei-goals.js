@@ -1,13 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, _Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       await queryInterface.sequelize.query(
         `
         -- Unlike most goal merging, this is for changing both the ongoing and historical text of goals
@@ -125,10 +123,10 @@ module.exports = {
           ON gid = arg."goalId"
         GROUP BY 1;
         `,
-        { transaction },
-      );
-    });
+        { transaction }
+      )
+    })
   },
 
   down: async () => {},
-};
+}

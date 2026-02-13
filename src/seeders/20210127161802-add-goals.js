@@ -1,4 +1,4 @@
-const now = new Date();
+const now = new Date()
 
 const bulletedGoal = `
   * Staff have become very Tech Savvy
@@ -7,17 +7,23 @@ const bulletedGoal = `
         Swivel cameras for observations
         DOJO communication device for parents
         Weekly ZOOM connects to support staff.
-`;
+`
 
 const longGoal = `Recipient will receive support in developing a full enrollment action plan that covers the 12-month under-enrollment period.
-Recipient will receive strategies for ensuring they can consistently meet enrollment requirement via their ERSEA policies and procedures. Recipient will receive strategies for ensuring their partnership with Skyline leads to sustainable enrollment.`;
+Recipient will receive strategies for ensuring they can consistently meet enrollment requirement via their ERSEA policies and procedures. Recipient will receive strategies for ensuring their partnership with Skyline leads to sustainable enrollment.`
 
 module.exports = {
   up: async (queryInterface) => {
     const goalTemplates = [
       {
         id: 50, // 2,
-        hash: queryInterface.sequelize.fn('md5', queryInterface.sequelize.fn('TRIM', 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.')),
+        hash: queryInterface.sequelize.fn(
+          'md5',
+          queryInterface.sequelize.fn(
+            'TRIM',
+            'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.'
+          )
+        ),
         templateName: 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.',
         createdAt: now,
         updatedAt: now,
@@ -26,7 +32,13 @@ module.exports = {
       },
       {
         id: 51, // 3,
-        hash: queryInterface.sequelize.fn('md5', queryInterface.sequelize.fn('TRIM', 'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.')),
+        hash: queryInterface.sequelize.fn(
+          'md5',
+          queryInterface.sequelize.fn(
+            'TRIM',
+            'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.'
+          )
+        ),
         templateName: 'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.',
         createdAt: now,
         updatedAt: now,
@@ -51,7 +63,7 @@ module.exports = {
         templateNameModifiedAt: now,
         creationMethod: 'Automatic',
       },
-    ];
+    ]
 
     const goals = [
       {
@@ -99,17 +111,20 @@ module.exports = {
         onAR: false,
         onApprovedAR: false,
       },
-    ];
+    ]
 
-    await queryInterface.bulkInsert('GoalTemplates', goalTemplates, { validate: true, individualHooks: true });
-    await queryInterface.bulkInsert('Goals', goals, { validate: true, individualHooks: true });
+    await queryInterface.bulkInsert('GoalTemplates', goalTemplates, {
+      validate: true,
+      individualHooks: true,
+    })
+    await queryInterface.bulkInsert('Goals', goals, { validate: true, individualHooks: true })
 
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "GoalTemplates_id_seq" RESTART WITH ${goalTemplates[goalTemplates.length - 1].id + 1};`);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "Goals_id_seq" RESTART WITH ${goals[goals.length - 1].id + 1};`);
+    await queryInterface.sequelize.query(`ALTER SEQUENCE "GoalTemplates_id_seq" RESTART WITH ${goalTemplates[goalTemplates.length - 1].id + 1};`)
+    await queryInterface.sequelize.query(`ALTER SEQUENCE "Goals_id_seq" RESTART WITH ${goals[goals.length - 1].id + 1};`)
   },
 
   down: async (queryInterface) => {
-    await queryInterface.bulkDelete('Goals', null);
-    await queryInterface.bulkDelete('GoalTemplates', null);
+    await queryInterface.bulkDelete('Goals', null)
+    await queryInterface.bulkDelete('GoalTemplates', null)
   },
-};
+}

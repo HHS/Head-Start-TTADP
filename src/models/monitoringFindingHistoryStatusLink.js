@@ -1,4 +1,4 @@
-import { Model } from 'sequelize';
+import { Model } from 'sequelize'
 
 /**
  * The incoming data does not have traditional primary keys that can be used in
@@ -9,26 +9,28 @@ import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
   class MonitoringFindingHistoryStatusLink extends Model {
-    static associate(models) {
-    }
+    static associate(models) {}
   }
-  MonitoringFindingHistoryStatusLink.init({
-    // Note: id column is only here for the audit log
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
+  MonitoringFindingHistoryStatusLink.init(
+    {
+      // Note: id column is only here for the audit log
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+      },
+      statusId: {
+        primaryKey: true,
+        allowNull: false,
+        type: DataTypes.INTEGER,
+      },
     },
-    statusId: {
-      primaryKey: true,
-      allowNull: false,
-      type: DataTypes.INTEGER,
-    },
-  }, {
-    sequelize,
-    modelName: 'MonitoringFindingHistoryStatusLink',
-    tableName: 'MonitoringFindingHistoryStatusLinks',
-    paranoid: true,
-  });
-  return MonitoringFindingHistoryStatusLink;
-};
+    {
+      sequelize,
+      modelName: 'MonitoringFindingHistoryStatusLink',
+      tableName: 'MonitoringFindingHistoryStatusLinks',
+      paranoid: true,
+    }
+  )
+  return MonitoringFindingHistoryStatusLink
+}

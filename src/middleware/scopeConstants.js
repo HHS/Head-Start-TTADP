@@ -8,5 +8,5 @@ const SCOPES = {
   READ_WRITE_TRAINING_REPORTS: 7,
   READ_TRAINING_REPORTS: 8,
   POC_TRAINING_REPORTS: 9,
-};
-export default SCOPES;
+}
+export default SCOPES

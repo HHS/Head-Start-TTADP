@@ -6,9 +6,8 @@ module.exports = {
         EXCEPTION
           WHEN duplicate_object THEN null;
         END $$;
-      `);
+      `)
   },
 
-  down: async () => {
-  },
-};
+  down: async () => {},
+}

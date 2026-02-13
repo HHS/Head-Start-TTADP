@@ -1,20 +1,15 @@
-import faker from '@faker-js/faker';
-import db, {
-  Recipient,
-  Grant,
-  Program,
-  ProgramPersonnel,
-} from '..';
-import { GRANT_PERSONNEL_ROLES } from '../../constants';
+import faker from '@faker-js/faker'
+import db, { Recipient, Grant, Program, ProgramPersonnel } from '..'
+import { GRANT_PERSONNEL_ROLES } from '../../constants'
 
 describe('ProgramPersonnel', () => {
-  let grant;
-  let recipient;
-  let program;
-  let ehsProgram;
-  let weirdProgram;
-  let baseProgramPersonnel;
-  let programPersonnel;
+  let grant
+  let recipient
+  let program
+  let ehsProgram
+  let weirdProgram
+  let baseProgramPersonnel
+  let programPersonnel
 
   const BASE_PERSONNEL = {
     role: GRANT_PERSONNEL_ROLES[0],
@@ -27,7 +22,7 @@ describe('ProgramPersonnel', () => {
     email: 'john.doe@test.gov',
     effectiveDate: '2023-01-01',
     mapsTo: null,
-  };
+  }
 
   beforeAll(async () => {
     // Recipient.
@@ -35,7 +30,7 @@ describe('ProgramPersonnel', () => {
       id: faker.datatype.number({ min: 10000, max: 100000 }),
       name: faker.company.companyName(),
       uei: 'BNA5N2FDWGN2',
-    });
+    })
 
     // Grant.
     grant = await Grant.create({
@@ -46,7 +41,7 @@ describe('ProgramPersonnel', () => {
       recipientId: recipient.id,
       startDate: '2023-01-01',
       endDate: '2025-12-31',
-    });
+    })
 
     // Program.
     program = await Program.create({
@@ -58,7 +53,7 @@ describe('ProgramPersonnel', () => {
       status: 'active',
       startDate: new Date('01/01/2023'),
       endDate: new Date('01/01/2025'),
-    });
+    })
 
     ehsProgram = await Program.create({
       id: faker.datatype.number({ min: 10000, max: 100000 }),
@@ -69,7 +64,7 @@ describe('ProgramPersonnel', () => {
       status: 'active',
       startDate: new Date('01/01/2023'),
       endDate: new Date('01/01/2025'),
-    });
+    })
 
     weirdProgram = await Program.create({
       id: faker.datatype.number({ min: 10000, max: 100000 }),
@@ -80,14 +75,14 @@ describe('ProgramPersonnel', () => {
       status: 'active',
       startDate: new Date('01/01/2023'),
       endDate: new Date('01/01/2025'),
-    });
+    })
 
     // Grant Personnel.
     baseProgramPersonnel = await ProgramPersonnel.create({
       ...BASE_PERSONNEL,
       grantId: grant.id,
       programId: program.id,
-    });
+    })
 
     // Grant Personnel.
     programPersonnel = await ProgramPersonnel.create({
@@ -103,22 +98,22 @@ describe('ProgramPersonnel', () => {
       email: 'john.doe@test.gov',
       effectiveDate: '2023-01-01',
       mapsTo: baseProgramPersonnel.id,
-    });
-  });
+    })
+  })
   afterAll(async () => {
     // Delete Grant Personnel.
     await ProgramPersonnel.destroy({
       where: {
         grantId: grant.id,
       },
-    });
+    })
 
     // Delete Program.
     await Program.destroy({
       where: {
         id: [program.id, ehsProgram.id, weirdProgram.id],
       },
-    });
+    })
 
     // Delete Grant.
     await Grant.destroy({
@@ -126,17 +121,17 @@ describe('ProgramPersonnel', () => {
         id: grant.id,
       },
       individualHooks: true,
-    });
+    })
 
     // Delete Recipient.
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
-    });
+    })
 
-    await db.sequelize.close();
-  });
+    await db.sequelize.close()
+  })
 
   it('programPersonnel', async () => {
     // Get Grant Personnel.
@@ -145,21 +140,21 @@ describe('ProgramPersonnel', () => {
         grantId: grant.id,
         active: true,
       },
-    });
-    const ppId = programPersonnelToCheck.id;
+    })
+    const ppId = programPersonnelToCheck.id
     // Assert all grant personnel values.
-    expect(programPersonnelToCheck).toHaveProperty('id');
-    expect(programPersonnelToCheck.grantId).toEqual(grant.id);
-    expect(programPersonnelToCheck.programId).toEqual(program.id);
-    expect(programPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES[0]);
-    expect(programPersonnelToCheck.active).toEqual(true);
-    expect(programPersonnelToCheck.prefix).toEqual('Mr.');
-    expect(programPersonnelToCheck.firstName).toEqual('John');
-    expect(programPersonnelToCheck.lastName).toEqual('Doe');
-    expect(programPersonnelToCheck.suffix).toEqual('Jr.');
-    expect(programPersonnelToCheck.title).toEqual('Director');
-    expect(programPersonnelToCheck.email).toEqual('john.doe@test.gov');
-    expect(programPersonnelToCheck.mapsTo).toEqual(baseProgramPersonnel.id);
+    expect(programPersonnelToCheck).toHaveProperty('id')
+    expect(programPersonnelToCheck.grantId).toEqual(grant.id)
+    expect(programPersonnelToCheck.programId).toEqual(program.id)
+    expect(programPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES[0])
+    expect(programPersonnelToCheck.active).toEqual(true)
+    expect(programPersonnelToCheck.prefix).toEqual('Mr.')
+    expect(programPersonnelToCheck.firstName).toEqual('John')
+    expect(programPersonnelToCheck.lastName).toEqual('Doe')
+    expect(programPersonnelToCheck.suffix).toEqual('Jr.')
+    expect(programPersonnelToCheck.title).toEqual('Director')
+    expect(programPersonnelToCheck.email).toEqual('john.doe@test.gov')
+    expect(programPersonnelToCheck.mapsTo).toEqual(baseProgramPersonnel.id)
 
     // Update Grant Personnel.
     programPersonnelToCheck = await programPersonnel.update({
@@ -174,30 +169,30 @@ describe('ProgramPersonnel', () => {
       email: 'jane.doe@test.gov',
       effectiveDate: '2023-01-02',
       mapsTo: null,
-    });
+    })
 
     // Assert all grant personnel values.
     programPersonnelToCheck = await ProgramPersonnel.findOne({
       where: {
         id: ppId,
       },
-    });
+    })
 
-    expect(programPersonnelToCheck).toHaveProperty('id');
-    expect(programPersonnelToCheck.grantId).toEqual(grant.id);
-    expect(programPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES[4]);
-    expect(programPersonnelToCheck.active).toEqual(false);
-    expect(programPersonnelToCheck.prefix).toEqual('Ms.');
-    expect(programPersonnelToCheck.firstName).toEqual('Jane');
-    expect(programPersonnelToCheck.lastName).toEqual('Doe');
-    expect(programPersonnelToCheck.suffix).toEqual('Sr2.');
-    expect(programPersonnelToCheck.title).toEqual('Director2');
-    expect(programPersonnelToCheck.email).toEqual('jane.doe@test.gov');
-    expect(programPersonnelToCheck.mapsTo).toEqual(null);
+    expect(programPersonnelToCheck).toHaveProperty('id')
+    expect(programPersonnelToCheck.grantId).toEqual(grant.id)
+    expect(programPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES[4])
+    expect(programPersonnelToCheck.active).toEqual(false)
+    expect(programPersonnelToCheck.prefix).toEqual('Ms.')
+    expect(programPersonnelToCheck.firstName).toEqual('Jane')
+    expect(programPersonnelToCheck.lastName).toEqual('Doe')
+    expect(programPersonnelToCheck.suffix).toEqual('Sr2.')
+    expect(programPersonnelToCheck.title).toEqual('Director2')
+    expect(programPersonnelToCheck.email).toEqual('jane.doe@test.gov')
+    expect(programPersonnelToCheck.mapsTo).toEqual(null)
 
     // check virtual fields
-    expect(programPersonnelToCheck.fullName).toEqual('Jane Doe');
-    expect(programPersonnelToCheck.nameAndRole).toEqual('Jane Doe - director');
+    expect(programPersonnelToCheck.fullName).toEqual('Jane Doe')
+    expect(programPersonnelToCheck.nameAndRole).toEqual('Jane Doe - director')
 
     programPersonnelToCheck = await ProgramPersonnel.findOne({
       where: {
@@ -209,11 +204,11 @@ describe('ProgramPersonnel', () => {
           as: 'program',
         },
       ],
-    });
+    })
 
-    expect(programPersonnelToCheck.fullName).toEqual('Jane Doe');
-    expect(programPersonnelToCheck.nameAndRole).toEqual('Jane Doe - Director for Head Start');
-  });
+    expect(programPersonnelToCheck.fullName).toEqual('Jane Doe')
+    expect(programPersonnelToCheck.nameAndRole).toEqual('Jane Doe - Director for Head Start')
+  })
 
   it('grant returns grant personnel', async () => {
     // Get Grant.
@@ -227,11 +222,11 @@ describe('ProgramPersonnel', () => {
           as: 'programPersonnel',
         },
       ],
-    });
+    })
 
     // Assert there are two program personnel.
-    expect(grant.programPersonnel.length).toBe(2);
-  });
+    expect(grant.programPersonnel.length).toBe(2)
+  })
 
   it('returns the correct data for CFO', async () => {
     await ProgramPersonnel.bulkCreate([
@@ -240,7 +235,8 @@ describe('ProgramPersonnel', () => {
         role: 'cfo',
         programId: program.id,
         grantId: grant.id,
-      }, {
+      },
+      {
         ...BASE_PERSONNEL,
         role: 'cfo',
         programId: ehsProgram.id,
@@ -251,7 +247,8 @@ describe('ProgramPersonnel', () => {
         role: 'cfo',
         programId: weirdProgram.id,
         grantId: grant.id,
-      }]);
+      },
+    ])
 
     const personnel = await ProgramPersonnel.findAll({
       where: {
@@ -264,14 +261,14 @@ describe('ProgramPersonnel', () => {
           as: 'program',
         },
       ],
-    });
+    })
 
-    expect(personnel.length).toBe(3);
+    expect(personnel.length).toBe(3)
 
-    const fullRoles = personnel.map((p) => p.fullRole);
+    const fullRoles = personnel.map((p) => p.fullRole)
 
-    expect(fullRoles).toContain('Chief Financial Officer for Head Start');
-    expect(fullRoles).toContain('Chief Financial Officer for Early Head Start');
-    expect(fullRoles).toContain('Chief Financial Officer');
-  });
-});
+    expect(fullRoles).toContain('Chief Financial Officer for Head Start')
+    expect(fullRoles).toContain('Chief Financial Officer for Early Head Start')
+    expect(fullRoles).toContain('Chief Financial Officer')
+  })
+})

@@ -1,12 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(/* sql */`
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.sequelize.query(
+        /* sql */ `
 
       -- Get all unwanted objectives for this Goal.
       DROP TABLE IF EXISTS ObjectivesToRemove;
@@ -126,14 +125,14 @@ module.exports = {
       DROP TABLE IF EXISTS DeleteCourses;
       DROP TABLE IF EXISTS DeleteAROs;
       DROP TABLE IF EXISTS DeleteObjectives;
-        `, { transaction });
-    },
-  ),
+        `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
       // No need to put back unwanted objectives.
-    },
-  ),
-};
+    }),
+}

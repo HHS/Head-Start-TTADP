@@ -1,12 +1,13 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
+      await queryInterface.sequelize.query(
+        /* sql */ `
         ---------- The steps -------------------------------------------------
         -- 1: Find all Goals that are open FEI, Monitoring, or CLASS goals
         -- 2: Complete any In Progress Objectives not on those Goals
@@ -195,17 +196,22 @@ module.exports = {
         ;
 
 
-    `, { transaction });
-    });
+    `,
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
+      await queryInterface.sequelize.query(
+        /* sql */ `
         ALTER TABLE "Goals" DROP COLUMN "prestandard";
-    `, { transaction });
-    });
+    `,
+        { transaction }
+      )
+    })
   },
-};
+}

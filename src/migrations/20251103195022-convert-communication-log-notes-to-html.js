@@ -4,17 +4,19 @@ const AUDIT_SETTINGS_SQL = `
     set_config('audit.transactionId', NULL, TRUE) as "transactionId",
     set_config('audit.sessionSig', :sessionSig, TRUE) as "sessionSig",
     set_config('audit.auditDescriptor', 'RUN MIGRATIONS', TRUE) as "auditDescriptor";
-`;
+`
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
-    await queryInterface.sequelize.query(AUDIT_SETTINGS_SQL, {
-      transaction,
-      replacements: { sessionSig: __filename },
-    });
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.sequelize.query(AUDIT_SETTINGS_SQL, {
+        transaction,
+        replacements: { sessionSig: __filename },
+      })
 
-    return queryInterface.sequelize.query(`
+      return queryInterface.sequelize.query(
+        `
       UPDATE "CommunicationLogs"
       SET data = jsonb_set(
         data,
@@ -50,16 +52,20 @@ module.exports = {
         true
       )
       WHERE data ? 'notes';
-    `, { transaction });
-  }),
+    `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
-    await queryInterface.sequelize.query(AUDIT_SETTINGS_SQL, {
-      transaction,
-      replacements: { sessionSig: __filename },
-    });
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.sequelize.query(AUDIT_SETTINGS_SQL, {
+        transaction,
+        replacements: { sessionSig: __filename },
+      })
 
-    return queryInterface.sequelize.query(`
+      return queryInterface.sequelize.query(
+        `
       UPDATE "CommunicationLogs"
       SET data = jsonb_set(
         data,
@@ -90,6 +96,8 @@ module.exports = {
         true
       )
       WHERE data ? 'notes';
-    `, { transaction });
-  }),
-};
+    `,
+        { transaction }
+      )
+    }),
+}

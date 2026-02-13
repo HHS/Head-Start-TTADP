@@ -1,4 +1,4 @@
-import { ActivityReportApprover, User } from '../models';
+import { ActivityReportApprover, User } from '../models'
 
 /**
  * Update or create new Approver
@@ -6,12 +6,7 @@ import { ActivityReportApprover, User } from '../models';
  * @param {*} values - object containing Approver properties to create or update
  */
 export async function upsertApprover(values) {
-  const {
-    activityReportId,
-    userId,
-    status,
-    note,
-  } = values;
+  const { activityReportId, userId, status, note } = values
 
   let approver = await ActivityReportApprover.findOne({
     where: {
@@ -19,30 +14,30 @@ export async function upsertApprover(values) {
       userId,
     },
     paranoid: false,
-  });
+  })
 
   if (approver) {
     // we always want to recalculate updatedAt
     // so we trigger the hooks, since we are no longer
     // using upsert
-    approver.changed('updatedAt', true);
-    approver.set('updatedAt', new Date());
+    approver.changed('updatedAt', true)
+    approver.set('updatedAt', new Date())
 
     if (status) {
-      approver.set('status', status);
+      approver.set('status', status)
     }
 
     if (note) {
-      approver.set('note', values.note);
+      approver.set('note', values.note)
     }
 
     await approver.save({
       individualHooks: true,
-    });
+    })
   }
 
   if (!approver) {
-    approver = await ActivityReportApprover.create(values, { individualHooks: true });
+    approver = await ActivityReportApprover.create(values, { individualHooks: true })
   }
 
   // If soft deleted record, restore instead.
@@ -50,19 +45,19 @@ export async function upsertApprover(values) {
     return ActivityReportApprover.restore({
       where: { id: approver.id },
       individualHooks: true,
-    });
+    })
   }
 
-  approver = approver.get({ plain: true });
+  approver = approver.get({ plain: true })
   const user = await User.findOne({
     attributes: ['email', 'name', 'fullName'],
     where: { id: approver.userId },
-  });
+  })
   if (user) {
-    approver.user = user.get({ plain: true });
+    approver.user = user.get({ plain: true })
   }
 
-  return approver;
+  return approver
 }
 
 /**
@@ -75,11 +70,11 @@ export async function upsertApprover(values) {
 export async function syncApprovers(activityReportId, userIds = []) {
   const preexistingApprovers = await ActivityReportApprover.findAll({
     where: { activityReportId },
-  });
+  })
 
   // Destroy any preexisting approvers now missing from userId request param
   if (preexistingApprovers && preexistingApprovers.length > 0) {
-    const approversToDestroy = preexistingApprovers.filter((a) => !userIds.includes(a.userId));
+    const approversToDestroy = preexistingApprovers.filter((a) => !userIds.includes(a.userId))
     const destroyPromises = approversToDestroy.map(async (approver) => {
       if (!approver.note && !approver.status) {
         // Approver was assigned never reviewed, nothing for UI
@@ -88,25 +83,27 @@ export async function syncApprovers(activityReportId, userIds = []) {
           where: { id: approver.id },
           individualHooks: true,
           force: true,
-        });
+        })
       }
       // Approver had reviewed the report, soft delete
       // so we can still display status and note
       return ActivityReportApprover.destroy({
         where: { id: approver.id },
         individualHooks: true,
-      });
-    });
-    await Promise.all(destroyPromises);
+      })
+    })
+    await Promise.all(destroyPromises)
   }
 
   // Create or restore approvers
   if (userIds.length > 0) {
-    const upsertApproverPromises = userIds.map(async (userId) => upsertApprover({
-      activityReportId,
-      userId,
-    }));
-    await Promise.all(upsertApproverPromises);
+    const upsertApproverPromises = userIds.map(async (userId) =>
+      upsertApprover({
+        activityReportId,
+        userId,
+      })
+    )
+    await Promise.all(upsertApproverPromises)
   }
 
   return ActivityReportApprover.findAll({
@@ -119,5 +116,5 @@ export async function syncApprovers(activityReportId, userIds = []) {
         raw: true,
       },
     ],
-  });
+  })
 }

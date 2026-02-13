@@ -1,4 +1,4 @@
-const { Model } = require('sequelize');
+const { Model } = require('sequelize')
 
 export default (sequelize, DataTypes) => {
   class Course extends Model {
@@ -6,57 +6,60 @@ export default (sequelize, DataTypes) => {
       Course.hasMany(models.Course, {
         foreignKey: 'mapsTo',
         as: 'mapsFromCourse',
-      });
+      })
       Course.belongsTo(models.Course, {
         foreignKey: 'mapsTo',
         as: 'mapsToCourse',
-      });
+      })
     }
   }
-  Course.init({
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false,
-    },
-    name: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    persistsOnUpload: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
-    },
-    mapsTo: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: {
-          tableName: 'Course',
+  Course.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        allowNull: false,
+      },
+      name: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      persistsOnUpload: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      mapsTo: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: {
+            tableName: 'Course',
+          },
+          key: 'id',
         },
-        key: 'id',
+      },
+      updatedAt: {
+        allowNull: false,
+        type: DataTypes.DATE,
+      },
+      createdAt: {
+        allowNull: false,
+        type: DataTypes.DATE,
+      },
+      deletedAt: {
+        allowNull: true,
+        type: DataTypes.DATE,
       },
     },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-    },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-    },
-    deletedAt: {
-      allowNull: true,
-      type: DataTypes.DATE,
-    },
-  }, {
-    sequelize,
-    modelName: 'Course',
-    tableName: 'Courses',
-    freezeTableName: true,
-    paranoid: true,
-  });
-  return Course;
-};
+    {
+      sequelize,
+      modelName: 'Course',
+      tableName: 'Courses',
+      freezeTableName: true,
+      paranoid: true,
+    }
+  )
+  return Course
+}

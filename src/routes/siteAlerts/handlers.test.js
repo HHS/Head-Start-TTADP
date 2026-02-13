@@ -1,12 +1,12 @@
-import moment from 'moment';
-import faker from '@faker-js/faker';
-import { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } from '@ttahub/common';
-import { SiteAlert, User, sequelize } from '../../models';
-import { getSiteAlerts } from './handlers';
+import moment from 'moment'
+import faker from '@faker-js/faker'
+import { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } from '@ttahub/common'
+import { SiteAlert, User, sequelize } from '../../models'
+import { getSiteAlerts } from './handlers'
 
 describe('site alerts', () => {
-  let mockUser;
-  let newestAlert;
+  let mockUser
+  let newestAlert
 
   beforeAll(async () => {
     mockUser = await User.create({
@@ -16,10 +16,10 @@ describe('site alerts', () => {
       homeRegionId: 1,
       hsesUsername: faker.internet.userName(),
       lastLogin: new Date(),
-    });
+    })
 
     // Create a published alert
-    await SiteAlert.create(({
+    await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().add(1, 'day').format('YYYY-MM-DD'),
       startDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
@@ -28,10 +28,10 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    }));
+    })
 
     // create a second published alert, the newest one
-    newestAlert = await SiteAlert.create(({
+    newestAlert = await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().add(1, 'day').format('YYYY-MM-DD'),
       startDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
@@ -40,10 +40,10 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    }));
+    })
 
     // create a draft alert
-    await SiteAlert.create(({
+    await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().add(1, 'day').format('YYYY-MM-DD'),
       startDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
@@ -52,10 +52,10 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    }));
+    })
 
     // create an alert that's already ended
-    await SiteAlert.create(({
+    await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
       startDate: moment().subtract(2, 'day').format('YYYY-MM-DD'),
@@ -64,10 +64,10 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.EMERGENCY,
       size: ALERT_SIZES.STANDARD,
-    }));
+    })
 
     // create an alert that hasn't started yet
-    await SiteAlert.create(({
+    await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().add(2, 'day').format('YYYY-MM-DD'),
       startDate: moment().add(1, 'day').format('YYYY-MM-DD'),
@@ -76,31 +76,31 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    }));
-  });
+    })
+  })
 
   afterAll(async () => {
     await SiteAlert.destroy({
       where: {
         userId: mockUser.id,
       },
-    });
+    })
 
     await User.destroy({
       where: {
         id: mockUser.id,
       },
-    });
+    })
 
-    await sequelize.close();
-  });
+    await sequelize.close()
+  })
 
   it('fetches the most recently created published alert', async () => {
     const mockResponse = {
       json: jest.fn(),
-    };
+    }
 
-    await getSiteAlerts({}, mockResponse);
+    await getSiteAlerts({}, mockResponse)
 
     expect(mockResponse.json).toHaveBeenCalledWith({
       id: newestAlert.id,
@@ -111,21 +111,21 @@ describe('site alerts', () => {
       title: newestAlert.title,
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    });
-  });
+    })
+  })
 
   it('handles errors', async () => {
     const mockResponse = {
       sendStatus: jest.fn(),
-    };
+    }
 
-    const oldFindAll = SiteAlert.findAll;
-    const mockFindAll = jest.fn().mockRejectedValue(new Error('test error'));
-    SiteAlert.findAll = mockFindAll;
+    const oldFindAll = SiteAlert.findAll
+    const mockFindAll = jest.fn().mockRejectedValue(new Error('test error'))
+    SiteAlert.findAll = mockFindAll
 
-    await getSiteAlerts({}, mockResponse);
+    await getSiteAlerts({}, mockResponse)
 
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(500);
-    SiteAlert.findAll = oldFindAll;
-  });
-});
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(500)
+    SiteAlert.findAll = oldFindAll
+  })
+})

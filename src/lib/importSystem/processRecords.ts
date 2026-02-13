@@ -1,16 +1,11 @@
-import { Op } from 'sequelize';
-import {
-  remap,
-  collectChangedValues,
-  lowercaseKeys,
-  createRanges,
-} from '../dataObjectUtils';
-import { filterDataToModel, modelForTable } from '../modelUtils';
-import { getHash } from '../stream/hasher';
-import XMLStream from '../stream/xml';
-import db from '../../models';
-import { auditLogger } from '../../logger';
-import { ProcessDefinition } from './types';
+import { Op } from 'sequelize'
+import { remap, collectChangedValues, lowercaseKeys, createRanges } from '../dataObjectUtils'
+import { filterDataToModel, modelForTable } from '../modelUtils'
+import { getHash } from '../stream/hasher'
+import type XMLStream from '../stream/xml'
+import db from '../../models'
+import { auditLogger } from '../../logger'
+import type { ProcessDefinition } from './types'
 
 /**
  * Process records according to the given process definition and XML client.
@@ -27,43 +22,43 @@ const processRecords = async (
   xmlClient: XMLStream,
   fileDate: Date,
   recordActions: {
-    inserts,
-    updates,
-    deletes,
-    errors,
+    inserts
+    updates
+    deletes
+    errors
   } = {
     inserts: [],
     updates: [],
     deletes: [],
     errors: [],
-  },
+  }
 ): Promise<{
-  inserts,
-  updates,
-  deletes,
-  errors,
+  inserts
+  updates
+  deletes
+  errors
 }> => {
-  let record;
+  let record
   try {
-    record = await xmlClient.getNextObject(true);
+    record = await xmlClient.getNextObject(true)
   } catch (err) {
     // record the error into the recordActions and continue on successfully as
     // other entries may be process successfully
-    recordActions.errors.push(err.message);
-    auditLogger.log('error', ` processRecords getNextObject ${err.message}`, err);
+    recordActions.errors.push(err.message)
+    auditLogger.log('error', ` processRecords getNextObject ${err.message}`, err)
   }
 
-  // @ts-ignore
-  let model;
+  // @ts-expect-error
+  let model
   try {
-    model = modelForTable(db, processDefinition.tableName);
+    model = modelForTable(db, processDefinition.tableName)
   } catch (err) {
     // record the error into the recordActions
-    recordActions.errors.push(err.message);
-    auditLogger.log('error', ` processRecords modelForTable ${err.message}`, err);
+    recordActions.errors.push(err.message)
+    auditLogger.log('error', ` processRecords modelForTable ${err.message}`, err)
 
     // Unable to continue as a model is required to record any information
-    return Promise.reject(recordActions);
+    return Promise.reject(recordActions)
   }
 
   if (record) {
@@ -82,35 +77,28 @@ const processRecords = async (
 
       // Format the record data using the remap method
       // This changes the attribute names and structure into what will be saved
-      const { mapped: data } = remap(
-        record,
-        lowercaseKeys(processDefinition.remapDef),
-        {
-          keepUnmappedValues: false,
-          // defines a custom fuction that will replace the resulting structure
-          // with the result of each function.
-          targetFunctions: {
-            // take in an object and generate a hash of that object
-            'toHash.*': (toHash) => ({ hash: getHash(toHash) }),
-          },
+      const { mapped: data } = remap(record, lowercaseKeys(processDefinition.remapDef), {
+        keepUnmappedValues: false,
+        // defines a custom fuction that will replace the resulting structure
+        // with the result of each function.
+        targetFunctions: {
+          // take in an object and generate a hash of that object
+          'toHash.*': (toHash) => ({ hash: getHash(toHash) }),
         },
-      );
+      })
 
       // Filter the data to match the expected model
-      const {
-        matched: filteredData,
-        unmatched: droppedData,
-      } = await filterDataToModel(data, model);
+      const { matched: filteredData, unmatched: droppedData } = await filterDataToModel(data, model)
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const recordKey: Record<string, any> = {};
+      const recordKey: Record<string, any> = {}
       processDefinition.keys.forEach((key) => {
-        const value = filteredData[key];
+        const value = filteredData[key]
         if (value) {
-          recordKey[key] = value;
+          recordKey[key] = value
         }
         // TODO: handle case where all/part of the key may have been dropped
-      });
+      })
       if (Object.keys(droppedData).length > 0) {
         // TODO: add some kind of note/warning that mapped data was filtered out at the model level
         // The message should include the importDataFileId, the recordKey, and the column names.
@@ -122,7 +110,7 @@ const processRecords = async (
         where: {
           ...recordKey,
         },
-      });
+      })
 
       if (!currentData) {
         // If the record is new, create it
@@ -135,12 +123,12 @@ const processRecords = async (
           {
             individualHooks: true,
             returning: true,
-          },
-        );
-        recordActions.inserts.push(insert);
+          }
+        )
+        recordActions.inserts.push(insert)
       } else if (fileDate > currentData.sourceUpdatedAt) {
         // If the record already exists, find the delta then update it
-        const delta = collectChangedValues(filteredData, currentData);
+        const delta = collectChangedValues(filteredData, currentData)
         const update = model.update(
           {
             ...delta,
@@ -152,15 +140,15 @@ const processRecords = async (
             where: { id: currentData.id },
             individualHooks: true,
             returning: true,
-          },
-        );
-        recordActions.updates.push(update);
+          }
+        )
+        recordActions.updates.push(update)
       }
     } /* istanbul ignore next: hard to test errors */ catch (err) {
       // record the error into the recordActions and continue on successfully as
       // other entries may be process successfully
-      recordActions.errors.push(err.message);
-      auditLogger.log('error', ` processRecords create/update ${err.message}`, err);
+      recordActions.errors.push(err.message)
+      auditLogger.log('error', ` processRecords create/update ${err.message}`, err)
     }
   } else {
     try {
@@ -169,28 +157,19 @@ const processRecords = async (
       // 3. recordActions.delete.push(promises)
       // 4. pass back recordActions
 
-      const [
-        affectedDataInserts,
-        affectedDataUpdates,
-      ] = await Promise.all([
-        Promise.all(recordActions.inserts),
-        Promise.all(recordActions.updates),
-      ]);
+      const [affectedDataInserts, affectedDataUpdates] = await Promise.all([Promise.all(recordActions.inserts), Promise.all(recordActions.updates)])
 
       // Flatten the affectedDataUpdates array and extract the objects
       const flattenedUpdates = affectedDataUpdates.flatMap(
         // Assuming the second element of each sub-array is the array of objects
-        (update) => (Array.isArray(update[1]) ? update[1] : []),
-      );
+        (update) => (Array.isArray(update[1]) ? update[1] : [])
+      )
 
       // Combine the affected data from inserts and flattened updates
-      const affectedData = [
-        ...affectedDataInserts,
-        ...flattenedUpdates,
-      ];
+      const affectedData = [...affectedDataInserts, ...flattenedUpdates]
 
-      const affectedDataIds = affectedData?.map(({ id }) => id).filter((id) => id) || [];
-      const affectedRanges = createRanges(affectedDataIds);
+      const affectedDataIds = affectedData?.map(({ id }) => id).filter((id) => id) || []
+      const affectedRanges = createRanges(affectedDataIds)
 
       // mark the source date when the records no longer are present in the processed file
       // "Delete" all records that are not in the affectedData array
@@ -207,27 +186,22 @@ const processRecords = async (
               sourceDeletedAt: null,
             },
             individualHooks: true,
-          },
-        );
+          }
+        )
 
-        recordActions.deletes.push(destroys);
+        recordActions.deletes.push(destroys)
       }
     } /* istanbul ignore next: hard to test errors */ catch (err) {
       // record the error into the recordActions
-      recordActions.deletes.push(err.message);
-      auditLogger.log('error', ` processRecords destroy ${err.message}`, err);
+      recordActions.deletes.push(err.message)
+      auditLogger.log('error', ` processRecords destroy ${err.message}`, err)
     }
 
-    return Promise.resolve(recordActions);
+    return Promise.resolve(recordActions)
   }
 
   // Recursively call the processRecords function to process the next record
-  return processRecords(
-    processDefinition,
-    xmlClient,
-    fileDate,
-    recordActions,
-  );
-};
+  return processRecords(processDefinition, xmlClient, fileDate, recordActions)
+}
 
-export default processRecords;
+export default processRecords

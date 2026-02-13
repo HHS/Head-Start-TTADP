@@ -1,9 +1,9 @@
-import { expandArrayContains } from './utils';
+import { expandArrayContains } from './utils'
 
 export function withProgramSpecialist(names) {
-  return expandArrayContains('programSpecialistName', names, false);
+  return expandArrayContains('programSpecialistName', names, false)
 }
 
 export function withoutProgramSpecialist(names) {
-  return expandArrayContains('programSpecialistName', names, true);
+  return expandArrayContains('programSpecialistName', names, true)
 }

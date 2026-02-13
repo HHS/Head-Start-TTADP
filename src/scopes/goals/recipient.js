@@ -1,5 +1,5 @@
-import { Op } from 'sequelize';
-import { filterAssociation } from './utils';
+import { Op } from 'sequelize'
+import { filterAssociation } from './utils'
 
 const recipientName = `
 SELECT DISTINCT "Goals"."id"
@@ -8,20 +8,16 @@ INNER JOIN "Grants"
 ON "Grants"."id" = "Goals"."grantId"
 INNER JOIN "Recipients"
 ON "Recipients"."id" = "Grants"."recipientId"
-WHERE "Recipients".NAME`;
+WHERE "Recipients".NAME`
 
 export function withRecipientName(names) {
   return {
-    [Op.and]: [
-      filterAssociation(recipientName, names, false),
-    ],
-  };
+    [Op.and]: [filterAssociation(recipientName, names, false)],
+  }
 }
 
 export function withoutRecipientName(names) {
   return {
-    [Op.and]: [
-      filterAssociation(recipientName, names, true),
-    ],
-  };
+    [Op.and]: [filterAssociation(recipientName, names, true)],
+  }
 }

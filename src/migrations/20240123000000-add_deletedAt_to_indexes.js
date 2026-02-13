@@ -1,13 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, _Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       await queryInterface.sequelize.query(
         `
         -- Original plan: In tables that use Sequelize's built-in "deletedAt" column, exclude deleted records
@@ -56,10 +54,10 @@ module.exports = {
         ALTER TABLE "ValidFor" ADD CONSTRAINT "ValidFor_option_unique" UNIQUE
         USING INDEX "ValidFor_option_unique";
         `,
-        { transaction },
-      );
-    });
+        { transaction }
+      )
+    })
   },
 
   down: async () => {},
-};
+}

@@ -1,8 +1,6 @@
 /* eslint-disable no-restricted-syntax */
-import {
-  ActivityReport,
-} from '../models';
-import { auditLogger } from '../logger';
+import { ActivityReport } from '../models'
+import { auditLogger } from '../logger'
 
 /**
  * changeReportStatus script changes status of activity reports based on ids and status.
@@ -10,20 +8,20 @@ import { auditLogger } from '../logger';
  */
 
 export default async function changeReportStatus(ids, status) {
-  const idsArray = ids.split(',');
+  const idsArray = ids.split(',')
   for await (const id of idsArray) {
-    const report = await ActivityReport.unscoped().findOne({ where: { id } });
+    const report = await ActivityReport.unscoped().findOne({ where: { id } })
 
     if (report) {
-      auditLogger.info(`Changing status of report: ${id} to ${status}`);
+      auditLogger.info(`Changing status of report: ${id} to ${status}`)
       await report.update(
         {
           submissionStatus: status,
         },
-        { individualHooks: true },
-      );
+        { individualHooks: true }
+      )
     } else {
-      auditLogger.info(`Couldn't find any reports with the id: ${id}`);
+      auditLogger.info(`Couldn't find any reports with the id: ${id}`)
     }
   }
 }

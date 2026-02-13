@@ -1,6 +1,4 @@
-import {
-  sequelize,
-} from '../models';
+import { sequelize } from '../models'
 /**
  *
  * @param {String} sortBy
@@ -12,38 +10,38 @@ import {
 // b) it's the first aliased variable due to the way Sequelize minifies arrays
 
 // storing this in a constant so it looks a little less magical/stupid
-export const STATUS_SORT = '_0';
+export const STATUS_SORT = '_0'
 
 const orderGoalsBy = (sortBy, sortDir) => {
-  let result = '';
+  let result = ''
   switch (sortBy) {
     case 'goalStatus':
       result = [
         [sequelize.col(STATUS_SORT), sortDir],
         [sequelize.col('createdAt'), 'DESC'],
-      ];
-      break;
+      ]
+      break
     case 'createdOn':
       result = [
         [sequelize.col('createdAt'), sortDir],
         [sequelize.col(STATUS_SORT), 'ASC'],
-      ];
-      break;
+      ]
+      break
     case 'name':
       result = [
         [sequelize.col('name'), sortDir],
         [sequelize.col(STATUS_SORT), 'ASC'],
-      ];
-      break;
+      ]
+      break
     case 'id':
     default:
       result = [
         [sequelize.col('id'), sortDir],
         [sequelize.col(STATUS_SORT), sortDir],
-      ];
-      break;
+      ]
+      break
   }
-  return result;
-};
+  return result
+}
 
-export default orderGoalsBy;
+export default orderGoalsBy

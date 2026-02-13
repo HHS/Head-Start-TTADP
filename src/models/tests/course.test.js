@@ -1,4 +1,4 @@
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES } from '@ttahub/common'
 import db, {
   User,
   Course,
@@ -10,7 +10,7 @@ import db, {
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveCourse,
-} from '..';
+} from '..'
 
 const mockUser = {
   name: 'Tim Test',
@@ -33,7 +33,7 @@ const mockUser = {
     },
   ],
   flags: [],
-};
+}
 
 const mockGrant = {
   regionId: 1,
@@ -45,7 +45,7 @@ const mockGrant = {
   grantSpecialistEmail: null,
   stateCode: 'NY',
   annualFundingMonth: 'October',
-};
+}
 
 const sampleReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
@@ -73,24 +73,24 @@ const sampleReport = {
     homeRegionId: 1,
   },
   version: 2,
-};
+}
 
 describe('course', () => {
-  let user;
-  let course;
-  let updateCourse;
-  let report;
-  let recipient;
-  let grant;
-  let goal;
-  let objective;
-  let activityReportGoal;
-  let activityReportObjective;
-  let activityReportObjectiveCourse;
+  let user
+  let course
+  let updateCourse
+  let report
+  let recipient
+  let grant
+  let goal
+  let objective
+  let activityReportGoal
+  let activityReportObjective
+  let activityReportObjectiveCourse
 
   beforeAll(async () => {
     // Create mock user.
-    user = await User.create({ ...mockUser });
+    user = await User.create({ ...mockUser })
 
     // Create recipient.
     recipient = await Recipient.create({
@@ -98,7 +98,7 @@ describe('course', () => {
       uei: 'NNA5N2KGHGM2',
       name: 'IPD Recipient',
       recipientType: 'IPD Recipient',
-    });
+    })
 
     // Create grant.
     grant = await Grant.create({
@@ -108,34 +108,30 @@ describe('course', () => {
       recipientId: recipient.id,
       programSpecialistName: user.name,
       programSpecialistEmail: user.email,
-    });
+    })
 
     // Create goal.
-    goal = await Goal.create(
-      {
-        name: 'ipd course goal 1',
-        grantId: grant.id,
-      },
-    );
+    goal = await Goal.create({
+      name: 'ipd course goal 1',
+      grantId: grant.id,
+    })
 
     // Create objective.
-    objective = await Objective.create(
-      {
-        title: 'IPD course objective ',
-        goalId: goal.id,
-        status: 'Not Started',
-      },
-    );
+    objective = await Objective.create({
+      title: 'IPD course objective ',
+      goalId: goal.id,
+      status: 'Not Started',
+    })
 
     // Create activity report.
-    report = await ActivityReport.create(sampleReport);
+    report = await ActivityReport.create(sampleReport)
 
     // Create activity report goal.
     activityReportGoal = await ActivityReportGoal.create({
       activityReportId: report.id,
       goalId: goal.id,
       isActivelyEdited: false,
-    });
+    })
 
     // Create activity report objective.
     activityReportObjective = await ActivityReportObjective.create({
@@ -143,25 +139,25 @@ describe('course', () => {
       activityReportId: report.id,
       ttaProvided: 'ipd aro Goal',
       status: objective.status,
-    });
+    })
 
     course = await Course.create({
       name: 'Test IpdCourse',
       nameLookUp: 'testipdCourse',
-    });
+    })
 
     // Create another course.
     updateCourse = await Course.create({
       name: 'Test IpdCourse 2',
       nameLookUp: 'testipdcourse2',
-    });
+    })
 
     // Create ActivityReportObjectiveCourse.
     activityReportObjectiveCourse = await ActivityReportObjectiveCourse.create({
       activityReportObjectiveId: activityReportObjective.id,
       courseId: course.id,
-    });
-  });
+    })
+  })
 
   afterAll(async () => {
     // Delete ActivityReportObjectiveCourse.
@@ -169,7 +165,7 @@ describe('course', () => {
       where: {
         id: activityReportObjectiveCourse.id,
       },
-    });
+    })
 
     // Delete Course.
     await Course.destroy({
@@ -177,28 +173,28 @@ describe('course', () => {
         id: [course.id, updateCourse.id],
       },
       force: true,
-    });
+    })
 
     // Delete activity report objective.
     await ActivityReportObjective.destroy({
       where: {
         id: activityReportObjective.id,
       },
-    });
+    })
 
     // Delete activity report goal.
     await ActivityReportGoal.destroy({
       where: {
         id: activityReportGoal.id,
       },
-    });
+    })
 
     // Delete activity report.
     await ActivityReport.destroy({
       where: {
         id: report.id,
       },
-    });
+    })
 
     // Delete objective.
     await Objective.destroy({
@@ -206,7 +202,7 @@ describe('course', () => {
         id: objective.id,
       },
       force: true,
-    });
+    })
 
     // Delete goal.
     await Goal.destroy({
@@ -214,7 +210,7 @@ describe('course', () => {
         id: goal.id,
       },
       force: true,
-    });
+    })
 
     // Delete grant.
     await Grant.destroy({
@@ -223,57 +219,63 @@ describe('course', () => {
       },
       force: true,
       individualHooks: true,
-    });
+    })
 
     // Delete recipient.
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
-    });
+    })
 
     // Delete mock user.
     await User.destroy({
       where: {
         id: user.id,
       },
-    });
+    })
 
-    await db.sequelize.close();
-  });
+    await db.sequelize.close()
+  })
 
   it('Update Course', async () => {
-    const newCourseName = 'Test IpdCourse Updated';
-    course.name = newCourseName;
-    await course.update({
-      name: newCourseName,
-    }, {
-      where: {
-        id: course.id,
+    const newCourseName = 'Test IpdCourse Updated'
+    course.name = newCourseName
+    await course.update(
+      {
+        name: newCourseName,
       },
-    });
-    course = await Course.findByPk(course.id);
-    expect(course.name).toBe(newCourseName);
-  });
+      {
+        where: {
+          id: course.id,
+        },
+      }
+    )
+    course = await Course.findByPk(course.id)
+    expect(course.name).toBe(newCourseName)
+  })
 
   it('ActivityReportObjective course', async () => {
     const aroCourse = await ActivityReportObjectiveCourse.findOne({
       where: {
         activityReportObjectiveId: activityReportObjective.id,
       },
-    });
-    expect(aroCourse.courseId).toBe(course.id);
+    })
+    expect(aroCourse.courseId).toBe(course.id)
 
     // Update activity report objective course.
-    aroCourse.courseId = updateCourse.id;
-    await ActivityReportObjectiveCourse.update({
-      courseId: updateCourse.id,
-    }, {
-      where: {
-        id: aroCourse.id,
+    aroCourse.courseId = updateCourse.id
+    await ActivityReportObjectiveCourse.update(
+      {
+        courseId: updateCourse.id,
       },
-    });
-    const updatedAroCourse = await ActivityReportObjectiveCourse.findByPk(aroCourse.id);
-    expect(updatedAroCourse.courseId).toBe(updateCourse.id);
-  });
-});
+      {
+        where: {
+          id: aroCourse.id,
+        },
+      }
+    )
+    const updatedAroCourse = await ActivityReportObjectiveCourse.findByPk(aroCourse.id)
+    expect(updatedAroCourse.courseId).toBe(updateCourse.id)
+  })
+})

@@ -1,12 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(/* sql */`
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.sequelize.query(
+        /* sql */ `
 
       -- 1. Get all r10 goals that are currently visible.
       WITH r_10_active_goals AS (
@@ -103,15 +102,15 @@ module.exports = {
         'objectives updated',
         COUNT("objectiveId")
       FROM update_objectives;
-        `, { transaction });
-    },
-  ),
+        `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
       // If we end up needing to revert this, it would be easier to use a separate
       // migration using the txid (or a similar identifier) after it's already set
-    },
-  ),
-};
+    }),
+}

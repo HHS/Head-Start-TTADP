@@ -1,9 +1,6 @@
-const { SCOPE_IDS } = require('@ttahub/common');
+const { SCOPE_IDS } = require('@ttahub/common')
 
-const {
-  READ_WRITE_TRAINING_REPORTS,
-  POC_TRAINING_REPORTS,
-} = SCOPE_IDS;
+const { READ_WRITE_TRAINING_REPORTS, POC_TRAINING_REPORTS } = SCOPE_IDS
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -19,15 +16,17 @@ module.exports = {
         regionId: 1,
         scopeId: POC_TRAINING_REPORTS,
       },
-    ];
+    ]
 
-    await queryInterface.bulkInsert('Permissions', readWriteTrainingReports, {});
-    await queryInterface.bulkInsert('UserRoles', [{
-      userId: 1,
-      roleId: 17, // National Center
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }]);
+    await queryInterface.bulkInsert('Permissions', readWriteTrainingReports, {})
+    await queryInterface.bulkInsert('UserRoles', [
+      {
+        userId: 1,
+        roleId: 17, // National Center
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ])
 
     await queryInterface.sequelize.query(`
     -- create a report for cuke
@@ -53,7 +52,7 @@ module.exports = {
         ARRAY
         [3]::INTEGER[] -- Harry Potter POC.
     );
-  `);
+  `)
   },
 
   async down(queryInterface) {
@@ -63,8 +62,8 @@ module.exports = {
       WHERE data->>'eventId' IN (
         'R01-PD-23-1037',
      );
-    `);
+    `)
 
-    await queryInterface.bulkDelete('Permissions', { userId: 5, scopeId: READ_WRITE_TRAINING_REPORTS }, {});
+    await queryInterface.bulkDelete('Permissions', { userId: 5, scopeId: READ_WRITE_TRAINING_REPORTS }, {})
   },
-};
+}

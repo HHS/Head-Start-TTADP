@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
 
 const getArTopicsSql = (topicsString) => `
       WITH unnested_topics AS (
@@ -9,7 +9,7 @@ const getArTopicsSql = (topicsString) => `
       SELECT
       DISTINCT "unnested_topics"."id"
       FROM "unnested_topics" "unnested_topics"
-      WHERE "unnested_topics"."name" IN (${topicsString})`;
+      WHERE "unnested_topics"."name" IN (${topicsString})`
 
 const getTopicsSql = (topicsString) => `
     SELECT
@@ -19,46 +19,39 @@ const getTopicsSql = (topicsString) => `
     ON "ActivityReportObjectives".id = "ActivityReportObjectiveTopics"."activityReportObjectiveId"
     INNER JOIN "Topics" "Topics"
     ON "ActivityReportObjectiveTopics"."topicId" = "Topics"."id"
-    WHERE "Topics"."name" IN (${topicsString})`;
+    WHERE "Topics"."name" IN (${topicsString})`
 
 export function withTopics(topics, _options, _userId, validTopics) {
-  if (!validTopics) return { id: { [Op.in]: [] } };
+  if (!validTopics) return { id: { [Op.in]: [] } }
 
-  const safeTopics = topics.filter((t) => validTopics.has(t));
-  if (safeTopics.length === 0) return { id: { [Op.in]: [] } };
+  const safeTopics = topics.filter((t) => validTopics.has(t))
+  if (safeTopics.length === 0) return { id: { [Op.in]: [] } }
 
-  const topicString = safeTopics.map((t) => sequelize.escape(t)).join(',');
-  const arTopicsQuery = getArTopicsSql(topicString);
-  const topicsQuery = getTopicsSql(topicString);
+  const topicString = safeTopics.map((t) => sequelize.escape(t)).join(',')
+  const arTopicsQuery = getArTopicsSql(topicString)
+  const topicsQuery = getTopicsSql(topicString)
   return {
-    [Op.or]: [
-      sequelize.literal(`("ActivityReport"."id" IN (${arTopicsQuery}))`),
-      sequelize.literal(`("ActivityReport"."id" IN (${topicsQuery}))`),
-    ],
-  };
+    [Op.or]: [sequelize.literal(`("ActivityReport"."id" IN (${arTopicsQuery}))`), sequelize.literal(`("ActivityReport"."id" IN (${topicsQuery}))`)],
+  }
 }
 
 export function withoutTopics(topics, _options, _userId, validTopics) {
   if (!validTopics) {
     return {
-      [Op.or]: [
-        sequelize.literal('"topics" IS NULL'),
-      ],
-    };
+      [Op.or]: [sequelize.literal('"topics" IS NULL')],
+    }
   }
 
-  const safeTopics = topics.filter((t) => validTopics.has(t));
+  const safeTopics = topics.filter((t) => validTopics.has(t))
   if (safeTopics.length === 0) {
     return {
-      [Op.or]: [
-        sequelize.literal('"topics" IS NULL'),
-      ],
-    };
+      [Op.or]: [sequelize.literal('"topics" IS NULL')],
+    }
   }
 
-  const topicString = safeTopics.map((t) => sequelize.escape(t)).join(',');
-  const arTopicsQuery = getArTopicsSql(topicString);
-  const topicsQuery = getTopicsSql(topicString);
+  const topicString = safeTopics.map((t) => sequelize.escape(t)).join(',')
+  const arTopicsQuery = getArTopicsSql(topicString)
+  const topicsQuery = getTopicsSql(topicString)
 
   return {
     [Op.or]: [
@@ -70,5 +63,5 @@ export function withoutTopics(topics, _options, _userId, validTopics) {
       },
       sequelize.literal('"topics" IS NULL'),
     ],
-  };
+  }
 }

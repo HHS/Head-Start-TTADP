@@ -1,13 +1,11 @@
-const {
-  prepMigration, removeTables,
-} = require('../lib/migration');
+const { prepMigration, removeTables } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       await queryInterface.createTable(
         'EventReportPilotGoals',
         {
@@ -56,16 +54,16 @@ module.exports = {
           createdAt: { allowNull: false, type: Sequelize.DATE },
           updatedAt: { allowNull: false, type: Sequelize.DATE },
         },
-        { transaction },
-      );
-    });
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
-      await removeTables(queryInterface, transaction, ['EventReportPilotGoals']);
-    });
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
+      await removeTables(queryInterface, transaction, ['EventReportPilotGoals'])
+    })
   },
-};
+}

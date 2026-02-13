@@ -5,7 +5,7 @@ const titles = [
   'Family Engagement Specialist',
   'Health Specialist',
   'Systems Specialist',
-];
+]
 
 const roles = [
   'Regional Program Manager',
@@ -23,36 +23,40 @@ const roles = [
   'Grantee Specialist',
   'Health Specialist',
   'System Specialist',
-];
+]
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.sequelize.transaction((t) => Promise.all([
-      queryInterface.removeColumn('Users', 'title', { transaction: t }),
-      queryInterface.sequelize.query('DROP TYPE public."enum_Users_title";', { transaction: t }),
-      queryInterface.addColumn(
-        'Users',
-        'role',
-        {
-          type: Sequelize.DataTypes.ENUM(...roles),
-        },
-        { transaction: t },
-      ),
-    ]));
+    await queryInterface.sequelize.transaction((t) =>
+      Promise.all([
+        queryInterface.removeColumn('Users', 'title', { transaction: t }),
+        queryInterface.sequelize.query('DROP TYPE public."enum_Users_title";', { transaction: t }),
+        queryInterface.addColumn(
+          'Users',
+          'role',
+          {
+            type: Sequelize.DataTypes.ENUM(...roles),
+          },
+          { transaction: t }
+        ),
+      ])
+    )
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.sequelize.transaction((t) => Promise.all([
-      queryInterface.removeColumn('Users', 'role', { transaction: t }),
-      queryInterface.sequelize.query('DROP TYPE public."enum_Users_role";', { transaction: t }),
-      queryInterface.addColumn(
-        'Users',
-        'title',
-        {
-          type: Sequelize.DataTypes.ENUM(...titles),
-        },
-        { transaction: t },
-      ),
-    ]));
+    await queryInterface.sequelize.transaction((t) =>
+      Promise.all([
+        queryInterface.removeColumn('Users', 'role', { transaction: t }),
+        queryInterface.sequelize.query('DROP TYPE public."enum_Users_role";', { transaction: t }),
+        queryInterface.addColumn(
+          'Users',
+          'title',
+          {
+            type: Sequelize.DataTypes.ENUM(...titles),
+          },
+          { transaction: t }
+        ),
+      ])
+    )
   },
-};
+}

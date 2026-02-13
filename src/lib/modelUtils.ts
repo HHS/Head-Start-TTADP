@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DataTypes, Model } from 'sequelize';
-import merge from 'deepmerge';
-import { isObject } from './dataObjectUtils';
+import { DataTypes, type Model } from 'sequelize'
+import merge from 'deepmerge'
+import { isObject } from './dataObjectUtils'
 
 // Define a custom type SequelizeDataTypes that represents the available data types in Sequelize
 type SequelizeDataTypes =
-  typeof DataTypes.ABSTRACT // Abstract data type
+  | typeof DataTypes.ABSTRACT // Abstract data type
   | typeof DataTypes.STRING // String data type
   | typeof DataTypes.CHAR // Character data type
   | typeof DataTypes.TEXT // Text data type
@@ -41,7 +41,7 @@ type SequelizeDataTypes =
   | typeof DataTypes.INET // IP address data type
   | typeof DataTypes.MACADDR // MAC (Media Access Control) address data type
   | typeof DataTypes.CITEXT // Case-insensitive text data type
-  | typeof DataTypes.TSVECTOR; // Text search vector data type
+  | typeof DataTypes.TSVECTOR // Text search vector data type
 
 // Define the mapping between Sequelize data types and TypeScript data types
 const dataTypeMapping = {
@@ -86,7 +86,7 @@ const dataTypeMapping = {
   [DataTypes.CITEXT.key]: undefined,
   [DataTypes.TSVECTOR.key]: undefined,
   // Add more mappings as needed
-};
+}
 
 /**
  * Retrieves the model for a given table name from a database object.
@@ -97,13 +97,12 @@ const dataTypeMapping = {
  * @throws If no model is found for the given table name.
  */
 const modelForTable = (db, tableName) => {
-  const model = Object.values(db.sequelize.models)
-    .find((m: { getTableName }) => m.getTableName() === tableName);
+  const model = Object.values(db.sequelize.models).find((m: { getTableName }) => m.getTableName() === tableName)
   if (!model) {
-    throw new Error(`Unable to find table for '${tableName}'`);
+    throw new Error(`Unable to find table for '${tableName}'`)
   }
-  return model;
-};
+  return model
+}
 
 /**
  * Retrieves column information for a given model.
@@ -111,36 +110,39 @@ const modelForTable = (db, tableName) => {
  * @returns An array of objects representing the columns, each containing the column name,
  * data type, and whether it allows null values.
  */
-const getColumnInformation = async (model): Promise<{
-  columnName: string,
-  dataType,
-  allowNull: boolean,
-}[]> => {
+const getColumnInformation = async (
+  model
+): Promise<
+  {
+    columnName: string
+    dataType
+    allowNull: boolean
+  }[]
+> => {
   if (!model.description) {
     // cache the response to the model as this is a request to the database
     // eslint-disable-next-line no-param-reassign
-    model.description = await model.describe();
+    model.description = await model.describe()
   }
 
   // Retrieve the table details using the describe() method of the model
-  const tableDetails:{
-    [key: string]:{
-      type,
-      allowNull: boolean,
-    },
-  } = model.description;
+  const tableDetails: {
+    [key: string]: {
+      type
+      allowNull: boolean
+    }
+  } = model.description
 
   // Map over the entries of the tableDetails object to transform them into an array of
   // column objects
-  const columns = Object.entries(tableDetails)
-    .map(([columnName, columnDetails]) => ({
-      columnName, // Store the column name
-      dataType: columnDetails.type, // Store the data type of the column
-      allowNull: columnDetails.allowNull, // Store whether the column allows null values
-    }));
+  const columns = Object.entries(tableDetails).map(([columnName, columnDetails]) => ({
+    columnName, // Store the column name
+    dataType: columnDetails.type, // Store the data type of the column
+    allowNull: columnDetails.allowNull, // Store whether the column allows null values
+  }))
 
-  return columns; // Return the array of column objects
-};
+  return columns // Return the array of column objects
+}
 
 /**
  * Retrieves the column names from a Sequelize model for a specific data type.
@@ -148,18 +150,13 @@ const getColumnInformation = async (model): Promise<{
  * @param type - The data type to filter the columns by.
  * @returns An array of column names that match the specified data type.
  */
-const getColumnNamesFromModelForType = async (
-  model: typeof Model,
-  type: SequelizeDataTypes,
-): Promise<string[]> => {
+const getColumnNamesFromModelForType = async (model: typeof Model, type: SequelizeDataTypes): Promise<string[]> => {
   // Retrieve the column information for the given model
-  const modelData = await getColumnInformation(model);
+  const modelData = await getColumnInformation(model)
 
   // Filter the model data to only include columns with the specified data type
-  return modelData
-    .filter(({ dataType }) => dataType === type)
-    .map(({ columnName }) => columnName);
-};
+  return modelData.filter(({ dataType }) => dataType === type).map(({ columnName }) => columnName)
+}
 
 /**
  * Filters the given data object based on the column information of a model.
@@ -169,42 +166,39 @@ const getColumnNamesFromModelForType = async (
  */
 const filterDataToModel = async (
   data: Record<string, any>,
-  model,
+  model
 ): Promise<{
-  matched: Record<string, any>,
-  unmatched: Record<string, any>,
+  matched: Record<string, any>
+  unmatched: Record<string, any>
 }> => {
   // Retrieve the column information for the model
-  const modelData = await getColumnInformation(model);
+  const modelData = await getColumnInformation(model)
 
-  return Object.entries(data)
-    .reduce((acc, [key, value]) => {
+  return Object.entries(data).reduce(
+    (acc, [key, value]) => {
       // Find the matching column in the model data
-      const matchColumn = modelData.find((md) => md.columnName === key);
-      const neededType = dataTypeMapping[matchColumn?.dataType?.key || matchColumn?.dataType];
-      const valueType = value instanceof Date
-        ? 'string'
-        : typeof value;
-      if (!!matchColumn
-        && ((value === null && matchColumn?.allowNull)
-          || (valueType === neededType))
-      ) {
+      const matchColumn = modelData.find((md) => md.columnName === key)
+      const neededType = dataTypeMapping[matchColumn?.dataType?.key || matchColumn?.dataType]
+      const valueType = value instanceof Date ? 'string' : typeof value
+      if (!!matchColumn && ((value === null && matchColumn?.allowNull) || valueType === neededType)) {
         // If the value matches the column criteria, add it to the matched object
-        acc.matched[key] = value;
+        acc.matched[key] = value
       } else if (neededType === 'string' && valueType === 'number') {
         // If the value matches the column criteria, add it to the matched object
-        acc.matched[key] = `${value}`;
+        acc.matched[key] = `${value}`
       } else if (neededType === 'boolean' && valueType === 'number' && [0, 1].includes(value)) {
         // If the value matches the column criteria, add it to the matched object
-        acc.matched[key] = Boolean(value);
+        acc.matched[key] = Boolean(value)
       } else {
         // Otherwise, add it to the unmatched object
-        acc.unmatched[key] = value;
+        acc.unmatched[key] = value
       }
 
-      return acc;
-    }, { matched: {}, unmatched: {} });
-};
+      return acc
+    },
+    { matched: {}, unmatched: {} }
+  )
+}
 
 /**
  * This function includes a model and its associated data based on the provided include function.
@@ -216,22 +210,10 @@ const filterDataToModel = async (
  * @param attributes - Attributes to be selected from the records.
  * @returns A promise that resolves to an array of matching records.
  */
-const includeToFindAll = async (
-  includeFunc,
-  moreWhere,
-  funcArgs = null,
-  attributes = null,
-) => {
+const includeToFindAll = async (includeFunc, moreWhere, funcArgs = null, attributes = null) => {
   // Destructure the properties 'as', 'model', 'where', and other arguments from the result of
   // calling the include function
-  const {
-    as,
-    model,
-    where,
-    ...args
-  } = funcArgs
-    ? includeFunc(...funcArgs)
-    : includeFunc();
+  const { as, model, where, ...args } = funcArgs ? includeFunc(...funcArgs) : includeFunc()
 
   // Find all records of the model, applying the merged 'where' condition and any additional
   // conditions
@@ -239,8 +221,8 @@ const includeToFindAll = async (
     where: merge(where, moreWhere),
     ...(attributes && { attributes }),
     ...args,
-  });
-};
+  })
+}
 
 /**
  * Transforms a nested object or array of objects by recursively stripping out
@@ -259,45 +241,26 @@ const includeToFindAll = async (
  * property containing the raw data, as well as other Sequelize-specific
  * metadata properties. These metadata properties are excluded from the output.
  */
-const nestedRawish = (
-  data: { [key: string]: any } | { [key: string]: any }[],
-): { [key: string]: any } | { [key: string]: any }[] => {
+const nestedRawish = (data: { [key: string]: any } | { [key: string]: any }[]): { [key: string]: any } | { [key: string]: any }[] => {
   if (Array.isArray(data)) {
-    return data.map((datum) => nestedRawish(datum));
+    return data.map((datum) => nestedRawish(datum))
   }
 
   if (isObject(data) && data?.dataValues) {
-    const {
-      dataValues,
-      _previousDataValues: previousDataValues,
-      uniqno,
-      _changed: changed,
-      _options: options,
-      isNewRecord,
-      ...includes
-    } = data;
+    const { dataValues, _previousDataValues: previousDataValues, uniqno, _changed: changed, _options: options, isNewRecord, ...includes } = data
 
     const result = {
       ...dataValues,
-    };
+    }
 
-    Object.keys(includes)
-      .forEach((key) => {
-        result[key] = nestedRawish(includes[key]);
-      });
+    Object.keys(includes).forEach((key) => {
+      result[key] = nestedRawish(includes[key])
+    })
 
-    return result;
+    return result
   }
 
-  return data;
-};
+  return data
+}
 
-export {
-  dataTypeMapping,
-  modelForTable,
-  getColumnInformation,
-  getColumnNamesFromModelForType,
-  includeToFindAll,
-  filterDataToModel,
-  nestedRawish,
-};
+export { dataTypeMapping, modelForTable, getColumnInformation, getColumnNamesFromModelForType, includeToFindAll, filterDataToModel, nestedRawish }

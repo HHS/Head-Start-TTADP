@@ -1,19 +1,7 @@
-import { INTERNAL_SERVER_ERROR } from 'http-codes';
-import db from '../../models';
-import {
-  getUserSettings,
-  getUserEmailSettings,
-  subscribe,
-  unsubscribe,
-  updateSettings,
-} from './handlers';
-import {
-  saveSettings,
-  subscribeAll,
-  unsubscribeAll,
-  userEmailSettingsById,
-  userSettingsById,
-} from '../../services/userSettings';
+import { INTERNAL_SERVER_ERROR } from 'http-codes'
+import db from '../../models'
+import { getUserSettings, getUserEmailSettings, subscribe, unsubscribe, updateSettings } from './handlers'
+import { saveSettings, subscribeAll, unsubscribeAll, userEmailSettingsById, userSettingsById } from '../../services/userSettings'
 
 jest.mock('../../services/userSettings', () => ({
   saveSettings: jest.fn(),
@@ -21,10 +9,10 @@ jest.mock('../../services/userSettings', () => ({
   unsubscribeAll: jest.fn(),
   userEmailSettingsById: jest.fn(),
   userSettingsById: jest.fn(),
-}));
+}))
 
 describe('Settings handlers', () => {
-  afterAll(() => db.sequelize.close());
+  afterAll(() => db.sequelize.close())
   const mockResponse = {
     attachment: jest.fn(),
     json: jest.fn(),
@@ -33,155 +21,161 @@ describe('Settings handlers', () => {
     status: jest.fn(() => ({
       end: jest.fn(),
     })),
-  };
+  }
 
   describe('getUserSettings', () => {
     it('should return the user settings', async () => {
-      const settings = [{ id: 1, name: 'Setting 1' }, { id: 2, name: 'Setting 2' }];
-      const userId = 1;
-      const req = { user: { id: userId } };
-      const res = { ...mockResponse };
+      const settings = [
+        { id: 1, name: 'Setting 1' },
+        { id: 2, name: 'Setting 2' },
+      ]
+      const userId = 1
+      const req = { user: { id: userId } }
+      const res = { ...mockResponse }
 
-      userSettingsById.mockResolvedValue(settings);
+      userSettingsById.mockResolvedValue(settings)
 
-      await getUserSettings(req, res);
+      await getUserSettings(req, res)
 
-      expect(res.json).toHaveBeenCalledWith(settings);
-    });
+      expect(res.json).toHaveBeenCalledWith(settings)
+    })
 
     it('handles errors', async () => {
-      const error = new Error('Something went wrong');
-      const userId = 1;
-      const req = { user: { id: userId } };
-      const res = { ...mockResponse };
+      const error = new Error('Something went wrong')
+      const userId = 1
+      const req = { user: { id: userId } }
+      const res = { ...mockResponse }
 
-      userSettingsById.mockRejectedValue(error);
-      await getUserSettings(req, res);
+      userSettingsById.mockRejectedValue(error)
+      await getUserSettings(req, res)
 
-      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('getUserEmailSettings', () => {
     it('should return the user email settings', async () => {
-      const settings = [{ id: 1, name: 'Setting 1' }, { id: 2, name: 'Setting 2' }];
-      const userId = 1;
-      const req = { user: { id: userId } };
-      const res = { ...mockResponse };
+      const settings = [
+        { id: 1, name: 'Setting 1' },
+        { id: 2, name: 'Setting 2' },
+      ]
+      const userId = 1
+      const req = { user: { id: userId } }
+      const res = { ...mockResponse }
 
-      userEmailSettingsById.mockResolvedValue(settings);
+      userEmailSettingsById.mockResolvedValue(settings)
 
-      await getUserEmailSettings(req, res);
+      await getUserEmailSettings(req, res)
 
-      expect(res.json).toHaveBeenCalledWith(settings);
-    });
+      expect(res.json).toHaveBeenCalledWith(settings)
+    })
 
     it('handles errors', async () => {
-      const error = new Error('Something went wrong');
-      const userId = 1;
-      const req = { user: { id: userId } };
-      const res = { ...mockResponse };
+      const error = new Error('Something went wrong')
+      const userId = 1
+      const req = { user: { id: userId } }
+      const res = { ...mockResponse }
 
-      userEmailSettingsById.mockRejectedValue(error);
-      await getUserEmailSettings(req, res);
+      userEmailSettingsById.mockRejectedValue(error)
+      await getUserEmailSettings(req, res)
 
-      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('updateSettings', () => {
     it('should update the user settings', async () => {
-      const userId = 1;
-      const req = { user: { id: userId }, body: [{ key: 'key', value: 'value' }] };
-      const res = { ...mockResponse };
+      const userId = 1
+      const req = { user: { id: userId }, body: [{ key: 'key', value: 'value' }] }
+      const res = { ...mockResponse }
 
-      await updateSettings(req, res);
-      expect(res.sendStatus).toHaveBeenCalledWith(204);
-    });
+      await updateSettings(req, res)
+      expect(res.sendStatus).toHaveBeenCalledWith(204)
+    })
     it('errors out if the body is not an array', async () => {
-      const userId = 1;
+      const userId = 1
       const req = {
         user: {
           id: userId,
         },
         body: 'not an array',
-      };
-      const res = { ...mockResponse };
+      }
+      const res = { ...mockResponse }
 
-      await updateSettings(req, res);
+      await updateSettings(req, res)
 
-      expect(res.sendStatus).toHaveBeenCalledWith(400);
-    });
+      expect(res.sendStatus).toHaveBeenCalledWith(400)
+    })
     it('errors out if the body is not present', async () => {
-      const userId = 1;
+      const userId = 1
       const req = {
         user: {
           id: userId,
         },
-      };
-      const res = { ...mockResponse };
+      }
+      const res = { ...mockResponse }
 
-      await updateSettings(req, res);
+      await updateSettings(req, res)
 
-      expect(res.sendStatus).toHaveBeenCalledWith(400);
-    });
+      expect(res.sendStatus).toHaveBeenCalledWith(400)
+    })
 
     it('handles errors', async () => {
-      const error = new Error('Something went wrong');
-      const userId = 1;
-      const req = { user: { id: userId }, body: [{ key: 'key', value: 'value' }] };
-      const res = { ...mockResponse };
+      const error = new Error('Something went wrong')
+      const userId = 1
+      const req = { user: { id: userId }, body: [{ key: 'key', value: 'value' }] }
+      const res = { ...mockResponse }
 
-      saveSettings.mockRejectedValue(error);
-      await updateSettings(req, res);
+      saveSettings.mockRejectedValue(error)
+      await updateSettings(req, res)
 
-      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('unsubscribe', () => {
     it('should unsubscribe the user', async () => {
-      const userId = 1;
-      const req = { user: { id: userId } };
-      const res = { ...mockResponse };
+      const userId = 1
+      const req = { user: { id: userId } }
+      const res = { ...mockResponse }
 
-      await unsubscribe(req, res);
-      expect(res.sendStatus).toHaveBeenCalledWith(204);
-    });
+      await unsubscribe(req, res)
+      expect(res.sendStatus).toHaveBeenCalledWith(204)
+    })
 
     it('handles errors', async () => {
-      const error = new Error('Something went wrong');
-      const userId = 1;
-      const req = { user: { id: userId } };
-      const res = { ...mockResponse };
+      const error = new Error('Something went wrong')
+      const userId = 1
+      const req = { user: { id: userId } }
+      const res = { ...mockResponse }
 
-      unsubscribeAll.mockRejectedValue(error);
-      await unsubscribe(req, res);
+      unsubscribeAll.mockRejectedValue(error)
+      await unsubscribe(req, res)
 
-      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('subscribe', () => {
     it('should subscribe the user', async () => {
-      const userId = 1;
-      const req = { user: { id: userId } };
-      const res = { ...mockResponse };
+      const userId = 1
+      const req = { user: { id: userId } }
+      const res = { ...mockResponse }
 
-      await subscribe(req, res);
-      expect(res.sendStatus).toHaveBeenCalledWith(204);
-    });
+      await subscribe(req, res)
+      expect(res.sendStatus).toHaveBeenCalledWith(204)
+    })
 
     it('handles errors', async () => {
-      const error = new Error('Something went wrong');
-      const userId = 1;
-      const req = { user: { id: userId } };
-      const res = { ...mockResponse };
+      const error = new Error('Something went wrong')
+      const userId = 1
+      const req = { user: { id: userId } }
+      const res = { ...mockResponse }
 
-      subscribeAll.mockRejectedValue(error);
-      await subscribe(req, res);
+      subscribeAll.mockRejectedValue(error)
+      await subscribe(req, res)
 
-      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
-});
+      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
+})

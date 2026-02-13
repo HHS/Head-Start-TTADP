@@ -1,11 +1,11 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       await queryInterface.addColumn(
         'Resources',
@@ -20,10 +20,11 @@ module.exports = {
           onUpdate: 'CASCADE',
           onDelete: 'SET NULL', // Adjust as needed (e.g., 'CASCADE' or 'RESTRICT')
         },
-        { transaction },
-      );
+        { transaction }
+      )
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         -- Create new headstart.gov resources for all eclkc resources that are missing.
          WITH orig_resources AS (
             SELECT DISTINCT ON ("url")
@@ -85,12 +86,14 @@ module.exports = {
         r."url" = regexp_replace(
             n."url", 'headstart.gov', 'eclkc.ohs.acf.hhs.gov'
         );
-    `, { transaction });
-    });
+    `,
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface) {
     // Drop the mapsTo column.
-    await queryInterface.removeColumn('Resources', 'mapsTo');
+    await queryInterface.removeColumn('Resources', 'mapsTo')
   },
-};
+}

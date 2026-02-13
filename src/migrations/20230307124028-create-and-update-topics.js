@@ -2,17 +2,17 @@
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const loggedUser = '0';
-      const sessionSig = __filename;
-      const auditDescriptor = 'RUN MIGRATIONS';
+      const loggedUser = '0'
+      const sessionSig = __filename
+      const auditDescriptor = 'RUN MIGRATIONS'
       await queryInterface.sequelize.query(
         `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Add new topic,
       await queryInterface.sequelize.query(
@@ -22,8 +22,8 @@ module.exports = {
             VALUES
             ('Fatherhood / Male Caregiving', current_timestamp, current_timestamp);
           `,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Insert & Change existing topic.
       await queryInterface.sequelize.query(
@@ -41,32 +41,32 @@ module.exports = {
         WHERE t1.name = 'Ongoing Monitoring Management System'
         AND t2.name = 'Ongoing Monitoring and Continuous Improvement'
         AND t1."deletedAt" IS NULL;`,
-        { transaction },
-      );
-    });
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const loggedUser = '0';
-      const sessionSig = __filename;
-      const auditDescriptor = 'RUN MIGRATIONS';
+      const loggedUser = '0'
+      const sessionSig = __filename
+      const auditDescriptor = 'RUN MIGRATIONS'
       await queryInterface.sequelize.query(
         `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Disable audit logging
       await queryInterface.sequelize.query(
         `
             SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
             `,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Revert topic to what it was before.
       await queryInterface.sequelize.query(
@@ -79,22 +79,22 @@ module.exports = {
             SELECT max("deletedAt")
             FROM "Topics"
             WHERE name = 'Ongoing Monitoring Management System');`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Delete new topics.
       await queryInterface.sequelize.query(
         'DELETE FROM "Topics" WHERE "name" IN (\'Fatherhood / Male Caregiving\', \'Ongoing Monitoring and Continuous Improvement\');',
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Enable audit logging
       await queryInterface.sequelize.query(
         `
             SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
             `,
-        { transaction },
-      );
-    });
+        { transaction }
+      )
+    })
   },
-};
+}

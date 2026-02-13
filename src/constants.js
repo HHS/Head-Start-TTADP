@@ -8,7 +8,7 @@ const FILE_STATUSES = {
   SCANNING_FAILED: 'SCANNING_FAILED',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
-};
+}
 
 const IMPORT_STATUSES = {
   IDENTIFIED: 'IDENTIFIED',
@@ -18,7 +18,7 @@ const IMPORT_STATUSES = {
   PROCESSING: 'PROCESSING',
   PROCESSED: 'PROCESSED',
   PROCESSING_FAILED: 'PROCESSING_FAILED',
-};
+}
 
 const IMPORT_DATA_STATUSES = {
   IDENTIFIED: 'IDENTIFIED',
@@ -26,24 +26,24 @@ const IMPORT_DATA_STATUSES = {
   PROCESSED: 'PROCESSED',
   PROCESSING_FAILED: 'PROCESSING_FAILED',
   WILL_NOT_PROCESS: 'WILL_NOT_PROCESS',
-};
+}
 
-const DATE_FORMAT = 'MM/DD/YYYY';
+const DATE_FORMAT = 'MM/DD/YYYY'
 
-const REPORTS_PER_PAGE = 10;
-const RECIPIENTS_PER_PAGE = 12;
-const GOALS_PER_PAGE = 5;
+const REPORTS_PER_PAGE = 10
+const RECIPIENTS_PER_PAGE = 12
+const GOALS_PER_PAGE = 5
 
-const SEARCH_RESULTS_PER_PAGE = 23;
+const SEARCH_RESULTS_PER_PAGE = 23
 
-const AUTOMATIC_CREATION = 'Automatic';
-const CURATED_CREATION = 'Curated';
-const SYSTEM_GENERATED = 'System Generated';
+const AUTOMATIC_CREATION = 'Automatic'
+const CURATED_CREATION = 'Curated'
+const SYSTEM_GENERATED = 'System Generated'
 const CREATION_METHOD = {
   AUTOMATIC: AUTOMATIC_CREATION,
   CURATED: CURATED_CREATION,
   SYSTEM_GENERATED,
-};
+}
 
 const GOAL_STATUS = {
   DRAFT: 'Draft',
@@ -51,22 +51,16 @@ const GOAL_STATUS = {
   IN_PROGRESS: 'In Progress',
   SUSPENDED: 'Suspended',
   CLOSED: 'Closed',
-};
+}
 
 const GOAL_COLLABORATORS = {
   CREATOR: 'Creator', // The user who creates a goal
   EDITOR: 'Editor', // The user(s) who edits the text of a goal
   LINKER: 'Linker', // The user who links the goal to a report
   UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where goal is used
-};
+}
 
-const GRANT_PERSONNEL_ROLES = [
-  'auth_official_contact',
-  'ceo',
-  'cfo',
-  'policy_council',
-  'director',
-];
+const GRANT_PERSONNEL_ROLES = ['auth_official_contact', 'ceo', 'cfo', 'policy_council', 'director']
 
 const OBJECTIVE_STATUS = {
   DRAFT: 'Draft',
@@ -74,30 +68,30 @@ const OBJECTIVE_STATUS = {
   IN_PROGRESS: 'In Progress',
   SUSPENDED: 'Suspended',
   COMPLETE: 'Complete',
-};
+}
 
 const OBJECTIVE_COLLABORATORS = {
   CREATOR: 'Creator', // The user who creates a objective
   EDITOR: 'Editor', // The user(s) who edits the text of a objective
   LINKER: 'Linker', // The user who links the objective to a report
   UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where objective is used
-};
+}
 
 const NEXTSTEP_NOTETYPE = {
   SPECIALIST: 'SPECIALIST',
   RECIPIENT: 'RECIPIENT',
-};
+}
 
 const RESOURCE_ACTIONS = {
   GET_METADATA: 'getMetaData',
-};
+}
 
 const GROUP_COLLABORATORS = {
   CREATOR: 'Creator',
   CO_OWNER: 'Co-Owner',
   SHARED_WITH: 'SharedWith',
   EDITOR: 'Editor',
-};
+}
 
 /**
  * Stored in `UserSettings` table, e.g.:
@@ -125,7 +119,7 @@ const USER_SETTINGS = {
       MONTHLY_DIGEST: 'this month',
     },
   },
-};
+}
 
 const EMAIL_ACTIONS = {
   COLLABORATOR_ADDED: 'collaboratorAssigned',
@@ -143,27 +137,27 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
   TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
   TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
-};
+}
 
 const S3_ACTIONS = {
   DELETE_FILE: 'deleteFile',
-};
+}
 
 const EMAIL_DIGEST_FREQ = {
   DAILY: 'today',
   WEEKLY: 'this week',
   MONTHLY: 'this month',
-};
+}
 
 const DIGEST_SUBJECT_FREQ = {
   DAILY: 'daily',
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
-};
+}
 
 const PROMPT_FIELD_TYPE = {
   MULTISELECT: 'multiselect',
-};
+}
 
 const SOURCE_FIELD = {
   REPORT: {
@@ -204,18 +198,18 @@ const SOURCE_FIELD = {
     TTAPROVIDED: 'ttaProvided',
     RESOURCE: 'resource',
   },
-};
+}
 
 const RESOURCE_DOMAIN = {
   HEAD_START: 'headstart.gov',
-};
+}
 
 const GRANT_INACTIVATION_REASONS = {
   REPLACED: 'Replaced',
   TERMINATED: 'Terminated',
   RELINQUISHED: 'Relinquished',
   UNKNOWN: 'Unknown',
-};
+}
 
 const MAINTENANCE_TYPE = {
   VACUUM_ANALYZE: 'VACUUM ANALYZE',
@@ -227,38 +221,29 @@ const MAINTENANCE_TYPE = {
   CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
   IMPORT_DOWNLOAD: 'IMPORT_DOWNLOAD',
   IMPORT_PROCESS: 'IMPORT_PROCESS',
-};
+}
 
-const FEATURE_FLAGS = [
-  'quality_assurance_dashboard',
-];
+const FEATURE_FLAGS = ['quality_assurance_dashboard']
 
 const MAINTENANCE_CATEGORY = {
   DB: 'DB',
   MAINTENANCE: 'MAINTENANCE',
   IMPORT: 'IMPORT',
-};
+}
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin', 'monitoring', 'merge'];
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin', 'monitoring', 'merge']
 
-const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
-const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;
+const FEI_PROD_GOAL_TEMPLATE_ID = 19017
+const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172
 
-const COMMUNICATION_LOG_LIMIT_MAX = 1000;
+const COMMUNICATION_LOG_LIMIT_MAX = 1000
 
 const SORT_DIR = {
   ASC: 'ASC',
   DESC: 'DESC',
-};
+}
 
-const REGIONS = [
-  'Northeast',
-  'Midwest',
-  'West',
-  'AIAN',
-  'Southeast',
-  'Southwest',
-];
+const REGIONS = ['Northeast', 'Midwest', 'West', 'AIAN', 'Southeast', 'Southwest']
 
 module.exports = {
   FEI_PROD_GOAL_TEMPLATE_ID,
@@ -298,4 +283,4 @@ module.exports = {
   SORT_DIR,
   COMMUNICATION_LOG_LIMIT_MAX,
   REGIONS,
-};
+}

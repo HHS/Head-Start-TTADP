@@ -1,12 +1,12 @@
-import { Op } from 'sequelize';
-import { withinDateRange, compareDate } from '../utils';
+import { Op } from 'sequelize'
+import { withinDateRange, compareDate } from '../utils'
 
 export function beforeCreateDate(date) {
   return {
     [Op.and]: {
       [Op.or]: compareDate(date, 'createdAt', Op.lt),
     },
-  };
+  }
 }
 
 export function afterCreateDate(date) {
@@ -14,7 +14,7 @@ export function afterCreateDate(date) {
     [Op.and]: {
       [Op.or]: compareDate(date, 'createdAt', Op.gt),
     },
-  };
+  }
 }
 
 export function withinCreateDate(dates) {
@@ -22,5 +22,5 @@ export function withinCreateDate(dates) {
     [Op.and]: {
       [Op.or]: withinDateRange(dates, 'createdAt'),
     },
-  };
+  }
 }

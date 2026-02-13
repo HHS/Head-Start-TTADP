@@ -1,12 +1,13 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
 
       // adding the distinct_cte layer to GrantRelationshipToActive
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         DROP MATERIALIZED VIEW IF EXISTS public."GrantRelationshipToActive";
 
         CREATE MATERIALIZED VIEW IF NOT EXISTS public."GrantRelationshipToActive"
@@ -57,13 +58,13 @@ module.exports = {
         CREATE INDEX "idx_GrantRelationshipToActive_grantId_activeGrantId"
           ON public."GrantRelationshipToActive" USING btree
           ("grantId", "activeGrantId");
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-    },
-  ),
-};
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+    }),
+}

@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op } from 'sequelize'
 
 export function withStatus(statuses) {
   if (statuses.includes('Needs status')) {
@@ -15,7 +15,7 @@ export function withStatus(statuses) {
           },
         },
       ],
-    };
+    }
   }
 
   return {
@@ -24,7 +24,7 @@ export function withStatus(statuses) {
         [Op.iLike]: `%${s}%`, // sequelize escapes this
       },
     })),
-  };
+  }
 }
 
 export function withoutStatus(statuses) {
@@ -44,7 +44,7 @@ export function withoutStatus(statuses) {
           },
         },
       ],
-    };
+    }
   }
 
   return {
@@ -62,5 +62,5 @@ export function withoutStatus(statuses) {
         })),
       },
     ],
-  };
+  }
 }

@@ -1,25 +1,22 @@
-import db from '../models';
-import { baseTRScopes, countBySingleKey, generateReasonList } from './helpers';
-import { IScopes } from './types';
+import db from '../models'
+import { baseTRScopes, countBySingleKey, generateReasonList } from './helpers'
+import type { IScopes } from './types'
 
-const { EventReportPilot: TrainingReport } = db;
+const { EventReportPilot: TrainingReport } = db
 
 export default async function trReasonList(scopes: IScopes) {
-  const res = await TrainingReport.findAll({
-    attributes: [
-      'data',
-      'id',
-    ],
+  const res = (await TrainingReport.findAll({
+    attributes: ['data', 'id'],
     ...baseTRScopes(scopes),
-  }) as {
+  })) as {
     data: {
-      reasons: string[],
-    },
-  }[];
+      reasons: string[]
+    }
+  }[]
 
-  const reasons = generateReasonList();
+  const reasons = generateReasonList()
 
-  const mapped = res.map((r) => ({ reasons: r.data.reasons }));
+  const mapped = res.map((r) => ({ reasons: r.data.reasons }))
 
-  return countBySingleKey(mapped, 'reasons', reasons);
+  return countBySingleKey(mapped, 'reasons', reasons)
 }

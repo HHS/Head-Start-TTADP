@@ -4,5 +4,5 @@
  * @returns The input if it's an array, or an empty array.
  */
 export default function ensureArray<T>(input: T | T[]): T[] {
-  return Array.isArray(input) ? input : [];
+  return Array.isArray(input) ? input : []
 }

@@ -89,73 +89,73 @@
 // //   });
 // // });
 
-import { Client } from 'ssh2';
-import { Readable } from 'stream';
-import SftpClient from '../sftp';
+import { Client } from 'ssh2'
+import { Readable } from 'stream'
+import SftpClient from '../sftp'
 
-jest.mock('stream');
+jest.mock('stream')
 
-const mockClient = ({
+const mockClient = {
   connect: jest.fn(),
   on: jest.fn(),
   end: jest.fn(),
   sftp: jest.fn(),
-});
+}
 
 jest.mock('ssh2', () => ({
   Client: jest.fn().mockImplementation(() => mockClient),
-}));
+}))
 
 describe('SftpClient', () => {
-  let sftpClient;
+  let sftpClient
   const mockSftp = {
     readdir: jest.fn(),
     createReadStream: jest.fn(),
-  };
+  }
   // const mockClient = new Client() as jest.Mocked<Client>;
   const connectionSettings = {
     host: 'example.com',
     username: 'user',
     password: 'password',
-  };
+  }
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    sftpClient = new SftpClient(connectionSettings);
+    jest.clearAllMocks()
+    sftpClient = new SftpClient(connectionSettings)
     mockClient.sftp.mockImplementation((callback) => {
-      callback(null, mockSftp);
-    });
+      callback(null, mockSftp)
+    })
     mockClient.connect.mockImplementation((config, callback) => {
       // Call the callback with no error to simulate a successful connection
       if (callback) {
-        callback();
+        callback()
       }
-    });
-    mockClient.end.mockImplementation(() => {});
+    })
+    mockClient.end.mockImplementation(() => {})
     mockClient.on.mockImplementation((event, callback) => {
       if (event === 'ready') {
-        callback();
+        callback()
       }
-      return mockClient;
-    });
-  });
+      return mockClient
+    })
+  })
 
   afterEach(() => {
-    mockClient.on.mockReset();
-    jest.clearAllMocks();
-    jest.resetModules();
-  });
+    mockClient.on.mockReset()
+    jest.clearAllMocks()
+    jest.resetModules()
+  })
 
   describe('connect', () => {
     it('should resolve if already connected', async () => {
-      (sftpClient).connected = true;
-      await expect(sftpClient.connect()).resolves.toBeUndefined();
-    });
+      sftpClient.connected = true
+      await expect(sftpClient.connect()).resolves.toBeUndefined()
+    })
 
     it('should connect and set connected to true', async () => {
-      await expect(sftpClient.connect()).resolves.toBeUndefined();
-      expect(sftpClient.isConnected()).toBe(true);
-    });
+      await expect(sftpClient.connect()).resolves.toBeUndefined()
+      expect(sftpClient.isConnected()).toBe(true)
+    })
 
     it('should reject on connection error', async () => {
       // const onError = new Error('Connection error');
@@ -175,105 +175,105 @@ describe('SftpClient', () => {
 
       // mockClient.connect.mockRejectedValue(new Error('Connection error'));
       jest.spyOn(mockClient, 'on').mockImplementation(() => {
-        throw new Error('Connection error');
-      });
+        throw new Error('Connection error')
+      })
       // mockClient.sftp.mockImplementationOnce((callback) => {
       //   callback(error);
       // });
-      await expect(sftpClient.connect()).rejects.not.toThrow();
-    });
-  });
+      await expect(sftpClient.connect()).rejects.not.toThrow()
+    })
+  })
 
   describe('disconnect', () => {
     it('should end the connection if connected', () => {
-      (sftpClient).connected = true;
+      sftpClient.connected = true
 
       // Mock the end method to be a jest function
-      mockClient.end = jest.fn();
+      mockClient.end = jest.fn()
 
-      sftpClient.disconnect();
-      expect(mockClient.end).toHaveBeenCalled();
-      expect(sftpClient.isConnected()).toBe(false);
-    });
+      sftpClient.disconnect()
+      expect(mockClient.end).toHaveBeenCalled()
+      expect(sftpClient.isConnected()).toBe(false)
+    })
 
     it('should not end the connection if not connected', () => {
-      (sftpClient).connected = false;
-      sftpClient.disconnect();
-      expect(mockClient.end).not.toHaveBeenCalled();
-    });
-  });
+      sftpClient.connected = false
+      sftpClient.disconnect()
+      expect(mockClient.end).not.toHaveBeenCalled()
+    })
+  })
 
   describe('listFiles', () => {
-    const path = '/path/to/directory';
-    const fileMask = '.*\\.txt';
+    const path = '/path/to/directory'
+    const fileMask = '.*\\.txt'
     const fileList = [
       { filename: 'file1.txt', longname: '-rw-r--r--', attrs: {} },
       { filename: 'file2.txt', longname: '-rw-r--r--', attrs: {} },
-    ];
+    ]
 
     beforeEach(() => {
-      jest.clearAllMocks();
-      sftpClient = new SftpClient(connectionSettings);
+      jest.clearAllMocks()
+      sftpClient = new SftpClient(connectionSettings)
       mockClient.sftp.mockImplementation((callback) => {
-        callback(null, mockSftp);
-      });
+        callback(null, mockSftp)
+      })
       mockClient.connect.mockImplementation((_config, callback) => {
         // Call the callback with no error to simulate a successful connection
         if (callback) {
-          callback();
+          callback()
         }
-      });
-      mockClient.end.mockImplementation(() => {});
+      })
+      mockClient.end.mockImplementation(() => {})
       mockSftp.readdir.mockImplementation((_path, callback) => {
-        callback(null, fileList);
-      });
+        callback(null, fileList)
+      })
       mockClient.on.mockImplementation((event, callback) => {
         if (event === 'ready') {
-          callback();
+          callback()
         }
-        return mockClient;
-      });
-    });
+        return mockClient
+      })
+    })
 
     it('should list files in the specified directory', async () => {
-      const files = await sftpClient.listFiles({ path });
-      expect(files).toHaveLength(fileList.length);
-      expect(files[0].fileInfo.name).toBe('file1.txt');
-      expect(files[1].fileInfo.name).toBe('file2.txt');
-    });
+      const files = await sftpClient.listFiles({ path })
+      expect(files).toHaveLength(fileList.length)
+      expect(files[0].fileInfo.name).toBe('file1.txt')
+      expect(files[1].fileInfo.name).toBe('file2.txt')
+    })
 
     it('should filter files by fileMask', async () => {
-      const files = await sftpClient.listFiles({ path, fileMask });
-      expect(files).toHaveLength(fileList.length);
-      expect(mockSftp.readdir).toHaveBeenCalledWith(path, expect.any(Function));
-    });
+      const files = await sftpClient.listFiles({ path, fileMask })
+      expect(files).toHaveLength(fileList.length)
+      expect(mockSftp.readdir).toHaveBeenCalledWith(path, expect.any(Function))
+    })
 
     it('should reject if there is an error reading the directory', async () => {
-      const error = new Error('Read directory error');
+      const error = new Error('Read directory error')
       mockSftp.readdir.mockImplementation((_path, callback) => {
-        callback(error, []);
-      });
-      await expect(sftpClient.listFiles({ path })).rejects.toThrow('Read directory error');
-    });
-  });
+        callback(error, [])
+      })
+      await expect(sftpClient.listFiles({ path })).rejects.toThrow('Read directory error')
+    })
+  })
 
   describe('downloadAsStream', () => {
-    const remoteFilePath = '/path/to/file.txt';
+    const remoteFilePath = '/path/to/file.txt'
 
     it('should return a readable stream for the remote file', async () => {
-      const mockStream = new Readable();
-      mockSftp.createReadStream.mockReturnValue(mockStream);
-      const stream = await sftpClient.downloadAsStream(remoteFilePath);
-      expect(stream).toBeInstanceOf(Readable);
-      expect(mockSftp.createReadStream).toHaveBeenCalledWith(remoteFilePath, {});
-    });
+      const mockStream = new Readable()
+      mockSftp.createReadStream.mockReturnValue(mockStream)
+      const stream = await sftpClient.downloadAsStream(remoteFilePath)
+      expect(stream).toBeInstanceOf(Readable)
+      expect(mockSftp.createReadStream).toHaveBeenCalledWith(remoteFilePath, {})
+    })
 
     it('should reject if there is an error creating the read stream', async () => {
-      const error = new Error('Create read stream error');
+      const error = new Error('Create read stream error')
       mockClient.sftp.mockImplementationOnce((callback) => {
-        process.nextTick(() => callback(error));
-      });
-      await expect(sftpClient.downloadAsStream(remoteFilePath)).rejects.toThrow('Create read stream error');
-    });
-  });
-});
+        process.nextTick(() => callback(error))
+      })
+      await expect(sftpClient.downloadAsStream(remoteFilePath)).rejects.toThrow('Create read stream error')
+    })
+  })
+})

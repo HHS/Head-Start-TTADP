@@ -1,5 +1,5 @@
 module.exports = {
-  up: (queryInterface, Sequelize) => (
+  up: (queryInterface, Sequelize) =>
     queryInterface.sequelize.transaction(async (transaction) => {
       await queryInterface.addColumn(
         'Users',
@@ -10,8 +10,8 @@ module.exports = {
         },
         {
           transaction,
-        },
-      );
+        }
+      )
       await queryInterface.addColumn(
         'Users',
         'hsesAuthorities',
@@ -21,9 +21,11 @@ module.exports = {
         },
         {
           transaction,
-        },
-      );
-      await queryInterface.sequelize.query('UPDATE "Users" SET "hsesUsername"="email"', { transaction });
+        }
+      )
+      await queryInterface.sequelize.query('UPDATE "Users" SET "hsesUsername"="email"', {
+        transaction,
+      })
       await queryInterface.changeColumn(
         'Users',
         'hsesUsername',
@@ -33,15 +35,14 @@ module.exports = {
         },
         {
           transaction,
-        },
-      );
-    })
-  ),
+        }
+      )
+    }),
 
   down: async (queryInterface) => {
     await queryInterface.sequelize.transaction(async (t) => {
-      await queryInterface.removeColumn('Users', 'hsesAuthorities', { transaction: t });
-      await queryInterface.removeColumn('Users', 'hsesUsername', { transaction: t });
-    });
+      await queryInterface.removeColumn('Users', 'hsesAuthorities', { transaction: t })
+      await queryInterface.removeColumn('Users', 'hsesUsername', { transaction: t })
+    })
   },
-};
+}

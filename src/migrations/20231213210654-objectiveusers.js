@@ -1,18 +1,16 @@
-const {
-  prepMigration,
-  removeTables,
-} = require('../lib/migration');
-const { OBJECTIVE_COLLABORATORS } = require('../constants');
+const { prepMigration, removeTables } = require('../lib/migration')
+const { OBJECTIVE_COLLABORATORS } = require('../constants')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       //---------------------------------------------------------------------------------
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         INSERT INTO "ValidFor"
         ("name", "isReport", "createdAt", "updatedAt")
         VALUES
@@ -22,11 +20,14 @@ module.exports = {
           current_timestamp,
           current_timestamp
         );
-      `, { transaction });
+      `,
+        { transaction }
+      )
 
       //---------------------------------------------------------------------------------
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         INSERT INTO "CollaboratorTypes"
         ("name", "validForId", "propagateOnMerge", "createdAt", "updatedAt")
         SELECT
@@ -37,84 +38,95 @@ module.exports = {
           current_timestamp
         FROM "ValidFor" vf
         CROSS JOIN UNNEST(ARRAY[
-          ${Object.values(OBJECTIVE_COLLABORATORS).map((type) => `'${type}'`).join(',\n')}
+          ${Object.values(OBJECTIVE_COLLABORATORS)
+            .map((type) => `'${type}'`)
+            .join(',\n')}
         ]) t(name)
         WHERE vf.name = 'Objectives'
-       ;`, { transaction });
+       ;`,
+        { transaction }
+      )
       //---------------------------------------------------------------------------------
-      await queryInterface.createTable('ObjectiveCollaborators', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        objectiveId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-          references: {
-            model: {
-              tableName: 'Objectives',
+      await queryInterface.createTable(
+        'ObjectiveCollaborators',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          objectiveId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+            references: {
+              model: {
+                tableName: 'Objectives',
+              },
+              key: 'id',
             },
-            key: 'id',
+          },
+          userId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+            references: {
+              model: {
+                tableName: 'Users',
+              },
+              key: 'id',
+            },
+          },
+          collaboratorTypeId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+            references: {
+              model: {
+                tableName: 'CollaboratorTypes',
+              },
+              key: 'id',
+            },
+          },
+          linkBack: {
+            type: Sequelize.JSONB,
+            allowNull: true,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.fn('NOW'),
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.fn('NOW'),
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+            defaultValue: null,
           },
         },
-        userId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-          references: {
-            model: {
-              tableName: 'Users',
-            },
-            key: 'id',
-          },
-        },
-        collaboratorTypeId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-          references: {
-            model: {
-              tableName: 'CollaboratorTypes',
-            },
-            key: 'id',
-          },
-        },
-        linkBack: {
-          type: Sequelize.JSONB,
-          allowNull: true,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-          defaultValue: null,
-        },
-      }, {
-        transaction,
-      });
+        {
+          transaction,
+        }
+      )
 
       // https://github.com/sequelize/sequelize/issues/9934
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
           ALTER TABLE "ObjectiveCollaborators"
           ADD CONSTRAINT "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_unique" UNIQUE ("objectiveId", "userId", "collaboratorTypeId");
-      `, { transaction });
+      `,
+        { transaction }
+      )
       //---------------------------------------------------------------------------------
-      const collectObjectiveCollaborators = (source, typeName) => /* sql */`
+      const collectObjectiveCollaborators = (source, typeName) => /* sql */ `
       WITH
         source_data AS (
           ${source}
@@ -179,10 +191,11 @@ module.exports = {
         "linkBack",
         "createdAt",
         "updatedAt";
-      `;
+      `
 
-      const collectObjectiveCollaboratorsViaAuditLogAsCreator = () => collectObjectiveCollaborators(
-        /* sql */`
+      const collectObjectiveCollaboratorsViaAuditLogAsCreator = () =>
+        collectObjectiveCollaborators(
+          /* sql */ `
         SELECT
           data_id "objectiveId",
           dml_as "userId",
@@ -200,11 +213,12 @@ module.exports = {
         GROUP BY 1,2
         ORDER BY 1,2
         `,
-        OBJECTIVE_COLLABORATORS.CREATOR,
-      );
+          OBJECTIVE_COLLABORATORS.CREATOR
+        )
 
-      const collectObjectiveCollaboratorsViaAuditLogAsEditor = () => collectObjectiveCollaborators(
-        /* sql */`
+      const collectObjectiveCollaboratorsViaAuditLogAsEditor = () =>
+        collectObjectiveCollaborators(
+          /* sql */ `
         SELECT
           data_id "objectiveId",
           dml_as "userId",
@@ -222,11 +236,12 @@ module.exports = {
         GROUP BY 1,2
         ORDER BY 1,2
         `,
-        OBJECTIVE_COLLABORATORS.EDITOR,
-      );
+          OBJECTIVE_COLLABORATORS.EDITOR
+        )
 
-      const collectObjectiveCollaboratorsViaActivityReport = () => collectObjectiveCollaborators(
-        /* sql */`
+      const collectObjectiveCollaboratorsViaActivityReport = () =>
+        collectObjectiveCollaborators(
+          /* sql */ `
         SELECT
           o.id "objectiveId",
           (ARRAY_AGG(ar."userId" ORDER BY ar.id ASC))[1] "userId",
@@ -249,11 +264,12 @@ module.exports = {
         AND MIN(ar."createdAt") IS NOT NULL
         ORDER BY 1,2
         `,
-        OBJECTIVE_COLLABORATORS.CREATOR,
-      );
+          OBJECTIVE_COLLABORATORS.CREATOR
+        )
 
-      const collectObjectiveCollaboratorsAsLinkers = () => collectObjectiveCollaborators(
-        /* sql */`
+      const collectObjectiveCollaboratorsAsLinkers = () =>
+        collectObjectiveCollaborators(
+          /* sql */ `
        SELECT
         "objectiveId",
         "userId",
@@ -298,11 +314,12 @@ module.exports = {
       CROSS JOIN UNNEST("activityReportIds") ar("activityReportId")
       GROUP BY 1,2
         `,
-        OBJECTIVE_COLLABORATORS.LINKER,
-      );
+          OBJECTIVE_COLLABORATORS.LINKER
+        )
 
-      const collectObjectiveCollaboratorsAsUtilizers = () => collectObjectiveCollaborators(
-        /* sql */`
+      const collectObjectiveCollaboratorsAsUtilizers = () =>
+        collectObjectiveCollaborators(
+          /* sql */ `
         SELECT
           "objectiveId",
           "userId",
@@ -343,11 +360,12 @@ module.exports = {
         CROSS JOIN UNNEST("activityReportIds") ar("activityReportId")
         GROUP BY 1,2
         `,
-        OBJECTIVE_COLLABORATORS.UTILIZER,
-      );
+          OBJECTIVE_COLLABORATORS.UTILIZER
+        )
 
-      const collectObjectiveCollaboratorsAsMergeDeprecators = () => collectObjectiveCollaborators(
-        /* sql */`
+      const collectObjectiveCollaboratorsAsMergeDeprecators = () =>
+        collectObjectiveCollaborators(
+          /* sql */ `
         select
           data_id "objectiveId",
           dml_as "userId",
@@ -363,11 +381,12 @@ module.exports = {
         and new_row_data ->> 'mapsToParentObjectiveId' IS NOT null
         GROUP BY 1,2
         `,
-        OBJECTIVE_COLLABORATORS.MERGE_DEPRECATOR,
-      );
+          OBJECTIVE_COLLABORATORS.MERGE_DEPRECATOR
+        )
 
-      const collectObjectiveCollaboratorsAsMergeCreator = () => collectObjectiveCollaborators(
-        /* sql */`
+      const collectObjectiveCollaboratorsAsMergeCreator = () =>
+        collectObjectiveCollaborators(
+          /* sql */ `
         SELECT
           data_id "objectiveId",
           dml_as "userId",
@@ -384,10 +403,10 @@ module.exports = {
         AND new_row_data -> 'title' IS NOT NULL
         GROUP BY 1,2
         `,
-        OBJECTIVE_COLLABORATORS.MERGE_CREATOR,
-      );
+          OBJECTIVE_COLLABORATORS.MERGE_CREATOR
+        )
 
-      const collectObjectiveCollaboratorsForMerged = () => /* sql */`
+      const collectObjectiveCollaboratorsForMerged = () => /* sql */ `
         WITH
           clusters as (
             select
@@ -513,57 +532,47 @@ module.exports = {
           "collaboratorTypeId",
           "linkBack",
           "createdAt",
-          "updatedAt";`;
+          "updatedAt";`
 
-      await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsViaAuditLogAsCreator(),
-        { transaction },
-      );
+      await queryInterface.sequelize.query(collectObjectiveCollaboratorsViaAuditLogAsCreator(), {
+        transaction,
+      })
 
-      await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsViaActivityReport(),
-        { transaction },
-      );
+      await queryInterface.sequelize.query(collectObjectiveCollaboratorsViaActivityReport(), {
+        transaction,
+      })
 
-      await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsViaAuditLogAsEditor(),
-        { transaction },
-      );
+      await queryInterface.sequelize.query(collectObjectiveCollaboratorsViaAuditLogAsEditor(), {
+        transaction,
+      })
 
-      await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsAsLinkers(),
-        { transaction },
-      );
+      await queryInterface.sequelize.query(collectObjectiveCollaboratorsAsLinkers(), {
+        transaction,
+      })
 
-      await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsAsUtilizers(),
-        { transaction },
-      );
+      await queryInterface.sequelize.query(collectObjectiveCollaboratorsAsUtilizers(), {
+        transaction,
+      })
 
-      await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsAsMergeDeprecators(),
-        { transaction },
-      );
+      await queryInterface.sequelize.query(collectObjectiveCollaboratorsAsMergeDeprecators(), {
+        transaction,
+      })
 
-      await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsAsMergeCreator(),
-        { transaction },
-      );
+      await queryInterface.sequelize.query(collectObjectiveCollaboratorsAsMergeCreator(), {
+        transaction,
+      })
 
-      await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsForMerged(),
-        { transaction },
-      );
-    });
+      await queryInterface.sequelize.query(collectObjectiveCollaboratorsForMerged(), {
+        transaction,
+      })
+    })
   },
 
   down: async (queryInterface, Sequelize) => {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
-      await removeTables(queryInterface, transaction, [
-        'ObjectiveCollaborators',
-      ]);
-    });
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
+      await removeTables(queryInterface, transaction, ['ObjectiveCollaborators'])
+    })
   },
-};
+}

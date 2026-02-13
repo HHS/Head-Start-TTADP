@@ -1,14 +1,9 @@
-import { Op } from 'sequelize';
-import {
-  INTERNAL_SERVER_ERROR,
-  NOT_FOUND,
-  BAD_REQUEST,
-  UNAUTHORIZED,
-} from 'http-codes';
-import db from '../../models';
-import { userById } from '../../services/users';
-import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
-import SCOPES from '../../middleware/scopeConstants';
+import { Op } from 'sequelize'
+import { INTERNAL_SERVER_ERROR, NOT_FOUND, BAD_REQUEST, UNAUTHORIZED } from 'http-codes'
+import db from '../../models'
+import { userById } from '../../services/users'
+import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission'
+import SCOPES from '../../middleware/scopeConstants'
 import {
   changeGoalStatus,
   createGoals,
@@ -18,7 +13,7 @@ import {
   getMissingDataForActivityReport,
   createGoalsFromTemplate,
   getGoalHistory,
-} from './handlers';
+} from './handlers'
 import {
   updateGoalStatusById,
   createOrUpdateGoals,
@@ -26,17 +21,17 @@ import {
   goalByIdWithActivityReportsAndRegions,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
-} from '../../goalServices/goals';
-import goalsFromTemplate from '../../goalServices/goalsFromTemplate';
-import { currentUserId } from '../../services/currentUser';
+} from '../../goalServices/goals'
+import goalsFromTemplate from '../../goalServices/goalsFromTemplate'
+import { currentUserId } from '../../services/currentUser'
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
-}));
+}))
 
 jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(),
-}));
+}))
 
 jest.mock('../../goalServices/goals', () => ({
   updateGoalStatusById: jest.fn(),
@@ -48,19 +43,19 @@ jest.mock('../../goalServices/goals', () => ({
   goalsByIdsAndActivityReport: jest.fn(),
   goalRegionsById: jest.fn(),
   getGoalsMissingDataForActivityReportSubmission: jest.fn(),
-}));
+}))
 
-jest.mock('../../goalServices/getGoalsMissingDataForActivityReportSubmission', () => jest.fn());
+jest.mock('../../goalServices/getGoalsMissingDataForActivityReportSubmission', () => jest.fn())
 
-jest.mock('../../goalServices/goalsFromTemplate', () => jest.fn());
+jest.mock('../../goalServices/goalsFromTemplate', () => jest.fn())
 
-jest.mock('../../goalServices/changeGoalStatus', () => jest.fn());
+jest.mock('../../goalServices/changeGoalStatus', () => jest.fn())
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
-}));
+}))
 
-jest.mock('../../services/accessValidation');
+jest.mock('../../services/accessValidation')
 
 const mockResponse = {
   attachment: jest.fn(),
@@ -71,10 +66,10 @@ const mockResponse = {
     end: jest.fn(),
     send: jest.fn(),
   })),
-};
+}
 
 describe('goal handlers', () => {
-  afterAll(() => db.sequelize.close());
+  afterAll(() => db.sequelize.close())
 
   describe('createGoalsFromTemplate', () => {
     it('checks permissions', async () => {
@@ -88,7 +83,7 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -97,12 +92,12 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      await createGoalsFromTemplate(req, mockResponse);
+      await createGoalsFromTemplate(req, mockResponse)
 
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
-    });
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401)
+    })
 
     it('handles success', async () => {
       const req = {
@@ -115,7 +110,7 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -124,14 +119,14 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      goalsFromTemplate.mockResolvedValueOnce([1]);
+      goalsFromTemplate.mockResolvedValueOnce([1])
 
-      await createGoalsFromTemplate(req, mockResponse);
+      await createGoalsFromTemplate(req, mockResponse)
 
-      expect(mockResponse.json).toHaveBeenCalledWith([1]);
-    });
+      expect(mockResponse.json).toHaveBeenCalledWith([1])
+    })
 
     it('sad path', async () => {
       const req = {
@@ -144,7 +139,7 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -153,33 +148,35 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      goalsFromTemplate.mockRejectedValue(new Error('Big time error'));
+      goalsFromTemplate.mockRejectedValue(new Error('Big time error'))
 
-      await createGoalsFromTemplate(req, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      await createGoalsFromTemplate(req, mockResponse)
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('createGoals', () => {
     afterAll(async () => {
-      jest.clearAllMocks();
-      userById.mockReset();
-    });
+      jest.clearAllMocks()
+      userById.mockReset()
+    })
 
     it('checks permissions', async () => {
       const req = {
         body: {
-          goals: [{
-            goalId: 2,
-            recipientId: 2,
-          }],
+          goals: [
+            {
+              goalId: 2,
+              recipientId: 2,
+            },
+          ],
         },
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -188,26 +185,28 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      await createGoals(req, mockResponse);
+      await createGoals(req, mockResponse)
 
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
-    });
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401)
+    })
 
     it('handles success', async () => {
       const req = {
         body: {
-          goals: [{
-            goalId: 2,
-            recipientId: 2,
-            regionId: 2,
-          }],
+          goals: [
+            {
+              goalId: 2,
+              recipientId: 2,
+              regionId: 2,
+            },
+          ],
         },
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -216,27 +215,29 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
-      createOrUpdateGoals.mockResolvedValueOnce({});
-      await createGoals(req, mockResponse);
+      createOrUpdateGoals.mockResolvedValueOnce({})
+      await createGoals(req, mockResponse)
 
-      expect(mockResponse.json).toHaveBeenCalledWith({});
-    });
+      expect(mockResponse.json).toHaveBeenCalledWith({})
+    })
 
     it('handles failures', async () => {
       const req = {
         body: {
-          goals: [{
-            goalId: 2,
-            recipientId: 2,
-            regionId: 2,
-          }],
+          goals: [
+            {
+              goalId: 2,
+              recipientId: 2,
+              regionId: 2,
+            },
+          ],
         },
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -245,23 +246,23 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
       createOrUpdateGoals.mockImplementationOnce(() => {
-        throw new Error();
-      });
+        throw new Error()
+      })
 
-      await createGoals(req, mockResponse);
+      await createGoals(req, mockResponse)
 
-      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('getMissingDataForActivityReport', () => {
     afterAll(async () => {
-      jest.clearAllMocks();
-      userById.mockReset();
-    });
+      jest.clearAllMocks()
+      userById.mockReset()
+    })
 
     it('checks permissions', async () => {
       const req = {
@@ -274,7 +275,7 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -283,12 +284,12 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      await getMissingDataForActivityReport(req, mockResponse);
+      await getMissingDataForActivityReport(req, mockResponse)
 
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
-    });
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401)
+    })
 
     it('handles success', async () => {
       const req = {
@@ -301,7 +302,7 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -310,13 +311,13 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
-      getGoalsMissingDataForActivityReportSubmission.mockResolvedValueOnce({});
-      await getMissingDataForActivityReport(req, mockResponse);
+      getGoalsMissingDataForActivityReportSubmission.mockResolvedValueOnce({})
+      await getMissingDataForActivityReport(req, mockResponse)
 
-      expect(mockResponse.json).toHaveBeenCalledWith({});
-    });
+      expect(mockResponse.json).toHaveBeenCalledWith({})
+    })
 
     it('handles failures', async () => {
       const req = {
@@ -329,7 +330,7 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -338,25 +339,25 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
       getGoalsMissingDataForActivityReportSubmission.mockImplementationOnce(() => {
-        throw new Error();
-      });
+        throw new Error()
+      })
 
-      await getMissingDataForActivityReport(req, mockResponse);
+      await getMissingDataForActivityReport(req, mockResponse)
 
-      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('changeGoalStatus', () => {
     beforeEach(async () => {
-      jest.clearAllMocks();
-      userById.mockReset();
-      goalByIdWithActivityReportsAndRegions.mockReset();
-    });
-    const goalWhere = { name: 'My updated goal' };
+      jest.clearAllMocks()
+      userById.mockReset()
+      goalByIdWithActivityReportsAndRegions.mockReset()
+    })
+    const goalWhere = { name: 'My updated goal' }
 
     it('updates status goal by id', async () => {
       const req = {
@@ -370,8 +371,8 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
-      updateGoalStatusById.mockResolvedValueOnce(goalWhere);
+      }
+      updateGoalStatusById.mockResolvedValueOnce(goalWhere)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -379,16 +380,16 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValue({
         objectives: [],
         grant: { regionId: 2 },
-      });
+      })
 
-      await changeGoalStatus(req, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(goalWhere);
-    });
+      await changeGoalStatus(req, mockResponse)
+      expect(mockResponse.json).toHaveBeenCalledWith(goalWhere)
+    })
 
     it('returns a bad request when the goal status cannot be so updated', async () => {
       const req = {
@@ -402,8 +403,8 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
-      updateGoalStatusById.mockResolvedValueOnce(false);
+      }
+      updateGoalStatusById.mockResolvedValueOnce(false)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -411,16 +412,16 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValue({
         objectives: [],
         grant: { regionId: 2 },
-      });
+      })
 
-      await changeGoalStatus(req, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(BAD_REQUEST);
-    });
+      await changeGoalStatus(req, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(BAD_REQUEST)
+    })
 
     it('returns a 401 based on permissions checks', async () => {
       const req = {
@@ -434,8 +435,8 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
-      updateGoalStatusById.mockResolvedValue(goalWhere);
+      }
+      updateGoalStatusById.mockResolvedValue(goalWhere)
       userById.mockResolvedValue({
         permissions: [
           {
@@ -443,18 +444,18 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValue({
         objectives: [],
         grant: { regionId: 2 },
-      });
+      })
 
-      await changeGoalStatus(req, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
-    });
+      await changeGoalStatus(req, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401)
+    })
 
-    it('returns a 404 when a goal can\'t be found', async () => {
+    it("returns a 404 when a goal can't be found", async () => {
       const req = {
         body: {
           goalIds: [100000],
@@ -466,7 +467,7 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValue({
         permissions: [
@@ -475,24 +476,23 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
-      goalByIdWithActivityReportsAndRegions.mockResolvedValue(null);
+      goalByIdWithActivityReportsAndRegions.mockResolvedValue(null)
 
-      updateGoalStatusById.mockResolvedValue(null);
-      await changeGoalStatus(req, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
-    });
+      updateGoalStatusById.mockResolvedValue(null)
+      await changeGoalStatus(req, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND)
+    })
 
     it('returns a 500 on error', async () => {
-      const req = {
-      };
-      await changeGoalStatus(req, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
+      const req = {}
+      await changeGoalStatus(req, mockResponse)
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
 
     it('automatically suspends in-progress objectives when goal is suspended', async () => {
-      db.Objective.update = jest.fn().mockResolvedValue([1, [{ id: 1 }]]);
+      db.Objective.update = jest.fn().mockResolvedValue([1, [{ id: 1 }]])
       const req = {
         body: {
           goalIds: [100000],
@@ -504,9 +504,9 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
-      updateGoalStatusById.mockResolvedValueOnce({ id: 100000, status: 'Suspended' });
+      updateGoalStatusById.mockResolvedValueOnce({ id: 100000, status: 'Suspended' })
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -514,14 +514,14 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValue({
         objectives: [],
         grant: { regionId: 2 },
-      });
+      })
 
-      await changeGoalStatus(req, mockResponse);
+      await changeGoalStatus(req, mockResponse)
 
       expect(db.Objective.update).toHaveBeenCalledWith(
         {
@@ -535,20 +535,20 @@ describe('goal handlers', () => {
             status: 'In Progress',
           },
           individualHooks: true,
-        },
-      );
-      expect(mockResponse.json).toHaveBeenCalledWith({ id: 100000, status: 'Suspended' });
-    });
-  });
+        }
+      )
+      expect(mockResponse.json).toHaveBeenCalledWith({ id: 100000, status: 'Suspended' })
+    })
+  })
 
   describe('deleteGoal', () => {
     afterEach(() => {
-      jest.clearAllMocks();
-    });
+      jest.clearAllMocks()
+    })
 
     afterAll(() => {
-      jest.resetModules();
-    });
+      jest.resetModules()
+    })
 
     it('checks permissions', async () => {
       const req = {
@@ -558,7 +558,7 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -567,17 +567,17 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
         objectives: [],
         grant: { regionId: 2 },
-      });
+      })
 
-      await deleteGoal(req, mockResponse);
+      await deleteGoal(req, mockResponse)
 
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
-    });
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401)
+    })
 
     it('handles success', async () => {
       const req = {
@@ -587,12 +587,12 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
         objectives: [],
         grant: { regionId: 2 },
-      });
+      })
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -601,13 +601,13 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
-      destroyGoal.mockResolvedValueOnce(1);
-      await deleteGoal(req, mockResponse);
+      destroyGoal.mockResolvedValueOnce(1)
+      await deleteGoal(req, mockResponse)
 
-      expect(mockResponse.json).toHaveBeenCalledWith(1);
-    });
+      expect(mockResponse.json).toHaveBeenCalledWith(1)
+    })
 
     it('handles no goal to delete', async () => {
       const req = {
@@ -617,12 +617,12 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
         objectives: [],
         grant: { regionId: 2 },
-      });
+      })
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -631,13 +631,13 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
-      destroyGoal.mockResolvedValueOnce(0);
-      await deleteGoal(req, mockResponse);
+      destroyGoal.mockResolvedValueOnce(0)
+      await deleteGoal(req, mockResponse)
 
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
-    });
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND)
+    })
 
     it('handles failures', async () => {
       const req = {
@@ -647,12 +647,12 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
         objectives: [],
         grants: [{ regionId: 2 }],
-      });
+      })
 
       userById.mockResolvedValueOnce({
         permissions: [
@@ -661,17 +661,17 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
       destroyGoal.mockImplementationOnce(() => {
-        throw new Error('This is an error');
-      });
+        throw new Error('This is an error')
+      })
 
-      await deleteGoal(req, mockResponse);
+      await deleteGoal(req, mockResponse)
 
-      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('createGoalsForReport', () => {
     it('handles success', async () => {
@@ -693,9 +693,9 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -703,13 +703,13 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
-      createOrUpdateGoalsForActivityReport.mockResolvedValueOnce(1);
-      await createGoalsForReport(req, mockResponse);
+      createOrUpdateGoalsForActivityReport.mockResolvedValueOnce(1)
+      await createGoalsForReport(req, mockResponse)
 
-      expect(mockResponse.json).toHaveBeenCalledWith(1);
-    });
+      expect(mockResponse.json).toHaveBeenCalledWith(1)
+    })
 
     it('rejects based on permissions', async () => {
       const req = {
@@ -730,16 +730,16 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [],
-      });
+      })
 
-      await createGoalsForReport(req, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
-    });
+      await createGoalsForReport(req, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401)
+    })
 
     it('handles errors', async () => {
       const req = {
@@ -760,9 +760,9 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -770,21 +770,21 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_WRITE_REPORTS,
           },
         ],
-      });
+      })
 
       createOrUpdateGoalsForActivityReport.mockImplementationOnce(() => {
-        throw new Error('a test error for the goals handler');
-      });
-      await createGoalsForReport(req, mockResponse);
+        throw new Error('a test error for the goals handler')
+      })
+      await createGoalsForReport(req, mockResponse)
 
-      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('retrieveObjectiveOptionsByGoalTemplate', () => {
     beforeAll(() => {
-      db.ActivityReport.findByPk = jest.fn();
-    });
+      db.ActivityReport.findByPk = jest.fn()
+    })
     it('successfully returns the deduplicated objectives for the standard goal', async () => {
       const req = {
         query: {
@@ -793,12 +793,12 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       db.ActivityReport.findByPk.mockResolvedValueOnce({
         id: 1,
         grants: [{ id: 2, regionId: 2 }],
-      });
+      })
 
       // Mock Goal.findAll once to return a object.
       db.Goal.findAll = jest.fn().mockResolvedValueOnce([
@@ -812,9 +812,9 @@ describe('goal handlers', () => {
           name: 'Goal 2',
           grant: { id: 2, regionId: 1 },
         },
-      ]);
+      ])
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -822,7 +822,7 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
       goalsByIdsAndActivityReport.mockResolvedValueOnce([
         {
           id: 1,
@@ -844,15 +844,15 @@ describe('goal handlers', () => {
             },
           ],
         },
-      ]);
+      ])
 
-      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse)
 
       expect(mockResponse.json).toHaveBeenCalledWith([
         { id: 1, title: 'Objective 1' },
         { id: 2, title: 'Objective 2' },
-      ]);
-    });
+      ])
+    })
     it('rejects based on permissions', async () => {
       const req = {
         query: {
@@ -861,12 +861,12 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       db.ActivityReport.findByPk.mockResolvedValueOnce({
         id: 1,
         grants: [{ id: 2, regionId: 2 }],
-      });
+      })
 
       // Mock Goal.findAll once to return a object.
       db.Goal.findAll = jest.fn().mockResolvedValueOnce([
@@ -880,21 +880,21 @@ describe('goal handlers', () => {
           name: 'Goal 2',
           grant: { id: 2, regionId: 2 }, // Wrong region should trigger permission error.
         },
-      ]);
+      ])
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValue({
         objectives: [],
         grant: { regionId: 2 },
-      });
+      })
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [],
-      });
+      })
 
-      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
-    });
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401)
+    })
 
     it('handles goals not found', async () => {
       const req = {
@@ -904,9 +904,9 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -914,22 +914,22 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
       db.ActivityReport.findByPk.mockResolvedValueOnce({
         id: 1,
         grants: [{ id: 2, regionId: 2 }],
-      });
+      })
 
       // Mock Goal.findAll once to return a object.
-      db.Goal.findAll = jest.fn().mockResolvedValueOnce([]);
+      db.Goal.findAll = jest.fn().mockResolvedValueOnce([])
 
-      goalsByIdsAndActivityReport.mockResolvedValueOnce([]);
+      goalsByIdsAndActivityReport.mockResolvedValueOnce([])
 
-      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse)
 
-      expect(mockResponse.json).toHaveBeenCalledWith([]);
-    });
+      expect(mockResponse.json).toHaveBeenCalledWith([])
+    })
 
     it('the reducer returning null', async () => {
       const req = {
@@ -939,12 +939,12 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       db.ActivityReport.findByPk.mockResolvedValueOnce({
         id: 1,
         grants: [{ id: 2, regionId: 2 }],
-      });
+      })
 
       // Mock Goal.findAll once to return a object.
       db.Goal.findAll = jest.fn().mockResolvedValueOnce([
@@ -958,9 +958,9 @@ describe('goal handlers', () => {
           name: 'Goal 2',
           grant: { id: 2, regionId: 1 },
         },
-      ]);
+      ])
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -968,13 +968,13 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      goalsByIdsAndActivityReport.mockResolvedValueOnce(null);
+      goalsByIdsAndActivityReport.mockResolvedValueOnce(null)
 
-      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith([]);
-    });
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse)
+      expect(mockResponse.json).toHaveBeenCalledWith([])
+    })
 
     it('handles error', async () => {
       const req = {
@@ -984,12 +984,12 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       db.ActivityReport.findByPk.mockResolvedValueOnce({
         id: 1,
         grants: [{ id: 2, regionId: 2 }],
-      });
+      })
 
       // Mock Goal.findAll once to return a object.
       db.Goal.findAll = jest.fn().mockResolvedValueOnce([
@@ -1003,9 +1003,9 @@ describe('goal handlers', () => {
           name: 'Goal 2',
           grant: { id: 2, regionId: 1 },
         },
-      ]);
+      ])
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1013,26 +1013,26 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
       goalsByIdsAndActivityReport.mockImplementationOnce(() => {
-        throw new Error('a test error for the goals handler');
-      });
+        throw new Error('a test error for the goals handler')
+      })
 
-      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-  });
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse)
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
+  })
 
   describe('getGoalHistory', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      currentUserId.mockReset();
-      userById.mockReset();
-      db.Goal.findByPk = jest.fn();
-      db.Grant.findByPk = jest.fn();
-      db.Goal.findAll = jest.fn();
-    });
+      jest.clearAllMocks()
+      currentUserId.mockReset()
+      userById.mockReset()
+      db.Goal.findByPk = jest.fn()
+      db.Grant.findByPk = jest.fn()
+      db.Goal.findAll = jest.fn()
+    })
 
     it('handles success', async () => {
       const req = {
@@ -1042,18 +1042,18 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       const mockGoal = {
         id: 1,
         goalTemplateId: 10,
         grantId: 100,
-      };
+      }
 
       const mockGrant = {
         id: 100,
         regionId: 2,
-      };
+      }
 
       const mockGoalsWithDetails = [
         {
@@ -1071,9 +1071,9 @@ describe('goal handlers', () => {
             },
           ],
         },
-      ];
+      ]
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1081,32 +1081,34 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce(mockGoalsWithDetails);
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal)
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant)
+      db.Goal.findAll.mockResolvedValueOnce(mockGoalsWithDetails)
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
-      expect(db.Goal.findByPk).toHaveBeenCalledWith(1);
-      expect(db.Grant.findByPk).toHaveBeenCalledWith(100);
-      expect(db.Goal.findAll).toHaveBeenCalledWith(expect.objectContaining({
-        where: {
-          goalTemplateId: 10,
-          grantId: 100,
-          [Op.or]: [
-            {
-              createdVia: { [Op.ne]: 'activityReport' },
-            },
-            {
-              onApprovedAR: true,
-            },
-          ],
-        },
-      }));
-      expect(mockResponse.json).toHaveBeenCalledWith(mockGoalsWithDetails);
-    });
+      expect(db.Goal.findByPk).toHaveBeenCalledWith(1)
+      expect(db.Grant.findByPk).toHaveBeenCalledWith(100)
+      expect(db.Goal.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            goalTemplateId: 10,
+            grantId: 100,
+            [Op.or]: [
+              {
+                createdVia: { [Op.ne]: 'activityReport' },
+              },
+              {
+                onApprovedAR: true,
+              },
+            ],
+          },
+        })
+      )
+      expect(mockResponse.json).toHaveBeenCalledWith(mockGoalsWithDetails)
+    })
 
     it('returns 404 when goal is not found', async () => {
       const req = {
@@ -1116,9 +1118,9 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1126,14 +1128,14 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      db.Goal.findByPk.mockResolvedValueOnce(null);
+      db.Goal.findByPk.mockResolvedValueOnce(null)
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
-    });
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND)
+    })
 
     it('returns 404 when grant is not found', async () => {
       const req = {
@@ -1143,15 +1145,15 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       const mockGoal = {
         id: 1,
         goalTemplateId: 10,
         grantId: 100,
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1159,15 +1161,15 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(null);
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal)
+      db.Grant.findByPk.mockResolvedValueOnce(null)
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
-    });
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND)
+    })
 
     it('returns 401 when user does not have permission in the region', async () => {
       const req = {
@@ -1177,20 +1179,20 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       const mockGoal = {
         id: 1,
         goalTemplateId: 10,
         grantId: 100,
-      };
+      }
 
       const mockGrant = {
         id: 100,
         regionId: 2,
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1198,15 +1200,15 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal)
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant)
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
-    });
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED)
+    })
 
     it('returns empty array when no goals with same template are found', async () => {
       const req = {
@@ -1216,20 +1218,20 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       const mockGoal = {
         id: 1,
         goalTemplateId: 10,
         grantId: 100,
-      };
+      }
 
       const mockGrant = {
         id: 100,
         regionId: 2,
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1237,16 +1239,16 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal)
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant)
+      db.Goal.findAll.mockResolvedValueOnce([])
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
-      expect(mockResponse.json).toHaveBeenCalledWith([]);
-    });
+      expect(mockResponse.json).toHaveBeenCalledWith([])
+    })
 
     it('handles errors', async () => {
       const req = {
@@ -1256,9 +1258,9 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1266,16 +1268,16 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
       db.Goal.findByPk.mockImplementationOnce(() => {
-        throw new Error('Database error');
-      });
+        throw new Error('Database error')
+      })
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
-      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR)
+    })
 
     it('ensures only objectives with createdVia = "rtr" or onApprovedAR = true are queried', async () => {
       const req = {
@@ -1285,20 +1287,20 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       const mockGoal = {
         id: 1,
         goalTemplateId: 10,
         grantId: 100,
-      };
+      }
 
       const mockGrant = {
         id: 100,
         regionId: 2,
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1306,13 +1308,13 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal)
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant)
+      db.Goal.findAll.mockResolvedValueOnce([])
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
       expect(db.Goal.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1321,16 +1323,13 @@ describe('goal handlers', () => {
               as: 'objectives',
               required: false,
               where: {
-                [Op.or]: [
-                  { createdVia: 'rtr' },
-                  { onApprovedAR: true },
-                ],
+                [Op.or]: [{ createdVia: 'rtr' }, { onApprovedAR: true }],
               },
             }),
           ]),
-        }),
-      );
-    });
+        })
+      )
+    })
 
     it('ensures only approved activity reports are included', async () => {
       const req = {
@@ -1340,20 +1339,20 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       const mockGoal = {
         id: 1,
         goalTemplateId: 10,
         grantId: 100,
-      };
+      }
 
       const mockGrant = {
         id: 100,
         regionId: 2,
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1361,13 +1360,13 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal)
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant)
+      db.Goal.findAll.mockResolvedValueOnce([])
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
       // Check that activity reports in objectives are filtered by approved status
       expect(db.Goal.findAll).toHaveBeenCalledWith(
@@ -1390,9 +1389,9 @@ describe('goal handlers', () => {
               ]),
             }),
           ]),
-        }),
-      );
-    });
+        })
+      )
+    })
 
     it('excludes prestandard goals from history queries', async () => {
       const req = {
@@ -1402,21 +1401,21 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       const mockGoal = {
         id: 1,
         goalTemplateId: 10,
         grantId: 100,
         prestandard: false,
-      };
+      }
 
       const mockGrant = {
         id: 100,
         regionId: 2,
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1424,22 +1423,22 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal)
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant)
+      db.Goal.findAll.mockResolvedValueOnce([])
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
       expect(db.Goal.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             prestandard: false,
           }),
-        }),
-      );
-    });
+        })
+      )
+    })
 
     it('only retrieves prestandard goals when requested goal is prestandard', async () => {
       const req = {
@@ -1449,21 +1448,21 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
+      }
 
       const mockGoal = {
         id: 1,
         goalTemplateId: 10,
         grantId: 100,
         prestandard: true,
-      };
+      }
 
       const mockGrant = {
         id: 100,
         regionId: 2,
-      };
+      }
 
-      currentUserId.mockResolvedValueOnce(1);
+      currentUserId.mockResolvedValueOnce(1)
       userById.mockResolvedValueOnce({
         permissions: [
           {
@@ -1471,13 +1470,13 @@ describe('goal handlers', () => {
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
+      })
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal)
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant)
+      db.Goal.findAll.mockResolvedValueOnce([])
 
-      await getGoalHistory(req, mockResponse);
+      await getGoalHistory(req, mockResponse)
 
       expect(db.Goal.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1486,8 +1485,8 @@ describe('goal handlers', () => {
             grantId: 100,
             prestandard: true,
           }),
-        }),
-      );
-    });
-  });
-});
+        })
+      )
+    })
+  })
+})

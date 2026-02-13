@@ -1,12 +1,12 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
-      return queryInterface.sequelize.query(/* sql */`
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
+      return queryInterface.sequelize.query(/* sql */ `
         -- Indexes for the "ActivityReports" table
         -- Index on ActivityReports.calculatedStatus for filtering approved reports
         CREATE INDEX IF NOT EXISTS activity_reports_calculated_status
@@ -103,11 +103,11 @@ module.exports = {
         -- Index for faster lookups on grantId and programType in Programs
         CREATE INDEX IF NOT EXISTS programs_grantid_programtype
             ON "Programs"("grantId", "programType");
-      `);
-    });
+      `)
+    })
   },
 
   async down() {
     // no rollbacks
   },
-};
+}

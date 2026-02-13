@@ -1,14 +1,14 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
 
 const grantStatusSql = (grantStatus, notWithin) => {
-  let where = null;
+  let where = null
   if (grantStatus === 'active') {
-    where = `"Grants"."status" = '${notWithin ? 'Inactive' : 'Active'}' AND "Grants"."cdi" = false`;
+    where = `"Grants"."status" = '${notWithin ? 'Inactive' : 'Active'}' AND "Grants"."cdi" = false`
   } else if (grantStatus === 'inactive') {
-    where = `"Grants"."status" = '${notWithin ? 'Active' : 'Inactive'}' AND "Grants"."cdi" = false`;
+    where = `"Grants"."status" = '${notWithin ? 'Active' : 'Inactive'}' AND "Grants"."cdi" = false`
   } else {
-    where = `"Grants"."cdi" = ${notWithin ? 'false' : 'true  AND "Grants"."status" = \'Active\''}`;
+    where = `"Grants"."cdi" = ${notWithin ? 'false' : 'true  AND "Grants"."status" = \'Active\''}`
   }
   return `
   SELECT
@@ -16,8 +16,8 @@ const grantStatusSql = (grantStatus, notWithin) => {
   FROM "ActivityRecipients" "ActivityRecipients"
   INNER JOIN "Grants" "Grants"
   ON "ActivityRecipients"."grantId" = "Grants"."id"
-  WHERE ${where}`;
-};
+  WHERE ${where}`
+}
 
 export function withGrantStatus(status) {
   return {
@@ -26,7 +26,7 @@ export function withGrantStatus(status) {
         ${grantStatusSql(status[0], false)}
       )`),
     },
-  };
+  }
 }
 
 export function withoutGrantStatus(status) {
@@ -36,5 +36,5 @@ export function withoutGrantStatus(status) {
           ${grantStatusSql(status[0], true)}
         )`),
     },
-  };
+  }
 }

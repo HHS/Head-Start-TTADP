@@ -1,18 +1,18 @@
-import moment from 'moment';
-import findOrCreateUser from './findOrCreateUser';
-import { User, sequelize } from '../models';
-import { auditLogger } from '../logger';
+import moment from 'moment'
+import findOrCreateUser from './findOrCreateUser'
+import { User, sequelize } from '../models'
+import { auditLogger } from '../logger'
 
-jest.mock('../logger');
+jest.mock('../logger')
 
 describe('findOrCreateUser', () => {
   afterEach(() => {
-    jest.clearAllMocks();
-  });
+    jest.clearAllMocks()
+  })
 
   afterAll(async () => {
-    await sequelize.close();
-  });
+    await sequelize.close()
+  })
 
   it('Finds an existing user when a matching user exists', async () => {
     const user = {
@@ -21,28 +21,28 @@ describe('findOrCreateUser', () => {
       email: 'test@test.com',
       hsesUsername: 'test@test.com',
       homeRegionId: 3,
-    };
+    }
     // Verify that the user with id 33 doesn't exist
-    await User.destroy({ where: { id: 33 } });
+    await User.destroy({ where: { id: 33 } })
     const noUser = await User.findOne({
       where: {
         id: user.id,
       },
-    });
+    })
 
-    expect(noUser).toBeNull();
+    expect(noUser).toBeNull()
 
-    const createdUser = await findOrCreateUser(user);
+    const createdUser = await findOrCreateUser(user)
 
-    expect(createdUser).toBeInstanceOf(User);
+    expect(createdUser).toBeInstanceOf(User)
 
-    const retrievedUser = await findOrCreateUser(user);
+    const retrievedUser = await findOrCreateUser(user)
 
-    expect(retrievedUser.hsesUserId).toEqual(user.hsesUserId);
-    expect(retrievedUser.email).toEqual(user.email);
-    expect(retrievedUser.id).toEqual(user.id);
-    expect(retrievedUser.lastLogin).not.toEqual(createdUser.lastLogin);
-  });
+    expect(retrievedUser.hsesUserId).toEqual(user.hsesUserId)
+    expect(retrievedUser.email).toEqual(user.email)
+    expect(retrievedUser.id).toEqual(user.id)
+    expect(retrievedUser.lastLogin).not.toEqual(createdUser.lastLogin)
+  })
 
   it('Handles HSES resets', async () => {
     const user = {
@@ -51,47 +51,47 @@ describe('findOrCreateUser', () => {
       email: 'test39@test.com',
       hsesUsername: 'test39@test.com',
       homeRegionId: 3,
-    };
+    }
     // Verify that the user with id 39 doesn't exist
-    await User.destroy({ where: { id: 39 } });
+    await User.destroy({ where: { id: 39 } })
     const noUser = await User.findOne({
       where: {
         id: user.id,
       },
-    });
+    })
 
-    expect(noUser).toBeNull();
+    expect(noUser).toBeNull()
 
     // Create a user
-    const createdUser = await User.create({ ...user, lastLogin: new Date() });
-    expect(createdUser).toBeInstanceOf(User);
+    const createdUser = await User.create({ ...user, lastLogin: new Date() })
+    expect(createdUser).toBeInstanceOf(User)
 
     // Change user's hsesUserId
-    user.hsesUserId = '40';
-    const updatedUser = await findOrCreateUser(user);
+    user.hsesUserId = '40'
+    const updatedUser = await findOrCreateUser(user)
 
-    expect(updatedUser).toBeInstanceOf(User);
-    expect(updatedUser.hsesUserId).toEqual(user.hsesUserId);
-    expect(updatedUser.email).toEqual(user.email);
-    expect(updatedUser.id).toEqual(user.id);
-  });
+    expect(updatedUser).toBeInstanceOf(User)
+    expect(updatedUser.hsesUserId).toEqual(user.hsesUserId)
+    expect(updatedUser.email).toEqual(user.email)
+    expect(updatedUser.id).toEqual(user.id)
+  })
 
   it('Updates the lastLogin timestamp when a matching user exists', async () => {
-    const userId = 36;
+    const userId = 36
     const user = {
       hsesUserId: '36',
       email: 'test36@test.com',
       hsesUsername: 'test36@test.com',
       homeRegionId: 3,
-    };
-    const originalLastLogin = moment().subtract(1, 'day');
-    await User.destroy({ where: { id: userId } });
-    await User.create({ ...user, id: userId, lastLogin: originalLastLogin });
+    }
+    const originalLastLogin = moment().subtract(1, 'day')
+    await User.destroy({ where: { id: userId } })
+    await User.create({ ...user, id: userId, lastLogin: originalLastLogin })
 
-    const retrievedUser = await findOrCreateUser(user);
-    expect(retrievedUser.id).toEqual(userId);
-    expect(originalLastLogin.isBefore(retrievedUser.lastLogin)).toBe(true);
-  });
+    const retrievedUser = await findOrCreateUser(user)
+    expect(retrievedUser.id).toEqual(userId)
+    expect(originalLastLogin.isBefore(retrievedUser.lastLogin)).toBe(true)
+  })
 
   it('Creates a new user when a matching user does not exist', async () => {
     const user = {
@@ -100,58 +100,58 @@ describe('findOrCreateUser', () => {
       email: 'test34@test.com',
       hsesUsername: 'test34@test.com',
       homeRegionId: 3,
-    };
+    }
     // Check that the above `user` doesn't exist in the DB yet.
-    await User.destroy({ where: { id: 34 } });
+    await User.destroy({ where: { id: 34 } })
     const existingUser = await User.findOne({
       where: {
         hsesUserId: user.hsesUserId,
       },
-    });
+    })
 
-    expect(existingUser).toBeNull();
+    expect(existingUser).toBeNull()
 
     // Now find or create `user2`, and confirm that a new user was created
-    const createdUser = await findOrCreateUser(user);
+    const createdUser = await findOrCreateUser(user)
 
-    expect(createdUser.id).toBeDefined();
-    expect(createdUser.email).toEqual(user.email);
+    expect(createdUser.id).toBeDefined()
+    expect(createdUser.email).toEqual(user.email)
 
     // Look up the user that was just created, make sure it can now be found
     const existingUserAfter = await User.findOne({
       where: {
         id: createdUser.id,
       },
-    });
-    expect(existingUserAfter).toBeInstanceOf(User);
-  });
+    })
+    expect(existingUserAfter).toBeInstanceOf(User)
+  })
 
   it('Finds the existing user when email is changed', async () => {
-    const userId = 35;
-    const oldEmail = 'test35@test.com';
-    const updatedEmail = 'new.email35@test.com';
+    const userId = 35
+    const oldEmail = 'test35@test.com'
+    const updatedEmail = 'new.email35@test.com'
     const user = {
       hsesUserId: '35',
       email: oldEmail,
       hsesUsername: oldEmail,
-    };
+    }
     // Verify that user 35 is set up as we expect
-    await User.destroy({ where: { id: userId } });
-    await User.create({ ...user, id: userId, lastLogin: new Date() });
+    await User.destroy({ where: { id: userId } })
+    await User.create({ ...user, id: userId, lastLogin: new Date() })
 
     const retrievedUser = await findOrCreateUser({
       ...user,
       email: updatedEmail,
-    });
+    })
 
-    expect(retrievedUser.id).toEqual(userId);
+    expect(retrievedUser.id).toEqual(userId)
 
-    expect(retrievedUser.email).toEqual(updatedEmail);
-  });
+    expect(retrievedUser.email).toEqual(updatedEmail)
+  })
 
   it('Throws when there is something wrong', async () => {
-    await expect(() => findOrCreateUser({ id: -1 })).rejects.toBeInstanceOf(Error);
-  });
+    await expect(() => findOrCreateUser({ id: -1 })).rejects.toBeInstanceOf(Error)
+  })
 
   it('Logs an error message on error', async () => {
     const user = {
@@ -159,9 +159,11 @@ describe('findOrCreateUser', () => {
       email: 'invalid',
       hsesUsername: 'user33',
       homeRegionId: 3,
-    };
-    await User.destroy({ where: { hsesUserId: '33' } });
-    await expect(findOrCreateUser(user)).rejects.toThrow();
-    expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:FIND_OR_CREATE_USER - Error finding or creating user in database - SequelizeValidationError: Validation error: email is invalid');
-  });
-});
+    }
+    await User.destroy({ where: { hsesUserId: '33' } })
+    await expect(findOrCreateUser(user)).rejects.toThrow()
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'SERVICE:FIND_OR_CREATE_USER - Error finding or creating user in database - SequelizeValidationError: Validation error: email is invalid'
+    )
+  })
+})

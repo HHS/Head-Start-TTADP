@@ -20,9 +20,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
-    });
+    })
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('Topics');
+    await queryInterface.dropTable('Topics')
   },
-};
+}

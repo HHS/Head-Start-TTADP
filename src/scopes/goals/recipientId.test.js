@@ -1,26 +1,18 @@
-import {
-  Op,
-  filtersToScopes,
-  Goal,
-  sequelize,
-  setupSharedTestData,
-  tearDownSharedTestData,
-  sharedTestData,
-} from './testHelpers';
+import { Op, filtersToScopes, Goal, sequelize, setupSharedTestData, tearDownSharedTestData, sharedTestData } from './testHelpers'
 
 describe('goals/recipientId', () => {
   beforeAll(async () => {
-    await setupSharedTestData();
-  });
+    await setupSharedTestData()
+  })
 
   afterAll(async () => {
-    await tearDownSharedTestData();
-    await sequelize.close();
-  });
+    await tearDownSharedTestData()
+    await sequelize.close()
+  })
 
   it('filters by recipientId', async () => {
-    const filters = { 'recipientId.ctn': [sharedTestData.grant.recipientId] };
-    const { goal: scope } = await filtersToScopes(filters, 'goal');
+    const filters = { 'recipientId.ctn': [sharedTestData.grant.recipientId] }
+    const { goal: scope } = await filtersToScopes(filters, 'goal')
     const found = await Goal.findAll({
       where: {
         [Op.and]: [
@@ -30,9 +22,9 @@ describe('goals/recipientId', () => {
           },
         ],
       },
-    });
+    })
 
-    expect(found.length).toBe(1);
-    expect(found[0].name).toContain('Goal 6');
-  });
-});
+    expect(found.length).toBe(1)
+    expect(found[0].name).toContain('Goal 6')
+  })
+})

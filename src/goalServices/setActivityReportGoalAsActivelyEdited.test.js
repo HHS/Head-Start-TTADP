@@ -1,27 +1,19 @@
-import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  setActivityReportGoalAsActivelyEdited,
-} from './goals';
-import getGoalsForReport from './getGoalsForReport';
-import {
-  Goal,
-  ActivityReport,
-  ActivityReportGoal,
-  User,
-  sequelize,
-} from '../models';
+import faker from '@faker-js/faker'
+import { REPORT_STATUSES } from '@ttahub/common'
+import { setActivityReportGoalAsActivelyEdited } from './goals'
+import getGoalsForReport from './getGoalsForReport'
+import { Goal, ActivityReport, ActivityReportGoal, User, sequelize } from '../models'
 
 describe('setActivityReportGoalAsActivelyEdited', () => {
-  let goal;
-  let goal2;
-  let report;
-  let user;
+  let goal
+  let goal2
+  let report
+  let user
 
   beforeAll(async () => {
     // Create User.
 
-    const userName = faker.random.word();
+    const userName = faker.random.word()
 
     user = await User.create({
       id: faker.datatype.number({ min: 1000 }),
@@ -30,7 +22,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       hsesUsername: userName,
       hsesUserId: userName,
       lastLogin: new Date(),
-    });
+    })
 
     // Create Goal.
     goal = await Goal.create({
@@ -40,7 +32,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       isFromSmartsheetTtaPlan: false,
       createdAt: new Date('2021-01-02'),
       grantId: 1,
-    });
+    })
 
     // Create Goal.
     goal2 = await Goal.create({
@@ -50,7 +42,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       isFromSmartsheetTtaPlan: false,
       createdAt: new Date('2021-01-02'),
       grantId: 1,
-    });
+    })
 
     // create report
     report = await ActivityReport.create({
@@ -62,54 +54,54 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       ECLKCResourcesUsed: ['test'],
       activityRecipients: [{ activityRecipientId: 30 }],
       version: 2,
-    });
+    })
 
     // create activity report goal
     await ActivityReportGoal.create({
       activityReportId: report.id,
       goalId: goal.id,
       isActivelyEdited: false,
-    });
+    })
 
     await ActivityReportGoal.create({
       activityReportId: report.id,
       goalId: goal2.id,
       isActivelyEdited: true,
-    });
-  });
+    })
+  })
   afterAll(async () => {
     await ActivityReportGoal.destroy({
       where: {
         activityReportId: report.id,
       },
-    });
+    })
 
     await Goal.destroy({
       where: {
         id: [goal.id, goal2.id],
       },
       force: true,
-    });
+    })
 
     await ActivityReport.destroy({
       where: {
         id: report.id,
       },
-    });
+    })
 
-    await sequelize.close();
-  });
+    await sequelize.close()
+  })
   it('sets goal as edited via the ARG table', async () => {
-    await setActivityReportGoalAsActivelyEdited(`${goal.id}`, report.id);
-    const goalsForReport = await getGoalsForReport(report.id);
-    expect(goalsForReport).toHaveLength(2);
+    await setActivityReportGoalAsActivelyEdited(`${goal.id}`, report.id)
+    const goalsForReport = await getGoalsForReport(report.id)
+    expect(goalsForReport).toHaveLength(2)
 
-    const goalNotEdited = goalsForReport.find((g) => g.id === goal2.id);
-    const [goalNotEditedArGoal] = goalNotEdited.activityReportGoals;
-    expect(goalNotEditedArGoal.isActivelyEdited).toBe(false);
+    const goalNotEdited = goalsForReport.find((g) => g.id === goal2.id)
+    const [goalNotEditedArGoal] = goalNotEdited.activityReportGoals
+    expect(goalNotEditedArGoal.isActivelyEdited).toBe(false)
 
-    const goalBeingEdited = goalsForReport.find((g) => g.id === goal2.id);
-    const [goalBeingEditedArGoal] = goalBeingEdited.activityReportGoals;
-    expect(goalBeingEditedArGoal.isActivelyEdited).toBe(false);
-  });
-});
+    const goalBeingEdited = goalsForReport.find((g) => g.id === goal2.id)
+    const [goalBeingEditedArGoal] = goalBeingEdited.activityReportGoals
+    expect(goalBeingEditedArGoal.isActivelyEdited).toBe(false)
+  })
+})

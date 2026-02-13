@@ -1,61 +1,49 @@
-import { Op, WhereOptions } from 'sequelize';
-import { GROUP_SHARED_WITH } from '@ttahub/common';
-import db, { sequelize } from '../models';
-import { GROUP_COLLABORATORS } from '../constants';
-import { getCollaboratorTypeMapping } from './collaboratorType';
-import SCOPES from '../middleware/scopeConstants';
+import { Op, type WhereOptions } from 'sequelize'
+import { GROUP_SHARED_WITH } from '@ttahub/common'
+import db, { sequelize } from '../models'
+import { GROUP_COLLABORATORS } from '../constants'
+import { getCollaboratorTypeMapping } from './collaboratorType'
+import SCOPES from '../middleware/scopeConstants'
 
-const {
-  CollaboratorType,
-  Grant,
-  Group,
-  GroupCollaborator,
-  GroupGrant,
-  Permission,
-  Program,
-  Recipient,
-  Role,
-  User,
-  Sequelize,
-} = db;
+const { CollaboratorType, Grant, Group, GroupCollaborator, GroupGrant, Permission, Program, Recipient, Role, User, Sequelize } = db
 
 interface GroupData {
-  name: string;
-  id?: number;
-  userId: number;
-  grants: number[];
-  isPublic: boolean;
-  creator: { userId: number },
-  coOwners?: number[];
-  individuals?: number[];
-  sharedWith?: GROUP_SHARED_WITH;
+  name: string
+  id?: number
+  userId: number
+  grants: number[]
+  isPublic: boolean
+  creator: { userId: number }
+  coOwners?: number[]
+  individuals?: number[]
+  sharedWith?: GROUP_SHARED_WITH
 }
 
 interface GroupGrantData {
-  id: number;
-  grantId: number;
-  groupId: number;
+  id: number
+  grantId: number
+  groupId: number
 }
 
 interface GrantsResponse {
-  id: number;
-  regionId: number;
-  recipientId: number;
-  status: string;
+  id: number
+  regionId: number
+  recipientId: number
+  status: string
 }
 
 interface GroupCollaboratorsResponse {
-  id: number;
-  collaboratorType: { name: string };
-  user: { id: number, name: string };
+  id: number
+  collaboratorType: { name: string }
+  user: { id: number; name: string }
 }
 
 export interface GroupResponse {
-  id: number;
-  name: string;
-  grants: GrantsResponse[];
-  groupCollaborators: GroupCollaboratorsResponse[];
-  isPublic: boolean;
+  id: number
+  name: string
+  grants: GrantsResponse[]
+  groupCollaborators: GroupCollaboratorsResponse[]
+  isPublic: boolean
 }
 
 /**
@@ -77,9 +65,9 @@ export async function checkGroupNameAvailable(name: string, groupId?: number): P
       // Exclude the group with the given groupId if provided
       ...(groupId && { id: { [Op.not]: groupId } }),
     },
-  });
+  })
   // Return true if the name is available, false otherwise.
-  return !existingGroup;
+  return !existingGroup
 }
 
 /**
@@ -91,10 +79,7 @@ export async function checkGroupNameAvailable(name: string, groupId?: number): P
  */
 export async function groupsByRegion(region: number, userId: number): Promise<GroupResponse[]> {
   return Group.findAll({
-    attributes: [
-      'id',
-      'name',
-    ],
+    attributes: ['id', 'name'],
     where: {
       '$grants.regionId$': region,
       [Op.or]: [
@@ -114,45 +99,39 @@ export async function groupsByRegion(region: number, userId: number): Promise<Gr
         required: false,
         attributes: [],
         where: { userId },
-        include: [{
-          model: User,
-          as: 'user',
-          attributes: [],
-          required: true,
-          include: [{
-            model: Permission,
-            as: 'permissions',
-            attributes: [],
-            required: true,
-            where: { regionId: region },
-            // through: { attributes: [] },
-          }],
-        }],
-      },
-      {
-        model: Grant,
-        as: 'grants',
-        attributes: [
-          'regionId',
-          'recipientId',
-          'number',
-          'id',
-          'granteeName',
-          'recipientInfo',
-        ],
         include: [
           {
-            model: Recipient,
-            as: 'recipient',
-            attributes: [
-              'name',
-              'id',
+            model: User,
+            as: 'user',
+            attributes: [],
+            required: true,
+            include: [
+              {
+                model: Permission,
+                as: 'permissions',
+                attributes: [],
+                required: true,
+                where: { regionId: region },
+                // through: { attributes: [] },
+              },
             ],
           },
         ],
       },
+      {
+        model: Grant,
+        as: 'grants',
+        attributes: ['regionId', 'recipientId', 'number', 'id', 'granteeName', 'recipientInfo'],
+        include: [
+          {
+            model: Recipient,
+            as: 'recipient',
+            attributes: ['name', 'id'],
+          },
+        ],
+      },
     ],
-  });
+  })
 }
 
 /**
@@ -164,13 +143,7 @@ export async function groupsByRegion(region: number, userId: number): Promise<Gr
  */
 export async function groups(userId: number, regions: number[] = []): Promise<GroupResponse[]> {
   const returnGroups = await Group.findAll({
-    attributes: [
-      'id',
-      'name',
-      'isPublic',
-      'updatedAt',
-      'sharedWith',
-    ],
+    attributes: ['id', 'name', 'isPublic', 'updatedAt', 'sharedWith'],
     where: {
       '$grants.regionId$': { [Op.in]: regions },
       [Op.or]: [
@@ -201,55 +174,38 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
             as: 'user',
             attributes: ['id', 'name'],
             required: true,
-            include: [{
-              model: Permission,
-              as: 'permissions',
-              attributes: [],
-              required: true,
-              where: {
-                scopeId: [
-                  SCOPES.READ_REPORTS,
-                  SCOPES.READ_WRITE_REPORTS,
-                  SCOPES.APPROVE_REPORTS,
-                ],
+            include: [
+              {
+                model: Permission,
+                as: 'permissions',
+                attributes: [],
+                required: true,
+                where: {
+                  scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
+                },
               },
-            }],
+            ],
           },
         ],
       },
       {
-        attributes: [
-          'regionId',
-          'recipientId',
-          'number',
-          'id',
-          'granteeName',
-          'recipientInfo',
-        ],
+        attributes: ['regionId', 'recipientId', 'number', 'id', 'granteeName', 'recipientInfo'],
         model: Grant,
         as: 'grants',
         include: [
           {
-            attributes: [
-              'name',
-              'id',
-            ],
+            attributes: ['name', 'id'],
             model: Recipient,
             as: 'recipient',
           },
         ],
       },
     ],
-  });
+  })
 
   // We need to get all the collaborators after we have the group ids.
   const allGroupCollaborators = await GroupCollaborator.findAll({
-    attributes: [
-      'id',
-      'groupId',
-      'userId',
-      'updatedAt',
-    ],
+    attributes: ['id', 'groupId', 'userId', 'updatedAt'],
     where: {
       groupId: returnGroups.map((g) => g.id),
     },
@@ -260,12 +216,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
         required: true,
         attributes: ['id', 'name'],
         where: {
-          name: [
-            GROUP_COLLABORATORS.CREATOR,
-            GROUP_COLLABORATORS.EDITOR,
-            GROUP_COLLABORATORS.CO_OWNER,
-            GROUP_COLLABORATORS.SHARED_WITH,
-          ],
+          name: [GROUP_COLLABORATORS.CREATOR, GROUP_COLLABORATORS.EDITOR, GROUP_COLLABORATORS.CO_OWNER, GROUP_COLLABORATORS.SHARED_WITH],
         },
       },
       {
@@ -274,50 +225,40 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
         attributes: ['id', 'name'],
       },
     ],
-  });
+  })
 
   // Get the creator of the group.
   const finalGroups = returnGroups.map((g) => {
-    const groupCollaborators = allGroupCollaborators.filter((gc) => gc.groupId === g.id);
+    const groupCollaborators = allGroupCollaborators.filter((gc) => gc.groupId === g.id)
     // Creator.
-    const creator = groupCollaborators.find(
-      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR,
-    );
+    const creator = groupCollaborators.find((gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR)
 
     // Editor.
-    const mostRecentEditor = (groupCollaborators.filter(
-      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.EDITOR,
-    ).sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    ) || [creator])[0];
+    const mostRecentEditor = (groupCollaborators
+      .filter((gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.EDITOR)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()) || [creator])[0]
 
     // Co-owners.
-    const coOwners = groupCollaborators.filter(
-      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CO_OWNER,
-    );
+    const coOwners = groupCollaborators.filter((gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CO_OWNER)
 
     // Shared with.
-    const individuals = groupCollaborators.filter(
-      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH,
-    );
+    const individuals = groupCollaborators.filter((gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH)
 
     return {
       ...g.dataValues,
-      editor: mostRecentEditor ? {
-        id: mostRecentEditor.user.id,
-        name: mostRecentEditor.user.name,
-      } : null,
+      editor: mostRecentEditor
+        ? {
+            id: mostRecentEditor.user.id,
+            name: mostRecentEditor.user.name,
+          }
+        : null,
       creator: creator ? { id: creator.user.id, name: creator.user.name } : null,
-      coOwners: coOwners
-        ? coOwners.map((coOwner) => ({ id: coOwner.user.id, name: coOwner.user.name }))
-        : null,
-      individuals: individuals
-        ? individuals.map((individual) => ({ id: individual.user.id, name: individual.user.name }))
-        : null,
-    };
-  });
+      coOwners: coOwners ? coOwners.map((coOwner) => ({ id: coOwner.user.id, name: coOwner.user.name })) : null,
+      individuals: individuals ? individuals.map((individual) => ({ id: individual.user.id, name: individual.user.name })) : null,
+    }
+  })
 
-  return finalGroups;
+  return finalGroups
 }
 
 /**
@@ -330,13 +271,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
 export async function group(groupId: number): Promise<GroupResponse> {
   // Find a group with the given groupId
   const returnGroup = await Group.findOne({
-    attributes: [
-      'id',
-      'name',
-      'isPublic',
-      'updatedAt',
-      'sharedWith',
-    ],
+    attributes: ['id', 'name', 'isPublic', 'updatedAt', 'sharedWith'],
     where: {
       id: groupId,
     },
@@ -358,36 +293,27 @@ export async function group(groupId: number): Promise<GroupResponse> {
             as: 'user',
             attributes: ['id', 'name'],
             required: true,
-            include: [{
-              model: Permission,
-              as: 'permissions',
-              attributes: [],
-              required: true,
-              // through: { attributes: [] },
-            }],
+            include: [
+              {
+                model: Permission,
+                as: 'permissions',
+                attributes: [],
+                required: true,
+                // through: { attributes: [] },
+              },
+            ],
           },
         ],
       },
       {
         model: Grant,
         as: 'grants',
-        attributes: [
-          'regionId',
-          'recipientId',
-          'number',
-          'id',
-          'granteeName',
-          'recipientInfo',
-          'recipientNameWithPrograms',
-        ],
+        attributes: ['regionId', 'recipientId', 'number', 'id', 'granteeName', 'recipientInfo', 'recipientNameWithPrograms'],
         include: [
           {
             model: Recipient,
             as: 'recipient',
-            attributes: [
-              'name',
-              'id',
-            ],
+            attributes: ['name', 'id'],
           },
           {
             model: Program,
@@ -397,56 +323,46 @@ export async function group(groupId: number): Promise<GroupResponse> {
         ],
       },
     ],
-  });
+  })
 
   const allGroupCollaborators = await GroupCollaborator.findAll({
-    attributes: [
-      'id',
-      'groupId',
-      'userId',
-      'updatedAt',
-      'collaboratorTypeId',
-    ],
+    attributes: ['id', 'groupId', 'userId', 'updatedAt', 'collaboratorTypeId'],
     where: {
       groupId: returnGroup.id,
     },
-  });
+  })
 
   // Get the creator of the group.
-  const creator = returnGroup.groupCollaborators.find(
-    (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR,
-  );
+  const creator = returnGroup.groupCollaborators.find((gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR)
 
   // Get the editor.
-  const mostRecentEditor = (returnGroup.groupCollaborators.filter(
-    (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.EDITOR,
-  ).sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-  ) || [creator])[0];
+  const mostRecentEditor = (returnGroup.groupCollaborators
+    .filter((gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.EDITOR)
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()) || [creator])[0]
 
-  const coOwners = (returnGroup.groupCollaborators.filter(
-    (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CO_OWNER,
-  ).sort(
-    (a, b) => a.user.name.localeCompare(b.user.name),
-  ) || []);
+  const coOwners =
+    returnGroup.groupCollaborators
+      .filter((gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CO_OWNER)
+      .sort((a, b) => a.user.name.localeCompare(b.user.name)) || []
 
-  const individuals = (returnGroup.groupCollaborators.filter(
-    (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH,
-  ).sort(
-    (a, b) => a.user.name.localeCompare(b.user.name),
-  ) || []);
+  const individuals =
+    returnGroup.groupCollaborators
+      .filter((gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH)
+      .sort((a, b) => a.user.name.localeCompare(b.user.name)) || []
 
   // Return the group with the creator.
   return {
     ...returnGroup.dataValues,
-    editor: mostRecentEditor ? {
-      id: mostRecentEditor.user.id,
-      name: mostRecentEditor.user.name,
-    } : null,
+    editor: mostRecentEditor
+      ? {
+          id: mostRecentEditor.user.id,
+          name: mostRecentEditor.user.name,
+        }
+      : null,
     coOwners: coOwners.map((co) => ({ id: co.user.id, name: co.user.name })),
     individuals: individuals.map((sw) => ({ id: sw.user.id, name: sw.user.name })),
     creator: creator ? { id: creator.user.id, name: creator.user.name } : null,
-  };
+  }
 }
 
 /**
@@ -470,16 +386,12 @@ async function creatorRegionIds(userId: number): Promise<number[]> {
       },
     ],
     where: {
-      scopeId: [
-        SCOPES.READ_REPORTS,
-        SCOPES.READ_WRITE_REPORTS,
-        SCOPES.APPROVE_REPORTS,
-      ],
+      scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
     },
     raw: true,
-  });
+  })
 
-  return [...new Set(regionResult.map(({ regionId }) => regionId))];
+  return [...new Set(regionResult.map(({ regionId }) => regionId))]
 }
 
 /**
@@ -520,16 +432,12 @@ async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
       },
     ],
     where: {
-      scopeId: [
-        SCOPES.READ_REPORTS,
-        SCOPES.READ_WRITE_REPORTS,
-        SCOPES.APPROVE_REPORTS,
-      ],
+      scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
     },
     raw: true,
-  });
+  })
 
-  return [...new Set(regionResult.map(({ regionId }) => regionId))];
+  return [...new Set(regionResult.map(({ regionId }) => regionId))]
 }
 
 /**
@@ -541,23 +449,18 @@ async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
  * in all the regions they have access to.
  * @throws {Error} If there is an error retrieving the users.
  */
-export async function potentialGroupUsers(
-  groupId: number,
-  userId: number,
-): Promise<{ userId: number, name: string }[]> {
-  if (groupId === null && userId === null) return [];
+export async function potentialGroupUsers(groupId: number, userId: number): Promise<{ userId: number; name: string }[]> {
+  if (groupId === null && userId === null) return []
 
   // Retrieve the regionIds of group creator or if we haven't saved yet the user id.
-  const creatorsRegionIds = groupId === null
-    ? await creatorRegionIds(userId)
-    : await groupCreatorRegionIds(groupId);
+  const creatorsRegionIds = groupId === null ? await creatorRegionIds(userId) : await groupCreatorRegionIds(groupId)
 
   // Retrieve users who have the permission to access reports in all the regionIds obtained above
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let whereClause:WhereOptions = {
+  let whereClause: WhereOptions = {
     // Add the top-level where clause for null groupCollaborators.id
     '$groupCollaborators.id$': null,
-  };
+  }
 
   if (groupId === null) {
     // If the group is not saved yet, we need to filter out the current user.
@@ -566,7 +469,7 @@ export async function potentialGroupUsers(
       id: {
         [Op.not]: userId,
       },
-    };
+    }
   }
 
   const users = await User.findAll({
@@ -582,12 +485,7 @@ export async function potentialGroupUsers(
         attributes: [],
         required: true,
         where: {
-          scopeId: [
-            SCOPES.READ_REPORTS,
-            SCOPES.READ_WRITE_REPORTS,
-            SCOPES.APPROVE_REPORTS,
-            SCOPES.SITE_ACCESS,
-          ],
+          scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS, SCOPES.SITE_ACCESS],
           // We only set site access permission on the user for region 14.
           regionId: [...creatorsRegionIds, 14],
         },
@@ -607,18 +505,17 @@ export async function potentialGroupUsers(
         attributes: [],
         required: false,
         where: { groupId },
-        include: [{
-          model: CollaboratorType.unscoped(),
-          as: 'collaboratorType',
-          attributes: [],
-          required: true,
-          where: {
-            name: [
-              GROUP_COLLABORATORS.CREATOR,
-              GROUP_COLLABORATORS.CO_OWNER,
-            ],
+        include: [
+          {
+            model: CollaboratorType.unscoped(),
+            as: 'collaboratorType',
+            attributes: [],
+            required: true,
+            where: {
+              name: [GROUP_COLLABORATORS.CREATOR, GROUP_COLLABORATORS.CO_OWNER],
+            },
           },
-        }],
+        ],
       },
     ],
     where: whereClause,
@@ -641,8 +538,8 @@ export async function potentialGroupUsers(
       ],
     },
     raw: true,
-  });
-  return users;
+  })
+  return users
 }
 
 /**
@@ -654,19 +551,13 @@ export async function potentialGroupUsers(
  * in all the regions they have access to.
  * @throws {Error} If there is an error retrieving the users.
  */
-export async function potentialSharedWith(
-  groupId: number,
-): Promise<{ userId: number, name: string }[]> {
+export async function potentialSharedWith(groupId: number): Promise<{ userId: number; name: string }[]> {
   // Retrieve the regionIds of group creator from permissions to access reports specified by group
-  const creatorsRegionIds = await groupCreatorRegionIds(groupId);
+  const creatorsRegionIds = await groupCreatorRegionIds(groupId)
 
   // Retrieve users who have the permission to access reports in any the regionIds obtained above
   const users = await User.findAll({
-    attributes: [
-      ['id', 'userId'],
-      'name',
-      [Sequelize.literal('ARRAY_AGG(DISTINCT "roles"."name")'), 'roles'],
-    ],
+    attributes: [['id', 'userId'], 'name', [Sequelize.literal('ARRAY_AGG(DISTINCT "roles"."name")'), 'roles']],
     include: [
       {
         model: Permission,
@@ -674,11 +565,7 @@ export async function potentialSharedWith(
         attributes: [],
         required: true,
         where: {
-          scopeId: [
-            SCOPES.READ_REPORTS,
-            SCOPES.READ_WRITE_REPORTS,
-            SCOPES.APPROVE_REPORTS,
-          ],
+          scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
           regionId: creatorsRegionIds,
         },
       },
@@ -716,9 +603,9 @@ export async function potentialSharedWith(
       ],
     },
     raw: true,
-  });
+  })
 
-  return users;
+  return users
 }
 
 /**
@@ -728,40 +615,33 @@ export async function potentialSharedWith(
  * @returns A promise that resolves to an array of potential recipient grants.
  * @throws If there is an error while retrieving the grants.
  */
-export async function potentialRecipientGrants(
-  data: { groupId?: number, userId?: number },
-): Promise<{
-    grantId: number,
-    grantNumber: string,
-    name: string,
-    regionId: number,
-    uei: string,
-    programType: string,
-  }[]> {
-  const {
-    groupId,
-    userId,
-  } = data;
-  if (groupId === null && userId === null) return [];
+export async function potentialRecipientGrants(data: { groupId?: number; userId?: number }): Promise<
+  {
+    grantId: number
+    grantNumber: string
+    name: string
+    regionId: number
+    uei: string
+    programType: string
+  }[]
+> {
+  const { groupId, userId } = data
+  if (groupId === null && userId === null) return []
 
   // Retrieve the regionIds of group creator from permissions to read reports specified by group
   let creatorsRegionIds = !groupId
     ? await Permission.findAll({
-      attributes: ['regionId'],
-      where: {
-        userId,
-        scopeId: [
-          SCOPES.READ_REPORTS,
-          SCOPES.READ_WRITE_REPORTS,
-          SCOPES.APPROVE_REPORTS,
-        ],
-      },
-      group: [['regionId', 'ASC']],
-    })
-    : await groupCreatorRegionIds(groupId);
+        attributes: ['regionId'],
+        where: {
+          userId,
+          scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
+        },
+        group: [['regionId', 'ASC']],
+      })
+    : await groupCreatorRegionIds(groupId)
 
   if (!groupId) {
-    creatorsRegionIds = creatorsRegionIds.map(({ regionId }) => regionId);
+    creatorsRegionIds = creatorsRegionIds.map(({ regionId }) => regionId)
   }
 
   // Retrieve grants with specific attributes and conditions
@@ -829,14 +709,12 @@ export async function potentialRecipientGrants(
       sequelize.col('"Grant"."regionId"'),
     ],
     // Order by recipient name.
-    order: [
-      [sequelize.col('"recipient"."name"'), 'ASC'],
-    ],
+    order: [[sequelize.col('"recipient"."name"'), 'ASC']],
     // Return raw data instead of Sequelize model instances
     raw: true,
-  });
+  })
 
-  return grants;
+  return grants
 }
 
 /**
@@ -848,21 +726,11 @@ export async function potentialRecipientGrants(
  * @throws {Error} If there is an error performing the database operations.
  */
 export async function editGroup(groupId: number, data: GroupData): Promise<GroupResponse> {
-  const {
-    grants,
-    coOwners = [],
-    individuals = [],
-    sharedWith,
-  } = data;
+  const { grants, coOwners = [], individuals = [], sharedWith } = data
 
   // Get all existing group grants, current group co-owners, current group shareWiths,
   // and collaborator types
-  const [
-    existingGroupGrants,
-    currentGroupCoOwners,
-    currentGroupIndividuals,
-    collaboratorTypeMapping,
-  ] = await Promise.all([
+  const [existingGroupGrants, currentGroupCoOwners, currentGroupIndividuals, collaboratorTypeMapping] = await Promise.all([
     // Find all group grants with matching groupId and grantId
     GroupGrant.findAll({
       where: {
@@ -875,192 +743,156 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
       where: {
         groupId,
       },
-      include: [{
-        model: CollaboratorType,
-        as: 'collaboratorType',
-        required: true,
-        where: {
-          name: GROUP_COLLABORATORS.CO_OWNER,
+      include: [
+        {
+          model: CollaboratorType,
+          as: 'collaboratorType',
+          required: true,
+          where: {
+            name: GROUP_COLLABORATORS.CO_OWNER,
+          },
+          attributes: [],
         },
-        attributes: [],
-      }],
+      ],
     }),
     // Find all group collaborators with matching groupId and collaboratorType 'shareWith'
     GroupCollaborator.findAll({
       where: {
         groupId,
       },
-      include: [{
-        model: CollaboratorType,
-        as: 'collaboratorType',
-        required: true,
-        where: {
-          name: GROUP_COLLABORATORS.SHARED_WITH,
+      include: [
+        {
+          model: CollaboratorType,
+          as: 'collaboratorType',
+          required: true,
+          where: {
+            name: GROUP_COLLABORATORS.SHARED_WITH,
+          },
+          attributes: [],
         },
-        attributes: [],
-      }],
+      ],
     }),
     // Find all collaborator types that are valid for 'Groups'
     getCollaboratorTypeMapping('Groups'),
-  ]);
+  ])
 
   // Determine the grants, co-owners, and shareWiths to add and remove
-  const [
-    addGrants,
-    removeGrants,
-    addCoOwners,
-    removeCoOwners,
-    addShareWiths,
-    removeShareWiths,
-  ] = [
+  const [addGrants, removeGrants, addCoOwners, removeCoOwners, addShareWiths, removeShareWiths] = [
     // Find grants that are not already existing group grants
-    grants
-      .filter((grantId) => !existingGroupGrants
-        .find((egg: { dataValues: { grantId: number } }) => egg.dataValues.grantId === grantId)),
+    grants.filter((grantId) => !existingGroupGrants.find((egg: { dataValues: { grantId: number } }) => egg.dataValues.grantId === grantId)),
     // Find existing group grants that are not in the grants list
     existingGroupGrants
-      .filter(({
-        dataValues: { grantId },
-      }: {
-        dataValues: { grantId: number },
-      }) => !grants.find((grant: number) => grant === grantId))
-      .map(({
-        dataValues: { grantId },
-      }: {
-        dataValues: { grantId: number },
-      }) => grantId),
+      .filter(({ dataValues: { grantId } }: { dataValues: { grantId: number } }) => !grants.find((grant: number) => grant === grantId))
+      .map(({ dataValues: { grantId } }: { dataValues: { grantId: number } }) => grantId),
     // Find co-owners that are not already current group co-owners
-    coOwners
-      .filter((id) => !currentGroupCoOwners
-        .find((cgco: { dataValues: { userId: number } }) => cgco.dataValues.userId === id)),
+    coOwners.filter((id) => !currentGroupCoOwners.find((cgco: { dataValues: { userId: number } }) => cgco.dataValues.userId === id)),
     // Find current group co-owners that are not in the co-owners list
     currentGroupCoOwners
-      .filter(({
-        dataValues: { userId },
-      }: {
-        dataValues: { userId: number },
-      }) => !coOwners.find((id) => id === userId))
-      .map(({
-        dataValues: { userId },
-      }: {
-        dataValues: { userId: number },
-      }) => userId),
+      .filter(({ dataValues: { userId } }: { dataValues: { userId: number } }) => !coOwners.find((id) => id === userId))
+      .map(({ dataValues: { userId } }: { dataValues: { userId: number } }) => userId),
     // Find shareWiths that are not already current group shareWiths
-    individuals
-      .filter((id: number) => !currentGroupIndividuals
-        .find((cgc: { dataValues: { userId: number } }) => cgc.dataValues.userId === id)),
+    individuals.filter((id: number) => !currentGroupIndividuals.find((cgc: { dataValues: { userId: number } }) => cgc.dataValues.userId === id)),
     // Find current group shareWiths that are not in the shareWiths list
     currentGroupIndividuals
-      .filter(({
-        dataValues: { userId },
-      }: {
-        dataValues: { userId: number },
-      }) => !individuals.find((id) => id === userId))
-      .map(({
-        dataValues: { userId },
-      }: {
-        dataValues: { userId: number },
-      }) => userId),
-  ];
+      .filter(({ dataValues: { userId } }: { dataValues: { userId: number } }) => !individuals.find((id) => id === userId))
+      .map(({ dataValues: { userId } }: { dataValues: { userId: number } }) => userId),
+  ]
 
   // Perform the necessary database operations
   await Promise.all([
     // Add new group grants
     addGrants && addGrants.length > 0
       ? GroupGrant.bulkCreate(
-        addGrants.map((grantId) => ({ groupId, grantId })),
-        { validate: true, individualHooks: true },
-      )
+          addGrants.map((grantId) => ({ groupId, grantId })),
+          { validate: true, individualHooks: true }
+        )
       : Promise.resolve(),
     // Remove existing group grants
     removeGrants && removeGrants.length > 0
       ? GroupGrant.destroy(
-        {
-          where: {
-            groupId,
-            grantId: removeGrants,
+          {
+            where: {
+              groupId,
+              grantId: removeGrants,
+            },
           },
-        },
-        { individualHooks: true },
-      )
+          { individualHooks: true }
+        )
       : Promise.resolve(),
     // Add new group co-owners
     addCoOwners && addCoOwners.length > 0
       ? GroupCollaborator.bulkCreate(
-        addCoOwners.map((userId) => ({
-          groupId,
-          userId,
-          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CO_OWNER],
-        })),
-        { validate: true, individualHooks: true },
-      )
+          addCoOwners.map((userId) => ({
+            groupId,
+            userId,
+            collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CO_OWNER],
+          })),
+          { validate: true, individualHooks: true }
+        )
       : Promise.resolve(),
     // Remove existing group co-owners
     removeCoOwners && removeCoOwners.length > 0
       ? GroupCollaborator.destroy(
-        {
-          where: {
-            groupId,
-            userId: removeCoOwners,
-            collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CO_OWNER],
+          {
+            where: {
+              groupId,
+              userId: removeCoOwners,
+              collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CO_OWNER],
+            },
           },
-        },
-        { individualHooks: true },
-      )
+          { individualHooks: true }
+        )
       : Promise.resolve(),
     // Add new group shareWiths
     addShareWiths && addShareWiths.length > 0
       ? GroupCollaborator.bulkCreate(
-        addShareWiths.map((userId) => ({
-          groupId,
-          userId,
-          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
-        })),
-        { validate: true, individualHooks: true },
-      )
+          addShareWiths.map((userId) => ({
+            groupId,
+            userId,
+            collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
+          })),
+          { validate: true, individualHooks: true }
+        )
       : Promise.resolve(),
     // Remove existing group shareWiths
     removeShareWiths && removeShareWiths.length > 0
       ? GroupCollaborator.destroy(
-        {
-          where: {
-            groupId,
-            userId: removeShareWiths,
-            collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
+          {
+            where: {
+              groupId,
+              userId: removeShareWiths,
+              collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
+            },
           },
-        },
-        { individualHooks: true },
-      )
+          { individualHooks: true }
+        )
       : Promise.resolve(),
     // Update group name and isPublic
-    Group.update({
-      name: data.name.trim(),
-      isPublic: data.isPublic,
-      sharedWith,
-    }, {
-      where: {
-        id: groupId,
+    Group.update(
+      {
+        name: data.name.trim(),
+        isPublic: data.isPublic,
+        sharedWith,
       },
-      individualHooks: true,
-      returning: true,
-    }),
-  ]);
+      {
+        where: {
+          id: groupId,
+        },
+        individualHooks: true,
+        returning: true,
+      }
+    ),
+  ])
 
   const allGroupCollaborators = await GroupCollaborator.findAll({
-    attributes: [
-      'id',
-      'groupId',
-      'userId',
-      'updatedAt',
-      'collaboratorTypeId',
-    ],
+    attributes: ['id', 'groupId', 'userId', 'updatedAt', 'collaboratorTypeId'],
     where: {
       groupId,
     },
-  });
+  })
 
   // Return the updated group
-  return group(groupId);
+  return group(groupId)
 }
 
 /**
@@ -1070,19 +902,9 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
  * @returns A Promise that resolves to the newly created group's response.
  */
 export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
-  const {
-    name,
-    isPublic,
-    grants,
-    coOwners,
-    individuals,
-    sharedWith,
-  } = data;
+  const { name, isPublic, grants, coOwners, individuals, sharedWith } = data
 
-  const [
-    newGroup,
-    collaboratorTypeMapping,
-  ] = await Promise.all([
+  const [newGroup, collaboratorTypeMapping] = await Promise.all([
     // Create a new group with the given name and isPublic flag
     Group.create({
       name: name.trim(),
@@ -1091,42 +913,42 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
     }),
     // Retrieve the collaborator type mapping for groups
     getCollaboratorTypeMapping('Groups'),
-  ]);
+  ])
 
   await Promise.all([
     // If there are grants, create group grants for each grant ID
     grants && grants.length > 0
       ? GroupGrant.bulkCreate(
-        grants.map((grantId) => ({ groupId: newGroup.id, grantId })),
-        { validate: true, individualHooks: true },
-      )
+          grants.map((grantId) => ({ groupId: newGroup.id, grantId })),
+          { validate: true, individualHooks: true }
+        )
       : Promise.resolve(),
     // If there are co-owners, create group collaborators with co-owner role
     coOwners && coOwners.length > 0
       ? GroupCollaborator.bulkCreate(
-        coOwners.map((coOwnerUserId) => ({
-          groupId: newGroup.id,
-          userId: coOwnerUserId,
-          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CO_OWNER],
-        })),
-        { validate: true, individualHooks: true },
-      )
+          coOwners.map((coOwnerUserId) => ({
+            groupId: newGroup.id,
+            userId: coOwnerUserId,
+            collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CO_OWNER],
+          })),
+          { validate: true, individualHooks: true }
+        )
       : Promise.resolve(),
     // If there are shareWiths, create group collaborators with shareWith role
     individuals && individuals.length > 0
       ? GroupCollaborator.bulkCreate(
-        individuals.map((sharedWithUserId) => ({
-          groupId: newGroup.id,
-          userId: sharedWithUserId,
-          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
-        })),
-        { validate: true, individualHooks: true },
-      )
+          individuals.map((sharedWithUserId) => ({
+            groupId: newGroup.id,
+            userId: sharedWithUserId,
+            collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
+          })),
+          { validate: true, individualHooks: true }
+        )
       : Promise.resolve(),
-  ]);
+  ])
 
   // Return the newly created group's ID
-  return group(newGroup.id);
+  return group(newGroup.id)
 }
 
 /**
@@ -1153,7 +975,7 @@ export async function destroyGroup(groupId: number): Promise<number> {
       },
       individualHooks: true,
     }),
-  ]);
+  ])
 
   // then we can destroy the group
   // Destroy the group with the given groupId
@@ -1162,5 +984,5 @@ export async function destroyGroup(groupId: number): Promise<number> {
       id: groupId,
     },
     individualHooks: true,
-  });
+  })
 }

@@ -1,12 +1,12 @@
-import { _ } from 'lodash';
-import { activityReportsFiltersToScopes as activityReport } from './activityReport';
-import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
-import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
-import { collabReportFiltersToScopes as collabReport } from './collabReports';
-import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
-import { grantsFiltersToScopes as grant } from './grants';
-import { goalsFiltersToScopes as goal } from './goals';
-import { getValidTopicsSet } from './utils';
+import { _ } from 'lodash'
+import { activityReportsFiltersToScopes as activityReport } from './activityReport'
+import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports'
+import { communicationLogFiltersToScopes as communicationLog } from './communicationLog'
+import { collabReportFiltersToScopes as collabReport } from './collabReports'
+import { sessionReportFiltersToScopes as sessionReport } from './sessionReports'
+import { grantsFiltersToScopes as grant } from './grants'
+import { goalsFiltersToScopes as goal } from './goals'
+import { getValidTopicsSet } from './utils'
 
 const models = {
   activityReport,
@@ -16,7 +16,7 @@ const models = {
   communicationLog,
   collabReport,
   sessionReport,
-};
+}
 
 /**
  * For each model listed, we apply the passed in filters from the express query and
@@ -51,22 +51,22 @@ const models = {
  * @returns {obj} scopes
  */
 export default async function filtersToScopes(filters, options = {}) {
-  let validTopics;
+  let validTopics
 
-  const filterKeys = Object.keys(filters || {});
-  const usesTopics = filterKeys.some((k) => k.startsWith('topic.'));
+  const filterKeys = Object.keys(filters || {})
+  const usesTopics = filterKeys.some((k) => k.startsWith('topic.'))
 
   if (usesTopics) {
-    validTopics = await getValidTopicsSet();
+    validTopics = await getValidTopicsSet()
   }
 
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
       [model]: models[model](filters, options[model], options.userId, validTopics),
-    });
-    return scopes;
-  }, {});
+    })
+    return scopes
+  }, {})
 }
 
 /**
@@ -80,16 +80,16 @@ export default async function filtersToScopes(filters, options = {}) {
  */
 export const mergeIncludes = (includes, requiredIncludes) => {
   if (!includes || !includes.length || includes.filter(Boolean).length < 1) {
-    return requiredIncludes;
+    return requiredIncludes
   }
 
-  const outIncludes = [...includes];
+  const outIncludes = [...includes]
 
   requiredIncludes.forEach((requiredInclude) => {
     if (!outIncludes.some((include) => include.as && include.as === requiredInclude.as)) {
-      outIncludes.push(requiredInclude);
+      outIncludes.push(requiredInclude)
     }
-  });
+  })
 
-  return outIncludes;
-};
+  return outIncludes
+}

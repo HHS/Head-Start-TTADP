@@ -1,10 +1,11 @@
-const { Op } = require('sequelize');
+const { Op } = require('sequelize')
 
-const cleanupOrphanResources = async (sequelize, resourceId) => Promise.all([
-  sequelize.models.Resource.destroy({
-    where: {
-      id: {
-        [Op.in]: sequelize.literal(`(
+const cleanupOrphanResources = async (sequelize, resourceId) =>
+  Promise.all([
+    sequelize.models.Resource.destroy({
+      where: {
+        id: {
+          [Op.in]: sequelize.literal(`(
             SELECT DISTINCT
                r.id
             FROM "Resources" r
@@ -29,15 +30,16 @@ const cleanupOrphanResources = async (sequelize, resourceId) => Promise.all([
             AND nsr.id IS NULL
             GROUP BY 1
          )`),
+        },
       },
-    },
-  }),
-]);
-const cleanupOrphanFiles = async (sequelize, fileId) => Promise.all([
-  sequelize.models.File.destroy({
-    where: {
-      id: {
-        [Op.in]: sequelize.literal(`(
+    }),
+  ])
+const cleanupOrphanFiles = async (sequelize, fileId) =>
+  Promise.all([
+    sequelize.models.File.destroy({
+      where: {
+        id: {
+          [Op.in]: sequelize.literal(`(
             SELECT DISTINCT
                 f.id
             FROM "Files" f
@@ -53,12 +55,9 @@ const cleanupOrphanFiles = async (sequelize, fileId) => Promise.all([
             AND imf.id IS NULL
             GROUP BY 1
         )`),
+        },
       },
-    },
-  }),
-]);
+    }),
+  ])
 
-export {
-  cleanupOrphanResources,
-  cleanupOrphanFiles,
-};
+export { cleanupOrphanResources, cleanupOrphanFiles }

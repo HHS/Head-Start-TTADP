@@ -1,20 +1,17 @@
-import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
-import { IActivityReportObjectivesModelInstance } from './types';
+import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives'
+import type { IActivityReportObjectivesModelInstance } from './types'
 
 describe('extractObjectiveAssociationsFromActivityReportObjectives', () => {
   it('should extract associations and call toJSON on each association', () => {
-    const mockToJson = jest.fn().mockReturnValue({ id: 1, name: 'Mocked Association' });
+    const mockToJson = jest.fn().mockReturnValue({ id: 1, name: 'Mocked Association' })
 
     const mockActivityReportObjective = {
       courses: [{ toJSON: mockToJson }],
-    } as unknown as IActivityReportObjectivesModelInstance;
+    } as unknown as IActivityReportObjectivesModelInstance
 
-    const associations = extractObjectiveAssociationsFromActivityReportObjectives(
-      [mockActivityReportObjective],
-      'courses',
-    );
+    const associations = extractObjectiveAssociationsFromActivityReportObjectives([mockActivityReportObjective], 'courses')
 
-    expect(associations).toEqual([{ id: 1, name: 'Mocked Association' }]);
-    expect(mockToJson).toHaveBeenCalledTimes(1);
-  });
-});
+    expect(associations).toEqual([{ id: 1, name: 'Mocked Association' }])
+    expect(mockToJson).toHaveBeenCalledTimes(1)
+  })
+})

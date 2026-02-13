@@ -1,7 +1,7 @@
 /* istanbul ignore file */
-import { WhereOptions } from 'sequelize';
+import type { WhereOptions } from 'sequelize'
 
 export interface IScopes {
-  grant: WhereOptions[],
-  trainingReport: WhereOptions[],
+  grant: WhereOptions[]
+  trainingReport: WhereOptions[]
 }

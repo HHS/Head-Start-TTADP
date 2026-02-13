@@ -1,12 +1,13 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
 
       // Remove the potential for an error to be created if more then one match is found
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         CREATE OR REPLACE FUNCTION public."ZAFDescriptorToID"(
             _param_id text
         )
@@ -35,10 +36,13 @@ module.exports = {
             RETURN Did;
         END
         $BODY$;
-      `, { transaction });
+      `,
+        { transaction }
+      )
 
       // Remove any existing duplicates
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         WITH duplicates AS (
             SELECT
                 id,
@@ -54,22 +58,28 @@ module.exports = {
         WHERE id IN (
             SELECT id FROM duplicates WHERE rn > 1
         );
-      `, { transaction });
+      `,
+        { transaction }
+      )
 
       // Add constraint to prevent any duplicates ever again
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         ALTER TABLE public."ZADescriptor"
         ADD CONSTRAINT unique_descriptor UNIQUE (descriptor);
-      `, { transaction });
-    },
-  ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(/* sql */`
+      `,
+        { transaction }
+      )
+    }),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.sequelize.query(
+        /* sql */ `
         ALTER TABLE public."ZADescriptor"
         DROP CONSTRAINT unique_descriptor;
-      `, { transaction });
-    },
-  ),
-};
+      `,
+        { transaction }
+      )
+    }),
+}

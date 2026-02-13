@@ -1,5 +1,5 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
 
 const regionQuery = `
 SELECT
@@ -7,16 +7,16 @@ SELECT
 FROM "Goals" "Goals"
 INNER JOIN "Grants" "Grants"
 ON "Goals"."grantId" = "Grants"."id"
-WHERE "Grants"."regionId"`;
+WHERE "Grants"."regionId"`
 
 export function withRegion(ids) {
   return {
     [Op.or]: sequelize.literal(`"Goal"."id" in (${regionQuery} in (${ids.map((id) => sequelize.escape(id)).join(',')}))`),
-  };
+  }
 }
 
 export function withoutRegion(ids) {
   return {
     [Op.and]: sequelize.literal(`"Goal"."id" not in (${regionQuery} in (${ids.map((id) => sequelize.escape(id)).join(',')}))`),
-  };
+  }
 }

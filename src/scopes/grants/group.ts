@@ -1,13 +1,13 @@
-import { Op, WhereOptions } from 'sequelize';
-import { sequelize } from '../../models';
-import { validatedIdArray } from '../utils';
+import { Op, type WhereOptions } from 'sequelize'
+import { sequelize } from '../../models'
+import { validatedIdArray } from '../utils'
 
 // WARNING - DO NOT interpolate unvalidated input into this SQL literal.
 // Only validated integers allowed.
 const constructLiteral = (query: string[], userId: number): string => {
-  const validatedIds = validatedIdArray(query);
-  const placeholders = validatedIds.length > 0 ? validatedIds.join(',') : '-1';
-  const escapedUserId = Number.isInteger(userId) ? userId : -1;
+  const validatedIds = validatedIdArray(query)
+  const placeholders = validatedIds.length > 0 ? validatedIds.join(',') : '-1'
+  const escapedUserId = Number.isInteger(userId) ? userId : -1
 
   const sql = `
     (
@@ -18,9 +18,9 @@ const constructLiteral = (query: string[], userId: number): string => {
       WHERE g."id" IN (${placeholders})
       AND (gc."userId" = ${escapedUserId} OR g."isPublic" = true)
     )
-  `;
-  return sequelize.literal(sql);
-};
+  `
+  return sequelize.literal(sql)
+}
 
 /**
  *
@@ -36,7 +36,7 @@ export function withGroup(query: string[], userId: number): WhereOptions {
         [Op.in]: constructLiteral(query, userId),
       },
     },
-  };
+  }
 }
 
 /**
@@ -52,5 +52,5 @@ export function withoutGroup(query: string[], userId: number): WhereOptions {
         [Op.notIn]: constructLiteral(query, userId),
       },
     },
-  };
+  }
 }

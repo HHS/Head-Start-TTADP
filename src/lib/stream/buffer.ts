@@ -1,13 +1,13 @@
-import { Writable, Readable } from 'stream';
+import { Writable, Readable } from 'stream'
 
 class BufferStream extends Writable {
-  private chunks: Buffer[] = [];
+  private chunks: Buffer[] = []
 
-  private finished = false;
+  private finished = false
 
-  private resolveReadable: ((readable: Readable) => void) | null = null;
+  private resolveReadable: ((readable: Readable) => void) | null = null
 
-  private readablePromise: Promise<Readable> | null = null;
+  private readablePromise: Promise<Readable> | null = null
 
   /**
    * Constructs an instance by initializing event listeners and state.
@@ -17,13 +17,13 @@ class BufferStream extends Writable {
    * @param options - Optional configuration options that may be used by the superclass constructor.
    */
   constructor(options?) {
-    super(options);
+    super(options)
     this.on('finish', () => {
-      this.finished = true;
+      this.finished = true
       if (this.resolveReadable) {
-        this.resolveReadable(Readable.from(this.getBuffer()));
+        this.resolveReadable(Readable.from(this.getBuffer()))
       }
-    });
+    })
   }
 
   /**
@@ -37,8 +37,8 @@ class BufferStream extends Writable {
    */
   // eslint-disable-next-line no-underscore-dangle
   _write(chunk, encoding: string, callback: (error?: Error | null) => void) {
-    this.chunks.push(Buffer.from(chunk));
-    callback();
+    this.chunks.push(Buffer.from(chunk))
+    callback()
   }
 
   /**
@@ -52,15 +52,15 @@ class BufferStream extends Writable {
   getReadableStream(): Promise<Readable> {
     if (this.finished) {
       // If the stream is already finished, return a promise that resolves immediately.
-      return Promise.resolve(Readable.from(this.getBuffer()));
+      return Promise.resolve(Readable.from(this.getBuffer()))
     }
     // If the stream is not finished, return a promise that will resolve later.
     if (!this.readablePromise) {
       this.readablePromise = new Promise<Readable>((resolve) => {
-        this.resolveReadable = resolve;
-      });
+        this.resolveReadable = resolve
+      })
     }
-    return this.readablePromise;
+    return this.readablePromise
   }
 
   /**
@@ -69,7 +69,7 @@ class BufferStream extends Writable {
    * @returns {number} The number of elements in the chunks array.
    */
   getSize(): number {
-    return this.chunks.length;
+    return this.chunks.length
   }
 
   /**
@@ -80,8 +80,8 @@ class BufferStream extends Writable {
    * @throws {TypeError} If any of the chunks is not of a type that can be concatenated.
    */
   private getBuffer(): Buffer {
-    return Buffer.concat(this.chunks);
+    return Buffer.concat(this.chunks)
   }
 }
 
-export default BufferStream;
+export default BufferStream

@@ -36,33 +36,36 @@ const TOPICS = [
   'Technology and Information Systems',
   'Transition Practices',
   'Transportation',
-];
+]
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       // delete all existing active topics
-      await queryInterface.bulkDelete('Topics', {}, { transaction });
+      await queryInterface.bulkDelete('Topics', {}, { transaction })
 
       const topicsToInsert = TOPICS.map((topic) => ({
         name: topic,
         createdAt: new Date(),
         updatedAt: new Date(),
-      }));
+      }))
 
       // add topics back, and they are now selectable
       await queryInterface.bulkInsert('Topics', topicsToInsert, {
         transaction,
-      });
+      })
 
-      return queryInterface.addColumn('Topics', 'deletedAt', {
-        allowNull: true,
-        type: Sequelize.DATE,
-      }, { transaction });
-    },
-  ),
+      return queryInterface.addColumn(
+        'Topics',
+        'deletedAt',
+        {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => queryInterface.removeColumn('Topics', 'deletedAt', { transaction }),
-  ),
-};
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => queryInterface.removeColumn('Topics', 'deletedAt', { transaction })),
+}

@@ -27,9 +27,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
-    });
+    })
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('Goals');
+    await queryInterface.dropTable('Goals')
   },
-};
+}

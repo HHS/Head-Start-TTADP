@@ -1,11 +1,11 @@
-const { prepMigration, removeTables } = require('../lib/migration');
+const { prepMigration, removeTables } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
       await queryInterface.createTable('GoalStatusChanges', {
         id: {
           type: Sequelize.INTEGER,
@@ -65,15 +65,15 @@ module.exports = {
           allowNull: false,
           defaultValue: Sequelize.fn('now'),
         },
-      });
-    });
+      })
+    })
   },
 
   async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
-      await removeTables(queryInterface, transaction, ['GoalStatusChanges']);
-    });
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
+      await removeTables(queryInterface, transaction, ['GoalStatusChanges'])
+    })
   },
-};
+}

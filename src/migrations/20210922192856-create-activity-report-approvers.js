@@ -1,7 +1,4 @@
-const approverStatuses = [
-  'needs_action',
-  'approved',
-];
+const approverStatuses = ['needs_action', 'approved']
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -54,12 +51,12 @@ module.exports = {
         allowNull: true,
         type: Sequelize.DATE,
       },
-    });
+    })
     await queryInterface.addConstraint('ActivityReportApprovers', {
       type: 'unique',
       name: 'unique_activityReportId_userId',
       fields: ['activityReportId', 'userId'],
-    });
+    })
   },
   down: (queryInterface) => queryInterface.dropTable('ActivityReportApprovers'),
-};
+}

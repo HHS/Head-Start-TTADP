@@ -1,7 +1,7 @@
-import { REPORT_STATUSES } from '@ttahub/common';
-import db from '../models';
-import targetPopulationTable from './targetPopulationTable';
-import { createReport, destroyReport } from '../testUtils';
+import { REPORT_STATUSES } from '@ttahub/common'
+import db from '../models'
+import targetPopulationTable from './targetPopulationTable'
+import { createReport, destroyReport } from '../testUtils'
 
 const reportObject = {
   activityRecipientType: 'recipient',
@@ -22,24 +22,24 @@ const reportObject = {
   topics: ['topics'],
   ttaType: ['technical-assistance'],
   version: 2,
-};
+}
 
-let report;
+let report
 
 describe('Target Population Table', () => {
   beforeAll(async () => {
-    report = await createReport(reportObject);
-  });
+    report = await createReport(reportObject)
+  })
 
   afterAll(async () => {
-    await destroyReport(report);
-    await db.sequelize.close();
-  });
+    await destroyReport(report)
+    await db.sequelize.close()
+  })
 
   it('counts target populations', async () => {
-    const data = await targetPopulationTable({ activityReport: { id: report.id } });
+    const data = await targetPopulationTable({ activityReport: { id: report.id } })
 
-    const children = data.filter((d) => d.name === 'Children with disabilities');
-    expect(children[0].count).toBe(1);
-  });
-});
+    const children = data.filter((d) => d.name === 'Children with disabilities')
+    expect(children[0].count).toBe(1)
+  })
+})

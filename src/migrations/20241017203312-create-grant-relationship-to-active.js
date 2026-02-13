@@ -1,11 +1,12 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         CREATE MATERIALIZED VIEW "GrantRelationshipToActive" AS
         WITH RECURSIVE recursive_cte AS (
             -- Base query: Case 1: Select all Active grants from the "Grants" table
@@ -65,27 +66,36 @@ module.exports = {
             rcte."activeGrantId"
         FROM recursive_cte rcte
         WITH NO DATA;
-      `, { transaction });
+      `,
+        { transaction }
+      )
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         CREATE INDEX "idx_GrantRelationshipToActive_grantId_activeGrantId"
         ON "GrantRelationshipToActive" ("grantId", "activeGrantId");
-      `, { transaction });
+      `,
+        { transaction }
+      )
 
       // Initial refresh without CONCURRENTLY to populate the materialized view
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         REFRESH MATERIALIZED VIEW "GrantRelationshipToActive";
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         DROP MATERIALIZED VIEW IF EXISTS "GrantRelationshipToActive";
-      `, { transaction });
-    },
-  ),
-};
+      `,
+        { transaction }
+      )
+    }),
+}

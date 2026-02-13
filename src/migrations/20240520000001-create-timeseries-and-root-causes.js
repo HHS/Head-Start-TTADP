@@ -1,13 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       // This starts by creating a stored procedure that can be
       // used now and in the future to create a time series table with a
@@ -39,7 +37,8 @@ module.exports = {
       //   ON arg."goalId" = gfrt."goalId"
       //   AND ar."approvedAt" BETWEEN gfrt.timeband_start AND gfrt.timeband_end
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
 
       CREATE OR REPLACE FUNCTION create_timeseries_from_audit_log(tablename text)
       RETURNS VOID LANGUAGE plpgsql AS
@@ -304,9 +303,12 @@ module.exports = {
       END
       $$
       ;
-      `, { transaction });
+      `,
+        { transaction }
+      )
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
 
       -- Create GoalFieldResponses_timeseries
     
@@ -358,16 +360,21 @@ module.exports = {
         NOW()
       FROM argfrs_to_insert
       ;
-      `, { transaction });
-    });
+      `,
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await await queryInterface.sequelize.query(/* sql */`
+      const sessionSig = __filename
+      await await queryInterface.sequelize.query(
+        /* sql */ `
       DROP FUNCTION IF EXISTS create_timeseries_from_audit_log;
-      `, { transaction });
-    });
+      `,
+        { transaction }
+      )
+    })
   },
-};
+}

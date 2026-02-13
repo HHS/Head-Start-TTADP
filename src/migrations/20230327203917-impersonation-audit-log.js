@@ -2,32 +2,32 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     return queryInterface.sequelize.transaction(async (transaction) => {
-      const loggedUser = '0';
-      const sessionSig = __filename;
-      const auditDescriptor = 'RUN MIGRATIONS';
+      const loggedUser = '0'
+      const sessionSig = __filename
+      const auditDescriptor = 'RUN MIGRATIONS'
       await queryInterface.sequelize.query(
         `SELECT
               set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Disable audit log
       await queryInterface.sequelize.query(
         `
         SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
         `,
-        { transaction },
-      );
+        { transaction }
+      )
 
       await queryInterface.sequelize.query(
         `
         DROP FUNCTION IF EXISTS "ZAFAddAuditingOnTable"(varchar(63));
         `,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Modify creation function to make creation of audit log table optional
       await queryInterface.sequelize.query(
@@ -51,8 +51,8 @@ module.exports = {
           PERFORM "ZAFCreateALNoTruncate"(t_name);
         END
         $func$;`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Updating the audit log function to record the impersonation ID.
       await queryInterface.sequelize.query(
@@ -204,8 +204,8 @@ module.exports = {
               'ZAL' || t_name);
         END
         $func$;`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Updating the audit log function to record the impersonation ID.
       await queryInterface.sequelize.query(
@@ -233,8 +233,8 @@ module.exports = {
                   'ZAL' || t_name);
           END
           $func$;`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Modify removal function to remove triggers on auditing table
       await queryInterface.sequelize.query(
@@ -294,8 +294,8 @@ module.exports = {
               'ZALNoUpdateF' || t_name);
         END
         $func$;`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // Remove the current audit system from all tables
       await queryInterface.sequelize.query(
@@ -334,8 +334,8 @@ module.exports = {
 
           END LOOP;
         END$$;`,
-        { transaction },
-      );
+        { transaction }
+      )
       // -------------
 
       // Enable audit log
@@ -343,26 +343,26 @@ module.exports = {
         `
         SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
         `,
-        { transaction },
-      );
-    });
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface) {
     return queryInterface.sequelize.transaction(async (transaction) => {
-      const loggedUser = '0';
-      const sessionSig = __filename;
-      const auditDescriptor = 'RUN MIGRATIONS';
+      const loggedUser = '0'
+      const sessionSig = __filename
+      const auditDescriptor = 'RUN MIGRATIONS'
       await queryInterface.sequelize.query(
         `SELECT
               set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+        { transaction }
+      )
 
       //
-    });
+    })
   },
-};
+}

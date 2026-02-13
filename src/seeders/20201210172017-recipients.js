@@ -48,14 +48,14 @@ const recipients = [
     name: 'DBA',
     uei: 'EWQJWXDDGME5',
   },
-];
+]
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('Recipients', recipients, {});
+    await queryInterface.bulkInsert('Recipients', recipients, {})
   },
 
   down: async (queryInterface) => {
-    await queryInterface.bulkDelete('Recipients', null, {});
+    await queryInterface.bulkDelete('Recipients', null, {})
   },
-};
+}

@@ -1,17 +1,10 @@
-import {
-  cast, Op, Model,
-} from 'sequelize';
-import { Cast } from 'sequelize/types/utils';
-import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import db, { sequelize } from '../models';
-import {
-  SessionReportShape,
-  GetSessionReportsResponse,
-  GetSessionReportsParams,
-  SessionReportSortSortMap,
-} from './types/sessionReport';
-import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
-import filtersToScopes from '../scopes';
+import { cast, Op, type Model } from 'sequelize'
+import type { Cast } from 'sequelize/types/utils'
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common'
+import db, { sequelize } from '../models'
+import type { SessionReportShape, GetSessionReportsResponse, GetSessionReportsParams, SessionReportSortSortMap } from './types/sessionReport'
+import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event'
+import filtersToScopes from '../scopes'
 
 const {
   SessionReportPilot,
@@ -20,38 +13,32 @@ const {
   SessionReportPilotSupportingAttachment,
   SessionReportPilotGoalTemplate,
   SessionReportPilotTrainer,
-} = db;
+} = db
 
 type WhereOptions = {
-  id?: number;
-  eventId?: number;
-  data?: unknown;
-};
+  id?: number
+  eventId?: number
+  data?: unknown
+}
 
 const userInclude = (as: string) => ({
   model: db.User,
   as,
-  attributes: [
-    'fullName',
-    'name',
-    'id',
-  ],
+  attributes: ['fullName', 'name', 'id'],
   include: [
     {
       model: db.Role,
       as: 'roles',
-      attributes: [
-        'name',
-      ],
+      attributes: ['name'],
     },
   ],
-});
+})
 
 const updateSessionReportRelatedModels = async (
   sessionReportId: number,
   joinTableModel: typeof SessionReportPilotGoalTemplate,
   relatedModelForeignKey: string,
-  relatedModelForeignKeyIds: number[],
+  relatedModelForeignKeyIds: number[]
 ) => {
   // First, remove any existing associations not in the new list.
   await joinTableModel.destroy({
@@ -59,7 +46,7 @@ const updateSessionReportRelatedModels = async (
       sessionReportPilotId: sessionReportId,
       [relatedModelForeignKey]: { [Op.notIn]: relatedModelForeignKeyIds },
     },
-  });
+  })
 
   // Next, add new associations.
   const existingAssociations = await joinTableModel.findAll({
@@ -68,50 +55,42 @@ const updateSessionReportRelatedModels = async (
       sessionReportPilotId: sessionReportId,
       [relatedModelForeignKey]: { [Op.in]: relatedModelForeignKeyIds },
     },
-  });
+  })
 
-  const existingForeignKeyIds = existingAssociations.map(
-    (assoc: { [key: string]: number }) => assoc[relatedModelForeignKey],
-  );
+  const existingForeignKeyIds = existingAssociations.map((assoc: { [key: string]: number }) => assoc[relatedModelForeignKey])
 
   const newAssociations = relatedModelForeignKeyIds
     .filter((key) => !existingForeignKeyIds.includes(key))
     .map((key) => ({
       sessionReportPilotId: sessionReportId,
       [relatedModelForeignKey]: key,
-    }));
+    }))
 
   if (newAssociations.length > 0) {
-    await joinTableModel.bulkCreate(
-      newAssociations,
-      { individualHooks: true, ignoreDuplicates: true },
-    );
+    await joinTableModel.bulkCreate(newAssociations, {
+      individualHooks: true,
+      ignoreDuplicates: true,
+    })
   }
-};
+}
 
 export const validateFields = (request, requiredFields: string[]) => {
-  const missingFields = requiredFields.filter((field) => !request[field]);
+  const missingFields = requiredFields.filter((field) => !request[field])
 
   if (missingFields.length) {
-    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
   }
-};
+}
 
 export async function destroySession(id: number): Promise<void> {
   // Delete files.
-  await SessionReportPilotFile.destroy(
-    { where: { sessionReportPilotId: id } },
-    { individualHooks: true },
-  );
+  await SessionReportPilotFile.destroy({ where: { sessionReportPilotId: id } }, { individualHooks: true })
 
   // Delete supporting attachments.
-  await SessionReportPilotSupportingAttachment.destroy(
-    { where: { sessionReportPilotId: id } },
-    { individualHooks: true },
-  );
+  await SessionReportPilotSupportingAttachment.destroy({ where: { sessionReportPilotId: id } }, { individualHooks: true })
 
   // Delete session.
-  await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
+  await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true })
 }
 
 // eslint-disable-next-line max-len
@@ -146,10 +125,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       {
         model: db.GoalTemplate,
         as: 'goalTemplates',
-        attributes: [
-          'id',
-          'standard',
-        ],
+        attributes: ['id', 'standard'],
         through: { attributes: [] }, // exclude join table attributes
       },
       {
@@ -159,30 +135,28 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       userInclude('approver'),
       userInclude('submitter'),
     ],
-  };
+  }
 
-  const session = plural
-    ? await SessionReportPilot.findAll(query)
-    : await SessionReportPilot.findOne(query);
+  const session = plural ? await SessionReportPilot.findAll(query) : await SessionReportPilot.findOne(query)
 
   if (!session) {
-    return null;
+    return null
   }
 
   if (Array.isArray(session)) {
-    return session;
+    return session
   }
 
   const eventId = (() => {
     if (session.event) {
-      const fullId = session.event.data.eventId;
+      const fullId = session.event.data.eventId
       // we need to get the last four digits of the smartsheet provided
       // event id, which is in the format R01-PD-1037
-      return fullId.substring(fullId.lastIndexOf('-') + 1);
+      return fullId.substring(fullId.lastIndexOf('-') + 1)
     }
 
-    return null;
-  })();
+    return null
+  })()
 
   return {
     id: session?.id,
@@ -199,97 +173,92 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     submitterId: session?.submitterId ?? null,
     submitter: session?.submitter ?? null,
     trainers: session?.trainers ?? [],
-  };
+  }
 }
 
 export async function createSession(request) {
-  validateFields(request, ['eventId', 'data']);
+  validateFields(request, ['eventId', 'data'])
 
-  const {
-    eventId,
-    data,
-  } = request;
+  const { eventId, data } = request
 
-  const event = await findEventByDbId(eventId);
+  const event = await findEventByDbId(eventId)
 
   if (!event) {
-    throw new Error(`Event with id ${eventId} not found`);
+    throw new Error(`Event with id ${eventId} not found`)
   }
 
-  const created = await SessionReportPilot.create({
-    eventId: event.id,
-    data: cast(JSON.stringify({
-      ...data,
-      reviewStatus: REPORT_STATUSES.DRAFT,
-      additionalStates: event.data.additionalStates || [],
-    }), 'jsonb'),
-  }, {
-    individualHooks: true,
-  });
+  const created = await SessionReportPilot.create(
+    {
+      eventId: event.id,
+      data: cast(
+        JSON.stringify({
+          ...data,
+          reviewStatus: REPORT_STATUSES.DRAFT,
+          additionalStates: event.data.additionalStates || [],
+        }),
+        'jsonb'
+      ),
+    },
+    {
+      individualHooks: true,
+    }
+  )
 
-  return findSessionHelper({ id: created.dataValues.id }) as Promise<SessionReportShape>;
+  return findSessionHelper({ id: created.dataValues.id }) as Promise<SessionReportShape>
 }
 
 export async function updateSession(id: number, request) {
   const session = await SessionReportPilot.findOne({
     where: { id },
-  });
+  })
 
   if (!session) {
-    return createSession(request);
+    return createSession(request)
   }
 
-  validateFields(request, ['eventId', 'data']);
+  validateFields(request, ['eventId', 'data'])
 
   const {
-    eventId, data: {
-      approverId,
-      goalTemplates,
-      submitterId,
-      trainers,
-      ...data
-    },
-  } = request;
+    eventId,
+    data: { approverId, goalTemplates, submitterId, trainers, ...data },
+  } = request
 
   // Combine existing session data with new data.
-  const existingData = session.data;
-  const newData = { ...existingData, ...data };
+  const existingData = session.data
+  const newData = { ...existingData, ...data }
 
-  const event = await findEventBySmartsheetIdSuffix(eventId);
+  const event = await findEventBySmartsheetIdSuffix(eventId)
 
   const update = {
     eventId: event.id,
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
-    eventId: number;
-    approverId?: number;
-    submitterId?: number;
-    data: Cast;
-  };
+    eventId: number
+    approverId?: number
+    submitterId?: number
+    data: Cast
+  }
 
   if (approverId) {
-    update.approverId = Number(approverId);
+    update.approverId = Number(approverId)
   }
 
   if (submitterId) {
-    update.submitterId = Number(submitterId);
+    update.submitterId = Number(submitterId)
   }
 
-  await SessionReportPilot.update(
-    update,
-    {
-      where: { id },
-      individualHooks: true,
-    },
-  );
+  await SessionReportPilot.update(update, {
+    where: { id },
+    individualHooks: true,
+  })
 
   if (goalTemplates) {
     await updateSessionReportRelatedModels(
       id,
       SessionReportPilotGoalTemplate,
       'goalTemplateId',
-      goalTemplates.map((template: { id: number }) => template.id),
-    );
+      goalTemplates.map((template: { id: number }) => template.id)
+    )
   }
 
   if (trainers) {
@@ -297,8 +266,8 @@ export async function updateSession(id: number, request) {
       id,
       SessionReportPilotTrainer,
       'userId',
-      trainers.map((trainer: { id: number }) => trainer.id),
-    );
+      trainers.map((trainer: { id: number }) => trainer.id)
+    )
   }
 
   if (trainers) {
@@ -306,66 +275,63 @@ export async function updateSession(id: number, request) {
       id,
       SessionReportPilotTrainer,
       'userId',
-      trainers.map((trainer: { id: number }) => trainer.id),
-    );
+      trainers.map((trainer: { id: number }) => trainer.id)
+    )
   }
 
-  return findSessionHelper({ id }) as Promise<SessionReportShape>;
+  return findSessionHelper({ id }) as Promise<SessionReportShape>
 }
 
 export async function findSessionById(id: number): Promise<SessionReportShape> {
-  return findSessionHelper({ id }) as Promise<SessionReportShape>;
+  return findSessionHelper({ id }) as Promise<SessionReportShape>
 }
 
 export async function findSessionsByEventId(eventId): Promise<SessionReportShape[]> {
-  return findSessionHelper({ eventId }, true) as Promise<SessionReportShape[]>;
+  return findSessionHelper({ eventId }, true) as Promise<SessionReportShape[]>
 }
 
-export async function getPossibleSessionParticipants(
-  regionId: number,
-  states?: string[],
-) : Promise<{ id: number, name: string }[]> {
+export async function getPossibleSessionParticipants(regionId: number, states?: string[]): Promise<{ id: number; name: string }[]> {
   const where = {
     status: 'Active',
   } as {
-    status: string;
-    regionId?: number;
+    status: string
+    regionId?: number
     [Op.or]?: {
-      regionId?: number;
-      '$grants.stateCode$'?: string[];
-    }[];
-  };
+      regionId?: number
+      '$grants.stateCode$'?: string[]
+    }[]
+  }
 
   if (states && states.length > 0) {
-    where[Op.or] = [
-      { regionId },
-      { '$grants.stateCode$': states },
-    ];
+    where[Op.or] = [{ regionId }, { '$grants.stateCode$': states }]
   } else {
-    where.regionId = regionId;
+    where.regionId = regionId
   }
 
   return db.Recipient.findAll({
     attributes: ['id', 'name'],
     order: ['name'],
-    include: [{
-      where,
-      model: db.Grant,
-      as: 'grants',
-      attributes: ['id', 'name', 'number'],
-      include: [{
-        model: db.Recipient,
-        as: 'recipient',
-        attributes: ['id', 'name'],
-      },
+    include: [
       {
-        model: db.Program,
-        as: 'programs',
-        attributes: ['programType'],
+        where,
+        model: db.Grant,
+        as: 'grants',
+        attributes: ['id', 'name', 'number'],
+        include: [
+          {
+            model: db.Recipient,
+            as: 'recipient',
+            attributes: ['id', 'name'],
+          },
+          {
+            model: db.Program,
+            as: 'programs',
+            attributes: ['programType'],
+          },
+        ],
       },
-      ],
-    }],
-  });
+    ],
+  })
 }
 
 /**
@@ -373,17 +339,8 @@ export async function getPossibleSessionParticipants(
  * @param params Query parameters including pagination, sorting, filtering, and format
  * @returns JSON object with count and rows
  */
-export async function getSessionReports(
-  params: GetSessionReportsParams,
-): Promise<GetSessionReportsResponse> {
-  const {
-    sortBy = 'id',
-    sortDir = 'DESC',
-    offset = 0,
-    limit = 10,
-    format = 'json',
-    ...filterParams
-  } = params;
+export async function getSessionReports(params: GetSessionReportsParams): Promise<GetSessionReportsResponse> {
+  const { sortBy = 'id', sortDir = 'DESC', offset = 0, limit = 10, format = 'json', ...filterParams } = params
 
   // Map frontend column header keys to backend sort keys
   // The frontend HorizontalTableWidget sends displayName.replaceAll(' ', '_') as sortBy
@@ -395,9 +352,9 @@ export async function getSessionReports(
     Event_title: 'eventName',
     Supporting_goals: 'supportingGoals',
     Topics: 'topics',
-  };
+  }
 
-  const resolvedSortBy = sortByAliases[sortBy] || sortBy;
+  const resolvedSortBy = sortByAliases[sortBy] || sortBy
 
   // Define allowed sort columns with their actual database paths
   const sortMap: SessionReportSortSortMap = {
@@ -405,21 +362,22 @@ export async function getSessionReports(
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
     startDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'startDate\' AS DATE)')],
     endDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'endDate\' AS DATE)')],
-    eventId: ['event', sequelize.literal('data->>\'eventId\'::text')],
-    eventName: ['event', sequelize.literal('data->>\'eventName\'::text')],
-    supportingGoals: [sequelize.literal('(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)')],
+    eventId: ['event', sequelize.literal("data->>'eventId'::text")],
+    eventName: ['event', sequelize.literal("data->>'eventName'::text")],
+    supportingGoals: [
+      sequelize.literal(
+        '(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)'
+      ),
+    ],
     topics: [sequelize.literal('("SessionReportPilot".data->\'objectiveTopics\'->>0)::text')],
-  };
+  }
 
   // Use the requested sort column or default to id descending
-  const sortEntry = sortMap[resolvedSortBy] || sortMap.id;
-  const orderClause = [[...sortEntry, sortDir]];
+  const sortEntry = sortMap[resolvedSortBy] || sortMap.id
+  const orderClause = [[...sortEntry, sortDir]]
 
   // Get scopes from filters
-  const {
-    trainingReport: trainingReportScopes,
-    sessionReport: sessionReportScopes,
-  } = await filtersToScopes(filterParams, {});
+  const { trainingReport: trainingReportScopes, sessionReport: sessionReportScopes } = await filtersToScopes(filterParams, {})
 
   // Get events to pass into session query
   // (the scopes construction makes this necessary, sadly)
@@ -431,16 +389,13 @@ export async function getSessionReports(
         {
           data: {
             status: {
-              [Op.in]: [
-                TRAINING_REPORT_STATUSES.COMPLETE,
-                TRAINING_REPORT_STATUSES.IN_PROGRESS,
-              ],
+              [Op.in]: [TRAINING_REPORT_STATUSES.COMPLETE, TRAINING_REPORT_STATUSES.IN_PROGRESS],
             },
           },
         },
       ],
     },
-  });
+  })
 
   // Build query options
   const queryOptions = {
@@ -477,12 +432,12 @@ export async function getSessionReports(
     order: orderClause,
     subQuery: true,
     distinct: true,
-  } as Record<string, unknown>;
+  } as Record<string, unknown>
 
-  queryOptions.offset = offset;
+  queryOptions.offset = offset
 
   if (limit !== 'all') {
-    queryOptions.limit = limit;
+    queryOptions.limit = limit
   }
 
   // First get the IDs of sessions for this page (without the goalTemplates join
@@ -490,10 +445,7 @@ export async function getSessionReports(
   const idQuery = {
     attributes: ['id'],
     where: {
-      [Op.and]: [
-        queryOptions.where,
-        ...sessionReportScopes,
-      ],
+      [Op.and]: [queryOptions.where, ...sessionReportScopes],
     },
     include: [
       {
@@ -506,32 +458,29 @@ export async function getSessionReports(
     order: orderClause,
     subQuery: false,
     offset,
-  } as Record<string, unknown>;
+  } as Record<string, unknown>
 
   if (limit !== 'all') {
-    idQuery.limit = limit;
+    idQuery.limit = limit
   }
 
-  const { count, rows: idRows } = await SessionReportPilot.findAndCountAll(idQuery);
-  const sessionIds = idRows.map((r: Model) => r.get('id'));
+  const { count, rows: idRows } = await SessionReportPilot.findAndCountAll(idQuery)
+  const sessionIds = idRows.map((r: Model) => r.get('id'))
 
   // Now fetch full data for just those IDs (with goalTemplates)
   const result = await SessionReportPilot.findAll({
     attributes: queryOptions.attributes,
     where: {
-      [Op.and]: [
-        { id: sessionIds },
-        ...sessionReportScopes,
-      ],
+      [Op.and]: [{ id: sessionIds }, ...sessionReportScopes],
     },
     include: queryOptions.include,
     order: orderClause,
     subQuery: false,
-  });
+  })
 
   // Transform rows to plain objects with goalTemplates included
   const rows = result.map((row: Model) => {
-    const plain = row.get({ plain: true });
+    const plain = row.get({ plain: true })
     return {
       id: plain.id,
       eventId: plain.eventId,
@@ -544,11 +493,11 @@ export async function getSessionReports(
       duration: plain.duration,
       recipients: plain.recipients,
       participants: plain.participants,
-    };
-  });
+    }
+  })
 
   return {
     count,
     rows,
-  };
+  }
 }

@@ -1,12 +1,12 @@
-import { Op } from 'sequelize';
-import { withinDateRange, compareDate } from '../utils';
+import { Op } from 'sequelize'
+import { withinDateRange, compareDate } from '../utils'
 
 export function beforeLastSaveDate(date) {
   return {
     [Op.and]: {
       [Op.or]: compareDate(date, 'updatedAt', Op.lt),
     },
-  };
+  }
 }
 
 export function afterLastSaveDate(date) {
@@ -14,7 +14,7 @@ export function afterLastSaveDate(date) {
     [Op.and]: {
       [Op.or]: compareDate(date, 'updatedAt', Op.gt),
     },
-  };
+  }
 }
 
 export function withinLastSaveDates(dates) {
@@ -22,5 +22,5 @@ export function withinLastSaveDates(dates) {
     [Op.and]: {
       [Op.or]: withinDateRange(dates, 'updatedAt'),
     },
-  };
+  }
 }

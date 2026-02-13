@@ -1,33 +1,34 @@
-import { option } from 'yargs';
-import { REPORT_STATUSES } from '@ttahub/common';
-import changeReportStatus from './changeReportStatus';
-import { auditLogger } from '../logger';
+import { option } from 'yargs'
+import { REPORT_STATUSES } from '@ttahub/common'
+import changeReportStatus from './changeReportStatus'
+import { auditLogger } from '../logger'
 
 const { argv } = option('ids', {
   alias: 'i',
-  description: 'comma separated activity report id\'s to change status',
-  type: 'string',
-}).option('status', {
-  alias: 's',
-  description: `new status (${Object.keys(REPORT_STATUSES)})`,
+  description: "comma separated activity report id's to change status",
   type: 'string',
 })
+  .option('status', {
+    alias: 's',
+    description: `new status (${Object.keys(REPORT_STATUSES)})`,
+    type: 'string',
+  })
   .help()
-  .alias('help', 'h');
+  .alias('help', 'h')
 
-const { ids, status } = argv;
+const { ids, status } = argv
 
 if (!ids) {
-  auditLogger.error('Please provide at least one id. Type -h for help');
-  process.exit(1);
+  auditLogger.error('Please provide at least one id. Type -h for help')
+  process.exit(1)
 }
 
 if (!status || !Object.keys(REPORT_STATUSES).includes(status.toUpperCase())) {
-  auditLogger.error('Please provide a valid new status. Type -h for help');
-  process.exit(1);
+  auditLogger.error('Please provide a valid new status. Type -h for help')
+  process.exit(1)
 }
 
 changeReportStatus(ids, status).catch((e) => {
-  auditLogger.error(e);
-  process.exit(1);
-});
+  auditLogger.error(e)
+  process.exit(1)
+})

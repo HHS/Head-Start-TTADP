@@ -9,23 +9,22 @@ const ACTIONS = [
   'changesRequestedDigest',
   'approverAssignedDigest',
   'reportApprovedDigest',
-];
+]
 
 module.exports = {
-
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      const loggedUser = '0';
-      const sessionSig = __filename;
-      const auditDescriptor = 'RUN MIGRATIONS';
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      const loggedUser = '0'
+      const sessionSig = __filename
+      const auditDescriptor = 'RUN MIGRATIONS'
       await queryInterface.sequelize.query(
         `SELECT
           set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
           set_config('audit.transactionId', NULL, TRUE) as "transactionId",
           set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
           set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+        { transaction }
+      )
       // Disable audit logging
       // await queryInterface.sequelize.query(
       //   `
@@ -78,7 +77,7 @@ module.exports = {
           type: Sequelize.DATE,
           defaultValue: Sequelize.fn('NOW'),
         },
-      });
+      })
       // Enable audit logging
       // await queryInterface.sequelize.query(
       //   `
@@ -86,21 +85,20 @@ module.exports = {
       //     `,
       //   { transaction },
       // );
-    },
-  ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      const loggedUser = '0';
-      const sessionSig = __filename;
-      const auditDescriptor = 'RUN MIGRATIONS';
+    }),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      const loggedUser = '0'
+      const sessionSig = __filename
+      const auditDescriptor = 'RUN MIGRATIONS'
       await queryInterface.sequelize.query(
         `SELECT
           set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
           set_config('audit.transactionId', NULL, TRUE) as "transactionId",
           set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
           set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+        { transaction }
+      )
       // Disable audit logging
       // await queryInterface.sequelize.query(
       //   `
@@ -108,15 +106,14 @@ module.exports = {
       //     `,
       //   { transaction },
       // );
-      await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS public."ZALNoTruncateFMailerLogs"() CASCADE;');
-      await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS public."ZALNoUpdateFMailerLogs"() CASCADE;');
-      await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS public."ZALNoDeleteFMailerLogs"() CASCADE;');
+      await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS public."ZALNoTruncateFMailerLogs"() CASCADE;')
+      await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS public."ZALNoUpdateFMailerLogs"() CASCADE;')
+      await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS public."ZALNoDeleteFMailerLogs"() CASCADE;')
 
-      await queryInterface.dropTable(
-        'MailerLogs',
-        { transaction },
-      );
-      await queryInterface.sequelize.query('DROP TYPE public."enum_MailerLogs_action";', { transaction });
+      await queryInterface.dropTable('MailerLogs', { transaction })
+      await queryInterface.sequelize.query('DROP TYPE public."enum_MailerLogs_action";', {
+        transaction,
+      })
       // Enable audit logging
       // await queryInterface.sequelize.query(
       //   `
@@ -124,6 +121,5 @@ module.exports = {
       //     `,
       //   { transaction },
       // );
-    },
-  ),
-};
+    }),
+}

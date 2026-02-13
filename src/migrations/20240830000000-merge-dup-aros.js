@@ -1,11 +1,12 @@
-const { prepMigration, removeTables } = require('../lib/migration');
+const { prepMigration, removeTables } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         -- This dedupes all remaining AROs. The logic is the same as used for previous
         -- support requests, except the latest TTA Provided that is not zero length 
         -- is selected with one exception. If an update is shorter than 10 characters
@@ -572,13 +573,13 @@ module.exports = {
         DROP TABLE IF EXISTS temp_updated_objectives;
         DROP TABLE IF EXISTS temp_inserted_objectives;
         DROP TABLE IF EXISTS temp_deleted_objectives;
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-    },
-  ),
-};
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+    }),
+}

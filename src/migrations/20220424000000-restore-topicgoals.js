@@ -1,22 +1,22 @@
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
+        const loggedUser = '0'
         // const transactionId = '';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
+        const sessionSig = __filename
+        const auditDescriptor = 'RUN MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Disable logging while doing mass updates
@@ -25,19 +25,24 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       try {
-        await queryInterface.addColumn('Topics', 'mapsTo', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          default: null,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Topics',
+          'mapsTo',
+          {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            default: null,
+          },
+          { transaction }
+        )
 
         await queryInterface.sequelize.query(
           `DO $$
@@ -59,11 +64,11 @@ module.exports = {
             ADD CONSTRAINT "Topics_name_key" UNIQUE (name, "deletedAt", "mapsTo");
             ------------------------------------------------------------------------------------
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Enable logging while doing structural updates
@@ -72,27 +77,26 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+    }),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       // Disable logging while doing mass updates
       try {
         await queryInterface.sequelize.query(
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       await queryInterface.sequelize.query(
@@ -109,10 +113,10 @@ module.exports = {
         ALTER TABLE "Topics"
         ADD CONSTRAINT "Topics_name_key" UNIQUE (name);
         END$$;`,
-        { transaction },
-      );
+        { transaction }
+      )
 
-      queryInterface.removeColumn('Topics', 'mapsTo');
+      queryInterface.removeColumn('Topics', 'mapsTo')
 
       // Enable logging while doing structural updates
       try {
@@ -120,12 +124,11 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
-};
+    }),
+}

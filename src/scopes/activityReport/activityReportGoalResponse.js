@@ -1,4 +1,4 @@
-import { filterAssociation } from './utils';
+import { filterAssociation } from './utils'
 
 const activityReportGoalResponseSql = `
 WITH unnested_responses AS (
@@ -10,12 +10,12 @@ SELECT
 FROM "ActivityReportGoals" "ActivityReportGoals"
 INNER JOIN unnested_responses arr
     ON arr."activityReportGoalId" = "ActivityReportGoals"."id"
-WHERE arr."res"`;
+WHERE arr."res"`
 
 export function withActivityReportGoalResponse(responses) {
-  return filterAssociation(activityReportGoalResponseSql, responses, false);
+  return filterAssociation(activityReportGoalResponseSql, responses, false)
 }
 
 export function withoutActivityReportGoalResponse(responses) {
-  return filterAssociation(activityReportGoalResponseSql, responses, true);
+  return filterAssociation(activityReportGoalResponseSql, responses, true)
 }

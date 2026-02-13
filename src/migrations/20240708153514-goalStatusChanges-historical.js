@@ -1,33 +1,59 @@
 /* eslint-disable no-tabs */
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
       // Change the userName column of GoalStatusChanges to allow null.
-      await queryInterface.changeColumn('GoalStatusChanges', 'userName', {
-        type: Sequelize.STRING,
-        allowNull: true,
-      }, { transaction });
-      await queryInterface.changeColumn('GoalStatusChanges', 'userRoles', {
-        type: Sequelize.ARRAY(Sequelize.STRING),
-        allowNull: true,
-      }, { transaction });
-      await queryInterface.changeColumn('GoalStatusChanges', 'reason', {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      }, { transaction });
-      await queryInterface.changeColumn('GoalStatusChanges', 'newStatus', {
-        type: Sequelize.STRING,
-        allowNull: true,
-      }, { transaction });
-      await queryInterface.changeColumn('GoalStatusChanges', 'userId', {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.changeColumn(
+        'GoalStatusChanges',
+        'userName',
+        {
+          type: Sequelize.STRING,
+          allowNull: true,
+        },
+        { transaction }
+      )
+      await queryInterface.changeColumn(
+        'GoalStatusChanges',
+        'userRoles',
+        {
+          type: Sequelize.ARRAY(Sequelize.STRING),
+          allowNull: true,
+        },
+        { transaction }
+      )
+      await queryInterface.changeColumn(
+        'GoalStatusChanges',
+        'reason',
+        {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        { transaction }
+      )
+      await queryInterface.changeColumn(
+        'GoalStatusChanges',
+        'newStatus',
+        {
+          type: Sequelize.STRING,
+          allowNull: true,
+        },
+        { transaction }
+      )
+      await queryInterface.changeColumn(
+        'GoalStatusChanges',
+        'userId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        { transaction }
+      )
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
 select create_timeseries_from_audit_log('Users');
 select create_timeseries_from_audit_log('UserRoles');
 
@@ -201,17 +227,17 @@ INSERT INTO "GoalStatusChanges"
     LEFT JOIN "Goals" g ON g.id = scq."goalId"
     WHERE gsc.id IS NULL
     AND g.id IS NOT NULL;
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async () => {
+  down: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async () => {
       // Change the userName column of GoalStatusChanges to not allow null.
       await queryInterface.changeColumn('GoalStatusChanges', 'userName', {
         type: Sequelize.STRING,
         allowNull: false,
-      });
-    },
-  ),
-};
+      })
+    }),
+}

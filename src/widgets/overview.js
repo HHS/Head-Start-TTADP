@@ -1,25 +1,18 @@
-import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  ActivityReport,
-  ActivityRecipient,
-  Grant,
-  OtherEntity,
-  Recipient,
-  sequelize,
-} from '../models';
-import { formatNumber, getAllRecipientsFiltered } from './helpers';
+import { Op } from 'sequelize'
+import { REPORT_STATUSES } from '@ttahub/common'
+import { ActivityReport, ActivityRecipient, Grant, OtherEntity, Recipient, sequelize } from '../models'
+import { formatNumber, getAllRecipientsFiltered } from './helpers'
 
 export default async function overview(scopes) {
   // get all distinct recipient ids from recipients with the proper scopes applied
 
-  const allRecipientsFiltered = await getAllRecipientsFiltered(scopes);
+  const allRecipientsFiltered = await getAllRecipientsFiltered(scopes)
 
   // create a distinct array of recipient ids (we'll need this later, to filter the AR recipients)
-  const totalRecipientIds = allRecipientsFiltered.map(({ id }) => id);
+  const totalRecipientIds = allRecipientsFiltered.map(({ id }) => id)
 
   // this is the number used in the API response, also to calculate the percentage
-  const totalRecipients = totalRecipientIds.length;
+  const totalRecipients = totalRecipientIds.length
 
   // here's where we use that array of ids to do the filtering, and get a distinct count of
   // recipient ids within the array of applicable recipients and within the activity report
@@ -29,10 +22,10 @@ export default async function overview(scopes) {
   // the matching denominator set
   const [{ numRecipients }] = await ActivityReport.findAll({
     attributes: [
-      [sequelize.fn('COUNT', sequelize.fn(
-        'DISTINCT',
-        sequelize.fn('CONCAT', sequelize.col('"activityRecipients->grant->recipient"."id"')),
-      )), 'numRecipients'],
+      [
+        sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.fn('CONCAT', sequelize.col('"activityRecipients->grant->recipient"."id"')))),
+        'numRecipients',
+      ],
     ],
     raw: true,
     where: {
@@ -67,7 +60,7 @@ export default async function overview(scopes) {
         ],
       },
     ],
-  });
+  })
 
   /**
    * this looks a little strange... why create another SQL queries?
@@ -78,26 +71,24 @@ export default async function overview(scopes) {
    * above, since that one is excluding some of these reports by recipients
    */
   const duration = await ActivityReport.findAll({
-    attributes: [
-      'duration',
-      'deliveryMethod',
-      'numberOfParticipants',
-    ],
+    attributes: ['duration', 'deliveryMethod', 'numberOfParticipants'],
     where: {
       [Op.and]: [scopes.activityReport],
       calculatedStatus: REPORT_STATUSES.APPROVED,
     },
     raw: true,
-  });
+  })
 
   // eslint-disable-next-line max-len
-  const sumDuration = formatNumber(duration.reduce((acc, report) => acc + (report.duration ? parseFloat(report.duration) : 0), 0), 1);
+  const sumDuration = formatNumber(
+    duration.reduce((acc, report) => acc + (report.duration ? parseFloat(report.duration) : 0), 0),
+    1
+  )
 
-  const inPerson = formatNumber(duration.filter((report) => report.deliveryMethod.toLowerCase() === 'in-person').length, 1).toString();
+  const inPerson = formatNumber(duration.filter((report) => report.deliveryMethod.toLowerCase() === 'in-person').length, 1).toString()
 
   // eslint-disable-next-line max-len
-  const numParticipants = duration.reduce((prev, ar) => prev + (ar.numberOfParticipants ? parseInt(ar.numberOfParticipants, 10) : 0), 0)
-    .toString();
+  const numParticipants = duration.reduce((prev, ar) => prev + (ar.numberOfParticipants ? parseInt(ar.numberOfParticipants, 10) : 0), 0).toString()
 
   // our final query, it stands on its own as explained in the comment for the last one
   const [res] = await ActivityReport.findAll({
@@ -142,13 +133,13 @@ export default async function overview(scopes) {
         ],
       },
     ],
-  });
+  })
 
   // calculate the percentage
-  const rawPercentage = (numRecipients / totalRecipients) * 100;
-  const recipientPercentage = `${formatNumber(rawPercentage, 2)}%`;
+  const rawPercentage = (numRecipients / totalRecipients) * 100
+  const recipientPercentage = `${formatNumber(rawPercentage, 2)}%`
 
-  const { numReports, numGrants, numOtherEntities } = res;
+  const { numReports, numGrants, numOtherEntities } = res
 
   return {
     numReports: formatNumber(numReports),
@@ -160,5 +151,5 @@ export default async function overview(scopes) {
     inPerson,
     sumDuration,
     numParticipants: formatNumber(numParticipants),
-  };
+  }
 }

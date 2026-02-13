@@ -1,6 +1,6 @@
-import { Sequelize } from 'sequelize';
-import db from '../..';
-import { nestedRawish } from '../../../lib/modelUtils';
+import { Sequelize } from 'sequelize'
+import db from '../..'
+import { nestedRawish } from '../../../lib/modelUtils'
 
 const {
   Grant,
@@ -12,7 +12,7 @@ const {
   MonitoringReviewStatus,
   MonitoringReviewStatusLink,
   Recipient,
-} = db;
+} = db
 
 describe('MonitoringClassSummary', () => {
   it('findAll', async () => {
@@ -23,24 +23,28 @@ describe('MonitoringClassSummary', () => {
           model: MonitoringReviewLink,
           attributes: [],
           required: false,
-          include: [{
-            as: 'monitoringReviews',
-            model: MonitoringReview,
-            attributes: [],
-            required: false,
-          }],
+          include: [
+            {
+              as: 'monitoringReviews',
+              model: MonitoringReview,
+              attributes: [],
+              required: false,
+            },
+          ],
         },
         {
           as: 'grantNumberLink',
           model: GrantNumberLink,
           attributes: [],
           required: false,
-          include: [{
-            as: 'grant',
-            model: Grant,
-            attributes: [],
-            required: false,
-          }],
+          include: [
+            {
+              as: 'grant',
+              model: Grant,
+              attributes: [],
+              required: false,
+            },
+          ],
         },
       ],
       attributes: [
@@ -57,17 +61,19 @@ describe('MonitoringClassSummary', () => {
         [Sequelize.literal(`"grantNumberLink->grant"."status"`), 'grantStatus'],
       ],
       where: { grantNumber: '09HP044444' },
-    });
-    expect(nestedRawish(data)).toMatchObject([{
-      classroomOrganization: '5.2303',
-      emotionalSupport: '6.2303',
-      grantNumber: '09HP044444',
-      grantStatus: 'Active',
-      instructionalSupport: '3.2303',
-      monitoringReviewOutcome: 'Deficient',
-      monitoringReviewType: 'RAN',
-    }]);
-  });
+    })
+    expect(nestedRawish(data)).toMatchObject([
+      {
+        classroomOrganization: '5.2303',
+        emotionalSupport: '6.2303',
+        grantNumber: '09HP044444',
+        grantStatus: 'Active',
+        instructionalSupport: '3.2303',
+        monitoringReviewOutcome: 'Deficient',
+        monitoringReviewType: 'RAN',
+      },
+    ])
+  })
   it('use case', async () => {
     const grants = await Grant.findAll({
       attributes: ['id', 'recipientId', 'regionId', 'number'],
@@ -99,42 +105,43 @@ describe('MonitoringClassSummary', () => {
                   model: MonitoringReviewLink,
                   as: 'monitoringReviewLink',
                   attributes: ['id'],
-                  include: [{
-                    model: MonitoringReview,
-                    as: 'monitoringReviews',
-                    attributes: [
-                      // 'reportDeliveryDate', - excluded from test because dates are hard to match
-                      'id',
-                      'reviewType',
-                      'reviewId',
-                      'statusId',
-                    ],
-                    required: true,
-                    include: [
-                      {
-                        model: MonitoringReviewStatusLink,
-                        as: 'statusLink',
-                        required: true,
-                        attributes: ['id'],
-                        include: [
-                          {
-                            attributes: ['id', 'name', 'statusId'],
-                            model: MonitoringReviewStatus,
-                            as: 'monitoringReviewStatuses',
-                            required: true,
-                          },
-                        ],
-                      },
-                    ],
-                  }],
+                  include: [
+                    {
+                      model: MonitoringReview,
+                      as: 'monitoringReviews',
+                      attributes: [
+                        // 'reportDeliveryDate', - excluded from test because dates are hard to match
+                        'id',
+                        'reviewType',
+                        'reviewId',
+                        'statusId',
+                      ],
+                      required: true,
+                      include: [
+                        {
+                          model: MonitoringReviewStatusLink,
+                          as: 'statusLink',
+                          required: true,
+                          attributes: ['id'],
+                          include: [
+                            {
+                              attributes: ['id', 'name', 'statusId'],
+                              model: MonitoringReviewStatus,
+                              as: 'monitoringReviewStatuses',
+                              required: true,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
                 },
-
               ],
             },
           ],
         },
       ],
-    });
+    })
     expect(nestedRawish(grants)).toMatchObject([
       {
         id: 8,
@@ -173,6 +180,6 @@ describe('MonitoringClassSummary', () => {
           ],
         },
       },
-    ]);
-  });
-});
+    ])
+  })
+})

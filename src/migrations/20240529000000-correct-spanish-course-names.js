@@ -1,12 +1,11 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(/* sql */`
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename)
+      await queryInterface.sequelize.query(
+        /* sql */ `
         -- Matches to created the mapping use hex encodings of the exact bits currently
         -- stored in the database to avoid having to trust that the UTF-8 'unknown character'
         -- value won't get corrupted somewhere along the deployment chain and cause the string
@@ -78,13 +77,13 @@ module.exports = {
         WHERE uc.id = old_cid
         ;
 
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      )
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async () => {
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async () => {
       // there's no point in un-fixing this data
-    },
-  ),
-};
+    }),
+}

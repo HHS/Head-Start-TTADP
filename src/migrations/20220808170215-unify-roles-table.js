@@ -9,19 +9,20 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     return queryInterface.sequelize.transaction(async (transaction) => {
       // disable audit logging
-      const loggedUser = '0';
-      const sessionSig = __filename;
-      const auditDescriptor = 'RUN MIGRATIONS';
+      const loggedUser = '0'
+      const sessionSig = __filename
+      const auditDescriptor = 'RUN MIGRATIONS'
       await queryInterface.sequelize.query(
         `SELECT
           set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
           set_config('audit.transactionId', NULL, TRUE) as "transactionId",
           set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
           set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+        { transaction }
+      )
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       -- update current roles
       UPDATE "Roles" SET "fullName" = 'Other Federal Staff' WHERE "fullName" = 'Central Office: Other Divisions';
       UPDATE "Roles" SET "name" = 'OFS' WHERE "fullName" = 'Other Federal Staff';
@@ -31,54 +32,60 @@ module.exports = {
       -- insert new roles
       INSERT INTO "Roles" ("name", "fullName", "isSpecialist", "createdAt", "updatedAt") VALUES ('NC', 'National Center', false, now(), now());
       INSERT INTO "Roles" ("name", "fullName", "isSpecialist", "createdAt", "updatedAt") VALUES ('CSC', 'Customer Service Contact', false, now(), now());
-    `, { transaction });
+    `,
+        { transaction }
+      )
 
       // create user role table
-      await queryInterface.createTable('UserRoles', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        userId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          onDelete: 'CASCADE',
-          references: {
-            model: {
-              tableName: 'Users',
+      await queryInterface.createTable(
+        'UserRoles',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          userId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            onDelete: 'CASCADE',
+            references: {
+              model: {
+                tableName: 'Users',
+              },
+              key: 'id',
             },
-            key: 'id',
           },
-        },
-        roleId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          onDelete: 'CASCADE',
-          references: {
-            model: {
-              tableName: 'Roles',
+          roleId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            onDelete: 'CASCADE',
+            references: {
+              model: {
+                tableName: 'Roles',
+              },
+              key: 'id',
             },
-            key: 'id',
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
         },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, {
-        uniqueKeys: {
-          userId_roleId_unique: {
-            fields: ['userId', 'roleId'],
+        {
+          uniqueKeys: {
+            userId_roleId_unique: {
+              fields: ['userId', 'roleId'],
+            },
           },
-        },
-        transaction,
-      });
+          transaction,
+        }
+      )
 
       await queryInterface.sequelize.query(
         `DO
@@ -113,23 +120,16 @@ module.exports = {
         $$
         LANGUAGE plpgsql;
         `,
-        { transaction },
-      );
+        { transaction }
+      )
 
       // remove old column from users table
-      await queryInterface.removeColumn(
-        'Users',
-        'role',
-        { transaction },
-      );
+      await queryInterface.removeColumn('Users', 'role', { transaction })
 
       // drop old enum
-      await queryInterface.sequelize.query(
-        'DROP TYPE public."enum_Users_role";',
-        { transaction },
-      );
-    });
+      await queryInterface.sequelize.query('DROP TYPE public."enum_Users_role";', { transaction })
+    })
   },
 
   async down() {},
-};
+}

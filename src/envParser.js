@@ -1,3 +1,3 @@
-require('dotenv').config();
+require('dotenv').config()
 
-exports.isTrue = (key) => process.env[key] === 'true';
+exports.isTrue = (key) => process.env[key] === 'true'

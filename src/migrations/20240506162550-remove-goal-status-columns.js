@@ -1,14 +1,12 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       ///
       // Remove these:
@@ -44,67 +42,132 @@ module.exports = {
         queryInterface.removeColumn('Goals', 'lastClosedAt', { transaction }),
         queryInterface.removeColumn('Goals', 'firstCompletedAt', { transaction }),
         queryInterface.removeColumn('Goals', 'lastCompletedAt', { transaction }),
-      ]);
-    });
+      ])
+    })
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const { DataTypes } = Sequelize;
+      const { DataTypes } = Sequelize
       await Promise.all([
-        queryInterface.addColumn('Goals', 'closeSuspendReason', {
-          type: DataTypes.TEXT,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'closeSuspendContext', {
-          type: DataTypes.TEXT,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'previousStatus', {
-          type: DataTypes.TEXT,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'firstNotStartedAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'lastNotStartedAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'firstInProgressAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'lastInProgressAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'firstCeasedSuspendedAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'lastCeasedSuspendedAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'firstClosedAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'lastClosedAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'firstCompletedAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-        queryInterface.addColumn('Goals', 'lastCompletedAt', {
-          type: DataTypes.DATE,
-          allowNull: true,
-        }, { transaction }),
-      ]);
-    });
+        queryInterface.addColumn(
+          'Goals',
+          'closeSuspendReason',
+          {
+            type: DataTypes.TEXT,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'closeSuspendContext',
+          {
+            type: DataTypes.TEXT,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'previousStatus',
+          {
+            type: DataTypes.TEXT,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'firstNotStartedAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'lastNotStartedAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'firstInProgressAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'lastInProgressAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'firstCeasedSuspendedAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'lastCeasedSuspendedAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'firstClosedAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'lastClosedAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'firstCompletedAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'lastCompletedAt',
+          {
+            type: DataTypes.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        ),
+      ])
+    })
   },
-};
+}

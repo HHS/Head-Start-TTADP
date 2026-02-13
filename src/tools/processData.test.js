@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { v4 as uuidv4 } from 'uuid'
+import { REPORT_STATUSES } from '@ttahub/common'
 import {
   sequelize,
   ActivityReport,
@@ -24,7 +24,7 @@ import {
   ActivityReportObjectiveCitation,
   Objective,
   ZALGoal,
-} from '../models';
+} from '../models'
 import processData, {
   truncateAuditTables,
   hideUsers,
@@ -34,19 +34,16 @@ import processData, {
   convertGrantNumberCreate,
   convertGrantNumberDrop,
   processMonitoringReferences,
-} from './processData';
-import {
-  createReportAndCitationData,
-  destroyReportAndCitationData,
-} from '../services/monitoring.testHelpers';
+} from './processData'
+import { createReportAndCitationData, destroyReportAndCitationData } from '../services/monitoring.testHelpers'
 
-jest.mock('../logger');
+jest.mock('../logger')
 
-const RECIPIENT_ID_ONE = 7777;
-const RECIPIENT_ID_TWO = 7776;
-const GRANT_ID_ONE = 88888;
-const GRANT_ID_TWO = 88887;
-const GRANT_NUMBER_ONE = '01GN011311';
+const RECIPIENT_ID_ONE = 7777
+const RECIPIENT_ID_TWO = 7776
+const GRANT_ID_ONE = 88888
+const GRANT_ID_TWO = 88887
+const GRANT_NUMBER_ONE = '01GN011311'
 
 const mockUser = {
   id: 3000,
@@ -56,7 +53,7 @@ const mockUser = {
   hsesUserId: '3000',
   email: 'user3000@test.com',
   lastLogin: new Date(),
-};
+}
 
 const mockManager = {
   id: 3001,
@@ -66,7 +63,7 @@ const mockManager = {
   hsesUserId: '3001',
   email: 'user3001@test.com',
   lastLogin: new Date(),
-};
+}
 
 const mockCollaboratorOne = {
   id: 3002,
@@ -76,7 +73,7 @@ const mockCollaboratorOne = {
   hsesUserId: '3002',
   email: 'user3002@test.com',
   lastLogin: new Date(),
-};
+}
 
 const mockCollaboratorTwo = {
   id: 3003,
@@ -86,14 +83,14 @@ const mockCollaboratorTwo = {
   hsesUserId: '3003',
   email: 'user3003@test.com',
   lastLogin: new Date(),
-};
+}
 
 // TODO: Use Activity file link table
 const mockActivityReportFile = {
   id: 140000,
   activityReportId: 1,
   fileId: 140000,
-};
+}
 
 const mockFile = {
   id: 140000,
@@ -101,7 +98,7 @@ const mockFile = {
   key: '508bdc9e-8dec-4d64-b83d-59a72a4f2353.pdf',
   status: 'APPROVED',
   fileSize: 54417,
-};
+}
 
 const reportObject = {
   activityRecipientType: 'recipient',
@@ -109,10 +106,7 @@ const reportObject = {
   regionId: 1,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
-  activityRecipients: [
-    { activityRecipientId: RECIPIENT_ID_ONE },
-    { activityRecipientId: RECIPIENT_ID_TWO },
-  ],
+  activityRecipients: [{ activityRecipientId: RECIPIENT_ID_ONE }, { activityRecipientId: RECIPIENT_ID_TWO }],
   submissionStatus: REPORT_STATUSES.APPROVED,
   approvingManagerId: mockManager.id,
   numberOfParticipants: 1,
@@ -149,8 +143,7 @@ const reportObject = {
     modifiedBy: 'user3001@test.com',
     multiGranteeActivities: '',
     nonGranteeActivity: '',
-    nonGranteeParticipants:
-      'HSCO\nRegional TTA Team / Specialists\nState Agency staff',
+    nonGranteeParticipants: 'HSCO\nRegional TTA Team / Specialists\nState Agency staff',
     nonOhsResources: '',
     numberOfParticipants: '',
     objective11:
@@ -169,8 +162,7 @@ const reportObject = {
     reportId: 'R01-AR-000033',
     resourcesUsed: '',
     sourceOfRequest: 'Regional Office',
-    specialistFollowUpTasksObjectives:
-      'The next meeting will be November 6, 2020',
+    specialistFollowUpTasksObjectives: 'The next meeting will be November 6, 2020',
     startDate: '10/02/20',
     tTa: 'Technical Assistance',
     targetPopulations: 'Infant/Toddlers\nPreschool',
@@ -180,7 +172,7 @@ const reportObject = {
       'The CT Office of Early Childhood facilitated the meeting. The agenda included:\n•\tReview and completion of Benchmarks of Quality action plan\n•\tWork group reports: Governance, Family Engagement, Training, Marketing\nThe Office of Early Childhood shared the following information: a new project from the National Center for Pyramid Model Innovations on Equity that targets supporting coaches and programs that are implementing Pyramid; the Pyramid Facebook page; and resources on COVID-19 specific to Early Childhood programs. The training work group shared information about changes in program participation for both Cohort 1 & 2. The work group also shared that over 50 participants attended the Leadership Team training facilitated by CT Master Coaches. Dates for the entire cohort 2 training will be sent to members and all are encouraged to participate. The Governance work group asked for feedback on the posted changes to the governance document on Google Drive before the next meeting. The Family Engagement Work group will report on the upcoming Toolkit resources at the next meeting',
   },
   version: 2,
-};
+}
 
 async function createMonitoringData(grantNumber) {
   await MonitoringClassSummary.findOrCreate({
@@ -196,7 +188,7 @@ async function createMonitoringData(grantNumber) {
       sourceCreatedAt: '2023-05-22 21:00:00-07',
       sourceUpdatedAt: '2023-05-22 21:00:00-07',
     },
-  });
+  })
 
   await MonitoringReviewGrantee.findOrCreate({
     where: { grantNumber },
@@ -210,7 +202,7 @@ async function createMonitoringData(grantNumber) {
       updateTime: '2024-02-12 14:31:55.74-08',
       updateBy: 'Support Team',
     },
-  });
+  })
 
   await MonitoringReview.findOrCreate({
     where: { reviewId: 'reviewId' },
@@ -227,21 +219,21 @@ async function createMonitoringData(grantNumber) {
       sourceCreatedAt: '2023-02-22 21:00:00-08',
       sourceUpdatedAt: '2023-02-22 21:00:00-08',
     },
-  });
+  })
 
   await MonitoringReviewLink.findOrCreate({
     where: { reviewId: 'reviewId' },
     defaults: {
       reviewId: 'reviewId',
     },
-  });
+  })
 
   await MonitoringReviewStatusLink.findOrCreate({
     where: { statusId: 6006 },
     defaults: {
       statusId: 6006,
     },
-  });
+  })
 
   await MonitoringReviewStatus.findOrCreate({
     where: { statusId: 6006 },
@@ -251,28 +243,32 @@ async function createMonitoringData(grantNumber) {
       sourceCreatedAt: '2024-02-12 14:31:55.74-08',
       sourceUpdatedAt: '2024-02-12 14:31:55.74-08',
     },
-  });
+  })
 }
 
 async function destroyMonitoringData() {
-  await MonitoringReviewGrantee.destroy({ where: { reviewId: 'reviewId' }, force: true });
-  await MonitoringClassSummary.destroy({ where: { reviewId: 'reviewId' }, force: true });
-  await MonitoringReview.destroy({ where: { reviewId: 'reviewId' }, force: true });
-  await MonitoringReview.destroy({ where: { statusId: 6006 }, force: true });
-  await MonitoringReviewLink.destroy({ where: { reviewId: 'reviewId' }, force: true });
-  await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
-  await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
+  await MonitoringReviewGrantee.destroy({ where: { reviewId: 'reviewId' }, force: true })
+  await MonitoringClassSummary.destroy({ where: { reviewId: 'reviewId' }, force: true })
+  await MonitoringReview.destroy({ where: { reviewId: 'reviewId' }, force: true })
+  await MonitoringReview.destroy({ where: { statusId: 6006 }, force: true })
+  await MonitoringReviewLink.destroy({ where: { reviewId: 'reviewId' }, force: true })
+  await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true })
+  await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true })
 }
 
 describe('processData', () => {
   beforeAll(async () => {
-    await User.findOrCreate({ where: mockUser });
-    await User.findOrCreate({ where: mockManager });
-    await User.findOrCreate({ where: mockCollaboratorOne });
-    await User.findOrCreate({ where: mockCollaboratorTwo });
+    await User.findOrCreate({ where: mockUser })
+    await User.findOrCreate({ where: mockManager })
+    await User.findOrCreate({ where: mockCollaboratorOne })
+    await User.findOrCreate({ where: mockCollaboratorTwo })
 
-    await Recipient.findOrCreate({ where: { name: 'Agency One, Inc.', id: RECIPIENT_ID_ONE, uei: 'NNA5N2KHMGM2' } });
-    await Recipient.findOrCreate({ where: { name: 'Agency Two', id: RECIPIENT_ID_TWO, uei: 'NNA5N2KHMGA2' } });
+    await Recipient.findOrCreate({
+      where: { name: 'Agency One, Inc.', id: RECIPIENT_ID_ONE, uei: 'NNA5N2KHMGM2' },
+    })
+    await Recipient.findOrCreate({
+      where: { name: 'Agency Two', id: RECIPIENT_ID_TWO, uei: 'NNA5N2KHMGA2' },
+    })
     await Grant.findOrCreate({
       where: {
         id: GRANT_ID_ONE,
@@ -285,7 +281,7 @@ describe('processData', () => {
         startDate: new Date(),
         endDate: new Date(),
       },
-    });
+    })
     await Grant.findOrCreate({
       where: {
         id: GRANT_ID_TWO,
@@ -296,88 +292,76 @@ describe('processData', () => {
         startDate: new Date(),
         endDate: new Date(),
       },
-    });
-    await createMonitoringData(GRANT_NUMBER_ONE);
-  });
+    })
+    await createMonitoringData(GRANT_NUMBER_ONE)
+  })
 
   afterAll(async () => {
     const reports = await ActivityReport.findAll({
       where: {
-        userId: [
-          mockUser.id,
-          mockManager.id,
-          mockCollaboratorOne.id,
-          mockCollaboratorTwo.id,
-        ],
+        userId: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
       },
-    });
-    const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { grantId: GRANT_ID_ONE } });
+    })
+    const ids = reports.map((report) => report.id)
+    await NextStep.destroy({ where: { activityReportId: ids } })
+    await ActivityRecipient.destroy({ where: { activityReportId: ids } })
+    await ActivityRecipient.destroy({ where: { grantId: GRANT_ID_ONE } })
     await ActivityReportFile.destroy({
       where: { id: mockActivityReportFile.id },
-    });
-    await File.destroy({ where: { id: mockFile.id } });
-    await ActivityReport.destroy({ where: { id: ids } });
+    })
+    await File.destroy({ where: { id: mockFile.id } })
+    await ActivityReport.destroy({ where: { id: ids } })
     await User.destroy({
       where: {
-        id: [
-          mockUser.id,
-          mockManager.id,
-          mockCollaboratorOne.id,
-          mockCollaboratorTwo.id,
-        ],
+        id: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
       },
-    });
+    })
     await GrantNumberLink.unscoped().destroy({
       where: { grantId: GRANT_ID_ONE },
       force: true,
-    });
+    })
     await GrantNumberLink.unscoped().destroy({
       where: { grantId: GRANT_ID_TWO },
       force: true,
-    });
+    })
     await GrantNumberLink.unscoped().destroy({
       where: { grantId: null },
       force: true,
-    });
+    })
     await Grant.unscoped().destroy({
       where: { id: GRANT_ID_ONE },
       individualHooks: true,
-    });
+    })
     await Grant.unscoped().destroy({
       where: { id: GRANT_ID_TWO },
       individualHooks: true,
-    });
-    await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } });
-    await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } });
-    await destroyMonitoringData();
-    await sequelize.close();
-  });
+    })
+    await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } })
+    await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } })
+    await destroyMonitoringData()
+    await sequelize.close()
+  })
 
   it('transforms user emails and recipient names in the ActivityReports table (imported)', async () => {
-    const report = await ActivityReport.create(reportObject);
-    mockActivityReportFile.activityReportId = report.id;
-    await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
-    const file = await File.create(mockFile);
-    await processData(report);
-    const transformedReport = await ActivityReport.findOne({ where: { id: report.id } });
+    const report = await ActivityReport.create(reportObject)
+    mockActivityReportFile.activityReportId = report.id
+    await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } })
+    const file = await File.create(mockFile)
+    await processData(report)
+    const transformedReport = await ActivityReport.findOne({ where: { id: report.id } })
 
-    expect(transformedReport.imported.createdBy).not.toBe(mockUser.email);
-    expect(transformedReport.imported.manager).not.toBe(mockManager.email);
-    expect(transformedReport.imported.modifiedBy).not.toBe(mockManager.email);
-    expect(transformedReport.imported.otherSpecialists).not.toBe(
-      report.imported.otherSpecialists,
-    );
-    expect(transformedReport.imported.granteeName).not.toBe(report.imported.granteeName);
+    expect(transformedReport.imported.createdBy).not.toBe(mockUser.email)
+    expect(transformedReport.imported.manager).not.toBe(mockManager.email)
+    expect(transformedReport.imported.modifiedBy).not.toBe(mockManager.email)
+    expect(transformedReport.imported.otherSpecialists).not.toBe(report.imported.otherSpecialists)
+    expect(transformedReport.imported.granteeName).not.toBe(report.imported.granteeName)
 
-    const transformedFile = await File.findOne({ where: { id: file.id } });
-    expect(transformedFile.originalFileName).not.toBe(mockFile.originalFileName);
+    const transformedFile = await File.findOne({ where: { id: file.id } })
+    expect(transformedFile.originalFileName).not.toBe(mockFile.originalFileName)
 
-    const requestErrors = await RequestErrors.findAll();
-    expect(requestErrors.length).toBe(0);
-  });
+    const requestErrors = await RequestErrors.findAll()
+    expect(requestErrors.length).toBe(0)
+  })
 
   it('truncates audit tables', async () => {
     await ZALGoal.create({
@@ -388,94 +372,94 @@ describe('processData', () => {
       dml_by: 1,
       dml_as: 3,
       dml_txid: uuidv4(),
-    });
+    })
 
-    await truncateAuditTables();
-    expect(await ZALGoal.count()).toBe(0);
-  });
+    await truncateAuditTables()
+    expect(await ZALGoal.count()).toBe(0)
+  })
 
   describe('hideUsers', () => {
     it('transforms user names and emails in the Users table', async () => {
-      await hideUsers([mockUser.id]);
-      const transformedMockUser = await User.findOne({ where: { id: mockUser.id } });
-      expect(transformedMockUser.email).not.toBe(mockUser.email);
-      expect(transformedMockUser.hsesUsername).not.toBe(mockUser.hsesUsername);
-      expect(transformedMockUser.name).not.toBe(mockUser.name);
-      expect(transformedMockUser.phoneNumber).not.toBe(mockUser.phoneNumber);
-    });
-  });
+      await hideUsers([mockUser.id])
+      const transformedMockUser = await User.findOne({ where: { id: mockUser.id } })
+      expect(transformedMockUser.email).not.toBe(mockUser.email)
+      expect(transformedMockUser.hsesUsername).not.toBe(mockUser.hsesUsername)
+      expect(transformedMockUser.name).not.toBe(mockUser.name)
+      expect(transformedMockUser.phoneNumber).not.toBe(mockUser.phoneNumber)
+    })
+  })
 
   describe('hideRecipientsGrants', () => {
     afterAll(async () => {
-      await destroyMonitoringData();
-    });
+      await destroyMonitoringData()
+    })
 
     it('transforms recipient names in the Recipients table', async () => {
-      await hideRecipientsGrants(reportObject.imported.granteeName);
+      await hideRecipientsGrants(reportObject.imported.granteeName)
 
-      const transformedRecipient = await Recipient.findOne({ where: { id: RECIPIENT_ID_ONE } });
-      expect(transformedRecipient.name).not.toBe('Agency One, Inc.');
-    });
+      const transformedRecipient = await Recipient.findOne({ where: { id: RECIPIENT_ID_ONE } })
+      expect(transformedRecipient.name).not.toBe('Agency One, Inc.')
+    })
 
     it('transforms grant numbers in the Grants table', async () => {
-      await hideRecipientsGrants(reportObject.imported.granteeName);
+      await hideRecipientsGrants(reportObject.imported.granteeName)
 
-      const transformedGrant = await Grant.findOne({ where: { recipientId: RECIPIENT_ID_ONE } });
-      expect(transformedGrant.number).not.toBe(GRANT_NUMBER_ONE);
-    });
+      const transformedGrant = await Grant.findOne({ where: { recipientId: RECIPIENT_ID_ONE } })
+      expect(transformedGrant.number).not.toBe(GRANT_NUMBER_ONE)
+    })
 
     it('transforms program specialist name and email in the Grants table', async () => {
-      await hideRecipientsGrants(reportObject.imported.granteeName);
+      await hideRecipientsGrants(reportObject.imported.granteeName)
 
-      const transformedGrant = await Grant.findOne({ where: { recipientId: RECIPIENT_ID_ONE } });
-      expect(transformedGrant.id).toBe(GRANT_ID_ONE);
-      const transformedMockManager = await User.findOne({ where: { id: mockManager.id } });
+      const transformedGrant = await Grant.findOne({ where: { recipientId: RECIPIENT_ID_ONE } })
+      expect(transformedGrant.id).toBe(GRANT_ID_ONE)
+      const transformedMockManager = await User.findOne({ where: { id: mockManager.id } })
 
-      expect(transformedGrant.programSpecialistName).toBe(transformedMockManager.name);
-      expect(transformedGrant.programSpecialistEmail).toBe(transformedMockManager.email);
-    });
+      expect(transformedGrant.programSpecialistName).toBe(transformedMockManager.name)
+      expect(transformedGrant.programSpecialistEmail).toBe(transformedMockManager.email)
+    })
 
     it('updates grant numbers in the GrantNumberLink table', async () => {
       const grantNumberLinkRecordBefore = await GrantNumberLink.findOne({
         where: { grantId: GRANT_ID_ONE },
-      });
+      })
 
-      expect(grantNumberLinkRecordBefore.grantId).toBe(GRANT_ID_ONE);
+      expect(grantNumberLinkRecordBefore.grantId).toBe(GRANT_ID_ONE)
 
-      await hideRecipientsGrants(reportObject.imported.granteeName);
+      await hideRecipientsGrants(reportObject.imported.granteeName)
 
       const grantNumberLinkRecord = await GrantNumberLink.findOne({
         where: { grantId: GRANT_ID_ONE },
-      });
+      })
 
-      expect(grantNumberLinkRecord.grantNumber).not.toBe(GRANT_NUMBER_ONE);
-      expect(grantNumberLinkRecord.grantId).toBe(GRANT_ID_ONE);
-    });
+      expect(grantNumberLinkRecord.grantNumber).not.toBe(GRANT_NUMBER_ONE)
+      expect(grantNumberLinkRecord.grantId).toBe(GRANT_ID_ONE)
+    })
 
     it('updates grant numbers in the MonitoringReviewGrantee table', async () => {
-      await hideRecipientsGrants(reportObject.imported.granteeName);
+      await hideRecipientsGrants(reportObject.imported.granteeName)
 
       // Verify that no record with the old grant number exists anymore
       const monitoringReviewGranteeRecord = await MonitoringReviewGrantee.findOne({
         where: { grantNumber: GRANT_NUMBER_ONE },
-      });
+      })
 
-      expect(monitoringReviewGranteeRecord).toBeNull();
+      expect(monitoringReviewGranteeRecord).toBeNull()
 
       // Verify that no record with the old grant number exists anymore
       const monitoringClassSummaryRecord = await MonitoringClassSummary.findOne({
         where: { grantNumber: GRANT_NUMBER_ONE },
-      });
+      })
 
-      expect(monitoringClassSummaryRecord).toBeNull();
-    });
-  });
+      expect(monitoringClassSummaryRecord).toBeNull()
+    })
+  })
 
   describe('processMonitoringReferences', () => {
-    const TEST_RECIP_ID = 99001;
-    const TEST_GRANT_ID = 99002;
-    const TEST_GRANT_NUMBER = '01GN099002';
-    const TEST_RECIP_NAME = 'Test Recip';
+    const TEST_RECIP_ID = 99001
+    const TEST_GRANT_ID = 99002
+    const TEST_GRANT_NUMBER = '01GN099002'
+    const TEST_RECIP_NAME = 'Test Recip'
 
     beforeAll(async () => {
       await Recipient.findOrCreate({
@@ -485,7 +469,7 @@ describe('processData', () => {
           name: TEST_RECIP_NAME,
           uei: 'TESTUEI99001',
         },
-      });
+      })
 
       await Grant.findOrCreate({
         where: { id: TEST_GRANT_ID },
@@ -498,98 +482,88 @@ describe('processData', () => {
           startDate: new Date(),
           endDate: new Date(),
         },
-      });
+      })
       await GrantNumberLink.findOrCreate({
         where: { grantId: TEST_GRANT_ID },
         defaults: {
           grantId: TEST_GRANT_ID,
           grantNumber: TEST_GRANT_NUMBER,
         },
-      });
-    });
+      })
+    })
 
     afterAll(async () => {
       await GrantNumberLink.destroy({
         where: { grantId: TEST_GRANT_ID },
         force: true,
         individualHooks: true,
-      });
+      })
       await Grant.unscoped().destroy({
         where: { id: TEST_GRANT_ID },
         force: true,
         individualHooks: true,
-      });
+      })
       await Recipient.unscoped().destroy({
         where: { id: TEST_RECIP_ID },
         force: true,
-      });
-    });
+      })
+    })
     it('obfuscates grant number in monitoring references', async () => {
-      const arocResult = await createReportAndCitationData(TEST_GRANT_NUMBER, 1);
+      const arocResult = await createReportAndCitationData(TEST_GRANT_NUMBER, 1)
       const recipientsGrants = `${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}
-${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}`;
+${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}`
 
       await sequelize.transaction(async () => {
-        await convertGrantNumberCreate();
-        await hideRecipientsGrants(recipientsGrants);
-        await processMonitoringReferences();
-        await convertGrantNumberDrop();
-      });
+        await convertGrantNumberCreate()
+        await hideRecipientsGrants(recipientsGrants)
+        await processMonitoringReferences()
+        await convertGrantNumberDrop()
+      })
 
       const row = await ActivityReportObjectiveCitation.findOne({
         where: { id: arocResult.citations[0].id },
         raw: true,
-      });
-      const obfuscated = (
-        await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true })
-      ).number;
+      })
+      const obfuscated = (await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true })).number
 
-      expect(row).toBeTruthy();
-      expect(Array.isArray(row.monitoringReferences)).toBe(true);
+      expect(row).toBeTruthy()
+      expect(Array.isArray(row.monitoringReferences)).toBe(true)
 
-      const referenceWithGrant = row.monitoringReferences.find(
-        (ref) => ref && typeof ref.grantNumber === 'string' && ref.grantNumber.length > 0,
-      );
+      const referenceWithGrant = row.monitoringReferences.find((ref) => ref && typeof ref.grantNumber === 'string' && ref.grantNumber.length > 0)
 
-      expect(referenceWithGrant).toBeTruthy();
-      expect(referenceWithGrant.grantNumber).not.toBe(TEST_GRANT_NUMBER);
-      expect(referenceWithGrant.grantNumber).toBe(obfuscated);
-      await destroyReportAndCitationData(
-        arocResult.goal,
-        arocResult.objectives,
-        arocResult.reports,
-        arocResult.topic,
-        arocResult.citations,
-      );
-    });
-  });
+      expect(referenceWithGrant).toBeTruthy()
+      expect(referenceWithGrant.grantNumber).not.toBe(TEST_GRANT_NUMBER)
+      expect(referenceWithGrant.grantNumber).toBe(obfuscated)
+      await destroyReportAndCitationData(arocResult.goal, arocResult.objectives, arocResult.reports, arocResult.topic, arocResult.citations)
+    })
+  })
 
   describe('bootstrapUsers', () => {
     it('creates a user if it does not exist', async () => {
-      await bootstrapUsers();
+      await bootstrapUsers()
 
-      const user = await User.findOne({ where: { hsesUserId: '51113' } });
+      const user = await User.findOne({ where: { hsesUserId: '51113' } })
 
-      expect(user.homeRegionId).toBe(14);
-    });
+      expect(user.homeRegionId).toBe(14)
+    })
 
     it('gives permissions to users', async () => {
-      await bootstrapUsers();
+      await bootstrapUsers()
 
-      const user = await User.findOne({ where: { hsesUserId: '51113' } });
-      const userPermissions = await Permission.findAll({ where: { userId: user.id } });
-      expect(userPermissions.length).toBe(16);
-    });
-  });
+      const user = await User.findOne({ where: { hsesUserId: '51113' } })
+      const userPermissions = await Permission.findAll({ where: { userId: user.id } })
+      expect(userPermissions.length).toBe(16)
+    })
+  })
 
   describe('convertName', () => {
     it('handles a program specialist not in the hub', async () => {
-      const name = await convertName('test', 'test@test.com');
+      const name = await convertName('test', 'test@test.com')
       expect(name).toStrictEqual({
         email: expect.any(String),
         id: expect.any(Number),
         name: expect.any(String),
-      });
-    });
-  });
-});
+      })
+    })
+  })
+})

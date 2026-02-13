@@ -1,402 +1,432 @@
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
-        const loggedUser = '0';
+        const loggedUser = '0'
         // const transactionId = '';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
+        const sessionSig = __filename
+        const auditDescriptor = 'RUN MIGRATIONS'
         await queryInterface.sequelize.query(
           `SELECT
             set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // A new table to allow linking directly between Activity Reports and Goals
-      await queryInterface.createTable('ActivityReportGoals', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
+      await queryInterface.createTable(
+        'ActivityReportGoals',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          activityReportId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: { model: { tableName: 'ActivityReports' }, key: 'id' },
+          },
+          goalId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: { model: { tableName: 'Goals' }, key: 'id' },
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
         },
-        activityReportId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: { model: { tableName: 'ActivityReports' }, key: 'id' },
-        },
-        goalId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: { model: { tableName: 'Goals' }, key: 'id' },
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
       // a new table to archive any goals that are not linked to a grant is some manner
-      await queryInterface.createTable('DisconnectedGoals', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
+      await queryInterface.createTable(
+        'DisconnectedGoals',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          name: {
+            allowNull: false,
+            type: Sequelize.TEXT,
+          },
+          status: {
+            type: Sequelize.STRING,
+          },
+          timeframe: {
+            type: Sequelize.STRING,
+          },
+          isFromSmartsheetTtaPlan: {
+            type: Sequelize.BOOLEAN,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          closeSuspendReason: {
+            allowNull: true,
+            type: Sequelize.ENUM([
+              'Duplicate goal',
+              'Recipient request',
+              'TTA complete',
+              'Key staff turnover / vacancies',
+              'Recipient is not responding',
+              'Regional Office request',
+            ]),
+          },
+          closeSuspendContext: {
+            allowNull: true,
+            type: Sequelize.TEXT,
+          },
+          endDate: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+          previousStatus: {
+            type: Sequelize.STRING,
+          },
         },
-        name: {
-          allowNull: false,
-          type: Sequelize.TEXT,
-        },
-        status: {
-          type: Sequelize.STRING,
-        },
-        timeframe: {
-          type: Sequelize.STRING,
-        },
-        isFromSmartsheetTtaPlan: {
-          type: Sequelize.BOOLEAN,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        closeSuspendReason: {
-          allowNull: true,
-          type: Sequelize.ENUM([
-            'Duplicate goal',
-            'Recipient request',
-            'TTA complete',
-            'Key staff turnover / vacancies',
-            'Recipient is not responding',
-            'Regional Office request',
-          ]),
-        },
-        closeSuspendContext: {
-          allowNull: true,
-          type: Sequelize.TEXT,
-        },
-        endDate: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        previousStatus: {
-          type: Sequelize.STRING,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
       // Add GoalTemplates table
-      await queryInterface.createTable('GoalTemplates', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
+      await queryInterface.createTable(
+        'GoalTemplates',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          hash: {
+            allowNull: false,
+            type: Sequelize.TEXT,
+          },
+          templateName: {
+            allowNull: false,
+            type: Sequelize.TEXT,
+          },
+          regionId: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: { model: { tableName: 'Regions' }, key: 'id' },
+          },
+          creationMethod: {
+            allowNull: false,
+            type: Sequelize.ENUM('Automatic', 'Curated'),
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          lastUsed: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+          templateNameModifiedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          // To support up/down on the migration
+          sourceGoals: {
+            allowNull: false,
+            type: Sequelize.ARRAY(Sequelize.INTEGER),
+          },
         },
-        hash: {
-          allowNull: false,
-          type: Sequelize.TEXT,
-        },
-        templateName: {
-          allowNull: false,
-          type: Sequelize.TEXT,
-        },
-        regionId: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: { model: { tableName: 'Regions' }, key: 'id' },
-        },
-        creationMethod: {
-          allowNull: false,
-          type: Sequelize.ENUM(
-            'Automatic',
-            'Curated',
-          ),
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        lastUsed: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        templateNameModifiedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        // To support up/down on the migration
-        sourceGoals: {
-          allowNull: false,
-          type: Sequelize.ARRAY(Sequelize.INTEGER),
-        },
-      }, { transaction });
+        { transaction }
+      )
 
       // Add ObjectiveTemplates table
-      await queryInterface.createTable('ObjectiveTemplates', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
+      await queryInterface.createTable(
+        'ObjectiveTemplates',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          hash: {
+            allowNull: false,
+            type: Sequelize.TEXT,
+          },
+          templateTitle: {
+            allowNull: false,
+            type: Sequelize.TEXT,
+          },
+          regionId: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: { model: { tableName: 'Regions' }, key: 'id' },
+          },
+          creationMethod: {
+            allowNull: false,
+            type: Sequelize.ENUM('Automatic', 'Curated'),
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          lastUsed: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+          templateTitleModifiedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          // To support up/down on the migration
+          sourceObjectives: {
+            allowNull: false,
+            type: Sequelize.ARRAY(Sequelize.INTEGER),
+          },
         },
-        hash: {
-          allowNull: false,
-          type: Sequelize.TEXT,
-        },
-        templateTitle: {
-          allowNull: false,
-          type: Sequelize.TEXT,
-        },
-        regionId: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: { model: { tableName: 'Regions' }, key: 'id' },
-        },
-        creationMethod: {
-          allowNull: false,
-          type: Sequelize.ENUM(
-            'Automatic',
-            'Curated',
-          ),
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        lastUsed: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        templateTitleModifiedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        // To support up/down on the migration
-        sourceObjectives: {
-          allowNull: false,
-          type: Sequelize.ARRAY(Sequelize.INTEGER),
-        },
-      }, { transaction });
+        { transaction }
+      )
 
-      await queryInterface.createTable('ObjectiveTemplateResources', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        userProvidedUrl: {
-          type: Sequelize.STRING,
-          allowNull: false,
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-        },
-        objectiveTemplateId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'ObjectiveTemplates',
-            },
-            key: 'id',
+      await queryInterface.createTable(
+        'ObjectiveTemplateResources',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
+          userProvidedUrl: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+          },
+          objectiveTemplateId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'ObjectiveTemplates',
+              },
+              key: 'id',
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
         },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
-      await queryInterface.createTable('ObjectiveTemplateTopics', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        objectiveTemplateId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'ObjectiveTemplates',
-            },
-            key: 'id',
+      await queryInterface.createTable(
+        'ObjectiveTemplateTopics',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-        },
-        topicId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'Topics',
+          objectiveTemplateId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'ObjectiveTemplates',
+              },
+              key: 'id',
             },
-            key: 'id',
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
+          topicId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Topics',
+              },
+              key: 'id',
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
         },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
       // Add GoalTemplateObjectiveTemplates table
-      await queryInterface.createTable('GoalTemplateObjectiveTemplates', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        goalTemplateId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'GoalTemplates',
+      await queryInterface.createTable(
+        'GoalTemplateObjectiveTemplates',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          goalTemplateId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'GoalTemplates',
+              },
+              key: 'id',
             },
-            key: 'id',
+          },
+          objectiveTemplateId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'ObjectiveTemplates',
+              },
+              key: 'id',
+            },
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
         },
-        objectiveTemplateId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'ObjectiveTemplates',
-            },
-            key: 'id',
-          },
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
-      await queryInterface.createTable('ObjectiveRoles', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        objectiveId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'Objectives',
-            },
-            key: 'id',
+      await queryInterface.createTable(
+        'ObjectiveRoles',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-        },
-        roleId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'Roles',
+          objectiveId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Objectives',
+              },
+              key: 'id',
             },
-            key: 'id',
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
+          roleId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Roles',
+              },
+              key: 'id',
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
         },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
-      await queryInterface.createTable('ObjectiveTemplateRoles', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        objectiveTemplateId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'ObjectiveTemplates',
-            },
-            key: 'id',
+      await queryInterface.createTable(
+        'ObjectiveTemplateRoles',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-        },
-        roleId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'Roles',
+          objectiveTemplateId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'ObjectiveTemplates',
+              },
+              key: 'id',
             },
-            key: 'id',
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
+          roleId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Roles',
+              },
+              key: 'id',
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
         },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
       // -------------------------------------------------------------------------------------------
       // -------------------------------------------------------------------------------------------
@@ -410,11 +440,11 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
       // -------------------------------------------------------------------------------------------
       // -------------------------------------------------------------------------------------------
@@ -425,22 +455,37 @@ module.exports = {
 
       // Clean up Roles table and add isSpecialist, deletedAt, & mapsTo columns
       try {
-        await queryInterface.addColumn('Roles', 'isSpecialist', {
-          type: Sequelize.BOOLEAN,
-          allowNull: true,
-          default: false,
-          onUpdate: 'CASCADE',
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Roles',
+          'isSpecialist',
+          {
+            type: Sequelize.BOOLEAN,
+            allowNull: true,
+            default: false,
+            onUpdate: 'CASCADE',
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Roles', 'deletedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Roles',
+          'deletedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Roles', 'mapsTo', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Roles',
+          'mapsTo',
+          {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
         await queryInterface.sequelize.query(
           `DO $$
@@ -518,11 +563,11 @@ module.exports = {
             ------------------------------------------------------------------------------------
             DROP TABLE "TempRoles";
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // -------------------------------------------------------------------------------------------
@@ -535,35 +580,50 @@ module.exports = {
       // template. Leave goalTemplateId nullable for now until it can be populated with the IDs of
       // the parent templates
       try {
-        await queryInterface.addColumn('Goals', 'goalTemplateId', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: {
-            model: {
-              tableName: 'GoalTemplates',
+        await queryInterface.addColumn(
+          'Goals',
+          'goalTemplateId',
+          {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+              model: {
+                tableName: 'GoalTemplates',
+              },
+              key: 'id',
             },
-            key: 'id',
+            onUpdate: 'CASCADE',
           },
-          onUpdate: 'CASCADE',
-        }, { transaction });
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'grantId', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: {
-            model: {
-              tableName: 'Grants',
+        await queryInterface.addColumn(
+          'Goals',
+          'grantId',
+          {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+              model: {
+                tableName: 'Grants',
+              },
+              key: 'id',
             },
-            key: 'id',
+            onUpdate: 'CASCADE',
           },
-          onUpdate: 'CASCADE',
-        }, { transaction });
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'onApprovedAR', {
-          type: Sequelize.BOOLEAN,
-          default: false,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'onApprovedAR',
+          {
+            type: Sequelize.BOOLEAN,
+            default: false,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
         await queryInterface.sequelize.query(
           `DO $$
@@ -578,46 +638,61 @@ module.exports = {
           SET NOT NULL;
           ------------------------------------------------------------------------------------
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Add the foreign key relation from Objectives table to ObjectiveTemplates for recording the
       // parent template. Leave goalTemplateId nullable for now until it can be populated with the
       // IDs of the parent templates
       try {
-        await queryInterface.addColumn('Objectives', 'objectiveTemplateId', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: {
-            model: {
-              tableName: 'ObjectiveTemplates',
+        await queryInterface.addColumn(
+          'Objectives',
+          'objectiveTemplateId',
+          {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+              model: {
+                tableName: 'ObjectiveTemplates',
+              },
+              key: 'id',
             },
-            key: 'id',
+            onUpdate: 'CASCADE',
           },
-          onUpdate: 'CASCADE',
-        }, { transaction });
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'otherEntityId', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: {
-            model: {
-              tableName: 'OtherEntities',
+        await queryInterface.addColumn(
+          'Objectives',
+          'otherEntityId',
+          {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+              model: {
+                tableName: 'OtherEntities',
+              },
+              key: 'id',
             },
-            key: 'id',
+            onUpdate: 'CASCADE',
           },
-          onUpdate: 'CASCADE',
-        }, { transaction });
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'onApprovedAR', {
-          type: Sequelize.BOOLEAN,
-          allowNull: true,
-          default: false,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Objectives',
+          'onApprovedAR',
+          {
+            type: Sequelize.BOOLEAN,
+            allowNull: true,
+            default: false,
+          },
+          { transaction }
+        )
 
         await queryInterface.sequelize.query(
           `DO $$
@@ -632,16 +707,21 @@ module.exports = {
           SET NOT NULL;
           ------------------------------------------------------------------------------------
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
 
-        await queryInterface.addColumn('ActivityReportObjectives', 'ttaProvided', {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'ActivityReportObjectives',
+          'ttaProvided',
+          {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
       // -------------------------------------------------------------------------------------------
       // -------------------------------------------------------------------------------------------
@@ -708,19 +788,19 @@ module.exports = {
           GROUP BY
               gtart."objectiveId",
               gtart."topicId";`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Drop TopicGoals table & remove topics column from ActivityReports
       try {
-        await queryInterface.dropTable('TopicGoals', { transaction });
+        await queryInterface.dropTable('TopicGoals', { transaction })
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // -------------------------------------------------------------------------------------------
@@ -1674,27 +1754,18 @@ module.exports = {
             DROP TABLE "GrantGoals";
             ------------------------------------------------------------------------------------
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Make goalTemplateId & grantId required
-      await queryInterface.changeColumn(
-        'Goals',
-        'grantId',
-        { type: Sequelize.INTEGER, allowNull: false },
-        { transaction },
-      );
+      await queryInterface.changeColumn('Goals', 'grantId', { type: Sequelize.INTEGER, allowNull: false }, { transaction })
 
       // Remove ttaProvided from Objectives as it now resides on ActivityReportObjectives
-      await queryInterface.removeColumn(
-        'Objectives',
-        'ttaProvided',
-        { transaction },
-      );
+      await queryInterface.removeColumn('Objectives', 'ttaProvided', { transaction })
 
       // Enable logging while doing structural updates
       try {
@@ -1702,160 +1773,176 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
-      await queryInterface.createTable('ActivityReportFiles', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        activityReportId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'ActivityReports',
+      await queryInterface.createTable(
+        'ActivityReportFiles',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          activityReportId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'ActivityReports',
+              },
+              key: 'id',
             },
-            key: 'id',
+          },
+          fileId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'Files',
+              },
+              key: 'id',
+            },
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
         },
-        fileId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'Files',
-            },
-            key: 'id',
-          },
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
-      await queryInterface.createTable('ActivityReportObjectiveFiles', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        activityReportObjectiveId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'ActivityReportObjectives',
+      await queryInterface.createTable(
+        'ActivityReportObjectiveFiles',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          activityReportObjectiveId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'ActivityReportObjectives',
+              },
+              key: 'id',
             },
-            key: 'id',
+          },
+          fileId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'Files',
+              },
+              key: 'id',
+            },
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
         },
-        fileId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'Files',
-            },
-            key: 'id',
-          },
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
-      await queryInterface.createTable('ObjectiveFiles', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        objectiveId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'Objectives',
+      await queryInterface.createTable(
+        'ObjectiveFiles',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          objectiveId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'Objectives',
+              },
+              key: 'id',
             },
-            key: 'id',
+          },
+          fileId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'Files',
+              },
+              key: 'id',
+            },
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
         },
-        fileId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'Files',
-            },
-            key: 'id',
-          },
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
-      await queryInterface.createTable('ObjectiveTemplateFiles', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        objectiveTemplateId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'ObjectiveTemplates',
+      await queryInterface.createTable(
+        'ObjectiveTemplateFiles',
+        {
+          id: {
+            allowNull: false,
+            autoIncrement: true,
+            primaryKey: true,
+            type: Sequelize.INTEGER,
+          },
+          objectiveTemplateId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'ObjectiveTemplates',
+              },
+              key: 'id',
             },
-            key: 'id',
+          },
+          fileId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'Files',
+              },
+              key: 'id',
+            },
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
           },
         },
-        fileId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'Files',
-            },
-            key: 'id',
-          },
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      )
 
       // Disable logging while doing mass updates
       try {
@@ -1863,11 +1950,11 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Realign files to use ActivityReportFiles table
@@ -1891,107 +1978,197 @@ module.exports = {
             ALTER TABLE "Files"
             DROP COLUMN "activityReportId";
           END$$;`,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Add first and last timestamps for each of the statuses after "Not Started"
       try {
-        await queryInterface.addColumn('Goals', 'firstNotStartedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'firstNotStartedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'lastNotStartedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'lastNotStartedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'firstInProgressAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'firstInProgressAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'lastInProgressAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'lastInProgressAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'firstCeasedSuspendedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'firstCeasedSuspendedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'lastCeasedSuspendedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'lastCeasedSuspendedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'firstClosedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'firstClosedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'lastClosedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'lastClosedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'firstCompletedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'firstCompletedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Goals', 'lastCompletedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Goals',
+          'lastCompletedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'firstNotStartedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Objectives',
+          'firstNotStartedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'lastNotStartedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Objectives',
+          'lastNotStartedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'firstInProgressAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Objectives',
+          'firstInProgressAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'lastInProgressAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Objectives',
+          'lastInProgressAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'firstCompleteAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Objectives',
+          'firstCompleteAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'lastCompleteAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Objectives',
+          'lastCompleteAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'firstSuspendedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Objectives',
+          'firstSuspendedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
 
-        await queryInterface.addColumn('Objectives', 'lastSuspendedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
+        await queryInterface.addColumn(
+          'Objectives',
+          'lastSuspendedAt',
+          {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
 
       // Enable logging while doing structural updates
@@ -2000,18 +2177,16 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-          { transaction },
-        );
+          { transaction }
+        )
       } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
+        console.error(err) // eslint-disable-line no-console
+        throw err
       }
-    },
-  ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await queryInterface.dropTable('GoalTemplates', { transaction });
-      await queryInterface.dropTable('ObjectiveTemplates', { transaction });
-    },
-  ),
-};
+    }),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.dropTable('GoalTemplates', { transaction })
+      await queryInterface.dropTable('ObjectiveTemplates', { transaction })
+    }),
+}

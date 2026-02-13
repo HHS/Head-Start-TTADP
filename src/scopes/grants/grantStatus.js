@@ -1,21 +1,21 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op } from 'sequelize'
+import { sequelize } from '../../models'
 
 const grantStatusSql = (grantStatus, notWithin) => {
-  let where = null;
+  let where = null
   if (grantStatus === 'active') {
-    where = `"Grants"."status" = '${notWithin ? 'Inactive' : 'Active'}' AND "Grants"."cdi" = false`;
+    where = `"Grants"."status" = '${notWithin ? 'Inactive' : 'Active'}' AND "Grants"."cdi" = false`
   } else if (grantStatus === 'inactive') {
-    where = `"Grants"."status" = '${notWithin ? 'Active' : 'Inactive'}' AND "Grants"."cdi" = false`;
+    where = `"Grants"."status" = '${notWithin ? 'Active' : 'Inactive'}' AND "Grants"."cdi" = false`
   } else {
-    where = `"Grants"."cdi" = ${notWithin ? 'false' : 'true  AND "Grants"."status" = \'Active\''}`;
+    where = `"Grants"."cdi" = ${notWithin ? 'false' : 'true  AND "Grants"."status" = \'Active\''}`
   }
   return `
     SELECT
     DISTINCT "Grants"."id"
     FROM "Grants" "Grants"
-    WHERE ${where}`;
-};
+    WHERE ${where}`
+}
 
 export function withGrantStatus(cdiStatus) {
   return {
@@ -26,7 +26,7 @@ export function withGrantStatus(cdiStatus) {
         )`),
       },
     },
-  };
+  }
 }
 
 export function withoutGrantStatus(cdiStatus) {
@@ -38,5 +38,5 @@ export function withoutGrantStatus(cdiStatus) {
           )`),
       },
     },
-  };
+  }
 }

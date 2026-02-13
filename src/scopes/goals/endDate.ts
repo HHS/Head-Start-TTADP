@@ -1,10 +1,8 @@
-import { Op, WhereOptions } from 'sequelize';
-import { sequelize } from '../../models';
+import { Op, type WhereOptions } from 'sequelize'
+import { sequelize } from '../../models'
 
 function getDateSql(dates: string[], operator: string) {
-  const dateClause = (operator === 'BETWEEN')
-    ? `${dates[0]} AND ${dates[1]}`
-    : dates[0];
+  const dateClause = operator === 'BETWEEN' ? `${dates[0]} AND ${dates[1]}` : dates[0]
 
   return sequelize.literal(`(
     SELECT DISTINCT "goalId"
@@ -12,7 +10,7 @@ function getDateSql(dates: string[], operator: string) {
     INNER JOIN "ActivityReports"
     ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
     WHERE "ActivityReports"."endDate" ${operator} ${dateClause}
-  )`);
+  )`)
 }
 
 export function beforeEndDate(date: string): WhereOptions {
@@ -20,7 +18,7 @@ export function beforeEndDate(date: string): WhereOptions {
     id: {
       [Op.in]: getDateSql([`'${new Date(date).toISOString()}'`], '<='),
     },
-  };
+  }
 }
 
 export function afterEndDate(date: string): WhereOptions {
@@ -28,16 +26,14 @@ export function afterEndDate(date: string): WhereOptions {
     id: {
       [Op.in]: getDateSql([`'${new Date(date).toISOString()}'`], '>='),
     },
-  };
+  }
 }
 
 export function withinEndDates(dates: string[]): WhereOptions {
-  const escapedDates = dates[0]
-    .split('-')
-    .map((d) => `'${new Date(d).toISOString()}'`);
+  const escapedDates = dates[0].split('-').map((d) => `'${new Date(d).toISOString()}'`)
   return {
     id: {
       [Op.in]: getDateSql(escapedDates, 'BETWEEN'),
     },
-  };
+  }
 }
