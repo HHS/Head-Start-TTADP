@@ -232,11 +232,6 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
   };
 
   const hasMultipleRegions = regions.length > 1;
-  const atStart = activeRegionIndex <= 0;
-  const atEnd = activeRegionIndex >= regions.length - 1;
-
-  const handleNext = () => handleRegionChange(activeRegionIndex + 1);
-  const handlePrevious = () => handleRegionChange(activeRegionIndex - 1);
 
   const subtitle = (
     <div className="margin-bottom-3">
@@ -445,26 +440,6 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
                   widgetRef={widgetRef}
                 />
               </div>
-            )}
-            {hasMultipleRegions && !atStart && (
-              <button
-                type="button"
-                className="approval-rate-carousel-arrow approval-rate-carousel-arrow--left"
-                onClick={handlePrevious}
-                aria-label="Previous region"
-              >
-                <span className="approval-rate-carousel-arrow-icon approval-rate-carousel-arrow-icon--left" />
-              </button>
-            )}
-            {hasMultipleRegions && !atEnd && (
-              <button
-                type="button"
-                className="approval-rate-carousel-arrow approval-rate-carousel-arrow--right"
-                onClick={handleNext}
-                aria-label="Next region"
-              >
-                <span className="approval-rate-carousel-arrow-icon approval-rate-carousel-arrow-icon--right" />
-              </button>
             )}
           </div>
           {hasMultipleRegions && (

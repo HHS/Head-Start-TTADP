@@ -43,17 +43,16 @@ describe('ApprovalRateByDeadlineWidget', () => {
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 
     expect(screen.getByText('Region 1')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /next region/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /previous region/i })).not.toBeInTheDocument();
     expect(document.querySelectorAll('.approval-rate-carousel-dot').length).toBe(2);
+    expect(screen.queryByRole('button', { name: /next region/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /previous region/i })).not.toBeInTheDocument();
   });
 
-  it('advances to the next region when clicking the arrow', () => {
+  it('advances to the next region when clicking a dot', () => {
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    fireEvent.click(screen.getByRole('button', { name: /show region 2/i }));
     expect(screen.getByText('Region 2')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /previous region/i })).toBeInTheDocument();
   });
 
   it('uses a generic legend label', () => {
@@ -68,7 +67,6 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /show region 1/i }));
     expect(screen.getByText('Region 1')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /previous region/i })).not.toBeInTheDocument();
   });
 
   it('switches regions when clicking a dot', () => {
@@ -83,7 +81,7 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    fireEvent.click(screen.getByRole('button', { name: /show region 2/i }));
     const frame = document.querySelector('.approval-rate-carousel-frame');
     expect(frame.className).not.toMatch(/is-animating/);
 
@@ -99,7 +97,7 @@ describe('ApprovalRateByDeadlineWidget', () => {
   it('handles transitions when a falsy region id is present', () => {
     render(<ApprovalRateByDeadlineWidget data={buildData([0, 2])} loading={false} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    fireEvent.click(screen.getByRole('button', { name: /show region 2/i }));
     expect(screen.getByText('Region 2')).toBeInTheDocument();
   });
 
@@ -124,7 +122,7 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    fireEvent.click(screen.getByRole('button', { name: /show region 2/i }));
     expect(screen.getByText('Region 2')).toBeInTheDocument();
   });
 
