@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { auditLogger, logger } from '../logger';
 import { EMAIL_ACTIONS, FILE_STATUSES } from '../constants';
+import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import { getRedis } from '../lib/redisClient';
 import {
@@ -16,19 +17,26 @@ import { createSession } from '../services/sessionReports';
 import { createFileMetaData, updateStatus } from '../services/files';
 import addToScanQueue from '../services/scanQueue';
 import { notificationQueue } from '../lib/mailer';
+import { userById } from '../services/users';
 
 const {
   sequelize,
   User,
+  Permission,
   Resource,
   File,
 } = db as any;
 
 const DEFAULT_TIMEOUT_SEC = 300;
 const DEFAULT_POLL_MS = 5000;
-const DEFAULT_REGION = 1;
+const DEFAULT_REGION = 0;
 const DEFAULT_RESOURCE_URL = 'https://headstart.gov/';
 const NOTIFICATION_JOB_STATES = ['waiting', 'active', 'delayed', 'completed', 'failed'] as const;
+const TRAINING_REPORT_SELECTION_SCOPES = [
+  SCOPES.READ_WRITE_TRAINING_REPORTS,
+  SCOPES.POC_TRAINING_REPORTS,
+];
+const NO_SEND_EMAIL_PREFIX = 'no-send_';
 
 export type QueueExerciseLiveOptions = {
   region?: number;
@@ -100,6 +108,7 @@ type QueueExerciseDeps = {
   getRedis: typeof getRedis;
   generateS3Config: typeof generateS3Config;
   User: any;
+  Permission: any;
   Resource: any;
   File: any;
   createEvent: typeof createEvent;
@@ -113,6 +122,7 @@ type QueueExerciseDeps = {
   downloadFile: typeof downloadFile;
   deleteFileFromS3: typeof deleteFileFromS3;
   notificationQueue: typeof notificationQueue;
+  userById: typeof userById;
 };
 
 const defaultDeps: QueueExerciseDeps = {
@@ -120,6 +130,7 @@ const defaultDeps: QueueExerciseDeps = {
   getRedis,
   generateS3Config,
   User,
+  Permission,
   Resource,
   File,
   createEvent,
@@ -133,6 +144,7 @@ const defaultDeps: QueueExerciseDeps = {
   downloadFile,
   deleteFileFromS3,
   notificationQueue,
+  userById,
 };
 
 const withDefaults = (
@@ -223,11 +235,159 @@ const ensureCleanupFileDeletion = async (
   }
 };
 
+const toNumericId = (value: unknown): number | null => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return null;
+  }
+  return parsed;
+};
+
+const hasSendableEmail = (email: unknown): boolean => (
+  typeof email === 'string'
+  && email.length > 0
+  && !email.startsWith(NO_SEND_EMAIL_PREFIX)
+);
+
+const selectQueueExerciseActors = async (
+  deps: QueueExerciseDeps,
+  requestedRegionId: number,
+  requestedOwnerUserId: number,
+  requestedCollaboratorUserId: number,
+) => {
+  const rawPermissions = await deps.Permission.findAll({
+    attributes: ['userId', 'scopeId', 'regionId'],
+    where: {
+      [Op.or]: [
+        { scopeId: SCOPES.SITE_ACCESS },
+        { scopeId: { [Op.in]: TRAINING_REPORT_SELECTION_SCOPES } },
+      ],
+    },
+    raw: true,
+  });
+
+  const allUserIds = new Set<number>();
+  (rawPermissions || []).forEach((permission) => {
+    const userId = toNumericId(permission.userId);
+    if (userId) {
+      allUserIds.add(userId);
+    }
+  });
+
+  const rawUsers = allUserIds.size > 0
+    ? await deps.User.findAll({
+      attributes: ['id', 'email'],
+      where: {
+        id: {
+          [Op.in]: Array.from(allUserIds),
+        },
+      },
+      order: [['id', 'ASC']],
+      raw: true,
+    })
+    : [];
+
+  const sendableUserIds = new Set<number>();
+  (rawUsers || []).forEach((user) => {
+    const userId = toNumericId(user.id);
+    if (userId && hasSendableEmail(user.email)) {
+      sendableUserIds.add(userId);
+    }
+  });
+
+  const siteAccessUserIds = new Set<number>();
+  const eligibleUserIdsByRegion = new Map<number, Set<number>>();
+
+  (rawPermissions || []).forEach((permission) => {
+    const userId = toNumericId(permission.userId);
+    const scopeId = toNumericId(permission.scopeId);
+    const regionId = toNumericId(permission.regionId);
+    if (!userId || !scopeId || !sendableUserIds.has(userId)) {
+      return;
+    }
+
+    if (scopeId === SCOPES.SITE_ACCESS) {
+      siteAccessUserIds.add(userId);
+      return;
+    }
+
+    if (TRAINING_REPORT_SELECTION_SCOPES.includes(scopeId) && regionId) {
+      if (!eligibleUserIdsByRegion.has(regionId)) {
+        eligibleUserIdsByRegion.set(regionId, new Set<number>());
+      }
+      eligibleUserIdsByRegion.get(regionId)?.add(userId);
+    }
+  });
+
+  const regionCandidates = Array.from(eligibleUserIdsByRegion.entries())
+    .map(([regionId, userIds]) => ({
+      regionId,
+      userIds: Array.from(userIds)
+        .filter((userId) => siteAccessUserIds.has(userId))
+        .sort((a, b) => a - b),
+    }))
+    .filter(({ userIds }) => userIds.length > 0)
+    .sort((a, b) => a.regionId - b.regionId);
+
+  let selectedRegionId = requestedRegionId;
+  if (!selectedRegionId) {
+    const regionCandidate = regionCandidates.find(({ userIds }) => {
+      if (requestedOwnerUserId && !userIds.includes(requestedOwnerUserId)) {
+        return false;
+      }
+      if (requestedCollaboratorUserId && !userIds.includes(requestedCollaboratorUserId)) {
+        return false;
+      }
+
+      const ids = new Set<number>(userIds);
+      if (requestedOwnerUserId) {
+        ids.add(requestedOwnerUserId);
+      }
+      if (requestedCollaboratorUserId) {
+        ids.add(requestedCollaboratorUserId);
+      }
+      return ids.size >= 2;
+    });
+    selectedRegionId = regionCandidate?.regionId || 0;
+  }
+
+  const selectedRegionUsers = (
+    regionCandidates.find(({ regionId }) => regionId === selectedRegionId)?.userIds || []
+  );
+
+  let selectedOwnerUserId = requestedOwnerUserId;
+  if (!selectedOwnerUserId || !selectedRegionUsers.includes(selectedOwnerUserId)) {
+    selectedOwnerUserId = selectedRegionUsers[0] || 0;
+  }
+
+  let selectedCollaboratorUserId = requestedCollaboratorUserId;
+  if (
+    !selectedCollaboratorUserId
+    || selectedCollaboratorUserId === selectedOwnerUserId
+    || !selectedRegionUsers.includes(selectedCollaboratorUserId)
+  ) {
+    selectedCollaboratorUserId = selectedRegionUsers.find((id) => id !== selectedOwnerUserId) || 0;
+  }
+
+  return {
+    selectedRegionId,
+    selectedOwnerUserId,
+    selectedCollaboratorUserId,
+    regionCandidates,
+  };
+};
+
 export async function runQueueExerciseLive(
   inputOptions: QueueExerciseLiveOptions = {},
   depsOverride: Partial<QueueExerciseDeps> = {},
 ): Promise<QueueExerciseSummary> {
   const options = withDefaults(inputOptions);
+  const regionWasExplicit = typeof inputOptions.region === 'number' && inputOptions.region > 0;
+  const ownerWasExplicit = typeof inputOptions.ownerUserId === 'number' && inputOptions.ownerUserId > 0;
+  const collaboratorWasExplicit = (
+    typeof inputOptions.collaboratorUserId === 'number'
+    && inputOptions.collaboratorUserId > 0
+  );
   const deps = { ...defaultDeps, ...depsOverride };
   const runId = buildRunId();
   const startedAt = new Date().toISOString();
@@ -317,11 +477,92 @@ export async function runQueueExerciseLive(
       return summary;
     }
 
-    if (!options.ownerUserId) {
+    const notificationsDisabledByCI = (
+      String(process.env.CI || '').toLowerCase() === 'true'
+      && process.env.NODE_ENV !== 'test'
+    );
+    if (notificationsDisabledByCI) {
       summary.preflight.passed = false;
-      summary.preflight.error = 'ownerUserId is required (or CURRENT_USER_ID must be set)';
+      summary.preflight.error = 'CI=true disables training report notifications';
       return summary;
     }
+
+    const selectedActors = await selectQueueExerciseActors(
+      deps,
+      options.region,
+      ownerWasExplicit ? options.ownerUserId : 0,
+      collaboratorWasExplicit ? options.collaboratorUserId : 0,
+    );
+
+    const {
+      selectedRegionId,
+      selectedOwnerUserId,
+      selectedCollaboratorUserId,
+      regionCandidates,
+    } = selectedActors;
+
+    if (!selectedRegionId) {
+      summary.preflight.passed = false;
+      summary.preflight.error = 'Unable to resolve a region with users eligible for training report queue exercise';
+      return summary;
+    }
+
+    if (
+      regionWasExplicit
+      && !regionCandidates.some(({ regionId }) => regionId === selectedRegionId)
+    ) {
+      summary.preflight.passed = false;
+      summary.preflight.error = `region ${options.region} does not have users with SITE_ACCESS and training report permissions`;
+      return summary;
+    }
+
+    if (ownerWasExplicit && selectedOwnerUserId !== options.ownerUserId) {
+      summary.preflight.passed = false;
+      summary.preflight.error = `ownerUserId ${options.ownerUserId} is not eligible in region ${selectedRegionId}`;
+      return summary;
+    }
+
+    if (!selectedOwnerUserId) {
+      summary.preflight.passed = false;
+      summary.preflight.error = 'Unable to resolve an owner user for notification flows';
+      return summary;
+    }
+
+    if (collaboratorWasExplicit && selectedCollaboratorUserId !== options.collaboratorUserId) {
+      summary.preflight.passed = false;
+      summary.preflight.error = `collaboratorUserId ${options.collaboratorUserId} is not eligible in region ${selectedRegionId}`;
+      return summary;
+    }
+
+    if (!selectedCollaboratorUserId || selectedCollaboratorUserId === selectedOwnerUserId) {
+      summary.preflight.passed = false;
+      summary.preflight.error = 'Unable to resolve a collaborator user for notification flows';
+      return summary;
+    }
+
+    options.region = selectedRegionId;
+    options.ownerUserId = selectedOwnerUserId;
+    options.collaboratorUserId = selectedCollaboratorUserId;
+    summary.options.region = selectedRegionId;
+    summary.options.ownerUserId = selectedOwnerUserId;
+    summary.options.collaboratorUserId = selectedCollaboratorUserId;
+
+    preflightChecks.selection = {
+      requested: {
+        region: regionWasExplicit ? inputOptions.region : null,
+        ownerUserId: ownerWasExplicit ? inputOptions.ownerUserId : null,
+        collaboratorUserId: collaboratorWasExplicit ? inputOptions.collaboratorUserId : null,
+      },
+      selected: {
+        region: selectedRegionId,
+        ownerUserId: selectedOwnerUserId,
+        collaboratorUserId: selectedCollaboratorUserId,
+      },
+    };
+
+    logger.info(
+      `[queue-exercise] Selected region ${selectedRegionId}, owner ${selectedOwnerUserId}, collaborator ${selectedCollaboratorUserId}`,
+    );
 
     const owner = await deps.User.findByPk(options.ownerUserId, { attributes: ['id'] });
     if (!owner) {
@@ -330,21 +571,19 @@ export async function runQueueExerciseLive(
       return summary;
     }
 
-    let { collaboratorUserId } = options;
-    if (!collaboratorUserId) {
-      const collaborator = await deps.User.findOne({
-        where: {
-          id: { [Op.ne]: options.ownerUserId },
-        },
-        attributes: ['id'],
-        order: [['id', 'ASC']],
-      });
-      collaboratorUserId = collaborator?.id || 0;
+    const ownerForNotifications = await deps.userById(options.ownerUserId, true);
+    if (!ownerForNotifications) {
+      summary.preflight.passed = false;
+      summary.preflight.error = `ownerUserId ${options.ownerUserId} is not notification-eligible (missing SITE_ACCESS)`;
+      return summary;
     }
 
-    if (!collaboratorUserId) {
+    const { collaboratorUserId } = options;
+
+    const collaboratorForNotifications = await deps.userById(collaboratorUserId, true);
+    if (!collaboratorForNotifications) {
       summary.preflight.passed = false;
-      summary.preflight.error = 'Unable to resolve a collaborator user for notification flows';
+      summary.preflight.error = `collaboratorUserId ${collaboratorUserId} is not notification-eligible (missing SITE_ACCESS)`;
       return summary;
     }
 

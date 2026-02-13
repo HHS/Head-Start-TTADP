@@ -1,6 +1,9 @@
 import { EMAIL_ACTIONS, FILE_STATUSES } from '../constants';
 import { runQueueExerciseLive } from './queueExerciseLive';
 
+const SITE_ACCESS = 1;
+const READ_WRITE_TRAINING_REPORTS = 7;
+
 const expectedNotificationActions = [
   EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
   EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
@@ -21,6 +24,9 @@ const buildNotificationJobs = (displayId, actions = expectedNotificationActions)
 
 const makeDeps = ({
   notificationActions = expectedNotificationActions,
+  notificationEligibleUserIds = [1001, 1002],
+  selectionEligibleUserIds = [1001, 1002],
+  selectionRegionId = 1,
   resourceFindByPk = async () => ({
     title: 'Queue Exercise Resource',
     mimeType: 'text/html',
@@ -34,6 +40,10 @@ const makeDeps = ({
   resourceDestroy = async () => {},
 } = {}) => {
   let eventDisplayId = 'QE-R01-UNKNOWN';
+  const selectionPermissionRows = selectionEligibleUserIds.flatMap((id) => ([
+    { userId: id, scopeId: SITE_ACCESS, regionId: 14 },
+    { userId: id, scopeId: READ_WRITE_TRAINING_REPORTS, regionId: selectionRegionId },
+  ]));
 
   const deps = {
     sequelize: {
@@ -43,9 +53,22 @@ const makeDeps = ({
       ping: jest.fn().mockResolvedValue('PONG'),
     })),
     generateS3Config: jest.fn(() => ({ s3Bucket: 'queue-exercise-test-bucket' })),
+    userById: jest.fn(async (userId, onlyActiveUsers = false) => {
+      if (!onlyActiveUsers) {
+        return { id: userId };
+      }
+      return notificationEligibleUserIds.includes(userId)
+        ? { id: userId, email: `user${userId}@example.com` }
+        : null;
+    }),
+    Permission: {
+      findAll: jest.fn().mockResolvedValue(selectionPermissionRows),
+    },
     User: {
       findByPk: jest.fn().mockResolvedValue({ id: 1001 }),
-      findOne: jest.fn().mockResolvedValue({ id: 1002 }),
+      findAll: jest.fn().mockResolvedValue(
+        selectionEligibleUserIds.map((id) => ({ id, email: `user${id}@example.com` })),
+      ),
     },
     Resource: {
       create: jest.fn().mockResolvedValue({ id: 2001 }),
@@ -82,6 +105,20 @@ const makeDeps = ({
 };
 
 describe('queueExerciseLive', () => {
+  it('auto-selects region and actors when omitted', async () => {
+    const deps = makeDeps();
+    const result = await runQueueExerciseLive({
+      timeoutSec: 1,
+      pollMs: 1,
+    }, deps);
+
+    expect(result.preflight.passed).toBe(true);
+    expect(result.options.region).toBe(1);
+    expect(result.options.ownerUserId).toBe(1001);
+    expect(result.options.collaboratorUserId).toBe(1002);
+    expect(result.passed).toBe(true);
+  });
+
   it('returns a passing summary when all flows complete', async () => {
     const deps = makeDeps();
     const result = await runQueueExerciseLive({
@@ -114,6 +151,23 @@ describe('queueExerciseLive', () => {
     expect(result.flows.notifications.passed).toBe(false);
     expect(result.flows.notifications.error).toContain('Timed out');
     expect(result.passed).toBe(false);
+  });
+
+  it('fails preflight when collaborator is not notification-eligible', async () => {
+    const deps = makeDeps({
+      notificationEligibleUserIds: [1001],
+      selectionEligibleUserIds: [1001, 1002],
+    });
+
+    const result = await runQueueExerciseLive({
+      region: 1,
+      ownerUserId: 1001,
+      timeoutSec: 1,
+      pollMs: 1,
+    }, deps);
+
+    expect(result.preflight.passed).toBe(false);
+    expect(result.preflight.error).toContain('collaboratorUserId 1002 is not notification-eligible');
   });
 
   it('fails resource flow when metadata state never updates', async () => {

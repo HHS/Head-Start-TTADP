@@ -6,18 +6,17 @@ import { auditLogger } from '../logger';
 const argv = yargs(hideBin(process.argv))
   .option('region', {
     alias: 'r',
-    description: 'Target region ID for generated test entities',
+    description: 'Target region ID for generated test entities (auto-selected if omitted)',
     type: 'number',
-    demandOption: true,
   })
   .option('ownerUserId', {
     alias: 'o',
-    description: 'Owner user ID (defaults to CURRENT_USER_ID if omitted)',
+    description: 'Owner user ID (auto-selected from eligible users if omitted)',
     type: 'number',
   })
   .option('collaboratorUserId', {
     alias: 'c',
-    description: 'Collaborator user ID to trigger collaborator notification flow',
+    description: 'Collaborator user ID to trigger collaborator notification flow (auto-selected if omitted)',
     type: 'number',
   })
   .option('resourceUrl', {
