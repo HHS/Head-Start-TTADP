@@ -29,10 +29,15 @@ const redisSnapshot = ({
   clientListCount,
 });
 
-const buildNotificationJobs = (displayId, actions = expectedNotificationActions) => (
+const buildNotificationJobs = (
+  displayId,
+  actions = expectedNotificationActions,
+  failedReasonsByAction = {},
+) => (
   actions.map((name, index) => ({
     id: index + 1,
     name,
+    failedReason: failedReasonsByAction[name],
     data: {
       displayId,
       reportPath: `/training-report/${displayId}`,
@@ -42,10 +47,13 @@ const buildNotificationJobs = (displayId, actions = expectedNotificationActions)
 
 const makeDeps = ({
   notificationActions = expectedNotificationActions,
+  notificationFailedActions = [],
+  notificationFailedReasonsByAction = {},
   notificationEligibleUserIds = [1001, 1002],
   selectionEligibleUserIds = [1001, 1002],
   selectionRegionId = 1,
   soakJobState = 'completed',
+  soakFailedReasons = ['SOAK_FAILED'],
   redisSnapshots = [redisSnapshot(), redisSnapshot()],
   resourceFindByPk = async () => ({
     title: 'Queue Exercise Resource',
@@ -62,6 +70,7 @@ const makeDeps = ({
   let eventDisplayId = 'QE-R01-UNKNOWN';
   let redisPhase = 0;
   const soakJobs = new Map();
+  let removedSoakJobsCount = 0;
   const selectionPermissionRows = selectionEligibleUserIds.flatMap((id) => ([
     { userId: id, scopeId: SITE_ACCESS, regionId: 14 },
     { userId: id, scopeId: READ_WRITE_TRAINING_REPORTS, regionId: selectionRegionId },
@@ -159,12 +168,15 @@ const makeDeps = ({
       add: jest.fn(async (name, data, jobOpts = {}) => {
         if (String(jobOpts.jobId || '').startsWith('qe-soak-')) {
           const id = String(jobOpts.jobId);
+          const nextFailedReason = soakFailedReasons[soakJobs.size % soakFailedReasons.length];
           const soakJob = {
             id,
             name,
             data,
             state: soakJobState,
+            failedReason: soakJobState === 'failed' ? nextFailedReason : undefined,
             remove: jest.fn(async () => {
+              removedSoakJobsCount += 1;
               soakJobs.delete(id);
             }),
           };
@@ -192,9 +204,20 @@ const makeDeps = ({
           ...(state === 'completed'
             ? buildNotificationJobs(eventDisplayId, notificationActions)
             : []),
+          ...(state === 'failed'
+            ? buildNotificationJobs(
+              eventDisplayId,
+              notificationFailedActions,
+              notificationFailedReasonsByAction,
+            )
+            : []),
           ...Array.from(soakJobs.values()).filter((job) => job.state === state),
         ]
       )),
+    },
+    debug: {
+      getRemovedSoakJobsCount: () => removedSoakJobsCount,
+      getCurrentSoakJobCount: () => soakJobs.size,
     },
   };
 
@@ -249,6 +272,8 @@ describe('queueExerciseLive', () => {
     expect(result.flows.soak.enqueuedActions).toBe(25);
     expect(result.flows.soak.completedActions).toBe(25);
     expect(result.flows.soak.failedActions).toBe(0);
+    expect(result.flows.soak.progressTimeline.length).toBeGreaterThan(0);
+    expect(result.flows.soak.removedJobCount).toBe(25);
     expect(result.flows.soak.passed).toBe(true);
     expect(result.passed).toBe(true);
   });
@@ -256,6 +281,7 @@ describe('queueExerciseLive', () => {
   it('fails soak flow when soak jobs fail', async () => {
     const deps = makeDeps({
       soakJobState: 'failed',
+      soakFailedReasons: ['SMTP timeout', 'SMTP timeout', 'Template missing'],
     });
     const result = await runQueueExerciseLive({
       region: 1,
@@ -267,6 +293,21 @@ describe('queueExerciseLive', () => {
 
     expect(result.flows.soak.enabled).toBe(true);
     expect(result.flows.soak.failedActions).toBe(10);
+    expect(result.flows.soak.failedReasonCounts[0]).toEqual({
+      reason: 'SMTP timeout',
+      count: 7,
+    });
+    expect(result.flows.soak.failedReasonCounts[1]).toEqual({
+      reason: 'Template missing',
+      count: 3,
+    });
+    expect(result.flows.soak.failedReasonCountsByAction[0]).toEqual({
+      action: EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
+      reason: 'SMTP timeout',
+      count: 7,
+    });
+    expect(result.flows.soak.failedJobSamples.length).toBeGreaterThan(0);
+    expect(result.flows.soak.failedJobSamples[0].reason).toBeTruthy();
     expect(result.flows.soak.passed).toBe(false);
     expect(result.passed).toBe(false);
   });
@@ -316,6 +357,57 @@ describe('queueExerciseLive', () => {
     expect(result.flows.notifications.passed).toBe(false);
     expect(result.flows.notifications.error).toContain('Timed out');
     expect(result.passed).toBe(false);
+  });
+
+  it('fails notification flow when expected action reaches terminal failed state', async () => {
+    const deps = makeDeps({
+      notificationActions: [
+        EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
+        EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
+        EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+      ],
+      notificationFailedActions: [EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED],
+      notificationFailedReasonsByAction: {
+        [EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED]: 'SMTP timeout',
+      },
+    });
+    const result = await runQueueExerciseLive({
+      region: 1,
+      ownerUserId: 1001,
+      timeoutSec: 1,
+      pollMs: 1,
+    }, deps);
+
+    expect(result.flows.notifications.passed).toBe(false);
+    expect(result.flows.notifications.error).toContain('failed=[trainingReportSessionCreated:SMTP timeout]');
+    expect(result.flows.notifications.failedReasonCounts).toEqual([
+      { reason: 'SMTP timeout', count: 1 },
+    ]);
+    expect(result.flows.notifications.terminalActionStates).toContainEqual({
+      action: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+      state: 'failed',
+      failedReason: 'SMTP timeout',
+      jobId: '1',
+    });
+  });
+
+  it('retains soak jobs when keepSoakJobs is enabled', async () => {
+    const deps = makeDeps();
+    const result = await runQueueExerciseLive({
+      region: 1,
+      ownerUserId: 1001,
+      soak: 8,
+      keepSoakJobs: true,
+      timeoutSec: 1,
+      pollMs: 1,
+    }, deps);
+
+    expect(result.flows.soak.passed).toBe(true);
+    expect(result.flows.soak.retainedJobs).toBe(true);
+    expect(result.flows.soak.removedJobCount).toBe(0);
+    expect(result.flows.soak.warnings).toContain('Retained soak jobs for postmortem analysis');
+    expect(deps.debug.getRemovedSoakJobsCount()).toBe(0);
+    expect(deps.debug.getCurrentSoakJobCount()).toBe(8);
   });
 
   it('fails preflight when collaborator is not notification-eligible', async () => {

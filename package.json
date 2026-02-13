@@ -113,7 +113,7 @@
     "createMonitoringGoalsCLI:local": "tsx ./src/tools/createMonitoringGoalsCLI.js",
     "cli:dbMaintenance": "node ./build/server/src/tools/dbMaintenanceCLI.js",
     "cli:queue-exercise:live": "node ./build/server/src/tools/queueExerciseLiveCLI.js",
-    "cli:queue-exercise:live:local": "tsx ./src/tools/queueExerciseLiveCLI.ts"
+    "cli:queue-exercise:local": "tsx ./src/tools/queueExerciseLiveCLI.ts"
   },
   "repository": {
     "type": "git",

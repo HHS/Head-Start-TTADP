@@ -43,6 +43,11 @@ const argv = yargs(rawArgs)
     type: 'boolean',
     default: false,
   })
+  .option('keepSoakJobs', {
+    description: 'Retain soak queue jobs for postmortem analysis',
+    type: 'boolean',
+    default: false,
+  })
   .option('json', {
     alias: 'j',
     description: 'Output JSON summary',
@@ -108,6 +113,7 @@ runQueueExerciseLive({
   timeoutSec: argv.timeoutSec,
   pollMs: argv.pollMs,
   keepData: argv.keepData,
+  keepSoakJobs: argv.keepSoakJobs,
   soak: soakCount,
 })
   .then((summary) => {

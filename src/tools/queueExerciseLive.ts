@@ -38,6 +38,9 @@ const SOAK_BATCH_SIZE = 100;
 const SOAK_CLIENT_DELTA_LIMIT = 3;
 const SOAK_MIN_MEMORY_DELTA_BYTES = 64 * 1024 * 1024;
 const SOAK_MEMORY_PERCENT_DELTA_LIMIT = 0.25;
+const SOAK_TIMELINE_MAX_POINTS = 120;
+const SOAK_FAILED_SAMPLE_LIMIT = 10;
+const REQUEST_FAILURE_PATTERN = /(RequestError|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|socket hang up)/i;
 const TRAINING_REPORT_SELECTION_SCOPES = [
   SCOPES.READ_WRITE_TRAINING_REPORTS,
   SCOPES.POC_TRAINING_REPORTS,
@@ -52,6 +55,7 @@ export type QueueExerciseLiveOptions = {
   timeoutSec?: number;
   pollMs?: number;
   keepData?: boolean;
+  keepSoakJobs?: boolean;
   soak?: number;
 };
 
@@ -100,6 +104,18 @@ type QueueExerciseSummary = {
       passed: boolean;
       expectedActions: string[];
       observedActions: string[];
+      completedActions: string[];
+      failedActions: string[];
+      terminalActionStates: Array<{
+        action: string;
+        state: 'completed' | 'failed' | 'missing';
+        failedReason?: string;
+        jobId?: string;
+      }>;
+      failedReasonCounts: Array<{
+        reason: string;
+        count: number;
+      }>;
       queueStateCounts: Record<string, number>;
       error?: string;
     };
@@ -125,6 +141,30 @@ type QueueExerciseSummary = {
       enqueuedActions: number;
       completedActions: number;
       failedActions: number;
+      failedReasonCounts: Array<{
+        reason: string;
+        count: number;
+      }>;
+      failedReasonCountsByAction: Array<{
+        action: string;
+        reason: string;
+        count: number;
+      }>;
+      failedJobSamples: Array<{
+        id: string;
+        action: string;
+        reason: string;
+        attemptsMade?: number;
+      }>;
+      progressTimeline: Array<{
+        elapsedMs: number;
+        waiting: number;
+        active: number;
+        delayed: number;
+        completed: number;
+        failed: number;
+        paused: number;
+      }>;
       durationMs: number;
       queueCountsBefore: Record<string, number>;
       queueCountsAfter: Record<string, number>;
@@ -132,6 +172,8 @@ type QueueExerciseSummary = {
       redisAfter?: RedisDiagnostics;
       thresholds: Record<string, unknown>;
       warnings: string[];
+      retainedJobs: boolean;
+      removedJobCount: number;
       error?: string;
     };
   };
@@ -196,6 +238,7 @@ const withDefaults = (
   timeoutSec: options.timeoutSec || DEFAULT_TIMEOUT_SEC,
   pollMs: options.pollMs || DEFAULT_POLL_MS,
   keepData: !!options.keepData,
+  keepSoakJobs: !!options.keepSoakJobs,
   soak: options.soak || 0,
 });
 
@@ -515,6 +558,52 @@ const removeSoakJobs = async (queue: any, runId: string, rangeEnd: number): Prom
   return jobs.length;
 };
 
+const aggregateFailedReasons = (jobs: any[]) => {
+  const counts = jobs.reduce((acc, job) => {
+    const reason = String(job?.failedReason || '').trim() || 'Unknown failure';
+    return {
+      ...acc,
+      [reason]: Number(acc[reason] || 0) + 1,
+    };
+  }, {} as Record<string, number>);
+
+  return Object.keys(counts)
+    .map((reason) => ({ reason, count: counts[reason] }))
+    .sort((a, b) => b.count - a.count);
+};
+
+const aggregateFailedReasonsByAction = (jobs: any[]) => {
+  const counts = jobs.reduce((acc, job) => {
+    const action = String(job?.name || 'unknownAction');
+    const reason = String(job?.failedReason || '').trim() || 'Unknown failure';
+    const key = `${action}@@${reason}`;
+    return {
+      ...acc,
+      [key]: Number(acc[key] || 0) + 1,
+    };
+  }, {} as Record<string, number>);
+
+  return Object.keys(counts)
+    .map((key) => {
+      const [action, reason] = key.split('@@');
+      return {
+        action,
+        reason,
+        count: counts[key],
+      };
+    })
+    .sort((a, b) => b.count - a.count);
+};
+
+const buildFailedJobSamples = (jobs: any[], limit: number) => jobs
+  .slice(0, limit)
+  .map((job) => ({
+    id: String(job?.id || ''),
+    action: String(job?.name || 'unknownAction'),
+    reason: String(job?.failedReason || '').trim() || 'Unknown failure',
+    attemptsMade: Number.isFinite(Number(job?.attemptsMade)) ? Number(job.attemptsMade) : undefined,
+  }));
+
 export async function runQueueExerciseLive(
   inputOptions: QueueExerciseLiveOptions = {},
   depsOverride: Partial<QueueExerciseDeps> = {},
@@ -551,6 +640,10 @@ export async function runQueueExerciseLive(
           EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
         ],
         observedActions: [],
+        completedActions: [],
+        failedActions: [],
+        terminalActionStates: [],
+        failedReasonCounts: [],
         queueStateCounts: {},
       },
       resource: {
@@ -569,11 +662,17 @@ export async function runQueueExerciseLive(
         enqueuedActions: 0,
         completedActions: 0,
         failedActions: 0,
+        failedReasonCounts: [],
+        failedReasonCountsByAction: [],
+        failedJobSamples: [],
+        progressTimeline: [],
         durationMs: 0,
         queueCountsBefore: {},
         queueCountsAfter: {},
         thresholds: {},
         warnings: [],
+        retainedJobs: false,
+        removedJobCount: 0,
       },
     },
     cleanup: {
@@ -798,21 +897,54 @@ export async function runQueueExerciseLive(
 
       const notificationCheck = await waitForCondition(async () => {
         const observedActions = new Set<string>();
+        const completedActions = new Set<string>();
+        const failedActions = new Set<string>();
+        const terminalActions = new Set<string>();
+        const failedJobs: any[] = [];
+        const completedActionMeta: Record<string, { jobId: string }> = {};
+        const failedActionMeta: Record<string, { jobId: string; failedReason: string }> = {};
         const stateCounts: Record<string, number> = {};
 
         await Promise.all(NOTIFICATION_JOB_STATES.map(async (state) => {
           const jobs = await deps.notificationQueue.getJobs([state], 0, 200, false);
           const matching = jobs.filter((job) => jobMatchesRun(job, eventDisplayId, runId));
           stateCounts[state] = matching.length;
-          matching.forEach((job) => observedActions.add(job.name));
+          matching.forEach((job) => {
+            observedActions.add(job.name);
+            if (state === 'completed') {
+              completedActions.add(job.name);
+              terminalActions.add(job.name);
+              if (!completedActionMeta[job.name]) {
+                completedActionMeta[job.name] = {
+                  jobId: String(job?.id || ''),
+                };
+              }
+            }
+            if (state === 'failed') {
+              failedActions.add(job.name);
+              terminalActions.add(job.name);
+              failedJobs.push(job);
+              if (!failedActionMeta[job.name]) {
+                failedActionMeta[job.name] = {
+                  jobId: String(job?.id || ''),
+                  failedReason: String(job?.failedReason || '').trim() || 'Unknown failure',
+                };
+              }
+            }
+          });
         }));
 
         return {
           ok: summary.flows.notifications.expectedActions
-            .every((action) => observedActions.has(action)),
+            .every((action) => terminalActions.has(action)),
           details: {
             observedActions: Array.from(observedActions),
+            completedActions: Array.from(completedActions),
+            failedActions: Array.from(failedActions),
             queueStateCounts: stateCounts,
+            completedActionMeta,
+            failedActionMeta,
+            failedReasonCounts: aggregateFailedReasons(failedJobs),
           },
         };
       }, options.timeoutSec, options.pollMs);
@@ -820,12 +952,78 @@ export async function runQueueExerciseLive(
       summary.flows.notifications.observedActions = (
         (notificationCheck.details?.observedActions as string[]) || []
       );
+      summary.flows.notifications.completedActions = (
+        (notificationCheck.details?.completedActions as string[]) || []
+      );
+      summary.flows.notifications.failedActions = (
+        (notificationCheck.details?.failedActions as string[]) || []
+      );
       summary.flows.notifications.queueStateCounts = (
         (notificationCheck.details?.queueStateCounts as Record<string, number>) || {}
       );
-      summary.flows.notifications.passed = notificationCheck.ok;
+      const failedReasonCountsRaw = notificationCheck.details?.failedReasonCounts;
+      summary.flows.notifications.failedReasonCounts = Array.isArray(failedReasonCountsRaw)
+        ? failedReasonCountsRaw.map((row: any) => ({
+          reason: String(row?.reason || 'Unknown failure'),
+          count: Number(row?.count || 0),
+        }))
+        : [];
+      const completedActionMeta = (
+        (notificationCheck.details?.completedActionMeta as Record<string, { jobId: string }>) || {}
+      );
+      const failedActionMetaDetails = notificationCheck.details?.failedActionMeta;
+      const failedActionMeta = (
+        failedActionMetaDetails || {}
+      ) as Record<string, { jobId: string; failedReason: string }>;
+      const completedActions = (
+        (notificationCheck.details?.completedActions as string[]) || []
+      );
+      const failedActions = (
+        (notificationCheck.details?.failedActions as string[]) || []
+      );
+      const failedExpectedActions = summary.flows.notifications.expectedActions
+        .filter((action) => failedActions.includes(action));
+      const missingCompletedActions = summary.flows.notifications.expectedActions
+        .filter((action) => !completedActions.includes(action));
+      summary.flows.notifications.terminalActionStates = summary.flows.notifications.expectedActions
+        .map((action) => {
+          if (failedActionMeta[action]) {
+            return {
+              action,
+              state: 'failed' as const,
+              failedReason: failedActionMeta[action].failedReason,
+              jobId: failedActionMeta[action].jobId,
+            };
+          }
+          if (completedActionMeta[action]) {
+            return {
+              action,
+              state: 'completed' as const,
+              jobId: completedActionMeta[action].jobId,
+            };
+          }
+          return {
+            action,
+            state: 'missing' as const,
+          };
+        });
+
+      summary.flows.notifications.passed = (
+        notificationCheck.ok
+        && failedExpectedActions.length === 0
+        && missingCompletedActions.length === 0
+      );
       if (!notificationCheck.ok) {
         summary.flows.notifications.error = 'Timed out waiting for expected notification actions';
+      } else if (!summary.flows.notifications.passed) {
+        const failedWithReason = failedExpectedActions
+          .map((action) => `${action}:${failedActionMeta[action]?.failedReason || 'Unknown failure'}`)
+          .join(', ');
+        summary.flows.notifications.error = (
+          'Notification actions failed or not completed. '
+          + `failed=[${failedWithReason}], `
+          + `missingCompleted=[${missingCompletedActions.join(', ')}]`
+        );
       }
     } catch (error) {
       summary.flows.notifications.passed = false;
@@ -993,7 +1191,10 @@ export async function runQueueExerciseLive(
           throw new Error('No soak jobs were enqueued');
         }
 
-        const soakCheck = await waitForCondition(async () => {
+        const timeoutAt = Date.now() + (options.timeoutSec * 1000);
+        let reachedTerminal = false;
+        while (Date.now() < timeoutAt) {
+          // eslint-disable-next-line no-await-in-loop
           const jobsByState = await listSoakJobsByStates(
             deps.notificationQueue,
             runId,
@@ -1008,25 +1209,59 @@ export async function runQueueExerciseLive(
           const completed = stateCounts.completed || 0;
           const failed = stateCounts.failed || 0;
           const terminal = completed + failed;
-          return {
-            ok: terminal >= soakFlow.enqueuedActions,
-            details: {
-              stateCounts,
+
+          soakFlow.completedActions = completed;
+          soakFlow.failedActions = failed;
+          if (
+            soakFlow.progressTimeline.length < SOAK_TIMELINE_MAX_POINTS
+            || terminal >= soakFlow.enqueuedActions
+          ) {
+            soakFlow.progressTimeline.push({
+              elapsedMs: Date.now() - soakStartedAt,
+              waiting: stateCounts.waiting || 0,
+              active: stateCounts.active || 0,
+              delayed: stateCounts.delayed || 0,
               completed,
               failed,
-            },
-          };
-        }, options.timeoutSec, options.pollMs);
+              paused: stateCounts.paused || 0,
+            });
+          }
 
-        soakFlow.completedActions = Number(soakCheck.details?.completed || 0);
-        soakFlow.failedActions = Number(soakCheck.details?.failed || 0);
+          if (terminal >= soakFlow.enqueuedActions) {
+            reachedTerminal = true;
+            break;
+          }
 
-        if (!soakCheck.ok) {
+          // eslint-disable-next-line no-await-in-loop
+          await sleep(options.pollMs);
+        }
+
+        if (!reachedTerminal) {
           soakFailures.push('Timed out waiting for soak notification jobs to reach terminal states');
         }
 
         if (soakFlow.failedActions > 0) {
           soakFailures.push(`Soak jobs failed: ${soakFlow.failedActions}`);
+
+          const failedOnly = await listSoakJobsByStates(
+            deps.notificationQueue,
+            runId,
+            ['failed'],
+            soakRangeEnd,
+          );
+          const failedJobs = failedOnly.failed || [];
+          soakFlow.failedReasonCounts = aggregateFailedReasons(failedJobs);
+          soakFlow.failedReasonCountsByAction = aggregateFailedReasonsByAction(failedJobs);
+          soakFlow.failedJobSamples = buildFailedJobSamples(failedJobs, SOAK_FAILED_SAMPLE_LIMIT);
+
+          const requestFailureCount = soakFlow.failedReasonCounts
+            .filter(({ reason }) => REQUEST_FAILURE_PATTERN.test(reason))
+            .reduce((acc, row) => acc + row.count, 0);
+          if (requestFailureCount > 0) {
+            soakFlow.warnings.push(
+              `Detected ${requestFailureCount} failed jobs with request/network style errors`,
+            );
+          }
         }
 
         if (soakFlow.completedActions !== soakFlow.enqueuedActions) {
@@ -1128,10 +1363,19 @@ export async function runQueueExerciseLive(
         soakFailures.push(stringifyError(error));
       } finally {
         soakFlow.durationMs = Date.now() - soakStartedAt;
-        try {
-          await removeSoakJobs(deps.notificationQueue, runId, soakRangeEnd);
-        } catch (error) {
-          soakFailures.push(`Failed removing soak jobs: ${stringifyError(error)}`);
+        if (options.keepSoakJobs || options.keepData) {
+          soakFlow.retainedJobs = true;
+          soakFlow.warnings.push('Retained soak jobs for postmortem analysis');
+        } else {
+          try {
+            soakFlow.removedJobCount = await removeSoakJobs(
+              deps.notificationQueue,
+              runId,
+              soakRangeEnd,
+            );
+          } catch (error) {
+            soakFailures.push(`Failed removing soak jobs: ${stringifyError(error)}`);
+          }
         }
       }
 
