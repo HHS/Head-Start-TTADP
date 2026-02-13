@@ -3,6 +3,8 @@ import { hideBin } from 'yargs/helpers';
 import { runQueueExerciseLive } from './queueExerciseLive';
 import { auditLogger } from '../logger';
 
+const DEFAULT_SOAK_ACTIONS = 100;
+
 const rawArgs = hideBin(process.argv);
 const argv = yargs(rawArgs)
   .option('region', {
@@ -54,9 +56,14 @@ const argv = yargs(rawArgs)
     type: 'boolean',
     default: true,
   })
+  .option('sendNotifications', {
+    description: 'Enable outbound notifications for this run (default false)',
+    type: 'boolean',
+    default: false,
+  })
   .option('soak', {
     alias: 's',
-    description: 'Run notification queue soak test (default 1000 when flag is provided without value)',
+    description: 'Run notification queue soak test (default 100 when flag is provided without value)',
     type: 'number',
   })
   .help()
@@ -79,7 +86,7 @@ const resolveSoakCount = (): number | undefined => {
     return undefined;
   }
   if (argv.soak === undefined) {
-    return 1000;
+    return DEFAULT_SOAK_ACTIONS;
   }
 
   const soak = Number(argv.soak);
@@ -104,6 +111,8 @@ if (space && space.toLowerCase().includes('prod')) {
   );
   process.exit(2);
 }
+
+process.env.SEND_NOTIFICATIONS = argv.sendNotifications ? 'true' : 'false';
 
 runQueueExerciseLive({
   region: argv.region,

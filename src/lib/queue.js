@@ -10,6 +10,23 @@ const QUEUE_LIST = new Set();
 // Job retention settings - these limit how many completed/failed jobs are kept in Redis
 export const KEEP_COMPLETED_JOBS = 5;
 export const KEEP_FAILED_JOBS = 10;
+export const DEFAULT_QUEUE_ATTEMPTS = 5;
+export const DEFAULT_REDIS_LIMITER_MAX = 10;
+export const DEFAULT_REDIS_LIMITER_DURATION = 1000;
+
+const limiterConfig = (enableRateLimiter) => {
+  if (!enableRateLimiter) {
+    return {};
+  }
+
+  return {
+    limiter: {
+      // limit to 10 requests per second by default
+      max: process.env.REDIS_LIMITER_MAX || DEFAULT_REDIS_LIMITER_MAX,
+      duration: process.env.REDIS_LIMITER_DURATION || DEFAULT_REDIS_LIMITER_DURATION,
+    },
+  };
+};
 
 export const generateRedisConfig = (enableRateLimiter = false) => {
   if (process.env.VCAP_SERVICES) {
@@ -43,11 +60,7 @@ export const generateRedisConfig = (enableRateLimiter = false) => {
           ...redisSettings,
           redisOpts: {
             ...redisSettings.redisOpts,
-            limiter: {
-              // limit to 1000 requests per minute by default
-              max: process.env.REDIS_LIMITER_MAX || 1000,
-              duration: process.env.REDIS_LIMITER_DURATION || 60000,
-            },
+            ...limiterConfig(enableRateLimiter),
           },
         };
       }
@@ -70,6 +83,7 @@ export const generateRedisConfig = (enableRateLimiter = false) => {
     tlsEnabled,
     redisOpts: {
       redis: { password: REDIS_PASS },
+      ...limiterConfig(enableRateLimiter),
     },
   };
 };
@@ -142,6 +156,7 @@ export default function newQueue(queueName, timeout = 30000) {
       connectionName: `${queueName}-${process.pid}-${connectionId}`,
     },
     defaultJobOptions: {
+      attempts: DEFAULT_QUEUE_ATTEMPTS,
       removeOnFail: KEEP_FAILED_JOBS,
       removeOnComplete: KEEP_COMPLETED_JOBS,
     },
