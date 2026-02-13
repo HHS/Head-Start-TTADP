@@ -56,6 +56,14 @@ const output = (value) => {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 };
 
+const space = process.env.SPACE;
+if (space && space.toLowerCase().includes('prod')) {
+  auditLogger.error(
+    `Refusing to run queue exercise with SPACE="${space}". Do not run this script in production.`,
+  );
+  process.exit(2);
+}
+
 runQueueExerciseLive({
   region: argv.region,
   ownerUserId: argv.ownerUserId,
