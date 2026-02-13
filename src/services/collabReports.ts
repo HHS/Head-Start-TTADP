@@ -174,7 +174,6 @@ async function saveReportSteps(collabReportId: number, steps: Model[]) {
             collabReportId,
             // @ts-expect-error
             collabStepDetail: step.collabStepDetail,
-            // @ts-expect-error
             collabStepCompleteDate: normalizedDate,
           }
         }

@@ -48,7 +48,6 @@ const processRecords = async (
     auditLogger.log('error', ` processRecords getNextObject ${err.message}`, err)
   }
 
-  // @ts-expect-error
   let model
   try {
     model = modelForTable(db, processDefinition.tableName)

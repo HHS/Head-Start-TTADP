@@ -3,16 +3,7 @@ import { Op } from 'sequelize'
 import { DECIMAL_BASE } from '@ttahub/common'
 import type { Request, Response } from 'express'
 import UserPolicy from '../../policies/user'
-import {
-  // @ts-expect-error
-  GoalTemplate,
-  User,
-  UserRole,
-  Permission,
-  Role,
-  Recipient,
-  Grant,
-} from '../../models'
+import db from '../../models'
 import {
   logById,
   logsByRecipientAndScopes,
@@ -35,6 +26,7 @@ import { groupsByRegion } from '../../services/groups'
 const namespace = 'HANDLERS:COMMUNICATION_LOG'
 
 const logContext = { namespace }
+const { GoalTemplate, Recipient, Grant } = db
 
 const getAuthorizationByRegion = async (req: Request, res: Response) => {
   const { regionId } = req.params
