@@ -1,7 +1,17 @@
 @use '../../../colors.scss' as *;
 
 .ttahub-recipient-spotlight-content {
-    max-height: 230px;
+    min-height: 230px;
+
+    // Allow every flex child to shrink below content width so text wraps
+    .display-flex > * {
+        min-width: 0;
+    }
+}
+
+.ttahub-recipient-spotlight-content-cell {
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .ttahub-recipient-spotlight-content-cell-good-indicator {

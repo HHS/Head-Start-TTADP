@@ -3,7 +3,7 @@ import filtersToScopes from '../../scopes';
 import { currentUserId } from '../../services/currentUser';
 import handleErrors from '../../lib/apiErrorHandler';
 import { getRecipientSpotlightIndicators } from '../../services/recipientSpotlight';
-import { getUserReadRegions } from '../../services/accessValidation';
+import { setReadRegions } from '../../services/accessValidation';
 
 jest.mock('../../scopes');
 jest.mock('../../services/currentUser');
@@ -37,16 +37,22 @@ describe('recipientSpotlight handlers', () => {
           sortBy: 'name',
           direction: 'asc',
           offset: '0',
+          parsedGrantId: null,
         },
       };
 
       res = {
         json: jest.fn(),
         sendStatus: jest.fn(),
+        status: jest.fn().mockReturnThis(),
       };
 
       currentUserId.mockResolvedValue(mockUserId);
-      getUserReadRegions.mockResolvedValue([1, 2, 3]); // User has access to regions 1, 2, 3
+      // setReadRegions returns the query with region.in filtered/defaulted
+      setReadRegions.mockImplementation((query) => Promise.resolve({
+        ...query,
+        'region.in': query['region.in'] || [1, 2, 3],
+      }));
       filtersToScopes.mockResolvedValue(mockScopes);
       getRecipientSpotlightIndicators.mockResolvedValue(mockRecipientSpotlightData);
     });
@@ -59,6 +65,10 @@ describe('recipientSpotlight handlers', () => {
       await getRecipientSpotLight(req, res);
 
       expect(currentUserId).toHaveBeenCalledWith(req, res);
+      expect(setReadRegions).toHaveBeenCalledWith(
+        expect.objectContaining({ 'region.in': ['1'] }),
+        mockUserId,
+      );
       expect(filtersToScopes).toHaveBeenCalledWith(
         req.query,
         { userId: mockUserId },
@@ -72,6 +82,8 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         [],
+        null,
+        undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -82,6 +94,7 @@ describe('recipientSpotlight handlers', () => {
         sortBy: 'name',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
       };
 
       await getRecipientSpotLight(req, res);
@@ -95,6 +108,8 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         [],
+        null,
+        undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -129,6 +144,7 @@ describe('recipientSpotlight handlers', () => {
         sortBy: 'date',
         direction: 'desc',
         offset: '10',
+        parsedGrantId: null,
       };
 
       await getRecipientSpotLight(req, res);
@@ -142,6 +158,8 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         [],
+        null,
+        undefined,
       );
     });
 
@@ -150,6 +168,7 @@ describe('recipientSpotlight handlers', () => {
         'recipientId.in': '456',
         'region.in': '1',
         offset: '0',
+        parsedGrantId: null,
       };
 
       await getRecipientSpotLight(req, res);
@@ -163,48 +182,57 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         [],
+        null,
+        undefined,
       );
     });
 
-    it('should return 403 FORBIDDEN when user tries to access a region they do not have permission for', async () => {
+    it('should silently filter unauthorized regions via setReadRegions', async () => {
+      setReadRegions.mockResolvedValue({
+        'region.in': [1], // setReadRegions filters out region 5
+      });
+
       req.query = {
-        'region.in': '5', // User does not have access to region 5
+        'region.in': ['1', '5'],
         sortBy: 'name',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
       };
 
       await getRecipientSpotLight(req, res);
 
-      expect(res.sendStatus).toHaveBeenCalledWith(403);
-      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
-    });
-
-    it('should return 403 FORBIDDEN when user tries to access multiple regions and one is unauthorized', async () => {
-      req.query = {
-        'region.in': ['1', '5'], // User has access to region 1 but not region 5
-        sortBy: 'name',
-        direction: 'asc',
-        offset: '0',
-      };
-
-      await getRecipientSpotLight(req, res);
-
-      expect(res.sendStatus).toHaveBeenCalledWith(403);
-      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
+      // Should NOT return 403, instead silently filters
+      expect(res.sendStatus).not.toHaveBeenCalledWith(403);
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'name',
+        'asc',
+        0,
+        10,
+        ['1'],
+        [],
+        [],
+        null,
+        undefined,
+      );
     });
 
     it('should default to all user read regions when no region is specified in the request', async () => {
+      setReadRegions.mockResolvedValue({
+        'region.in': [1, 2, 3],
+      });
+
       req.query = {
         'recipientId.in': '456',
         sortBy: 'name',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
       };
 
       await getRecipientSpotLight(req, res);
 
-      // Should use all user's read regions (1, 2, 3) as strings
       expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
         mockScopes,
         'name',
@@ -214,17 +242,19 @@ describe('recipientSpotlight handlers', () => {
         ['1', '2', '3'],
         [],
         [],
+        null,
+        undefined,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
-      expect(res.sendStatus).not.toHaveBeenCalledWith(403);
     });
 
     it('should allow access when user requests multiple regions they have access to', async () => {
       req.query = {
-        'region.in': ['1', '2'], // User has access to both regions 1 and 2
+        'region.in': ['1', '2'],
         sortBy: 'name',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
       };
 
       await getRecipientSpotLight(req, res);
@@ -234,18 +264,22 @@ describe('recipientSpotlight handlers', () => {
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
 
-    it('should call getUserReadRegions with the correct userId', async () => {
+    it('should call setReadRegions with the correct userId', async () => {
       await getRecipientSpotLight(req, res);
 
-      expect(getUserReadRegions).toHaveBeenCalledWith(mockUserId);
+      expect(setReadRegions).toHaveBeenCalledWith(
+        expect.any(Object),
+        mockUserId,
+      );
     });
 
     it('should handle region.in[] array notation from filtersToQueryString', async () => {
       req.query = {
-        'region.in[]': '1', // Array notation with brackets (from filtersToQueryString)
+        'region.in[]': '1',
         sortBy: 'recipientName',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
       };
 
       await getRecipientSpotLight(req, res);
@@ -258,10 +292,11 @@ describe('recipientSpotlight handlers', () => {
 
     it('should still handle region.in without brackets for backward compatibility', async () => {
       req.query = {
-        'region.in': '2', // Without brackets (manual construction)
+        'region.in': '2',
         sortBy: 'recipientName',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
       };
 
       await getRecipientSpotLight(req, res);
@@ -274,10 +309,11 @@ describe('recipientSpotlight handlers', () => {
 
     it('should handle region.in[] with multiple regions', async () => {
       req.query = {
-        'region.in[]': ['1', '2'], // Multiple regions with array notation
+        'region.in[]': ['1', '2'],
         sortBy: 'recipientName',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
       };
 
       await getRecipientSpotLight(req, res);
@@ -288,26 +324,13 @@ describe('recipientSpotlight handlers', () => {
       expect(getRecipientSpotlightIndicators).toHaveBeenCalled();
     });
 
-    it('should return 403 when region.in[] contains unauthorized region', async () => {
-      req.query = {
-        'region.in[]': '5', // Region 5 not in user's allowed regions [1, 2, 3]
-        sortBy: 'recipientName',
-        direction: 'asc',
-        offset: '0',
-      };
-
-      await getRecipientSpotLight(req, res);
-
-      expect(res.sendStatus).toHaveBeenCalledWith(403);
-      expect(getRecipientSpotlightIndicators).not.toHaveBeenCalled();
-    });
-
     it('should pass priorityIndicator.nin as indicatorsToExclude', async () => {
       req.query = {
         'region.in': '1',
         sortBy: 'recipientName',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
         'priorityIndicator.nin': 'No TTA',
       };
 
@@ -322,6 +345,8 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         ['No TTA'],
+        null,
+        undefined,
       );
     });
 
@@ -331,6 +356,7 @@ describe('recipientSpotlight handlers', () => {
         sortBy: 'recipientName',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
         'priorityIndicator.nin[]': ['No TTA', 'Deficiency'],
       };
 
@@ -345,6 +371,8 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         [],
         ['No TTA', 'Deficiency'],
+        null,
+        undefined,
       );
     });
 
@@ -354,6 +382,7 @@ describe('recipientSpotlight handlers', () => {
         sortBy: 'recipientName',
         direction: 'asc',
         offset: '0',
+        parsedGrantId: null,
         'priorityIndicator.in': 'New staff',
         'priorityIndicator.nin': 'No TTA',
       };
@@ -369,7 +398,88 @@ describe('recipientSpotlight handlers', () => {
         ['1'],
         ['New staff'],
         ['No TTA'],
+        null,
+        undefined,
       );
+    });
+
+    it('should pass parsedGrantId from middleware', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        parsedGrantId: 123,
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'name',
+        'asc',
+        0,
+        10,
+        ['1'],
+        [],
+        [],
+        123,
+        undefined,
+      );
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+    });
+
+    it('should pass mustHaveIndicators from query params', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        parsedGrantId: null,
+        mustHaveIndicators: 'true',
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'name',
+        'asc',
+        0,
+        10,
+        ['1'],
+        [],
+        [],
+        null,
+        'true',
+      );
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+    });
+
+    it('should pass null for parsedGrantId when middleware sets it to null', async () => {
+      req.query = {
+        'region.in': '1',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        parsedGrantId: null,
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'name',
+        'asc',
+        0,
+        10,
+        ['1'],
+        [],
+        [],
+        null,
+        undefined,
+      );
+      expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
   });
 });

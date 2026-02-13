@@ -69,7 +69,11 @@ describe('RecipientSpotlightDataController', () => {
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
-            <RecipientSpotlightDataController filters={filters} regionId={regionId} />
+            <RecipientSpotlightDataController
+              filters={filters}
+              regionId={regionId}
+              userHasOnlyOneRegion={false}
+            />
           </BrowserRouter>
         </FilterContext.Provider>
       </AppLoadingContext.Provider>,
@@ -99,6 +103,8 @@ describe('RecipientSpotlightDataController', () => {
         0,
         '',
         10,
+        null,
+        true,
       );
     });
   });
@@ -166,6 +172,8 @@ describe('RecipientSpotlightDataController', () => {
         0,
         '',
         10,
+        null,
+        true,
       );
     });
   });
@@ -187,6 +195,8 @@ describe('RecipientSpotlightDataController', () => {
         0,
         '',
         25,
+        null,
+        true,
       );
     });
   });
@@ -214,6 +224,8 @@ describe('RecipientSpotlightDataController', () => {
         10,
         '',
         10,
+        null,
+        true,
       );
     });
   });
@@ -243,7 +255,11 @@ describe('RecipientSpotlightDataController', () => {
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
-            <RecipientSpotlightDataController filters={newFilters} regionId={1} />
+            <RecipientSpotlightDataController
+              filters={newFilters}
+              regionId={1}
+              userHasOnlyOneRegion={false}
+            />
           </BrowserRouter>
         </FilterContext.Provider>
       </AppLoadingContext.Provider>,
@@ -256,6 +272,8 @@ describe('RecipientSpotlightDataController', () => {
         0,
         'test.in[]=value',
         10,
+        null,
+        true,
       );
     });
   });
@@ -284,6 +302,8 @@ describe('RecipientSpotlightDataController', () => {
         10,
         '',
         10,
+        null,
+        true,
       );
     });
 
@@ -298,6 +318,8 @@ describe('RecipientSpotlightDataController', () => {
         0,
         '',
         10,
+        null,
+        true,
       );
     });
   });
@@ -326,6 +348,8 @@ describe('RecipientSpotlightDataController', () => {
         10,
         '',
         10,
+        null,
+        true,
       );
     });
 
@@ -340,6 +364,8 @@ describe('RecipientSpotlightDataController', () => {
         0,
         '',
         25,
+        null,
+        true,
       );
     });
   });
@@ -384,6 +410,8 @@ describe('RecipientSpotlightDataController', () => {
         0,
         '',
         10,
+        null,
+        true,
       );
     });
   });
@@ -398,7 +426,11 @@ describe('RecipientSpotlightDataController', () => {
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
-            <RecipientSpotlightDataController filters={[]} regionId={1} />
+            <RecipientSpotlightDataController
+              filters={[]}
+              regionId={1}
+              userHasOnlyOneRegion={false}
+            />
           </BrowserRouter>
         </FilterContext.Provider>
       </AppLoadingContext.Provider>,

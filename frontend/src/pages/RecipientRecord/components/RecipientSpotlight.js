@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,41 +9,8 @@ import colors from '../../../colors';
 import IndicatorCounter from './IndicatorCounter';
 import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import NoResultsFound from '../../../components/NoResultsFound';
+import { useGrantData } from '../pages/GrantDataContext';
 import './RecipientSpotlight.scss';
-
-/*
-const sampleSpotlightData = [
-  {
-    recipientId: 1,
-    regionId: 1,
-    recipientName: 'Recipient A',
-    grantIds: [1, 2, 3],
-    childIncidents: true,
-    deficiency: false,
-    newRecipients: true,
-    newStaff: false,
-    noTTA: true,
-    DRS: false,
-    FEI: false,
-  },
-];
-
-const goodSampleSpotlightData = [
-  {
-    recipientId: 1,
-    regionId: 1,
-    recipientName: 'Recipient A',
-    grantIds: [1, 2, 3],
-    childIncidents: false,
-    deficiency: false,
-    newRecipients: false,
-    newStaff: false,
-    noTTA: false,
-    DRS: false,
-    FEI: false,
-  },
-];
-*/
 
 const createRowForEachIndicator = (name, label, value, description) => ({
   name, label, value, description,
@@ -62,19 +28,7 @@ const mappedData = (data) => ([
     data.deficiency,
     'Recipient has at least one active monitoring deficiency',
   ),
-  // Temporarily hidden - will be added back later
-  // createRowForEachIndicator(
-  //   'DRS',
-  //   'DRS',
-  //   data.DRS,
-  //   'Recipient meets the conditions for the Designation Renewal System (DRS)',
-  // ),
-  // createRowForEachIndicator(
-  //   'FEI',
-  //   'FEI',
-  //   data.FEI,
-  //   'Recipient is currently in the Full Enrollment Initiative (FEI)',
-  // ),
+
   createRowForEachIndicator(
     'newRecipients',
     'New recipients',
@@ -95,10 +49,12 @@ const mappedData = (data) => ([
   ),
 ]);
 
-export default function RecipientSpotlight({ regionId, recipientId }) {
+export default function RecipientSpotlight({
+  regionId, recipientId, grantId, grantNumber,
+}) {
   const [spotlightData, setSpotlightData] = useState([]);
   const [hasResults, setHasResults] = useState(true);
-  const [useGoodData, setUseGoodData] = useState(false);
+  const { updateGrantSpotlightData } = useGrantData();
 
   useEffect(() => {
     async function fetchRecipientSpotlight() {
@@ -109,6 +65,8 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
           'asc',
           0,
           filters,
+          null,
+          grantId,
         );
 
         // Check if response is valid and has meaningful data (more than just an empty object)
@@ -121,18 +79,26 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
         if (hasValidData) {
           setSpotlightData(mappedData(response.recipients[0]));
           setHasResults(true);
+          if (grantNumber) {
+            updateGrantSpotlightData(grantNumber, true);
+          }
         } else {
           setSpotlightData([]);
           setHasResults(false);
+          if (grantNumber) {
+            updateGrantSpotlightData(grantNumber, false);
+          }
         }
       } catch (err) {
         setSpotlightData([]);
         setHasResults(false);
+        if (grantNumber) {
+          updateGrantSpotlightData(grantNumber, false);
+        }
       }
     }
     fetchRecipientSpotlight();
-    // setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
-  }, [recipientId, regionId]);
+  }, [recipientId, regionId, grantId, grantNumber, updateGrantSpotlightData]);
 
   const hasIndicators = spotlightData.some((indicator) => indicator.value === true);
 
@@ -143,8 +109,8 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
   return (
     <Container paddingX={0} paddingY={0} className="ttahub--recipient-summary">
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
-        <h2 className="ttahub-card-header-title margin-0 padding-0">Recipient spotlight</h2>
-        <p className="margin-0 padding-0 usa-prose">This is the recipient&apos;s current number of priority indicators.</p>
+        <h2 className="ttahub-card-header-title margin-0 padding-0">Priority indicators</h2>
+        <p className="margin-0 padding-0 usa-prose margin-top-1">This is the recipient&apos;s current number of priority indicators.</p>
       </div>
 
       {hasResults ? (
@@ -152,7 +118,7 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
         <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto" tabIndex={0}>
           <div className="display-flex flex-align-center">
             <div className="display-flex flex-column">
-              <div className="display-flex flex-align-center">
+              <div className="display-flex flex-align-start">
                 {hasIndicators
                   ? <FontAwesomeIcon className="margin-right-1" color={colors.error} icon={faCircleExclamation} style={{ fontSize: '20px' }} />
                   : (
@@ -185,7 +151,7 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
                           {indicator.value ? ' - Active indicator' : ' - Not applicable to this recipient'}
                         </span>
                       </b>
-                      <p className="usa-prose margin-y-0 text-wrap">{indicator.description}</p>
+                      <p className="usa-prose margin-y-0">{indicator.description}</p>
                     </div>
                   </div>
                 ))
@@ -204,6 +170,13 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
 }
 
 RecipientSpotlight.propTypes = {
-  regionId: PropTypes.number.isRequired,
-  recipientId: PropTypes.number.isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  grantId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  grantNumber: PropTypes.string,
+};
+
+RecipientSpotlight.defaultProps = {
+  grantId: null,
+  grantNumber: null,
 };

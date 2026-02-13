@@ -72,6 +72,8 @@ describe('Recipient spotlight Dashboard page', () => {
         expect.any(Number),
         expect.stringContaining('region'),
         expect.any(Number),
+        null,
+        true,
       );
     });
   });
@@ -185,6 +187,8 @@ describe('Recipient spotlight Dashboard page', () => {
         0,
         '',
         10,
+        null,
+        true,
       );
     });
   });

@@ -5,6 +5,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import RecipientSpotlight from '../RecipientSpotlight';
+import { GrantDataProvider } from '../../pages/GrantDataContext';
 
 // Sample data for tests (wrapped in recipients array to match new API format)
 const mockSpotlightData = {
@@ -75,25 +76,24 @@ const noResultsMockData = {
 describe('RecipientSpotlight', () => {
   const renderRecipientSpotlight = (recipientId = 1, regionId = 1) => {
     render(
-      <div data-testid="recipient-spotlight-container">
-        <RecipientSpotlight recipientId={recipientId} regionId={regionId} />
-      </div>,
+      <GrantDataProvider>
+        <div data-testid="recipient-spotlight-container">
+          <RecipientSpotlight recipientId={recipientId} regionId={regionId} />
+        </div>
+      </GrantDataProvider>,
     );
   };
 
   beforeEach(() => fetchMock.restore());
 
   it('renders the component with header initially', () => {
-    // No need to mock API yet as we're just testing initial render
     renderRecipientSpotlight();
 
-    // Should show the header text initially
-    expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
+    expect(screen.getByText('Priority indicators')).toBeInTheDocument();
     expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
   });
 
   it('shows recipient may need prioritized attention when indicators are present', async () => {
-    // Mock the API endpoint directly with new filter format
     const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
@@ -151,11 +151,9 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      // Verify header is still present
-      expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
+      expect(screen.getByText('Priority indicators')).toBeInTheDocument();
       expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
 
-      // Verify NoResultsFound component is rendered
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
@@ -169,11 +167,9 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      // Verify header is still present
-      expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
+      expect(screen.getByText('Priority indicators')).toBeInTheDocument();
       expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
 
-      // Verify NoResultsFound component is rendered
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
@@ -201,7 +197,6 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      // Verify that descriptions for indicators are visible
       expect(screen.getByText(/Recipient has experienced more than one child incident/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
@@ -216,11 +211,9 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      // Verify header is still present
-      expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
+      expect(screen.getByText('Priority indicators')).toBeInTheDocument();
       expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
 
-      // Verify NoResultsFound component is rendered
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
@@ -234,17 +227,15 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      // Verify header is still present
-      expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
+      expect(screen.getByText('Priority indicators')).toBeInTheDocument();
       expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
 
-      // Verify NoResultsFound component is rendered
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
 
-  it('sets aria-hidden correctly based on indicator values', async () => {
+  it('applies correct CSS classes based on indicator values', async () => {
     const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
@@ -254,19 +245,15 @@ describe('RecipientSpotlight', () => {
     await waitFor(() => {
       // In our mockSpotlightData, we have:
       // childIncidents: true, deficiency: false, newRecipients: true,
-      // newStaff: false, noTTA: true, DRS: false, FEI: false
+      // newStaff: false, noTTA: true
 
-      // Check that cells with true values have aria-hidden="false"
+      // Check that cells with true values get the bad-indicator class
       const trueIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-bad-indicator');
-      trueIndicatorCells.forEach((cell) => {
-        expect(cell).toHaveAttribute('aria-hidden', 'false');
-      });
+      expect(trueIndicatorCells).toHaveLength(3);
 
-      // Check that cells with false values have aria-hidden="true"
+      // Check that cells with false values get the good-indicator class
       const falseIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
-      falseIndicatorCells.forEach((cell) => {
-        expect(cell).toHaveAttribute('aria-hidden', 'true');
-      });
+      expect(falseIndicatorCells).toHaveLength(2);
     });
   });
 });

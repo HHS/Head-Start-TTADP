@@ -46,6 +46,8 @@ export async function getRecipientSpotlightIndicators(
   regions,
   indicatorsToInclude = [],
   indicatorsToExclude = [],
+  singleGrantId = null,
+  mustHaveIndicators = false,
 ) {
   // Early return if no regions are provided
   if (!regions || regions.length === 0) {
@@ -71,6 +73,7 @@ export async function getRecipientSpotlightIndicators(
       {
         regionId: { [Op.in]: regions.map((r) => parseInt(r, 10)) },
       },
+      singleGrantId ? { id: singleGrantId } : {},
       {
         [Op.or]: [
           { status: 'Active' },
@@ -136,7 +139,18 @@ export async function getRecipientSpotlightIndicators(
 */
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
-  const grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'FALSE';
+  let grantIdFilter = hasGrantIds ? `gr.id IN (${grantIdList.join(',')})` : 'FALSE';
+  if (singleGrantId) {
+    // Only allow singleGrantId to further restrict the already-scoped grantIdList.
+    // If it is not part of grantIdList, force the filter to match no rows.
+    const singleGrantIdStr = String(singleGrantId);
+    const scopedGrantIdStrings = grantIdList.map((id) => String(id));
+    if (scopedGrantIdStrings.includes(singleGrantIdStr)) {
+      grantIdFilter = `gr.id = ${singleGrantIdStr}`;
+    } else {
+      grantIdFilter = 'FALSE';
+    }
+  }
 
   // Query total distinct recipient-region pairs for the selected regions
   // This counts all recipients with active/recently-inactive grants in the regions,
@@ -169,32 +183,32 @@ export async function getRecipientSpotlightIndicators(
   const safeSortBy = ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : 'recipientName';
   const safeDirection = ALLOWED_DIRECTIONS.includes(direction?.toUpperCase()) ? direction.toUpperCase() : 'ASC';
 
-  // Build indicator WHERE clause for filtering by priority indicators
-  // Default to only showing recipients with at least one indicator
-  let indicatorWhereClause = '"indicatorCount" > 0';
+  let indicatorWhereClause = '';
 
-  if (indicatorsToInclude.length > 0) {
-    const includeConditions = indicatorsToInclude
-      .map((label) => INDICATOR_LABEL_TO_COLUMN[label])
-      .filter(Boolean)
-      .map((col) => `"${col}" = TRUE`);
+  const includeConditions = indicatorsToInclude
+    .map((label) => INDICATOR_LABEL_TO_COLUMN[label])
+    .filter(Boolean)
+    .map((col) => `"${col}" = TRUE`);
 
-    if (includeConditions.length > 0) {
-      indicatorWhereClause = `(${includeConditions.join(' OR ')})`;
-    }
+  const excludeConditions = indicatorsToExclude
+    .map((label) => INDICATOR_LABEL_TO_COLUMN[label])
+    .filter(Boolean)
+    .map((col) => `"${col}" = FALSE`);
+
+  const parts = [];
+  if (includeConditions.length > 0) {
+    parts.push(`(${includeConditions.join(' OR ')})`);
+  }
+  if (excludeConditions.length > 0) {
+    parts.push(`(${excludeConditions.join(' AND ')})`);
   }
 
-  // Handle exclusion filter - exclude recipients with any of the excluded indicators
-  if (indicatorsToExclude.length > 0) {
-    const excludeConditions = indicatorsToExclude
-      .map((label) => INDICATOR_LABEL_TO_COLUMN[label])
-      .filter(Boolean)
-      .map((col) => `"${col}" = FALSE`);
-
-    if (excludeConditions.length > 0) {
-      // All excluded indicators must be FALSE (i.e., recipient must NOT have any of them)
-      indicatorWhereClause = `${indicatorWhereClause} AND (${excludeConditions.join(' AND ')})`;
-    }
+  if (parts.length > 0) {
+    indicatorWhereClause = parts.join(' AND ');
+  } else if (mustHaveIndicators) {
+    indicatorWhereClause = '"indicatorCount" > 0';
+  } else {
+    indicatorWhereClause = 'TRUE';
   }
 
   const spotLightSql = `
