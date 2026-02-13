@@ -32,6 +32,12 @@ const DEFAULT_POLL_MS = 5000;
 const DEFAULT_REGION = 0;
 const DEFAULT_RESOURCE_URL = 'https://headstart.gov/';
 const NOTIFICATION_JOB_STATES = ['waiting', 'active', 'delayed', 'completed', 'failed'] as const;
+const NOTIFICATION_QUEUE_COUNT_STATES = ['waiting', 'active', 'delayed', 'completed', 'failed', 'paused'];
+const DEFAULT_SOAK_ACTIONS = 1000;
+const SOAK_BATCH_SIZE = 100;
+const SOAK_CLIENT_DELTA_LIMIT = 3;
+const SOAK_MIN_MEMORY_DELTA_BYTES = 64 * 1024 * 1024;
+const SOAK_MEMORY_PERCENT_DELTA_LIMIT = 0.25;
 const TRAINING_REPORT_SELECTION_SCOPES = [
   SCOPES.READ_WRITE_TRAINING_REPORTS,
   SCOPES.POC_TRAINING_REPORTS,
@@ -46,6 +52,23 @@ export type QueueExerciseLiveOptions = {
   timeoutSec?: number;
   pollMs?: number;
   keepData?: boolean;
+  soak?: number;
+};
+
+type RedisDiagnostics = {
+  clients: {
+    connectedClients: number;
+    blockedClients: number;
+    clientListCount: number;
+  };
+  memory: {
+    usedMemory: number;
+    usedMemoryRss: number;
+  };
+  stats: {
+    rejectedConnections: number;
+    evictedKeys: number;
+  };
 };
 
 type QueueExerciseSummary = {
@@ -93,6 +116,22 @@ type QueueExerciseSummary = {
     s3: {
       passed: boolean;
       objectDeleted?: boolean;
+      error?: string;
+    };
+    soak: {
+      enabled: boolean;
+      passed: boolean;
+      requestedActions: number;
+      enqueuedActions: number;
+      completedActions: number;
+      failedActions: number;
+      durationMs: number;
+      queueCountsBefore: Record<string, number>;
+      queueCountsAfter: Record<string, number>;
+      redisBefore?: RedisDiagnostics;
+      redisAfter?: RedisDiagnostics;
+      thresholds: Record<string, unknown>;
+      warnings: string[];
       error?: string;
     };
   };
@@ -157,6 +196,7 @@ const withDefaults = (
   timeoutSec: options.timeoutSec || DEFAULT_TIMEOUT_SEC,
   pollMs: options.pollMs || DEFAULT_POLL_MS,
   keepData: !!options.keepData,
+  soak: options.soak || 0,
 });
 
 const sleep = async (ms: number) => new Promise((resolve) => {
@@ -377,6 +417,104 @@ const selectQueueExerciseActors = async (
   };
 };
 
+const parseRedisInfoNumericField = (info: string, field: string): number => {
+  const match = info.match(new RegExp(`^${field}:(.+)$`, 'm'));
+  if (!match) {
+    return 0;
+  }
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const collectRedisDiagnostics = async (redis: any): Promise<RedisDiagnostics> => {
+  const [clientsInfo, memoryInfo, statsInfo, clientListRaw] = await Promise.all([
+    redis.info('clients'),
+    redis.info('memory'),
+    redis.info('stats'),
+    redis.client('list'),
+  ]);
+  const clientListCount = String(clientListRaw || '')
+    .split(/\r?\n/)
+    .filter((line) => !!line.trim())
+    .length;
+
+  return {
+    clients: {
+      connectedClients: parseRedisInfoNumericField(String(clientsInfo), 'connected_clients'),
+      blockedClients: parseRedisInfoNumericField(String(clientsInfo), 'blocked_clients'),
+      clientListCount,
+    },
+    memory: {
+      usedMemory: parseRedisInfoNumericField(String(memoryInfo), 'used_memory'),
+      usedMemoryRss: parseRedisInfoNumericField(String(memoryInfo), 'used_memory_rss'),
+    },
+    stats: {
+      rejectedConnections: parseRedisInfoNumericField(String(statsInfo), 'rejected_connections'),
+      evictedKeys: parseRedisInfoNumericField(String(statsInfo), 'evicted_keys'),
+    },
+  };
+};
+
+const collectNotificationQueueCounts = async (queue: any): Promise<Record<string, number>> => {
+  const counts = await queue.getJobCounts(...NOTIFICATION_QUEUE_COUNT_STATES);
+  return NOTIFICATION_QUEUE_COUNT_STATES.reduce((acc, key) => ({
+    ...acc,
+    [key]: Number(counts?.[key] || 0),
+  }), {});
+};
+
+const soakJobIdPrefix = (runId: string) => `qe-soak-${runId}-`;
+const buildSoakJobId = (runId: string, index: number) => `${soakJobIdPrefix(runId)}${index}`;
+
+const buildSoakNotificationJobData = (runId: string, index: number, emailTo: string) => {
+  const displayId = `QE-SOAK-${runId}-${index}`;
+  return {
+    displayId,
+    reportPath: `/training-report/soak/${runId}/${index}`,
+    emailTo,
+    templatePath: 'tr_event_imported',
+    debugMessage: `MAILER: Queue exercise soak job ${runId} #${index}`,
+    report: {
+      displayId,
+    },
+  };
+};
+
+const listSoakJobsByStates = async (
+  queue: any,
+  runId: string,
+  states: string[],
+  rangeEnd: number,
+) => {
+  const all = await Promise.all(states.map(async (state) => {
+    const jobs = await queue.getJobs([state], 0, rangeEnd, false);
+    const matching = jobs.filter((job) => String(job?.id || '').startsWith(soakJobIdPrefix(runId)));
+    return [state, matching] as const;
+  }));
+  return all.reduce(
+    (acc, [state, jobs]) => ({ ...acc, [state]: jobs }),
+    {} as Record<string, any[]>,
+  );
+};
+
+const removeSoakJobs = async (queue: any, runId: string, rangeEnd: number): Promise<number> => {
+  const jobsByState = await listSoakJobsByStates(
+    queue,
+    runId,
+    [...NOTIFICATION_JOB_STATES, 'paused'],
+    rangeEnd,
+  );
+  const jobs = Object.values(jobsByState).flat();
+  await Promise.all(jobs.map(async (job) => {
+    try {
+      await job.remove();
+    } catch (error) {
+      auditLogger.error(`[queue-exercise] Failed removing soak job ${job?.id}: ${stringifyError(error)}`);
+    }
+  }));
+  return jobs.length;
+};
+
 export async function runQueueExerciseLive(
   inputOptions: QueueExerciseLiveOptions = {},
   depsOverride: Partial<QueueExerciseDeps> = {},
@@ -424,6 +562,19 @@ export async function runQueueExerciseLive(
       s3: {
         passed: false,
       },
+      soak: {
+        enabled: options.soak > 0,
+        passed: true,
+        requestedActions: options.soak,
+        enqueuedActions: 0,
+        completedActions: 0,
+        failedActions: 0,
+        durationMs: 0,
+        queueCountsBefore: {},
+        queueCountsAfter: {},
+        thresholds: {},
+        warnings: [],
+      },
     },
     cleanup: {
       skipped: options.keepData,
@@ -436,6 +587,7 @@ export async function runQueueExerciseLive(
   let createdResourceId: number | undefined;
   let createdFileId: number | undefined;
   let createdFileKey: string | undefined;
+  let notificationSoakEmail: string | undefined;
 
   try {
     logger.info(`[queue-exercise] Starting run ${runId}`);
@@ -577,6 +729,7 @@ export async function runQueueExerciseLive(
       summary.preflight.error = `ownerUserId ${options.ownerUserId} is not notification-eligible (missing SITE_ACCESS)`;
       return summary;
     }
+    notificationSoakEmail = ownerForNotifications.email;
 
     const { collaboratorUserId } = options;
 
@@ -788,6 +941,205 @@ export async function runQueueExerciseLive(
       summary.flows.scan.error = summary.flows.scan.error || stringifyError(error);
       summary.flows.s3.error = summary.flows.s3.error || stringifyError(error);
     }
+
+    if (options.soak > 0) {
+      const soakRangeEnd = Math.max((options.soak * 3), 3000);
+      const soakFlow = summary.flows.soak;
+      const soakStartedAt = Date.now();
+      const soakFailures: string[] = [];
+
+      try {
+        if (!notificationSoakEmail) {
+          throw new Error('Unable to resolve a notification email for soak jobs');
+        }
+
+        const redis = deps.getRedis();
+        soakFlow.queueCountsBefore = await collectNotificationQueueCounts(deps.notificationQueue);
+        soakFlow.redisBefore = await collectRedisDiagnostics(redis);
+
+        const enqueueErrors: string[] = [];
+        for (let offset = 0; offset < options.soak; offset += SOAK_BATCH_SIZE) {
+          const batchCount = Math.min(SOAK_BATCH_SIZE, options.soak - offset);
+          // eslint-disable-next-line no-await-in-loop
+          const settled = await Promise.allSettled(
+            Array.from({ length: batchCount }).map((_, idx) => {
+              const index = offset + idx;
+              return deps.notificationQueue.add(
+                EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
+                buildSoakNotificationJobData(runId, index, notificationSoakEmail as string),
+                {
+                  jobId: buildSoakJobId(runId, index),
+                  removeOnComplete: false,
+                  removeOnFail: false,
+                },
+              );
+            }),
+          );
+
+          settled.forEach((result, idx) => {
+            if (result.status === 'fulfilled') {
+              soakFlow.enqueuedActions += 1;
+              return;
+            }
+            enqueueErrors.push(`job ${offset + idx}: ${stringifyError(result.reason)}`);
+          });
+        }
+
+        if (enqueueErrors.length > 0) {
+          soakFlow.warnings.push(`Encountered ${enqueueErrors.length} enqueue errors during soak`);
+        }
+
+        if (soakFlow.enqueuedActions === 0) {
+          throw new Error('No soak jobs were enqueued');
+        }
+
+        const soakCheck = await waitForCondition(async () => {
+          const jobsByState = await listSoakJobsByStates(
+            deps.notificationQueue,
+            runId,
+            [...NOTIFICATION_JOB_STATES, 'paused'],
+            soakRangeEnd,
+          );
+          const stateCounts = Object.keys(jobsByState).reduce((acc, state) => ({
+            ...acc,
+            [state]: jobsByState[state].length,
+          }), {} as Record<string, number>);
+
+          const completed = stateCounts.completed || 0;
+          const failed = stateCounts.failed || 0;
+          const terminal = completed + failed;
+          return {
+            ok: terminal >= soakFlow.enqueuedActions,
+            details: {
+              stateCounts,
+              completed,
+              failed,
+            },
+          };
+        }, options.timeoutSec, options.pollMs);
+
+        soakFlow.completedActions = Number(soakCheck.details?.completed || 0);
+        soakFlow.failedActions = Number(soakCheck.details?.failed || 0);
+
+        if (!soakCheck.ok) {
+          soakFailures.push('Timed out waiting for soak notification jobs to reach terminal states');
+        }
+
+        if (soakFlow.failedActions > 0) {
+          soakFailures.push(`Soak jobs failed: ${soakFlow.failedActions}`);
+        }
+
+        if (soakFlow.completedActions !== soakFlow.enqueuedActions) {
+          soakFailures.push(
+            `Completed soak jobs (${soakFlow.completedActions}) did not match enqueued (${soakFlow.enqueuedActions})`,
+          );
+        }
+
+        soakFlow.queueCountsAfter = await collectNotificationQueueCounts(deps.notificationQueue);
+        soakFlow.redisAfter = await collectRedisDiagnostics(redis);
+
+        if (soakFlow.redisBefore && soakFlow.redisAfter) {
+          const connectedClientsDelta = (
+            soakFlow.redisAfter.clients.connectedClients
+            - soakFlow.redisBefore.clients.connectedClients
+          );
+          const clientListCountDelta = (
+            soakFlow.redisAfter.clients.clientListCount
+            - soakFlow.redisBefore.clients.clientListCount
+          );
+          const blockedClientsDelta = (
+            soakFlow.redisAfter.clients.blockedClients
+            - soakFlow.redisBefore.clients.blockedClients
+          );
+          const usedMemoryDelta = (
+            soakFlow.redisAfter.memory.usedMemory
+            - soakFlow.redisBefore.memory.usedMemory
+          );
+          const memoryGrowthLimit = Math.max(
+            SOAK_MIN_MEMORY_DELTA_BYTES,
+            Math.floor(soakFlow.redisBefore.memory.usedMemory * SOAK_MEMORY_PERCENT_DELTA_LIMIT),
+          );
+          const rejectedConnectionsDelta = (
+            soakFlow.redisAfter.stats.rejectedConnections
+            - soakFlow.redisBefore.stats.rejectedConnections
+          );
+          const evictedKeysDelta = (
+            soakFlow.redisAfter.stats.evictedKeys
+            - soakFlow.redisBefore.stats.evictedKeys
+          );
+
+          soakFlow.thresholds = {
+            connectedClients: {
+              before: soakFlow.redisBefore.clients.connectedClients,
+              after: soakFlow.redisAfter.clients.connectedClients,
+              delta: connectedClientsDelta,
+              limit: SOAK_CLIENT_DELTA_LIMIT,
+            },
+            clientListCount: {
+              before: soakFlow.redisBefore.clients.clientListCount,
+              after: soakFlow.redisAfter.clients.clientListCount,
+              delta: clientListCountDelta,
+              limit: SOAK_CLIENT_DELTA_LIMIT,
+            },
+            blockedClients: {
+              before: soakFlow.redisBefore.clients.blockedClients,
+              after: soakFlow.redisAfter.clients.blockedClients,
+              delta: blockedClientsDelta,
+              limit: 0,
+            },
+            usedMemory: {
+              before: soakFlow.redisBefore.memory.usedMemory,
+              after: soakFlow.redisAfter.memory.usedMemory,
+              delta: usedMemoryDelta,
+              limit: memoryGrowthLimit,
+            },
+            rejectedConnections: {
+              before: soakFlow.redisBefore.stats.rejectedConnections,
+              after: soakFlow.redisAfter.stats.rejectedConnections,
+              delta: rejectedConnectionsDelta,
+            },
+            evictedKeys: {
+              before: soakFlow.redisBefore.stats.evictedKeys,
+              after: soakFlow.redisAfter.stats.evictedKeys,
+              delta: evictedKeysDelta,
+            },
+          };
+
+          if (connectedClientsDelta > SOAK_CLIENT_DELTA_LIMIT) {
+            soakFailures.push(
+              `connected_clients delta ${connectedClientsDelta} exceeded limit ${SOAK_CLIENT_DELTA_LIMIT}`,
+            );
+          }
+          if (clientListCountDelta > SOAK_CLIENT_DELTA_LIMIT) {
+            soakFailures.push(
+              `CLIENT LIST count delta ${clientListCountDelta} exceeded limit ${SOAK_CLIENT_DELTA_LIMIT}`,
+            );
+          }
+          if (blockedClientsDelta > 0) {
+            soakFailures.push(`blocked_clients increased by ${blockedClientsDelta}`);
+          }
+          if (usedMemoryDelta > memoryGrowthLimit) {
+            soakFailures.push(
+              `used_memory delta ${usedMemoryDelta} exceeded limit ${memoryGrowthLimit}`,
+            );
+          }
+        }
+      } catch (error) {
+        soakFailures.push(stringifyError(error));
+      } finally {
+        soakFlow.durationMs = Date.now() - soakStartedAt;
+        try {
+          await removeSoakJobs(deps.notificationQueue, runId, soakRangeEnd);
+        } catch (error) {
+          soakFailures.push(`Failed removing soak jobs: ${stringifyError(error)}`);
+        }
+      }
+
+      soakFlow.passed = soakFailures.length === 0;
+      if (!soakFlow.passed) {
+        soakFlow.error = soakFailures.join('; ');
+      }
+    }
   } catch (error) {
     auditLogger.error(`[queue-exercise] Run failed: ${stringifyError(error)}`);
   } finally {
@@ -835,7 +1187,8 @@ export async function runQueueExerciseLive(
       && summary.flows.notifications.passed
       && summary.flows.resource.passed
       && summary.flows.scan.passed
-      && summary.flows.s3.passed;
+      && summary.flows.s3.passed
+      && summary.flows.soak.passed;
   }
 
   return summary;

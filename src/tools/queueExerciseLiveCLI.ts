@@ -3,7 +3,8 @@ import { hideBin } from 'yargs/helpers';
 import { runQueueExerciseLive } from './queueExerciseLive';
 import { auditLogger } from '../logger';
 
-const argv = yargs(hideBin(process.argv))
+const rawArgs = hideBin(process.argv);
+const argv = yargs(rawArgs)
   .option('region', {
     alias: 'r',
     description: 'Target region ID for generated test entities (auto-selected if omitted)',
@@ -48,6 +49,11 @@ const argv = yargs(hideBin(process.argv))
     type: 'boolean',
     default: true,
   })
+  .option('soak', {
+    alias: 's',
+    description: 'Run notification queue soak test (default 1000 when flag is provided without value)',
+    type: 'number',
+  })
   .help()
   .alias('help', 'h')
   .parseSync();
@@ -55,6 +61,36 @@ const argv = yargs(hideBin(process.argv))
 const output = (value) => {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 };
+
+const soakFlagProvided = rawArgs.some((arg) => (
+  arg === '--soak'
+  || arg === '-s'
+  || arg.startsWith('--soak=')
+  || arg.startsWith('-s=')
+));
+
+const resolveSoakCount = (): number | undefined => {
+  if (!soakFlagProvided) {
+    return undefined;
+  }
+  if (argv.soak === undefined) {
+    return 1000;
+  }
+
+  const soak = Number(argv.soak);
+  if (!Number.isInteger(soak) || soak <= 0) {
+    throw new Error(`Invalid --soak value "${argv.soak}". Use a positive integer.`);
+  }
+  return soak;
+};
+
+let soakCount: number | undefined;
+try {
+  soakCount = resolveSoakCount();
+} catch (error) {
+  auditLogger.error(error);
+  process.exit(2);
+}
 
 const space = process.env.SPACE;
 if (space && space.toLowerCase().includes('prod')) {
@@ -72,6 +108,7 @@ runQueueExerciseLive({
   timeoutSec: argv.timeoutSec,
   pollMs: argv.pollMs,
   keepData: argv.keepData,
+  soak: soakCount,
 })
   .then((summary) => {
     if (argv.json) {
