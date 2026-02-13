@@ -11,8 +11,8 @@ const QUEUE_LIST = new Set();
 export const KEEP_COMPLETED_JOBS = 5;
 export const KEEP_FAILED_JOBS = 10;
 export const DEFAULT_QUEUE_ATTEMPTS = 5;
-export const DEFAULT_REDIS_LIMITER_MAX = 10;
-export const DEFAULT_REDIS_LIMITER_DURATION = 1000;
+export const DEFAULT_REDIS_LIMITER_MAX = 100;
+export const DEFAULT_REDIS_LIMITER_DURATION = 10000;
 
 const limiterConfig = (enableRateLimiter) => {
   if (!enableRateLimiter) {
@@ -21,9 +21,10 @@ const limiterConfig = (enableRateLimiter) => {
 
   return {
     limiter: {
-      // limit to 10 requests per second by default
+      // limit to 100 requests per 10 seconds by default
       max: process.env.REDIS_LIMITER_MAX || DEFAULT_REDIS_LIMITER_MAX,
-      duration: process.env.REDIS_LIMITER_DURATION || DEFAULT_REDIS_LIMITER_DURATION,
+      duration:
+        process.env.REDIS_LIMITER_DURATION || DEFAULT_REDIS_LIMITER_DURATION,
     },
   };
 };
