@@ -111,7 +111,9 @@
     "check-coverage": "node ./src/tools/check-coverage.js --fail-on-uncovered=true",
     "createMonitoringGoalsCLI": "node ./build/server/src/tools/createMonitoringGoalsCLI.js",
     "createMonitoringGoalsCLI:local": "tsx ./src/tools/createMonitoringGoalsCLI.js",
-    "cli:dbMaintenance": "node ./build/server/src/tools/dbMaintenanceCLI.js"
+    "cli:dbMaintenance": "node ./build/server/src/tools/dbMaintenanceCLI.js",
+    "cli:queue-exercise:live": "node ./build/server/src/tools/queueExerciseLiveCLI.js",
+    "cli:queue-exercise:local": "tsx ./src/tools/queueExerciseLiveCLI.ts"
   },
   "repository": {
     "type": "git",
@@ -297,7 +299,7 @@
     "aws-sdk-client-mock": "^4.1.0",
     "aws4": "^1.11.0",
     "axios": "^1.13.5",
-    "bull": "^4.2.0",
+    "bull": "^4.16.5",
     "chardet": "^2.0.0",
     "cheerio": "^1.1.2",
     "client-oauth2": "^4.3.3",
