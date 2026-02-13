@@ -65,9 +65,9 @@ describe('job retention constants', () => {
     expect(DEFAULT_QUEUE_ATTEMPTS).toBe(5);
   });
 
-  it('exports default rate limiter values for 10/sec', () => {
-    expect(DEFAULT_REDIS_LIMITER_MAX).toBe(10);
-    expect(DEFAULT_REDIS_LIMITER_DURATION).toBe(1000);
+  it('exports default rate limiter values for 100 per 10 seconds', () => {
+    expect(DEFAULT_REDIS_LIMITER_MAX).toBe(100);
+    expect(DEFAULT_REDIS_LIMITER_DURATION).toBe(10000);
   });
 });
 
@@ -163,8 +163,8 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
     const config = generateRedisConfig(true);
 
     expect(config.redisOpts.limiter).toEqual({
-      max: 10,
-      duration: 1000,
+      max: DEFAULT_REDIS_LIMITER_MAX,
+      duration: DEFAULT_REDIS_LIMITER_DURATION,
     });
   });
 });

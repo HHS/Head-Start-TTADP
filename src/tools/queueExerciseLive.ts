@@ -19,13 +19,115 @@ import addToScanQueue from '../services/scanQueue';
 import { notificationQueue } from '../lib/mailer';
 import { userById } from '../services/users';
 
+type QueryOptions = Record<string, unknown>;
+
+type PermissionRecord = {
+  userId?: unknown;
+  scopeId?: unknown;
+  regionId?: unknown;
+};
+
+type UserRecord = {
+  id?: unknown;
+  email?: unknown;
+};
+
+type QueueExerciseUserRecord = {
+  id?: unknown;
+  email?: string;
+};
+
+type ResourceRecord = {
+  id: number;
+  title?: unknown;
+  mimeType?: unknown;
+  lastStatusCode?: unknown;
+  metadataUpdatedAt?: unknown;
+};
+
+type FileRecord = {
+  id: number;
+  status?: string;
+};
+
+type QueueJobLike = {
+  id?: string | number;
+  name: string;
+  failedReason?: string;
+  attemptsMade?: number;
+  data?: {
+    displayId?: string;
+    reportPath?: string;
+    report?: {
+      displayId?: string;
+    };
+  };
+  remove: () => Promise<unknown>;
+};
+
+type RedisLike = {
+  info: (...args: unknown[]) => Promise<unknown>;
+  client: (...args: unknown[]) => Promise<unknown>;
+};
+
+type NotificationQueueLike = {
+  getJobCounts: (...states: string[]) => Promise<unknown>;
+  getJobs: (
+    types: string[],
+    start: number,
+    end: number,
+    asc: boolean,
+  ) => Promise<QueueJobLike[]>;
+  add: (
+    name: string,
+    data: Record<string, unknown>,
+    opts: {
+      jobId: string;
+      removeOnComplete: boolean;
+      removeOnFail: boolean;
+    },
+  ) => Promise<unknown>;
+};
+
+type SequelizeLike = {
+  authenticate: () => Promise<unknown>;
+};
+
+type UserModelLike = {
+  findAll: (options: QueryOptions) => Promise<UserRecord[]>;
+  findByPk: (id: number, options?: QueryOptions) => Promise<QueueExerciseUserRecord | null>;
+};
+
+type PermissionModelLike = {
+  findAll: (options: QueryOptions) => Promise<PermissionRecord[]>;
+};
+
+type ResourceModelLike = {
+  create: (values: { url: string }) => Promise<ResourceRecord>;
+  findByPk: (id: number, options?: QueryOptions) => Promise<ResourceRecord | null>;
+  destroy: (options: QueryOptions) => Promise<unknown>;
+};
+
+type FileModelLike = {
+  findByPk: (id: number, options?: QueryOptions) => Promise<FileRecord | null>;
+  destroy: (options: QueryOptions) => Promise<unknown>;
+};
+
+type QueueExerciseDb = {
+  sequelize: SequelizeLike;
+  User: UserModelLike;
+  Permission: PermissionModelLike;
+  Resource: ResourceModelLike;
+  File: FileModelLike;
+};
+
 const {
   sequelize,
   User,
   Permission,
   Resource,
   File,
-} = db as any;
+} = db as unknown as QueueExerciseDb;
 
 const DEFAULT_TIMEOUT_SEC = 300;
 const DEFAULT_POLL_MS = 5000;
@@ -185,13 +287,13 @@ type QueueExerciseSummary = {
 };
 
 type QueueExerciseDeps = {
-  sequelize: any;
+  sequelize: SequelizeLike;
   getRedis: typeof getRedis;
   generateS3Config: typeof generateS3Config;
-  User: any;
-  Permission: any;
-  Resource: any;
-  File: any;
+  User: UserModelLike;
+  Permission: PermissionModelLike;
+  Resource: ResourceModelLike;
+  File: FileModelLike;
   createEvent: typeof createEvent;
   updateEvent: typeof updateEvent;
   destroyEvent: typeof destroyEvent;
@@ -202,7 +304,7 @@ type QueueExerciseDeps = {
   uploadFile: typeof uploadFile;
   downloadFile: typeof downloadFile;
   deleteFileFromS3: typeof deleteFileFromS3;
-  notificationQueue: typeof notificationQueue;
+  notificationQueue: NotificationQueueLike;
   userById: typeof userById;
 };
 
@@ -289,7 +391,7 @@ const stringifyError = (error: unknown) => {
   return String(error);
 };
 
-const jobMatchesRun = (job: any, eventDisplayId: string, runId: string) => {
+const jobMatchesRun = (job: QueueJobLike, eventDisplayId: string, runId: string) => {
   const displayId = job?.data?.displayId
     || job?.data?.report?.displayId
     || '';
@@ -469,7 +571,7 @@ const parseRedisInfoNumericField = (info: string, field: string): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const collectRedisDiagnostics = async (redis: any): Promise<RedisDiagnostics> => {
+const collectRedisDiagnostics = async (redis: RedisLike): Promise<RedisDiagnostics> => {
   const [clientsInfo, memoryInfo, statsInfo, clientListRaw] = await Promise.all([
     redis.info('clients'),
     redis.info('memory'),
@@ -498,8 +600,12 @@ const collectRedisDiagnostics = async (redis: any): Promise<RedisDiagnostics> =>
   };
 };
 
-const collectNotificationQueueCounts = async (queue: any): Promise<Record<string, number>> => {
-  const counts = await queue.getJobCounts(...NOTIFICATION_QUEUE_COUNT_STATES);
+const collectNotificationQueueCounts = async (
+  queue: NotificationQueueLike,
+): Promise<Record<string, number>> => {
+  const counts = (await queue.getJobCounts(
+    ...NOTIFICATION_QUEUE_COUNT_STATES,
+  )) as Record<string, unknown>;
   return NOTIFICATION_QUEUE_COUNT_STATES.reduce((acc, key) => ({
     ...acc,
     [key]: Number(counts?.[key] || 0),
@@ -524,7 +630,7 @@ const buildSoakNotificationJobData = (runId: string, index: number, emailTo: str
 };
 
 const listSoakJobsByStates = async (
-  queue: any,
+  queue: NotificationQueueLike,
   runId: string,
   states: string[],
   rangeEnd: number,
@@ -536,11 +642,15 @@ const listSoakJobsByStates = async (
   }));
   return all.reduce(
     (acc, [state, jobs]) => ({ ...acc, [state]: jobs }),
-    {} as Record<string, any[]>,
+    {} as Record<string, QueueJobLike[]>,
   );
 };
 
-const removeSoakJobs = async (queue: any, runId: string, rangeEnd: number): Promise<number> => {
+const removeSoakJobs = async (
+  queue: NotificationQueueLike,
+  runId: string,
+  rangeEnd: number,
+): Promise<number> => {
   const jobsByState = await listSoakJobsByStates(
     queue,
     runId,
@@ -558,7 +668,7 @@ const removeSoakJobs = async (queue: any, runId: string, rangeEnd: number): Prom
   return jobs.length;
 };
 
-const aggregateFailedReasons = (jobs: any[]) => {
+const aggregateFailedReasons = (jobs: QueueJobLike[]) => {
   const counts = jobs.reduce((acc, job) => {
     const reason = String(job?.failedReason || '').trim() || 'Unknown failure';
     return {
@@ -572,7 +682,7 @@ const aggregateFailedReasons = (jobs: any[]) => {
     .sort((a, b) => b.count - a.count);
 };
 
-const aggregateFailedReasonsByAction = (jobs: any[]) => {
+const aggregateFailedReasonsByAction = (jobs: QueueJobLike[]) => {
   const counts = jobs.reduce((acc, job) => {
     const action = String(job?.name || 'unknownAction');
     const reason = String(job?.failedReason || '').trim() || 'Unknown failure';
@@ -595,7 +705,7 @@ const aggregateFailedReasonsByAction = (jobs: any[]) => {
     .sort((a, b) => b.count - a.count);
 };
 
-const buildFailedJobSamples = (jobs: any[], limit: number) => jobs
+const buildFailedJobSamples = (jobs: QueueJobLike[], limit: number) => jobs
   .slice(0, limit)
   .map((job) => ({
     id: String(job?.id || ''),
@@ -855,23 +965,30 @@ export async function runQueueExerciseLive(
         endDate: today,
       };
 
-      const createdEvent = await deps.createEvent({
+      const createdEventRequest = {
         ownerId: options.ownerUserId,
         pocIds: [options.ownerUserId],
         collaboratorIds: [],
         regionId: options.region,
         data: baseEventData,
-      } as any);
+      };
+      const createdEvent = await deps.createEvent(
+        createdEventRequest as unknown as Parameters<typeof createEvent>[0],
+      );
       createdEventId = createdEvent.id;
       summary.entities.eventId = createdEventId;
 
-      await deps.updateEvent(createdEventId, {
+      const addCollaboratorEventRequest = {
         ownerId: options.ownerUserId,
         pocIds: [options.ownerUserId],
         collaboratorIds: [collaboratorUserId],
         regionId: options.region,
         data: baseEventData,
-      } as any);
+      };
+      await deps.updateEvent(
+        createdEventId,
+        addCollaboratorEventRequest as unknown as Parameters<typeof updateEvent>[1],
+      );
 
       const createdSession = await deps.createSession({
         eventId: createdEventId,
@@ -884,7 +1001,7 @@ export async function runQueueExerciseLive(
       });
       summary.entities.sessionId = createdSession.id;
 
-      await deps.updateEvent(createdEventId, {
+      const completeEventRequest = {
         ownerId: options.ownerUserId,
         pocIds: [options.ownerUserId],
         collaboratorIds: [collaboratorUserId],
@@ -893,14 +1010,18 @@ export async function runQueueExerciseLive(
           ...baseEventData,
           status: TRAINING_REPORT_STATUSES.COMPLETE,
         },
-      } as any);
+      };
+      await deps.updateEvent(
+        createdEventId,
+        completeEventRequest as unknown as Parameters<typeof updateEvent>[1],
+      );
 
       const notificationCheck = await waitForCondition(async () => {
         const observedActions = new Set<string>();
         const completedActions = new Set<string>();
         const failedActions = new Set<string>();
         const terminalActions = new Set<string>();
-        const failedJobs: any[] = [];
+        const failedJobs: QueueJobLike[] = [];
         const completedActionMeta: Record<string, { jobId: string }> = {};
         const failedActionMeta: Record<string, { jobId: string; failedReason: string }> = {};
         const stateCounts: Record<string, number> = {};
@@ -963,7 +1084,7 @@ export async function runQueueExerciseLive(
       );
       const failedReasonCountsRaw = notificationCheck.details?.failedReasonCounts;
       summary.flows.notifications.failedReasonCounts = Array.isArray(failedReasonCountsRaw)
-        ? failedReasonCountsRaw.map((row: any) => ({
+        ? (failedReasonCountsRaw as Array<{ reason?: unknown; count?: unknown }>).map((row) => ({
           reason: String(row?.reason || 'Unknown failure'),
           count: Number(row?.count || 0),
         }))
@@ -1083,7 +1204,7 @@ export async function runQueueExerciseLive(
       createdFileKey = key;
       summary.entities.fileKey = key;
 
-      await deps.uploadFile(body, key, { mime: 'text/plain', ext: '.txt' } as any);
+      await deps.uploadFile(body, key, { mime: 'text/plain', ext: '.txt' });
       const file = await deps.createFileMetaData(`queue-exercise-${runId}.txt`, key, body.length);
       createdFileId = file.id;
       summary.entities.fileId = file.id;
