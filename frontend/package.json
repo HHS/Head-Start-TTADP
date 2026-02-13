@@ -75,10 +75,10 @@
     "eject": "craco eject",
     "test": "cross-env TZ=America/New_York craco test",
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/craco test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
-    "lint": "biome lint src",
+    "lint": "biome check src",
     "lint:fix": "biome check --write src",
     "lint:fix:single": "biome check --write --no-errors-on-unmatched",
-    "lint:ci": "mkdir -p reports; biome lint src; LINT_EXIT=$?; biome lint --reporter junit src > reports/lint.xml; JUNIT_EXIT=$?; [ $LINT_EXIT -eq 0 ] && [ $JUNIT_EXIT -eq 0 ]"
+    "lint:ci": "mkdir -p reports; biome check src --reporter summary; LINT_EXIT=$?; biome check src --reporter junit > reports/lint.xml; JUNIT_EXIT=$?; [ $LINT_EXIT -eq 0 ] && [ $JUNIT_EXIT -eq 0 ]"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",
