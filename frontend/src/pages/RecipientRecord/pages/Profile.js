@@ -17,7 +17,6 @@ export default function Profile({
   recipientId,
 }) {
   const { hasMonitoringData, hasClassData } = useGrantData();
-
   return (
     <>
       <Helmet>
@@ -28,18 +27,17 @@ export default function Profile({
           <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
             <RecipientSummary summary={recipientSummary} />
           </Grid>
-          <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
-            <RecipientSpotlight recipientId={recipientId} regionId={regionId} />
-          </Grid>
           <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <RecipientLeadership recipientId={recipientId} regionId={regionId} />
           </Grid>
           <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <GrantList summary={recipientSummary} />
           </Grid>
-          {(recipientSummary.grants || []).map((grant) => (
-            <React.Fragment key={grant.number}>
-              {hasMonitoringData(grant.number) || hasClassData(grant.number) ? (
+          {(recipientSummary.grants || []).map((grant) => {
+            const hasLeftColumn = hasClassData(grant.number)
+              || hasMonitoringData(grant.number);
+            return (
+              <React.Fragment key={grant.number}>
                 <Grid desktop={{ col: 12 }}>
                   <h2 className="smart-hub-title-big-serif">
                     Grant number
@@ -47,37 +45,43 @@ export default function Profile({
                     {grant.number}
                   </h2>
                 </Grid>
-              ) : null}
-              <Grid
-                desktop={{ col: 6 }}
-                tabletLg={{ col: 12 }}
-                hidden={!hasClassData(grant.number)}
-              >
-                <div>
-                  <ClassReview
-                    grantNumber={grant.number}
-                    regionId={regionId}
-                    recipientId={recipientId}
-                  />
-                </div>
-              </Grid>
 
-              <Grid
-                desktop={{ col: 6 }}
-                tabletLg={{ col: 12 }}
-                hidden={!hasMonitoringData(grant.number)}
-              >
-                <div>
-                  <MonitoringReview
-                    grantNumber={grant.number}
-                    regionId={regionId}
-                    recipientId={recipientId}
-                  />
-                </div>
-              </Grid>
+                <Grid row gap={3} desktop={{ col: 12 }}>
+                  <Grid
+                    desktop={{ col: 6 }}
+                    tabletLg={{ col: 12 }}
+                    hidden={!hasLeftColumn}
+                  >
+                    <div className={hasClassData(grant.number) ? 'margin-bottom-4' : ''}>
+                      <ClassReview
+                        grantNumber={grant.number}
+                        regionId={regionId}
+                        recipientId={recipientId}
+                      />
+                    </div>
+                    <div>
+                      <MonitoringReview
+                        grantNumber={grant.number}
+                        regionId={regionId}
+                        recipientId={recipientId}
+                      />
+                    </div>
+                  </Grid>
 
-            </React.Fragment>
-          ))}
+                  <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                    <div>
+                      <RecipientSpotlight
+                        grantId={grant.id}
+                        grantNumber={grant.number}
+                        recipientId={recipientId}
+                        regionId={regionId}
+                      />
+                    </div>
+                  </Grid>
+                </Grid>
+              </React.Fragment>
+            );
+          })}
         </Grid>
       </div>
     </>

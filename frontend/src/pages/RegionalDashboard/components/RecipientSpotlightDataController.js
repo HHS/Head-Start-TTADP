@@ -61,6 +61,8 @@ export default function RecipientSpotlightDataController({
     sortConfig.offset,
     filterQuery,
     recipientsPerPage,
+    null, // grantId
+    true, // mustHaveIndicators
   );
 
   const {

@@ -36,6 +36,7 @@ describe('Recipient Record - Profile', () => {
       recipientId: 1, regionId: 1, reviewStatus: 'Compliant', reviewDate: '02/02/2024', reviewType: 'Follow-up', grant: 'asdfsjkfd',
     });
     fetchMock.get('/api/monitoring/class/1/region/1/grant/asdfsjkfd', {});
+    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
     const summary = {
       recipientId: '44',
       grants: [
@@ -63,9 +64,10 @@ describe('Recipient Record - Profile', () => {
     expect(await screen.findByRole('heading', { name: /Monitoring review/i })).toBeInTheDocument();
   });
 
-  it('doesnt show the class/monitoring review headings if there is no grant data', async () => {
+  it('always shows grant heading even when no class or monitoring data', async () => {
     fetchMock.get('/api/monitoring/1/region/1/grant/asdfsjkfd', { body: null });
     fetchMock.get('/api/monitoring/class/1/region/1/grant/asdfsjkfd', {});
+    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
     const summary = {
       recipientId: '44',
       grants: [{
@@ -77,8 +79,8 @@ describe('Recipient Record - Profile', () => {
     };
     renderRecipientProfile(summary);
 
-    // should not see the heading "Grant number asdf"
-    expect(screen.queryByRole('heading', { name: /grant number asdfsjkfd/i })).not.toBeInTheDocument();
+    // Grant heading should always be visible now
+    expect(await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })).toBeInTheDocument();
   });
 
   it('displays class data', async () => {
@@ -86,6 +88,7 @@ describe('Recipient Record - Profile', () => {
     fetchMock.get('/api/monitoring/class/1/region/1/grant/asdfsjkfd', {
       recipientId: 1, regionId: 1, grantNumber: 'asdfsjkfd', received: '03/30/2023', ES: '5.8611', CO: '5.6296', IS: '3.2037',
     });
+    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
     const summary = {
       recipientId: '44',
       grants: [{
@@ -97,7 +100,6 @@ describe('Recipient Record - Profile', () => {
     };
     renderRecipientProfile(summary);
 
-    // should not see the heading "Grant number asdf"
     expect(await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: /CLASS® review/i })).toBeInTheDocument();
   });
