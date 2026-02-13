@@ -8,7 +8,9 @@ import NoResultsFound from '../components/NoResultsFound';
 import './StandardGoalList.scss';
 
 export function StandardGoalsListTable({
-  data, loading,
+  data,
+  loading,
+  title,
 }) {
   // Define the columns for the SimpleSortableTable
   const columns = [
@@ -19,9 +21,9 @@ export function StandardGoalsListTable({
   return (
     <Container paddingX={0} paddingY={1} loading={loading} loadingLabel="Goals list loading" className="ttahub-goal-counts-container margin-bottom-0 height-full">
       <div className="ttahub-goal-counts-table inline-size-auto maxw-full margin-bottom-0">
-        <div className="display-flex flex-wrap flex-align-center padding-3 goal-list-header">
+        <div className="display-flex flex-wrap flex-column flex-justify padding-3 goal-list-header">
           <WidgetH2 classNames="padding-0">
-            Goals categories in Activity Reports
+            {title}
           </WidgetH2>
           <p className="usa-prose padding-0 margin-0">Data reflects activity starting on 09/01/2025.</p>
         </div>
@@ -52,10 +54,12 @@ StandardGoalsListTable.propTypes = {
     ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
+  title: PropTypes.string,
 };
 
 StandardGoalsListTable.defaultProps = {
   data: [],
+  title: 'Goals categories in Activity Reports',
 };
 
 export default withWidgetData(StandardGoalsListTable, 'standardGoalsList');

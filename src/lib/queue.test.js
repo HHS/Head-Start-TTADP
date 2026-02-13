@@ -13,6 +13,9 @@ import { auditLogger } from '../logger';
 import {
   generateRedisConfig,
   increaseListeners,
+  DEFAULT_QUEUE_ATTEMPTS,
+  DEFAULT_REDIS_LIMITER_MAX,
+  DEFAULT_REDIS_LIMITER_DURATION,
   KEEP_COMPLETED_JOBS,
   KEEP_FAILED_JOBS,
 } from './queue';
@@ -56,6 +59,15 @@ describe('job retention constants', () => {
 
   it('exports KEEP_FAILED_JOBS with correct value', () => {
     expect(KEEP_FAILED_JOBS).toBe(10);
+  });
+
+  it('exports DEFAULT_QUEUE_ATTEMPTS with correct value', () => {
+    expect(DEFAULT_QUEUE_ATTEMPTS).toBe(5);
+  });
+
+  it('exports default rate limiter values for 10/sec', () => {
+    expect(DEFAULT_REDIS_LIMITER_MAX).toBe(10);
+    expect(DEFAULT_REDIS_LIMITER_DURATION).toBe(1000);
   });
 });
 
@@ -133,6 +145,28 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
       },
     });
   });
+
+  it('uses default rate limiter settings when env vars are absent', () => {
+    process.env.VCAP_SERVICES = JSON.stringify({
+      'aws-elasticache-redis': [{
+        credentials: {
+          host: 'test-host',
+          port: '1234',
+          password: 'test-password',
+          uri: 'test-uri',
+        },
+      }],
+    });
+    delete process.env.REDIS_LIMITER_MAX;
+    delete process.env.REDIS_LIMITER_DURATION;
+
+    const config = generateRedisConfig(true);
+
+    expect(config.redisOpts.limiter).toEqual({
+      max: 10,
+      duration: 1000,
+    });
+  });
 });
 
 describe('newQueue', () => {
@@ -176,6 +210,7 @@ describe('newQueue', () => {
           connectionName: expect.any(String),
         }),
         defaultJobOptions: expect.objectContaining({
+          attempts: DEFAULT_QUEUE_ATTEMPTS,
           removeOnComplete: KEEP_COMPLETED_JOBS,
           removeOnFail: KEEP_FAILED_JOBS,
         }),
@@ -218,6 +253,7 @@ describe('newQueue', () => {
           connectionName: expect.any(String),
         }),
         defaultJobOptions: expect.objectContaining({
+          attempts: DEFAULT_QUEUE_ATTEMPTS,
           removeOnComplete: KEEP_COMPLETED_JOBS,
           removeOnFail: KEEP_FAILED_JOBS,
         }),
