@@ -279,7 +279,7 @@ describe('TrainingReports', () => {
     })
 
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: /training reports - region 2/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /training reports - your region/i })).toBeInTheDocument()
   })
 
   it('renders user without a region', async () => {
@@ -426,7 +426,7 @@ describe('TrainingReports', () => {
     act(() => {
       renderTrainingReports()
     })
-    expect(await screen.findByRole('heading', { name: /training reports - region 1/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /training reports - your region/i })).toBeInTheDocument()
   })
 
   it('renders the header with all regions', async () => {
@@ -443,7 +443,7 @@ describe('TrainingReports', () => {
     act(() => {
       renderTrainingReports(centralOfficeUser)
     })
-    expect(await screen.findByRole('heading', { name: /training reports - all regions/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /training reports - your regions/i })).toBeInTheDocument()
   })
 
   // Filters.
@@ -476,7 +476,7 @@ describe('TrainingReports', () => {
     renderTrainingReports(user)
 
     // Assert initial data.
-    expect(await screen.findByRole('heading', { name: /training reports - all regions/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /training reports - your regions/i })).toBeInTheDocument()
     expect(await screen.findByText(/not started event 1/i)).toBeInTheDocument()
     expect(await screen.findByText(/not started event 2/i)).toBeInTheDocument()
 

@@ -1,13 +1,19 @@
 import PropTypes from 'prop-types'
 
 import {
-  startDateFilter,
+  startDateFilter as baseStartDateFilter,
   regionFilter,
   collaboratorsFilter,
   creatorFilter,
   eventIdFilter,
   goalCategoryFilter,
 } from '../../components/filter/trainingReportFilters'
+
+// Create page-specific filter with "Event start date" label
+const startDateFilter = {
+  ...baseStartDateFilter,
+  display: 'Event Start Date',
+}
 
 const TRAINING_REPORT_FILTER_CONFIG = [startDateFilter, creatorFilter, collaboratorsFilter, eventIdFilter, goalCategoryFilter, regionFilter]
 

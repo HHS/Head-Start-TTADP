@@ -912,52 +912,6 @@ describe('SessionReportForm', () => {
     expect(history.location.pathname).toContain('/session/999')
   })
 
-  it('redirects when event owner creates session and user is not admin', async () => {
-    fetchMock.post(sessionsUrl, {
-      id: 999,
-      eventId: 1,
-      regionId: 1,
-      data: {
-        sessionName: 'Test Session Name',
-      },
-      event: {
-        regionId: 1,
-        ownerId: 1,
-        pocIds: [],
-        collaboratorIds: [1],
-        data: {
-          eventId: 'R01-PD-1234',
-          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-        },
-      },
-    })
-
-    const pushSpy = jest.spyOn(history, 'push')
-    const replaceSpy = jest.spyOn(history, 'replace')
-
-    await act(async () => {
-      renderSessionForm('1', 'session-summary', 'new')
-    })
-
-    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true))
-
-    // Verify redirect with message when event owner creates session
-    await waitFor(() => expect(pushSpy).toHaveBeenCalled())
-
-    // Assert history.push was called with correct path and message object
-    expect(pushSpy).toHaveBeenCalledWith('/training-reports/in-progress', {
-      message: expect.objectContaining({
-        messageTemplate: 'sessionCreated',
-        sessionName: 'Test Session Name',
-        eventId: 'R01-PD-1234',
-        dateStr: expect.stringMatching(/\d{2}\/\d{2}\/\d{4} at \d{1,2}:\d{2} [ap]m/),
-      }),
-    })
-
-    // Verify replace was NOT called (mutually exclusive paths)
-    expect(replaceSpy).not.toHaveBeenCalled()
-  })
-
   it('sets reportId.current when existing session is fetched', async () => {
     jest.useFakeTimers()
     const url = join(sessionsUrl, 'id', '777')

@@ -67,6 +67,12 @@ export default function Submit({ onSaveDraft, onUpdatePage, onSubmit, reviewSubm
     approverOptions = approverOptions.filter((a) => a.id !== user.id)
   }
 
+  // filter out event owner from approver list (owner cannot approve their own event's sessions)
+  const eventOwnerId = event?.ownerId
+  if (eventOwnerId) {
+    approverOptions = approverOptions.filter((a) => a.id !== eventOwnerId)
+  }
+
   const onFormSubmit = async () => {
     const valid = await trigger()
 

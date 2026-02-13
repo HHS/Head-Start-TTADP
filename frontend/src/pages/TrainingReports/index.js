@@ -92,13 +92,14 @@ export default function TrainingReports({ match }) {
   // eslint-disable-next-line max-len
   const [msg, setMsg] = useState(evaluateMessageFromHistory(history))
 
-  const { regions, defaultRegion, allRegionsFilters, filters, setFilters, onApplyFilters, onRemoveFilter, filterConfig } = useFilters(
-    user,
-    FILTER_KEY,
-    true, // manage regions
-    [],
-    TRAINING_REPORT_FILTER_CONFIG
-  )
+  const { regions, defaultRegion, allRegionsFilters, hasMultipleRegions, filters, setFilters, onApplyFilters, onRemoveFilter, filterConfig } =
+    useFilters(
+      user,
+      FILTER_KEY,
+      true, // manage regions
+      [],
+      TRAINING_REPORT_FILTER_CONFIG
+    )
 
   useEffect(() => {
     async function fetchEvents() {
@@ -121,13 +122,10 @@ export default function TrainingReports({ match }) {
   }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filters])
 
   const regionLabel = () => {
-    if (defaultRegion === 14) {
-      return 'all regions'
+    if (defaultRegion === 14 || hasMultipleRegions) {
+      return 'your regions'
     }
-    if (defaultRegion > 0) {
-      return `region ${defaultRegion.toString()}`
-    }
-    return ''
+    return 'your region'
   }
 
   const onRemoveSession = async (session) => {

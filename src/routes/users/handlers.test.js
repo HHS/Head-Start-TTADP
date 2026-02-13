@@ -598,7 +598,7 @@ describe('User handlers', () => {
       await getTrainingReportTrainersByRegion(req, res)
       expect(userById).toHaveBeenCalledTimes(1)
       expect(currentUserId).toHaveBeenCalledTimes(1)
-      expect(usersByRoles).toHaveBeenNthCalledWith(1, ['HS', 'SS', 'ECS', 'GS', 'FES', 'TTAC', 'ECM', 'GSM'], 1)
+      expect(usersByRoles).toHaveBeenNthCalledWith(1, ['HS', 'SS', 'ECS', 'GS', 'FES', 'TTAC', 'ECM', 'GSM', 'AA'], 1)
       expect(res.json).toHaveBeenCalledWith([...mockRegionalTrainers])
     })
 
@@ -705,7 +705,7 @@ describe('User handlers', () => {
       await getTrainingReportTrainersByRegionAndNationalCenter(req, res)
       expect(userById).toHaveBeenCalledTimes(1)
       expect(currentUserId).toHaveBeenCalledTimes(1)
-      expect(usersByRoles).toHaveBeenNthCalledWith(1, ['HS', 'SS', 'ECS', 'GS', 'FES', 'TTAC', 'ECM', 'GSM'], [1])
+      expect(usersByRoles).toHaveBeenNthCalledWith(1, ['HS', 'SS', 'ECS', 'GS', 'FES', 'TTAC', 'ECM', 'GSM', 'AA'], [1])
       expect(usersByRoles).toHaveBeenNthCalledWith(2, ['NC'])
       expect(res.json).toHaveBeenCalledWith([...mockRegionalTrainers, ...mockNCTrainers])
     })

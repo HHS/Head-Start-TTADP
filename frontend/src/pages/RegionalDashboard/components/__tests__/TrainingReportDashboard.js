@@ -7,7 +7,7 @@ import AppLoadingContext from '../../../../AppLoadingContext'
 
 describe('Training report Dashboard page', () => {
   const hoursOfTrainingUrl = '/api/widgets/trHoursOfTrainingByNationalCenter'
-  const reasonListUrl = '/api/widgets/trReasonList'
+  const standardGoalsListUrl = '/api/widgets/trStandardGoalList'
   const overviewUrl = '/api/widgets/trOverview'
   const sessionsByTopicUrl = '/api/widgets/trSessionsByTopic'
 
@@ -22,7 +22,7 @@ describe('Training report Dashboard page', () => {
       numParticipants: '0',
       numSessions: '0',
     })
-    fetchMock.get(reasonListUrl, [])
+    fetchMock.get(standardGoalsListUrl, [])
     fetchMock.get(hoursOfTrainingUrl, [])
     fetchMock.get(sessionsByTopicUrl, [])
   })
@@ -41,13 +41,13 @@ describe('Training report Dashboard page', () => {
     renderTest()
 
     expect(fetchMock.calls(overviewUrl)).toHaveLength(1)
-    expect(fetchMock.calls(reasonListUrl)).toHaveLength(1)
+    expect(fetchMock.calls(standardGoalsListUrl)).toHaveLength(1)
     expect(fetchMock.calls(hoursOfTrainingUrl)).toHaveLength(1)
     expect(fetchMock.calls(sessionsByTopicUrl)).toHaveLength(1)
 
     expect(document.querySelector('.smart-hub--dashboard-overview-container')).toBeTruthy()
 
-    expect(screen.getByText('Reasons in Training Reports')).toBeInTheDocument()
+    expect(screen.getByText('Goal categories in Training Report sessions')).toBeInTheDocument()
     expect(screen.getByText('Hours of training by National Center')).toBeInTheDocument()
     expect(screen.getByText('Number of TR sessions by topic')).toBeInTheDocument()
   })

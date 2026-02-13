@@ -99,15 +99,18 @@ export default function useSessionFormRoleAndPages(hookForm) {
     }
   }, [formData, user.id])
 
+  // Treat owner as collaborator for page access
+  const isOwnerOrCollaborator = isOwner || isCollaborator
+
   const applicationPages = useMemo(() => {
     let pagesWithReview = []
     if (isAdminUser || isApprover) {
       pagesWithReview = [pages.sessionSummary, pages.participants, pages.supportingAttachments, pages.nextSteps]
-    } else if (isCollaborator && isRegionalNoNationalCenters) {
+    } else if (isOwnerOrCollaborator && isRegionalNoNationalCenters) {
       pagesWithReview = [pages.sessionSummary, pages.participants, pages.supportingAttachments, pages.nextSteps]
-    } else if (isCollaborator && isRegionalWithNationalCenters && !facilitationIncludesRegion && isSubmitted) {
+    } else if (isOwnerOrCollaborator && isRegionalWithNationalCenters && !facilitationIncludesRegion && isSubmitted) {
       pagesWithReview = [pages.sessionSummary, pages.participants, pages.supportingAttachments, pages.nextSteps]
-    } else if (isCollaborator && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
+    } else if (isOwnerOrCollaborator && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
       pagesWithReview = [pages.sessionSummary]
     } else if (isPoc && isRegionalWithNationalCenters && facilitationIncludesRegion) {
       pagesWithReview = [pages.sessionSummary, pages.participants, pages.supportingAttachments, pages.nextSteps]
@@ -127,7 +130,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
     facilitationIncludesRegion,
     isAdminUser,
     isApprover,
-    isCollaborator,
+    isOwnerOrCollaborator,
     isPoc,
     isSubmitted,
     isRegionalNoNationalCenters,

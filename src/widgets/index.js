@@ -7,7 +7,7 @@ import targetPopulationTable from './targetPopulationTable'
 import frequencyGraph from './frequencyGraph'
 import goalStatusByGoalName from './goalStatusByGoalName'
 import trOverview from './trOverview'
-import trReasonList from './trReasonList'
+import trStandardGoalList from './trStandardGoalList'
 import trSessionsByTopic from './trSessionsByTopic'
 import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter'
 
@@ -26,7 +26,7 @@ export default {
   goalStatusByGoalName,
 
   trOverview,
-  trReasonList,
+  trStandardGoalList,
   trSessionsByTopic,
   trHoursOfTrainingByNationalCenter,
 }

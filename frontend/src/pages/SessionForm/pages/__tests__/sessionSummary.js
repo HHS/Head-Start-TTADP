@@ -151,17 +151,17 @@ describe('sessionSummary', () => {
       ])
 
       fetchMock.get('/api/users/trainers/regional/region/1', [
-        { id: 1, fullName: 'Regional Trainer 1' },
-        { id: 2, fullName: 'Regional Trainer 2' },
-        { id: 3, fullName: 'Regional Trainer 3' },
-        { id: 4, fullName: 'Regional Trainer 4' },
+        { id: 1, fullName: 'Regional Trainer 1', roles: [{ name: 'GS' }] },
+        { id: 2, fullName: 'Regional Trainer 2', roles: [{ name: 'GS' }] },
+        { id: 3, fullName: 'Regional Trainer 3', roles: [{ name: 'GS' }] },
+        { id: 4, fullName: 'Regional Trainer 4', roles: [{ name: 'GS' }] },
       ])
 
       fetchMock.get('/api/users/trainers/national-center/region/1', [
-        { id: 1, fullName: 'National Center Trainer 1' },
-        { id: 2, fullName: 'National Center Trainer 2' },
-        { id: 3, fullName: 'National Center Trainer 3' },
-        { id: 4, fullName: 'National Center Trainer 4' },
+        { id: 1, fullName: 'National Center Trainer 1', roles: [{ name: 'NC' }] },
+        { id: 2, fullName: 'National Center Trainer 2', roles: [{ name: 'NC' }] },
+        { id: 3, fullName: 'National Center Trainer 3', roles: [{ name: 'NC' }] },
+        { id: 4, fullName: 'National Center Trainer 4', roles: [{ name: 'NC' }] },
       ])
 
       fetchMock.get('/api/courses', [

@@ -1,36 +1,38 @@
 # Technical Details for the TTAHUB
 
-## Languages
-- TypeScript/Javascript/Node.js
-- HTML/CSS
-- Postgres
-- Bash
+## Backend
+- Node.js (22.22.0)
+- TypeScript & Javascript (mixed)
+- PostgreSQL (15.12) via Sequelize ORM
 
-## Frameworks & Libraries
-- React
-- Express
-- Sequelize
-- Bull
+## Frontend
+- React (17)
+- Javascript
+- USWDS (U.S. Web Design System)
 
-## Development/Deployment
-- Git/Github
-- Yarn
-- Docker
-- CircleCI
-- AXE CI
-- Cucumber
-- Jest
-- Minio
-- ClamAV/OWASP
+## Testing
+- Jest (unit/integration)
+- Playwright (E2E)
+- Cucumber (BDD)
+- Axe (accessibility)
 
 ## Infrastructure
-- Terraform
 - Cloud.gov
-- - RDS, EC2, S3
-- - Kibana
-- Redis
+- Cloud Foundry
+- CircleCI
 
-## Documentation
-- Github
-- Swagger/Redoc
-- PlantUML
+### Frontend Build Variables
+
+| Variable | Description |
+|-|-|
+| `REACT_APP_INACTIVE_MODAL_TIMEOUT` | Amount of time before the "Idle Logout" modal is shown to a user, in milliseconds |
+| `REACT_APP_SESSION_TIMEOUT` | Amount of time before an inactive user is automatically logged out |
+
+## Other
+- Worker Queue: Redis + Bull
+- Package Manager: Yarn Classic (v1)
+- Scripting: Bash
+- Security: ClamAV/OWASP
+- Local Dev: Docker
+- Documentation: Swagger/Redoc
+- Diagrams: PlantUML
