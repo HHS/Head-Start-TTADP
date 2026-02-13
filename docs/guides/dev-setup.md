@@ -74,7 +74,7 @@ You must also install and run minio locally to use the file upload functionality
 
 ## Precommit hooks
 
-Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in `.githooks/pre-commit`, also contains code to auto-format our terraform files.
+Our CI will fail if code is committed that doesn't pass our linter (Biome). This repository contains a pre-commit hook that runs Biome's autofix check on all staged JavaScript and TypeScript files so that any autofixable issues will be fixed. The pre-commit hook, in `.githooks/pre-commit`, also contains code to auto-format our terraform files, which you can read more about [here](terraform/README.md).
 
 If you are not using your own custom pre-commit hooks:
 
