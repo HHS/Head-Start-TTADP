@@ -25,11 +25,11 @@
     "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "test:e2e:ui": "npx playwright test --ui tests/e2e",
-    "lint": "eslint src",
-    "lint:ci": "eslint -f eslint-formatter-multiple src",
+    "lint": "biome lint src",
+    "lint:ci": "mkdir -p reports && biome lint --reporter junit src > reports/lint.xml",
     "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
-    "lint:fix": "eslint --fix src",
-    "lint:fix:single": "eslint --fix",
+    "lint:fix": "biome check --write src",
+    "lint:fix:single": "biome check --write --no-errors-on-unmatched",
     "lint:fix:all": "yarn lint:fix && yarn --cwd frontend lint:fix",
     "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
     "docs:serve": "npx @redocly/cli preview-docs -p 5003 docs/openapi/index.yaml",
@@ -157,51 +157,6 @@
     "babel-jest": "29.7.0",
     "form-data": "^4.0.0"
   },
-  "eslintConfig": {
-    "extends": [
-      "airbnb-base",
-      "airbnb-typescript/base",
-      "plugin:jest/recommended",
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaVersion": 2020,
-      "project": "./src/tsconfig.json"
-    },
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "ignorePatterns": [
-      "node_modules/*",
-      "playwright.config.js",
-      "tests/*",
-      "packages/*",
-      "frontend/public/*",
-      "ops/*",
-      "cucumber/*"
-    ],
-    "rules": {
-      "linebreak-style": 0,
-      "@typescript-eslint/no-var-requires": 0,
-      "@typescript-eslint/no-unused-vars": 0,
-      "@typescript-eslint/no-empty-function": 0,
-      "@typescript-eslint/ban-ts-comment": 0
-    }
-  },
-  "eslint-formatter-multiple": {
-    "formatters": [
-      {
-        "name": "stylish",
-        "output": "console"
-      },
-      {
-        "name": "junit",
-        "output": "file",
-        "path": "reports/lint.xml"
-      }
-    ]
-  },
   "jest": {
     "modulePathIgnorePatterns": [
       "<rootDir>/build/"
@@ -291,6 +246,7 @@
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.5",
     "@babel/preset-typescript": "^7.18.6",
+    "@biomejs/biome": "^2.3.14",
     "@cucumber/cucumber": "^12.2.0",
     "@hapi/joi": "^17.1.1",
     "@playwright/test": "^1.56.1",
@@ -298,20 +254,10 @@
     "@types/hapi__joi": "^17.1.14",
     "@types/jest": "^29.5.12",
     "@types/node": "^24.9.1",
-    "@typescript-eslint/eslint-plugin": "^5.13.0",
-    "@typescript-eslint/parser": "^5.0.0",
     "babel-jest": "29.7.0",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.2",
     "depcheck": "^1.2.0",
-    "eslint": "^7.20.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-airbnb-typescript": "^17.0.0",
-    "eslint-formatter-multiple": "^1.0.0",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-jest": "^25.3.4",
-    "eslint-plugin-jsx-a11y": "^6.3.1",
-    "eslint-plugin-react": "^7.20.6",
     "esm": "^3.2.25",
     "ioredis-mock": "^8.13.1",
     "istanbul-lib-coverage": "^3.2.2",

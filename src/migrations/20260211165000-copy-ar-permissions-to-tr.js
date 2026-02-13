@@ -1,11 +1,11 @@
-const { prepMigration } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration')
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      const sessionSig = __filename;
-      await prepMigration(queryInterface, transaction, sessionSig);
+      const sessionSig = __filename
+      await prepMigration(queryInterface, transaction, sessionSig)
 
       /**
        * READ_WRITE_REPORTS = 3
@@ -14,7 +14,8 @@ module.exports = {
        */
 
       // Copy AR permissions to TR permissions for all users with AR permissions
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         WITH ar_readwrite_users as (
             SELECT
                 u.id user_id,
@@ -34,11 +35,13 @@ module.exports = {
         UNION
         SELECT user_id, 9, region_id, NOW(), NOW() FROM ar_readwrite_users
         ON CONFLICT ("userId", "scopeId", "regionId") DO NOTHING;
-      `, { transaction });
-    });
+      `,
+        { transaction }
+      )
+    })
   },
 
   async down(queryInterface) {
     // no rollbacks here, would have to revert using audit log
   },
-};
+}

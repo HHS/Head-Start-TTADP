@@ -12,7 +12,7 @@ The project currently uses ESLint v7 with separate backend and frontend configur
 
 ## Decision
 
-We will replace ESLint with Biome for linting in a single cutover across backend and frontend.
+We will replace ESLint with Biome (https://biomejs.dev/) for linting in a single cutover across backend and frontend.
 
 This ADR is lint-only:
 - Biome formatter will be disabled for now, deferred to the future.

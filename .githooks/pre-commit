@@ -51,8 +51,8 @@ do
     git add "$f"
   fi
 
-  # Autolint changed .js and .ts files
-  if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.ts ]]); then
+  # Auto-fix changed JS/TS files with Biome
+  if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.jsx ]] || [[ $f == *.ts ]] || [[ $f == *.tsx ]]); then
     if [ "$USE_DOCKER" = true ]; then
       if [[ $f == frontend/* ]]; then
         docker compose run -T --rm frontend yarn lint:fix:single "${f#frontend/}"
