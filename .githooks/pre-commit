@@ -20,6 +20,9 @@ common_changed=false
 common_package_json_changed=false
 frontend_yarn_lock_changed=false
 backend_yarn_lock_changed=false
+frontend_js_ts_files=()
+backend_js_ts_files=()
+js_ts_files=()
 files=$(git diff --cached --name-only)
 
 for f in $files
@@ -51,23 +54,39 @@ do
     git add "$f"
   fi
 
-  # Auto-fix changed JS/TS files with Biome
+  # Collect changed JS/TS files for batched Biome runs
   if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.jsx ]] || [[ $f == *.ts ]] || [[ $f == *.tsx ]]); then
-    if [ "$USE_DOCKER" = true ]; then
-      if [[ $f == frontend/* ]]; then
-        docker compose run -T --rm frontend yarn lint:fix:single "${f#frontend/}"
-      else
-        docker compose --profile minimal_required_postgres --profile minimal_required_redis run -T --rm backend yarn lint:fix:single "$f"
-      fi
+    js_ts_files+=("$f")
+    if [[ $f == frontend/* ]]; then
+      frontend_js_ts_files+=("${f#frontend/}")
     else
-      if [[ $f == frontend/* ]]; then
-        check_and_run_yarn frontend
-        (cd frontend && yarn lint:fix:single "${f#frontend/}")
-      else
-        check_and_run_yarn "."
-        yarn lint:fix:single "$f"
-      fi
+      backend_js_ts_files+=("$f")
     fi
+  fi
+done
+
+# Auto-fix changed JS/TS files with Biome in batched runs
+if [ ${#frontend_js_ts_files[@]} -gt 0 ]; then
+  if [ "$USE_DOCKER" = true ]; then
+    docker compose run -T --rm frontend yarn lint:fix:single "${frontend_js_ts_files[@]}"
+  else
+    check_and_run_yarn frontend
+    (cd frontend && yarn lint:fix:single "${frontend_js_ts_files[@]}")
+  fi
+fi
+
+if [ ${#backend_js_ts_files[@]} -gt 0 ]; then
+  if [ "$USE_DOCKER" = true ]; then
+    docker compose --profile minimal_required_postgres --profile minimal_required_redis run -T --rm backend yarn lint:fix:single "${backend_js_ts_files[@]}"
+  else
+    check_and_run_yarn "."
+    yarn lint:fix:single "${backend_js_ts_files[@]}"
+  fi
+fi
+
+for f in "${js_ts_files[@]}"
+do
+  if [ -e "$f" ]; then
     git add "$f"
   fi
 done
