@@ -426,7 +426,11 @@ describe('RecipientSpotlightDataController', () => {
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
-            <RecipientSpotlightDataController filters={[]} regionId={1} userHasOnlyOneRegion={false} />
+            <RecipientSpotlightDataController
+              filters={[]}
+              regionId={1}
+              userHasOnlyOneRegion={false}
+            />
           </BrowserRouter>
         </FilterContext.Provider>
       </AppLoadingContext.Provider>,
