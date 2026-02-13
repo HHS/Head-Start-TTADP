@@ -331,29 +331,31 @@ describe('Recipient DB service', () => {
       expect(recipient).toBeNull();
     });
 
-    it('returns only active grants', async () => {
+    it('returns active grants and inactive grants after cutoff', async () => {
       const recipient = await recipientById(76, {});
 
       expect(recipient.name).toBe('recipient 4');
-      expect(recipient.grants.length).toBe(2);
+      expect(recipient.grants.length).toBe(5);
 
-      // Active grants only.
+      // Active After Cut Off Date.
       expect(recipient.grants[0].id).toBe(76);
       expect(recipient.grants[0].status).toBe('Active');
 
+      // Active Before Cut Off Date.
       expect(recipient.grants[1].id).toBe(77);
       expect(recipient.grants[1].status).toBe('Active');
-    });
 
-    it('excludes inactive grants regardless of end date', async () => {
-      const recipient = await recipientById(76, {});
+      // Inactive with End Date past Today.
+      expect(recipient.grants[2].id).toBe(80);
+      expect(recipient.grants[2].status).toBe('Inactive');
 
-      const grantIds = recipient.grants.map((g) => g.id);
-      // Inactive grants should not be included even with recent end dates.
-      expect(grantIds).not.toContain(78); // Inactive, endDate after 2020-08-31
-      expect(grantIds).not.toContain(79); // Inactive, endDate before 2020-08-31
-      expect(grantIds).not.toContain(80); // Inactive, endDate in the future
-      expect(grantIds).not.toContain(81); // Inactive, endDate today
+      // Inactive with End Date of Today.
+      expect(recipient.grants[3].id).toBe(81);
+      expect(recipient.grants[3].status).toBe('Inactive');
+
+      // Inactive After Cut Off Date.
+      expect(recipient.grants[4].id).toBe(78);
+      expect(recipient.grants[4].status).toBe('Inactive');
     });
   });
 
@@ -777,15 +779,21 @@ describe('Recipient DB service', () => {
         },
       });
 
-      // Recipient with only inactive grants should not be found by recipientById
+      // Get the inactive recipient
       const inactiveRecipient = await recipientById(recipientWithInactiveGrant.id, {});
-      expect(inactiveRecipient).toBeNull();
 
       // Get the monitoring recipient
       const monitoringRecipient = await recipientById(recipientWithMonitoringGoal.id, {});
 
+      // Get missing goals for inactive grant recipient
+      const inactiveGrantGoals = await missingStandardGoals(inactiveRecipient, {});
+
       // Get missing goals for recipient with monitoring goal
       const monitoringGoals = await missingStandardGoals(monitoringRecipient, {});
+
+      // Verify that the inactive grant is not considered when calculating missing standard goals
+      const inactiveGrantHasGoals = inactiveGrantGoals.some((g) => g.grantId === inactiveGrant.id);
+      expect(inactiveGrantHasGoals).toBe(false);
 
       // Verify that the monitoring goal template is not included in missing goals
       const monitoringTemplateIncluded = monitoringGoals.some(
@@ -934,7 +942,7 @@ describe('Recipient DB service', () => {
         regionId: 1,
         number: '12352',
         programSpecialistName: 'Jim',
-        status: 'Active',
+        status: 'Inactive',
         annualFundingMonth: 'October',
         startDate: new Date(),
         endDate: new Date(),
@@ -945,7 +953,7 @@ describe('Recipient DB service', () => {
         regionId: 1,
         number: '12353',
         programSpecialistName: 'Jim',
-        status: 'Active',
+        status: 'Inactive',
         endDate: new Date(2020, 10, 31),
         grantSpecialistName: 'Allen',
         annualFundingMonth: 'November',
@@ -1015,7 +1023,6 @@ describe('Recipient DB service', () => {
       expect(foundRecipients.rows.length).toBe(4);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(63);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(66);
-      expect(foundRecipients.rows.map((g) => g.id)).toContain(67);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(68);
     });
 
@@ -1034,25 +1041,27 @@ describe('Recipient DB service', () => {
     it('sorts based on name', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(4);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66, 67, 68].sort());
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual(
+        [67, 68, 63, 66].sort((a, b) => a - b),
+      );
     });
 
     it('sorts based on program specialist', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'programSpecialist', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(4);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66, 67, 68].sort());
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 67, 68].sort());
     });
 
     it('sorts based on grant specialist', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'grantSpecialist', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(4);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66, 67, 68].sort());
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([67, 68, 63, 66].sort());
     });
 
     it('respects sort order', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'desc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(4);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66, 67, 68].sort());
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 67, 68].sort());
     });
 
     it('respects the offset passed in', async () => {
@@ -1061,9 +1070,11 @@ describe('Recipient DB service', () => {
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66, 68].sort());
     });
 
-    it('excludes recipients with only inactive grants', async () => {
+    it('finds inactive grants that fall in the accepted range', async () => {
       const foundRecipients = await recipientsByName('Pumpkin', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
-      expect(foundRecipients.rows.length).toBe(0);
+      expect(foundRecipients.rows.length).toBe(2);
+      expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
+      expect(foundRecipients.rows.map((g) => g.id)).toContain(69);
     });
   });
 

@@ -33,7 +33,7 @@ export default function Profile({
           <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <GrantList summary={recipientSummary} />
           </Grid>
-          {(recipientSummary.grants || []).map((grant) => {
+          {(recipientSummary.grants || []).filter((grant) => grant.status === 'Active').map((grant) => {
             const hasLeftColumn = hasClassData(grant.number)
               || hasMonitoringData(grant.number);
             return (
