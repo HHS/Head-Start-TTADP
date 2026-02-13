@@ -1,32 +1,28 @@
 /* eslint-disable react/prop-types */
-import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  waitFor,
-  fireEvent,
-} from '@testing-library/react';
-import { Router } from 'react-router';
-import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
-import fetchMock from 'fetch-mock';
-import { createMemoryHistory } from 'history';
-import userEvent from '@testing-library/user-event';
-import { mockWindowProperty } from '../../../testHelpers';
-import CollaborationReportForm, { convertFormDataToReport, formatReportWithSaveBeforeConversion } from '..';
-import AppLoadingContext from '../../../AppLoadingContext';
-import UserContext from '../../../UserContext';
+import '@testing-library/jest-dom'
+import React from 'react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { Router } from 'react-router'
+import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common'
+import fetchMock from 'fetch-mock'
+import { createMemoryHistory } from 'history'
+import userEvent from '@testing-library/user-event'
+import { mockWindowProperty } from '../../../testHelpers'
+import CollaborationReportForm, {
+  convertFormDataToReport,
+  formatReportWithSaveBeforeConversion,
+} from '..'
+import AppLoadingContext from '../../../AppLoadingContext'
+import UserContext from '../../../UserContext'
 
-const history = createMemoryHistory();
+const history = createMemoryHistory()
 
 const user = {
   id: 1,
   name: 'Walter Burns',
   roles: [{ fullName: 'Reporter' }],
-  permissions: [
-    { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
-  ],
-};
+  permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+}
 
 const dummyReport = {
   regionId: 1,
@@ -37,7 +33,7 @@ const dummyReport = {
   userId: 1,
   reportReasons: [],
   collabReportSpecialists: [],
-};
+}
 
 const ReportComponent = ({
   id,
@@ -51,213 +47,230 @@ const ReportComponent = ({
     <AppLoadingContext.Provider
       value={{ isAppLoading: true, setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
     >
-      <UserContext.Provider value={{
-        user: {
-          ...user,
-          id: userId,
-          roles: userRoles,
-          flags: [],
-          permissions: [
-            {
-              scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-              userId,
-              regionId: region,
-            },
-          ],
-        },
-      }}
+      <UserContext.Provider
+        value={{
+          user: {
+            ...user,
+            id: userId,
+            roles: userRoles,
+            flags: [],
+            permissions: [
+              {
+                scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+                userId,
+                regionId: region,
+              },
+            ],
+          },
+        }}
       >
         <CollaborationReportForm
           match={{ params: { currentPage, collabReportId: id }, path: '', url: '' }}
           location={{
-            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+            state: { showLastUpdatedTime },
+            hash: '',
+            pathname: '',
+            search: '',
           }}
         />
       </UserContext.Provider>
     </AppLoadingContext.Provider>
   </Router>
-);
+)
 
 describe('CollaborationReportForm', () => {
-  const setItem = jest.fn();
-  const getItem = jest.fn();
-  const removeItem = jest.fn();
+  const setItem = jest.fn()
+  const getItem = jest.fn()
+  const removeItem = jest.fn()
 
   mockWindowProperty('localStorage', {
     setItem,
     getItem,
     removeItem,
-  });
+  })
 
   beforeEach(() => {
-    fetchMock.get('/api/users/collaborators?region=1', [{
-      id: 2,
-      name: 'Hermione Granger',
-      roles: [
-        {
-          id: 16,
-          name: 'SS',
-          fullName: 'System Specialist',
-          isSpecialist: true,
-          deletedAt: null,
-          mapsTo: null,
-          createdAt: '2025-12-31T14:27:05.466Z',
-          updatedAt: '2025-12-31T14:27:05.466Z',
-          UserRole: {
-            id: 1,
-            userId: 1,
-            roleId: 16,
-            createdAt: '2025-12-31T14:27:05.468Z',
-            updatedAt: '2025-12-31T14:27:05.468Z',
+    fetchMock.get('/api/users/collaborators?region=1', [
+      {
+        id: 2,
+        name: 'Hermione Granger',
+        roles: [
+          {
+            id: 16,
+            name: 'SS',
+            fullName: 'System Specialist',
+            isSpecialist: true,
+            deletedAt: null,
+            mapsTo: null,
+            createdAt: '2025-12-31T14:27:05.466Z',
+            updatedAt: '2025-12-31T14:27:05.466Z',
+            UserRole: {
+              id: 1,
+              userId: 1,
+              roleId: 16,
+              createdAt: '2025-12-31T14:27:05.468Z',
+              updatedAt: '2025-12-31T14:27:05.468Z',
+            },
           },
-        },
-        {
-          id: 17,
-          name: 'NC',
-          fullName: 'National Center',
-          isSpecialist: false,
-          deletedAt: null,
-          mapsTo: null,
-          createdAt: '2025-12-31T14:27:05.467Z',
-          updatedAt: '2025-12-31T14:27:05.467Z',
-          UserRole: {
-            id: 21,
-            userId: 1,
-            roleId: 17,
-            createdAt: '2025-12-31T14:27:05.837Z',
-            updatedAt: '2025-12-31T14:27:05.837Z',
+          {
+            id: 17,
+            name: 'NC',
+            fullName: 'National Center',
+            isSpecialist: false,
+            deletedAt: null,
+            mapsTo: null,
+            createdAt: '2025-12-31T14:27:05.467Z',
+            updatedAt: '2025-12-31T14:27:05.467Z',
+            UserRole: {
+              id: 21,
+              userId: 1,
+              roleId: 17,
+              createdAt: '2025-12-31T14:27:05.837Z',
+              updatedAt: '2025-12-31T14:27:05.837Z',
+            },
           },
-        },
-      ],
-    }]);
-    fetchMock.get('/api/activity-reports/approvers?region=1', []);
-    fetchMock.get('/api/collaboration-reports/123', dummyReport);
+        ],
+      },
+    ])
+    fetchMock.get('/api/activity-reports/approvers?region=1', [])
+    fetchMock.get('/api/collaboration-reports/123', dummyReport)
     fetchMock.get('/api/goal-templates', [
       { id: 1, standard: 'Goal Template 1', label: 'Template 1' },
       { id: 2, standard: 'Goal Template 2', label: 'Template 2' },
-    ]);
-  });
+    ])
+  })
 
   afterEach(() => {
-    fetchMock.restore();
-    jest.clearAllMocks();
-  });
+    fetchMock.restore()
+    jest.clearAllMocks()
+  })
 
   it('renders', async () => {
-    getItem.mockReturnValue(JSON.stringify({
-      regionId: 1,
-      calculatedStatus: REPORT_STATUSES.DRAFT,
-    }));
+    getItem.mockReturnValue(
+      JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      })
+    )
 
-    render(<ReportComponent id="new" />);
+    render(<ReportComponent id="new" />)
 
-    const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
-    expect(heading).toBeInTheDocument();
-  });
+    const heading = await screen.findByText(/Collaboration report for Region [\d]/i)
+    expect(heading).toBeInTheDocument()
+  })
 
   it('keeps activity summary validation errors after review navigation', async () => {
-    getItem.mockReturnValue(JSON.stringify({
-      regionId: 1,
-      calculatedStatus: REPORT_STATUSES.DRAFT,
-    }));
+    getItem.mockReturnValue(
+      JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      })
+    )
 
-    render(<ReportComponent id="123" />);
+    render(<ReportComponent id="123" />)
 
-    await screen.findByText(/Collaboration report for Region [\d]/i);
+    await screen.findByText(/Collaboration report for Region [\d]/i)
 
-    const activityNameInput = await screen.findByTestId('activity-name-input');
-    fireEvent.change(activityNameInput, { target: { value: 'Test activity' } });
-    fireEvent.blur(activityNameInput);
-    fireEvent.change(activityNameInput, { target: { value: '' } });
-    fireEvent.blur(activityNameInput);
+    const activityNameInput = await screen.findByTestId('activity-name-input')
+    fireEvent.change(activityNameInput, { target: { value: 'Test activity' } })
+    fireEvent.blur(activityNameInput)
+    fireEvent.change(activityNameInput, { target: { value: '' } })
+    fireEvent.blur(activityNameInput)
 
-    expect(await screen.findByText('Enter activity name')).toBeInTheDocument();
+    expect(await screen.findByText('Enter activity name')).toBeInTheDocument()
 
-    const descriptionInput = await screen.findByTestId('description-input');
-    fireEvent.blur(descriptionInput, { target: { value: '' } });
+    const descriptionLabel = await screen.findByText('Activity description')
+    const descriptionInput = descriptionLabel.parentElement.querySelector('.rdw-editor-main')
+    fireEvent.blur(descriptionInput)
 
-    expect(await screen.findByText('Describe the activity')).toBeInTheDocument();
+    expect(await screen.findByText('Describe the activity')).toBeInTheDocument()
 
-    const reviewButton = await screen.findByRole('button', { name: /review and submit/i });
-    userEvent.click(reviewButton);
+    const reviewButton = await screen.findByRole('button', { name: /review and submit/i })
+    userEvent.click(reviewButton)
 
-    await screen.findByText('Review and submit');
+    await screen.findByText('Review and submit')
 
-    const activitySummaryButton = await screen.findByRole('button', { name: /activity summary/i });
-    userEvent.click(activitySummaryButton);
+    const activitySummaryButton = await screen.findByRole('button', { name: /activity summary/i })
+    userEvent.click(activitySummaryButton)
 
-    await screen.findByText(/Collaboration report for Region [\d]/i);
-    expect(await screen.findByText('Enter activity name')).toBeInTheDocument();
-    expect(await screen.findByText('Describe the activity')).toBeInTheDocument();
-  });
+    await screen.findByText(/Collaboration report for Region [\d]/i)
+    expect(await screen.findByText('Enter activity name')).toBeInTheDocument()
+    expect(await screen.findByText('Describe the activity')).toBeInTheDocument()
+  })
 
   // FIXME: Not yet implemented
   it('renders with single user role and sets creator role', async () => {
-    getItem.mockReturnValue(JSON.stringify({
-      regionId: 1,
-      calculatedStatus: REPORT_STATUSES.DRAFT,
-    }));
+    getItem.mockReturnValue(
+      JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      })
+    )
 
-    render(<ReportComponent id="new" userRoles={[{ fullName: 'Health Specialist' }]} />);
+    render(<ReportComponent id="new" userRoles={[{ fullName: 'Health Specialist' }]} />)
 
-    const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
-    expect(heading).toBeInTheDocument();
-  });
+    const heading = await screen.findByText(/Collaboration report for Region [\d]/i)
+    expect(heading).toBeInTheDocument()
+  })
 
   // FIXME: Not yet implemented
   it('renders with multiple user roles without setting creator role', async () => {
-    getItem.mockReturnValue(JSON.stringify({
-      regionId: 1,
-      calculatedStatus: REPORT_STATUSES.DRAFT,
-    }));
+    getItem.mockReturnValue(
+      JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      })
+    )
 
     render(
       <ReportComponent
         id="new"
         userRoles={[{ fullName: 'Health Specialist' }, { fullName: 'Education Specialist' }]}
-      />,
-    );
+      />
+    )
 
-    const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
-    expect(heading).toBeInTheDocument();
-  });
+    const heading = await screen.findByText(/Collaboration report for Region [\d]/i)
+    expect(heading).toBeInTheDocument()
+  })
 
   // FIXME: Not yet implemented
   it('renders without region prop and uses user region', async () => {
-    getItem.mockReturnValue(JSON.stringify({
-      regionId: 1,
-      calculatedStatus: REPORT_STATUSES.DRAFT,
-    }));
+    getItem.mockReturnValue(
+      JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      })
+    )
 
-    render(<ReportComponent id="new" region={undefined} />);
+    render(<ReportComponent id="new" region={undefined} />)
 
-    const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
-    expect(heading).toBeInTheDocument();
-  });
+    const heading = await screen.findByText(/Collaboration report for Region [\d]/i)
+    expect(heading).toBeInTheDocument()
+  })
 
   it('handles loading state', () => {
     // Mock getItem to return null to force loading state
-    getItem.mockReturnValue(null);
+    getItem.mockReturnValue(null)
 
-    render(<ReportComponent id="new" />);
+    render(<ReportComponent id="new" />)
 
-    expect(screen.getByText('loading...')).toBeInTheDocument();
-  });
+    expect(screen.getByText('loading...')).toBeInTheDocument()
+  })
 
   describe('error handling', () => {
     beforeEach(() => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', 500);
-      fetchMock.get('/api/activity-reports/approvers?region=1', 500);
-      fetchMock.get('/api/collaboration-reports/123', 500);
-    });
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', 500)
+      fetchMock.get('/api/activity-reports/approvers?region=1', 500)
+      fetchMock.get('/api/collaboration-reports/123', 500)
+    })
 
     it('handles collaborators fetch error', async () => {
-      render(<ReportComponent id="new" />);
+      render(<ReportComponent id="new" />)
 
-      expect(await screen.findByText(/There’s an issue with your connection./i)).toBeInTheDocument();
-    });
-  });
+      expect(await screen.findByText(/There’s an issue with your connection./i)).toBeInTheDocument()
+    })
+  })
 
   describe('formatReportWithSaveBeforeConversion', () => {
     beforeEach(() => {
@@ -266,13 +279,13 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         startDate: '2025-01-15',
         endDate: '2025-01-30',
-      });
-    });
+      })
+    })
 
     const mockUser = {
       id: 1,
       roles: [{ fullName: 'Health Specialist' }],
-    };
+    }
 
     const mockFormData = {
       id: 'test-report',
@@ -280,14 +293,14 @@ describe('CollaborationReportForm', () => {
       startDate: '01/15/2025',
       endDate: '01/30/2025',
       creatorRole: 'Health Specialist',
-    };
+    }
 
     const mockData = {
       calculatedStatus: REPORT_STATUSES.DRAFT,
       startDate: '01/15/2025',
       endDate: '01/30/2025',
       pageState: { 1: 'Complete' },
-    };
+    }
 
     it('sets creatorRole when user has one role and data has no creatorRole', async () => {
       const result = await formatReportWithSaveBeforeConversion(
@@ -296,15 +309,15 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false,
-      );
+        false
+      )
 
-      expect(result).toBeDefined();
-      expect(result.startDate).toBe('01/15/2025');
-    });
+      expect(result).toBeDefined()
+      expect(result.startDate).toBe('01/15/2025')
+    })
 
     it('preserves existing creatorRole when data already has one', async () => {
-      const dataWithCreatorRole = { ...mockData, creatorRole: 'Education Specialist' };
+      const dataWithCreatorRole = { ...mockData, creatorRole: 'Education Specialist' }
 
       const result = await formatReportWithSaveBeforeConversion(
         dataWithCreatorRole,
@@ -312,17 +325,17 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false,
-      );
+        false
+      )
 
-      expect(result).toBeDefined();
-    });
+      expect(result).toBeDefined()
+    })
 
     it('does not set creatorRole when user has multiple roles', async () => {
       const multiRoleUser = {
         ...mockUser,
         roles: [{ fullName: 'Health Specialist' }, { fullName: 'Education Specialist' }],
-      };
+      }
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -330,16 +343,16 @@ describe('CollaborationReportForm', () => {
         multiRoleUser,
         false,
         { current: 'test-id' },
-        false,
-      );
+        false
+      )
 
-      expect(result).toBeDefined();
-    });
+      expect(result).toBeDefined()
+    })
 
     it('returns formData when no changes detected and forceUpdate is false', async () => {
       // Mock findWhatsChanged to return empty object (no changes)
-      const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({});
+      const originalModule = await import('../formDataHelpers')
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({})
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -347,18 +360,19 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false,
-      );
+        false
+      )
 
-      expect(result).toEqual(mockFormData);
-      findWhatsChangedSpy.mockRestore();
-    });
+      expect(result).toEqual(mockFormData)
+      findWhatsChangedSpy.mockRestore()
+    })
 
     it('calls saveReport when changes are detected', async () => {
       // Mock findWhatsChanged to return changes
-      const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged')
-        .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED });
+      const originalModule = await import('../formDataHelpers')
+      const findWhatsChangedSpy = jest
+        .spyOn(originalModule, 'findWhatsChanged')
+        .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED })
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -366,18 +380,18 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false,
-      );
+        false
+      )
 
-      expect(result.startDate).toBe('01/15/2025');
-      expect(result.endDate).toBe('01/30/2025');
-      findWhatsChangedSpy.mockRestore();
-    });
+      expect(result.startDate).toBe('01/15/2025')
+      expect(result.endDate).toBe('01/30/2025')
+      findWhatsChangedSpy.mockRestore()
+    })
 
     it('calls saveReport when forceUpdate is true even with no changes', async () => {
       // Mock findWhatsChanged to return no changes
-      const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({});
+      const originalModule = await import('../formDataHelpers')
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({})
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -385,19 +399,20 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        true,
-      );
+        true
+      )
 
-      expect(result.startDate).toBe('2025-01-15');
-      expect(result.endDate).toBe('2025-01-30');
-      findWhatsChangedSpy.mockRestore();
-    });
+      expect(result.startDate).toBe('2025-01-15')
+      expect(result.endDate).toBe('2025-01-30')
+      findWhatsChangedSpy.mockRestore()
+    })
 
     it('converts dates from YYYY-MM-DD to MM/DD/YYYY format when changes are detected', async () => {
       // Mock findWhatsChanged to return changes
-      const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged')
-        .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED });
+      const originalModule = await import('../formDataHelpers')
+      const findWhatsChangedSpy = jest
+        .spyOn(originalModule, 'findWhatsChanged')
+        .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED })
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -405,18 +420,18 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false,
-      );
+        false
+      )
 
-      expect(result.startDate).toBe('01/15/2025');
-      expect(result.endDate).toBe('01/30/2025');
-      findWhatsChangedSpy.mockRestore();
-    });
+      expect(result.startDate).toBe('01/15/2025')
+      expect(result.endDate).toBe('01/30/2025')
+      findWhatsChangedSpy.mockRestore()
+    })
 
     it('does not convert dates when no changes are detected', async () => {
       // Mock findWhatsChanged to return no changes
-      const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({});
+      const originalModule = await import('../formDataHelpers')
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({})
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -424,29 +439,30 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false,
-      );
+        false
+      )
 
-      expect(result.startDate).toBe('01/15/2025'); // Original format preserved
-      expect(result.endDate).toBe('01/30/2025'); // Original format preserved
-      findWhatsChangedSpy.mockRestore();
-    });
+      expect(result.startDate).toBe('01/15/2025') // Original format preserved
+      expect(result.endDate).toBe('01/30/2025') // Original format preserved
+      findWhatsChangedSpy.mockRestore()
+    })
 
     it('handles missing dates gracefully', async () => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
-      fetchMock.get('/api/collaboration-reports/123', dummyReport);
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', [])
+      fetchMock.get('/api/activity-reports/approvers?region=1', [])
+      fetchMock.get('/api/collaboration-reports/123', dummyReport)
       fetchMock.put('/api/collaboration-reports/test-id', {
         id: 'test-id',
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         // No startDate or endDate provided
-      });
+      })
 
       // Mock findWhatsChanged to return changes
-      const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged')
-        .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED });
+      const originalModule = await import('../formDataHelpers')
+      const findWhatsChangedSpy = jest
+        .spyOn(originalModule, 'findWhatsChanged')
+        .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED })
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -454,33 +470,33 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false,
-      );
+        false
+      )
 
       // When dates are undefined from the API, moment parsing will result in 'Invalid date'
       // The function should handle this gracefully
-      expect(result.startDate).toBeDefined();
-      expect(result.endDate).toBeDefined();
-      findWhatsChangedSpy.mockRestore();
-    });
+      expect(result.startDate).toBeDefined()
+      expect(result.endDate).toBeDefined()
+      findWhatsChangedSpy.mockRestore()
+    })
 
     it('uses real findWhatsChanged implementation to test integration', async () => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
-      fetchMock.get('/api/collaboration-reports/123', dummyReport);
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', [])
+      fetchMock.get('/api/activity-reports/approvers?region=1', [])
+      fetchMock.get('/api/collaboration-reports/123', dummyReport)
       fetchMock.put('/api/collaboration-reports/test-id', {
         id: 'test-id',
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         startDate: '2025-01-15',
         endDate: '2025-01-30',
-      });
+      })
 
       const dataWithChanges = {
         ...mockData,
         calculatedStatus: REPORT_STATUSES.SUBMITTED, // Changed from DRAFT
         description: 'Updated description',
-      };
+      }
 
       const result = await formatReportWithSaveBeforeConversion(
         dataWithChanges,
@@ -488,52 +504,44 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false,
-      );
+        false
+      )
 
-      expect(result.startDate).toBe('01/15/2025');
-      expect(result.endDate).toBe('01/30/2025');
-      expect(result.calculatedStatus).toBe(REPORT_STATUSES.SUBMITTED);
-    });
-  });
+      expect(result.startDate).toBe('01/15/2025')
+      expect(result.endDate).toBe('01/30/2025')
+      expect(result.calculatedStatus).toBe(REPORT_STATUSES.SUBMITTED)
+    })
+  })
 
   // converts Participants, Data Used, and Goals from formData format to API format
   describe('convertFormDataToReport', () => {
     const formData = {
-      participants: [
-        { label: 'Head Start Staff', value: 'head_start_staff' },
-      ],
-      dataUsed: [
-        { label: 'Data 1', value: 'data_1' },
-      ],
-      goals: [
-        { label: 'Goal 1', value: 'goal_1' },
-      ],
-      reportGoals: [
-        { label: 'Goal 2', value: 'goal_2' },
-      ],
-    };
+      participants: [{ label: 'Head Start Staff', value: 'head_start_staff' }],
+      dataUsed: [{ label: 'Data 1', value: 'data_1' }],
+      goals: [{ label: 'Goal 1', value: 'goal_1' }],
+      reportGoals: [{ label: 'Goal 2', value: 'goal_2' }],
+    }
 
     it('converts participants', () => {
-      const result = convertFormDataToReport(formData);
-      expect(result.participants).toEqual(['head_start_staff']);
-    });
+      const result = convertFormDataToReport(formData)
+      expect(result.participants).toEqual(['head_start_staff'])
+    })
 
     it('converts dataUsed', () => {
-      const result = convertFormDataToReport(formData);
-      expect(result.dataUsed).toEqual(['data_1']);
-    });
+      const result = convertFormDataToReport(formData)
+      expect(result.dataUsed).toEqual(['data_1'])
+    })
 
     it('converts goals', () => {
-      const result = convertFormDataToReport(formData);
-      expect(result.reportGoals).toEqual(['goal_1']);
-    });
+      const result = convertFormDataToReport(formData)
+      expect(result.reportGoals).toEqual(['goal_1'])
+    })
 
     it('converts reportGoals when goals is null', () => {
-      const dataToTest = { ...formData, goals: null };
-      const result = convertFormDataToReport(dataToTest);
-      expect(result.reportGoals).toEqual(['goal_2']);
-    });
+      const dataToTest = { ...formData, goals: null }
+      const result = convertFormDataToReport(dataToTest)
+      expect(result.reportGoals).toEqual(['goal_2'])
+    })
 
     it('handles empty arrays gracefully', () => {
       const emptyData = {
@@ -541,81 +549,81 @@ describe('CollaborationReportForm', () => {
         dataUsed: [],
         goals: [],
         reportGoals: [],
-      };
+      }
 
-      const result = convertFormDataToReport(emptyData);
-      expect(result.participants).toEqual([]);
-      expect(result.dataUsed).toEqual([]);
-      expect(result.reportGoals).toEqual([]);
-    });
+      const result = convertFormDataToReport(emptyData)
+      expect(result.participants).toEqual([])
+      expect(result.dataUsed).toEqual([])
+      expect(result.reportGoals).toEqual([])
+    })
 
     describe('null/undefined handling', () => {
       it('handles null conductMethod', () => {
-        const data = { ...formData, conductMethod: null };
-        const result = convertFormDataToReport(data);
-        expect(result.conductMethod).toEqual(null);
-      });
+        const data = { ...formData, conductMethod: null }
+        const result = convertFormDataToReport(data)
+        expect(result.conductMethod).toEqual(null)
+      })
 
       it('handles undefined conductMethod', () => {
-        const data = { ...formData, conductMethod: undefined };
-        const result = convertFormDataToReport(data);
-        expect(result.conductMethod).toEqual(null);
-      });
+        const data = { ...formData, conductMethod: undefined }
+        const result = convertFormDataToReport(data)
+        expect(result.conductMethod).toEqual(null)
+      })
 
       it('handles null statesInvolved', () => {
-        const data = { ...formData, statesInvolved: null };
-        const result = convertFormDataToReport(data);
-        expect(result.statesInvolved).toEqual([]);
-      });
+        const data = { ...formData, statesInvolved: null }
+        const result = convertFormDataToReport(data)
+        expect(result.statesInvolved).toEqual([])
+      })
 
       it('handles undefined statesInvolved', () => {
-        const data = { ...formData, statesInvolved: undefined };
-        const result = convertFormDataToReport(data);
-        expect(result.statesInvolved).toEqual([]);
-      });
+        const data = { ...formData, statesInvolved: undefined }
+        const result = convertFormDataToReport(data)
+        expect(result.statesInvolved).toEqual([])
+      })
 
       it('handles null participants', () => {
-        const data = { ...formData, participants: null };
-        const result = convertFormDataToReport(data);
-        expect(result.participants).toEqual([]);
-      });
+        const data = { ...formData, participants: null }
+        const result = convertFormDataToReport(data)
+        expect(result.participants).toEqual([])
+      })
 
       it('handles undefined participants', () => {
-        const data = { ...formData, participants: undefined };
-        const result = convertFormDataToReport(data);
-        expect(result.participants).toEqual([]);
-      });
+        const data = { ...formData, participants: undefined }
+        const result = convertFormDataToReport(data)
+        expect(result.participants).toEqual([])
+      })
 
       it('handles null dataUsed', () => {
-        const data = { ...formData, dataUsed: null };
-        const result = convertFormDataToReport(data);
-        expect(result.dataUsed).toEqual([]);
-      });
+        const data = { ...formData, dataUsed: null }
+        const result = convertFormDataToReport(data)
+        expect(result.dataUsed).toEqual([])
+      })
 
       it('handles undefined dataUsed', () => {
-        const data = { ...formData, dataUsed: undefined };
-        const result = convertFormDataToReport(data);
-        expect(result.dataUsed).toEqual([]);
-      });
+        const data = { ...formData, dataUsed: undefined }
+        const result = convertFormDataToReport(data)
+        expect(result.dataUsed).toEqual([])
+      })
 
       it('handles undefined goals', () => {
-        const data = { ...formData, goals: undefined };
-        const result = convertFormDataToReport(data);
-        expect(result.reportGoals).toEqual(['goal_2']);
-      });
+        const data = { ...formData, goals: undefined }
+        const result = convertFormDataToReport(data)
+        expect(result.reportGoals).toEqual(['goal_2'])
+      })
 
       it('handles null reportGoals', () => {
-        const data = { ...formData, reportGoals: null };
-        const result = convertFormDataToReport(data);
-        expect(result.reportGoals).toEqual(['goal_1']);
-      });
+        const data = { ...formData, reportGoals: null }
+        const result = convertFormDataToReport(data)
+        expect(result.reportGoals).toEqual(['goal_1'])
+      })
 
       it('handles undefined reportGoals', () => {
-        const data = { ...formData, reportGoals: undefined };
-        const result = convertFormDataToReport(data);
-        expect(result.reportGoals).toEqual(['goal_1']);
-      });
-    });
+        const data = { ...formData, reportGoals: undefined }
+        const result = convertFormDataToReport(data)
+        expect(result.reportGoals).toEqual(['goal_1'])
+      })
+    })
 
     describe('goals priority logic', () => {
       it('uses reportGoals when goals is empty array and reportGoals has values', () => {
@@ -625,10 +633,10 @@ describe('CollaborationReportForm', () => {
             { label: 'Report Goal 1', value: 'report_goal_1' },
             { label: 'Report Goal 2', value: 'report_goal_2' },
           ],
-        };
-        const result = convertFormDataToReport(data);
-        expect(result.reportGoals).toEqual(['report_goal_1', 'report_goal_2']);
-      });
+        }
+        const result = convertFormDataToReport(data)
+        expect(result.reportGoals).toEqual(['report_goal_1', 'report_goal_2'])
+      })
 
       it('uses goals when it has values (ignores reportGoals)', () => {
         const data = {
@@ -636,32 +644,30 @@ describe('CollaborationReportForm', () => {
             { label: 'Goal 1', value: 'goal_1' },
             { label: 'Goal 2', value: 'goal_2' },
           ],
-          reportGoals: [
-            { label: 'Report Goal 1', value: 'report_goal_1' },
-          ],
-        };
-        const result = convertFormDataToReport(data);
-        expect(result.reportGoals).toEqual(['goal_1', 'goal_2']);
-      });
+          reportGoals: [{ label: 'Report Goal 1', value: 'report_goal_1' }],
+        }
+        const result = convertFormDataToReport(data)
+        expect(result.reportGoals).toEqual(['goal_1', 'goal_2'])
+      })
 
       it('returns empty array when both goals and reportGoals are empty', () => {
         const data = {
           goals: [],
           reportGoals: [],
-        };
-        const result = convertFormDataToReport(data);
-        expect(result.reportGoals).toEqual([]);
-      });
+        }
+        const result = convertFormDataToReport(data)
+        expect(result.reportGoals).toEqual([])
+      })
 
       it('returns empty array when both goals and reportGoals are null', () => {
         const data = {
           goals: null,
           reportGoals: null,
-        };
-        const result = convertFormDataToReport(data);
-        expect(result.reportGoals).toEqual([]);
-      });
-    });
+        }
+        const result = convertFormDataToReport(data)
+        expect(result.reportGoals).toEqual([])
+      })
+    })
 
     describe('integration tests', () => {
       it('converts all fields when populated with values', () => {
@@ -674,27 +680,23 @@ describe('CollaborationReportForm', () => {
             { label: 'Data 1', value: 'd1' },
             { label: 'Data 2', value: 'd2' },
           ],
-          goals: [
-            { label: 'Goal 1', value: 'g1' },
-          ],
-          reportGoals: [
-            { label: 'Report Goal 1', value: 'rg1' },
-          ],
+          goals: [{ label: 'Goal 1', value: 'g1' }],
+          reportGoals: [{ label: 'Report Goal 1', value: 'rg1' }],
           statesInvolved: [
             { label: 'Alabama', value: 'AL' },
             { label: 'Alaska', value: 'AK' },
           ],
           conductMethod: 'email',
-        };
+        }
 
-        const result = convertFormDataToReport(fullData);
+        const result = convertFormDataToReport(fullData)
 
-        expect(result.participants).toEqual(['p1', 'p2']);
-        expect(result.dataUsed).toEqual(['d1', 'd2']);
-        expect(result.reportGoals).toEqual(['g1']);
-        expect(result.statesInvolved).toEqual(['AL', 'AK']);
-        expect(result.conductMethod).toEqual('email');
-      });
+        expect(result.participants).toEqual(['p1', 'p2'])
+        expect(result.dataUsed).toEqual(['d1', 'd2'])
+        expect(result.reportGoals).toEqual(['g1'])
+        expect(result.statesInvolved).toEqual(['AL', 'AK'])
+        expect(result.conductMethod).toEqual('email')
+      })
 
       it('preserves other properties through rest spreading', () => {
         const dataWithExtras = {
@@ -704,29 +706,29 @@ describe('CollaborationReportForm', () => {
           description: 'Test Description',
           regionId: 1,
           customField: 'custom value',
-        };
+        }
 
-        const result = convertFormDataToReport(dataWithExtras);
+        const result = convertFormDataToReport(dataWithExtras)
 
-        expect(result.id).toBe(123);
-        expect(result.title).toBe('Test Report');
-        expect(result.description).toBe('Test Description');
-        expect(result.regionId).toBe(1);
-        expect(result.customField).toBe('custom value');
-      });
-    });
+        expect(result.id).toBe(123)
+        expect(result.title).toBe('Test Report')
+        expect(result.description).toBe('Test Description')
+        expect(result.regionId).toBe(1)
+        expect(result.customField).toBe('custom value')
+      })
+    })
 
     describe('edge cases', () => {
       it('handles completely empty data object', () => {
-        const emptyData = {};
-        const result = convertFormDataToReport(emptyData);
+        const emptyData = {}
+        const result = convertFormDataToReport(emptyData)
 
-        expect(result.participants).toEqual([]);
-        expect(result.dataUsed).toEqual([]);
-        expect(result.reportGoals).toEqual([]);
-        expect(result.statesInvolved).toEqual([]);
-        expect(result.conductMethod).toEqual(null);
-      });
+        expect(result.participants).toEqual([])
+        expect(result.dataUsed).toEqual([])
+        expect(result.reportGoals).toEqual([])
+        expect(result.statesInvolved).toEqual([])
+        expect(result.conductMethod).toEqual(null)
+      })
 
       it('handles mixed null/undefined/empty/populated values', () => {
         const mixedData = {
@@ -737,31 +739,31 @@ describe('CollaborationReportForm', () => {
           statesInvolved: [],
           conductMethod: 'email',
           otherField: 'preserved',
-        };
+        }
 
-        const result = convertFormDataToReport(mixedData);
+        const result = convertFormDataToReport(mixedData)
 
-        expect(result.participants).toEqual(['p1']);
-        expect(result.dataUsed).toEqual([]);
-        expect(result.reportGoals).toEqual(['rg1']);
-        expect(result.statesInvolved).toEqual([]);
-        expect(result.conductMethod).toEqual('email');
-        expect(result.otherField).toBe('preserved');
-      });
-    });
-  });
+        expect(result.participants).toEqual(['p1'])
+        expect(result.dataUsed).toEqual([])
+        expect(result.reportGoals).toEqual(['rg1'])
+        expect(result.statesInvolved).toEqual([])
+        expect(result.conductMethod).toEqual('email')
+        expect(result.otherField).toBe('preserved')
+      })
+    })
+  })
 
   describe('onSave and onSaveAndContinue functionality', () => {
     beforeEach(() => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', [])
+      fetchMock.get('/api/activity-reports/approvers?region=1', [])
       fetchMock.get('/api/goal-templates', [
         { id: 1, standard: 'Goal Template 1', label: 'Template 1' },
         { id: 2, standard: 'Goal Template 2', label: 'Template 2' },
-      ]);
-      fetchMock.get('/api/collaboration-reports/123', dummyReport);
-    });
+      ])
+      fetchMock.get('/api/collaboration-reports/123', dummyReport)
+    })
 
     it('creates new report when reportId is "new"', async () => {
       fetchMock.post('/api/collaboration-reports', {
@@ -769,35 +771,37 @@ describe('CollaborationReportForm', () => {
         regionId: 1,
         calculatedStatus: REPORT_STATUSES.DRAFT,
         creatorNameWithRole: 'Walter Burns - Reporter',
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      const { container } = render(<ReportComponent id="new" />);
-      expect(container).toBeInTheDocument();
+      const { container } = render(<ReportComponent id="new" />)
+      expect(container).toBeInTheDocument()
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Update the form
-      const textInputs = await screen.findAllByTestId('textInput');
-      const activityNameInput = textInputs[0];
-      expect(activityNameInput).toBeInTheDocument();
-      userEvent.type(activityNameInput, 'Report 1');
+      const textInputs = await screen.findAllByTestId('textInput')
+      const activityNameInput = textInputs[0]
+      expect(activityNameInput).toBeInTheDocument()
+      userEvent.type(activityNameInput, 'Report 1')
 
       // Simulate form save action through the Navigator component
-      const saveDraftButton = await screen.findByRole('button', { name: 'Save draft' });
-      expect(saveDraftButton).toBeInTheDocument();
-      userEvent.click(saveDraftButton);
+      const saveDraftButton = await screen.findByRole('button', { name: 'Save draft' })
+      expect(saveDraftButton).toBeInTheDocument()
+      userEvent.click(saveDraftButton)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-    });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
+    })
 
     // FIXME: WIP, currently doesn't trigger the save action properly and don't know why.
     // eslint-disable-next-line jest/no-disabled-tests
@@ -808,28 +812,30 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
         creatorNameWithRole: 'Walter Burns - Reporter',
         name: 'Report 1',
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="new" />);
+      render(<ReportComponent id="new" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Update the form
-      const activityNameInput = screen.getByTestId('activity-name-input');
-      expect(activityNameInput).toBeInTheDocument();
-      userEvent.type(activityNameInput, 'Report 1');
+      const activityNameInput = screen.getByTestId('activity-name-input')
+      expect(activityNameInput).toBeInTheDocument()
+      userEvent.type(activityNameInput, 'Report 1')
 
       // Simulate form save action through the Navigator component
-      const saveDraftButton = await screen.findByRole('button', { name: 'Save draft' });
-      expect(saveDraftButton).toBeInTheDocument();
-      userEvent.click(saveDraftButton);
+      const saveDraftButton = await screen.findByRole('button', { name: 'Save draft' })
+      expect(saveDraftButton).toBeInTheDocument()
+      userEvent.click(saveDraftButton)
 
       // const form = screen.getByTestId('navigator-header');
       // await waitFor(() => {
@@ -838,9 +844,9 @@ describe('CollaborationReportForm', () => {
       // screen.debug(form);
 
       await waitFor(() => {
-        expect(fetchMock.called('/api/collaboration-reports')).toBeTruthy();
-      });
-    });
+        expect(fetchMock.called('/api/collaboration-reports')).toBeTruthy()
+      })
+    })
 
     describe('onSave - new report branch', () => {
       it('deletes invalid startDate when creating new report', async () => {
@@ -849,92 +855,100 @@ describe('CollaborationReportForm', () => {
           regionId: 1,
           calculatedStatus: REPORT_STATUSES.DRAFT,
           creatorNameWithRole: 'Test User',
-        });
+        })
 
-        getItem.mockReturnValue(JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-          startDate: 'invalid-date',
-          endDate: '01/15/2025',
-        }));
+        getItem.mockReturnValue(
+          JSON.stringify({
+            regionId: 1,
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+            startDate: 'invalid-date',
+            endDate: '01/15/2025',
+          })
+        )
 
-        render(<ReportComponent id="new" />);
+        render(<ReportComponent id="new" />)
 
         await waitFor(() => {
-          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-        });
+          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+        })
 
         // Test verifies component renders without error with invalid date
         // The actual date validation happens in onSave when user saves
-      });
+      })
 
       it('deletes invalid endDate when creating new report', async () => {
         fetchMock.post('/api/collaboration-reports', {
           id: 'new-id',
           regionId: 1,
           calculatedStatus: REPORT_STATUSES.DRAFT,
-        });
+        })
 
-        getItem.mockReturnValue(JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-          startDate: '01/15/2025',
-          endDate: 'invalid-date',
-        }));
+        getItem.mockReturnValue(
+          JSON.stringify({
+            regionId: 1,
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+            startDate: '01/15/2025',
+            endDate: 'invalid-date',
+          })
+        )
 
-        render(<ReportComponent id="new" />);
+        render(<ReportComponent id="new" />)
 
         await waitFor(() => {
-          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-        });
+          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+        })
 
         // Test verifies component renders without error with invalid date
         // The actual date validation happens in onSave when user saves
-      });
+      })
 
       it('handles null savedReport by throwing error', async () => {
-        fetchMock.post('/api/collaboration-reports', null);
+        fetchMock.post('/api/collaboration-reports', null)
 
-        getItem.mockReturnValue(JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        }));
+        getItem.mockReturnValue(
+          JSON.stringify({
+            regionId: 1,
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+          })
+        )
 
-        render(<ReportComponent id="new" />);
+        render(<ReportComponent id="new" />)
 
         await waitFor(() => {
-          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-        });
+          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+        })
 
         // Should handle the error gracefully
-      });
+      })
 
       it('navigates to new report URL after successful creation', async () => {
-        const mockPush = jest.fn();
-        history.push = mockPush;
+        const mockPush = jest.fn()
+        history.push = mockPush
 
         fetchMock.post('/api/collaboration-reports', {
           id: 'new-report-123',
           regionId: 1,
           calculatedStatus: REPORT_STATUSES.DRAFT,
           creatorNameWithRole: 'Test User',
-        });
+        })
 
-        getItem.mockReturnValue(JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        }));
+        getItem.mockReturnValue(
+          JSON.stringify({
+            regionId: 1,
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+          })
+        )
 
-        render(<ReportComponent id="new" />);
+        render(<ReportComponent id="new" />)
 
         await waitFor(() => {
-          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-        });
+          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+        })
 
         // Note: Navigation happens when save is triggered, which requires user interaction
         // This test verifies the component renders without error
-      });
-    });
+      })
+    })
 
     describe('onSave - existing report branch', () => {
       it('updates existing report with formatReportWithSaveBeforeConversion', async () => {
@@ -944,77 +958,83 @@ describe('CollaborationReportForm', () => {
           calculatedStatus: REPORT_STATUSES.DRAFT,
           creatorNameWithRole: 'Test User',
           startDate: '2025-01-15',
-        });
+        })
 
-        getItem.mockReturnValue(JSON.stringify({
-          id: '123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        }));
+        getItem.mockReturnValue(
+          JSON.stringify({
+            id: '123',
+            regionId: 1,
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+          })
+        )
 
-        render(<ReportComponent id="123" />);
+        render(<ReportComponent id="123" />)
 
         await waitFor(() => {
-          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-        });
-      });
+          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+        })
+      })
 
       it('handles network error during save', async () => {
-        fetchMock.put('/api/collaboration-reports/123', { throws: new Error('Network error') });
+        fetchMock.put('/api/collaboration-reports/123', { throws: new Error('Network error') })
 
-        getItem.mockReturnValue(JSON.stringify({
-          id: '123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        }));
+        getItem.mockReturnValue(
+          JSON.stringify({
+            id: '123',
+            regionId: 1,
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+          })
+        )
 
-        render(<ReportComponent id="123" />);
+        render(<ReportComponent id="123" />)
 
         await waitFor(() => {
-          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-        });
+          expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+        })
 
         // Component should handle error gracefully
-      });
-    });
-  });
+      })
+    })
+  })
 
   describe('onFormSubmit functionality', () => {
     beforeEach(() => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
-      fetchMock.get('/api/collaboration-reports/123', dummyReport);
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', [])
+      fetchMock.get('/api/activity-reports/approvers?region=1', [])
+      fetchMock.get('/api/collaboration-reports/123', dummyReport)
       fetchMock.get('/api/goal-templates', [
         { id: 1, standard: 'Goal Template 1', label: 'Template 1' },
         { id: 2, standard: 'Goal Template 2', label: 'Template 2' },
-      ]);
-    });
+      ])
+    })
 
     it('submits report with required fields only', async () => {
-      const mockPush = jest.fn();
-      history.push = mockPush;
+      const mockPush = jest.fn()
+      history.push = mockPush
 
       fetchMock.post('/api/collaboration-reports/123/submit', {
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         approvers: [],
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // onFormSubmit is called by review/submit pages which aren't rendered in this test
       // This test verifies the component renders without errors
-    });
+    })
 
     it('submits with multiple approvers', async () => {
       fetchMock.post('/api/collaboration-reports/123/submit', {
@@ -1023,240 +1043,260 @@ describe('CollaborationReportForm', () => {
           { user: { id: 1, name: 'Approver 1' } },
           { user: { id: 2, name: 'Approver 2' } },
         ],
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-        approvers: [
-          { user: { id: 1, name: 'Approver 1' } },
-          { user: { id: 2, name: 'Approver 2' } },
-        ],
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          approvers: [
+            { user: { id: 1, name: 'Approver 1' } },
+            { user: { id: 2, name: 'Approver 2' } },
+          ],
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-    });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
+    })
 
     it('navigates to collaboration reports list after submission', async () => {
-      const mockPush = jest.fn();
-      history.push = mockPush;
+      const mockPush = jest.fn()
+      history.push = mockPush
 
       fetchMock.post('/api/collaboration-reports/123/submit', {
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         approvers: [],
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Navigation happens in onFormSubmit which requires the review page
-    });
+    })
 
     it('handles submission error gracefully', async () => {
       fetchMock.post('/api/collaboration-reports/123/submit', {
         throws: new Error('Submission failed'),
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-    });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
+    })
 
     it('includes additionalNotes and creatorRole in submission', async () => {
       fetchMock.post('/api/collaboration-reports/123/submit', {
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         approvers: [],
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-        additionalNotes: 'Test notes',
-        creatorRole: 'Health Specialist',
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          additionalNotes: 'Test notes',
+          creatorRole: 'Health Specialist',
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Submission data structure is tested via actual submission in review page
-    });
-  });
+    })
+  })
 
   describe('onReview functionality', () => {
     beforeEach(() => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
-      fetchMock.get('/api/collaboration-reports/123', dummyReport);
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', [])
+      fetchMock.get('/api/activity-reports/approvers?region=1', [])
+      fetchMock.get('/api/collaboration-reports/123', dummyReport)
       fetchMock.get('/api/goal-templates', [
         { id: 1, standard: 'Goal Template 1', label: 'Template 1' },
         { id: 2, standard: 'Goal Template 2', label: 'Template 2' },
-      ]);
-    });
+      ])
+    })
 
     it('reviews report with approved status', async () => {
-      const mockPush = jest.fn();
-      history.push = mockPush;
+      const mockPush = jest.fn()
+      history.push = mockPush
 
-      fetchMock.put('/api/collaboration-reports/123/approver', {});
+      fetchMock.put('/api/collaboration-reports/123/approver', {})
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        displayId: 'R01-AR-123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          displayId: 'R01-AR-123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // onReview is called from the review page with status and note
-    });
+    })
 
     it('reviews report with needs action status', async () => {
-      const mockPush = jest.fn();
-      history.push = mockPush;
+      const mockPush = jest.fn()
+      history.push = mockPush
 
-      fetchMock.put('/api/collaboration-reports/123/approver', {});
+      fetchMock.put('/api/collaboration-reports/123/approver', {})
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        displayId: 'R01-AR-123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          displayId: 'R01-AR-123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Status is set to 'reviewed' when not APPROVER_STATUSES.APPROVED
-    });
+    })
 
     it('includes note and status in review', async () => {
-      fetchMock.put('/api/collaboration-reports/123/approver', {});
+      fetchMock.put('/api/collaboration-reports/123/approver', {})
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        displayId: 'R01-AR-123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          displayId: 'R01-AR-123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Review data structure: { note: data.note, status: data.status }
-    });
+    })
 
     it('navigates with approval message after review', async () => {
-      const mockPush = jest.fn();
-      history.push = mockPush;
+      const mockPush = jest.fn()
+      history.push = mockPush
 
-      fetchMock.put('/api/collaboration-reports/123/approver', {});
+      fetchMock.put('/api/collaboration-reports/123/approver', {})
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        displayId: 'R01-AR-123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          displayId: 'R01-AR-123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Navigation message includes: time, reportId, displayId, status
-    });
+    })
 
     it('formats timezone correctly in review message', async () => {
-      fetchMock.put('/api/collaboration-reports/123/approver', {});
+      fetchMock.put('/api/collaboration-reports/123/approver', {})
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        displayId: 'R01-AR-123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          displayId: 'R01-AR-123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Timezone is detected and formatted as 'MM/DD/YYYY [at] h:mm a z'
-    });
+    })
 
     it('handles review error gracefully', async () => {
       fetchMock.put('/api/collaboration-reports/123/approver', {
         throws: new Error('Review failed'),
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        id: '123',
-        displayId: 'R01-AR-123',
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          id: '123',
+          displayId: 'R01-AR-123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Error handling is tested through component rendering
-    });
-  });
+    })
+  })
 
   describe('report status redirection logic', () => {
-    const mockPush = jest.fn();
+    const mockPush = jest.fn()
 
     beforeEach(() => {
-      jest.clearAllMocks();
-      history.push = mockPush;
-      history.replace = jest.fn();
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
-    });
+      jest.clearAllMocks()
+      history.push = mockPush
+      history.replace = jest.fn()
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', [])
+      fetchMock.get('/api/activity-reports/approvers?region=1', [])
+    })
 
     it('redirects to view when report is approved', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
@@ -1266,19 +1306,21 @@ describe('CollaborationReportForm', () => {
         userId: 1,
         approvers: [],
         id: 123,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={1} />);
+      render(<ReportComponent id="123" userId={1} />)
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123');
-      });
-    });
+        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123')
+      })
+    })
 
     it('redirects to view when report is submitted and user is not an approver', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
@@ -1288,19 +1330,21 @@ describe('CollaborationReportForm', () => {
         userId: 2, // Different user
         approvers: [{ user: { id: 3 } }], // Not current user
         id: 123,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={1} />);
+      render(<ReportComponent id="123" userId={1} />)
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123');
-      });
-    });
+        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123')
+      })
+    })
 
     it('does not redirect when report is submitted and user is an approver', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
@@ -1309,21 +1353,23 @@ describe('CollaborationReportForm', () => {
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         approvers: [{ user: { id: 1 } }], // Same user
         id: 123,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={1} />);
+      render(<ReportComponent id="123" userId={1} />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
-      expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123');
-    });
+      expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123')
+    })
 
     it('does not redirect when report is not approved and not submitted', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
@@ -1332,21 +1378,23 @@ describe('CollaborationReportForm', () => {
         submissionStatus: REPORT_STATUSES.DRAFT,
         approvers: [{ userId: 2 }],
         id: 123,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={1} />);
+      render(<ReportComponent id="123" userId={1} />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
-      expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123');
-    });
+      expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123')
+    })
 
     it('does not redirect when report is not approved and not submitted and user is a collaborator', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
@@ -1355,56 +1403,60 @@ describe('CollaborationReportForm', () => {
         submissionStatus: REPORT_STATUSES.DRAFT,
         collabReportSpecialists: [{ userId: 2 }],
         approvers: [{ userId: 1 }],
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={2} />);
+      render(<ReportComponent id="123" userId={2} />)
 
       await waitFor(() => {
-        expect(screen.getAllByText(/Activity summary/)[1]).toBeInTheDocument();
-      });
+        expect(screen.getAllByText(/Activity summary/)[1]).toBeInTheDocument()
+      })
 
-      expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123');
-    });
-  });
+      expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123')
+    })
+  })
 
   describe('additional edge cases', () => {
     it('handles network error with connection check', async () => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', { throws: new Error('Network error') });
-      fetchMock.get('/api/activity-reports/approvers?region=1', { throws: new Error('Network error') });
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', { throws: new Error('Network error') })
+      fetchMock.get('/api/activity-reports/approvers?region=1', {
+        throws: new Error('Network error'),
+      })
 
-      getItem.mockReturnValue(null); // No local storage data
+      getItem.mockReturnValue(null) // No local storage data
 
-      render(<ReportComponent id="new" />);
+      render(<ReportComponent id="new" />)
 
-      expect(await screen.findByText(/There’s an issue with your connection./i)).toBeInTheDocument();
-    });
-  });
+      expect(await screen.findByText(/There’s an issue with your connection./i)).toBeInTheDocument()
+    })
+  })
 
   describe('Report status redirects and state management', () => {
     beforeEach(() => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', [])
+      fetchMock.get('/api/activity-reports/approvers?region=1', [])
       fetchMock.get('/api/goal-templates', [
         { id: 1, standard: 'Goal Template 1', label: 'Template 1' },
         { id: 2, standard: 'Goal Template 2', label: 'Template 2' },
-      ]);
-    });
+      ])
+    })
 
     afterEach(() => {
-      fetchMock.restore();
-      jest.clearAllMocks();
-    });
+      fetchMock.restore()
+      jest.clearAllMocks()
+    })
 
     it('redirects to review page when report calculatedStatus is NEEDS_ACTION', async () => {
-      const mockPush = jest.fn();
-      history.push = mockPush;
+      const mockPush = jest.fn()
+      history.push = mockPush
 
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
@@ -1412,104 +1464,108 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         approvers: [],
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/123/review');
-      });
-    });
+        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/123/review')
+      })
+    })
 
     it('handles null collabReportSpecialists - isCollaborator should be false', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
         collabReportSpecialists: null,
         calculatedStatus: REPORT_STATUSES.DRAFT,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={2} />);
+      render(<ReportComponent id="123" userId={2} />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-    });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
+    })
 
     it('sets isApprover true when user is matching approver', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
-        approvers: [
-          { user: { id: 1 }, status: 'pending' },
-        ],
+        approvers: [{ user: { id: 1 }, status: 'pending' }],
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={1} />);
+      render(<ReportComponent id="123" userId={1} />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
       // isApprover state is set to true
-    });
+    })
 
     it('sets isPendingApprover true when approver status is null', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
-        approvers: [
-          { user: { id: 1 }, status: null },
-        ],
+        approvers: [{ user: { id: 1 }, status: null }],
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={1} />);
+      render(<ReportComponent id="123" userId={1} />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
       // isPendingApprover state is set to true
-    });
+    })
 
     it('sets isPendingApprover true when approver status is pending', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
-        approvers: [
-          { user: { id: 1 }, status: 'pending' },
-        ],
+        approvers: [{ user: { id: 1 }, status: 'pending' }],
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={1} />);
+      render(<ReportComponent id="123" userId={1} />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
       // isPendingApprover state is set to true
-    });
+    })
 
     it('sets editable false when any approver has marked report as APPROVED', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
@@ -1519,170 +1575,186 @@ describe('CollaborationReportForm', () => {
           { user: { id: 2 }, status: 'pending' },
         ],
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        })
+      )
 
-      render(<ReportComponent id="123" userId={1} />);
+      render(<ReportComponent id="123" userId={1} />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
       // editable is set to false due to approverHasMarkedReport
-    });
+    })
 
     it('updates lastSaveTime when showLastUpdatedTime is true', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
         updatedAt: '2025-01-15T10:30:00Z',
         calculatedStatus: REPORT_STATUSES.DRAFT,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" showLastUpdatedTime />);
+      render(<ReportComponent id="123" showLastUpdatedTime />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
       // lastSaveTime is updated with moment(report.updatedAt)
-    });
-  });
+    })
+  })
 
   describe('Error handling edge cases', () => {
     beforeEach(() => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', [])
+      fetchMock.get('/api/activity-reports/approvers?region=1', [])
       fetchMock.get('/api/goal-templates', [
         { id: 1, standard: 'Goal Template 1', label: 'Template 1' },
         { id: 2, standard: 'Goal Template 2', label: 'Template 2' },
-      ]);
-    });
+      ])
+    })
 
     afterEach(() => {
-      fetchMock.restore();
-      jest.clearAllMocks();
-    });
+      fetchMock.restore()
+      jest.clearAllMocks()
+    })
 
     it('handles invalid region error - updates formData with regionId -1', async () => {
       // Simulate error in API call, then set report.regionId to -1
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
         regionId: -1,
-      });
+      })
 
-      getItem.mockReturnValue(null);
+      getItem.mockReturnValue(null)
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
-      await waitFor(() => {
-        expect(screen.getByText(/loading/)).toBeInTheDocument();
-      }, { timeout: 100 });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/loading/)).toBeInTheDocument()
+        },
+        { timeout: 100 }
+      )
       // formData is updated with invalid regionId
-    });
+    })
 
     it('returns empty tagClass when formData is null', async () => {
-      fetchMock.get('/api/collaboration-reports/123', dummyReport);
+      fetchMock.get('/api/collaboration-reports/123', dummyReport)
 
-      getItem.mockReturnValue(null);
+      getItem.mockReturnValue(null)
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
-      await waitFor(() => {
-        expect(screen.getByText(/loading/)).toBeInTheDocument();
-      }, { timeout: 100 });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/loading/)).toBeInTheDocument()
+        },
+        { timeout: 100 }
+      )
       // tagClass returns empty string when formData is null
-    });
+    })
 
     it('returns empty tagClass when formData.calculatedStatus is undefined', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
         calculatedStatus: undefined,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+        })
+      )
 
-      render(<ReportComponent id="123" />);
+      render(<ReportComponent id="123" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
       // tagClass returns empty string when calculatedStatus is undefined
-    });
-  });
+    })
+  })
 
   describe('onSaveAndContinue functionality', () => {
     beforeEach(() => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
+      fetchMock.restore()
+      fetchMock.get('/api/users/collaborators?region=1', [])
+      fetchMock.get('/api/activity-reports/approvers?region=1', [])
       fetchMock.get('/api/goal-templates', [
         { id: 1, standard: 'Goal Template 1', label: 'Template 1' },
         { id: 2, standard: 'Goal Template 2', label: 'Template 2' },
-      ]);
-      fetchMock.post('/api/collaboration-reports', { id: 123 });
-      fetchMock.put('begin:/api/collaboration-reports/', {});
-    });
+      ])
+      fetchMock.post('/api/collaboration-reports', { id: 123 })
+      fetchMock.put('begin:/api/collaboration-reports/', {})
+    })
 
     afterEach(() => {
-      fetchMock.restore();
-      jest.clearAllMocks();
-    });
+      fetchMock.restore()
+      jest.clearAllMocks()
+    })
 
     it('does not advance page when validation fails', async () => {
-      const mockPush = jest.fn();
-      history.push = mockPush;
+      const mockPush = jest.fn()
+      history.push = mockPush
 
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
         calculatedStatus: REPORT_STATUSES.DRAFT,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" currentPage="activity-summary" />);
+      render(<ReportComponent id="123" currentPage="activity-summary" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // Validation fails, page does not advance
       // This tests the early return when validity is false
-    });
+    })
 
     it('saves draft and advances to next page when validation passes', async () => {
-      const mockPush = jest.fn();
-      history.push = mockPush;
+      const mockPush = jest.fn()
+      history.push = mockPush
 
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
         calculatedStatus: REPORT_STATUSES.DRAFT,
-      });
+      })
 
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
+      getItem.mockReturnValue(
+        JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
 
-      render(<ReportComponent id="123" currentPage="activity-summary" />);
+      render(<ReportComponent id="123" currentPage="activity-summary" />)
 
       await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument()
+      })
 
       // When validation passes, onSaveDraft is called and page advances
-    });
-  });
-});
+    })
+  })
+})

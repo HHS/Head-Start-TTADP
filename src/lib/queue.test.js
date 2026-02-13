@@ -4,101 +4,101 @@ jest.mock('bull', () => ({
   default: jest.fn(() => ({
     on: jest.fn(),
     close: jest.fn().mockResolvedValue(undefined),
-    client: {
-      getMaxListeners: jest.fn(() => 10),
-      setMaxListeners: jest.fn(),
-      call: jest.fn().mockResolvedValue(undefined),
-    },
-    eventNames: jest.fn(() => ['error']),
-    listenerCount: jest.fn(() => 1),
-    removeListener: jest.fn(),
+    getMaxListeners: jest.fn(() => 10),
+    setMaxListeners: jest.fn(),
   })),
-}));
+}))
 
-import { auditLogger } from '../logger';
+import { auditLogger } from '../logger'
 import {
   generateRedisConfig,
   increaseListeners,
-  setRedisConnectionName,
-} from './queue';
+  DEFAULT_QUEUE_ATTEMPTS,
+  DEFAULT_REDIS_LIMITER_MAX,
+  DEFAULT_REDIS_LIMITER_DURATION,
+  KEEP_COMPLETED_JOBS,
+  KEEP_FAILED_JOBS,
+} from './queue'
 
 jest.mock('../logger', () => ({
   auditLogger: {
     error: jest.fn(),
     warn: jest.fn(),
+    info: jest.fn(),
   },
-}));
+}))
 
 describe('increaseListeners', () => {
-  const MAX_LISTENERS = 20;
-  let queue;
-  let redisClient;
+  let queue
 
   beforeEach(() => {
-    // ////mockQueueConstructor.mockClear();
-    redisClient = {
+    queue = {
       getMaxListeners: jest.fn().mockReturnValue(10),
       setMaxListeners: jest.fn(),
-    };
-    queue = {
-      client: redisClient,
-      eventNames: jest.fn().mockReturnValue(['event1', 'event2']),
-      listenerCount: jest.fn().mockImplementation((eventName) => {
-        if (eventName === 'event1') return 5;
-        if (eventName === 'event2') return 3;
-        return 0;
-      }),
-    };
-  });
+      name: 'test-queue',
+    }
+  })
 
-  it('increases max listeners if new total exceeds current max', async () => {
-    await increaseListeners(queue, 3);
-    expect(redisClient.setMaxListeners).toHaveBeenCalledWith(11);
-  });
+  it('increases max listeners by the provided amount', () => {
+    increaseListeners(queue, 3)
+    expect(queue.setMaxListeners).toHaveBeenCalledWith(13)
+  })
 
-  it('does not change max listeners if new total does not exceed current max', async () => {
-    await increaseListeners(queue, 2);
-    expect(redisClient.setMaxListeners).not.toHaveBeenCalled();
-  });
+  it('logs and returns when queue is undefined', () => {
+    increaseListeners(undefined, 1)
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'Queue is not defined, cannot increase listeners'
+    )
+  })
+})
 
-  it('caps listener increase at MAX_LISTENERS constant', async () => {
-    await increaseListeners(queue, 15);
-    expect(redisClient.setMaxListeners).toHaveBeenCalledWith(MAX_LISTENERS);
-  });
+describe('job retention constants', () => {
+  it('exports KEEP_COMPLETED_JOBS with correct value', () => {
+    expect(KEEP_COMPLETED_JOBS).toBe(5)
+  })
 
-  it('does nothing if queue has no client', async () => {
-    queue.client = null;
-    await increaseListeners(queue, 1);
-    expect(redisClient.setMaxListeners).not.toHaveBeenCalled();
-  });
-});
+  it('exports KEEP_FAILED_JOBS with correct value', () => {
+    expect(KEEP_FAILED_JOBS).toBe(10)
+  })
+
+  it('exports DEFAULT_QUEUE_ATTEMPTS with correct value', () => {
+    expect(DEFAULT_QUEUE_ATTEMPTS).toBe(5)
+  })
+
+  it('exports default rate limiter values for 100 per 10 seconds', () => {
+    expect(DEFAULT_REDIS_LIMITER_MAX).toBe(100)
+    expect(DEFAULT_REDIS_LIMITER_DURATION).toBe(10000)
+  })
+})
 
 describe('generateRedisConfig with VCAP_SERVICES', () => {
-  const originalEnv = process.env;
+  const originalEnv = process.env
 
   beforeEach(() => {
     // ////mockQueueConstructor.mockClear();
-    jest.resetModules();
-    process.env = { ...originalEnv };
-  });
+    jest.resetModules()
+    process.env = { ...originalEnv }
+  })
 
   afterAll(() => {
-    process.env = originalEnv;
-  });
+    process.env = originalEnv
+  })
 
   it('returns TLS enabled redis settings without rate limiter', () => {
     process.env.VCAP_SERVICES = JSON.stringify({
-      'aws-elasticache-redis': [{
-        credentials: {
-          host: 'test-host',
-          port: '1234',
-          password: 'test-password',
-          uri: 'test-uri',
+      'aws-elasticache-redis': [
+        {
+          credentials: {
+            host: 'test-host',
+            port: '1234',
+            password: 'test-password',
+            uri: 'test-uri',
+          },
         },
-      }],
-    });
+      ],
+    })
 
-    const config = generateRedisConfig();
+    const config = generateRedisConfig()
 
     expect(config).toEqual({
       uri: 'test-uri',
@@ -111,24 +111,26 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
           tls: {},
         },
       },
-    });
-  });
+    })
+  })
 
   it('returns TLS enabled redis settings with rate limiter', () => {
     process.env.VCAP_SERVICES = JSON.stringify({
-      'aws-elasticache-redis': [{
-        credentials: {
-          host: 'test-host',
-          port: '1234',
-          password: 'test-password',
-          uri: 'test-uri',
+      'aws-elasticache-redis': [
+        {
+          credentials: {
+            host: 'test-host',
+            port: '1234',
+            password: 'test-password',
+            uri: 'test-uri',
+          },
         },
-      }],
-    });
-    process.env.REDIS_LIMITER_MAX = '2000';
-    process.env.REDIS_LIMITER_DURATION = '600000';
+      ],
+    })
+    process.env.REDIS_LIMITER_MAX = '2000'
+    process.env.REDIS_LIMITER_DURATION = '600000'
 
-    const config = generateRedisConfig(true);
+    const config = generateRedisConfig(true)
 
     expect(config).toEqual({
       uri: 'test-uri',
@@ -145,123 +147,129 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
           duration: '600000',
         },
       },
-    });
-  });
-});
+    })
+  })
 
-describe('setRedisConnectionName', () => {
-  beforeEach(() => {
-    // ////mockQueueConstructor.mockClear();
-  });
+  it('uses default rate limiter settings when env vars are absent', () => {
+    process.env.VCAP_SERVICES = JSON.stringify({
+      'aws-elasticache-redis': [
+        {
+          credentials: {
+            host: 'test-host',
+            port: '1234',
+            password: 'test-password',
+            uri: 'test-uri',
+          },
+        },
+      ],
+    })
+    delete process.env.REDIS_LIMITER_MAX
+    delete process.env.REDIS_LIMITER_DURATION
 
-  it('logs an error if setting the Redis connection name fails', async () => {
-    const mockQueue = {
-      client: {
-        call: jest.fn().mockRejectedValue(new Error('Connection error')),
-      },
-    };
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
-    await setRedisConnectionName(mockQueue, 'testConnectionName');
-    expect(auditLoggerSpy).toHaveBeenCalledWith('Failed to set Redis connection name:', expect.any(Error));
-  });
-});
+    const config = generateRedisConfig(true)
+
+    expect(config.redisOpts.limiter).toEqual({
+      max: DEFAULT_REDIS_LIMITER_MAX,
+      duration: DEFAULT_REDIS_LIMITER_DURATION,
+    })
+  })
+})
 
 describe('newQueue', () => {
-  const originalEnv = process.env;
+  const originalEnv = process.env
 
   beforeEach(() => {
-    jest.resetModules();
-    process.env = { ...originalEnv };
-  });
+    jest.resetModules()
+    process.env = { ...originalEnv }
+  })
 
   afterAll(() => {
-    process.env = originalEnv;
-  });
+    process.env = originalEnv
+  })
 
   it('creates a queue with default timeout when none is provided', async () => {
-    const mockQueue = jest.fn().mockReturnValue({
+    const queueInstance = {
       on: jest.fn(),
       close: jest.fn(),
-      client: {
-        call: jest.fn().mockResolvedValue(undefined),
-      },
-    });
+      setMaxListeners: jest.fn(),
+    }
+    const mockQueue = jest.fn().mockReturnValue({
+      ...queueInstance,
+    })
 
     jest.doMock('bull', () => ({
       __esModule: true,
       default: mockQueue,
-    }));
+    }))
 
     // eslint-disable-next-line global-require
-    const { default: Queue } = require('bull');
-    const newQueue = (await import('./queue')).default;
+    const { default: Queue } = require('bull')
+    const newQueue = (await import('./queue')).default
 
-    newQueue('test-queue');
+    newQueue('test-queue')
 
     expect(Queue).toHaveBeenCalledWith(
       'test-queue',
       expect.stringMatching(/^redis:\/\/.+$/),
       expect.objectContaining({
+        redis: expect.objectContaining({
+          connectionName: expect.any(String),
+        }),
+        defaultJobOptions: expect.objectContaining({
+          attempts: DEFAULT_QUEUE_ATTEMPTS,
+          removeOnComplete: KEEP_COMPLETED_JOBS,
+          removeOnFail: KEEP_FAILED_JOBS,
+        }),
         settings: expect.objectContaining({
           stalledInterval: 30000,
         }),
-      }),
-    );
-  });
+      })
+    )
+    expect(queueInstance.on).toHaveBeenCalledWith('error', expect.any(Function))
+    expect(queueInstance.on).toHaveBeenCalledWith('failed', expect.any(Function))
+    expect(queueInstance.on).toHaveBeenCalledWith('stalled', expect.any(Function))
+  })
 
   it('creates a queue with custom timeout when specified', async () => {
-    const mockQueue = jest.fn().mockReturnValue({
+    const queueInstance = {
       on: jest.fn(),
       close: jest.fn(),
-      client: {
-        call: jest.fn().mockResolvedValue(undefined),
-      },
-    });
+      setMaxListeners: jest.fn(),
+    }
+    const mockQueue = jest.fn().mockReturnValue({
+      ...queueInstance,
+    })
 
     jest.doMock('bull', () => ({
       __esModule: true,
       default: mockQueue,
-    }));
+    }))
 
     // eslint-disable-next-line global-require
-    const { default: Queue } = require('bull');
-    const newQueue = (await import('./queue')).default;
+    const { default: Queue } = require('bull')
+    const newQueue = (await import('./queue')).default
 
-    newQueue('test-queue', 60000);
+    newQueue('test-queue', 60000)
 
     expect(Queue).toHaveBeenCalledWith(
       'test-queue',
       expect.stringMatching(/^redis:\/\/.+$/),
       expect.objectContaining({
+        redis: expect.objectContaining({
+          connectionName: expect.any(String),
+        }),
+        defaultJobOptions: expect.objectContaining({
+          attempts: DEFAULT_QUEUE_ATTEMPTS,
+          removeOnComplete: KEEP_COMPLETED_JOBS,
+          removeOnFail: KEEP_FAILED_JOBS,
+        }),
         settings: expect.objectContaining({
           stalledInterval: 60000,
         }),
-      }),
-    );
-  });
-});
-
-describe('removeQueueEventHandlers', () => {
-  it('safely handles removing event listeners when some are undefined', () => {
-    const mockQueue = {
-      removeListener: jest.fn(),
-    };
-
-    const originalProcessRemoveListener = process.removeListener;
-    process.removeListener = jest.fn();
-
-    // eslint-disable-next-line global-require
-    const { removeQueueEventHandlers } = require('./queue');
-
-    const errorListener = jest.fn();
-
-    // Call with some undefined listeners
-    removeQueueEventHandlers(mockQueue, errorListener, undefined, undefined, undefined);
-
-    // Verify it removes the defined listener but doesn't try to remove undefined ones
-    expect(mockQueue.removeListener).toHaveBeenCalledWith('error', errorListener);
-    expect(process.removeListener).not.toHaveBeenCalled();
-
-    process.removeListener = originalProcessRemoveListener;
-  });
-});
+      })
+    )
+    expect(queueInstance.on).toHaveBeenCalledWith('error', expect.any(Function))
+    expect(queueInstance.on).toHaveBeenCalledWith('failed', expect.any(Function))
+    expect(queueInstance.on).toHaveBeenCalledWith('stalled', expect.any(Function))
+  })
+})
