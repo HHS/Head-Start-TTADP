@@ -14,7 +14,7 @@ To only run the backend tests run `yarn docker:test backend`.
 
 Migrations and seeding of the test db occurs within the script run by the `docker:test` command.
 
-To run eslint run `yarn lint:all` or `yarn lint:fix:all` to have eslint attempt to fix linting problems.
+To run Biome linting, run `yarn lint:all` or `yarn lint:fix:all` to have Biome attempt to fix linting and formatting problems.
 
 > [!NOTE]
 > You may run into some issues running the docker commands on Windows:

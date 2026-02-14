@@ -5,16 +5,14 @@
   to that label. Be sure to pass in a description of the menu in the `label` prop. This prop
   is used as ellipsis' aria-label.
 */
-import React, {
-  useState, useEffect, useCallback, useRef,
-} from 'react';
-import { createPortal } from 'react-dom';
-import PropTypes from 'prop-types';
-import { Button } from '@trussworks/react-uswds';
-import './Menu.scss';
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import PropTypes from 'prop-types'
+import { Button } from '@trussworks/react-uswds'
+import './Menu.scss'
 
-const ESCAPE_KEY_CODE = 27;
-const TAB_KEY_CODE = 9;
+const ESCAPE_KEY_CODE = 27
+const TAB_KEY_CODE = 9
 
 function Menu({
   label,
@@ -29,60 +27,58 @@ function Menu({
   menuHeightOffset,
   fixed,
 }) {
-  const [shown, updateShown] = useState(false);
-  const [menuPosition, updateMenuPosition] = useState({});
-  const defaultClass = 'smart-hub--menu';
-  const containerRef = useRef(null);
-  const triggerRef = useRef(null);
-  const menuRef = useRef(null);
+  const [shown, updateShown] = useState(false)
+  const [menuPosition, updateMenuPosition] = useState({})
+  const defaultClass = 'smart-hub--menu'
+  const containerRef = useRef(null)
+  const triggerRef = useRef(null)
+  const menuRef = useRef(null)
 
-  const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) {
-      updateShown(false);
-    }
-  }, [updateShown]);
+  const onEscape = useCallback(
+    (event) => {
+      if (event.keyCode === ESCAPE_KEY_CODE) {
+        updateShown(false)
+      }
+    },
+    [updateShown]
+  )
 
   useEffect(() => {
-    document.addEventListener('keydown', onEscape, false);
+    document.addEventListener('keydown', onEscape, false)
     return () => {
-      document.removeEventListener('keydown', onEscape, false);
-      updateShown(false);
-    };
-  }, [onEscape]);
+      document.removeEventListener('keydown', onEscape, false)
+      updateShown(false)
+    }
+  }, [onEscape])
 
   const recordButtonPositionAndUpdateMenu = useCallback(() => {
     // set initial postition
     if (fixed && containerRef.current && containerRef.current.getBoundingClientRect) {
       // containerRef.current.style = 'background: red';
       // get the button's position
-      const {
-        top,
-        height,
-        left: l,
-        width,
-      } = containerRef.current.getBoundingClientRect();
+      const { top, height, left: l, width } = containerRef.current.getBoundingClientRect()
 
       // we could be programmatically calculating the height and width offset numbers
       // but a little manual work up front will save on performance in the browser
 
-      let leftPos = l + width;
+      let leftPos = l + width
 
       // left = the menu opens to the left of the button instead of the right
       if (left) {
-        leftPos = l + width - menuWidthOffset;
+        leftPos = l + width - menuWidthOffset
       }
 
       // top = the menu opens above the button instead of below
-      let topPos = top + height;
+      let topPos = top + height
 
       if (up) {
-        topPos = top - height - menuHeightOffset;
+        topPos = top - height - menuHeightOffset
       }
 
       // update the CSS
-      updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px` });
+      updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px` })
     }
-  }, [fixed, left, menuHeightOffset, menuWidthOffset, up]);
+  }, [fixed, left, menuHeightOffset, menuWidthOffset, up])
 
   // watch for window scroll and table container scroll
   useEffect(() => {
@@ -91,104 +87,100 @@ function Menu({
     // this means that it wouldn't scroll with the page, so we need to update the position
     // when the user scrolls
     if (fixed) {
-      window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
+      window.addEventListener('scroll', recordButtonPositionAndUpdateMenu)
 
       // Also listen for scroll on the table container for horizontal scrolling
-      const tableContainer = containerRef.current?.closest('.usa-table-container--scrollable');
+      const tableContainer = containerRef.current?.closest('.usa-table-container--scrollable')
       if (tableContainer) {
-        tableContainer.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
+        tableContainer.addEventListener('scroll', recordButtonPositionAndUpdateMenu)
       }
 
       return () => {
-        window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
+        window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu)
         if (tableContainer) {
-          tableContainer.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
+          tableContainer.removeEventListener('scroll', recordButtonPositionAndUpdateMenu)
         }
-      };
+      }
     }
 
     return () => {
-      window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
-    };
-  }, [fixed, recordButtonPositionAndUpdateMenu]);
+      window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu)
+    }
+  }, [fixed, recordButtonPositionAndUpdateMenu])
 
   const onBlur = (e) => {
-    const { currentTarget, relatedTarget } = e;
+    const { currentTarget, relatedTarget } = e
 
     // When using a portal, relatedTarget will be the element receiving focus
     // If it's inside our menu, don't close
     if (relatedTarget && menuRef.current && menuRef.current.contains(relatedTarget)) {
-      return;
+      return
     }
 
     // Also allow focus to move to the trigger button
     if (relatedTarget && triggerRef.current && triggerRef.current.contains(relatedTarget)) {
-      return;
+      return
     }
 
     setTimeout(() => {
       // Check if focus is still within the button container or the portal-rendered menu
-      const focusInContainer = currentTarget.contains(document.activeElement);
-      const focusInMenu = menuRef.current && menuRef.current.contains(document.activeElement);
+      const focusInContainer = currentTarget.contains(document.activeElement)
+      const focusInMenu = menuRef.current && menuRef.current.contains(document.activeElement)
       if (!focusInContainer && !focusInMenu && shown) {
         // When tabbing out of a portal menu, focus goes somewhere unexpected
         // Restore focus to trigger before closing
         if (fixed && triggerRef.current) {
-          triggerRef.current.focus();
+          triggerRef.current.focus()
         }
-        updateShown(false);
+        updateShown(false)
       }
-    }, 0);
-  };
+    }, 0)
+  }
 
   // Handle Tab key in portal menu - close menu but allow normal focus movement
   const onMenuKeyDown = (event) => {
     if (event.keyCode === TAB_KEY_CODE && fixed) {
       // Close the menu and allow the browser to manage focus (no preventDefault, no manual refocus)
-      updateShown(false);
+      updateShown(false)
     }
-  };
+  }
 
   const placementClass = (() => {
-    if (left && up) return 'smart-hub--menu__left_and_up';
-    if (left) return 'smart-hub--menu__left';
-    if (up) return 'smart-hub--menu__up';
-    return 'smart-hub--menu__right';
-  })();
+    if (left && up) return 'smart-hub--menu__left_and_up'
+    if (left) return 'smart-hub--menu__left'
+    if (up) return 'smart-hub--menu__up'
+    return 'smart-hub--menu__right'
+  })()
 
-  const positionClass = fixed ? 'position-fixed' : 'position-absolute';
-  const menuClass = `${defaultClass} shadow-1 z-top ${positionClass} ${placementClass}`;
+  const positionClass = fixed ? 'position-fixed' : 'position-absolute'
+  const menuClass = `${defaultClass} shadow-1 z-top ${positionClass} ${placementClass}`
 
   const onClick = () => {
     // we don't need to check anything before calling this - if fixed is false, it won't do anything
-    recordButtonPositionAndUpdateMenu();
+    recordButtonPositionAndUpdateMenu()
 
     // toggle the menu visibility
-    updateShown((previous) => !previous);
-  };
+    updateShown((previous) => !previous)
+  }
 
   // Manage focus: move to menu when opening, return to trigger when closing
-  const prevShownRef = useRef(false);
+  const prevShownRef = useRef(false)
   useEffect(() => {
     if (shown && menuRef.current) {
       // Menu just opened - focus first menu item
-      const firstButton = menuRef.current.querySelector('button');
+      const firstButton = menuRef.current.querySelector('button')
       if (firstButton) {
-        firstButton.focus();
+        firstButton.focus()
       }
     } else if (!shown && prevShownRef.current && triggerRef.current) {
       // Menu just closed - return focus to trigger button
-      triggerRef.current.focus();
+      triggerRef.current.focus()
     }
-    prevShownRef.current = shown;
-  }, [shown]);
+    prevShownRef.current = shown
+  }, [shown])
 
   return (
-    <div
-      onBlur={onBlur}
-      className="position-relative smart-hub-menu-container"
-      ref={containerRef}
-    >
+    <div onBlur={onBlur} className="position-relative smart-hub-menu-container" ref={containerRef}>
       <button
         ref={triggerRef}
         className={`smart-hub--menu-button usa-button usa-button--unstyled smart-hub--button__no-margin ${className}`}
@@ -200,36 +192,52 @@ function Menu({
       >
         {buttonText}
       </button>
-      {shown && (() => {
-        const menuContent = (
-          <div ref={menuRef} data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
-            <ul className="usa-list usa-list--unstyled" role="menu" onKeyDown={onMenuKeyDown}>
-              {menuItems.map((item) => (
-                <li key={item.label} role="menuitem">
-                  <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin" aria-label={item.label}>
-                    <div className="padding-2 padding-right-3">
-                      {item.label}
-                    </div>
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-        // Use portal when fixed to escape stacking context of sticky table columns
-        return fixed ? createPortal(menuContent, document.body) : menuContent;
-      })()}
+      {shown &&
+        (() => {
+          const menuContent = (
+            <div
+              ref={menuRef}
+              data-testid="menu"
+              className={menuClass}
+              style={{ backgroundColor, ...menuPosition }}
+            >
+              <ul className="usa-list usa-list--unstyled" role="menu" onKeyDown={onMenuKeyDown}>
+                {menuItems.map((item) => (
+                  <li key={item.label} role="menuitem">
+                    <Button
+                      type="button"
+                      id={item.id || undefined}
+                      onClick={() => {
+                        updateShown(false)
+                        item.onClick()
+                      }}
+                      unstyled
+                      className="smart-hub--menu-button smart-hub--button__no-margin"
+                      aria-label={item.label}
+                    >
+                      <div className="padding-2 padding-right-3">{item.label}</div>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+          // Use portal when fixed to escape stacking context of sticky table columns
+          return fixed ? createPortal(menuContent, document.body) : menuContent
+        })()}
     </div>
-  );
+  )
 }
 
 Menu.propTypes = {
   label: PropTypes.string.isRequired,
-  menuItems: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
-    onClick: PropTypes.func,
-    id: PropTypes.string,
-  })).isRequired,
+  menuItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
+      onClick: PropTypes.func,
+      id: PropTypes.string,
+    })
+  ).isRequired,
   backgroundColor: PropTypes.string,
   buttonTestId: PropTypes.string,
   left: PropTypes.bool,
@@ -239,7 +247,7 @@ Menu.propTypes = {
   buttonText: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   className: PropTypes.string,
   fixed: PropTypes.bool,
-};
+}
 
 Menu.defaultProps = {
   backgroundColor: 'white',
@@ -250,6 +258,6 @@ Menu.defaultProps = {
   menuWidthOffset: 120,
   menuHeightOffset: 140,
   fixed: false,
-};
+}
 
-export default Menu;
+export default Menu

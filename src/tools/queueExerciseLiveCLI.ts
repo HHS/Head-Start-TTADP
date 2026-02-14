@@ -1,11 +1,11 @@
-import yargs from 'yargs/yargs';
-import { hideBin } from 'yargs/helpers';
-import { runQueueExerciseLive } from './queueExerciseLive';
-import { auditLogger } from '../logger';
+import yargs from 'yargs/yargs'
+import { hideBin } from 'yargs/helpers'
+import { runQueueExerciseLive } from './queueExerciseLive'
+import { auditLogger } from '../logger'
 
-const DEFAULT_SOAK_ACTIONS = 100;
+const DEFAULT_SOAK_ACTIONS = 100
 
-const rawArgs = hideBin(process.argv);
+const rawArgs = hideBin(process.argv)
 const argv = yargs(rawArgs)
   .option('region', {
     alias: 'r',
@@ -19,7 +19,8 @@ const argv = yargs(rawArgs)
   })
   .option('collaboratorUserId', {
     alias: 'c',
-    description: 'Collaborator user ID to trigger collaborator notification flow (auto-selected if omitted)',
+    description:
+      'Collaborator user ID to trigger collaborator notification flow (auto-selected if omitted)',
     type: 'number',
   })
   .option('resourceUrl', {
@@ -63,56 +64,54 @@ const argv = yargs(rawArgs)
   })
   .option('soak', {
     alias: 's',
-    description: 'Run notification queue soak test (default 100 when flag is provided without value)',
+    description:
+      'Run notification queue soak test (default 100 when flag is provided without value)',
     type: 'number',
   })
   .help()
   .alias('help', 'h')
-  .parseSync();
+  .parseSync()
 
 const output = (value) => {
-  process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
-};
+  process.stdout.write(`${JSON.stringify(value, null, 2)}\n`)
+}
 
-const soakFlagProvided = rawArgs.some((arg) => (
-  arg === '--soak'
-  || arg === '-s'
-  || arg.startsWith('--soak=')
-  || arg.startsWith('-s=')
-));
+const soakFlagProvided = rawArgs.some(
+  (arg) => arg === '--soak' || arg === '-s' || arg.startsWith('--soak=') || arg.startsWith('-s=')
+)
 
 const resolveSoakCount = (): number | undefined => {
   if (!soakFlagProvided) {
-    return undefined;
+    return undefined
   }
   if (argv.soak === undefined) {
-    return DEFAULT_SOAK_ACTIONS;
+    return DEFAULT_SOAK_ACTIONS
   }
 
-  const soak = Number(argv.soak);
+  const soak = Number(argv.soak)
   if (!Number.isInteger(soak) || soak <= 0) {
-    throw new Error(`Invalid --soak value "${argv.soak}". Use a positive integer.`);
+    throw new Error(`Invalid --soak value "${argv.soak}". Use a positive integer.`)
   }
-  return soak;
-};
-
-let soakCount: number | undefined;
-try {
-  soakCount = resolveSoakCount();
-} catch (error) {
-  auditLogger.error(error);
-  process.exit(2);
+  return soak
 }
 
-const space = process.env.SPACE;
+let soakCount: number | undefined
+try {
+  soakCount = resolveSoakCount()
+} catch (error) {
+  auditLogger.error(error)
+  process.exit(2)
+}
+
+const space = process.env.SPACE
 if (space && space.toLowerCase().includes('prod')) {
   auditLogger.error(
-    `Refusing to run queue exercise with SPACE="${space}". Do not run this script in production.`,
-  );
-  process.exit(2);
+    `Refusing to run queue exercise with SPACE="${space}". Do not run this script in production.`
+  )
+  process.exit(2)
 }
 
-process.env.SEND_NOTIFICATIONS = argv.sendNotifications ? 'true' : 'false';
+process.env.SEND_NOTIFICATIONS = argv.sendNotifications ? 'true' : 'false'
 
 runQueueExerciseLive({
   region: argv.region,
@@ -127,16 +126,16 @@ runQueueExerciseLive({
 })
   .then((summary) => {
     if (argv.json) {
-      output(summary);
+      output(summary)
     }
 
     if (!summary.preflight.passed) {
-      process.exit(2);
+      process.exit(2)
     }
 
-    process.exit(summary.passed ? 0 : 1);
+    process.exit(summary.passed ? 0 : 1)
   })
   .catch((error) => {
-    auditLogger.error(error);
-    process.exit(2);
-  });
+    auditLogger.error(error)
+    process.exit(2)
+  })

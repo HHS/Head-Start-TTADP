@@ -8,13 +8,13 @@
  *
  * Creating a test that checks it renders properly decreases the test suite below the
  * threshold as well.
-*/
+ */
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Controller } from 'react-hook-form';
-import RichEditor from './RichEditor';
-import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Controller } from 'react-hook-form'
+import RichEditor from './RichEditor'
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css'
 
 /**
  * Component that wraps the RichEditor in a react-hook-form controller
@@ -24,33 +24,26 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
  * defaultValue: Default value for the editor
  * ariaLabel: Label describing the editor read by a screen reader
  */
-const HookFormRichEditor = ({
-  name,
-  id,
-  defaultValue,
-  ariaLabel,
-  required,
-  errorMessage,
-}) => (
+const HookFormRichEditor = ({ name, id, defaultValue, ariaLabel, required, errorMessage }) => (
   <Controller
     name={name}
     id={id}
     defaultValue={defaultValue}
-    rules={required ? {
-      validate: {
-        notEmptyTag: (value) => (value && value.trim() !== '<p></p>') || errorMessage || 'This field is required',
-      },
-    } : {}}
+    rules={
+      required
+        ? {
+            validate: {
+              notEmptyTag: (value) =>
+                (value && value.trim() !== '<p></p>') || errorMessage || 'This field is required',
+            },
+          }
+        : {}
+    }
     render={({ onChange, value, onBlur }) => (
-      <RichEditor
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-        ariaLabel={ariaLabel}
-      />
+      <RichEditor value={value} onChange={onChange} onBlur={onBlur} ariaLabel={ariaLabel} />
     )}
   />
-);
+)
 
 HookFormRichEditor.propTypes = {
   name: PropTypes.string.isRequired,
@@ -59,11 +52,11 @@ HookFormRichEditor.propTypes = {
   ariaLabel: PropTypes.string.isRequired,
   required: PropTypes.bool,
   errorMessage: PropTypes.string,
-};
+}
 
 HookFormRichEditor.defaultProps = {
   defaultValue: '',
   required: false,
   errorMessage: null,
-};
-export default HookFormRichEditor;
+}
+export default HookFormRichEditor

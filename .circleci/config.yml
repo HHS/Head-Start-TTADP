@@ -317,7 +317,7 @@ jobs:
         key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
-        command: mkdir reports
+        command: mkdir -p reports frontend/reports
     - run: yarn build
     - run:
         name: Lint backend

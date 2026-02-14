@@ -1,7 +1,7 @@
-import {} from 'dotenv/config';
-import { option } from 'yargs';
-import addMonitoringGoalForGrant from './addMonitoringGoalForGrant';
-import { auditLogger } from '../logger';
+import {} from 'dotenv/config'
+import { option } from 'yargs'
+import addMonitoringGoalForGrant from './addMonitoringGoalForGrant'
+import { auditLogger } from '../logger'
 
 const { argv } = option('grantId', {
   alias: 'g',
@@ -9,20 +9,20 @@ const { argv } = option('grantId', {
   type: 'number',
 })
   .help()
-  .alias('help', 'h');
+  .alias('help', 'h')
 
-const { grantId } = argv;
+const { grantId } = argv
 
 if (!grantId) {
-  auditLogger.error('grantId is required');
-  process.exit(1);
+  auditLogger.error('grantId is required')
+  process.exit(1)
 }
 
 addMonitoringGoalForGrant(grantId)
   .catch((e) => {
-    auditLogger.error(e);
-    process.exit(1);
+    auditLogger.error(e)
+    process.exit(1)
   })
   .finally(() => {
-    process.exit(0);
-  });
+    process.exit(0)
+  })
