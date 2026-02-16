@@ -21,24 +21,24 @@ const addGetResourceMetadataToQueue = async (id, url) => {
     key: RESOURCE_ACTIONS.GET_METADATA,
     ...referenceData(),
   };
-  return resourceQueue.add(
-    RESOURCE_ACTIONS.GET_METADATA,
-    data,
-    {
-      attempts: retries,
-      backoff: backOffOpts,
-      removeOnComplete: true,
-      removeOnFail: true,
-    },
-  );
+  return resourceQueue.add(RESOURCE_ACTIONS.GET_METADATA, data, {
+    attempts: retries,
+    backoff: backOffOpts,
+    removeOnComplete: true,
+    removeOnFail: true,
+  });
 };
 
 const onFailedResourceQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
 const onCompletedResourceQueue = (job, result) => {
   if (result.status === 200 || result.status === 201 || result.status === 202) {
-    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    logger.info(
+      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`,
+    );
   } else {
-    auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    auditLogger.error(
+      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`,
+    );
   }
 };
 const processResourceQueue = () => {

@@ -107,7 +107,7 @@ A new goal is created if:
 * A monitoring review was delivered after 2025-01-21
 * The review is Complete
 * It is of a type like 'AIAN-DEF', 'RAN', 'FA-1', 'Follow-up', 'FA1-FR',
-          'FA-2', 'FA2-CR', 'Special'
+          'FA1-PSR', 'FA-2', 'FA2-CR', 'FA2-CSR', 'Special'
 * There is at least one valid 'Active' Finding linked to the grant
   * Findings are considered to be active if they have an 'Active' or 'Elevated Deficiency' status OR if their most recent follow-up review is not yet delivered.
   * No finding will be considered active if a Monitoring Goal has been closed since the Finding's most recent review's reportDeliveryDate.
