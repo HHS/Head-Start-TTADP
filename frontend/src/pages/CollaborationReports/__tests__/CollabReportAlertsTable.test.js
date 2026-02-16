@@ -80,7 +80,7 @@ describe('CollabReportAlertsTable', () => {
           collaboratingSpecialists: [{ fullName: 'Jane Smith' }],
           updatedAt: '2024-01-02T10:00:00Z',
           link: '/collaboration-reports/3',
-          approvers: [{ userId: 3, user: { fullName: 'Approver user 3' } }],
+          approvers: [{ userId: 3, user: { fullName: 'Approver user 3', id: 3 } }],
           submissionStatus: REPORT_STATUSES.SUBMITTED,
         },
       ],

@@ -66,8 +66,8 @@ const DeleteReportModal = ({
 }) => {
   const onDeleteReport = () => {
     // istanbul ignore next - tested elsewhere
-    onReportRemoved(report)
-      .then(modalRef.current.toggleModal(false));
+    onReportRemoved(report);
+    modalRef.current.toggleModal(false);
   };
 
   return (
