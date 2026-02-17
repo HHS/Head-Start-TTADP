@@ -532,12 +532,25 @@ jobs:
         name: Run OWASP ZAP full scan
         command: |
           set -euxo pipefail
+          SERVER_CONTAINER_ID=$(docker compose -f docker-compose.dss.yml ps -q server)
+          if [ -z "${SERVER_CONTAINER_ID}" ]; then
+            echo "Unable to find running 'server' container from docker-compose.dss.yml"
+            docker compose -f docker-compose.dss.yml ps
+            exit 1
+          fi
+          SCAN_NETWORK=$(docker inspect -f '{{range $k, $_ := .NetworkSettings.Networks}}{{printf "%s\n" $k}}{{end}}' "${SERVER_CONTAINER_ID}" | head -n1)
+          if [ -z "${SCAN_NETWORK}" ]; then
+            echo "Unable to determine network for container ${SERVER_CONTAINER_ID}"
+            docker inspect "${SERVER_CONTAINER_ID}"
+            exit 1
+          fi
+          echo "Using Docker network for ZAP scan: ${SCAN_NETWORK}"
           docker run \
             -v "$(pwd)/zap.conf:/zap/wrk/zap.conf:ro" \
             -v "$(pwd)/reports:/zap/wrk:rw" \
             --rm \
             --user zap:$(id -g) \
-            --network=smarthub \
+            --network="${SCAN_NETWORK}" \
             --platform linux/amd64 \
             -t zaproxy/zap-stable:latest zap-full-scan.py \
             -t http://server:8080 \
