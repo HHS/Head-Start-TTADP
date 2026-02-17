@@ -6,8 +6,8 @@ describe('RegionalDashboard constants', () => {
       expect(RECIPIENT_SPOTLIGHT_FILTER_CONFIG).toBeDefined();
     });
 
-    it('contains exactly 8 filters', () => {
-      expect(RECIPIENT_SPOTLIGHT_FILTER_CONFIG).toHaveLength(8);
+    it('contains exactly 7 filters', () => {
+      expect(RECIPIENT_SPOTLIGHT_FILTER_CONFIG).toHaveLength(7);
     });
 
     it('includes all required filters', () => {
@@ -18,7 +18,6 @@ describe('RegionalDashboard constants', () => {
       expect(filterIds).toContain('lastTTA'); // Last TTA
       expect(filterIds).toContain('programSpecialist'); // Program specialist
       expect(filterIds).toContain('priorityIndicator'); // Priority indicator (NEW)
-      expect(filterIds).toContain('programType'); // Program types
       expect(filterIds).toContain('region'); // Region
       expect(filterIds).toContain('stateCode'); // State or territory
     });
