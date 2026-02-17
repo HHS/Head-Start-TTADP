@@ -7,7 +7,6 @@ import {
   processS3Queue,
 } from './s3Queue';
 import { FILE_STATUSES, S3_ACTIONS } from '../constants';
-
 import db, { File } from '../models';
 import { auditLogger, logger } from '../logger';
 

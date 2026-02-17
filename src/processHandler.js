@@ -1,6 +1,5 @@
 import { auditLogger } from './logger';
 import { sequelize, descriptiveDetails, isConnectionOpen } from './models';
-import { closeAllQueues } from './lib/queue';
 
 let isShuttingDown = false; // To prevent multiple shutdown attempts
 
@@ -15,11 +14,6 @@ export const gracefulShutdown = async (msg) => {
   isShuttingDown = true;
 
   const details = JSON.stringify(descriptiveDetails());
-  try {
-    await closeAllQueues(msg);
-  } catch (err) {
-    auditLogger.error(`Error during queue shutdown through ${msg}: ${err}`);
-  }
   if (isConnectionOpen()) {
     try {
       await sequelize.close();

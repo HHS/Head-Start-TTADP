@@ -42,42 +42,26 @@ export default async function getCachedResponse(
 
   try {
     if (!ignoreCache) {
+      redisClient = new Redis(redisUrl, {
+        tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
+      });
+      response = await redisClient.get(key);
+    }
+  } catch (err) {
+    auditLogger.error('Error creating & connecting to redis client', { err });
+  }
+
+  // if we do not have a response, we need to call the callback
+  if (!response) {
+    response = await responseCallback();
+    // and then, if we have a response and we have a redis client, we need to set the cache
+    if (response && redisClient) {
       try {
-        redisClient = new Redis(redisUrl, {
-          tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
-        });
+        await redisClient.set(key, response, 'EX', options.EX || 600);
       } catch (err) {
-        auditLogger.error('Error creating & connecting to redis client', { err });
-      }
-
-      if (redisClient) {
-        try {
-          response = await redisClient.get(key);
-        } catch (err) {
-          auditLogger.error('Error getting cache response', { err });
-        }
-      }
-    }
-
-    // if we do not have a response, we need to call the callback
-    if (!response) {
-      response = await responseCallback();
-      // and then, if we have a response and we have a redis client, we need to set the cache
-      if (response && redisClient) {
-        try {
-          await redisClient.set(key, response, 'EX', options.EX || 600);
-        } catch (err) {
-          auditLogger.error('Error setting cache response', { err });
-        }
-      }
-    }
-  } finally {
-    if (redisClient) {
-      try {
+        auditLogger.error('Error setting cache response', { err });
+      } finally {
         await redisClient.quit();
-      } catch (err) {
-        auditLogger.error('Error closing redis client', { err });
-        redisClient.disconnect();
       }
     }
   }
