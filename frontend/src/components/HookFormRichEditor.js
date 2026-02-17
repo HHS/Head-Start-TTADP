@@ -25,16 +25,27 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
  * ariaLabel: Label describing the editor read by a screen reader
  */
 const HookFormRichEditor = ({
-  name, defaultValue, ariaLabel, required,
+  name,
+  id,
+  defaultValue,
+  ariaLabel,
+  required,
+  errorMessage,
 }) => (
   <Controller
     name={name}
+    id={id}
     defaultValue={defaultValue}
-    rules={{ required }}
-    render={({ onChange, value }) => (
+    rules={required ? {
+      validate: {
+        notEmptyTag: (value) => (value && value.trim() !== '<p></p>') || errorMessage || 'This field is required',
+      },
+    } : {}}
+    render={({ onChange, value, onBlur }) => (
       <RichEditor
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         ariaLabel={ariaLabel}
       />
     )}
@@ -43,14 +54,16 @@ const HookFormRichEditor = ({
 
 HookFormRichEditor.propTypes = {
   name: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
   defaultValue: PropTypes.string,
   ariaLabel: PropTypes.string.isRequired,
   required: PropTypes.bool,
+  errorMessage: PropTypes.string,
 };
 
 HookFormRichEditor.defaultProps = {
   defaultValue: '',
   required: false,
+  errorMessage: null,
 };
-
 export default HookFormRichEditor;
