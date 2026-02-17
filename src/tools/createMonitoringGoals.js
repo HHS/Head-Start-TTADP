@@ -160,8 +160,8 @@ const createMonitoringGoals = async () => {
           'AIAN-DEF',
           'RAN',
           'Follow-up',
-          'FA-1', 'FA1-FR',
-          'FA-2', 'FA2-CR',
+          'FA-1', 'FA1-FR', 'FA1-PSR',
+          'FA-2', 'FA2-CR', 'FA2-CSR',
           'Special'
         )
         AND g.id IS NULL
