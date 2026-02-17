@@ -125,12 +125,30 @@
 .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table thead th:last-child::before,
 .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tbody td:last-child::before,
 .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget tfoot td:last-child::before {
+  display: none;
+}
+
+.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget tfoot td {
+  border-top: 2px solid #5c5c5c;
+}
+
+.approval-rate-by-deadline-widget--multi .smarthub-horizontal-table-widget .usa-table thead th:last-child::before,
+.approval-rate-by-deadline-widget--multi .smarthub-horizontal-table-widget .usa-table tbody td:last-child::before,
+.approval-rate-by-deadline-widget--multi .smarthub-horizontal-table-widget tfoot td:last-child::before {
+  display: block;
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   height: 100%;
-  border-left: 1px solid black;
+  border-left: 1px solid #5c5c5c;
+}
+
+@media (min-width: 60em) {
+  .approval-rate-by-deadline-widget--single .smarthub-horizontal-table-widget
+  .smarthub-horizontal-table-first-column-border::after {
+    border-right: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
