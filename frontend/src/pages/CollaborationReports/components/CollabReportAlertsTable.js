@@ -95,7 +95,6 @@ DeleteReportModal.propTypes = {
   onReportRemoved: PropTypes.func.isRequired,
   report: PropTypes.shape({
     id: PropTypes.number,
-    userId: PropTypes.number,
   }),
 };
 
