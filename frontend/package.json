@@ -69,7 +69,7 @@
     "node": "22.22.0"
   },
   "scripts": {
-    "start": "cross-env DISABLE_ESLINT_PLUGIN=true craco start --verbose",
+    "start": "cross-env DISABLE_ESLINT_PLUGIN=true node ./scripts/start-dev.js --verbose",
     "build:local": "INLINE_RUNTIME_CHUNK=false craco build",
     "build": "INLINE_RUNTIME_CHUNK=false FAST_REFRESH=false craco build && mv build/ ../build/server/client",
     "eject": "craco eject",

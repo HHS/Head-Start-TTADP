@@ -4,43 +4,21 @@
 
 ### Testing With Docker
 
-If switching branches for code review, run `yarn docker:reset` before running your tests.
+If switching branches for code review, run `make docker-reset` before running your tests.
 
-Run `yarn docker:test` to run all tests for the frontend and backend.
+Run `make docker-test` to run all Jest tests for backend and frontend in Docker.
 
-To only run the frontend tests run `yarn docker:test frontend`.
+`make docker-test` behavior:
 
-To only run the backend tests run `yarn docker:test backend`.
+- Uses an isolated compose stack defined in `docker/compose/test.yml`
+- Starts dedicated `test-db` and `test-redis`
+- Runs migrations and seeders before tests
+- Runs backend Jest (`yarn test:ci`) and frontend Jest (`yarn --cwd frontend test:ci`)
+- Tears down test containers, network, and test volumes automatically
 
-Migrations and seeding of the test db occurs within the script run by the `docker:test` command.
+To run the same command through Yarn compatibility scripts, use `yarn docker:test`.
 
 To run eslint run `yarn lint:all` or `yarn lint:fix:all` to have eslint attempt to fix linting problems.
-
-> [!NOTE]
-> You may run into some issues running the docker commands on Windows:
->
-> - If you run into `Permission Denied` errors see [this issue](https://github.com/docker/for-win/issues/3385#issuecomment-501931980)
-> - You can try to speed up execution time on windows with solutions posted to [this issue](https://github.com/docker/for-win/issues/1936)
-
-#### Using `./bin/run-tests`
-
-To simplify running tests in Docker, there is a bash script, `./bin/run-tests` that will run the appropriate commands to start `test-` variations of the services used in tests. You should be able to run tests using that command while your development Docker environment is running. The script uses a separate `docker-compose.test.yml` which does not create a user-accessible network and cleans up after itself once tests have run.
-
-This script is written such that it will log errors, but won't exit if a docker command fails. It will count the number of errors and the number of errors will be the exit code (`$?`) for the script. So if three docker commands fail, the exit code would be 3.
-
-By default, `./bin/run-tests` will run both backend and frontend tests. If you want to run only one set of tests, supply 'frontend' or 'backend' as a parameter. So to run only the backend tests, you'd run `./bin/run-tests backend`.
-
-#### Note: Database Records in Docker
-
-When running tests in Docker, be aware that there are tests that will modify/delete database records. For tests to run, the 'db' service needs to exist and `db:migrate` and `db:seed` need to have been run (to create the tables and populate certain records).
-
-In the `docker-compose.yml` configuration, the database is set up to persist to a volume, "dbdata", so database records will persist between runs of the 'db' service, unless you remove that volume explicitly (e.g. `docker volume rm` or `docker compose down --volumes`).
-
-#### Note: Docker Compose & Multiple Configurations
-
-`docker compose` has a feature for providing multiple `docker-compose.*.yml` files where subsequent files can override settings in previous files, which sounds like it would suit the use case of running docker for local development and for testing. However, the ability to [override configurations](https://docs.docker.com/compose/extends/#adding-and-overriding-configuration) is limited. While experimenting with overrides, it became clear that doing so would require a minimum of three docker-compose.yml files: one "base", one for local development, one for running tests. Trying to compose docker-compose.yml files would be complicated.
-
-In addition, while experimenting with multiple configuration files, it became clear that docker was unable to differentiate between different versions of the same service. Trying to override the 'db' service for testing would not work as expected: if the local/dev 'db' service had already been created, that one would be used when tests were run.
 
 ### Running Tests Natively
 

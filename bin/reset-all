@@ -1,11 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-yarn docker:stop --volumes
+set -euo pipefail
 
-yarn docker:deps
-
-yarn docker:db:migrate
-
-yarn docker:db:seed
-
-yarn docker:stop
+make docker-reset

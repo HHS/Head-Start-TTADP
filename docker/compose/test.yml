@@ -1,0 +1,106 @@
+x-project-labels: &project-labels
+  com.ttahub.project: head-start-ttadp
+  com.ttahub.stack: test
+
+services:
+  test-db:
+    image: postgres:15.12
+    labels: *project-labels
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-something_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ttasmarthub}
+    volumes:
+      - test-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DB:-ttasmarthub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  test-redis:
+    image: redis:6.2.6
+    labels: *project-labels
+    command: ["redis-server", "--requirepass", "${REDIS_PASS:-SUPERSECUREPASSWORD}"]
+    volumes:
+      - test-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASS:-SUPERSECUREPASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  test-backend:
+    labels: *project-labels
+    build:
+      context: ../..
+      dockerfile: docker/images/node-dev.Dockerfile
+    working_dir: /workspace
+    entrypoint: ["/workspace/docker/scripts/ensure-deps.sh", "backend"]
+    command: ["yarn", "--version"]
+    env_file:
+      - ../../.env
+    environment:
+      NODE_ENV: test
+      POSTGRES_HOST: test-db
+      REDIS_HOST: test-redis
+      # Keep test runtime deterministic and isolated from local .env S3 values.
+      S3_ENDPOINT: ""
+      S3_BUCKET: ""
+      S3_ACCESS_KEY_ID: ""
+      S3_SECRET_ACCESS_KEY: ""
+      VCAP_SERVICES: ""
+      YARN_CACHE_FOLDER: /yarn-cache
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    volumes:
+      - ../../:/workspace:rw
+      - test-backend-node-modules:/workspace/node_modules
+      - test-backend-yarn-cache:/yarn-cache
+
+  test-frontend:
+    labels: *project-labels
+    build:
+      context: ../..
+      dockerfile: docker/images/node-dev.Dockerfile
+    working_dir: /workspace/frontend
+    entrypoint: ["/workspace/docker/scripts/ensure-deps.sh", "frontend"]
+    command: ["yarn", "--version"]
+    env_file:
+      - ../../.env
+    environment:
+      CI: "true"
+      BACKEND_PROXY: http://test-backend:8080
+      YARN_CACHE_FOLDER: /yarn-cache
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    volumes:
+      - ../../frontend:/workspace/frontend:rw
+      - ../../packages:/workspace/packages:rw
+      - ../../docker:/workspace/docker:ro
+      - test-frontend-node-modules:/workspace/frontend/node_modules
+      - test-frontend-yarn-cache:/yarn-cache
+
+networks:
+  default:
+    labels: *project-labels
+
+volumes:
+  test-db-data:
+    labels: *project-labels
+  test-redis-data:
+    labels: *project-labels
+  test-backend-node-modules:
+    labels: *project-labels
+  test-frontend-node-modules:
+    labels: *project-labels
+  test-backend-yarn-cache:
+    labels: *project-labels
+  test-frontend-yarn-cache:
+    labels: *project-labels

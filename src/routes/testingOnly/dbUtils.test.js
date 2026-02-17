@@ -20,5 +20,5 @@ describe('dbUtils', () => {
     `, { type: QueryTypes.SELECT });
 
     expect(lastValue).not.toBe(65535);
-  });
+  }, 180000);
 });

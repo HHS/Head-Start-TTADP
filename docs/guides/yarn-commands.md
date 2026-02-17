@@ -1,79 +1,46 @@
-# Yarn Commands
+# Command Reference
 
-## Setup
+## Preferred Docker commands (Make)
 
-<!-- prettier-ignore-start -->
-| Description | Docker Command | Host Command | Local only Command |
-| --- | --- | --- | --- |
-| Install dependencies for the frontend and backend | `yarn docker:deps` | `yarn deps` | `yarn deps:local` |
-<!-- prettier-ignore-end -->
+| Description | Command |
+| --- | --- |
+| Start core local stack (`db`, `redis`, `backend`, `frontend`) | `make docker-start` |
+| Start core stack + optional local services (`api-docs`, `minio`, `mailcatcher`, `redis-commander`) and the worker | `make docker-start-full` |
+| Stop any running repo Docker resources | `make docker-stop` |
+| Reset Docker state (remove volumes, rebuild, migrate, seed) | `make docker-reset` |
+| Run backend + frontend Jest in isolated Docker test stack | `make docker-test` |
+| Follow logs for the dev stack | `make docker-logs` |
+| Open shell in backend container | `make docker-shell-backend` |
+| Open shell in frontend container | `make docker-shell-frontend` |
 
-## Services
+## Yarn compatibility aliases
 
-<!-- prettier-ignore-start -->
-| Description | Docker Command | Host Command | Local only Command |
-| --- | --- | --- | --- |
-| Starts the backend and frontend | `yarn docker:start` | | `yarn start:local` |
-| Stops the backend and frontend | `yarn docker:stop` | | |
-| Start only the supporting services | `yarn docker:dbs:start` | | |
-| Stops the backend and frontend (alias) | | `yarn docker:dbs:stop` | |
-| Starts the backend web process | | `yarn start:web` | `yarn server` |
-| Starts the worker process | | `yarn start:worker` | `yarn worker` |
-| Start the frontend | | | `yarn client` |
-<!-- prettier-ignore-end -->
+These Yarn scripts remain available for the core Docker workflow:
 
-## Testing
+- `yarn docker:start` -> `make docker-start`
+- `yarn docker:start:full` -> `make docker-start-full`
+- `yarn docker:stop` -> `make docker-stop`
+- `yarn docker:reset` -> `make docker-reset`
+- `yarn docker:test` -> `make docker-test`
 
-<!-- prettier-ignore-start -->
-| Description | Docker Command | Host Command | Local only Command |
-| --- | --- | --- | --- |
-| Runs tests for the frontend and backend | `yarn docker:test` | | |
-| Run tests for only the backend | | `yarn test` | |
-| Run tests for the backend with coverage and output results to xml files | | `yarn test:ci` | |
-| Run `yarn test:ci` for both the frontend and backend | | `yarn test:all` | |
-| Run Playwright E2E tests | | `yarn e2e` | |
-| Run Playwright API tests | | `yarn e2e:api` | |
-| Run cucumber tests | | `yarn cucumber` | |
-| Collect backend coverage report | | `yarn coverage:backend` | |
-<!-- prettier-ignore-end -->
+## Native host commands
 
-## Linting
-
-<!-- prettier-ignore-start -->
-| Description | Docker Command | Host Command | Local only Command |
-| --- | --- | --- | --- |
-| Runs the linter for the frontend and backend | `yarn docker:lint` | | |
-| Run the linter only for the backend | | `yarn lint` | |
-| Run the linter for the backend with results output to xml files | | `yarn lint:ci` | |
-| Run `yarn lint:ci` for both the frontend and backend | | `yarn lint:all` | |
-| Auto-fix linting issues for backend and frontend | | `yarn lint:fix:all` | |
-<!-- prettier-ignore-end -->
-
-## Database
-
-<!-- prettier-ignore-start -->
-| Description | Docker Command | Host Command | Local only Command |
-| --- | --- | --- | --- |
-| Run migrations | `yarn docker:db:migrate` | `yarn db:migrate` | |
-| Undo migrations | `yarn docker:db:migrate:undo` | `yarn db:migrate:undo` | |
-| Run all seeders located in `src/seeders` | `yarn docker:db:seed` | `yarn db:seed` | |
-| Undo all seeders located in `src/seeders` | `yarn docker:db:seed:undo` | `yarn db:seed:undo` | |
-<!-- prettier-ignore-end -->
-
-## Building
-
-<!-- prettier-ignore-start -->
-| Description | Docker Command | Host Command | Local only Command |
-| --- | --- | --- | --- |
-| Build backend TypeScript | | `yarn build` | |
-| Build frontend for production | | `yarn --cwd frontend build` | |
-<!-- prettier-ignore-end -->
-
-## Other
-
-<!-- prettier-ignore-start -->
-| Description | Docker Command | Host Command | Local only Command |
-| --- | --- | --- | --- |
-| Host the OpenAPI 3 spec using [Redoc](https://github.com/Redocly/redoc) at `localhost:5003` | | `yarn docs:serve` | |
-| Start backend with debugger on port 9229 | | `yarn server:debug` | |
-<!-- prettier-ignore-end -->
+| Description | Command |
+| --- | --- |
+| Install dependencies (CI-style lockfile install) | `yarn deps` |
+| Install dependencies for host-only local development | `yarn deps:local` |
+| Start backend + frontend + worker locally | `yarn start:local` |
+| Start backend only (built output) | `yarn start:web` |
+| Start backend dev watcher | `yarn server` |
+| Start worker dev watcher | `yarn worker` |
+| Start frontend dev server | `yarn client` |
+| Run backend tests | `yarn test` |
+| Run backend CI test command | `yarn test:ci` |
+| Run backend + frontend CI tests | `yarn test:all` |
+| Run backend lint | `yarn lint` |
+| Run backend + frontend lint | `yarn lint:all` |
+| Auto-fix backend + frontend lint issues | `yarn lint:fix:all` |
+| Run backend migrations | `yarn db:migrate` |
+| Run backend seeders | `yarn db:seed` |
+| Build backend TypeScript | `yarn build` |
+| Build frontend production bundle | `yarn --cwd frontend build` |
