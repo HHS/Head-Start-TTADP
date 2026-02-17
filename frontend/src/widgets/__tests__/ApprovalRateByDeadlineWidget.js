@@ -62,6 +62,23 @@ describe('ApprovalRateByDeadlineWidget', () => {
     expect(screen.getByText('National average')).toBeInTheDocument();
   });
 
+  it('renders table with a national average column and total footer row', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /open actions for approval rate by deadline/i }));
+    fireEvent.click(screen.getByRole('button', { name: /display table/i }));
+
+    expect(screen.getByText('National average', { selector: 'span[aria-hidden="true"]' })).toBeInTheDocument();
+    expect(screen.getAllByText('Total').length).toBeGreaterThan(0);
+  });
+
+  it('does not render the deprecated secondary header label', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    expect(screen.queryByText('Region and national average')).not.toBeInTheDocument();
+    expect(screen.getByText(/Filters not applied/i)).toBeInTheDocument();
+  });
+
   it('keeps the same region when clicking the active dot', () => {
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 

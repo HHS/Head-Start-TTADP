@@ -8,7 +8,7 @@ import React, {
 import PropTypes from 'prop-types';
 import WidgetContainer from '../components/WidgetContainer';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
-import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
+import FiltersNotApplicable from '../components/FiltersNotApplicable';
 import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import useWidgetExport from '../hooks/useWidgetExport';
@@ -104,6 +104,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
 
   const {
     columnHeadings,
+    footerData,
     tableRows,
     monthLabels,
     nationalSeries,
@@ -112,6 +113,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     if (!widgetData || !arrayExistsAndHasLength(widgetData.records)) {
       return {
         columnHeadings: [],
+        footerData: [],
         tableRows: [],
         monthLabels: [],
         nationalSeries: [],
@@ -121,19 +123,33 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
 
     const months = widgetData.records.map((r) => r.month_label);
     const regionHeadings = regions.map((regionId) => `Region ${regionId}`);
-    const tableHeadings = [...regionHeadings, 'Total'];
+    const tableHeadings = [...regionHeadings, 'National average'];
     const nationalValues = widgetData.records.map((record) => Number(record.national_pct) || 0);
     const regionSeriesMap = new Map();
+    const regionTotalsMap = new Map();
+    let nationalOnTimeTotal = 0;
+    let nationalCountTotal = 0;
+
     regions.forEach((regionId) => {
+      let regionOnTimeTotal = 0;
+      let regionCountTotal = 0;
       regionSeriesMap.set(
         regionId,
         widgetData.records.map((record) => {
           const regionData = record.regions && record.regions[regionId]
             ? record.regions[regionId]
             : { pct: 0 };
+          regionOnTimeTotal += Number(regionData.on_time) || 0;
+          regionCountTotal += Number(regionData.total) || 0;
           return Number(regionData.pct) || 0;
         }),
       );
+      regionTotalsMap.set(regionId, { onTime: regionOnTimeTotal, total: regionCountTotal });
+    });
+
+    widgetData.records.forEach((record) => {
+      nationalOnTimeTotal += Number(record.national_on_time) || 0;
+      nationalCountTotal += Number(record.national_total) || 0;
     });
 
     const tableData = widgetData.records.map((record, index) => {
@@ -153,7 +169,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
           record.national_on_time,
           record.national_total,
         ),
-        title: 'Total',
+        title: 'National average',
       });
 
       return {
@@ -163,8 +179,27 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
       };
     });
 
+    const formatTotalCell = (onTime, total) => {
+      if (!total) {
+        return formatPctWithCounts(0, 0, 0);
+      }
+      const pct = Math.round((onTime / total) * 100);
+      return formatPctWithCounts(pct, onTime, total);
+    };
+
+    const totalsRow = [
+      '',
+      'Total',
+      ...regions.map((regionId) => {
+        const totals = regionTotalsMap.get(regionId) || { onTime: 0, total: 0 };
+        return formatTotalCell(totals.onTime, totals.total);
+      }),
+      formatTotalCell(nationalOnTimeTotal, nationalCountTotal),
+    ];
+
     return {
       columnHeadings: tableHeadings,
+      footerData: totalsRow,
       tableRows: tableData,
       monthLabels: months,
       nationalSeries: nationalValues,
@@ -232,20 +267,27 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
   };
 
   const hasMultipleRegions = regions.length > 1;
+  const widgetClassName = [
+    'approval-rate-by-deadline-widget',
+    hasMultipleRegions
+      ? 'approval-rate-by-deadline-widget--multi'
+      : 'approval-rate-by-deadline-widget--single',
+  ].join(' ');
 
   const subtitle = (
-    <div className="margin-bottom-3">
-      <WidgetContainerSubtitle marginY={0}>
-        Percentage of activity reports approved by the expected deadline.
-      </WidgetContainerSubtitle>
-      <SecondarySubtitleWithFilterWarning showFiltersNotApplicable>
-        Region and national average
-      </SecondarySubtitleWithFilterWarning>
+    <div className="approval-rate-subtitle margin-bottom-3">
+      <div className="display-flex flex-wrap flex-align-center">
+        <WidgetContainerSubtitle marginY={0}>
+          Percentage of activity reports approved by the expected deadline.
+        </WidgetContainerSubtitle>
+        <FiltersNotApplicable showLeadingDash={false} />
+      </div>
     </div>
   );
 
   return (
     <WidgetContainer
+      className={widgetClassName}
       loading={loading}
       title="Approval rate by deadline"
       subtitle={subtitle}
@@ -289,14 +331,15 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
             checkboxes,
             setCheckboxes,
             footer: {
-              showFooter: false,
+              showFooter: true,
+              data: footerData,
             },
           }}
           widgetRef={widgetRef}
         />
       ) : (
         <div>
-          <div className="text-center text-bold margin-bottom-1">
+          <div className="text-center text-bold margin-top-2 margin-bottom-1">
             {activeRegionId ? `Region ${activeRegionId}` : 'Region'}
           </div>
           <div
@@ -346,7 +389,8 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
                       checkboxes,
                       setCheckboxes,
                       footer: {
-                        showFooter: false,
+                        showFooter: true,
+                        data: footerData,
                       },
                     }}
                     widgetRef={widgetRef}
@@ -389,7 +433,8 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
                       checkboxes,
                       setCheckboxes,
                       footer: {
-                        showFooter: false,
+                        showFooter: true,
+                        data: footerData,
                       },
                     }}
                     widgetRef={widgetRef}
@@ -434,7 +479,8 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
                     checkboxes,
                     setCheckboxes,
                     footer: {
-                      showFooter: false,
+                      showFooter: true,
+                      data: footerData,
                     },
                   }}
                   widgetRef={widgetRef}
