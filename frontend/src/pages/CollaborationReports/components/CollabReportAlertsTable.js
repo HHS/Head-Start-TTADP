@@ -123,10 +123,10 @@ const CollabReportAlertsTable = ({
     return isCreator || isCollaborator;
   }, [userId]);
 
-  const handleDelete = (report) => {
+  const handleDelete = useCallback((report) => {
     setReportToDelete(report);
     modalRef.current.toggleModal(true);
-  };
+  }, []);
 
   const handleRowActionClick = useCallback((action, row) => {
     if (action === 'View') {
@@ -135,7 +135,7 @@ const CollabReportAlertsTable = ({
     } else if (action === 'Delete') {
       handleDelete(row);
     }
-  }, [history, userId]);
+  }, [history, userId, handleDelete]);
 
   const deleteReport = async (report) => {
     try {
