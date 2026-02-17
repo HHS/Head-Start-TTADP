@@ -1,6 +1,11 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  act,
+} from '@testing-library/react';
 import { ApprovalRateByDeadlineWidget } from '../ApprovalRateByDeadlineWidget';
 
 jest.mock('plotly.js-basic-dist', () => ({
@@ -102,10 +107,14 @@ describe('ApprovalRateByDeadlineWidget', () => {
     const frame = document.querySelector('.approval-rate-carousel-frame');
     expect(frame.className).not.toMatch(/is-animating/);
 
-    jest.advanceTimersByTime(0);
+    act(() => {
+      jest.advanceTimersByTime(0);
+    });
     expect(frame.className).toMatch(/is-animating/);
 
-    jest.advanceTimersByTime(320);
+    act(() => {
+      jest.advanceTimersByTime(320);
+    });
     expect(frame.className).not.toMatch(/is-animating/);
 
     jest.useRealTimers();
@@ -116,6 +125,14 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /show region 2/i }));
     expect(screen.getByText('Region 2')).toBeInTheDocument();
+  });
+
+  it('supports backward carousel transitions', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData([1, 2, 3])} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /show region 3/i }));
+    fireEvent.click(screen.getByRole('button', { name: /show region 1/i }));
+    expect(screen.getByText('Region 1')).toBeInTheDocument();
   });
 
   it('renders without matchMedia support', () => {
@@ -149,5 +166,45 @@ describe('ApprovalRateByDeadlineWidget', () => {
     expect(screen.getByText('Region')).toBeInTheDocument();
     expect(document.querySelectorAll('.approval-rate-carousel-dot').length).toBe(0);
     expect(screen.queryByRole('button', { name: /next region/i })).not.toBeInTheDocument();
+  });
+
+  it('handles null data and renders no-results state', () => {
+    render(<ApprovalRateByDeadlineWidget data={null} loading={false} />);
+
+    expect(screen.getByText('No results found.')).toBeInTheDocument();
+  });
+
+  it('falls back when records are empty for defined regions', () => {
+    render(<ApprovalRateByDeadlineWidget data={{ regions: [1], records: [] }} loading={false} />);
+
+    expect(screen.getByText('No results found.')).toBeInTheDocument();
+  });
+
+  it('normalizes non-numeric values in rows and totals', () => {
+    render(
+      <ApprovalRateByDeadlineWidget
+        loading={false}
+        data={{
+          regions: [1],
+          records: [
+            {
+              month_start: '2025-01-01',
+              month_label: 'Jan 2025',
+              national_pct: Number.NaN,
+              national_total: Number.NaN,
+              national_on_time: Number.NaN,
+              regions: {
+                1: { pct: 'x', total: '2', on_time: '1' },
+              },
+            },
+          ],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /open actions for approval rate by deadline/i }));
+    fireEvent.click(screen.getByRole('button', { name: /display table/i }));
+
+    expect(screen.getAllByText('0% (0 of 0)').length).toBeGreaterThan(0);
   });
 });
