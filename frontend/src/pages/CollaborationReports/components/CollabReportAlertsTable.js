@@ -71,19 +71,17 @@ const DeleteReportModal = ({
   };
 
   return (
-    <>
-      <Modal
-        modalRef={modalRef}
-        onOk={onDeleteReport}
-        modalId="DeleteReportModal"
-        title="Are you sure you want to delete the report?"
-        okButtonText="Delete"
-        okButtonAriaLabel="Confirm delete and reload page"
-        showCloseX
-      >
-        <p>This action cannot be undone.</p>
-      </Modal>
-    </>
+    <Modal
+      modalRef={modalRef}
+      onOk={onDeleteReport}
+      modalId="DeleteReportModal"
+      title="Are you sure you want to delete the report?"
+      okButtonText="Delete"
+      okButtonAriaLabel="Confirm delete and reload page"
+      showCloseX
+    >
+      <p>This action cannot be undone.</p>
+    </Modal>
   );
 };
 
