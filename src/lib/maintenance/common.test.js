@@ -46,9 +46,7 @@ jest.mock('../../models', () => ({
 jest.mock('../../logger', () => ({
   auditLogger: {
     error: jest.fn(),
-    info: jest.fn(),
     log: jest.fn(),
-    warn: jest.fn(),
   },
   logger: {
     info: jest.fn(),
@@ -191,10 +189,7 @@ describe('Maintenance Queue', () => {
       addQueueProcessor(category, processor);
       maintenanceQueue.add = jest.fn();
       await enqueueMaintenanceJob({ category, data });
-      expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data, expect.objectContaining({
-        removeOnComplete: 5,
-        removeOnFail: 10,
-      }));
+      expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data, {});
     });
 
     it('should default data to {} if not provided', async () => {
