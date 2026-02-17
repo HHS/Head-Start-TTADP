@@ -15,21 +15,17 @@ import useWidgetExport from '../hooks/useWidgetExport';
 import withWidgetData from './withWidgetData';
 import LineGraph from './LineGraph';
 import { arrayExistsAndHasLength, EMPTY_ARRAY, NOOP } from '../Constants';
+import {
+  APPROVAL_RATE_BY_DEADLINE_EXPORT_NAME,
+  APPROVAL_RATE_BY_DEADLINE_FIRST_COLUMN,
+  APPROVAL_RATE_BY_DEADLINE_LEGEND_CONFIG,
+  APPROVAL_RATE_BY_DEADLINE_TABLE_CAPTION,
+  APPROVAL_RATE_BY_DEADLINE_TRACE_IDS,
+} from './constants';
 import './ApprovalRateByDeadlineWidget.css';
-
-const EXPORT_NAME = 'Approval rate by deadline';
-const FIRST_COLUMN = 'Months';
-
-const TRACE_IDS = {
-  REGION: 'approval-rate-region',
-  NATIONAL: 'approval-rate-national',
-};
-
-const TABLE_CAPTION = 'Approval rate by deadline by month';
 
 export function ApprovalRateByDeadlineWidget({ data, loading }) {
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [activeRegionIndex, setActiveRegionIndex] = useState(0);
@@ -94,6 +90,10 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
   );
 
   const activeRegionId = regions[activeRegionIndex];
+  const screenshotTitle = Number.isInteger(activeRegionId)
+    ? `${APPROVAL_RATE_BY_DEADLINE_EXPORT_NAME} - Region ${activeRegionId}`
+    : APPROVAL_RATE_BY_DEADLINE_EXPORT_NAME;
+  const capture = useMediaCapture(widgetRef, screenshotTitle);
 
   const formatPctWithCounts = (pct, onTime, total) => {
     const safePct = Number.isFinite(pct) ? pct : Number(pct) || 0;
@@ -218,14 +218,14 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
         x: monthLabels,
         y: series,
         trace: 'circle',
-        id: TRACE_IDS.REGION,
+        id: APPROVAL_RATE_BY_DEADLINE_TRACE_IDS.REGION,
       },
       {
         name: 'National average',
         x: monthLabels,
         y: nationalSeries,
         trace: 'triangle',
-        id: TRACE_IDS.NATIONAL,
+        id: APPROVAL_RATE_BY_DEADLINE_TRACE_IDS.NATIONAL,
       },
     ];
   };
@@ -236,8 +236,8 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     tableRows,
     columnHeadings,
     checkboxes,
-    FIRST_COLUMN,
-    EXPORT_NAME,
+    APPROVAL_RATE_BY_DEADLINE_FIRST_COLUMN,
+    APPROVAL_RATE_BY_DEADLINE_EXPORT_NAME,
   );
 
   const menuItems = useWidgetMenuItems(
@@ -247,6 +247,24 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     checkboxes,
     exportRows,
   );
+
+  const tableConfig = useMemo(() => ({
+    data: tableRows,
+    title: 'Approval rate by deadline',
+    firstHeading: APPROVAL_RATE_BY_DEADLINE_FIRST_COLUMN,
+    caption: APPROVAL_RATE_BY_DEADLINE_TABLE_CAPTION,
+    enableCheckboxes: true,
+    enableSorting: false,
+    showTotalColumn: false,
+    requestSort: NOOP,
+    headings: columnHeadings,
+    checkboxes,
+    setCheckboxes,
+    footer: {
+      showFooter: true,
+      data: footerData,
+    },
+  }), [checkboxes, columnHeadings, footerData, setCheckboxes, tableRows]);
 
   const handleRegionChange = (nextIndex) => {
     if (nextIndex < 0 || nextIndex >= regions.length || nextIndex === activeRegionIndex) {
@@ -285,6 +303,20 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     </div>
   );
 
+  const renderLineGraph = (graphData, key, showTable = false) => (
+    <LineGraph
+      key={key}
+      showTabularData={showTable}
+      data={graphData}
+      xAxisTitle="Months"
+      yAxisTitle="Percentage"
+      yAxisTickStep={10}
+      legendConfig={APPROVAL_RATE_BY_DEADLINE_LEGEND_CONFIG}
+      tableConfig={tableConfig}
+      widgetRef={widgetRef}
+    />
+  );
+
   return (
     <WidgetContainer
       className={widgetClassName}
@@ -295,48 +327,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
       titleMargin={{ bottom: 1 }}
     >
       {showTabularData ? (
-        <LineGraph
-          key="approval-rate-table"
-          showTabularData
-          data={traceData}
-          xAxisTitle="Months"
-          yAxisTitle="Percentage"
-          yAxisTickStep={10}
-          legendConfig={[
-            {
-              label: 'Region',
-              selected: true,
-              shape: 'circle',
-              id: 'show-approval-rate-region',
-              traceId: TRACE_IDS.REGION,
-            },
-            {
-              label: 'National average',
-              selected: true,
-              shape: 'triangle',
-              id: 'show-approval-rate-national',
-              traceId: TRACE_IDS.NATIONAL,
-            },
-          ]}
-          tableConfig={{
-            data: tableRows,
-            title: 'Approval rate by deadline',
-            firstHeading: FIRST_COLUMN,
-            caption: TABLE_CAPTION,
-            enableCheckboxes: true,
-            enableSorting: false,
-            showTotalColumn: false,
-            requestSort: NOOP,
-            headings: columnHeadings,
-            checkboxes,
-            setCheckboxes,
-            footer: {
-              showFooter: true,
-              data: footerData,
-            },
-          }}
-          widgetRef={widgetRef}
-        />
+        renderLineGraph(traceData, 'approval-rate-table', true)
       ) : (
         <div>
           <div className="text-center text-bold margin-top-2 margin-bottom-1">
@@ -353,143 +344,26 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
             {transition ? (
               <>
                 <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--outgoing approval-rate-carousel-slide--${transition.direction}`}>
-                  <LineGraph
-                    key={`approval-rate-outgoing-${transition.from}`}
-                    showTabularData={false}
-                    data={getTraceDataForRegion(regions[transition.from])}
-                    xAxisTitle="Months"
-                    yAxisTitle="Percentage"
-                    yAxisTickStep={10}
-                    legendConfig={[
-                      {
-                        label: 'Region',
-                        selected: true,
-                        shape: 'circle',
-                        id: 'show-approval-rate-region',
-                        traceId: TRACE_IDS.REGION,
-                      },
-                      {
-                        label: 'National average',
-                        selected: true,
-                        shape: 'triangle',
-                        id: 'show-approval-rate-national',
-                        traceId: TRACE_IDS.NATIONAL,
-                      },
-                    ]}
-                    tableConfig={{
-                      data: tableRows,
-                      title: 'Approval rate by deadline',
-                      firstHeading: FIRST_COLUMN,
-                      caption: TABLE_CAPTION,
-                      enableCheckboxes: true,
-                      enableSorting: false,
-                      showTotalColumn: false,
-                      requestSort: NOOP,
-                      headings: columnHeadings,
-                      checkboxes,
-                      setCheckboxes,
-                      footer: {
-                        showFooter: true,
-                        data: footerData,
-                      },
-                    }}
-                    widgetRef={widgetRef}
-                  />
+                  {renderLineGraph(
+                    getTraceDataForRegion(regions[transition.from]),
+                    `approval-rate-outgoing-${transition.from}`,
+                  )}
                 </div>
                 <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--incoming approval-rate-carousel-slide--${transition.direction}`}>
-                  <LineGraph
-                    key={`approval-rate-incoming-${transition.to}`}
-                    showTabularData={false}
-                    data={getTraceDataForRegion(regions[transition.to])}
-                    xAxisTitle="Months"
-                    yAxisTitle="Percentage"
-                    yAxisTickStep={10}
-                    legendConfig={[
-                      {
-                        label: 'Region',
-                        selected: true,
-                        shape: 'circle',
-                        id: 'show-approval-rate-region',
-                        traceId: TRACE_IDS.REGION,
-                      },
-                      {
-                        label: 'National average',
-                        selected: true,
-                        shape: 'triangle',
-                        id: 'show-approval-rate-national',
-                        traceId: TRACE_IDS.NATIONAL,
-                      },
-                    ]}
-                    tableConfig={{
-                      data: tableRows,
-                      title: 'Approval rate by deadline',
-                      firstHeading: FIRST_COLUMN,
-                      caption: TABLE_CAPTION,
-                      enableCheckboxes: true,
-                      enableSorting: false,
-                      showTotalColumn: false,
-                      requestSort: NOOP,
-                      headings: columnHeadings,
-                      checkboxes,
-                      setCheckboxes,
-                      footer: {
-                        showFooter: true,
-                        data: footerData,
-                      },
-                    }}
-                    widgetRef={widgetRef}
-                  />
+                  {renderLineGraph(
+                    getTraceDataForRegion(regions[transition.to]),
+                    `approval-rate-incoming-${transition.to}`,
+                  )}
                 </div>
               </>
             ) : (
               <div className="approval-rate-carousel-slide approval-rate-carousel-slide--current">
-                <LineGraph
-                  key={`approval-rate-region-${activeRegionId}`}
-                  showTabularData={false}
-                  data={traceData}
-                  xAxisTitle="Months"
-                  yAxisTitle="Percentage"
-                  yAxisTickStep={10}
-                  legendConfig={[
-                    {
-                      label: 'Region',
-                      selected: true,
-                      shape: 'circle',
-                      id: 'show-approval-rate-region',
-                      traceId: TRACE_IDS.REGION,
-                    },
-                    {
-                      label: 'National average',
-                      selected: true,
-                      shape: 'triangle',
-                      id: 'show-approval-rate-national',
-                      traceId: TRACE_IDS.NATIONAL,
-                    },
-                  ]}
-                  tableConfig={{
-                    data: tableRows,
-                    title: 'Approval rate by deadline',
-                    firstHeading: FIRST_COLUMN,
-                    caption: TABLE_CAPTION,
-                    enableCheckboxes: true,
-                    enableSorting: false,
-                    showTotalColumn: false,
-                    requestSort: NOOP,
-                    headings: columnHeadings,
-                    checkboxes,
-                    setCheckboxes,
-                    footer: {
-                      showFooter: true,
-                      data: footerData,
-                    },
-                  }}
-                  widgetRef={widgetRef}
-                />
+                {renderLineGraph(traceData, `approval-rate-region-${activeRegionId}`)}
               </div>
             )}
           </div>
           {hasMultipleRegions && (
-            <div className="display-flex flex-justify-center flex-gap-1 margin-top-1" role="tablist" aria-label="Select region">
+            <div className="display-flex flex-justify-center flex-gap-1 margin-top-1">
               {regions.map((regionId, index) => (
                 <button
                   key={`approval-rate-dot-${regionId}`}
@@ -500,7 +374,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
                   ].join(' ')}
                   onClick={() => handleRegionChange(index)}
                   aria-label={`Show Region ${regionId}`}
-                  aria-pressed={index === activeRegionIndex}
+                  aria-current={index === activeRegionIndex ? 'true' : undefined}
                 />
               ))}
             </div>
