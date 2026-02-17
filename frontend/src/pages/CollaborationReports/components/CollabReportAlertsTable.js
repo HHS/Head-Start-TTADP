@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
@@ -118,25 +118,25 @@ const CollabReportAlertsTable = ({
   const modalRef = React.useRef();
   const history = useHistory();
 
-  const isCreatorOrCollaborator = (report) => {
+  const isCreatorOrCollaborator = useCallback((report) => {
     const isCreator = report.author.id === userId;
     const isCollaborator = report.collaboratingSpecialists.some((c) => c.id === userId);
     return isCreator || isCollaborator;
-  };
+  }, [userId]);
 
   const handleDelete = (report) => {
     setReportToDelete(report);
     modalRef.current.toggleModal(true);
   };
 
-  const handleRowActionClick = (action, row) => {
+  const handleRowActionClick = useCallback((action, row) => {
     if (action === 'View') {
       const link = getReportLink(row, userId);
       history.push(link);
     } else if (action === 'Delete') {
       handleDelete(row);
     }
-  };
+  }, [history, userId]);
 
   const deleteReport = async (report) => {
     try {
@@ -203,7 +203,7 @@ const CollabReportAlertsTable = ({
     ] : [
       { label: 'View', onClick: () => handleRowActionClick('View', r) },
     ],
-  })), [data.rows, userId, isCreatorOrCollaborator]);
+  })), [data.rows, userId, isCreatorOrCollaborator, handleRowActionClick]);
 
   return (
     <>
