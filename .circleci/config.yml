@@ -499,6 +499,7 @@ jobs:
 
   test_cucumber:
     executor: docker-postgres-executor
+    resource_class: large
     steps:
     - run_e2e_test:
         cmd: yarn cucumber:ci
