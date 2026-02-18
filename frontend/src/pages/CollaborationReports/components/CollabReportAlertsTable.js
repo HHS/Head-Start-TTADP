@@ -112,6 +112,7 @@ const CollabReportAlertsTable = ({
 }) => {
   const { user: { id: userId } } = useContext(UserContext);
   const [reportToDelete, setReportToDelete] = React.useState(null);
+  const [deleteError, setDeleteError] = React.useState(null);
   const modalRef = React.useRef();
   const history = useHistory();
 
@@ -138,8 +139,10 @@ const CollabReportAlertsTable = ({
   const deleteReport = async (report) => {
     try {
       await deleteReportById(report.id);
+      setDeleteError(null);
       window.location.reload();
     } catch (err) {
+      setDeleteError('Error deleting report. Please try again.');
       // eslint-disable-next-line no-console
       console.error('Error deleting report:', err);
     }
@@ -217,6 +220,11 @@ const CollabReportAlertsTable = ({
         perPage={10}
         titleMargin={{ bottom: 3 }}
       >
+        { deleteError !== null && (
+        <Container className="bg-error-light margin-bottom-2 padding-1">
+          {deleteError}
+        </Container>
+        )}
         { data.rows.length === 0 && (
         <Container className="landing" paddingX={0} paddingY={0}>
           <div className="text-center padding-10">
@@ -264,13 +272,6 @@ const CollabReportAlertsTable = ({
   );
 };
 
-CollabReportAlertsTable.defaultProps = {
-  offset: 0,
-  loading: false,
-  emptyMsg: 'You have no Collaboration Reports',
-  showCreateMsgOnEmpty: false,
-};
-
 CollabReportAlertsTable.propTypes = {
   emptyMsg: PropTypes.string,
   loading: PropTypes.bool,
@@ -284,7 +285,13 @@ CollabReportAlertsTable.propTypes = {
   sortConfig: PropTypes.shape({}).isRequired,
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string.isRequired,
+};
 
+CollabReportAlertsTable.defaultProps = {
+  offset: 0,
+  loading: false,
+  emptyMsg: 'You have no Collaboration Reports',
+  showCreateMsgOnEmpty: false,
 };
 
 export default CollabReportAlertsTable;
