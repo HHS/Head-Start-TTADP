@@ -228,6 +228,7 @@ export default function LineGraph({
             setCheckboxes={tableConfig.setCheckboxes}
             showTotalColumn={tableConfig.showTotalColumn}
             footerData={tableConfig.footer.showFooter ? tableConfig.footer.data : false}
+            selectAllIdPrefix={tableConfig.selectAllIdPrefix}
           />
         )
         : (
@@ -302,6 +303,7 @@ LineGraph.propTypes = {
       data: PropTypes.arrayOf(PropTypes.string),
       showFooter: PropTypes.bool.isRequired,
     }),
+    selectAllIdPrefix: PropTypes.string,
     data: PropTypes.arrayOf(PropTypes.shape({
       heading: PropTypes.string.isRequired,
       data: PropTypes.arrayOf(PropTypes.shape({

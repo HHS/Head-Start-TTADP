@@ -38,7 +38,7 @@ import { upsertApprover, syncApprovers } from '../../services/activityReportAppr
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
-import { logger } from '../../logger';
+import { logger, auditLogger } from '../../logger';
 import {
   approverAssignedNotification,
   changesRequestedNotification,
@@ -495,6 +495,16 @@ export async function reviewReport(req, res) {
         await ActivityReportModel.update(
           { approvedAtTimezone },
           { where: { id: activityReportId } },
+        );
+      } else {
+        auditLogger.error(
+          `${namespace}: approved report received invalid or missing approvedAtTimezone`,
+          {
+            activityReportId,
+            userId,
+            approvedAtTimezone,
+            approvedAtTimezoneType: typeof approvedAtTimezone,
+          },
         );
       }
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
