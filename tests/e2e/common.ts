@@ -27,7 +27,19 @@ export const useClock = (test: typeof _test) => {
 }
 
 /**
- * 
+ * Removes the webpack-dev-server client overlay iframe if present.
+ * This overlay can intercept pointer events in tests running against the dev server.
+ * @param page {Page}
+ */
+export async function dismissWebpackOverlay(page: Page) {
+  await page.evaluate(() => {
+    const overlay = document.getElementById('webpack-dev-server-client-overlay');
+    if (overlay) overlay.remove();
+  });
+}
+
+/**
+ *
  * @param page {Page}
  */
 export async function blur(page: Page) {

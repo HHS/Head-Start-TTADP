@@ -8,7 +8,7 @@ declare global {
     __smartHubSnapshotPageState?: { activityReportId?: string };
   }
 }
-import { blur } from './common';
+import { blur, dismissWebpackOverlay } from './common';
 
 async function getFullName(page: Page) {
   await page.goto('/');
@@ -559,7 +559,8 @@ test.describe('Activity Report', () => {
 
     await page.waitForTimeout(10000);
     await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.supportType"]').selectOption('Implementing');
-    await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(4).click();
+    await dismissWebpackOverlay(page);
+    await page.getByRole('textbox', { name: /TTA provided for objective/i }).nth(1).locator('div').nth(2).click();
     await page.keyboard.type('g1 o2 tta');
     await blur(page);
 
