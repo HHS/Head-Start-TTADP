@@ -61,7 +61,6 @@ const RECIPIENT_SPOTLIGHT_FILTER_CONFIG = [
   lastTTA, // Last TTA
   programSpecialistFilter, // Program specialist
   priorityIndicatorFilter, // Priority indicator (NEW)
-  programTypeFilter, // Program types
   regionFilter, // Region
   stateCodeFilter, // State or territory
 ];
