@@ -42,7 +42,7 @@ describe('useSocket', () => {
   beforeAll(() => {
     global.WebSocket = class extends WebSocket {
       constructor() {
-        super('wss://test');
+        super('wss://localhost');
         global.sendMsg = null;
         this.binaryType = '';
       }
