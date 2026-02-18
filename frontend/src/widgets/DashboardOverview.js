@@ -152,6 +152,7 @@ const getDashboardFields = (data, showTooltip) => ([
     backgroundColor: colors.ttahubBlueLight,
     tooltipText: 'Recipients with at least one priority indicator',
     data: data.recipientPercentage,
+    drawerTagName: 'ttahub-spotlight-priority-indicators',
   },
 ]);
 

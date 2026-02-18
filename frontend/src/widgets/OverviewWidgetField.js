@@ -26,8 +26,10 @@ export function OverviewWidgetField({
   iconSize,
   showNoResults,
   maxToolTipWidth,
+  drawerTagName,
 }) {
   const drawerTriggerRef = useRef(null);
+  const aboutThisDataRef = useRef(null);
   const noData = data === '0%';
   return (
     <Grid desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-2 gap-0">
@@ -68,6 +70,16 @@ export function OverviewWidgetField({
           <span className="margin-top-1">{label1}</span>
         )}
         {label2 && <span className="font-sans-2xs">{label2}</span>}
+        {drawerTagName && (
+          <>
+            <DrawerTriggerButton drawerTriggerRef={aboutThisDataRef} customClass="margin-top-1">
+              About this data
+            </DrawerTriggerButton>
+            <Drawer triggerRef={aboutThisDataRef} title={label1} stickyHeader stickyFooter>
+              <ContentFromFeedByTag tagName={drawerTagName} />
+            </Drawer>
+          </>
+        )}
         {route && (!showNoResults || !noData) && (
           <Link
             to={route.to}
@@ -105,6 +117,7 @@ OverviewWidgetField.propTypes = {
   iconSize: PropTypes.string,
   showNoResults: PropTypes.bool,
   maxToolTipWidth: PropTypes.number,
+  drawerTagName: PropTypes.string,
 };
 
 OverviewWidgetField.defaultProps = {
@@ -116,6 +129,7 @@ OverviewWidgetField.defaultProps = {
   iconSize: 'lg',
   showNoResults: false,
   maxToolTipWidth: null,
+  drawerTagName: null,
 };
 
 export default OverviewWidgetField;

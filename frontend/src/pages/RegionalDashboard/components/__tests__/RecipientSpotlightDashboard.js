@@ -173,7 +173,8 @@ describe('Recipient spotlight Dashboard page', () => {
     renderTest();
 
     await waitFor(() => {
-      expect(screen.getByText('Recipients with priority indicators')).toBeInTheDocument();
+      const matches = screen.getAllByText('Recipients with priority indicators');
+      expect(matches.length).toBeGreaterThan(0);
     });
   });
 
