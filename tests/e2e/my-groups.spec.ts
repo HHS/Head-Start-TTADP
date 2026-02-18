@@ -10,10 +10,14 @@ test('my groups', async ({ page }) => {
   await page.getByRole('link', { name: 'Account Management' }).click();
 
   // create a  new group
+  const groupGrantsLoaded = page.waitForResponse(/api\/groups\/new\/grants/);
+  const groupEligibleUsersLoaded = page.waitForResponse(/api\/groups\/new\/eligibleUsers/);
   await page.getByRole('link', { name: 'Create a group' }).click();
+  await groupGrantsLoaded;
+  await groupEligibleUsersLoaded;
   await page.getByTestId('textInput').fill('A new group for me');
 
-  await page.locator('[class$="-ValueContainer"]').first().click();
+  await page.getByTestId('select-recipients-new-group-click-container').click();
   await page.keyboard.press('Enter');
 
   await blur(page);
@@ -31,7 +35,7 @@ test('my groups', async ({ page }) => {
   await page.getByRole('button', { name: 'open filters for this page' }).click();
   await page.locator('select[name="topic"]').selectOption('group');
   await page.locator('select[name="condition"]').selectOption('is');
-  await page.locator('[class$="-ValueContainer"]').click();
+  await page.getByLabel('Select group to filter by').click();
   await page.keyboard.press('Enter');
   const responsePromise = page.waitForResponse(/api\/recipient\/search/);
   await page.getByTestId('apply-filters-test-id').click();
