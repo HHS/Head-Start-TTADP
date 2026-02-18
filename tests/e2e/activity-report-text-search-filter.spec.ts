@@ -1,7 +1,16 @@
 import { test, expect, Page } from '@playwright/test';
 
 async function blur(page) {
-  await page.getByText('Office of Head Start TTA Hub').click();
+  await page.evaluate(() => {
+    const active = document.activeElement as HTMLElement | null;
+    if (active && typeof active.blur === 'function') {
+      active.blur();
+    }
+
+    if (document.body && typeof document.body.focus === 'function') {
+      document.body.focus();
+    }
+  });
 }
 
 /**

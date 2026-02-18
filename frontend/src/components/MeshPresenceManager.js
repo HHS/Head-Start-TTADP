@@ -94,7 +94,7 @@ function MeshPresenceManager({ room, onPresenceUpdate, onRevisionUpdate }) {
       window.addEventListener('beforeunload', cleanup);
     }
 
-    connect();
+    connect().catch(() => {});
 
     return () => {
       if (client) {

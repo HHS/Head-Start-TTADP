@@ -31,5 +31,14 @@ export const useClock = (test: typeof _test) => {
  * @param page {Page}
  */
 export async function blur(page: Page) {
-  await page.getByText('Office of Head Start TTA Hub').click();
+  await page.evaluate(() => {
+    const active = document.activeElement as HTMLElement | null;
+    if (active && typeof active.blur === 'function') {
+      active.blur();
+    }
+
+    if (document.body && typeof document.body.focus === 'function') {
+      document.body.focus();
+    }
+  });
 }
