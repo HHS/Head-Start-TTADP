@@ -109,6 +109,7 @@
     "semver": "^7.5.3",
     "serialize-javascript": "^6.0.2",
     "sqlite3": "^5.1.7",
+    "sass-loader": "^13.3.3",
     "tar": "^7.5.7",
     "tough-cookie": "^4.1.2",
     "ua-parser-js": "^0.7.33",
