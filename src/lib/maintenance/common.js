@@ -1,8 +1,6 @@
 const { Op } = require('sequelize');
 const { CronJob } = require('cron');
-const {
-  default: newQueue, increaseListeners, KEEP_COMPLETED_JOBS, KEEP_FAILED_JOBS,
-} = require('../queue');
+const { default: newQueue, increaseListeners } = require('../queue');
 const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
@@ -136,15 +134,7 @@ const enqueueMaintenanceJob = async ({
     if (category in maintenanceQueueProcessors) {
       try {
         // Add the job to the maintenance queue
-        await maintenanceQueue.add(
-          category,
-          { ...data, ...referenceData() },
-          {
-            removeOnComplete: KEEP_COMPLETED_JOBS,
-            removeOnFail: KEEP_FAILED_JOBS,
-            ...jobSettings,
-          },
-        );
+        maintenanceQueue.add(category, { ...data, ...referenceData() }, jobSettings);
       } catch (err) {
         // Log any errors that occur when adding the job to the queue
         auditLogger.error(err);
