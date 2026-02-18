@@ -117,9 +117,11 @@
 }
 
 .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table thead th:last-child,
-.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tbody td:last-child,
 .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget tfoot td:last-child {
   background: #fff;
+}
+
+.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tbody td:last-child {
   font-weight: 700;
   position: sticky;
   right: 0;

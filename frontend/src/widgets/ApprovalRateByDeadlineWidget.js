@@ -260,6 +260,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     headings: columnHeadings,
     checkboxes,
     setCheckboxes,
+    selectAllIdPrefix: 'approval-rate-by-deadline-',
     footer: {
       showFooter: true,
       data: footerData,

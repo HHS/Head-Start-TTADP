@@ -75,6 +75,7 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
     expect(screen.getByText('National average', { selector: 'span[aria-hidden="true"]' })).toBeInTheDocument();
     expect(screen.getAllByText('Total').length).toBeGreaterThan(0);
+    expect(document.querySelector('#approval-rate-by-deadline-check-all-checkboxes')).toBeInTheDocument();
   });
 
   it('does not render the deprecated secondary header label', () => {
