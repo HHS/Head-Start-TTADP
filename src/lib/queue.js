@@ -6,6 +6,7 @@ import { auditLogger } from '../logger';
 
 const MAX_LISTENERS = 50;
 const QUEUE_LIST = new Set();
+let shuttingDown = false;
 
 export const clearQueueList = () => {
   QUEUE_LIST.clear();
@@ -116,7 +117,6 @@ export function increaseListeners(queue, num = 1) {
   auditLogger.info(`Set max listeners for ${queue.name} to ${newMaxListeners}`);
 }
 
-let shuttingDown = false;
 export const closeAllQueues = async (reason = 'shutdown') => {
   if (shuttingDown) return;
   shuttingDown = true;
