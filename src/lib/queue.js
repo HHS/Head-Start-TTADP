@@ -10,6 +10,10 @@ const QUEUE_LIST = new Set();
 export const clearQueueList = () => {
   QUEUE_LIST.clear();
 };
+
+export const resetShutdownFlag = () => {
+  shuttingDown = false;
+};
 // Job retention settings - these limit how many completed/failed jobs are kept in Redis
 export const KEEP_COMPLETED_JOBS = 5;
 export const KEEP_FAILED_JOBS = 10;
