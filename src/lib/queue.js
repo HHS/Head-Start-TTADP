@@ -7,6 +7,9 @@ import { auditLogger } from '../logger';
 const MAX_LISTENERS = 50;
 const QUEUE_LIST = new Set();
 
+export const clearQueueList = () => {
+  QUEUE_LIST.clear();
+};
 // Job retention settings - these limit how many completed/failed jobs are kept in Redis
 export const KEEP_COMPLETED_JOBS = 5;
 export const KEEP_FAILED_JOBS = 10;
@@ -22,9 +25,9 @@ const limiterConfig = (enableRateLimiter) => {
   return {
     limiter: {
       // limit to 100 requests per 10 seconds by default
-      max: process.env.REDIS_LIMITER_MAX || DEFAULT_REDIS_LIMITER_MAX,
+      max: Number(process.env.REDIS_LIMITER_MAX) || DEFAULT_REDIS_LIMITER_MAX,
       duration:
-        process.env.REDIS_LIMITER_DURATION || DEFAULT_REDIS_LIMITER_DURATION,
+        Number(process.env.REDIS_LIMITER_DURATION) || DEFAULT_REDIS_LIMITER_DURATION,
     },
   };
 };
@@ -142,8 +145,10 @@ function registerQueueHandlers(queue) {
         err,
       );
     });
-    queue.on('stalled', () => {
-      auditLogger.error(`${queue.name} stalled`);
+    queue.on('stalled', (job) => {
+      auditLogger.error(
+        `${queue.name} job stalled (${job?.id ?? 'unknown'})`,
+      );
     });
   }
 }
