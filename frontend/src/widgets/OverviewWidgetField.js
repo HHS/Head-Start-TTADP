@@ -52,7 +52,7 @@ export function OverviewWidgetField({
             </>
           ) : (
             <>
-              <span className="text-bold font-sans-xs">{data}</span>
+              <span className="text-bold font-sans-sm">{data}</span>
               {!filterApplicable ? <FiltersNotApplicable /> : null}
             </>
           )}
@@ -67,9 +67,9 @@ export function OverviewWidgetField({
             maxWidth={maxToolTipWidth}
           />
         ) : (
-          <span className="margin-top-1">{label1}</span>
+          <span className="margin-top-1 font-sans-sm">{label1}</span>
         )}
-        {label2 && <span className="font-sans-2xs">{label2}</span>}
+        {label2 && <span className="font-sans-xs">{label2}</span>}
         {drawerTagName && (
           <>
             <DrawerTriggerButton drawerTriggerRef={aboutThisDataRef} customClass="margin-top-1">
