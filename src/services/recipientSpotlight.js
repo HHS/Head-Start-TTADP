@@ -239,7 +239,7 @@ export async function getRecipientSpotlightIndicators(
       MAX(ar."startDate") last_tta,
       -- toggle whether we're calculating for just a specific grant
       -- or if we're calculating indicators for an entire recipient
-      CASE WHEN (SELECT COUNT(*) FROM grant_recipients) > 1 THEN FALSE ELSE TRUE
+      CASE WHEN '${singleGrantId}' = '' THEN FALSE ELSE TRUE
       END AS grantmode
     FROM grant_recipients
     LEFT JOIN "Goals" g

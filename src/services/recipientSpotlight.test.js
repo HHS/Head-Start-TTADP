@@ -977,11 +977,14 @@ describe('recipientSpotlight service', () => {
 
       const singleGrantIndNumber = `G-SG-IND-${faker.datatype.number({ min: 100000, max: 999999 })}`;
       const singleGrantNoIndNumber = `G-SG-NOIND-${faker.datatype.number({ min: 100000, max: 999999 })}`;
+      // Second grant on singleGrantRecipient — will have a new CFO
+      const singleGrantOtherNumber = `G-SG-OTHER-${faker.datatype.number({ min: 100000, max: 999999 })}`;
 
       // Create GrantNumberLinks before creating grants (foreign key constraint)
       await db.GrantNumberLink.bulkCreate([
         { grantNumber: singleGrantIndNumber },
         { grantNumber: singleGrantNoIndNumber },
+        { grantNumber: singleGrantOtherNumber },
       ]);
 
       const singleGrantWithIndicator = await Grant.create({
@@ -1004,6 +1007,29 @@ describe('recipientSpotlight service', () => {
         startDate: pastFiveYears,
         endDate: createDate,
         cdi: false,
+      });
+
+      // Second grant on singleGrantRecipient with a new CFO.
+      // In grant mode targeting singleGrantWithIndicator, this CFO should NOT
+      // trigger newStaff. In recipient mode it should.
+      const singleGrantOther = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        number: singleGrantOtherNumber,
+        recipientId: singleGrantRecipient.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYears,
+        endDate: createDate,
+        cdi: false,
+      });
+
+      await ProgramPersonnel.create({
+        grantId: singleGrantOther.id,
+        effectiveDate: pastYear,
+        title: 'New CFO on other grant',
+        programId: 1,
+        role: 'cfo',
+        active: true,
       });
 
       await db.MonitoringGranteeLink.bulkCreate([
@@ -1116,6 +1142,28 @@ describe('recipientSpotlight service', () => {
         expect(resultWithIndicator.recipients[0].childIncidents).toBe(true);
         expect(resultWithIndicator.recipients[0].indicatorCount).toBeGreaterThan(0);
 
+        // Grant mode should NOT see the new CFO on the other grant
+        expect(resultWithIndicator.recipients[0].newStaff).toBe(false);
+
+        // Recipient mode (no singleGrantId) SHOULD see the new CFO across all grants
+        const recipientModeResult = await getRecipientSpotlightIndicators(
+          scopesWithIndicator,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          [],
+          [],
+          null,
+        );
+
+        const recipientRow = recipientModeResult.recipients.find(
+          (r) => r.recipientId === singleGrantRecipient.id,
+        );
+        expect(recipientRow).toBeDefined();
+        expect(recipientRow.newStaff).toBe(true);
+
         // Test with the grant that has no indicator (different recipient, no monitoring data)
         const scopesWithoutIndicator = createScopesWithRecipientAndRegion(
           noIndicatorRecipient.id,
@@ -1177,8 +1225,14 @@ describe('recipientSpotlight service', () => {
           force: true,
         });
 
+        await ProgramPersonnel.destroy({
+          where: { grantId: singleGrantOther.id },
+          force: true,
+        });
         await Grant.destroy({
-          where: { id: [singleGrantWithIndicator.id, singleGrantWithoutIndicator.id] },
+          where: {
+            id: [singleGrantWithIndicator.id, singleGrantWithoutIndicator.id, singleGrantOther.id],
+          },
           force: true,
           individualHooks: true,
         });
@@ -1188,7 +1242,9 @@ describe('recipientSpotlight service', () => {
         });
 
         await db.GrantNumberLink.destroy({
-          where: { grantNumber: [singleGrantIndNumber, singleGrantNoIndNumber] },
+          where: {
+            grantNumber: [singleGrantIndNumber, singleGrantNoIndNumber, singleGrantOtherNumber],
+          },
           force: true,
         });
       }
