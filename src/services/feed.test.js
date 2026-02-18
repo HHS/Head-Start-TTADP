@@ -6,15 +6,6 @@ jest.mock('axios', () => ({
   })),
 }));
 
-jest.mock('redis', () => ({
-  createClient: jest.fn(() => ({
-    connect: jest.fn(),
-    get: jest.fn(() => null),
-    set: jest.fn(),
-    quit: jest.fn(),
-  })),
-}));
-
 jest.mock('../lib/cache', () => ({
   __esModule: true,
   default: jest.fn((_key, cb) => cb()),
