@@ -263,7 +263,7 @@
     "@hapi/joi": "^17.1.1",
     "@opentelemetry/api": "^1.5.0",
     "@playwright/test": "^1.56.1",
-    "@redocly/cli": "^2.7.0",
+    "@redocly/cli": "^2.18.2",
     "@types/hapi__joi": "^17.1.14",
     "@types/ioredis-mock": "^8.2.6",
     "@types/jest": "^29.5.12",

@@ -2939,7 +2939,7 @@
     json-schema-traverse "^1.0.0"
     require-from-string "^2.0.2"
 
-"@redocly/cli@^2.7.0":
+"@redocly/cli@^2.18.2":
   version "2.18.2"
   resolved "https://registry.yarnpkg.com/@redocly/cli/-/cli-2.18.2.tgz#322a708a76c503d2f3d47a314762ae279274a5f7"
   integrity sha512-35vmPgF9eAkbi2jQWJ4zr2L/xsnLJcGd/qBNduGeulbET9TVO/UcBrFHDl6rj99PlJEtLR51bOew2rgcoRo56g==
