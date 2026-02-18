@@ -65,6 +65,7 @@
     "react-router-prop-types": "^1.0.5",
     "react-select": "^5.7.4",
     "react-stickynode": "^4.0.0",
+    "sass ": "^1.51.0",
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
     "uuid": "^8.3.2"
