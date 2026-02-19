@@ -145,7 +145,6 @@ const getDashboardFields = (data, showTooltip) => ([
     lookUpKey: 'Recipients with priority indicators',
     key: 'recipients-with-priority-indicators',
     icon: faUser,
-    showTooltip,
     label1: 'Recipients with priority indicators',
     label2: `${data.numRecipients} of ${data.totalRecipients}`,
     iconColor: colors.ttahubMediumBlue,

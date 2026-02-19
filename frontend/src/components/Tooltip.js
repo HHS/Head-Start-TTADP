@@ -12,6 +12,7 @@ export default function Tooltip({
   className,
   position,
   buttonClassName,
+  buttonTextClassName,
   maxWidth,
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -27,7 +28,7 @@ export default function Tooltip({
       <button type="button" className={`usa-button usa-button--unstyled ${buttonClassName}`} onClick={onClick}>
         <span className="smart-hub--ellipsis" style={{ maxWidth: `${maxWidth}px` }}>
           <span
-            className={hideUnderline ? '' : 'smart-hub-tooltip__underlined-text'}
+            className={`${hideUnderline ? '' : 'smart-hub-tooltip__underlined-text'} ${buttonTextClassName}`.trim()}
             aria-hidden={!screenReadDisplayText}
           >
             {displayText}
@@ -62,6 +63,7 @@ Tooltip.propTypes = {
   className: PropTypes.string,
   position: PropTypes.string,
   buttonClassName: PropTypes.string,
+  buttonTextClassName: PropTypes.string,
   maxWidth: PropTypes.number,
 };
 
@@ -71,5 +73,6 @@ Tooltip.defaultProps = {
   className: '',
   position: 'top',
   buttonClassName: '',
+  buttonTextClassName: '',
   maxWidth: 175,
 };

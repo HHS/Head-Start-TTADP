@@ -65,10 +65,10 @@ export function OverviewWidgetField({
             buttonLabel={`${tooltipText} click to visually reveal this information`}
             tooltipText={tooltipText}
             maxWidth={maxToolTipWidth}
-            buttonClassName="font-sans-sm"
+            buttonTextClassName="font-sans-xs"
           />
         ) : (
-          <span className="margin-top-1 font-sans-sm">{label1}</span>
+          <span className="font-sans-sm">{label1}</span>
         )}
         {label2 && <span className="font-sans-2xs">{label2}</span>}
         {drawerTagName && (
