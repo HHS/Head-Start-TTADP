@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import {
   Op,
   filtersToScopes,
@@ -11,6 +12,7 @@ import { filterAssociation } from './utils';
 describe('trainingReports/startDate', () => {
   let lteEventReportPilot;
   let gteEventReportPilot;
+  let superGteEventReportPilot;
   let betweenEventReportPilot;
   let possibleIds;
 
@@ -40,6 +42,17 @@ describe('trainingReports/startDate', () => {
       },
     });
 
+    // create gte report.
+    superGteEventReportPilot = await EventReportPilot.create({
+      ownerId: mockUser.id,
+      pocIds: [mockUser.id],
+      collaboratorIds: [],
+      regionId: mockUser.homeRegionId,
+      data: {
+        startDate: '09/08/2019',
+      },
+    });
+
     // create between report.
     betweenEventReportPilot = await EventReportPilot.create({
       ownerId: mockUser.id,
@@ -51,14 +64,14 @@ describe('trainingReports/startDate', () => {
       },
     });
 
-    possibleIds = [lteEventReportPilot.id, gteEventReportPilot.id, betweenEventReportPilot.id];
+    possibleIds = [lteEventReportPilot.id, gteEventReportPilot.id, betweenEventReportPilot.id, superGteEventReportPilot.id];
   });
 
   afterAll(async () => {
     // destroy reports.
     await EventReportPilot.destroy({
       where: {
-        id: [lteEventReportPilot.id, gteEventReportPilot.id, betweenEventReportPilot.id],
+        id: [lteEventReportPilot.id, gteEventReportPilot.id, betweenEventReportPilot.id, superGteEventReportPilot.id],
       },
     });
 
@@ -74,8 +87,12 @@ describe('trainingReports/startDate', () => {
     const found = await EventReportPilot.findAll({
       where: { [Op.and]: [scope, { id: possibleIds }] },
     });
-    expect(found.length).toBe(1);
-    expect(found[0].id).toBe(lteEventReportPilot.id);
+    // Should include lteEventReportPilot (06/06/2021) and superGteEventReportPilot (09/08/2019)
+    // The 09/08/2019 date is chronologically before 06/06/2021, even though "09" > "06" lexicographically
+    expect(found.length).toBe(2);
+    const foundIds = found.map((f) => f.id);
+    expect(foundIds).toContain(lteEventReportPilot.id);
+    expect(foundIds).toContain(superGteEventReportPilot.id);
   });
 
   it('before returns reports with start dates between the given dates', async () => {
