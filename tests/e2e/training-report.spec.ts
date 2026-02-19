@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { blur } from './common';
+import { blur, dismissWebpackOverlay } from './common';
 import { query } from '../utils/common';
 
 test.beforeAll(async ({ request }) => {
@@ -22,6 +22,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByRole('link', { name: 'Training Reports' }).click();
 
   // Edit the event (use Actions menu instead of clicking the event ID link)
+  await dismissWebpackOverlay(page);
   await page.getByRole('button', { name: 'Actions for event R01-PD-23-1037' }).click();
   await page.getByRole('button', { name: 'Edit event' }).click();
 
@@ -44,6 +45,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByRole('button', { name: 'Yes, continue' }).click();
 
   // Back on the TR page click create session.
+  await dismissWebpackOverlay(page);
   await page.getByRole('button', { name: 'Actions for event R01-PD-23-1037' }).click();
   await page.getByRole('button', { name: 'Create session' }).click();
 
@@ -158,6 +160,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
   expect(page.getByText('Topics Behavioral / Mental')).toBeTruthy();
 
   // view/print event
+  await dismissWebpackOverlay(page);
   await page.getByRole('button', { name: 'Actions for event R01-PD-23-1037' }).click();
   await page.getByTestId('menu').getByText('View/Print event').click();
 
