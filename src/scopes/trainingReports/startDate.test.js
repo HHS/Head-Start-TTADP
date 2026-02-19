@@ -95,7 +95,7 @@ describe('trainingReports/startDate', () => {
     expect(foundIds).toContain(superGteEventReportPilot.id);
   });
 
-  it('before returns reports with start dates between the given dates', async () => {
+  it('within returns reports with start dates between the given dates', async () => {
     const filters = { 'startDate.win': '2021/06/07-2021/06/07' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     const found = await EventReportPilot.findAll({
