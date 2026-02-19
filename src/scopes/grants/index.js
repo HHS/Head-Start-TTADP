@@ -4,12 +4,13 @@ import { map, pickBy } from 'lodash';
 import { activeBefore, activeAfter, activeWithinDates } from './activeWithin';
 import { withRegion, withoutRegion } from './region';
 import { withRecipientName, withoutRecipientName } from './recipient';
+import { withRecipientId, withoutRecipientId } from './recipientId';
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withProgramTypes, withoutProgramTypes } from './programType';
 import { withStateCode } from './stateCode';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 import { withGroup, withoutGroup } from './group';
-import { noActivityWithin } from './recipientsWithoutTTA';
+import { beforeLastTTA, afterLastTTA, withinLastTTA } from './lastTTA';
 import { withGoalName, withoutGoalName } from './goalName';
 import { withGrantStatus, withoutGrantStatus } from './grantStatus';
 import { withGoalResponse, withoutGoalResponse } from './goalResponse';
@@ -18,6 +19,10 @@ export const topicToQuery = {
   recipient: {
     ctn: (query) => withRecipientName(query),
     nctn: (query) => withoutRecipientName(query),
+  },
+  recipientId: {
+    in: (query) => withRecipientId(query),
+    nin: (query) => withoutRecipientId(query),
   },
   programSpecialist: {
     ctn: (query) => withProgramSpecialist(query),
@@ -40,9 +45,11 @@ export const topicToQuery = {
     win: (query) => activeWithinDates(query),
     in: (query) => activeWithinDates(query),
   },
-  recipientsWithoutTTA: {
-    win: (query) => noActivityWithin(query),
-    in: (query) => noActivityWithin(query),
+  lastTTA: {
+    bef: (query) => beforeLastTTA(query),
+    aft: (query) => afterLastTTA(query),
+    win: (query) => withinLastTTA(query),
+    in: (query) => withinLastTTA(query),
   },
   region: {
     in: (query) => withRegion(query),

@@ -1,0 +1,28 @@
+@use '../../../colors.scss' as *;
+
+.ttahub-recipient-spotlight-content {
+    min-height: 230px;
+
+    // Allow every flex child to shrink below content width so text wraps
+    .display-flex > * {
+        min-width: 0;
+    }
+}
+
+.ttahub-recipient-spotlight-content-cell {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.ttahub-recipient-spotlight-content-cell-good-indicator {
+ border: 1px dashed $base-medium;
+ color: $base-medium;
+}
+
+.ttahub-recipient-spotlight-content-cell-bad-indicator {
+ border: 1px solid $base-darkest;
+}
+
+.ttahub-recipient-spotlight-content .smart-hub--no-results-found {
+    padding: 24px
+}

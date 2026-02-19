@@ -30,6 +30,7 @@ import GrantStatus, { displayGrantsStatus } from './GrantStatus';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
+import FilterPriorityIndicator from './FilterPriorityIndicator';
 import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
 import { handleArrayQuery } from './helpers';
 
@@ -527,6 +528,21 @@ export const domainInstructionalSupportFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDomainResultSelect
       inputId={`domainInstructionalSupport-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const priorityIndicatorFilter = {
+  id: 'priorityIndicator',
+  display: 'Priority indicator',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterPriorityIndicator
+      inputId={`priorityIndicator-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

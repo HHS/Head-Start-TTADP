@@ -8,7 +8,7 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { hasApproveActivityReport } from '../../permissions';
 import UserContext from '../../UserContext';
-import { DASHBOARD_FILTER_CONFIG } from './constants';
+import { DASHBOARD_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { showFilterWithMyRegions } from '../regionHelpers';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
@@ -26,6 +26,10 @@ const pageConfig = () => ({
   'all-reports': {
     h1Text: 'Regional dashboard - All reports',
     showFilters: false,
+  },
+  'recipient-spotlight': {
+    h1Text: 'Regional dashboard - Recipient spotlight',
+    showFilters: true,
   },
   'activity-reports': {
     h1Text: 'Regional dashboard - Activity Reports',
@@ -46,6 +50,10 @@ const links = [
     to: '/dashboards/regional-dashboard/training-reports',
     label: 'Training Reports',
   },
+  {
+    to: '/dashboards/regional-dashboard/recipient-spotlight',
+    label: 'Recipient spotlight',
+  },
   /*
   {
     to: '/dashboards/regional-dashboard/all-reports',
@@ -60,6 +68,14 @@ export default function RegionalDashboard({ match }) {
 
   const { reportType } = match.params;
   const filterKey = useDashboardFilterKey('regional-dashboard', reportType || 'activityReports');
+
+  // Determine which filter config to use based on report type
+  const filterConfigToUse = useMemo(() => {
+    if (reportType === 'recipient-spotlight') {
+      return RECIPIENT_SPOTLIGHT_FILTER_CONFIG;
+    }
+    return DASHBOARD_FILTER_CONFIG;
+  }, [reportType]);
 
   const {
     // from useUserDefaultRegionFilters
@@ -79,7 +95,7 @@ export default function RegionalDashboard({ match }) {
     filterKey,
     true,
     [],
-    DASHBOARD_FILTER_CONFIG,
+    filterConfigToUse,
   );
 
   const {
@@ -92,12 +108,13 @@ export default function RegionalDashboard({ match }) {
     const config = [...filterConfig];
 
     // If user has approve activity report permission add 'Specialist name' filter.
-    if (hasApproveActivityReport(user)) {
+    // Exclude specialist name filter from recipient spotlight
+    if (hasApproveActivityReport(user) && reportType !== 'recipient-spotlight') {
       config.push(specialistNameFilter);
       config.sort((a, b) => a.display.localeCompare(b.display));
     }
     return config;
-  }, [filterConfig, user]);
+  }, [filterConfig, user, reportType]);
 
   return (
     <div className="ttahub-dashboard">
@@ -130,6 +147,7 @@ export default function RegionalDashboard({ match }) {
         filters={filters}
         filterKey={filterKey}
         resetPagination={resetPagination}
+        userHasOnlyOneRegion={userHasOnlyOneRegion}
       />
     </div>
   );
