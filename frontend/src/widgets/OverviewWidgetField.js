@@ -52,7 +52,7 @@ export function OverviewWidgetField({
             </>
           ) : (
             <>
-              <span className="text-bold font-sans-sm">{data}</span>
+              <span className="text-bold">{data}</span>
               {!filterApplicable ? <FiltersNotApplicable /> : null}
             </>
           )}
@@ -68,12 +68,12 @@ export function OverviewWidgetField({
             buttonTextClassName="font-sans-xs"
           />
         ) : (
-          <span className="font-sans-sm">{label1}</span>
+          <span>{label1}</span>
         )}
         {label2 && <span className="font-sans-2xs">{label2}</span>}
         {drawerTagName && (
           <>
-            <DrawerTriggerButton drawerTriggerRef={aboutThisDataRef} customClass="margin-top-1">
+            <DrawerTriggerButton drawerTriggerRef={aboutThisDataRef} customClass="margin-top-1 font-sans-xs">
               About this data
             </DrawerTriggerButton>
             <Drawer triggerRef={aboutThisDataRef} title={label1} stickyHeader stickyFooter>
