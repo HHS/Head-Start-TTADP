@@ -239,8 +239,7 @@ export async function getRecipientSpotlightIndicators(
       MAX(ar."startDate") last_tta,
       -- toggle whether we're calculating for just a specific grant
       -- or if we're calculating indicators for an entire recipient
-      CASE WHEN '${singleGrantId}' = '' THEN FALSE ELSE TRUE
-      END AS grantmode
+      ${singleGrantId ? 'TRUE' : 'FALSE'} AS grantmode
     FROM grant_recipients
     LEFT JOIN "Goals" g
       ON g."grantId" = grid
