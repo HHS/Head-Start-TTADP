@@ -25,7 +25,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '2021/06/06',
+        startDate: '06/06/2021',
       },
     });
 
@@ -36,7 +36,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '2021/06/08',
+        startDate: '06/08/2021',
       },
     });
 
@@ -47,7 +47,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '2021/06/07',
+        startDate: '06/07/2021',
       },
     });
 
