@@ -35,6 +35,7 @@ export function DashboardOverviewContainer({ fieldData, loading, maxToolTipWidth
           tooltipText={field.tooltipText}
           showNoResults={field.showNoResults}
           maxToolTipWidth={maxToolTipWidth}
+          drawerTagName={field.drawerTagName}
         />
       ))}
     </Grid>
@@ -55,6 +56,7 @@ DashboardOverviewContainer.propTypes = {
       route: PropTypes.string,
       filterApplicable: PropTypes.bool,
       iconSize: PropTypes.string,
+      drawerTagName: PropTypes.string,
     }),
   ),
   maxToolTipWidth: PropTypes.number,

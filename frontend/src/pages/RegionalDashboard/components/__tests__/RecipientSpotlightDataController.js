@@ -374,8 +374,8 @@ describe('RecipientSpotlightDataController', () => {
     renderController();
 
     await waitFor(() => {
-      const widget = screen.getByText('Recipients with priority indicators');
-      expect(widget).toBeInTheDocument();
+      const widgets = screen.getAllByText('Recipients with priority indicators');
+      expect(widgets.length).toBeGreaterThan(0);
     });
   });
 

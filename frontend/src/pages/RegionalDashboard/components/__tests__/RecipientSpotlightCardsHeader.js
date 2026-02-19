@@ -35,7 +35,7 @@ describe('RecipientSpotlightCardsHeader', () => {
   it('renders the title and description', () => {
     renderHeader();
 
-    expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
+    expect(screen.getByText('Priority indicators')).toBeInTheDocument();
     expect(screen.getByText('These are the recipients that currently have at least one priority indicator.')).toBeInTheDocument();
   });
 
