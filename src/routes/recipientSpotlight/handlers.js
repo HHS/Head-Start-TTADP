@@ -22,12 +22,17 @@ getRecipientSpotLight():
 export async function getRecipientSpotLight(req, res) {
   try {
     const {
-      sortBy, direction, offset, limit, parsedGrantId, mustHaveIndicators,
+      sortBy, direction, offset, limit, mustHaveIndicators,
     } = req.query;
 
     // Parse pagination params to integers
     const parsedOffset = offset ? parseInt(offset, DECIMAL_BASE) : 0;
     const parsedLimit = limit ? parseInt(limit, DECIMAL_BASE) : 10;
+
+    // Parse and validate parsedGrantId to prevent SQL injection;
+    // treat missing or non-numeric values as null
+    const rawGrantId = req.query.parsedGrantId;
+    const parsedGrantId = rawGrantId ? parseInt(rawGrantId, DECIMAL_BASE) : null;
 
     const userId = await currentUserId(req, res);
 

@@ -218,7 +218,11 @@ export async function getRecipientSpotlightIndicators(
       rname,
       region,
       ARRAY_AGG(DISTINCT grid)::text[] grant_ids,
-      MAX(ar."startDate") last_tta
+      MAX(ar."startDate") last_tta,
+      -- toggle whether we're calculating for just a specific grant
+      -- or if we're calculating indicators for an entire recipient
+      -- blank is recipient mode, nonblank is grantmode
+      '${singleGrantId}' != '' AS grantmode
     FROM grant_recipients
     LEFT JOIN "Goals" g
       ON g."grantId" = grid
@@ -229,22 +233,29 @@ export async function getRecipientSpotlightIndicators(
       AND ar."calculatedStatus" = 'approved'
     GROUP BY 1,2,3
     ),
-    -- Usually we care about all the grants for a recipient
-    -- not just the ones in the filter. A deficient finding
-    -- on *any* rec
+    -- In recipient mode we care about all the grants for a recipient
+    -- not just the ones in the filter. In grantmode we only want the
+    -- indicators calculated for that specific grant.
     all_grants AS (
     SELECT DISTINCT
-      rid,
-      rname,
-      region,
+      r.rid,
+      r.rname,
+      r.region,
       gr.id grid,
       gr."startDate" grstart,
       gr.number grnumber,
       gr.status grstatus
-    FROM recipients
+    FROM recipients r
+    JOIN grant_recipients g
+      ON r.rid = g.rid
     JOIN "Grants" gr
-      ON rid = gr."recipientId"
-    WHERE gr.deleted IS NULL OR NOT gr.deleted
+      ON r.rid = gr."recipientId"
+      AND (
+        NOT grantmode OR
+        g.grid = gr.id
+      )
+    WHERE (gr.deleted IS NULL OR NOT gr.deleted)
+      AND gr.status = 'Active'
     ),
     -- Select all the potentially-relevant reviews
     -- for early filtering of monitoring datasets
