@@ -82,6 +82,9 @@ const updateReportStatus = async (sequelize, instance) => {
     calculatedStatus: newCalculatedStatus,
     approvedAt,
   };
+  if (newCalculatedStatus !== REPORT_STATUSES.APPROVED) {
+    updatedFields.approvedAtTimezone = null;
+  }
 
   await sequelize.models.ActivityReport.update(updatedFields, {
     where: { id: instance.activityReportId },

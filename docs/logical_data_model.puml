@@ -187,6 +187,7 @@ class ActivityReports{
  activityRecipientType : varchar(255)
  additionalNotes : text
  approvedAt : timestamp with time zone
+ approvedAtTimezone : varchar(255)
  calculatedStatus : enum
  context : text
  creatorRole : enum
