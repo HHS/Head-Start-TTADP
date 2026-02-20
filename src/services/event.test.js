@@ -18,6 +18,7 @@ import {
   validateFields,
   findEventHelper,
   filterEventsByStatus,
+  filterEventSessions,
   findAllEvents,
   findEventHelperBlob,
   mapLineToData,
@@ -1178,6 +1179,137 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       await expect(checkUserExistsByNationalCenter('Nonexistent National Center')).rejects.toThrow('User associated with National Center: Nonexistent National Center does not exist');
 
       jest.restoreAllMocks();
+    });
+  });
+
+  describe('filterEventSessions', () => {
+    const createMockEvent = (overrides = {}) => ({
+      id: 1,
+      ownerId: 100,
+      pocIds: [200],
+      collaboratorIds: [300],
+      regionId: 1,
+      data: {
+        status: TRS.IN_PROGRESS,
+        eventOrganizer: 'Regional PD Event (with National Centers)',
+      },
+      sessionReports: [
+        {
+          id: 1, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: false,
+        },
+        {
+          id: 2, data: { status: TRS.COMPLETE }, approverId: 400, submitted: true,
+        },
+      ],
+      ...overrides,
+    });
+
+    it('admin sees all sessions', () => {
+      const event = createMockEvent();
+      const result = filterEventSessions(event, 999, true);
+      expect(result.sessionReports).toHaveLength(2);
+    });
+
+    it('owner sees all sessions', () => {
+      const event = createMockEvent();
+      const result = filterEventSessions(event, 100, false);
+      expect(result.sessionReports).toHaveLength(2);
+    });
+
+    it('collaborator sees all sessions', () => {
+      const event = createMockEvent();
+      const result = filterEventSessions(event, 300, false);
+      expect(result.sessionReports).toHaveLength(2);
+    });
+
+    it('POC sees all sessions for Regional PD events', () => {
+      const event = createMockEvent({
+        data: {
+          status: TRS.IN_PROGRESS,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      });
+      const result = filterEventSessions(event, 200, false);
+      expect(result.sessionReports).toHaveLength(2);
+    });
+
+    it('POC sees NO sessions for Regional TTA events', () => {
+      const event = createMockEvent({
+        data: {
+          status: TRS.IN_PROGRESS,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      });
+      const result = filterEventSessions(event, 200, false);
+      expect(result.sessionReports).toHaveLength(0);
+    });
+
+    it('approver sees only submitted sessions', () => {
+      const event = createMockEvent();
+      // User 400 is the approver - should only see session 2 which is submitted
+      const result = filterEventSessions(event, 400, false);
+      expect(result.sessionReports).toHaveLength(1);
+      expect(result.sessionReports[0].id).toBe(2);
+    });
+
+    it('approver does not see non-submitted sessions', () => {
+      const event = createMockEvent({
+        sessionReports: [
+          {
+            id: 1, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: false,
+          },
+        ],
+      });
+      const result = filterEventSessions(event, 400, false);
+      expect(result.sessionReports).toHaveLength(0);
+    });
+
+    it('approver check takes precedence over POC check for Regional TTA events', () => {
+      // This tests the fix where approver check is before POC check
+      // User 400 is both approver AND POC for this event
+      const event = createMockEvent({
+        pocIds: [400], // User 400 is also a POC
+        data: {
+          status: TRS.IN_PROGRESS,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+        sessionReports: [
+          {
+            id: 1, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: true,
+          },
+          {
+            id: 2, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: false,
+          },
+        ],
+      });
+      // As POC only for Regional TTA, user would see 0 sessions
+      // But as approver, they should see the submitted session
+      const result = filterEventSessions(event, 400, false);
+      expect(result.sessionReports).toHaveLength(1);
+      expect(result.sessionReports[0].id).toBe(1); // Only the submitted session
+    });
+
+    it('regional user only sees COMPLETE sessions', () => {
+      const event = createMockEvent();
+      // User 999 has no role in this event
+      const result = filterEventSessions(event, 999, false);
+      expect(result.sessionReports).toHaveLength(1);
+      expect(result.sessionReports[0].id).toBe(2); // Only the complete session
+    });
+
+    it('regional user sees no sessions when none are complete', () => {
+      const event = createMockEvent({
+        sessionReports: [
+          {
+            id: 1, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: false,
+          },
+          {
+            id: 2, data: { status: TRS.NOT_STARTED }, approverId: 400, submitted: false,
+          },
+        ],
+      });
+      const result = filterEventSessions(event, 999, false);
+      expect(result.sessionReports).toHaveLength(0);
     });
   });
 

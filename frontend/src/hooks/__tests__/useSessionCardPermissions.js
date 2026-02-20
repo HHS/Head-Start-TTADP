@@ -584,13 +584,13 @@ describe('useSessionCardPermissions', () => {
   });
 
   describe('default case', () => {
-    it('returns true when all checks pass for regular user', () => {
+    it('returns false when user has no qualifying role', () => {
       const { result } = renderHook(() => useSessionCardPermissions(baseProps), {
         wrapper,
         initialProps: { user: mockUser },
       });
 
-      expect(result.current.showSessionEdit).toBe(true);
+      expect(result.current.showSessionEdit).toBe(false);
     });
   });
 
@@ -699,7 +699,7 @@ describe('useSessionCardPermissions', () => {
             ...baseSession,
             data: {
               ...baseSession.data,
-              ownerComplete: true,
+              collabComplete: true,
               pocComplete: true,
             },
           },
@@ -758,7 +758,7 @@ describe('useSessionCardPermissions', () => {
             ...baseSession,
             data: {
               ...baseSession.data,
-              ownerComplete: true,
+              collabComplete: true,
               pocComplete: true,
             },
           },
@@ -772,15 +772,16 @@ describe('useSessionCardPermissions', () => {
         expect(result.current.showSessionDelete).toBe(false);
       });
 
-      it('returns false for delete when approver has edit permissions', () => {
+      it('returns false for both edit and delete when approver-only on non-submitted session', () => {
+        // Session is not submitted because collabComplete is false (default)
         const props = {
           ...baseProps,
           session: {
             ...baseSession,
             data: {
               ...baseSession.data,
-              ownerComplete: true,
               pocComplete: true,
+              // collabComplete remains false, so session is NOT submitted
             },
           },
         };
@@ -790,7 +791,7 @@ describe('useSessionCardPermissions', () => {
           initialProps: { user: mockSessionApprover },
         });
 
-        expect(result.current.showSessionEdit).toBe(true);
+        expect(result.current.showSessionEdit).toBe(false);
         expect(result.current.showSessionDelete).toBe(false);
       });
 
@@ -802,7 +803,7 @@ describe('useSessionCardPermissions', () => {
             ...baseSession,
             data: {
               ...baseSession.data,
-              ownerComplete: true,
+              collabComplete: true,
               pocComplete: true,
             },
           },

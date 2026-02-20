@@ -58,8 +58,8 @@ describe('eventSummary', () => {
     };
 
     const defaultCreators = [
-      { id: 1, name: 'IST 1', nameWithNationalCenters: 'IST 1' },
-      { id: 2, name: 'IST 2', nameWithNationalCenters: 'IST 2' },
+      { id: 1, name: 'IST 1', fullName: 'IST 1' },
+      { id: 2, name: 'IST 2', fullName: 'IST 2' },
     ];
 
     const RenderEventSummary = ({

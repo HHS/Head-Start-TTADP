@@ -56,35 +56,30 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    // POC-specific edit blockers (apply even if user has other roles)
-    if (isPoc) {
-      if (isRegionalNoNationalCenters) {
-        return false;
-      }
-      if (pocComplete && !statusIsNeedsAction) {
-        return false;
-      }
+    // Role-based: must have a qualifying role, and that role must not be blocked
+    let hasRole = false;
+    let blocked = false;
 
-      if (facilitationIsNationalCenters && statusIsNeedsAction) {
-        return false;
+    if (isPoc) {
+      hasRole = true;
+      if (isRegionalNoNationalCenters
+        || (pocComplete && !statusIsNeedsAction)
+        || (facilitationIsNationalCenters && statusIsNeedsAction)) {
+        blocked = true;
       }
     }
 
-    // Owner/Collaborator-specific EDIT blockers
     // For EDIT permissions, owners are treated identically to collaborators.
     // For DELETE permissions (see showSessionDelete below), owners are MORE permissive.
     if (isCollaborator || isOwner) {
-      if (collabComplete && !statusIsNeedsAction) {
-        return false;
-      }
-
-      if (isRegionalWithNationalCenters && facilitationIncludesRegion) {
-        return false;
+      hasRole = true;
+      if ((collabComplete && !statusIsNeedsAction)
+        || (isRegionalWithNationalCenters && facilitationIncludesRegion)) {
+        blocked = true;
       }
     }
 
-    // If not blocked, allow edit
-    return true;
+    return hasRole && !blocked;
   }, [
     status,
     eventOrganizer,
@@ -125,29 +120,32 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    // POC-specific delete blockers
+    // Role-based: must have a qualifying role, and that role must not be blocked
+    let hasRole = false;
+    let blocked = false;
+
     if (isPoc) {
-      if (isRegionalNoNationalCenters) {
-        return false;
-      }
-      if (isRegionalWithNationalCenters && facilitation === 'national_center') {
-        return false;
+      hasRole = true;
+      if (isRegionalNoNationalCenters
+        || (isRegionalWithNationalCenters && facilitation === 'national_center')) {
+        blocked = true;
       }
     }
 
-    // IMPORTANT: Owners have NO facilitation-based delete restrictions.
+    // Owners have NO facilitation-based delete restrictions.
+    if (isOwner) {
+      hasRole = true;
+    }
+
     // Only collaborators are blocked by regional facilitation rules.
-
-    // Collaborator-specific delete blockers
     if (isCollaborator) {
+      hasRole = true;
       if (isRegionalWithNationalCenters && facilitationIncludesRegion) {
-        return false;
+        blocked = true;
       }
     }
 
-    // If not blocked, allow delete
-    // This includes: Owner, Owner+POC (with valid conditions), Owner+Collaborator, etc.
-    return true;
+    return hasRole && !blocked;
   }, [
     status,
     eventStatus,

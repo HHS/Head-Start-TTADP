@@ -223,10 +223,6 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
         attributes: ['id', 'name', 'fullName'],
       },
       {
-        model: NationalCenter,
-        as: 'nationalCenters',
-      },
-      {
         attributes: [
           'id',
           'scopeId',
@@ -256,7 +252,8 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
   users.forEach((user) => {
     if (user.permissions.some((permission) => permission.scopeId === pointOfContactScope)) {
       results.pointOfContact.push(user);
-    } else {
+    }
+    if (user.permissions.some((permission) => permission.scopeId === collaboratorScope)) {
       results.collaborators.push(user);
     }
   });
@@ -283,7 +280,7 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
       if (!currentOwner) {
         // If the current ownerId is not in the creators array, add it.
         const owner = await userById(eventReportPilot.ownerId);
-        results.creators.push({ id: owner.id, name: owner.name });
+        results.creators.push({ id: owner.id, fullName: owner.fullName });
       }
     }
   }
