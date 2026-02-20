@@ -28,6 +28,7 @@ export default function HorizontalTableWidget(
     showDashForNullValue,
     stickyFirstColumn,
     stickyLastColumn,
+    stickyLastDataColumn,
   },
 ) {
   const [menuWidthOffset, setMenuWidthOffset] = useState(110);
@@ -118,7 +119,10 @@ export default function HorizontalTableWidget(
     }
   };
 
-  const Header = ({ header, sortingEnabled }) => {
+  const hasActionsColumn = data.some((r) => r.actions);
+  const canStickyLastDataColumn = stickyLastDataColumn && !hasActionsColumn && !showTotalColumn;
+
+  const Header = ({ header, sortingEnabled, className }) => {
     let displayName = header;
     let name = header;
 
@@ -133,11 +137,11 @@ export default function HorizontalTableWidget(
     const key = displayName.replaceAll(' ', '_');
 
     if (sortingEnabled) {
-      return renderSortableColumnHeader(displayName, key, name);
+      return renderSortableColumnHeader(displayName, key, name, className);
     }
 
     return (
-      <th key={key} scope="col" className="text-left data-header">
+      <th key={key} scope="col" className={`text-left data-header ${className}`.trim()}>
         <span className="usa-sr-only">{name}</span>
         <span aria-hidden="true">{displayName}</span>
       </th>
@@ -153,7 +157,18 @@ export default function HorizontalTableWidget(
         name: PropTypes.string,
       }),
     ]).isRequired,
+    className: PropTypes.string,
   };
+
+  Header.defaultProps = {
+    className: '',
+  };
+
+  const getStickyLastDataColumnClass = (isLastDataColumn) => (
+    canStickyLastDataColumn && isLastDataColumn
+      ? 'smarthub-horizontal-table-sticky-last-data-column'
+      : ''
+  );
 
   const firstHeadingClasses = () => {
     const classes = [
@@ -212,10 +227,17 @@ export default function HorizontalTableWidget(
                 )
             }
             {
-            headers.map((h) => (<Header header={h} key={`header-${uniqueId()}`} sortingEnabled={enableSorting} />))
+            headers.map((h, index) => (
+              <Header
+                header={h}
+                key={`header-${uniqueId()}`}
+                sortingEnabled={enableSorting}
+                className={getStickyLastDataColumnClass(index === headers.length - 1)}
+              />
+            ))
             }
             {
-            data.some((r) => r.actions) && (
+            hasActionsColumn && (
               <th scope="col" aria-label="context menu" className={`${stickyLastColumn ? 'smarthub-horizontal-table-last-column' : ''} fixed-th`}>
                 Actions
               </th>
@@ -236,58 +258,78 @@ export default function HorizontalTableWidget(
         </thead>
         <tbody>
           {
-            data.map((r, index) => (
-              <tr className="bg-white border-bottom-0 text-bold" key={`horizontal_table_row_${index}`}>
-                {
-                  enableCheckboxes && (
-                    <td className="width-8 checkbox-column" data-label="Select report">
-                      <Checkbox
-                        id={r.id}
-                        label=""
-                        value={r.id}
-                        checked={checkboxes[r.id] || false}
-                        onChange={handleReportSelect}
-                        aria-label={(() => `Select ${r.title || r.heading}`)()}
+            data.map((r, index) => {
+              const visibleData = (r.data || []).filter((d) => !d.hidden);
+              return (
+                <tr className="bg-white border-bottom-0 text-bold" key={`horizontal_table_row_${index}`}>
+                  {
+                    enableCheckboxes && (
+                      <td className="width-8 checkbox-column" data-label="Select report">
+                        <Checkbox
+                          id={r.id}
+                          label=""
+                          value={r.id}
+                          checked={checkboxes[r.id] || false}
+                          onChange={handleReportSelect}
+                          aria-label={(() => `Select ${r.title || r.heading}`)()}
+                        />
+                      </td>
+                    )
+                  }
+                  <HorizontalTableWidgetCell
+                    data={r}
+                    showDashForNullValue={showDashForNullValue}
+                    isFirstColumn
+                    enableCheckboxes={enableCheckboxes}
+                    hideFirstColumnBorder={hideFirstColumnBorder}
+                    stickyFirstColumn={stickyFirstColumn}
+                  />
+                  {visibleData.map((d, cellIndex) => (
+                    <HorizontalTableWidgetCell
+                      key={`horizontal_table_cell_${cellIndex}`}
+                      data={{ ...d, title: d.title }}
+                      showDashForNullValue={showDashForNullValue}
+                      className={getStickyLastDataColumnClass(cellIndex === visibleData.length - 1)}
+                    />
+                  ))}
+                  {r.actions && r.actions.length ? (
+                    <td
+                      data-label={`Row actions for ${r.title || r.heading}`}
+                      key={`horizontal_table_row_actions_${index}`}
+                      className={`
+                        ${stickyLastColumn ? 'smarthub-horizontal-table-last-column' : ''}
+                        text-overflow-ellipsis
+                        ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}
+                      `.trim()}
+                    >
+                      <ContextMenu
+                        fixed
+                        left
+                        label={`Actions for ${r.title || r.heading}`}
+                        menuItems={r.actions}
+                        menuWidthOffset={menuWidthOffset}
                       />
                     </td>
-                  )
-                }
-                <HorizontalTableWidgetCell
-                  data={r}
-                  showDashForNullValue={showDashForNullValue}
-                  isFirstColumn
-                  enableCheckboxes={enableCheckboxes}
-                  hideFirstColumnBorder={hideFirstColumnBorder}
-                  stickyFirstColumn={stickyFirstColumn}
-                />
-                {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
-                  <HorizontalTableWidgetCell
-                    key={`horizontal_table_cell_${cellIndex}`}
-                    data={{ ...d, title: d.title }}
-                    showDashForNullValue={showDashForNullValue}
-                  />
-                ))}
-                {r.actions && r.actions.length ? (
-                  <td data-label={`Row actions for ${r.title || r.heading}`} key={`horizontal_table_row_actions_${index}`} className={`${stickyLastColumn ? 'smarthub-horizontal-table-last-column' : ''} text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
-                    <ContextMenu
-                      fixed
-                      left
-                      label={`Actions for ${r.title || r.heading}`}
-                      menuItems={r.actions}
-                      menuWidthOffset={menuWidthOffset}
-                    />
-                  </td>
-                ) : null}
-              </tr>
-            ))
+                  ) : null}
+                </tr>
+              );
+            })
             }
         </tbody>
         {footerData && (
           <tfoot>
             <tr>
-              {footerData.map((f, index) => (
-                <td key={`horizontal_table_footer_${index}`}>{f}</td>
-              ))}
+              {footerData.map((f, index) => {
+                const isLastDataFooterCell = index === headers.length + (enableCheckboxes ? 1 : 0);
+                return (
+                  <td
+                    key={`horizontal_table_footer_${index}`}
+                    className={getStickyLastDataColumnClass(isLastDataFooterCell)}
+                  >
+                    {f}
+                  </td>
+                );
+              })}
             </tr>
           </tfoot>
         )}
@@ -335,6 +377,7 @@ HorizontalTableWidget.propTypes = {
   showDashForNullValue: PropTypes.bool,
   stickyFirstColumn: PropTypes.bool,
   stickyLastColumn: PropTypes.bool,
+  stickyLastDataColumn: PropTypes.bool,
 };
 
 HorizontalTableWidget.defaultProps = {
@@ -359,4 +402,5 @@ HorizontalTableWidget.defaultProps = {
   showDashForNullValue: false,
   stickyFirstColumn: true,
   stickyLastColumn: true,
+  stickyLastDataColumn: false,
 };
