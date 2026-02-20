@@ -29,9 +29,10 @@ const sqlContent = (() => {
 // setFilters uses set_config() which is session-scoped. Wrapping both setFilters and
 // the query in the same transaction guarantees they share a single PostgreSQL connection
 // (via Sequelize CLS), so the session settings are visible to the SQL.
-const runWithFilters = (filterValues) => db.sequelize.transaction(
-  () => setFilters(filterValues).then(() => db.sequelize.query(sqlContent, { type: QueryTypes.SELECT })),
-);
+const runWithFilters = (filterValues) => db.sequelize.transaction(async () => {
+  await setFilters(filterValues);
+  return db.sequelize.query(sqlContent, { type: QueryTypes.SELECT });
+});
 
 const getPageData = (result) => {
   const dataset = result.find((d) => d.data_set === 'no_tta_page');
