@@ -14,13 +14,11 @@ import Dropzone from './Dropzone';
 import './FileUploader.scss';
 
 export const upload = async (file, idKey, idValue, setErrorMessage) => {
-  let res;
-
   try {
     const data = new FormData();
     data.append(idKey, idValue);
     data.append('file', file);
-    res = await uploadFile(data);
+    const [res] = await uploadFile(data);
     setErrorMessage(null);
     return {
       id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url: res.url,
@@ -44,9 +42,9 @@ const ReportFileUploader = ({
 }) => {
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
+    await deleteFile(file.id, idValue);
     const remainingFiles = files.filter((f) => f.id !== file.id);
     onChange(remainingFiles);
-    await deleteFile(file.id, idValue);
   };
 
   const handleDrop = async (e) => {
@@ -56,9 +54,8 @@ const ReportFileUploader = ({
     }
 
     const newFiles = e.map((file) => upload(file, idKey, idValue, setErrorMessage));
-    Promise.all(newFiles).then((values) => {
-      onChange([...files, ...values.filter((file) => file)]);
-    });
+    const values = await Promise.all(newFiles);
+    onChange([...files, ...values.filter((file) => file)]);
   };
 
   return (
