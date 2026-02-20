@@ -1,6 +1,32 @@
 import { Op } from 'sequelize';
-import { compareDate, scopeToWhere } from './utils';
+import { compareDate, scopeToWhere, filterToAllowedProgramTypes } from './utils';
 import { ActivityReport } from '../models'; // Assuming the model is imported from './models'
+
+describe('filterToAllowedProgramTypes', () => {
+  it('should return an empty array when given an empty array', () => {
+    const result = filterToAllowedProgramTypes([]);
+    expect(result).toStrictEqual([]);
+  });
+
+  it('should return the same array when all program types are allowed', () => {
+    const input = ['EHS', 'HS'];
+    const result = filterToAllowedProgramTypes(input);
+    expect(result.sort()).toStrictEqual([
+      'AIAN EHS',
+      'EHS',
+      'Migrant EHS',
+      'AIAN HS',
+      'HS',
+      'Migrant HS',
+    ].sort());
+  });
+
+  it('should filter out disallowed program types', () => {
+    const input = ['DisallowedType', 'HS'];
+    const result = filterToAllowedProgramTypes(input);
+    expect(result.sort()).toStrictEqual(['HS', 'AIAN HS', 'Migrant HS'].sort());
+  });
+});
 
 describe('scopeToWhere', () => {
   const alias = 'alias';

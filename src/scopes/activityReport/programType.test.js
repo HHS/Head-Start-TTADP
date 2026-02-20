@@ -117,7 +117,14 @@ describe('programType filtersToScopes', () => {
             id: faker.datatype.number(),
             name: faker.name.findName(),
             grantId: recipient.grantId,
-            programType: 'HS',
+            programType: 'AIAN HS',
+          }).catch((err) => auditLogger.error(err));
+          await Program.create({
+            ...dummyProgram,
+            id: faker.datatype.number(),
+            name: faker.name.findName(),
+            grantId: recipient.grantId,
+            programType: 'AIAN EHS',
           }).catch((err) => auditLogger.error(err));
         }),
       ]);
@@ -152,10 +159,10 @@ describe('programType filtersToScopes', () => {
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
-      expect(found.length).toBe(2);
+      expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining(
-          [reportThree.id, sharedTestData.globallyExcludedReport.id],
+          [sharedTestData.globallyExcludedReport.id],
         ));
     });
 
