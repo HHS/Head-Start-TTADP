@@ -27,11 +27,13 @@ import './ApprovalRateByDeadlineWidget.css';
 
 export function ApprovalRateByDeadlineWidget({ data, loading }) {
   const widgetRef = useRef(null);
+  const carouselFrameRef = useRef(null);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [activeRegionIndex, setActiveRegionIndex] = useState(0);
   const [transition, setTransition] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [lockedFrameHeight, setLockedFrameHeight] = useState(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -278,6 +280,10 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
       return;
     }
 
+    if (carouselFrameRef.current) {
+      setLockedFrameHeight(carouselFrameRef.current.getBoundingClientRect().height);
+    }
+
     setTransition({
       from: activeRegionIndex,
       to: nextIndex,
@@ -287,6 +293,22 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
   };
 
   const hasMultipleRegions = regions.length > 1;
+  const hasPreviousRegion = hasMultipleRegions && activeRegionIndex > 0;
+  const hasNextRegion = hasMultipleRegions && activeRegionIndex < regions.length - 1;
+  const goToPreviousRegion = () => {
+    if (!hasPreviousRegion) {
+      return;
+    }
+    handleRegionChange(activeRegionIndex - 1);
+  };
+
+  const goToNextRegion = () => {
+    if (!hasNextRegion) {
+      return;
+    }
+    handleRegionChange(activeRegionIndex + 1);
+  };
+
   const widgetClassName = [
     'approval-rate-by-deadline-widget',
     hasMultipleRegions
@@ -342,6 +364,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
           showTotalColumn={false}
           footerData={footerData}
           hideFirstColumnBorder
+          stickyLastDataColumn
           selectAllIdPrefix="approval-rate-by-deadline-"
         />
       ) : (
@@ -349,34 +372,72 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
           <div className="text-center text-bold margin-top-2 margin-bottom-1">
             {activeRegionId ? `Region ${activeRegionId}` : 'Region'}
           </div>
-          <div
-            className={[
-              'approval-rate-carousel-frame',
-              'position-relative',
-              'overflow-hidden',
-              isAnimating ? 'is-animating' : '',
-            ].join(' ')}
-          >
-            {transition ? (
-              <>
-                <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--outgoing approval-rate-carousel-slide--${transition.direction}`}>
-                  {renderLineGraph(
-                    getTraceDataForRegion(regions[transition.from]),
-                    `approval-rate-outgoing-${transition.from}`,
-                  )}
+          <div className="approval-rate-carousel-shell position-relative">
+            <div
+              ref={carouselFrameRef}
+              className={[
+                'approval-rate-carousel-frame',
+                'position-relative',
+                'overflow-hidden',
+                isAnimating ? 'is-animating' : '',
+              ].join(' ')}
+              style={lockedFrameHeight ? { minHeight: `${lockedFrameHeight}px` } : undefined}
+            >
+              {hasMultipleRegions && (
+                <button
+                  type="button"
+                  className={[
+                    'approval-rate-carousel-nav',
+                    'approval-rate-carousel-nav--prev',
+                    !hasPreviousRegion ? 'is-hidden' : '',
+                  ].join(' ')}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={goToPreviousRegion}
+                  aria-label="Previous region"
+                  aria-hidden={!hasPreviousRegion}
+                  tabIndex={!hasPreviousRegion ? -1 : 0}
+                >
+                  <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--left" aria-hidden="true" />
+                </button>
+              )}
+              {transition ? (
+                <>
+                  <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--outgoing approval-rate-carousel-slide--${transition.direction}`}>
+                    {renderLineGraph(
+                      getTraceDataForRegion(regions[transition.from]),
+                      `approval-rate-outgoing-${transition.from}`,
+                    )}
+                  </div>
+                  <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--incoming approval-rate-carousel-slide--${transition.direction}`}>
+                    {renderLineGraph(
+                      getTraceDataForRegion(regions[transition.to]),
+                      `approval-rate-incoming-${transition.to}`,
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="approval-rate-carousel-slide approval-rate-carousel-slide--current">
+                  {renderLineGraph(traceData, `approval-rate-region-${activeRegionId}`)}
                 </div>
-                <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--incoming approval-rate-carousel-slide--${transition.direction}`}>
-                  {renderLineGraph(
-                    getTraceDataForRegion(regions[transition.to]),
-                    `approval-rate-incoming-${transition.to}`,
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="approval-rate-carousel-slide approval-rate-carousel-slide--current">
-                {renderLineGraph(traceData, `approval-rate-region-${activeRegionId}`)}
-              </div>
-            )}
+              )}
+              {hasMultipleRegions && (
+                <button
+                  type="button"
+                  className={[
+                    'approval-rate-carousel-nav',
+                    'approval-rate-carousel-nav--next',
+                    !hasNextRegion ? 'is-hidden' : '',
+                  ].join(' ')}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={goToNextRegion}
+                  aria-label="Next region"
+                  aria-hidden={!hasNextRegion}
+                  tabIndex={!hasNextRegion ? -1 : 0}
+                >
+                  <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--right" aria-hidden="true" />
+                </button>
+              )}
+            </div>
           </div>
           {hasMultipleRegions && (
             <div className="display-flex flex-justify-center flex-gap-1 margin-top-1">

@@ -2,6 +2,10 @@
   width: 100%;
 }
 
+.approval-rate-by-deadline-widget {
+  overflow-anchor: none;
+}
+
 .approval-rate-carousel-slide--current {
   position: relative;
 }
@@ -57,6 +61,71 @@
   background-color: currentColor;
 }
 
+.approval-rate-carousel-nav {
+  position: absolute;
+  top: 48%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 1.5rem;
+  height: 2.2rem;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: rgb(217, 217, 217);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.approval-rate-carousel-nav:focus {
+  outline: 0.25rem solid #2491ff;
+  outline-offset: 0;
+}
+
+.approval-rate-carousel-nav.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.approval-rate-carousel-nav--prev {
+  left: 0.125rem;
+}
+
+.approval-rate-carousel-nav--next {
+  right: 0.125rem;
+}
+
+.approval-rate-carousel-nav-icon {
+  width: 0;
+  height: 0;
+  border-top: 0.5rem solid transparent;
+  border-bottom: 0.5rem solid transparent;
+}
+
+.approval-rate-carousel-nav-icon--left {
+  border-right: 0.62rem solid #1b1b1b;
+}
+
+.approval-rate-carousel-nav-icon--right {
+  border-left: 0.62rem solid #1b1b1b;
+}
+
+@media (max-width: 63.99em) {
+  .approval-rate-carousel-nav {
+    top: 50%;
+    width: 1.3rem;
+    height: 2rem;
+  }
+
+  .approval-rate-carousel-nav--prev {
+    left: 0;
+  }
+
+  .approval-rate-carousel-nav--next {
+    right: 0;
+  }
+}
+
 .approval-rate-by-deadline-widget .ttahub-three-trace-line-graph {
   overflow: hidden;
 }
@@ -83,27 +152,18 @@
   white-space: nowrap;
 }
 
+.approval-rate-by-deadline-widget
+.smarthub-horizontal-table-widget
+.usa-table
+tbody
+td.smarthub-horizontal-table-sticky-last-data-column {
+  font-weight: 700;
+}
+
 @media (min-width: 60em) {
-  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table thead th:last-child {
-    position: sticky;
-    right: 0;
-    z-index: 2;
-    background-color: #fff;
-  }
-
-  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tbody td:last-child {
-    position: sticky;
-    right: 0;
-    z-index: 1;
-    font-weight: 700;
-    background-color: inherit;
-  }
-
-  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tfoot td:last-child {
-    position: sticky;
-    right: 0;
-    z-index: 2;
-    background-color: #fff;
+  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget
+  .usa-table thead th.smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
+    border-bottom: 1px solid lightgray;
   }
 }
 

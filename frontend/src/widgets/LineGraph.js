@@ -229,6 +229,7 @@ export default function LineGraph({
             showTotalColumn={tableConfig.showTotalColumn}
             footerData={tableConfig.footer.showFooter ? tableConfig.footer.data : false}
             selectAllIdPrefix={tableConfig.selectAllIdPrefix}
+            stickyLastDataColumn={tableConfig.stickyLastDataColumn}
           />
         )
         : (
@@ -297,6 +298,7 @@ LineGraph.propTypes = {
     enableCheckboxes: PropTypes.bool.isRequired,
     enableSorting: PropTypes.bool.isRequired,
     showTotalColumn: PropTypes.bool.isRequired,
+    stickyLastDataColumn: PropTypes.bool,
     checkboxes: PropTypes.shape({}),
     setCheckboxes: PropTypes.func,
     footer: PropTypes.shape({
