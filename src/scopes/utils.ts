@@ -13,7 +13,7 @@ const FULL_DATE_FORMATS = [
   'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
 ];
 
-function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {
+export function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {
   if (!value || typeof value !== 'string') {
     return null;
   }
