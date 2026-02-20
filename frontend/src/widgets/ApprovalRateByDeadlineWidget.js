@@ -14,6 +14,7 @@ import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import useWidgetExport from '../hooks/useWidgetExport';
 import withWidgetData from './withWidgetData';
 import LineGraph from './LineGraph';
+import HorizontalTableWidget from './HorizontalTableWidget';
 import { arrayExistsAndHasLength, EMPTY_ARRAY, NOOP } from '../Constants';
 import {
   APPROVAL_RATE_BY_DEADLINE_EXPORT_NAME,
@@ -304,10 +305,10 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     </div>
   );
 
-  const renderLineGraph = (graphData, key, showTable = false) => (
+  const renderLineGraph = (graphData, key) => (
     <LineGraph
       key={key}
-      showTabularData={showTable}
+      showTabularData={false}
       data={graphData}
       xAxisTitle="Months"
       yAxisTitle="Percentage"
@@ -328,7 +329,21 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
       titleMargin={{ bottom: 1 }}
     >
       {showTabularData ? (
-        renderLineGraph(traceData, 'approval-rate-table', true)
+        <HorizontalTableWidget
+          headers={columnHeadings}
+          data={tableRows}
+          caption={APPROVAL_RATE_BY_DEADLINE_TABLE_CAPTION}
+          firstHeading={APPROVAL_RATE_BY_DEADLINE_FIRST_COLUMN}
+          enableSorting={false}
+          requestSort={NOOP}
+          enableCheckboxes
+          checkboxes={checkboxes}
+          setCheckboxes={setCheckboxes}
+          showTotalColumn={false}
+          footerData={footerData}
+          hideFirstColumnBorder
+          selectAllIdPrefix="approval-rate-by-deadline-"
+        />
       ) : (
         <div>
           <div className="text-center text-bold margin-top-2 margin-bottom-1">

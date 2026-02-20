@@ -83,82 +83,27 @@
   white-space: nowrap;
 }
 
-.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tbody tr:first-child td {
-  border-top: 0;
-}
-
-.approval-rate-by-deadline-widget--single .smarthub-horizontal-table-widget .usa-table {
-  table-layout: fixed;
-}
-
-.approval-rate-by-deadline-widget--single .smarthub-horizontal-table-widget .usa-table thead th:nth-child(2),
-.approval-rate-by-deadline-widget--single .smarthub-horizontal-table-widget .usa-table tbody td:nth-child(2) {
-  width: 9rem;
-  min-width: 9rem;
-  max-width: 9rem;
-}
-
-.approval-rate-by-deadline-widget--single .smarthub-horizontal-table-widget .usa-table thead th:nth-child(3),
-.approval-rate-by-deadline-widget--single .smarthub-horizontal-table-widget .usa-table tbody td:nth-child(3) {
-  width: 12rem;
-  min-width: 12rem;
-  max-width: 12rem;
-}
-
-.approval-rate-by-deadline-widget--single .smarthub-horizontal-table-widget .usa-table thead th:last-child,
-.approval-rate-by-deadline-widget--single .smarthub-horizontal-table-widget .usa-table tbody td:last-child {
-  width: auto;
-}
-
-.approval-rate-by-deadline-widget--multi .smarthub-horizontal-table-widget .usa-table .data-header,
-.approval-rate-by-deadline-widget--multi .smarthub-horizontal-table-widget .usa-table tbody td {
-  min-width: 9.5rem;
-  white-space: nowrap;
-}
-
-.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table thead th:last-child,
-.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget tfoot td:last-child {
-  background: #fff;
-}
-
-.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tbody td:last-child {
-  font-weight: 700;
-  position: sticky;
-  right: 0;
-  z-index: 1;
-}
-
-.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table thead th:last-child::before,
-.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tbody td:last-child::before,
-.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget tfoot td:last-child::before {
-  display: none;
-}
-
-.approval-rate-by-deadline-widget .smarthub-horizontal-table-widget tfoot td {
-  border-top: 2px solid #5c5c5c;
-}
-
-.approval-rate-by-deadline-widget--multi .smarthub-horizontal-table-widget .usa-table thead th:last-child::before,
-.approval-rate-by-deadline-widget--multi .smarthub-horizontal-table-widget .usa-table tbody td:last-child::before,
-.approval-rate-by-deadline-widget--multi .smarthub-horizontal-table-widget tfoot td:last-child::before {
-  display: block;
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  border-left: 1px solid #5c5c5c;
-}
-
 @media (min-width: 60em) {
-  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget
-  .usa-table thead th.smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
-    border-bottom: 1px solid lightgray;
+  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table thead th:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    background-color: #fff;
   }
 
-  .approval-rate-by-deadline-widget--single .smarthub-horizontal-table-widget
-  .smarthub-horizontal-table-first-column-border::after {
-    border-right: 0;
+  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tbody td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    font-weight: 700;
+    background-color: inherit;
+  }
+
+  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget .usa-table tfoot td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    background-color: #fff;
   }
 }
 
