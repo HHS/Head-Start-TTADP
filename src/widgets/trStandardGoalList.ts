@@ -13,7 +13,6 @@ export default async function trStandardGoalList(scopes: IScopes): Promise<{ nam
         scopes.trainingReport,
         {
           data: {
-            status: TRAINING_REPORT_STATUSES.COMPLETE,
             startDate: {
               [Op.gte]: new Date('2025-09-01'),
             },

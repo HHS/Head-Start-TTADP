@@ -81,7 +81,7 @@ describe('trStandardGoalList', () => {
       startDate: new Date('2025-11-15'),
     });
 
-    // Event with incomplete status - should not be included in results
+    // Event - included since we only filter by start date, not event status
     eventReportIncomplete = await createAnEvent({
       userId: user.id,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
@@ -159,6 +159,8 @@ describe('trStandardGoalList', () => {
       goalTemplateId: goalTemplate2.id,
     });
 
+    // Note: This status update is no longer required for the widget logic since
+    // event completion status is no longer checked, but kept for test data consistency
     await sequelize.query(`
       UPDATE "EventReportPilots"
         SET data = JSONB_SET(data,'{status}','"${TRAINING_REPORT_STATUSES.COMPLETE}"')
@@ -246,13 +248,13 @@ describe('trStandardGoalList', () => {
     expect(Number(teachingPracticesResult.count)).toBeLessThanOrEqual(3);
   });
 
-  it('only includes events with complete status and start date >= 2025-09-01', async () => {
+  it('only includes events with start date >= 2025-09-01', async () => {
     const scopes = filtersToScopes({});
 
     const results = await trStandardGoalList(scopes);
 
-    // Should only count session reports from complete events with valid start dates
-    // Events before 2025-09-01 or with incomplete status should be excluded
+    // Should only count session reports from events with valid start dates (>= 2025-09-01)
+    // Event status is not checked - only session report status matters
     expect(results).toBeDefined();
     expect(Array.isArray(results)).toBe(true);
   });
