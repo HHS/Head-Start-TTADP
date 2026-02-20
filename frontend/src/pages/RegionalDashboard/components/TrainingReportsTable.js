@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { Link, useHistory } from 'react-router-dom';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
@@ -92,11 +92,11 @@ const TrainingReportsTable = ({
       },
       {
         title: 'Session start date',
-        value: r.startDate ? moment(r.startDate).format(DATE_DISPLAY_FORMAT) : '',
+        value: r.startDate ? format(parseISO(r.startDate), DATE_DISPLAY_FORMAT) : '',
       },
       {
         title: 'Session end date',
-        value: r.endDate ? moment(r.endDate).format(DATE_DISPLAY_FORMAT) : '',
+        value: r.endDate ? format(parseISO(r.endDate), DATE_DISPLAY_FORMAT) : '',
       },
       {
         title: 'Topics',

@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import {
   Label, TextInput, Grid, Fieldset,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import RegionDropdown from '../../components/RegionDropdown';
 import AdminMultiSelect from '../../components/AdminMultiSelect';
 import { getRoles } from '../../fetchers/Admin';
@@ -77,7 +77,7 @@ function UserInfo({ user, onUserChange }) {
   let { lastLogin } = user;
 
   if (lastLogin && lastLogin !== '') {
-    lastLogin = moment(lastLogin).format('lll Z');
+    lastLogin = format(parseISO(lastLogin), 'MMM d, yyyy h:mm aa xxx');
   }
 
   const [roleOptions, setRoleOptions] = useState([]);

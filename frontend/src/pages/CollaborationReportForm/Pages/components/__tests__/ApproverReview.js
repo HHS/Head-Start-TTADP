@@ -6,15 +6,12 @@ import '@testing-library/jest-dom';
 import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
-import moment from 'moment';
 import ApproverReview from '../ApproverReview';
-import { DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 
 // Mock dependencies
-jest.mock('moment');
 jest.mock('../../../../../Constants', () => ({
   managerReportStatuses: ['needs_action', 'approved'],
-  DATE_DISPLAY_FORMAT: 'MM/DD/YYYY',
+  DATE_DISPLAY_FORMAT: 'MM/dd/yyyy',
 }));
 
 jest.mock('../../../../../components/FormItem', () => function MockFormItem({ children, label }) {
@@ -78,13 +75,8 @@ describe('ApproverReview Component', () => {
     isNeedsAction: false,
   };
 
-  const mockMoment = {
-    format: jest.fn(() => '01/15/2024'),
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    moment.mockReturnValue(mockMoment);
   });
 
   const renderComponent = (props = {}) => render(
@@ -123,26 +115,23 @@ describe('ApproverReview Component', () => {
     it('formats and displays dateSubmitted correctly', () => {
       renderComponent();
 
-      expect(moment).toHaveBeenCalledWith('2024-01-15T10:30:00Z');
-      expect(mockMoment.format).toHaveBeenCalledWith(DATE_DISPLAY_FORMAT);
       expect(screen.getByText('Date submitted')).toBeInTheDocument();
-      // Check that the formatted date paragraph exists
+      // Check that the formatted date paragraph exists and shows the correct formatted date
       const dateParagraphs = document.querySelectorAll('p.margin-top-0');
       expect(dateParagraphs.length).toBeGreaterThan(0);
+      expect(screen.getByText('01/15/2024')).toBeInTheDocument();
     });
 
     it('hides date section when dateSubmitted is null', () => {
       renderComponent({ dateSubmitted: null });
 
       expect(screen.queryByText('Date Submitted')).not.toBeInTheDocument();
-      expect(moment).not.toHaveBeenCalled();
     });
 
     it('hides date section when dateSubmitted is empty string', () => {
       renderComponent({ dateSubmitted: '' });
 
       expect(screen.queryByText('Date Submitted')).not.toBeInTheDocument();
-      expect(moment).not.toHaveBeenCalled();
     });
   });
 

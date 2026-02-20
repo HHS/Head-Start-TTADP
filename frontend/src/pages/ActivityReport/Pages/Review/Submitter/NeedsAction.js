@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import moment from 'moment';
+import { formatInTimeZone } from 'date-fns-tz';
 import PropTypes from 'prop-types';
 import {
   FormGroup, Button, Fieldset, Dropdown, ErrorMessage,
@@ -57,8 +57,8 @@ const NeedsAction = ({
       // if successful, we should redirect to
       // the landing page with the message saying
       // we successfully resubmitted
-      const timezone = moment.tz.guess();
-      const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const time = formatInTimeZone(new Date(), timezone, "MM/dd/yyyy 'at' h:mm a zzz");
       const message = {
         time,
         reportId,

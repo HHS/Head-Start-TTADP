@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { addDays, subDays, startOfDay } from 'date-fns';
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
@@ -159,8 +159,8 @@ describe('Recipient DB service', () => {
         regionId: 1,
         recipientId: 76,
         status: 'Inactive',
-        startDate: new Date(moment().add(1, 'days').format('MM/DD/yyyy')),
-        endDate: new Date(moment().add(2, 'days').format('MM/DD/yyyy')),
+        startDate: startOfDay(addDays(new Date(), 1)),
+        endDate: startOfDay(addDays(new Date(), 2)),
       }),
       Grant.create({
         id: 81,
@@ -168,8 +168,8 @@ describe('Recipient DB service', () => {
         regionId: 1,
         recipientId: 76,
         status: 'Inactive',
-        startDate: new Date(moment().subtract(5, 'days').format('MM/DD/yyyy')),
-        endDate: new Date(moment().format('MM/DD/yyyy')),
+        startDate: startOfDay(subDays(new Date(), 5)),
+        endDate: startOfDay(new Date()),
       }),
 
     ]);
@@ -965,7 +965,7 @@ describe('Recipient DB service', () => {
         number: '582353',
         programSpecialistName: 'John Tom',
         status: 'Inactive',
-        endDate: new Date(moment().add(2, 'days').format('MM/DD/yyyy')),
+        endDate: startOfDay(addDays(new Date(), 2)),
         grantSpecialistName: 'Bill Smith',
         annualFundingMonth: 'October',
       },
@@ -976,7 +976,7 @@ describe('Recipient DB service', () => {
         number: '582354',
         programSpecialistName: 'John Tom',
         status: 'Inactive',
-        endDate: new Date(moment().format('MM/DD/yyyy')),
+        endDate: startOfDay(new Date()),
         grantSpecialistName: 'Bill Smith',
         annualFundingMonth: 'October',
       },

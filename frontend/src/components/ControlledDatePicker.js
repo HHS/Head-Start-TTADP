@@ -1,6 +1,8 @@
 import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import {
+  format, parse, isBefore, isAfter, differenceInDays, addDays,
+} from 'date-fns';
 import { useController } from 'react-hook-form';
 import {
   DatePicker,
@@ -30,32 +32,41 @@ export default function ControlledDatePicker({
    * we don't want to compute these fields multiple times if we don't have to,
    * especially on renders where the underlying dependency doesn't change
    */
-  const max = useMemo(() => (isStartDate ? {
-    display: moment().format(DATE_DISPLAY_FORMAT),
-    moment: moment(maxDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-    compare: moment(maxDate, DATE_DISPLAY_FORMAT),
-  } : {
-    display: maxDate,
-    moment: moment(maxDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-    compare: moment(maxDate, DATE_DISPLAY_FORMAT),
-  }), [isStartDate, maxDate]);
+  const max = useMemo(() => {
+    const maxDateParsed = parse(maxDate, DATE_DISPLAY_FORMAT, new Date());
+    return isStartDate ? {
+      display: format(new Date(), DATE_DISPLAY_FORMAT),
+      date: maxDateParsed,
+      datePicker: format(maxDateParsed, DATEPICKER_VALUE_FORMAT),
+      compare: maxDateParsed,
+    } : {
+      display: maxDate,
+      date: maxDateParsed,
+      datePicker: format(maxDateParsed, DATEPICKER_VALUE_FORMAT),
+      compare: maxDateParsed,
+    };
+  }, [isStartDate, maxDate]);
 
-  const endDateMax = useMemo(() => ({
-    display: moment().format(DATE_DISPLAY_FORMAT),
-    moment: moment(endDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(endDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-    compare: moment(endDate, DATE_DISPLAY_FORMAT),
-  }), [endDate]);
+  const endDateMax = useMemo(() => {
+    const endDateParsed = parse(endDate, DATE_DISPLAY_FORMAT, new Date());
+    return {
+      display: format(new Date(), DATE_DISPLAY_FORMAT),
+      date: endDateParsed,
+      datePicker: format(endDateParsed, DATEPICKER_VALUE_FORMAT),
+      compare: endDateParsed,
+    };
+  }, [endDate]);
 
-  const min = useMemo(() => ({
-    display: minDate,
-    moment: moment(minDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(minDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-  }), [minDate]);
+  const min = useMemo(() => {
+    const minDateParsed = parse(minDate, DATE_DISPLAY_FORMAT, new Date());
+    return {
+      display: minDate,
+      date: minDateParsed,
+      datePicker: format(minDateParsed, DATEPICKER_VALUE_FORMAT),
+    };
+  }, [minDate]);
 
-  const formattedValue = value ? moment(value, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT) : '';
+  const formattedValue = value ? format(parse(value, DATE_DISPLAY_FORMAT, new Date()), DATEPICKER_VALUE_FORMAT) : '';
 
   const {
     beforeMessage,
@@ -68,11 +79,11 @@ export default function ControlledDatePicker({
     const newValue = isValidDate(v);
     if (!newValue) return invalidMessage || 'Enter valid date';
 
-    if (newValue.isBefore(min.moment)) {
+    if (isBefore(newValue, min.date)) {
       return afterMessage || `Please enter a date after ${min.display}`;
     }
 
-    if (newValue.isAfter(max.moment)) {
+    if (isAfter(newValue, max.compare)) {
       return beforeMessage || `Please enter a date before ${max.display}`;
     }
 
@@ -107,12 +118,12 @@ export default function ControlledDatePicker({
 
   const datePickerOnChange = (d) => {
     if (isStartDate) {
-      const newDate = moment(d, DATE_DISPLAY_FORMAT);
-      const currentDate = moment(value, DATE_DISPLAY_FORMAT);
-      if (endDateMax.compare.isBefore(newDate)) {
-        const diff = endDateMax.compare.diff(currentDate, 'days');
-        const newEnd = newDate.add(diff, 'days');
-        setEndDate(newEnd.format(DATE_DISPLAY_FORMAT));
+      const newDate = parse(d, DATE_DISPLAY_FORMAT, new Date());
+      const currentDate = parse(value, DATE_DISPLAY_FORMAT, new Date());
+      if (isBefore(endDateMax.compare, newDate)) {
+        const diff = differenceInDays(endDateMax.compare, currentDate);
+        const newEnd = addDays(newDate, diff);
+        setEndDate(format(newEnd, DATE_DISPLAY_FORMAT));
       }
     }
     onChange(d);

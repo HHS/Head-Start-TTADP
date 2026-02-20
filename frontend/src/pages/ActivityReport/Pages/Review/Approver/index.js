@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
-import moment from 'moment-timezone';
+import { formatInTimeZone } from 'date-fns-tz';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
@@ -39,9 +39,8 @@ const Approver = ({
 
   // NOTE: This is only an estimate of which timezone the user is in.
   // Not guaranteed to be 100% correct but is "good enough"
-  // https://momentjs.com/timezone/docs/#/using-timezones/guessing-user-timezone/
-  const timezone = moment.tz.guess();
-  const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const time = formatInTimeZone(new Date(), timezone, "MM/dd/yyyy 'at' h:mm a zzz");
   const message = {
     time,
     reportId: id,

@@ -3,7 +3,7 @@ import React, {
   useRef,
   useContext,
 } from 'react';
-import moment from 'moment';
+import { format, parseISO, parse } from 'date-fns';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -120,13 +120,13 @@ export default function RecipientsWithClassScoresAndGoals() {
             classroomOrganization,
             instructionalSupport,
             grantNumber,
-            lastARStartDate: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
-            reportDeliveryDate: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+            lastARStartDate: lastARStartDate === null ? null : format(parseISO(lastARStartDate), 'MM/dd/yyyy'),
+            reportDeliveryDate: reportDeliveryDate === null ? null : format(parse(reportDeliveryDate, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy'),
             regionId,
             dataForExport: [
               {
                 title: 'Last AR Start Date',
-                value: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
+                value: lastARStartDate === null ? null : format(parseISO(lastARStartDate), 'MM/dd/yyyy'),
               },
               {
                 title: 'Emotional Support',
@@ -142,7 +142,7 @@ export default function RecipientsWithClassScoresAndGoals() {
               },
               {
                 title: 'Report Delivery Date',
-                value: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+                value: reportDeliveryDate === null ? null : format(parse(reportDeliveryDate, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy'),
               },
             ],
             goals: [

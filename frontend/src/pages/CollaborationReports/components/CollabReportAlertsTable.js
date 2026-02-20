@@ -1,6 +1,6 @@
 import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { Tag } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
@@ -83,7 +83,7 @@ const CollabReportAlertsTable = ({
       },
       {
         title: 'Created date',
-        value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
+        value: format(parseISO(r.createdAt), DATE_DISPLAY_FORMAT),
       },
       {
         title: 'Collaborators',

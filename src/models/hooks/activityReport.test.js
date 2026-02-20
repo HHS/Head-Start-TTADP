@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { APPROVER_STATUSES, REPORT_STATUSES, GOAL_STATUS } from '@ttahub/common';
 import db, {
   ActivityReport,
@@ -899,8 +899,8 @@ describe('activity report model hooks', () => {
 
       testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('In Progress');
-      expect(moment(testObjective.firstInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
-      expect(moment(testObjective.lastInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
+      expect(format(new Date(testObjective.firstInProgressAt), 'MM/dd/yyyy')).toEqual(testReport.endDate);
+      expect(format(new Date(testObjective.lastInProgressAt), 'MM/dd/yyyy')).toEqual(testReport.endDate);
     });
 
     it('setting a status to something other than in progress from not started does not skip metadata', async () => {

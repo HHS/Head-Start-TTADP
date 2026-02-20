@@ -1,13 +1,13 @@
 /* eslint-disable import/prefer-default-export */
 import { Op } from 'sequelize';
-import moment from 'moment';
+import { format } from 'date-fns';
 import httpCodes from 'http-codes';
 import { ALERT_STATUSES } from '@ttahub/common';
 import { SiteAlert } from '../../models';
 
 export async function getSiteAlerts(req, res) {
   try {
-    const today = moment().format('YYYY-MM-DD');
+    const today = format(new Date(), 'yyyy-MM-dd');
     const alert = await SiteAlert.findOne({
       attributes: ['id', 'title', 'message', 'startDate', 'endDate', 'status', 'variant', 'size'],
       where: {

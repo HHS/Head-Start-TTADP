@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { subDays, isBefore } from 'date-fns';
 import findOrCreateUser from './findOrCreateUser';
 import { User, sequelize } from '../models';
 import { auditLogger } from '../logger';
@@ -84,13 +84,13 @@ describe('findOrCreateUser', () => {
       hsesUsername: 'test36@test.com',
       homeRegionId: 3,
     };
-    const originalLastLogin = moment().subtract(1, 'day');
+    const originalLastLogin = subDays(new Date(), 1);
     await User.destroy({ where: { id: userId } });
     await User.create({ ...user, id: userId, lastLogin: originalLastLogin });
 
     const retrievedUser = await findOrCreateUser(user);
     expect(retrievedUser.id).toEqual(userId);
-    expect(originalLastLogin.isBefore(retrievedUser.lastLogin)).toBe(true);
+    expect(isBefore(originalLastLogin, retrievedUser.lastLogin)).toBe(true);
   });
 
   it('Creates a new user when a matching user does not exist', async () => {

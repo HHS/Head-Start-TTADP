@@ -1,5 +1,5 @@
 import React from 'react';
-import moment from 'moment';
+import { format, parse } from 'date-fns';
 import {
   DATE_CONDITIONS,
   FILTER_CONDITIONS,
@@ -104,7 +104,7 @@ export const communicationDateFilter = {
         withSpaces: false,
       });
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return format(parse(query, 'yyyy/MM/dd', new Date()), 'MM/dd/yyyy');
   },
   renderInput: (_id, condition, query, onApplyQuery) => (
     <FilterDateRange

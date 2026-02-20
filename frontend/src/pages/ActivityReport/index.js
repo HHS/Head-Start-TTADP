@@ -14,7 +14,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import moment from 'moment';
+import { parse, format } from 'date-fns';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { useForm } from 'react-hook-form';
 import pages from './Pages';
@@ -134,8 +134,8 @@ export const formatReportWithSaveBeforeConversion = async (
   if (thereIsANeedToParseDates) {
     reportData = {
       ...reportData,
-      startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-      endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+      startDate: format(parse(updatedReport.startDate, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy'),
+      endDate: format(parse(updatedReport.endDate, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy'),
     };
   }
 
@@ -368,7 +368,7 @@ function ActivityReport({
         updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
-          updateLastSaveTime(moment(report.updatedAt));
+          updateLastSaveTime(new Date(report.updatedAt));
         }
 
         updateError();

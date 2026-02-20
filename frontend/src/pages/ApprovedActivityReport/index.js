@@ -5,7 +5,7 @@ import React, {
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Redirect } from 'react-router-dom';
-import moment from 'moment-timezone';
+import { formatInTimeZone } from 'date-fns-tz';
 import { Helmet } from 'react-helmet';
 import { unlockReport } from '../../fetchers/activityReports';
 import Modal from '../../components/Modal';
@@ -73,8 +73,8 @@ export default function ApprovedActivityReport({ match, user }) {
     </Modal>
   );
 
-  const timezone = moment.tz.guess();
-  const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const time = formatInTimeZone(new Date(), timezone, "MM/dd/yyyy 'at' h:mm a zzz");
   const message = {
     time,
     reportId,

@@ -1,5 +1,5 @@
 import React from 'react';
-import moment from 'moment';
+import { parse, isValid } from 'date-fns';
 import { Helmet } from 'react-helmet';
 import {
   Button,
@@ -66,7 +66,7 @@ export const isPageComplete = (hookForm) => {
     return false;
   }
 
-  if (![...specialistNextSteps, ...recipientNextSteps].every((step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid())) {
+  if (![...specialistNextSteps, ...recipientNextSteps].every((step) => step.note && isValid(parse(step.completeDate, 'MM/dd/yyyy', new Date())))) {
     return false;
   }
 

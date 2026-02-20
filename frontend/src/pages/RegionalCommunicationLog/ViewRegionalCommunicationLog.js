@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useHistory, Link } from 'react-router-dom';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import parse from 'html-react-parser';
 import { Helmet } from 'react-helmet';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -114,7 +114,7 @@ export default function ViewRegionalCommunicationLog({ match }) {
           <DisplayNextSteps title="Recipient's next steps" steps={log.data.recipientNextSteps} />
           <p className="text-bold font-sans-3xs base-dark">
             Date of entry:
-            {moment(log.createdAt).format('MMM Do, YYYY')}
+            {format(parseISO(log.createdAt), 'MMM do, yyyy')}
           </p>
         </Container>
       </div>

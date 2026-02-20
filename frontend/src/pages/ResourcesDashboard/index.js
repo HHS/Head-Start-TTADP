@@ -5,7 +5,7 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -34,7 +34,7 @@ import './index.scss';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
-  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+  string: `2022/07/01-${format(new Date(), 'yyyy/MM/dd')}`,
   withSpaces: false,
 });
 

@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import moment from 'moment';
+import { parse } from 'date-fns';
 import changeGoalStatus, { changeGoalStatusWithSystemUser } from './changeGoalStatus';
 import db from '../models';
 
@@ -134,7 +134,7 @@ describe('changeGoalStatus service', () => {
     expect(statusChangeLog.userId).toBe(mockUser.id);
     expect(statusChangeLog.userName).toBe(user.name);
     expect(statusChangeLog.userRoles).toStrictEqual(['Astronaut']);
-    expect(statusChangeLog.performedAt).toStrictEqual(moment('2025/01/01').toDate());
+    expect(statusChangeLog.performedAt).toStrictEqual(parse('2025/01/01', 'yyyy/MM/dd', new Date()));
   });
 
   it('should throw an error if the goal does not exist', async () => {

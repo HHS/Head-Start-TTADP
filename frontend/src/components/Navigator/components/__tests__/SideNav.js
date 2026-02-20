@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import {
   render, screen,
 } from '@testing-library/react';
-import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common';
 import SideNav from '../SideNav';
 import {
@@ -16,7 +15,7 @@ describe('SideNav', () => {
   const saveDataDefaults = {
     connectionActive: true,
     savedToStorageTime: new Date().toISOString(),
-    lastSaveTime: moment(),
+    lastSaveTime: new Date(),
   };
 
   const renderNav = (
@@ -133,7 +132,7 @@ describe('SideNav', () => {
     const saveData = {
       connectionActive: true,
       savedToStorageTime: null,
-      lastSaveTime: moment(),
+      lastSaveTime: new Date(),
     };
 
     renderNav(REPORT_STATUSES.DRAFT, () => {}, false, null, saveData);

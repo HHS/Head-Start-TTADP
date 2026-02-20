@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
-import moment from 'moment';
+import {
+  format, parseISO, differenceInDays,
+} from 'date-fns';
 import { REPORT_STATUSES, TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common';
 import { ActivityReport } from '../models';
 
@@ -92,15 +94,15 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
 
   if (startDate && endDate) {
     // Determine if we have more than 31 days.
-    const sdDate = moment(startDate);
-    const edDate = moment(endDate);
-    const daysDiff = edDate.diff(sdDate, 'days');
+    const sdDate = parseISO(startDate);
+    const edDate = parseISO(endDate);
+    const daysDiff = differenceInDays(edDate, sdDate);
     useDays = daysDiff <= 31;
 
     // Determine if we have more than 1 year in the range.
     // const yearDiff = edDate.diff(sdDate, 'years', true);
     // multipleYrs = yearDiff > 1;
-    multipleYrs = moment(sdDate).format('YY') !== moment(edDate).format('YY');
+    multipleYrs = format(sdDate, 'yy') !== format(edDate, 'yy');
   } else {
     multipleYrs = true;
     useDays = false;
@@ -131,14 +133,14 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
       // Get X Axis value to use.
       let xValue;
       if (useDays) {
-        xValue = moment(r.startDate).format('MMM-DD');
+        xValue = format(parseISO(r.startDate), 'MMM-dd');
       } else if (multipleYrs) {
-        xValue = moment(r.startDate).format('MMM-YY');
+        xValue = format(parseISO(r.startDate), 'MMM-yy');
       } else {
-        xValue = moment(r.startDate).format('MMM');
+        xValue = format(parseISO(r.startDate), 'MMM');
       }
 
-      const month = useDays ? moment(r.startDate).format('MMM') : false;
+      const month = useDays ? format(parseISO(r.startDate), 'MMM') : false;
 
       // Check if we have added this activity report for this date.
       if (!arDates.find((cache) => cache.id === r.id && cache.date === r.startDate)) {

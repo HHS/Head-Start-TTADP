@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { Link } from 'react-router-dom';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
@@ -87,7 +87,7 @@ const CollabReportsTable = ({
       },
       {
         title: 'Created date',
-        value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
+        value: format(parseISO(r.createdAt), DATE_DISPLAY_FORMAT),
       },
       {
         title: 'Collaborators',
@@ -95,7 +95,7 @@ const CollabReportsTable = ({
       },
       {
         title: 'Last saved',
-        value: moment(r.updatedAt).format(DATE_DISPLAY_FORMAT),
+        value: format(parseISO(r.updatedAt), DATE_DISPLAY_FORMAT),
       },
     ],
   })), [data.rows]);

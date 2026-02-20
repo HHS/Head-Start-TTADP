@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
-import moment from 'moment';
+import { format, parse } from 'date-fns';
 import { formatDateRange } from '../../utils';
 import {
   DATE_CONDITIONS,
@@ -38,7 +38,7 @@ export const createDateFilter = {
         withSpaces: false,
       });
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return format(parse(query, 'yyyy/MM/dd', new Date()), 'MM/dd/yyyy');
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange

@@ -5,7 +5,8 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import moment from 'moment';
+import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -468,7 +469,7 @@ export default function SessionForm({ match }) {
           eventId: trainingReportId || null,
         });
 
-        updateLastSaveTime(moment(updatedSession.updatedAt));
+        updateLastSaveTime(new Date(updatedSession.updatedAt));
         updateShowSavedDraft(true);
       } catch (err) {
         setError('There was an error saving the session. Please try again later.');
@@ -540,7 +541,7 @@ export default function SessionForm({ match }) {
         messageTemplate: 'sessionReviewSubmitted',
         sessionName: data.sessionName,
         eventId: data.event.data.eventId,
-        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+        dateStr: formatInTimeZone(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone, "MM/dd/yyyy 'at' h:mm a zzz"),
       };
 
       history.push('/training-reports/in-progress', { message });
@@ -579,14 +580,14 @@ export default function SessionForm({ match }) {
       if (isPoc || isAdminUser) {
         roleData.pocComplete = true;
         roleData.pocCompleteId = user.id;
-        roleData.pocCompleteDate = moment().format('YYYY-MM-DD');
+        roleData.pocCompleteDate = format(new Date(), 'yyyy-MM-dd');
       }
 
       // Owner, collaborator, and admin can submitted the session.
       if (isOwner || isCollaborator || isAdminUser) {
         roleData.collabComplete = true;
         roleData.collabCompleteId = user.id;
-        roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
+        roleData.collabCompleteDate = format(new Date(), 'yyyy-MM-dd');
       }
 
       // Remove complete property data based on current role.
@@ -598,7 +599,7 @@ export default function SessionForm({ match }) {
           ...roleData,
           ...(isRegionalNoNationalCenters && roleData.pocComplete ? { pocComplete: true } : {}),
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-          dateSubmitted: moment().format('MM/DD/YYYY'), // date the session was submitted
+          dateSubmitted: format(new Date(), 'MM/dd/yyyy'), // date the session was submitted
           ...(canSelectApprover ? { submitterId: user.id } : {}),
         },
         trainingReportId,
@@ -609,7 +610,7 @@ export default function SessionForm({ match }) {
         messageTemplate: 'sessionSubmitted',
         sessionName: data.sessionName,
         eventId: data.event.data.eventId,
-        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+        dateStr: formatInTimeZone(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone, "MM/dd/yyyy 'at' h:mm a zzz"),
       };
 
       history.push('/training-reports/in-progress', { message });

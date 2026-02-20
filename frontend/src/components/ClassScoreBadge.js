@@ -1,5 +1,5 @@
 import React from 'react';
-import moment from 'moment';
+import { parse, isAfter, isBefore } from 'date-fns';
 import './ClassScoreBadge.scss';
 
 const BadgeAbove = (fontSize) => (
@@ -33,14 +33,14 @@ export function getScoreBadge(key, score, received, size) {
 
     // IS is slightly more complicated.
     // See TTAHUB-2097 for details.
-    const dt = moment(received, 'MM/DD/YYYY');
+    const dt = parse(received, 'MM/dd/yyyy', new Date());
 
-    if (dt.isAfter('2027-08-01')) {
+    if (isAfter(dt, new Date('2027-08-01'))) {
       if (score < 2.5) return BadgeBelowCompetitive(fontSize);
       return BadgeBelowQuality(fontSize);
     }
 
-    if (dt.isAfter('2020-11-09') && dt.isBefore('2027-07-31')) {
+    if (isAfter(dt, new Date('2020-11-09')) && isBefore(dt, new Date('2027-07-31'))) {
       if (score < 2.3) return BadgeBelowCompetitive(fontSize);
       return BadgeBelowQuality(fontSize);
     }

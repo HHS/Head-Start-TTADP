@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { parse, isValid } from 'date-fns';
 
 /**
  * Attempts to parse a date string using multiple known formats.
@@ -9,17 +9,21 @@ export default function parseDate(value) {
 
   const formats = [
     // Slash formats
-    'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
-    'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
+    'MM/dd/yyyy', 'M/d/yyyy', 'M/dd/yyyy', 'MM/d/yyyy',
+    'MM/dd/yy', 'M/d/yy', 'M/dd/yy', 'MM/d/yy',
 
     // Dash formats
-    'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-M-DD', 'YYYY-MM-D',
+    'yyyy-MM-dd', 'yyyy-M-d', 'yyyy-M-dd', 'yyyy-MM-d',
 
     // Dot formats
-    'M.D.YYYY', 'MM.D.YYYY', 'M.DD.YYYY',
-    'M.D.YY', 'MM.DD.YY',
+    'M.d.yyyy', 'MM.d.yyyy', 'M.dd.yyyy',
+    'M.d.yy', 'MM.dd.yy',
   ];
 
-  const parsed = formats.find((format) => moment(value, format, true).isValid());
-  return parsed ? moment(value, parsed, true).toDate() : null;
+  const referenceDate = new Date();
+  const matchedFormat = formats.find((fmt) => {
+    const parsed = parse(value, fmt, referenceDate);
+    return isValid(parsed) && !Number.isNaN(parsed.getTime());
+  });
+  return matchedFormat ? parse(value, matchedFormat, referenceDate) : null;
 }

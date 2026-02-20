@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import '@testing-library/jest-dom';
 import React from 'react';
-import moment from 'moment';
+import { format, addDays } from 'date-fns';
 import {
   render, screen, act, fireEvent,
 } from '@testing-library/react';
@@ -146,12 +146,12 @@ describe('Controlled Date Picker', () => {
 
     // Enter a future start date.
     const sd = await screen.findByRole('textbox', { name: /start date/i });
-    const futureDate = moment().add(5, 'days').format(DATE_DISPLAY_FORMAT);
+    const futureDate = format(addDays(new Date(), 5), DATE_DISPLAY_FORMAT);
     userEvent.type(sd, futureDate);
 
     // Enter a end date before start date.
     const ed = await screen.findByRole('textbox', { name: /end date/i });
-    const todaysDate = moment().format(DATE_DISPLAY_FORMAT);
+    const todaysDate = format(new Date(), DATE_DISPLAY_FORMAT);
     userEvent.type(ed, todaysDate);
 
     // Verify error message.
@@ -159,12 +159,12 @@ describe('Controlled Date Picker', () => {
     expect(validationMessage).toBeVisible();
 
     // End end date after start date.
-    const newEndDate = moment().add(10, 'days').format(DATE_DISPLAY_FORMAT);
+    const newEndDate = format(addDays(new Date(), 10), DATE_DISPLAY_FORMAT);
     act(() => userEvent.clear(ed));
     userEvent.type(ed, newEndDate);
 
     // Enter start date after end date.
-    const newStartDate = moment().add(22, 'days').format(DATE_DISPLAY_FORMAT);
+    const newStartDate = format(addDays(new Date(), 22), DATE_DISPLAY_FORMAT);
     act(() => userEvent.clear(sd));
     userEvent.type(sd, newStartDate);
 

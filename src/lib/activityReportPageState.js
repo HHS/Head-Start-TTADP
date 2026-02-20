@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { isValid, parseISO } from 'date-fns';
 import { isValidResourceUrl, NAVIGATOR_PAGE_STATUSES } from '@ttahub/common';
 
 const {
@@ -37,7 +37,8 @@ function isValidDate(value) {
   if (!value) {
     return false;
   }
-  return moment(value).isValid();
+  const d = typeof value === 'string' ? parseISO(value) : value;
+  return isValid(d);
 }
 
 function stripHtml(value) {

@@ -14,7 +14,10 @@ import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES, DECIMAL_BASE, APPROVER_STATUSES } from '@ttahub/common';
-import moment from 'moment';
+import {
+  parse, format, isValid, isAfter,
+} from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
@@ -115,8 +118,8 @@ export const formatReportWithSaveBeforeConversion = async (
     if (isYMDFormat) {
       reportData = {
         ...reportData,
-        startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-        endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+        startDate: format(parse(updatedReport.startDate, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy'),
+        endDate: format(parse(updatedReport.endDate, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy'),
       };
     } else {
       // Preserve existing dates if API doesn't return them or they're in wrong format
@@ -352,10 +355,10 @@ function CollaborationReport({ match, location }) {
 
         // istanbul ignore next - hard to test time comparisons in-memory
         if (formData && savedToStorageTime) {
-          const updatedAtFromNetwork = moment(report.updatedAt);
-          const updatedAtFromLocalStorage = moment(savedToStorageTime);
-          if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
-            const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
+          const updatedAtFromNetwork = new Date(report.updatedAt);
+          const updatedAtFromLocalStorage = new Date(savedToStorageTime);
+          if (isValid(updatedAtFromNetwork) && isValid(updatedAtFromLocalStorage)) {
+            const storageIsNewer = isAfter(updatedAtFromLocalStorage, updatedAtFromNetwork);
             if (storageIsNewer && formData.calculatedStatus === REPORT_STATUSES.DRAFT) {
               shouldUpdateFromNetwork = false;
             }
@@ -388,7 +391,7 @@ function CollaborationReport({ match, location }) {
         updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
-          updateLastSaveTime(moment(report.updatedAt));
+          updateLastSaveTime(new Date(report.updatedAt));
         }
 
         updateError();
@@ -571,7 +574,7 @@ function CollaborationReport({ match, location }) {
       await onSave(data, forceUpdate);
 
       // Update the last saved time
-      updateLastSaveTime(moment());
+      updateLastSaveTime(new Date());
 
       // show the saved draft message
       updateShowSavedDraft(true);
@@ -602,8 +605,8 @@ function CollaborationReport({ match, location }) {
     cleanupLocalStorage(collabReportId);
 
     // Prepare success message
-    const timezone = moment.tz.guess();
-    const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const time = formatInTimeZone(new Date(), timezone, "MM/dd/yyyy 'at' h:mm a zzz");
     const message = {
       time,
       reportId: formData.id,
@@ -634,8 +637,8 @@ function CollaborationReport({ match, location }) {
     }
 
     await reviewReport(reportId.current, { note: data.note, status: data.status });
-    const timezone = moment.tz.guess();
-    const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const time = formatInTimeZone(new Date(), timezone, "MM/dd/yyyy 'at' h:mm a zzz");
     const message = {
       time,
       reportId: formData.id,

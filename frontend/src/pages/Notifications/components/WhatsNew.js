@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
-import moment from 'moment';
+import { getYear } from 'date-fns';
 import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import FeedArticle from '../../../components/FeedArticle';
@@ -8,7 +8,7 @@ import './WhatsNew.scss';
 
 const LOCAL_STORAGE_KEY = 'whatsnew-read-notifications';
 
-const CURRENT_YEAR = moment().year();
+const CURRENT_YEAR = getYear(new Date());
 const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3];
 const MONTHS = [
   'January',

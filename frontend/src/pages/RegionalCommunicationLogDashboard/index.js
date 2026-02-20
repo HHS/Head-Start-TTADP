@@ -1,6 +1,6 @@
 import React, { useContext, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
@@ -20,7 +20,7 @@ import './index.scss';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
-  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+  string: `2022/07/01-${format(new Date(), 'yyyy/MM/dd')}`,
   withSpaces: false,
 });
 

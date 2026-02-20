@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as dotWild from 'dot-wild';
-import moment from 'moment-timezone';
+import { parseISO } from 'date-fns';
 
 /**
  * Checks if a value is an object.
@@ -498,7 +498,7 @@ const detectAndCast = (value: string): {
     const hour = +dateMatch[4] || 0;
     const minute = +dateMatch[5] || 0;
     const second = +dateMatch[6] || 0;
-    const date = moment.utc(value).toDate();
+    const date = parseISO(value);
     if (date.getUTCFullYear() === year
     && date.getUTCMonth() === month - 1
     && date.getUTCDate() === day

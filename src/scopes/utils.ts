@@ -1,17 +1,26 @@
 import { Op, WhereOptions } from 'sequelize';
-import moment from 'moment';
+import {
+  parse, isValid, startOfMonth, endOfMonth, format,
+} from 'date-fns';
 import { map, pickBy } from 'lodash';
 import db from '../models';
 
 const { Topic } = db;
 const YEAR_MONTH_PATTERN = /^\d{4}[-/]\d{1,2}$/;
-const YEAR_MONTH_FORMATS = ['YYYY-MM', 'YYYY-M', 'YYYY/MM', 'YYYY/M'];
+const YEAR_MONTH_FORMATS = ['yyyy-MM', 'yyyy-M', 'yyyy/MM', 'yyyy/M'];
 const FULL_DATE_FORMATS = [
-  'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-MM-D', 'YYYY-M-DD',
-  'YYYY/MM/DD', 'YYYY/M/D', 'YYYY/MM/D', 'YYYY/M/DD',
-  'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
-  'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
+  'yyyy-MM-dd', 'yyyy-M-d', 'yyyy-MM-d', 'yyyy-M-dd',
+  'yyyy/MM/dd', 'yyyy/M/d', 'yyyy/MM/d', 'yyyy/M/dd',
+  'MM/dd/yyyy', 'M/d/yyyy', 'M/dd/yyyy', 'MM/d/yyyy',
+  'MM/dd/yy', 'M/d/yy', 'M/dd/yy', 'MM/d/yy',
 ];
+
+const REFERENCE_DATE = new Date(2000, 0, 1);
+
+function tryParse(value: string, formats: string[]): Date | null {
+  const matchedFormat = formats.find((fmt) => isValid(parse(value, fmt, REFERENCE_DATE)));
+  return matchedFormat ? parse(value, matchedFormat, REFERENCE_DATE) : null;
+}
 
 function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {
   if (!value || typeof value !== 'string') {
@@ -24,20 +33,20 @@ function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | 
   }
 
   if (YEAR_MONTH_PATTERN.test(trimmed)) {
-    const monthOnly = moment(trimmed, YEAR_MONTH_FORMATS, true);
-    if (!monthOnly.isValid()) {
+    const monthOnly = tryParse(trimmed, YEAR_MONTH_FORMATS);
+    if (!monthOnly) {
       return null;
     }
-    const bounded = boundary === 'end' ? monthOnly.endOf('month') : monthOnly.startOf('month');
-    return bounded.format('YYYY-MM-DD');
+    const bounded = boundary === 'end' ? endOfMonth(monthOnly) : startOfMonth(monthOnly);
+    return format(bounded, 'yyyy-MM-dd');
   }
 
-  const fullDate = moment(trimmed, FULL_DATE_FORMATS, true);
-  if (!fullDate.isValid()) {
+  const fullDate = tryParse(trimmed, FULL_DATE_FORMATS);
+  if (!fullDate) {
     return null;
   }
 
-  return fullDate.format('YYYY-MM-DD');
+  return format(fullDate, 'yyyy-MM-dd');
 }
 /**
  * Takes an array of string date ranges (2020/09/01-2021/10/02, for example)

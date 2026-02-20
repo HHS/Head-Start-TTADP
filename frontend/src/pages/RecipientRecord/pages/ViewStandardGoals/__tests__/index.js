@@ -10,13 +10,13 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route } from 'react-router-dom';
 import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import ViewGoalDetails from '..';
 import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { DATE_DISPLAY_FORMAT, OBJECTIVE_STATUS } from '../../../../../Constants';
 
-const formatDate = (date) => moment.utc(date).format(DATE_DISPLAY_FORMAT);
+const formatDate = (date) => format(parseISO(date), DATE_DISPLAY_FORMAT);
 
 const mockGoalHistory = [
   {

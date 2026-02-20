@@ -15,7 +15,7 @@ import {
   Button, Tag, Alert,
 } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import Container from '../../Container';
 import './SideNav.scss';
 import {
@@ -81,7 +81,7 @@ function SideNav({
   ));
 
   const onAnimationEnd = () => updateFade(false);
-  const DATE_DISPLAY_SAVED_FORMAT = 'MM/DD/YYYY [at] h:mm a';
+  const DATE_DISPLAY_SAVED_FORMAT = "MM/dd/yyyy 'at' h:mm a";
 
   return (
     <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
@@ -115,7 +115,7 @@ function SideNav({
                   <span>
                     • our network at
                     {' '}
-                    {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
+                    {format(lastSaveTime, DATE_DISPLAY_SAVED_FORMAT)}
                   </span>
                   <br />
                 </>
@@ -124,7 +124,7 @@ function SideNav({
               <span>
                 • your computer at
                 {' '}
-                {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
+                {format(parseISO(savedToStorageTime), DATE_DISPLAY_SAVED_FORMAT)}
               </span>
               )}
           </Alert>
@@ -145,7 +145,7 @@ SideNav.propTypes = {
   skipTo: PropTypes.string.isRequired,
   skipToMessage: PropTypes.string.isRequired,
   errorMessage: PropTypes.string,
-  lastSaveTime: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.instanceOf(Date),
   savedToStorageTime: PropTypes.string,
   deadNavigation: PropTypes.bool,
 };

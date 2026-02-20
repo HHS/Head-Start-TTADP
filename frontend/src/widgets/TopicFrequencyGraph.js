@@ -5,7 +5,7 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
@@ -46,7 +46,7 @@ export function TopicFrequencyGraphWidget({
   title,
 }) {
   const exportName = useMemo(() => {
-    const TODAY = moment().format('YYYY-MM-DD');
+    const TODAY = format(new Date(), 'yyyy-MM-dd');
     return `${TODAY} ${title}`;
   }, [title]);
 

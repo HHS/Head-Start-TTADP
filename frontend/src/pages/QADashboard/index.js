@@ -9,7 +9,7 @@ import {
   Grid,
   Alert,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
+import { format, subMonths } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import QAOverview from '../../widgets/QualityAssuranceDashboardOverview';
 import DeliveryMethod from '../../widgets/DeliveryMethodGraph';
@@ -37,10 +37,10 @@ const DISALLOWED_FILTERS = [
 const ALLOWED_SUBFILTERS = QA_DASHBOARD_FILTER_CONFIG.map(({ id }) => id)
   .filter((id) => !DISALLOWED_FILTERS.includes(id));
 
-const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
+const todayMinus12Months = format(subMonths(new Date(), 12), 'yyyy/MM/dd');
 const defaultDate = formatDateRange({
   forDateTime: true,
-  string: `${todayMinus12Months}-${moment().format('YYYY/MM/DD')}`,
+  string: `${todayMinus12Months}-${format(new Date(), 'yyyy/MM/dd')}`,
   withSpaces: false,
 });
 

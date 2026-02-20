@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { lowerCase } from 'lodash';
 
 export default function LogLine({
@@ -32,7 +32,7 @@ export default function LogLine({
           on
           {' '}
           <span className="text-bold">
-            {moment(communicationDate).format('MMM Do, YYYY')}
+            {format(parseISO(communicationDate), 'MMM do, yyyy')}
           </span>
           {' '}
         </>

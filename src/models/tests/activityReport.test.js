@@ -1,5 +1,5 @@
 /* eslint-disable dot-notation */
-import moment from 'moment';
+import { format } from 'date-fns';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
@@ -332,7 +332,7 @@ describe('Activity Reports model', () => {
     const preReport = await ActivityReport.findOne(
       { where: { id: reportToSubmit.id } },
     );
-    const submittedDate = moment();
+    const submittedDate = new Date();
     preReport.submittedDate = submittedDate;
 
     // Submitted.
@@ -344,7 +344,7 @@ describe('Activity Reports model', () => {
       { where: { id: reportToSubmit.id } },
     );
     expect(reportToSubmit.submittedDate).not.toBeNull();
-    expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
+    expect(reportToSubmit.submittedDate).toBe(format(submittedDate, 'MM/dd/yyyy'));
 
     // Approved.
     await ActivityReport.update(
@@ -355,7 +355,7 @@ describe('Activity Reports model', () => {
       { where: { id: reportToSubmit.id } },
     );
     expect(reportToSubmit.submittedDate).not.toBeNull();
-    expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
+    expect(reportToSubmit.submittedDate).toBe(format(submittedDate, 'MM/dd/yyyy'));
 
     // Needs Action.
     await ActivityReport.update(
@@ -366,7 +366,7 @@ describe('Activity Reports model', () => {
       { where: { id: reportToSubmit.id } },
     );
     expect(reportToSubmit.submittedDate).not.toBeNull();
-    expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
+    expect(reportToSubmit.submittedDate).toBe(format(submittedDate, 'MM/dd/yyyy'));
 
     // Reset to Draft.
     await ActivityReport.update(

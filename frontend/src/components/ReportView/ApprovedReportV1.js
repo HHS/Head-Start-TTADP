@@ -1,5 +1,5 @@
 import React from 'react';
-import moment from 'moment-timezone';
+import { format, parse, parseISO } from 'date-fns';
 import Container from '../Container';
 import ViewTable from './ViewTable';
 import {
@@ -103,8 +103,8 @@ export default function ApprovedReportV1({ data }) {
   const attendees = formatSimpleArray(data.participants);
   const participantCount = data.numberOfParticipants.toString();
   const reasons = formatSimpleArray(data.reason);
-  const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
-  const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
+  const startDate = format(parse(data.startDate, DATEPICKER_VALUE_FORMAT, new Date()), 'MMMM d, yyyy');
+  const endDate = format(parse(data.endDate, DATEPICKER_VALUE_FORMAT, new Date()), 'MMMM d, yyyy');
   const duration = `${data.duration} hours`;
   const method = formatMethod(data.ttaType, data.virtualDeliveryType);
   const requester = formatRequester(data.requester);
@@ -122,9 +122,9 @@ export default function ApprovedReportV1({ data }) {
   // next steps table
   const specialistNextSteps = data.specialistNextSteps.map((step) => step.note);
   const recipientNextSteps = data.recipientNextSteps.map((step) => step.note);
-  const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
-  const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
-  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
+  const approvedAt = data.approvedAt ? format(parseISO(data.approvedAt), DATE_DISPLAY_FORMAT) : '';
+  const createdAt = format(parseISO(data.createdAt), DATE_DISPLAY_FORMAT);
+  const submittedAt = data.submittedDate ? format(parseISO(data.submittedDate), DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author && data.author.fullName ? data.author.fullName : '';
 

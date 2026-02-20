@@ -4,7 +4,7 @@ import React, {
   useRef,
 } from 'react';
 import { Link } from 'react-router-dom';
-import moment from 'moment';
+import { format, parseISO, isValid } from 'date-fns';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -77,9 +77,9 @@ export default function RecipientsWithNoTta() {
           const dateOfLastTta = item['last tta'];
           const daysSinceLastTta = item['days since last tta'];
 
-          const parsedDate = dateOfLastTta ? moment(dateOfLastTta) : null;
-          const formattedDate = parsedDate && parsedDate.isValid()
-            ? parsedDate.format('MM/DD/YYYY')
+          const parsedDate = dateOfLastTta ? parseISO(dateOfLastTta) : null;
+          const formattedDate = parsedDate && isValid(parsedDate)
+            ? format(parsedDate, 'MM/dd/yyyy')
             : null;
 
           const numericDaysSinceLastTta = Number(daysSinceLastTta);

@@ -6,7 +6,6 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { FormProvider } from 'react-hook-form';
-import moment from 'moment';
 import { OBJECTIVE_RESOURCES, validateGoals, validatePrompts } from '../../pages/ActivityReport/Pages/components/goalValidator';
 import { saveGoalsForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
@@ -165,7 +164,7 @@ const ActivityReportNavigator = ({
         updateGoalsObjectivesPageState(savedData);
       }
 
-      updateLastSaveTime(moment());
+      updateLastSaveTime(new Date());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
@@ -246,7 +245,7 @@ const ActivityReportNavigator = ({
       }
 
       updateErrorMessage('');
-      updateLastSaveTime(moment());
+      updateLastSaveTime(new Date());
       updateShowSavedDraft(true); // show the saved draft message
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
@@ -387,7 +386,7 @@ const ActivityReportNavigator = ({
       }
 
       updateErrorMessage('');
-      updateLastSaveTime(moment());
+      updateLastSaveTime(new Date());
       updateShowSavedDraft(true); // show the saved draft message
       // we have to do this here, after the form data has been updated
       if (isAutoSave && goalForEditing) {
@@ -634,7 +633,7 @@ ActivityReportNavigator.propTypes = {
   }).isRequired,
   errorMessage: PropTypes.string,
   updateErrorMessage: PropTypes.func.isRequired,
-  lastSaveTime: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.instanceOf(Date),
   updateLastSaveTime: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,

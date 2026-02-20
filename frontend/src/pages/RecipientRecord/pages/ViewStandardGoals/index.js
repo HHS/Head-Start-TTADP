@@ -11,7 +11,7 @@ import {
   Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading,
 } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import Container from '../../../../components/Container';
 import colors from '../../../../colors';
@@ -216,9 +216,9 @@ export default function ViewGoalDetails({
       ? goal.statusChanges.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
       : []).map((gsc) => ({
       ...gsc,
-      performedAt: moment.utc(
+      performedAt: format(parseISO(
         gsc.performedAt || gsc.createdAt,
-      ).format(DATE_DISPLAY_FORMAT),
+      ), DATE_DISPLAY_FORMAT),
     }));
     // Deduplicate near-identical updates (same time and statuses) to avoid double-rendering.
     const dedupedStatusUpdates = statusUpdates.reduce((acc, curr) => {
@@ -239,7 +239,7 @@ export default function ViewGoalDetails({
     if (dedupedStatusUpdates.length > 0 && !hasAddedUpdate) {
       displayUpdates.unshift({
         id: `synthetic-added-${goal.id}-${index}`,
-        performedAt: moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT),
+        performedAt: format(parseISO(goal.createdAt), DATE_DISPLAY_FORMAT),
         createdAt: goal.createdAt,
         newStatus: GOAL_STATUS.NOT_STARTED,
         oldStatus: null,
@@ -300,7 +300,7 @@ export default function ViewGoalDetails({
                     {' '}
                     on
                     {' '}
-                    <strong>{moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                    <strong>{format(parseISO(goal.createdAt), DATE_DISPLAY_FORMAT)}</strong>
                     <GoalUserIdentifier goal={goal} />
                   </li>
                 </ul>

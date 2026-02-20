@@ -1,4 +1,6 @@
-import moment from 'moment';
+import {
+  format, parse, isValid, subDays, subMonths, startOfYear,
+} from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
@@ -81,9 +83,9 @@ export const getDistinctSortedArray = (arr) => {
 /**
  * Check for a valid date otherwise return '...'.
  */
-export const checkForDate = (date, format = 'MM/DD/YYYY') => {
+export const checkForDate = (date, fmt = 'MM/dd/yyyy') => {
   if (date) {
-    return moment(date, format).format(DATE_DISPLAY_FORMAT);
+    return format(parse(date, fmt, new Date()), DATE_DISPLAY_FORMAT);
   }
   return '---';
 };
@@ -164,7 +166,8 @@ export function filtersToQueryString(filters, region) {
   const filtersWithValues = filters.filter((f) => {
     if (f.condition === WITHIN) {
       const [startDate, endDate] = f.query.split('-');
-      return moment(startDate, DATE_FMT).isValid() && moment(endDate, DATE_FMT).isValid();
+      return isValid(parse(startDate, DATE_FMT, new Date()))
+        && isValid(parse(endDate, DATE_FMT, new Date()));
     }
     return f.query !== '';
   });
@@ -203,7 +206,7 @@ export function filtersToQueryString(filters, region) {
  * @param {Object} format
  * @returns a date string
  */
-export function formatDateRange(format = {
+export function formatDateRange(opts = {
   lastThirtyDays: false,
   yearToDate: false,
   withSpaces: false,
@@ -213,52 +216,52 @@ export function formatDateRange(format = {
   sep: '-',
   string: '',
 }) {
-  const selectedFormat = format.forDateTime ? DATE_FMT : DATE_FORMAT;
+  const selectedFormat = opts.forDateTime ? DATE_FMT : DATE_FORMAT;
 
-  let { sep } = format;
+  let { sep } = opts;
 
-  if (!format.sep) {
+  if (!opts.sep) {
     sep = '-';
   }
 
   let firstDay;
   let secondDay;
 
-  if (format.lastThirtyDays) {
-    secondDay = moment();
-    firstDay = moment().subtract(30, 'days');
+  if (opts.lastThirtyDays) {
+    secondDay = new Date();
+    firstDay = subDays(new Date(), 30);
   }
 
-  if (format.lastThreeMonths) {
-    secondDay = moment();
-    firstDay = moment().subtract(3, 'months');
+  if (opts.lastThreeMonths) {
+    secondDay = new Date();
+    firstDay = subMonths(new Date(), 3);
   }
 
-  if (format.lastSixMonths) {
-    secondDay = moment();
-    firstDay = moment().subtract(6, 'months');
+  if (opts.lastSixMonths) {
+    secondDay = new Date();
+    firstDay = subMonths(new Date(), 6);
   }
 
-  if (format.yearToDate) {
-    secondDay = moment();
-    firstDay = moment().startOf('year');
+  if (opts.yearToDate) {
+    secondDay = new Date();
+    firstDay = startOfYear(new Date());
   }
 
-  if (format.string) {
-    const dates = format.string.split('-');
+  if (opts.string) {
+    const dates = opts.string.split('-');
 
     if (dates && dates.length > 1) {
-      firstDay = moment(dates[0], DATE_FMT);
-      secondDay = moment(dates[1], DATE_FMT);
+      firstDay = parse(dates[0], DATE_FMT, new Date());
+      secondDay = parse(dates[1], DATE_FMT, new Date());
     }
   }
 
   if (firstDay && secondDay) {
-    if (format.withSpaces) {
-      return `${firstDay.format(selectedFormat)} ${sep} ${secondDay.format(selectedFormat)}`;
+    if (opts.withSpaces) {
+      return `${format(firstDay, selectedFormat)} ${sep} ${format(secondDay, selectedFormat)}`;
     }
 
-    return `${firstDay.format(selectedFormat)}${sep}${secondDay.format(selectedFormat)}`;
+    return `${format(firstDay, selectedFormat)}${sep}${format(secondDay, selectedFormat)}`;
   }
 
   return '';
@@ -328,17 +331,18 @@ export const getPageInfo = (offset, totalCount, currentPage, perPage) => {
 };
 
 export const SUPPORTED_DATE_FORMATS = [
-  'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
-  'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
-  'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-M-DD', 'YYYY-MM-D',
-  'M.D.YYYY', 'MM.D.YYYY', 'M.DD.YYYY',
-  'M.D.YY', 'MM.DD.YY',
+  'MM/dd/yyyy', 'M/d/yyyy', 'M/dd/yyyy', 'MM/d/yyyy',
+  'MM/dd/yy', 'M/d/yy', 'M/dd/yy', 'MM/d/yy',
+  'yyyy-MM-dd', 'yyyy-M-d', 'yyyy-M-dd', 'yyyy-MM-d',
+  'M.d.yyyy', 'MM.d.yyyy', 'M.dd.yyyy',
+  'M.d.yy', 'MM.dd.yy',
 ];
 
 export function isValidDate(value) {
   if (!value) return null;
-  const parsed = SUPPORTED_DATE_FORMATS.find((format) => moment(value, format, true).isValid());
-  return parsed ? moment(value, parsed, true) : null;
+  const ref = new Date();
+  const matchedFormat = SUPPORTED_DATE_FORMATS.find((fmt) => isValid(parse(value, fmt, ref)));
+  return matchedFormat ? parse(value, matchedFormat, ref) : null;
 }
 
 /**

@@ -6,11 +6,11 @@ import {
   act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import moment from 'moment';
+import { format } from 'date-fns';
 import DateRangePicker from '../DateRangePicker';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 
-const today = moment().format(DATE_DISPLAY_FORMAT);
+const today = format(new Date(), DATE_DISPLAY_FORMAT);
 
 describe('DateRangePicker', () => {
   const renderDateRangePicker = (query = '2021/11/03-2021/11/10', onApply = jest.fn()) => {

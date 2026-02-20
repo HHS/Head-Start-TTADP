@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { COMMUNICATION_METHODS, COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import {
   Alert,
@@ -46,7 +46,7 @@ const Log = ({
 
   const otherStaffOptions = regionalUsers.map((u) => ({ ...u, value: String(u.value) }));
   const standardGoalsOptions = standardGoals.map((g) => ({ ...g, value: String(g.value) }));
-  const today = useMemo(() => moment().format('MM/DD/YYYY'), []);
+  const today = useMemo(() => format(new Date(), 'MM/dd/yyyy'), []);
 
   return (
     <>

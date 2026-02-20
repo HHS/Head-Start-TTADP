@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import Container from '../../../components/Container';
 import { getDistinctSortedArray } from '../../../utils';
 import { useGrantData } from '../pages/GrantDataContext';
@@ -35,8 +35,8 @@ export default function GrantsList({ summary }) {
       </>
     ),
     programs: grant.programs ? getDistinctSortedArray(grant.programs.map((program) => program.programType)).join(', ') : '',
-    startDate: grant.startDate ? moment(grant.startDate).format('MM/DD/yyyy') : null,
-    endDate: grant.endDate ? moment(grant.endDate).format('MM/DD/yyyy') : null,
+    startDate: grant.startDate ? format(parseISO(grant.startDate), 'MM/dd/yyyy') : null,
+    endDate: grant.endDate ? format(parseISO(grant.endDate), 'MM/dd/yyyy') : null,
   }));
 
   return (

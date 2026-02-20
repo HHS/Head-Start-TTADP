@@ -4,7 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import moment from 'moment';
+import { formatInTimeZone } from 'date-fns-tz';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -234,7 +234,7 @@ export default function TrainingReportForm({ match }) {
       });
       resetFormData(hookForm.reset, updatedEvent);
 
-      const dateStr = moment().format('MM/DD/YYYY [at] h:mm a z');
+      const dateStr = formatInTimeZone(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone, "MM/dd/yyyy 'at' h:mm a zzz");
       const message = {
         eventId: updatedEvent.data.eventId,
         dateStr,

@@ -1,5 +1,4 @@
 import { uniq, uniqBy } from 'lodash';
-import moment from 'moment';
 import { auditLogger } from '../logger';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import {

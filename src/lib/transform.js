@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { format, parseISO, isValid } from 'date-fns';
 import md5 from 'md5';
 import { uniq } from 'lodash';
 import { convert } from 'html-to-text';
@@ -11,9 +11,9 @@ function transformDate(field) {
     let value = '';
     const date = instance[field];
     if (date) {
-      const m = moment(date);
-      if (m.isValid()) {
-        value = m.format(DATE_FORMAT);
+      const d = typeof date === 'string' ? parseISO(date) : date;
+      if (isValid(d)) {
+        value = format(d, DATE_FORMAT);
       }
     }
     const obj = {};

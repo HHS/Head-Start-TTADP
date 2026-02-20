@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import _ from 'lodash';
@@ -50,7 +50,7 @@ const Review = ({
   const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
   const incompletePages = filtered.map((f) => f.label);
   const hasIncompletePages = incompletePages.length > 0;
-  const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
+  const formattedDateSubmitted = dateSubmitted ? format(parseISO(dateSubmitted), DATE_DISPLAY_FORMAT) : '';
 
   return (
     <>

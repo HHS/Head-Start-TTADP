@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { format } from 'date-fns';
 import {
   createAdditionalMonitoringData,
   createMonitoringData,
@@ -179,7 +179,7 @@ describe('ttaByReviews', () => {
           '01HP044446',
         ],
         id: expect.any(Number),
-        lastTTADate: moment().format('MM/DD/YYYY'),
+        lastTTADate: format(new Date(), 'MM/dd/yyyy'),
         name: 'REVIEW!!!',
         outcome: 'Complete',
         reviewReceived: '02/22/2025',

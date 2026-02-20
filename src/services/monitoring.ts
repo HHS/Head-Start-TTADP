@@ -1,6 +1,8 @@
 /* eslint-disable max-len */
 import { Op } from 'sequelize';
-import moment from 'moment';
+import {
+  format, parseISO, isAfter, isBefore, parse,
+} from 'date-fns';
 import { uniq, uniqBy } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
@@ -180,7 +182,7 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
   return objectives.map((objective) => {
     let findingIds = [];
     let reviewNames = [];
-    let endDate = null;
+    let endDate: Date | null = null;
     const grants = [];
     const activityReports = [];
     const specialists = [];
@@ -216,8 +218,9 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
         displayId: activityReport.displayId,
       });
 
-      if (!endDate || moment(activityReport.endDate).isAfter(endDate)) {
-        endDate = moment(activityReport.endDate);
+      const parsedEndDate = parseISO(activityReport.endDate);
+      if (!endDate || isAfter(parsedEndDate, endDate)) {
+        endDate = parsedEndDate;
       }
     });
 
@@ -227,7 +230,7 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
       reviewNames,
       title: objective.title,
       activityReports,
-      endDate: endDate ? endDate.format('MM/DD/YYYY') : null,
+      endDate: endDate ? format(endDate, 'MM/dd/yyyy') : null,
       topics: uniq(topics),
       status: objective.status,
       specialists,
@@ -363,7 +366,7 @@ export async function ttaByReviews(
 
   return reviews.map((review) => {
     const { monitoringReviewGrantees, monitoringFindingHistories } = review.monitoringReviewLink;
-    let lastTTADate = null;
+    let lastTTADate: Date | null = null;
     const findings = [];
     let specialists = [];
 
@@ -381,30 +384,37 @@ export async function ttaByReviews(
         const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(findingId));
 
         objectives.forEach(({ endDate }) => {
-          if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
-            lastTTADate = moment(endDate, 'MM/DD/YYYY');
+          const parsedTTADate = parse(endDate, 'MM/dd/yyyy', new Date());
+          if (!lastTTADate || isAfter(parsedTTADate, lastTTADate)) {
+            lastTTADate = parsedTTADate;
           }
           specialists = specialists.concat(objectives.map((o) => o.specialists).flat());
         });
 
+        const correctionDeadLine = finding.correctionDeadLine instanceof Date
+          ? finding.correctionDeadLine
+          : parseISO(String(finding.correctionDeadLine));
         findings.push({
           citation,
           status,
           findingType: mapFindingType(history.determination, finding.findingType),
-          correctionDeadline: finding.correctionDeadLine ? moment(finding.correctionDeadLine).format('MM/DD/YYYY') : '',
+          correctionDeadline: finding.correctionDeadLine ? format(correctionDeadLine, 'MM/dd/yyyy') : '',
           category: finding.source,
           objectives,
         });
       });
     });
 
+    const reportDeliveryDate = review.reportDeliveryDate instanceof Date
+      ? review.reportDeliveryDate
+      : parseISO(String(review.reportDeliveryDate));
     return {
       name: review.name,
       id: review.id,
-      lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : '',
+      lastTTADate: lastTTADate ? format(lastTTADate, 'MM/dd/yyyy') : '',
       outcome: review.outcome,
       reviewType: review.reviewType,
-      reviewReceived: moment(review.reportDeliveryDate).format('MM/DD/YYYY'),
+      reviewReceived: format(reportDeliveryDate, 'MM/dd/yyyy'),
       grants: monitoringReviewGrantees.map((grantee) => grantee.grantNumber),
       specialists: uniqBy(specialists, 'name'),
       findings,
@@ -541,7 +551,7 @@ export async function ttaByCitations(
     const [findingStandard] = citation.standardLink.monitoringFindingStandards;
     const { findingLink } = findingStandard;
 
-    let lastTTADate = null;
+    let lastTTADate: Date | null = null;
 
     const grants = [];
     const reviews = [];
@@ -566,8 +576,9 @@ export async function ttaByCitations(
 
       const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(finding.findingId));
       objectives.forEach(({ endDate }) => {
-        if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
-          lastTTADate = moment(endDate, 'MM/DD/YYYY');
+        const parsedTTADate = parse(endDate, 'MM/dd/yyyy', new Date());
+        if (!lastTTADate || isAfter(parsedTTADate, lastTTADate)) {
+          lastTTADate = parsedTTADate;
         }
       });
 
@@ -577,10 +588,13 @@ export async function ttaByCitations(
 
         grants.push(gr);
 
+        const reviewDeliveryDate = review.reportDeliveryDate instanceof Date
+          ? review.reportDeliveryDate
+          : parseISO(String(review.reportDeliveryDate));
         reviews.push({
           name: review.name,
           reviewType: review.reviewType,
-          reviewReceived: moment(review.reportDeliveryDate).format('MM/DD/YYYY'),
+          reviewReceived: format(reviewDeliveryDate, 'MM/dd/yyyy'),
           outcome: review.outcome,
           specialists: uniqBy(objectives.map((o) => o.specialists).flat(), 'name'),
           objectives: objectives.filter((o) => o.reviewNames.includes(review.name)),
@@ -595,7 +609,7 @@ export async function ttaByCitations(
       findingType: mapFindingType(findingType, finding.findingType),
       category: finding.source,
       grantNumbers: uniq(grants.flat()),
-      lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : '',
+      lastTTADate: lastTTADate ? format(lastTTADate, 'MM/dd/yyyy') : '',
       reviews,
     };
   });
@@ -712,7 +726,7 @@ export async function monitoringData({
     recipientId: grant.recipientId,
     regionId: grant.regionId,
     reviewStatus: monitoringReview.outcome,
-    reviewDate: moment(monitoringReview.reportDeliveryDate).format('MM/DD/YYYY'),
+    reviewDate: format(monitoringReview.reportDeliveryDate instanceof Date ? monitoringReview.reportDeliveryDate : parseISO(String(monitoringReview.reportDeliveryDate)), 'MM/dd/yyyy'),
     reviewType: monitoringReview.reviewType,
     grant: grant.number,
   };
@@ -741,10 +755,12 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
     return {};
   }
 
-  const received = moment(score.reportDeliveryDate);
+  const received = score.reportDeliveryDate instanceof Date
+    ? score.reportDeliveryDate
+    : parseISO(String(score.reportDeliveryDate));
 
   // Do not show scores that are before Nov 9, 2020.
-  if (received.isBefore('2020-11-09')) {
+  if (isBefore(received, parseISO('2020-11-09'))) {
     return {};
   }
 
@@ -764,7 +780,7 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
     recipientId,
     regionId,
     grantNumber,
-    received: received.format('MM/DD/YYYY'),
+    received: format(received, 'MM/dd/yyyy'),
     ES: score.emotionalSupport,
     CO: score.classroomOrganization,
     IS: score.instructionalSupport,

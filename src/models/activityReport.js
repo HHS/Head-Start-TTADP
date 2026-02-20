@@ -1,5 +1,5 @@
 const { Op, Model } = require('sequelize');
-const moment = require('moment');
+const { format: dateFnsFormat, parseISO, isValid } = require('date-fns');
 const { REPORT_STATUSES, USER_ROLES } = require('@ttahub/common');
 const { NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
@@ -282,7 +282,9 @@ export default (sequelize, DataTypes) => {
     lastSaved: {
       type: DataTypes.VIRTUAL,
       get() {
-        return moment(this.updatedAt).format('MM/DD/YYYY');
+        const raw = this.updatedAt;
+        const d = raw instanceof Date ? raw : parseISO(String(raw));
+        return isValid(d) ? dateFnsFormat(d, 'MM/dd/yyyy') : null;
       },
     },
     creatorNameWithRole: {

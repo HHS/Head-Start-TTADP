@@ -3,7 +3,7 @@ import React, {
   useRef,
   useContext,
 } from 'react';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -109,7 +109,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
               },
               {
                 title: 'Goal_created_on',
-                value: moment(createdAt).format('MM/DD/YYYY'),
+                value: format(parseISO(createdAt), 'MM/dd/yyyy'),
               },
               {
                 title: 'Goal_number',

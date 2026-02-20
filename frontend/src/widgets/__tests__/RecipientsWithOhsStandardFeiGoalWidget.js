@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
@@ -57,7 +57,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
             link: '/recipient-tta-records/376/region/1/profile',
             data: [{
               title: 'Goal_created_on',
-              value: moment('2021-09-01').format('MM/DD/YYYY'),
+              value: format(parseISO('2021-09-01'), 'MM/dd/yyyy'),
             },
             {
               title: 'Goal_number',
@@ -82,7 +82,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
             link: '/recipient-tta-records/376/region/1/profile',
             data: [{
               title: 'Goal_created_on',
-              value: moment('2021-09-02').format('MM/DD/YYYY'),
+              value: format(parseISO('2021-09-02'), 'MM/dd/yyyy'),
             },
             {
               title: 'Goal_number',
@@ -106,7 +106,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
             link: '/recipient-tta-records/376/region/1/profile',
             data: [{
               title: 'Goal_created_on',
-              value: moment('2021-09-03').format('MM/DD/YYYY'),
+              value: format(parseISO('2021-09-03'), 'MM/dd/yyyy'),
             },
             {
               title: 'Goal_number',

@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { parseISO } from 'date-fns';
 import * as Sequelize from 'sequelize';
 import db from '../models';
 
@@ -89,7 +89,7 @@ export default async function changeGoalStatus({
     newStatus,
     reason,
     context,
-    performedAt: performedAt ? moment.utc(performedAt).toDate() : new Date(),
+    performedAt: performedAt ? parseISO(performedAt) : new Date(),
   };
 
   if (oldStatus !== newStatus || forceStatusChange) {

@@ -3,13 +3,15 @@ import React, {
   useState, useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import {
+  format, parse, isValid, isBefore, isAfter, differenceInDays, addDays,
+} from 'date-fns';
 import { Button } from '@trussworks/react-uswds';
 import DatePicker from '../DatePicker';
 import './DateRangePicker.scss';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
-const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
+const QUERY_DATE_FORMAT = 'yyyy/MM/dd';
 export default function DateRangePicker({ onApply, query }) {
   let defaultDateRange = {
     startDate: '',
@@ -21,8 +23,8 @@ export default function DateRangePicker({ onApply, query }) {
   if (query && query.split('-').length === 2) {
     const [start, end] = query.split('-');
     defaultDateRange = {
-      startDate: moment(start, QUERY_DATE_FORMAT).format(DATE_DISPLAY_FORMAT),
-      endDate: moment(end, QUERY_DATE_FORMAT).format(DATE_DISPLAY_FORMAT),
+      startDate: format(parse(start, QUERY_DATE_FORMAT, new Date()), DATE_DISPLAY_FORMAT),
+      endDate: format(parse(end, QUERY_DATE_FORMAT, new Date()), DATE_DISPLAY_FORMAT),
       endDateKey: 'end-date',
       startDateKey: 'start-date',
     };
@@ -36,11 +38,11 @@ export default function DateRangePicker({ onApply, query }) {
 
   useEffect(() => {
     const { startDate, endDate } = dateRange;
-    const start = moment(startDate, DATE_DISPLAY_FORMAT);
-    const end = moment(endDate, DATE_DISPLAY_FORMAT);
+    const start = parse(startDate, DATE_DISPLAY_FORMAT, new Date());
+    const end = parse(endDate, DATE_DISPLAY_FORMAT, new Date());
 
-    if (start.isValid() && end.isValid()) {
-      const rangeStr = `${start.format(QUERY_DATE_FORMAT)}-${end.format(QUERY_DATE_FORMAT)}`;
+    if (isValid(start) && isValid(end)) {
+      const rangeStr = `${format(start, QUERY_DATE_FORMAT)}-${format(end, QUERY_DATE_FORMAT)}`;
       setRange(rangeStr);
     } else {
       setRange('');
@@ -56,34 +58,34 @@ export default function DateRangePicker({ onApply, query }) {
   const onChangeStartDate = (date) => {
     const { startDate, endDate } = dateRange;
 
-    const newStartDate = moment(date, DATE_DISPLAY_FORMAT);
+    const newStartDate = parse(date, DATE_DISPLAY_FORMAT, new Date());
 
-    if (newStartDate.isValid()) {
-      const startDateKey = `start-date-${newStartDate.format(DATE_DISPLAY_FORMAT)}`;
-      const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
-      const isBeforeMax = currentEndDate.isBefore(newStartDate);
+    if (isValid(newStartDate)) {
+      const startDateKey = `start-date-${format(newStartDate, DATE_DISPLAY_FORMAT)}`;
+      const currentEndDate = parse(endDate, DATE_DISPLAY_FORMAT, new Date());
+      const isBeforeMax = isBefore(currentEndDate, newStartDate);
 
       if (isBeforeMax && endDate) {
-        const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
-        const diff = currentEndDate.diff(currentStartDate, 'days');
-        let newEndDate = moment(newStartDate).add(diff, 'days');
+        const currentStartDate = parse(startDate, DATE_DISPLAY_FORMAT, new Date());
+        const diff = differenceInDays(currentEndDate, currentStartDate);
+        let newEndDate = addDays(newStartDate, diff);
 
-        if (newEndDate.isAfter(moment())) {
-          newEndDate = moment();
+        if (isAfter(newEndDate, new Date())) {
+          newEndDate = new Date();
         }
 
-        const newEndDateKey = `end-date-${newEndDate.format(DATE_DISPLAY_FORMAT)}`;
+        const newEndDateKey = `end-date-${format(newEndDate, DATE_DISPLAY_FORMAT)}`;
 
         setDateRange({
-          endDate: newEndDate.format(DATE_DISPLAY_FORMAT),
-          startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
+          endDate: format(newEndDate, DATE_DISPLAY_FORMAT),
+          startDate: format(newStartDate, DATE_DISPLAY_FORMAT),
           endDateKey: newEndDateKey,
           startDateKey,
         });
       } else {
         setDateRange({
           ...dateRange,
-          startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
+          startDate: format(newStartDate, DATE_DISPLAY_FORMAT),
           startDateKey,
         });
       }

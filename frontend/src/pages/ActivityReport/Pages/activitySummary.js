@@ -13,7 +13,7 @@ import {
   Label,
   Alert as USWDSAlert,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
+import { parse, isValid, isAfter } from 'date-fns';
 import {
   TARGET_POPULATIONS as targetPopulations,
   LANGUAGES,
@@ -232,10 +232,10 @@ const ActivitySummary = ({
         .filter((citation) => citation !== null);
       // If we have selected citations
       if (allCitations.length) {
-        const start = moment(startDate, 'MM/DD/YYYY');
+        const start = parse(startDate, 'MM/dd/yyyy', new Date());
         const invalidCitations = allCitations.filter(
           (citation) => citation.monitoringReferences.some(
-            (monitoringReference) => moment(monitoringReference.reportDeliveryDate, 'YYYY-MM-DD').isAfter(start),
+            (monitoringReference) => isAfter(parse(monitoringReference.reportDeliveryDate, 'yyyy-MM-dd', new Date()), start),
           ),
         );
         // If any of the citations are invalid given the new date.
@@ -684,8 +684,8 @@ const ReviewSection = () => {
 };
 
 export const isPageComplete = (formData, formState) => {
-  const { isValid } = formState;
-  if (isValid) {
+  const { isValid: formIsValid } = formState;
+  if (formIsValid) {
     return true;
   }
 
@@ -763,7 +763,7 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
-  return [startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid());
+  return [startDate, endDate].every((date) => isValid(parse(date, 'MM/dd/yyyy', new Date())));
 };
 
 export default {

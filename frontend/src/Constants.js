@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { pickBy } from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
 import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
@@ -61,7 +60,7 @@ export const WITHOUT_ACTIVITY_DATE_CONDITIONS = [
   WITHIN,
 ];
 
-export const DATE_FORMAT = 'MM/DD/YYYY';
+export const DATE_FORMAT = 'MM/dd/yyyy';
 
 export const REGIONAL_SCOPES = {
   [SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS]: {
@@ -170,10 +169,10 @@ export const RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE = 10;
 // the Esc key returns "Esc" instead of "Escape".
 export const ESCAPE_KEY_CODES = ['Escape', 'Esc'];
 
-export const DATE_FMT = 'YYYY/MM/DD';
-export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
-export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
-export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
+export const DATE_FMT = 'yyyy/MM/dd';
+export const DATE_DISPLAY_FORMAT = 'MM/dd/yyyy';
+export const DATEPICKER_VALUE_FORMAT = 'yyyy-MM-dd';
+export const EARLIEST_INC_FILTER_DATE = new Date('2020-08-31');
 
 const LOCAL_STORAGE_CACHE_NUMBER = '0.5';
 export const LOCAL_STORAGE_AR_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;

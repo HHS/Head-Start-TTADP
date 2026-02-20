@@ -16,7 +16,7 @@ import {
   Grid,
   Alert,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
+import { formatInTimeZone } from 'date-fns-tz';
 import useInterval from '@use-it/interval';
 import Container from '../Container';
 import {
@@ -170,7 +170,7 @@ const Navigator = ({
       <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
         Draft saved on
         {' '}
-        {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+        {formatInTimeZone(lastSaveTime, Intl.DateTimeFormat().resolvedOptions().timeZone, "MM/dd/yyyy 'at' h:mm a zzz")}
       </Alert>
       )}
     </DismissingComponentWrapper>
@@ -255,7 +255,7 @@ Navigator.propTypes = {
     regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   }).isRequired,
   errorMessage: PropTypes.string,
-  lastSaveTime: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.instanceOf(Date),
   savedToStorageTime: PropTypes.string,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,

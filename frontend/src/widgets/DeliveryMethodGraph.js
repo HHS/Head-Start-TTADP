@@ -5,7 +5,7 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format, parse } from 'date-fns';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
@@ -142,7 +142,7 @@ export default function DeliveryMethodGraph({ data }) {
 
     (records || []).forEach((dataset, index) => {
       tableData.push({
-        heading: moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'),
+        heading: format(parse(dataset.month, 'yyyy-MM-dd', new Date()), 'MMM yyyy'),
         sortKey: index + 1,
         id: index + 1,
         data: [
@@ -179,13 +179,13 @@ export default function DeliveryMethodGraph({ data }) {
         ],
       });
 
-      traceMap.get('In person').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
+      traceMap.get('In person').x.push(format(parse(dataset.month, 'yyyy-MM-dd', new Date()), 'MMM yyyy'));
       traceMap.get('In person').y.push(dataset.in_person_percentage);
 
-      traceMap.get('Virtual').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
+      traceMap.get('Virtual').x.push(format(parse(dataset.month, 'yyyy-MM-dd', new Date()), 'MMM yyyy'));
       traceMap.get('Virtual').y.push(dataset.virtual_percentage);
 
-      traceMap.get('Hybrid').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
+      traceMap.get('Hybrid').x.push(format(parse(dataset.month, 'yyyy-MM-dd', new Date()), 'MMM yyyy'));
       traceMap.get('Hybrid').y.push(dataset.hybrid_percentage);
     });
     setShowFiltersNotApplicable(showDashboardFiltersNotApplicableProp);

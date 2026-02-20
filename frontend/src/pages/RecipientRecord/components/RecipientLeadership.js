@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { uniqBy } from 'lodash';
 import Container from '../../../components/Container';
 import { getRecipientLeadership } from '../../../fetchers/recipient';
@@ -19,7 +19,7 @@ export default function RecipientLeadership({ regionId, recipientId }) {
 
         const leadershipData = response.map((person) => ({
           ...person,
-          effectiveDate: person.effectiveDate ? moment(person.effectiveDate).format('MM/DD/YYYY') : null,
+          effectiveDate: person.effectiveDate ? format(parseISO(person.effectiveDate), 'MM/dd/yyyy') : null,
         }));
 
         setLeadership(uniqBy(leadershipData, 'nameAndRole'));

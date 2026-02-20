@@ -4,7 +4,7 @@ import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { uniq } from 'lodash';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
@@ -110,7 +110,7 @@ function ReportRow({
         )}
       </td>
       <td>
-        {moment(createdAt).format('MM/DD/YYYY')}
+        {format(parseISO(createdAt), 'MM/dd/yyyy')}
       </td>
       <td>
         <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />

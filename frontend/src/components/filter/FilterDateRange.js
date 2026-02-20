@@ -5,16 +5,18 @@ import {
   DatePicker,
   Dropdown,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
+import {
+  format, parse, isValid, isBefore, isAfter,
+} from 'date-fns';
 import DateRangePicker from './DateRangePicker';
 import { formatDateRange } from '../../utils';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import FilterErrorContext from './FilterErrorContext';
 
-const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
-const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD';
+const QUERY_DATE_FORMAT = 'yyyy/MM/dd';
+const DATEPICKER_DATE_FORMAT = 'yyyy-MM-dd';
 const MIN_DATE = '2020-09-01';
-const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
+const MAX_DATE = format(new Date(), DATEPICKER_DATE_FORMAT);
 
 const DATE_OPTIONS = [
   {
@@ -44,31 +46,34 @@ export default function FilterDateRange({
   const isOnChange = (e) => onApplyDateRange(e.target.value);
 
   const onChange = (date) => {
-    const d = moment(date, DATE_DISPLAY_FORMAT);
+    const d = parse(date, DATE_DISPLAY_FORMAT, new Date());
 
-    if (!d.isValid()) {
+    if (!isValid(d)) {
       setError('Please enter a valid date');
       return;
     }
 
-    if (d.isBefore(moment(MIN_DATE).format(DATEPICKER_DATE_FORMAT))) {
+    if (isBefore(d, parse(MIN_DATE, 'yyyy-MM-dd', new Date()))) {
       setError('Please enter a valid date');
       return;
     }
 
-    if (d.isAfter(moment(MAX_DATE).format(DATEPICKER_DATE_FORMAT))) {
+    if (isAfter(d, parse(MAX_DATE, DATEPICKER_DATE_FORMAT, new Date()))) {
       setError('Please enter a valid date');
       return;
     }
 
-    onApplyDateRange(d.format(QUERY_DATE_FORMAT));
+    onApplyDateRange(format(d, QUERY_DATE_FORMAT));
     setError('');
   };
 
   let defaultValue = '';
 
-  if (query && moment(query, QUERY_DATE_FORMAT).isValid()) {
-    defaultValue = moment(query, QUERY_DATE_FORMAT).format(DATEPICKER_DATE_FORMAT);
+  if (query) {
+    const parsedQuery = parse(query, QUERY_DATE_FORMAT, new Date());
+    if (isValid(parsedQuery)) {
+      defaultValue = format(parsedQuery, DATEPICKER_DATE_FORMAT);
+    }
   }
 
   switch (condition) {

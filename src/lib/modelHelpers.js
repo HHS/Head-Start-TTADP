@@ -1,10 +1,13 @@
 /* eslint-disable import/prefer-default-export */
-import moment from 'moment';
+import { format, parseISO, isValid } from 'date-fns';
 
 export function formatDate(fieldName) {
   const raw = this.getDataValue(fieldName);
   if (raw) {
-    return moment(raw).format('MM/DD/YYYY');
+    const date = typeof raw === 'string' ? parseISO(raw) : raw;
+    if (isValid(date)) {
+      return format(date, 'MM/dd/yyyy');
+    }
   }
   return null;
 }

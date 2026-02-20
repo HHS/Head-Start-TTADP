@@ -8,7 +8,7 @@ import {
 } from '@trussworks/react-uswds';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { Helmet } from 'react-helmet';
-import moment from 'moment';
+import { formatInTimeZone } from 'date-fns-tz';
 import useFetch from '../../hooks/useFetch';
 import Container from '../../components/Container';
 import BackLink from '../../components/BackLink';
@@ -86,7 +86,7 @@ export default function SessionReportFacilitation({ match }) {
         messageTemplate: 'sessionCreated',
         sessionName: '',
         eventId,
-        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+        dateStr: formatInTimeZone(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone, "MM/dd/yyyy 'at' h:mm a zzz"),
       };
 
       if (!isAdminUser && (collaboratorWithRegionalFacilitation || isOwner)) {

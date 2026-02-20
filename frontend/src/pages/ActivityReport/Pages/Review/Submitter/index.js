@@ -1,5 +1,4 @@
 import React from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
@@ -229,7 +228,7 @@ Submitter.propTypes = {
     name: PropTypes.string,
   })).isRequired,
   onFormSubmit: PropTypes.func.isRequired,
-  lastSaveTime: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.instanceOf(Date),
   reviewItems: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string,
     title: PropTypes.string,

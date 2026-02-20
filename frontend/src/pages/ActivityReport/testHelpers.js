@@ -8,7 +8,7 @@ import { createMemoryHistory } from 'history';
 import {
   render,
 } from '@testing-library/react';
-import moment from 'moment';
+import { format } from 'date-fns';
 import ActivityReport from './index';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -36,7 +36,7 @@ export const formData = () => ({
     3: 'in-progress',
     4: 'in-progress',
   },
-  endDate: moment().format('YYYY-MM-DD'),
+  endDate: format(new Date(), 'yyyy-MM-dd'),
 
   // value: 14826,
   // label: 'Ability Connection Colorado, Inc. - 08CH012276  - EHS, HS',
@@ -58,7 +58,7 @@ export const formData = () => ({
   calculatedStatus: REPORT_STATUSES.DRAFT,
   submissionStatus: REPORT_STATUSES.DRAFT,
   resourcesUsed: 'eclkcurl',
-  startDate: moment().format('YYYY-MM-DD'),
+  startDate: format(new Date(), 'yyyy-MM-dd'),
   targetPopulations: ['target 1'],
   author: { name: 'test', roles: { fullName: 'Reporter' } },
   topics: 'first',

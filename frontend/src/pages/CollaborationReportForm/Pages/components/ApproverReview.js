@@ -1,5 +1,5 @@
 import React from 'react';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { useFormContext } from 'react-hook-form';
 import _ from 'lodash';
 import {
@@ -25,7 +25,7 @@ export default function ApproverReview({
 }) {
   const { handleSubmit, register, watch } = useFormContext();
   const status = watch('status');
-  const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
+  const formattedDateSubmitted = dateSubmitted ? format(parseISO(dateSubmitted), DATE_DISPLAY_FORMAT) : '';
   const submitButtonLabel = isCreator ? 'Update report' : 'Submit';
 
   function sentenceCase(str) {

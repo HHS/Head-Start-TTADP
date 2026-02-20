@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
-import moment from 'moment';
+import { format, parse } from 'date-fns';
 import { FILTER_CONDITIONS, EMPTY_MULTI_SELECT, WITHOUT_ACTIVITY_DATE_CONDITIONS } from '../../Constants';
 import FilterGroups from './FilterGroups';
 import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
@@ -63,7 +63,7 @@ export const recipientsWithoutTTA = {
         withSpaces: false,
       });
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return format(parse(query, 'yyyy/MM/dd', new Date()), 'MM/dd/yyyy');
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange

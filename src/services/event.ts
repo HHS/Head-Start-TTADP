@@ -10,7 +10,9 @@ import {
   REPORT_STATUSES,
   ALL_STATES_FLATTENED,
 } from '@ttahub/common';
-import moment from 'moment';
+import {
+  startOfDay, addDays, isAfter, parseISO,
+} from 'date-fns';
 import { auditLogger } from '../logger';
 import db from '../models';
 import {
@@ -559,7 +561,7 @@ export async function getTrainingReportAlerts(
   // noSessionsCreated: No sessions created (IST Creator) - 20 days past event start date
   // eventNotCompleted: Event not completed (IST Creator or Collaborator) - 20 days past event end date
 
-  const today = moment().startOf('day');
+  const today = startOfDay(new Date());
 
   // the following three filters are used to determine if the user is the owner, collaborator, or poc
   // or if there is no user, in which case the alert is triggered for everyone
@@ -588,13 +590,13 @@ export async function getTrainingReportAlerts(
   };
 
   events.forEach((event: EventShape) => {
-    const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
-    const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
+    const nineteenDaysAfterStart = addDays(startOfDay(parseISO(event.data.startDate)), 19);
+    const nineteenDaysAfterEnd = addDays(startOfDay(parseISO(event.data.endDate)), 19);
 
     // one alert triggers just for the owner
     if (ownerUserIdFilter(event, userId)) {
       // if we are 20 days past the end date, and the event is not completed
-      if (event.data.status !== TRS.COMPLETE && today.isAfter(nineteenDaysAfterEnd)) {
+      if (event.data.status !== TRS.COMPLETE && isAfter(today, nineteenDaysAfterEnd)) {
         alerts.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
       }
     }
@@ -602,14 +604,14 @@ export async function getTrainingReportAlerts(
     // some alerts only trigger for the owner or the collaborators
     if (ownerUserIdFilter(event, userId) || collaboratorUserIdFilter(event, userId)) {
       // if we are 20 days past the end date and missing event data
-      if (today.isAfter(nineteenDaysAfterEnd)) {
+      if (isAfter(today, nineteenDaysAfterEnd)) {
         if (!event.data.eventSubmitted) {
           alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
         }
       }
 
       // if we are 20 days past the start date and there are no sessions
-      if (today.isAfter(nineteenDaysAfterStart) && event.sessionReports.length === 0) {
+      if (isAfter(today, nineteenDaysAfterStart) && event.sessionReports.length === 0) {
         // and there are no sessions
         alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
       }
@@ -617,8 +619,8 @@ export async function getTrainingReportAlerts(
       const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
       sessions.forEach((session) => {
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
-        if (today.isAfter(nineteenDaysAfterSessionStart)) {
+        const nineteenDaysAfterSessionStart = addDays(startOfDay(parseISO(session.data.startDate)), 19);
+        if (isAfter(today, nineteenDaysAfterSessionStart)) {
           checkSessionForCompletion(session, event, 'collabComplete', alerts);
         }
       });
@@ -631,8 +633,8 @@ export async function getTrainingReportAlerts(
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
-        if (today.isAfter(nineteenDaysAfterSessionStart)) {
+        const nineteenDaysAfterSessionStart = addDays(startOfDay(parseISO(session.data.startDate)), 19);
+        if (isAfter(today, nineteenDaysAfterSessionStart)) {
         // eslint-disable-next-line no-restricted-syntax
           checkSessionForCompletion(session, event, 'pocComplete', alerts);
         }

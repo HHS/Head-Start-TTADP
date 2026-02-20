@@ -13,7 +13,7 @@ import {
   Label,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import moment from 'moment';
+import { parse, isValid } from 'date-fns';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import Drawer from '../../../components/Drawer';
 import MultiSelect from '../../../components/MultiSelect';
@@ -483,7 +483,7 @@ export const isPageComplete = (hookForm) => {
     return false;
   }
 
-  if (![startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid())) {
+  if (![startDate, endDate].every((date) => isValid(parse(date, 'MM/dd/yyyy', new Date())))) {
     return false;
   }
 

@@ -1,6 +1,6 @@
 import { WhereOptions, Op } from 'sequelize';
 import stringify from 'csv-stringify/lib/sync';
-import moment from 'moment';
+import { parse, format, isValid } from 'date-fns';
 import db from '../models';
 import { communicationLogToCsvRecord } from '../lib/transform';
 import { SORT_DIR } from '../constants';
@@ -34,15 +34,15 @@ interface CommLogData {
 
 export const formatCommunicationDateWithJsonData = (data: CommLogData): CommLogData => {
   if (data.communicationDate) {
-    const formattedCommunicationDate = moment(data.communicationDate, 'MM/DD/YYYY').format('MM/DD/YYYY');
-
-    if (formattedCommunicationDate === 'Invalid date') {
+    const parsed = parse(data.communicationDate, 'MM/dd/yyyy', new Date());
+    if (!isValid(parsed)) {
       return {
         ...data,
         communicationDate: '',
       };
     }
 
+    const formattedCommunicationDate = format(parsed, 'MM/dd/yyyy');
     if (formattedCommunicationDate !== data.communicationDate) {
       return {
         ...data,
@@ -215,7 +215,7 @@ const logsByScopes = async (
   direction = 'desc',
   limit: number = COMMUNICATION_LOGS_PER_PAGE,
   scopes: WhereOptions[] = [],
-  format:'json' | 'csv' = 'json',
+  outputFormat:'json' | 'csv' = 'json',
 ) => {
   const queryParams = {
     attributes: [
@@ -247,7 +247,7 @@ const logsByScopes = async (
     ? limit
     : COMMUNICATION_LOGS_PER_PAGE;
 
-  if (format === 'json') {
+  if (outputFormat === 'json') {
     queryParams.offset = offset;
     queryParams.limit = validatedLimit;
   }

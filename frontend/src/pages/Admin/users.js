@@ -5,7 +5,9 @@ import { Helmet } from 'react-helmet';
 import {
   Label, TextInput, Grid, SideNav, Alert, Radio, Fieldset,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
+import {
+  subDays, parseISO, isBefore, isAfter,
+} from 'date-fns';
 import { SCOPE_IDS, DECIMAL_BASE } from '@ttahub/common';
 import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
@@ -113,15 +115,15 @@ function Admin(props) {
 
   // rules for to-lock and to-disable filters are laid out in Access Control SOP:
   // https://github.com/HHS/Head-Start-TTADP/wiki/Access-Control-&-Account-Management-SOP#account-review-frequency-and-process
-  const lockThreshold = moment().subtract(60, 'days');
-  const disableThreshold = moment().subtract(180, 'days');
+  const lockThreshold = subDays(new Date(), 60);
+  const disableThreshold = subDays(new Date(), 180);
 
   const filteredUsers = useMemo(() => (
     _.filter(users, (u) => {
       const {
         email, name, permissions, flags,
       } = u;
-      const lastLogin = moment(u.lastLogin);
+      const lastLogin = u.lastLogin ? parseISO(u.lastLogin) : null;
       const userNameMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
 
       let userFlagMatchesFilter = true;
@@ -136,13 +138,14 @@ function Admin(props) {
 
       let userMatchesLockFilter = true;
       if (lockedFilter === 'recent') {
-        userMatchesLockFilter = lastLogin.isAfter(lockThreshold)
+        userMatchesLockFilter = lastLogin && isAfter(lastLogin, lockThreshold)
           && !permissionsIncludesAccess(permissions);
       } else if (lockedFilter === 'to-lock') {
-        userMatchesLockFilter = lastLogin.isBefore(lockThreshold)
+        userMatchesLockFilter = lastLogin && isBefore(lastLogin, lockThreshold)
           && permissionsIncludesAccess(permissions);
       } else if (lockedFilter === 'to-disable') {
-        userMatchesLockFilter = lastLogin.isBefore(disableThreshold) && permissions.length > 0;
+        userMatchesLockFilter = lastLogin
+          && isBefore(lastLogin, disableThreshold) && permissions.length > 0;
       }
       return userNameMatchesFilter && userFlagMatchesFilter && userMatchesLockFilter;
     })

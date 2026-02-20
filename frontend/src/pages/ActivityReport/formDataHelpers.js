@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import moment from 'moment';
+import { parse, isValid, format } from 'date-fns';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   DATE_DISPLAY_FORMAT,
@@ -20,7 +20,7 @@ const ALLOWED_STATUSES_FOR_GOAL_EDITING = [
 export const findWhatsChanged = (object, base) => {
   function reduction(accumulator, current) {
     if (current === 'startDate' || current === 'endDate') {
-      if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
+      if (!object[current] || !isValid(parse(object[current], 'MM/dd/yyyy', new Date()))) {
         delete accumulator[current];
         return accumulator;
       }
@@ -331,8 +331,8 @@ export const convertReportToFormData = (fetchedReport) => {
 
   const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
   const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-  const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
-  const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
+  const endDate = fetchedReport.endDate ? format(parse(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT, new Date()), DATE_DISPLAY_FORMAT) : '';
+  const startDate = fetchedReport.startDate ? format(parse(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT, new Date()), DATE_DISPLAY_FORMAT) : '';
   return {
     ...fetchedReport,
     activityRecipients,

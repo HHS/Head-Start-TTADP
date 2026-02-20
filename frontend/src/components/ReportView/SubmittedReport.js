@@ -1,5 +1,5 @@
 import React from 'react';
-import moment from 'moment-timezone';
+import { format, parse, parseISO } from 'date-fns';
 import Container from '../Container';
 import {
   DATE_DISPLAY_FORMAT,
@@ -39,8 +39,8 @@ export default function SubmittedReport({ data }) {
   const participantVirtualCount = data.numberOfParticipantsVirtually
     ? data.numberOfParticipantsVirtually.toString()
     : null;
-  const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
-  const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
+  const startDate = format(parse(data.startDate, DATEPICKER_VALUE_FORMAT, new Date()), 'MMMM d, yyyy');
+  const endDate = format(parse(data.endDate, DATEPICKER_VALUE_FORMAT, new Date()), 'MMMM d, yyyy');
   const duration = `${data.duration} hours`;
   // const requester = formatRequester(data.requester);
 
@@ -60,9 +60,9 @@ export default function SubmittedReport({ data }) {
   const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
   const nextStepsLabel = isRecipient ? 'Recipient\'s next steps' : 'Other entities next steps';
   const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
-  const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
-  const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
-  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
+  const approvedAt = data.approvedAt ? format(parseISO(data.approvedAt), DATE_DISPLAY_FORMAT) : '';
+  const createdAt = format(parseISO(data.createdAt), DATE_DISPLAY_FORMAT);
+  const submittedAt = data.submittedDate ? format(parseISO(data.submittedDate), DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
 

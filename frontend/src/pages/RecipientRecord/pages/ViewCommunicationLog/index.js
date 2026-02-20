@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
@@ -138,7 +138,7 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           <p className="text-bold font-sans-3xs base-dark">
             Date of entry:
             {' '}
-            {moment(log.createdAt).format('MMM Do, YYYY')}
+            {format(parseISO(log.createdAt), 'MMM do, yyyy')}
           </p>
         </Container>
       </div>

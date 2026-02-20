@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment-timezone';
+import { formatInTimeZone } from 'date-fns-tz';
 import { Redirect } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -98,9 +98,8 @@ const Draft = ({
 
   // NOTE: This is only an estimate of which timezone the user is in.
   // Not guaranteed to be 100% correct but is "good enough"
-  // https://momentjs.com/timezone/docs/#/using-timezones/guessing-user-timezone/
-  const timezone = moment.tz.guess();
-  const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const time = formatInTimeZone(new Date(), timezone, "MM/dd/yyyy 'at' h:mm a zzz");
   const message = {
     time,
     reportId,
@@ -229,7 +228,7 @@ const Draft = ({
           <Alert id="reviewSubmitSaveAlert" className="margin-top-3 maxw-mobile-lg" noIcon slim type="success">
             Draft saved on
             {' '}
-            {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+            {formatInTimeZone(lastSaveTime, Intl.DateTimeFormat().resolvedOptions().timeZone, "MM/dd/yyyy 'at' h:mm a zzz")}
           </Alert>
         )}
       </DismissingComponentWrapper>
@@ -251,7 +250,7 @@ Draft.propTypes = {
     approver: PropTypes.string,
     status: PropTypes.string,
   })).isRequired,
-  lastSaveTime: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.instanceOf(Date),
   creatorRole: PropTypes.string.isRequired,
   grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
   grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,

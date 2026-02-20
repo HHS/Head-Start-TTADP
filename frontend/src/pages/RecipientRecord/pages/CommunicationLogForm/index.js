@@ -4,7 +4,7 @@ import React, {
   useRef,
 } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import { parseISO } from 'date-fns';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
@@ -118,7 +118,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
       }
 
       // update the last save time
-      updateLastSaveTime(moment(loggedCommunication.updatedAt));
+      updateLastSaveTime(parseISO(loggedCommunication.updatedAt));
 
       // update the sidebar message
       updateShowSavedDraft(true);

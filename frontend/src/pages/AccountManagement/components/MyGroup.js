@@ -1,6 +1,8 @@
 import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import {
+  format, parse, parseISO, isValid,
+} from 'date-fns';
 import { Link } from 'react-router-dom';
 import {
   Button,
@@ -39,7 +41,21 @@ export default function MyGroup({
   };
 
   const getLastUpdated = () => {
-    let updatedAt = moment(group.updatedAt, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    const isoDatePrefix = typeof group.updatedAt === 'string' ? group.updatedAt.slice(0, 10) : '';
+    const parsedIsoDatePrefix = parse(isoDatePrefix, 'yyyy-MM-dd', new Date());
+    const parsedIsoDate = parseISO(group.updatedAt);
+    const parsedLegacyDate = parse(group.updatedAt, 'yyyy/MM/dd', new Date());
+    let parsedDate = null;
+
+    if (isValid(parsedIsoDatePrefix)) {
+      parsedDate = parsedIsoDatePrefix;
+    } else if (isValid(parsedIsoDate)) {
+      parsedDate = parsedIsoDate;
+    } else if (isValid(parsedLegacyDate)) {
+      parsedDate = parsedLegacyDate;
+    }
+
+    let updatedAt = parsedDate ? format(parsedDate, 'MM/dd/yyyy') : '';
     if (group.editor) {
       updatedAt = `${updatedAt} by ${group.editor.name}`;
     }

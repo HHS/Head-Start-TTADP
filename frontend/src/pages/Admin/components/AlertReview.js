@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState, useEffect } from 'react';
-import moment from 'moment';
+import { format, parse } from 'date-fns';
 import PropTypes from 'prop-types';
 import {
   Button,
@@ -258,7 +258,7 @@ export default function AlertReview({ alert, onDelete }) {
             <DatePicker
               id={`alert-${alert.id}-start-date`}
               name={`alert-${alert.id}-start-date`}
-              defaultValue={moment(startDate, 'MM/DD/YYYY').format('YYYY-MM-DD')}
+              defaultValue={format(parse(startDate, 'MM/dd/yyyy', new Date()), 'yyyy-MM-dd')}
               onChange={(date) => setStartDate(date)}
               disabled={isFetching}
               required
@@ -273,7 +273,7 @@ export default function AlertReview({ alert, onDelete }) {
             <DatePicker
               id={`alert-${alert.id}-end-date`}
               name={`alert-${alert.id}-end-date`}
-              defaultValue={moment(endDate, 'MM/DD/YYYY').format('YYYY-MM-DD')}
+              defaultValue={format(parse(endDate, 'MM/dd/yyyy', new Date()), 'yyyy-MM-dd')}
               onChange={(date) => setEndDate(date)}
               disabled={isFetching}
               required
