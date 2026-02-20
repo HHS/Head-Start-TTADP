@@ -490,7 +490,7 @@ describe('SessionCard', () => {
           data: {
             ...defaultSession.data,
             pocComplete: true,
-            ownerComplete: true,
+            collabComplete: true,
           },
         },
         TRAINING_REPORT_STATUSES.IN_PROGRESS,
