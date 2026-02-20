@@ -50,7 +50,7 @@ export default class CollabReport {
   }
 
   canDelete() {
-    return (this.isAdmin() || this.isAuthor())
+    return (this.isAdmin() || this.isAuthor() || this.isCollaborator())
       && this.collabReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
   }
 

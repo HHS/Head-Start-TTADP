@@ -1,37 +1,45 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { Tag } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import CollabReportApproverTableDisplay from '../../../components/CollabReportApproverTableDisplay';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
+import Modal from '../../../components/Modal';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import { getCollabReportStatusDisplayAndClassnames } from '../../../utils';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import UserContext from '../../../UserContext';
+import { deleteReport as deleteReportById } from '../../../fetchers/collaborationReports';
 
-export const ReportLink = ({ report, userId }) => {
+export const getReportLink = (report, userId) => {
   const isSubmitted = report.submissionStatus === REPORT_STATUSES.SUBMITTED;
   const isApprover = report.approvers.some(({ user }) => user.id === userId);
   const isNeedsAction = report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const isCreator = report.author.id === userId;
 
   if (isCreator && isNeedsAction) {
-    return <Link to={`/collaboration-reports/${report.id}/review`}>{report.displayId}</Link>;
+    return `/collaboration-reports/${report.id}/review`;
   }
 
   if (isSubmitted && !isApprover && !isNeedsAction) {
-    return <Link to={`/collaboration-reports/view/${report.id}`}>{report.displayId}</Link>;
+    return `/collaboration-reports/view/${report.id}`;
   }
 
   if (isSubmitted && isApprover) {
-    return <Link to={`/collaboration-reports/${report.id}/review`}>{report.displayId}</Link>;
+    return `/collaboration-reports/${report.id}/review`;
   }
 
-  return <Link to={report.link}>{report.displayId}</Link>;
+  return report.link;
+};
+
+export const ReportLink = ({ report, userId }) => {
+  const link = getReportLink(report, userId);
+
+  return <Link to={link}>{report.displayId}</Link>;
 };
 
 ReportLink.propTypes = {
@@ -51,6 +59,47 @@ ReportLink.propTypes = {
   }).isRequired,
 };
 
+const DeleteReportModal = ({
+  modalRef,
+  onReportRemoved,
+  report,
+}) => {
+  const onDeleteReport = () => {
+    // istanbul ignore next - tested elsewhere
+    onReportRemoved(report);
+    modalRef.current.toggleModal(false);
+  };
+
+  return (
+    <Modal
+      modalRef={modalRef}
+      onOk={onDeleteReport}
+      modalId="DeleteReportModal"
+      title="Are you sure you want to delete the report?"
+      okButtonText="Delete"
+      okButtonAriaLabel="Confirm delete and reload page"
+      showCloseX
+    >
+      <p>This action cannot be undone.</p>
+    </Modal>
+  );
+};
+
+DeleteReportModal.propTypes = {
+  modalRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape(),
+  ]).isRequired,
+  onReportRemoved: PropTypes.func.isRequired,
+  report: PropTypes.shape({
+    id: PropTypes.number,
+  }),
+};
+
+DeleteReportModal.defaultProps = {
+  report: null,
+};
+
 const CollabReportAlertsTable = ({
   emptyMsg,
   loading,
@@ -62,6 +111,42 @@ const CollabReportAlertsTable = ({
   sortConfig,
 }) => {
   const { user: { id: userId } } = useContext(UserContext);
+  const [reportToDelete, setReportToDelete] = React.useState(null);
+  const [deleteError, setDeleteError] = React.useState(null);
+  const modalRef = React.useRef();
+  const history = useHistory();
+
+  const isCreatorOrCollaborator = useCallback((report) => {
+    const isCreator = report.author.id === userId;
+    const isCollaborator = report.collaboratingSpecialists.some((c) => c.id === userId);
+    return isCreator || isCollaborator;
+  }, [userId]);
+
+  const handleDelete = useCallback((report) => {
+    setReportToDelete(report);
+    modalRef.current.toggleModal(true);
+  }, []);
+
+  const handleRowActionClick = useCallback((action, row) => {
+    if (action === 'View') {
+      const link = getReportLink(row, userId);
+      history.push(link);
+    } else if (action === 'Delete') {
+      handleDelete(row);
+    }
+  }, [history, userId, handleDelete]);
+
+  const deleteReport = async (report) => {
+    try {
+      await deleteReportById(report.id);
+      setDeleteError(null);
+      window.location.reload();
+    } catch (err) {
+      setDeleteError('Error deleting report. Please try again.');
+      // eslint-disable-next-line no-console
+      console.error('Error deleting report:', err);
+    }
+  };
 
   const tabularData = useMemo(() => data.rows.map((r) => ({
     heading: <ReportLink userId={userId} report={r} />,
@@ -112,7 +197,13 @@ const CollabReportAlertsTable = ({
         )(),
       },
     ],
-  })), [data.rows, userId]);
+    actions: isCreatorOrCollaborator(r) ? [
+      { label: 'View', onClick: () => handleRowActionClick('View', r) },
+      { label: 'Delete', onClick: () => handleRowActionClick('Delete', r) },
+    ] : [
+      { label: 'View', onClick: () => handleRowActionClick('View', r) },
+    ],
+  })), [data.rows, userId, isCreatorOrCollaborator, handleRowActionClick]);
 
   return (
     <>
@@ -129,6 +220,11 @@ const CollabReportAlertsTable = ({
         perPage={10}
         titleMargin={{ bottom: 3 }}
       >
+        { deleteError !== null && (
+        <Container className="bg-error-light margin-bottom-2 padding-1">
+          {deleteError}
+        </Container>
+        )}
         { data.rows.length === 0 && (
         <Container className="landing" paddingX={0} paddingY={0}>
           <div className="text-center padding-10">
@@ -167,15 +263,13 @@ const CollabReportAlertsTable = ({
         />
         )}
       </WidgetContainer>
+      <DeleteReportModal
+        report={reportToDelete}
+        modalRef={modalRef}
+        onReportRemoved={deleteReport}
+      />
     </>
   );
-};
-
-CollabReportAlertsTable.defaultProps = {
-  offset: 0,
-  loading: false,
-  emptyMsg: 'You have no Collaboration Reports',
-  showCreateMsgOnEmpty: false,
 };
 
 CollabReportAlertsTable.propTypes = {
@@ -191,7 +285,13 @@ CollabReportAlertsTable.propTypes = {
   sortConfig: PropTypes.shape({}).isRequired,
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string.isRequired,
+};
 
+CollabReportAlertsTable.defaultProps = {
+  offset: 0,
+  loading: false,
+  emptyMsg: 'You have no Collaboration Reports',
+  showCreateMsgOnEmpty: false,
 };
 
 export default CollabReportAlertsTable;
