@@ -44,12 +44,12 @@ describe('ApprovalRateByDeadlineWidget', () => {
     jest.clearAllMocks();
   });
 
-  it('renders region carousel controls with dots', () => {
+  it('renders region carousel controls and only shows next arrow on first region', () => {
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 
     expect(screen.getByText('Region 1')).toBeInTheDocument();
     expect(document.querySelectorAll('.approval-rate-carousel-dot').length).toBe(2);
-    expect(screen.queryByRole('button', { name: /next region/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next region/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /previous region/i })).not.toBeInTheDocument();
   });
 
@@ -58,6 +58,30 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /show region 2/i }));
     expect(screen.getByText('Region 2')).toBeInTheDocument();
+  });
+
+  it('advances to the next region when clicking next', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+  });
+
+  it('goes to the previous region when clicking previous', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    fireEvent.click(screen.getByRole('button', { name: /previous region/i }));
+    expect(screen.getByText('Region 1')).toBeInTheDocument();
+  });
+
+  it('only shows previous arrow on last region', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /previous region/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /next region/i })).not.toBeInTheDocument();
   });
 
   it('uses a generic legend label', () => {
@@ -167,6 +191,7 @@ describe('ApprovalRateByDeadlineWidget', () => {
     expect(screen.getByText('Region')).toBeInTheDocument();
     expect(document.querySelectorAll('.approval-rate-carousel-dot').length).toBe(0);
     expect(screen.queryByRole('button', { name: /next region/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /previous region/i })).not.toBeInTheDocument();
   });
 
   it('handles null data and renders no-results state', () => {
