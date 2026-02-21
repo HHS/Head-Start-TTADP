@@ -73,6 +73,28 @@ describe('Controlled Date Picker', () => {
     );
   };
 
+  // eslint-disable-next-line react/prop-types
+  const StartOnlyDatePicker = () => {
+    const {
+      control, watch,
+    } = useForm({
+      defaultValues: { startDate: '' },
+      mode: 'all',
+    });
+
+    const startDate = watch('startDate');
+
+    return (
+      <ControlledDatePicker
+        control={control}
+        name="startDate"
+        value={startDate}
+        isStartDate
+        inputId="startOnlyDate"
+      />
+    );
+  };
+
   it('validates correctly', async () => {
     const setEndDate = jest.fn();
     render(<TestDatePicker setEndDate={setEndDate} />);
@@ -170,5 +192,10 @@ describe('Controlled Date Picker', () => {
 
     // Check that end date is pushed beyond start date for same number of days.
     expect(setEndDate).toHaveBeenCalled();
+  });
+
+  it('renders a start date picker when maxDate and endDate are omitted', () => {
+    render(<StartOnlyDatePicker />);
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 });

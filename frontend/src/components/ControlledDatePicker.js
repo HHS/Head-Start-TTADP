@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
-  format, parse, isBefore, isAfter, differenceInDays, addDays,
+  format, parse, isBefore, isAfter, differenceInDays, addDays, isValid,
 } from 'date-fns';
 import { useController } from 'react-hook-form';
 import {
@@ -28,45 +28,57 @@ export default function ControlledDatePicker({
   required,
   additionalValidation,
 }) {
+  const today = useMemo(() => new Date(), []);
+  const fallbackMinDate = useMemo(() => parse('09/01/2020', DATE_DISPLAY_FORMAT, new Date()), []);
+
   /**
    * we don't want to compute these fields multiple times if we don't have to,
    * especially on renders where the underlying dependency doesn't change
    */
   const max = useMemo(() => {
     const maxDateParsed = parse(maxDate, DATE_DISPLAY_FORMAT, new Date());
+    const hasValidMax = isValid(maxDateParsed);
+    const compare = hasValidMax ? maxDateParsed : today;
+    const display = format(compare, DATE_DISPLAY_FORMAT);
     return isStartDate ? {
-      display: format(new Date(), DATE_DISPLAY_FORMAT),
-      date: maxDateParsed,
-      datePicker: format(maxDateParsed, DATEPICKER_VALUE_FORMAT),
-      compare: maxDateParsed,
+      display,
+      date: compare,
+      datePicker: format(compare, DATEPICKER_VALUE_FORMAT),
+      compare,
     } : {
-      display: maxDate,
-      date: maxDateParsed,
-      datePicker: format(maxDateParsed, DATEPICKER_VALUE_FORMAT),
-      compare: maxDateParsed,
+      display,
+      date: compare,
+      datePicker: format(compare, DATEPICKER_VALUE_FORMAT),
+      compare,
     };
-  }, [isStartDate, maxDate]);
+  }, [isStartDate, maxDate, today]);
 
   const endDateMax = useMemo(() => {
     const endDateParsed = parse(endDate, DATE_DISPLAY_FORMAT, new Date());
+    const compare = isValid(endDateParsed) ? endDateParsed : null;
     return {
-      display: format(new Date(), DATE_DISPLAY_FORMAT),
-      date: endDateParsed,
-      datePicker: format(endDateParsed, DATEPICKER_VALUE_FORMAT),
-      compare: endDateParsed,
+      display: format(today, DATE_DISPLAY_FORMAT),
+      date: compare,
+      datePicker: compare ? format(compare, DATEPICKER_VALUE_FORMAT) : '',
+      compare,
     };
-  }, [endDate]);
+  }, [endDate, today]);
 
   const min = useMemo(() => {
     const minDateParsed = parse(minDate, DATE_DISPLAY_FORMAT, new Date());
+    const date = isValid(minDateParsed) ? minDateParsed : fallbackMinDate;
     return {
-      display: minDate,
-      date: minDateParsed,
-      datePicker: format(minDateParsed, DATEPICKER_VALUE_FORMAT),
+      display: format(date, DATE_DISPLAY_FORMAT),
+      date,
+      datePicker: format(date, DATEPICKER_VALUE_FORMAT),
     };
-  }, [minDate]);
+  }, [minDate, fallbackMinDate]);
 
-  const formattedValue = value ? format(parse(value, DATE_DISPLAY_FORMAT, new Date()), DATEPICKER_VALUE_FORMAT) : '';
+  const formattedValue = useMemo(() => {
+    if (!value) return '';
+    const parsedValue = parse(value, DATE_DISPLAY_FORMAT, new Date());
+    return isValid(parsedValue) ? format(parsedValue, DATEPICKER_VALUE_FORMAT) : '';
+  }, [value]);
 
   const {
     beforeMessage,
@@ -120,7 +132,12 @@ export default function ControlledDatePicker({
     if (isStartDate) {
       const newDate = parse(d, DATE_DISPLAY_FORMAT, new Date());
       const currentDate = parse(value, DATE_DISPLAY_FORMAT, new Date());
-      if (isBefore(endDateMax.compare, newDate)) {
+      if (
+        isValid(newDate)
+        && endDateMax.compare
+        && isValid(currentDate)
+        && isBefore(endDateMax.compare, newDate)
+      ) {
         const diff = differenceInDays(endDateMax.compare, currentDate);
         const newEnd = addDays(newDate, diff);
         setEndDate(format(newEnd, DATE_DISPLAY_FORMAT));

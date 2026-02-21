@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { Op } from 'sequelize';
 import {
-  format, parseISO, isAfter, isBefore, parse,
+  format, parseISO, isAfter, isBefore, parse, isValid,
 } from 'date-fns';
 import { uniq, uniqBy } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
@@ -53,6 +53,28 @@ const {
 
 const MIN_DELIVERY_DATE = '2025-01-21';
 const REVIEW_STATUS_COMPLETE = 'Complete';
+
+function normalizeIsoDate(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return isValid(value) ? value : null;
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = parseISO(value);
+    return isValid(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function normalizeDisplayDate(value: string | null | undefined): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = parse(value, 'MM/dd/yyyy', new Date());
+  return isValid(parsed) ? parsed : null;
+}
 
 /**
  * Map finding type based on determination and original type.
@@ -218,8 +240,8 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
         displayId: activityReport.displayId,
       });
 
-      const parsedEndDate = parseISO(activityReport.endDate);
-      if (!endDate || isAfter(parsedEndDate, endDate)) {
+      const parsedEndDate = normalizeIsoDate(activityReport.endDate);
+      if (parsedEndDate && (!endDate || isAfter(parsedEndDate, endDate))) {
         endDate = parsedEndDate;
       }
     });
@@ -384,37 +406,33 @@ export async function ttaByReviews(
         const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(findingId));
 
         objectives.forEach(({ endDate }) => {
-          const parsedTTADate = parse(endDate, 'MM/dd/yyyy', new Date());
-          if (!lastTTADate || isAfter(parsedTTADate, lastTTADate)) {
+          const parsedTTADate = normalizeDisplayDate(endDate);
+          if (parsedTTADate && (!lastTTADate || isAfter(parsedTTADate, lastTTADate))) {
             lastTTADate = parsedTTADate;
           }
           specialists = specialists.concat(objectives.map((o) => o.specialists).flat());
         });
 
-        const correctionDeadLine = finding.correctionDeadLine instanceof Date
-          ? finding.correctionDeadLine
-          : parseISO(String(finding.correctionDeadLine));
+        const correctionDeadLine = normalizeIsoDate(finding.correctionDeadLine as unknown);
         findings.push({
           citation,
           status,
           findingType: mapFindingType(history.determination, finding.findingType),
-          correctionDeadline: finding.correctionDeadLine ? format(correctionDeadLine, 'MM/dd/yyyy') : '',
+          correctionDeadline: correctionDeadLine ? format(correctionDeadLine, 'MM/dd/yyyy') : '',
           category: finding.source,
           objectives,
         });
       });
     });
 
-    const reportDeliveryDate = review.reportDeliveryDate instanceof Date
-      ? review.reportDeliveryDate
-      : parseISO(String(review.reportDeliveryDate));
+    const reportDeliveryDate = normalizeIsoDate(review.reportDeliveryDate as unknown);
     return {
       name: review.name,
       id: review.id,
       lastTTADate: lastTTADate ? format(lastTTADate, 'MM/dd/yyyy') : '',
       outcome: review.outcome,
       reviewType: review.reviewType,
-      reviewReceived: format(reportDeliveryDate, 'MM/dd/yyyy'),
+      reviewReceived: reportDeliveryDate ? format(reportDeliveryDate, 'MM/dd/yyyy') : '',
       grants: monitoringReviewGrantees.map((grantee) => grantee.grantNumber),
       specialists: uniqBy(specialists, 'name'),
       findings,
@@ -576,8 +594,8 @@ export async function ttaByCitations(
 
       const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(finding.findingId));
       objectives.forEach(({ endDate }) => {
-        const parsedTTADate = parse(endDate, 'MM/dd/yyyy', new Date());
-        if (!lastTTADate || isAfter(parsedTTADate, lastTTADate)) {
+        const parsedTTADate = normalizeDisplayDate(endDate);
+        if (parsedTTADate && (!lastTTADate || isAfter(parsedTTADate, lastTTADate))) {
           lastTTADate = parsedTTADate;
         }
       });
@@ -588,13 +606,11 @@ export async function ttaByCitations(
 
         grants.push(gr);
 
-        const reviewDeliveryDate = review.reportDeliveryDate instanceof Date
-          ? review.reportDeliveryDate
-          : parseISO(String(review.reportDeliveryDate));
+        const reviewDeliveryDate = normalizeIsoDate(review.reportDeliveryDate as unknown);
         reviews.push({
           name: review.name,
           reviewType: review.reviewType,
-          reviewReceived: format(reviewDeliveryDate, 'MM/dd/yyyy'),
+          reviewReceived: reviewDeliveryDate ? format(reviewDeliveryDate, 'MM/dd/yyyy') : '',
           outcome: review.outcome,
           specialists: uniqBy(objectives.map((o) => o.specialists).flat(), 'name'),
           objectives: objectives.filter((o) => o.reviewNames.includes(review.name)),
@@ -726,7 +742,10 @@ export async function monitoringData({
     recipientId: grant.recipientId,
     regionId: grant.regionId,
     reviewStatus: monitoringReview.outcome,
-    reviewDate: format(monitoringReview.reportDeliveryDate instanceof Date ? monitoringReview.reportDeliveryDate : parseISO(String(monitoringReview.reportDeliveryDate)), 'MM/dd/yyyy'),
+    reviewDate: (() => {
+      const reviewDate = normalizeIsoDate(monitoringReview.reportDeliveryDate as unknown);
+      return reviewDate ? format(reviewDate, 'MM/dd/yyyy') : '';
+    })(),
     reviewType: monitoringReview.reviewType,
     grant: grant.number,
   };
@@ -755,9 +774,11 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
     return {};
   }
 
-  const received = score.reportDeliveryDate instanceof Date
-    ? score.reportDeliveryDate
-    : parseISO(String(score.reportDeliveryDate));
+  const received = normalizeIsoDate(score.reportDeliveryDate as unknown);
+
+  if (!received) {
+    return {};
+  }
 
   // Do not show scores that are before Nov 9, 2020.
   if (isBefore(received, parseISO('2020-11-09'))) {
