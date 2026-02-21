@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import findOrCreateUser from './findOrCreateUser';
 import { User, sequelize } from '../models';
 import { auditLogger } from '../logger';
@@ -84,13 +84,13 @@ describe('findOrCreateUser', () => {
       hsesUsername: 'test36@test.com',
       homeRegionId: 3,
     };
-    const originalLastLogin = moment().subtract(1, 'day');
+    const originalLastLogin = DateTime.local().minus({ days: 1 });
     await User.destroy({ where: { id: userId } });
-    await User.create({ ...user, id: userId, lastLogin: originalLastLogin });
+    await User.create({ ...user, id: userId, lastLogin: originalLastLogin.toJSDate() });
 
     const retrievedUser = await findOrCreateUser(user);
     expect(retrievedUser.id).toEqual(userId);
-    expect(originalLastLogin.isBefore(retrievedUser.lastLogin)).toBe(true);
+    expect(originalLastLogin.toMillis() < new Date(retrievedUser.lastLogin).getTime()).toBe(true);
   });
 
   it('Creates a new user when a matching user does not exist', async () => {

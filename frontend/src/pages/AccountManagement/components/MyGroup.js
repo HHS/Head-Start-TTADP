@@ -1,6 +1,5 @@
 import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { Link } from 'react-router-dom';
 import {
   Button,
@@ -9,6 +8,7 @@ import {
 import { deleteGroup, fetchGroups } from '../../../fetchers/groups';
 import VanillaModal from '../../../components/VanillaModal';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { formatDateValue } from '../../../lib/dates';
 import './MyGroup.scss';
 
 export default function MyGroup({
@@ -39,7 +39,8 @@ export default function MyGroup({
   };
 
   const getLastUpdated = () => {
-    let updatedAt = moment(group.updatedAt, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    const updatedDate = group.updatedAt ? group.updatedAt.split('T')[0] : group.updatedAt;
+    let updatedAt = formatDateValue(updatedDate, 'MM/DD/YYYY', 'YYYY-MM-DD');
     if (group.editor) {
       updatedAt = `${updatedAt} by ${group.editor.name}`;
     }

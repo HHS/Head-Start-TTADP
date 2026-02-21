@@ -3,7 +3,6 @@ import React, {
   useRef,
   useContext,
 } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -24,6 +23,7 @@ import RecipientsWithClassScoresAndGoalsWidget from '../../../widgets/Recipients
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
 import UserContext from '../../../UserContext';
 import { getSelfServiceData } from '../../../fetchers/ssdi';
+import { formatDateValue } from '../../../lib/dates';
 
 const ALLOWED_SUBFILTERS = [
   'domainClassroomOrganization',
@@ -94,6 +94,7 @@ export default function RecipientsWithClassScoresAndGoals() {
             collaborators,
             creator,
           } = item;
+          const reportDeliveryDateOnly = reportDeliveryDate ? reportDeliveryDate.split('T')[0] : reportDeliveryDate;
 
           const regionId = item['region id'];
           // Check if recipientId is already in the accumulator.
@@ -120,13 +121,13 @@ export default function RecipientsWithClassScoresAndGoals() {
             classroomOrganization,
             instructionalSupport,
             grantNumber,
-            lastARStartDate: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
-            reportDeliveryDate: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+            lastARStartDate: lastARStartDate === null ? null : formatDateValue(lastARStartDate, 'MM/DD/YYYY'),
+            reportDeliveryDate: reportDeliveryDate === null ? null : formatDateValue(reportDeliveryDateOnly, 'MM/DD/YYYY', 'YYYY-MM-DD'),
             regionId,
             dataForExport: [
               {
                 title: 'Last AR Start Date',
-                value: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
+                value: lastARStartDate === null ? null : formatDateValue(lastARStartDate, 'MM/DD/YYYY'),
               },
               {
                 title: 'Emotional Support',
@@ -142,7 +143,7 @@ export default function RecipientsWithClassScoresAndGoals() {
               },
               {
                 title: 'Report Delivery Date',
-                value: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+                value: reportDeliveryDate === null ? null : formatDateValue(reportDeliveryDateOnly, 'MM/DD/YYYY', 'YYYY-MM-DD'),
               },
             ],
             goals: [

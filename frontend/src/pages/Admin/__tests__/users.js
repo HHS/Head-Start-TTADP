@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import Users, { setFeatureFromURL } from '../users';
 
 describe('User Page', () => {
@@ -39,7 +39,7 @@ describe('User Page', () => {
         name: undefined,
         homeRegionId: 1,
         roles: [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }],
-        lastLogin: moment().subtract(65, 'days').toISOString(),
+        lastLogin: DateTime.local().minus({ days: 65 }).toISO(),
         permissions: [{
           userId: 2,
           scopeId: SCOPE_IDS.SITE_ACCESS,
@@ -53,7 +53,7 @@ describe('User Page', () => {
         name: 'Harry Potter',
         homeRegionId: 1,
         roles: [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }],
-        lastLogin: moment().toISOString(),
+        lastLogin: DateTime.local().toISO(),
         permissions: [{
           userId: 3,
           scopeId: SCOPE_IDS.SITE_ACCESS,
@@ -67,7 +67,7 @@ describe('User Page', () => {
         name: 'Hermione Granger',
         homeRegionId: 1,
         roles: [{ fullName: 'Early Childhood Specialist', name: 'ECS', id: 2 }],
-        lastLogin: moment().subtract(190, 'days').toISOString(),
+        lastLogin: DateTime.local().minus({ days: 190 }).toISO(),
         permissions: [{
           userId: 4,
           scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,

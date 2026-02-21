@@ -443,7 +443,7 @@ describe('goalFieldResponseHooks', () => {
       // HOOK: Change goal response to trigger hook.
       goalFieldResponse.response = ['Updated Activity Report Goal Response'];
 
-      // Get the current time using moment.
+      // Capture the current time before update.
       const beforeGoalFieldResponseUpdate = new Date();
 
       await GoalFieldResponse.update(

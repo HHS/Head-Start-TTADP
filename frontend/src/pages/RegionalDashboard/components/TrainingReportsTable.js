@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { Link, useHistory } from 'react-router-dom';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import { getSessionReportsCSV, getSessionReportsCSVById } from '../../../fetchers/session';
+import { formatDateValue } from '../../../lib/dates';
 
 const PER_PAGE = 10;
 
@@ -92,11 +92,11 @@ const TrainingReportsTable = ({
       },
       {
         title: 'Session start date',
-        value: r.startDate ? moment(r.startDate).format(DATE_DISPLAY_FORMAT) : '',
+        value: r.startDate ? formatDateValue(r.startDate, DATE_DISPLAY_FORMAT) : '',
       },
       {
         title: 'Session end date',
-        value: r.endDate ? moment(r.endDate).format(DATE_DISPLAY_FORMAT) : '',
+        value: r.endDate ? formatDateValue(r.endDate, DATE_DISPLAY_FORMAT) : '',
       },
       {
         title: 'Topics',

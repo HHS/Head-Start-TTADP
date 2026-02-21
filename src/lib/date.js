@@ -1,4 +1,13 @@
-import moment from 'moment';
+import { DateTime } from 'luxon';
+
+function toLuxonFormat(format) {
+  return format
+    .replace(/\[([^\]]+)\]/g, "'$1'")
+    .replace(/YYYY/g, 'yyyy')
+    .replace(/YY/g, 'yy')
+    .replace(/DD/g, 'dd')
+    .replace(/D/g, 'd');
+}
 
 /**
  * Attempts to parse a date string using multiple known formats.
@@ -20,6 +29,13 @@ export default function parseDate(value) {
     'M.D.YY', 'MM.DD.YY',
   ];
 
-  const parsed = formats.find((format) => moment(value, format, true).isValid());
-  return parsed ? moment(value, parsed, true).toDate() : null;
+  const parsed = formats.find((format) => DateTime.fromFormat(
+    value,
+    toLuxonFormat(format),
+  ).isValid);
+  if (!parsed) {
+    return null;
+  }
+
+  return DateTime.fromFormat(value, toLuxonFormat(parsed)).toJSDate();
 }

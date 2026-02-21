@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import moment from 'moment';
 import html2canvas from 'html2canvas';
+import { formatDateValue, now } from '../lib/dates';
 
 export default function useMediaCapture(reference, title = 'download') {
   const capture = useCallback(async () => {
@@ -9,7 +9,7 @@ export default function useMediaCapture(reference, title = 'download') {
       // we just calculated, and setting the background to white
       // and then converting it to a data url
       // and triggering a download
-      const today = moment().format('YYYY-MM-DD');
+      const today = formatDateValue(now(), 'YYYY-MM-DD');
       const canvas = await html2canvas(reference.current, {
         onclone: (_document, element) => {
           // set the first child to be white (we can always make this configurable later)

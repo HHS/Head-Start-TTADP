@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { Op, QueryTypes } from 'sequelize';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
@@ -58,7 +58,7 @@ export async function rollUpCourseUrlData(data) {
 
   // Return the headers and rolled up data.
   const sortedHeaders = headers.map((h) => ({
-    name: moment(h.rollUpDate, 'MMM-YY').format('MMMM YYYY'),
+    name: DateTime.fromFormat(h.rollUpDate, 'LLL-yy').toFormat('LLLL yyyy'),
     displayName: h.rollUpDate,
   }));
 

@@ -3,7 +3,6 @@ import '@testing-library/jest-dom';
 import {
   render, screen, waitFor,
 } from '@testing-library/react';
-import moment from 'moment';
 import reactSelectEvent from 'react-select-event';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
@@ -64,7 +63,7 @@ const RenderReview = ({
         isPendingApprover={isPendingApprover}
         pages={pages}
         reportCreator={reportCreator}
-        lastSaveTime={moment()}
+        lastSaveTime={new Date()}
       />
     </FormProvider>
   );

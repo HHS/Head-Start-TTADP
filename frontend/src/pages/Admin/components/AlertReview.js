@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState, useEffect } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
   Button,
@@ -16,6 +15,7 @@ import SiteAlert from '../../../components/SiteAlert';
 import Req from '../../../components/Req';
 import { saveSiteAlert, createSiteAlert } from '../../../fetchers/Admin';
 import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
+import { formatDateValue } from '../../../lib/dates';
 import './AlertReview.scss';
 
 const BASE_EDITOR_HEIGHT = '10rem';
@@ -258,7 +258,7 @@ export default function AlertReview({ alert, onDelete }) {
             <DatePicker
               id={`alert-${alert.id}-start-date`}
               name={`alert-${alert.id}-start-date`}
-              defaultValue={moment(startDate, 'MM/DD/YYYY').format('YYYY-MM-DD')}
+              defaultValue={formatDateValue(startDate, 'YYYY-MM-DD', 'MM/DD/YYYY')}
               onChange={(date) => setStartDate(date)}
               disabled={isFetching}
               required
@@ -273,7 +273,7 @@ export default function AlertReview({ alert, onDelete }) {
             <DatePicker
               id={`alert-${alert.id}-end-date`}
               name={`alert-${alert.id}-end-date`}
-              defaultValue={moment(endDate, 'MM/DD/YYYY').format('YYYY-MM-DD')}
+              defaultValue={formatDateValue(endDate, 'YYYY-MM-DD', 'MM/DD/YYYY')}
               onChange={(date) => setEndDate(date)}
               disabled={isFetching}
               required

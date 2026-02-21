@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react';
 import { REPORT_STATUSES } from '@ttahub/common';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
@@ -144,7 +143,7 @@ ReviewSubmit.propTypes = {
     state: PropTypes.string,
     label: PropTypes.string,
   })).isRequired,
-  lastSaveTime: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.oneOfType([PropTypes.instanceOf(Date), PropTypes.string]),
 };
 
 ReviewSubmit.defaultProps = {

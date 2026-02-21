@@ -5,7 +5,6 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
@@ -15,6 +14,7 @@ import { EMPTY_ARRAY } from '../Constants';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
+import { formatDateValue } from '../lib/dates';
 
 // the following constants are to configure the table
 // we store them outside of the component to avoid
@@ -141,8 +141,9 @@ export default function DeliveryMethodGraph({ data }) {
     });
 
     (records || []).forEach((dataset, index) => {
+      const monthHeading = formatDateValue(dataset.month, 'MMM YYYY', 'YYYY-MM-DD');
       tableData.push({
-        heading: moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'),
+        heading: monthHeading,
         sortKey: index + 1,
         id: index + 1,
         data: [
@@ -179,13 +180,13 @@ export default function DeliveryMethodGraph({ data }) {
         ],
       });
 
-      traceMap.get('In person').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
+      traceMap.get('In person').x.push(monthHeading);
       traceMap.get('In person').y.push(dataset.in_person_percentage);
 
-      traceMap.get('Virtual').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
+      traceMap.get('Virtual').x.push(monthHeading);
       traceMap.get('Virtual').y.push(dataset.virtual_percentage);
 
-      traceMap.get('Hybrid').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
+      traceMap.get('Hybrid').x.push(monthHeading);
       traceMap.get('Hybrid').y.push(dataset.hybrid_percentage);
     });
     setShowFiltersNotApplicable(showDashboardFiltersNotApplicableProp);

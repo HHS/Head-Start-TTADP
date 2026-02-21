@@ -16,7 +16,6 @@ import {
   Grid,
   Alert,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
 import useInterval from '@use-it/interval';
 import Container from '../Container';
 import {
@@ -27,6 +26,7 @@ import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import AppLoadingContext from '../../AppLoadingContext';
 import { NOOP } from '../../Constants';
+import { formatSaveTimestamp } from '../../lib/dates';
 
 const Navigator = ({
   formData,
@@ -170,7 +170,7 @@ const Navigator = ({
       <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
         Draft saved on
         {' '}
-        {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+        {formatSaveTimestamp(lastSaveTime, true)}
       </Alert>
       )}
     </DismissingComponentWrapper>
@@ -255,7 +255,7 @@ Navigator.propTypes = {
     regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   }).isRequired,
   errorMessage: PropTypes.string,
-  lastSaveTime: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.oneOfType([PropTypes.instanceOf(Date), PropTypes.string]),
   savedToStorageTime: PropTypes.string,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,

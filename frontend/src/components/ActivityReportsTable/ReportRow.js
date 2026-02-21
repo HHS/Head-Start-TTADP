@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
-import moment from 'moment';
 import ContextMenu from '../ContextMenu';
 import { getReportsDownloadURL } from '../../fetchers/helpers';
 import TooltipWithCollection from '../TooltipWithCollection';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import { formatDateValue } from '../../lib/dates';
 import './ReportRow.css';
 
 function ReportRow({
@@ -131,7 +131,7 @@ function ReportRow({
           />
         ) : '' }
       </td>
-      <td data-label="Created date">{moment(createdAt).format(DATE_DISPLAY_FORMAT)}</td>
+      <td data-label="Created date">{formatDateValue(createdAt, DATE_DISPLAY_FORMAT)}</td>
       <td data-label="Topics">
         <TooltipWithCollection collection={topics} collectionTitle={`topics for ${displayId}`} />
       </td>
@@ -139,7 +139,7 @@ function ReportRow({
         <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
       </td>
       <td data-label="Last saved">{lastSaved}</td>
-      <td data-label="Approved at">{approvedAt && moment(approvedAt).format(DATE_DISPLAY_FORMAT)}</td>
+      <td data-label="Approved at">{approvedAt && formatDateValue(approvedAt, DATE_DISPLAY_FORMAT)}</td>
       <td data-label="Context menu">
         <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={openMenuUp} fixed />
       </td>

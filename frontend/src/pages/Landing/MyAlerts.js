@@ -4,7 +4,6 @@ import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
-import moment from 'moment';
 import { uniq } from 'lodash';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
@@ -21,6 +20,7 @@ import UserContext from '../../UserContext';
 import ApproverTableDisplay from '../../components/ApproverTableDisplay';
 import { getStatusDisplayAndClassnames } from '../../utils';
 import NewActivityReportButton from '../../components/NewActivityReportButton';
+import { formatDateValue } from '../../lib/dates';
 import './index.scss';
 
 const isCollaborator = (report, user) => {
@@ -110,7 +110,7 @@ function ReportRow({
         )}
       </td>
       <td>
-        {moment(createdAt).format('MM/DD/YYYY')}
+        {formatDateValue(createdAt, 'MM/DD/YYYY')}
       </td>
       <td>
         <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />

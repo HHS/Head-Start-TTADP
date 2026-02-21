@@ -3,7 +3,6 @@ import React, {
   useRef,
   useContext,
 } from 'react';
-import moment from 'moment';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -23,6 +22,7 @@ import useFilters from '../../../hooks/useFilters';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
 import UserContext from '../../../UserContext';
 import { getSelfServiceData } from '../../../fetchers/ssdi';
+import { formatDateValue } from '../../../lib/dates';
 
 const ALLOWED_SUBFILTERS = [
   'region',
@@ -109,7 +109,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
               },
               {
                 title: 'Goal_created_on',
-                value: moment(createdAt).format('MM/DD/YYYY'),
+                value: formatDateValue(createdAt, 'MM/DD/YYYY'),
               },
               {
                 title: 'Goal_number',

@@ -5,16 +5,22 @@ import {
   DatePicker,
   Dropdown,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
 import DateRangePicker from './DateRangePicker';
 import { formatDateRange } from '../../utils';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import {
+  formatDateValue,
+  formatDateValueFromFormat,
+  isValidForFormat,
+  now,
+  parseDateTimeFromFormat,
+} from '../../lib/dates';
 import FilterErrorContext from './FilterErrorContext';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
 const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD';
 const MIN_DATE = '2020-09-01';
-const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
+const MAX_DATE = formatDateValue(now().toISO(), DATEPICKER_DATE_FORMAT);
 
 const DATE_OPTIONS = [
   {
@@ -44,31 +50,33 @@ export default function FilterDateRange({
   const isOnChange = (e) => onApplyDateRange(e.target.value);
 
   const onChange = (date) => {
-    const d = moment(date, DATE_DISPLAY_FORMAT);
+    const d = parseDateTimeFromFormat(date, DATE_DISPLAY_FORMAT);
 
-    if (!d.isValid()) {
+    if (!d) {
       setError('Please enter a valid date');
       return;
     }
 
-    if (d.isBefore(moment(MIN_DATE).format(DATEPICKER_DATE_FORMAT))) {
+    const min = parseDateTimeFromFormat(MIN_DATE, DATEPICKER_DATE_FORMAT);
+    if (min && d.toMillis() < min.toMillis()) {
       setError('Please enter a valid date');
       return;
     }
 
-    if (d.isAfter(moment(MAX_DATE).format(DATEPICKER_DATE_FORMAT))) {
+    const max = parseDateTimeFromFormat(MAX_DATE, DATEPICKER_DATE_FORMAT);
+    if (max && d.toMillis() > max.toMillis()) {
       setError('Please enter a valid date');
       return;
     }
 
-    onApplyDateRange(d.format(QUERY_DATE_FORMAT));
+    onApplyDateRange(formatDateValue(d.toISO(), QUERY_DATE_FORMAT));
     setError('');
   };
 
   let defaultValue = '';
 
-  if (query && moment(query, QUERY_DATE_FORMAT).isValid()) {
-    defaultValue = moment(query, QUERY_DATE_FORMAT).format(DATEPICKER_DATE_FORMAT);
+  if (query && isValidForFormat(query, QUERY_DATE_FORMAT)) {
+    defaultValue = formatDateValueFromFormat(query, QUERY_DATE_FORMAT, DATEPICKER_DATE_FORMAT);
   }
 
   switch (condition) {

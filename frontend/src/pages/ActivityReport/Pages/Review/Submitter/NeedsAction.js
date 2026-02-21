@@ -1,5 +1,4 @@
 import React, { useContext, useState } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
   FormGroup, Button, Fieldset, Dropdown, ErrorMessage,
@@ -16,6 +15,7 @@ import IncompletePages from '../../../../../components/IncompletePages';
 import UserContext from '../../../../../UserContext';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 import MissingCitationAlerts from '../../components/MissingCitationAlerts';
+import { formatNowForTimeZoneMessage, guessLocalTimeZone } from '../../../../../lib/dates';
 
 const NeedsAction = ({
   additionalNotes,
@@ -57,8 +57,8 @@ const NeedsAction = ({
       // if successful, we should redirect to
       // the landing page with the message saying
       // we successfully resubmitted
-      const timezone = moment.tz.guess();
-      const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+      const timezone = guessLocalTimeZone();
+      const time = formatNowForTimeZoneMessage(timezone);
       const message = {
         time,
         reportId,

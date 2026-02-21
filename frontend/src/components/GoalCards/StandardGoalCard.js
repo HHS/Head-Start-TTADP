@@ -9,7 +9,6 @@ import PropTypes from 'prop-types';
 import { useHistory } from 'react-router-dom';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { Checkbox, Alert } from '@trussworks/react-uswds';
-import moment from 'moment';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { goalPropTypes } from './constants';
 import UserContext from '../../UserContext';
@@ -27,6 +26,7 @@ import ExpanderButton from '../ExpanderButton';
 import ObjectiveCard from './ObjectiveCard';
 import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
+import { formatDateValue } from '../../lib/dates';
 
 export default function StandardGoalCard({
   goal,
@@ -90,7 +90,7 @@ export default function StandardGoalCard({
 
   const lastTTA = useMemo(() => {
     const latestDate = objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), '');
-    return latestDate ? moment(latestDate).format(DATE_DISPLAY_FORMAT) : '';
+    return latestDate ? formatDateValue(latestDate, DATE_DISPLAY_FORMAT) : '';
   }, [objectives]);
   const history = useHistory();
   const goalNumber = goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${id}`;
@@ -416,7 +416,7 @@ export default function StandardGoalCard({
                   <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
                     <p className="usa-prose text-bold margin-y-0">{getStatusChangeLabel()}</p>
                     <p className="usa-prose margin-y-0">
-                      {moment(lastStatusChange.performedAt || createdAt, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}
+                      {formatDateValue(lastStatusChange.performedAt || createdAt, DATE_DISPLAY_FORMAT, 'YYYY-MM-DD')}
                     </p>
                   </div>
 

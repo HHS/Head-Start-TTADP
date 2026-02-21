@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
-import moment from 'moment';
 import { formatDateRange } from '../../utils';
+import { formatDateValueFromFormat } from '../../lib/dates';
 import {
   DATE_CONDITIONS,
   REGION_CONDITIONS,
@@ -54,6 +54,10 @@ export const startDateFilter = {
   displayQuery: (query) => {
     // we need to handle array vs string case here
 
+    if (Array.isArray(query)) {
+      return formatDateValueFromFormat(query[0], 'YYYY/MM/DD', 'MM/DD/YYYY');
+    }
+
     const smushed = fixQueryWhetherStringOrArray(query);
 
     if (smushed.includes('-')) {
@@ -62,7 +66,7 @@ export const startDateFilter = {
         withSpaces: false,
       });
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return formatDateValueFromFormat(smushed, 'YYYY/MM/DD', 'MM/DD/YYYY');
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange

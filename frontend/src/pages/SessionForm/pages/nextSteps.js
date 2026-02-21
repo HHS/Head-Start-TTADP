@@ -1,5 +1,4 @@
 import React from 'react';
-import moment from 'moment';
 import { Helmet } from 'react-helmet';
 import {
   Button,
@@ -11,6 +10,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import {
   nextStepsFields,
 } from '../constants';
+import { isValidForFormat } from '../../../lib/dates';
 import NextStepsRepeater from '../../ActivityReport/Pages/components/NextStepsRepeater';
 import { getNextStepsSections } from '../../ActivityReport/Pages/nextSteps';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
@@ -66,7 +66,7 @@ export const isPageComplete = (hookForm) => {
     return false;
   }
 
-  if (![...specialistNextSteps, ...recipientNextSteps].every((step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid())) {
+  if (![...specialistNextSteps, ...recipientNextSteps].every((step) => step.note && isValidForFormat(step.completeDate, 'MM/DD/YYYY'))) {
     return false;
   }
 

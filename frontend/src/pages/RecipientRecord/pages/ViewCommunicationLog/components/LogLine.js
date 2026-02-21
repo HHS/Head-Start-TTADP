@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { lowerCase } from 'lodash';
+import { formatDateValueWithShortMonthOrdinalDayYear } from '../../../../../lib/dates';
 
 export default function LogLine({
   authorName,
@@ -32,7 +32,7 @@ export default function LogLine({
           on
           {' '}
           <span className="text-bold">
-            {moment(communicationDate).format('MMM Do, YYYY')}
+            {formatDateValueWithShortMonthOrdinalDayYear(communicationDate)}
           </span>
           {' '}
         </>

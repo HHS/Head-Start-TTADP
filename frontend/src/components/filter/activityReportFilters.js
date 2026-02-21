@@ -1,6 +1,6 @@
 import React from 'react';
-import moment from 'moment';
 import { formatDateRange } from '../../utils';
+import { formatDateValueFromFormat } from '../../lib/dates';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
@@ -75,7 +75,7 @@ export const startDateFilter = {
         withSpaces: false,
       });
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return formatDateValueFromFormat(smushed, 'YYYY/MM/DD', 'MM/DD/YYYY');
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange
@@ -101,7 +101,7 @@ export const endDateFilter = {
         withSpaces: false,
       });
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return formatDateValueFromFormat(smushed, 'YYYY/MM/DD', 'MM/DD/YYYY');
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange

@@ -1,6 +1,5 @@
 import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { Tag } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
@@ -12,6 +11,7 @@ import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import { getCollabReportStatusDisplayAndClassnames } from '../../../utils';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import UserContext from '../../../UserContext';
+import { formatDateValue } from '../../../lib/dates';
 
 export const ReportLink = ({ report, userId }) => {
   const isSubmitted = report.submissionStatus === REPORT_STATUSES.SUBMITTED;
@@ -83,7 +83,7 @@ const CollabReportAlertsTable = ({
       },
       {
         title: 'Created date',
-        value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
+        value: formatDateValue(r.createdAt, DATE_DISPLAY_FORMAT),
       },
       {
         title: 'Collaborators',

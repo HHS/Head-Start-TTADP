@@ -1,5 +1,4 @@
 const { Op, Model } = require('sequelize');
-const moment = require('moment');
 const { REPORT_STATUSES, USER_ROLES } = require('@ttahub/common');
 const { NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
@@ -282,7 +281,7 @@ export default (sequelize, DataTypes) => {
     lastSaved: {
       type: DataTypes.VIRTUAL,
       get() {
-        return moment(this.updatedAt).format('MM/DD/YYYY');
+        return formatDate.call(this, 'updatedAt');
       },
     },
     creatorNameWithRole: {

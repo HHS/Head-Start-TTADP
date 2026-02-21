@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { pickBy } from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
 import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
@@ -173,7 +172,7 @@ export const ESCAPE_KEY_CODES = ['Escape', 'Esc'];
 export const DATE_FMT = 'YYYY/MM/DD';
 export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
-export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
+export const EARLIEST_INC_FILTER_DATE = new Date('2020-08-31T00:00:00.000Z');
 
 const LOCAL_STORAGE_CACHE_NUMBER = '0.5';
 export const LOCAL_STORAGE_AR_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;

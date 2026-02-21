@@ -2,8 +2,9 @@ import { renderHook } from '@testing-library/react-hooks';
 import html2canvas from 'html2canvas';
 import useMediaCapture from '../useMediaCapture';
 
-jest.mock('moment', () => () => ({
-  format: jest.fn(() => '2023-10-10'),
+jest.mock('../../lib/dates', () => ({
+  now: jest.fn(() => ({})),
+  formatDateValue: jest.fn(() => '2023-10-10'),
 }));
 jest.mock('html2canvas');
 

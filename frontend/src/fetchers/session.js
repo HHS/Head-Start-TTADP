@@ -1,5 +1,4 @@
 import join from 'url-join';
-import moment from 'moment';
 import { uniqueId } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import {
@@ -7,6 +6,7 @@ import {
 } from './index';
 import { uploadFile } from './File';
 import { blobToCsvDownload, filtersToQueryString } from '../utils';
+import { formatDateValue, now } from '../lib/dates';
 
 const sessionsUrl = join('/', 'api', 'session-reports');
 
@@ -48,7 +48,7 @@ export const getSessionReportsTable = async (sortConfig, filters = []) => {
 const getSessionReportCSV = async (url) => {
   const response = await get(url);
   const csv = await response.text();
-  blobToCsvDownload(new Blob([csv], { type: 'text/csv' }), `${moment().format('YYYY-MM-DD')}-${uniqueId('training-reports-export-')}.csv`);
+  blobToCsvDownload(new Blob([csv], { type: 'text/csv' }), `${formatDateValue(now(), 'YYYY-MM-DD')}-${uniqueId('training-reports-export-')}.csv`);
 };
 
 export const getSessionReportsCSV = async (sortConfig, filters = []) => {

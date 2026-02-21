@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { REPORT_STATUSES, TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common';
 import { ActivityReport } from '../models';
+import parseDate from '../lib/date';
 
 function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
   // If report is missing duration set value to 0.
@@ -36,6 +37,14 @@ function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
     }
   });
 }
+
+const toDateTime = (value) => {
+  const parsedByKnownFormats = parseDate(value);
+  if (parsedByKnownFormats) {
+    return DateTime.fromJSDate(parsedByKnownFormats);
+  }
+  return DateTime.fromJSDate(new Date(value));
+};
 
 export default async function totalHrsAndRecipientGraph(scopes, query) {
   // Build out return Graph data.
@@ -92,15 +101,15 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
 
   if (startDate && endDate) {
     // Determine if we have more than 31 days.
-    const sdDate = moment(startDate);
-    const edDate = moment(endDate);
-    const daysDiff = edDate.diff(sdDate, 'days');
+    const sdDate = toDateTime(startDate);
+    const edDate = toDateTime(endDate);
+    const daysDiff = Math.floor(edDate.diff(sdDate, 'days').days);
     useDays = daysDiff <= 31;
 
     // Determine if we have more than 1 year in the range.
     // const yearDiff = edDate.diff(sdDate, 'years', true);
     // multipleYrs = yearDiff > 1;
-    multipleYrs = moment(sdDate).format('YY') !== moment(edDate).format('YY');
+    multipleYrs = sdDate.toFormat('yy') !== edDate.toFormat('yy');
   } else {
     multipleYrs = true;
     useDays = false;
@@ -128,17 +137,18 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
 
   reports?.forEach((r) => {
     if (r.startDate && r.startDate !== null) {
+      const reportDate = toDateTime(r.startDate);
       // Get X Axis value to use.
       let xValue;
       if (useDays) {
-        xValue = moment(r.startDate).format('MMM-DD');
+        xValue = reportDate.toFormat('LLL-dd');
       } else if (multipleYrs) {
-        xValue = moment(r.startDate).format('MMM-YY');
+        xValue = reportDate.toFormat('LLL-yy');
       } else {
-        xValue = moment(r.startDate).format('MMM');
+        xValue = reportDate.toFormat('LLL');
       }
 
-      const month = useDays ? moment(r.startDate).format('MMM') : false;
+      const month = useDays ? reportDate.toFormat('LLL') : false;
 
       // Check if we have added this activity report for this date.
       if (!arDates.find((cache) => cache.id === r.id && cache.date === r.startDate)) {

@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { Link } from 'react-router-dom';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
@@ -9,6 +8,7 @@ import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import './CollabReportsTable.css';
 import { getReportsCSV, getReportsCSVById } from '../../../fetchers/collaborationReports';
+import { formatDateValue } from '../../../lib/dates';
 
 const ALL = 2; // this is a constant
 
@@ -87,7 +87,7 @@ const CollabReportsTable = ({
       },
       {
         title: 'Created date',
-        value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
+        value: formatDateValue(r.createdAt, DATE_DISPLAY_FORMAT),
       },
       {
         title: 'Collaborators',
@@ -95,7 +95,7 @@ const CollabReportsTable = ({
       },
       {
         title: 'Last saved',
-        value: moment(r.updatedAt).format(DATE_DISPLAY_FORMAT),
+        value: formatDateValue(r.updatedAt, DATE_DISPLAY_FORMAT),
       },
     ],
   })), [data.rows]);

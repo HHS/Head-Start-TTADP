@@ -1,5 +1,5 @@
-import moment from 'moment';
 import { isValidResourceUrl, NAVIGATOR_PAGE_STATUSES } from '@ttahub/common';
+import parseDate from './date';
 
 const {
   NOT_STARTED,
@@ -37,7 +37,7 @@ function isValidDate(value) {
   if (!value) {
     return false;
   }
-  return moment(value).isValid();
+  return !!parseDate(value);
 }
 
 function stripHtml(value) {

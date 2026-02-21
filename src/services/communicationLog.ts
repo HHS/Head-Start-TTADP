@@ -1,6 +1,6 @@
 import { WhereOptions, Op } from 'sequelize';
 import stringify from 'csv-stringify/lib/sync';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import db from '../models';
 import { communicationLogToCsvRecord } from '../lib/transform';
 import { SORT_DIR } from '../constants';
@@ -34,15 +34,46 @@ interface CommLogData {
 
 export const formatCommunicationDateWithJsonData = (data: CommLogData): CommLogData => {
   if (data.communicationDate) {
-    const formattedCommunicationDate = moment(data.communicationDate, 'MM/DD/YYYY').format('MM/DD/YYYY');
+    const strictParsedCommunicationDate = DateTime.fromFormat(data.communicationDate, 'MM/dd/yyyy');
+    if (strictParsedCommunicationDate.isValid) {
+      const formattedCommunicationDate = strictParsedCommunicationDate.toFormat('MM/dd/yyyy');
+      if (formattedCommunicationDate !== data.communicationDate) {
+        return {
+          ...data,
+          communicationDate: formattedCommunicationDate,
+        };
+      }
 
-    if (formattedCommunicationDate === 'Invalid date') {
+      return data;
+    }
+
+    const dateParts = data.communicationDate.match(/(\d{1,2})\D+(\d{1,2})\D+(\d{2,5})/);
+    if (!dateParts) {
       return {
         ...data,
         communicationDate: '',
       };
     }
 
+    const [, rawMonth, rawDay, rawYear] = dateParts;
+    const month = Number(rawMonth);
+    const day = Number(rawDay);
+    const normalizedYearDigits = rawYear.length > 4 ? rawYear.slice(0, 4) : rawYear;
+    const yearNumber = Number(normalizedYearDigits);
+    let year = yearNumber;
+    if (normalizedYearDigits.length === 2) {
+      year = yearNumber <= 68 ? 2000 + yearNumber : 1900 + yearNumber;
+    }
+
+    const parsedCommunicationDate = DateTime.fromObject({ year, month, day });
+    if (!parsedCommunicationDate.isValid) {
+      return {
+        ...data,
+        communicationDate: '',
+      };
+    }
+
+    const formattedCommunicationDate = parsedCommunicationDate.toFormat('MM/dd/yyyy');
     if (formattedCommunicationDate !== data.communicationDate) {
       return {
         ...data,

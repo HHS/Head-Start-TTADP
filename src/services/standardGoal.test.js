@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import db, {
   ActivityReportGoal,
   ActivityReportObjective,
@@ -749,7 +749,7 @@ describe('standardGoal service', () => {
 
       activityReportThree = await createReport({
         ...reportData,
-        endDate: moment().add(1, 'month').toDate(),
+        endDate: DateTime.local().plus({ months: 1 }).toJSDate(),
       });
 
       await ActivityReportGoal.create({
@@ -759,7 +759,7 @@ describe('standardGoal service', () => {
 
       activityReportFour = await createReport({
         ...reportData,
-        endDate: moment().add(3, 'month').toDate(),
+        endDate: DateTime.local().plus({ months: 3 }).toJSDate(),
       });
       await ActivityReportGoal.create({
         activityReportId: activityReportFour.id,

@@ -13,7 +13,6 @@ import {
   Label,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import moment from 'moment';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import Drawer from '../../../components/Drawer';
 import MultiSelect from '../../../components/MultiSelect';
@@ -30,6 +29,7 @@ import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey'
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { COLLAB_REPORT_REASONS, STATES, COLLAB_REPORT_CONDUCT_METHODS } from '../../../Constants';
+import { isValidForFormat } from '../../../lib/dates';
 
 const position = 1;
 const path = 'activity-summary';
@@ -483,7 +483,7 @@ export const isPageComplete = (hookForm) => {
     return false;
   }
 
-  if (![startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid())) {
+  if (![startDate, endDate].every((date) => isValidForFormat(date, 'MM/DD/YYYY'))) {
     return false;
   }
 

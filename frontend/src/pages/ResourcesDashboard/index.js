@@ -5,7 +5,6 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -30,11 +29,12 @@ import RegionPermissionModal from '../../components/RegionPermissionModal';
 import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
 import useSessionSort from '../../hooks/useSessionSort';
+import { formatDateValue, now } from '../../lib/dates';
 import './index.scss';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
-  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+  string: `2022/07/01-${formatDateValue(now(), 'YYYY/MM/DD')}`,
   withSpaces: false,
 });
 

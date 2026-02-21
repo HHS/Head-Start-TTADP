@@ -1,11 +1,11 @@
 import React from 'react';
-import moment from 'moment-timezone';
 import Container from '../Container';
 import ViewTable from './ViewTable';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
+import { formatDateValue } from '../../lib/dates';
 import {
   reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
 } from './helpers';
@@ -103,8 +103,8 @@ export default function ApprovedReportV1({ data }) {
   const attendees = formatSimpleArray(data.participants);
   const participantCount = data.numberOfParticipants.toString();
   const reasons = formatSimpleArray(data.reason);
-  const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
-  const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
+  const startDate = formatDateValue(data.startDate, 'MMMM D, YYYY', DATEPICKER_VALUE_FORMAT);
+  const endDate = formatDateValue(data.endDate, 'MMMM D, YYYY', DATEPICKER_VALUE_FORMAT);
   const duration = `${data.duration} hours`;
   const method = formatMethod(data.ttaType, data.virtualDeliveryType);
   const requester = formatRequester(data.requester);
@@ -122,9 +122,9 @@ export default function ApprovedReportV1({ data }) {
   // next steps table
   const specialistNextSteps = data.specialistNextSteps.map((step) => step.note);
   const recipientNextSteps = data.recipientNextSteps.map((step) => step.note);
-  const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
-  const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
-  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
+  const approvedAt = data.approvedAt ? formatDateValue(data.approvedAt, DATE_DISPLAY_FORMAT) : '';
+  const createdAt = formatDateValue(data.createdAt, DATE_DISPLAY_FORMAT);
+  const submittedAt = data.submittedDate ? formatDateValue(data.submittedDate, DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author && data.author.fullName ? data.author.fullName : '';
 

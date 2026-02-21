@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { uniqBy } from 'lodash';
 import Container from '../../../components/Container';
 import { getRecipientLeadership } from '../../../fetchers/recipient';
 import SimpleSortableTable from '../../../components/SimpleSortableTable';
+import { formatDateValue } from '../../../lib/dates';
 
 export default function RecipientLeadership({ regionId, recipientId }) {
   const [leadership, setLeadership] = useState([]);
@@ -19,7 +19,7 @@ export default function RecipientLeadership({ regionId, recipientId }) {
 
         const leadershipData = response.map((person) => ({
           ...person,
-          effectiveDate: person.effectiveDate ? moment(person.effectiveDate).format('MM/DD/YYYY') : null,
+          effectiveDate: person.effectiveDate ? formatDateValue(person.effectiveDate, 'MM/DD/YYYY') : null,
         }));
 
         setLeadership(uniqBy(leadershipData, 'nameAndRole'));

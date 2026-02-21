@@ -1,5 +1,4 @@
 import React from 'react';
-import moment from 'moment';
 import { useFormContext } from 'react-hook-form';
 import _ from 'lodash';
 import {
@@ -11,6 +10,7 @@ import FormItem from '../../../../components/FormItem';
 import HookFormRichEditor from '../../../../components/HookFormRichEditor';
 import ApproverStatusList from '../../../ActivityReport/Pages/components/ApproverStatusList';
 import DisplayApproverNotes from '../../../ActivityReport/Pages/components/DisplayApproverNotes';
+import { formatDateValue } from '../../../../lib/dates';
 import { reviewPageDefaultProps, reviewPagePropType } from './constants';
 
 export default function ApproverReview({
@@ -25,7 +25,7 @@ export default function ApproverReview({
 }) {
   const { handleSubmit, register, watch } = useFormContext();
   const status = watch('status');
-  const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
+  const formattedDateSubmitted = dateSubmitted ? formatDateValue(dateSubmitted, DATE_DISPLAY_FORMAT) : '';
   const submitButtonLabel = isCreator ? 'Update report' : 'Submit';
 
   function sentenceCase(str) {

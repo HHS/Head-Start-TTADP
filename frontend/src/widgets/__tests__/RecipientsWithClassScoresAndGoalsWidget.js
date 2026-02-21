@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Router } from 'react-router';
@@ -178,7 +178,10 @@ describe('Recipients With Class and Scores and Goals Widget', () => {
         ...recipientData.pageData[0],
         name: `recipient ${i + 1}`,
         // Make the date of last TTA increment by 1 day for each recipient.
-        lastARStartDate: moment(recipientData.pageData[0].lastARStartDate).add(i, 'days').format('MM/DD/YYYY'),
+        lastARStartDate: DateTime.fromFormat(
+          recipientData.pageData[0].lastARStartDate,
+          'MM/dd/yyyy',
+        ).plus({ days: i }).toFormat('MM/dd/yyyy'),
       })),
     };
 

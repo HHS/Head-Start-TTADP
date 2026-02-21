@@ -8,7 +8,6 @@ import {
 } from '@trussworks/react-uswds';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { Helmet } from 'react-helmet';
-import moment from 'moment';
 import useFetch from '../../hooks/useFetch';
 import Container from '../../components/Container';
 import BackLink from '../../components/BackLink';
@@ -19,6 +18,7 @@ import { eventById } from '../../fetchers/event';
 import { ROUTES } from '../../Constants';
 import UserContext from '../../UserContext';
 import isAdmin from '../../permissions';
+import { formatNowForTimeZoneMessage } from '../../lib/dates';
 
 const TRAINING_REPORT_URL_NOT_STARTED = '/training-reports/not-started';
 const TRAINING_REPORT_URL_IN_PROGRESS = '/training-reports/in-progress';
@@ -86,7 +86,7 @@ export default function SessionReportFacilitation({ match }) {
         messageTemplate: 'sessionCreated',
         sessionName: '',
         eventId,
-        dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
+        dateStr: formatNowForTimeZoneMessage(),
       };
 
       if (!isAdminUser && (collaboratorWithRegionalFacilitation || isOwner)) {

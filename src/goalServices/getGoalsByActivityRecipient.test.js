@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common';
 import faker from '@faker-js/faker';
 import crypto from 'crypto';

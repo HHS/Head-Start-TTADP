@@ -6,10 +6,10 @@ import PropTypes from 'prop-types';
 import {
   Label, TextInput, Grid, Fieldset,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
 import RegionDropdown from '../../components/RegionDropdown';
 import AdminMultiSelect from '../../components/AdminMultiSelect';
 import { getRoles } from '../../fetchers/Admin';
+import { formatDateValue } from '../../lib/dates';
 
 const AuthoritiesList = memo(({ authorities }) => {
   const [expanded, setExpanded] = useState(false);
@@ -77,7 +77,7 @@ function UserInfo({ user, onUserChange }) {
   let { lastLogin } = user;
 
   if (lastLogin && lastLogin !== '') {
-    lastLogin = moment(lastLogin).format('lll Z');
+    lastLogin = formatDateValue(lastLogin, 'MMM D, YYYY h:mm a ZZ');
   }
 
   const [roleOptions, setRoleOptions] = useState([]);

@@ -1,8 +1,15 @@
-import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
 import { DECIMAL_BASE, REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
+import {
+  formatDateValue,
+  formatDateValueFromFormat,
+  isValidForFormat,
+  now,
+  parseDateTimeFromFormats,
+  parseDateTimeFromFormat,
+} from './lib/dates';
 import {
   ECLKC_GOVERNMENT_HOSTNAME_EXTENSION,
   HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION,
@@ -83,7 +90,7 @@ export const getDistinctSortedArray = (arr) => {
  */
 export const checkForDate = (date, format = 'MM/DD/YYYY') => {
   if (date) {
-    return moment(date, format).format(DATE_DISPLAY_FORMAT);
+    return formatDateValueFromFormat(date, format, DATE_DISPLAY_FORMAT);
   }
   return '---';
 };
@@ -164,7 +171,7 @@ export function filtersToQueryString(filters, region) {
   const filtersWithValues = filters.filter((f) => {
     if (f.condition === WITHIN) {
       const [startDate, endDate] = f.query.split('-');
-      return moment(startDate, DATE_FMT).isValid() && moment(endDate, DATE_FMT).isValid();
+      return isValidForFormat(startDate, DATE_FMT) && isValidForFormat(endDate, DATE_FMT);
     }
     return f.query !== '';
   });
@@ -225,40 +232,40 @@ export function formatDateRange(format = {
   let secondDay;
 
   if (format.lastThirtyDays) {
-    secondDay = moment();
-    firstDay = moment().subtract(30, 'days');
+    secondDay = now();
+    firstDay = now().minus({ days: 30 });
   }
 
   if (format.lastThreeMonths) {
-    secondDay = moment();
-    firstDay = moment().subtract(3, 'months');
+    secondDay = now();
+    firstDay = now().minus({ months: 3 });
   }
 
   if (format.lastSixMonths) {
-    secondDay = moment();
-    firstDay = moment().subtract(6, 'months');
+    secondDay = now();
+    firstDay = now().minus({ months: 6 });
   }
 
   if (format.yearToDate) {
-    secondDay = moment();
-    firstDay = moment().startOf('year');
+    secondDay = now();
+    firstDay = now().startOf('year');
   }
 
   if (format.string) {
     const dates = format.string.split('-');
 
     if (dates && dates.length > 1) {
-      firstDay = moment(dates[0], DATE_FMT);
-      secondDay = moment(dates[1], DATE_FMT);
+      firstDay = parseDateTimeFromFormat(dates[0], DATE_FMT);
+      secondDay = parseDateTimeFromFormat(dates[1], DATE_FMT);
     }
   }
 
   if (firstDay && secondDay) {
     if (format.withSpaces) {
-      return `${firstDay.format(selectedFormat)} ${sep} ${secondDay.format(selectedFormat)}`;
+      return `${formatDateValue(firstDay.toISO(), selectedFormat)} ${sep} ${formatDateValue(secondDay.toISO(), selectedFormat)}`;
     }
 
-    return `${firstDay.format(selectedFormat)}${sep}${secondDay.format(selectedFormat)}`;
+    return `${formatDateValue(firstDay.toISO(), selectedFormat)}${sep}${formatDateValue(secondDay.toISO(), selectedFormat)}`;
   }
 
   return '';
@@ -337,8 +344,7 @@ export const SUPPORTED_DATE_FORMATS = [
 
 export function isValidDate(value) {
   if (!value) return null;
-  const parsed = SUPPORTED_DATE_FORMATS.find((format) => moment(value, format, true).isValid());
-  return parsed ? moment(value, parsed, true) : null;
+  return parseDateTimeFromFormats(value, SUPPORTED_DATE_FORMATS);
 }
 
 /**

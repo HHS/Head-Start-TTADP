@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import '@testing-library/jest-dom';
 import React from 'react';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { SCOPE_IDS } from '@ttahub/common';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
@@ -31,8 +31,8 @@ const defaultUser = {
   }],
 };
 
-const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
-const today = moment().format('YYYY/MM/DD');
+const todayMinus12Months = DateTime.local().minus({ months: 12 }).toFormat('yyyy/MM/dd');
+const today = DateTime.local().toFormat('yyyy/MM/dd');
 
 // Convert todayMinus12Months to the format used in the API.
 const combinedDates = `${encodeURIComponent(todayMinus12Months)}-${encodeURIComponent(today)}`;

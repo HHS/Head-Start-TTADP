@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment-timezone';
 import { Redirect } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -19,6 +18,11 @@ import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
 import MissingCitationAlerts from '../../components/MissingCitationAlerts';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
+import {
+  formatNowForTimeZoneMessage,
+  formatSaveTimestamp,
+  guessLocalTimeZone,
+} from '../../../../../lib/dates';
 import './Draft.scss';
 
 const Draft = ({
@@ -99,8 +103,8 @@ const Draft = ({
   // NOTE: This is only an estimate of which timezone the user is in.
   // Not guaranteed to be 100% correct but is "good enough"
   // https://momentjs.com/timezone/docs/#/using-timezones/guessing-user-timezone/
-  const timezone = moment.tz.guess();
-  const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+  const timezone = guessLocalTimeZone();
+  const time = formatNowForTimeZoneMessage(timezone);
   const message = {
     time,
     reportId,
@@ -229,7 +233,7 @@ const Draft = ({
           <Alert id="reviewSubmitSaveAlert" className="margin-top-3 maxw-mobile-lg" noIcon slim type="success">
             Draft saved on
             {' '}
-            {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+            {formatSaveTimestamp(lastSaveTime, true)}
           </Alert>
         )}
       </DismissingComponentWrapper>
@@ -251,7 +255,7 @@ Draft.propTypes = {
     approver: PropTypes.string,
     status: PropTypes.string,
   })).isRequired,
-  lastSaveTime: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.oneOfType([PropTypes.instanceOf(Date), PropTypes.string]),
   creatorRole: PropTypes.string.isRequired,
   grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
   grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,

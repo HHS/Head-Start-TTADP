@@ -458,7 +458,7 @@ describe('CollaborationReportForm', () => {
         false,
       );
 
-      // When dates are undefined from the API, moment parsing will result in 'Invalid date'
+      // When dates are undefined from the API, date parsing can result in 'Invalid date'
       // The function should handle this gracefully
       expect(result.startDate).toBeDefined();
       expect(result.endDate).toBeDefined();
@@ -1552,7 +1552,7 @@ describe('CollaborationReportForm', () => {
       await waitFor(() => {
         expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
       });
-      // lastSaveTime is updated with moment(report.updatedAt)
+      // lastSaveTime is updated from report.updatedAt
     });
   });
 

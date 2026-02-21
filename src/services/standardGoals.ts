@@ -458,7 +458,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
 
     // this will link our objective to the activity report through
     // activity report objective and then link all associated objective data
-    // to the activity report objective to capture this moment in time
+    // to the activity report objective to capture this point in time
     return cacheObjectiveMetadata(
       savedObjective,
       report.id,

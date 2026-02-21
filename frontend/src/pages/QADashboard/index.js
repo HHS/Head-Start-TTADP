@@ -9,7 +9,6 @@ import {
   Grid,
   Alert,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import QAOverview from '../../widgets/QualityAssuranceDashboardOverview';
 import DeliveryMethod from '../../widgets/DeliveryMethodGraph';
@@ -26,6 +25,7 @@ import RootCauseFeiGoals from '../../widgets/RootCauseFeiGoals';
 import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../../fetchers/ssdi';
 import Loader from '../../components/Loader';
 import { formatDateRange } from '../../utils';
+import { formatDateValue, now } from '../../lib/dates';
 import './index.scss';
 
 const DISALLOWED_FILTERS = [
@@ -37,10 +37,10 @@ const DISALLOWED_FILTERS = [
 const ALLOWED_SUBFILTERS = QA_DASHBOARD_FILTER_CONFIG.map(({ id }) => id)
   .filter((id) => !DISALLOWED_FILTERS.includes(id));
 
-const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
+const todayMinus12Months = formatDateValue(now().minus({ months: 12 }), 'YYYY/MM/DD');
 const defaultDate = formatDateRange({
   forDateTime: true,
-  string: `${todayMinus12Months}-${moment().format('YYYY/MM/DD')}`,
+  string: `${todayMinus12Months}-${formatDateValue(now(), 'YYYY/MM/DD')}`,
   withSpaces: false,
 });
 

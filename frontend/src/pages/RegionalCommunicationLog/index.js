@@ -4,7 +4,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import moment from 'moment';
 import { Redirect, useParams } from 'react-router';
 import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
@@ -87,7 +86,7 @@ export default function RegionalCommunicationLog() {
       resetFormData(hookForm.reset, loggedCommunication);
 
       // update the last save time
-      updateLastSaveTime(moment(loggedCommunication.updatedAt));
+      updateLastSaveTime(new Date(loggedCommunication.updatedAt));
 
       // update the sidebar message
       updateShowSavedDraft(true);

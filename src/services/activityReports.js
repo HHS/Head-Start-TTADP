@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/quotes */
 import _ from 'lodash';
 import { Op } from 'sequelize';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import { REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
@@ -717,7 +717,7 @@ export async function activityReports(
 }
 
 export async function activityReportsForCleanup(userId) {
-  const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
+  const threeMonthsAgo = DateTime.local().minus({ months: 3 }).toISODate();
 
   return ActivityReport.unscoped().findAll(
     {

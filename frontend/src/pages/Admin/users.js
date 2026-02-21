@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet';
 import {
   Label, TextInput, Grid, SideNav, Alert, Radio, Fieldset,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { SCOPE_IDS, DECIMAL_BASE } from '@ttahub/common';
 import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
@@ -113,15 +113,15 @@ function Admin(props) {
 
   // rules for to-lock and to-disable filters are laid out in Access Control SOP:
   // https://github.com/HHS/Head-Start-TTADP/wiki/Access-Control-&-Account-Management-SOP#account-review-frequency-and-process
-  const lockThreshold = moment().subtract(60, 'days');
-  const disableThreshold = moment().subtract(180, 'days');
+  const lockThreshold = DateTime.local().minus({ days: 60 });
+  const disableThreshold = DateTime.local().minus({ days: 180 });
 
   const filteredUsers = useMemo(() => (
     _.filter(users, (u) => {
       const {
         email, name, permissions, flags,
       } = u;
-      const lastLogin = moment(u.lastLogin);
+      const lastLogin = DateTime.fromISO(u.lastLogin || '');
       const userNameMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
 
       let userFlagMatchesFilter = true;
@@ -136,13 +136,17 @@ function Admin(props) {
 
       let userMatchesLockFilter = true;
       if (lockedFilter === 'recent') {
-        userMatchesLockFilter = lastLogin.isAfter(lockThreshold)
+        userMatchesLockFilter = lastLogin.isValid
+          && lastLogin.toMillis() > lockThreshold.toMillis()
           && !permissionsIncludesAccess(permissions);
       } else if (lockedFilter === 'to-lock') {
-        userMatchesLockFilter = lastLogin.isBefore(lockThreshold)
+        userMatchesLockFilter = lastLogin.isValid
+          && lastLogin.toMillis() < lockThreshold.toMillis()
           && permissionsIncludesAccess(permissions);
       } else if (lockedFilter === 'to-disable') {
-        userMatchesLockFilter = lastLogin.isBefore(disableThreshold) && permissions.length > 0;
+        userMatchesLockFilter = lastLogin.isValid
+          && lastLogin.toMillis() < disableThreshold.toMillis()
+          && permissions.length > 0;
       }
       return userNameMatchesFilter && userFlagMatchesFilter && userMatchesLockFilter;
     })

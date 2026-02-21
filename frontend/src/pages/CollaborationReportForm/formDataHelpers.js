@@ -1,12 +1,12 @@
 import { isEqual } from 'lodash';
-import moment from 'moment';
 import { COLLAB_REPORT_DATA, STATES } from '../../Constants';
+import { isValidForFormat } from '../../lib/dates';
 
 /**
  * @param string
  * @returns isValid bool
  */
-export const isDateValid = (date) => !(!date || !moment(date, 'MM/DD/YYYY').isValid());
+export const isDateValid = (date) => !!(date && isValidForFormat(date, 'MM/DD/YYYY'));
 
 /**
  * compares two objects using lodash "isEqual" and returns the difference

@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import * as Sequelize from 'sequelize';
 import db from '../models';
 
@@ -12,6 +12,25 @@ interface GoalStatusChangeParams {
   forceStatusChange?: boolean;
   transaction?: Sequelize.Transaction;
 }
+
+const parsePerformedAtUtc = (value: string): Date | null => {
+  const parsedIso = DateTime.fromISO(value, { zone: 'utc' });
+  if (parsedIso.isValid) {
+    return parsedIso.toJSDate();
+  }
+
+  const parsedYmd = DateTime.fromFormat(value, 'yyyy/MM/dd', { zone: 'utc' });
+  if (parsedYmd.isValid) {
+    return parsedYmd.toJSDate();
+  }
+
+  const parsedYmdDash = DateTime.fromFormat(value, 'yyyy-MM-dd', { zone: 'utc' });
+  if (parsedYmdDash.isValid) {
+    return parsedYmdDash.toJSDate();
+  }
+
+  return null;
+};
 
 export async function changeGoalStatusWithSystemUser({
   goalId,
@@ -89,7 +108,7 @@ export default async function changeGoalStatus({
     newStatus,
     reason,
     context,
-    performedAt: performedAt ? moment.utc(performedAt).toDate() : new Date(),
+    performedAt: performedAt ? (parsePerformedAtUtc(performedAt) || new Date()) : new Date(),
   };
 
   if (oldStatus !== newStatus || forceStatusChange) {

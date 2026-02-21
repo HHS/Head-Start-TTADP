@@ -1,7 +1,7 @@
 /* istanbul ignore file: tested but not showing up in coverage */
 /* eslint-disable @typescript-eslint/return-await */
 import { createTransport } from 'nodemailer';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { uniq, lowerCase } from 'lodash';
 import { QueryTypes } from 'sequelize';
 import Email from 'email-templates';
@@ -988,7 +988,7 @@ export async function trainingReportTaskDueNotifications(freq) {
 
     const alerts = await getTrainingReportAlerts();
 
-    const today = moment().startOf('day');
+    const today = DateTime.local().startOf('day');
     const emailData = alerts.reduce((accumulatedEmailData, alert) => {
       const alertTypeConfig = TR_NOTIFICATION_CONFIG_DICT[alert.alertType];
       // Some kind of garbage type got in the alerts,
@@ -1004,9 +1004,13 @@ export async function trainingReportTaskDueNotifications(freq) {
         return accumulatedEmailData;
       }
 
-      const dateToDiff = moment(alert[toDiff], 'MM/DD/YYYY').startOf('day');
+      const parsedDateToDiff = DateTime.fromFormat(alert[toDiff], 'MM/dd/yyyy');
+      if (!parsedDateToDiff.isValid) {
+        return accumulatedEmailData;
+      }
+      const dateToDiff = parsedDateToDiff.startOf('day');
 
-      const diff = today.diff(dateToDiff, 'days');
+      const diff = Math.floor(today.diff(dateToDiff, 'days').days);
       // Depending on the diff, the subject starts a certain way
       // either "Reminder" or "Past due"
       let prefix = '';

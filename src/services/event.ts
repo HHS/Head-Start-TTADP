@@ -10,7 +10,7 @@ import {
   REPORT_STATUSES,
   ALL_STATES_FLATTENED,
 } from '@ttahub/common';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { auditLogger } from '../logger';
 import db from '../models';
 import {
@@ -33,6 +33,14 @@ const {
   File,
   sequelize,
 } = db;
+
+const startOfDay = (value?: string) => {
+  if (!value) {
+    return null;
+  }
+  const parsed = DateTime.fromJSDate(new Date(value));
+  return parsed.isValid ? parsed.startOf('day') : null;
+};
 
 type WhereOptions = {
   id?: number;
@@ -559,7 +567,7 @@ export async function getTrainingReportAlerts(
   // noSessionsCreated: No sessions created (IST Creator) - 20 days past event start date
   // eventNotCompleted: Event not completed (IST Creator or Collaborator) - 20 days past event end date
 
-  const today = moment().startOf('day');
+  const today = DateTime.local().startOf('day');
 
   // the following three filters are used to determine if the user is the owner, collaborator, or poc
   // or if there is no user, in which case the alert is triggered for everyone
@@ -588,13 +596,19 @@ export async function getTrainingReportAlerts(
   };
 
   events.forEach((event: EventShape) => {
-    const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
-    const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
+    const eventStartDay = startOfDay(event.data.startDate);
+    const eventEndDay = startOfDay(event.data.endDate);
+    const nineteenDaysAfterStart = eventStartDay ? eventStartDay.plus({ days: 19 }) : null;
+    const nineteenDaysAfterEnd = eventEndDay ? eventEndDay.plus({ days: 19 }) : null;
 
     // one alert triggers just for the owner
     if (ownerUserIdFilter(event, userId)) {
       // if we are 20 days past the end date, and the event is not completed
-      if (event.data.status !== TRS.COMPLETE && today.isAfter(nineteenDaysAfterEnd)) {
+      if (
+        event.data.status !== TRS.COMPLETE
+        && nineteenDaysAfterEnd
+        && today.toMillis() > nineteenDaysAfterEnd.toMillis()
+      ) {
         alerts.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
       }
     }
@@ -602,14 +616,18 @@ export async function getTrainingReportAlerts(
     // some alerts only trigger for the owner or the collaborators
     if (ownerUserIdFilter(event, userId) || collaboratorUserIdFilter(event, userId)) {
       // if we are 20 days past the end date and missing event data
-      if (today.isAfter(nineteenDaysAfterEnd)) {
+      if (nineteenDaysAfterEnd && today.toMillis() > nineteenDaysAfterEnd.toMillis()) {
         if (!event.data.eventSubmitted) {
           alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
         }
       }
 
       // if we are 20 days past the start date and there are no sessions
-      if (today.isAfter(nineteenDaysAfterStart) && event.sessionReports.length === 0) {
+      if (
+        nineteenDaysAfterStart
+        && today.toMillis() > nineteenDaysAfterStart.toMillis()
+        && event.sessionReports.length === 0
+      ) {
         // and there are no sessions
         alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
       }
@@ -617,8 +635,9 @@ export async function getTrainingReportAlerts(
       const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
       sessions.forEach((session) => {
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
-        if (today.isAfter(nineteenDaysAfterSessionStart)) {
+        const sessionStartDay = startOfDay(session.data.startDate);
+        const nineteenDaysAfterSessionStart = sessionStartDay ? sessionStartDay.plus({ days: 19 }) : null;
+        if (nineteenDaysAfterSessionStart && today.toMillis() > nineteenDaysAfterSessionStart.toMillis()) {
           checkSessionForCompletion(session, event, 'collabComplete', alerts);
         }
       });
@@ -631,8 +650,9 @@ export async function getTrainingReportAlerts(
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
-        if (today.isAfter(nineteenDaysAfterSessionStart)) {
+        const sessionStartDay = startOfDay(session.data.startDate);
+        const nineteenDaysAfterSessionStart = sessionStartDay ? sessionStartDay.plus({ days: 19 }) : null;
+        if (nineteenDaysAfterSessionStart && today.toMillis() > nineteenDaysAfterSessionStart.toMillis()) {
         // eslint-disable-next-line no-restricted-syntax
           checkSessionForCompletion(session, event, 'pocComplete', alerts);
         }

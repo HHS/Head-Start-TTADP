@@ -5,7 +5,6 @@ import React, {
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Redirect } from 'react-router-dom';
-import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
 import { unlockReport } from '../../fetchers/activityReports';
 import Modal from '../../components/Modal';
@@ -15,6 +14,7 @@ import ApprovedReportV2 from '../../components/ReportView/ApprovedReportV2';
 import SubmittedReport from '../../components/ReportView/SubmittedReport';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import useReadOnlyReportFetch from '../../hooks/useReadOnlyReportFetch';
+import { formatNowForTimeZoneMessage, guessLocalTimeZone } from '../../lib/dates';
 import './index.scss';
 
 export default function ApprovedActivityReport({ match, user }) {
@@ -73,8 +73,8 @@ export default function ApprovedActivityReport({ match, user }) {
     </Modal>
   );
 
-  const timezone = moment.tz.guess();
-  const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+  const timezone = guessLocalTimeZone();
+  const time = formatNowForTimeZoneMessage(timezone);
   const message = {
     time,
     reportId,

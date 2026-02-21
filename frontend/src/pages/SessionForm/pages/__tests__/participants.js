@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import join from 'url-join';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import {
   render,
   screen,
@@ -244,7 +244,7 @@ describe('participants', () => {
 
   describe('render', () => {
     const userId = 1;
-    const todaysDate = moment().format('YYYY-MM-DD');
+    const todaysDate = DateTime.local().toFormat('yyyy-MM-dd');
     const onSaveDraft = jest.fn();
 
     const defaultFormValues = {

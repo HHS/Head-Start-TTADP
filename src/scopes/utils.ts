@@ -1,5 +1,5 @@
 import { Op, WhereOptions } from 'sequelize';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { map, pickBy } from 'lodash';
 import db from '../models';
 
@@ -13,6 +13,21 @@ const FULL_DATE_FORMATS = [
   'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
 ];
 
+const toLuxonFormat = (format: string) => format
+  .replace(/YYYY/g, 'yyyy')
+  .replace(/YY/g, 'yy')
+  .replace(/DD/g, 'dd')
+  .replace(/D/g, 'd');
+
+const parseFromFormats = (value: string, formats: string[]): DateTime | null => {
+  const format = formats.find((f) => DateTime.fromFormat(value, toLuxonFormat(f)).isValid);
+  if (!format) {
+    return null;
+  }
+  const parsed = DateTime.fromFormat(value, toLuxonFormat(format));
+  return parsed.isValid ? parsed : null;
+};
+
 function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {
   if (!value || typeof value !== 'string') {
     return null;
@@ -24,20 +39,20 @@ function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | 
   }
 
   if (YEAR_MONTH_PATTERN.test(trimmed)) {
-    const monthOnly = moment(trimmed, YEAR_MONTH_FORMATS, true);
-    if (!monthOnly.isValid()) {
+    const monthOnly = parseFromFormats(trimmed, YEAR_MONTH_FORMATS);
+    if (!monthOnly) {
       return null;
     }
     const bounded = boundary === 'end' ? monthOnly.endOf('month') : monthOnly.startOf('month');
-    return bounded.format('YYYY-MM-DD');
+    return bounded.toISODate();
   }
 
-  const fullDate = moment(trimmed, FULL_DATE_FORMATS, true);
-  if (!fullDate.isValid()) {
+  const fullDate = parseFromFormats(trimmed, FULL_DATE_FORMATS);
+  if (!fullDate) {
     return null;
   }
 
-  return fullDate.format('YYYY-MM-DD');
+  return fullDate.toISODate();
 }
 /**
  * Takes an array of string date ranges (2020/09/01-2021/10/02, for example)

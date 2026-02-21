@@ -1,6 +1,5 @@
 import React, { useContext, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import moment from 'moment';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
@@ -16,11 +15,12 @@ import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionalCommLogTable from './components/RegionalCommLogTable';
 import { regionFilter } from '../../components/filter/communicationLogFilters';
 import NewReportButton from '../../components/NewReportButton';
+import { formatDateValue, now } from '../../lib/dates';
 import './index.scss';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
-  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+  string: `2022/07/01-${formatDateValue(now(), 'YYYY/MM/DD')}`,
   withSpaces: false,
 });
 

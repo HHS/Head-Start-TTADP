@@ -1,5 +1,4 @@
 import React, { useContext } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import _ from 'lodash';
@@ -18,6 +17,7 @@ import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 import UserContext from '../../../../../UserContext';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 import ApproverSelect from '../Submitter/components/ApproverSelect';
+import { formatDateValue } from '../../../../../lib/dates';
 
 const Review = ({
   additionalNotes,
@@ -50,7 +50,7 @@ const Review = ({
   const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
   const incompletePages = filtered.map((f) => f.label);
   const hasIncompletePages = incompletePages.length > 0;
-  const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
+  const formattedDateSubmitted = dateSubmitted ? formatDateValue(dateSubmitted, DATE_DISPLAY_FORMAT) : '';
 
   return (
     <>

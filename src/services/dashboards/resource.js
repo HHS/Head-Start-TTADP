@@ -2,7 +2,7 @@
 import { Sequelize, Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -1757,7 +1757,7 @@ export async function resourceDashboardFlat(scopes) {
 
   // Date headers.
   const dateHeadersArray = data.dateHeaders.map((date) => ({
-    name: moment(date.rollUpDate, 'MMM-YY').format('MMMM YYYY'),
+    name: DateTime.fromFormat(date.rollUpDate, 'LLL-yy').toFormat('LLLL yyyy'),
     displayName: date.rollUpDate,
   }));
 

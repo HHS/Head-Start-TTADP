@@ -1,11 +1,14 @@
 import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { useController } from 'react-hook-form';
 import {
   DatePicker,
 } from '@trussworks/react-uswds';
 import { isValidDate } from '../utils';
+import {
+  formatDateValue,
+  now,
+} from '../lib/dates';
 
 // this is the format used in every place we see
 import { DATE_DISPLAY_FORMAT, DATEPICKER_VALUE_FORMAT } from '../Constants';
@@ -31,31 +34,31 @@ export default function ControlledDatePicker({
    * especially on renders where the underlying dependency doesn't change
    */
   const max = useMemo(() => (isStartDate ? {
-    display: moment().format(DATE_DISPLAY_FORMAT),
-    moment: moment(maxDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-    compare: moment(maxDate, DATE_DISPLAY_FORMAT),
+    display: formatDateValue(now().toISO(), DATE_DISPLAY_FORMAT),
+    dateTime: isValidDate(maxDate),
+    datePicker: formatDateValue(maxDate, DATEPICKER_VALUE_FORMAT),
+    compare: isValidDate(maxDate),
   } : {
     display: maxDate,
-    moment: moment(maxDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-    compare: moment(maxDate, DATE_DISPLAY_FORMAT),
+    dateTime: isValidDate(maxDate),
+    datePicker: formatDateValue(maxDate, DATEPICKER_VALUE_FORMAT),
+    compare: isValidDate(maxDate),
   }), [isStartDate, maxDate]);
 
   const endDateMax = useMemo(() => ({
-    display: moment().format(DATE_DISPLAY_FORMAT),
-    moment: moment(endDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(endDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-    compare: moment(endDate, DATE_DISPLAY_FORMAT),
+    display: formatDateValue(now().toISO(), DATE_DISPLAY_FORMAT),
+    dateTime: isValidDate(endDate),
+    datePicker: formatDateValue(endDate, DATEPICKER_VALUE_FORMAT),
+    compare: isValidDate(endDate),
   }), [endDate]);
 
   const min = useMemo(() => ({
     display: minDate,
-    moment: moment(minDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(minDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
+    dateTime: isValidDate(minDate),
+    datePicker: formatDateValue(minDate, DATEPICKER_VALUE_FORMAT),
   }), [minDate]);
 
-  const formattedValue = value ? moment(value, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT) : '';
+  const formattedValue = value ? formatDateValue(value, DATEPICKER_VALUE_FORMAT) : '';
 
   const {
     beforeMessage,
@@ -68,11 +71,11 @@ export default function ControlledDatePicker({
     const newValue = isValidDate(v);
     if (!newValue) return invalidMessage || 'Enter valid date';
 
-    if (newValue.isBefore(min.moment)) {
+    if (min.dateTime && newValue.toMillis() < min.dateTime.toMillis()) {
       return afterMessage || `Please enter a date after ${min.display}`;
     }
 
-    if (newValue.isAfter(max.moment)) {
+    if (max.dateTime && newValue.toMillis() > max.dateTime.toMillis()) {
       return beforeMessage || `Please enter a date before ${max.display}`;
     }
 
@@ -107,12 +110,13 @@ export default function ControlledDatePicker({
 
   const datePickerOnChange = (d) => {
     if (isStartDate) {
-      const newDate = moment(d, DATE_DISPLAY_FORMAT);
-      const currentDate = moment(value, DATE_DISPLAY_FORMAT);
-      if (endDateMax.compare.isBefore(newDate)) {
-        const diff = endDateMax.compare.diff(currentDate, 'days');
-        const newEnd = newDate.add(diff, 'days');
-        setEndDate(newEnd.format(DATE_DISPLAY_FORMAT));
+      const newDate = isValidDate(d);
+      const currentDate = isValidDate(value) || newDate;
+      if (newDate && endDateMax.compare
+        && endDateMax.compare.toMillis() < newDate.toMillis()) {
+        const diff = Math.trunc(endDateMax.compare.diff(currentDate, 'days').days);
+        const newEnd = newDate.plus({ days: diff });
+        setEndDate(formatDateValue(newEnd.toISO(), DATE_DISPLAY_FORMAT));
       }
     }
     onChange(d);

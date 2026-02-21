@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import '@testing-library/jest-dom';
 import React from 'react';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import join from 'url-join';
 import { SCOPE_IDS } from '@ttahub/common';
 import { Router } from 'react-router-dom';
@@ -24,7 +24,7 @@ const history = createMemoryHistory();
 
 const defaultDate = formatDateRange({
   forDateTime: true,
-  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+  string: `2022/07/01-${DateTime.local().toFormat('yyyy/MM/dd')}`,
   withSpaces: false,
 });
 const defaultDateParam = `startDate.win=${encodeURIComponent(defaultDate)}`;

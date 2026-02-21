@@ -1,11 +1,11 @@
 import React from 'react';
-import moment from 'moment-timezone';
 import Container from '../Container';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
   OBJECTIVE_STATUS,
 } from '../../Constants';
+import { formatDateValue } from '../../lib/dates';
 import {
   reportDataPropTypes,
   formatSimpleArray,
@@ -168,8 +168,8 @@ export default function ApprovedReportV2({ data }) {
   const languages = formatSimpleArray(data.language);
   const participantCount = data.numberOfParticipants.toString();
   const reasons = formatSimpleArray(data.reason);
-  const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
-  const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
+  const startDate = formatDateValue(data.startDate, 'MMMM D, YYYY', DATEPICKER_VALUE_FORMAT);
+  const endDate = formatDateValue(data.endDate, 'MMMM D, YYYY', DATEPICKER_VALUE_FORMAT);
   const duration = `${data.duration} hours`;
   const requester = formatRequester(data.requester);
 
@@ -187,9 +187,9 @@ export default function ApprovedReportV2({ data }) {
   const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
   const nextStepsLabel = isRecipient ? 'Recipient\'s next steps' : 'Other entities next steps';
   const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
-  const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
-  const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
-  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
+  const approvedAt = data.approvedAt ? formatDateValue(data.approvedAt, DATE_DISPLAY_FORMAT) : '';
+  const createdAt = formatDateValue(data.createdAt, DATE_DISPLAY_FORMAT);
+  const submittedAt = data.submittedDate ? formatDateValue(data.submittedDate, DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
   return (

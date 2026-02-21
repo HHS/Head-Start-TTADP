@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import faker from '@faker-js/faker';
 import { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } from '@ttahub/common';
 import { SiteAlert, User, sequelize } from '../../models';
@@ -21,8 +21,8 @@ describe('site alerts', () => {
     // Create a published alert
     await SiteAlert.create(({
       userId: mockUser.id,
-      endDate: moment().add(1, 'day').format('YYYY-MM-DD'),
-      startDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
+      endDate: DateTime.local().plus({ days: 1 }).toFormat('yyyy-MM-dd'),
+      startDate: DateTime.local().minus({ days: 1 }).toFormat('yyyy-MM-dd'),
       message: faker.lorem.sentence(),
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
@@ -33,8 +33,8 @@ describe('site alerts', () => {
     // create a second published alert, the newest one
     newestAlert = await SiteAlert.create(({
       userId: mockUser.id,
-      endDate: moment().add(1, 'day').format('YYYY-MM-DD'),
-      startDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
+      endDate: DateTime.local().plus({ days: 1 }).toFormat('yyyy-MM-dd'),
+      startDate: DateTime.local().minus({ days: 1 }).toFormat('yyyy-MM-dd'),
       message: faker.lorem.sentence(),
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
@@ -45,8 +45,8 @@ describe('site alerts', () => {
     // create a draft alert
     await SiteAlert.create(({
       userId: mockUser.id,
-      endDate: moment().add(1, 'day').format('YYYY-MM-DD'),
-      startDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
+      endDate: DateTime.local().plus({ days: 1 }).toFormat('yyyy-MM-dd'),
+      startDate: DateTime.local().minus({ days: 1 }).toFormat('yyyy-MM-dd'),
       message: faker.lorem.sentence(),
       status: ALERT_STATUSES.DRAFT,
       title: faker.lorem.sentence(),
@@ -57,8 +57,8 @@ describe('site alerts', () => {
     // create an alert that's already ended
     await SiteAlert.create(({
       userId: mockUser.id,
-      endDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
-      startDate: moment().subtract(2, 'day').format('YYYY-MM-DD'),
+      endDate: DateTime.local().minus({ days: 1 }).toFormat('yyyy-MM-dd'),
+      startDate: DateTime.local().minus({ days: 2 }).toFormat('yyyy-MM-dd'),
       message: faker.lorem.sentence(),
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
@@ -69,8 +69,8 @@ describe('site alerts', () => {
     // create an alert that hasn't started yet
     await SiteAlert.create(({
       userId: mockUser.id,
-      endDate: moment().add(2, 'day').format('YYYY-MM-DD'),
-      startDate: moment().add(1, 'day').format('YYYY-MM-DD'),
+      endDate: DateTime.local().plus({ days: 2 }).toFormat('yyyy-MM-dd'),
+      startDate: DateTime.local().plus({ days: 1 }).toFormat('yyyy-MM-dd'),
       message: faker.lorem.sentence(),
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),

@@ -1,8 +1,7 @@
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import md5 from 'md5';
 import { uniq } from 'lodash';
 import { convert } from 'html-to-text';
-import { DATE_FORMAT } from '../constants';
 
 const HTML_TO_TEXT_OPTIONS = { selectors: [{ selector: 'table', format: 'dataTable' }] };
 
@@ -11,9 +10,9 @@ function transformDate(field) {
     let value = '';
     const date = instance[field];
     if (date) {
-      const m = moment(date);
-      if (m.isValid()) {
-        value = m.format(DATE_FORMAT);
+      const parsed = DateTime.fromJSDate(new Date(date));
+      if (parsed.isValid) {
+        value = parsed.toFormat('MM/dd/yyyy');
       }
     }
     const obj = {};

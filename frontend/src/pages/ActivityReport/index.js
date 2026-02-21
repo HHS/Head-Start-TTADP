@@ -14,7 +14,6 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { useForm } from 'react-hook-form';
 import pages from './Pages';
@@ -53,6 +52,7 @@ import MeshPresenceManager from '../../components/MeshPresenceManager';
 import useLocalStorageCleanup, { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
 import usePresenceData from '../../hooks/usePresenceData';
 import useHookFormLocalStorage from '../../hooks/useHookFormLocalStorage';
+import { formatDateValueFromFormat } from '../../lib/dates';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -134,8 +134,8 @@ export const formatReportWithSaveBeforeConversion = async (
   if (thereIsANeedToParseDates) {
     reportData = {
       ...reportData,
-      startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-      endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+      startDate: formatDateValueFromFormat(updatedReport.startDate, 'YYYY-MM-DD', 'MM/DD/YYYY'),
+      endDate: formatDateValueFromFormat(updatedReport.endDate, 'YYYY-MM-DD', 'MM/DD/YYYY'),
     };
   }
 
@@ -368,7 +368,7 @@ function ActivityReport({
         updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
-          updateLastSaveTime(moment(report.updatedAt));
+          updateLastSaveTime(new Date(report.updatedAt));
         }
 
         updateError();

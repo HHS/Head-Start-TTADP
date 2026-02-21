@@ -5,7 +5,6 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
@@ -14,6 +13,7 @@ import ButtonSelect from '../components/ButtonSelect';
 import colors from '../colors';
 import MediaCaptureButton from '../components/MediaCaptureButton';
 import DisplayTableToggle from '../components/DisplayTableToggleButton';
+import { formatDateValue, now } from '../lib/dates';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -46,7 +46,7 @@ export function TopicFrequencyGraphWidget({
   title,
 }) {
   const exportName = useMemo(() => {
-    const TODAY = moment().format('YYYY-MM-DD');
+    const TODAY = formatDateValue(now(), 'YYYY-MM-DD');
     return `${TODAY} ${title}`;
   }, [title]);
 

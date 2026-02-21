@@ -4,11 +4,12 @@ import WhatsNew, { formatWhatsNew } from '../WhatsNew';
 import { mockRSSData, mockWindowProperty } from '../../../../testHelpers';
 import { parseFeedIntoDom } from '../../../../utils';
 
-jest.mock('moment', () => {
-  const actualMoment = jest.requireActual('moment');
-  const mockMoment = (input) => (input ? actualMoment(input) : actualMoment('2025-06-01'));
-  Object.assign(mockMoment, actualMoment);
-  return mockMoment;
+jest.mock('../../../../lib/dates', () => {
+  const actual = jest.requireActual('../../../../lib/dates');
+  return {
+    ...actual,
+    now: () => ({ year: 2025 }),
+  };
 });
 
 describe('formatWhatsNew', () => {

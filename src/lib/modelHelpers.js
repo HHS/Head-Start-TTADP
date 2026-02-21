@@ -1,10 +1,13 @@
 /* eslint-disable import/prefer-default-export */
-import moment from 'moment';
+import { DateTime } from 'luxon';
 
 export function formatDate(fieldName) {
   const raw = this.getDataValue(fieldName);
   if (raw) {
-    return moment(raw).format('MM/DD/YYYY');
+    const parsed = DateTime.fromJSDate(new Date(raw));
+    if (parsed.isValid) {
+      return parsed.toFormat('MM/dd/yyyy');
+    }
   }
   return null;
 }

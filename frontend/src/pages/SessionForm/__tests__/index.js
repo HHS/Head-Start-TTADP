@@ -1,5 +1,5 @@
 import React from 'react';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import join from 'url-join';
 import {
   render, screen, act, waitFor,
@@ -681,7 +681,7 @@ describe('SessionReportForm', () => {
     const putBodyJson = JSON.parse(putBody);
     expect(putBodyJson.data.collabComplete).toBe(true);
     expect(putBodyJson.data.collabCompleteId).toBe(1);
-    expect(putBodyJson.data.collabCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+    expect(putBodyJson.data.collabCompleteDate).toBe(DateTime.local().toFormat('yyyy-MM-dd'));
 
     // Assert the poc complete properties are NOT set.
     expect(putBodyJson.data.pocComplete).toBe(true);

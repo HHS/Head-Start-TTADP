@@ -4,7 +4,6 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -24,6 +23,7 @@ import BackLink from '../../components/BackLink';
 import EventSummary from './pages/eventSummary';
 import AppLoadingContext from '../../AppLoadingContext';
 import Modal from '../../components/VanillaModal';
+import { formatNowForTimeZoneMessage } from '../../lib/dates';
 
 /**
  * this is just a simple handler to "flatten"
@@ -234,7 +234,7 @@ export default function TrainingReportForm({ match }) {
       });
       resetFormData(hookForm.reset, updatedEvent);
 
-      const dateStr = moment().format('MM/DD/YYYY [at] h:mm a z');
+      const dateStr = formatNowForTimeZoneMessage();
       const message = {
         eventId: updatedEvent.data.eventId,
         dateStr,

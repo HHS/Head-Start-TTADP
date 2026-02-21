@@ -13,7 +13,6 @@ import {
   Label,
   Alert as USWDSAlert,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
 import {
   TARGET_POPULATIONS as targetPopulations,
   LANGUAGES,
@@ -43,6 +42,10 @@ import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
 import FormItemWithDrawerTriggerLabel from '../../../components/FormItemWithDrawerTriggerLabel';
+import {
+  isValidForFormat,
+  parseDateTimeFromFormat,
+} from '../../../lib/dates';
 
 export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
   const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
@@ -232,10 +235,20 @@ const ActivitySummary = ({
         .filter((citation) => citation !== null);
       // If we have selected citations
       if (allCitations.length) {
-        const start = moment(startDate, 'MM/DD/YYYY');
+        const start = parseDateTimeFromFormat(startDate, 'MM/DD/YYYY');
+        if (!start) {
+          return 'The date entered is not valid with the selected citations.';
+        }
         const invalidCitations = allCitations.filter(
           (citation) => citation.monitoringReferences.some(
-            (monitoringReference) => moment(monitoringReference.reportDeliveryDate, 'YYYY-MM-DD').isAfter(start),
+            (monitoringReference) => {
+              const reportDeliveryDate = parseDateTimeFromFormat(
+                monitoringReference.reportDeliveryDate,
+                'YYYY-MM-DD',
+              );
+
+              return reportDeliveryDate ? reportDeliveryDate.toMillis() > start.toMillis() : false;
+            },
           ),
         );
         // If any of the citations are invalid given the new date.
@@ -763,7 +776,7 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
-  return [startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid());
+  return [startDate, endDate].every((date) => isValidForFormat(date, 'MM/DD/YYYY'));
 };
 
 export default {

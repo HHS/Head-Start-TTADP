@@ -3,11 +3,16 @@ import React, {
   useState, useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { Button } from '@trussworks/react-uswds';
 import DatePicker from '../DatePicker';
 import './DateRangePicker.scss';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import {
+  formatDateValue,
+  formatDateValueFromFormat,
+  now,
+  parseDateTimeFromFormat,
+} from '../../lib/dates';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
 export default function DateRangePicker({ onApply, query }) {
@@ -21,8 +26,8 @@ export default function DateRangePicker({ onApply, query }) {
   if (query && query.split('-').length === 2) {
     const [start, end] = query.split('-');
     defaultDateRange = {
-      startDate: moment(start, QUERY_DATE_FORMAT).format(DATE_DISPLAY_FORMAT),
-      endDate: moment(end, QUERY_DATE_FORMAT).format(DATE_DISPLAY_FORMAT),
+      startDate: formatDateValueFromFormat(start, QUERY_DATE_FORMAT, DATE_DISPLAY_FORMAT),
+      endDate: formatDateValueFromFormat(end, QUERY_DATE_FORMAT, DATE_DISPLAY_FORMAT),
       endDateKey: 'end-date',
       startDateKey: 'start-date',
     };
@@ -36,11 +41,13 @@ export default function DateRangePicker({ onApply, query }) {
 
   useEffect(() => {
     const { startDate, endDate } = dateRange;
-    const start = moment(startDate, DATE_DISPLAY_FORMAT);
-    const end = moment(endDate, DATE_DISPLAY_FORMAT);
+    const start = parseDateTimeFromFormat(startDate, DATE_DISPLAY_FORMAT);
+    const end = parseDateTimeFromFormat(endDate, DATE_DISPLAY_FORMAT);
 
-    if (start.isValid() && end.isValid()) {
-      const rangeStr = `${start.format(QUERY_DATE_FORMAT)}-${end.format(QUERY_DATE_FORMAT)}`;
+    if (start && end) {
+      const formattedStart = formatDateValue(start.toISO(), QUERY_DATE_FORMAT);
+      const formattedEnd = formatDateValue(end.toISO(), QUERY_DATE_FORMAT);
+      const rangeStr = `${formattedStart}-${formattedEnd}`;
       setRange(rangeStr);
     } else {
       setRange('');
@@ -56,34 +63,37 @@ export default function DateRangePicker({ onApply, query }) {
   const onChangeStartDate = (date) => {
     const { startDate, endDate } = dateRange;
 
-    const newStartDate = moment(date, DATE_DISPLAY_FORMAT);
+    const newStartDate = parseDateTimeFromFormat(date, DATE_DISPLAY_FORMAT);
 
-    if (newStartDate.isValid()) {
-      const startDateKey = `start-date-${newStartDate.format(DATE_DISPLAY_FORMAT)}`;
-      const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
-      const isBeforeMax = currentEndDate.isBefore(newStartDate);
+    if (newStartDate) {
+      const startDateKey = `start-date-${formatDateValue(newStartDate.toISO(), DATE_DISPLAY_FORMAT)}`;
+      const currentEndDate = parseDateTimeFromFormat(endDate, DATE_DISPLAY_FORMAT);
+      const isBeforeMax = !!(currentEndDate && currentEndDate.toMillis() < newStartDate.toMillis());
 
       if (isBeforeMax && endDate) {
-        const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
-        const diff = currentEndDate.diff(currentStartDate, 'days');
-        let newEndDate = moment(newStartDate).add(diff, 'days');
+        const currentStartDate = (
+          parseDateTimeFromFormat(startDate, DATE_DISPLAY_FORMAT)
+          || newStartDate
+        );
+        const diff = Math.trunc(currentEndDate.diff(currentStartDate, 'days').days);
+        let newEndDate = newStartDate.plus({ days: diff });
 
-        if (newEndDate.isAfter(moment())) {
-          newEndDate = moment();
+        if (newEndDate.toMillis() > now().toMillis()) {
+          newEndDate = now();
         }
 
-        const newEndDateKey = `end-date-${newEndDate.format(DATE_DISPLAY_FORMAT)}`;
+        const newEndDateKey = `end-date-${formatDateValue(newEndDate.toISO(), DATE_DISPLAY_FORMAT)}`;
 
         setDateRange({
-          endDate: newEndDate.format(DATE_DISPLAY_FORMAT),
-          startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
+          endDate: formatDateValue(newEndDate.toISO(), DATE_DISPLAY_FORMAT),
+          startDate: formatDateValue(newStartDate.toISO(), DATE_DISPLAY_FORMAT),
           endDateKey: newEndDateKey,
           startDateKey,
         });
       } else {
         setDateRange({
           ...dateRange,
-          startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
+          startDate: formatDateValue(newStartDate.toISO(), DATE_DISPLAY_FORMAT),
           startDateKey,
         });
       }

@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useContext } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
@@ -13,6 +12,7 @@ import BackLink from '../../../../components/BackLink';
 import UserContext from '../../../../UserContext';
 import DisplayNextSteps from './components/DisplayNextSteps';
 import LogLine from './components/LogLine';
+import { formatDateValueWithShortMonthOrdinalDayYear } from '../../../../lib/dates';
 
 const hasRichTextContent = (html) => {
   if (!html) {
@@ -138,7 +138,7 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           <p className="text-bold font-sans-3xs base-dark">
             Date of entry:
             {' '}
-            {moment(log.createdAt).format('MMM Do, YYYY')}
+            {formatDateValueWithShortMonthOrdinalDayYear(log.createdAt)}
           </p>
         </Container>
       </div>

@@ -1,6 +1,5 @@
 import React, { useContext, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { COMMUNICATION_METHODS, COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import {
   Alert,
@@ -23,6 +22,7 @@ import { useLogContext } from '../components/LogContext';
 import CommunicationRecipients from '../components/CommunicationRecipients';
 import HookFormRichEditor from '../../HookFormRichEditor';
 import FormItemWithDrawerTriggerLabel from '../../FormItemWithDrawerTriggerLabel';
+import { formatDateValue } from '../../../lib/dates';
 
 const fields = Object.keys(defaultLogValues);
 
@@ -46,7 +46,7 @@ const Log = ({
 
   const otherStaffOptions = regionalUsers.map((u) => ({ ...u, value: String(u.value) }));
   const standardGoalsOptions = standardGoals.map((g) => ({ ...g, value: String(g.value) }));
-  const today = useMemo(() => moment().format('MM/DD/YYYY'), []);
+  const today = useMemo(() => formatDateValue(new Date(), 'MM/DD/YYYY'), []);
 
   return (
     <>

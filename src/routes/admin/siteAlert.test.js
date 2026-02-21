@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import httpCodes from 'http-codes';
 import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import SCOPES from '../../middleware/scopeConstants';
@@ -183,8 +183,8 @@ describe('site alert admin handler', () => {
   describe('createAlert', () => {
     it('should create an alert', async () => {
       const newAlert = {
-        endDate: moment(faker.date.future()).format('MM/DD/YYYY'),
-        startDate: moment(faker.date.past()).format('MM/DD/YYYY'),
+        endDate: DateTime.fromJSDate(faker.date.future()).toFormat('MM/dd/yyyy'),
+        startDate: DateTime.fromJSDate(faker.date.past()).toFormat('MM/dd/yyyy'),
         message: faker.lorem.sentence(),
         status: ALERT_STATUSES.UNPUBLISHED,
         title: faker.lorem.sentence(),

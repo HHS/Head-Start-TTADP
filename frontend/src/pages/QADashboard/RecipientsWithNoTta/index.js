@@ -4,7 +4,6 @@ import React, {
   useRef,
 } from 'react';
 import { Link } from 'react-router-dom';
-import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -22,6 +21,7 @@ import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import UserContext from '../../../UserContext';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
 import { getSelfServiceData } from '../../../fetchers/ssdi';
+import { formatDateValue } from '../../../lib/dates';
 
 const ALLOWED_SUBFILTERS = [
   'region',
@@ -77,9 +77,8 @@ export default function RecipientsWithNoTta() {
           const dateOfLastTta = item['last tta'];
           const daysSinceLastTta = item['days since last tta'];
 
-          const parsedDate = dateOfLastTta ? moment(dateOfLastTta) : null;
-          const formattedDate = parsedDate && parsedDate.isValid()
-            ? parsedDate.format('MM/DD/YYYY')
+          const formattedDate = dateOfLastTta
+            ? formatDateValue(dateOfLastTta, 'MM/DD/YYYY')
             : null;
 
           const numericDaysSinceLastTta = Number(daysSinceLastTta);
@@ -99,7 +98,7 @@ export default function RecipientsWithNoTta() {
             data: [
               {
                 title: 'Date_of_Last_TTA',
-                value: formattedDate,
+                value: formattedDate === 'Invalid date' ? null : formattedDate,
               },
               {
                 title: 'Days_Since_Last_TTA',

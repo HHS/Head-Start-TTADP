@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment-timezone';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import Container from '../Container';
 import {
@@ -10,6 +9,7 @@ import {
   COLLAB_REPORT_DATA,
   COLLAB_REPORT_CONDUCT_METHODS,
 } from '../../Constants';
+import { formatDateValue } from '../../lib/dates';
 import ReadOnlyContent from '../ReadOnlyContent';
 
 export function formatNextSteps(nextSteps) {
@@ -50,12 +50,12 @@ export default function SubmittedCollabReport({ report }) {
   } = report;
 
   // Format dates
-  const formattedStartDate = moment(startDate).format(DATE_DISPLAY_FORMAT);
-  const formattedEndDate = moment(endDate).format(DATE_DISPLAY_FORMAT);
+  const formattedStartDate = formatDateValue(startDate, DATE_DISPLAY_FORMAT);
+  const formattedEndDate = formatDateValue(endDate, DATE_DISPLAY_FORMAT);
   const formattedDuration = `${duration} hours`;
-  const formattedCreatedAt = moment(createdAt).format(DATE_DISPLAY_FORMAT);
-  const formattedSubmittedAt = moment(submittedAt).format(DATE_DISPLAY_FORMAT);
-  const formattedApprovedAt = moment(approvedAt).format(DATE_DISPLAY_FORMAT);
+  const formattedCreatedAt = formatDateValue(createdAt, DATE_DISPLAY_FORMAT);
+  const formattedSubmittedAt = formatDateValue(submittedAt, DATE_DISPLAY_FORMAT);
+  const formattedApprovedAt = formatDateValue(approvedAt, DATE_DISPLAY_FORMAT);
 
   // Process collaborating specialists
   const collaboratingSpecialists = collabReportSpecialists?.length
