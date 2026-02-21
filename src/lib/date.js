@@ -1,13 +1,5 @@
 import { DateTime } from 'luxon';
-
-function toLuxonFormat(format) {
-  return format
-    .replace(/\[([^\]]+)\]/g, "'$1'")
-    .replace(/YYYY/g, 'yyyy')
-    .replace(/YY/g, 'yy')
-    .replace(/DD/g, 'dd')
-    .replace(/D/g, 'd');
-}
+import { toLuxonFormat } from './dates';
 
 /**
  * Attempts to parse a date string using multiple known formats.

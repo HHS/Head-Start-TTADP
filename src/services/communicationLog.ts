@@ -61,6 +61,8 @@ export const formatCommunicationDateWithJsonData = (data: CommLogData): CommLogD
     const normalizedYearDigits = rawYear.length > 4 ? rawYear.slice(0, 4) : rawYear;
     const yearNumber = Number(normalizedYearDigits);
     let year = yearNumber;
+    // Luxon doesn't provide a custom pivot for 2-digit years, so we apply
+    // the same heuristic browsers use: 00-68 → 2000s, 69-99 → 1900s.
     if (normalizedYearDigits.length === 2) {
       year = yearNumber <= 68 ? 2000 + yearNumber : 1900 + yearNumber;
     }
