@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
-import { Tag } from '@trussworks/react-uswds';
+import { Alert, Tag } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
 import CollabReportApproverTableDisplay from '../../../components/CollabReportApproverTableDisplay';
 import Container from '../../../components/Container';
@@ -221,9 +221,9 @@ const CollabReportAlertsTable = ({
         titleMargin={{ bottom: 3 }}
       >
         { deleteError !== null && (
-        <Container className="bg-error-light margin-bottom-2 padding-1">
-          {deleteError}
-        </Container>
+          <Alert type="error" role="alert">
+            {deleteError}
+          </Alert>
         )}
         { data.rows.length === 0 && (
         <Container className="landing" paddingX={0} paddingY={0}>
