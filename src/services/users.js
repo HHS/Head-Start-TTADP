@@ -11,7 +11,6 @@ import {
   sequelize,
   UserValidationStatus,
   EventReportPilot,
-  NationalCenter,
 } from '../models';
 
 const { SITE_ACCESS } = SCOPES;
