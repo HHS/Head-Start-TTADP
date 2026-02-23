@@ -423,3 +423,34 @@ export async function createReport(req: Request, res: Response) {
     await handleErrors(req, res, error, logContext);
   }
 }
+
+export async function unlockReport(req: Request, res: Response) {
+  try {
+    const { collabReportId } = req.params;
+    const report = await collabReportById(collabReportId);
+
+    if (!report) {
+      res.sendStatus(NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, report);
+
+    if (!authorization.canUnlock()) {
+      res.sendStatus(FORBIDDEN);
+      return;
+    }
+
+    // Unlocking resets all Approving Managers to NEEDS_ACTION status
+    await CollabReportApprover.update({ status: APPROVER_STATUSES.NEEDS_ACTION }, {
+      where: { collabReportId },
+      individualHooks: true,
+    });
+
+    res.sendStatus(NO_CONTENT);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}

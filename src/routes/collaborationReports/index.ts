@@ -9,6 +9,7 @@ import {
   saveReport,
   softDeleteReport,
   submitReport,
+  unlockReport,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 import { checkCollabReportIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -55,5 +56,8 @@ router.put('/:collabReportId/submit', checkCollabReportIdParam, transactionWrapp
 
 // saveReport
 router.put('/:collabReportId', checkCollabReportIdParam, transactionWrapper(saveReport));
+
+// unlockReport
+router.put('/:collabReportId/unlock', checkCollabReportIdParam, transactionWrapper(unlockReport));
 
 export default router;

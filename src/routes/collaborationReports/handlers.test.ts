@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
 import {
   getReports,
   getReport,
@@ -11,6 +11,7 @@ import {
   getAlerts,
   downloadReports,
   sendCollabReportCSV,
+  unlockReport,
 } from './handlers';
 import * as CRServices from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
@@ -1615,6 +1616,89 @@ describe('Collaboration Reports Handlers', () => {
       expect(lines[1]).toContain('"R01-CR-001"');
       expect(lines[1]).toContain('"Test Report"');
       expect(lines[1]).toContain('"Test Description"');
+    });
+  });
+
+  describe('unlockReport', () => {
+    beforeEach(() => {
+      mockRequest.params = { collabReportId: '1' };
+      (currentUserId as jest.Mock).mockResolvedValue(123);
+      (userById as jest.Mock).mockResolvedValue({
+        id: 123,
+        name: 'Test User',
+        permissions: [{
+          scopeId: SCOPES.UNLOCK_APPROVED_REPORTS,
+          regionId: 1,
+        }],
+      });
+    });
+
+    it('should return HTTP 404 when report is not found', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(null);
+
+      await unlockReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(mockSendStatus).toHaveBeenCalledWith(404);
+      expect(db.CollabReportApprover.update).not.toHaveBeenCalled();
+    });
+
+    it('should return HTTP 403 when user is not authorized', async () => {
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
+        .mockImplementation(() => ({
+          canUnlock: jest.fn().mockReturnValue(false),
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
+
+      await unlockReport(mockRequest as Request, mockResponse as Response);
+
+      expect(mockSendStatus).toHaveBeenCalledWith(403);
+      expect(db.CollabReportApprover.update).not.toHaveBeenCalled();
+    });
+
+    it('should update approvers to NEEDS_ACTION and return 204 on success', async () => {
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
+        .mockImplementation(() => ({
+          canUnlock: () => true,
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
+
+      await unlockReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(currentUserId).toHaveBeenCalledWith(mockRequest, mockResponse);
+      expect(userById).toHaveBeenCalledWith(123);
+      expect(db.CollabReportApprover.update).toHaveBeenCalledWith(
+        { status: APPROVER_STATUSES.NEEDS_ACTION },
+        { where: { collabReportId: '1' }, individualHooks: true },
+      );
+      expect(mockSendStatus).toHaveBeenCalledWith(204);
+    });
+
+    it('should call handleErrors when an exception occurs', async () => {
+      const mockError = new Error('Database error');
+      (CRServices.collabReportById as jest.Mock).mockRejectedValue(mockError);
+
+      await unlockReport(mockRequest as Request, mockResponse as Response);
+
+      expect(handleErrors).toHaveBeenCalledWith(
+        mockRequest,
+        mockResponse,
+        mockError,
+        expect.objectContaining({ namespace: 'SERVICE:COLLAB_REPORTS' }),
+      );
     });
   });
 });
