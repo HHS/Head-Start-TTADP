@@ -7,8 +7,8 @@ import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
-import './CollabReportsTable.css';
 import { getReportsCSV, getReportsCSVById } from '../../../fetchers/collaborationReports';
+import './CollabReportsTable.css';
 
 const ALL = 2; // this is a constant
 
@@ -55,7 +55,7 @@ const CollabReportsTable = ({
     );
   }
 
-  const handlePageChange = useCallback((e) => {
+  const perPageChange = useCallback((e) => {
     let newValue = Number(e.target.value);
     if (newValue === ALL) {
       newValue = 'all';
@@ -64,6 +64,14 @@ const CollabReportsTable = ({
     setSortConfig((previousConfig) => ({
       ...previousConfig,
       perPage: newValue,
+    }));
+  }, [setSortConfig]);
+
+  const handlePageChange = useCallback((newValue) => {
+    setSortConfig((previousConfig) => ({
+      ...previousConfig,
+      activePage: newValue,
+      offset: (newValue - 1) * Number(previousConfig.perPage),
     }));
   }, [setSortConfig]);
 
@@ -114,12 +122,13 @@ const CollabReportsTable = ({
         totalCount={data.count}
         offset={sortConfig.offset}
         currentPage={sortConfig.activePage}
-        perPage={10}
+        perPage={sortConfig.perPage}
         titleMargin={{ bottom: 1 }}
         menuItems={menuItems}
         showPagingTop={data.rows.length > 0}
+        handlePageChange={handlePageChange}
         paginationCardTopProps={{
-          perPageChange: handlePageChange,
+          perPageChange,
           noXofX: true,
           spaceBetweenSelectPerPageAndContext: 2,
         }}
@@ -188,6 +197,7 @@ CollabReportsTable.propTypes = {
     activePage: PropTypes.number,
     direction: PropTypes.string,
     sortBy: PropTypes.string,
+    perPage: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   }).isRequired,
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string.isRequired,
