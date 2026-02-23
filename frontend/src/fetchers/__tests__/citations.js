@@ -15,4 +15,10 @@ describe('Citations fetcher', () => {
     await fetchCitationTextByName(['123', '456']);
     expect(fetchMock.called('/api/citations/text?citationIds=123&citationIds=456')).toBeTruthy();
   });
+
+  it('dedupes citation IDs when fetching citation text', async () => {
+    fetchMock.get('/api/citations/text?citationIds=123&citationIds=456', []);
+    await fetchCitationTextByName(['123', '123', '456', '456']);
+    expect(fetchMock.called('/api/citations/text?citationIds=123&citationIds=456')).toBeTruthy();
+  });
 });
