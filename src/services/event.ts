@@ -821,8 +821,9 @@ const canUserViewSession = (
   }
 
   if (session.approverId === userId && session.submitted) {
-    // approvers can see all sessions but shouldn't see the edit link on the session card if the session is not "submitted"
-    // (and hasn't been returned for edits, I.E. needs_action)
+    // Approvers can view sessions that are assigned to them once the session has been submitted,
+    // but they shouldn't see the edit link on the session card if the session is not "submitted"
+    // (and hasn't been returned for edits, i.e., needs_action).
     return true;
   }
 
