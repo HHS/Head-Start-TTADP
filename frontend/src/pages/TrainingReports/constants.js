@@ -12,7 +12,7 @@ import {
 // Create page-specific filter with "Event start date" label
 const startDateFilter = {
   ...baseStartDateFilter,
-  display: 'Event Start Date',
+  display: 'Event start date',
 };
 
 const TRAINING_REPORT_FILTER_CONFIG = [

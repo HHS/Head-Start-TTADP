@@ -23,8 +23,9 @@ export async function fetchCitationsByGrant(region, grantIds, reportStartDate) {
  * @returns {Promise<{ text: String; citation: String; }[]>}
  */
 export async function fetchCitationTextByName(citationIds) {
+  const uniqueCitationIds = [...new Set(citationIds)];
   const params = new URLSearchParams();
-  citationIds.forEach((name) => {
+  uniqueCitationIds.forEach((name) => {
     params.append('citationIds', encodeURIComponent(name));
   });
 
