@@ -139,8 +139,8 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
           tls: {},
         },
         limiter: {
-          max: '2000',
-          duration: '600000',
+          max: 2000,
+          duration: 600000,
         },
       },
     });
@@ -159,6 +159,28 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
     });
     delete process.env.REDIS_LIMITER_MAX;
     delete process.env.REDIS_LIMITER_DURATION;
+
+    const config = generateRedisConfig(true);
+
+    expect(config.redisOpts.limiter).toEqual({
+      max: DEFAULT_REDIS_LIMITER_MAX,
+      duration: DEFAULT_REDIS_LIMITER_DURATION,
+    });
+  });
+
+  it('uses default rate limiter settings when env vars are invalid', () => {
+    process.env.VCAP_SERVICES = JSON.stringify({
+      'aws-elasticache-redis': [{
+        credentials: {
+          host: 'test-host',
+          port: '1234',
+          password: 'test-password',
+          uri: 'test-uri',
+        },
+      }],
+    });
+    process.env.REDIS_LIMITER_MAX = 'invalid';
+    process.env.REDIS_LIMITER_DURATION = 'not-a-number';
 
     const config = generateRedisConfig(true);
 

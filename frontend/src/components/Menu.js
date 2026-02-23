@@ -141,11 +141,14 @@ function Menu({
     }, 0);
   };
 
-  // Handle Tab key in portal menu - close menu but allow normal focus movement
+  // Handle Tab key in portal menu - close menu and return focus to trigger
   const onMenuKeyDown = (event) => {
     if (event.keyCode === TAB_KEY_CODE && fixed) {
-      // Close the menu and allow the browser to manage focus (no preventDefault, no manual refocus)
+      event.preventDefault();
       updateShown(false);
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      }
     }
   };
 

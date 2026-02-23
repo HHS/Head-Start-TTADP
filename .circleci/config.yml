@@ -1212,7 +1212,27 @@ commands:
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service
-          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+          retry_with_backoff() {
+            local max_attempts="$1"
+            local delay_seconds="$2"
+            shift 2
+
+            local attempt=1
+            while true; do
+              if "$@"; then
+                return 0
+              fi
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "Attempt ${attempt}/${max_attempts} failed. Retrying in ${delay_seconds}s: $*"
+              attempt=$((attempt + 1))
+              sleep "${delay_seconds}"
+            done
+          }
+
+          retry_with_backoff 5 10 cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
 
           # The line you want to ensure exists in the /etc/hosts file
           line="127.0.0.1        localhost"
