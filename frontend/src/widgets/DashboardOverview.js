@@ -145,13 +145,13 @@ const getDashboardFields = (data, showTooltip) => ([
     lookUpKey: 'Recipients with priority indicators',
     key: 'recipients-with-priority-indicators',
     icon: faUser,
-    showTooltip,
     label1: 'Recipients with priority indicators',
     label2: `${data.numRecipients} of ${data.totalRecipients}`,
     iconColor: colors.ttahubMediumBlue,
     backgroundColor: colors.ttahubBlueLight,
     tooltipText: 'Recipients with at least one priority indicator',
     data: data.recipientPercentage,
+    drawerTagName: 'ttahub-spotlight-priority-indicators',
   },
 ]);
 

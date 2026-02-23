@@ -68,6 +68,8 @@ describe('recipientSpotlight service', () => {
   let newRecipientGrant;
   let newStaffGrant;
   let noTTAGrant;
+  let inactiveOnlyRecipient;
+  let inactiveOnlyGrant;
 
   let monitoringReviewStatus;
   let monitoringFindingStatus;
@@ -92,7 +94,7 @@ describe('recipientSpotlight service', () => {
         number: [
           'G-NORMAL-01', 'G-CHILD-INC-01', 'G-DEFICIENCY-01',
           'G-NEW-RECIP-01', 'G-NEW-STAFF-01', 'G-NO-TTA-01',
-          'G-SORT-TEST-A', 'G-SORT-TEST-B',
+          'G-INACTIVE-01', 'G-SORT-TEST-A', 'G-SORT-TEST-B',
         ],
       },
       raw: true,
@@ -145,6 +147,7 @@ describe('recipientSpotlight service', () => {
       { grantNumber: 'G-NEW-RECIP-01' },
       { grantNumber: 'G-NEW-STAFF-01' },
       { grantNumber: 'G-NO-TTA-01' },
+      { grantNumber: 'G-INACTIVE-01' },
       { grantNumber: 'G-SORT-TEST-A' },
       { grantNumber: 'G-SORT-TEST-B' },
     ], { ignoreDuplicates: true });
@@ -186,6 +189,12 @@ describe('recipientSpotlight service', () => {
       regionId: REGION_ID,
     });
 
+    inactiveOnlyRecipient = await Recipient.create({
+      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      name: 'Inactive Only Recipient',
+      regionId: REGION_ID,
+    });
+
     // Create MonitoringGranteeLinks for each recipient
     await db.MonitoringGranteeLink.bulkCreate([
       { granteeId: normalRecipient.id.toString() },
@@ -194,6 +203,7 @@ describe('recipientSpotlight service', () => {
       { granteeId: newRecipient.id.toString() },
       { granteeId: newStaffRecipient.id.toString() },
       { granteeId: noTTARecipient.id.toString() },
+      { granteeId: inactiveOnlyRecipient.id.toString() },
     ], { ignoreDuplicates: true });
 
     // Create grants for each recipient
@@ -258,6 +268,18 @@ describe('recipientSpotlight service', () => {
       recipientId: noTTARecipient.id,
       regionId: REGION_ID,
       status: 'Active',
+      startDate: pastFiveYears,
+      endDate: createDate,
+      cdi: false,
+    });
+
+    inactiveOnlyGrant = await Grant.create({
+      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      number: 'G-INACTIVE-01',
+      recipientId: inactiveOnlyRecipient.id,
+      regionId: REGION_ID,
+      status: 'Inactive',
+      inactivationDate: createDate,
       startDate: pastFiveYears,
       endDate: createDate,
       cdi: false,
@@ -483,6 +505,7 @@ describe('recipientSpotlight service', () => {
       newRecipientGrant?.id,
       newStaffGrant?.id,
       noTTAGrant?.id,
+      inactiveOnlyGrant?.id,
     ].filter(Boolean);
 
     const recipientIds = [
@@ -492,6 +515,7 @@ describe('recipientSpotlight service', () => {
       newRecipient?.id,
       newStaffRecipient?.id,
       noTTARecipient?.id,
+      inactiveOnlyRecipient?.id,
     ].filter(Boolean);
 
     await sequelize.transaction(async (transaction) => {
@@ -1213,6 +1237,43 @@ describe('recipientSpotlight service', () => {
       // With scope that matches no grants, the query uses TRUE as filter
       // so it returns all recipients in the region
       expect(Array.isArray(result.recipients)).toBe(true);
+    });
+
+    it('excludes recipients with only inactive grants from spotlight cards and totalRecipients', async () => {
+      // Query scoped to only the inactive-only recipient
+      const scopes = createScopesWithRecipientAndRegion(inactiveOnlyRecipient.id, REGION_ID);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        10,
+        [REGION_ID],
+      );
+
+      // Recipient with only inactive grant should not appear in spotlight cards
+      const inactiveRecipientInResults = result.recipients.find(
+        (r) => r.recipientId === inactiveOnlyRecipient.id,
+      );
+      expect(inactiveRecipientInResults).toBeUndefined();
+      expect(result.recipients.length).toBe(0);
+      expect(result.count).toBe(0);
+
+      // totalRecipients should also not include the inactive-only recipient
+      // Query with broad scope to get the real totalRecipients denominator
+      const broadScopes = createScopesWithRegion(REGION_ID);
+      const broadResult = await getRecipientSpotlightIndicators(
+        broadScopes,
+        'recipientName',
+        'ASC',
+        0,
+        10,
+        [REGION_ID],
+      );
+      const inactiveRecipientCounted = broadResult.recipients.find(
+        (r) => r.recipientId === inactiveOnlyRecipient.id,
+      );
+      expect(inactiveRecipientCounted).toBeUndefined();
     });
   });
 

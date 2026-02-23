@@ -62,7 +62,6 @@ export async function getRecipientSpotlightIndicators(
     };
   }
 
-  const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   // Build where for grants, filter by region early on.
   // Get the where clause from scopes.grant (may be empty object if no filters)
   const grantScopeWhere = scopes?.grant?.where || {};
@@ -74,17 +73,7 @@ export async function getRecipientSpotlightIndicators(
         regionId: { [Op.in]: regions.map((r) => parseInt(r, 10)) },
       },
       singleGrantId ? { id: singleGrantId } : {},
-      {
-        [Op.or]: [
-          { status: 'Active' },
-          {
-            status: 'Inactive',
-            inactivationDate: {
-              [Op.gte]: INACTIVATION_CUT_OFF,
-            },
-          },
-        ],
-      },
+      { status: 'Active' },
     ],
   };
 
@@ -153,7 +142,7 @@ export async function getRecipientSpotlightIndicators(
   }
 
   // Query total distinct recipient-region pairs for the selected regions
-  // This counts all recipients with active/recently-inactive grants in the regions,
+  // This counts all recipients with active grants in the regions,
   // regardless of other scope filters, to get the true denominator for the percentage
   const totalRecipientsResult = await sequelize.query(`
     SELECT COUNT(*) AS "totalRecipients"
@@ -162,18 +151,11 @@ export async function getRecipientSpotlightIndicators(
       FROM "Recipients" r
       JOIN "Grants" gr ON r.id = gr."recipientId"
       WHERE gr."regionId" IN (:regions)
-        AND (
-          gr.status = 'Active'
-          OR (
-            gr.status = 'Inactive'
-            AND gr."inactivationDate" >= :cutoffDate
-          )
-        )
+        AND gr.status = 'Active'
     ) AS recipient_regions
   `, {
     replacements: {
       regions: regions.map((r) => parseInt(r, 10)),
-      cutoffDate: INACTIVATION_CUT_OFF,
     },
     type: QueryTypes.SELECT,
   });

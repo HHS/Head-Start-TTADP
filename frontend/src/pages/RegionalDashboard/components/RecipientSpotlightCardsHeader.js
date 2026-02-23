@@ -32,7 +32,7 @@ export default function RecipientSpotlightCardsHeader({
       {/* Title Section */}
       <div className="padding-bottom-2">
         <WidgetH2 classNames="padding-0 margin-bottom-1">
-          Recipient spotlight
+          Priority indicators
         </WidgetH2>
         <p className="usa-prose padding-0 margin-0">
           These are the recipients that currently have at least one priority indicator.

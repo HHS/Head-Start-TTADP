@@ -145,7 +145,7 @@ export default function RecipientSpotlightDataController({
             data={safeData.overview}
             fields={['Recipients with priority indicators']}
             showTooltips
-            maxToolTipWidth={220}
+            maxToolTipWidth={300}
           />
         </Grid>
       </Grid>
