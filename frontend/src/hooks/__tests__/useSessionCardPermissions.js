@@ -1138,11 +1138,12 @@ describe('useSessionCardPermissions', () => {
           initialProps: { user: mockUser },
         });
 
-        expect(result.current.showSessionEdit).toBe(false);
+        // POC is not blocked by regional_tta_staff facilitation, so pocCanEdit grants access
+        expect(result.current.showSessionEdit).toBe(true);
         expect(result.current.showSessionDelete).toBe(true);
       });
 
-      it('returns false for delete when Owner+POC with Regional TTA No National Centers', () => {
+      it('returns true for both when Owner+POC with Regional TTA No National Centers', () => {
         const props = {
           ...baseProps,
           isOwner: true,
@@ -1155,8 +1156,10 @@ describe('useSessionCardPermissions', () => {
           initialProps: { user: mockUser },
         });
 
-        expect(result.current.showSessionEdit).toBe(false);
-        expect(result.current.showSessionDelete).toBe(false);
+        // Owner not blocked = REGIONAL_TTA_NO_NATIONAL_CENTERS, so ownerOrCollabCanEdit grants edit
+        // Owner has no facilitation delete restrictions, so ownerCanDelete grants delete
+        expect(result.current.showSessionEdit).toBe(true);
+        expect(result.current.showSessionDelete).toBe(true);
       });
 
       it('returns true for both edit and delete when Owner+Collaborator', () => {
@@ -1175,7 +1178,7 @@ describe('useSessionCardPermissions', () => {
         expect(result.current.showSessionDelete).toBe(true);
       });
 
-      it('returns false for delete when Owner+Collaborator with Regional PD and Region facilitation', () => {
+      it('returns false for edit but true for delete when Owner+Collaborator with Regional PD and Region facilitation', () => {
         const props = {
           ...baseProps,
           isOwner: true,
@@ -1195,8 +1198,10 @@ describe('useSessionCardPermissions', () => {
           initialProps: { user: mockUser },
         });
 
+        // Owner+Collab both use same edit rule; both blocked by regional facilitation → edit false
         expect(result.current.showSessionEdit).toBe(false);
-        expect(result.current.showSessionDelete).toBe(false);
+        // Owner has no facilitation delete restrictions, so ownerCanDelete grants delete
+        expect(result.current.showSessionDelete).toBe(true);
       });
 
       it('returns true for both edit and delete when Approver+Owner', () => {
