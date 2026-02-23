@@ -40,6 +40,9 @@ For detailed testing patterns including database state management helpers, see `
 - When authoring a new filter, sanitize all data for SQL injection, as the filters are usually derived from URLs. sequelize.escape will do some of this, but independent validation of expected types (are all region IDs numbers, for example) should also be performed.
 - Avoid raw SQL unless necessary; use Sequelize scopes/models.
 
+### Validation
+- We leverage the Joi.dev library for schema validation. An example of how we do this is here @src/models/hooks/activityReport.js 
+
 ## Frontend
 
 ### Hook and component based architecture
