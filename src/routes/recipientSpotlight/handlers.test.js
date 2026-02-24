@@ -83,7 +83,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -109,7 +109,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -159,7 +159,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -183,7 +183,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -214,7 +214,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -243,7 +243,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -346,7 +346,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         ['No TTA'],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -372,7 +372,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         ['No TTA', 'Deficiency'],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -399,7 +399,7 @@ describe('recipientSpotlight handlers', () => {
         ['New staff'],
         ['No TTA'],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -478,7 +478,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        'true',
+        true,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -504,7 +504,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });

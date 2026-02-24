@@ -22,8 +22,9 @@ getRecipientSpotLight():
 export async function getRecipientSpotLight(req, res) {
   try {
     const {
-      sortBy, direction, offset, limit, mustHaveIndicators,
+      sortBy, direction, offset, limit, mustHaveIndicators: rawMustHaveIndicators,
     } = req.query;
+    const mustHaveIndicators = rawMustHaveIndicators === 'true';
 
     // Parse pagination params to integers
     const parsedOffset = offset ? parseInt(offset, DECIMAL_BASE) : 0;

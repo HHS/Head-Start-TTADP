@@ -12,6 +12,8 @@ import NoResultsFound from '../../../components/NoResultsFound';
 import { useGrantData } from '../pages/GrantDataContext';
 import './RecipientSpotlight.scss';
 
+const DISPLAYED_INDICATOR_COUNT = 5;
+
 const createRowForEachIndicator = (name, label, value, description) => ({
   name, label, value, description,
 });
@@ -57,6 +59,7 @@ export default function RecipientSpotlight({
   const { updateGrantSpotlightData } = useGrantData();
 
   useEffect(() => {
+    const controller = new AbortController();
     async function fetchRecipientSpotlight() {
       try {
         const filters = `recipientId.in=${recipientId}&region.in=${regionId}`;
@@ -67,6 +70,8 @@ export default function RecipientSpotlight({
           filters,
           null,
           grantId,
+          false,
+          controller.signal,
         );
 
         // Check if response is valid and has meaningful data (more than just an empty object)
@@ -90,6 +95,7 @@ export default function RecipientSpotlight({
           }
         }
       } catch (err) {
+        if (err.name === 'AbortError') return;
         setSpotlightData([]);
         setHasResults(false);
         if (grantNumber) {
@@ -98,6 +104,7 @@ export default function RecipientSpotlight({
       }
     }
     fetchRecipientSpotlight();
+    return () => controller.abort();
   }, [recipientId, regionId, grantId, grantNumber, updateGrantSpotlightData]);
 
   const hasIndicators = spotlightData.some((indicator) => indicator.value === true);
@@ -128,13 +135,16 @@ export default function RecipientSpotlight({
                   )}
                 <h3 className="margin-0 font-serif-md">{hasIndicators ? 'Recipient may need prioritized attention' : 'No priority indicators identified'}</h3>
               </div>
-              <IndicatorCounter count={numberOfTrueIndicators} totalCount={5} />
+              <IndicatorCounter
+                count={numberOfTrueIndicators}
+                totalCount={DISPLAYED_INDICATOR_COUNT}
+              />
             </div>
           </div>
 
           <div className="display-flex flex-align-center margin-top-1">
             <div className="flex-row">
-              <b><p className="usa-prose margin-0 margin-bottom-2">{`${numberOfTrueIndicators} of 5 priority indicators`}</p></b>
+              <p className="usa-prose text-bold margin-0 margin-bottom-2">{`${numberOfTrueIndicators} of ${DISPLAYED_INDICATOR_COUNT} priority indicators`}</p>
               <div>
                 {
                 spotlightData.map((indicator) => (

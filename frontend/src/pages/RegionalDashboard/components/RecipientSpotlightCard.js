@@ -7,6 +7,9 @@ import ExpanderButton from '../../../components/ExpanderButton';
 import IndicatorCounter from '../../RecipientRecord/components/IndicatorCounter';
 import './RecipientSpotlightCard.scss';
 
+// Number of priority indicators currently shown (DRS and FEI temporarily hidden)
+const DISPLAYED_INDICATOR_COUNT = 5;
+
 const INDICATOR_DETAILS = {
   childIncidents: {
     label: 'Child incidents',
@@ -86,6 +89,7 @@ export default function RecipientSpotlightCard({ recipient }) {
         <div
           key={key}
           ref={index === 0 ? firstIndicatorRef : null}
+          tabIndex={index === 0 ? -1 : undefined}
           className={boxClassName}
           role="article"
           aria-label={`${label} - ${isApplicable ? 'Active indicator' : 'Not applicable to this recipient'}`}
@@ -143,7 +147,7 @@ export default function RecipientSpotlightCard({ recipient }) {
             <div className="margin-top-0">
               <IndicatorCounter
                 count={activeCount}
-                totalCount={5}
+                totalCount={DISPLAYED_INDICATOR_COUNT}
                 showCountInline
                 noTopMargin
               />
