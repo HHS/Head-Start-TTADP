@@ -1,3 +1,4 @@
+// See docs/monitoring-fact-tables.md for column definitions and business rules.
 import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {

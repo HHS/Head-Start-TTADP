@@ -283,7 +283,7 @@ const updateMonitoringFactTables = async () => {
       latest_goal_closure,
       CASE
         WHEN calculated_finding_type = 'Area of Concern' AND calculated_status = 'Closed' THEN latest_goal_closure
-        WHEN calculated_status IN ('Active','Elevated Deficiency') THEN CURRENT_DATE + 1
+        WHEN NOT last_review_delivered THEN CURRENT_DATE + 1
         ELSE latest_report_delivery_date
       END active_through
     FROM current_citation_reviews ccr
@@ -313,8 +313,8 @@ const updateMonitoringFactTables = async () => {
       review_status,
       rdd,
       rsd,
-      CASE WHEN NOT BOOL_OR(active) THEN MAX(active_through) END complete_date,
-      NOT BOOL_OR(active) complete,
+      CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(active_through) END complete_date,
+      BOOL_AND(last_review_delivered) complete,
       BOOL_AND(last_review_delivered) AND NOT BOOL_OR(active) corrected
     FROM all_reviews
     JOIN "MonitoringFindingHistories" mfh
