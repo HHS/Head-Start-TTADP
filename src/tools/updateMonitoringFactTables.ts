@@ -1,18 +1,21 @@
 /* eslint-disable no-console */
 
 import { sequelize } from '../models';
+import { prepMigration } from '../lib/migration';
 
 const updateMonitoringFactTables = async () => {
   console.info('Starting Monitoring fact table update');
-  await sequelize.query(
-    `
-    SET TIME ZONE 'UTC';
+  await sequelize.transaction(async (transaction) => {
+    await prepMigration(
+      sequelize.getQueryInterface(),
+      transaction,
+      `UpdateMonitoringFactTables${new Date().toISOString()}`,
+      'UpdateMonitoringFactTables',
+    );
 
-    SELECT
-      set_config('audit.loggedUser', '0', TRUE) as "loggedUser",
-      set_config('audit.transactionId', NULL, TRUE) as "transactionId",
-      set_config('audit.sessionSig', 'UpdateMonitoringFactTables' || NOW()::text, TRUE) as "sessionSig",
-      set_config('audit.auditDescriptor', 'UpdateMonitoringFactTables', TRUE) as "auditDescriptor";
+    await sequelize.query(
+      `
+    SET LOCAL TIME ZONE 'UTC';
 
     ----------------------------------
     -- Primary Entity Data Creation --
@@ -644,8 +647,9 @@ const updateMonitoringFactTables = async () => {
     )
     ;
     `,
-    { raw: true },
-  );
+      { raw: true, transaction },
+    );
+  });
   console.info('Monitoring fact table update complete');
 };
 
