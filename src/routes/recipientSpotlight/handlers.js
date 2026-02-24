@@ -50,7 +50,7 @@ export async function getRecipientSpotLight(req, res) {
     const regionsArray = updatedQuery['region.in'].map((r) => r.toString());
 
     const scopes = await filtersToScopes(
-      req.query,
+      updatedQuery,
       { userId },
     );
 
