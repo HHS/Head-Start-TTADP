@@ -9,7 +9,7 @@ The monitoring fact tables are pre-calculated, denormalized tables calculated fr
 ## Conventions
 
 - **Column naming**: snake_case (e.g., `report_delivery_date`), distinguishing calculated fact tables from raw Monitoring tables.
-- **Timezone**: All date casts use Eastern Time (`America/New_York`) via `SET TIME ZONE` at the start of the update script.
+- **Timezone**: All date casts use UTC via `SET TIME ZONE 'UTC'` at the start of the update script, matching HSES's interpretation of IT-AMS data.
 - **Soft deletes**: `DeliveredReviews` and `Citations` use paranoid soft deletes (`deletedAt`).
 - **Junction tables**: `DeliveredReviewCitations`, `GrantDeliveredReviews`, and `GrantCitations` use hard deletes for stale records since they carry no data beyond the FK pair.
 - **Update frequency**: Runs daily after the monitoring data import and maintenance pipeline, via `updateMonitoringFactTablesCLI.ts`.

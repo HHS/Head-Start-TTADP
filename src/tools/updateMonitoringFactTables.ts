@@ -6,7 +6,7 @@ const updateMonitoringFactTables = async () => {
   console.info('Starting Monitoring fact table update');
   await sequelize.query(
     `
-    SET TIME ZONE 'America/New_York';
+    SET TIME ZONE 'UTC';
 
     SELECT
       set_config('audit.loggedUser', '0', TRUE) as "loggedUser",
