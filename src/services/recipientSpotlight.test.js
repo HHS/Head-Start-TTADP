@@ -17,6 +17,18 @@ const createScopesWithRegion = (regionId) => ({
   },
 });
 
+// Helper function to create scopes with a single grant ID filter
+const createScopesWithGrantId = (grantId) => ({
+  grant: {
+    where: {
+      [db.Sequelize.Op.and]: [
+        { id: { [db.Sequelize.Op.in]: [grantId] } },
+      ],
+    },
+    include: [],
+  },
+});
+
 // Helper function to create scopes with recipient and region filter
 const createScopesWithRecipientAndRegion = (recipientId, regionId) => ({
   grant: {
@@ -1169,9 +1181,12 @@ describe('recipientSpotlight service', () => {
         // Grant mode should NOT see the new CFO on the other grant
         expect(resultWithIndicator.recipients[0].newStaff).toBe(false);
 
-        // Recipient mode (no singleGrantId) SHOULD see the new CFO across all grants
+        // Recipient mode (no singleGrantId) SHOULD see the new CFO across all grants.
+        // Scope intentionally restricted to singleGrantWithIndicator only (not the whole
+        // recipient) so that recipient mode must expand beyond the filter scope to find
+        // the CFO on singleGrantOther. With grantmode bugged to always TRUE this would fail.
         const recipientModeResult = await getRecipientSpotlightIndicators(
-          scopesWithIndicator,
+          createScopesWithGrantId(singleGrantWithIndicator.id),
           'recipientName',
           'ASC',
           0,

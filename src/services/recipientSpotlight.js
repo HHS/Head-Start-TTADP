@@ -222,7 +222,7 @@ export async function getRecipientSpotlightIndicators(
       -- toggle whether we're calculating for just a specific grant
       -- or if we're calculating indicators for an entire recipient
       -- blank is recipient mode, nonblank is grantmode
-      '${singleGrantId}' != '' AS grantmode
+      ${singleGrantId ? 'TRUE' : 'FALSE'} AS grantmode
     FROM grant_recipients
     LEFT JOIN "Goals" g
       ON g."grantId" = grid
