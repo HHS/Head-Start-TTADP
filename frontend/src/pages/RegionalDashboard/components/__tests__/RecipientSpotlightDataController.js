@@ -201,6 +201,29 @@ describe('RecipientSpotlightDataController', () => {
     });
   });
 
+  it('does not set perPage to 0 when "All" is selected with zero results', async () => {
+    getRecipientSpotlight.mockResolvedValue({
+      recipients: [],
+      count: 0,
+      overview: { numRecipients: '0', totalRecipients: '100', recipientPercentage: '0.00%' },
+    });
+    renderController();
+
+    await waitFor(() => {
+      expect(getRecipientSpotlight).toHaveBeenCalledTimes(1);
+    });
+
+    const perPageDropdown = screen.getByLabelText('Show');
+    fireEvent.change(perPageDropdown, { target: { value: '0' } });
+
+    // Guard should prevent state update and any additional fetch
+    expect(getRecipientSpotlight).toHaveBeenCalledTimes(1);
+    expect(getRecipientSpotlight).not.toHaveBeenCalledWith(
+      expect.anything(), expect.anything(), expect.anything(),
+      expect.anything(), 0, expect.anything(), expect.anything(),
+    );
+  });
+
   it('handles pagination', async () => {
     const largeDataSet = {
       ...mockRecipientData,

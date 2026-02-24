@@ -122,6 +122,7 @@ export default function RecipientSpotlightDataController({
 
   const perPageChange = (e) => {
     const perPageValue = parseInt(e.target.value, DECIMAL_BASE);
+    if (!perPageValue) return;
     setSortConfig({
       ...sortConfig,
       activePage: 1,
