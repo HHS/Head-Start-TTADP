@@ -255,7 +255,6 @@ export async function getRecipientSpotlightIndicators(
         g.grid = gr.id
       )
     WHERE (gr.deleted IS NULL OR NOT gr.deleted)
-      AND gr.status = 'Active'
     ),
     -- Select all the potentially-relevant reviews
     -- for early filtering of monitoring datasets
@@ -279,6 +278,7 @@ export async function getRecipientSpotlightIndicators(
       ON mr."statusId" = mrs."statusId"
     CROSS JOIN monitoring_dates
     WHERE mr."deletedAt" IS NULL 
+      AND grstatus = 'Active'
       AND (
         mr."reportDeliveryDate" > monitoring_start_date
         OR
@@ -359,6 +359,7 @@ export async function getRecipientSpotlightIndicators(
         ON grid = pp."grantId"
       WHERE pp.role IN ('cfo','director') 
         AND pp."effectiveDate" >= NOW() - INTERVAL '2 years'
+        AND grstatus = 'Active'
       GROUP BY 1,2
     ),
 
