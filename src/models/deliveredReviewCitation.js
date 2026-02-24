@@ -23,10 +23,18 @@ export default (sequelize, DataTypes) => {
     deliveredReviewId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: 'DeliveredReviews',
+        key: 'id',
+      },
     },
     citationId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: 'Citations',
+        key: 'id',
+      },
     },
   }, {
     sequelize,
