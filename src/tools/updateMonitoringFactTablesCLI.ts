@@ -8,6 +8,6 @@ updateMonitoringFactTables()
     auditLogger.error(e);
     process.exit(1);
   })
-  .finally(() => {
+  .then(() => {
     process.exit(0);
   });
