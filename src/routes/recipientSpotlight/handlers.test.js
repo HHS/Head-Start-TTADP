@@ -424,7 +424,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         123,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
