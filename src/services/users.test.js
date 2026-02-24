@@ -516,6 +516,38 @@ describe('Users DB service', () => {
       expect(creators.includes(userIds[5])).toBeTruthy();
       expect(creators.length).toBe(2);
     });
+
+    describe('when a user has both POC and collaborator permissions', () => {
+      let dualPermUser;
+
+      beforeAll(async () => {
+        dualPermUser = await User.create({
+          id: faker.datatype.number({ min: 25000 }),
+          name: 'dual-perm-user',
+          hsesUsername: `dual-perm-${faker.datatype.number({ min: 25000 })}`,
+          hsesUserId: `dual-perm-${faker.datatype.number({ min: 25000 })}`,
+          lastLogin: new Date(),
+        });
+        await Permission.bulkCreate([
+          { userId: dualPermUser.id, regionId: 5, scopeId: SCOPES.POC_TRAINING_REPORTS },
+          { userId: dualPermUser.id, regionId: 5, scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS },
+        ]);
+      });
+
+      afterAll(async () => {
+        await Permission.destroy({ where: { userId: dualPermUser.id } });
+        await User.destroy({ where: { id: dualPermUser.id } });
+      });
+
+      it('appears in both pointOfContact and collaborators', async () => {
+        const result = await getTrainingReportUsersByRegion(5);
+        const pocIds = result.pointOfContact.map((u) => u.id);
+        const collabIds = result.collaborators.map((u) => u.id);
+
+        expect(pocIds).toContain(dualPermUser.id);
+        expect(collabIds).toContain(dualPermUser.id);
+      });
+    });
   });
 
   describe('usersByRoles', () => {
