@@ -133,6 +133,37 @@ describe('CollabReportsTable', () => {
         perPage: 50,
       });
     });
+
+    it('resets activePage to 1 and offset to 0 when changing perPage', () => {
+      const sortConfigOnPage2 = {
+        ...defaultProps.sortConfig,
+        activePage: 2,
+        offset: 10,
+      };
+
+      render(
+        <MemoryRouter>
+          <CollabReportsTable
+            {...defaultProps}
+            sortConfig={sortConfigOnPage2}
+            data={mockReportData}
+          />
+        </MemoryRouter>,
+      );
+
+      const perPageSelect = screen.getByLabelText('Select per page');
+      fireEvent.change(perPageSelect, { target: { value: '25' } });
+
+      const updateFunction = mockSetSortConfig.mock.calls[0][0];
+      const result = updateFunction(sortConfigOnPage2);
+
+      expect(result).toEqual({
+        ...sortConfigOnPage2,
+        perPage: 25,
+        activePage: 1,
+        offset: 0,
+      });
+    });
   });
 
   describe('page navigation handlePageChange', () => {
