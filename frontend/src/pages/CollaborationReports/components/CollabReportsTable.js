@@ -64,6 +64,8 @@ const CollabReportsTable = ({
     setSortConfig((previousConfig) => ({
       ...previousConfig,
       perPage: newValue,
+      activePage: 1,
+      offset: 0,
     }));
   }, [setSortConfig]);
 
