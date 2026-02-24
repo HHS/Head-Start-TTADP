@@ -3,7 +3,14 @@ import { Model } from 'sequelize';
 export default (sequelize, DataTypes) => {
   class GrantCitation extends Model {
     static associate(models) {
-      // TODO: Add associations
+      models.GrantCitation.belongsTo(models.Grant, {
+        foreignKey: 'grantId',
+        as: 'grant',
+      });
+      models.GrantCitation.belongsTo(models.Citation, {
+        foreignKey: 'citationId',
+        as: 'citation',
+      });
     }
   }
   GrantCitation.init({
@@ -13,7 +20,14 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    // TODO: Add columns and foreign keys
+    grantId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    citationId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   }, {
     sequelize,
     modelName: 'GrantCitation',

@@ -3,7 +3,14 @@ import { Model } from 'sequelize';
 export default (sequelize, DataTypes) => {
   class DeliveredReviewCitation extends Model {
     static associate(models) {
-      // TODO: Add associations
+      models.DeliveredReviewCitation.belongsTo(models.DeliveredReview, {
+        foreignKey: 'deliveredReviewId',
+        as: 'deliveredReview',
+      });
+      models.DeliveredReviewCitation.belongsTo(models.Citation, {
+        foreignKey: 'citationId',
+        as: 'citation',
+      });
     }
   }
   DeliveredReviewCitation.init({
@@ -13,7 +20,14 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    // TODO: Add columns and foreign keys
+    deliveredReviewId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    citationId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   }, {
     sequelize,
     modelName: 'DeliveredReviewCitation',

@@ -6,13 +6,22 @@ const updateMonitoringFactTables = async () => {
   console.info('Starting Monitoring fact table update');
   await sequelize.query(
     `
+    SET TIME ZONE 'America/New_York';
+
     SELECT
       set_config('audit.loggedUser', '0', TRUE) as "loggedUser",
       set_config('audit.transactionId', NULL, TRUE) as "transactionId",
       set_config('audit.sessionSig', 'UpdateMonitoringFactTables' || NOW()::text, TRUE) as "sessionSig",
       set_config('audit.auditDescriptor', 'UpdateMonitoringFactTables', TRUE) as "auditDescriptor";
 
-    -- Collect all potentially valid grant-review combinations
+    ----------------------------------
+    -- Primary Entity Data Creation --
+    ----------------------------------
+
+      -- Collect all potentially valid grant-review combinations
+    -- This includes non-delivered reviews that are ineligible for direct use
+    -- or exposure to the user, but are used to determine whether Findings are
+    -- effectively "Active" due to having undelivered reviews outstanding
     DROP TABLE IF EXISTS all_grant_reviews;
     CREATE TEMP TABLE all_grant_reviews
     AS
@@ -30,7 +39,7 @@ const updateMonitoringFactTables = async () => {
       ON r.id = gr."recipientId"
     WHERE NOT gr.deleted
     )
-    SELECT DISTINCT
+    SELECT DISTINCT ON (review_uuid,grid)
       mr.id mrid,
       rid,
       rname,
@@ -58,16 +67,18 @@ const updateMonitoringFactTables = async () => {
         OR
         mr."sourceCreatedAt" > monitoring_start_date
       )
+    ORDER BY review_uuid, grid, mr.id
     ;
 
     -- Collapse down to a single record per review to
-    -- yeild a list of all possible reviews of interest
+    -- yield a list of all possible reviews of interest
     DROP TABLE IF EXISTS all_reviews;
     CREATE TEMP TABLE all_reviews
     AS
     SELECT
-      mrid,
+      MIN(mrid) mrid,
       rid,
+      rname,
       region,
       ARRAY_AGG(grid) grids,
       review_uuid,
@@ -77,13 +88,14 @@ const updateMonitoringFactTables = async () => {
       rsd,
       rsc
     FROM all_grant_reviews
-    GROUP BY 1,2,3,5,6,7,8,9,10
+    GROUP BY 2,3,4,6,7,8,9,10,11
     ;
 
     -- Collapse down to a single record per grant to
-    -- yeild a list of all possible grants of interest
+    -- yield a list of all possible grants of interest
     DROP TABLE IF EXISTS all_grants;
     CREATE TEMP TABLE all_grants
+    AS
     SELECT DISTINCT
       rid,
       rname,
@@ -94,13 +106,15 @@ const updateMonitoringFactTables = async () => {
     FROM all_grant_reviews
     ;
 
-    -- DROP TABLE IF EXISTS monitoring_goals;
+
+    -- Collect all the relevant monitoring Goals
+    -- and when they were most recently closed
+    DROP TABLE IF EXISTS monitoring_goals;
     CREATE TEMP TABLE monitoring_goals
     AS
-    SELECT DISTINCT ON (g.id)
-      g.id gid,
+    SELECT DISTINCT ON (grid)
       grid goal_grid,
-      "activeGrantId" active_grid,
+      g.id gid,
       "performedAt" latest_goal_closure
     FROM all_grants
     JOIN "GrantRelationshipToActive" grta
@@ -114,13 +128,16 @@ const updateMonitoringFactTables = async () => {
     LEFT JOIN "GoalStatusChanges" gsc
       ON g.id = gsc."goalId"
       AND "newStatus" = 'Closed'
-    ORDER BY g.id, "performedAt" DESC
+    ORDER BY grid, "performedAt" DESC NULLS LAST
     ;
 
+    -- Connect Findings of interest to their raw/naive statuses plus
+    -- the citation and other information from FindingStandards
     DROP TABLE IF EXISTS denormed_findings;
     CREATE TEMP TABLE denormed_findings
     AS
     SELECT DISTINCT
+      mf.id mfid,
       mf."findingId" finding_uuid,
       mfss.name raw_status,
       mf."findingType" raw_finding_type,
@@ -144,12 +161,17 @@ const updateMonitoringFactTables = async () => {
     JOIN "MonitoringStandards" ms
       ON mfst."standardId" = ms."standardId"
     ;
-      
 
+    -- Connect findings to their most recent DELIVERED review and also
+    -- mark it with the finding type based on that finding history as
+    -- well as pull in the latest Monitoring Goal closure, which we
+    -- use to decide whether Findings are considered to have been
+    -- addressed by TTA staff.
     DROP TABLE IF EXISTS latest_citation_reviews;
     CREATE TEMP TABLE latest_citation_reviews
     AS
     SELECT DISTINCT ON (finding_uuid)
+      mfid,
       finding_uuid,
       raw_status,
       raw_finding_type,
@@ -167,7 +189,6 @@ const updateMonitoringFactTables = async () => {
       guidance_category,
       rid recipient_id,
       region region_id,
-      grid latest_grant_id,
       review_uuid latest_review_uuid,
       mfh.narrative latest_narrative,
       mfh.determination latest_determination,
@@ -176,19 +197,22 @@ const updateMonitoringFactTables = async () => {
     FROM denormed_findings df
     JOIN "MonitoringFindingHistories" mfh
       ON finding_uuid = mfh."findingId"
-    JOIN all_reviews
+    JOIN all_grant_reviews
       ON mfh."reviewId" = review_uuid
       AND rdd IS NOT NULL
     LEFT JOIN monitoring_goals
       ON grid = goal_grid
-      OR grid = active_grid
-    ORDER BY 1,rdd DESC, latest_goal_closure DESC NULLS LAST, rsd DESC, rsc DESC
+    ORDER BY finding_uuid,rdd DESC, latest_goal_closure DESC NULLS LAST, rsd DESC, rsc DESC, mfid
     ;
     
+    -- Connect the Finding with whatever review is currently in progress;
+    -- If it is undelivered, the Finding is considered Active regardless of
+    -- its naive/raw status
     DROP TABLE IF EXISTS current_citation_reviews;
     CREATE TEMP TABLE current_citation_reviews
     AS
     SELECT DISTINCT ON (finding_uuid)
+      mfid,
       finding_uuid,
       raw_status,
       CASE
@@ -196,6 +220,7 @@ const updateMonitoringFactTables = async () => {
         WHEN rdd IS NOT NULL AND review_status = 'Complete' THEN raw_status
         ELSE 'Active'
       END calculated_status,
+      rdd IS NOT NULL last_review_delivered,
       raw_finding_type,
       calculated_finding_type,
       source_category,
@@ -207,7 +232,6 @@ const updateMonitoringFactTables = async () => {
       guidance_category,
       recipient_id,
       region_id,
-      latest_grant_id,
       latest_review_uuid,
       latest_narrative,
       latest_determination,
@@ -218,16 +242,25 @@ const updateMonitoringFactTables = async () => {
       ON finding_uuid = mfh."findingId"
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
-    ORDER BY 1,rdd DESC NULLS FIRST, rsd DESC, rsc DESC
+    ORDER BY finding_uuid,rdd DESC NULLS FIRST, rsd DESC, rsc DESC, mfid
     ;
 
-    DROP TABLE IF EXISTS full_citation_reviews;
-    CREATE TEMP TABLE full_citation_reviews
+    -- Connect the Finding with the initial delivered review that made
+    -- it eligible for TTA. This could be useful for showing historical
+    -- information about a Finding, but it's most important for establishing
+    -- the timeframe during which we considered the Finding "Active"
+    --
+    -- This is basically the finished 'Citation" record set
+    DROP TABLE IF EXISTS full_citations;
+    CREATE TEMP TABLE full_citations
     AS
     SELECT DISTINCT ON (finding_uuid)
+      mfid,
       finding_uuid,
       raw_status,
       calculated_status,
+      calculated_status IN ('Active','Elevated Deficiency') active,
+      last_review_delivered,
       raw_finding_type,
       calculated_finding_type,
       source_category,
@@ -239,18 +272,17 @@ const updateMonitoringFactTables = async () => {
       guidance_category,
       rid recipient_id,
       region region_id,
-      grid initial_grant_id,
       review_uuid initial_review_uuid,
       mfh.narrative initial_narrative,
       mfh.determination initial_determination,
       rdd initial_report_delivery_date,
-      latest_grant_id,
       latest_review_uuid,
       latest_narrative,
       latest_determination,
       latest_report_delivery_date,
       latest_goal_closure,
       CASE
+        WHEN calculated_finding_type = 'Area of Concern' AND calculated_status = 'Closed' THEN latest_goal_closure
         WHEN calculated_status IN ('Active','Elevated Deficiency') THEN CURRENT_DATE + 1
         ELSE latest_report_delivery_date
       END active_through
@@ -259,13 +291,358 @@ const updateMonitoringFactTables = async () => {
       ON finding_uuid = mfh."findingId"
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
-    ORDER BY 1,rdd NULLS LAST, rsd, rsc
+    ORDER BY finding_uuid,rdd NULLS LAST, rsd, rsc, mfid
     ;
+
+    -- Use Findings to determine if a chain of reviews is complete
+    -- by connecting to the linked Findings and seeing if any is
+    -- still active and if not then when they were complete 
+    --
+    -- This is basically the finished 'DeliveredReviews" record set
+    DROP TABLE IF EXISTS delivered_reviews;
+    CREATE TEMP TABLE delivered_reviews
+    AS
+    SELECT
+      mrid,
+      rid,
+      rname,
+      region,
+      grids,
+      review_uuid,
+      review_type,
+      review_status,
+      rdd,
+      rsd,
+      CASE WHEN NOT BOOL_OR(active) THEN MAX(active_through) END complete_date,
+      NOT BOOL_OR(active) complete,
+      BOOL_AND(last_review_delivered) AND NOT BOOL_OR(active) corrected
+    FROM all_reviews
+    JOIN "MonitoringFindingHistories" mfh
+      ON mfh."reviewId" = review_uuid
+    JOIN full_citations
+      ON mfh."findingId" = finding_uuid
+    WHERE rdd IS NOT NULL
+    GROUP BY 1,2,3,4,5,6,7,8,9,10
+    ;
+
+    ----------------------------------
+    -- Primary Entity Table Upserts --
+    ----------------------------------
+
+    -- DeliveredReviews upsert
+    INSERT INTO "DeliveredReviews" (
+      mrid,
+      recipient_id,
+      recipient_name,
+      region_id,
+      grids,
+      review_uuid,
+      review_type,
+      review_status,
+      report_delivery_date,
+      report_start_date,
+      complete_date,
+      complete,
+      corrected,
+      "createdAt"
+    )
+    SELECT
+      mrid,
+      rid,
+      rname,
+      region,
+      grids,
+      review_uuid,
+      review_type,
+      review_status,
+      rdd,
+      rsd,
+      complete_date,
+      complete,
+      corrected,
+      NOW()
+    FROM delivered_reviews d_r
+    ON CONFLICT (mrid)
+    DO UPDATE SET
+      recipient_id = EXCLUDED.recipient_id,
+      recipient_name = EXCLUDED.recipient_name,
+      region_id = EXCLUDED.region_id,
+      grids = EXCLUDED.grids,
+      review_uuid = EXCLUDED.review_uuid,
+      review_type = EXCLUDED.review_type,
+      review_status = EXCLUDED.review_status,
+      report_delivery_date = EXCLUDED.report_delivery_date,
+      report_start_date = EXCLUDED.report_start_date,
+      complete_date = EXCLUDED.complete_date,
+      complete = EXCLUDED.complete,
+      corrected = EXCLUDED.corrected,
+      "updatedAt" = NOW(),
+      "deletedAt" = NULL
+    WHERE
+      "DeliveredReviews".recipient_id IS DISTINCT FROM EXCLUDED.recipient_id
+      OR "DeliveredReviews".recipient_name IS DISTINCT FROM EXCLUDED.recipient_name
+      OR "DeliveredReviews".region_id IS DISTINCT FROM EXCLUDED.region_id
+      OR "DeliveredReviews".grids IS DISTINCT FROM EXCLUDED.grids
+      OR "DeliveredReviews".review_uuid IS DISTINCT FROM EXCLUDED.review_uuid
+      OR "DeliveredReviews".review_type IS DISTINCT FROM EXCLUDED.review_type
+      OR "DeliveredReviews".review_status IS DISTINCT FROM EXCLUDED.review_status
+      OR "DeliveredReviews".report_delivery_date IS DISTINCT FROM EXCLUDED.report_delivery_date
+      OR "DeliveredReviews".report_start_date IS DISTINCT FROM EXCLUDED.report_start_date
+      OR "DeliveredReviews".complete_date IS DISTINCT FROM EXCLUDED.complete_date
+      OR "DeliveredReviews".complete IS DISTINCT FROM EXCLUDED.complete
+      OR "DeliveredReviews".corrected IS DISTINCT FROM EXCLUDED.corrected
+      OR "DeliveredReviews"."deletedAt" IS NOT NULL
+    ;
+
+    -- DeliveredReviews deleted record marking
+    UPDATE "DeliveredReviews" dr
+    SET "deletedAt" = NOW()
+    WHERE "deletedAt" IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM delivered_reviews d_r
+        WHERE dr.mrid = d_r.mrid
+      )
+    ;
+
+    -- Citations upsert
+    INSERT INTO "Citations" (
+      mfid,
+      finding_uuid,
+      raw_status,
+      calculated_status,
+      active,
+      last_review_delivered,
+      raw_finding_type,
+      calculated_finding_type,
+      source_category,
+      finding_deadline,
+      reported_date,
+      closed_date,
+      citation,
+      standard_text,
+      guidance_category,
+      recipient_id,
+      region_id,
+      initial_review_uuid,
+      initial_narrative,
+      initial_determination,
+      initial_report_delivery_date,
+      latest_review_uuid,
+      latest_narrative,
+      latest_determination,
+      latest_report_delivery_date,
+      latest_goal_closure,
+      active_through,
+      "createdAt"
+    )
+    SELECT
+      mfid,
+      finding_uuid,
+      raw_status,
+      calculated_status,
+      active,
+      last_review_delivered,
+      raw_finding_type,
+      calculated_finding_type,
+      source_category,
+      finding_deadline,
+      reported_date,
+      closed_date,
+      citation,
+      standard_text,
+      guidance_category,
+      recipient_id,
+      region_id,
+      initial_review_uuid,
+      initial_narrative,
+      initial_determination,
+      initial_report_delivery_date,
+      latest_review_uuid,
+      latest_narrative,
+      latest_determination,
+      latest_report_delivery_date,
+      latest_goal_closure,
+      active_through,
+      NOW()
+    FROM full_citations
+    ON CONFLICT (finding_uuid)
+    DO UPDATE SET
+      mfid = EXCLUDED.mfid,
+      raw_status = EXCLUDED.raw_status,
+      calculated_status = EXCLUDED.calculated_status,
+      active = EXCLUDED.active,
+      last_review_delivered = EXCLUDED.last_review_delivered,
+      raw_finding_type = EXCLUDED.raw_finding_type,
+      calculated_finding_type = EXCLUDED.calculated_finding_type,
+      source_category = EXCLUDED.source_category,
+      finding_deadline = EXCLUDED.finding_deadline,
+      reported_date = EXCLUDED.reported_date,
+      closed_date = EXCLUDED.closed_date,
+      citation = EXCLUDED.citation,
+      standard_text = EXCLUDED.standard_text,
+      guidance_category = EXCLUDED.guidance_category,
+      recipient_id = EXCLUDED.recipient_id,
+      region_id = EXCLUDED.region_id,
+      initial_review_uuid = EXCLUDED.initial_review_uuid,
+      initial_narrative = EXCLUDED.initial_narrative,
+      initial_determination = EXCLUDED.initial_determination,
+      initial_report_delivery_date = EXCLUDED.initial_report_delivery_date,
+      latest_review_uuid = EXCLUDED.latest_review_uuid,
+      latest_narrative = EXCLUDED.latest_narrative,
+      latest_determination = EXCLUDED.latest_determination,
+      latest_report_delivery_date = EXCLUDED.latest_report_delivery_date,
+      latest_goal_closure = EXCLUDED.latest_goal_closure,
+      active_through = EXCLUDED.active_through,
+      "updatedAt" = NOW(),
+      "deletedAt" = NULL
+    WHERE
+      "Citations".mfid IS DISTINCT FROM EXCLUDED.mfid
+      OR "Citations".raw_status IS DISTINCT FROM EXCLUDED.raw_status
+      OR "Citations".calculated_status IS DISTINCT FROM EXCLUDED.calculated_status
+      OR "Citations".active IS DISTINCT FROM EXCLUDED.active
+      OR "Citations".last_review_delivered IS DISTINCT FROM EXCLUDED.last_review_delivered
+      OR "Citations".raw_finding_type IS DISTINCT FROM EXCLUDED.raw_finding_type
+      OR "Citations".calculated_finding_type IS DISTINCT FROM EXCLUDED.calculated_finding_type
+      OR "Citations".source_category IS DISTINCT FROM EXCLUDED.source_category
+      OR "Citations".finding_deadline IS DISTINCT FROM EXCLUDED.finding_deadline
+      OR "Citations".reported_date IS DISTINCT FROM EXCLUDED.reported_date
+      OR "Citations".closed_date IS DISTINCT FROM EXCLUDED.closed_date
+      OR "Citations".citation IS DISTINCT FROM EXCLUDED.citation
+      OR "Citations".standard_text IS DISTINCT FROM EXCLUDED.standard_text
+      OR "Citations".guidance_category IS DISTINCT FROM EXCLUDED.guidance_category
+      OR "Citations".recipient_id IS DISTINCT FROM EXCLUDED.recipient_id
+      OR "Citations".region_id IS DISTINCT FROM EXCLUDED.region_id
+      OR "Citations".initial_review_uuid IS DISTINCT FROM EXCLUDED.initial_review_uuid
+      OR "Citations".initial_narrative IS DISTINCT FROM EXCLUDED.initial_narrative
+      OR "Citations".initial_determination IS DISTINCT FROM EXCLUDED.initial_determination
+      OR "Citations".initial_report_delivery_date IS DISTINCT FROM EXCLUDED.initial_report_delivery_date
+      OR "Citations".latest_review_uuid IS DISTINCT FROM EXCLUDED.latest_review_uuid
+      OR "Citations".latest_narrative IS DISTINCT FROM EXCLUDED.latest_narrative
+      OR "Citations".latest_determination IS DISTINCT FROM EXCLUDED.latest_determination
+      OR "Citations".latest_report_delivery_date IS DISTINCT FROM EXCLUDED.latest_report_delivery_date
+      OR "Citations".latest_goal_closure IS DISTINCT FROM EXCLUDED.latest_goal_closure
+      OR "Citations".active_through IS DISTINCT FROM EXCLUDED.active_through
+      OR "Citations"."deletedAt" IS NOT NULL
+    ;
+
+    -- Citations deleted record marking
+    UPDATE "Citations"
+    SET "deletedAt" = NOW()
+    WHERE "deletedAt" IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM full_citations fc
+        WHERE fc.finding_uuid = "Citations".finding_uuid
+      );
+
+    ----------------------------
+    -- Junction Table Upserts --
+    ----------------------------
+
+    -- GrantDeliveredReviews upsert
+    INSERT INTO "GrantDeliveredReviews" ("grantId", "deliveredReviewId", "createdAt")
+    SELECT DISTINCT
+      agr.grid,
+      dr.id,
+      NOW()
+    FROM all_grant_reviews agr
+    JOIN "DeliveredReviews" dr
+      ON agr.mrid = dr.mrid
+    ON CONFLICT ("grantId", "deliveredReviewId")
+    DO NOTHING
+    ;
+
+    -- GrantDeliveredReviews stale record cleanup
+    DELETE FROM "GrantDeliveredReviews" gdr
+    WHERE NOT EXISTS (
+      SELECT 1 FROM all_grant_reviews agr
+      JOIN "DeliveredReviews" dr
+        ON agr.mrid = dr.mrid
+      WHERE gdr."grantId" = agr.grid
+        AND gdr."deliveredReviewId" = dr.id
+    )
+    ;
+
+    -- Create the DeliveredReviewCitations junction record set
+    DROP TABLE IF EXISTS delivered_review_citations;
+    CREATE TEMP TABLE delivered_review_citations
+    AS
+    SELECT DISTINCT
+      mfid,
+      mrid
+    FROM full_citations
+    JOIN "MonitoringFindingHistories" mfh
+      ON mfh."findingId" = finding_uuid
+    JOIN all_reviews
+      ON mfh."reviewId" = review_uuid
+    ;
+
+    -- DeliveredReviewCitations upsert
+    INSERT INTO "DeliveredReviewCitations" ("deliveredReviewId", "citationId", "createdAt")
+    SELECT DISTINCT
+      dr.id,
+      c.id,
+      NOW()
+    FROM delivered_review_citations drc
+    JOIN "DeliveredReviews" dr
+      ON drc.mrid = dr.mrid
+    JOIN "Citations" c
+      ON drc.mfid = c.mfid
+    ON CONFLICT ("deliveredReviewId", "citationId")
+    DO NOTHING
+    ;
+
+    -- DeliveredReviewCitations stale record cleanup
+    DELETE FROM "DeliveredReviewCitations" drc
+    WHERE NOT EXISTS (
+      SELECT 1 FROM delivered_review_citations t
+      JOIN "DeliveredReviews" dr
+        ON t.mrid = dr.mrid
+      JOIN "Citations" c
+        ON t.mfid = c.mfid
+      WHERE drc."deliveredReviewId" = dr.id
+        AND drc."citationId" = c.id
+    )
+    ;
+
     -- Create the GrantCitations junction record set
     DROP TABLE IF EXISTS citation_grants;
     CREATE TEMP TABLE citation_grants
     AS
-    SELECT
+    SELECT DISTINCT
+      mfid,
+      grid
+    FROM full_citations
+    JOIN "MonitoringFindingGrants" mfg
+      ON mfg."findingId" = finding_uuid
+    JOIN "MonitoringReviewGrantees" mrg
+      ON mfg."granteeId" = mrg."granteeId"
+    JOIN all_grants
+      ON grnumber = mrg."grantNumber"
+    ;
+
+    -- GrantCitations upsert
+    INSERT INTO "GrantCitations" ("grantId", "citationId", "createdAt")
+    SELECT DISTINCT
+      cg.grid,
+      c.id,
+      NOW()
+    FROM citation_grants cg
+    JOIN "Citations" c
+      ON cg.mfid = c.mfid
+    ON CONFLICT ("grantId", "citationId")
+    DO NOTHING
+    ;
+
+    -- GrantCitations stale record cleanup
+    DELETE FROM "GrantCitations" gc
+    WHERE NOT EXISTS (
+      SELECT 1 FROM citation_grants cg
+      JOIN "Citations" c
+        ON cg.mfid = c.mfid
+      WHERE gc."grantId" = cg.grid
+        AND gc."citationId" = c.id
+    )
+    ;
     `,
     { raw: true },
   );

@@ -3,7 +3,14 @@ import { Model } from 'sequelize';
 export default (sequelize, DataTypes) => {
   class GrantDeliveredReview extends Model {
     static associate(models) {
-      // TODO: Add associations
+      models.GrantDeliveredReview.belongsTo(models.Grant, {
+        foreignKey: 'grantId',
+        as: 'grant',
+      });
+      models.GrantDeliveredReview.belongsTo(models.DeliveredReview, {
+        foreignKey: 'deliveredReviewId',
+        as: 'deliveredReview',
+      });
     }
   }
   GrantDeliveredReview.init({
@@ -13,7 +20,14 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    // TODO: Add columns and foreign keys
+    grantId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    deliveredReviewId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   }, {
     sequelize,
     modelName: 'GrantDeliveredReview',
