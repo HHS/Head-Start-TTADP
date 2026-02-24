@@ -38,7 +38,7 @@ One row per monitoring review (with findings) that has actually been delivered t
 | `recipient_id` | INTEGER | Convenience link to `Recipients.id` |
 | `recipient_name` | TEXT | Recipient name |
 | `region_id` | INTEGER | region |
-| `grids` | INTEGER[] | Array of linked grant IDs for inpection convenience |
+| `grids` | INTEGER[] | Array of linked grant IDs for inspection convenience |
 | `review_uuid` | TEXT | `MonitoringReviews.reviewId` — the IT-AMS review UUID |
 | `review_type` | TEXT | Review type (e.g., FA-1, FA-2, RAN, Follow-up) |
 | `review_status` | TEXT | Status name from `MonitoringReviewStatuses` (e.g., Complete) |
