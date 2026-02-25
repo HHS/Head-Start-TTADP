@@ -114,25 +114,12 @@ function Menu({
   }, [fixed, recordButtonPositionAndUpdateMenu]);
 
   const onBlur = (e) => {
-    const { currentTarget, relatedTarget } = e;
-
     if (clickingMenuItemRef.current) {
-      // Always clear the flag on blur
       clickingMenuItemRef.current = false;
-
-      // If focus is moving within the menu or back to the trigger, don't close
-      const focusStaysInMenu = relatedTarget
-        && menuRef.current
-        && menuRef.current.contains(relatedTarget);
-      const focusMovesToTrigger = relatedTarget
-        && triggerRef.current
-        && triggerRef.current.contains(relatedTarget);
-
-      if (focusStaysInMenu || focusMovesToTrigger) {
-        return;
-      }
-      // Otherwise, fall through and run the usual blur-close checks
+      return;
     }
+
+    const { currentTarget, relatedTarget } = e;
 
     // When using a portal, relatedTarget will be the element receiving focus
     // If it's inside our menu, don't close
@@ -233,9 +220,7 @@ function Menu({
               className="usa-list usa-list--unstyled"
               role="menu"
               onKeyDown={onMenuKeyDown}
-              onPointerDownCapture={() => {
-                clickingMenuItemRef.current = true;
-              }}
+              onPointerDownCapture={() => { clickingMenuItemRef.current = true; }}
             >
               {menuItems.map((item) => (
                 <li key={item.label} role="menuitem">

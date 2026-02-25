@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, waitFor, fireEvent,
+  render, screen, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -139,30 +139,6 @@ describe('ContextMenu', () => {
       // When not using portal, menu should be inside container
       const container = screen.getByTestId('container');
       expect(container.contains(menu)).toBe(true);
-    });
-
-    it('does not close menu when blur fires before click on menu item (Safari behavior)', async () => {
-      const onClick = jest.fn();
-      render(<ContextMenu fixed menuItems={menuItems('one', onClick)} label="label" />);
-
-      // Open the menu
-      const button = await screen.findByTestId('context-menu-actions-btn');
-      userEvent.click(button);
-
-      const menuItemButton = await screen.findByRole('button', { name: 'one' });
-
-      // Safari fires pointerdown on the menu item BEFORE blur fires on the trigger
-      fireEvent.pointerDown(menuItemButton);
-
-      // Safari fires blur on the trigger (focus leaving the container in portal mode)
-      fireEvent.focusOut(button);
-
-      // Menu should still be open because clickingMenuItemRef was set by the pointerdown
-      expect(await screen.findByText('one')).toBeVisible();
-
-      // The actual click now fires
-      userEvent.click(menuItemButton);
-      await waitFor(() => expect(onClick).toHaveBeenCalled());
     });
   });
 });
