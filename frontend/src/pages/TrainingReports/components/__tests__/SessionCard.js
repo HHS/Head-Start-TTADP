@@ -286,7 +286,7 @@ describe('SessionCard', () => {
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
-  it('hides the edit session button if the owner work is complete', () => {
+  it('shows the edit button when user is Owner+POC and only owner work is complete (POC can still edit)', () => {
     renderSessionCard({
       id: 1,
       approverId: 999,
@@ -297,7 +297,8 @@ describe('SessionCard', () => {
       },
     }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
+    // Owner blocked (collabComplete=true), but POC is not (pocComplete=false) → edit allowed
+    expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
@@ -490,7 +491,7 @@ describe('SessionCard', () => {
           data: {
             ...defaultSession.data,
             pocComplete: true,
-            ownerComplete: true,
+            collabComplete: true,
           },
         },
         TRAINING_REPORT_STATUSES.IN_PROGRESS,
