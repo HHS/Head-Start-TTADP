@@ -274,6 +274,7 @@ const updateMonitoringFactTables = async () => {
       standard_text,
       guidance_category,
       rid recipient_id,
+      rname recipient_name,
       region region_id,
       review_uuid initial_review_uuid,
       mfh.narrative initial_narrative,
@@ -425,6 +426,7 @@ const updateMonitoringFactTables = async () => {
       standard_text,
       guidance_category,
       recipient_id,
+      recipient_name,
       region_id,
       initial_review_uuid,
       initial_narrative,
@@ -455,6 +457,7 @@ const updateMonitoringFactTables = async () => {
       standard_text,
       guidance_category,
       recipient_id,
+      recipient_name,
       region_id,
       initial_review_uuid,
       initial_narrative,
@@ -485,6 +488,7 @@ const updateMonitoringFactTables = async () => {
       standard_text = EXCLUDED.standard_text,
       guidance_category = EXCLUDED.guidance_category,
       recipient_id = EXCLUDED.recipient_id,
+      recipient_name = EXCLUDED.recipient_name,
       region_id = EXCLUDED.region_id,
       initial_review_uuid = EXCLUDED.initial_review_uuid,
       initial_narrative = EXCLUDED.initial_narrative,
@@ -514,6 +518,7 @@ const updateMonitoringFactTables = async () => {
       OR "Citations".standard_text IS DISTINCT FROM EXCLUDED.standard_text
       OR "Citations".guidance_category IS DISTINCT FROM EXCLUDED.guidance_category
       OR "Citations".recipient_id IS DISTINCT FROM EXCLUDED.recipient_id
+      OR "Citations".recipient_name IS DISTINCT FROM EXCLUDED.recipient_name
       OR "Citations".region_id IS DISTINCT FROM EXCLUDED.region_id
       OR "Citations".initial_review_uuid IS DISTINCT FROM EXCLUDED.initial_review_uuid
       OR "Citations".initial_narrative IS DISTINCT FROM EXCLUDED.initial_narrative

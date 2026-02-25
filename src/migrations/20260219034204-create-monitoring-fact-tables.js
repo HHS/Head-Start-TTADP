@@ -155,6 +155,10 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
         },
+        recipient_name: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
         region_id: {
           type: Sequelize.INTEGER,
           allowNull: true,

@@ -71,6 +71,7 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `standard_text` | TEXT | Full standard text from `MonitoringStandards.text` |
 | `guidance_category` | TEXT | Guidance text from `MonitoringStandards.guidance` |
 | `recipient_id` | INTEGER | Convenience link to `Recipients.id` |
+| `recipient_name` | TEXT | Recipient name |
 | `region_id` | INTEGER | region |
 | `initial_review_uuid` | TEXT | Review UUID of the earliest delivered review where this finding appeared |
 | `initial_narrative` | TEXT | Finding narrative from `MonitoringFindingHistories` linking to the initial review |

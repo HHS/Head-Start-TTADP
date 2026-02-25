@@ -542,6 +542,7 @@ describe('updateMonitoringFactTables', () => {
       expect(citation.guidance_category).toBe('Fiscal');
       expect(citation.source_category).toBe('FA-1');
       expect(citation.recipient_id).toBe(recipientIdA);
+      expect(citation.recipient_name).toMatch(/^Recipient A /);
       expect(citation.region_id).toBe(1);
     });
 

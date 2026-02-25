@@ -243,6 +243,7 @@ class Citations{
  raw_finding_type : text
  raw_status : text
  recipient_id : integer
+ recipient_name : text
  region_id : integer
  reported_date : date
  source_category : text
