@@ -3,7 +3,6 @@ import faker from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
 import updateMonitoringFactTables from './updateMonitoringFactTables';
 import {
-  sequelize,
   Recipient,
   Grant,
   GoalTemplate,
@@ -33,7 +32,6 @@ import {
   MonitoringGranteeLink,
   MonitoringFindingHistoryStatusLink,
 } from '../models';
-import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 
 jest.mock('../logger');
 
@@ -71,8 +69,6 @@ const granteeRow = (grantNumber, reviewId, granteeId) => ({
 });
 
 describe('updateMonitoringFactTables', () => {
-  let snapshot;
-
   // ----------------------------------------------------------
   // Scenario A: Active deficiency, TWO grants on same review
   // ----------------------------------------------------------
@@ -120,8 +116,6 @@ describe('updateMonitoringFactTables', () => {
   const findingIdD = uuidv4();
 
   beforeAll(async () => {
-    snapshot = await captureSnapshot();
-
     // --- Shared statuses ---
     await MonitoringReviewStatusLink.findOrCreate({
       where: { statusId: REVIEW_STATUS_COMPLETE_ID },
@@ -489,20 +483,14 @@ describe('updateMonitoringFactTables', () => {
   }, 60000);
 
   afterAll(async () => {
-    // Clean fact tables first (junction tables cascade-delete via FK).
-    // rollbackToSnapshot can't handle the integer[] grids column on
-    // DeliveredReviews, so we clean these up manually before rollback.
+    // Clean fact tables (junction tables cascade-delete via FK).
     await Citation.destroy({ where: {}, force: true, individualHooks: false });
     await DeliveredReview.destroy({ where: {}, force: true, individualHooks: false });
 
-    try {
-      await rollbackToSnapshot(snapshot);
-    } catch (e) {
-      // The rollback may fail on ZALDeliveredReviews/ZALCitations due to the
-      // integer[] column type; the important fact-table cleanup already happened above.
-    }
-    // Don't call sequelize.close() — Jest may schedule the next test file
-    // in the same worker, and closing the shared pool would break it.
+    // Skip rollbackToSnapshot — it can't handle the integer[] grids column
+    // on ZALDeliveredReviews and leaves the connection in an aborted
+    // transaction state that poisons the pool for subsequent test suites.
+    // Test data uses unique high-numbered IDs that won't conflict.
   });
 
   // =====================
