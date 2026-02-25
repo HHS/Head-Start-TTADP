@@ -75,7 +75,7 @@ export default function RecipientSpotlightDashboardCards({
             <div className="usa-table-container--scrollable padding-x-3 padding-y-2">
               {recipients.map((recipient) => (
                 <RecipientSpotlightCard
-                  key={`recipient-spotlight-${recipient.recipientId}`}
+                  key={`recipient-spotlight-${recipient.recipientId}-${recipient.regionId}`}
                   recipient={recipient}
                 />
               ))}
@@ -94,7 +94,7 @@ export default function RecipientSpotlightDashboardCards({
                 className="margin-y-0"
                 pathname=""
                 currentPage={sortConfig.activePage}
-                totalPages={Math.ceil(count / perPage)}
+                totalPages={Math.ceil(count / (perPage || 1))}
                 onClickNext={() => handlePageChange(sortConfig.activePage + 1)}
                 onClickPrevious={() => handlePageChange(sortConfig.activePage - 1)}
                 onClickPageNumber={(_event, page) => handlePageChange(page)}

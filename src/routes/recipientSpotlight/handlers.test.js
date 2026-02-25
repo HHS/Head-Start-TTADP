@@ -70,7 +70,7 @@ describe('recipientSpotlight handlers', () => {
         mockUserId,
       );
       expect(filtersToScopes).toHaveBeenCalledWith(
-        req.query,
+        expect.objectContaining({ 'region.in': ['1'] }),
         { userId: mockUserId },
       );
       expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
@@ -83,7 +83,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -109,7 +109,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -159,7 +159,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -183,7 +183,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -214,7 +214,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -243,7 +243,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -346,7 +346,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         ['No TTA'],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -372,7 +372,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         ['No TTA', 'Deficiency'],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -399,7 +399,7 @@ describe('recipientSpotlight handlers', () => {
         ['New staff'],
         ['No TTA'],
         null,
-        undefined,
+        false,
       );
     });
 
@@ -424,9 +424,36 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         123,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+    });
+
+    it('should pass updatedQuery (not req.query) to filtersToScopes so region filtering is applied', async () => {
+      // setReadRegions filters out unauthorized region 5, keeping only region 1
+      setReadRegions.mockResolvedValue({
+        'region.in': [1],
+      });
+
+      req.query = {
+        'region.in': ['1', '5'],
+        sortBy: 'name',
+        direction: 'asc',
+        offset: '0',
+        parsedGrantId: null,
+      };
+
+      await getRecipientSpotLight(req, res);
+
+      // filtersToScopes should receive the authorized region list, not the raw req.query
+      expect(filtersToScopes).toHaveBeenCalledWith(
+        expect.objectContaining({ 'region.in': [1] }),
+        { userId: mockUserId },
+      );
+      expect(filtersToScopes).not.toHaveBeenCalledWith(
+        expect.objectContaining({ 'region.in': ['1', '5'] }),
+        expect.anything(),
+      );
     });
 
     it('should pass mustHaveIndicators from query params', async () => {
@@ -451,7 +478,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        'true',
+        true,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });
@@ -477,7 +504,7 @@ describe('recipientSpotlight handlers', () => {
         [],
         [],
         null,
-        undefined,
+        false,
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
     });

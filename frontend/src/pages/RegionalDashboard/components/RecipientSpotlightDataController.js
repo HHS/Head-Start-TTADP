@@ -46,14 +46,10 @@ export default function RecipientSpotlightDataController({
   // If filters is different from currentFilters, then reset the activePage and Offset
   useEffect(() => {
     if (filterQuery !== currentFilters) {
-      setSortConfig({
-        ...sortConfig,
-        activePage: 1,
-        offset: 0,
-      });
+      setSortConfig((prev) => ({ ...prev, activePage: 1, offset: 0 }));
       setCurrentFilters(filterQuery);
     }
-  }, [filterQuery, currentFilters, sortConfig, setSortConfig]);
+  }, [filterQuery, currentFilters, setSortConfig]);
 
   const fetcher = () => getRecipientSpotlight(
     sortConfig.sortBy,
@@ -122,6 +118,7 @@ export default function RecipientSpotlightDataController({
 
   const perPageChange = (e) => {
     const perPageValue = parseInt(e.target.value, DECIMAL_BASE);
+    if (!perPageValue) return;
     setSortConfig({
       ...sortConfig,
       activePage: 1,

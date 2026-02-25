@@ -78,4 +78,25 @@ describe('recipientSpotlight fetcher', () => {
     expect(response).toEqual(mockResponse);
     expect(fetchMock.called()).toBe(true);
   });
+
+  it('passes the signal to the underlying fetch call', async () => {
+    const controller = new AbortController();
+    const mockResponse = { data: 'test data' };
+
+    fetchMock.getOnce(`${recipientUrl}?sortBy=recipientName&direction=desc&offset=0`, mockResponse);
+
+    await getRecipientSpotlight(
+      'recipientName',
+      'desc',
+      0,
+      null,
+      null,
+      null,
+      false,
+      controller.signal,
+    );
+
+    const lastOptions = fetchMock.lastOptions();
+    expect(lastOptions.signal).toBe(controller.signal);
+  });
 });
