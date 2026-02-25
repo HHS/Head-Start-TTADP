@@ -501,7 +501,8 @@ describe('updateMonitoringFactTables', () => {
       // The rollback may fail on ZALDeliveredReviews/ZALCitations due to the
       // integer[] column type; the important fact-table cleanup already happened above.
     }
-    await sequelize.close();
+    // Don't call sequelize.close() — Jest may schedule the next test file
+    // in the same worker, and closing the shared pool would break it.
   });
 
   // =====================
