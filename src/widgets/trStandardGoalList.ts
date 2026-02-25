@@ -11,13 +11,8 @@ export default async function trStandardGoalList(scopes: IScopes): Promise<{ nam
     where: {
       [Op.and]: [
         scopes.trainingReport,
-        {
-          data: {
-            startDate: {
-              [Op.gte]: new Date('2025-09-01'),
-            },
-          },
-        },
+        // eslint-disable-next-line @typescript-eslint/quotes
+        sequelize.literal(`TO_DATE("EventReportPilot"."data"->>'startDate', 'MM/DD/YYYY') >= '2025-09-01'::date`),
       ],
     },
   });

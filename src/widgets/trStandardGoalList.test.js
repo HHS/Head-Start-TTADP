@@ -72,20 +72,20 @@ describe('trStandardGoalList', () => {
     eventReportComplete1 = await createAnEvent({
       userId: user.id,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      startDate: new Date('2025-10-01'),
+      startDate: '10/01/2025',
     });
 
     eventReportComplete2 = await createAnEvent({
       userId: user.id,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      startDate: new Date('2025-11-15'),
+      startDate: '11/15/2025',
     });
 
     // Event - included since we only filter by start date, not event status
     eventReportIncomplete = await createAnEvent({
       userId: user.id,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      startDate: new Date('2025-10-01'),
+      startDate: '10/01/2025',
     });
 
     // Session reports linked to complete events
