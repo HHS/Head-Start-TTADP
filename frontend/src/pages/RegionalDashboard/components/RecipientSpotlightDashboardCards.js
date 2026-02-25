@@ -75,7 +75,7 @@ export default function RecipientSpotlightDashboardCards({
             <div className="usa-table-container--scrollable padding-x-3 padding-y-2">
               {recipients.map((recipient) => (
                 <RecipientSpotlightCard
-                  key={`recipient-spotlight-${recipient.recipientId}`}
+                  key={`recipient-spotlight-${recipient.recipientId}-${recipient.regionId}`}
                   recipient={recipient}
                 />
               ))}

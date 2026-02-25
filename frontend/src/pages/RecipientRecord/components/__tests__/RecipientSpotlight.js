@@ -235,6 +235,27 @@ describe('RecipientSpotlight', () => {
     });
   });
 
+  it('calls abort on the AbortController when the component unmounts', async () => {
+    const mockAbort = jest.fn();
+    const mockController = { signal: {}, abort: mockAbort };
+    const OriginalAbortController = global.AbortController;
+    global.AbortController = jest.fn(() => mockController);
+
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    fetchMock.get(spotlightUrl, mockSpotlightData);
+
+    const { unmount } = render(
+      <GrantDataProvider>
+        <RecipientSpotlight recipientId={1} regionId={1} />
+      </GrantDataProvider>,
+    );
+
+    unmount();
+
+    expect(mockAbort).toHaveBeenCalled();
+    global.AbortController = OriginalAbortController;
+  });
+
   it('applies correct CSS classes based on indicator values', async () => {
     const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
