@@ -213,11 +213,15 @@ function Menu({
         const menuContent = (
           // needed fix below for safari's focus behavior with portals and blur events -
           // blur fires before the click event on the menu item, so we set a ref to
-          // ignore the blur when clicking a menu item, then reset it in a mousedown
-          // event on the menu container
-          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-          <div ref={menuRef} onMouseDown={() => { clickingMenuItemRef.current = true; }} data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
-            <ul className="usa-list usa-list--unstyled" role="menu" onKeyDown={onMenuKeyDown}>
+          // ignore the blur when clicking a menu item, then reset it in a pointer
+          // event on the menu
+          <div ref={menuRef} data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
+            <ul
+              className="usa-list usa-list--unstyled"
+              role="menu"
+              onKeyDown={onMenuKeyDown}
+              onPointerDownCapture={() => { clickingMenuItemRef.current = true; }}
+            >
               {menuItems.map((item) => (
                 <li key={item.label} role="menuitem">
                   <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin" aria-label={item.label}>
