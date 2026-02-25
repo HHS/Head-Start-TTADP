@@ -320,6 +320,7 @@ export default function SessionForm({ match }) {
 
         const submittedFormUser = submitted && isFormUser && !isNeedsAction && !isApproverUser;
         const completeSessionFormUser = sessionComplete && (isFormUser || isApproverUser);
+        const isRegionalEventPocAndNotApproverUser = isRegionalEventPoc && !isApproverUser;
 
         // when do we redirect to the "View" page?
         if (
@@ -327,7 +328,8 @@ export default function SessionForm({ match }) {
           || submittedFormUser // when the form is submitted and we are a form-filler
           || completeSessionFormUser // when the form is complete and we are a form-filler
           || needsActionApprover // when we are an approver and the form is needs action
-          || isRegionalEventPoc // if it's a "regional" session and we are a POC (corner case)
+          || isRegionalEventPocAndNotApproverUser // if it's a "regional" session and
+          //  we are a POC and not an approver (corner case)
         ) {
           history.push(viewTrUrl);
           return;

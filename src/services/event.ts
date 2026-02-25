@@ -820,6 +820,13 @@ const canUserViewSession = (
     return true;
   }
 
+  if (session.approverId === userId && session.submitted) {
+    // Approvers can view sessions that are assigned to them once the session has been submitted,
+    // but they shouldn't see the edit link on the session card if the session is not "submitted"
+    // (and hasn't been returned for edits, i.e., needs_action).
+    return true;
+  }
+
   // POC visibility depends on event organizer type
   if (isPoc) {
     // Check if POC can see sessions for this event type
@@ -827,12 +834,6 @@ const canUserViewSession = (
       return false; // POC cannot see any sessions for this event type
     }
     // POC can see sessions for this event type
-    return true;
-  }
-
-  if (session.approverId === userId && session.submitted) {
-    // approvers can see all sessions but shouldn't see the edit link on the session card if the session is not "submitted"
-    // (and hasn't been returned for edits, I.E. needs_action)
     return true;
   }
 
