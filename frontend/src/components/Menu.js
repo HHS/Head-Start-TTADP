@@ -233,10 +233,8 @@ function Menu({
               className="usa-list usa-list--unstyled"
               role="menu"
               onKeyDown={onMenuKeyDown}
-              onPointerDownCapture={(event) => {
-                if (event.target instanceof Element && event.target.closest('button')) {
-                  clickingMenuItemRef.current = true;
-                }
+              onPointerDownCapture={() => {
+                clickingMenuItemRef.current = true;
               }}
             >
               {menuItems.map((item) => (
