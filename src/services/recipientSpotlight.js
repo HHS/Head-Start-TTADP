@@ -222,7 +222,7 @@ export async function getRecipientSpotlightIndicators(
       -- toggle whether we're calculating for just a specific grant
       -- or if we're calculating indicators for an entire recipient
       -- blank is recipient mode, nonblank is grantmode
-      '${singleGrantId}' != '' AS grantmode
+      '${singleGrantId || ''}' != '' AS grantmode
     FROM grant_recipients
     LEFT JOIN "Goals" g
       ON g."grantId" = grid
@@ -339,19 +339,14 @@ export async function getRecipientSpotlightIndicators(
         OR rdd IS NULL
     ),
 
-    -- 3. New Recipients: Recipients with oldest grant (including inactive/expired) less than 4 years old.
-    -- Uses all non-deleted grants (not just active ones) to avoid falsely flagging recipients
-    -- whose old grants have since become inactive.
+    -- 3. New Recipients: Recipients with oldest grant less than 4 years old
     new_recipients AS (
       SELECT
-        gr_inner.rid new_recip_rid,
-        gr_inner.region new_recip_region
-      FROM grant_recipients gr_inner
-      JOIN "Grants" g
-        ON gr_inner.rid = g."recipientId"
-        AND (g.deleted IS NULL OR NOT g.deleted)
-      GROUP BY 1, 2
-      HAVING MIN(g."startDate") >= NOW() - INTERVAL '4 years'
+        rid new_recip_rid,
+        region new_recip_region
+      FROM all_grants
+      GROUP BY 1,2
+      HAVING MIN(grstart) >= NOW() - INTERVAL '4 years'
     ),
 
     -- 4. New Staff: Any program personnel with effective date in the past 2 years
