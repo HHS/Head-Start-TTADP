@@ -211,11 +211,11 @@ describe('updateMonitoringFactTables', () => {
     // Grant hooks don't fire during bulkCreate, so create link table entries manually.
     // These satisfy FK constraints on MonitoringReviewGrantees, MonitoringFindingGrant, etc.
     await Promise.all([
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberA1 } }),
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberA2 } }),
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberB } }),
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberC } }),
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberD } }),
+      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberA1 }, defaults: { grantId: grantIdA1 } }),
+      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberA2 }, defaults: { grantId: grantIdA2 } }),
+      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberB }, defaults: { grantId: grantIdB } }),
+      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberC }, defaults: { grantId: grantIdC } }),
+      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberD }, defaults: { grantId: grantIdD } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA1 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA2 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdB } }),
@@ -487,10 +487,24 @@ describe('updateMonitoringFactTables', () => {
     await Citation.destroy({ where: {}, force: true, individualHooks: false });
     await DeliveredReview.destroy({ where: {}, force: true, individualHooks: false });
 
-    // Skip rollbackToSnapshot — it can't handle the integer[] grids column
-    // on ZALDeliveredReviews and leaves the connection in an aborted
-    // transaction state that poisons the pool for subsequent test suites.
-    // Test data uses unique high-numbered IDs that won't conflict.
+    const allFindingIds = [findingIdA, findingIdB, findingIdC, findingIdD];
+    const allReviewIds = [reviewIdA, reviewIdB1, reviewIdB2, reviewIdC, reviewIdD1, reviewIdD2];
+    const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD];
+    const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD];
+    const allGrantNumbers = [grantNumberA1, grantNumberA2, grantNumberB, grantNumberC, grantNumberD];
+
+    // Monitoring source data (children before parents)
+    await MonitoringFindingGrant.destroy({ where: { findingId: allFindingIds }, force: true });
+    await MonitoringFindingStandard.destroy({ where: { findingId: allFindingIds }, force: true });
+    await MonitoringFindingHistory.destroy({ where: { findingId: allFindingIds }, force: true });
+    await MonitoringFinding.destroy({ where: { findingId: allFindingIds }, force: true });
+    await MonitoringReviewGrantee.destroy({ where: { reviewId: allReviewIds }, force: true });
+    await MonitoringReview.destroy({ where: { reviewId: allReviewIds }, force: true });
+    await GoalStatusChange.destroy({ where: {}, force: true, individualHooks: false });
+    await Goal.destroy({ where: { grantId: allGrantIds }, force: true, individualHooks: false });
+    await GrantNumberLink.destroy({ where: { grantNumber: allGrantNumbers }, force: true });
+    await Grant.unscoped().destroy({ where: { id: allGrantIds }, force: true, individualHooks: false });
+    await Recipient.unscoped().destroy({ where: { id: allRecipientIds }, force: true });
   });
 
   // =====================
