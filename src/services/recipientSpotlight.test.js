@@ -767,6 +767,83 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients[0].newRecipients).toBe(true);
     });
 
+    it('does not flag recipient with old inactive grant as new recipient', async () => {
+      // A recipient with an old inactive grant + a newer active grant should NOT be
+      // flagged as "New Recipient" because they have historical grant activity > 4 years old.
+      const oldInactiveGrantNumber = `G-OLD-INACTIVE-${faker.datatype.number({ min: 100000, max: 999999 })}`;
+      const newActiveGrantNumber = `G-NEW-ACTIVE-${faker.datatype.number({ min: 100000, max: 999999 })}`;
+
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: oldInactiveGrantNumber },
+        { grantNumber: newActiveGrantNumber },
+      ]);
+
+      const veteranRecipient = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        name: 'Veteran Recipient With Inactive History',
+        regionId: REGION_ID,
+      });
+
+      await db.MonitoringGranteeLink.create({ granteeId: veteranRecipient.id.toString() });
+
+      // Old grant: inactive, started > 4 years ago
+      const oldInactiveGrant = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        number: oldInactiveGrantNumber,
+        recipientId: veteranRecipient.id,
+        regionId: REGION_ID,
+        status: 'Inactive',
+        inactivationDate: pastTwoYears,
+        startDate: pastFiveYears,
+        endDate: pastTwoYears,
+        cdi: false,
+      });
+
+      // New grant: active, started within the last 4 years
+      const newActiveGrant = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        number: newActiveGrantNumber,
+        recipientId: veteranRecipient.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastThreeYears,
+        endDate: createDate,
+        cdi: false,
+      });
+
+      try {
+        const scopes = createScopesWithRecipientAndRegion(veteranRecipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+        );
+
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].recipientId).toBe(veteranRecipient.id);
+        // Should NOT be flagged as new — the old inactive grant predates the 4-year window
+        expect(result.recipients[0].newRecipients).toBe(false);
+      } finally {
+        await Grant.destroy({
+          where: { id: [oldInactiveGrant.id, newActiveGrant.id] },
+          force: true,
+          individualHooks: true,
+        });
+        await db.MonitoringGranteeLink.destroy({
+          where: { granteeId: veteranRecipient.id.toString() },
+          force: true,
+        });
+        await Recipient.destroy({ where: { id: veteranRecipient.id }, force: true });
+        await db.GrantNumberLink.destroy({
+          where: { grantNumber: [oldInactiveGrantNumber, newActiveGrantNumber] },
+          force: true,
+        });
+      }
+    });
+
     it('identifies new staff correctly', async () => {
       const scopes = createScopesWithRecipientAndRegion(newStaffRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
