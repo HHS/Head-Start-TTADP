@@ -22,13 +22,13 @@ const mappedData = (data) => ([
     'childIncidents',
     'Child incidents',
     data.childIncidents,
-    'Recipient has experienced more than one child incident cited in a RAN in the last 12 months',
+    'Recipient grant has experienced more than one child incident cited in a RAN in the last 12 months',
   ),
   createRowForEachIndicator(
     'deficiency',
     'Deficiency',
     data.deficiency,
-    'Recipient has at least one active monitoring deficiency',
+    'Recipient grant has at least one active monitoring deficiency',
   ),
 
   createRowForEachIndicator(
@@ -41,13 +41,13 @@ const mappedData = (data) => ([
     'newStaff',
     'New staff',
     data.newStaff,
-    'Recipient has changed the name of the director or fiscal officer within the last two years in HSES, signifying a key hire',
+    'Recipient grant has changed the name of the director or fiscal officer within the last two years in HSES, signifying a key hire',
   ),
   createRowForEachIndicator(
     'noTTA',
     'No TTA',
     data.noTTA,
-    'Recipient does not have any TTA reports in last 12 months',
+    'Recipient grant does not have any TTA reports in last 12 months',
   ),
 ]);
 

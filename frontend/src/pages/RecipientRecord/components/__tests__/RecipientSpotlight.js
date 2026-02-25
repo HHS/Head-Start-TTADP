@@ -197,9 +197,25 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      expect(screen.getByText(/Recipient has experienced more than one child incident/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has experienced more than one child incident/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
-      expect(screen.getByText(/Recipient does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+    });
+  });
+
+  it('uses grant-scoped descriptions for grant-level indicators', async () => {
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    fetchMock.get(spotlightUrl, mockSpotlightData);
+
+    renderRecipientSpotlight();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Recipient grant has experienced more than one child incident/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has at least one active monitoring deficiency/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has changed the name of the director or fiscal officer/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+      // newRecipients description is not grant-scoped
+      expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
     });
   });
 
