@@ -93,7 +93,7 @@ describe('RecipientSpotlight', () => {
     expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
   });
 
-  it('shows recipient may need prioritized attention when indicators are present', async () => {
+  it('shows recipient grant may need prioritized attention when indicators are present', async () => {
     const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
@@ -101,7 +101,7 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      expect(screen.getByText(/Recipient may need prioritized attention/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant may need prioritized attention/i)).toBeInTheDocument();
       expect(screen.getByText(/3 of 5 priority indicators/i)).toBeInTheDocument();
     });
   });
@@ -185,7 +185,7 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      expect(screen.getByText(/Recipient may need prioritized attention/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant may need prioritized attention/i)).toBeInTheDocument();
     });
   });
 
