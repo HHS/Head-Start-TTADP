@@ -100,9 +100,11 @@ export const submittedReport = {
     'Infants and Toddlers (ages birth to 3)',
   ],
   reason: ['reason'],
+  activityReason: 'reason',
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  language: ['English'],
 };
 
 export const approvedReport = {
