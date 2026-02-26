@@ -56,35 +56,18 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    // POC-specific edit blockers (apply even if user has other roles)
-    if (isPoc) {
-      if (isRegionalNoNationalCenters) {
-        return false;
-      }
-      if (pocComplete && !statusIsNeedsAction) {
-        return false;
-      }
+    const pocCanEdit = isPoc
+      && !isRegionalNoNationalCenters
+      && !(pocComplete && !statusIsNeedsAction)
+      && !(facilitationIsNationalCenters && statusIsNeedsAction);
 
-      if (facilitationIsNationalCenters && statusIsNeedsAction) {
-        return false;
-      }
-    }
-
-    // Owner/Collaborator-specific EDIT blockers
     // For EDIT permissions, owners are treated identically to collaborators.
     // For DELETE permissions (see showSessionDelete below), owners are MORE permissive.
-    if (isCollaborator || isOwner) {
-      if (collabComplete && !statusIsNeedsAction) {
-        return false;
-      }
+    const ownerOrCollabCanEdit = (isCollaborator || isOwner)
+      && !(collabComplete && !statusIsNeedsAction)
+      && !(isRegionalWithNationalCenters && facilitationIncludesRegion);
 
-      if (isRegionalWithNationalCenters && facilitationIncludesRegion) {
-        return false;
-      }
-    }
-
-    // If not blocked, allow edit
-    return true;
+    return pocCanEdit || ownerOrCollabCanEdit;
   }, [
     status,
     eventOrganizer,
@@ -125,29 +108,18 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    // POC-specific delete blockers
-    if (isPoc) {
-      if (isRegionalNoNationalCenters) {
-        return false;
-      }
-      if (isRegionalWithNationalCenters && facilitation === 'national_center') {
-        return false;
-      }
-    }
+    const pocCanDelete = isPoc
+      && !isRegionalNoNationalCenters
+      && !(isRegionalWithNationalCenters && facilitation === 'national_center');
 
-    // IMPORTANT: Owners have NO facilitation-based delete restrictions.
+    // Owners have NO facilitation-based delete restrictions.
+    const ownerCanDelete = isOwner;
+
     // Only collaborators are blocked by regional facilitation rules.
+    const collabCanDelete = isCollaborator
+      && !(isRegionalWithNationalCenters && facilitationIncludesRegion);
 
-    // Collaborator-specific delete blockers
-    if (isCollaborator) {
-      if (isRegionalWithNationalCenters && facilitationIncludesRegion) {
-        return false;
-      }
-    }
-
-    // If not blocked, allow delete
-    // This includes: Owner, Owner+POC (with valid conditions), Owner+Collaborator, etc.
-    return true;
+    return pocCanDelete || ownerCanDelete || collabCanDelete;
   }, [
     status,
     eventStatus,

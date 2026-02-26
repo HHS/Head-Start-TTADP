@@ -198,7 +198,7 @@ const EventSummary = ({
                       }}
                       inputRef={register({ required: 'Select an event creator' })}
                       options={creators || []}
-                      getOptionLabel={(option) => option.nameWithNationalCenters}
+                      getOptionLabel={(option) => option.fullName}
                       getOptionValue={(option) => option.id}
                       onBlur={onBlur}
                       required
@@ -208,7 +208,7 @@ const EventSummary = ({
                   rules={{
                     validate: (value) => {
                       if (!value || value.length === 0) {
-                        return 'Select an event organizer';
+                        return 'Select an event creator';
                       }
                       return true;
                     },
