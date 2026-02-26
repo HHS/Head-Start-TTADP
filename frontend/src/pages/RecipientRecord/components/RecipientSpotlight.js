@@ -117,7 +117,7 @@ export default function RecipientSpotlight({
     <Container paddingX={0} paddingY={0} className="ttahub--recipient-summary">
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <h2 className="ttahub-card-header-title margin-0 padding-0">Priority indicators</h2>
-        <p className="margin-0 padding-0 usa-prose margin-top-1">This is the recipient grant&apos;s current number of priority indicators.</p>
+        <p className="margin-0 padding-0 usa-prose margin-top-1">This is the grant&apos;s current number of priority indicators.</p>
       </div>
 
       {hasResults ? (

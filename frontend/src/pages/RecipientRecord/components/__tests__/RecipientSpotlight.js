@@ -90,7 +90,7 @@ describe('RecipientSpotlight', () => {
     renderRecipientSpotlight();
 
     expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-    expect(screen.getByText("This is the recipient grant's current number of priority indicators.")).toBeInTheDocument();
+    expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
   });
 
   it('shows recipient grant may need prioritized attention when indicators are present', async () => {
@@ -152,7 +152,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(screen.getByText("This is the recipient grant's current number of priority indicators.")).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
@@ -168,7 +168,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(screen.getByText("This is the recipient grant's current number of priority indicators.")).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
@@ -228,7 +228,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(screen.getByText("This is the recipient grant's current number of priority indicators.")).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
@@ -244,7 +244,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(screen.getByText("This is the recipient grant's current number of priority indicators.")).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
