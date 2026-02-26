@@ -9,7 +9,6 @@ const {
   afterCreate,
   afterUpdate,
   beforeValidate,
-  afterDestroy,
 } = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
