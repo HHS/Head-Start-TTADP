@@ -3,6 +3,10 @@
 .ttahub-recipient-spotlight-content {
     min-height: 230px;
 
+    &:focus {
+        outline: none;
+    }
+
     // Allow every flex child to shrink below content width so text wraps
     .display-flex > * {
         min-width: 0;

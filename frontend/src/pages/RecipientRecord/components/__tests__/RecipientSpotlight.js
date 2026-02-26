@@ -90,10 +90,10 @@ describe('RecipientSpotlight', () => {
     renderRecipientSpotlight();
 
     expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-    expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
+    expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
   });
 
-  it('shows recipient may need prioritized attention when indicators are present', async () => {
+  it('shows recipient grant may need prioritized attention when indicators are present', async () => {
     const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
@@ -101,7 +101,7 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      expect(screen.getByText(/Recipient may need prioritized attention/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant may need prioritized attention/i)).toBeInTheDocument();
       expect(screen.getByText(/3 of 5 priority indicators/i)).toBeInTheDocument();
     });
   });
@@ -152,7 +152,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
@@ -168,7 +168,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
@@ -185,7 +185,7 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      expect(screen.getByText(/Recipient may need prioritized attention/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant may need prioritized attention/i)).toBeInTheDocument();
     });
   });
 
@@ -197,9 +197,25 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      expect(screen.getByText(/Recipient has experienced more than one child incident/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has experienced more than one child incident/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
-      expect(screen.getByText(/Recipient does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+    });
+  });
+
+  it('uses grant-scoped descriptions for grant-level indicators', async () => {
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    fetchMock.get(spotlightUrl, mockSpotlightData);
+
+    renderRecipientSpotlight();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Recipient grant has experienced more than one child incident/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has at least one active monitoring deficiency/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has changed the name of the director or fiscal officer/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+      // newRecipients description is not grant-scoped
+      expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
     });
   });
 
@@ -212,7 +228,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
@@ -228,7 +244,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();

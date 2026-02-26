@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
@@ -44,17 +44,10 @@ const INDICATOR_DETAILS = {
 
 export default function RecipientSpotlightCard({ recipient }) {
   const [expanded, setExpanded] = useState(false);
-  const firstIndicatorRef = useRef(null);
 
   const closeOrOpenIndicators = () => {
     setExpanded(!expanded);
   };
-
-  useEffect(() => {
-    if (expanded && firstIndicatorRef.current) {
-      firstIndicatorRef.current.focus();
-    }
-  }, [expanded]);
 
   const calculateActiveIndicators = (recip) => {
     const indicators = [
@@ -79,7 +72,7 @@ export default function RecipientSpotlightCard({ recipient }) {
   const renderIndicatorDetails = () => Object.entries(
     INDICATOR_DETAILS,
   ).map(
-    ([key, { label, description }], index) => {
+    ([key, { label, description }]) => {
       const isApplicable = recipient[key];
       const boxClassName = isApplicable
         ? 'ttahub-recipient-spotlight-card__indicator-box padding-y-1 padding-x-2 bg-white radius-md'
@@ -88,8 +81,6 @@ export default function RecipientSpotlightCard({ recipient }) {
       return (
         <div
           key={key}
-          ref={index === 0 ? firstIndicatorRef : null}
-          tabIndex={index === 0 ? -1 : undefined}
           className={boxClassName}
           role="article"
           aria-label={`${label} - ${isApplicable ? 'Active indicator' : 'Not applicable to this recipient'}`}

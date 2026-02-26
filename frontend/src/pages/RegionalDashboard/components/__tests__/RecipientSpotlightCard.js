@@ -243,4 +243,14 @@ describe('RecipientSpotlightCard', () => {
     const card = container.querySelector('[data-testid="recipient-spotlight-card-1"]');
     expect(card).toBeInTheDocument();
   });
+
+  it('uses recipient-level (not grant-level) descriptions for indicators', () => {
+    renderCard();
+    const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
+    fireEvent.click(expandButton);
+
+    // Descriptions should say "Recipient has", not "Recipient grant has"
+    expect(screen.getByText(/Recipient has experienced more than one child incident/)).toBeInTheDocument();
+    expect(screen.queryByText(/Recipient grant has/)).not.toBeInTheDocument();
+  });
 });
