@@ -54,10 +54,10 @@ router.put(
 // submitReport
 router.put('/:collabReportId/submit', checkCollabReportIdParam, transactionWrapper(submitReport));
 
-// saveReport
-router.put('/:collabReportId', checkCollabReportIdParam, transactionWrapper(saveReport));
-
 // unlockReport
 router.put('/:collabReportId/unlock', checkCollabReportIdParam, transactionWrapper(unlockReport));
+
+// saveReport
+router.put('/:collabReportId', checkCollabReportIdParam, transactionWrapper(saveReport));
 
 export default router;

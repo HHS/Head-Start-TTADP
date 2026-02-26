@@ -66,7 +66,7 @@ export default function ViewCollabReport({ match, user }) {
   const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
   const message = {
     time,
-    collabReportId,
+    reportId: collabReportId,
     displayId,
     status: 'unlocked',
   };
