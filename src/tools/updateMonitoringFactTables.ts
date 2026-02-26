@@ -80,10 +80,6 @@ const updateMonitoringFactTables = async () => {
     AS
     SELECT
       MIN(mrid) mrid,
-      rid,
-      rname,
-      region,
-      ARRAY_AGG(grid) grids,
       review_uuid,
       review_type,
       review_status,
@@ -91,7 +87,7 @@ const updateMonitoringFactTables = async () => {
       rsd,
       rsc
     FROM all_grant_reviews
-    GROUP BY 2,3,4,6,7,8,9,10,11
+    GROUP BY 2,3,4,5,6,7
     ;
 
     -- Collapse down to a single record per grant to
@@ -190,8 +186,6 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
-      rid recipient_id,
-      region region_id,
       review_uuid latest_review_uuid,
       mfh.narrative latest_narrative,
       mfh.determination latest_determination,
@@ -233,8 +227,6 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
-      recipient_id,
-      region_id,
       latest_review_uuid,
       latest_narrative,
       latest_determination,
@@ -273,9 +265,6 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
-      rid recipient_id,
-      rname recipient_name,
-      region region_id,
       review_uuid initial_review_uuid,
       mfh.narrative initial_narrative,
       mfh.determination initial_determination,
@@ -308,10 +297,6 @@ const updateMonitoringFactTables = async () => {
     AS
     SELECT
       mrid,
-      rid,
-      rname,
-      region,
-      grids,
       review_uuid,
       review_type,
       review_status,
@@ -326,7 +311,7 @@ const updateMonitoringFactTables = async () => {
     JOIN full_citations
       ON mfh."findingId" = finding_uuid
     WHERE rdd IS NOT NULL
-    GROUP BY 1,2,3,4,5,6,7,8,9,10
+    GROUP BY 1,2,3,4,5,6
     ;
 
     ----------------------------------
@@ -336,10 +321,6 @@ const updateMonitoringFactTables = async () => {
     -- DeliveredReviews upsert
     INSERT INTO "DeliveredReviews" (
       mrid,
-      recipient_id,
-      recipient_name,
-      region_id,
-      grids,
       review_uuid,
       review_type,
       review_status,
@@ -352,10 +333,6 @@ const updateMonitoringFactTables = async () => {
     )
     SELECT
       mrid,
-      rid,
-      rname,
-      region,
-      grids,
       review_uuid,
       review_type,
       review_status,
@@ -368,10 +345,6 @@ const updateMonitoringFactTables = async () => {
     FROM delivered_reviews d_r
     ON CONFLICT (mrid)
     DO UPDATE SET
-      recipient_id = EXCLUDED.recipient_id,
-      recipient_name = EXCLUDED.recipient_name,
-      region_id = EXCLUDED.region_id,
-      grids = EXCLUDED.grids,
       review_uuid = EXCLUDED.review_uuid,
       review_type = EXCLUDED.review_type,
       review_status = EXCLUDED.review_status,
@@ -383,11 +356,7 @@ const updateMonitoringFactTables = async () => {
       "updatedAt" = NOW(),
       "deletedAt" = NULL
     WHERE
-      "DeliveredReviews".recipient_id IS DISTINCT FROM EXCLUDED.recipient_id
-      OR "DeliveredReviews".recipient_name IS DISTINCT FROM EXCLUDED.recipient_name
-      OR "DeliveredReviews".region_id IS DISTINCT FROM EXCLUDED.region_id
-      OR "DeliveredReviews".grids IS DISTINCT FROM EXCLUDED.grids
-      OR "DeliveredReviews".review_uuid IS DISTINCT FROM EXCLUDED.review_uuid
+      "DeliveredReviews".review_uuid IS DISTINCT FROM EXCLUDED.review_uuid
       OR "DeliveredReviews".review_type IS DISTINCT FROM EXCLUDED.review_type
       OR "DeliveredReviews".review_status IS DISTINCT FROM EXCLUDED.review_status
       OR "DeliveredReviews".report_delivery_date IS DISTINCT FROM EXCLUDED.report_delivery_date
@@ -425,9 +394,6 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
-      recipient_id,
-      recipient_name,
-      region_id,
       initial_review_uuid,
       initial_narrative,
       initial_determination,
@@ -456,9 +422,6 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
-      recipient_id,
-      recipient_name,
-      region_id,
       initial_review_uuid,
       initial_narrative,
       initial_determination,
@@ -487,9 +450,6 @@ const updateMonitoringFactTables = async () => {
       citation = EXCLUDED.citation,
       standard_text = EXCLUDED.standard_text,
       guidance_category = EXCLUDED.guidance_category,
-      recipient_id = EXCLUDED.recipient_id,
-      recipient_name = EXCLUDED.recipient_name,
-      region_id = EXCLUDED.region_id,
       initial_review_uuid = EXCLUDED.initial_review_uuid,
       initial_narrative = EXCLUDED.initial_narrative,
       initial_determination = EXCLUDED.initial_determination,
@@ -517,9 +477,6 @@ const updateMonitoringFactTables = async () => {
       OR "Citations".citation IS DISTINCT FROM EXCLUDED.citation
       OR "Citations".standard_text IS DISTINCT FROM EXCLUDED.standard_text
       OR "Citations".guidance_category IS DISTINCT FROM EXCLUDED.guidance_category
-      OR "Citations".recipient_id IS DISTINCT FROM EXCLUDED.recipient_id
-      OR "Citations".recipient_name IS DISTINCT FROM EXCLUDED.recipient_name
-      OR "Citations".region_id IS DISTINCT FROM EXCLUDED.region_id
       OR "Citations".initial_review_uuid IS DISTINCT FROM EXCLUDED.initial_review_uuid
       OR "Citations".initial_narrative IS DISTINCT FROM EXCLUDED.initial_narrative
       OR "Citations".initial_determination IS DISTINCT FROM EXCLUDED.initial_determination
@@ -547,16 +504,34 @@ const updateMonitoringFactTables = async () => {
     ----------------------------
 
     -- GrantDeliveredReviews upsert
-    INSERT INTO "GrantDeliveredReviews" ("grantId", "deliveredReviewId", "createdAt")
+    INSERT INTO "GrantDeliveredReviews" (
+      "grantId",
+      "deliveredReviewId",
+      recipient_id,
+      recipient_name,
+      region_id,
+      "createdAt"
+    )
     SELECT DISTINCT
       agr.grid,
       dr.id,
+      agr.rid,
+      agr.rname,
+      agr.region,
       NOW()
     FROM all_grant_reviews agr
     JOIN "DeliveredReviews" dr
       ON agr.mrid = dr.mrid
     ON CONFLICT ("grantId", "deliveredReviewId")
-    DO NOTHING
+    DO UPDATE SET
+      recipient_id = EXCLUDED.recipient_id,
+      recipient_name = EXCLUDED.recipient_name,
+      region_id = EXCLUDED.region_id,
+      "updatedAt" = NOW()
+    WHERE
+      "GrantDeliveredReviews".recipient_id IS DISTINCT FROM EXCLUDED.recipient_id
+      OR "GrantDeliveredReviews".recipient_name IS DISTINCT FROM EXCLUDED.recipient_name
+      OR "GrantDeliveredReviews".region_id IS DISTINCT FROM EXCLUDED.region_id
     ;
 
     -- GrantDeliveredReviews stale record cleanup
@@ -618,7 +593,10 @@ const updateMonitoringFactTables = async () => {
     AS
     SELECT DISTINCT
       mfid,
-      grid
+      grid,
+      rid,
+      rname,
+      region
     FROM full_citations
     JOIN "MonitoringFindingGrants" mfg
       ON mfg."findingId" = finding_uuid
@@ -629,16 +607,34 @@ const updateMonitoringFactTables = async () => {
     ;
 
     -- GrantCitations upsert
-    INSERT INTO "GrantCitations" ("grantId", "citationId", "createdAt")
+    INSERT INTO "GrantCitations" (
+      "grantId",
+      "citationId",
+      recipient_id,
+      recipient_name,
+      region_id,
+      "createdAt"
+    )
     SELECT DISTINCT
       cg.grid,
       c.id,
+      cg.rid,
+      cg.rname,
+      cg.region,
       NOW()
     FROM citation_grants cg
     JOIN "Citations" c
       ON cg.mfid = c.mfid
     ON CONFLICT ("grantId", "citationId")
-    DO NOTHING
+    DO UPDATE SET
+      recipient_id = EXCLUDED.recipient_id,
+      recipient_name = EXCLUDED.recipient_name,
+      region_id = EXCLUDED.region_id,
+      "updatedAt" = NOW()
+    WHERE
+      "GrantCitations".recipient_id IS DISTINCT FROM EXCLUDED.recipient_id
+      OR "GrantCitations".recipient_name IS DISTINCT FROM EXCLUDED.recipient_name
+      OR "GrantCitations".region_id IS DISTINCT FROM EXCLUDED.region_id
     ;
 
     -- GrantCitations stale record cleanup

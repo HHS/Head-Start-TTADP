@@ -38,22 +38,6 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       unique: true,
     },
-    recipient_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    recipient_name: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    region_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    grids: {
-      type: DataTypes.ARRAY(DataTypes.INTEGER),
-      allowNull: true,
-    },
     review_uuid: {
       type: DataTypes.TEXT,
       allowNull: true,

@@ -242,9 +242,6 @@ class Citations{
  latest_review_uuid : text
  raw_finding_type : text
  raw_status : text
- recipient_id : integer
- recipient_name : text
- region_id : integer
  reported_date : date
  source_category : text
  standard_text : text
@@ -412,10 +409,6 @@ class DeliveredReviews{
  complete_date : date
  corrected : boolean
  deletedAt : timestamp with time zone
- grids : integer[]
- recipient_id : integer
- recipient_name : text
- region_id : integer
  report_delivery_date : date
  report_start_date : date
  review_status : text
@@ -595,6 +588,9 @@ class GrantCitations{
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+ recipient_id : integer
+ recipient_name : text
+ region_id : integer
 }
 
 class GrantDeliveredReviews{
@@ -603,6 +599,9 @@ class GrantDeliveredReviews{
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+ recipient_id : integer
+ recipient_name : text
+ region_id : integer
 }
 
 class GrantNumberLinks{

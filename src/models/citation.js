@@ -94,18 +94,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    recipient_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    recipient_name: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    region_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
     initial_review_uuid: {
       type: DataTypes.TEXT,
       allowNull: true,

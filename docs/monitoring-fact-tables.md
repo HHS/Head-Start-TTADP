@@ -11,9 +11,9 @@ The monitoring fact tables are pre-calculated, denormalized tables calculated fr
 - **Column naming**: snake_case (e.g., `report_delivery_date`), distinguishing calculated fact tables from raw Monitoring tables.
 - **Timezone**: All date casts use UTC via `SET TIME ZONE 'UTC'` at the start of the update script, matching HSES's interpretation of IT-AMS data.
 - **Soft deletes**: `DeliveredReviews` and `Citations` use paranoid soft deletes (`deletedAt`).
-- **Junction tables**: `DeliveredReviewCitations`, `GrantDeliveredReviews`, and `GrantCitations` use hard deletes for stale records since they carry no data beyond the FK pair.
+- **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries only the FK pair.
 - **Update frequency**: Runs daily after the monitoring data import and maintenance pipeline, via `updateMonitoringFactTablesCLI.ts`.
-- **Upsert strategy**: Entity tables use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries. Junction tables use `ON CONFLICT ... DO NOTHING`.
+- **Upsert strategy**: Entity tables, `GrantDeliveredReviews`, and `GrantCitations` use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries. `DeliveredReviewCitations` uses `ON CONFLICT ... DO NOTHING`.
 
 ## Pipeline Order
 
@@ -35,10 +35,6 @@ One row per monitoring review (with findings) that has actually been delivered t
 |---|---|---|
 | `id` | INTEGER | Auto-increment primary key |
 | `mrid` | INTEGER | Convenience link to `MonitoringReviews.id` |
-| `recipient_id` | INTEGER | Convenience link to `Recipients.id` |
-| `recipient_name` | TEXT | Recipient name |
-| `region_id` | INTEGER | region |
-| `grids` | INTEGER[] | Array of linked grant IDs for inspection convenience |
 | `review_uuid` | TEXT | `MonitoringReviews.reviewId` — the IT-AMS review UUID |
 | `review_type` | TEXT | Review type (e.g., FA-1, FA-2, RAN, Follow-up) |
 | `review_status` | TEXT | Status name from `MonitoringReviewStatuses` (e.g., Complete) |
@@ -70,9 +66,6 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `citation` | TEXT | Citation text from `MonitoringStandards` (e.g., "1302.3") |
 | `standard_text` | TEXT | Full standard text from `MonitoringStandards.text` |
 | `guidance_category` | TEXT | Guidance text from `MonitoringStandards.guidance` |
-| `recipient_id` | INTEGER | Convenience link to `Recipients.id` |
-| `recipient_name` | TEXT | Recipient name |
-| `region_id` | INTEGER | region |
 | `initial_review_uuid` | TEXT | Review UUID of the earliest delivered review where this finding appeared |
 | `initial_narrative` | TEXT | Finding narrative from `MonitoringFindingHistories` linking to the initial review |
 | `initial_determination` | TEXT | Determination from `MonitoringFindingHistories` linking to the initial review |
@@ -107,6 +100,9 @@ Links `Grants` to `DeliveredReviews` in a many-to-many relationship.
 | `id` | INTEGER | Auto-increment primary key |
 | `grantId` | INTEGER | FK to `Grants.id` |
 | `deliveredReviewId` | INTEGER | FK to `DeliveredReviews.id` |
+| `recipient_id` | INTEGER | Link to `Recipients.id` for this grant |
+| `recipient_name` | TEXT | Recipient name for this grant |
+| `region_id` | INTEGER | Region for this grant |
 
 Unique index on `(grantId, deliveredReviewId)`.
 
@@ -119,6 +115,9 @@ Links `Grants` to `Citations` in a many-to-many relationship.
 | `id` | INTEGER | Auto-increment primary key |
 | `grantId` | INTEGER | FK to `Grants.id` |
 | `citationId` | INTEGER | FK to `Citations.id` |
+| `recipient_id` | INTEGER | Link to `Recipients.id` for this grant |
+| `recipient_name` | TEXT | Recipient name for this grant |
+| `region_id` | INTEGER | Region for this grant |
 
 Unique index on `(grantId, citationId)`.
 

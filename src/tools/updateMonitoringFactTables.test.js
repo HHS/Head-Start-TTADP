@@ -516,14 +516,9 @@ describe('updateMonitoringFactTables', () => {
       expect(reviews).toHaveLength(1);
 
       const review = reviews[0];
-      expect(review.recipient_id).toBe(recipientIdA);
-      expect(review.region_id).toBe(1);
       expect(review.review_type).toBe('FA-1');
       expect(review.review_status).toBe('Complete');
       expect(review.report_delivery_date).toBe('2025-03-01');
-      // grids should contain both grant IDs
-      expect(review.grids).toEqual(expect.arrayContaining([grantIdA1, grantIdA2]));
-      expect(review.grids).toHaveLength(2);
     });
 
     it('creates exactly one Citation (no duplication across grants)', async () => {
@@ -541,9 +536,6 @@ describe('updateMonitoringFactTables', () => {
       expect(citation.standard_text).toBe('Standard text for testing');
       expect(citation.guidance_category).toBe('Fiscal');
       expect(citation.source_category).toBe('FA-1');
-      expect(citation.recipient_id).toBe(recipientIdA);
-      expect(citation.recipient_name).toMatch(/^Recipient A /);
-      expect(citation.region_id).toBe(1);
     });
 
     it('marks the review as complete but not corrected (finding still active)', async () => {
@@ -552,7 +544,7 @@ describe('updateMonitoringFactTables', () => {
       expect(review.corrected).toBe(false);
     });
 
-    it('creates two GrantDeliveredReview entries (one per grant)', async () => {
+    it('creates two GrantDeliveredReview entries with recipient/region data', async () => {
       const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
       const junctions = await GrantDeliveredReview.findAll({
         where: { deliveredReviewId: review.id },
@@ -560,6 +552,11 @@ describe('updateMonitoringFactTables', () => {
       expect(junctions).toHaveLength(2);
       const grantIds = junctions.map((j) => j.grantId).sort();
       expect(grantIds).toEqual([grantIdA1, grantIdA2].sort());
+      junctions.forEach((j) => {
+        expect(j.recipient_id).toBe(recipientIdA);
+        expect(j.recipient_name).toMatch(/^Recipient A /);
+        expect(j.region_id).toBe(1);
+      });
     });
 
     it('creates one DeliveredReviewCitation entry', async () => {
@@ -571,7 +568,7 @@ describe('updateMonitoringFactTables', () => {
       expect(junctions).toHaveLength(1);
     });
 
-    it('creates two GrantCitation entries (one per grant)', async () => {
+    it('creates two GrantCitation entries with recipient/region data', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdA } });
       const junctions = await GrantCitation.findAll({
         where: { citationId: citation.id },
@@ -579,6 +576,11 @@ describe('updateMonitoringFactTables', () => {
       expect(junctions).toHaveLength(2);
       const grantIds = junctions.map((j) => j.grantId).sort();
       expect(grantIds).toEqual([grantIdA1, grantIdA2].sort());
+      junctions.forEach((j) => {
+        expect(j.recipient_id).toBe(recipientIdA);
+        expect(j.recipient_name).toMatch(/^Recipient A /);
+        expect(j.region_id).toBe(1);
+      });
     });
   });
 

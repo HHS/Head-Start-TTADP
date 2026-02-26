@@ -19,22 +19,6 @@ module.exports = {
           allowNull: false,
           unique: true,
         },
-        recipient_id: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        recipient_name: {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        },
-        region_id: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        grids: {
-          type: Sequelize.ARRAY(Sequelize.INTEGER),
-          allowNull: true,
-        },
         review_uuid: {
           type: Sequelize.TEXT,
           allowNull: true,
@@ -151,18 +135,6 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        recipient_id: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        recipient_name: {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        },
-        region_id: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
         initial_review_uuid: {
           type: Sequelize.TEXT,
           allowNull: true,
@@ -261,6 +233,18 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: false,
         },
+        recipient_id: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        recipient_name: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        region_id: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -287,6 +271,18 @@ module.exports = {
         citationId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+        },
+        recipient_id: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        recipient_name: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        region_id: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
         },
         createdAt: {
           allowNull: false,
