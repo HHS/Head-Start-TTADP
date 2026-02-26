@@ -11,7 +11,7 @@ declare global {
 import { blur } from './common';
 
 async function getFullName(page: Page) {
-  await page.goto('/');
+  await page.goto('http://localhost:3000/');
   const welcomeText = page.getByRole('heading', { name: /welcome to the tta hub,/i });
   const text = await welcomeText.textContent();
   return text ? text.replace(/welcome to the tta hub, /i, '') : '';
@@ -78,15 +78,6 @@ function getGrants(recipients: string): string[] {
     .replace(',', ' ')
     .replace(/\s+/g, ' ')
     .split(' ');
-}
-
-/**
- * Extracts the text of the dropdown's selected value
- *
- * @param selectedOption - dropdown
- */
-async function extractSelectedDisplayedValue(selectedOption) {
-  return selectedOption.evaluate((sel) => sel.options[sel.options.selectedIndex].textContent);
 }
 
 interface ActivitySummaryConfig {
