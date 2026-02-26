@@ -133,6 +133,88 @@ describe('CollabReportsTable', () => {
         perPage: 50,
       });
     });
+
+    it('resets activePage to 1 and offset to 0 when changing perPage', () => {
+      const sortConfigOnPage2 = {
+        ...defaultProps.sortConfig,
+        activePage: 2,
+        offset: 10,
+      };
+
+      render(
+        <MemoryRouter>
+          <CollabReportsTable
+            {...defaultProps}
+            sortConfig={sortConfigOnPage2}
+            data={mockReportData}
+          />
+        </MemoryRouter>,
+      );
+
+      const perPageSelect = screen.getByLabelText('Select per page');
+      fireEvent.change(perPageSelect, { target: { value: '25' } });
+
+      const updateFunction = mockSetSortConfig.mock.calls[0][0];
+      const result = updateFunction(sortConfigOnPage2);
+
+      expect(result).toEqual({
+        ...sortConfigOnPage2,
+        perPage: 25,
+        activePage: 1,
+        offset: 0,
+      });
+    });
+  });
+
+  describe('page navigation handlePageChange', () => {
+    const paginatedData = { ...mockReportData, count: 30 };
+
+    it('calls setSortConfig with updated activePage and offset when navigating to page 2', async () => {
+      render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={paginatedData} />
+        </MemoryRouter>,
+      );
+      const pageBtns = await screen.findAllByRole('button', { name: /page 2/i });
+      fireEvent.click(pageBtns[0]);
+      expect(mockSetSortConfig).toHaveBeenCalledWith(expect.any(Function));
+      const updateFn = mockSetSortConfig.mock.calls[0][0];
+      const result = updateFn(defaultProps.sortConfig);
+      expect(result).toEqual({ ...defaultProps.sortConfig, activePage: 2, offset: 10 });
+    });
+
+    it('calculates offset correctly for different perPage values', async () => {
+      const sortConfigWith25 = { ...defaultProps.sortConfig, perPage: 25 };
+      render(
+        <MemoryRouter>
+          <CollabReportsTable
+            {...defaultProps}
+            sortConfig={sortConfigWith25}
+            data={paginatedData}
+          />
+        </MemoryRouter>,
+      );
+      const pageBtns = await screen.findAllByRole('button', { name: /page 2/i });
+      fireEvent.click(pageBtns[0]);
+      const updateFn = mockSetSortConfig.mock.calls[0][0];
+      const result = updateFn(sortConfigWith25);
+      expect(result).toEqual({ ...sortConfigWith25, activePage: 2, offset: 25 }); // (2-1)*25=25
+    });
+
+    it('preserves other sortConfig properties when navigating pages', async () => {
+      render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={paginatedData} />
+        </MemoryRouter>,
+      );
+      const pageBtns = await screen.findAllByRole('button', { name: /page 2/i });
+      fireEvent.click(pageBtns[0]);
+      const updateFn = mockSetSortConfig.mock.calls[0][0];
+      const result = updateFn(defaultProps.sortConfig);
+      expect(result.direction).toBe(defaultProps.sortConfig.direction);
+      expect(result.sortBy).toBe(defaultProps.sortConfig.sortBy);
+      expect(result.perPage).toBe(defaultProps.sortConfig.perPage);
+    });
   });
 
   describe('Export functionality', () => {
