@@ -121,6 +121,7 @@
   },
   "resolutions": {
     "axe-core": "^4.11.0",
+    "basic-ftp": "^5.2.0",
     "@axe-core/webdriverjs": "^4.11.0",
     "ansi-regex": "^5.0.1",
     "body-parser": "^1.20.3",
