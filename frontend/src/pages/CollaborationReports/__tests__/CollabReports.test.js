@@ -76,6 +76,16 @@ describe('CollabReports', () => {
     });
   });
 
+  test('initializes sort config with perPage: 10', async () => {
+    getReports.mockResolvedValue({ count: 0, rows: [] });
+    renderTest({});
+    await waitFor(() => {
+      expect(getReports).toHaveBeenCalledWith(
+        expect.objectContaining({ perPage: 10 }),
+      );
+    });
+  });
+
   test('Passes isAlerts prop to table', async () => {
     getAlerts.mockResolvedValue({ count: 0, rows: [] });
 
