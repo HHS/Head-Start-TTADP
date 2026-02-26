@@ -213,6 +213,8 @@ describe('Programmatic Transaction', () => {
       participants: ['participants'],
       topics: ['topics'],
       ttaType: ['type'],
+      activityReason: 'reason',
+      language: ['English'],
       version: 2,
     };
 
