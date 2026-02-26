@@ -195,4 +195,46 @@ describe('no-tta.sql grantStatus filter', () => {
     expect(ids).toContain(activeNonCdiRecipient.id);
     expect(ids).not.toContain(activeCdiRecipient.id);
   });
+
+  it('shows only inactive non-CDI recipients when grantStatus is "inactive"', async () => {
+    const inactiveRecipient = await Recipient.create({
+      name: 'Inactive non-CDI recipient',
+    });
+
+    await Grant.create({
+      number: `G-${getUniqueId()}`,
+      status: 'Inactive',
+      regionId: 1,
+      recipientId: inactiveRecipient.id,
+      cdi: false,
+    });
+
+    const result = await runWithFilters({ region: [1], grantStatus: ['inactive'] });
+    const ids = getRecipientIds(result);
+
+    expect(ids).toContain(inactiveRecipient.id);
+    expect(ids).not.toContain(activeNonCdiRecipient.id);
+    expect(ids).not.toContain(activeCdiRecipient.id);
+  });
+
+  it('excludes inactive non-CDI recipients when grantStatus is NOT "inactive"', async () => {
+    const inactiveRecipient = await Recipient.create({
+      name: 'Inactive non-CDI recipient (NOT filter)',
+    });
+
+    await Grant.create({
+      number: `G-${getUniqueId()}`,
+      status: 'Inactive',
+      regionId: 1,
+      recipientId: inactiveRecipient.id,
+      cdi: false,
+    });
+
+    const result = await runWithFilters({ region: [1], 'grantStatus.not': ['inactive'] });
+    const ids = getRecipientIds(result);
+
+    expect(ids).not.toContain(inactiveRecipient.id);
+    expect(ids).toContain(activeNonCdiRecipient.id);
+    expect(ids).toContain(activeCdiRecipient.id);
+  });
 });
