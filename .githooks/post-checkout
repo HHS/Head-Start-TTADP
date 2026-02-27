@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# After a branch switch or checkout, sync .github/skills/ to .claude/skills/
+# so that Claude Code skills match the checked-out branch.
+"$(dirname "$0")/../bin/sync-skills.sh"

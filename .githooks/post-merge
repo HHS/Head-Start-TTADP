@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# After a git pull or merge, sync .github/skills/ to .claude/skills/
+# so that any new or updated Claude Code skills are available locally.
+"$(dirname "$0")/../bin/sync-skills.sh"

@@ -61,6 +61,7 @@ tests/e2e/report.xml
 /playwright/.auth/
 
 # Claude/Anthropic config files
+.claude
 CLAUDE-mine.md
 
 # Copilot Instructions, etc.
