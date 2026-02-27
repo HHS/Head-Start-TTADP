@@ -48,6 +48,7 @@ export default function TrainingReportDashboard({ filters }) {
             <TRStandardGoalsList
               filters={filters}
               title="Goal categories in Training Report sessions"
+              subtitle="Data includes sessions approved on or after 09/01/2025."
             />
           </Grid>
           <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>

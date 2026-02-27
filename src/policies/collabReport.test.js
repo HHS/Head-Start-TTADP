@@ -412,11 +412,22 @@ describe('CollabReport Policy', () => {
       expect(policy.canDelete()).toBe(false);
     });
 
-    it('should return false when user is not admin or author', () => {
+    it('should return false when user is not admin or author or collaborator', () => {
       collabReport.userId = 2;
       collabReport.calculatedStatus = REPORT_STATUSES.DRAFT;
       const policy = new CollabReport(user, collabReport);
       expect(policy.canDelete()).toBe(false);
+    });
+
+    it('should return true when user is collaborator and report is not approved', () => {
+      user.id = 2;
+      collabReport.userId = 1;
+      collabReport.calculatedStatus = REPORT_STATUSES.DRAFT;
+      collabReport.collabReportSpecialists = [
+        { specialist: { id: 2, fullName: 'Specialist 2' } },
+      ];
+      const policy = new CollabReport(user, collabReport);
+      expect(policy.canDelete()).toBe(true);
     });
   });
 
