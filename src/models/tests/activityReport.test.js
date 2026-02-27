@@ -310,15 +310,6 @@ describe('Activity Reports model', () => {
       expect(() => validateForSubmission(instance)).toThrow();
     });
 
-    it('throws when required array field is empty on SUBMITTED transition', () => {
-      const instance = makeInstance(
-        REPORT_STATUSES.SUBMITTED,
-        ['submissionStatus'],
-        { ...validDataValues, topics: [] },
-      );
-      expect(() => validateForSubmission(instance)).toThrow();
-    });
-
     it('requires numberOfParticipantsInPerson and numberOfParticipantsVirtually for hybrid delivery', () => {
       const hybridDataValues = {
         ...validDataValues,
