@@ -6,6 +6,7 @@
 | Description | Docker Command | Host Command | Local only Command |
 | --- | --- | --- | --- |
 | Install dependencies for the frontend and backend | `yarn docker:deps` | `yarn deps` | `yarn deps:local` |
+| Sync Claude Code skills (runs automatically via `postinstall`) | | `yarn postinstall` | |
 <!-- prettier-ignore-end -->
 
 ## Services

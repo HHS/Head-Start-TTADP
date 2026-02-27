@@ -413,19 +413,21 @@ These docs are verbose because this is technology with which developers will rar
 
 Terraform has a specific whitespace formatting style that is difficult to maintain. Terraform includes a formatting command, `terraform fmt`, to help developers maintain the correct style. This repository contains a pre-commit hook that runs `terraform fmt` on all staged files so you don't have to remember to run this command.
 
-If you are not using your own custom pre-commit hooks:
+If you are not using your own custom git hooks:
 
 ```bash
 # start from repo root directory
 
-# make the pre-commit file executable
-chmod 755 .githooks/pre-commit
+# make all hook files executable
+chmod 755 .githooks/*
 
 # change your default hooks directory to `.githooks`.
 git config core.hooksPath .githooks
 ```
 
-If you are already using git hooks, add the `.githooks/pre-commit` contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
+The `.githooks/` directory includes a pre-commit hook (linting and formatting), plus post-merge and post-checkout hooks that sync Claude Code skills from `.github/skills/` to `.claude/skills/`.
+
+If you are already using git hooks, add the `.githooks/` contents to your hooks directory. Remember to make the files executable.
 
 **Install Version 7 of the Cloud Foundry CLI tool**
 

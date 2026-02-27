@@ -72,19 +72,23 @@ You can also run build commands directly on your host (without docker). Make sur
 
 You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
 
-## Precommit hooks
+## Git hooks
 
-Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in `.githooks/pre-commit`, also contains code to auto-format our terraform files.
+The `.githooks/` directory contains several hooks that run automatically:
 
-If you are not using your own custom pre-commit hooks:
+- **pre-commit**: Runs eslint's "fix" command on all staged JavaScript files and auto-formats Terraform files. CI will fail if code is committed that doesn't pass the linter.
+- **post-merge**: Syncs Claude Code skills from `.github/skills/` to `.claude/skills/` after a pull or merge.
+- **post-checkout**: Syncs Claude Code skills after a branch switch or checkout.
+
+To enable these hooks:
 
 - start from repo root directory
-- make the pre-commit file executable:
-  `chmod 755 .githooks/pre-commit`
+- make the hook files executable:
+  `chmod 755 .githooks/*`
 - change your default hooks directory to [.githooks](../../.githooks):
   `git config core.hooksPath .githooks`
 
-If you are already using git hooks, add the [.githooks/pre-commit](../../.githooks/pre-commit) contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
+If you are already using git hooks, add the `.githooks/` contents to your hooks directory. Remember to make the files executable.
 
 ## Import Production Data
 
