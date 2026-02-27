@@ -444,6 +444,7 @@ export async function unlockReport(req: Request, res: Response) {
     }
 
     // Unlocking resets all Approving Managers to NEEDS_ACTION status
+    // Calculated status is updated in the hook
     await CollabReportApprover.update({ status: APPROVER_STATUSES.NEEDS_ACTION }, {
       where: { collabReportId },
       individualHooks: true,
