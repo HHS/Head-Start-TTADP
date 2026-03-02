@@ -216,6 +216,7 @@ describe('Programmatic Transaction', () => {
       activityReason: 'reason',
       language: ['English'],
       version: 2,
+      creatorRole: 'TTAC',
     };
 
     await User.bulkCreate([mockUser, mockUserTwo, mockManager, secondMockManager]);

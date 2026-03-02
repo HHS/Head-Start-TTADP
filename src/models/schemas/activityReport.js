@@ -18,7 +18,7 @@ const activityReportSchema = Joi.object({
   participants: Joi.array().min(1).required(),
   topics: Joi.array().optional(),
   ttaType: Joi.array().min(1).required(),
-  creatorRole: Joi.string().allow(null).optional(),
+  creatorRole: Joi.string().required(),
   activityReason: Joi.string().required(),
   language: Joi.array().min(1).required(),
   // For hybrid delivery, require in-person and virtual counts instead of a single total

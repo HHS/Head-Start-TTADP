@@ -56,6 +56,7 @@ const submittedReport = {
   language: ['English'],
   activityReason: 'reason',
   version: 2,
+  creatorRole: 'TTAC',
 };
 
 const draftReport = {
