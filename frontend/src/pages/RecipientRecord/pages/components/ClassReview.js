@@ -47,7 +47,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
       </Drawer>
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <div className="display-flex flex-row flex-justify">
-          <h2 className="margin-0 padding-0">CLASS® review</h2>
+          <h3 className="ttahub-card-header-title margin-0 padding-0">CLASS® review</h3>
           <Link
             className="display-flex flex-align-center"
             href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grantNumber}`}

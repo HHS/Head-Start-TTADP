@@ -9,7 +9,12 @@ import './WhatsNew.scss';
 const LOCAL_STORAGE_KEY = 'whatsnew-read-notifications';
 
 const CURRENT_YEAR = moment().year();
-const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3];
+const YEARS = [
+  CURRENT_YEAR,
+  CURRENT_YEAR - 1,
+  CURRENT_YEAR - 2,
+  CURRENT_YEAR - 3,
+  CURRENT_YEAR - 4];
 const MONTHS = [
   'January',
   'February',
