@@ -111,6 +111,8 @@
     "check-coverage": "node ./src/tools/check-coverage.js --fail-on-uncovered=true",
     "createMonitoringGoalsCLI": "node ./build/server/src/tools/createMonitoringGoalsCLI.js",
     "createMonitoringGoalsCLI:local": "tsx ./src/tools/createMonitoringGoalsCLI.js",
+    "updateMonitoringFactTablesCLI": "node ./build/server/src/tools/updateMonitoringFactTablesCLI.js",
+    "updateMonitoringFactTablesCLI:local": "tsx ./src/tools/updateMonitoringFactTablesCLI.ts",
     "cli:dbMaintenance": "node ./build/server/src/tools/dbMaintenanceCLI.js",
     "cli:queue-exercise:live": "node ./build/server/src/tools/queueExerciseLiveCLI.js",
     "cli:queue-exercise:local": "tsx ./src/tools/queueExerciseLiveCLI.ts"
