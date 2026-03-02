@@ -24,16 +24,14 @@ const router = express.Router();
 // PD23-24 b. Region 12 PD Plan WITH NCs
 
 // Function to create and return the Smartsheet client
-let smartsheetClient: ReturnType<typeof createClient> | null = null;
-function getSmartsheetClient() {
-  if (!smartsheetClient) {
-    smartsheetClient = createClient({
-      accessToken: process.env.SMARTSHEET_ACCESS_TOKEN,
-      baseUrl: process.env.SMARTSHEET_ENDPOINT,
-    });
-  }
-  return smartsheetClient;
+function createSmartsheetClient() {
+  return createClient({
+    accessToken: process.env.SMARTSHEET_ACCESS_TOKEN,
+    baseUrl: process.env.SMARTSHEET_ENDPOINT,
+  });
 }
+
+const smartsheetClient = createSmartsheetClient();
 interface SheetData {
   id: number;
   name: string;
@@ -53,7 +51,7 @@ export async function listSheets(req, res) {
   };
 
   try {
-    const result = await getSmartsheetClient().sheets.listSheets(options);
+    const result = await smartsheetClient.sheets.listSheets(options);
 
     if (!result) {
       throw new Error('Failed to list sheets');
@@ -73,7 +71,7 @@ export async function getSheet(req, res) {
   const lastFourDigits = (sheetId && sheetId.length > 0) ? sheetId.slice(-8) : null;
 
   try {
-    const result = await getSmartsheetClient().sheets.getSheet({ id: sheetId });
+    const result = await smartsheetClient.sheets.getSheet({ id: sheetId });
     if (!result) {
       throw new Error(`Failed to get sheet: ${lastFourDigits}`);
     }
