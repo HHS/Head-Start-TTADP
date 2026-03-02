@@ -28,7 +28,7 @@ function createSmartsheetClient() {
   return createClient({
     accessToken: process.env.SMARTSHEET_ACCESS_TOKEN,
     baseUrl: process.env.SMARTSHEET_ENDPOINT,
-    logLevel: 'info',
+    // logLevel: 'info', // There is a bug right now, removing this will default to 'info'.
   });
 }
 
