@@ -7,17 +7,23 @@ export default function useFetch(
   fetcher,
   dependencies = [],
   errorMessage = 'An unexpected error occurred',
+  useAppLoading = false,
 ) {
   const [data, setData] = useState(initialValue);
   const [error, setError] = useState('');
   const [statusCode, setStatusCode] = useState(null);
-  const { setIsAppLoading } = useContext(AppLoadingContext);
+  const [loading, setLoading] = useState(true);
+  const { setIsAppLoading } = useContext(AppLoadingContext) || {};
 
   useDeepCompareEffectNoCheck(() => {
+    setLoading(true);
+
     async function fetchData() {
       try {
-        setIsAppLoading(true);
         setError('');
+        if (useAppLoading && setIsAppLoading) {
+          setIsAppLoading(true);
+        }
         const response = await fetcher();
         setData(response);
         setStatusCode(200);
@@ -27,7 +33,10 @@ export default function useFetch(
         setError(errorMessage);
         setStatusCode(err.status || 500);
       } finally {
-        setIsAppLoading(false);
+        setLoading(false);
+        if (useAppLoading && setIsAppLoading) {
+          setIsAppLoading(false);
+        }
       }
     }
 
@@ -39,5 +48,6 @@ export default function useFetch(
     setData,
     error,
     statusCode,
+    loading,
   };
 }

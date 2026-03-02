@@ -160,6 +160,7 @@ export const ECLKC_GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
 export const HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION = 'headstart.gov';
 export const ESCAPE_KEY_CODE = 27;
 export const GOALS_PER_PAGE = 10;
+export const RECIPIENTS_SPOTLIGHT_PER_PAGE = 10;
 export const TOPICS_PER_PAGE = 10;
 export const COURSES_PER_PAGE = 10;
 export const RECIPIENTS_WITH_NO_TTA_PER_PAGE = 10;
