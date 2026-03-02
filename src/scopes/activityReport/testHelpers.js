@@ -106,6 +106,7 @@ export const submittedReport = {
   topics: ['topics'],
   ttaType: ['type'],
   language: ['English'],
+  creatorRole: 'COR',
 };
 
 export const approvedReport = {
