@@ -18,8 +18,8 @@ Office of Head Start TTA Smart Hub — full-stack monorepo (Express API, React S
 - Ask before starting work when acceptance criteria are missing, scope is ambiguous, or constraints are unclear.
 - Pause and ask before making broad refactors or touching many files.
 - When presenting choices, provide a recommended option with reasoning.
-- Prefer creating new backend files as TypeScript.
 - Ensure changes pass lint checks after work is complete.
+- Follow coding standards in `best_practices.md`.
 
 ## Commands
 
@@ -45,10 +45,29 @@ Office of Head Start TTA Smart Hub — full-stack monorepo (Express API, React S
 - `yarn docker:test:be` — backend tests in Docker
 - `yarn docker:db:migrate` — migrations in Docker
 
+## Architecture at a Glance
+
+Three entry points: backend (`/src`), frontend (`/frontend/src`), worker (`/src/worker.ts`).
+
+**Backend layered pattern:** Routes → Services → Models.
+- `routes/`: API endpoints organized by domain. Call services, never contain business logic directly.
+- `services/`: Business logic. Interact with models and handle associated-data updates.
+- `models/`: Sequelize database models.
+- `policies/`: Authorization and access control. Routes check policies before proceeding.
+- `scopes/`: Reusable Sequelize query filters.
+- `middleware/`: Express middleware (auth, sessions, logging). Routes use `transactionWrapper.js` when needed.
+- `migrations/`, `seeders/`, `lib/`, `tools/`, `widgets/`, `workers/`: Supporting directories.
+
+**Frontend:** `pages/` → `components/` with `fetchers/` for API calls and `hooks/` for shared logic. Uses React Hook Form and `@trussworks/react-uswds`.
+
+**Worker:** Bull queues backed by Redis — Scan (ClamAV), Resource, S3, Notification, Maintenance. Uses `throng` for horizontal scaling.
+
+**Auth:** OAuth2 via HSES, session management with `express-session` + Redis, authorization enforced by policies.
+
+**Database:** Sequelize v6, config at `.sequelizerc` and `config/config.js`.
+
 ## Non-obvious Architecture
-- Three entry points: backend (`/src`), frontend (`/frontend/src`), worker (`/src/worker.ts`).
-- Worker uses `throng` for horizontal scaling; **only instance 0 runs cron jobs** — never duplicate cron registration.
-- Sequelize config lives at `.sequelizerc` and `config/config.js` (not the default location).
+- **Only worker instance 0 runs cron jobs** — never duplicate cron registration.
 - `yarn db:migrate` also runs the logical data model CLI (`yarn ldm`) — don't skip this.
 - Frontend proxies unknown paths to the backend API via CRA proxy config.
 
@@ -72,17 +91,24 @@ All tests run against the same database instance. Never rely on seed data — cr
 ### Avoid raw SQL
 Use Sequelize scopes and models. Raw SQL should be a last resort.
 
-## Migrations
-- Always include `down` logic so migrations are reversible.
-- Name migrations clearly: `verb_object_table` (e.g., `add_status_to_activity_reports`).
-- Prefer transactions for multi-step writes within migrations.
+## Common Workflows
 
-## Frontend Conventions
-- Use USWDS utility classes instead of authoring new CSS. Prefer vanilla CSS over SCSS.
-- CSS nesting: one level maximum.
-- Use the `useFetch` hook instead of manual `useEffect` + `useState` for data fetching.
-- Use `@trussworks/react-uswds` components.
+### Adding a New API Endpoint
+1. Create/update route handler in `src/routes/<domain>/`
+2. Add business logic in `src/services/<domain>.js`
+3. Add authorization policy in `src/policies/` if needed
+4. Write tests alongside implementation
+5. Update OpenAPI spec in `docs/openapi/`
 
-## Release Hygiene
-- Update OpenAPI specs (`docs/openapi/`) when API shape changes.
-- Update `docs/adr/` if an architecture decision is introduced or changed.
+### Creating a New Migration
+1. Run `yarn db:migrate:create -- --name add_new_field_to_table`
+2. Edit the generated file in `src/migrations/`
+3. Run `yarn db:migrate`
+
+## Documentation
+- `docs/guides/testing.md`: Testing strategy and database state management
+- `docs/guides/dev-setup.md`: Local development setup
+- `docs/guides/infrastructure.md`: Cloud.gov, CI/CD, deployment
+- `docs/adr/`: Architecture Decision Records
+- `docs/openapi/`: OpenAPI specs (served via Redoc at localhost:5003)
+- `best_practices.md`: Code authoring and review standards

@@ -3,7 +3,14 @@
 This document captures project-specific constraints for engineers and LLM-based code tools.
 For general coding standards, follow existing style in the surrounding code.
 
+## Code Style
+- Prefer creating new backend files as TypeScript.
+- Follow existing style in the surrounding code.
+- Ensure changes pass lint checks.
+- Reuse existing components and hooks before creating new ones.
+
 ## Testing
+- Add or update tests for behavior changes unless the change is purely documentation or formatting.
 - All tests run against the same database instance — never rely on seed data.
 - Create test data in `beforeAll`/`beforeEach`, destroy in `afterAll`/`afterEach`.
 - Use `Promise.all()` for multiple async operations in setup.
@@ -11,6 +18,7 @@ For general coding standards, follow existing style in the surrounding code.
 - Mock database interaction when a real database isn't required.
 - Avoid network calls in unit tests; mock external services.
 - Prefer focused unit/integration tests; add E2E only when the user-facing flow changes.
+- If tests are skipped, note why and suggest follow-up coverage.
 
 For detailed testing patterns including database state management helpers, see `docs/guides/testing.md`.
 
@@ -28,18 +36,23 @@ For detailed testing patterns including database state management helpers, see `
 - Prefer transactions for multi-step writes.
 
 ### Error Handling & Logging
+- Use consistent error handling patterns in the surrounding code; avoid introducing new styles.
 - Log actionable context (request IDs, relevant entity IDs) without leaking PII.
 
 ## Frontend
 
-### WYSIWYG Fields
-- We use React Draft (`frontend/src/components/RichEditor.js`).
-- **Disable autosave on forms with WYSIWYG editors.** Autosave triggers `reset()` which destroys cursor position and in-progress text. See `frontend/src/utils/formRichTextEditorHelper.js` for the guard pattern.
+### Hook and Component Reuse
+- Reuse existing components for consistency and maintainability. Use hooks if they exist (example: use the `useFetch` hook instead of manual `useEffect` + `useState` for data fetching) and create new hooks if change can be reusable 
+- Use `@trussworks/react-uswds` components.
 
 ### CSS
 - Use USWDS utility classes instead of authoring new CSS.
 - One level of nesting maximum.
 - Prefer vanilla CSS over SCSS.
+
+### WYSIWYG Fields
+- We use React Draft (`frontend/src/components/RichEditor.js`).
+- **Disable autosave on forms with WYSIWYG editors.** Autosave triggers `reset()` which destroys cursor position and in-progress text. See `frontend/src/utils/formRichTextEditorHelper.js` for the guard pattern.
 
 ## Release Hygiene
 - Update OpenAPI specs (`docs/openapi/`) when API shape changes.
