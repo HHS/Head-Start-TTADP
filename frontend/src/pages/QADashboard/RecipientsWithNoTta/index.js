@@ -28,6 +28,7 @@ const ALLOWED_SUBFILTERS = [
   'startDate',
   'endDate',
   'grantNumber',
+  'grantStatus',
   'recipient',
   'stateCode',
 ];
