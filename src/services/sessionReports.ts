@@ -403,8 +403,8 @@ export async function getSessionReports(
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'startDate\' AS DATE)')],
-    endDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'endDate\' AS DATE)')],
+    startDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'startDate\', \'\'), \'MM/DD/YYYY\')')],
+    endDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'endDate\', \'\'), \'MM/DD/YYYY\')')],
     eventId: ['event', sequelize.literal('data->>\'eventId\'::text')],
     eventName: ['event', sequelize.literal('data->>\'eventName\'::text')],
     supportingGoals: [sequelize.literal('(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)')],
