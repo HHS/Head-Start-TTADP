@@ -25,6 +25,18 @@ describe('displayCdiGrantStatus', () => {
   it('returns an empty string for an empty string', () => {
     expect(displayGrantsStatus('')).toEqual('');
   });
+
+  it('returns the correct string for active when query is an array', () => {
+    expect(displayGrantsStatus(['active'])).toEqual('Active');
+  });
+
+  it('returns the correct string for inactive when query is an array', () => {
+    expect(displayGrantsStatus(['inactive'])).toEqual('Inactive');
+  });
+
+  it('returns the correct string for interim-management-cdi when query is an array', () => {
+    expect(displayGrantsStatus(['interim-management-cdi'])).toEqual('Interim management (CDI)');
+  });
 });
 
 describe('CdiGrantFilter', () => {
