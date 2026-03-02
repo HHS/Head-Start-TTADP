@@ -458,6 +458,9 @@ export async function getSessionReports(
     ],
     where: {
       eventId: events.map(({ id }) => id),
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+      },
     },
     include: [
       {
@@ -493,6 +496,7 @@ export async function getSessionReports(
       [Op.and]: [
         queryOptions.where,
         ...sessionReportScopes,
+
       ],
     },
     include: [
