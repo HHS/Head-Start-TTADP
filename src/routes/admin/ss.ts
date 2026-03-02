@@ -28,7 +28,6 @@ function createSmartsheetClient() {
   return createClient({
     accessToken: process.env.SMARTSHEET_ACCESS_TOKEN,
     baseUrl: process.env.SMARTSHEET_ENDPOINT,
-    logLevel: 'info',
   });
 }
 
