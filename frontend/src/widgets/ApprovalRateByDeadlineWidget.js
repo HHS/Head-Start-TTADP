@@ -1,5 +1,6 @@
 /* global globalThis */
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -25,7 +26,7 @@ import {
 } from './constants';
 import './ApprovalRateByDeadlineWidget.css';
 
-export function ApprovalRateByDeadlineWidget({ data, loading }) {
+export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotApplicable }) {
   const widgetRef = useRef(null);
   const carouselFrameRef = useRef(null);
   const [showTabularData, setShowTabularData] = useState(false);
@@ -35,6 +36,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [lockedFrameHeight, setLockedFrameHeight] = useState(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
 
   useEffect(() => {
     if (typeof globalThis === 'undefined' || typeof globalThis.matchMedia !== 'function') {
@@ -210,7 +212,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     };
   }, [regions, widgetData]);
 
-  const getTraceDataForRegion = (regionId) => {
+  const getTraceDataForRegion = useCallback((regionId) => {
     if (!regionId) {
       return [];
     }
@@ -231,7 +233,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
         id: APPROVAL_RATE_BY_DEADLINE_TRACE_IDS.NATIONAL,
       },
     ];
-  };
+  }, [monthLabels, nationalSeries, regionSeriesById]);
 
   const traceData = activeRegionId ? getTraceDataForRegion(activeRegionId) : [];
 
@@ -274,6 +276,8 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     if (nextIndex < 0 || nextIndex >= regions.length || nextIndex === activeRegionIndex) {
       return;
     }
+
+    setAnnouncement(`Showing Region ${regions[nextIndex]}`);
 
     if (prefersReducedMotion) {
       setActiveRegionIndex(nextIndex);
@@ -322,7 +326,9 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
         <WidgetContainerSubtitle marginY={0}>
           Percentage of activity reports approved by the expected deadline.
         </WidgetContainerSubtitle>
-        <FiltersNotApplicable showLeadingDash={false} />
+        {(showFiltersNotApplicable || Boolean(widgetData?.showDashboardFiltersNotApplicable)) && (
+          <FiltersNotApplicable showLeadingDash={false} />
+        )}
       </div>
     </div>
   );
@@ -369,9 +375,10 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
         />
       ) : (
         <div>
-          <div className="text-center text-bold margin-top-2 margin-bottom-1">
+          <h3 className="text-center text-bold font-sans-md margin-0 margin-top-2 margin-bottom-1">
             {activeRegionId ? `Region ${activeRegionId}` : 'Region'}
-          </div>
+          </h3>
+          <span className="usa-sr-only" aria-live="polite" aria-atomic="true">{announcement}</span>
           <div className="approval-rate-carousel-shell position-relative">
             <div
               ref={carouselFrameRef}
@@ -394,7 +401,6 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={goToPreviousRegion}
                   aria-label="Previous region"
-                  aria-hidden={!hasPreviousRegion}
                   tabIndex={!hasPreviousRegion ? -1 : 0}
                 >
                   <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--left" aria-hidden="true" />
@@ -431,7 +437,6 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={goToNextRegion}
                   aria-label="Next region"
-                  aria-hidden={!hasNextRegion}
                   tabIndex={!hasNextRegion ? -1 : 0}
                 >
                   <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--right" aria-hidden="true" />
@@ -465,6 +470,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
 ApprovalRateByDeadlineWidget.propTypes = {
   data: PropTypes.shape({
     regions: PropTypes.arrayOf(PropTypes.number),
+    showDashboardFiltersNotApplicable: PropTypes.bool,
     records: PropTypes.arrayOf(PropTypes.shape({
       month_label: PropTypes.string.isRequired,
       national_pct: PropTypes.number.isRequired,
@@ -474,14 +480,17 @@ ApprovalRateByDeadlineWidget.propTypes = {
     })),
   }),
   loading: PropTypes.bool,
+  showFiltersNotApplicable: PropTypes.bool,
 };
 
 ApprovalRateByDeadlineWidget.defaultProps = {
   data: {
     regions: EMPTY_ARRAY,
+    showDashboardFiltersNotApplicable: false,
     records: EMPTY_ARRAY,
   },
   loading: false,
+  showFiltersNotApplicable: false,
 };
 
 export default withWidgetData(ApprovalRateByDeadlineWidget, 'approvalRateByDeadline');
