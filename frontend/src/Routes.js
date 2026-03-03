@@ -137,7 +137,7 @@ export default function Routes({
           path="/collaboration-reports/view/:collabReportId(new|[0-9]*)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <ViewCollabReport match={match} />
+              <ViewCollabReport match={match} user={user} />
             </AppWrapper>
           )}
         />
