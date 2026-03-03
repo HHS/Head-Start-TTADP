@@ -269,6 +269,7 @@ describe('Activity Report handlers', () => {
         body: {
           status: REPORT_STATUSES.APPROVED,
           note: 'notes',
+          approvedAtTimezone: 'America/New_York',
         },
       },
     };
@@ -306,6 +307,7 @@ describe('Activity Report handlers', () => {
         canReview: () => true,
       }));
       upsertApprover.mockResolvedValue(mockApproverRecord);
+      const updateTimezone = jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
       const approvalNotification = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
 
       userSettingOverridesById.mockResolvedValue({
@@ -316,6 +318,10 @@ describe('Activity Report handlers', () => {
       await reviewReport(approvedReportRequest, mockResponse);
 
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+      expect(updateTimezone).toHaveBeenCalledWith(
+        { approvedAtTimezone: 'America/New_York' },
+        { where: { id: approvedReportRequest.params.activityReportId } },
+      );
       expect(approvalNotification).toHaveBeenCalled();
     });
     it('returns the new needs action status', async () => { // here
