@@ -13,6 +13,7 @@ export default function HorizontalTableWidgetCell({
   enableCheckboxes = false,
   hideFirstColumnBorder = false,
   stickyFirstColumn = false,
+  className = '',
 }) {
   const handleUrl = (url) => {
     if (url.isInternalLink) {
@@ -60,7 +61,7 @@ export default function HorizontalTableWidgetCell({
   };
 
   const getFirstColumnClasses = () => {
-    if (!isFirstColumn) return 'position-relative';
+    if (!isFirstColumn) return `position-relative ${className}`.trim();
 
     const classes = ['smarthub-horizontal-table-first-column', 'text-overflow-ellipsis', 'data-description', 'position-relative'];
     if (stickyFirstColumn) {
@@ -79,6 +80,10 @@ export default function HorizontalTableWidgetCell({
       classes.push('left-with-checkbox');
     } else {
       classes.push('left-0');
+    }
+
+    if (className) {
+      classes.push(className);
     }
 
     return classes.join(' ');
@@ -116,6 +121,7 @@ HorizontalTableWidgetCell.propTypes = {
   enableCheckboxes: PropTypes.bool,
   hideFirstColumnBorder: PropTypes.bool,
   stickyFirstColumn: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 HorizontalTableWidgetCell.defaultProps = {
@@ -124,4 +130,5 @@ HorizontalTableWidgetCell.defaultProps = {
   enableCheckboxes: false,
   hideFirstColumnBorder: false,
   stickyFirstColumn: false,
+  className: '',
 };

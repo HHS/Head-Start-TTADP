@@ -86,6 +86,7 @@ export default function LineGraph({
   hideYAxis,
   xAxisTitle,
   yAxisTitle,
+  yAxisTickStep,
   legendConfig,
   tableConfig,
   widgetRef,
@@ -162,6 +163,8 @@ export default function LineGraph({
         rangemode: 'tozero',
         tickwidth: 1,
         tickcolor: 'transparent',
+        dtick: yAxisTickStep,
+        tick0: 0,
         tickformat: (n) => {
           // if not a whole number, round to 1 decimal place
           if (n % 1 !== 0) {
@@ -201,7 +204,8 @@ export default function LineGraph({
     import('plotly.js-basic-dist').then((Plotly) => {
       if (lines.current) Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
     });
-  }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle, hasData, lines]);
+  }, [data, hideYAxis, legends, showTabularData,
+    xAxisTitle, yAxisTitle, yAxisTickStep, hasData, lines]);
 
   if (!hasData) {
     return <NoResultsFound />;
@@ -224,6 +228,8 @@ export default function LineGraph({
             setCheckboxes={tableConfig.setCheckboxes}
             showTotalColumn={tableConfig.showTotalColumn}
             footerData={tableConfig.footer.showFooter ? tableConfig.footer.data : false}
+            selectAllIdPrefix={tableConfig.selectAllIdPrefix}
+            stickyLastDataColumn={tableConfig.stickyLastDataColumn}
           />
         )
         : (
@@ -271,6 +277,7 @@ LineGraph.propTypes = {
   hideYAxis: PropTypes.bool,
   xAxisTitle: PropTypes.string,
   yAxisTitle: PropTypes.string,
+  yAxisTickStep: PropTypes.number,
   legendConfig: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string.isRequired,
     id: PropTypes.string.isRequired,
@@ -291,12 +298,14 @@ LineGraph.propTypes = {
     enableCheckboxes: PropTypes.bool.isRequired,
     enableSorting: PropTypes.bool.isRequired,
     showTotalColumn: PropTypes.bool.isRequired,
+    stickyLastDataColumn: PropTypes.bool,
     checkboxes: PropTypes.shape({}),
     setCheckboxes: PropTypes.func,
     footer: PropTypes.shape({
       data: PropTypes.arrayOf(PropTypes.string),
       showFooter: PropTypes.bool.isRequired,
     }),
+    selectAllIdPrefix: PropTypes.string,
     data: PropTypes.arrayOf(PropTypes.shape({
       heading: PropTypes.string.isRequired,
       data: PropTypes.arrayOf(PropTypes.shape({
@@ -314,6 +323,7 @@ LineGraph.defaultProps = {
   xAxisTitle: '',
   yAxisTitle: '',
   hideYAxis: false,
+  yAxisTickStep: null,
   data: null,
   legendConfig: [
     {

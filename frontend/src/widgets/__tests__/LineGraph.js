@@ -7,7 +7,12 @@ import {
   screen,
 } from '@testing-library/react';
 import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
+import Plotly from 'plotly.js-basic-dist';
 import LineGraph from '../LineGraph';
+
+jest.mock('plotly.js-basic-dist', () => ({
+  newPlot: jest.fn(),
+}));
 
 const traces = [
   {
@@ -597,7 +602,7 @@ const tableConfig = {
 };
 
 describe('LineGraph', () => {
-  const renderTest = (showTabularData = false, data = traces) => {
+  const renderTest = (showTabularData = false, data = traces, yAxisTickStep = null) => {
     act(() => {
       render(
         <LineGraph
@@ -605,6 +610,7 @@ describe('LineGraph', () => {
           hideYAxis={false}
           xAxisTitle="Months"
           yAxisTitle="Percentage"
+          yAxisTickStep={yAxisTickStep}
           legendConfig={[
             {
               label: 'In person',
@@ -632,6 +638,10 @@ describe('LineGraph', () => {
       );
     });
   };
+
+  beforeEach(() => {
+    Plotly.newPlot.mockClear();
+  });
 
   it('switches legends', () => {
     renderTest();
@@ -677,5 +687,17 @@ describe('LineGraph', () => {
       expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible();
       expect(screen.getByRole('button', { name: /get help using filters/i })).toBeInTheDocument();
     });
+  });
+
+  it('passes custom tick step to plotly layout', async () => {
+    renderTest(false, traces, 10);
+
+    await waitFor(() => {
+      expect(Plotly.newPlot).toHaveBeenCalled();
+    });
+
+    const lastCall = Plotly.newPlot.mock.calls[Plotly.newPlot.mock.calls.length - 1];
+    const layoutArg = lastCall[2];
+    expect(layoutArg.yaxis.dtick).toBe(10);
   });
 });
