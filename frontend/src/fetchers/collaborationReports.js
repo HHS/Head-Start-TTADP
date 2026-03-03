@@ -98,3 +98,9 @@ export const submitReport = async (reportId, data) => {
   const response = await put(url, data);
   return response.json();
 };
+
+export const unlockReport = async (reportId) => {
+  const url = join(collabReportUrl, reportId.toString(DECIMAL_BASE), 'unlock');
+  const response = await put(url);
+  return response.status;
+};

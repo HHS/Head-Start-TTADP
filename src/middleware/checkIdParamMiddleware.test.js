@@ -15,6 +15,7 @@ import {
   checkGoalTemplateIdParam,
   checkSessionAttachmentIdParam,
   checkGrantIdParam,
+  checkGrantIdQueryParam,
 } from './checkIdParamMiddleware';
 import { auditLogger } from '../logger';
 
@@ -734,6 +735,71 @@ describe('checkIdParamMiddleware', () => {
       checkSessionAttachmentIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalled();
+    });
+  });
+
+  describe('checkGrantIdQueryParam', () => {
+    it('sets parsedGrantId to null and calls next when grantId is absent', () => {
+      const mockRequest = { path: '/api/endpoint', query: {} };
+
+      checkGrantIdQueryParam(mockRequest, mockResponse, mockNext);
+      expect(mockRequest.query.parsedGrantId).toBeNull();
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+    });
+
+    it('sets parsedGrantId to null and calls next when grantId is empty string', () => {
+      const mockRequest = { path: '/api/endpoint', query: { grantId: '' } };
+
+      checkGrantIdQueryParam(mockRequest, mockResponse, mockNext);
+      expect(mockRequest.query.parsedGrantId).toBeNull();
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+    });
+
+    it('sets parsedGrantId to parsed integer and calls next when grantId is valid', () => {
+      const mockRequest = { path: '/api/endpoint', query: { grantId: '123' } };
+
+      checkGrantIdQueryParam(mockRequest, mockResponse, mockNext);
+      expect(mockRequest.query.parsedGrantId).toBe(123);
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when grantId is not a valid integer', () => {
+      const mockRequest = { path: '/api/endpoint', query: { grantId: 'invalid' } };
+
+      checkGrantIdQueryParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: grantId invalid`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when grantId is zero', () => {
+      const mockRequest = { path: '/api/endpoint', query: { grantId: '0' } };
+
+      checkGrantIdQueryParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: grantId 0`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when grantId is negative', () => {
+      const mockRequest = { path: '/api/endpoint', query: { grantId: '-5' } };
+
+      checkGrantIdQueryParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: grantId -5`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when grantId is a decimal', () => {
+      const mockRequest = { path: '/api/endpoint', query: { grantId: '123.45' } };
+
+      checkGrantIdQueryParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: grantId 123.45`);
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 });

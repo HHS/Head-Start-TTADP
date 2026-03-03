@@ -101,6 +101,24 @@ describe('SSDI fetcher', () => {
     expect(containsFiltersThatAreNotApplicable('recipients-with-no-tta', filters)).toBe(true);
   });
 
+  it('grantStatus is an allowed filter for recipients-with-no-tta', () => {
+    const filters = [
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
+        topic: 'region',
+        condition: 'is',
+        query: '14',
+      },
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f8723401',
+        topic: 'grantStatus',
+        condition: 'is',
+        query: 'active',
+      },
+    ];
+    expect(containsFiltersThatAreNotApplicable('recipients-with-no-tta', filters)).toBe(false);
+  });
+
   it('containsFiltersThatAreNotApplicable returns true if any filter is not allowed', () => {
     const filters = [
       {
