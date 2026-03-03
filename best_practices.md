@@ -39,6 +39,7 @@ For detailed testing patterns including database state management helpers, see `
 - Avoid the use of _hooks_ that perform database writes. It's completely fine to leverage a beforeUpdate hook in order to validate data (this is an ideal place for the use of runtime schema validation). Updating data with hooks obfuscates operations in a way that makes debugging more difficult and leads to unexpected states. Instead, update associated data directly in services.
 - When authoring a new filter, sanitize all data for SQL injection, as the filters are usually derived from URLs. sequelize.escape will do some of this, but independent validation of expected types (are all region IDs numbers, for example) should also be performed.
 - Avoid raw SQL unless necessary; use Sequelize scopes/models.
+- Dates stored in JSONB fields use `MM/DD/YYYY` format. When sorting or comparing these values in SQL, use `TO_DATE(field, 'MM/DD/YYYY')` rather than `CAST(field AS DATE)` — PostgreSQL's `CAST AS DATE` expects ISO format and will throw a `DateTimeParseError` (error code `22007`) on `MM/DD/YYYY` values. Use `NULLIF(field, '')` to guard against empty strings: `TO_DATE(NULLIF(field, ''), 'MM/DD/YYYY')`. See `src/scopes/trainingReports/startDate.js` for reference examples.
 
 ## Frontend
 
