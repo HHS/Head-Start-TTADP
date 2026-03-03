@@ -1105,7 +1105,15 @@ describe('goal handlers', () => {
           ],
         },
       }));
-      expect(mockResponse.json).toHaveBeenCalledWith(mockGoalsWithDetails);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        goals: mockGoalsWithDetails,
+        overview: {
+          activityReports: 0,
+          objectives: 0,
+          closures: 0,
+          suspensions: 0,
+        },
+      });
     });
 
     it('returns 404 when goal is not found', async () => {
@@ -1245,7 +1253,15 @@ describe('goal handlers', () => {
 
       await getGoalHistory(req, mockResponse);
 
-      expect(mockResponse.json).toHaveBeenCalledWith([]);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        goals: [],
+        overview: {
+          activityReports: 0,
+          objectives: 0,
+          closures: 0,
+          suspensions: 0,
+        },
+      });
     });
 
     it('handles errors', async () => {
@@ -1488,6 +1504,97 @@ describe('goal handlers', () => {
           }),
         }),
       );
+    });
+
+    it('computes overview.activityReports as count of unique approved AR ids', async () => {
+      const req = {
+        params: { goalId: '1' },
+        session: { userId: 1 },
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [{ regionId: 2, scopeId: SCOPES.READ_REPORTS }],
+      });
+      db.Goal.findByPk.mockResolvedValueOnce({ id: 1, goalTemplateId: 10, grantId: 100 });
+      db.Grant.findByPk.mockResolvedValueOnce({ id: 100, regionId: 2 });
+      db.Goal.findAll.mockResolvedValueOnce([
+        {
+          id: 1,
+          status: 'In Progress',
+          objectives: [
+            {
+              activityReportObjectives: [
+                { activityReport: { id: 10 } },
+                { activityReport: { id: 11 } },
+                { activityReport: { id: 10 } }, // duplicate — should only count once
+              ],
+            },
+            {
+              activityReportObjectives: [
+                { activityReport: { id: 12 } },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
+        overview: expect.objectContaining({ activityReports: 3 }),
+      }));
+    });
+
+    it('computes overview.objectives as total count across all goals', async () => {
+      const req = {
+        params: { goalId: '1' },
+        session: { userId: 1 },
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [{ regionId: 2, scopeId: SCOPES.READ_REPORTS }],
+      });
+      db.Goal.findByPk.mockResolvedValueOnce({ id: 1, goalTemplateId: 10, grantId: 100 });
+      db.Grant.findByPk.mockResolvedValueOnce({ id: 100, regionId: 2 });
+      db.Goal.findAll.mockResolvedValueOnce([
+        { id: 1, status: 'In Progress', objectives: [{ id: 1 }, { id: 2 }] },
+        { id: 2, status: 'Closed', objectives: [{ id: 3 }] },
+        { id: 3, status: 'In Progress', objectives: [] },
+      ]);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
+        overview: expect.objectContaining({ objectives: 3 }),
+      }));
+    });
+
+    it('computes overview.closures and overview.suspensions by goal status', async () => {
+      const req = {
+        params: { goalId: '1' },
+        session: { userId: 1 },
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [{ regionId: 2, scopeId: SCOPES.READ_REPORTS }],
+      });
+      db.Goal.findByPk.mockResolvedValueOnce({ id: 1, goalTemplateId: 10, grantId: 100 });
+      db.Grant.findByPk.mockResolvedValueOnce({ id: 100, regionId: 2 });
+      db.Goal.findAll.mockResolvedValueOnce([
+        { id: 1, status: 'Closed', objectives: [] },
+        { id: 2, status: 'Suspended', objectives: [] },
+        { id: 3, status: 'Closed', objectives: [] },
+        { id: 4, status: 'In Progress', objectives: [] },
+      ]);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
+        overview: expect.objectContaining({ closures: 2, suspensions: 1 }),
+      }));
     });
   });
 });

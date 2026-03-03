@@ -500,11 +500,31 @@ export async function getGoalHistory(req, res) {
     });
 
     if (!goalsWithDetails.length) {
-      res.json([]);
+      res.json({
+        goals: [],
+        overview: {
+          activityReports: 0, objectives: 0, closures: 0, suspensions: 0,
+        },
+      });
       return;
     }
 
-    res.json(goalsWithDetails);
+    const activityReportIds = new Set(
+      goalsWithDetails
+        .flatMap((g) => g.objectives || [])
+        .flatMap((o) => o.activityReportObjectives || [])
+        .map((aro) => aro.activityReport?.id)
+        .filter(Boolean),
+    );
+
+    const overview = {
+      activityReports: activityReportIds.size,
+      objectives: goalsWithDetails.reduce((sum, g) => sum + (g.objectives?.length || 0), 0),
+      closures: goalsWithDetails.filter((g) => g.status === 'Closed').length,
+      suspensions: goalsWithDetails.filter((g) => g.status === 'Suspended').length,
+    };
+
+    res.json({ goals: goalsWithDetails, overview });
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_GOAL_HISTORY`);
   }
