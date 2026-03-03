@@ -168,6 +168,7 @@ const SiteNav = ({
                     <NavLink
                       withinDisclosure
                       to="/dashboards/regional-dashboard/activity-reports"
+                      isActive={(match, loc) => loc.pathname.startsWith('/dashboards/regional-dashboard/')}
                     >
                       Regional Dashboard
                     </NavLink>

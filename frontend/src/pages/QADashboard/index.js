@@ -23,6 +23,7 @@ import Drawer from '../../components/Drawer';
 import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 import PercentageActivityReportByRole from '../../widgets/PercentageActivityReportByRole';
 import RootCauseFeiGoals from '../../widgets/RootCauseFeiGoals';
+import ApprovalRateByDeadline from '../../widgets/ApprovalRateByDeadlineWidget';
 import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../../fetchers/ssdi';
 import Loader from '../../components/Loader';
 import { formatDateRange } from '../../utils';
@@ -82,6 +83,9 @@ export default function QADashboard() {
     additionalDefaultFilters,
     QA_DASHBOARD_FILTER_CONFIG,
   );
+
+  // This widget only supports region filtering; other filters are ignored by the API.
+  const regionFilters = filters.filter((filter) => filter.topic === 'region');
 
   useDeepCompareEffect(() => {
     async function fetchQaData() {
@@ -256,6 +260,11 @@ export default function QADashboard() {
               <RootCauseFeiGoals
                 data={qaData.rootCauseFeiGoalsGraph}
               />
+            </Grid>
+          </Grid>
+          <Grid row>
+            <Grid desktop={{ col: 12 }} mobile={{ col: 12 }}>
+              <ApprovalRateByDeadline filters={regionFilters} />
             </Grid>
           </Grid>
         </div>
