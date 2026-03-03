@@ -113,6 +113,18 @@ const DEPRECATED_REASONS = [
 
 exports.DEPRECATED_REASONS = DEPRECATED_REASONS;
 
+const PRIORITY_INDICATORS = [
+  'Child incidents',
+  'Deficiency',
+  'DRS',
+  'FEI',
+  'New recipient',
+  'New staff',
+  'No TTA',
+];
+
+exports.PRIORITY_INDICATORS = PRIORITY_INDICATORS;
+
 const REPORT_STATUSES = {
   DRAFT: 'draft',
   DELETED: 'deleted',

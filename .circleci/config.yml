@@ -678,6 +678,7 @@ jobs:
           yarn createMonitoringGoalsCLI
           node ./build/server/src/tools/queryMonitoringDataCLI.js
           node ./build/server/src/tools/maintainMonitoringDataCLI.js
+          node ./build/server/src/tools/updateMonitoringFactTablesCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:

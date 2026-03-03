@@ -150,6 +150,43 @@ describe('SiteNav', () => {
     });
   });
 
+  describe('Regional Dashboard active link', () => {
+    afterEach(() => fetchMock.restore());
+
+    const userUrl = join('api', 'user');
+
+    const renderWithPath = (path) => {
+      const user = { name: 'name', permissions: [] };
+      fetchMock.get(userUrl, { ...user });
+
+      render(
+        <MemoryRouter initialEntries={[path]}>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <SiteNav authenticated user={user} hasAlerts={false} />
+          </UserContext.Provider>
+        </MemoryRouter>,
+      );
+    };
+
+    test('Regional Dashboard link is active when on the activity-reports sub-route', () => {
+      renderWithPath('/dashboards/regional-dashboard/activity-reports');
+      const link = screen.getByText('Regional Dashboard').closest('a');
+      expect(link).toHaveClass('text-bold');
+    });
+
+    test('Regional Dashboard link is active on other regional dashboard sub-routes', () => {
+      renderWithPath('/dashboards/regional-dashboard/goals');
+      const link = screen.getByText('Regional Dashboard').closest('a');
+      expect(link).toHaveClass('text-bold');
+    });
+
+    test('Regional Dashboard link is not active on unrelated routes', () => {
+      renderWithPath('/activity-reports');
+      const link = screen.getByText('Regional Dashboard').closest('a');
+      expect(link).not.toHaveClass('text-bold');
+    });
+  });
+
   describe('site nav label', () => {
     afterEach(() => fetchMock.restore());
 
