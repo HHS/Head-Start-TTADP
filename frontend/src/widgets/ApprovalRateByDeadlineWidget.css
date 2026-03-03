@@ -1,0 +1,175 @@
+.approval-rate-carousel-slide {
+  width: 100%;
+}
+
+.approval-rate-by-deadline-widget {
+  overflow-anchor: none;
+}
+
+.approval-rate-carousel-slide--current {
+  position: relative;
+}
+
+.approval-rate-carousel-slide--outgoing,
+.approval-rate-carousel-slide--incoming {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transition: transform 300ms ease;
+}
+
+.approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--next {
+  transform: translateX(0);
+}
+
+.approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--next {
+  transform: translateX(100%);
+}
+
+.approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--prev {
+  transform: translateX(0);
+}
+
+.approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--prev {
+  transform: translateX(-100%);
+}
+
+.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--next {
+  transform: translateX(-100%);
+}
+
+.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--next {
+  transform: translateX(0);
+}
+
+.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--prev {
+  transform: translateX(100%);
+}
+
+.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--prev {
+  transform: translateX(0);
+}
+
+.approval-rate-carousel-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background-color: currentColor;
+}
+
+.approval-rate-carousel-nav {
+  position: absolute;
+  top: 48%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 1.5rem;
+  height: 2.2rem;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: rgb(217, 217, 217);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.approval-rate-carousel-nav:focus {
+  outline: 0.25rem solid #2491ff;
+  outline-offset: 0;
+}
+
+.approval-rate-carousel-nav.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.approval-rate-carousel-nav--prev {
+  left: 0.125rem;
+}
+
+.approval-rate-carousel-nav--next {
+  right: 0.125rem;
+}
+
+.approval-rate-carousel-nav-icon {
+  width: 0;
+  height: 0;
+  border-top: 0.5rem solid transparent;
+  border-bottom: 0.5rem solid transparent;
+}
+
+.approval-rate-carousel-nav-icon--left {
+  border-right: 0.62rem solid #1b1b1b;
+}
+
+.approval-rate-carousel-nav-icon--right {
+  border-left: 0.62rem solid #1b1b1b;
+}
+
+@media (max-width: 63.99em) {
+  .approval-rate-carousel-nav {
+    top: 50%;
+    width: 1.3rem;
+    height: 2rem;
+  }
+
+  .approval-rate-carousel-nav--prev {
+    left: 0;
+  }
+
+  .approval-rate-carousel-nav--next {
+    right: 0;
+  }
+}
+
+.approval-rate-by-deadline-widget .ttahub-three-trace-line-graph {
+  overflow: hidden;
+}
+
+.approval-rate-by-deadline-widget .position-absolute.smart-hub--menu__left {
+  transform: translateX(-100%);
+}
+
+.approval-rate-by-deadline-widget [role="menu"] .padding-2 {
+  white-space: nowrap;
+}
+
+.approval-rate-by-deadline-widget [role="menu"] li,
+.approval-rate-by-deadline-widget [role="menu"] .smart-hub--menu-button {
+  width: 100%;
+}
+
+.approval-rate-by-deadline-widget .approval-rate-subtitle .smart-hub-widget--subtitle {
+  display: inline;
+  margin-right: 0.25rem;
+}
+
+.approval-rate-by-deadline-widget .approval-rate-subtitle .ttahub-filters-not-applicable {
+  white-space: nowrap;
+}
+
+.approval-rate-by-deadline-widget
+.smarthub-horizontal-table-widget
+.usa-table
+tbody
+td.smarthub-horizontal-table-sticky-last-data-column {
+  font-weight: 700;
+}
+
+@media (min-width: 60em) {
+  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget
+  .usa-table thead th.smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
+    border-bottom: 1px solid lightgray;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .approval-rate-carousel-slide--outgoing,
+  .approval-rate-carousel-slide--incoming {
+    transition: none;
+  }
+}

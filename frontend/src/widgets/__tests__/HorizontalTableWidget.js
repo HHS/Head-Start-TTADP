@@ -399,4 +399,69 @@ describe('Horizontal Table Widget', () => {
     const { container } = renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, true);
     expect(container.querySelector('.fa-arrow-up-right-from-square')).toBeNull();
   });
+
+  it('applies sticky class to the last data column when enabled', () => {
+    const headers = ['col1', 'col2'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        isUrl: false,
+        data: [
+          { title: 'col1', value: '17' },
+          { title: 'col2', value: '18' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="First Heading"
+          enableSorting={false}
+          enableCheckboxes
+          checkboxes={{}}
+          setCheckboxes={() => {}}
+          showTotalColumn={false}
+          footerData={['', 'Total', '17', '18']}
+          stickyLastDataColumn
+        />
+      </Router>,
+    );
+
+    const stickyCells = container.querySelectorAll('.smarthub-horizontal-table-sticky-last-data-column');
+    expect(stickyCells.length).toBeGreaterThan(0);
+  });
+
+  it('does not apply sticky class to last data column when actions column exists', () => {
+    const headers = ['col1', 'col2'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        isUrl: false,
+        data: [
+          { title: 'col1', value: '17' },
+          { title: 'col2', value: '18' },
+        ],
+        actions: [{ label: 'Open', onClick: jest.fn() }],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="First Heading"
+          enableSorting={false}
+          showTotalColumn={false}
+          stickyLastDataColumn
+        />
+      </Router>,
+    );
+
+    const stickyCells = container.querySelectorAll('.smarthub-horizontal-table-sticky-last-data-column');
+    expect(stickyCells.length).toBe(0);
+  });
 });

@@ -14,7 +14,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { useForm } from 'react-hook-form';
 import pages from './Pages';
@@ -625,7 +625,12 @@ function ActivityReport({
   };
 
   const onReview = async (data) => {
-    await reviewReport(reportId.current, { note: data.note, status: data.status });
+    const approvedAtTimezone = moment.tz.guess();
+    await reviewReport(reportId.current, {
+      note: data.note,
+      status: data.status,
+      approvedAtTimezone,
+    });
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
