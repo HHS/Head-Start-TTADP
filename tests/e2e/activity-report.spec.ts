@@ -11,7 +11,7 @@ declare global {
 import { blur } from './common';
 
 async function getFullName(page: Page) {
-  await page.goto('http://localhost:3000/');
+  await page.goto('/');
   const welcomeText = page.getByRole('heading', { name: /welcome to the tta hub,/i });
   const text = await welcomeText.textContent();
   return text ? text.replace(/welcome to the tta hub, /i, '') : '';
