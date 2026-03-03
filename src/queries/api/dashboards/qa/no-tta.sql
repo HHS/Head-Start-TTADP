@@ -194,6 +194,16 @@ JSON: {
       "display": "End Date",
       "description": "Filter based on the end date of the activity reports.",
       "supportsExclusion": true
+    },
+    {
+      "name": "grantStatus",
+      "type": "string[]",
+      "display": "Grant Status",
+      "description": "Filter based on the status of the grant.",
+      "supportsExclusion": true,
+      "options": {
+        "staticValues": ["active", "inactive", "interim-management-cdi"]
+      }
     }
   ]
 }
@@ -208,6 +218,7 @@ DECLARE
     region_ids_filter TEXT := NULLIF(current_setting('ssdi.region', true), '');
     start_date_filter TEXT := NULLIF(current_setting('ssdi.startDate', true), '');
     end_date_filter TEXT := NULLIF(current_setting('ssdi.endDate', true), '');
+    grant_status_filter TEXT := NULLIF(current_setting('ssdi.grantStatus', true), '');
 
     -- Declare `.not` variables
     recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipient.not', true), 'false') = 'true';
@@ -217,6 +228,7 @@ DECLARE
     region_ids_not_filter BOOLEAN := COALESCE(current_setting('ssdi.region.not', true), 'false') = 'true';
     start_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.startDate.not', true), 'false') = 'true';
     end_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.endDate.not', true), 'false') = 'true';
+    grant_status_not_filter BOOLEAN := COALESCE(current_setting('ssdi.grantStatus.not', true), 'false') = 'true';
 
 BEGIN
 ---------------------------------------------------------------------------------------------------
@@ -257,7 +269,8 @@ BEGIN
     program_type_filter IS NOT NULL OR
     grant_numbers_filter IS NOT NULL OR
     state_code_filter IS NOT NULL OR
-    region_ids_filter IS NOT NULL
+    region_ids_filter IS NOT NULL OR
+    grant_status_filter IS NOT NULL
   THEN
     WITH
       applied_filtered_grants AS (
@@ -300,6 +313,17 @@ BEGIN
         AND (
           region_ids_filter IS NULL
           OR COALESCE(region_ids_filter, '[]')::jsonb @> to_jsonb(gr."regionId") != region_ids_not_filter
+        )
+        -- Filter for grantStatus if ssdi.grantStatus is defined
+        AND (
+          grant_status_filter IS NULL
+          OR (
+            (
+              ((grant_status_filter::jsonb ->> 0) = 'active' AND gr.status = 'Active' AND gr.cdi = false)
+              OR ((grant_status_filter::jsonb ->> 0) = 'inactive' AND gr.status = 'Inactive' AND gr.cdi = false)
+              OR ((grant_status_filter::jsonb ->> 0) = 'interim-management-cdi' AND gr.cdi = true AND gr.status = 'Active')
+            ) != grant_status_not_filter
+          )
         )
         GROUP BY 1
         ORDER BY 1
@@ -458,7 +482,8 @@ active_filters_array AS (
       CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
       CASE WHEN NULLIF(current_setting('ssdi.region', true), '') IS NOT NULL THEN 'region' END,
       CASE WHEN NULLIF(current_setting('ssdi.startDate', true), '') IS NOT NULL THEN 'startDate' END,
-      CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END
+      CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END,
+      CASE WHEN NULLIF(current_setting('ssdi.grantStatus', true), '') IS NOT NULL THEN 'grantStatus' END
     ], NULL) AS active_filters
 
 ),

@@ -94,6 +94,9 @@ Runs post-processing functions defined in `Import.postProcessingActions`. Exampl
 - `createMonitoringGoals`
   - creates monitoring goals
   - reopens monitoring goals
+- `updateMonitoringFactTables` (via CLI after import pipeline)
+  - updates the [Monitoring Fact Tables](./monitoring-fact-tables.md) (`DeliveredReviews`, `Citations`, and their junction tables)
+  - runs after `maintainMonitoringData` in the CI pipeline
 
 ## Monitoring Goal Logic
 

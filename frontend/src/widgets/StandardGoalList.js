@@ -11,6 +11,7 @@ export function StandardGoalsListTable({
   data,
   loading,
   title,
+  subtitle,
 }) {
   // Define the columns for the SimpleSortableTable
   const columns = [
@@ -25,7 +26,7 @@ export function StandardGoalsListTable({
           <WidgetH2 classNames="padding-0">
             {title}
           </WidgetH2>
-          <p className="usa-prose padding-0 margin-0">Data reflects activity starting on 09/01/2025.</p>
+          <p className="usa-prose padding-0 margin-0">{subtitle}</p>
         </div>
         {data && data.length > 0 ? (
           <div
@@ -55,11 +56,13 @@ StandardGoalsListTable.propTypes = {
   ]),
   loading: PropTypes.bool.isRequired,
   title: PropTypes.string,
+  subtitle: PropTypes.string,
 };
 
 StandardGoalsListTable.defaultProps = {
   data: [],
   title: 'Goals categories in Activity Reports',
+  subtitle: 'Data reflects activity starting on 09/01/2025.',
 };
 
 export default withWidgetData(StandardGoalsListTable, 'standardGoalsList');
