@@ -1,5 +1,5 @@
 const httpContext = require('express-http-context');
-const { Op } = require('sequelize');
+const { Op, ValidationError, ValidationErrorItem } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const activityReportSchema = require('../schemas/activityReport');
 const {
@@ -1017,7 +1017,12 @@ const validateForSubmission = (instance) => {
     && instance.submissionStatus === REPORT_STATUSES.SUBMITTED
   ) {
     const { error } = activityReportSchema.validate(instance.dataValues);
-    if (error) throw error;
+    if (error) {
+      const items = error.details.map(
+        (d) => new ValidationErrorItem(d.message, 'Validation error', d.path.join('.'), d.context?.value),
+      );
+      throw new ValidationError('Activity report validation failed', items);
+    }
   }
 };
 
@@ -1029,7 +1034,12 @@ const validateForApproval = (instance) => {
     && instance.calculatedStatus === REPORT_STATUSES.APPROVED
   ) {
     const { error } = activityReportSchema.validate(instance.dataValues);
-    if (error) throw error;
+    if (error) {
+      const items = error.details.map(
+        (d) => new ValidationErrorItem(d.message, 'Validation error', d.path.join('.'), d.context?.value),
+      );
+      throw new ValidationError('Activity report validation failed', items);
+    }
   }
 };
 

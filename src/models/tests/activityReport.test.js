@@ -1,5 +1,6 @@
 /* eslint-disable dot-notation */
 import moment from 'moment';
+import { ValidationError } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
@@ -307,7 +308,7 @@ describe('Activity Reports model', () => {
         ['submissionStatus'],
         { ...validDataValues, deliveryMethod: undefined },
       );
-      expect(() => validateForSubmission(instance)).toThrow();
+      expect(() => validateForSubmission(instance)).toThrow(ValidationError);
     });
 
     it('requires numberOfParticipantsInPerson and numberOfParticipantsVirtually for hybrid delivery', () => {
@@ -339,7 +340,7 @@ describe('Activity Reports model', () => {
         ['submissionStatus'],
         hybridDataValues,
       );
-      expect(() => validateForSubmission(instance)).toThrow();
+      expect(() => validateForSubmission(instance)).toThrow(ValidationError);
     });
   });
 
@@ -400,7 +401,7 @@ describe('Activity Reports model', () => {
         ['calculatedStatus'],
         { ...validDataValues, topics: null },
       );
-      expect(() => validateForApproval(instance)).toThrow();
+      expect(() => validateForApproval(instance)).toThrow(ValidationError);
     });
   });
 
