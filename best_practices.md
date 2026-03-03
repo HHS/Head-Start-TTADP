@@ -41,7 +41,7 @@ For detailed testing patterns including database state management helpers, see `
 - Avoid raw SQL unless necessary; use Sequelize scopes/models.
 
 ### Validation
-- We leverage the Joi.dev library for schema validation. Example: @src/models/hooks/activityReport.js 
+- We leverage the Joi.dev library for schema validation. Example: [src/models/hooks/activityReport.js](src/models/hooks/activityReport.js)
 
 ## Frontend
 
