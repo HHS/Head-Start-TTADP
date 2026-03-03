@@ -12,7 +12,7 @@ The backend API has grown without a consistent strategy for validating incoming 
 - **Inconsistent validation patterns** — some routes validate manually with ad-hoc conditionals, others not at all.
 - **Lack of type safety at the boundary** between the frontend and backend, making it difficult to reason about what shape of data a route expects.
 
-Joi (`joi.dev`) was already in limited use in the codebase — specifically in `src/models/schemas/activityReport.js`, where it validates required Activity Report fields at submission and approval gates, and in Sequelize model `beforeUpdate` hooks where it enforces data integrity before writes reach the database. This established precedent and familiarity with the library within the team.
+This ADR introduces Joi (`joi.dev`) as the standard library for backend schema validation — including its use in `src/models/schemas/activityReport.js`, where it validates required Activity Report fields at submission and approval gates, and in Sequelize model `beforeUpdate` hooks where it enforces data integrity before writes reach the database. This establishes a clear precedent and shared pattern for the team.
 
 ## Decision
 
