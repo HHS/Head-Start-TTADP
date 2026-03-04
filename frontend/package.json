@@ -81,6 +81,7 @@
     "lint:ci": "eslint -f eslint-formatter-multiple src"
   },
   "resolutions": {
+    "@tootallnate/once": ">=3.0.1",
     "ansi-regex": "^5.0.1",
     "async": "^3.2.3",
     "braces": "^3.0.3",
@@ -89,7 +90,7 @@
     "cross-fetch": "^3.1.5",
     "d3-color": "^3.1.0",
     "decode-uri-component": "^0.2.1",
-    "dompurify": "^2.5.8",
+    "dompurify": "^3.2.4",
     "ejs": "^3.1.10",
     "es5-ext": "^0.10.63",
     "express": "^4.22.0",
@@ -97,7 +98,7 @@
     "glob-parent": "^6.0.2",
     "json5": "^1.0.2",
     "lodash": "^4.17.23",
-    "minimatch": "^3.0.5",
+    "minimatch": "^9.0.7",
     "minimist": "^1.2.6",
     "moment": "^2.29.2",
     "nanoid": "^3.2.0",
