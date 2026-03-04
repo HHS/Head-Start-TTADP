@@ -20,6 +20,7 @@ This widget returns two monthly traces:
 ### Notes
 
 - Matching from AR citations to monitoring findings is done by `monitoringReferences[].findingId -> Citations.finding_uuid`.
+- The chart includes missing months between the first and last scoped report months, with zero values for both traces when no qualifying records exist in that month.
 - Widget implementation: `src/widgets/monitoring/activeDeficientCitationsWithTtaSupport.ts`
 - Widget tests: `src/widgets/monitoring/activeDeficientCitationsWithTtaSupport.test.js`
 - Fact table reference: `docs/monitoring-fact-tables.md`
