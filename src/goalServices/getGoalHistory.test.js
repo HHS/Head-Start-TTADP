@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import faker from '@faker-js/faker';
 import httpContext from 'express-http-context';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { getUniqueId } from '../../testUtils';
+import { getUniqueId } from '../testUtils';
 import db, {
   ActivityReport,
   ActivityReportObjective,
@@ -13,9 +13,9 @@ import db, {
   Permission,
   Recipient,
   User,
-} from '../../models';
-import SCOPES from '../../middleware/scopeConstants';
-import { getGoalHistory } from './handlers';
+} from '../models';
+import SCOPES from '../middleware/scopeConstants';
+import { getGoalHistory } from './goals';
 
 jest.mock('bull');
 
@@ -225,26 +225,13 @@ describe('getGoalHistory (database-backed)', () => {
   });
 
   it('returns the correct overview metrics', async () => {
-    const req = {
-      session: { userId: user.id },
-      params: { goalId: String(goalSuspended.id) },
-      headers: {},
-    };
-    const res = {
-      json: jest.fn(),
-      sendStatus: jest.fn(),
-    };
+    const result = await getGoalHistory(goalSuspended.id);
 
-    await getGoalHistory(req, res);
+    expect(result).not.toBeNull();
+    expect(result).toHaveProperty('goals');
+    expect(result).toHaveProperty('overview');
 
-    expect(res.sendStatus).not.toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledTimes(1);
-
-    const [response] = res.json.mock.calls[0];
-    expect(response).toHaveProperty('goals');
-    expect(response).toHaveProperty('overview');
-
-    const { overview } = response;
+    const { overview } = result;
     // objective1 links to report1 AND report2; objective2 links to report1 only → 2 unique ARs
     expect(overview.activityReports).toBe(2);
     // 2 objectives on the Suspended goal; Closed goal has none
@@ -256,69 +243,15 @@ describe('getGoalHistory (database-backed)', () => {
   });
 
   it('includes both goals in the history', async () => {
-    const req = {
-      session: { userId: user.id },
-      params: { goalId: String(goalSuspended.id) },
-      headers: {},
-    };
-    const res = {
-      json: jest.fn(),
-      sendStatus: jest.fn(),
-    };
+    const result = await getGoalHistory(goalSuspended.id);
 
-    await getGoalHistory(req, res);
-
-    const [response] = res.json.mock.calls[0];
-    expect(response.goals).toHaveLength(2);
-    const statuses = response.goals.map((g) => g.status);
+    expect(result.goals).toHaveLength(2);
+    const statuses = result.goals.map((g) => g.status);
     expect(statuses).toEqual(expect.arrayContaining(['Suspended', 'Closed']));
   });
 
-  it('returns 404 when the goal does not exist', async () => {
-    const req = {
-      session: { userId: user.id },
-      params: { goalId: '99999999' },
-      headers: {},
-    };
-    const res = {
-      json: jest.fn(),
-      sendStatus: jest.fn(),
-    };
-
-    await getGoalHistory(req, res);
-
-    expect(res.sendStatus).toHaveBeenCalledWith(404);
-    expect(res.json).not.toHaveBeenCalled();
-  });
-
-  it('returns 401 when the user lacks permission for the grant region', async () => {
-    const unpermittedUser = await User.create({
-      homeRegionId: REGION_ID,
-      hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.datatype.number({ min: 1, max: 100000 })}`,
-      email: faker.internet.email(),
-      name: faker.name.findName(),
-      role: ['Grants Specialist'],
-      lastLogin: new Date(),
-    });
-
-    try {
-      const req = {
-        session: { userId: unpermittedUser.id },
-        params: { goalId: String(goalSuspended.id) },
-        headers: {},
-      };
-      const res = {
-        json: jest.fn(),
-        sendStatus: jest.fn(),
-      };
-
-      await getGoalHistory(req, res);
-
-      expect(res.sendStatus).toHaveBeenCalledWith(401);
-      expect(res.json).not.toHaveBeenCalled();
-    } finally {
-      await User.destroy({ where: { id: unpermittedUser.id } });
-    }
+  it('returns null when the goal does not exist', async () => {
+    const result = await getGoalHistory(99999999);
+    expect(result).toBeNull();
   });
 });
