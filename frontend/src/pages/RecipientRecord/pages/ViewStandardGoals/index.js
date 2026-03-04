@@ -546,7 +546,7 @@ export default function ViewGoalDetails({
               label1: 'Activity reports',
               data: String(overview?.activityReports ?? 0),
               showTooltip: true,
-              tooltipText: 'The number of Activity Reports this goal was used on.',
+              tooltipText: 'The number of Activity Reports the goal was used on.',
             },
             {
               key: 'goal-objectives',
@@ -566,17 +566,17 @@ export default function ViewGoalDetails({
               label1: 'Goal closures',
               data: String(overview?.closures ?? 0),
               showTooltip: true,
-              tooltipText: 'The number of times this goal has been closed.',
+              tooltipText: 'The number of times the goal has been closed.',
             },
             {
               key: 'goal-suspensions',
               icon: faPauseCircle,
-              iconColor: colors.ttahubMagenta,
-              backgroundColor: colors.ttahubMagentaLight,
+              iconColor: colors.errorDark,
+              backgroundColor: colors.errorLighter,
               label1: 'Goal suspensions',
               data: String(overview?.suspensions ?? 0),
               showTooltip: true,
-              tooltipText: 'The number of times this goal has been suspended.',
+              tooltipText: 'The number of times the goal has been suspended.',
             },
           ]}
         />
