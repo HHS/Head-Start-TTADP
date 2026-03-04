@@ -44,6 +44,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     where: {
       [Op.and]: [
         scopes.activityReport,
+        { startDate: { [Op.not]: null } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
     },
@@ -61,12 +62,10 @@ export default async function activeDeficientCitationsWithTtaSupport(
     ],
   });
 
-  const months = Array.from(new Set(
+  const months = uniq(
     approvedReports
-      .map((report) => report.getDataValue('startDate'))
-      .filter((startDate) => moment(startDate).isValid())
-      .map((startDate) => moment(startDate).startOf('month').format('YYYY-MM-DD')),
-  )).sort();
+      .map((report: typeof approvedReports[number]) => moment(report.getDataValue('startDate') as string).startOf('month').format('YYYY-MM-DD')),
+  ).sort();
 
   const continuousMonths: string[] = [];
   if (months.length) {
@@ -79,10 +78,10 @@ export default async function activeDeficientCitationsWithTtaSupport(
   }
 
   // activityRecipientIds = grant IDs
-  const grantIds = uniq(approvedReports.flatMap((report) => report.getDataValue('activityRecipients') as { grantId: number }[])
+  const grantIds = uniq(approvedReports.flatMap((report: typeof approvedReports[number]) => report.getDataValue('activityRecipients') as { grantId: number }[])
     .map((ar: { grantId: number }) => ar.grantId));
 
-  const approvedReportIds = approvedReports.map((report) => report.getDataValue('id') as number);
+  const approvedReportIds = approvedReports.map((report: typeof approvedReports[number]) => report.getDataValue('id') as number);
 
   if (!continuousMonths.length) {
     return [

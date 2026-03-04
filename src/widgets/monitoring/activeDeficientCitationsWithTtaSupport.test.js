@@ -180,19 +180,17 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     jest.restoreAllMocks();
   });
 
-  it('returns empty traces when no valid report months exist', async () => {
-    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      mockReport({
-        id: 1001,
-        startDate: 'invalid-date',
-        activityRecipients: [{ grantId: grant.id }],
-      }),
-    ]);
+  it('returns empty traces when no approved reports exist and enforces non-null startDate in query', async () => {
+    const findAllSpy = jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([]);
     const querySpy = jest.spyOn(db.sequelize, 'query');
 
     const data = await activeDeficientCitationsWithTtaSupport({ activityReport: {} });
+    const findAllQuery = findAllSpy.mock.calls[0][0];
 
     expect(querySpy).not.toHaveBeenCalled();
+    expect(findAllQuery.where[Op.and]).toEqual(expect.arrayContaining([
+      { startDate: { [Op.not]: null } },
+    ]));
     expect(data).toEqual([
       {
         name: 'Active Deficiencies with TTA support',
@@ -251,7 +249,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     ]);
   });
 
-  it('filters invalid report start dates before creating the monthly query range', async () => {
+  it('creates the monthly query range from approved report start dates', async () => {
     const querySpy = jest.spyOn(db.sequelize, 'query').mockResolvedValue([
       {
         month_start: '2025-01-01',
@@ -272,16 +270,11 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
       mockReport({
         id: 1004,
-        startDate: 'not-a-real-date',
-        activityRecipients: [{ grantId: grant.id }],
-      }),
-      mockReport({
-        id: 1005,
         startDate: '2025-01-10T00:00:00Z',
         activityRecipients: [{ grantId: grant.id }],
       }),
       mockReport({
-        id: 1006,
+        id: 1005,
         startDate: '2025-03-20T00:00:00Z',
         activityRecipients: [{ grantId: grant.id }],
       }),
@@ -292,7 +285,6 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     const queryOptions = querySpy.mock.calls[0][1];
 
     expect(sql).toContain('ARRAY[:monthStarts]::date[]');
-    expect(sql).not.toContain('not-a-real-date');
     expect(queryOptions.replacements.monthStarts).toEqual(['2025-01-01', '2025-02-01', '2025-03-01']);
     expect(data).toEqual([
       {
