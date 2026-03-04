@@ -107,7 +107,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     ];
   }
 
-  if (!grantIds.length || !approvedReportIds.length) {
+  if (!grantIds.length) {
     const x = continuousMonths.map((month) => (moment(month).format('MMM-YYYY')));
     const zeroes = x.map(() => 0);
     return [
