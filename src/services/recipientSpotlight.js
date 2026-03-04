@@ -348,7 +348,7 @@ export async function getRecipientSpotlightIndicators(
       FROM recipients
       JOIN "Grants" gr
         ON gr."recipientId" = rid
-      WHERE NOT gr.deleted
+      WHERE (gr.deleted IS NULL OR NOT gr.deleted)
       GROUP BY 1,2
       HAVING MIN(gr."startDate") >= NOW() - INTERVAL '4 years'
     ),
