@@ -38,6 +38,19 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
   let grantCitationWithTta;
   let grantCitationWithoutTta;
 
+  const mockReport = ({
+    id,
+    startDate,
+    activityRecipients,
+  }) => ({
+    getDataValue: (key) => {
+      if (key === 'id') return id;
+      if (key === 'startDate') return startDate;
+      if (key === 'activityRecipients') return activityRecipients;
+      return null;
+    },
+  });
+
   beforeAll(async () => {
     region = await createRegion({ id: 1919, name: 'Region 1919' });
     recipient = await createRecipient({ id: 1919001, name: 'Monitoring Widget Recipient' });
@@ -161,6 +174,144 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     await destroyGoal(goal);
     await Promise.all([destroyReport(febReport), destroyReport(aprReport)]);
     await db.sequelize.close();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('returns empty traces when no valid report months exist', async () => {
+    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
+      mockReport({
+        id: 1001,
+        startDate: 'invalid-date',
+        activityRecipients: [{ grantId: grant.id }],
+      }),
+    ]);
+    const querySpy = jest.spyOn(db.sequelize, 'query');
+
+    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: {} });
+
+    expect(querySpy).not.toHaveBeenCalled();
+    expect(data).toEqual([
+      {
+        name: 'Active Deficiencies with TTA support',
+        x: [],
+        y: [],
+        month: [],
+        id: 'active-deficiencies-with-tta-support',
+        trace: 'circle',
+      },
+      {
+        name: 'All active Deficiencies',
+        x: [],
+        y: [],
+        month: [],
+        id: 'all-active-deficiencies',
+        trace: 'triangle',
+      },
+    ]);
+  });
+
+  it('returns zero-filled traces when approved reports have no grant IDs', async () => {
+    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
+      mockReport({
+        id: 1002,
+        startDate: '2025-01-15',
+        activityRecipients: [],
+      }),
+      mockReport({
+        id: 1003,
+        startDate: '2025-02-02',
+        activityRecipients: [],
+      }),
+    ]);
+    const querySpy = jest.spyOn(db.sequelize, 'query');
+
+    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: {} });
+
+    expect(querySpy).not.toHaveBeenCalled();
+    expect(data).toEqual([
+      {
+        name: 'Active Deficiencies with TTA support',
+        x: ['Jan 2025', 'Feb 2025'],
+        y: [0, 0],
+        month: ['', ''],
+        id: 'active-deficiencies-with-tta-support',
+        trace: 'circle',
+      },
+      {
+        name: 'All active Deficiencies',
+        x: ['Jan 2025', 'Feb 2025'],
+        y: [0, 0],
+        month: ['', ''],
+        id: 'all-active-deficiencies',
+        trace: 'triangle',
+      },
+    ]);
+  });
+
+  it('filters invalid report start dates before creating the monthly query range', async () => {
+    const querySpy = jest.spyOn(db.sequelize, 'query').mockResolvedValue([
+      {
+        month_start: '2025-01-01',
+        deficiencies_with_tta: 1,
+        total_active_deficiencies: 2,
+      },
+      {
+        month_start: '2025-02-01',
+        deficiencies_with_tta: 0,
+        total_active_deficiencies: 1,
+      },
+      {
+        month_start: '2025-03-01',
+        deficiencies_with_tta: 1,
+        total_active_deficiencies: 1,
+      },
+    ]);
+    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
+      mockReport({
+        id: 1004,
+        startDate: 'not-a-real-date',
+        activityRecipients: [{ grantId: grant.id }],
+      }),
+      mockReport({
+        id: 1005,
+        startDate: '2025-01-10T00:00:00Z',
+        activityRecipients: [{ grantId: grant.id }],
+      }),
+      mockReport({
+        id: 1006,
+        startDate: '2025-03-20T00:00:00Z',
+        activityRecipients: [{ grantId: grant.id }],
+      }),
+    ]);
+
+    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: {} });
+    const sql = querySpy.mock.calls[0][0];
+
+    expect(sql).toContain("('2025-01-01'::date)");
+    expect(sql).toContain("('2025-02-01'::date)");
+    expect(sql).toContain("('2025-03-01'::date)");
+    expect(sql).not.toContain('not-a-real-date');
+    expect(data).toEqual([
+      {
+        name: 'Active Deficiencies with TTA support',
+        x: ['Jan 2025', 'Feb 2025', 'Mar 2025'],
+        y: [1, 0, 1],
+        month: ['', '', ''],
+        id: 'active-deficiencies-with-tta-support',
+        trace: 'circle',
+      },
+      {
+        name: 'All active Deficiencies',
+        x: ['Jan 2025', 'Feb 2025', 'Mar 2025'],
+        y: [2, 1, 1],
+        month: ['', '', ''],
+        id: 'all-active-deficiencies',
+        trace: 'triangle',
+      },
+    ]);
   });
 
   it('queries real data and returns monthly counts', async () => {
