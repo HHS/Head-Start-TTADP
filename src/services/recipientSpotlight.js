@@ -256,6 +256,20 @@ export async function getRecipientSpotlightIndicators(
       )
     WHERE (gr.deleted IS NULL OR NOT gr.deleted)
     ),
+    -- All grants for each recipient (ignores grantmode) used for the "New Recipients"
+    -- indicator so that it always reflects full recipient grant history regardless of
+    -- whether a singleGrantId filter was applied.
+    recipient_grant_history AS (
+      SELECT DISTINCT
+        r.rid,
+        r.region,
+        gr.id AS grid,
+        gr."startDate" AS grstart
+      FROM recipients r
+      JOIN "Grants" gr
+        ON r.rid = gr."recipientId"
+      WHERE (gr.deleted IS NULL OR NOT gr.deleted)
+    ),
     -- Select all the potentially-relevant reviews
     -- for early filtering of monitoring datasets
     all_reviews AS (
@@ -339,12 +353,15 @@ export async function getRecipientSpotlightIndicators(
         OR rdd IS NULL
     ),
 
-    -- 3. New Recipients: Recipients with oldest grant less than 4 years old
+    -- 3. New Recipients: Recipients with oldest grant less than 4 years old.
+    -- This is intentionally based on the recipient's full grant history
+    -- (recipient_grant_history) so that the indicator is consistent between
+    -- recipient-level and grant-level views.
     new_recipients AS (
       SELECT
         rid new_recip_rid,
         region new_recip_region
-      FROM all_grants
+      FROM recipient_grant_history
       GROUP BY 1,2
       HAVING MIN(grstart) >= NOW() - INTERVAL '4 years'
     ),

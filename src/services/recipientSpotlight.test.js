@@ -856,6 +856,101 @@ describe('recipientSpotlight service', () => {
       }
     });
 
+    it('treats "New Recipients" consistently between recipient and grant modes', async () => {
+      // Recreate a veteran-style recipient with both an old inactive grant and a newer
+      // active grant. The recipient should NOT be flagged as "New Recipient" even when
+      // querying in grant mode for only the newer active grant.
+
+      const oldNumber = `G-OLD-HISTORY-${faker.datatype.number({ min: 100000, max: 999999 })}`;
+      const newNumber = `G-NEW-ACTIVE-${faker.datatype.number({ min: 100000, max: 999999 })}`;
+
+      await db.GrantNumberLink.bulkCreate([
+        { grantNumber: oldNumber },
+        { grantNumber: newNumber },
+      ]);
+
+      const veteran = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 60000 })),
+        name: 'Veteran Recipient For Grantmode New Recipient Test',
+        regionId: REGION_ID,
+      });
+
+      await db.MonitoringGranteeLink.create({ granteeId: veteran.id.toString() });
+
+      const veteranOldGrant = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 60000 })),
+        number: oldNumber,
+        recipientId: veteran.id,
+        regionId: REGION_ID,
+        status: 'Inactive',
+        inactivationDate: pastTwoYears,
+        startDate: pastFiveYears,
+        endDate: pastTwoYears,
+        cdi: false,
+      });
+
+      const veteranNewGrant = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 60000 })),
+        number: newNumber,
+        recipientId: veteran.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastThreeYears,
+        endDate: createDate,
+        cdi: false,
+      });
+
+      try {
+        // Recipient mode: no singleGrantId
+        const recipientModeScopes = createScopesWithRecipientAndRegion(veteran.id, REGION_ID);
+        const recipientModeResult = await getRecipientSpotlightIndicators(
+          recipientModeScopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+        );
+
+        expect(recipientModeResult.recipients.length).toBe(1);
+        expect(recipientModeResult.recipients[0].recipientId).toBe(veteran.id);
+        expect(recipientModeResult.recipients[0].newRecipients).toBe(false);
+
+        // Grant mode: pass the newer grant's id as singleGrantId. Previously this could
+        // incorrectly mark the recipient as "New" by only considering the newer grant.
+        const grantModeResult = await getRecipientSpotlightIndicators(
+          recipientModeScopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          [],
+          [],
+          veteranNewGrant.id,
+        );
+
+        expect(grantModeResult.recipients.length).toBe(1);
+        expect(grantModeResult.recipients[0].recipientId).toBe(veteran.id);
+        expect(grantModeResult.recipients[0].newRecipients).toBe(false);
+      } finally {
+        await Grant.destroy({
+          where: { id: [veteranOldGrant.id, veteranNewGrant.id] },
+          force: true,
+          individualHooks: true,
+        });
+        await db.MonitoringGranteeLink.destroy({
+          where: { granteeId: veteran.id.toString() },
+          force: true,
+        });
+        await Recipient.destroy({ where: { id: veteran.id }, force: true });
+        await db.GrantNumberLink.destroy({
+          where: { grantNumber: [oldNumber, newNumber] },
+          force: true,
+        });
+      }
+    });
+
     it('identifies new staff correctly', async () => {
       const scopes = createScopesWithRecipientAndRegion(newStaffRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
