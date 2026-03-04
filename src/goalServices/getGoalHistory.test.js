@@ -242,6 +242,80 @@ describe('getGoalHistory (database-backed)', () => {
     expect(overview.suspensions).toBe(1);
   });
 
+  it('only includes objectives created via RTR or on approved ARs', async () => {
+    // Create an objective that should NOT be included by the service filter
+    const excludedObjective = await Objective.create({
+      title: faker.random.words(5),
+      goalId: goalSuspended.id,
+      status: 'Suspended',
+      createdVia: 'activityReport',
+      onApprovedAR: false,
+    });
+
+    try {
+      const result = await getGoalHistory(goalSuspended.id);
+
+      const returnedObjectiveIds = result.goals
+        .flatMap((g) => g.objectives || [])
+        .map((o) => o.id);
+
+      expect(returnedObjectiveIds).not.toContain(excludedObjective.id);
+    } finally {
+      await Objective.destroy({
+        where: { id: excludedObjective.id },
+        force: true,
+      });
+    }
+  });
+
+  it('only counts activity reports with APPROVED calculatedStatus in overview.activityReports', async () => {
+    // Create a non-approved activity report linked to objective1; it should be ignored
+    const extraReport = await ActivityReport.create({
+      activityRecipientType: 'recipient',
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      numberOfParticipants: 1,
+      deliveryMethod: 'in-person',
+      duration: 1,
+      regionId: REGION_ID,
+      endDate: '2021-01-02T12:00:00Z',
+      startDate: '2021-01-02T12:00:00Z',
+      requester: 'requester',
+      targetPopulations: ['pop'],
+      reason: ['reason'],
+      participants: ['participants'],
+      topics: ['Program Planning and Services'],
+      ttaType: ['technical-assistance'],
+      version: 2,
+      userId: user.id,
+    });
+
+    const extraAro = await ActivityReportObjective.create({
+      activityReportId: extraReport.id,
+      objectiveId: objective1.id,
+      status: 'Suspended',
+    });
+
+    try {
+      const result = await getGoalHistory(goalSuspended.id);
+
+      const uniqueArIds = new Set(
+        result.goals
+          .flatMap((g) => g.objectives || [])
+          .flatMap((o) => o.activityReportObjectives || [])
+          .map((aro) => aro.activityReport?.id)
+          .filter(Boolean),
+      );
+
+      // Still only the two APPROVED reports from the main fixture
+      expect(uniqueArIds.size).toBe(2);
+      expect(uniqueArIds).toEqual(new Set([report1.id, report2.id]));
+    } finally {
+      await ActivityReportObjective.destroy({ where: { id: extraAro.id } });
+      await ActivityReport.destroy({ where: { id: extraReport.id } });
+    }
+  });
+
   it('includes both goals in the history', async () => {
     const result = await getGoalHistory(goalSuspended.id);
 
