@@ -1216,7 +1216,7 @@ describe('goal handlers', () => {
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
     });
 
-    it('returns empty array when no goals with same template are found', async () => {
+    it('returns object with empty goals array and zeroed overview when no goals with same template are found', async () => {
       const req = {
         params: {
           goalId: '1',

@@ -323,6 +323,13 @@ export async function retrieveObjectiveOptionsByGoalTemplate(req, res) {
   }
 }
 
+/**
+ * Retrieves the history of goals with the same template as the specified goal
+ * This handler is used by ViewStandardGoals to display goal status changes
+ * Returns an object { goals, overview } where goals is an array of goals with the same
+ * goalTemplateId for this specific grant, and overview contains summary counts
+ * (activityReports, objectives, closures, suspensions)
+ */
 export async function getGoalHistory(req, res) {
   try {
     const { goalId } = req.params;
