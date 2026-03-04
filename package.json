@@ -122,6 +122,7 @@
     "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
   },
   "resolutions": {
+    "@tootallnate/once": ">=3.0.1",
     "axe-core": "^4.11.0",
     "basic-ftp": "^5.2.0",
     "@axe-core/webdriverjs": "^4.11.0",
