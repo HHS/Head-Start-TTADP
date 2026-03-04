@@ -1,5 +1,6 @@
 import moment from 'moment';
-import { QueryTypes } from 'sequelize';
+import { uniq } from 'lodash';
+import { Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { IScopes } from '../types';
 import db, { sequelize } from '../../models';
@@ -41,14 +42,21 @@ export default async function activeDeficientCitationsWithTtaSupport(
   const approvedReports = await ActivityReport.findAll({
     attributes: ['id', 'startDate'],
     where: {
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-      ...scopes.activityReport,
+      [Op.and]: [
+        scopes.activityReport,
+        { calculatedStatus: REPORT_STATUSES.APPROVED },
+      ],
     },
     include: [
       {
         model: ActivityRecipient,
         as: 'activityRecipients',
         attributes: ['grantId'],
+        where: {
+          grantId: {
+            [Op.not]: null,
+          },
+        },
       },
     ],
   });
@@ -73,11 +81,10 @@ export default async function activeDeficientCitationsWithTtaSupport(
   const monthValues = continuousMonths.map((month) => `'${moment(month).format('YYYY-MM-DD')}'`);
 
   // activityRecipientIds = grant IDs
-  const grants = approvedReports.flatMap((report) => report.getDataValue('activityRecipients') as { grantId: number }[])
-    .map((ar: { grantId: number }) => ar.grantId);
+  const grantIds = uniq(approvedReports.flatMap((report) => report.getDataValue('activityRecipients') as { grantId: number }[])
+    .map((ar: { grantId: number }) => ar.grantId));
 
   const approvedReportIds = approvedReports.map((report) => report.getDataValue('id') as number);
-  const grantIds = Array.from(new Set(grants));
 
   if (!monthValues.length) {
     return [
@@ -101,12 +108,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
   }
 
   if (!grantIds.length || !approvedReportIds.length) {
-    const multipleYears = new Set(continuousMonths.map((month) => moment(month).format('YY'))).size > 1;
-    const x = continuousMonths.map((month) => (
-      multipleYears
-        ? moment(month).format('MMM-YY')
-        : moment(month).format('MMM')
-    ));
+    const x = continuousMonths.map((month) => (moment(month).format('MMM-YYYY')));
     const zeroes = x.map(() => 0);
     return [
       {
