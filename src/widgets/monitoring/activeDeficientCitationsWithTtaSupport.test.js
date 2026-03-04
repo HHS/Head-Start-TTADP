@@ -180,7 +180,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     expect(data).toEqual([
       {
         name: 'Active Deficiencies with TTA support',
-        x: ['Feb', 'Mar', 'Apr'],
+        x: ['Feb 2025', 'Mar 2025', 'Apr 2025'],
         y: [1, 0, 0],
         month: ['', '', ''],
         id: 'active-deficiencies-with-tta-support',
@@ -188,7 +188,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
       },
       {
         name: 'All active Deficiencies',
-        x: ['Feb', 'Mar', 'Apr'],
+        x: ['Feb 2025', 'Mar 2025', 'Apr 2025'],
         y: [2, 1, 0],
         month: ['', '', ''],
         id: 'all-active-deficiencies',

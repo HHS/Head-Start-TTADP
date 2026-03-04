@@ -73,14 +73,14 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
       <LineGraph
         showTabularData={showTabularData}
         data={data}
-        xAxisTitle="Date range"
-        yAxisTitle="Number of hours"
+        xAxisTitle="Activity report start date"
+        yAxisTitle="Number of deficient citations"
         legendConfig={[
           {
             label: 'Active Deficiencies with TTA support', selected: true, shape: 'circle', id: `${TRACE_IDS.ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT}-checkbox`, traceId: TRACE_IDS.ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT,
           },
           {
-            label: 'All active Deficiencies', selected: true, shape: 'square', id: `${TRACE_IDS.ALL_ACTIVE_DEFICIENCIES}-checkbox`, traceId: TRACE_IDS.ALL_ACTIVE_DEFICIENCIES,
+            label: 'All active Deficiencies', selected: true, shape: 'triangle', id: `${TRACE_IDS.ALL_ACTIVE_DEFICIENCIES}-checkbox`, traceId: TRACE_IDS.ALL_ACTIVE_DEFICIENCIES,
           },
         ]}
         tableConfig={{

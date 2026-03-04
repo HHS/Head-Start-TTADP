@@ -108,7 +108,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
   }
 
   if (!grantIds.length) {
-    const x = continuousMonths.map((month) => (moment(month).format('MMM-YYYY')));
+    const x = continuousMonths.map((month) => (moment(month).format('MMM YYYY')));
     const zeroes = x.map(() => 0);
     return [
       {
@@ -181,12 +181,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
   );
   const monthRows: IMonthlyCounts[] = Array.from(rowsByMonthStart.values());
 
-  const multipleYears = new Set(monthRows.map((row) => moment(row.month_start).format('YY'))).size > 1;
-  const x: string[] = monthRows.map((row) => (
-    multipleYears
-      ? moment(row.month_start).format('MMM-YY')
-      : moment(row.month_start).format('MMM')
-  ));
+  const x: string[] = monthRows.map((row) => moment(row.month_start).format('MMM YYYY'));
 
   const response: IActiveDeficientCitationsWithTtaSupport[] = [
     {
