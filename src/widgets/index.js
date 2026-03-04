@@ -10,6 +10,7 @@ import trOverview from './trOverview';
 import trStandardGoalList from './trStandardGoalList';
 import trSessionsByTopic from './trSessionsByTopic';
 import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
+import approvalRateByDeadline from './approvalRateByDeadline';
 
 /*
   All widgets need to be added to this object
@@ -29,4 +30,5 @@ export default {
   trStandardGoalList,
   trSessionsByTopic,
   trHoursOfTrainingByNationalCenter,
+  approvalRateByDeadline,
 };

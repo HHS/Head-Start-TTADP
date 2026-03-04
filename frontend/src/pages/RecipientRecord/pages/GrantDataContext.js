@@ -25,6 +25,13 @@ export const GrantDataProvider = ({ children }) => {
     }));
   }, []);
 
+  const updateGrantSpotlightData = useCallback((grantNumber, hasSpotlightData) => {
+    setGrantData((currentGrantData) => ({
+      ...currentGrantData,
+      [grantNumber]: { ...currentGrantData[grantNumber], hasSpotlightData },
+    }));
+  }, []);
+
   const safeCheck = (grantNumber, key) => {
     if (typeof grantNumber !== 'string' || !grantData || !grantData[grantNumber]) {
       return false;
@@ -34,14 +41,17 @@ export const GrantDataProvider = ({ children }) => {
 
   const hasMonitoringData = (grantNumber) => safeCheck(grantNumber, 'hasMonitoringData');
   const hasClassData = (grantNumber) => safeCheck(grantNumber, 'hasClassData');
+  const hasSpotlightData = (grantNumber) => safeCheck(grantNumber, 'hasSpotlightData');
 
   return (
     <GrantDataContext.Provider value={{
       grantData,
       updateGrantMonitoringData,
       updateGrantClassData,
+      updateGrantSpotlightData,
       hasMonitoringData,
       hasClassData,
+      hasSpotlightData,
     }}
     >
       {children}

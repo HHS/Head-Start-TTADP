@@ -295,6 +295,11 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DATE,
     },
+    approvedAtTimezone: {
+      allowNull: true,
+      type: DataTypes.STRING,
+      comment: 'IANA timezone used to interpret approvedAt for deadline calculations',
+    },
     imported: {
       type: DataTypes.JSONB,
       comment: 'Storage for raw values from smartsheet CSV imports',

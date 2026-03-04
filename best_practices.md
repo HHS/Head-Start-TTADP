@@ -29,6 +29,7 @@ For detailed testing patterns including database state management helpers, see `
 - **No enum arrays.** Use a joined table instead. There is a Sequelize bug that intermittently returns the wrong data type from enum arrays.
 - **Sanitize filter inputs for SQL injection.** Filters are derived from URLs. `sequelize.escape` is insufficient alone — independently validate expected types (e.g., confirm all region IDs are numbers).
 - Avoid raw SQL unless necessary; use Sequelize scopes/models.
+- Dates stored in JSONB fields use `MM/DD/YYYY` format. When sorting or comparing these values in SQL, use `TO_DATE(field, 'MM/DD/YYYY')` rather than `CAST(field AS DATE)` — PostgreSQL's `CAST AS DATE` expects ISO format and will throw a `DateTimeParseError` (error code `22007`) on `MM/DD/YYYY` values. Use `NULLIF(field, '')` to guard against empty strings: `TO_DATE(NULLIF(field, ''), 'MM/DD/YYYY')`. See `src/scopes/trainingReports/startDate.js` for reference examples.
 
 ### Migrations
 - Always include reversible `down` logic.
