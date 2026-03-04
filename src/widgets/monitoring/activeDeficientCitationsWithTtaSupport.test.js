@@ -289,11 +289,11 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
 
     const data = await activeDeficientCitationsWithTtaSupport({ activityReport: {} });
     const sql = querySpy.mock.calls[0][0];
+    const queryOptions = querySpy.mock.calls[0][1];
 
-    expect(sql).toContain("('2025-01-01'::date)");
-    expect(sql).toContain("('2025-02-01'::date)");
-    expect(sql).toContain("('2025-03-01'::date)");
+    expect(sql).toContain('ARRAY[:monthStarts]::date[]');
     expect(sql).not.toContain('not-a-real-date');
+    expect(queryOptions.replacements.monthStarts).toEqual(['2025-01-01', '2025-02-01', '2025-03-01']);
     expect(data).toEqual([
       {
         name: 'Active Deficiencies with TTA support',

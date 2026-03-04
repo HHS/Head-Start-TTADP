@@ -78,15 +78,13 @@ export default async function activeDeficientCitationsWithTtaSupport(
     }
   }
 
-  const monthValues = continuousMonths.map((month) => `'${moment(month).format('YYYY-MM-DD')}'`);
-
   // activityRecipientIds = grant IDs
   const grantIds = uniq(approvedReports.flatMap((report) => report.getDataValue('activityRecipients') as { grantId: number }[])
     .map((ar: { grantId: number }) => ar.grantId));
 
   const approvedReportIds = approvedReports.map((report) => report.getDataValue('id') as number);
 
-  if (!monthValues.length) {
+  if (!continuousMonths.length) {
     return [
       {
         name: 'Active Deficiencies with TTA support',
@@ -135,14 +133,14 @@ export default async function activeDeficientCitationsWithTtaSupport(
       m.month_start::text,
       COALESCE(tsd.deficiencies_with_tta, 0)::int AS deficiencies_with_tta,
       COALESCE(ad.total_active_deficiencies, 0)::int AS total_active_deficiencies
-    FROM (VALUES ${monthValues.map((month) => `(${month}::date)`).join(', ')}) AS m(month_start)
+    FROM unnest(ARRAY[:monthStarts]::date[]) AS m(month_start)
     LEFT JOIN LATERAL (
       SELECT
         COUNT(DISTINCT c.id)::int AS total_active_deficiencies
       FROM "Citations" c
       JOIN "GrantCitations" gc
         ON gc."citationId" = c.id
-      WHERE gc."grantId" IN (${grantIds.join(',')})
+      WHERE gc."grantId" IN (:grantIds)
         AND c."calculated_finding_type" = 'Deficiency'
         AND c."deletedAt" IS NULL
         AND c.reported_date < (m.month_start + INTERVAL '1 month')::date
@@ -163,8 +161,8 @@ export default async function activeDeficientCitationsWithTtaSupport(
         ON c.finding_uuid = ref.reference->>'findingId'
       JOIN "GrantCitations" gc
         ON gc."citationId" = c.id
-      WHERE ar.id IN (${approvedReportIds.join(',')})
-        AND gc."grantId" IN (${grantIds.join(',')})
+      WHERE ar.id IN (:approvedReportIds)
+        AND gc."grantId" IN (:grantIds)
         AND DATE_TRUNC('month', ar."startDate")::date = m.month_start
         AND c."calculated_finding_type" = 'Deficiency'
         AND c."deletedAt" IS NULL
@@ -173,7 +171,14 @@ export default async function activeDeficientCitationsWithTtaSupport(
     ) tsd
       ON true
     ORDER BY m.month_start ASC;`,
-    { type: QueryTypes.SELECT },
+    {
+      replacements: {
+        monthStarts: continuousMonths.map((month) => moment(month).format('YYYY-MM-DD')),
+        grantIds,
+        approvedReportIds,
+      },
+      type: QueryTypes.SELECT,
+    },
   );
 
   const rowsByMonthStart: MonthCountByMonthStart = new Map(
