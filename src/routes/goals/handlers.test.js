@@ -26,6 +26,7 @@ import {
   goalByIdWithActivityReportsAndRegions,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
+  getGoalHistory as getGoalHistoryService,
 } from '../../goalServices/goals';
 import goalsFromTemplate from '../../goalServices/goalsFromTemplate';
 import { currentUserId } from '../../services/currentUser';
@@ -48,6 +49,7 @@ jest.mock('../../goalServices/goals', () => ({
   goalsByIdsAndActivityReport: jest.fn(),
   goalRegionsById: jest.fn(),
   getGoalsMissingDataForActivityReportSubmission: jest.fn(),
+  getGoalHistory: jest.fn(),
 }));
 
 jest.mock('../../goalServices/getGoalsMissingDataForActivityReportSubmission', () => jest.fn());
@@ -1029,9 +1031,6 @@ describe('goal handlers', () => {
       jest.clearAllMocks();
       currentUserId.mockReset();
       userById.mockReset();
-      db.Goal.findByPk = jest.fn();
-      db.Grant.findByPk = jest.fn();
-      db.Goal.findAll = jest.fn();
     });
 
     it('handles success', async () => {
@@ -1042,17 +1041,6 @@ describe('goal handlers', () => {
         session: {
           userId: 1,
         },
-      };
-
-      const mockGoal = {
-        id: 1,
-        goalTemplateId: 10,
-        grantId: 100,
-      };
-
-      const mockGrant = {
-        id: 100,
-        regionId: 2,
       };
 
       const mockGoalsWithDetails = [
@@ -1083,32 +1071,32 @@ describe('goal handlers', () => {
         ],
       });
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce(mockGoalsWithDetails);
+      getGoalHistoryService.mockResolvedValueOnce({
+        goals: mockGoalsWithDetails,
+        overview: {
+          activityReports: 0,
+          objectives: 0,
+          closures: 0,
+          suspensions: 0,
+        },
+        regionId: 2,
+      });
 
       await getGoalHistory(req, mockResponse);
 
-      expect(db.Goal.findByPk).toHaveBeenCalledWith(1);
-      expect(db.Grant.findByPk).toHaveBeenCalledWith(100);
-      expect(db.Goal.findAll).toHaveBeenCalledWith(expect.objectContaining({
-        where: {
-          goalTemplateId: 10,
-          grantId: 100,
-          [Op.or]: [
-            {
-              createdVia: { [Op.ne]: 'activityReport' },
-            },
-            {
-              onApprovedAR: true,
-            },
-          ],
+      expect(getGoalHistoryService).toHaveBeenCalledWith(1);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        goals: mockGoalsWithDetails,
+        overview: {
+          activityReports: 0,
+          objectives: 0,
+          closures: 0,
+          suspensions: 0,
         },
-      }));
-      expect(mockResponse.json).toHaveBeenCalledWith(mockGoalsWithDetails);
+      });
     });
 
-    it('returns 404 when goal is not found', async () => {
+    it('returns 404 when goal history service returns null', async () => {
       const req = {
         params: {
           goalId: '1',
@@ -1127,42 +1115,7 @@ describe('goal handlers', () => {
           },
         ],
       });
-
-      db.Goal.findByPk.mockResolvedValueOnce(null);
-
-      await getGoalHistory(req, mockResponse);
-
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
-    });
-
-    it('returns 404 when grant is not found', async () => {
-      const req = {
-        params: {
-          goalId: '1',
-        },
-        session: {
-          userId: 1,
-        },
-      };
-
-      const mockGoal = {
-        id: 1,
-        goalTemplateId: 10,
-        grantId: 100,
-      };
-
-      currentUserId.mockResolvedValueOnce(1);
-      userById.mockResolvedValueOnce({
-        permissions: [
-          {
-            regionId: 2,
-            scopeId: SCOPES.READ_REPORTS,
-          },
-        ],
-      });
-
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(null);
+      getGoalHistoryService.mockResolvedValueOnce(null);
 
       await getGoalHistory(req, mockResponse);
 
@@ -1179,36 +1132,33 @@ describe('goal handlers', () => {
         },
       };
 
-      const mockGoal = {
-        id: 1,
-        goalTemplateId: 10,
-        grantId: 100,
-      };
-
-      const mockGrant = {
-        id: 100,
-        regionId: 2,
-      };
-
       currentUserId.mockResolvedValueOnce(1);
       userById.mockResolvedValueOnce({
         permissions: [
           {
-            regionId: 3, // Different region than the grant
+            regionId: 3, // Different region than the result region
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
       });
 
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
+      getGoalHistoryService.mockResolvedValueOnce({
+        goals: [],
+        overview: {
+          activityReports: 0,
+          objectives: 0,
+          closures: 0,
+          suspensions: 0,
+        },
+        regionId: 2,
+      });
 
       await getGoalHistory(req, mockResponse);
 
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
     });
 
-    it('returns empty array when no goals with same template are found', async () => {
+    it('returns object with empty goals array and zeroed overview when no goals with same template are found', async () => {
       const req = {
         params: {
           goalId: '1',
@@ -1217,18 +1167,6 @@ describe('goal handlers', () => {
           userId: 1,
         },
       };
-
-      const mockGoal = {
-        id: 1,
-        goalTemplateId: 10,
-        grantId: 100,
-      };
-
-      const mockGrant = {
-        id: 100,
-        regionId: 2,
-      };
-
       currentUserId.mockResolvedValueOnce(1);
       userById.mockResolvedValueOnce({
         permissions: [
@@ -1238,14 +1176,28 @@ describe('goal handlers', () => {
           },
         ],
       });
-
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
+      getGoalHistoryService.mockResolvedValueOnce({
+        goals: [],
+        overview: {
+          activityReports: 0,
+          objectives: 0,
+          closures: 0,
+          suspensions: 0,
+        },
+        regionId: 2,
+      });
 
       await getGoalHistory(req, mockResponse);
 
-      expect(mockResponse.json).toHaveBeenCalledWith([]);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        goals: [],
+        overview: {
+          activityReports: 0,
+          objectives: 0,
+          closures: 0,
+          suspensions: 0,
+        },
+      });
     });
 
     it('handles errors', async () => {
@@ -1267,227 +1219,13 @@ describe('goal handlers', () => {
           },
         ],
       });
-
-      db.Goal.findByPk.mockImplementationOnce(() => {
+      getGoalHistoryService.mockImplementationOnce(() => {
         throw new Error('Database error');
       });
 
       await getGoalHistory(req, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-    });
-
-    it('ensures only objectives with createdVia = "rtr" or onApprovedAR = true are queried', async () => {
-      const req = {
-        params: {
-          goalId: '1',
-        },
-        session: {
-          userId: 1,
-        },
-      };
-
-      const mockGoal = {
-        id: 1,
-        goalTemplateId: 10,
-        grantId: 100,
-      };
-
-      const mockGrant = {
-        id: 100,
-        regionId: 2,
-      };
-
-      currentUserId.mockResolvedValueOnce(1);
-      userById.mockResolvedValueOnce({
-        permissions: [
-          {
-            regionId: 2,
-            scopeId: SCOPES.READ_REPORTS,
-          },
-        ],
-      });
-
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
-
-      await getGoalHistory(req, mockResponse);
-
-      expect(db.Goal.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          include: expect.arrayContaining([
-            expect.objectContaining({
-              as: 'objectives',
-              required: false,
-              where: {
-                [Op.or]: [
-                  { createdVia: 'rtr' },
-                  { onApprovedAR: true },
-                ],
-              },
-            }),
-          ]),
-        }),
-      );
-    });
-
-    it('ensures only approved activity reports are included', async () => {
-      const req = {
-        params: {
-          goalId: '1',
-        },
-        session: {
-          userId: 1,
-        },
-      };
-
-      const mockGoal = {
-        id: 1,
-        goalTemplateId: 10,
-        grantId: 100,
-      };
-
-      const mockGrant = {
-        id: 100,
-        regionId: 2,
-      };
-
-      currentUserId.mockResolvedValueOnce(1);
-      userById.mockResolvedValueOnce({
-        permissions: [
-          {
-            regionId: 2,
-            scopeId: SCOPES.READ_REPORTS,
-          },
-        ],
-      });
-
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
-
-      await getGoalHistory(req, mockResponse);
-
-      // Check that activity reports in objectives are filtered by approved status
-      expect(db.Goal.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          include: expect.arrayContaining([
-            expect.objectContaining({
-              as: 'objectives',
-              include: expect.arrayContaining([
-                expect.objectContaining({
-                  as: 'activityReportObjectives',
-                  include: expect.arrayContaining([
-                    expect.objectContaining({
-                      as: 'activityReport',
-                      where: {
-                        calculatedStatus: 'approved',
-                      },
-                    }),
-                  ]),
-                }),
-              ]),
-            }),
-          ]),
-        }),
-      );
-    });
-
-    it('excludes prestandard goals from history queries', async () => {
-      const req = {
-        params: {
-          goalId: '1',
-        },
-        session: {
-          userId: 1,
-        },
-      };
-
-      const mockGoal = {
-        id: 1,
-        goalTemplateId: 10,
-        grantId: 100,
-        prestandard: false,
-      };
-
-      const mockGrant = {
-        id: 100,
-        regionId: 2,
-      };
-
-      currentUserId.mockResolvedValueOnce(1);
-      userById.mockResolvedValueOnce({
-        permissions: [
-          {
-            regionId: 2,
-            scopeId: SCOPES.READ_REPORTS,
-          },
-        ],
-      });
-
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
-
-      await getGoalHistory(req, mockResponse);
-
-      expect(db.Goal.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            prestandard: false,
-          }),
-        }),
-      );
-    });
-
-    it('only retrieves prestandard goals when requested goal is prestandard', async () => {
-      const req = {
-        params: {
-          goalId: '1',
-        },
-        session: {
-          userId: 1,
-        },
-      };
-
-      const mockGoal = {
-        id: 1,
-        goalTemplateId: 10,
-        grantId: 100,
-        prestandard: true,
-      };
-
-      const mockGrant = {
-        id: 100,
-        regionId: 2,
-      };
-
-      currentUserId.mockResolvedValueOnce(1);
-      userById.mockResolvedValueOnce({
-        permissions: [
-          {
-            regionId: 2,
-            scopeId: SCOPES.READ_REPORTS,
-          },
-        ],
-      });
-
-      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
-      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
-      db.Goal.findAll.mockResolvedValueOnce([]);
-
-      await getGoalHistory(req, mockResponse);
-
-      expect(db.Goal.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            goalTemplateId: 10,
-            grantId: 100,
-            prestandard: true,
-          }),
-        }),
-      );
     });
   });
 });
