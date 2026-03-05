@@ -41,6 +41,9 @@ For detailed testing patterns including database state management helpers, see `
 - Avoid raw SQL unless necessary; use Sequelize scopes/models.
 - Dates stored in JSONB fields use `MM/DD/YYYY` format. When sorting or comparing these values in SQL, use `TO_DATE(field, 'MM/DD/YYYY')` rather than `CAST(field AS DATE)` — PostgreSQL's `CAST AS DATE` expects ISO format and will throw a `DateTimeParseError` (error code `22007`) on `MM/DD/YYYY` values. Use `NULLIF(field, '')` to guard against empty strings: `TO_DATE(NULLIF(field, ''), 'MM/DD/YYYY')`. See `src/scopes/trainingReports/startDate.js` for reference examples.
 
+### Validation
+- We leverage the Joi.dev library for schema validation. Example: [src/models/hooks/activityReport.js](src/models/hooks/activityReport.js)
+
 ## Frontend
 
 ### Hook and component based architecture

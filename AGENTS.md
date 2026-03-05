@@ -56,6 +56,8 @@ The codebase is a monorepo with three main components:
 - `routes/`: API route handlers organized by domain (activityReports, goals, recipients, etc.)
 - `services/`: Business logic layer
 - `models/`: Sequelize database models
+- `models/hooks/`: Model lifecycle hooks (beforeCreate, beforeUpdate, afterUpdate, etc.)
+- `models/schemas/`: Joi validation schemas used in model hooks to enforce data integrity at submission and approval gates
 - `middleware/`: Express middleware (auth, sessions, logging, etc.)
 - `policies/`: Authorization/access control logic
 - `scopes/`: Sequelize query scopes for reusable filters
