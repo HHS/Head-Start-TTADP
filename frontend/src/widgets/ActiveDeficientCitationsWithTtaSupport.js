@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import withWidgetData from './withWidgetData';
 import LineGraphWidget from './LineGraphWidget';
 
-const EXPORT_NAME = 'Active Deficient Citations with TTA Support';
+const EXPORT_NAME = 'Active deficient citations with TTA support';
 
 // TODO: publish in common
 const TRACE_IDS = {
@@ -14,11 +14,14 @@ const TRACE_IDS = {
 export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
   return (
     <LineGraphWidget
-      title="Active Deficient Citations with TTA Support"
+      title="Active deficient citations with TTA support"
       exportName={EXPORT_NAME}
       data={data}
       xAxisTitle="Activity report start date"
       yAxisTitle="Number of deficient citations"
+      tableTitle="Active deficient citations"
+      tableFirstHeading="Active deficient citations"
+      subtitle="Active deficient citations addressed in approved Activity Reports (AR)."
       legendConfig={[
         // TODO: Here and in TotalHrsAndRecipientGraph, we should be able to derive this
         // information from the backend data instead of hardcoding it in the frontend

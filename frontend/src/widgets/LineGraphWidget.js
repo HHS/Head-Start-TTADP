@@ -11,6 +11,7 @@ import { arrayExistsAndHasLength, NOOP } from '../Constants';
 
 export default function LineGraphWidget({
   title,
+  subtitle,
   exportName,
   data,
   hideYAxis,
@@ -69,7 +70,8 @@ export default function LineGraphWidget({
     <WidgetContainer
       loading={false}
       title={title}
-      showHeaderBorder={false}
+      subtitle={subtitle}
+      showHeaderBorder
       menuItems={menuItems}
     >
       <LineGraph
@@ -86,7 +88,7 @@ export default function LineGraphWidget({
           firstHeading: tableFirstHeading,
           caption: tableCaption,
           enableCheckboxes: false,
-          enableSorting: false,
+          enableSorting: true,
           showTotalColumn: false,
           requestSort: NOOP,
           headings: columnHeadings,
@@ -127,6 +129,7 @@ LineGraphWidget.propTypes = {
   tableTitle: PropTypes.string,
   tableFirstHeading: PropTypes.string,
   tableCaption: PropTypes.string,
+  subtitle: PropTypes.string,
 };
 
 LineGraphWidget.defaultProps = {
@@ -136,4 +139,5 @@ LineGraphWidget.defaultProps = {
   tableTitle: 'TTA Provided',
   tableFirstHeading: 'TTA Provided',
   tableCaption: 'Total TTA hours by date and type',
+  subtitle: '',
 };
