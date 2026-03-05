@@ -305,21 +305,7 @@ export default function Routes({
         />
         <Route
           exact
-          path="/dashboards/regional-dashboard/activity-reports"
-          render={({ match }) => (
-            <AppWrapper
-              authenticated
-              logout={logout}
-              padded={false}
-              hasAlerts={!!(alert)}
-            >
-              <RegionalDashboard match={match} />
-            </AppWrapper>
-          )}
-        />
-        <Route
-          exact
-          path="/dashboards/regional-dashboard/:reportType(training-reports|all-reports|recipient-spotligh|monitoring)"
+          path="/dashboards/regional-dashboard/:reportType(activity-reports|training-reports|all-reports|recipient-spotlight|monitoring)"
           render={({ match }) => (
             <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
               <RegionalDashboard match={match} />
