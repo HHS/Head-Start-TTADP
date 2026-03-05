@@ -306,7 +306,6 @@ jobs:
     - restore_cache:
       keys:
       - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
-      - yarn-tarballs-
     - restore_cache:
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
@@ -617,7 +616,6 @@ jobs:
     - restore_cache:
       keys:
       - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
-      - yarn-tarballs-
     - restore_cache:
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
