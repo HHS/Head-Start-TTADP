@@ -6,9 +6,12 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      return queryInterface.sequelize.query(`
+      return await queryInterface.sequelize.query(
+        `
          ALTER TYPE "enum_Users_flags" ADD VALUE IF NOT EXISTS 'monitoring-regional-dashboard';
-      `);
+        `,
+        { transaction }
+      );
     });
   },
 
