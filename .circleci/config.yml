@@ -118,7 +118,7 @@ workflows:
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
         serial-group: << pipeline.parameters.target_env >>/deploy-lock
-        target_env: "<< pipeline.parameters.target_env >>"
+        target_env: << pipeline.parameters.target_env >>
         requires:
         - build_and_lint
 
@@ -304,8 +304,8 @@ jobs:
     - checkout
     - create_combined_yarnlock
     - restore_cache:
-      keys:
-      - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+        keys:
+        - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - restore_cache:
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
@@ -313,9 +313,9 @@ jobs:
         - yarn-deps-
     - run: yarn deps
     - save_cache:
-      paths:
-      - /home/circleci/.cache/yarn
-      key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+        paths:
+        - /home/circleci/.cache/yarn
+        key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - save_cache:
         paths:
         - node_modules
@@ -514,6 +514,10 @@ jobs:
   dynamic_security_scan:
     executor: machine-executor
     resource_class: large
+    parameters:
+      target_env:
+        type: string
+        default: staging
     steps:
     - attach_workspace:
         at: .
@@ -616,8 +620,8 @@ jobs:
     - checkout
     - create_combined_yarnlock
     - restore_cache:
-      keys:
-      - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+        keys:
+        - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - restore_cache:
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
@@ -626,9 +630,9 @@ jobs:
         yarn deps
         yarn build
     - save_cache:
-      paths:
-      - /home/circleci/.cache/yarn
-      key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+        paths:
+        - /home/circleci/.cache/yarn
+        key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - cf_process:
         target_env: prod
 
