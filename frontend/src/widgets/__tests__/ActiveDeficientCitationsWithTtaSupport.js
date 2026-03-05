@@ -34,7 +34,7 @@ describe('ActiveDeficientCitationsWithTtaSupportWidget', () => {
   it('renders and toggles to tabular view', async () => {
     render(<ActiveDeficientCitationsWithTtaSupportWidget data={TEST_DATA} />);
 
-    expect(await screen.findByText('Active deficient citations with TTA support')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: /Active deficient citations with TTA support/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
     fireEvent.click(screen.getByText('Display table'));

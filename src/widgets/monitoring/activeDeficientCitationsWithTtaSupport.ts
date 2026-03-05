@@ -8,7 +8,7 @@ import db, { sequelize } from '../../models';
 const { ActivityReport, ActivityRecipient } = db;
 
 interface IActiveDeficientCitationsWithTtaSupport {
-  name: 'Active Deficiencies with TTA support' | 'All active Deficiencies',
+  name: 'Active deficiencies with TTA support' | 'All active deficiencies',
   x: string[],
   y: number[],
   month: string[],
@@ -86,7 +86,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
   if (!continuousMonths.length) {
     return [
       {
-        name: 'Active Deficiencies with TTA support',
+        name: 'Active deficiencies with TTA support',
         x: [],
         y: [],
         month: [],
@@ -94,7 +94,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
         trace: 'circle',
       },
       {
-        name: 'All active Deficiencies',
+        name: 'All active deficiencies',
         x: [],
         y: [],
         month: [],
@@ -109,7 +109,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     const zeroes = x.map(() => 0);
     return [
       {
-        name: 'Active Deficiencies with TTA support',
+        name: 'Active deficiencies with TTA support',
         x,
         y: zeroes,
         month: x.map(() => ''),
@@ -117,7 +117,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
         trace: 'circle',
       },
       {
-        name: 'All active Deficiencies',
+        name: 'All active deficiencies',
         x,
         y: zeroes,
         month: x.map(() => ''),
@@ -189,7 +189,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
 
   const response: IActiveDeficientCitationsWithTtaSupport[] = [
     {
-      name: 'Active Deficiencies with TTA support',
+      name: 'Active deficiencies with TTA support',
       x,
       y: monthRows.map((row) => row.deficiencies_with_tta),
       month: x.map(() => ''),
@@ -197,7 +197,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
       trace: 'circle',
     },
     {
-      name: 'All active Deficiencies',
+      name: 'All active deficiencies',
       x,
       y: monthRows.map((row) => row.total_active_deficiencies),
       month: x.map(() => ''),

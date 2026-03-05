@@ -193,7 +193,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     ]));
     expect(data).toEqual([
       {
-        name: 'Active Deficiencies with TTA support',
+        name: 'Active deficiencies with TTA support',
         x: [],
         y: [],
         month: [],
@@ -201,7 +201,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
         trace: 'circle',
       },
       {
-        name: 'All active Deficiencies',
+        name: 'All active deficiencies',
         x: [],
         y: [],
         month: [],
@@ -231,7 +231,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     expect(querySpy).not.toHaveBeenCalled();
     expect(data).toEqual([
       {
-        name: 'Active Deficiencies with TTA support',
+        name: 'Active deficiencies with TTA support',
         x: ['Jan 2025', 'Feb 2025'],
         y: [0, 0],
         month: ['', ''],
@@ -239,7 +239,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
         trace: 'circle',
       },
       {
-        name: 'All active Deficiencies',
+        name: 'All active deficiencies',
         x: ['Jan 2025', 'Feb 2025'],
         y: [0, 0],
         month: ['', ''],
@@ -288,7 +288,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     expect(queryOptions.replacements.monthStarts).toEqual(['2025-01-01', '2025-02-01', '2025-03-01']);
     expect(data).toEqual([
       {
-        name: 'Active Deficiencies with TTA support',
+        name: 'Active deficiencies with TTA support',
         x: ['Jan 2025', 'Feb 2025', 'Mar 2025'],
         y: [1, 0, 1],
         month: ['', '', ''],
@@ -296,7 +296,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
         trace: 'circle',
       },
       {
-        name: 'All active Deficiencies',
+        name: 'All active deficiencies',
         x: ['Jan 2025', 'Feb 2025', 'Mar 2025'],
         y: [2, 1, 1],
         month: ['', '', ''],
@@ -322,7 +322,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
 
     expect(data).toEqual([
       {
-        name: 'Active Deficiencies with TTA support',
+        name: 'Active deficiencies with TTA support',
         x: ['Feb 2025', 'Mar 2025', 'Apr 2025'],
         y: [1, 0, 0],
         month: ['', '', ''],
@@ -330,7 +330,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
         trace: 'circle',
       },
       {
-        name: 'All active Deficiencies',
+        name: 'All active deficiencies',
         x: ['Feb 2025', 'Mar 2025', 'Apr 2025'],
         y: [2, 1, 0],
         month: ['', '', ''],
