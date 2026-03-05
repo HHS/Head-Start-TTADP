@@ -80,10 +80,16 @@ ActiveDeficientCitationsWithTtaSupportWidget.propTypes = {
 ActiveDeficientCitationsWithTtaSupportWidget.defaultProps = {
   data: [
     {
-      name: 'Active Deficiencies with TTA support', x: [], y: [], month: '',
+      name: 'Active Deficiencies with TTA support',
+      x: [],
+      y: [],
+      month: [],
     },
     {
-      name: 'All active Deficiencies', x: [], y: [], month: '',
+      name: 'All active Deficiencies',
+      x: [],
+      y: [],
+      month: [],
     },
   ],
 };
