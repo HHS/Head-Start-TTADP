@@ -517,6 +517,8 @@ jobs:
     steps:
     - attach_workspace:
         at: .
+    - set_env_vars:
+        target_env: << parameters.target_env >>
     - run:
         name: Start up local services
         command: ./bin/prod-style-server
