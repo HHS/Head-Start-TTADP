@@ -6,7 +6,6 @@ import React, {
 import { DECIMAL_BASE } from '@ttahub/common';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenCircle } from '@fortawesome/pro-solid-svg-icons';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading,
@@ -17,6 +16,7 @@ import {
   faArrowLeft,
   faChartColumn,
   faCheckCircle,
+  faPenCircle,
   faPauseCircle,
 } from '../../../../icons';
 import { DashboardOverviewContainer } from '../../../../widgets/DashboardOverviewContainer';
