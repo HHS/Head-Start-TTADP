@@ -31,6 +31,30 @@ const TEST_DATA = [
 ];
 
 describe('ActiveDeficientCitationsWithTtaSupportWidget', () => {
+  it('derives legend labels from trace data', async () => {
+    render(
+      <ActiveDeficientCitationsWithTtaSupportWidget
+        data={[
+          {
+            ...TEST_DATA[0],
+            name: 'Derived legend label one',
+          },
+          {
+            ...TEST_DATA[1],
+            name: 'Derived legend label two',
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      await screen.findByRole('checkbox', { name: 'Derived legend label one' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('checkbox', { name: 'Derived legend label two' }),
+    ).toBeInTheDocument();
+  });
+
   it('renders and toggles to tabular view', async () => {
     render(<ActiveDeficientCitationsWithTtaSupportWidget data={TEST_DATA} />);
 

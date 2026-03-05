@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import withWidgetData from './withWidgetData';
 import LineGraphWidget from './LineGraphWidget';
+import { deriveLineGraphLegendConfig } from './constants';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import Drawer from '../components/Drawer';
@@ -14,6 +15,23 @@ const TRACE_IDS = {
   ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT: 'active-deficiencies-with-tta-support',
   ALL_ACTIVE_DEFICIENCIES: 'all-active-deficiencies',
 };
+
+const DEFAULT_LEGEND_CONFIG = [
+  {
+    label: 'Active deficiencies with TTA support',
+    selected: true,
+    shape: 'circle',
+    id: `${TRACE_IDS.ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT}-checkbox`,
+    traceId: TRACE_IDS.ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT,
+  },
+  {
+    label: 'All active deficiencies',
+    selected: true,
+    shape: 'triangle',
+    id: `${TRACE_IDS.ALL_ACTIVE_DEFICIENCIES}-checkbox`,
+    traceId: TRACE_IDS.ALL_ACTIVE_DEFICIENCIES,
+  },
+];
 
 export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
   const drawerTriggerRef = useRef(null);
@@ -46,16 +64,7 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
         tableTitle="Active deficient citations"
         tableFirstHeading="Active deficient citations"
         subtitle={subtitle}
-        legendConfig={[
-        // TODO: Here and in TotalHrsAndRecipientGraph, we should be able to derive this
-        // information from the backend data instead of hardcoding it in the frontend
-          {
-            label: 'Active deficiencies with TTA support', selected: true, shape: 'circle', id: `${TRACE_IDS.ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT}-checkbox`, traceId: TRACE_IDS.ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT,
-          },
-          {
-            label: 'All active deficiencies', selected: true, shape: 'triangle', id: `${TRACE_IDS.ALL_ACTIVE_DEFICIENCIES}-checkbox`, traceId: TRACE_IDS.ALL_ACTIVE_DEFICIENCIES,
-          },
-        ]}
+        legendConfig={deriveLineGraphLegendConfig(data, DEFAULT_LEGEND_CONFIG)}
       />
     </>
   );
