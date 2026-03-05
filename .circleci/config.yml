@@ -304,11 +304,19 @@ jobs:
     - checkout
     - create_combined_yarnlock
     - restore_cache:
+      keys:
+      - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+      - yarn-tarballs-
+    - restore_cache:
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
         - yarn-deps-
     - run: yarn deps
+    - save_cache:
+      paths:
+      - /home/circleci/.cache/yarn
+      key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - save_cache:
         paths:
         - node_modules
@@ -607,12 +615,20 @@ jobs:
     - checkout
     - create_combined_yarnlock
     - restore_cache:
+      keys:
+      - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+      - yarn-tarballs-
+    - restore_cache:
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         - yarn-deps-
     - run: |
         yarn deps
         yarn build
+    - save_cache:
+      paths:
+      - /home/circleci/.cache/yarn
+      key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - cf_process:
         target_env: prod
 
