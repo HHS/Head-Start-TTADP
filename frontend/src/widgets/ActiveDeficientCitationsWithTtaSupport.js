@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
+import { TRACE_IDS } from '@ttahub/common';
 import withWidgetData from './withWidgetData';
 import LineGraphWidget from './LineGraphWidget';
 import { deriveLineGraphLegendConfig } from './constants';
@@ -9,12 +10,6 @@ import Drawer from '../components/Drawer';
 // import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 
 const EXPORT_NAME = 'Active deficient citations with TTA support';
-
-// TODO: publish in common
-const TRACE_IDS = {
-  ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT: 'active-deficiencies-with-tta-support',
-  ALL_ACTIVE_DEFICIENCIES: 'all-active-deficiencies',
-};
 
 const DEFAULT_LEGEND_CONFIG = [
   {

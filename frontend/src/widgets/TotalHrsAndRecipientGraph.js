@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS as TRACE_IDS } from '@ttahub/common';
+import { TRACE_IDS } from '@ttahub/common';
 import withWidgetData from './withWidgetData';
 import LineGraphWidget from './LineGraphWidget';
 import { deriveLineGraphLegendConfig } from './constants';

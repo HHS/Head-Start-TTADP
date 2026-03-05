@@ -8,7 +8,7 @@ import {
   screen,
   act,
 } from '@testing-library/react';
-import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
+import { TRACE_IDS as TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
 import LegendControl from '../LegendControl';
 import { TotalHrsAndRecipientGraph } from '../TotalHrsAndRecipientGraph';
 

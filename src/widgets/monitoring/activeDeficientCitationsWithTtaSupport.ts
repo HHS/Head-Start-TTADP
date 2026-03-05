@@ -1,7 +1,7 @@
 import moment from 'moment';
 import { uniq } from 'lodash';
 import { Op, QueryTypes } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRACE_IDS } from '@ttahub/common';
 import { IScopes } from '../types';
 import db, { sequelize } from '../../models';
 
@@ -23,11 +23,6 @@ interface IMonthlyCounts {
 }
 
 type MonthCountByMonthStart = Map<string, IMonthlyCounts>;
-
-const TRACE_IDS = {
-  ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT: 'active-deficiencies-with-tta-support',
-  ALL_ACTIVE_DEFICIENCIES: 'all-active-deficiencies',
-} as const;
 
 /**
  * Returns monthly traces for active deficiencies and active deficiencies with TTA support.
