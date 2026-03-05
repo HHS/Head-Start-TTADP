@@ -50,7 +50,8 @@ export default async function activeDeficientCitationsWithTtaSupport(
     },
     include: [
       {
-        model: ActivityRecipient,
+        // removed scopes so that unnecessary tables are not included (otherEntities)
+        model: ActivityRecipient.unscoped(),
         as: 'activityRecipients',
         required: true,
         attributes: ['grantId'],
@@ -61,7 +62,8 @@ export default async function activeDeficientCitationsWithTtaSupport(
         },
         include: [
           {
-            model: Grant,
+            // removed scopes so that unnecessary tables are not included (recipient)
+            model: Grant.unscoped(),
             attributes: [],
             required: true,
             as: 'grant',
