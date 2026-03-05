@@ -22,6 +22,9 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
       tableTitle="Active deficient citations"
       tableFirstHeading="Active deficient citations"
       subtitle="Active deficient citations addressed in approved Activity Reports (AR)."
+      tableConfig={{
+        enableSorting: true,
+      }}
       legendConfig={[
         // TODO: Here and in TotalHrsAndRecipientGraph, we should be able to derive this
         // information from the backend data instead of hardcoding it in the frontend
