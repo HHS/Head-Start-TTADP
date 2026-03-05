@@ -5,7 +5,12 @@ import { REPORT_STATUSES, TRACE_IDS } from '@ttahub/common';
 import { IScopes } from '../types';
 import db, { sequelize } from '../../models';
 
-const { ActivityReport, ActivityRecipient } = db;
+const {
+  ActivityReport,
+  ActivityRecipient,
+  Grant,
+  GrantCitation,
+} = db;
 
 interface IActiveDeficientCitationsWithTtaSupport {
   name: 'Active deficiencies with TTA support' | 'All active deficiencies',
@@ -47,12 +52,29 @@ export default async function activeDeficientCitationsWithTtaSupport(
       {
         model: ActivityRecipient,
         as: 'activityRecipients',
+        required: true,
         attributes: ['grantId'],
         where: {
           grantId: {
             [Op.not]: null,
           },
         },
+        include: [
+          {
+            model: Grant,
+            attributes: [],
+            required: true,
+            as: 'grant',
+            include: [
+              {
+                as: 'grantCitations',
+                model: GrantCitation,
+                attributes: [],
+                required: true,
+              },
+            ],
+          },
+        ],
       },
     ],
   });

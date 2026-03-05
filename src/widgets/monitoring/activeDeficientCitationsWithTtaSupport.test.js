@@ -191,6 +191,15 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     expect(findAllQuery.where[Op.and]).toEqual(expect.arrayContaining([
       { startDate: { [Op.not]: null } },
     ]));
+    const [activityRecipientsInclude] = findAllQuery.include;
+    const [grantInclude] = activityRecipientsInclude.include;
+    const [grantCitationsInclude] = grantInclude.include;
+
+    expect(activityRecipientsInclude.required).toBe(true);
+    expect(grantInclude.required).toBe(true);
+    expect(grantCitationsInclude.required).toBe(true);
+    expect(grantInclude.as).toBe('grant');
+    expect(grantCitationsInclude.as).toBe('grantCitations');
     expect(data).toEqual([
       {
         name: 'Active deficiencies with TTA support',
@@ -280,7 +289,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
       }),
     ]);
 
-    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: {} });
+    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: [] });
     const sql = querySpy.mock.calls[0][0];
     const queryOptions = querySpy.mock.calls[0][1];
 
@@ -308,14 +317,18 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
 
   it('queries real data and returns monthly counts', async () => {
     const scopes = {
-      activityReport: {
-        regionId: region.id,
-        userId: user.id,
-        startDate: {
-          [Op.gte]: '2025-02-01',
-          [Op.lte]: '2025-04-30',
+      activityReport: [
+        {
+          regionId: region.id,
         },
-      },
+        { userId: user.id },
+        {
+          startDate: {
+            [Op.gte]: '2025-02-01',
+            [Op.lte]: '2025-04-30',
+          },
+        },
+      ],
     };
 
     const data = await activeDeficientCitationsWithTtaSupport(scopes);
