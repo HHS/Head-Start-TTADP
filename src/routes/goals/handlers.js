@@ -1,6 +1,5 @@
-import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   updateGoalStatusById,
   createOrUpdateGoalsForActivityReport,
@@ -8,6 +7,7 @@ import {
   goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
   destroyGoal,
+  getGoalHistory as getGoalHistoryService,
 } from '../../goalServices/goals';
 import { sequelize } from '../../models';
 import goalsFromTemplate from '../../goalServices/goalsFromTemplate';
@@ -326,7 +326,9 @@ export async function retrieveObjectiveOptionsByGoalTemplate(req, res) {
 /**
  * Retrieves the history of goals with the same template as the specified goal
  * This handler is used by ViewStandardGoals to display goal status changes
- * Returns an array of goals with the same goalTemplateId for this specific grant
+ * Returns an object { goals, overview } where goals is an array of goals with the same
+ * goalTemplateId for this specific grant, and overview contains summary counts
+ * (activityReports, objectives, closures, suspensions)
  */
 export async function getGoalHistory(req, res) {
   try {
@@ -335,21 +337,15 @@ export async function getGoalHistory(req, res) {
     const user = await userById(userId);
 
     const id = parseInt(goalId, DECIMAL_BASE);
+    const result = await getGoalHistoryService(id);
 
-    const goal = await sequelize.models.Goal.findByPk(id);
-    if (!goal) {
-      res.sendStatus(httpCodes.NOT_FOUND);
-      return;
-    }
-
-    const grantRecord = await sequelize.models.Grant.findByPk(goal.grantId);
-    if (!grantRecord) {
+    if (!result) {
       res.sendStatus(httpCodes.NOT_FOUND);
       return;
     }
 
     const hasPermissionInRegion = user.permissions.some(
-      (permission) => permission.regionId === grantRecord.regionId,
+      (permission) => permission.regionId === result.regionId,
     );
 
     if (!hasPermissionInRegion) {
@@ -357,154 +353,7 @@ export async function getGoalHistory(req, res) {
       return;
     }
 
-    const goalsWithDetails = await sequelize.models.Goal.findAll({
-      where: {
-        goalTemplateId: goal.goalTemplateId,
-        grantId: goal.grantId,
-        prestandard: goal.prestandard,
-        [Op.or]: [
-          {
-            createdVia: {
-              [Op.ne]: 'activityReport',
-            },
-          },
-          {
-            onApprovedAR: true,
-          },
-        ],
-      },
-      attributes: {
-        include: [
-          [
-            sequelize.literal('"statusChanges"."reason"'), 'reason',
-          ],
-          [
-            sequelize.literal('"goalTemplate"."standard"'),
-            'standard',
-          ],
-        ],
-      },
-      include: [
-        {
-          model: sequelize.models.GoalStatusChange,
-          as: 'statusChanges',
-          attributes: ['id', 'createdAt', 'newStatus', 'oldStatus', 'reason', 'performedAt'],
-          include: [
-            {
-              model: sequelize.models.User,
-              as: 'user',
-              attributes: ['name'],
-              include: [{
-                model: sequelize.models.Role,
-                as: 'roles',
-                attributes: ['name'],
-                through: { attributes: [] },
-              }],
-            },
-          ],
-        },
-        {
-          model: sequelize.models.Objective,
-          as: 'objectives',
-          required: false,
-          attributes: ['id', 'title', 'status'],
-          where: {
-            [Op.or]: [
-              { createdVia: 'rtr' },
-              { onApprovedAR: true },
-            ],
-          },
-          include: [
-            {
-              model: sequelize.models.ActivityReportObjective,
-              as: 'activityReportObjectives',
-              required: false,
-              attributes: ['id'],
-              include: [
-                {
-                  model: sequelize.models.ActivityReport,
-                  as: 'activityReport',
-                  attributes: ['id', 'displayId'],
-                  where: {
-                    calculatedStatus: REPORT_STATUSES.APPROVED,
-                  },
-                },
-                {
-                  model: sequelize.models.Topic,
-                  as: 'topics',
-                  attributes: ['id', 'name'],
-                },
-                {
-                  model: sequelize.models.Resource,
-                  as: 'resources',
-                  attributes: ['id', 'url', 'title'],
-                },
-                {
-                  model: sequelize.models.File,
-                  as: 'files',
-                  attributes: ['id', 'originalFileName', 'fileSize', 'url', 'key'],
-                },
-                {
-                  separate: true,
-                  model: sequelize.models.ActivityReportObjectiveCourse,
-                  as: 'activityReportObjectiveCourses',
-                  required: false,
-                  include: [
-                    {
-                      model: sequelize.models.Course,
-                      as: 'course',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          model: sequelize.models.Grant,
-          as: 'grant',
-          attributes: ['number'],
-        },
-        {
-          model: sequelize.models.GoalTemplate,
-          as: 'goalTemplate',
-          attributes: ['templateName', 'standard'],
-        },
-        {
-          model: sequelize.models.GoalFieldResponse,
-          as: 'responses',
-          attributes: ['id', 'response'],
-        },
-        {
-          model: sequelize.models.GoalCollaborator,
-          as: 'goalCollaborators',
-          attributes: ['id'],
-          include: [
-            {
-              model: sequelize.models.User,
-              as: 'user',
-              attributes: ['name'],
-            },
-            {
-              model: sequelize.models.CollaboratorType,
-              as: 'collaboratorType',
-              attributes: ['name'],
-            },
-          ],
-        },
-      ],
-      order: [
-        ['createdAt', 'DESC'],
-        [{ model: sequelize.models.GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'DESC'],
-      ],
-    });
-
-    if (!goalsWithDetails.length) {
-      res.json([]);
-      return;
-    }
-
-    res.json(goalsWithDetails);
+    res.json({ goals: result.goals, overview: result.overview });
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_GOAL_HISTORY`);
   }

@@ -838,6 +838,24 @@ describe('recipientSpotlight service', () => {
         expect(result.recipients[0].recipientId).toBe(veteranRecipient.id);
         // Should NOT be flagged as new — the old inactive grant predates the 4-year window
         expect(result.recipients[0].newRecipients).toBe(false);
+
+        // Grantmode targeting the newer active grant should also NOT flag as new,
+        // because new_recipients checks ALL recipient grants regardless of grantmode.
+        const grantModeResult = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          [],
+          [],
+          newActiveGrant.id, // sets singleGrantId so grantmode is true
+        );
+
+        expect(grantModeResult.recipients.length).toBe(1);
+        expect(grantModeResult.recipients[0].recipientId).toBe(veteranRecipient.id);
+        expect(grantModeResult.recipients[0].newRecipients).toBe(false);
       } finally {
         await Grant.destroy({
           where: { id: [oldInactiveGrant.id, newActiveGrant.id] },

@@ -340,13 +340,17 @@ export async function getRecipientSpotlightIndicators(
     ),
 
     -- 3. New Recipients: Recipients with oldest grant less than 4 years old
+    --    this checks all recipient grants even in grantmode
     new_recipients AS (
       SELECT
         rid new_recip_rid,
         region new_recip_region
-      FROM all_grants
+      FROM recipients
+      JOIN "Grants" gr
+        ON gr."recipientId" = rid
+      WHERE (gr.deleted IS NULL OR NOT gr.deleted)
       GROUP BY 1,2
-      HAVING MIN(grstart) >= NOW() - INTERVAL '4 years'
+      HAVING MIN(gr."startDate") >= NOW() - INTERVAL '4 years'
     ),
 
     -- 4. New Staff: Any program personnel with effective date in the past 2 years
