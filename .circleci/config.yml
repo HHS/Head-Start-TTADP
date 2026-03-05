@@ -514,15 +514,11 @@ jobs:
   dynamic_security_scan:
     executor: machine-executor
     resource_class: large
-    parameters:
-      target_env:
-        type: string
-        default: staging
     steps:
     - attach_workspace:
         at: .
     - set_env_vars:
-        target_env: << parameters.target_env >>
+        target_env: staging
     - run:
         name: Start up local services
         command: ./bin/prod-style-server
@@ -788,12 +784,15 @@ commands:
           ./tools/parse-env-CLI.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
           # substitute actual values from circle into env.vars file
           circleci env subst < ./temp.vars > env.vars
-          # iterate through ci.vars file and export each line,
+          # show the env var names in file
+          cut -s -d'=' -f1 env.vars
+          # iterate through env.vars file and export each line
           while read line; do
             if [ -n "${line}" ] && [ << parameters.do_export >>=='true' ]; then
               echo "export ${line}">>"$BASH_ENV"
             fi
           done < env.vars
+          # show var names that were set
 
   install_cf_tools:
     description: "Install Cloud Foundry CLI"
