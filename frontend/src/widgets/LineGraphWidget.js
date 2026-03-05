@@ -22,7 +22,6 @@ export default function LineGraphWidget({
   tableTitle,
   tableFirstHeading,
   tableCaption,
-  tableConfig,
 }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, exportName);
@@ -96,7 +95,6 @@ export default function LineGraphWidget({
           footer: {
             showFooter: false,
           },
-          ...tableConfig,
         }}
         widgetRef={widgetRef}
       />
@@ -132,29 +130,6 @@ LineGraphWidget.propTypes = {
   tableFirstHeading: PropTypes.string,
   tableCaption: PropTypes.string,
   subtitle: PropTypes.string,
-  tableConfig: PropTypes.shape({
-    headings: PropTypes.arrayOf(PropTypes.string).isRequired,
-    firstHeading: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    requestSort: PropTypes.func,
-    sortConfig: PropTypes.shape({
-      sortBy: PropTypes.string,
-      direction: PropTypes.string,
-      activePage: PropTypes.number,
-    }),
-    caption: PropTypes.string.isRequired,
-    enableCheckboxes: PropTypes.bool.isRequired,
-    enableSorting: PropTypes.bool.isRequired,
-    showTotalColumn: PropTypes.bool.isRequired,
-    stickyLastDataColumn: PropTypes.bool,
-    checkboxes: PropTypes.shape({}),
-    setCheckboxes: PropTypes.func,
-    footer: PropTypes.shape({
-      data: PropTypes.arrayOf(PropTypes.string),
-      showFooter: PropTypes.bool.isRequired,
-    }),
-    selectAllIdPrefix: PropTypes.string,
-  }).isRequired,
 };
 
 LineGraphWidget.defaultProps = {
