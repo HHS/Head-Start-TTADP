@@ -184,7 +184,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     const findAllSpy = jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([]);
     const querySpy = jest.spyOn(db.sequelize, 'query');
 
-    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: {} });
+    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: [] });
     const findAllQuery = findAllSpy.mock.calls[0][0];
 
     expect(querySpy).not.toHaveBeenCalled();
@@ -226,7 +226,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     ]);
     const querySpy = jest.spyOn(db.sequelize, 'query');
 
-    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: {} });
+    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: [] });
 
     expect(querySpy).not.toHaveBeenCalled();
     expect(data).toEqual([

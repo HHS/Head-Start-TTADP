@@ -38,7 +38,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     attributes: ['id', 'startDate'],
     where: {
       [Op.and]: [
-        scopes.activityReport,
+        ...scopes.activityReport,
         { startDate: { [Op.not]: null } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
@@ -76,7 +76,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
   const grantIds = uniq(approvedReports.flatMap((report: typeof approvedReports[number]) => report.getDataValue('activityRecipients') as { grantId: number }[])
     .map((ar: { grantId: number }) => ar.grantId));
 
-  const approvedReportIds = approvedReports.map((report: typeof approvedReports[number]) => report.getDataValue('id') as number);
+  const approvedReportIds = uniq(approvedReports.map((report: typeof approvedReports[number]) => report.getDataValue('id') as number));
 
   if (!continuousMonths.length) {
     return [
