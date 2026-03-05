@@ -96,7 +96,6 @@
     "express": "^4.22.0",
     "follow-redirects": "^1.15.6",
     "glob-parent": "^6.0.2",
-    "immutable": ">=4.3.8",
     "json5": "^1.0.2",
     "lodash": "^4.17.23",
     "minimist": "^1.2.6",
