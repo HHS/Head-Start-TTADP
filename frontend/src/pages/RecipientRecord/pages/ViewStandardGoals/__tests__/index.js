@@ -181,6 +181,20 @@ const mockGoalHistory = [
   },
 ];
 
+const mockOverview = {
+  activityReports: 2,
+  objectives: 3,
+  closures: 1,
+  suspensions: 0,
+};
+
+const emptyOverview = {
+  activityReports: 0,
+  objectives: 0,
+  closures: 0,
+  suspensions: 0,
+};
+
 const historyWithNulls = [
   {
     ...mockGoalHistory[0],
@@ -228,7 +242,7 @@ describe('ViewGoalDetails', () => {
   afterEach(() => fetchMock.restore());
 
   test('renders the page heading with recipient name and region id', async () => {
-    fetchMock.get(goalHistoryUrl, mockGoalHistory); // setup mock
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview }); // setup mock
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -239,7 +253,7 @@ describe('ViewGoalDetails', () => {
 
   test('renders the goal name or template name in summary', async () => {
     // test case 1: First goal has a name
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -248,7 +262,7 @@ describe('ViewGoalDetails', () => {
     fetchMock.restore(); // Clean up before next render
 
     // test case 2: first goal has null name and null template -> defaults to 'Standard Goal'
-    fetchMock.get(goalHistoryUrl, historyWithNulls);
+    fetchMock.get(goalHistoryUrl, { goals: historyWithNulls, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -257,7 +271,7 @@ describe('ViewGoalDetails', () => {
 
   test('renders the grant number or N/A in summary', async () => {
     // test case 1: first goal has grant number
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -265,7 +279,7 @@ describe('ViewGoalDetails', () => {
     fetchMock.restore();
 
     // test case 2: first goal has null grant -> shows N/A
-    fetchMock.get(goalHistoryUrl, historyWithNulls);
+    fetchMock.get(goalHistoryUrl, { goals: historyWithNulls, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -273,7 +287,7 @@ describe('ViewGoalDetails', () => {
   });
 
   test('renders the accordion with goal history, sorted correctly', async () => {
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -294,7 +308,7 @@ describe('ViewGoalDetails', () => {
   });
 
   test('handles fetch error (500 status)', async () => {
-    fetchMock.get(goalHistoryUrl, 500); // setup mock for error
+    fetchMock.get(goalHistoryUrl, { status: 500 }); // setup mock for error
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -312,7 +326,8 @@ describe('ViewGoalDetails', () => {
   });
 
   test('handles no goals found (empty array)', async () => {
-    fetchMock.get(goalHistoryUrl, []); // setup mock for empty response
+    // setup mock for empty response
+    fetchMock.get(goalHistoryUrl, { goals: [], overview: emptyOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -330,7 +345,7 @@ describe('ViewGoalDetails', () => {
   });
 
   test('renders the back to RTTAPA link', async () => {
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -340,7 +355,7 @@ describe('ViewGoalDetails', () => {
   });
 
   test('renders goal status updates correctly sorted and formatted', async () => {
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -363,7 +378,7 @@ describe('ViewGoalDetails', () => {
   });
 
   test('renders objective information including reports, topics, and resources', async () => {
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -436,7 +451,7 @@ describe('ViewGoalDetails', () => {
   });
 
   test('renders root causes', async () => {
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -449,7 +464,8 @@ describe('ViewGoalDetails', () => {
   });
   test('does not render root causes section when responses are null or empty', async () => {
     // test case 1: responses is null
-    fetchMock.get(goalHistoryUrl, mockGoalHistory); // G-2 has responses: null
+    // G-2 has responses: null
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -463,7 +479,8 @@ describe('ViewGoalDetails', () => {
     fetchMock.restore();
 
     // test case 2: responses is empty array
-    fetchMock.get(goalHistoryUrl, historyWithNulls); // G-3 has responses: []
+    // G-3 has responses: []
+    fetchMock.get(goalHistoryUrl, { goals: historyWithNulls, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -476,7 +493,7 @@ describe('ViewGoalDetails', () => {
   });
 
   test('renders fallback status update with creator name when statusChanges is empty', async () => {
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -504,7 +521,10 @@ describe('ViewGoalDetails', () => {
       standard: 'Monitoring',
     };
 
-    fetchMock.get(goalHistoryUrl, [monitoringGoal, ...mockGoalHistory]);
+    fetchMock.get(
+      goalHistoryUrl,
+      { goals: [monitoringGoal, ...mockGoalHistory], overview: mockOverview },
+    );
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -541,7 +561,7 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/7/history', [goalWithMissingAdded]);
+    fetchMock.get('/api/goals/7/history', { goals: [goalWithMissingAdded], overview: emptyOverview });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=7');
     });
@@ -589,7 +609,7 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/8/history', [goalWithEmptyResources]);
+    fetchMock.get('/api/goals/8/history', { goals: [goalWithEmptyResources], overview: emptyOverview });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=8');
     });
@@ -636,7 +656,7 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/9/history', [goalWithOnlyCourses]);
+    fetchMock.get('/api/goals/9/history', { goals: [goalWithOnlyCourses], overview: emptyOverview });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=9');
     });
@@ -686,7 +706,7 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/10/history', [goalWithOnlyLinks]);
+    fetchMock.get('/api/goals/10/history', { goals: [goalWithOnlyLinks], overview: emptyOverview });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=10');
     });
@@ -736,7 +756,7 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/11/history', [goalWithOnlyFiles]);
+    fetchMock.get('/api/goals/11/history', { goals: [goalWithOnlyFiles], overview: emptyOverview });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=11');
     });
@@ -753,5 +773,49 @@ describe('ViewGoalDetails', () => {
     // And the file should be visible
     const resourceContainer = within(objective).getByText('Resources').nextElementSibling;
     expect(within(resourceContainer).getByText('files-only-test.pdf')).toBeInTheDocument();
+  });
+
+  test('renders all four overview widget labels', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    await waitFor(() => expect(fetchMock.called(goalHistoryUrl)).toBe(true));
+    expect(await screen.findByText('Activity reports')).toBeInTheDocument();
+    expect(screen.getByText('Goal objectives')).toBeInTheDocument();
+    expect(screen.getByText('Goal closures')).toBeInTheDocument();
+    expect(screen.getByText('Goal suspensions')).toBeInTheDocument();
+  });
+
+  test('displays correct counts from overview data', async () => {
+    const overview = {
+      activityReports: 5,
+      objectives: 7,
+      closures: 2,
+      suspensions: 1,
+    };
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    await waitFor(() => expect(fetchMock.called(goalHistoryUrl)).toBe(true));
+    // The data values render as bold spans inside the widget
+    const allBoldSpans = await screen.findAllByText(/^\d+$/);
+    const values = allBoldSpans.map((el) => el.textContent);
+    expect(values).toContain('5');
+    expect(values).toContain('7');
+    expect(values).toContain('2');
+    expect(values).toContain('1');
+  });
+
+  test('displays 0 values when overview returns zeros', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: emptyOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    await waitFor(() => expect(fetchMock.called(goalHistoryUrl)).toBe(true));
+    const zeroSpans = await screen.findAllByText('0');
+    // All four widgets should show 0
+    expect(zeroSpans.length).toBeGreaterThanOrEqual(4);
   });
 });
