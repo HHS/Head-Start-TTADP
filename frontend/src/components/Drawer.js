@@ -101,7 +101,7 @@ export default function Drawer({
             <div
               className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
             >
-              <h1 className="text-bold font-serif-lg" id={uniqueDrawerID}>{title}</h1>
+              <span className="text-bold font-serif-lg" id={uniqueDrawerID} role="heading" aria-level={1}>{title}</span>
               <button
                 ref={closeButtonRef}
                 type="button"
