@@ -558,7 +558,10 @@ describe('Activity report service', () => {
       });
 
       // Clean up any additional entities
-      await OtherEntity.destroy({ where: { id: [RECIPIENT_ID, OTHER_ENTITY_TEST_ID] }, force: true });
+      await OtherEntity.destroy({
+        where: { id: [RECIPIENT_ID, OTHER_ENTITY_TEST_ID] },
+        force: true,
+      });
       await Region.destroy({ where: { id: 19 } });
     });
 
