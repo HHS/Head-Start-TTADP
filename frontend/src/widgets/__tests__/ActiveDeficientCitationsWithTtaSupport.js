@@ -34,11 +34,11 @@ describe('ActiveDeficientCitationsWithTtaSupportWidget', () => {
   it('renders and toggles to tabular view', async () => {
     render(<ActiveDeficientCitationsWithTtaSupportWidget data={TEST_DATA} />);
 
-    expect(await screen.findByText('Active Deficient Citations with TTA Support')).toBeInTheDocument();
+    expect(await screen.findByText('Active deficient citations with TTA support')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
     fireEvent.click(screen.getByText('Display table'));
 
-    expect(await screen.findByText('TTA Provided')).toBeInTheDocument();
+    expect(await screen.findByText('Active deficient citations')).toBeInTheDocument();
   });
 });
