@@ -5,7 +5,7 @@ services:
   backend:
     build:
       context: ../..
-      dockerfile: Dockerfile
+      dockerfile: ../images/Dockerfile
     entrypoint: ["/workspace/docker/scripts/ensure-deps.sh", "backend"]
     command: ["yarn", "server"]
     env_file:
@@ -41,7 +41,7 @@ services:
   frontend:
     build:
       context: ../..
-      dockerfile: Dockerfile
+      dockerfile: ../images/Dockerfile
     working_dir: /workspace/frontend
     entrypoint: ["/workspace/docker/scripts/ensure-deps.sh", "frontend"]
     command: ["yarn", "start"]
@@ -116,7 +116,7 @@ services:
     profiles: ["fullstack"]
     build:
       context: ../..
-      dockerfile: Dockerfile
+      dockerfile: ../images/Dockerfile
     entrypoint: ["/workspace/docker/scripts/ensure-deps.sh", "backend"]
     command: ["yarn", "start:worker:watch"]
     env_file:
@@ -149,7 +149,7 @@ services:
     profiles: ["fullstack"]
     build:
       context: ../..
-      dockerfile: Dockerfile
+      dockerfile: ../images/Dockerfile
     entrypoint: ["/workspace/docker/scripts/ensure-deps.sh", "backend"]
     command: ["yarn", "tsx", "src/testingOnly.js"]
     env_file:

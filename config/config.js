@@ -1,16 +1,12 @@
 require('dotenv').config();
-
-const isTrue = (value) => value === 'true';
-
-const isQueryLoggingEnabled = isTrue(process.env.LOG_QUERIES);
+const { isTrue } = require('../src/envParser');
 
 const singleLineLogger = (
   queryString,
 ) => console.log(queryString.replace(/\n/g, '\\n')); // eslint-disable-line no-console
 
+const dbLogging = isTrue(process.env.LOG_QUERIES) ? singleLineLogger : false;
 const suppressSuccessMessage = isTrue(process.env.SUPPRESS_SUCCESS_MESSAGE);
-
-const sequelizeLogging = isQueryLoggingEnabled ? singleLineLogger : false;
 
 const connectionValidation = async (connection) => {
   try {
@@ -20,13 +16,11 @@ const connectionValidation = async (connection) => {
     */
     // eslint-disable-next-line no-underscore-dangle
     if (connection._invalid) {
-      // eslint-disable-next-line no-console
       console.info('Connection invalid');
       return false;
     }
     // eslint-disable-next-line no-underscore-dangle
     if (connection._ending) {
-      // eslint-disable-next-line no-console
       console.info('Connection ending');
       return false;
     }
@@ -62,48 +56,67 @@ const connectionValidation = async (connection) => {
   }
 };
 
-const commonConfig = {
-  username: process.env.POSTGRES_USERNAME,
-  password: process.env.POSTGRES_PASSWORD,
-  database: process.env.POSTGRES_DB,
-  host: (process.env.POSTGRES_HOST || 'localhost'),
-  port: (process.env.POSTGRES_PORT || 5432),
-  dialect: 'postgres',
-  logging: sequelizeLogging,
-  logQueryParameters: isQueryLoggingEnabled,
-  minifyAliases: true,
-  pool: {
-    validate: connectionValidation,
-  },
-};
-
-const withPoolMax = (max) => ({
-  ...commonConfig,
-  pool: {
-    ...commonConfig.pool,
-    max,
-  },
-});
-
 module.exports = {
   development: {
-    ...withPoolMax(10),
-    seederStorage: 'sequelize',
+    username: process.env.POSTGRES_USERNAME,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+    host: (process.env.POSTGRES_HOST || 'localhost'),
+    port: (process.env.POSTGRES_PORT || 5432),
+    dialect: 'postgres',
+    logging: dbLogging,
+    logQueryParameters: true,
+    minifyAliases: true,
+    pool: {
+      max: 10,
+      validate: connectionValidation,
+    },
   },
   test: {
-    ...withPoolMax(10),
+    username: process.env.POSTGRES_USERNAME,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+    host: (process.env.POSTGRES_HOST || 'localhost'),
+    port: (process.env.POSTGRES_PORT || 5432),
+    dialect: 'postgres',
+    logging: dbLogging,
+    minifyAliases: true,
+    pool: {
+      max: 10,
+      validate: connectionValidation,
+    },
   },
   dss: {
-    ...withPoolMax(10),
     use_env_variable: 'DATABASE_URL',
+    username: process.env.POSTGRES_USERNAME,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
     host: process.env.POSTGRES_HOST,
+    port: (process.env.POSTGRES_PORT || 5432),
+    dialect: 'postgres',
+    logging: dbLogging,
+    minifyAliases: true,
+    pool: {
+      max: 10,
+      validate: connectionValidation,
+    },
   },
   production: {
-    ...withPoolMax(30),
     use_env_variable: 'DATABASE_URL',
+    username: process.env.POSTGRES_USERNAME,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
     host: process.env.POSTGRES_HOST,
+    port: (process.env.POSTGRES_PORT || 5432),
+    dialect: 'postgres',
+    logging: dbLogging,
+    minifyAliases: true,
     dialectOptions: {
       ssl: true,
+    },
+    pool: {
+      max: 30,
+      validate: connectionValidation,
     },
   },
 };

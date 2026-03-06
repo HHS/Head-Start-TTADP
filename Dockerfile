@@ -1,10 +1,13 @@
 FROM node:22.22.0
+WORKDIR /app
 
-WORKDIR /workspace
+# Install system dependencies
+RUN apt-get update && apt-get install lcov -y
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends lcov git postgresql-client \
-  && rm -rf /var/lib/apt/lists/*
+# Set up permissions for yarn cache and node_modules
+RUN mkdir -p /home/node/.cache/yarn && \
+    chown -R node:node /home/node/.cache/yarn && \
+    mkdir -p /app/node_modules && \
+    chown -R node:node /app && \
+    chown -R node:node /app/node_modules
 
-COPY docker/scripts/ensure-deps.sh /usr/local/bin/ensure-deps.sh
-RUN chmod +x /usr/local/bin/ensure-deps.sh
