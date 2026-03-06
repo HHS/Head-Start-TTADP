@@ -9,9 +9,9 @@ export PGPASSWORD="${POSTGRES_PASSWORD:-}"
 
 psql \
   -U ${POSTGRES_USERNAME} \
-  -h ${POSTGRES_HOST}\
+  -h ${POSTGRES_HOST} \
   -d ${POSTGRES_DB} \
-  -p 5432\
+  -p 5432 \
   -v ON_ERROR_STOP=1 <<'SQL'
 -- Create the table to store historial seeding data
 CREATE TABLE IF NOT EXISTS "SequelizeData" (
