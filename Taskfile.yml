@@ -101,11 +101,10 @@ tasks:
 
   refresh:
     desc: Rebuild frontend and backend code, reinstall deps, restart stack
-    cmds:
+    cmds: 
       - yarn deps:install
       - task: stack-down
-      - cmds:
-          - docker compose {{.COMPOSE_FILE}} build --no-cache
+      - docker compose {{.COMPOSE_FILE}} build --no-cache
       - task: stack-up
 
   reinit:
