@@ -2522,10 +2522,10 @@
   resolved "https://registry.npmjs.org/@tsconfig/node16/-/node16-1.0.4.tgz#0b92dcc0cc1c81f6f306a381f28e31b1a56536e9"
   integrity sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==
 
-"@ttahub/common@2.2.20":
-  version "2.2.20"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.2.20.tgz#a1a17b175ba021fae9e45e8a559a86a2c2db7d78"
-  integrity sha512-JQSvolEapkghqUO42y9r+opc0q8svM+mMPxvUDB5hbBthwiZdXq+x8T/NKFlZWYwSMi6FuyRkyS9KIJny2rtCw==
+"@ttahub/common@2.2.21":
+  version "2.2.21"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.2.21.tgz#5980079c595d01370a9edb8dbf568b1b4ce50cc4"
+  integrity sha512-vOb0JQu3bZxVHiDrZtMdq5p5X2TXHTNLrcaJJktlg1oxK0wt27T0UfvxPt4wvVqhPMEMHHeoRwNMIqev0Yd28w==
 
 "@turf/area@^6.4.0":
   version "6.5.0"

@@ -212,7 +212,7 @@ export default function LineGraph({
   }
 
   return (
-    <div className="ttahub-three-trace-line-graph padding-3" ref={widgetRef}>
+    <div className="ttahub-three-trace-line-graph" ref={widgetRef}>
       { showTabularData
         ? (
           <HorizontalTableWidget
@@ -233,7 +233,7 @@ export default function LineGraph({
           />
         )
         : (
-          <div>
+          <div className="padding-3">
             <LegendControlFieldset legend="Toggle individual lines by checking or unchecking a legend item.">
               {legends.map((legend) => (
                 <LegendControl
