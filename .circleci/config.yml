@@ -617,18 +617,11 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
-    - restore_cache:
-        keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         - yarn-deps-
     - run: |
         yarn deps
         yarn build
-    - save_cache:
-        paths:
-        - /home/circleci/.cache/yarn
-        key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - cf_process:
         target_env: prod
 
