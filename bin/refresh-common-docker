@@ -8,4 +8,5 @@ cd frontend && yarn remove @ttahub/common
 git restore package.json
 cd ..
 git restore package.json
-yarn docker:deps
+task stack-run TARGET=backend -- yarn install --frozen-lockfile
+task stack-run TARGET=frontend -- yarn install --frozen-lockfile

@@ -480,28 +480,28 @@ jobs:
     resource_class: large
     steps:
     - run_e2e_test:
-        cmd: yarn e2e
+        cmd: yarn test:e2e
         artifact_path: tests/e2e
 
   test_e2e_api:
     executor: docker-postgres-executor
     steps:
     - run_e2e_test:
-        cmd: yarn e2e:api
+        cmd: yarn test:e2e:api
         artifact_path: tests/api
 
   test_e2e_utils:
     executor: docker-postgres-executor
     steps:
     - run_e2e_test:
-        cmd: yarn e2e:utils
+        cmd: yarn test:e2e:utils
         artifact_path: tests/utilsTests
 
   test_cucumber:
     executor: docker-postgres-executor
     steps:
     - run_e2e_test:
-        cmd: yarn cucumber:ci
+        cmd: yarn test:bdd:ci
         artifact_path: reports
 
   dynamic_security_scan:
@@ -511,17 +511,27 @@ jobs:
     - attach_workspace:
         at: .
     - run:
-        name: Start up local services
+        name: Build and start scan target
         command: ./bin/prod-style-server
+      
     - run:
         name: Wait for Node.js server to start
-        command: ./bin/ping-server 8080
+        command: ./bin/ping-server 8080 localhost "" 20
     - run:
         name: Pull OWASP ZAP docker image
         command: docker pull zaproxy/zap-stable:latest
     - run:
-        name: Run OWASP ZAP scan for Node.js server
+        name: Run OWASP ZAP full scan
         command: ./bin/run-owasp-scan --target http://server:8080 --full
+    - run:
+        name: Capture container logs
+        when: always
+        command: |
+          docker compose -f docker/compose/dss.yml logs --no-color > reports/server/docker-compose.log
+    - run:
+        name: Tear down scan services
+        when: always
+        command: docker compose -f docker/compose/dss.yml down -v
     - store_artifacts:
         path: reports
 
@@ -675,7 +685,7 @@ jobs:
         the_command: |
           node ./build/server/src/tools/importSystemCLI.js download 1
           node ./build/server/src/tools/importSystemCLI.js process 1
-          yarn createMonitoringGoalsCLI
+          yarn cli:create-monitoring-goals
           node ./build/server/src/tools/queryMonitoringDataCLI.js
           node ./build/server/src/tools/maintainMonitoringDataCLI.js
           node ./build/server/src/tools/updateMonitoringFactTablesCLI.js
@@ -805,7 +815,7 @@ commands:
           export CURRENT_USER_ID=5
           export POSTGRES_USERNAME="postgres"
           export POSTGRES_DB="ttasmarthub"
-          yarn start:web
+          yarn start:be
         background: true
     - run:
         name: Start frontend (3000) & watch logs
@@ -816,7 +826,7 @@ commands:
           export CURRENT_USER_ID=5
           export TTA_SMART_HUB_URI="http://localhost:3000"
           yarn playwright install
-          yarn client
+          yarn start:fe
         background: true
     - run:
         name: Start testing server (9999) & watch logs

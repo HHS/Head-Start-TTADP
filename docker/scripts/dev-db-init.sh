@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+compose_files="${TTA_DOCKER_COMPOSE_FILES:-docker/compose/new-compose.yml}"
+pg_user="${POSTGRES_USERNAME:-postgres}"
+pg_db="${POSTGRES_DB:-ttasmarthub}"
+use_local_postgres="${USE_LOCAL_POSTGRES:-false}"
+
+compose() {
+  for f in $compose_files; do
+    args+=(-f "$f")
+  done
+  docker compose "${args[@]}" "$@"
+}
+
+psql_query() {
+  local query="$1"
+  compose exec -T db psql -U "$pg_user" -d "$pg_db" -Atc "$query"
+}
+
+echo "Running migrations..."
+compose run --rm backend yarn db:migrate
+
+if [ "$use_local_postgres" = "false" ]; then
+    echo "Fresh database detected; running seeders..."
+    compose run --rm backend yarn db:seed:local
+else
+  echo "Local Postgres mode enabled; skipping seed"
+fi
+
+echo "Development database initialization complete."

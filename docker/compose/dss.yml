@@ -1,0 +1,64 @@
+x-project-labels: &project-labels
+  com.ttahub.project: head-start-ttadp
+  com.ttahub.stack: dss
+
+services:
+  db:
+    image: postgres:15.12
+    labels: *project-labels
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-something_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ttasmarthub}
+    volumes:
+      - dss-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DB:-ttasmarthub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    shm_size: 1g
+
+  server:
+    labels: *project-labels
+    build:
+      context: ../..
+      dockerfile: docker/images/node-dev.Dockerfile
+    working_dir: /workspace
+    entrypoint: ["/workspace/docker/scripts/ensure-deps.sh", "backend"]
+    command: ["yarn", "start:be"]
+    environment:
+      NODE_ENV: dss
+      POSTGRES_HOST: db
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-something_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ttasmarthub}
+      DATABASE_URL: postgres://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD:-something_secret}@db:5432/${POSTGRES_DB:-ttasmarthub}
+      SESSION_SECRET: ${SESSION_SECRET:-notasecret}
+      BYPASS_SOCKETS: "true"
+      YARN_CACHE_FOLDER: /yarn-cache
+      NEW_RELIC_ENABLED: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../../:/workspace:rw
+      - dss-backend-node-modules:/workspace/node_modules
+      - dss-frontend-node-modules:/workspace/frontend/node_modules
+      - dss-backend-yarn-cache:/yarn-cache
+
+networks:
+  default:
+    labels: *project-labels
+
+volumes:
+  dss-db-data:
+    labels: *project-labels
+  dss-backend-node-modules:
+    name: dss-backend-node-modules
+  dss-frontend-node-modules:
+    name: dss-frontend-node-modules
+  dss-backend-yarn-cache:
+    name: dss-backend-yarn-cache

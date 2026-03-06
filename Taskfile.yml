@@ -1,0 +1,117 @@
+version: "3"
+
+vars:
+  PROJECT_NAME: "ttahub"
+  COMPOSE_FILE: "-f docker/compose/docker-compose.yml"
+  DEV_DEBUG: '{{default "false" .DEV_DEBUG}}'
+  USE_LOCAL_POSTGRES:
+    sh: |
+      if [[ "$POSTGRES_HOST" == "host.docker.internal" ]]; then
+        echo "true"
+      else
+        echo "false"
+      fi
+  CMD: ""
+
+tasks:
+  default:
+    desc: Show available tasks
+    aliases: [help]
+    cmds:
+      - task --list
+
+  # --- Stack Up/Down ---
+
+  stack-up:
+    desc: Start full local stack (db/redis/backend/frontend/worker/minio/mailpit/testingonly)
+    cmds:
+      - docker compose {{.COMPOSE_FILE}} down --remove-orphans
+      - yarn deps:install
+      - |
+        echo "Initializing database..."
+        docker compose {{.COMPOSE_FILE}} up --build -y -d --wait db redis
+        docker/scripts/dev-db-init.sh
+      - |
+        echo "Starting stack..."
+        docker compose {{.COMPOSE_FILE}} up -y --remove-orphans --wait --detach 
+        echo "All services healthy, use 'task stack-logs' to view logs"
+
+  stack-up-full:
+    desc: Start full local stack (db/redis/backend/frontend/worker/minio/mailpit/testingonly)
+    cmds:
+      - docker compose {{.COMPOSE_FILE}} down --remove-orphans
+      - yarn deps:install
+      - |
+        echo "Initializing database..."
+        docker compose {{.COMPOSE_FILE}} up --build -y -d --wait db redis
+        docker/scripts/dev-db-init.sh
+      - |
+        echo "Starting stack..."
+        docker compose {{.COMPOSE_FILE}} --profile fullstack up -y --remove-orphans --wait --detach 
+        echo "All services healthy, use 'task stack-logs' to view logs"
+
+  stack-down:
+    desc: Stop compose stacks for this repo
+    cmds:
+      - docker compose {{.COMPOSE_FILE}} down --remove-orphans
+
+  # --- Utility ---
+
+  stack-logs:
+    desc: Tail current running stack logs
+    cmds:
+      - docker compose {{.COMPOSE_FILE}} logs -f
+
+  stack-shell:
+    desc: Open shell in a running container (TARGET defaults to backend)
+    cmds:
+      - docker compose {{.COMPOSE_FILE}} exec {{.TARGET}} /bin/bash
+
+  stack-exec:
+    desc: Execute command in running container (TARGET defaults to backend)
+    cmds:
+      - |
+        bash -lc "set -euo pipefail; \
+          if [ -n '{{.CLI_ARGS}}' ]; then \
+            echo '[{{.TARGET}}]: {{.CLI_ARGS}}'; \
+            docker compose {{.COMPOSE_FILE}} exec {{.TARGET}} {{.CLI_ARGS}}; \
+          elif [ -n '{{.CMD}}' ]; then \
+            echo '[{{.TARGET}}]: {{.CMD}}'; \
+            {{.STACK_COMPOSE}} exec {{.TARGET}} {{.CMD}}; \
+          else \
+            echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
+            exit 1; \
+          fi"
+
+  stack-run:
+    desc: Run one-off command in new container (TARGET defaults to backend)
+    cmds:
+      - |
+        bash -lc "set -euo pipefail; \
+          if [ -n '{{.CLI_ARGS}}' ]; then \
+            echo '[{{.TARGET}}]: {{.CLI_ARGS}}'; \
+            {{.STACK_COMPOSE}} run --rm {{.TARGET}} {{.CLI_ARGS}}; \
+          elif [ -n '{{.CMD}}' ]; then \
+            echo '[{{.TARGET}}]: {{.CMD}}'; \
+            {{.STACK_COMPOSE}} run --rm {{.TARGET}} {{.CMD}}; \
+          else \
+            echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
+            exit 1; \
+          fi"
+
+  refresh:
+    desc: Rebuild frontend and backend code, reinstall deps, restart stack
+    cmds:
+      - yarn deps:install
+      - task: stack-down
+      - cmds:
+          - docker compose {{.COMPOSE_FILE}} build --no-cache
+      - task: stack-up
+
+  reinit:
+    desc: Remove containers, images, networks, volumes and reinitialize stack
+    cmds:
+      - task: stack-down
+      - docker compose {{.COMPOSE_FILE}} down --volumes
+      - docker images -a | grep '{{.PROJECT_NAME}}' | awk '{print $3}' | xargs docker rmi
+      - task: refresh

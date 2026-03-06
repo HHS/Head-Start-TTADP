@@ -1,115 +1,202 @@
 # Dev Setup
 
-## Running With Docker
+## Running With Docker (Recommended)
 
-For a full list of available yarn commands, see [yarn-commands.md](./yarn-commands.md)
+### Prerequisites
 
-If you run into issues, check the [troubleshooting](#troubleshooting) section.
+1. Install Docker Desktop (or Docker Engine + Compose v2).
+2. Install Node using the version in `.nvmrc` (`22.22.0`).
+3. Install [Taskfile](https://taskfile.dev/) 
+3. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
+4. Confirm the tools are available (`task`, `node`, `docker`)
 
-1. Install Docker. To check run `docker ps`.
-2. Install Node, matching the version in `.nvmrc` (in the repo root).
-3. Install Yarn `npm install -g yarn`
-4. Install cross-env `npm install -g cross-env`
-5. Copy `.env.example` to `.env`.
-6. Change the `AUTH_CLIENT_ID` variable to value found in the team 1password account. If you don't have access to 1password, please ask in the acf-head-start-eng slack channel for access.
-7. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
-8. Run `yarn docker:start` to start the application.
-   - The frontend will run on http://localhost:3000
-   - The backend will run on http://localhost:8080
-   - API documentation will run on http://localhost:5003
-   - Minio (S3-compatible file storage) will run on http://localhost:9000
-9. Run `yarn docker:stop` to stop the servers and remove the docker containers.
+### Compose workflow model
 
-**Notes:**
+There 
+yarn docker:start
 
-- The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
-- Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the [docs/openapi](../../docs/openapi) folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+task stack-up # (or ) bring up the dev stack (ctrl-c to stop)
+task stack-down # (or yarn docker:stop) bring it down explicitly
+task refresh # (or yarn docker:refresh) rebuild everything except node_module volumes
 
-### Troubleshooting
+| Stack | Primary tasks | Compose project (`-p`) | Compose file(s) |
+| --- | --- | --- | --- |
+| Dev core (fronted, backend, db, redis) | `task stack-up` | `ttahub-dev` | `docker/compose/dev.yml` |
+| Dev debug mode | `DEV_DEBUG=true task stack-up` | `ttahub-dev` | `docker/compose/dev.yml` + `docker/compose/dev.debug.yml` |
+| Full local stack (app + worker + minio + mailpit + testingonly) | `task stack-up-full` | `ttahub-full` | `docker/compose/test.yml` + `docker/compose/test.e2e.yml` + `--profile e2e` |
+| Run backend tests | `task test-be`, `task test-fe` | `ttahub-test` | `docker/compose/test.yml` |
+| Run frontend tests | `task test-be`, `task test-fe` | `ttahub-test` | `docker/compose/test.yml` |
+| Run E2E tests | `task test-e2e` | `ttahub-e2e` | `docker/compose/test.yml` + `docker/compose/test.e2e.yml` |
+| Dev + local Postgres | `USE_LOCAL_POSTGRES=true task stack-up` | `ttahub-dev` | `docker/compose/dev.yml` + `docker/compose/dev.local-postgres.yml` |
+| DSS scan stack | `task test-dss` | `ttahub-dss` | `docker/compose/dss.yml` |
 
-#### Outdated Node.js containers
+Notes:
+- The task wrappers set `TTA_DOCKER_LABEL=com.ttahub.project=head-start-ttadp` so repo cleanup scripts can stop/remove only this repo's Docker resources.
+- `task stack-down` and `task reset` intentionally clean up by label across all local stack contexts (`dev`, `full`, `test`, `dss`, `e2e`).
 
-If you see errors that the version of Node.js is incorrect, you may have older versions of the containers built. Delete those images and rerun `yarn docker:reset`.
+### Shared dependency volumes
 
-#### Port conflicts
+Compose workflows share dependency/cache volumes across stack contexts to avoid reinstalling dependencies from scratch:
 
-When using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of those services are already running on your machine.
+- `ttahub-backend-node-modules`
+- `ttahub-frontend-node-modules`
+- `ttahub-backend-yarn-cache`
+- `ttahub-frontend-yarn-cache`
 
-#### Missing `docker-compose` on Mac
+These are configured as `external: true` in compose files. If they do not exist yet, create them once:
 
-On a Mac with Brew-installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve: `brew install docker-compose`
-
-#### File permission issues
-
-If you run into issues with file permissions when using Docker, try changing the CURRENT_USER values in your `.env`. Run `id -u` and `id -g` to get your current user uid/gid.
-
-#### Apple Silicon & Chromium
-
-If you are using a newer Mac with the Apple Silicon chipset, Puppeteer install fails with the message: `"The chromium binary is not available for arm64"`.
-
-You will need to have Chromium installed (you probably do not). The recommended installation method is to use brew: `brew install chromium --no-quarantine`
-
-To `~/.zshrc` (or your particular shell config) you'll need to add:
-
-```sh
-export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-export PUPPETEER_EXECUTABLE_PATH=`which chromium`
+```bash
+docker volume create ttahub-backend-node-modules
+docker volume create ttahub-frontend-node-modules
+docker volume create ttahub-backend-yarn-cache
+docker volume create ttahub-frontend-yarn-cache
 ```
 
-Don't forget to run `source ~/.zshrc` or the equivalent after adding the above environment variables.
+### Core commands
 
-#### Playwright setup
+- `task stack-up`
+  - Stops any existing local project containers.
+  - Starts the core stack: `db`, `redis`, `backend`, and `frontend`.
+  - Runs migrations before attaching logs.
+  - Runs attached (Ctrl+C to stop log streaming).
+- `task stack-up-full`
+  - Stops any existing local project containers.
+  - Starts `db` and `redis`, runs migrations/seed initialization, then starts and attaches:
+    `backend`, `frontend`, `worker`, `minio`, `mailpit`, and `testingonly`.
+  - Runs attached (Ctrl+C to stop log streaming).
+- `task stack-down`
+  - Force-stops all compose resources labeled for this repo.
+- `task reset`
+  - Stops containers, removes project volumes, rebuilds images.
+  - Runs migrations and seeders to reset to a deterministic baseline.
+- `task refresh`
+  - Rebuilds backend/frontend assets, reinstalls dependencies, and restarts the core dev stack.
+  - Good first step after switching branches with large dependency or build-output drift.
+- `task test-be` and `task test-fe`
+  - Run backend/frontend Jest suites in an isolated test compose stack.
+  - Applies migrations and seed data before tests.
+  - Cleans up test resources automatically.
 
-If running E2E tests for the first time, install the required browsers:
+### Optional helper commands
 
-```sh
-npx playwright install
+- `task stack-logs`
+- `task stack-shell TARGET=backend`
+- `task stack-shell TARGET=frontend`
+
+### Optional environment toggles
+
+- `USE_LOCAL_POSTGRES=true task stack-up`
+  - Runs non-test Docker stacks against a local Postgres host (`LOCAL_POSTGRES_HOST`, default `host.docker.internal`) instead of the in-compose db service.
+- `DEV_DEBUG=true task stack-up`
+  - Runs backend in debug mode and exposes Node inspector on port `9229`.
+- Toggles can be combined:
+  - `USE_LOCAL_POSTGRES=true DEV_DEBUG=true task stack-up`
+
+### Running raw `docker compose` commands safely
+
+Use Task commands by default. If you need raw compose for debugging, use the same project names/files as Taskfile:
+
+```bash
+# Dev stack
+docker compose -p ttahub-dev -f docker/compose/dev.yml ps
+
+# Test stack
+docker compose -p ttahub-test -f docker/compose/test.yml ps
+
+# DSS stack
+docker compose -p ttahub-dss -f docker/compose/dss.yml ps
+
+# E2E stack
+docker compose -p ttahub-e2e -f docker/compose/test.yml -f docker/compose/test.e2e.yml --profile e2e ps
+
+# Full local stack
+docker compose -p ttahub-full -f docker/compose/test.yml -f docker/compose/test.e2e.yml --profile e2e ps
 ```
+
+Also keep `.env` present for compose workflows that include `env_file` entries (`dev`, `test`, `e2e`):
+
+```bash
+cp .env.example .env
+```
+
+### Common compose failures
+
+- `env file .../.env not found`
+  - Create the file from example: `cp .env.example .env`
+- `external volume "ttahub-backend-node-modules" not found` (or similar `ttahub-*` dependency volume)
+  - Create missing shared dependency volumes with `docker volume create <volume-name>`
+- Volume ownership/recreate prompts (for old local definitions)
+  - Ensure you are on current compose files where dependency/cache volumes are `external: true`
+  - If needed, remove stale conflicting local volumes, then re-run `task stack-up`
+
+### Service URLs
+
+When running `task stack-up`:
+
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:8080`
+- Postgres: `localhost:5432`
+- Redis: `localhost:6379`
+
+When running `task stack-up-full`:
+
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:8080`
+- Testing-only API: `http://localhost:9999/testingonly`
+- Mailpit UI: `http://localhost:8025`
+- Minio Console: `http://localhost:9001`
+- Postgres: `localhost:5432`
+- Redis: `localhost:6379`
+
+### Dependency updates and lockfiles
+
+Containers auto-check lockfile hashes at startup and run `yarn install --frozen-lockfile` only when needed.
+
+- Root lockfile changes refresh backend/worker dependencies.
+- Frontend lockfile changes refresh frontend dependencies.
+- No lockfile change means no reinstall.
 
 ## Running Natively
 
-You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
+You can also run locally without Docker.
 
-You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
+1. Install dependencies: `yarn deps`
+2. Start services: `yarn start:stack:local`
+3. For file upload support, run Minio locally and use `S3_ENDPOINT=http://localhost:9000` in `.env`.
 
 ## Precommit hooks
 
-Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in `.githooks/pre-commit`, also contains code to auto-format our terraform files.
+Our CI will fail if code is committed that does not pass linting. This repo includes a pre-commit hook in `.githooks/pre-commit`.
 
-If you are not using your own custom pre-commit hooks:
+If you are not using custom hooks:
 
-- start from repo root directory
-- make the pre-commit file executable:
-  `chmod 755 .githooks/pre-commit`
-- change your default hooks directory to [.githooks](../../.githooks):
-  `git config core.hooksPath .githooks`
-
-If you are already using git hooks, add the [.githooks/pre-commit](../../.githooks/pre-commit) contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
+1. `chmod 755 .githooks/pre-commit`
+2. `git config core.hooksPath .githooks`
 
 ## Import Production Data
 
-Make sure you have access to all the necessary spaces on Cloud.gov
+Make sure you have access to cloud.gov spaces and required credentials.
 
-On a Mac
+On macOS:
 
-1. Login to cloud.gov: `cf login -a api.fr.cloud.gov  --sso`.
-2. Download latest data: `bash ./bin/latest_backup.sh -d` (file will be placed in current directory).
-3. Ensure you have `psql` (if not `brew install libpq`).
-4. Ensure ttahub docker container is running.
-5. Create bounce.sql in repo directory (see below)
-6. Load data: `psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql && psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql` (Where username:password are replaced with credentials from .env and db.sql is the file you downloaded and unzipped).
-7. Migrate data: `yarn docker:db:migrate`
-8. Edit .env and change CURRENT_USER_ID= from 1 to the ID of a production user
-9. Restart docker
+1. `cf login -a api.fr.cloud.gov --sso`
+2. `bash ./bin/latest_backup.sh -d`
+3. Ensure `psql` is installed.
+4. Start the Docker stack: `task stack-up`
+5. Create `bounce.sql` in repo root:
 
-_bounce.sql_
-
-```sh
+```sql
 select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
 drop database ttasmarthub;
 create database ttasmarthub;
 ```
 
-On Windows
+6. Load backup data (replace credentials from `.env`):
 
-> Windows setup instructions have not yet been documented. Contributions welcome — please open a PR if you get this working.
+```bash
+psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql
+psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql
+```
+
+7. Run migrations: `docker compose -p ttahub-dev -f docker/compose/dev.yml run --rm backend yarn db:migrate`
+8. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.

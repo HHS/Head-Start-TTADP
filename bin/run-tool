@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Usage: bin/run-tool [--local] <src-path> [args...]
+#   build mode (default): node ./build/server/<src-path>
+#   local mode (--local):  tsx <src-path>
+set -euo pipefail
+mode=build
+[ "${1:-}" = "--local" ] && mode=local && shift
+src="${1:?Usage: bin/run-tool [--local] <src-path> [args...]}"
+shift
+if [ "$mode" = "local" ]; then
+  exec tsx "$src" "$@"
+else
+  exec node "./build/server/$src" "$@"
+fi
