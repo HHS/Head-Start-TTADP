@@ -22,11 +22,13 @@ psql_query() {
 echo "Running migrations..."
 compose run --rm backend yarn db:migrate
 
-if [ "$use_local_postgres" = "false" ]; then
-    echo "Fresh database detected; running seeders..."
-    compose run --rm backend yarn db:seed:local
-else
+if [ "$use_local_postgres" = "true" ]; then
   echo "Local Postgres mode enabled; skipping seed"
+elif psql_query "SELECT EXISTS (SELECT 1 FROM \"SequelizeData\" LIMIT 1);" 2>/dev/null | grep -q 't'; then
+  echo "Database has already been seeded; skipping seed"
+else
+  echo "Fresh database detected; running seeders..."
+  compose run --rm backend yarn db:seed:local
 fi
 
 echo "Development database initialization complete."

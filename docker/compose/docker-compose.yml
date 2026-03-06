@@ -30,7 +30,7 @@ services:
       interval: 60s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 10s
     ports:
       - "8080:8080"
     volumes:
