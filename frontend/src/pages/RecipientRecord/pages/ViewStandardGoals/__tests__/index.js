@@ -49,7 +49,19 @@ const mockGoalHistory = [
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         activityReportObjectives: [
           {
-            activityReport: { id: 101, displayId: 'R-101' },
+            activityReport: {
+              id: 101,
+              displayId: 'R-101',
+              author: { id: 10, name: 'Alice Specialist', roles: [{ name: 'Program Specialist' }] },
+              activityReportCollaborators: [
+                {
+                  id: 1,
+                  userId: 11,
+                  user: { id: 11, name: 'Bob Collaborator' },
+                  roles: [{ name: 'Grants Specialist' }],
+                },
+              ],
+            },
             topics: [{ id: 1, name: 'Topic A' }, { id: 2, name: 'Topic B' }],
             resources: [{ id: 1, url: 'http://example.com/resource1', title: 'Resource 1' }],
             files: [
@@ -61,7 +73,12 @@ const mockGoalHistory = [
             ],
           },
           {
-            activityReport: { id: 102, displayId: 'R-102' },
+            activityReport: {
+              id: 102,
+              displayId: 'R-102',
+              author: { id: 10, name: 'Alice Specialist', roles: [{ name: 'Program Specialist' }] },
+              activityReportCollaborators: [],
+            },
             topics: [{ id: 2, name: 'Topic B' }, { id: 3, name: 'Topic C' }],
             resources: [{ id: 2, url: 'http://example.com/resource2' }],
             files: [
@@ -448,6 +465,80 @@ describe('ViewGoalDetails', () => {
     expect(files[0]).toHaveTextContent('report101-file1.pdf');
     expect(files[1]).toHaveTextContent('report101-file2.docx');
     expect(files[2]).toHaveTextContent('report102-file1.xlsx');
+  });
+
+  test('renders TTA Specialists from approved ARs under objectives, deduplicated', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
+    await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+
+    // objective 1 has two ARs: both with author Alice (id 10) and AR-101 has collaborator Bob
+    // Alice should appear once (deduplicated), Bob should appear once
+    const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
+    const specialistsLabel = within(objective1).getByText('TTA Specialists');
+    expect(specialistsLabel).toBeInTheDocument();
+    
+    // Get the specialists text content (comma-separated format)
+    const specialistsContainer = specialistsLabel.closest('div').parentElement;
+    const specialistsValue = within(specialistsContainer).getByTestId('read-only-value');
+    
+    // Check that both specialists are present with their roles
+    expect(specialistsValue).toHaveTextContent('Alice Specialist (Program Specialist)');
+    expect(specialistsValue).toHaveTextContent('Bob Collaborator (Grants Specialist)');
+    // Verify Alice only appears once (deduplicated even though she's author on both ARs)
+    const aliceMatches = specialistsValue.textContent.match(/Alice Specialist/g);
+    expect(aliceMatches).toHaveLength(1);
+  });
+
+  test('does not render TTA Specialists when no approved ARs exist for the objective', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
+    await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+
+    // objective 2 has no activityReportObjectives
+    const objective2 = within(firstAccordionContent).getByText('Objective with no reports/topics/resources').closest('div.margin-bottom-3');
+    expect(within(objective2).queryByText('TTA Specialists')).not.toBeInTheDocument();
+  });
+
+  test('does not render TTA Specialists from non-approved ARs', async () => {
+    // Backend filters non-approved ARs at the query level, so objectives
+    // with only non-approved reports will have an empty activityReportObjectives array
+    const goalWithNonApprovedARs = [
+      {
+        ...mockGoalHistory[0],
+        objectives: [
+          {
+            id: 10,
+            title: 'Objective with only non-approved ARs',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            // Backend filtered out all non-approved ARs, so array is empty
+            activityReportObjectives: [],
+          },
+        ],
+      },
+    ];
+    fetchMock.get(goalHistoryUrl, { goals: goalWithNonApprovedARs, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
+    await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+
+    // Objective has no AROs because backend filtered out all non-approved ARs
+    const objective = within(firstAccordionContent).getByText('Objective with only non-approved ARs').closest('div.margin-bottom-3');
+    // TTA Specialists should not appear because there are no approved ARs
+    expect(within(objective).queryByText('TTA Specialists')).not.toBeInTheDocument();
+    // Reports section should also not appear since no approved ARs exist
+    expect(within(objective).queryByText('Reports')).not.toBeInTheDocument();
   });
 
   test('renders root causes', async () => {

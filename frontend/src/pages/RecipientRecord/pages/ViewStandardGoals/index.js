@@ -375,6 +375,45 @@ export default function ViewGoalDetails({
                           </div>
                 )}
 
+                {/* Display TTA Specialists from approved ARs */}
+                {(() => {
+                  const seenIds = new Set();
+                  // Backend already filters to only approved reports,
+                  // so we just need to check activityReport exists
+                  const specialists = (objective.activityReportObjectives || [])
+                    .filter((aro) => aro.activityReport)
+                    .flatMap((aro) => {
+                      const people = [];
+                      const { activityReport } = aro;
+                      if (activityReport.author && activityReport.author.id
+                        && !seenIds.has(activityReport.author.id)) {
+                        seenIds.add(activityReport.author.id);
+                        people.push({
+                          name: activityReport.author.name,
+                          roles: (activityReport.author.roles || []).map((r) => r.name),
+                        });
+                      }
+                      (activityReport.activityReportCollaborators || []).forEach((collab) => {
+                        if (collab.user && collab.userId && !seenIds.has(collab.userId)) {
+                          seenIds.add(collab.userId);
+                          people.push({
+                            name: collab.user.name,
+                            roles: (collab.roles || []).map((r) => r.name),
+                          });
+                        }
+                      });
+                      return people;
+                    });
+                  if (specialists.length === 0) return null;
+                  return (
+                    <div className="margin-top-2">
+                      <ReadOnlyField label="TTA Specialists">
+                        {specialists.map((s) => `${s.name}${s.roles && s.roles.length > 0 ? ` (${s.roles.join(', ')})` : ''}`).join(', ')}
+                      </ReadOnlyField>
+                    </div>
+                  );
+                })()}
+
                 {/* Display Topics */}
                 {!objective.activityReportObjectives
                         || !objective.activityReportObjectives.some(
