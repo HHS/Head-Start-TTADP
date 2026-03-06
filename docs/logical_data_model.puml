@@ -1187,6 +1187,11 @@ class Scopes{
  * updatedAt : timestamp with time zone : now()
 }
 
+!issue='model missing for table'
+class SequelizeData #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * name : varchar(255)
+}
+
 class SessionReportPilotFiles{
  * id : integer : <generated>
  * fileId : integer : REFERENCES "Files".id

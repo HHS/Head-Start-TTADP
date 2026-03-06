@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-compose_files="${TTA_DOCKER_COMPOSE_FILES:-docker/compose/new-compose.yml}"
+compose_files="${TTA_DOCKER_COMPOSE_FILES:-docker/compose/docker-compose.yml}"
 pg_user="${POSTGRES_USERNAME:-postgres}"
 pg_db="${POSTGRES_DB:-ttasmarthub}"
 use_local_postgres="${USE_LOCAL_POSTGRES:-false}"

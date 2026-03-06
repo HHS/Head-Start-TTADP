@@ -12,7 +12,7 @@ vars:
         echo "false"
       fi
   CMD: ""
-  STACK_COMPOSE_FILE: "docker/compose/new-compose.yml"
+  STACK_COMPOSE_FILE: "docker/compose/docker-compose.yml"
 
 tasks:
   default:
