@@ -39,6 +39,7 @@ services:
     command: yarn start
     user: ${CURRENT_USER:-root}
     stdin_open: true
+    env_file: .env
     ports:
       - "3000:3000"
     volumes:
@@ -50,6 +51,7 @@ services:
     environment:
       - BACKEND_PROXY=http://backend:8080
       - REACT_APP_WEBSOCKET_URL
+      - FONTAWESOME_NPM_AUTH_TOKEN
   worker:
     build:
       context: .

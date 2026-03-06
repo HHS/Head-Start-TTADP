@@ -4,21 +4,21 @@ import React, {
   useContext,
 } from 'react';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faArrowLeft,
-  faChartColumn,
-  faPencil,
-  faCheckCircle,
-  faPauseCircle,
-} from '@fortawesome/free-solid-svg-icons';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading,
 } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import {
+  faArrowLeft,
+  faChartColumn,
+  faCheckCircle,
+  faPenCircle,
+  faPauseCircle,
+} from '../../../../icons';
 import { DashboardOverviewContainer } from '../../../../widgets/DashboardOverviewContainer';
 import Container from '../../../../components/Container';
 import colors from '../../../../colors';
@@ -550,7 +550,7 @@ export default function ViewGoalDetails({
             },
             {
               key: 'goal-objectives',
-              icon: faPencil,
+              icon: faPenCircle,
               iconColor: colors.ttahubMediumBlue,
               backgroundColor: colors.ttahubBlueLight,
               label1: 'Goal objectives',
