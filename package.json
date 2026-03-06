@@ -36,7 +36,7 @@
     "db:seed:undo": "sequelize db:seed:undo:all",
     "db:seed:undo:prod": "sequelize db:seed:undo:all --options-path .production.sequelizerc",
     "db:ldm": "tsx ./src/tools/logicalDataModelCLI.ts",
-    "db:ldm:ci": "bin/ci-envtsx ./src/tools/logicalDataModelCLI.ts",
+    "db:ldm:ci": "bin/ci-env tsx ./src/tools/logicalDataModelCLI.ts",
     "db:validate:filenames": "node ./src/tools/validateDbFilenames.js",
     "db:validation": "node ./build/server/src/tools/dataValidationCLI.js",
     "cli:change-report-status": "bin/run-tool src/tools/changeReportStatusCLI.js",
