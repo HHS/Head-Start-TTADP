@@ -23,7 +23,7 @@ services:
     labels: *project-labels
     build:
       context: ../..
-      dockerfile: docker/images/node-dev.Dockerfile
+      dockerfile: Dockerfile
     working_dir: /workspace
     entrypoint: ["/workspace/docker/scripts/ensure-deps.sh", "backend"]
     command: ["yarn", "start:be"]
