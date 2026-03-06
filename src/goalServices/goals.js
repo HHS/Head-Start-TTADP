@@ -1528,6 +1528,37 @@ export async function getGoalHistory(id) {
                 where: {
                   calculatedStatus: REPORT_STATUSES.APPROVED,
                 },
+                include: [
+                  {
+                    model: sequelize.models.User,
+                    as: 'author',
+                    attributes: ['id', 'name'],
+                    include: [{
+                      model: sequelize.models.Role,
+                      as: 'roles',
+                      attributes: ['name'],
+                      through: { attributes: [] },
+                    }],
+                  },
+                  {
+                    model: sequelize.models.ActivityReportCollaborator,
+                    as: 'activityReportCollaborators',
+                    attributes: ['id', 'userId'],
+                    include: [
+                      {
+                        model: sequelize.models.User,
+                        as: 'user',
+                        attributes: ['id', 'name'],
+                      },
+                      {
+                        model: sequelize.models.Role,
+                        as: 'roles',
+                        attributes: ['name'],
+                        through: { attributes: [] },
+                      },
+                    ],
+                  },
+                ],
               },
               {
                 model: sequelize.models.Topic,

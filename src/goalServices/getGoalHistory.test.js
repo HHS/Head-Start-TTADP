@@ -328,4 +328,23 @@ describe('getGoalHistory (database-backed)', () => {
     const result = await getGoalHistory(99999999);
     expect(result).toBeNull();
   });
+
+  it('includes author and collaborators on activity reports within objective AROs', async () => {
+    const result = await getGoalHistory(goalSuspended.id);
+
+    const aros = result.goals
+      .flatMap((g) => g.objectives || [])
+      .flatMap((o) => o.activityReportObjectives || [])
+      .filter((aro) => aro.activityReport);
+
+    expect(aros.length).toBeGreaterThan(0);
+
+    aros.forEach((aro) => {
+      // author should be present with name
+      expect(aro.activityReport.author).toBeDefined();
+      expect(aro.activityReport.author.name).toBe(user.name);
+      // collaborators array should be present (may be empty)
+      expect(Array.isArray(aro.activityReport.activityReportCollaborators)).toBe(true);
+    });
+  });
 });
