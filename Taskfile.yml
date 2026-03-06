@@ -12,6 +12,7 @@ vars:
         echo "false"
       fi
   CMD: ""
+  STACK_COMPOSE_FILE: "docker/compose/new-compose.yml"
 
 tasks:
   default:
@@ -74,10 +75,10 @@ tasks:
         bash -lc "set -euo pipefail; \
           if [ -n '{{.CLI_ARGS}}' ]; then \
             echo '[{{.TARGET}}]: {{.CLI_ARGS}}'; \
-            docker compose {{.COMPOSE_FILE}} exec {{.TARGET}} {{.CLI_ARGS}}; \
+            docker compose -f {{.STACK_COMPOSE_FILE}} exec {{.TARGET}} {{.CLI_ARGS}}; \
           elif [ -n '{{.CMD}}' ]; then \
             echo '[{{.TARGET}}]: {{.CMD}}'; \
-            {{.STACK_COMPOSE}} exec {{.TARGET}} {{.CMD}}; \
+            docker compose -f {{.STACK_COMPOSE_FILE}} exec {{.TARGET}} {{.CMD}}; \
           else \
             echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
             exit 1; \
@@ -90,10 +91,10 @@ tasks:
         bash -lc "set -euo pipefail; \
           if [ -n '{{.CLI_ARGS}}' ]; then \
             echo '[{{.TARGET}}]: {{.CLI_ARGS}}'; \
-            {{.STACK_COMPOSE}} run --rm {{.TARGET}} {{.CLI_ARGS}}; \
+            docker compose -f {{.STACK_COMPOSE_FILE}} run --rm {{.TARGET}} {{.CLI_ARGS}}; \
           elif [ -n '{{.CMD}}' ]; then \
             echo '[{{.TARGET}}]: {{.CMD}}'; \
-            {{.STACK_COMPOSE}} run --rm {{.TARGET}} {{.CMD}}; \
+            docker compose -f {{.STACK_COMPOSE_FILE}} run --rm {{.TARGET}} {{.CMD}}; \
           else \
             echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
             exit 1; \
@@ -107,7 +108,7 @@ tasks:
       - docker compose {{.COMPOSE_FILE}} build --no-cache
       - task: stack-up
 
-  reinit:
+  reset:
     desc: Remove containers, images, networks, volumes and reinitialize stack
     cmds:
       - task: stack-down
