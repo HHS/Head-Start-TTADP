@@ -30,7 +30,7 @@
     "db:migrate:undo:prod:last": "sequelize db:migrate:undo --options-path .production.sequelizerc",
     "db:migrate:undo:prod:all": "sequelize db:migrate:undo:all --options-path .production.sequelizerc",
     "db:seed": "sequelize db:seed:all",
-    "db:seed:local": "./bin/seed-pre && yarn db:seed",
+    "db:seed:local": "yarn db:seed",
     "db:seed:ci": "bin/ci-env sequelize db:seed:all",
     "db:seed:prod": "sequelize db:seed:all --options-path .production.sequelizerc",
     "db:seed:undo": "sequelize db:seed:undo:all",

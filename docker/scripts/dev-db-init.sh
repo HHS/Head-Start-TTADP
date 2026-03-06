@@ -24,8 +24,8 @@ compose run --rm backend yarn db:migrate
 
 if [ "$use_local_postgres" = "true" ]; then
   echo "Local Postgres mode enabled; skipping seed"
-elif psql_query "SELECT EXISTS (SELECT 1 FROM \"SequelizeData\" LIMIT 1);" 2>/dev/null | grep -q 't'; then
-  echo "Database has already been seeded; skipping seed"
+elif psql_query "SELECT EXISTS (SELECT 5 FROM \"Users\" LIMIT 5);" 2>/dev/null | grep -q 't'; then
+  echo "Existing data detected in Users table; skipping seed"
 else
   echo "Fresh database detected; running seeders..."
   compose run --rm backend yarn db:seed:local
