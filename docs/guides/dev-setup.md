@@ -15,7 +15,7 @@
 Primary workflows to get started (from `package.json`):
 
 install frontend & backend node_modules
-`yarn deps`   
+`yarn deps` (or `yarn deps:install` to regen the lockfiles)
 
 build backend application
 `yarn build` 
