@@ -82,3 +82,26 @@ psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql
 
 7. Run migrations: `yarn docker:db:migrate`
 8. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
+
+## Puppeteer & Playwright
+
+If you are using a newer Mac with the Apple Silicon chipset, Puppeteer install fails with the message: `"The chromium binary is not available for arm64"`.
+
+You will need to have Chromium installed (you probably do not). The recommended installation method is to use brew: `brew install chromium --no-quarantine`
+
+To `~/.zshrc` (or your particular shell config) you'll need to add:
+
+```sh
+export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+export PUPPETEER_EXECUTABLE_PATH=`which chromium`
+```
+
+Don't forget to run `source ~/.zshrc` or the equivalent after adding the above environment variables.
+
+#### Playwright setup
+
+If running E2E tests for the first time, install the required browsers:
+
+```sh
+npx playwright install
+```

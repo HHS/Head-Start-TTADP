@@ -44,7 +44,7 @@ yarn --cwd frontend test                    # Run all frontend tests
 **All Tests:**
 
 ```bash
-yarn test:all        # Run both backend and frontend tests
+yarn test:all                               # Run both backend and frontend tests
 ```
 
 ## Writing Tests
