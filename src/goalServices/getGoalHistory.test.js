@@ -5,13 +5,16 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import { getUniqueId } from '../testUtils';
 import db, {
   ActivityReport,
+  ActivityReportCollaborator,
   ActivityReportObjective,
+  CollaboratorRole,
   Goal,
   GoalTemplate,
   Grant,
   Objective,
   Permission,
   Recipient,
+  Role,
   User,
 } from '../models';
 import SCOPES from '../middleware/scopeConstants';
@@ -30,6 +33,9 @@ const REGION_ID = 1;
 
 describe('getGoalHistory (database-backed)', () => {
   let user;
+  let collaboratorUser;
+  let collaborator;
+  let collaboratorRole;
   let permission;
   let recipient;
   let grant;
@@ -187,9 +193,38 @@ describe('getGoalHistory (database-backed)', () => {
         status: 'Suspended',
       }),
     ]);
+
+    // Create a collaborator user and attach them to report1 with a known role.
+    collaboratorUser = await User.create({
+      homeRegionId: REGION_ID,
+      hsesUsername: faker.internet.email(),
+      hsesUserId: `fake${faker.datatype.number({ min: 100001, max: 200000 })}`,
+      email: faker.internet.email(),
+      name: faker.name.findName(),
+      role: ['Health Specialist'],
+      lastLogin: new Date(),
+    });
+
+    collaborator = await ActivityReportCollaborator.create({
+      activityReportId: report1.id,
+      userId: collaboratorUser.id,
+    });
+
+    const healthSpecialistRole = await Role.findOne({ where: { fullName: 'Health Specialist' } });
+    expect(healthSpecialistRole).not.toBeNull();
+    collaboratorRole = await CollaboratorRole.create({
+      activityReportCollaboratorId: collaborator.id,
+      roleId: healthSpecialistRole.id,
+    });
   });
 
   afterAll(async () => {
+    await CollaboratorRole.destroy({
+      where: { id: collaboratorRole.id },
+    });
+    await ActivityReportCollaborator.destroy({
+      where: { id: collaborator.id },
+    });
     await ActivityReportObjective.destroy({
       where: { id: [aro1.id, aro2.id, aro3.id] },
     });
@@ -219,7 +254,7 @@ describe('getGoalHistory (database-backed)', () => {
       where: { id: recipient.id },
     });
     await User.destroy({
-      where: { id: user.id },
+      where: { id: [user.id, collaboratorUser.id] },
     });
     await db.sequelize.close();
   });
@@ -343,8 +378,27 @@ describe('getGoalHistory (database-backed)', () => {
       // author should be present with name
       expect(aro.activityReport.author).toBeDefined();
       expect(aro.activityReport.author.name).toBe(user.name);
-      // collaborators array should be present (may be empty)
+      // collaborators array should be present
       expect(Array.isArray(aro.activityReport.activityReportCollaborators)).toBe(true);
+    });
+
+    // report1 has a collaborator — find the AROs linked to report1 and verify the collaborator
+    const arosOnReport1 = aros.filter(
+      (aro) => aro.activityReport.id === report1.id,
+    );
+    expect(arosOnReport1.length).toBeGreaterThan(0);
+
+    arosOnReport1.forEach((aro) => {
+      const { activityReportCollaborators } = aro.activityReport;
+      expect(activityReportCollaborators.length).toBeGreaterThan(0);
+
+      const match = activityReportCollaborators.find((c) => c.userId === collaboratorUser.id);
+      expect(match).toBeDefined();
+      expect(match.user).toBeDefined();
+      expect(match.user.name).toBe(collaboratorUser.name);
+      expect(Array.isArray(match.roles)).toBe(true);
+      expect(match.roles.length).toBeGreaterThan(0);
+      expect(match.roles.map((r) => r.name)).toContain('Health Specialist');
     });
   });
 });
