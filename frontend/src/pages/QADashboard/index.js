@@ -24,7 +24,9 @@ import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 import PercentageActivityReportByRole from '../../widgets/PercentageActivityReportByRole';
 import RootCauseFeiGoals from '../../widgets/RootCauseFeiGoals';
 import ApprovalRateByDeadline from '../../widgets/ApprovalRateByDeadlineWidget';
+import DashboardFeedbackSurvey from '../../components/DashboardFeedbackSurvey';
 import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../../fetchers/ssdi';
+import { submitDashboardFeedback } from '../../fetchers/feedback';
 import Loader from '../../components/Loader';
 import { formatDateRange } from '../../utils';
 import './index.scss';
@@ -269,6 +271,10 @@ export default function QADashboard() {
           </Grid>
         </div>
       </div>
+      <DashboardFeedbackSurvey
+        pageId="qa-dashboard"
+        onSubmit={submitDashboardFeedback}
+      />
     </>
   );
 }

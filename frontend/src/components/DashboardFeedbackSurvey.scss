@@ -1,0 +1,159 @@
+@import '../colors.scss';
+
+.dashboard-feedback-survey {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: $base-lighter;
+  border-top: 2px solid $base-light;
+  padding: 1.5rem;
+  max-height: 20vh;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+
+  @media (min-width: 768px) {
+    padding: 1.5rem 3rem;
+  }
+}
+
+.dashboard-feedback-survey__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.dashboard-feedback-survey__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+  color: $base-darkest;
+}
+
+.dashboard-feedback-survey__close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: $base-dark;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $base-darkest;
+  }
+
+  &:focus {
+    outline: 2px solid $blue-vivid-focus;
+    outline-offset: 2px;
+  }
+}
+
+.dashboard-feedback-survey__rating-scale {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.dashboard-feedback-survey__scale-label {
+  font-size: 0.875rem;
+  color: $base-dark;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.dashboard-feedback-survey__rating-options {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-feedback-survey__rating-option {
+  display: flex;
+  align-items: center;
+
+  .usa-radio__input {
+    margin-top: 0;
+  }
+
+  .usa-radio__label {
+    margin-top: 0;
+    padding-left: 1.75rem;
+    font-size: 0.875rem;
+    min-height: auto;
+  }
+
+  .usa-radio__label::before {
+    top: 0;
+  }
+
+  .usa-radio__label::after {
+    top: 4px;
+  }
+}
+
+.dashboard-feedback-survey__comment-section {
+  margin-bottom: 1rem;
+}
+
+.dashboard-feedback-survey__expand-button {
+  background: none;
+  border: none;
+  color: $text-link;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  &:hover {
+    color: $ttahub-blue;
+  }
+
+  &:focus {
+    outline: 2px solid $blue-vivid-focus;
+    outline-offset: 2px;
+  }
+}
+
+.dashboard-feedback-survey__textarea-container {
+  margin-top: 0.75rem;
+
+  .usa-label {
+    font-size: 0.875rem;
+    margin-top: 0;
+  }
+
+  textarea {
+    max-height: 80px;
+  }
+}
+
+.dashboard-feedback-survey__char-count {
+  font-size: 0.75rem;
+  color: $base-medium;
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.dashboard-feedback-survey__actions {
+  display: flex;
+  justify-content: flex-end;
+
+  button {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+}
