@@ -683,12 +683,12 @@ jobs:
     - checkout
     - cf_task:
         the_command: |
-          node ./build/server/src/tools/importSystemCLI.js download 1
-          node ./build/server/src/tools/importSystemCLI.js process 1
+          yarn cli:import-system download 1
+          yarn cli:import-system process 1
           yarn cli:create-monitoring-goals
-          node ./build/server/src/tools/queryMonitoringDataCLI.js
-          node ./build/server/src/tools/maintainMonitoringDataCLI.js
-          node ./build/server/src/tools/updateMonitoringFactTablesCLI.js
+          yarn cli:query-monitoring-data
+          yarn cli:maintain-monitoring-data
+          yarn cli:updateMonitoringFactTables
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
