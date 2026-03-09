@@ -408,7 +408,10 @@ export default function ViewGoalDetails({
                   return (
                     <div className="margin-top-2">
                       <ReadOnlyField label="TTA Specialists">
-                        {specialists.map((s) => `${s.name}${s.roles && s.roles.length > 0 ? ` (${s.roles.join(', ')})` : ''}`).join(', ')}
+                        {specialists.map((s) => {
+                          const sortedRoles = [...new Set(s.roles || [])].sort();
+                          return `${s.name}${sortedRoles.length > 0 ? ` (${sortedRoles.join(', ')})` : ''}`;
+                        }).join(', ')}
                       </ReadOnlyField>
                     </div>
                   );
