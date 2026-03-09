@@ -21,7 +21,7 @@ tasks:
     cmds:
       - task --list
 
-  # --- Stack Up/Down ---
+  # --- Stack Up ---
 
   stack-up:
     desc: Start basic local dev stack (frontend/backend/db/redis/redis)
@@ -41,26 +41,45 @@ tasks:
       STACK: '{{default "" .STACK}}'
     cmds:
       - yarn deps:install
+      - cmd: docker compose -f {{.COMPOSE_FILE}} down --remove-orphans
+        ignore_error: true
       - |
         echo "Initializing database..."
-        docker compose -f {{.COMPOSE_FILE}} up -y --build --wait db redis
+        docker compose -f {{.COMPOSE_FILE}} up -y --build --detach --wait db redis
         docker/scripts/dev-db-init.sh
       - |
         echo "Starting stack..."
-        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up -y --wait --remove-orphans || \
-        (docker compose -f {{.COMPOSE_FILE}} logs -n 20 && docker ps && exit 1)
-      - |
-        echo "-----------------------------------"
-        echo "All services healthy, using 'task stack-logs' to tail logs"
-        echo "-----------------------------------"
-      - task: stack-logs
+        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up -y --build --detach --wait --force-recreate --remove-orphans || \
+        (echo "--- ERROR ---" && docker compose -f {{.COMPOSE_FILE}} logs -n 10 && docker ps && exit 1)
+        docker compose -f {{.COMPOSE_FILE}} logs -n 1
+      - cmd: |
+          echo "----------------------"
+          echo "All services healthy, use 'task stack-logs' (or yarn docker:logs) to tail logs"
+          echo "----------------------"
+        silent: true
       - cmd: docker ps
 
+  # --- Stack Down ---
 
   stack-down:
     desc: Stop compose stacks for this repo
     cmds:
-      - docker compose -f {{.COMPOSE_FILE}} down --remove-orphans
+      - docker compose -f {{.COMPOSE_FILE}} --profile fullstack down --remove-orphans
+
+  refresh:
+    desc: Rebuild frontend and backend code, reinstall deps, restart stack
+    cmds: 
+      - yarn deps:install
+      - task: stack-down
+      - yarn build
+      - docker compose -f {{.COMPOSE_FILE}} build --no-cache
+      - task: stack-up
+
+  reset:
+    desc: Remove containers, images, networks, volumes and reinitialize stack
+    cmds:
+      - task: stack-down
+      - docker compose -f {{.COMPOSE_FILE}} down --volumes --rmi all --remove-orphans
 
   # --- Utility ---
 
@@ -76,6 +95,7 @@ tasks:
       TARGET: '{{default "backend" .TARGET}}'
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} exec {{.TARGET}} /bin/bash
+    ignore_error: true
 
   stack-exec:
     desc: Execute command in running container (TARGET defaults to backend)
@@ -111,16 +131,13 @@ tasks:
             exit 1; \
           fi"
 
-  refresh:
-    desc: Rebuild frontend and backend code, reinstall deps, restart stack
-    cmds: 
-      - yarn deps:install
-      - task: stack-down
-      - docker compose -f {{.COMPOSE_FILE}} build --no-cache
+  # --- Internal ---
 
-  reset:
-    desc: Remove containers, images, networks, volumes and reinitialize stack
+  msg:
+    desc: Internal task to print messages in a consistent format
+    internal: true
+    vars:
+      MSG: ''
     cmds:
-      - task: stack-down
-      - docker compose -f {{.COMPOSE_FILE}} down --volumes
-      - docker images -a | grep '{{.PROJECT_NAME}}' | awk '{print $2}' | xargs docker rmi
+      - echo "----- {{.MSG}}"
+    silent: true

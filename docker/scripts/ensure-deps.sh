@@ -100,6 +100,7 @@ retry_install_after_cleanup() {
 
 install_deps_with_retries() {
   local attempt=1
+  echo "-- Installing dependencies for $mode"
   while [ "$attempt" -le "$max_install_attempts" ]; do
     if install_deps; then
       return 0

@@ -90,6 +90,7 @@
     "docker:logs": "task stack-logs",
     "docker:refresh": "task refresh",
     "docker:reset": "task reset",
+    "docker:shell": "task stack-shell",
     "docker:shell:backend": "task stack-shell TARGET=backend",
     "docker:shell:frontend": "task stack-shell TARGET=frontend",
     "docker:dss": "docker/scripts/run-dss-in-compose.sh",
