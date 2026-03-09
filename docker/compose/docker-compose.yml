@@ -58,9 +58,9 @@ services:
           "/workspace/docker/scripts/healthcheck-http.sh",
           "http://127.0.0.1:3000",
         ]
-      interval: 10s
-      timeout: 5s
-      retries: 30
+      interval: 60s
+      timeout: 10s
+      retries: 10
       start_period: 30s
     depends_on:
       backend:

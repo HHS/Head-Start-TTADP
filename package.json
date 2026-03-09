@@ -74,7 +74,7 @@
     "lint:fix:single": "eslint --fix",
     "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
     "lint:fix:all": "yarn lint:fix && yarn --cwd frontend lint:fix",
-    "test": "yarn build && yarn test:ci",
+    "test": "yarn build && jest build/server/src --runInBand",
     "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "test:e2e": "playwright test --config=tests/e2e/playwright.config.js",

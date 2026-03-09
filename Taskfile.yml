@@ -43,11 +43,13 @@ tasks:
       - yarn deps:install
       - |
         echo "Initializing database..."
-        docker compose -f {{.COMPOSE_FILE}} up -y --build --detach --wait db redis
+        docker compose -f {{.COMPOSE_FILE}} up -y --build --wait db redis
         docker/scripts/dev-db-init.sh
       - |
         echo "Starting stack..."
-        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up -y --detach --wait --remove-orphans
+        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up -y --wait --remove-orphans || \
+        (docker compose -f {{.COMPOSE_FILE}} logs -n 20 && docker ps && exit 1)
+      - |
         echo "-----------------------------------"
         echo "All services healthy, using 'task stack-logs' to tail logs"
         echo "-----------------------------------"

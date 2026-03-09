@@ -30,7 +30,7 @@ To run lint checks:
 **Backend:**
 
 ```bash
-yarn test build/server/src/example.test.js  # Run single backend test (includes build)
+yarn test src/logger.test.js                # Run single backend test (includes build)
 yarn test                                   # Run all backend tests (includes build)
 ```
 

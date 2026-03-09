@@ -13173,11 +13173,6 @@ tar@^6.0.2, tar@^6.1.11, tar@^6.1.2, tar@^7.5.10:
     minizlib "^3.1.0"
     yallist "^5.0.0"
 
-tasuku@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/tasuku/-/tasuku-2.3.0.tgz#3122dffdb1a8ad30748bb74e0bb4b8bf74cc0fb1"
-  integrity sha512-9Jtk+XAnttslCw4i9RceSZGr2PT5TLn0vUyWnoP2SdlSYzkiYRY6kB5qnPi5IQ/Em8e4oBow1rpaA39iijTIrA==
-
 tcp-port-used@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/tcp-port-used/-/tcp-port-used-1.0.2.tgz#9652b7436eb1f4cfae111c79b558a25769f6faea"
