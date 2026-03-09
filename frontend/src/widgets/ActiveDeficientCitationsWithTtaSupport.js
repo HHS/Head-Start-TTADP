@@ -47,7 +47,7 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
   return (
     <>
       <Drawer triggerRef={drawerTriggerRef} title="Active deficient citations with TTA support">
-        Placeholder content la la la
+        Placeholder content
         {/* <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" /> */}
       </Drawer>
       <LineGraphWidget

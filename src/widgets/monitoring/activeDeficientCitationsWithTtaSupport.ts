@@ -147,27 +147,28 @@ export default async function activeDeficientCitationsWithTtaSupport(
   }
 
   const rows = await sequelize.query<IMonthlyCounts>(
-    `SELECT
-      m.month_start::text,
-      COALESCE(tsd.deficiencies_with_tta, 0)::int AS deficiencies_with_tta,
-      COALESCE(ad.total_active_deficiencies, 0)::int AS total_active_deficiencies
-    FROM unnest(ARRAY[:monthStarts]::date[]) AS m(month_start)
-    LEFT JOIN LATERAL (
+    `WITH months AS (
+      SELECT unnest(ARRAY[:monthStarts]::date[]) AS month_start
+    ),
+    active_deficiencies AS (
       SELECT
+        m.month_start,
         COUNT(DISTINCT c.id)::int AS total_active_deficiencies
-      FROM "Citations" c
+      FROM months m
       JOIN "GrantCitations" gc
-        ON gc."citationId" = c.id
-      WHERE gc."grantId" IN (:grantIds)
-        AND c."calculated_finding_type" = 'Deficiency'
+        ON gc."grantId" IN (:grantIds)
+      JOIN "Citations" c
+        ON c.id = gc."citationId"
+      WHERE c."calculated_finding_type" = 'Deficiency'
         AND c."deletedAt" IS NULL
         AND c.reported_date < (m.month_start + INTERVAL '1 month')::date
         AND c.active_through >= m.month_start
-    ) ad
-      ON true
-    LEFT JOIN LATERAL (
-      SELECT
-        COUNT(DISTINCT c.id)::int AS deficiencies_with_tta
+      GROUP BY m.month_start
+    ),
+    tta_references AS (
+      SELECT DISTINCT
+        DATE_TRUNC('month', ar."startDate")::date AS month_start,
+        ref.reference->>'findingId' AS finding_uuid
       FROM "ActivityReportObjectives" aro
       JOIN "ActivityReportObjectiveCitations" aroc
         ON aroc."activityReportObjectiveId" = aro.id
@@ -175,19 +176,35 @@ export default async function activeDeficientCitationsWithTtaSupport(
         ON ar.id = aro."activityReportId"
       JOIN LATERAL jsonb_array_elements(aroc."monitoringReferences") ref(reference)
         ON true
+      WHERE ar.id IN (:approvedReportIds)
+    ),
+    tta_deficiencies AS (
+      SELECT
+        m.month_start,
+        COUNT(DISTINCT c.id)::int AS deficiencies_with_tta
+      FROM months m
+      JOIN tta_references tr
+        ON tr.month_start = m.month_start
       JOIN "Citations" c
-        ON c.finding_uuid = ref.reference->>'findingId'
+        ON c.finding_uuid = tr.finding_uuid
       JOIN "GrantCitations" gc
         ON gc."citationId" = c.id
-      WHERE ar.id IN (:approvedReportIds)
-        AND gc."grantId" IN (:grantIds)
-        AND DATE_TRUNC('month', ar."startDate")::date = m.month_start
+      WHERE gc."grantId" IN (:grantIds)
         AND c."calculated_finding_type" = 'Deficiency'
         AND c."deletedAt" IS NULL
         AND c.reported_date < (m.month_start + INTERVAL '1 month')::date
         AND c.active_through >= m.month_start
-    ) tsd
-      ON true
+      GROUP BY m.month_start
+    )
+    SELECT
+      m.month_start::text,
+      COALESCE(td.deficiencies_with_tta, 0)::int AS deficiencies_with_tta,
+      COALESCE(ad.total_active_deficiencies, 0)::int AS total_active_deficiencies
+    FROM months m
+    LEFT JOIN active_deficiencies ad
+      ON ad.month_start = m.month_start
+    LEFT JOIN tta_deficiencies td
+      ON td.month_start = m.month_start
     ORDER BY m.month_start ASC;`,
     {
       replacements: {
