@@ -4,47 +4,26 @@
 
 ### Testing With Docker
 
-If switching branches, run `task refresh` before running your tests.
+If you switch branches and Docker deps get out of sync, run `yarn docker:refresh`.
 
-Run `task test-be` and `task test-fe` to run Jest tests for backend and frontend in Docker.
+Common Yarn-first test commands:
 
-`task test-be` / `task test-fe` behavior:
+- Backend unit/integration tests: `yarn test` or `yarn test:ci`
+- Frontend tests: `cd frontend && yarn test --watchAll=false` or `cd frontend && yarn test:ci`
+- Run backend + frontend CI suites: `yarn test:all`
+- Playwright E2E: `yarn test:e2e`
+- Playwright API: `yarn test:e2e:api`
+- Playwright utils: `yarn test:e2e:utils`
+- Cucumber BDD: `yarn test:bdd`
 
-- Uses an isolated compose stack defined in `docker/compose/test.yml`
-- Uses compose project `ttahub-test`
-- Starts dedicated `db` and `redis` services
-- Runs migrations and seeders before tests
-- Runs backend and frontend Jest suites in their respective test containers
-- Tears down test containers and network automatically
-- Resets test database/redis volumes each run
-- Reuses shared external dependency/cache volumes across runs for faster startup
-- Use `task reset` for a manual hard reset of local Docker state, including caches
+For Docker-specific non-test checks/scans:
 
-Shared dependency volume names used by test compose:
+- Dynamic security scan (OWASP ZAP): `yarn docker:dss`
 
-- `ttahub-backend-node-modules`
-- `ttahub-frontend-node-modules`
-- `ttahub-backend-yarn-cache`
-- `ttahub-frontend-yarn-cache`
+To run lint checks:
 
-If those external volumes do not exist yet, create them once:
-
-```bash
-docker volume create ttahub-backend-node-modules
-docker volume create ttahub-frontend-node-modules
-docker volume create ttahub-backend-yarn-cache
-docker volume create ttahub-frontend-yarn-cache
-```
-
-`test.yml` includes `env_file: ../../.env`, so ensure `.env` exists:
-
-```bash
-cp .env.example .env
-```
-
-To run both through Yarn compatibility scripts, use `yarn docker:test`.
-
-To run eslint run `yarn lint:all` or `yarn lint:fix:all` to have eslint attempt to fix linting problems.
+- `yarn lint:all`
+- `yarn lint:fix:all`
 
 ### Running Tests Natively
 
