@@ -475,19 +475,19 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
   const hasMultipleRegions = regions.length > 1;
   const hasPreviousRegion = hasMultipleRegions && activeRegionIndex > 0;
   const hasNextRegion = hasMultipleRegions && activeRegionIndex < regions.length - 1;
-  const goToPreviousRegion = () => {
+  const goToPreviousRegion = useCallback(() => {
     if (!hasPreviousRegion) {
       return;
     }
     handleRegionChange(activeRegionIndex - 1);
-  };
+  }, [activeRegionIndex, handleRegionChange, hasPreviousRegion]);
 
-  const goToNextRegion = () => {
+  const goToNextRegion = useCallback(() => {
     if (!hasNextRegion) {
       return;
     }
     handleRegionChange(activeRegionIndex + 1);
-  };
+  }, [activeRegionIndex, handleRegionChange, hasNextRegion]);
   const handleChartClick = useCallback((event) => {
     if (!hasMultipleRegions || transition) {
       return;
