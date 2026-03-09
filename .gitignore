@@ -66,5 +66,5 @@ CLAUDE-mine.md
 # Copilot Instructions, etc.
 .github/instructions/
 
-# Ignore claude config files
+# Ignore claude
 .claude/

@@ -54,12 +54,13 @@ const RECIPIENT_WITH_PROGRAMS_ID = 425;
 const DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID = 426;
 
 const INACTIVE_GRANT_ID_ONE = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_TWO = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_THREE = faker.datatype.number({ min: 9999 });
+const INACTIVE_GRANT_ID_BOUNDARY = faker.datatype.number({ min: 9999 });
+const INACTIVE_GRANT_ID_OUTSIDE_WINDOW = faker.datatype.number({ min: 9999 });
+const INACTIVE_GRANT_ID_NULL_DATE = faker.datatype.number({ min: 9999 });
+const GRANT_ON_ACTIVITY_REPORT_ID = faker.datatype.number({ min: 9999 });
+const OTHER_ENTITY_TEST_ID = faker.datatype.number({ min: 9999 });
 
-let inactiveActivityReportOne;
-let inactiveActivityReportTwo;
-let inactiveActivityReportMissingStartDate;
+let testActivityReport;
 
 const mockUser = {
   id: 1115665161,
@@ -425,9 +426,21 @@ describe('Activity report service', () => {
         inactivationDate: new Date(new Date().setDate(new Date().getDate() - 60)),
       });
 
-      // Create a inactive grant with a 'inactivationDate' date more than 90 days ago.
+      // Create a inactive grant exactly 365 days ago (boundary condition)
       await Grant.create({
-        id: INACTIVE_GRANT_ID_TWO,
+        id: INACTIVE_GRANT_ID_BOUNDARY,
+        number: faker.datatype.number({ min: 9999 }),
+        recipientId: RECIPIENT_ID,
+        regionId: 19,
+        status: 'Inactive',
+        startDate: new Date(),
+        endDate: new Date(),
+        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 365)),
+      });
+
+      // Create a inactive grant more than 365 days ago (should be excluded)
+      await Grant.create({
+        id: INACTIVE_GRANT_ID_OUTSIDE_WINDOW,
         number: faker.datatype.number({ min: 9999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
@@ -437,54 +450,52 @@ describe('Activity report service', () => {
         inactivationDate: new Date(new Date().setDate(new Date().getDate() - 366)),
       });
 
+      // Create a inactive grant with NULL inactivationDate (should be excluded)
       await Grant.create({
-        id: INACTIVE_GRANT_ID_THREE,
+        id: INACTIVE_GRANT_ID_NULL_DATE,
         number: faker.datatype.number({ min: 9999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
         startDate: new Date(),
         endDate: new Date(),
-        inactivationDate: new Date(),
+        inactivationDate: null,
       });
 
-      // Create a ActivityReport within 60 days.
-      inactiveActivityReportOne = await ActivityReport.create({
+      // Create a inactive grant already on an activity report
+      await Grant.create({
+        id: GRANT_ON_ACTIVITY_REPORT_ID,
+        number: faker.datatype.number({ min: 9999 }),
+        recipientId: RECIPIENT_ID,
+        regionId: 19,
+        status: 'Inactive',
+        startDate: new Date(),
+        endDate: new Date(),
+        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 400)),
+      });
+
+      // Create test activity report
+      testActivityReport = await ActivityReport.create({
         ...submittedReport,
         userId: mockUser.id,
         lastUpdatedById: mockUser.id,
         submissionStatus: REPORT_STATUSES.DRAFT,
         calculatedStatus: REPORT_STATUSES.DRAFT,
         activityRecipients: [],
-        // Set a start date that will return the inactive grant.
-        startDate: new Date(new Date().setDate(new Date().getDate() - 62)),
-        endDate: new Date(new Date().setDate(new Date().getDate() - 62)),
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
-      // Create a ActivityReport outside of 90 days.
-      inactiveActivityReportTwo = await ActivityReport.create({
-        ...submittedReport,
-        userId: mockUser.id,
-        lastUpdatedById: mockUser.id,
-        submissionStatus: REPORT_STATUSES.DRAFT,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-        activityRecipients: [],
-        // Set a start date that will NOT return the inactive grant.
-        startDate: new Date(new Date().setDate(new Date().getDate() + 366)),
-        endDate: new Date(new Date().setDate(new Date().getDate() + 366)),
+      // Link the grant to the activity report
+      await ActivityRecipient.create({
+        activityReportId: testActivityReport.id,
+        grantId: GRANT_ON_ACTIVITY_REPORT_ID,
       });
 
-      // Create a ActivityReport without start date.
-      inactiveActivityReportMissingStartDate = await ActivityReport.create({
-        ...submittedReport,
-        userId: mockUser.id,
-        lastUpdatedById: mockUser.id,
-        submissionStatus: REPORT_STATUSES.DRAFT,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-        activityRecipients: [],
-        // If there is no start date use today's date.
-        startDate: null,
-        endDate: null,
+      // Create an other entity for testing
+      await OtherEntity.create({
+        id: OTHER_ENTITY_TEST_ID,
+        name: `Test Other Entity ${faker.datatype.uuid()}`,
       });
     });
 
@@ -548,7 +559,10 @@ describe('Activity report service', () => {
       });
 
       // Clean up any additional entities
-      await OtherEntity.destroy({ where: { id: RECIPIENT_ID }, force: true });
+      await OtherEntity.destroy({
+        where: { id: [RECIPIENT_ID, OTHER_ENTITY_TEST_ID] },
+        force: true,
+      });
       await Region.destroy({ where: { id: 19 } });
     });
 
@@ -1208,61 +1222,69 @@ describe('Activity report service', () => {
         expect(recipients.grants.length).toBe(0);
       });
 
-      it('retrieves inactive grant inside of range with report', async () => {
+      it('returns otherEntities', async () => {
         const region = 19;
-        const recipients = await possibleRecipients(region, inactiveActivityReportOne.id);
-        expect(recipients.grants.length).toBe(1);
+        const recipients = await possibleRecipients(region);
 
-        // Get the grant with the id RECIPIENT_ID.
-        const alertRecipient = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === RECIPIENT_ID,
-        );
-        expect(alertRecipient.length).toBe(1);
+        expect(recipients.otherEntities).toBeDefined();
+        expect(Array.isArray(recipients.otherEntities)).toBe(true);
+        expect(recipients.otherEntities.length).toBeGreaterThan(0);
 
-        // Get the grant with the id inactiveGrantIdOne.
-        const inactiveRecipient = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_ONE,
+        const testEntity = recipients.otherEntities.find(
+          (entity) => entity.activityRecipientId === OTHER_ENTITY_TEST_ID,
         );
-        expect(inactiveRecipient.length).toBe(1);
+        expect(testEntity).toBeDefined();
+        expect(testEntity.name).toContain('Test Other Entity');
       });
 
-      it('doesn\'t retrieve inactive grant outside of range with report', async () => {
+      it('includes inactive grant exactly at 365-day boundary', async () => {
         const region = 19;
-        const recipients = await possibleRecipients(region, inactiveActivityReportTwo.id);
-        expect(recipients.grants.length).toBe(1);
-        expect(recipients.grants[0].grants.length).toBe(1);
+        const recipients = await possibleRecipients(region);
 
-        // Get the grant with the id RECIPIENT_ID.
-        const alertRecipient = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === RECIPIENT_ID,
+        const boundaryGrant = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_BOUNDARY,
         );
-        expect(alertRecipient.length).toBe(1);
+        expect(boundaryGrant.length).toBe(1);
       });
 
-      it('retrieves inactive grant inside of range with report missing start date', async () => {
+      it('excludes inactive grant outside 365-day window', async () => {
         const region = 19;
-        // eslint-disable-next-line max-len
-        const recipients = await possibleRecipients(region, inactiveActivityReportMissingStartDate.id);
-        expect(recipients.grants.length).toBe(1);
-        expect(recipients.grants[0].grants.length).toBe(3);
+        const recipients = await possibleRecipients(region);
 
-        // Get the grant with the id RECIPIENT_ID.
-        const alertRecipient = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === RECIPIENT_ID,
+        const outsideWindowGrant = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_OUTSIDE_WINDOW,
         );
-        expect(alertRecipient.length).toBe(1);
+        expect(outsideWindowGrant.length).toBe(0);
+      });
 
-        // Get the grant with the id INACTIVE_GRANT_ID_ONE.
-        const inactiveGrantOne = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_ONE,
-        );
-        expect(inactiveGrantOne.length).toBe(1);
+      it('excludes inactive grant with NULL inactivationDate', async () => {
+        const region = 19;
+        const recipients = await possibleRecipients(region);
 
-        // Get the grant with the id INACTIVE_GRANT_ID_THREE (todays date).
-        const inactiveGrantThree = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_THREE,
+        const nullDateGrant = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_NULL_DATE,
         );
-        expect(inactiveGrantThree.length).toBe(1);
+        expect(nullDateGrant.length).toBe(0);
+      });
+
+      it('includes inactive grant already on activity report even if outside 365-day window', async () => {
+        const region = 19;
+        const recipients = await possibleRecipients(region, testActivityReport.id);
+
+        const grantOnReport = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === GRANT_ON_ACTIVITY_REPORT_ID,
+        );
+        expect(grantOnReport.length).toBe(1);
+      });
+
+      it('excludes grant on activity report if not passed activityReportId', async () => {
+        const region = 19;
+        const recipients = await possibleRecipients(region);
+
+        const grantOnReport = recipients.grants[0].grants.filter(
+          (grant) => grant.dataValues.activityRecipientId === GRANT_ON_ACTIVITY_REPORT_ID,
+        );
+        expect(grantOnReport.length).toBe(0);
       });
     });
 
