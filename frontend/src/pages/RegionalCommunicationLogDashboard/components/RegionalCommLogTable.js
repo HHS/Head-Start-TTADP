@@ -258,7 +258,7 @@ RegionalCommLogTable.propTypes = {
     id: PropTypes.string,
     topic: PropTypes.string,
     condition: PropTypes.string,
-    query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    query: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
   })),
 };
 
