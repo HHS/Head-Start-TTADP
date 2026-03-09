@@ -398,7 +398,7 @@ describe('getGoalHistory (database-backed)', () => {
       expect(match.user.name).toBe(collaboratorUser.name);
       expect(Array.isArray(match.roles)).toBe(true);
       expect(match.roles.length).toBeGreaterThan(0);
-      expect(match.roles.map((r) => r.name)).toContain('Health Specialist');
+      expect(match.roles.map((r) => r.fullName)).toContain('Health Specialist');
     });
   });
 });

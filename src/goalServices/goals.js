@@ -1554,7 +1554,7 @@ export async function getGoalHistory(id) {
                       {
                         model: sequelize.models.Role,
                         as: 'roles',
-                        attributes: ['name'],
+                        attributes: ['name', 'fullName'],
                         through: { attributes: [] },
                       },
                     ],
