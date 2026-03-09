@@ -410,8 +410,8 @@ export default function ViewGoalDetails({
                       <ReadOnlyField label="TTA Specialists">
                         {specialists.map((s) => {
                           const sortedRoles = [...new Set(s.roles || [])].sort();
-                          return `${s.name}${sortedRoles.length > 0 ? ` (${sortedRoles.join(', ')})` : ''}`;
-                        }).join(', ')}
+                          return [s.name, ...sortedRoles].filter(Boolean).join(', ');
+                        }).join('; ')}
                       </ReadOnlyField>
                     </div>
                   );

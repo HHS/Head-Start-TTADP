@@ -487,8 +487,9 @@ describe('ViewGoalDetails', () => {
     const specialistsValue = within(specialistsContainer).getByTestId('read-only-value');
 
     // Check that both specialists are present with their roles
-    expect(specialistsValue).toHaveTextContent('Alice Specialist (Program Specialist)');
-    expect(specialistsValue).toHaveTextContent('Bob Collaborator (Grants Specialist)');
+    expect(specialistsValue).toHaveTextContent('Alice Specialist, Program Specialist');
+    expect(specialistsValue).toHaveTextContent('Bob Collaborator, Grants Specialist');
+    expect(specialistsValue).toHaveTextContent('Alice Specialist, Program Specialist; Bob Collaborator, Grants Specialist');
     // Verify Alice only appears once (deduplicated even though she's author on both ARs)
     const aliceMatches = specialistsValue.textContent.match(/Alice Specialist/g);
     expect(aliceMatches).toHaveLength(1);
