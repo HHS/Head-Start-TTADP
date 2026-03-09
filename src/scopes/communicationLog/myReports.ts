@@ -1,7 +1,5 @@
-// import { filterAssociation } from './utils';
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
-import { auditLogger } from '../../logger';
 
 const creatorQuery = (userId: number, exclude = false) => ({
   '$author.id$': {
