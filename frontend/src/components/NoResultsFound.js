@@ -10,7 +10,7 @@ import ContentFromFeedByTag from './ContentFromFeedByTag';
 import colors from '../colors';
 import './NoResultsFound.scss';
 
-function NoResultsFound({ customMessage, hideFilterHelp }) {
+function NoResultsFound({ customMessage, hideFilterHelp, drawerConfig }) {
   const drawerTriggerRef = useRef(null);
   return (
     <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center text-center height-full">
@@ -22,8 +22,8 @@ function NoResultsFound({ customMessage, hideFilterHelp }) {
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           Get help using filters
         </DrawerTriggerButton>
-        <Drawer title="QA dashboard filters" triggerRef={drawerTriggerRef}>
-          <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" />
+        <Drawer title={drawerConfig.title} triggerRef={drawerTriggerRef}>
+          <ContentFromFeedByTag tagName={drawerConfig.tagName} />
         </Drawer>
       </>
       )}
@@ -34,11 +34,19 @@ function NoResultsFound({ customMessage, hideFilterHelp }) {
 NoResultsFound.propTypes = {
   customMessage: PropTypes.string,
   hideFilterHelp: PropTypes.bool,
+  drawerConfig: PropTypes.shape({
+    title: PropTypes.string,
+    tagName: PropTypes.string,
+  }),
 };
 
 NoResultsFound.defaultProps = {
   customMessage: '',
   hideFilterHelp: false,
+  drawerConfig: {
+    title: 'QA dashboard filters',
+    tagName: 'ttahub-qa-dash-filters',
+  },
 };
 
 export default NoResultsFound;

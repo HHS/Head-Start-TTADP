@@ -22,6 +22,7 @@ export default function LineGraphWidget({
   tableTitle,
   tableFirstHeading,
   tableCaption,
+  drawerConfig,
 }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, exportName);
@@ -97,6 +98,7 @@ export default function LineGraphWidget({
           },
         }}
         widgetRef={widgetRef}
+        drawerConfig={drawerConfig}
       />
     </WidgetContainer>
   );
@@ -130,6 +132,10 @@ LineGraphWidget.propTypes = {
   tableFirstHeading: PropTypes.string,
   tableCaption: PropTypes.string,
   subtitle: PropTypes.string,
+  drawerConfig: PropTypes.shape({
+    title: PropTypes.string,
+    tagName: PropTypes.string,
+  }),
 };
 
 LineGraphWidget.defaultProps = {
@@ -140,4 +146,8 @@ LineGraphWidget.defaultProps = {
   tableFirstHeading: 'TTA Provided',
   tableCaption: 'Total TTA hours by date and type',
   subtitle: '',
+  drawerConfig: {
+    title: 'QA dashboard filters',
+    tagName: 'ttahub-qa-dash-filters',
+  },
 };

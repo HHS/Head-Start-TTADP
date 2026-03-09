@@ -91,6 +91,7 @@ export default function LineGraph({
   tableConfig,
   widgetRef,
   showTabularData,
+  drawerConfig,
 }) {
   // the state for the legend and which traces are visible
   const [legends, setLegends] = useState(legendConfig);
@@ -208,7 +209,7 @@ export default function LineGraph({
     xAxisTitle, yAxisTitle, yAxisTickStep, hasData, lines]);
 
   if (!hasData) {
-    return <NoResultsFound />;
+    return <NoResultsFound drawerConfig={drawerConfig} />;
   }
 
   return (
@@ -317,6 +318,10 @@ LineGraph.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   widgetRef: PropTypes.object.isRequired,
   showTabularData: PropTypes.bool.isRequired,
+  drawerConfig: PropTypes.shape({
+    title: PropTypes.string,
+    tagName: PropTypes.string,
+  }),
 };
 
 LineGraph.defaultProps = {
@@ -345,4 +350,8 @@ LineGraph.defaultProps = {
       shape: 'square',
     },
   ],
+  drawerConfig: {
+    title: 'QA dashboard filters',
+    tagName: 'ttahub-qa-dash-filters',
+  },
 };

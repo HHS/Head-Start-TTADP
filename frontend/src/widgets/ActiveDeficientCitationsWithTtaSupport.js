@@ -60,6 +60,10 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
         tableFirstHeading="Active deficient citations"
         subtitle={subtitle}
         legendConfig={deriveLineGraphLegendConfig(data, DEFAULT_LEGEND_CONFIG)}
+        drawerConfig={{
+          tagName: '',
+          title: 'Monitoring dashboard filters',
+        }}
       />
     </>
   );
