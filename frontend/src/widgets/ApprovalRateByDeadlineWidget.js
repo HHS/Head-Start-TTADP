@@ -66,6 +66,11 @@ function ApprovalRateCarousel({
         {activeRegionId ? `Region ${activeRegionId}` : 'Region'}
       </h3>
       <span className="usa-sr-only" aria-live="polite" aria-atomic="true">{announcement}</span>
+      {hasMultipleRegions && (
+        <p className="usa-sr-only">
+          Click left side of the chart for previous region, right side for next region.
+        </p>
+      )}
       <div className="approval-rate-carousel-shell position-relative">
         <div
           ref={carouselFrameRef}
@@ -483,6 +488,24 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
     }
     handleRegionChange(activeRegionIndex + 1);
   };
+  const handleChartClick = useCallback((event) => {
+    if (!hasMultipleRegions || transition) {
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (!bounds.width) {
+      return;
+    }
+
+    const clickOffset = event.clientX - bounds.left;
+    if (clickOffset < bounds.width / 2) {
+      goToPreviousRegion();
+      return;
+    }
+
+    goToNextRegion();
+  }, [goToNextRegion, goToPreviousRegion, hasMultipleRegions, transition]);
 
   const widgetClassName = [
     'approval-rate-by-deadline-widget',
@@ -508,6 +531,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
       xAxisTitle="Months"
       yAxisTitle="Percentage"
       yAxisTickStep={10}
+      onChartClick={handleChartClick}
       legendConfig={APPROVAL_RATE_BY_DEADLINE_LEGEND_CONFIG}
       tableConfig={tableConfig}
       widgetRef={widgetRef}
