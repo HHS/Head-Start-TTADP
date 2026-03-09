@@ -481,11 +481,11 @@ describe('ViewGoalDetails', () => {
     const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
     const specialistsLabel = within(objective1).getByText('TTA Specialists');
     expect(specialistsLabel).toBeInTheDocument();
-    
+
     // Get the specialists text content (comma-separated format)
     const specialistsContainer = specialistsLabel.closest('div').parentElement;
     const specialistsValue = within(specialistsContainer).getByTestId('read-only-value');
-    
+
     // Check that both specialists are present with their roles
     expect(specialistsValue).toHaveTextContent('Alice Specialist (Program Specialist)');
     expect(specialistsValue).toHaveTextContent('Bob Collaborator (Grants Specialist)');
