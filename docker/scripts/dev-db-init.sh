@@ -31,4 +31,7 @@ else
   compose run --rm backend yarn db:seed:local
 fi
 
+# Make the current user an admin
+./bin/local-admin
+
 echo "Development database initialization complete."
