@@ -4,6 +4,7 @@ import React, {
   useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
+import { Checkbox } from '@trussworks/react-uswds';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
@@ -29,6 +30,9 @@ export default function LineGraphWidget({
   const [showTabularData, setShowTabularData] = useState(false);
   const [columnHeadings, setColumnHeadings] = useState([]);
   const [tableRows, setTableRows] = useState([]);
+
+  // for testing purposes, allow the empty state to be toggled with a checkbox
+  const [showEmptyState, setShowEmptyState] = useState(false);
 
   useEffect(() => {
     if (!arrayExistsAndHasLength(data)) {
@@ -75,9 +79,10 @@ export default function LineGraphWidget({
       showHeaderBorder
       menuItems={menuItems}
     >
+      <Checkbox label="Show empty state" id="show-empty-state" onChange={() => setShowEmptyState(!showEmptyState)} />
       <LineGraph
         showTabularData={showTabularData}
-        data={data}
+        data={showEmptyState ? [] : data}
         hideYAxis={hideYAxis}
         xAxisTitle={xAxisTitle}
         yAxisTitle={yAxisTitle}
