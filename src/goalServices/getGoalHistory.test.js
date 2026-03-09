@@ -211,7 +211,7 @@ describe('getGoalHistory (database-backed)', () => {
     });
 
     const healthSpecialistRole = await Role.findOne({ where: { fullName: 'Health Specialist' } });
-    expect(healthSpecialistRole).not.toBeNull();
+    if (!healthSpecialistRole) throw new Error('Health Specialist role not found in database');
     collaboratorRole = await CollaboratorRole.create({
       activityReportCollaboratorId: collaborator.id,
       roleId: healthSpecialistRole.id,
