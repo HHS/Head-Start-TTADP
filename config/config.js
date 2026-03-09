@@ -5,8 +5,8 @@ const singleLineLogger = (
   queryString,
 ) => console.log(queryString.replace(/\n/g, '\\n')); // eslint-disable-line no-console
 
-const dbLogging = isTrue(process.env.LOG_QUERIES) ? singleLineLogger : false;
-const suppressSuccessMessage = isTrue(process.env.SUPPRESS_SUCCESS_MESSAGE);
+const dbLogging = isTrue('LOG_QUERIES') ? singleLineLogger : false;
+const suppressSuccessMessage = isTrue('SUPPRESS_SUCCESS_MESSAGE');
 
 const connectionValidation = async (connection) => {
   try {

@@ -27,7 +27,6 @@ case "$mode" in
   backend)
     app_dir="/workspace"
     hash_files=(
-      #"/workspace/package.json"
       "/workspace/yarn.lock"
     )
     state_file="/workspace/node_modules/.deps-hash"
@@ -36,7 +35,6 @@ case "$mode" in
   frontend)
     app_dir="/workspace/frontend"
     hash_files=(
-      #"/workspace/frontend/package.json"
       "/workspace/frontend/yarn.lock"
     )
 

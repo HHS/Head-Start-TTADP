@@ -2,8 +2,9 @@ version: "3"
 
 vars:
   PROJECT_NAME: "ttahub"
-  COMPOSE_FILE: "-f docker/compose/docker-compose.yml"
+  COMPOSE_FILE: "docker/compose/docker-compose.yml"
   DEV_DEBUG: '{{default "false" .DEV_DEBUG}}'
+  DEFAULT_TARGET: "backend"
   USE_LOCAL_POSTGRES:
     sh: |
       if [[ "$POSTGRES_HOST" == "host.docker.internal" ]]; then
@@ -12,7 +13,6 @@ vars:
         echo "false"
       fi
   CMD: ""
-  STACK_COMPOSE_FILE: "docker/compose/docker-compose.yml"
 
 tasks:
   default:
@@ -43,11 +43,11 @@ tasks:
       - yarn deps:install
       - |
         echo "Initializing database..."
-        docker compose {{.COMPOSE_FILE}} up -y --build -y --detach --wait db redis
+        docker compose -f {{.COMPOSE_FILE}} up -y --build --detach --wait db redis
         docker/scripts/dev-db-init.sh
       - |
         echo "Starting stack..."
-        docker compose {{.COMPOSE_FILE}} {{.STACK}} up -y --detach --wait --remove-orphans
+        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up -y --detach --wait --remove-orphans
         echo "-----------------------------------"
         echo "All services healthy, using 'task stack-logs' to tail logs"
         echo "-----------------------------------"
@@ -58,14 +58,14 @@ tasks:
   stack-down:
     desc: Stop compose stacks for this repo
     cmds:
-      - docker compose {{.COMPOSE_FILE}} down --remove-orphans
+      - docker compose -f {{.COMPOSE_FILE}} down --remove-orphans
 
   # --- Utility ---
 
   stack-logs:
     desc: Tail current running stack logs
     cmds:
-      - docker compose {{.COMPOSE_FILE}} logs --follow
+      - docker compose -f {{.COMPOSE_FILE}} logs --follow
     ignore_error: true
 
   stack-shell:
@@ -73,19 +73,21 @@ tasks:
     vars:
       TARGET: '{{default "backend" .TARGET}}'
     cmds:
-      - docker compose {{.COMPOSE_FILE}} exec {{.TARGET}} /bin/bash
+      - docker compose -f {{.COMPOSE_FILE}} exec {{.TARGET}} /bin/bash
 
   stack-exec:
     desc: Execute command in running container (TARGET defaults to backend)
+    vars:
+      TARGET: '{{default {.DEFAULT_TARGET} .TARGET}}'
     cmds:
       - |
         bash -lc "set -euo pipefail; \
           if [ -n '{{.CLI_ARGS}}' ]; then \
             echo '[{{.TARGET}}]: {{.CLI_ARGS}}'; \
-            docker compose -f {{.STACK_COMPOSE_FILE}} exec {{.TARGET}} {{.CLI_ARGS}}; \
+            docker compose -f {{.COMPOSE_FILE}} exec {{.TARGET}} {{.CLI_ARGS}}; \
           elif [ -n '{{.CMD}}' ]; then \
             echo '[{{.TARGET}}]: {{.CMD}}'; \
-            docker compose -f {{.STACK_COMPOSE_FILE}} exec {{.TARGET}} {{.CMD}}; \
+            docker compose -f {{.COMPOSE_FILE}} exec {{.TARGET}} {{.CMD}}; \
           else \
             echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
             exit 1; \
@@ -98,10 +100,10 @@ tasks:
         bash -lc "set -euo pipefail; \
           if [ -n '{{.CLI_ARGS}}' ]; then \
             echo '[{{.TARGET}}]: {{.CLI_ARGS}}'; \
-            docker compose -f {{.STACK_COMPOSE_FILE}} run --rm {{.TARGET}} {{.CLI_ARGS}}; \
+            docker compose -f {{.COMPOSE_FILE}} run --rm {{.TARGET}} {{.CLI_ARGS}}; \
           elif [ -n '{{.CMD}}' ]; then \
             echo '[{{.TARGET}}]: {{.CMD}}'; \
-            docker compose -f {{.STACK_COMPOSE_FILE}} run --rm {{.TARGET}} {{.CMD}}; \
+            docker compose -f {{.COMPOSE_FILE}} run --rm {{.TARGET}} {{.CMD}}; \
           else \
             echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
             exit 1; \
@@ -112,11 +114,11 @@ tasks:
     cmds: 
       - yarn deps:install
       - task: stack-down
-      - docker compose {{.COMPOSE_FILE}} build --no-cache
+      - docker compose -f {{.COMPOSE_FILE}} build --no-cache
 
   reset:
     desc: Remove containers, images, networks, volumes and reinitialize stack
     cmds:
       - task: stack-down
-      - docker compose {{.COMPOSE_FILE}} down --volumes
+      - docker compose -f {{.COMPOSE_FILE}} down --volumes
       - docker images -a | grep '{{.PROJECT_NAME}}' | awk '{print $2}' | xargs docker rmi

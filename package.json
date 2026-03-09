@@ -51,7 +51,7 @@
     "cli:import-goals": "bin/run-tool src/tools/importTTAPlanGoals.js",
     "cli:import-goals:local": "bin/run-tool --local src/tools/importTTAPlanGoals.js",
     "cli:import-hses": "bin/run-tool src/tools/importGrantRecipientsCLI.js",
-    "cli:import-hses:local": "bin/run-tool --local src/tools/importGrantRecipientsCLI.js -- --skipdownload",
+    "cli:import-hses:local": "bin/run-tool --local src/tools/importGrantRecipientsCLI.js --skipdownload",
     "cli:import-reports": "bin/run-tool src/tools/importSSActivityReports.js",
     "cli:import-reports:local": "bin/run-tool --local src/tools/importSSActivityReports.js",
     "cli:import-system": "bin/ci-env tsx src/tools/importSystemCLI.ts",
