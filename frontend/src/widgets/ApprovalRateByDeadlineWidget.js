@@ -448,7 +448,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
     },
   }), [checkboxes, columnHeadings, footerData, setCheckboxes, tableRows]);
 
-  const handleRegionChange = (nextIndex) => {
+  const handleRegionChange = useCallback((nextIndex) => {
     if (nextIndex < 0 || nextIndex >= regions.length || nextIndex === activeRegionIndex) {
       return;
     }
@@ -470,7 +470,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
       direction: nextIndex > activeRegionIndex ? 'next' : 'prev',
     });
     setActiveRegionIndex(nextIndex);
-  };
+  }, [activeRegionIndex, prefersReducedMotion, regions]);
 
   const hasMultipleRegions = regions.length > 1;
   const hasPreviousRegion = hasMultipleRegions && activeRegionIndex > 0;
