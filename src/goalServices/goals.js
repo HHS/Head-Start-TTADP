@@ -1543,7 +1543,8 @@ export async function getGoalHistory(id) {
                   {
                     model: sequelize.models.ActivityReportCollaborator,
                     as: 'activityReportCollaborators',
-                    attributes: ['id', 'userId'],
+                    separate: true,
+                    attributes: ['id', 'userId', 'activityReportId'],
                     include: [
                       {
                         model: sequelize.models.User,
