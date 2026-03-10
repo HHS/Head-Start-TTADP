@@ -197,7 +197,11 @@ class SftpClient {
 
         const {
           algorithms = {
-            serverHostKey: ['ssh-dss', 'ssh-rsa'],
+            serverHostKey: [
+              'ssh-ed25519',
+              'ecdsa-sha2-nistp256',
+              'ssh-rsa',
+            ],
           },
           hostVerifier = () => true,
           ...connectionSettings
