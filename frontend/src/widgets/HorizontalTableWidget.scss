@@ -21,10 +21,14 @@
   vertical-align: bottom;
 }
 
-.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column {
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column,
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-sticky-last-data-column {
   z-index: 1;
   position: sticky;
   right: 0;
+}
+
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column {
   font-weight: bold;
   min-width: 90px;
 }
@@ -32,21 +36,7 @@
 // Because putting the border on the sticky element doesn't work, and box-shadow
 // isn't ideal because of z-indexing weirdness that happens when a ContextMenu
 // is above the border.
-.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  border-left: 1px solid black;
-}
-
-.smarthub-horizontal-table-widget .smarthub-horizontal-table-sticky-last-data-column {
-  z-index: 1;
-  position: sticky;
-  right: 0;
-}
-
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column::before,
 .smarthub-horizontal-table-widget .smarthub-horizontal-table-sticky-last-data-column::before {
   content: '';
   position: absolute;
@@ -66,7 +56,7 @@
   background-color: inherit;
 }
 
-.smarthub-horizontal-table-widget .usa-table-container--scrollable th {
+.smarthub-horizontal-table-widget.usa-table-container--scrollable th {
   position: sticky;
 }
 
@@ -80,7 +70,6 @@
 }
 
 .smarthub-horizontal-table-widget thead .checkbox-column {
-  z-index: 1;
   background-color: white;
   left: 0;
 }
@@ -98,12 +87,12 @@
   height: calc(100% - 1.5rem);
 }
 
-.smarthub-horizontal-table-widget .usa-table-container--scrollable {
+.smarthub-horizontal-table-widget.usa-table-container--scrollable {
   overflow-x: auto;
   overflow-y: auto;
 }
 
-.smarthub-horizontal-table-widget .usa-table-container--scrollable thead {
+.smarthub-horizontal-table-widget.usa-table-container--scrollable thead {
   border-top: 1px solid lightgray;
 }
 
