@@ -1627,7 +1627,7 @@ export async function getGoalHistory(id) {
     ],
     order: [
       ['createdAt', 'DESC'],
-      [{ model: sequelize.models.GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'DESC'],
+      [{ model: sequelize.models.GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'ASC'],
     ],
   });
 
@@ -1641,8 +1641,59 @@ export async function getGoalHistory(id) {
     };
   }
 
+  const goalsWithPreparedSpecialists = goalsWithDetails.map((goalRecord) => {
+    const goalData = goalRecord.toJSON();
+    const objectives = (goalData.objectives || []).map((objective) => {
+      const specialistsByUserId = new Map();
+      (objective.activityReportObjectives || [])
+        .filter((aro) => aro.activityReport)
+        .forEach((aro) => {
+          const { activityReport } = aro;
+          if (activityReport.author && activityReport.author.id) {
+            const existing = specialistsByUserId.get(activityReport.author.id) || {
+              name: activityReport.author.name,
+              roles: new Set(),
+            };
+            (activityReport.author.roles || []).forEach((role) => {
+              existing.roles.add(role.name);
+            });
+            specialistsByUserId.set(activityReport.author.id, existing);
+          }
+          (activityReport.activityReportCollaborators || []).forEach((collab) => {
+            if (collab.user && collab.userId) {
+              const existing = specialistsByUserId.get(collab.userId) || {
+                name: collab.user.name,
+                roles: new Set(),
+              };
+              (collab.roles || []).forEach((role) => {
+                existing.roles.add(role.name);
+              });
+              specialistsByUserId.set(collab.userId, existing);
+            }
+          });
+        });
+
+      const ttaSpecialists = Array.from(specialistsByUserId.values())
+        .map((specialist) => [
+          specialist.name,
+          ...Array.from(specialist.roles).sort(),
+        ].filter(Boolean).join(', '))
+        .sort();
+
+      return {
+        ...objective,
+        ttaSpecialists,
+      };
+    });
+
+    return {
+      ...goalData,
+      objectives,
+    };
+  });
+
   const activityReportIds = new Set(
-    goalsWithDetails
+    goalsWithPreparedSpecialists
       .flatMap((g) => g.objectives || [])
       .flatMap((o) => o.activityReportObjectives || [])
       .map((aro) => aro.activityReport?.id)
@@ -1651,12 +1702,13 @@ export async function getGoalHistory(id) {
 
   const overview = {
     activityReports: activityReportIds.size,
-    objectives: goalsWithDetails.reduce((sum, g) => sum + (g.objectives?.length || 0), 0),
-    closures: goalsWithDetails.filter((g) => g.status === 'Closed').length,
-    suspensions: goalsWithDetails.filter((g) => g.status === 'Suspended').length,
+    objectives: goalsWithPreparedSpecialists
+      .reduce((sum, g) => sum + (g.objectives?.length || 0), 0),
+    closures: goalsWithPreparedSpecialists.filter((g) => g.status === 'Closed').length,
+    suspensions: goalsWithPreparedSpecialists.filter((g) => g.status === 'Suspended').length,
   };
 
-  return { goals: goalsWithDetails, overview, regionId: grantRecord.regionId };
+  return { goals: goalsWithPreparedSpecialists, overview, regionId: grantRecord.regionId };
 }
 
 export async function closeMultiRecipientGoalsFromAdmin(data, userId) {

@@ -209,20 +209,16 @@ export default function ViewGoalDetails({
     );
   }
 
-  const sortedGoalHistory = [...goalHistory].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-  );
-
-  const firstGoal = sortedGoalHistory[0] || {};
+  const firstGoal = goalHistory[0] || {};
   const goalTemplate = firstGoal.goalTemplate || {};
   const goalTemplateName = goalTemplate.templateName || 'Standard Goal';
 
   // Create accordion items from goal history
-  const accordionItems = sortedGoalHistory.map((goal, index) => {
+  const accordionItems = goalHistory.map((goal, index) => {
     // doing this moment/format transform here in order to make grouping by below
     // a bit more readable
     const statusUpdates = (goal.statusChanges && goal.statusChanges.length > 0
-      ? goal.statusChanges.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      ? goal.statusChanges
       : []).map((gsc) => ({
       ...gsc,
       performedAt: moment.utc(
@@ -279,7 +275,7 @@ export default function ViewGoalDetails({
                       <strong>
                         <StatusActionTag
                           update={update}
-                          goalHistory={sortedGoalHistory}
+                          goalHistory={goalHistory}
                           currentGoalIndex={index}
                         />
                       </strong>
@@ -375,47 +371,13 @@ export default function ViewGoalDetails({
                           </div>
                 )}
 
-                {/* Display TTA Specialists from approved ARs */}
-                {(() => {
-                  const seenIds = new Set();
-                  // Backend already filters to only approved reports,
-                  // so we just need to check activityReport exists
-                  const specialists = (objective.activityReportObjectives || [])
-                    .filter((aro) => aro.activityReport)
-                    .flatMap((aro) => {
-                      const people = [];
-                      const { activityReport } = aro;
-                      if (activityReport.author && activityReport.author.id
-                        && !seenIds.has(activityReport.author.id)) {
-                        seenIds.add(activityReport.author.id);
-                        people.push({
-                          name: activityReport.author.name,
-                          roles: (activityReport.author.roles || []).map((r) => r.name),
-                        });
-                      }
-                      (activityReport.activityReportCollaborators || []).forEach((collab) => {
-                        if (collab.user && collab.userId && !seenIds.has(collab.userId)) {
-                          seenIds.add(collab.userId);
-                          people.push({
-                            name: collab.user.name,
-                            roles: (collab.roles || []).map((r) => r.name),
-                          });
-                        }
-                      });
-                      return people;
-                    });
-                  if (specialists.length === 0) return null;
-                  return (
-                    <div className="margin-top-2">
-                      <ReadOnlyField label="TTA Specialists">
-                        {specialists.map((s) => {
-                          const sortedRoles = [...new Set(s.roles || [])].sort();
-                          return [s.name, ...sortedRoles].filter(Boolean).join(', ');
-                        }).join('; ')}
-                      </ReadOnlyField>
-                    </div>
-                  );
-                })()}
+                {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
+                  <div className="margin-top-2">
+                    <ReadOnlyField label="TTA specialists">
+                      {objective.ttaSpecialists.join('; ')}
+                    </ReadOnlyField>
+                  </div>
+                ) : null}
 
                 {/* Display Topics */}
                 {!objective.activityReportObjectives

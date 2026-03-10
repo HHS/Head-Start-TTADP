@@ -401,4 +401,27 @@ describe('getGoalHistory (database-backed)', () => {
       expect(match.roles.map((r) => r.fullName)).toContain('Health Specialist');
     });
   });
+
+  it('returns backend-prepared, deduplicated and sorted TTA specialists per objective', async () => {
+    const result = await getGoalHistory(goalSuspended.id);
+
+    const suspendedGoal = result.goals.find((g) => g.id === goalSuspended.id);
+    const targetObjective = (suspendedGoal.objectives || []).find((o) => o.id === objective1.id);
+
+    expect(targetObjective.ttaSpecialists).toBeDefined();
+    expect(targetObjective.ttaSpecialists).toHaveLength(2);
+
+    // Backend processing guarantees both distinct and sorted specialist strings.
+    expect(new Set(targetObjective.ttaSpecialists).size)
+      .toBe(targetObjective.ttaSpecialists.length);
+    const sortedSpecialists = [...targetObjective.ttaSpecialists]
+      .sort((a, b) => a.localeCompare(b));
+    expect(targetObjective.ttaSpecialists).toEqual(sortedSpecialists);
+
+    const authorMatches = targetObjective.ttaSpecialists
+      .filter((entry) => entry.includes(user.name));
+    expect(authorMatches).toHaveLength(1);
+
+    expect(targetObjective.ttaSpecialists.join(' | ')).toContain(collaboratorUser.name);
+  });
 });

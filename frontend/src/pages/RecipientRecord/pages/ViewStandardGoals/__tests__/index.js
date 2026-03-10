@@ -47,6 +47,10 @@ const mockGoalHistory = [
         id: 1,
         title: 'Implement new curriculum',
         status: OBJECTIVE_STATUS.IN_PROGRESS,
+        ttaSpecialists: [
+          'Alice Specialist, Program Specialist',
+          'Bob Collaborator, Grants Specialist',
+        ],
         activityReportObjectives: [
           {
             activityReport: {
@@ -111,13 +115,13 @@ const mockGoalHistory = [
         activityReportObjectives: null,
       },
     ],
-    // status changes out of order to test sorting, added 'Closed' status
+    // status changes sorted by backend
     statusChanges: [
       {
-        id: 2, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 2, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
         id: 3, goalId: 1, userId: 2, oldStatus: GOAL_STATUS.IN_PROGRESS, newStatus: GOAL_STATUS.SUSPENDED, createdAt: '2025-01-10T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
@@ -384,7 +388,7 @@ describe('ViewGoalDetails', () => {
     const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
     const updates = within(updatesList).getAllByRole('listitem');
 
-    // check sorting (component sorts ascending) and formatting
+    // check ordering and formatting
     expect(updates).toHaveLength(6);
     expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2025-01-01T00:00:00.000Z')} by Test User`);
     expect(updates[1]).toHaveTextContent(`Started on ${formatDate('2025-01-02T00:00:00.000Z')} by Test User`);
@@ -467,7 +471,7 @@ describe('ViewGoalDetails', () => {
     expect(files[2]).toHaveTextContent('report102-file1.xlsx');
   });
 
-  test('renders TTA Specialists from approved ARs under objectives, deduplicated', async () => {
+  test('renders TTA specialists from approved ARs under objectives, deduplicated', async () => {
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
@@ -479,7 +483,7 @@ describe('ViewGoalDetails', () => {
     // objective 1 has two ARs: both with author Alice (id 10) and AR-101 has collaborator Bob
     // Alice should appear once (deduplicated), Bob should appear once
     const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
-    const specialistsLabel = within(objective1).getByText('TTA Specialists');
+    const specialistsLabel = within(objective1).getByText('TTA specialists');
     expect(specialistsLabel).toBeInTheDocument();
 
     // Get the specialists text content (comma-separated format)
@@ -495,7 +499,7 @@ describe('ViewGoalDetails', () => {
     expect(aliceMatches).toHaveLength(1);
   });
 
-  test('does not render TTA Specialists when no approved ARs exist for the objective', async () => {
+  test('does not render TTA specialists when no approved ARs exist for the objective', async () => {
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
@@ -506,10 +510,10 @@ describe('ViewGoalDetails', () => {
 
     // objective 2 has no activityReportObjectives
     const objective2 = within(firstAccordionContent).getByText('Objective with no reports/topics/resources').closest('div.margin-bottom-3');
-    expect(within(objective2).queryByText('TTA Specialists')).not.toBeInTheDocument();
+    expect(within(objective2).queryByText('TTA specialists')).not.toBeInTheDocument();
   });
 
-  test('does not render TTA Specialists from non-approved ARs', async () => {
+  test('does not render TTA specialists from non-approved ARs', async () => {
     // Backend filters non-approved ARs at the query level, so objectives
     // with only non-approved reports will have an empty activityReportObjectives array
     const goalWithNonApprovedARs = [
@@ -536,8 +540,8 @@ describe('ViewGoalDetails', () => {
 
     // Objective has no AROs because backend filtered out all non-approved ARs
     const objective = within(firstAccordionContent).getByText('Objective with only non-approved ARs').closest('div.margin-bottom-3');
-    // TTA Specialists should not appear because there are no approved ARs
-    expect(within(objective).queryByText('TTA Specialists')).not.toBeInTheDocument();
+    // TTA specialists should not appear because there are no approved ARs
+    expect(within(objective).queryByText('TTA specialists')).not.toBeInTheDocument();
     // Reports section should also not appear since no approved ARs exist
     expect(within(objective).queryByText('Reports')).not.toBeInTheDocument();
   });
