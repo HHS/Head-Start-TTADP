@@ -1538,7 +1538,7 @@ export async function getGoalHistory(id) {
                     WHERE aro."objectiveId" = "Objective"."id"
                   ) AS specialists
                   GROUP BY specialists.user_id, specialists.name
-                  ORDER BY 1
+                  ORDER BY specialists.name
                 ) AS sorted_specialists
               )
             )`),

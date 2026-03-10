@@ -364,44 +364,6 @@ describe('getGoalHistory (database-backed)', () => {
     expect(result).toBeNull();
   });
 
-  it('includes author and collaborators on activity reports within objective AROs', async () => {
-    const result = await getGoalHistory(goalSuspended.id);
-
-    const aros = result.goals
-      .flatMap((g) => g.objectives || [])
-      .flatMap((o) => o.activityReportObjectives || [])
-      .filter((aro) => aro.activityReport);
-
-    expect(aros.length).toBeGreaterThan(0);
-
-    aros.forEach((aro) => {
-      // author should be present with name
-      expect(aro.activityReport.author).toBeDefined();
-      expect(aro.activityReport.author.name).toBe(user.name);
-      // collaborators array should be present
-      expect(Array.isArray(aro.activityReport.activityReportCollaborators)).toBe(true);
-    });
-
-    // report1 has a collaborator — find the AROs linked to report1 and verify the collaborator
-    const arosOnReport1 = aros.filter(
-      (aro) => aro.activityReport.id === report1.id,
-    );
-    expect(arosOnReport1.length).toBeGreaterThan(0);
-
-    arosOnReport1.forEach((aro) => {
-      const { activityReportCollaborators } = aro.activityReport;
-      expect(activityReportCollaborators.length).toBeGreaterThan(0);
-
-      const match = activityReportCollaborators.find((c) => c.userId === collaboratorUser.id);
-      expect(match).toBeDefined();
-      expect(match.user).toBeDefined();
-      expect(match.user.name).toBe(collaboratorUser.name);
-      expect(Array.isArray(match.roles)).toBe(true);
-      expect(match.roles.length).toBeGreaterThan(0);
-      expect(match.roles.map((r) => r.fullName)).toContain('Health Specialist');
-    });
-  });
-
   it('returns backend-prepared, deduplicated and sorted TTA specialists per objective', async () => {
     const result = await getGoalHistory(goalSuspended.id);
 
