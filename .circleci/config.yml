@@ -673,36 +673,35 @@ jobs:
     - checkout
     - cf_task:
         the_command: |
-          node ./build/server/src/tools/importSystemCLI.js download 1
-          node ./build/server/src/tools/importSystemCLI.js process 1
-          yarn createMonitoringGoalsCLI
-          node ./build/server/src/tools/queryMonitoringDataCLI.js
-          node ./build/server/src/tools/maintainMonitoringDataCLI.js
-          node ./build/server/src/tools/updateMonitoringFactTablesCLI.js
+          bash ./bin/run-import-job.sh
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
         when: always
         name: Create monitoring updates summary
         command: |
-          if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
-            echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
-          else
-            results=$(grep -o "Recent Monitoring Updates.*" cmd_log.txt | tail -n 1)
-            delim=":"
-            json_data=${results#*"$delim"}
-            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
-            echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
-          fi
-          echo $(grep -o "Error.*" cmd_log.txt | tail -n 1) >> monitoring-updates.txt
+          node ./bin/create-monitoring-notification.js \
+            cmd_log.txt \
+            monitoring-updates.txt \
+            monitoring-failure.txt \
+            << parameters.target_env >> \
+            "${TASK_NAME:-unknown-task}"
           cat monitoring-updates.txt
+          cat monitoring-failure.txt
     - when:
         condition:
           equal: [ << parameters.target_env >>, "prod" ]
         steps:
-        - notify_slack:
-            message_text_file: monitoring-updates.txt
-            slack_channel: << parameters.slack_channel >>
+        - run:
+            when: on_success
+            name: Notify Slack Success
+            command: |
+              ./bin/notify-slack.sh "$(cat monitoring-updates.txt)" "<< parameters.slack_channel >>" "${SLACK_BOT_TOKEN}"
+        - run:
+            when: on_fail
+            name: Notify Slack Failure
+            command: |
+              ./bin/notify-slack.sh "$(cat monitoring-failure.txt)" "<< parameters.slack_channel >>" "${SLACK_BOT_TOKEN}"
 
   clear_cache_job:
     executor: docker-executor
@@ -1069,11 +1068,12 @@ commands:
         name: "Wait for task to complete"
         no_output_timeout: 30m
         command: |
-          set +e
           sleep 15
-          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME}
+          status=0
+          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME} || status=$?
           sleep 30
-          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
+          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >> || true
+          exit $status
 
     - run:
         name: Logout of service account
