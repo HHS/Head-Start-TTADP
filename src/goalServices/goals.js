@@ -1458,6 +1458,7 @@ export async function getGoalHistory(id) {
   if (!grantRecord) return null;
 
   const goalsWithDetails = await Goal.findAll({
+    logging: console.log,
     where: {
       goalTemplateId: goal.goalTemplateId,
       grantId: goal.grantId,
@@ -1516,27 +1517,26 @@ export async function getGoalHistory(id) {
               SELECT ARRAY(
                 SELECT specialist_str
                 FROM (
-                  SELECT concat_ws(', ', specialists.name, string_agg(DISTINCT specialists.role_name ORDER BY specialists.role_name)) AS specialist_str
+                  SELECT concat_ws(', ', specialists.name, string_agg(DISTINCT specialists.role_name, ', ' ORDER BY specialists.role_name)) AS specialist_str
                   FROM (
-                    SELECT ar."userId" AS user_id, u.name, r.name AS role_name
+                        SELECT ar."userId" AS user_id, u.name, r.name AS role_name, aro."objectiveId" AS objective_id
                     FROM "ActivityReportObjectives" aro
                     JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
-                      AND ar."calculatedStatus" = 'Approved'
+                      AND ar."calculatedStatus" = 'approved'
                     JOIN "Users" u ON u.id = ar."userId"
                     LEFT JOIN "UserRoles" ur ON ur."userId" = u.id
                     LEFT JOIN "Roles" r ON r.id = ur."roleId"
-                    WHERE aro."objectiveId" = "Objective"."id"
                     UNION ALL
-                    SELECT arc."userId" AS user_id, u.name, r.name AS role_name
+                        SELECT arc."userId" AS user_id, u.name, r.name AS role_name, aro."objectiveId" AS objective_id
                     FROM "ActivityReportObjectives" aro
                     JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
-                      AND ar."calculatedStatus" = 'Approved'
+                      AND ar."calculatedStatus" = 'approved'
                     JOIN "ActivityReportCollaborators" arc ON arc."activityReportId" = ar.id
                     JOIN "Users" u ON u.id = arc."userId"
                     LEFT JOIN "CollaboratorRoles" cr ON cr."activityReportCollaboratorId" = arc.id
                     LEFT JOIN "Roles" r ON r.id = cr."roleId"
-                    WHERE aro."objectiveId" = "Objective"."id"
                   ) AS specialists
+                      WHERE specialists.objective_id = "objectives"."id"
                   GROUP BY specialists.user_id, specialists.name
                   ORDER BY specialists.name
                 ) AS sorted_specialists

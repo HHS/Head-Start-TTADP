@@ -364,6 +364,26 @@ describe('getGoalHistory (database-backed)', () => {
     expect(result).toBeNull();
   });
 
+  it('includes only id and displayId on activity reports within objective AROs (not author or collaborators)', async () => {
+    const result = await getGoalHistory(goalSuspended.id);
+
+    const aros = result.goals
+      .flatMap((g) => g.objectives || [])
+      .flatMap((o) => o.activityReportObjectives || [])
+      .filter((aro) => aro.activityReport);
+
+    expect(aros.length).toBeGreaterThan(0);
+
+    aros.forEach((aro) => {
+      expect(aro.activityReport.id).toBeDefined();
+      expect(aro.activityReport.displayId).toBeDefined();
+      // author and activityReportCollaborators are no longer fetched;
+      // specialist data is aggregated via SQL into ttaSpecialists instead
+      expect(aro.activityReport.author).toBeUndefined();
+      expect(aro.activityReport.activityReportCollaborators).toBeUndefined();
+    });
+  });
+
   it('returns backend-prepared, deduplicated and sorted TTA specialists per objective', async () => {
     const result = await getGoalHistory(goalSuspended.id);
 
