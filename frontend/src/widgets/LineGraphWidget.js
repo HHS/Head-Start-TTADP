@@ -31,7 +31,7 @@ export default function LineGraphWidget({
   const [columnHeadings, setColumnHeadings] = useState([]);
   const [tableRows, setTableRows] = useState([]);
 
-  const exportWidget = useWidgetExport(
+  const { exportRows } = useWidgetExport(
     tableRows,
     columnHeadings,
     [],
@@ -73,7 +73,7 @@ export default function LineGraphWidget({
   if (showTabularData) {
     menuItems.push({
       label: 'Export table data',
-      onClick: () => exportWidget.exportRows('all'),
+      onClick: () => exportRows('all'),
       id: `rd-${titleSlug}-export-table-data`,
     });
   }
