@@ -8,7 +8,7 @@ import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContain
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import Drawer from '../components/Drawer';
 import AppLoadingContext from '../AppLoadingContext';
-// import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 
 const EXPORT_NAME = 'Active deficient citations with TTA support';
 
@@ -57,8 +57,7 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data, loading }) 
   return (
     <>
       <Drawer triggerRef={drawerTriggerRef} title="Active deficient citations with TTA support">
-        Placeholder content
-        {/* <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" /> */}
+        <ContentFromFeedByTag tagName="ttahub-active-deficient-citation" />
       </Drawer>
       <LineGraphWidget
         title="Active deficient citations with TTA support"
