@@ -1,10 +1,14 @@
-.smart-hub--table-widget-heading-titles {
-    width: 77%;
+.smart-hub--table-widget-container {
+    container: ttahub-widget-title-group / inline-size;
 }
 
-@media(min-width: 1024px) {
+.smart-hub--table-widget-heading-titles {
+    /* magic number, arrived at by trial and error */
+    width: 80%; 
+}
+
+@container ttahub-widget-title-group (min-width: 560px) {
     .smart-hub--table-widget-heading-titles {
         width: 100%;
     }
 }
-
