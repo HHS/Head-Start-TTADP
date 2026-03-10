@@ -5,73 +5,61 @@
   top: 4px;
 }
 
-@media (min-width: 60em) {
-  .smarthub-horizontal-table-widget
-  .smarthub-horizontal-table-first-column-border::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 100%;
-    border-right: 1px solid black;
-  }
-
-  .smarthub-horizontal-table-widget .data-header.smarthub-horizontal-table--sticky-first-column {
-    background: #fff;
-    position: sticky;
-    top: 0;
-    vertical-align: bottom;
-  }
-
-  .smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column {
-    z-index: 1;
-    position: sticky;
-    right: 0;
-    font-weight: bold;
-    min-width: 90px;
-  }
-
-  // Because putting the border on the sticky element doesn't work, and box-shadow
-  // isn't ideal because of z-indexing weirdness that happens when a ContextMenu
-  // is above the border.
-  .smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    border-left: 1px solid black;
-  }
-
-  .smarthub-horizontal-table-widget .smarthub-horizontal-table-sticky-last-data-column {
-    z-index: 1;
-    position: sticky;
-    right: 0;
-  }
-
-  .smarthub-horizontal-table-widget .smarthub-horizontal-table-sticky-last-data-column::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    border-left: 1px solid black;
-  }
-
-  .smarthub-horizontal-table-widget .usa-table thead th.smarthub-horizontal-table-sticky-last-data-column,
-  .smarthub-horizontal-table-widget .usa-table tfoot td.smarthub-horizontal-table-sticky-last-data-column {
-    background-color: #fff;
-    z-index: 2;
-  }
-
-  .smarthub-horizontal-table-widget .usa-table tbody td.smarthub-horizontal-table-sticky-last-data-column {
-    background-color: inherit;
-  }
-
-  .smarthub-horizontal-table-widget .usa-table-container--scrollable th {
-    position: sticky;
-  }
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column-border::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  border-right: 1px solid black;
 }
+
+.smarthub-horizontal-table-widget .data-header.smarthub-horizontal-table--sticky-first-column {
+  background: #fff;
+  position: sticky;
+  top: 0;
+  vertical-align: bottom;
+}
+
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column,
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-sticky-last-data-column {
+  z-index: 1;
+  position: sticky;
+  right: 0;
+}
+
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column {
+  font-weight: bold;
+  min-width: 90px;
+}
+
+// Because putting the border on the sticky element doesn't work, and box-shadow
+// isn't ideal because of z-indexing weirdness that happens when a ContextMenu
+// is above the border.
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column::before,
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-sticky-last-data-column::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-left: 1px solid black;
+}
+
+.smarthub-horizontal-table-widget .usa-table thead th.smarthub-horizontal-table-sticky-last-data-column,
+.smarthub-horizontal-table-widget .usa-table tfoot td.smarthub-horizontal-table-sticky-last-data-column {
+  background-color: #fff;
+  z-index: 2;
+}
+
+.smarthub-horizontal-table-widget .usa-table tbody td.smarthub-horizontal-table-sticky-last-data-column {
+  background-color: inherit;
+}
+
+.smarthub-horizontal-table-widget.usa-table-container--scrollable th {
+  position: sticky;
+}
+
 
 .smarthub-horizontal-table-widget .checkbox-column {
   vertical-align: top;
@@ -82,7 +70,6 @@
 }
 
 .smarthub-horizontal-table-widget thead .checkbox-column {
-  z-index: 1;
   background-color: white;
   left: 0;
 }
@@ -100,12 +87,12 @@
   height: calc(100% - 1.5rem);
 }
 
-.smarthub-horizontal-table-widget .usa-table-container--scrollable {
+.smarthub-horizontal-table-widget.usa-table-container--scrollable {
   overflow-x: auto;
   overflow-y: auto;
 }
 
-.smarthub-horizontal-table-widget .usa-table-container--scrollable thead {
+.smarthub-horizontal-table-widget.usa-table-container--scrollable thead {
   border-top: 1px solid lightgray;
 }
 
@@ -142,7 +129,8 @@
 }
 
 .smarthub-horizontal-table-widget a {
-  max-width: 50ch; /* the ch unit is character, so a max width of 55 characters */
+  max-width: 50ch;
+  /* the ch unit is character, so a max width of 55 characters */
   display: inline-block;
   vertical-align: middle;
 }
@@ -182,7 +170,7 @@
   position: sticky;
   z-index: 1;
   max-width: 330px;
-  
+
   &.smarthub-horizontal-table--sticky-first-column-checkboxes-enabled {
     left: 44px;
   }

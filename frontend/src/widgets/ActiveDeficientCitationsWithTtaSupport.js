@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { TRACE_IDS } from '@ttahub/common';
 import withWidgetData from './withWidgetData';
@@ -7,7 +7,8 @@ import { deriveLineGraphLegendConfig } from './constants';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import Drawer from '../components/Drawer';
-// import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
+import AppLoadingContext from '../AppLoadingContext';
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 
 const EXPORT_NAME = 'Active deficient citations with TTA support';
 
@@ -28,8 +29,17 @@ const DEFAULT_LEGEND_CONFIG = [
   },
 ];
 
-export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
+export function ActiveDeficientCitationsWithTtaSupportWidget({ data, loading }) {
   const drawerTriggerRef = useRef(null);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
+
+  useEffect(() => {
+    if (loading) {
+      setIsAppLoading(true);
+    } else {
+      setIsAppLoading(false);
+    }
+  }, [loading, setIsAppLoading]);
 
   const subtitle = (
     <div className="margin-bottom-3">
@@ -47,8 +57,7 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
   return (
     <>
       <Drawer triggerRef={drawerTriggerRef} title="Active deficient citations with TTA support">
-        Placeholder content
-        {/* <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" /> */}
+        <ContentFromFeedByTag tagName="ttahub-active-deficient-citation" />
       </Drawer>
       <LineGraphWidget
         title="Active deficient citations with TTA support"
@@ -75,6 +84,7 @@ ActiveDeficientCitationsWithTtaSupportWidget.propTypes = {
       }),
     ), PropTypes.shape({}),
   ]),
+  loading: PropTypes.bool.isRequired,
 };
 
 ActiveDeficientCitationsWithTtaSupportWidget.defaultProps = {
