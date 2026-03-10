@@ -500,12 +500,12 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
 
     const clickOffset = event.clientX - bounds.left;
     if (clickOffset < bounds.width / 2) {
-      goToPreviousRegion();
+      handleRegionChange(activeRegionIndex - 1);
       return;
     }
 
-    goToNextRegion();
-  }, [goToNextRegion, goToPreviousRegion, hasMultipleRegions, transition]);
+    handleRegionChange(activeRegionIndex + 1);
+  }, [activeRegionIndex, handleRegionChange, hasMultipleRegions, transition]);
 
   const widgetClassName = [
     'approval-rate-by-deadline-widget',
