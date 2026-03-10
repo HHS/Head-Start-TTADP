@@ -8,6 +8,7 @@ pg_db="${POSTGRES_DB:-ttasmarthub}"
 use_local_postgres="${USE_LOCAL_POSTGRES:-false}"
 
 compose() {
+  local -a args=()
   for f in $compose_files; do
     args+=(-f "$f")
   done
@@ -30,8 +31,5 @@ else
   echo "Fresh database detected; running seeders..."
   compose run --rm backend yarn db:seed:local
 fi
-
-# Make the current user an admin
-./bin/local-admin
 
 echo "Development database initialization complete."

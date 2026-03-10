@@ -3,15 +3,15 @@ version: "3"
 vars:
   PROJECT_NAME: "ttahub"
   COMPOSE_FILE: "docker/compose/docker-compose.yml"
-  DEV_DEBUG: '{{default "false" .DEV_DEBUG}}'
   DEFAULT_TARGET: "backend"
+  DEV_DEBUG:
+    sh: |
+      if [[ "$DEV_DEBUG" == "true" ]]; then echo " -f docker/compose/dev.debug.yaml"; 
+      else echo ""; fi
   USE_LOCAL_POSTGRES:
     sh: |
-      if [[ "$POSTGRES_HOST" == "host.docker.internal" ]]; then
-        echo "true"
-      else
-        echo "false"
-      fi
+      if [[ "$POSTGRES_HOST" == "host.docker.internal" ]]; then echo "true"
+      else echo "false"; fi
   CMD: ""
 
 tasks:
@@ -38,18 +38,18 @@ tasks:
     desc: Internal task to abstract common stack-up steps
     internal: true
     vars:
-      STACK: '{{default "" .STACK}}'
+      STACK: '{{default .DEV_DEBUG .STACK.DEV_DEBUG}}'
     cmds:
       - yarn deps:install
-      - cmd: docker compose -f {{.COMPOSE_FILE}} down --remove-orphans
+      - cmd: docker compose -f {{.COMPOSE_FILE}} down
         ignore_error: true
       - |
         echo "Initializing database..."
-        docker compose -f {{.COMPOSE_FILE}} up -y --build --detach --wait db redis
+        docker compose -f {{.COMPOSE_FILE}} up --build --detach --wait db redis
         docker/scripts/dev-db-init.sh
       - |
         echo "Starting stack..."
-        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up -y --build --detach --wait --force-recreate --remove-orphans || \
+        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --build --wait --build || \
         (echo "--- ERROR ---" && docker compose -f {{.COMPOSE_FILE}} logs -n 10 && docker ps && exit 1)
         docker compose -f {{.COMPOSE_FILE}} logs -n 1
       - cmd: |
@@ -66,12 +66,19 @@ tasks:
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} --profile fullstack down --remove-orphans
 
+  reseed:
+    desc: Reseed the database via testing server
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up --detach --wait testingonly
+      - curl http://localhost:9999/testingOnly/reseed
+
   refresh:
     desc: Rebuild frontend and backend code, reinstall deps, restart stack
     cmds: 
-      - yarn deps:install
       - task: stack-down
+      - yarn deps:install
       - yarn build
+      - task: reseed
       - docker compose -f {{.COMPOSE_FILE}} build --no-cache
       - task: stack-up
 
@@ -99,45 +106,35 @@ tasks:
 
   stack-exec:
     desc: Execute command in running container (TARGET defaults to backend)
-    vars:
-      TARGET: '{{default {.DEFAULT_TARGET} .TARGET}}'
+    vars: { TARGET: '{{default .DEFAULT_TARGET .TARGET}}' }
     cmds:
-      - |
-        bash -lc "set -euo pipefail; \
-          if [ -n '{{.CLI_ARGS}}' ]; then \
-            echo '[{{.TARGET}}]: {{.CLI_ARGS}}'; \
-            docker compose -f {{.COMPOSE_FILE}} exec {{.TARGET}} {{.CLI_ARGS}}; \
-          elif [ -n '{{.CMD}}' ]; then \
-            echo '[{{.TARGET}}]: {{.CMD}}'; \
-            docker compose -f {{.COMPOSE_FILE}} exec {{.TARGET}} {{.CMD}}; \
-          else \
-            echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
-            exit 1; \
-          fi"
+      - task: cmd-helper
+        vars: { CMD_FORM: "exec" }
 
   stack-run:
     desc: Run one-off command in new container (TARGET defaults to backend)
+    vars: { TARGET: '{{default .DEFAULT_TARGET .TARGET}}' }
     cmds:
-      - |
-        bash -lc "set -euo pipefail; \
-          if [ -n '{{.CLI_ARGS}}' ]; then \
-            echo '[{{.TARGET}}]: {{.CLI_ARGS}}'; \
-            docker compose -f {{.COMPOSE_FILE}} run --rm {{.TARGET}} {{.CLI_ARGS}}; \
-          elif [ -n '{{.CMD}}' ]; then \
-            echo '[{{.TARGET}}]: {{.CMD}}'; \
-            docker compose -f {{.COMPOSE_FILE}} run --rm {{.TARGET}} {{.CMD}}; \
-          else \
-            echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
-            exit 1; \
-          fi"
+      - task: cmd-helper
+        vars: { CMD_FORM: "run --rm --no-deps" }
 
   # --- Internal ---
 
-  msg:
-    desc: Internal task to print messages in a consistent format
+  cmd-helper:
+    desc: Internal utility for running some similar commands
     internal: true
     vars:
-      MSG: ''
+      TARGET: '{{default .DEFAULT_TARGET .TARGET}}'
+      CMD_FORM: '{{default "exec" .CMD_FORM}}'
     cmds:
-      - echo "----- {{.MSG}}"
+      - |
+        bash -lc "set -euo pipefail; \
+        
+        if [ -n '{{.CMD}}' ]; then \
+          echo '[{{.TARGET}}]: {{.CMD}}'; \
+          docker compose -f {{.COMPOSE_FILE}} {{.CMD_FORM}} {{.TARGET}} {{.CMD}}; \
+        else \
+          echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
+          exit 1; \
+        fi"
     silent: true

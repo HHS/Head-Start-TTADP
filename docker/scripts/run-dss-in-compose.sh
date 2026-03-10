@@ -26,11 +26,11 @@ rm -f "${reports_dir}"/*
 
 compose down --remove-orphans >/dev/null 2>&1 || true
 
-compose up -y -d --build --wait db
+compose up -d --build --wait db
 compose run --rm server yarn build
 compose run --rm --entrypoint /workspace/docker/scripts/ensure-deps.sh server frontend yarn build
 compose run --rm server yarn db:migrate:ci
-compose up -y -d server
+compose up -d server
 
 ./bin/ping-server 8080 localhost "" 20
 

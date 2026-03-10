@@ -243,7 +243,7 @@ While process does run every night automatically, it can also be run on-demand v
 The script can be run using the following:
 
 ```
-yarn cli:process-data:local
+yarn cli:process-data
 ```
 
 The transformed database can then be restored in the non-production environments.
