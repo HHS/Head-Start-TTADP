@@ -470,8 +470,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
@@ -550,8 +552,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
@@ -573,8 +577,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
@@ -594,8 +600,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
@@ -617,8 +625,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
@@ -638,8 +648,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
@@ -658,8 +670,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(admin));
