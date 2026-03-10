@@ -59,6 +59,7 @@ function ApprovalRateCarousel({
   traceData,
   activeRegionIndex,
   handleRegionChange,
+  onDotRef,
 }) {
   return (
     <div>
@@ -142,11 +143,12 @@ function ApprovalRateCarousel({
             <button
               key={`approval-rate-dot-${regionId}`}
               type="button"
+              ref={(element) => onDotRef(index, element)}
               className={[
                 'approval-rate-carousel-dot',
                 index === activeRegionIndex ? 'text-ink' : 'text-base-lightest',
               ].join(' ')}
-              onClick={() => handleRegionChange(index)}
+              onClick={() => handleRegionChange(index, 'dot')}
               aria-label={`Show Region ${regionId}`}
               aria-current={index === activeRegionIndex ? 'true' : undefined}
             />
@@ -194,6 +196,7 @@ ApprovalRateCarousel.propTypes = {
   })).isRequired,
   activeRegionIndex: PropTypes.number.isRequired,
   handleRegionChange: PropTypes.func.isRequired,
+  onDotRef: PropTypes.func.isRequired,
 };
 
 ApprovalRateCarousel.defaultProps = {
@@ -205,6 +208,8 @@ ApprovalRateCarousel.defaultProps = {
 export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotApplicable }) {
   const widgetRef = useRef(null);
   const carouselFrameRef = useRef(null);
+  const dotButtonRefs = useRef([]);
+  const shouldFocusActiveDotRef = useRef(false);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [activeRegionIndex, setActiveRegionIndex] = useState(0);
@@ -264,6 +269,17 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
       clearTimeout(cleanupTimer);
     };
   }, [transition]);
+
+  useEffect(() => {
+    if (!shouldFocusActiveDotRef.current) {
+      return;
+    }
+    const activeDot = dotButtonRefs.current[activeRegionIndex];
+    if (activeDot && typeof activeDot.focus === 'function') {
+      activeDot.focus();
+    }
+    shouldFocusActiveDotRef.current = false;
+  }, [activeRegionIndex]);
 
   const regions = useMemo(
     () => (widgetData && Array.isArray(widgetData.regions) ? widgetData.regions : []),
@@ -448,11 +464,12 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
     },
   }), [checkboxes, columnHeadings, footerData, setCheckboxes, tableRows]);
 
-  const handleRegionChange = useCallback((nextIndex) => {
+  const handleRegionChange = useCallback((nextIndex, source = 'dot') => {
     if (nextIndex < 0 || nextIndex >= regions.length || nextIndex === activeRegionIndex) {
       return;
     }
 
+    shouldFocusActiveDotRef.current = source !== 'dot';
     setAnnouncement(`Showing Region ${regions[nextIndex]}`);
 
     if (prefersReducedMotion) {
@@ -479,15 +496,18 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
     if (!hasPreviousRegion) {
       return;
     }
-    handleRegionChange(activeRegionIndex - 1);
+    handleRegionChange(activeRegionIndex - 1, 'arrow');
   }, [activeRegionIndex, handleRegionChange, hasPreviousRegion]);
 
   const goToNextRegion = useCallback(() => {
     if (!hasNextRegion) {
       return;
     }
-    handleRegionChange(activeRegionIndex + 1);
+    handleRegionChange(activeRegionIndex + 1, 'arrow');
   }, [activeRegionIndex, handleRegionChange, hasNextRegion]);
+  const handleDotRef = useCallback((index, element) => {
+    dotButtonRefs.current[index] = element;
+  }, []);
   const handleChartClick = useCallback((event) => {
     if (!hasMultipleRegions || transition) {
       return;
@@ -500,11 +520,11 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
 
     const clickOffset = event.clientX - bounds.left;
     if (clickOffset < bounds.width / 2) {
-      handleRegionChange(activeRegionIndex - 1);
+      handleRegionChange(activeRegionIndex - 1, 'chart');
       return;
     }
 
-    handleRegionChange(activeRegionIndex + 1);
+    handleRegionChange(activeRegionIndex + 1, 'chart');
   }, [activeRegionIndex, handleRegionChange, hasMultipleRegions, transition]);
 
   const widgetClassName = [
@@ -583,6 +603,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
           traceData={traceData}
           activeRegionIndex={activeRegionIndex}
           handleRegionChange={handleRegionChange}
+          onDotRef={handleDotRef}
         />
       )}
     </WidgetContainer>
