@@ -276,6 +276,11 @@ const updateLogById = async (req: Request, res: Response) => {
     const { data } = req.body;
 
     const updatedLog = await updateLog(Number(id), data);
+    if (!updatedLog) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
     res.status(httpCodes.OK).json(updatedLog);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -298,7 +303,8 @@ const deleteLogById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const operation = await deleteLog(Number(id));
     if (!operation) {
-      throw new Error('Failure to delete log');
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
     }
     res.status(httpCodes.NO_CONTENT).send();
   } catch (err) {
