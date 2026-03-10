@@ -61,7 +61,7 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data }) {
         subtitle={subtitle}
         legendConfig={deriveLineGraphLegendConfig(data, DEFAULT_LEGEND_CONFIG)}
         drawerConfig={{
-          tagName: '',
+          tagName: 'blank-for-testing',
           title: 'Monitoring dashboard filters',
         }}
       />

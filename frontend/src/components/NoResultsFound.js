@@ -12,12 +12,14 @@ import './NoResultsFound.scss';
 
 function NoResultsFound({ customMessage, hideFilterHelp, drawerConfig }) {
   const drawerTriggerRef = useRef(null);
+  const showFilterHelp = !hideFilterHelp && Boolean(drawerConfig?.title && drawerConfig?.tagName);
+
   return (
     <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center text-center height-full">
       <FontAwesomeIcon icon={faChartColumn} color={colors.baseDarkest} size="2x" />
       <h3 className="margin-y-1">No results found.</h3>
       <span className="margin-bottom-1">{customMessage || 'Try removing or changing the selected filters.'}</span>
-      {!hideFilterHelp && (
+      {showFilterHelp && (
       <>
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           Get help using filters
@@ -35,8 +37,8 @@ NoResultsFound.propTypes = {
   customMessage: PropTypes.string,
   hideFilterHelp: PropTypes.bool,
   drawerConfig: PropTypes.shape({
-    title: PropTypes.string,
-    tagName: PropTypes.string,
+    title: PropTypes.string.isRequired,
+    tagName: PropTypes.string.isRequired,
   }),
 };
 
