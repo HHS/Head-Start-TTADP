@@ -1,0 +1,10 @@
+.smart-hub--table-widget-heading-titles {
+    width: 77%;
+}
+
+@media(min-width: 1024px) {
+    .smart-hub--table-widget-heading-titles {
+        width: 100%;
+    }
+}
+
