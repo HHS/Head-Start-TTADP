@@ -305,10 +305,10 @@ describe('RegionalCommunicationLogDashboard', () => {
 
   it('allows you to remove a filter', async () => {
     act(() => renderComm(userWithTwoRegions, '/communication-log'));
-    await waitFor(() => expect(screen.getByRole('button', { name: /this button removes the filter: communication date is/i })).toBeInTheDocument());
-    const remove = screen.getByRole('button', { name: /this button removes the filter: communication date is/i });
+    await waitFor(() => expect(screen.getByRole('button', { name: /this button removes the filter/i })).toBeInTheDocument());
+    const remove = screen.getByRole('button', { name: /this button removes the filter/i });
     act(() => userEvent.click(remove));
-    await waitFor(() => expect(screen.queryByRole('button', { name: /this button removes the filter: communication date is/i })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('button', { name: /this button removes the filter/i })).not.toBeInTheDocument());
   });
 
   it('shows an error message if the fetch fails', async () => {
