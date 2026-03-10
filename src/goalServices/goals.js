@@ -1507,7 +1507,44 @@ export async function getGoalHistory(id) {
         model: Objective,
         as: 'objectives',
         required: false,
-        attributes: ['id', 'title', 'status'],
+        attributes: [
+          'id',
+          'title',
+          'status',
+          [
+            sequelize.literal(`(
+              SELECT ARRAY(
+                SELECT specialist_str
+                FROM (
+                  SELECT concat_ws(', ', specialists.name, string_agg(DISTINCT specialists.role_name ORDER BY specialists.role_name)) AS specialist_str
+                  FROM (
+                    SELECT ar."userId" AS user_id, u.name, r.name AS role_name
+                    FROM "ActivityReportObjectives" aro
+                    JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
+                      AND ar."calculatedStatus" = 'Approved'
+                    JOIN "Users" u ON u.id = ar."userId"
+                    LEFT JOIN "UserRoles" ur ON ur."userId" = u.id
+                    LEFT JOIN "Roles" r ON r.id = ur."roleId"
+                    WHERE aro."objectiveId" = "Objective"."id"
+                    UNION ALL
+                    SELECT arc."userId" AS user_id, u.name, r.name AS role_name
+                    FROM "ActivityReportObjectives" aro
+                    JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
+                      AND ar."calculatedStatus" = 'Approved'
+                    JOIN "ActivityReportCollaborators" arc ON arc."activityReportId" = ar.id
+                    JOIN "Users" u ON u.id = arc."userId"
+                    LEFT JOIN "CollaboratorRoles" cr ON cr."activityReportCollaboratorId" = arc.id
+                    LEFT JOIN "Roles" r ON r.id = cr."roleId"
+                    WHERE aro."objectiveId" = "Objective"."id"
+                  ) AS specialists
+                  GROUP BY specialists.user_id, specialists.name
+                  ORDER BY 1
+                ) AS sorted_specialists
+              )
+            )`),
+            'ttaSpecialists',
+          ],
+        ],
         where: {
           [Op.or]: [
             { createdVia: 'rtr' },
@@ -1528,38 +1565,7 @@ export async function getGoalHistory(id) {
                 where: {
                   calculatedStatus: REPORT_STATUSES.APPROVED,
                 },
-                include: [
-                  {
-                    model: sequelize.models.User,
-                    as: 'author',
-                    attributes: ['id', 'name'],
-                    include: [{
-                      model: sequelize.models.Role,
-                      as: 'roles',
-                      attributes: ['name'],
-                      through: { attributes: [] },
-                    }],
-                  },
-                  {
-                    model: sequelize.models.ActivityReportCollaborator,
-                    as: 'activityReportCollaborators',
-                    separate: true,
-                    attributes: ['id', 'userId', 'activityReportId'],
-                    include: [
-                      {
-                        model: sequelize.models.User,
-                        as: 'user',
-                        attributes: ['id', 'name'],
-                      },
-                      {
-                        model: sequelize.models.Role,
-                        as: 'roles',
-                        attributes: ['name', 'fullName'],
-                        through: { attributes: [] },
-                      },
-                    ],
-                  },
-                ],
+                include: [],
               },
               {
                 model: sequelize.models.Topic,
@@ -1641,56 +1647,7 @@ export async function getGoalHistory(id) {
     };
   }
 
-  const goalsWithPreparedSpecialists = goalsWithDetails.map((goalRecord) => {
-    const goalData = goalRecord.toJSON();
-    const objectives = (goalData.objectives || []).map((objective) => {
-      const specialistsByUserId = new Map();
-      (objective.activityReportObjectives || [])
-        .filter((aro) => aro.activityReport)
-        .forEach((aro) => {
-          const { activityReport } = aro;
-          if (activityReport.author && activityReport.author.id) {
-            const existing = specialistsByUserId.get(activityReport.author.id) || {
-              name: activityReport.author.name,
-              roles: new Set(),
-            };
-            (activityReport.author.roles || []).forEach((role) => {
-              existing.roles.add(role.name);
-            });
-            specialistsByUserId.set(activityReport.author.id, existing);
-          }
-          (activityReport.activityReportCollaborators || []).forEach((collab) => {
-            if (collab.user && collab.userId) {
-              const existing = specialistsByUserId.get(collab.userId) || {
-                name: collab.user.name,
-                roles: new Set(),
-              };
-              (collab.roles || []).forEach((role) => {
-                existing.roles.add(role.name);
-              });
-              specialistsByUserId.set(collab.userId, existing);
-            }
-          });
-        });
-
-      const ttaSpecialists = Array.from(specialistsByUserId.values())
-        .map((specialist) => [
-          specialist.name,
-          ...Array.from(specialist.roles).sort(),
-        ].filter(Boolean).join(', '))
-        .sort();
-
-      return {
-        ...objective,
-        ttaSpecialists,
-      };
-    });
-
-    return {
-      ...goalData,
-      objectives,
-    };
-  });
+  const goalsWithPreparedSpecialists = goalsWithDetails.map((g) => g.toJSON());
 
   const activityReportIds = new Set(
     goalsWithPreparedSpecialists
