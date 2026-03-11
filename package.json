@@ -213,6 +213,9 @@
     "modulePathIgnorePatterns": [
       "<rootDir>/build/"
     ],
+    "moduleNameMapper": {
+      "^file-type$": "<rootDir>/src/fileType.jest.mock.js"
+    },
     "testPathIgnorePatterns": [
       "<rootDir>/frontend/",
       "<rootDir>/node_modules/",
