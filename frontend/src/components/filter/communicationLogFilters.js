@@ -15,6 +15,7 @@ import FilterCommunicationResult from './FilterCommunicationResult';
 import FilterInput from './FilterInput';
 import { handleArrayQuery } from './helpers';
 import FilterRegionalSelect from './FilterRegionSelect';
+import FilterSpecialistSelect from './FilterSpecialistSelect';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -126,6 +127,21 @@ export const regionFilter = {
     <FilterRegionalSelect
       appliedRegion={query}
       onApply={onApplyQuery}
+    />
+  ),
+};
+
+export const specialistFilter = {
+  id: 'role',
+  display: 'Specialist roles',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterSpecialistSelect
+      inputId={`role-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };
