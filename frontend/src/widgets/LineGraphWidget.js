@@ -4,10 +4,12 @@ import React, {
   useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
+import { kebabCase } from 'lodash';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
 import { arrayExistsAndHasLength, NOOP } from '../Constants';
+import useWidgetExport from '../hooks/useWidgetExport';
 
 export default function LineGraphWidget({
   title,
@@ -28,6 +30,14 @@ export default function LineGraphWidget({
   const [showTabularData, setShowTabularData] = useState(false);
   const [columnHeadings, setColumnHeadings] = useState([]);
   const [tableRows, setTableRows] = useState([]);
+
+  const { exportRows } = useWidgetExport(
+    tableRows,
+    columnHeadings,
+    [],
+    tableTitle,
+    exportName,
+  );
 
   useEffect(() => {
     if (!arrayExistsAndHasLength(data)) {
@@ -53,16 +63,26 @@ export default function LineGraphWidget({
     setTableRows(rows);
   }, [data]);
 
+  const titleSlug = kebabCase(title) || 'line-graph';
+
   const menuItems = [{
     label: showTabularData ? 'Display graph' : 'Display table',
     onClick: () => setShowTabularData(!showTabularData),
   }];
 
+  if (showTabularData) {
+    menuItems.push({
+      label: 'Export table data',
+      onClick: () => exportRows('all'),
+      id: `rd-${titleSlug}-export-table-data`,
+    });
+  }
+
   if (!showTabularData) {
     menuItems.push({
       label: 'Save screenshot',
       onClick: capture,
-      id: 'rd-save-screenshot',
+      id: `rd-${titleSlug}-save-screenshot`,
     });
   }
 
