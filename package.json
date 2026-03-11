@@ -407,7 +407,7 @@
     "pug": "^3.0.3",
     "redis": "^4.0.6",
     "sax": "^1.3.0",
-    "sequelize": "^6.29.0",
+    "sequelize": "^6.37.8",
     "sequelize-cli": "^6.2.0",
     "simple-git": "3.32.3",
     "smartsheet": "^4.3.0",
