@@ -233,7 +233,8 @@
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/*Cli.js",
       "<rootDir>/src/tools/populateLegacyResourceTitlesCLI.js",
-      "<rootDir>/src/tools/importTTAPlanGoals.js"
+      "<rootDir>/src/tools/importTTAPlanGoals.js",
+      "\\.mock\\.js$"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
@@ -254,7 +255,8 @@
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/*Cli.js",
       "<rootDir>/src/tools/populateLegacyResourceTitlesCli.js",
-      "<rootDir>/src/tools/importTTAPlanGoals.js"
+      "<rootDir>/src/tools/importTTAPlanGoals.js",
+      "\\.mock\\.js$"
     ],
     "coverageReporters": [
       "json",
