@@ -1217,13 +1217,7 @@ export async function possibleRecipients(regionId, activityReportId = null) {
         { ...(activityReportId ? { '$grants.activityRecipients.activityReportId$': activityReportId } : {}) },
         {
           '$grants.inactivationDate$': {
-            [Op.gte]: sequelize.literal(`
-          CASE
-            WHEN ${activityReportId ? 'true' : 'false'}
-            THEN (SELECT COALESCE("startDate", NOW() - INTERVAL '${inactiveDayDuration} days') FROM "ActivityReports" WHERE "id" = ${activityReportId})
-            ELSE date_trunc('day', NOW()) - interval '${inactiveDayDuration} days'
-          END
-            `),
+            [Op.gte]: sequelize.literal(`date_trunc('day', NOW()) - interval '${inactiveDayDuration} days'`),
           },
         },
       ],
