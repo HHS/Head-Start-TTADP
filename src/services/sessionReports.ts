@@ -173,16 +173,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     return session;
   }
 
-  const eventId = (() => {
-    if (session.event) {
-      const fullId = session.event.data.eventId;
-      // we need to get the last four digits of the smartsheet provided
-      // event id, which is in the format R01-PD-1037
-      return fullId.substring(fullId.lastIndexOf('-') + 1);
-    }
-
-    return null;
-  })();
+  const eventId = session.event ? session.event.data.eventId : null;
 
   return {
     id: session?.id,
