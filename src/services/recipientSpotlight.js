@@ -322,6 +322,7 @@ export async function getRecipientSpotlightIndicators(
     FROM "MonitoringFindings" mf
     JOIN "MonitoringFindingHistories" mfh
       ON mf."findingId" = mfh."findingId"
+      AND mf."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = ruuid
     JOIN "MonitoringFindingStatuses" mfs
