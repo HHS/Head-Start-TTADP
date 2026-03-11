@@ -118,7 +118,7 @@ workflows:
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
         serial-group: << pipeline.parameters.target_env >>/deploy-lock
-        target_env: "<< pipeline.parameters.target_env >>"
+        target_env: << pipeline.parameters.target_env >>
         requires:
         - build_and_lint
 
@@ -305,10 +305,17 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
+        - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+    - restore_cache:
+        keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
         - yarn-deps-
     - run: yarn deps
+    - save_cache:
+        paths:
+        - /home/circleci/.cache/yarn
+        key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - save_cache:
         paths:
         - node_modules
@@ -510,6 +517,8 @@ jobs:
     steps:
     - attach_workspace:
         at: .
+    - set_env_vars:
+        target_env: staging
     - run:
         name: Start up local services
         command: ./bin/prod-style-server
@@ -768,7 +777,7 @@ commands:
           ./tools/parse-env-CLI.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
           # substitute actual values from circle into env.vars file
           circleci env subst < ./temp.vars > env.vars
-          # iterate through ci.vars file and export each line,
+          # iterate through env.vars file and export each line
           while read line; do
             if [ -n "${line}" ] && [ << parameters.do_export >>=='true' ]; then
               echo "export ${line}">>"$BASH_ENV"
