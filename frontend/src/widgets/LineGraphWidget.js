@@ -2,6 +2,7 @@ import React, {
   useRef,
   useState,
   useEffect,
+  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
@@ -32,6 +33,9 @@ export default function LineGraphWidget({
   const [showTabularData, setShowTabularData] = useState(false);
   const [columnHeadings, setColumnHeadings] = useState([]);
   const [tableRows, setTableRows] = useState([]);
+
+  // eslint-disable-next-line max-len
+  const hasData = useMemo(() => data && data.length && data.some((d) => d.x.length > 0, []), [data]);
 
   // for testing purposes, allow the empty state to be toggled with a checkbox
   const [showEmptyState, setShowEmptyState] = useState(false);
@@ -96,7 +100,7 @@ export default function LineGraphWidget({
       title={title}
       subtitle={subtitle}
       showHeaderBorder
-      menuItems={menuItems}
+      menuItems={hasData && !showEmptyState ? menuItems : []}
     >
       <Checkbox label="Show empty state" id="show-empty-state" onChange={() => setShowEmptyState(!showEmptyState)} />
       <LineGraph
