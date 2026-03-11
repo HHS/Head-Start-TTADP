@@ -35,8 +35,8 @@ import { findSessionById } from '../../services/sessionReports';
 import { findEventBySmartsheetIdSuffix } from '../../services/event';
 import { logById } from '../../services/communicationLog';
 
-const fileType = require('file-type');
 const multiparty = require('multiparty');
+const { fileTypeFromFile } = require('file-type');
 
 const namespace = 'SERVICE:FILES';
 
@@ -223,7 +223,7 @@ const parseFormPromise = (req) => new Promise((resolve, reject) => {
 });
 
 const determineFileTypeFromPath = async (filePath) => {
-  const type = await fileType.fromFile(filePath);
+  const type = await fileTypeFromFile(filePath);
   let altFileType;
   if (!type) {
     const matchingAltType = altFileTypes.filter((t) => filePath.endsWith(t.ext));
