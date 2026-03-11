@@ -209,20 +209,16 @@ export default function ViewGoalDetails({
     );
   }
 
-  const sortedGoalHistory = [...goalHistory].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-  );
-
-  const firstGoal = sortedGoalHistory[0] || {};
+  const firstGoal = goalHistory[0] || {};
   const goalTemplate = firstGoal.goalTemplate || {};
   const goalTemplateName = goalTemplate.templateName || 'Standard Goal';
 
   // Create accordion items from goal history
-  const accordionItems = sortedGoalHistory.map((goal, index) => {
+  const accordionItems = goalHistory.map((goal, index) => {
     // doing this moment/format transform here in order to make grouping by below
     // a bit more readable
     const statusUpdates = (goal.statusChanges && goal.statusChanges.length > 0
-      ? goal.statusChanges.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      ? goal.statusChanges
       : []).map((gsc) => ({
       ...gsc,
       performedAt: moment.utc(
@@ -279,7 +275,7 @@ export default function ViewGoalDetails({
                       <strong>
                         <StatusActionTag
                           update={update}
-                          goalHistory={sortedGoalHistory}
+                          goalHistory={goalHistory}
                           currentGoalIndex={index}
                         />
                       </strong>
@@ -374,6 +370,14 @@ export default function ViewGoalDetails({
                             </ReadOnlyField>
                           </div>
                 )}
+
+                {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
+                  <div className="margin-top-2">
+                    <ReadOnlyField label="TTA specialists">
+                      {objective.ttaSpecialists.join('; ')}
+                    </ReadOnlyField>
+                  </div>
+                ) : null}
 
                 {/* Display Topics */}
                 {!objective.activityReportObjectives
