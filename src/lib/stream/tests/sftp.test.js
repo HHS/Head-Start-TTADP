@@ -118,6 +118,11 @@ describe('SftpClient', () => {
     username: 'user',
     password: 'password',
   };
+  const defaultServerHostKeyAlgorithms = [
+    'ssh-ed25519',
+    'ecdsa-sha2-nistp256',
+    'ssh-rsa',
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -155,6 +160,28 @@ describe('SftpClient', () => {
     it('should connect and set connected to true', async () => {
       await expect(sftpClient.connect()).resolves.toBeUndefined();
       expect(sftpClient.isConnected()).toBe(true);
+    });
+
+    it('should connect with expected default serverHostKey algorithms', async () => {
+      await expect(sftpClient.connect()).resolves.toBeUndefined();
+      expect(mockClient.connect).toHaveBeenCalledTimes(1);
+      const [connectConfig] = mockClient.connect.mock.calls[0];
+      expect(connectConfig.algorithms.serverHostKey).toEqual(defaultServerHostKeyAlgorithms);
+    });
+
+    it('should use supplied serverHostKey algorithms', async () => {
+      const customAlgorithms = ['ssh-rsa'];
+      sftpClient = new SftpClient({
+        ...connectionSettings,
+        algorithms: {
+          serverHostKey: customAlgorithms,
+        },
+      });
+
+      await expect(sftpClient.connect()).resolves.toBeUndefined();
+      expect(mockClient.connect).toHaveBeenCalledTimes(1);
+      const [connectConfig] = mockClient.connect.mock.calls[0];
+      expect(connectConfig.algorithms.serverHostKey).toEqual(customAlgorithms);
     });
 
     it('should reject on connection error', async () => {
