@@ -236,4 +236,136 @@ describe('communicationLog filtersToScopes', () => {
     const out = withinCommunicationDate(['2022/10/01']);
     expect(out).toMatchObject({});
   });
+
+  describe('myReports filters', () => {
+    let myReportsRecipient;
+    let myReportsLogs;
+
+    beforeAll(async () => {
+      myReportsRecipient = await createRecipient();
+
+      const baseData = {
+        communicationDate: '2023/01/10',
+        result: COMMUNICATION_RESULTS[0],
+        method: COMMUNICATION_METHODS[0],
+        purpose: COMMUNICATION_PURPOSES[0],
+      };
+
+      myReportsLogs = await Promise.all([
+        db.CommunicationLog.create({
+          userId: user.id,
+          data: {
+            ...baseData,
+          },
+        }),
+        db.CommunicationLog.create({
+          userId: secondUser.id,
+          data: {
+            ...baseData,
+            otherStaff: [{ value: String(user.id) }],
+          },
+        }),
+        db.CommunicationLog.create({
+          userId: secondUser.id,
+          data: {
+            ...baseData,
+            otherStaff: [{ value: String(secondUser.id) }],
+          },
+        }),
+      ]);
+
+      await db.CommunicationLogRecipient.bulkCreate(myReportsLogs.map((log) => ({
+        recipientId: myReportsRecipient.id,
+        communicationLogId: log.id,
+      })));
+    });
+
+    afterAll(async () => {
+      await db.CommunicationLogRecipient.destroy({
+        where: {
+          communicationLogId: myReportsLogs.map((log) => log.id),
+        },
+      });
+
+      await db.CommunicationLog.destroy({
+        where: {
+          id: myReportsLogs.map((log) => log.id),
+        },
+      });
+
+      await db.Recipient.destroy({
+        where: {
+          id: myReportsRecipient.id,
+        },
+      });
+    });
+
+    it('filters by my reports creator', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'myReports.in': ['Creator'],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes,
+      );
+
+      expect(count).toBe(1);
+    });
+
+    it('filters by my reports other staff', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'myReports.in': ['Other TTA staff'],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes,
+      );
+
+      expect(count).toBe(1);
+    });
+
+    it('filters by my reports creator or other staff', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'myReports.in': ['Creator,Other TTA staff'],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes,
+      );
+
+      expect(count).toBe(2);
+    });
+
+    it('filters by my reports not creator or other staff', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'myReports.nin': ['Creator,Other TTA staff'],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes,
+      );
+
+      expect(count).toBe(1);
+    });
+  });
 });
