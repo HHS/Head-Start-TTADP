@@ -3,7 +3,7 @@ import { auditLogger } from '../../logger';
 
 const userQuery = `
   SELECT
-    cl."id"
+    DISTINCT cl."id"
   FROM "Users" users
   INNER JOIN "CommunicationLogs" cl
   ON cl."userId" = users."id"
@@ -28,14 +28,13 @@ const normalizeRoles = (roles: RoleFilter): string[] => {
 };
 
 export function withRoles(rolesFromQuery: RoleFilter) {
-  auditLogger.info(`Normalizing roles for communication log filter: ${JSON.stringify(rolesFromQuery)}`);
   const roles = normalizeRoles(rolesFromQuery);
 
   if (!roles.length) {
     return {};
   }
 
-  return filterAssociation(userQuery, roles, false);
+  return filterAssociation(userQuery, roles, false, '=');
 }
 
 export function withoutRoles(rolesFromQuery: RoleFilter) {
@@ -45,5 +44,5 @@ export function withoutRoles(rolesFromQuery: RoleFilter) {
     return {};
   }
 
-  return filterAssociation(userQuery, roles, true);
+  return filterAssociation(userQuery, roles, true, '=');
 }
