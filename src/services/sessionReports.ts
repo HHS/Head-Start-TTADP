@@ -10,7 +10,7 @@ import {
   GetSessionReportsParams,
   SessionReportSortSortMap,
 } from './types/sessionReport';
-import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
+import { findEventBySmartsheetId, findEventByDbId } from './event';
 import filtersToScopes from '../scopes';
 
 const {
@@ -255,7 +255,7 @@ export async function updateSession(id: number, request) {
   const existingData = session.data;
   const newData = { ...existingData, ...data };
 
-  const event = await findEventBySmartsheetIdSuffix(eventId);
+  const event = await findEventBySmartsheetId(eventId);
 
   const update = {
     eventId: event.id,
