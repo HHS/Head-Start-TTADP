@@ -489,14 +489,14 @@ describe('Users DB service', () => {
       const creators = result.creators.map((u) => u.id);
 
       expect(collaboratorIds.includes(userIds[2])).toBeTruthy();
-      expect(collaboratorIds.length).toBeGreaterThanOrEqual(1);
+      expect(collaboratorIds.length).toBe(1);
 
       expect(pointOfContact.includes(userIds[0])).toBeTruthy();
       expect(pointOfContact.includes(userIds[1])).toBeTruthy();
-      expect(pointOfContact.length).toBeGreaterThanOrEqual(2);
+      expect(pointOfContact.length).toBe(2);
 
       expect(creators.includes(userIds[2])).toBeTruthy();
-      expect(creators.length).toBeGreaterThanOrEqual(1);
+      expect(creators.length).toBe(1);
     });
 
     it('adds missing creator id when event id is passed', async () => {
@@ -507,15 +507,15 @@ describe('Users DB service', () => {
       const creators = result.creators.map((u) => u.id);
 
       expect(collaboratorIds.includes(userIds[2])).toBeTruthy();
-      expect(collaboratorIds.length).toBeGreaterThanOrEqual(1);
+      expect(collaboratorIds.length).toBe(1);
 
       expect(pointOfContact.includes(userIds[0])).toBeTruthy();
       expect(pointOfContact.includes(userIds[1])).toBeTruthy();
-      expect(pointOfContact.length).toBeGreaterThanOrEqual(2);
+      expect(pointOfContact.length).toBe(2);
 
       expect(creators.includes(userIds[2])).toBeTruthy();
       expect(creators.includes(userIds[5])).toBeTruthy();
-      expect(creators.length).toBeGreaterThanOrEqual(2);
+      expect(creators.length).toBe(2);
     });
 
     describe('when a user has both POC and collaborator permissions', () => {
