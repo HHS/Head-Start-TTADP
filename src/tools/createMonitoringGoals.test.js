@@ -2781,6 +2781,84 @@ describe('createMonitoringGoals', () => {
     await assertMonitoringGoals();
   });
 
+  it('creates one goal for multiple citations on the same grant and skips null reportDeliveryDate reviews', async () => {
+    const completeReviewStatus = await MonitoringReviewStatus.findOne({ where: { name: 'Complete' } });
+    const activeFindingStatus = await MonitoringFindingStatus.findOne({ where: { name: 'Active' } });
+
+    const grant1Link = await MonitoringReviewGrantee.findOne({
+      where: { grantNumber: grantThatNeedsMonitoringGoal1.number },
+    });
+
+    const grant6Link = await MonitoringReviewGrantee.findOne({
+      where: { grantNumber: grantThatsMonitoringReviewStatusIsNotComplete6.number },
+    });
+
+    // Add a second citation on the same review/grantee to validate we still create only one goal.
+    const additionalFindingIdForGrant1 = uuidv4();
+
+    await MonitoringFinding.create({
+      findingId: additionalFindingIdForGrant1,
+      statusId: activeFindingStatus.statusId,
+      findingType: faker.random.word(),
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    }, { individualHooks: true });
+
+    await MonitoringFindingHistory.create({
+      reviewId: grant1Link.reviewId,
+      findingHistoryId: uuidv4(),
+      findingId: additionalFindingIdForGrant1,
+      statusId: activeFindingStatus.statusId,
+      narrative: faker.random.words(10),
+      ordinal: faker.datatype.number({ min: 1, max: 10 }),
+      determination: faker.random.words(5),
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+      sourceDeletedAt: null,
+    }, { individualHooks: true });
+
+    await MonitoringFindingGrant.create({
+      findingId: additionalFindingIdForGrant1,
+      granteeId: grant1Link.granteeId,
+      statusId: activeFindingStatus.statusId,
+      findingType: faker.random.word(),
+      source: faker.random.word(),
+      correctionDeadLine: new Date(),
+      reportedDate: new Date(),
+      closedDate: null,
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+      sourceDeletedAt: null,
+    }, { individualHooks: true });
+
+    // Make case 6 review otherwise eligible while keeping reportDeliveryDate = NULL.
+    await MonitoringReview.update(
+      { statusId: completeReviewStatus.statusId },
+      { where: { reviewId: grant6Link.reviewId } },
+    );
+
+    await createMonitoringGoals();
+
+    const multipleCitationGoals = await Goal.findAll({
+      where: {
+        grantId: grantThatNeedsMonitoringGoal1.id,
+        goalTemplateId: goalTemplate.id,
+      },
+    });
+    expect(multipleCitationGoals.length).toBe(1);
+
+    const nullDeliveryGoals = await Goal.findAll({
+      where: {
+        grantId: grantThatsMonitoringReviewStatusIsNotComplete6.id,
+        goalTemplateId: goalTemplate.id,
+      },
+    });
+    expect(nullDeliveryGoals.length).toBe(0);
+  });
+
   it('uses auditlogger.error to log an error', async () => {
     // Mock GoalTemplate.findOne to throw an error:
     GoalTemplate.findOne = jest.fn().mockRejectedValueOnce(new Error('Test error'));
