@@ -593,6 +593,9 @@ export const trOwnerAdded = async (
     // due to the way sequelize sends the JSON column :(
     const parsedData = safeParse(report); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
+    if (!eventId) {
+      throw new Error(`Missing eventId for trOwnerAdded notification on TR ${report?.id || 'unknown'}`);
+    }
     const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
     const data = {
