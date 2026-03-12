@@ -51,6 +51,7 @@ services:
       BACKEND_PROXY: http://backend:8080
       YARN_CACHE_FOLDER: /yarn-cache
       NODE_OPTIONS: --no-deprecation
+      FONTAWESOME_NPM_AUTH_TOKEN: ${FONTAWESOME_NPM_AUTH_TOKEN}
     healthcheck:
       test:
         [
