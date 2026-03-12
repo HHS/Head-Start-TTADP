@@ -3,6 +3,7 @@
 /* eslint-disable max-len */
 import faker from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
+import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import createMonitoringGoals from './createMonitoringGoals';
 import {
@@ -489,6 +490,13 @@ describe('createMonitoringGoals', () => {
     await sequelize.query(`
       INSERT INTO "GrantReplacements" ("replacedGrantId", "replacingGrantId", "grantReplacementTypeId", "replacementDate", "createdAt", "updatedAt")
       VALUES (${cdiGrant.id}, ${inactiveGrantThatHasBeenReplacedByActiveGrant9.id}, ${grantReplacementType[0].id}, NOW(), NOW(), NOW())
+    `);
+
+    // Case 9 replacement pairing: inactive grant 5 is replaced by active grant 9.
+    // Both grants have citations in this suite and should each receive a monitoring goal.
+    await sequelize.query(`
+      INSERT INTO "GrantReplacements" ("replacedGrantId", "replacingGrantId", "grantReplacementTypeId", "replacementDate", "createdAt", "updatedAt")
+      VALUES (${grantThatIsInactive5.id}, ${inactiveGrantThatHasBeenReplacedByActiveGrant9.id}, ${grantReplacementType[0].id}, NOW(), NOW(), NOW())
     `);
 
     // Grant replacement for split case 10.
@@ -2578,9 +2586,25 @@ describe('createMonitoringGoals', () => {
     const grant4Goals = await Goal.findAll({ where: { grantId: grantThatFallsAfterCutOffDate4.id } });
     expect(grant4Goals.length).toBe(0);
 
-    // CASE 5: Does not create a monitoring goal for an inactive grant.
+    // CASE 5: Creates a monitoring goal for an inactive grant when it appears in the citations.
     const grant5Goals = await Goal.findAll({ where: { grantId: grantThatIsInactive5.id } });
-    expect(grant5Goals.length).toBe(0);
+    expect(grant5Goals.length).toBe(1);
+    expect(grant5Goals[0].goalTemplateId).toBe(goalTemplate.id);
+    expect(grant5Goals[0].name).toBe(goalTemplateName);
+    expect(grant5Goals[0].status).toBe('Not Started');
+
+    const goalChangeStatus5 = await GoalStatusChange.findOne({
+      where: {
+        goalId: grant5Goals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus5).not.toBeNull();
+    expect(goalChangeStatus5.userId).toBeNull();
+    expect(goalChangeStatus5.userName).toBeNull();
 
     // CASE 6: Does not create a monitoring goal for a grant that has a monitoring review with a status that is not complete.
     const grant6Goals = await Goal.findAll({ where: { grantId: grantThatsMonitoringReviewStatusIsNotComplete6.id } });
@@ -2594,7 +2618,7 @@ describe('createMonitoringGoals', () => {
     const grant8Goals = await Goal.findAll({ where: { grantId: grantThatsMonitoringReviewReviewTypeIsNotAllowed8.id } });
     expect(grant8Goals.length).toBe(0);
 
-    // CASE 9: Does not create a monitoring goal for an inactive grant that has been replaced by an active grant.
+    // CASE 9: Creates a monitoring goal for a grant cited in findings.
     const grant9Goals = await Goal.findAll({ where: { grantId: inactiveGrantThatHasBeenReplacedByActiveGrant9.id } });
     expect(grant9Goals.length).toBe(1);
     expect(grant9Goals[0].goalTemplateId).toBe(goalTemplate.id);
@@ -2614,6 +2638,21 @@ describe('createMonitoringGoals', () => {
     expect(goalChangeStatus9).not.toBeNull();
     expect(goalChangeStatus9.userId).toBeNull();
     expect(goalChangeStatus9.userName).toBeNull();
+
+    // CASE 9A: For a replacement pair, if both grants have citations,
+    // both the replaced inactive grant and replacing active grant get goals.
+    const replacementPairGoals = await Goal.findAll({
+      where: {
+        grantId: {
+          [Op.in]: [
+            grantThatIsInactive5.id,
+            inactiveGrantThatHasBeenReplacedByActiveGrant9.id,
+          ],
+        },
+        goalTemplateId: goalTemplate.id,
+      },
+    });
+    expect(replacementPairGoals.length).toBe(2);
 
     // CASE 10: Creates a monitoring goal ONLY for the grant that initially had the monitoring goal and does NOT create one for the split grant..
     const grant10AGoals = await Goal.findAll({ where: { grantId: grantBeingMonitoredSplit10A.id } });
