@@ -5,47 +5,12 @@ import {
   screen, render, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter, Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import SiteNav from '../SiteNav';
 import UserContext from '../../UserContext';
 
-const history = createMemoryHistory();
-
 describe('SiteNav', () => {
-  describe('when authenticated & pathname = "activity-reports', () => {
-    afterEach(() => fetchMock.restore());
-
-    const logoutUrl = join('api', 'logout');
-    const userUrl = join('api', 'user');
-
-    beforeEach(() => {
-      const user = {
-        name: 'name',
-        id: 1,
-        flags: [],
-        roles: [],
-        permissions: [],
-      };
-      fetchMock.get(userUrl, { ...user });
-      fetchMock.get(logoutUrl, 200);
-
-      render(
-        <Router history={history}>
-          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
-            <SiteNav authenticated admin user={user} hasAlerts={false} />
-          </UserContext.Provider>
-        </Router>,
-      );
-    });
-    test('survey button is visible', async () => {
-      history.push('/activity-reports');
-      const surveyButton = await screen.findByText(/Please leave feedback/i);
-      expect(surveyButton).toBeVisible();
-    });
-  });
-
   describe('when authenticated', () => {
     afterEach(() => fetchMock.restore());
 
@@ -98,7 +63,7 @@ describe('SiteNav', () => {
     });
 
     test('nav items are not visible', () => {
-      expect(screen.queryAllByRole('link').length).toBe(1);
+      expect(screen.queryAllByRole('link').length).toBe(0);
     });
   });
 

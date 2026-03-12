@@ -140,6 +140,10 @@ describe('Landing Page', () => {
     expect(await screen.findByRole('heading', { name: /Activity reports - /i })).toBeVisible();
   });
 
+  test('displays feedback survey on landing page', async () => {
+    expect(await screen.findByText('How useful is this dashboard page?')).toBeVisible();
+  });
+
   test('displays report id column', async () => {
     const reportIdColumnHeader = await screen.findByRole('columnheader', {
       name: /report id/i,

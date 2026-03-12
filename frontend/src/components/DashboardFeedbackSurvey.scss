@@ -3,7 +3,7 @@
 .dashboard-feedback-survey {
   position: fixed;
   bottom: 0;
-  left: 0;
+  left: 8rem;
   right: 0;
   background-color: $base-lighter;
   border-top: 2px solid $base-light;
@@ -12,6 +12,18 @@
   overflow-y: auto;
   z-index: 1000;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+
+  @media all and (min-width: 30em) {
+    left: 7.5rem;
+  }
+
+  @media all and (min-width: 40em) {
+    left: 10rem;
+  }
+
+  @media all and (min-width: 64em) {
+    left: 15rem;
+  }
 
   @media (min-width: 768px) {
     padding: 1.5rem 3rem;
