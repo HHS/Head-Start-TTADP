@@ -134,16 +134,28 @@ describe('DashboardFeedbackSurvey', () => {
     await userEvent.click(closeButton);
 
     await waitFor(() => {
-      expect(localStorage.getItem('dashboard-feedback-dismissed-test-dashboard')).toBe('true');
+      expect(localStorage.getItem('dashboard-feedback-dismissed-test-dashboard')).toBe('collapsed');
     });
     expect(screen.queryByText('How useful is this dashboard page?')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /reopen survey/i })).toBeInTheDocument();
   });
 
-  it('does not render if previously dismissed', () => {
+  it('shows reopen button if previously dismissed', () => {
     const { pageId, onSubmit } = defaultProps;
-    localStorage.setItem('dashboard-feedback-dismissed-test-dashboard', 'true');
+    localStorage.setItem('dashboard-feedback-dismissed-test-dashboard', 'collapsed');
     render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
     expect(screen.queryByText('How useful is this dashboard page?')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /reopen survey/i })).toBeInTheDocument();
+  });
+
+  it('reopens survey when reopen button is clicked', async () => {
+    const { pageId, onSubmit } = defaultProps;
+    localStorage.setItem('dashboard-feedback-dismissed-test-dashboard', 'collapsed');
+    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /reopen survey/i }));
+    expect(screen.getByText('How useful is this dashboard page?')).toBeInTheDocument();
+    expect(localStorage.getItem('dashboard-feedback-dismissed-test-dashboard')).toBeNull();
   });
 
   it('dismisses survey after successful submission', async () => {
@@ -159,8 +171,9 @@ describe('DashboardFeedbackSurvey', () => {
     await userEvent.click(screen.getByRole('button', { name: /submit feedback/i }));
 
     await waitFor(() => {
-      expect(localStorage.getItem('dashboard-feedback-dismissed-test-dashboard')).toBe('true');
+      expect(localStorage.getItem('dashboard-feedback-dismissed-test-dashboard')).toBe('completed');
       expect(screen.queryByText('How useful is this dashboard page?')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /reopen survey/i })).not.toBeInTheDocument();
     });
   });
 
