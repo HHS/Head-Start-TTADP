@@ -13,6 +13,7 @@ module.exports = {
         -- - Do not have any active ARs
         -- Then mark these goals as deleted
 
+        DROP TABLE IF EXISTS goals_to_delete;
         CREATE TEMP TABLE goals_to_delete
         AS
         WITH candidate_goals AS (
