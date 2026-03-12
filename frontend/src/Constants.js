@@ -111,6 +111,11 @@ export const MY_REPORT_ROLES = [
   'Approver',
 ];
 
+export const MY_CL_REPORT_ROLES = [
+  'Creator',
+  'Other TTA staff',
+];
+
 export const OTHER_ENTITY_TYPES = [
   'CCDF / Child Care Administrator',
   'Head Start Collaboration Office',
