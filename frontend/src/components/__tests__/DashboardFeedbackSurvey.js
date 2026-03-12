@@ -145,7 +145,13 @@ describe('DashboardFeedbackSurvey', () => {
     localStorage.setItem('dashboard-feedback-dismissed-test-dashboard', 'collapsed');
     render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
     expect(screen.queryByText('How useful is this dashboard page?')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /reopen survey/i })).toBeInTheDocument();
+    const reopenButton = screen.getByRole('button', { name: /reopen survey/i });
+    expect(reopenButton).toBeInTheDocument();
+    expect(screen.getByRole('tooltip', { name: /expand survey/i })).toBeInTheDocument();
+    expect(reopenButton).toHaveAttribute(
+      'aria-describedby',
+      'dashboard-feedback-reopen-tooltip-test-dashboard',
+    );
   });
 
   it('reopens survey when reopen button is clicked', async () => {

@@ -72,15 +72,20 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
   }
 
   if (surveyStatus === SURVEY_STATUS.COLLAPSED) {
+    const reopenTooltipId = `dashboard-feedback-reopen-tooltip-${pageId}`;
+
     return (
       <button
         type="button"
         className="dashboard-feedback-survey__reopen-button"
         onClick={handleReopen}
         aria-label="Reopen survey"
-        data-tooltip="Expand survey"
+        aria-describedby={reopenTooltipId}
       >
         <FontAwesomeIcon icon={faChevronUp} />
+        <span id={reopenTooltipId} role="tooltip" className="dashboard-feedback-survey__reopen-tooltip">
+          Expand survey
+        </span>
       </button>
     );
   }
