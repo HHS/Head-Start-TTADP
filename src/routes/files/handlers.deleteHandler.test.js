@@ -106,7 +106,7 @@ describe('deleteHandler', () => {
     getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
+    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetId').mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
     EventPolicy.mockImplementation(() => mockPolicy);
 
@@ -130,7 +130,7 @@ describe('deleteHandler', () => {
     getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
+    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetId').mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(true) };
     EventPolicy.mockImplementation(() => mockPolicy);
 
@@ -202,7 +202,7 @@ describe('deleteHandler', () => {
     getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
+    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetId').mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
     EventPolicy.mockImplementation(() => mockPolicy);
 
@@ -226,7 +226,7 @@ describe('deleteHandler', () => {
     getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
+    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetId').mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(true) };
     EventPolicy.mockImplementation(() => mockPolicy);
 

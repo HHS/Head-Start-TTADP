@@ -17,7 +17,7 @@ import {
   getSessionReports,
 } from '../../services/sessionReports';
 import EventReport from '../../policies/event';
-import { findEventBySmartsheetIdSuffix, findEventByDbId } from '../../services/event';
+import { findEventBySmartsheetId, findEventByDbId } from '../../services/event';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 import { groupsByRegion } from '../../services/groups';
@@ -83,7 +83,7 @@ describe('session report handlers', () => {
         canEditSession: () => true,
       }));
       findSessionById.mockResolvedValue(mockSession);
-      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -92,7 +92,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
       }));
-      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionsByEventId.mockResolvedValue(mockSession);
       await getHandler({ session: { userId: 1 }, params: { eventId: 99_998 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -135,7 +135,7 @@ describe('session report handlers', () => {
           status: 'Complete',
         },
       };
-      findEventBySmartsheetIdSuffix.mockResolvedValue(completedEvent);
+      findEventBySmartsheetId.mockResolvedValue(completedEvent);
       await getHandler({ session: { userId: 1 }, params: { eventId: 99_998 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(403);
     });
@@ -201,7 +201,7 @@ describe('session report handlers', () => {
     };
 
     it('returns the session', async () => {
-      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       EventReport.mockImplementation(() => ({
         canCreateSession: () => true,
       }));
@@ -221,13 +221,13 @@ describe('session report handlers', () => {
     });
 
     it('returns 404 if there is no event', async () => {
-      findEventBySmartsheetIdSuffix.mockResolvedValue(null);
+      findEventBySmartsheetId.mockResolvedValue(null);
       await createHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 403 when permissions are inadequate', async () => {
-      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       EventReport.mockImplementation(() => ({
         canCreateSession: () => false,
       }));

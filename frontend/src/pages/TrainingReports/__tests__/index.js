@@ -209,7 +209,7 @@ describe('TrainingReports', () => {
     });
 
     it('handles success', async () => {
-      fetchMock.delete('/api/events/id/1', { message: 'Success!' });
+      fetchMock.delete(`/api/events/id/${notStartedEvents[0].data.eventId}`, { message: 'Success!' });
       expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
 
       await act(async () => {
@@ -228,7 +228,7 @@ describe('TrainingReports', () => {
     });
 
     it('handles failure', async () => {
-      fetchMock.delete('/api/events/id/1', 500);
+      fetchMock.delete(`/api/events/id/${notStartedEvents[0].data.eventId}`, 500);
       expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
       await act(async () => {
         const deleteButtons = screen.queryAllByRole('button', { name: /delete event/i });
@@ -584,7 +584,7 @@ describe('TrainingReports', () => {
 
       // Verify link points to correct view page
       const link = screen.getByRole('link', { name: 'R01-PD-1234' });
-      expect(link).toHaveAttribute('href', '/training-report/view/1234');
+      expect(link).toHaveAttribute('href', '/training-report/view/R01-PD-1234');
     });
 
     it('returns event message when isSession is false or undefined', () => {
@@ -615,7 +615,7 @@ describe('TrainingReports', () => {
 
       // Verify link points to correct view page
       const link = screen.getByRole('link', { name: 'R02-PD-5678' });
-      expect(link).toHaveAttribute('href', '/training-report/view/5678');
+      expect(link).toHaveAttribute('href', '/training-report/view/R02-PD-5678');
     });
 
     it('handles eventId with different format correctly', () => {
@@ -639,9 +639,9 @@ describe('TrainingReports', () => {
         </Router>,
       );
 
-      // The link extracts last segment after split
+      // The link uses the full event ID
       const link = screen.getByRole('link', { name: 'R14-PD-99-9999' });
-      expect(link).toHaveAttribute('href', '/training-report/view/9999');
+      expect(link).toHaveAttribute('href', '/training-report/view/R14-PD-99-9999');
     });
   });
 });

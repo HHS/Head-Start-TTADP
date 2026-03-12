@@ -7,7 +7,7 @@ import { currentUserId } from '../../services/currentUser';
 import {
   createEvent,
   findEventsByCollaboratorId,
-  findEventBySmartsheetIdSuffix,
+  findEventBySmartsheetId,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
@@ -84,7 +84,7 @@ export const getHandler = async (req, res) => {
     }
 
     if (eventId) {
-      event = await findEventBySmartsheetIdSuffix(eventId, scopes);
+      event = await findEventBySmartsheetId(eventId, scopes);
 
       if (event && event.data && event.data.status === 'Complete' && !readOnly) {
         return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' });
@@ -150,7 +150,7 @@ export const updateHandler = async (req, res) => {
     }
 
     // Get event to update.
-    const eventToUpdate = await findEventBySmartsheetIdSuffix(eventId);
+    const eventToUpdate = await findEventBySmartsheetId(eventId);
 
     if (!eventToUpdate) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
@@ -187,7 +187,7 @@ export const deleteHandler = async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    const event = await findEventBySmartsheetIdSuffix(eventId);
+    const event = await findEventBySmartsheetId(eventId);
     if (!event) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
     }
