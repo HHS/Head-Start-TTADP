@@ -9,10 +9,15 @@ import './DashboardFeedbackSurvey.scss';
 
 const RATING_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const MAX_COMMENT_LENGTH = 300;
+const SURVEY_STATUS = {
+  COLLAPSED: 'collapsed',
+  COMPLETED: 'completed',
+  OPEN: 'open',
+};
 
 function DashboardFeedbackSurvey({ pageId, onSubmit }) {
   const storageKey = `dashboard-feedback-dismissed-${pageId}`;
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [surveyStatus, setSurveyStatus] = useState(SURVEY_STATUS.OPEN);
   const [selectedRating, setSelectedRating] = useState(null);
   const [comment, setComment] = useState('');
   const [isCommentExpanded, setIsCommentExpanded] = useState(false);
@@ -20,14 +25,25 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
 
   useEffect(() => {
     const dismissed = localStorage.getItem(storageKey);
-    if (dismissed === 'true') {
-      setIsDismissed(true);
+    if (dismissed === SURVEY_STATUS.COMPLETED) {
+      setSurveyStatus(SURVEY_STATUS.COMPLETED);
+      return;
+    }
+
+    // Backward compatibility: legacy "true" means hidden, now treated as collapsed.
+    if (dismissed === SURVEY_STATUS.COLLAPSED || dismissed === 'true') {
+      setSurveyStatus(SURVEY_STATUS.COLLAPSED);
     }
   }, [storageKey]);
 
   const handleDismiss = () => {
-    localStorage.setItem(storageKey, 'true');
-    setIsDismissed(true);
+    localStorage.setItem(storageKey, SURVEY_STATUS.COLLAPSED);
+    setSurveyStatus(SURVEY_STATUS.COLLAPSED);
+  };
+
+  const handleReopen = () => {
+    localStorage.removeItem(storageKey);
+    setSurveyStatus(SURVEY_STATUS.OPEN);
   };
 
   const handleSubmit = async () => {
@@ -41,8 +57,8 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
         comment: comment.trim(),
         timestamp: new Date().toISOString(),
       });
-      localStorage.setItem(storageKey, 'true');
-      setIsDismissed(true);
+      localStorage.setItem(storageKey, SURVEY_STATUS.COMPLETED);
+      setSurveyStatus(SURVEY_STATUS.COMPLETED);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to submit feedback:', error);
@@ -51,8 +67,22 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
     }
   };
 
-  if (isDismissed) {
+  if (surveyStatus === SURVEY_STATUS.COMPLETED) {
     return null;
+  }
+
+  if (surveyStatus === SURVEY_STATUS.COLLAPSED) {
+    return (
+      <button
+        type="button"
+        className="dashboard-feedback-survey__reopen-button"
+        onClick={handleReopen}
+        aria-label="Reopen survey"
+        data-tooltip="Expand survey"
+      >
+        <FontAwesomeIcon icon={faChevronUp} />
+      </button>
+    );
   }
 
   return (
