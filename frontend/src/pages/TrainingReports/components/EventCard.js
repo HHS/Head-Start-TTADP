@@ -209,7 +209,7 @@ function EventCard({
     setReportsExpanded(!reportsExpanded);
   };
 
-  // get the last four digits of the event id
+  // link to either the editable event summary or the read-only view page
   const link = canEditEvent && !eventSubmitted ? `/training-report/${eventId}/event-summary` : `/training-report/view/${eventId}`;
   const contextMenuLabel = `Actions for event ${eventId}`;
 

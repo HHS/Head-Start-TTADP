@@ -5,9 +5,6 @@ export const LOCAL_STORAGE_DATA_KEY = (id) => `tr-form-data-${id}-${LOCAL_STORAG
 export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `tr-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `tr-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 
-// Legacy name preserved; IDs are now full event display IDs.
-export const getEventIdSlug = (eventId) => eventId;
-
 export const eventSummaryFields = {
   eventOrganizer: null,
   collaboratorIds: [],
