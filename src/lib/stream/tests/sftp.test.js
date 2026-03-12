@@ -121,7 +121,8 @@ describe('SftpClient', () => {
   const defaultServerHostKeyAlgorithms = [
     'ssh-ed25519',
     'ecdsa-sha2-nistp256',
-    'ssh-rsa',
+    'rsa-sha2-512',
+    'rsa-sha2-256',
   ];
 
   beforeEach(() => {
