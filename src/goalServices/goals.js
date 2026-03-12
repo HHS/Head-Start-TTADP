@@ -1458,7 +1458,6 @@ export async function getGoalHistory(id) {
   if (!grantRecord) return null;
 
   const goalsWithDetails = await Goal.findAll({
-    logging: console.log,
     where: {
       goalTemplateId: goal.goalTemplateId,
       grantId: goal.grantId,

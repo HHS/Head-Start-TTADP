@@ -1455,7 +1455,7 @@ describe('mailer tests', () => {
       // Expect auditLogger warning to have been called.
 
       expect(logger.info).toHaveBeenCalledTimes(1);
-      expect(logger.info).toHaveBeenCalledWith('Did not send tr session created notification for 1234 preferences are not set or marked as "no-send"');
+      expect(logger.info).toHaveBeenCalledWith('Did not send tr session created notification for tr-1234 preferences are not set or marked as "no-send"');
     });
 
     it('trOwnerAdded returns if process.env.ci is true', async () => {
@@ -1490,7 +1490,12 @@ describe('mailer tests', () => {
 
     it('trOwnerAdded correctly logs exceptions', async () => {
       userById.mockImplementationOnce(() => Promise.resolve({ email: 'test@gov.test' }));
+      const mock = jest.spyOn(notificationQueueMock, 'add');
+      mock.mockImplementationOnce(() => {
+        throw new Error('Something is not right');
+      });
       const data = {
+        eventId: 'tr-1234',
         emailTo: ['test@gov.test'],
         templatePath: 'tr_owner_added',
         debugMessage: 'Congrats dude',
@@ -1504,8 +1509,8 @@ describe('mailer tests', () => {
 
       await trOwnerAdded({
         data,
-      }, jsonTransport);
-      expect(auditLogger.error).toHaveBeenCalledTimes(1);
+      }, 1);
+      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Something is not right'));
     });
 
     it('trEventComplete returns if process.env.ci is true', async () => {
@@ -1524,7 +1529,7 @@ describe('mailer tests', () => {
         },
       }, jsonTransport);
       expect(logger.info).toHaveBeenCalledTimes(1);
-      expect(logger.info).toHaveBeenCalledWith('Did not send tr event complete notification for 1234 preferences are not set or marked as "no-send"');
+      expect(logger.info).toHaveBeenCalledWith('Did not send tr event complete notification for tr-1234 preferences are not set or marked as "no-send"');
     });
 
     it('trEventComplete correctly gets added to the notificationQueue', async () => {
@@ -1610,7 +1615,7 @@ describe('mailer tests', () => {
       // Expect auditLogger warning to have been called.
 
       expect(logger.info).toHaveBeenCalledTimes(1);
-      expect(logger.info).toHaveBeenCalledWith('Did not send tr collaborator added notification for 1234 preferences are not set or marked as "no-send"');
+      expect(logger.info).toHaveBeenCalledWith('Did not send tr collaborator added notification for tr-1234 preferences are not set or marked as "no-send"');
     });
 
     it('trCollaboratorAdded early return', async () => {

@@ -87,6 +87,7 @@ export default function LineGraph({
   xAxisTitle,
   yAxisTitle,
   yAxisTickStep,
+  onChartClick,
   legendConfig,
   tableConfig,
   widgetRef,
@@ -102,7 +103,15 @@ export default function LineGraph({
 
   useEffect(() => {
     if (!lines || showTabularData || !arrayExistsAndHasLength(data) || !hasData) {
-      return;
+      return () => {};
+    }
+    const chartElement = lines.current;
+    const handleChartClick = onChartClick
+      ? (event) => onChartClick(event)
+      : null;
+
+    if (chartElement && handleChartClick) {
+      chartElement.addEventListener('click', handleChartClick);
     }
 
     const xTickStep = (() => {
@@ -204,8 +213,13 @@ export default function LineGraph({
     import('plotly.js-basic-dist').then((Plotly) => {
       if (lines.current) Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
     });
+    return () => {
+      if (chartElement && handleChartClick) {
+        chartElement.removeEventListener('click', handleChartClick);
+      }
+    };
   }, [data, hideYAxis, legends, showTabularData,
-    xAxisTitle, yAxisTitle, yAxisTickStep, hasData, lines]);
+    xAxisTitle, yAxisTitle, yAxisTickStep, hasData, lines, onChartClick]);
 
   if (!hasData) {
     return <NoResultsFound />;
@@ -278,6 +292,7 @@ LineGraph.propTypes = {
   xAxisTitle: PropTypes.string,
   yAxisTitle: PropTypes.string,
   yAxisTickStep: PropTypes.number,
+  onChartClick: PropTypes.func,
   legendConfig: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string.isRequired,
     id: PropTypes.string.isRequired,
@@ -324,6 +339,7 @@ LineGraph.defaultProps = {
   yAxisTitle: '',
   hideYAxis: false,
   yAxisTickStep: null,
+  onChartClick: null,
   data: null,
   legendConfig: [
     {

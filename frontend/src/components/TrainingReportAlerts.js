@@ -13,15 +13,13 @@ import SimpleSortableTable from './SimpleSortableTable';
 import { NeedsActionIcon, PendingApprovalIcon } from './icons';
 import './TrainingReportAlerts.css';
 
-const idForLink = (eventId) => eventId.split('-').pop();
-
 const ACTIONS_NEEDED = {
-  noSessionsCreated: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/new/`} data-sort="no-sessions-created">Create a session</Link></>,
-  missingEventInfo: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/event-summary`} data-sort="missing-event-info">Missing event info</Link></>,
-  missingSessionInfo: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/session-summary`} data-sort="missing-session-info">Missing session info</Link></>,
-  eventNotCompleted: (alert) => <><Link to={`/training-report/view/${idForLink(alert.eventId)}`} data-sort="event-not-completed">Event not completed</Link></>,
-  waitingForApproval: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/review`} data-sort="waiting-for-approval">Waiting for approval</Link></>,
-  changesNeeded: (alert) => <><Link to={`/training-report/${idForLink(alert.eventId)}/session/${alert.id}/review`} data-sort="changes-needed">Changes needed</Link></>,
+  noSessionsCreated: (alert) => <><Link to={`/training-report/${alert.eventId}/session/new/`} data-sort="no-sessions-created">Create a session</Link></>,
+  missingEventInfo: (alert) => <><Link to={`/training-report/${alert.eventId}/event-summary`} data-sort="missing-event-info">Missing event info</Link></>,
+  missingSessionInfo: (alert) => <><Link to={`/training-report/${alert.eventId}/session/${alert.id}/session-summary`} data-sort="missing-session-info">Missing session info</Link></>,
+  eventNotCompleted: (alert) => <><Link to={`/training-report/view/${alert.eventId}`} data-sort="event-not-completed">Event not completed</Link></>,
+  waitingForApproval: (alert) => <><Link to={`/training-report/${alert.eventId}/session/${alert.id}/review`} data-sort="waiting-for-approval">Waiting for approval</Link></>,
+  changesNeeded: (alert) => <><Link to={`/training-report/${alert.eventId}/session/${alert.id}/review`} data-sort="changes-needed">Changes needed</Link></>,
 };
 
 const STATUS_ICONS = {

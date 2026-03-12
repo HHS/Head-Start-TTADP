@@ -86,6 +86,7 @@ export default function QADashboard() {
 
   // This widget only supports region filtering; other filters are ignored by the API.
   const regionFilters = filters.filter((filter) => filter.topic === 'region');
+  const showApprovalRateFiltersNotApplicable = containsFiltersThatAreNotApplicable('qa-dashboard', filters);
 
   useDeepCompareEffect(() => {
     async function fetchQaData() {
@@ -264,7 +265,10 @@ export default function QADashboard() {
           </Grid>
           <Grid row>
             <Grid desktop={{ col: 12 }} mobile={{ col: 12 }}>
-              <ApprovalRateByDeadline filters={regionFilters} />
+              <ApprovalRateByDeadline
+                filters={regionFilters}
+                showFiltersNotApplicable={showApprovalRateFiltersNotApplicable}
+              />
             </Grid>
           </Grid>
         </div>

@@ -15,7 +15,7 @@ import { logById } from '../../services/communicationLog';
 import { deleteFileFromS3 } from '../../lib/s3';
 import SCOPES from '../../middleware/scopeConstants';
 import { findSessionById } from '../../services/sessionReports';
-import { findEventBySmartsheetIdSuffix } from '../../services/event';
+import { findEventBySmartsheetId } from '../../services/event';
 
 jest.mock('../../services/communicationLog', () => ({
   logById: jest.fn(),
@@ -26,7 +26,7 @@ jest.mock('../../services/sessionReports', () => ({
 }));
 
 jest.mock('../../services/event', () => ({
-  findEventBySmartsheetIdSuffix: jest.fn(),
+  findEventBySmartsheetId: jest.fn(),
 }));
 
 jest.mock('../../services/files', () => ({
@@ -143,7 +143,7 @@ describe('file handlers, additional tests', () => {
         eventId: 789,
       });
 
-      findEventBySmartsheetIdSuffix.mockResolvedValueOnce({
+      findEventBySmartsheetId.mockResolvedValueOnce({
         id: 789,
         ownerId: 1,
         collaboratorIds: [],

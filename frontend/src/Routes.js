@@ -251,7 +251,7 @@ export default function Routes({
         />
         <Route
           exact
-          path="/training-report/view/:trainingReportId([0-9RT\-]*)"
+          path="/training-report/view/:trainingReportId"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <ViewTrainingReport match={match} />
@@ -260,7 +260,7 @@ export default function Routes({
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9RT\-]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <TrainingReportForm match={match} />
@@ -269,7 +269,7 @@ export default function Routes({
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9RT\-]*)/session/new/choose-facilitation"
+          path="/training-report/:trainingReportId/session/new/choose-facilitation"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <SessionReportFacilitation match={match} />
@@ -278,7 +278,7 @@ export default function Routes({
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9RT\-]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId/session/:sessionId/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <SessionForm match={match} />
