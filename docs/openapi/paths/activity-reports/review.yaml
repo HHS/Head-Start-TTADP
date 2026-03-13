@@ -7,11 +7,14 @@ put:
     any additional updates. If the report needs updates the manager sets the status to
     'Needs Action', otherwise to 'Approved'
   requestBody:
-    description: The status and any manager notes
+    description: The status, manager notes, and (for approved reviews) the approver's IANA timezone
     required: true
     content:
       application/json:
         schema:
+          type: object
+          required:
+            - status
           properties:
             status:
               type: string
@@ -22,6 +25,20 @@ put:
             note:
               type: string
               description: Manager feedback relating to the approval
+            approvedAtTimezone:
+              type: string
+              description: IANA timezone for the approval timestamp; required when status is approved
+          oneOf:
+            - properties:
+                status:
+                  enum:
+                    - approved
+              required:
+                - approvedAtTimezone
+            - properties:
+                status:
+                  enum:
+                    - needs_action
   parameters:
     - in: path
       name: activityReportId
@@ -36,4 +53,4 @@ put:
           schema:
             $ref: '../../index.yaml#/components/schemas/approver'
     400:
-      description: activityReportId param is missing or malformed
+      description: activityReportId param is missing or malformed, or request body is malformed
