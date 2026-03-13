@@ -1,5 +1,5 @@
 import { APIResponse } from '@playwright/test';
-import Joi from '@hapi/joi';
+import Joi from 'joi';
 
 export const root = `http://localhost:8080/api`;
 
