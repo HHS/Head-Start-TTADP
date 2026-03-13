@@ -10,7 +10,7 @@ import {
   GetSessionReportsParams,
   SessionReportSortSortMap,
 } from './types/sessionReport';
-import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
+import { findEventBySmartsheetId, findEventByDbId } from './event';
 import filtersToScopes from '../scopes';
 
 const {
@@ -173,16 +173,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     return session;
   }
 
-  const eventId = (() => {
-    if (session.event) {
-      const fullId = session.event.data.eventId;
-      // we need to get the last four digits of the smartsheet provided
-      // event id, which is in the format R01-PD-1037
-      return fullId.substring(fullId.lastIndexOf('-') + 1);
-    }
-
-    return null;
-  })();
+  const eventId = session.event ? session.event.data.eventId : null;
 
   return {
     id: session?.id,
@@ -255,7 +246,7 @@ export async function updateSession(id: number, request) {
   const existingData = session.data;
   const newData = { ...existingData, ...data };
 
-  const event = await findEventBySmartsheetIdSuffix(eventId);
+  const event = await findEventBySmartsheetId(eventId);
 
   const update = {
     eventId: event.id,

@@ -404,7 +404,7 @@ describe('User handlers', () => {
     const req = {
       query: {
         regionId: '1',
-        eventId: '1',
+        eventId: 'R01-PD-25-25010',
       },
     };
 
@@ -448,7 +448,7 @@ describe('User handlers', () => {
       await getTrainingReportUsers(req, res);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(getTrainingReportUsersByRegion).toHaveBeenCalledWith(1, 1);
+      expect(getTrainingReportUsersByRegion).toHaveBeenCalledWith(1, 'R01-PD-25-25010');
       expect(res.json).toHaveBeenCalledWith([]);
     });
     it('should handle errors', async () => {
