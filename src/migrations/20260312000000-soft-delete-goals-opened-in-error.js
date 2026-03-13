@@ -80,6 +80,10 @@ module.exports = {
         JOIN "MonitoringFindings" mf
           ON mfh."findingId" = mf."findingId"
           AND mf."sourceDeletedAt" IS NULL
+        JOIN "MonitoringFindingGrants" mfg
+          ON mf."findingId" = mfg."findingId"
+          AND mrg."granteeId" = mfg."granteeId"
+          AND mfg."sourceDeletedAt" IS NULL
         JOIN "MonitoringFindingStatuses" mfs
           ON mf."statusId" = mfs."statusId"
         JOIN "MonitoringReviewStatuses" mrs
