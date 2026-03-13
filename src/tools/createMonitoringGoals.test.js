@@ -100,6 +100,11 @@ describe('createMonitoringGoals', () => {
   let grantThatsMonitoringFindingStatusIsNotActive7;
   let grantThatsMonitoringReviewReviewTypeIsNotAllowed8;
   let inactiveGrantThatHasBeenReplacedByActiveGrant9;
+  // Case 9B: Only the inactive/replaced grant has citations; the active/replacing grant does not.
+  // This is the key regression check: the goal must be created on the cited inactive grant, NOT
+  // on the non-cited active grant.
+  let inactiveGrantCitedOnly9B;
+  let activeGrantNotCited9B;
   // These grants represent a slightly more complex case when a
   // grant that has a monitoring goal is then split into two recipients.
   // We would expect a new monitoring goal to be created for only one of two new recipients.
@@ -132,6 +137,8 @@ describe('createMonitoringGoals', () => {
   const grantThatsMonitoringFindingStatusIsNotActiveNumber7 = faker.datatype.string(4);
   const grantThatsMonitoringReviewReviewTypeIsNotAllowedNumber8 = faker.datatype.string(4);
   const inactiveGrantThatHasBeenReplacedByActiveGrantNumber9 = faker.datatype.string(4);
+  const inactiveGrantCitedOnlyNumber9B = faker.datatype.string(4);
+  const activeGrantNotCitedNumber9B = faker.datatype.string(4);
   const grantBeingMonitoredSplitNumber10A = uuidv4();
   const grantBeingMonitoredSplitNumber10B = uuidv4();
   const grantBeingMonitoredSplitNumber10C = uuidv4();
@@ -288,6 +295,26 @@ describe('createMonitoringGoals', () => {
         status: 'Active',
       },
       {
+        // 9B - inactive grant with citations; the active replacing grant (below) has none
+        id: faker.datatype.number({ min: 9999 }),
+        number: inactiveGrantCitedOnlyNumber9B,
+        recipientId: recipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Inactive',
+      },
+      {
+        // 9B - active replacing grant with NO citations
+        id: faker.datatype.number({ min: 9999 }),
+        number: activeGrantNotCitedNumber9B,
+        recipientId: recipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
+      {
         // 10 A
         id: faker.datatype.number({ min: 9999 }),
         number: grantBeingMonitoredSplitNumber10A,
@@ -429,6 +456,8 @@ describe('createMonitoringGoals', () => {
       grantThatsMonitoringFindingStatusIsNotActive7,
       grantThatsMonitoringReviewReviewTypeIsNotAllowed8,
       inactiveGrantThatHasBeenReplacedByActiveGrant9,
+      inactiveGrantCitedOnly9B,
+      activeGrantNotCited9B,
       grantBeingMonitoredSplit10A,
       grantBeingMonitoredSplit10B,
       grantBeingMonitoredSplit10C,
@@ -499,6 +528,13 @@ describe('createMonitoringGoals', () => {
       VALUES (${grantThatIsInactive5.id}, ${inactiveGrantThatHasBeenReplacedByActiveGrant9.id}, ${grantReplacementType[0].id}, NOW(), NOW(), NOW())
     `);
 
+    // Case 9B replacement pairing: only the inactive grant has citations; the active replacing grant does not.
+    // This is the key regression check — the goal must be created on the cited inactive grant only.
+    await sequelize.query(`
+      INSERT INTO "GrantReplacements" ("replacedGrantId", "replacingGrantId", "grantReplacementTypeId", "replacementDate", "createdAt", "updatedAt")
+      VALUES (${inactiveGrantCitedOnly9B.id}, ${activeGrantNotCited9B.id}, ${grantReplacementType[0].id}, NOW(), NOW(), NOW())
+    `);
+
     // Grant replacement for split case 10.
     // Grant A is replaced by Grant B and Grant C (C uses a different recipient).
     await sequelize.query(`
@@ -536,6 +572,7 @@ describe('createMonitoringGoals', () => {
     const grantThatsMonitoringFindingStatusIsNotActiveNumberGranteeId7 = uuidv4();
     const grantThatsMonitoringReviewReviewTypeIsNotAllowedNumberGranteeId8 = uuidv4();
     const inactiveGrantThatHasBeenReplacedByActiveGrantNumberGranteeId9 = uuidv4();
+    const inactiveGrantCitedOnlyGranteeId9B = uuidv4();
     const grantBeingMonitoredSplitNumberGranteeId10A = uuidv4();
     const grantBeingMonitoredSplitNumberGranteeId10B = uuidv4();
     // Exclude grantBeingMonitoredSplitNumberGranteeId10C from the granteeIds array below.
@@ -561,6 +598,7 @@ describe('createMonitoringGoals', () => {
     const grantThatsMonitoringFindingStatusIsNotActiveNumberReviewId7 = uuidv4();
     const grantThatsMonitoringReviewReviewTypeIsNotAllowedNumberReviewId8 = uuidv4();
     const inactiveGrantThatHasBeenReplacedByActiveGrantNumberReviewId9 = uuidv4();
+    const inactiveGrantCitedOnlyReviewId9B = uuidv4();
     const grantBeingMonitoredSplitNumberReviewId10A = uuidv4();
     const grantBeingMonitoredSplitNumberReviewId10B = uuidv4();
     // Exclude grantBeingMonitoredSplitNumberReviewId10C from the reviewIds array below.
@@ -679,6 +717,18 @@ describe('createMonitoringGoals', () => {
         grantNumber: inactiveGrantThatHasBeenReplacedByActiveGrantNumber9,
         reviewId: inactiveGrantThatHasBeenReplacedByActiveGrantNumberReviewId9,
         granteeId: inactiveGrantThatHasBeenReplacedByActiveGrantNumberGranteeId9,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'Support Team',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      {
+        // 9B - only the inactive grant has citations; the active replacing grant does not
+        id: faker.datatype.number({ min: 9999 }),
+        grantNumber: inactiveGrantCitedOnlyNumber9B,
+        reviewId: inactiveGrantCitedOnlyReviewId9B,
+        granteeId: inactiveGrantCitedOnlyGranteeId9B,
         createTime: new Date(),
         updateTime: new Date(),
         updateBy: 'Support Team',
@@ -854,6 +904,7 @@ describe('createMonitoringGoals', () => {
     const status16 = 19;
     const status17 = 20;
     const status18 = 21;
+    const status9B = 22;
 
     // MonitoringReview.
     // Allowed review types:
@@ -1009,6 +1060,22 @@ describe('createMonitoringGoals', () => {
         reportAttachmentId: faker.datatype.uuid(),
         outcome: faker.random.words(5),
         hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      {
+        // 9B - cited inactive grant (its active replacing grant has no monitoring data)
+        reviewId: inactiveGrantCitedOnlyReviewId9B,
+        contentId: uuidv4(),
+        statusId: status9B,
+        name: faker.random.words(3),
+        startDate: new Date(),
+        endDate: new Date(),
+        reviewType: 'RAN',
+        reportDeliveryDate: new Date(),
+        reportAttachmentId: uuidv4(),
+        outcome: faker.random.words(5),
+        hash: uuidv4(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
@@ -1272,6 +1339,13 @@ describe('createMonitoringGoals', () => {
         sourceUpdatedAt: new Date(),
       },
       {
+        // 9B
+        statusId: status9B,
+        name: 'Complete',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      {
         // 10 A
         statusId: status10A,
         name: 'Complete',
@@ -1367,6 +1441,7 @@ describe('createMonitoringGoals', () => {
     const findingId7 = uuidv4();
     const findingId8 = uuidv4();
     const findingId9 = uuidv4();
+    const findingId9B = uuidv4();
     const findingId10A = uuidv4();
     const findingId10B = uuidv4();
     const findingId11A = uuidv4();
@@ -1504,6 +1579,20 @@ describe('createMonitoringGoals', () => {
         ordinal: faker.datatype.number({ min: 1, max: 10 }),
         determination: faker.random.words(5),
         hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      },
+      {
+        // 9B
+        reviewId: inactiveGrantCitedOnlyReviewId9B,
+        findingHistoryId: uuidv4(),
+        findingId: findingId9B,
+        statusId: status9B,
+        narrative: faker.random.words(10),
+        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        determination: faker.random.words(5),
+        hash: uuidv4(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
@@ -1750,6 +1839,15 @@ describe('createMonitoringGoals', () => {
         sourceUpdatedAt: new Date(),
       },
       {
+        // 9B
+        findingId: findingId9B,
+        statusId: status9B,
+        findingType: faker.random.word(),
+        hash: uuidv4(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      {
         // 10 A
         findingId: findingId10A,
         statusId: status10A,
@@ -1920,6 +2018,13 @@ describe('createMonitoringGoals', () => {
       {
         // 9
         statusId: statusId9,
+        name: 'Active',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      {
+        // 9B
+        statusId: status9B,
         name: 'Active',
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
@@ -2129,6 +2234,21 @@ describe('createMonitoringGoals', () => {
         reportedDate: new Date(),
         closedDate: null,
         hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      },
+      {
+        // 9B - only the inactive grant is cited; active replacing grant has no entry here
+        findingId: findingId9B,
+        granteeId: inactiveGrantCitedOnlyGranteeId9B,
+        statusId: status9B,
+        findingType: faker.random.word(),
+        source: faker.random.word(),
+        correctionDeadLine: new Date(),
+        reportedDate: new Date(),
+        closedDate: null,
+        hash: uuidv4(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
@@ -2653,6 +2773,19 @@ describe('createMonitoringGoals', () => {
       },
     });
     expect(replacementPairGoals.length).toBe(2);
+
+    // CASE 9B: When only the inactive/replaced grant is cited and the active/replacing grant is NOT,
+    // the monitoring goal is created for the cited inactive grant only — NOT for the active replacing grant.
+    // This is the key regression check: previously the job would have created the goal on the active
+    // replacing grant instead of the cited inactive grant.
+    const inactiveGrant9BGoals = await Goal.findAll({ where: { grantId: inactiveGrantCitedOnly9B.id } });
+    expect(inactiveGrant9BGoals.length).toBe(1);
+    expect(inactiveGrant9BGoals[0].goalTemplateId).toBe(goalTemplate.id);
+    expect(inactiveGrant9BGoals[0].name).toBe(goalTemplateName);
+    expect(inactiveGrant9BGoals[0].status).toBe('Not Started');
+
+    const activeGrant9BGoals = await Goal.findAll({ where: { grantId: activeGrantNotCited9B.id } });
+    expect(activeGrant9BGoals.length).toBe(0);
 
     // CASE 10: Creates a monitoring goal ONLY for the grant that initially had the monitoring goal and does NOT create one for the split grant..
     const grant10AGoals = await Goal.findAll({ where: { grantId: grantBeingMonitoredSplit10A.id } });
