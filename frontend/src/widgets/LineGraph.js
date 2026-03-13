@@ -90,6 +90,7 @@ export default function LineGraph({
   xAxisTitle,
   yAxisTitle,
   yAxisTickStep,
+  onChartClick,
   legendConfig,
   tableConfig,
   widgetRef,
@@ -105,6 +106,23 @@ export default function LineGraph({
 
   const isMediumWidget = useMediaQuery({ maxWidth: MAX_WIDTH_MEDIUM });
   const isSmallWidget = useMediaQuery({ maxWidth: MAX_WIDTH_SMALL });
+
+  useEffect(() => {
+    const chartElement = lines.current;
+    const handleChartClick = onChartClick
+      ? (event) => onChartClick(event)
+      : null;
+
+    if (chartElement && handleChartClick) {
+      chartElement.addEventListener('click', handleChartClick);
+    }
+
+    return () => {
+      if (chartElement && handleChartClick) {
+        chartElement.removeEventListener('click', handleChartClick);
+      }
+    };
+  }, [data, hasData, onChartClick, showTabularData]);
 
   useEffect(() => {
     if (!lines || showTabularData || !arrayExistsAndHasLength(data) || !hasData) {
@@ -222,17 +240,16 @@ export default function LineGraph({
     });
   }, [
     data,
+    hasData,
     hideYAxis,
+    isMediumWidget,
+    isSmallWidget,
     legends,
+    onChartClick,
     showTabularData,
     xAxisTitle,
-    yAxisTitle,
     yAxisTickStep,
-    hasData,
-    lines,
-    widgetRef,
-    isSmallWidget,
-    isMediumWidget,
+    yAxisTitle,
   ]);
 
   if (!hasData) {
@@ -306,6 +323,7 @@ LineGraph.propTypes = {
   xAxisTitle: PropTypes.string,
   yAxisTitle: PropTypes.string,
   yAxisTickStep: PropTypes.number,
+  onChartClick: PropTypes.func,
   legendConfig: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string.isRequired,
     id: PropTypes.string.isRequired,
@@ -352,6 +370,7 @@ LineGraph.defaultProps = {
   yAxisTitle: '',
   hideYAxis: false,
   yAxisTickStep: null,
+  onChartClick: null,
   data: null,
   legendConfig: [
     {

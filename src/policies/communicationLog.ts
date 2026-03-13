@@ -14,6 +14,11 @@ interface LogType {
   userId: number;
 }
 
+const DEFAULT_LOG: LogType = {
+  recipientId: 0,
+  userId: 0,
+};
+
 export default class CommunicationLog {
   readonly user: UserType;
 
@@ -21,10 +26,10 @@ export default class CommunicationLog {
 
   readonly log: LogType;
 
-  constructor(user: UserType, regionId: number, log = { recipientId: 0, userId: 0 }) {
+  constructor(user: UserType, regionId: number, log: LogType | null = DEFAULT_LOG) {
     this.user = user;
     this.regionId = regionId;
-    this.log = log;
+    this.log = log ?? DEFAULT_LOG;
   }
 
   canCreateLog() {
