@@ -296,7 +296,61 @@ describe('CommunicationLogForm', () => {
     }));
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'post' })).toBe(true));
-    await waitFor(() => expect(screen.getByText(/There was an error saving the communication log. Please try again later/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText(/There was an error saving the communication log. Please try again later/i).length).toBeGreaterThan(0));
+  });
+
+  it('shows a specific message when save and continue fails for a deleted log', async () => {
+    const formData = {
+      id: 1,
+      recipientId: RECIPIENT_ID,
+      userId: '1',
+      updatedAt: new Date(),
+      files: [],
+      data: {
+        communicationDate: '11/01/2023',
+        result: 'Next Steps identified',
+        method: 'Phone',
+        purpose: 'General Check-In',
+        duration: '1',
+        notes: '<p>This is a note</p>',
+        goals: [{ label: 'CQI and Data', value: '1' }],
+        otherStaff: [{ label: 'A', value: '1' }],
+        specialistNextSteps: [
+          {
+            note: 'next step 1',
+            completeDate: '11/23/2023',
+          },
+        ],
+        recipientNextSteps: [
+          {
+            note: 'next step 2',
+            completeDate: '11/16/2023',
+          },
+        ],
+        pageState: {
+          1: COMPLETE,
+          2: NOT_STARTED,
+          3: NOT_STARTED,
+        },
+      },
+    };
+
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
+    const putUrl = `${communicationLogUrl}/log/1`;
+    fetchMock.get(url, formData);
+    fetchMock.put(putUrl, 404);
+
+    await act(() => waitFor(() => {
+      renderTest('1', 'supporting-attachments');
+    }));
+
+    expect(fetchMock.called(url, { method: 'get' })).toBe(true);
+    const onSaveButton = screen.getByText(/save and continue/i);
+    await act(() => waitFor(() => {
+      userEvent.click(onSaveButton);
+    }));
+    await waitFor(() => expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true));
+    await waitFor(() => expect(screen.getAllByText(/This communication log was deleted in another window. Your changes were not saved/i).length).toBeGreaterThan(0));
   });
 
   it('you can complete support attachment', async () => {
@@ -470,7 +524,67 @@ describe('CommunicationLogForm', () => {
       userEvent.click(submit);
     }));
     expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true);
-    await waitFor(() => expect(screen.getByText(/There was an error saving the communication log. Please try again later/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText(/There was an error saving the communication log. Please try again later/i).length).toBeGreaterThan(0));
+  });
+
+  it('shows a specific message when the log was deleted in another window', async () => {
+    const formData = {
+      id: 1,
+      recipients: [{
+        id: RECIPIENT_ID,
+      }],
+      userId: '1',
+      updatedAt: new Date(),
+      files: [],
+      data: {
+        communicationDate: '11/01/2023',
+        notes: '<p>adsf</p>',
+        method: 'Phone',
+        result: 'New TTA accepted',
+        purpose: "Program Specialist's site visit",
+        duration: 1,
+        regionId: '1',
+        createdAt: '2023-11-15T16:15:55.134Z',
+        goals: [{ label: 'CQI and Data', value: '1' }],
+        otherStaff: [{ label: 'A', value: '1' }],
+        pageState: {
+          1: 'Complete',
+          2: 'Complete',
+          3: 'Complete',
+        },
+        pocComplete: false,
+        recipientNextSteps: [
+          {
+            note: 'asdf',
+            completeDate: '11/01/2023',
+          },
+        ],
+        specialistNextSteps: [
+          {
+            note: 'asf',
+            completeDate: '11/01/2023',
+          },
+        ],
+        'pageVisited-supporting-attachments': 'true',
+      },
+    };
+
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
+    const putUrl = `${communicationLogUrl}/log/1`;
+    fetchMock.get(url, formData);
+    fetchMock.put(putUrl, 404);
+
+    await act(() => waitFor(() => {
+      renderTest('1', 'next-steps');
+    }));
+
+    expect(fetchMock.called(url, { method: 'get' })).toBe(true);
+    const submit = screen.getByText(/save log/i);
+    await act(() => waitFor(() => {
+      userEvent.click(submit);
+    }));
+    expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true);
+    await waitFor(() => expect(screen.getAllByText(/This communication log was deleted in another window. Your changes were not saved/i).length).toBeGreaterThan(0));
   });
 
   it('can go back', async () => {

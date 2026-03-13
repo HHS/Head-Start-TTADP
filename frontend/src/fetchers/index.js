@@ -51,7 +51,7 @@ export const put = async (url, data) => {
     body: JSON.stringify(data),
   });
   if (!res.ok) {
-    throw new Error(res.statusText);
+    throw new HTTPError(res.status, res.statusText);
   }
   return res;
 };
@@ -67,7 +67,7 @@ export const post = async (url, data) => {
     body: JSON.stringify(data),
   });
   if (!res.ok) {
-    throw new Error(res.statusText);
+    throw new HTTPError(res.status, res.statusText);
   }
   return res;
 };
@@ -87,7 +87,7 @@ export const destroy = async (url, data) => {
   });
 
   if (!res.ok) {
-    throw new Error(res.statusText);
+    throw new HTTPError(res.status, res.statusText);
   }
   return res;
 };
