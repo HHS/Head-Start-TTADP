@@ -740,13 +740,13 @@ export async function getTrainingReportAlertsForUser(
   return getTrainingReportAlerts(userId, regions, [where]);
 }
 
-export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+export async function findEventBySmartsheetId(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
   const where = {
     [Op.and]: [
       {
         data: {
           eventId: {
-            [Op.endsWith]: `-${eventId}`,
+            [Op.eq]: eventId,
           },
         },
       },

@@ -222,6 +222,23 @@ describe('RegionalCommunicationLog', () => {
     await waitFor(() => expect(screen.getByText('There was an error saving the communication log. Please try again later.')).toBeInTheDocument());
   });
 
+  it('shows a specific message when save and continue fails for a deleted log', async () => {
+    const logId = 1;
+    const regionId = 1;
+
+    fetchMock.get(`/api/communication-logs/region/${regionId}/log/${logId}`, completeLog);
+    fetchMock.put(`/api/communication-logs/log/${logId}`, 404);
+
+    renderComponent(`/region/${regionId}/log/${logId}/log`);
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
+
+    const saveButton = screen.getByRole('button', { name: 'Save and continue' });
+    userEvent.click(saveButton);
+
+    await waitFor(() => expect(screen.getByText('This communication log was deleted in another window. Your changes were not saved.')).toBeInTheDocument());
+  });
+
   it('successfully updates an existing communication log', async () => {
     const logId = 123;
     const regionId = 1;

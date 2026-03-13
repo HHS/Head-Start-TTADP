@@ -200,7 +200,8 @@ class SftpClient {
             serverHostKey: [
               'ssh-ed25519',
               'ecdsa-sha2-nistp256',
-              'ssh-rsa',
+              'rsa-sha2-512',
+              'rsa-sha2-256',
             ],
           },
           hostVerifier = () => true,
