@@ -2,8 +2,10 @@ import React, {
   useRef,
   useState,
   useEffect,
+  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
+import { Checkbox } from '@trussworks/react-uswds';
 import { kebabCase } from 'lodash';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
@@ -24,6 +26,7 @@ export default function LineGraphWidget({
   tableTitle,
   tableFirstHeading,
   tableCaption,
+  drawerConfig,
 }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, exportName);
@@ -31,6 +34,11 @@ export default function LineGraphWidget({
   const [columnHeadings, setColumnHeadings] = useState([]);
   const [tableRows, setTableRows] = useState([]);
 
+  // eslint-disable-next-line max-len
+  const hasData = useMemo(() => data && data.length && data.some((d) => d.x.length > 0, []), [data]);
+
+  // for testing purposes, allow the empty state to be toggled with a checkbox
+  const [showEmptyState, setShowEmptyState] = useState(false);
   const { exportRows } = useWidgetExport(
     tableRows,
     columnHeadings,
@@ -92,11 +100,12 @@ export default function LineGraphWidget({
       title={title}
       subtitle={subtitle}
       showHeaderBorder
-      menuItems={menuItems}
+      menuItems={hasData && !showEmptyState ? menuItems : []}
     >
+      <Checkbox label="Show empty state" id="show-empty-state" onChange={() => setShowEmptyState(!showEmptyState)} />
       <LineGraph
         showTabularData={showTabularData}
-        data={data}
+        data={showEmptyState ? [] : data}
         hideYAxis={hideYAxis}
         xAxisTitle={xAxisTitle}
         yAxisTitle={yAxisTitle}
@@ -117,6 +126,7 @@ export default function LineGraphWidget({
           },
         }}
         widgetRef={widgetRef}
+        drawerConfig={drawerConfig}
       />
     </WidgetContainer>
   );
@@ -150,6 +160,10 @@ LineGraphWidget.propTypes = {
   tableFirstHeading: PropTypes.string,
   tableCaption: PropTypes.string,
   subtitle: PropTypes.string,
+  drawerConfig: PropTypes.shape({
+    title: PropTypes.string,
+    tagName: PropTypes.string,
+  }),
 };
 
 LineGraphWidget.defaultProps = {
@@ -160,4 +174,8 @@ LineGraphWidget.defaultProps = {
   tableFirstHeading: 'TTA Provided',
   tableCaption: 'Total TTA hours by date and type',
   subtitle: '',
+  drawerConfig: {
+    title: 'QA dashboard filters',
+    tagName: 'ttahub-qa-dash-filters',
+  },
 };
