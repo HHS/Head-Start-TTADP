@@ -38,6 +38,7 @@ services:
       BYPASS_SOCKETS: "true"
       YARN_CACHE_FOLDER: /yarn-cache
       NEW_RELIC_ENABLED: "false"
+      FONTAWESOME_NPM_AUTH_TOKEN: ${FONTAWESOME_NPM_AUTH_TOKEN:-}
     depends_on:
       db:
         condition: service_healthy

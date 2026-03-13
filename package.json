@@ -95,7 +95,7 @@
     "docker:shell": "task stack-shell",
     "docker:shell:backend": "task stack-shell TARGET=backend",
     "docker:shell:frontend": "task stack-shell TARGET=frontend",
-    "docker:dss": "docker/scripts/run-dss-in-compose.sh",
+    "docker:dss": "./bin/prod-style-server",
     "docker:db:migrate": "task stack-run TARGET=backend -- yarn db:migrate",
     "docker:db:migrate:undo": "task stack-run TARGET=backend -- yarn db:migrate:undo",
     "docker:db:seed": "task stack-run TARGET=backend -- yarn db:seed",
