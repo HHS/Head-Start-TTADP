@@ -2840,6 +2840,16 @@ describe('createMonitoringGoals', () => {
       { where: { reviewId: grant6Link.reviewId } },
     );
 
+    // Ensure there are no pre-existing monitoring goals for this grant/template so that
+    // we are validating that multiple citations create a single new goal, rather than
+    // relying on a goal that may have been created in an earlier test.
+    await Goal.destroy({
+      where: {
+        grantId: grantThatNeedsMonitoringGoal1.id,
+        goalTemplateId: goalTemplate.id,
+      },
+    });
+
     await createMonitoringGoals();
 
     const multipleCitationGoals = await Goal.findAll({
