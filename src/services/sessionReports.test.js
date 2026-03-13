@@ -26,7 +26,6 @@ describe('session reports service', () => {
   let event;
 
   const eventId = 'R01-PD-99_888';
-  const eventIdSubstring = '99_888';
 
   beforeAll(async () => {
     const eventData = {
@@ -53,7 +52,7 @@ describe('session reports service', () => {
 
       expect(created).toMatchObject({
         id: expect.anything(),
-        eventId: eventIdSubstring,
+        eventId,
       });
 
       await destroySession(created.id);
@@ -71,7 +70,7 @@ describe('session reports service', () => {
       const created = await createSession({ eventId: event.id, data: {} });
 
       const updatedData = {
-        eventId: eventIdSubstring,
+        eventId,
         data: {
           harry: 'potter',
         },
@@ -79,7 +78,7 @@ describe('session reports service', () => {
       const updated = await updateSession(created.id, updatedData);
 
       expect(updated).toMatchObject({
-        eventId: eventIdSubstring,
+        eventId,
         data: updatedData.data,
       });
 
@@ -95,7 +94,7 @@ describe('session reports service', () => {
 
       expect(updated).toMatchObject({
         id: expect.anything(),
-        eventId: eventIdSubstring,
+        eventId,
         data: updatedData.data,
       });
 
@@ -171,7 +170,7 @@ describe('session reports service', () => {
 
       expect(found).toMatchObject({
         id: created.id,
-        eventId: eventIdSubstring,
+        eventId,
       });
 
       await destroySession(created.id);

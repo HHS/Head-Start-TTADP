@@ -497,7 +497,7 @@ export const trSessionCreated = async (event, sessionId) => {
     }
 
     const { eventId } = event.data;
-    const eId = eventId.split('-').pop();
+    const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
 
     await Promise.all(event.pocIds.map(async (id) => {
@@ -548,7 +548,7 @@ export const trCollaboratorAdded = async (
     // due to the way sequelize sends the JSON column :(
     const parsedData = safeParse(report); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
-    const eId = eventId.split('-').pop();
+    const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
     const emailTo = filterAndDeduplicateEmails([collaborator.email]);
@@ -593,7 +593,10 @@ export const trOwnerAdded = async (
     // due to the way sequelize sends the JSON column :(
     const parsedData = safeParse(report); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
-    const eId = eventId.split('-').pop();
+    if (!eventId) {
+      throw new Error(`Missing eventId for trOwnerAdded notification on TR ${report?.id || 'unknown'}`);
+    }
+    const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
     const data = {
       displayId: eventId,
@@ -630,7 +633,7 @@ export const trEventComplete = async (
 
     const parsedData = safeParse(event); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
-    const eId = eventId.split('-').pop();
+    const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eId}`;
 
     const emails = await Promise.all(userIds.map(async (id) => {
@@ -930,12 +933,12 @@ const TR_NOTIFICATION_CONFIG_DICT = {
       {
         templatePath: 'tr_owner_reminder_event',
         users: 'ownerId',
-        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}`,
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}`,
       },
       {
         templatePath: 'tr_collaborator_reminder_event',
         users: 'collaboratorIds',
-        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}`,
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}`,
       },
     ],
   },
@@ -946,17 +949,17 @@ const TR_NOTIFICATION_CONFIG_DICT = {
       {
         templatePath: 'tr_owner_reminder_session',
         users: 'ownerId',
-        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
+        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${sessionId}`,
       },
       {
         templatePath: 'tr_collaborator_reminder_session',
         users: 'collaboratorIds',
-        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
+        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${sessionId}`,
       },
       {
         templatePath: 'tr_poc_reminder_session',
         users: 'pocIds',
-        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
+        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${sessionId}`,
       },
     ],
   },
@@ -966,7 +969,7 @@ const TR_NOTIFICATION_CONFIG_DICT = {
     emails: [
       {
         templatePath: 'tr_owner_reminder_event_not_completed',
-        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eventId.split('-').pop()}`,
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eventId}`,
         users: 'ownerId',
       },
     ],

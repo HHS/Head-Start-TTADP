@@ -33,7 +33,7 @@ import { FILE_STATUSES } from '../../constants';
 import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
 import { findSessionById } from '../../services/sessionReports';
-import { findEventBySmartsheetIdSuffix } from '../../services/event';
+import { findEventBySmartsheetId } from '../../services/event';
 import { logById } from '../../services/communicationLog';
 
 const multiparty = require('multiparty');
@@ -139,7 +139,7 @@ const deleteHandler = async (req, res) => {
       }
     } else if (eventSessionId) {
       const session = await findSessionById(eventSessionId);
-      const event = await findEventBySmartsheetIdSuffix(session.eventId);
+      const event = await findEventBySmartsheetId(session.eventId);
 
       const eventPolicy = new EventPolicy(user, event);
 
@@ -172,7 +172,7 @@ const deleteHandler = async (req, res) => {
     } else if (sessionAttachmentId) {
       // Session Supporting Attachments.
       const session = await findSessionById(sessionAttachmentId);
-      const event = await findEventBySmartsheetIdSuffix(session.eventId);
+      const event = await findEventBySmartsheetId(session.eventId);
       const eventPolicy = new EventPolicy(user, event);
 
       if (!eventPolicy.canUploadFile()) {
@@ -356,7 +356,7 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
 
   if (sessionId) {
     const session = await findSessionById(sessionId);
-    const event = await findEventBySmartsheetIdSuffix(session.eventId);
+    const event = await findEventBySmartsheetId(session.eventId);
 
     const eventPolicy = new EventPolicy(user, event);
 
@@ -413,7 +413,7 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
   }
   if (sessionAttachmentId) {
     const session = await findSessionById(sessionAttachmentId);
-    const event = await findEventBySmartsheetIdSuffix(session.eventId);
+    const event = await findEventBySmartsheetId(session.eventId);
 
     const eventPolicy = new EventPolicy(user, event);
 

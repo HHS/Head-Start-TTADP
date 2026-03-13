@@ -213,7 +213,10 @@ describe('Programmatic Transaction', () => {
       participants: ['participants'],
       topics: ['topics'],
       ttaType: ['type'],
+      activityReason: 'reason',
+      language: ['English'],
       version: 2,
+      creatorRole: 'TTAC',
     };
 
     await User.bulkCreate([mockUser, mockUserTwo, mockManager, secondMockManager]);
