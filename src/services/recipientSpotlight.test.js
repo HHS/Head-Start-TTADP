@@ -85,6 +85,7 @@ describe('recipientSpotlight service', () => {
 
   let monitoringReviewStatus;
   let monitoringFindingStatus;
+  let deficiencyFinding;
 
   const createDate = new Date();
   // Make pastYear clearly within the last 12 months (9 months ago) to avoid edge cases
@@ -477,7 +478,7 @@ describe('recipientSpotlight service', () => {
       findingId: deficiencyFindingId,
     });
 
-    const deficiencyFinding = await MonitoringFinding.create({
+    deficiencyFinding = await MonitoringFinding.create({
       findingId: deficiencyFindingId,
       statusId: monitoringFindingStatus.statusId,
       findingType: 'Deficiency',
@@ -760,6 +761,19 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
       expect(result.recipients[0].deficiency).toBe(true);
+
+      // Source-deleted findings must be excluded — soft-delete the finding and verify
+      await deficiencyFinding.update({ sourceDeletedAt: new Date() });
+      const resultAfterDelete = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        10,
+        [REGION_ID],
+      );
+      expect(resultAfterDelete.recipients[0].deficiency).toBe(false);
+      await deficiencyFinding.update({ sourceDeletedAt: null });
     });
 
     it('identifies new recipients correctly', async () => {
