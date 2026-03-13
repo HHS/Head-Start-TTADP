@@ -1,5 +1,4 @@
 import stringify from 'csv-stringify/lib/sync';
-import moment from 'moment-timezone';
 import { QueryTypes } from 'sequelize';
 import {
   APPROVER_STATUSES,
@@ -491,22 +490,10 @@ export async function reviewReport(req, res) {
     ] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      if (typeof approvedAtTimezone === 'string' && moment.tz.zone(approvedAtTimezone)) {
-        await ActivityReportModel.update(
-          { approvedAtTimezone },
-          { where: { id: activityReportId } },
-        );
-      } else {
-        auditLogger.error(
-          `${namespace}: approved report received invalid or missing approvedAtTimezone`,
-          {
-            activityReportId,
-            userId,
-            approvedAtTimezone,
-            approvedAtTimezoneType: typeof approvedAtTimezone,
-          },
-        );
-      }
+      await ActivityReportModel.update(
+        { approvedAtTimezone },
+        { where: { id: activityReportId } },
+      );
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
         reviewedReport,
         USER_SETTINGS.EMAIL.KEYS.APPROVAL,

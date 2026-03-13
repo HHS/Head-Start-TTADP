@@ -94,15 +94,19 @@ export const submittedReport = {
   duration: 0,
   endDate: '2000-01-01T12:00:00Z',
   startDate: '2000-01-01T12:00:00Z',
+  activityRecipientType: 'recipient',
   requester: 'requester',
   targetPopulations: [
     'Children with Disabilities',
     'Infants and Toddlers (ages birth to 3)',
   ],
   reason: ['reason'],
+  activityReason: 'reason',
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  language: ['English'],
+  creatorRole: 'COR',
 };
 
 export const approvedReport = {

@@ -40,6 +40,10 @@ For detailed testing patterns including database state management helpers, see `
 - Use consistent error handling patterns in the surrounding code; avoid introducing new styles.
 - Log actionable context (request IDs, relevant entity IDs) without leaking PII.
 
+### Validation
+- We leverage the Joi.dev library for schema validation. Example: [src/models/hooks/activityReport.js](src/models/hooks/activityReport.js)
+
+
 ## Frontend
 
 ### Hook and Component Reuse

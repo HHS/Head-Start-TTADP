@@ -15,6 +15,9 @@ import {
   recipientRecordRootUrl,
   resetFormData,
   formatRecipientCommunicationLogUrl,
+  GENERIC_SAVE_ERROR,
+  LOG_NOT_FOUND_SAVE_ERROR,
+  isCommunicationLogNotFoundError,
 } from '../../../../components/CommunicationLog/constants';
 import NetworkContext, { isOnlineMode } from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
@@ -123,7 +126,8 @@ export default function CommunicationLogForm({ match, recipientName }) {
       // update the sidebar message
       updateShowSavedDraft(true);
     } catch (err) {
-      setError('There was an error saving the communication log. Please try again later.');
+      const isMissingLog = isCommunicationLogNotFoundError(err);
+      setError(isMissingLog ? LOG_NOT_FOUND_SAVE_ERROR : GENERIC_SAVE_ERROR);
     } finally {
       setReportFetched(true);
       setIsAppLoading(false);
