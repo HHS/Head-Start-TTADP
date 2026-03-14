@@ -7266,7 +7266,7 @@ file-entry-cache@^6.0.1:
   dependencies:
     flat-cache "^3.0.4"
 
-file-type@^21.3.1:
+file-type@^21.3.2:
   version "21.3.2"
   resolved "https://registry.yarnpkg.com/file-type/-/file-type-21.3.2.tgz#b28bb3a19ea4b03f59af31546b9d95ee8a3623eb"
   integrity sha512-DLkUvGwep3poOV2wpzbHCOnSKGk1LzyXTv+aHFgN2VFl96wnp8YA9YjO2qPzg5PuL8q/SW9Pdi6WTkYOIh995w==
@@ -7382,7 +7382,7 @@ flat-cache@^3.0.4:
     keyv "^4.5.3"
     rimraf "^3.0.2"
 
-flatted@^3.2.7, flatted@^3.2.9:
+flatted@^3.2.7, flatted@^3.2.9, flatted@^3.4.0:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/flatted/-/flatted-3.4.1.tgz#84ccd9579e76e9cc0d246c11d8be0beb019143e6"
   integrity sha512-IxfVbRFVlV8V/yRaGzk0UVIcsKKHMSfYw66T/u4nTwlWteQePsxe//LjudR1AMX4tZW3WFCh3Zqa/sjlqpbURQ==
