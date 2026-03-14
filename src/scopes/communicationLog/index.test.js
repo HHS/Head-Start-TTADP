@@ -19,8 +19,12 @@ describe('communicationLog filtersToScopes', () => {
   let ignoredRecipient;
   const regionId = faker.datatype.number({ min: 10000, max: 100000 });
   let region;
+  let userRole;
+  let secondUserRole;
+  const createdRoles = [];
+  let createdUserRoles = [];
 
-  let communicationLogs;
+  let communicationLogs = [];
   let logForIgnoredRecipient;
 
   beforeAll(async () => {
@@ -31,6 +35,38 @@ describe('communicationLog filtersToScopes', () => {
 
     user = await createUser({ homeRegionId: regionId, name: userName });
     secondUser = await createUser({ homeRegionId: regionId, name: secondUserName });
+
+    userRole = await db.Role.findOne({ where: { fullName: 'System Specialist' } });
+    if (!userRole) {
+      userRole = await db.Role.create({
+        name: 'SS',
+        fullName: 'System Specialist',
+        isSpecialist: true,
+      });
+      createdRoles.push(userRole);
+    }
+
+    secondUserRole = await db.Role.findOne({ where: { fullName: 'COR' } });
+    if (!secondUserRole) {
+      secondUserRole = await db.Role.create({
+        name: 'COR',
+        fullName: 'COR',
+        isSpecialist: false,
+      });
+      createdRoles.push(secondUserRole);
+    }
+
+    createdUserRoles = await Promise.all([
+      db.UserRole.create({
+        userId: user.id,
+        roleId: userRole.id,
+      }),
+      db.UserRole.create({
+        userId: secondUser.id,
+        roleId: secondUserRole.id,
+      }),
+    ]);
+
     recipient = await createRecipient();
     ignoredRecipient = await createRecipient();
 
@@ -92,11 +128,21 @@ describe('communicationLog filtersToScopes', () => {
   });
 
   afterAll(async () => {
+    await db.UserRole.destroy({
+      where: {
+        id: createdUserRoles.map((createdRole) => createdRole.id),
+      },
+    });
+    await db.Role.destroy({
+      where: {
+        id: createdRoles.map((role) => role.id),
+      },
+    });
     await db.CommunicationLogRecipient.destroy({
       where: {
         communicationLogId: [
           ...communicationLogs.map((log) => log.id),
-          logForIgnoredRecipient.id,
+          logForIgnoredRecipient?.id,
         ],
       },
     });
@@ -105,7 +151,7 @@ describe('communicationLog filtersToScopes', () => {
       where: {
         id: [
           ...communicationLogs.map((log) => log.id),
-          logForIgnoredRecipient.id,
+          logForIgnoredRecipient?.id,
         ],
       },
     });
@@ -196,6 +242,22 @@ describe('communicationLog filtersToScopes', () => {
   it('filters by creator without', async () => {
     const scopes = communicationLogFiltersToScopes({
       'creator.nctn': [secondUserName.substring(0, 8)],
+    });
+    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    expect(count).toBe(3);
+  });
+
+  it('filters by role within', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'role.in': [secondUserRole.fullName],
+    });
+    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    expect(count).toBe(1);
+  });
+
+  it('filters by role without', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'role.nin': [secondUserRole.fullName],
     });
     const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
     expect(count).toBe(3);
