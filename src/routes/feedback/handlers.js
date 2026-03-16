@@ -1,14 +1,19 @@
-import { saveDashboardFeedback } from '../../services/dashboardFeedback';
+import saveSurveyFeedbackService from '../../services/surveyFeedback';
 
 /**
- * Handler for submitting dashboard feedback
+ * Handler for submitting survey feedback
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-export async function submitDashboardFeedback(req, res) {
+export async function submitSurveyFeedback(req, res) {
   try {
-    const { pageId, rating, comment, timestamp } = req.body;
-    const userId = req.session.userId;
+    const {
+      pageId,
+      rating,
+      comment,
+      timestamp,
+    } = req.body;
+    const { session: { userId } } = req;
 
     if (!pageId || !rating) {
       return res.status(400).json({
@@ -22,7 +27,19 @@ export async function submitDashboardFeedback(req, res) {
       });
     }
 
-    const feedback = await saveDashboardFeedback({
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User must be authenticated to submit feedback',
+      });
+    }
+
+    if (timestamp && Number.isNaN(Date.parse(timestamp))) {
+      return res.status(400).json({
+        error: 'Timestamp must be a valid ISO date string',
+      });
+    }
+
+    const feedback = await saveSurveyFeedbackService({
       pageId,
       rating,
       comment: comment || '',
@@ -35,11 +52,11 @@ export async function submitDashboardFeedback(req, res) {
       feedbackId: feedback.id,
     });
   } catch (error) {
-    req.logger.error('Error submitting dashboard feedback:', error);
+    req.logger.error('Error submitting survey feedback:', error);
     return res.status(500).json({
       error: 'Failed to submit feedback',
     });
   }
 }
 
-export default submitDashboardFeedback;
+export default submitSurveyFeedback;

@@ -141,7 +141,7 @@ describe('Landing Page', () => {
   });
 
   test('displays feedback survey on landing page', async () => {
-    expect(await screen.findByText('How useful is this dashboard page?')).toBeVisible();
+    expect(await screen.findByText('How useful is this page?')).toBeVisible();
   });
 
   test('displays report id column', async () => {
