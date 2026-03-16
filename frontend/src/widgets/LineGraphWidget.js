@@ -5,7 +5,6 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import { Checkbox } from '@trussworks/react-uswds';
 import { kebabCase } from 'lodash';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
@@ -37,8 +36,6 @@ export default function LineGraphWidget({
   // eslint-disable-next-line max-len
   const hasData = useMemo(() => data && data.length && data.some((d) => d.x.length > 0, []), [data]);
 
-  // for testing purposes, allow the empty state to be toggled with a checkbox
-  const [showEmptyState, setShowEmptyState] = useState(false);
   const { exportRows } = useWidgetExport(
     tableRows,
     columnHeadings,
@@ -100,12 +97,11 @@ export default function LineGraphWidget({
       title={title}
       subtitle={subtitle}
       showHeaderBorder
-      menuItems={hasData && !showEmptyState ? menuItems : []}
+      menuItems={hasData ? menuItems : []}
     >
-      <Checkbox label="Show empty state" id="show-empty-state" onChange={() => setShowEmptyState(!showEmptyState)} />
       <LineGraph
         showTabularData={showTabularData}
-        data={showEmptyState ? [] : data}
+        data={data}
         hideYAxis={hideYAxis}
         xAxisTitle={xAxisTitle}
         yAxisTitle={yAxisTitle}
