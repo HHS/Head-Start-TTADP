@@ -53,7 +53,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-cmd="yarn docker:deps"
+cmd="yarn docker:refresh"
 
 if [[ $environment == "local" ]]; then
     cmd="yarn deps"

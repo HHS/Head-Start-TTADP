@@ -1,49 +1,89 @@
 # Dev Setup
 
-## Running With Docker
+## Docker Setup
 
-For a full list of available yarn commands, see [yarn-commands.md](./yarn-commands.md)
+### Prerequisites
 
-If you run into issues, check the [troubleshooting](#troubleshooting) section.
+1. Install Docker Desktop (or Docker Engine + Compose v2).
+2. Install Node using the version in `.nvmrc` (`22.22.0`).
+3. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
+4. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
+5. Confirm the tools are available (`task`, `node`, `docker`).
 
-1. Install Docker. To check run `docker ps`.
-2. Install Node, matching the version in `.nvmrc` (in the repo root).
-3. Install Yarn `npm install -g yarn`
-4. Install cross-env `npm install -g cross-env`
-5. Copy `.env.example` to `.env`.
-6. Change the `AUTH_CLIENT_ID` variable to value found in the team 1password account. If you don't have access to 1password, please ask in the acf-head-start-eng slack channel for access.
-7. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
-8. Run `yarn docker:start` to start the application.
-   - The frontend will run on http://localhost:3000
-   - The backend will run on http://localhost:8080
-   - API documentation will run on http://localhost:5003
-   - Minio (S3-compatible file storage) will run on http://localhost:9000
-9. Run `yarn docker:stop` to stop the servers and remove the docker containers.
+### Docker Workflows
 
-**Notes:**
+Primary workflows (Yarn-first):
 
-- The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
-- Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the [docs/openapi](../../docs/openapi) folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+- Install frontend and backend dependencies: `yarn deps`
+- Start core stack (`frontend`, `backend`, `db`, `redis`): `yarn docker:start`
+- Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full`
+- Tail logs: `yarn docker:logs`
+- Open backend shell: `yarn docker:shell:backend`
+- Open frontend shell: `yarn docker:shell:frontend`
+- Stop stack: `yarn docker:stop`
+- Rebuild and restart stack: `yarn docker:refresh`
+- Reset Docker resources for this repo: `yarn docker:reset`
 
-### Troubleshooting
+Once the stack is running, open `http://localhost:3000`.
+For testing commands, see [testing](./testing.md).
 
-#### Outdated Node.js containers
+### Docker Compose Design
 
-If you see errors that the version of Node.js is incorrect, you may have older versions of the containers built. Delete those images and rerun `yarn docker:reset`.
+Local Docker development uses [`docker/compose/docker-compose.yml`](../../docker/compose/docker-compose.yml).
+The baseline/dev services have no profile and start by default.
+Additional services use the `fullstack` profile and are included by `yarn docker:start:full`.
+Dynamic security scan uses [`docker/compose/dss.yml`](../../docker/compose/dss.yml) via `yarn docker:dss`.
 
-#### Port conflicts
+The Docker stack uses bind mounts for source code and named volumes for dependencies/cache (for example `backend-node-modules`, `backend-yarn-cache`) to speed up rebuilds.
 
-When using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of those services are already running on your machine.
+If you need internals, Yarn `docker:*` scripts are wrappers around Taskfile commands.
 
-#### Missing `docker-compose` on Mac
+## Running Natively
 
-On a Mac with Brew-installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve: `brew install docker-compose`
+You can also run locally without Docker.
 
-#### File permission issues
+1. Install dependencies: `yarn deps`
+2. Start backend + frontend + worker watchers: `yarn start:stack:local`
+3. For file upload support, run Minio locally and use `S3_ENDPOINT=http://localhost:9000` in `.env`.
 
-If you run into issues with file permissions when using Docker, try changing the CURRENT_USER values in your `.env`. Run `id -u` and `id -g` to get your current user uid/gid.
+## Precommit hooks
 
-#### Apple Silicon & Chromium
+Our CI will fail if code is committed that does not pass linting. This repo includes a pre-commit hook in `.githooks/pre-commit`.
+
+If you are not using custom hooks:
+
+1. `chmod 755 .githooks/pre-commit`
+2. `git config core.hooksPath .githooks`
+
+## Import Production Data
+
+Make sure you have access to cloud.gov spaces and required credentials.
+
+On macOS:
+
+1. `cf login -a api.fr.cloud.gov --sso`
+2. `bash ./bin/latest_backup.sh -d`
+3. Ensure `psql` is installed.
+4. Start the Docker stack: `yarn docker:start`
+5. Create `bounce.sql` in repo root:
+
+```sql
+select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
+drop database ttasmarthub;
+create database ttasmarthub;
+```
+
+6. Load backup data (replace credentials from `.env`):
+
+```bash
+psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql
+psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql
+```
+
+7. Run migrations: `yarn docker:db:migrate`
+8. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
+
+## Puppeteer & Playwright
 
 If you are using a newer Mac with the Apple Silicon chipset, Puppeteer install fails with the message: `"The chromium binary is not available for arm64"`.
 
@@ -65,51 +105,3 @@ If running E2E tests for the first time, install the required browsers:
 ```sh
 npx playwright install
 ```
-
-## Running Natively
-
-You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
-
-You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
-
-## Precommit hooks
-
-Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in `.githooks/pre-commit`, also contains code to auto-format our terraform files.
-
-If you are not using your own custom pre-commit hooks:
-
-- start from repo root directory
-- make the pre-commit file executable:
-  `chmod 755 .githooks/pre-commit`
-- change your default hooks directory to [.githooks](../../.githooks):
-  `git config core.hooksPath .githooks`
-
-If you are already using git hooks, add the [.githooks/pre-commit](../../.githooks/pre-commit) contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
-
-## Import Production Data
-
-Make sure you have access to all the necessary spaces on Cloud.gov
-
-On a Mac
-
-1. Login to cloud.gov: `cf login -a api.fr.cloud.gov  --sso`.
-2. Download latest data: `bash ./bin/latest_backup.sh -d` (file will be placed in current directory).
-3. Ensure you have `psql` (if not `brew install libpq`).
-4. Ensure ttahub docker container is running.
-5. Create bounce.sql in repo directory (see below)
-6. Load data: `psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql && psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql` (Where username:password are replaced with credentials from .env and db.sql is the file you downloaded and unzipped).
-7. Migrate data: `yarn docker:db:migrate`
-8. Edit .env and change CURRENT_USER_ID= from 1 to the ID of a production user
-9. Restart docker
-
-_bounce.sql_
-
-```sh
-select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
-drop database ttasmarthub;
-create database ttasmarthub;
-```
-
-On Windows
-
-> Windows setup instructions have not yet been documented. Contributions welcome — please open a PR if you get this working.

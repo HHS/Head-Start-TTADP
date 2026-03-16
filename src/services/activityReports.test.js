@@ -175,6 +175,7 @@ const submittedReport = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  creatorRole: 'TTAC',
 };
 
 describe('formatResources', () => {
