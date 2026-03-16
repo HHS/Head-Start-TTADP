@@ -32,8 +32,7 @@ export default (sequelize, DataTypes) => {
     },
     comment: {
       type: DataTypes.TEXT,
-      allowNull: false,
-      defaultValue: '',
+      allowNull: true,
     },
     submittedAt: {
       type: DataTypes.DATE,

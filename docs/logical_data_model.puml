@@ -1255,12 +1255,12 @@ class SiteAlerts{
 class SurveyFeedbacks{
  * id : integer : <generated>
  * userId : integer : REFERENCES "Users".id
-!issue='column default does not match model' * comment : text : ''::text
  * createdAt : timestamp with time zone
  * pageId : varchar(255)
  * rating : integer
  * submittedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ comment : text
 }
 
 class Topics{
