@@ -44,7 +44,8 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data, loading }) 
   const subtitle = (
     <div className="margin-bottom-3">
       <WidgetContainerSubtitle marginY={0}>
-        Active deficient citations addressed in approved Activity Reports (AR).
+        Active deficient citations addressed in approved Activity Reports (AR)
+        compared against all act ive deficiencies.
       </WidgetContainerSubtitle>
       <div className="margin-top-1">
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>

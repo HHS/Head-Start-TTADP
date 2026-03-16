@@ -3,7 +3,7 @@ import stringify from 'csv-stringify/lib/sync';
 import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
-import { findEventBySmartsheetIdSuffix } from '../../services/event';
+import { findEventBySmartsheetId } from '../../services/event';
 import {
   createSession,
   findSessionsByEventId,
@@ -125,7 +125,7 @@ export const getHandler = async (req: Request, res: Response) => {
     }
 
     // Event auth.
-    const event = await findEventBySmartsheetIdSuffix(sessionEventId);
+    const event = await findEventBySmartsheetId(sessionEventId);
     if (event.data && event.data.status === 'Complete') {
       return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' });
     }
@@ -170,7 +170,7 @@ export const createHandler = async (req: Request, res: Response) => {
     }
 
     // Get associated event to use for authorization for region write
-    const event = await findEventBySmartsheetIdSuffix(eventId);
+    const event = await findEventBySmartsheetId(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const auth = await getEventAuthorization(req, res, event);
     if (!auth.canCreateSession()) { return res.sendStatus(httpCodes.FORBIDDEN); }
@@ -209,7 +209,7 @@ export const updateHandler = async (req: Request, res: Response) => {
     }
 
     // Authorization is through the associated event
-    const event = await findEventBySmartsheetIdSuffix(eventId);
+    const event = await findEventBySmartsheetId(eventId);
     const session = await findSessionById(Number(id));
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event, session);
@@ -236,7 +236,7 @@ export const deleteHandler = async (req: Request, res: Response) => {
 
     // Authorization is through the associated event
     // so we need to get the event first
-    const event = await findEventBySmartsheetIdSuffix(String(session.eventId));
+    const event = await findEventBySmartsheetId(String(session.eventId));
     const eventAuth = await getEventAuthorization(req, res, event);
     if (!eventAuth.canDeleteSession()) { return res.sendStatus(403); }
 

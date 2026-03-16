@@ -5,6 +5,7 @@ import {
   waitFor,
   act,
   screen,
+  fireEvent,
 } from '@testing-library/react';
 import { TRACE_IDS as TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
 import { useMediaQuery } from 'react-responsive';
@@ -607,7 +608,12 @@ const tableConfig = {
 };
 
 describe('LineGraph', () => {
-  const renderTest = (showTabularData = false, data = traces, yAxisTickStep = null) => {
+  const renderTest = (
+    showTabularData = false,
+    data = traces,
+    yAxisTickStep = null,
+    onChartClick = null,
+  ) => {
     act(() => {
       render(
         <LineGraph
@@ -616,6 +622,7 @@ describe('LineGraph', () => {
           xAxisTitle="Months"
           yAxisTitle="Percentage"
           yAxisTickStep={yAxisTickStep}
+          onChartClick={onChartClick}
           legendConfig={[
             {
               label: 'In person',
@@ -721,5 +728,15 @@ describe('LineGraph', () => {
     expect(layoutArg.xaxis.autotick).toBe(true);
     expect(layoutArg.xaxis.nticks).toBe(4);
     expect(layoutArg.xaxis.dtick).toBeUndefined();
+  });
+
+  it('calls chart click callback when graph is clicked', async () => {
+    const onChartClick = jest.fn();
+    renderTest(false, traces, null, onChartClick);
+
+    const lineChart = await screen.findByTestId('lines');
+    fireEvent.click(lineChart, { clientX: 100 });
+
+    expect(onChartClick).toHaveBeenCalledTimes(1);
   });
 });

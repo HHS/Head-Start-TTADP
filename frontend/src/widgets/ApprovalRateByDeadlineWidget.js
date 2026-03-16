@@ -1,5 +1,6 @@
 /* global globalThis */
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -25,9 +26,190 @@ import {
 } from './constants';
 import './ApprovalRateByDeadlineWidget.css';
 
-export function ApprovalRateByDeadlineWidget({ data, loading }) {
+function ApprovalRateSubtitle({ showFilterWarning }) {
+  return (
+    <div className="approval-rate-subtitle margin-bottom-3">
+      <div className="display-flex flex-wrap flex-align-center">
+        <WidgetContainerSubtitle marginY={0}>
+          Percentage of activity reports approved by the expected deadline.
+        </WidgetContainerSubtitle>
+        {showFilterWarning && (
+          <FiltersNotApplicable showLeadingDash={false} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ApprovalRateCarousel({
+  activeRegionId,
+  announcement,
+  carouselFrameRef,
+  hasMultipleRegions,
+  hasPreviousRegion,
+  hasNextRegion,
+  isAnimating,
+  lockedFrameHeight,
+  goToPreviousRegion,
+  goToNextRegion,
+  transition,
+  regions,
+  getTraceDataForRegion,
+  renderLineGraph,
+  traceData,
+  activeRegionIndex,
+  handleRegionChange,
+  onDotRef,
+}) {
+  return (
+    <div>
+      <h3 className="text-center text-bold font-sans-md margin-0 margin-top-2 margin-bottom-1">
+        {activeRegionId ? `Region ${activeRegionId}` : 'Region'}
+      </h3>
+      <span className="usa-sr-only" aria-live="polite" aria-atomic="true">{announcement}</span>
+      {hasMultipleRegions && (
+        <p className="usa-sr-only">
+          Click left side of the chart for previous region, right side for next region.
+        </p>
+      )}
+      <div className="approval-rate-carousel-shell position-relative">
+        <div
+          ref={carouselFrameRef}
+          className={[
+            'approval-rate-carousel-frame',
+            'position-relative',
+            'overflow-hidden',
+            isAnimating ? 'is-animating' : '',
+          ].join(' ')}
+          style={lockedFrameHeight ? { minHeight: `${lockedFrameHeight}px` } : undefined}
+        >
+          {hasMultipleRegions && (
+            <button
+              type="button"
+              className={[
+                'approval-rate-carousel-nav',
+                'approval-rate-carousel-nav--prev',
+                hasPreviousRegion ? '' : 'is-hidden',
+              ].join(' ')}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={goToPreviousRegion}
+              aria-label="Previous region"
+              tabIndex={hasPreviousRegion ? 0 : -1}
+            >
+              <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--left" aria-hidden="true" />
+            </button>
+          )}
+          {transition ? (
+            <>
+              <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--outgoing approval-rate-carousel-slide--${transition.direction}`}>
+                {renderLineGraph(
+                  getTraceDataForRegion(regions[transition.from]),
+                  `approval-rate-outgoing-${transition.from}`,
+                )}
+              </div>
+              <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--incoming approval-rate-carousel-slide--${transition.direction}`}>
+                {renderLineGraph(
+                  getTraceDataForRegion(regions[transition.to]),
+                  `approval-rate-incoming-${transition.to}`,
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="approval-rate-carousel-slide approval-rate-carousel-slide--current">
+              {renderLineGraph(traceData, `approval-rate-region-${activeRegionId}`)}
+            </div>
+          )}
+          {hasMultipleRegions && (
+            <button
+              type="button"
+              className={[
+                'approval-rate-carousel-nav',
+                'approval-rate-carousel-nav--next',
+                hasNextRegion ? '' : 'is-hidden',
+              ].join(' ')}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={goToNextRegion}
+              aria-label="Next region"
+              tabIndex={hasNextRegion ? 0 : -1}
+            >
+              <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--right" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </div>
+      {hasMultipleRegions && (
+        <div className="display-flex flex-justify-center flex-gap-1 margin-top-1">
+          {regions.map((regionId, index) => (
+            <button
+              key={`approval-rate-dot-${regionId}`}
+              type="button"
+              ref={(element) => onDotRef(index, element)}
+              className={[
+                'approval-rate-carousel-dot',
+                index === activeRegionIndex ? 'text-ink' : 'text-base-lightest',
+              ].join(' ')}
+              onClick={() => handleRegionChange(index, 'dot')}
+              aria-label={`Show Region ${regionId}`}
+              aria-current={index === activeRegionIndex ? 'true' : undefined}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+ApprovalRateSubtitle.propTypes = {
+  showFilterWarning: PropTypes.bool.isRequired,
+};
+
+ApprovalRateCarousel.propTypes = {
+  activeRegionId: PropTypes.number,
+  announcement: PropTypes.string.isRequired,
+  carouselFrameRef: PropTypes.shape({
+    current: PropTypes.oneOfType([
+      PropTypes.object,
+      PropTypes.oneOf([null]),
+    ]),
+  }).isRequired,
+  hasMultipleRegions: PropTypes.bool.isRequired,
+  hasPreviousRegion: PropTypes.bool.isRequired,
+  hasNextRegion: PropTypes.bool.isRequired,
+  isAnimating: PropTypes.bool.isRequired,
+  lockedFrameHeight: PropTypes.number,
+  goToPreviousRegion: PropTypes.func.isRequired,
+  goToNextRegion: PropTypes.func.isRequired,
+  transition: PropTypes.shape({
+    from: PropTypes.number.isRequired,
+    to: PropTypes.number.isRequired,
+    direction: PropTypes.oneOf(['next', 'prev']).isRequired,
+  }),
+  regions: PropTypes.arrayOf(PropTypes.number).isRequired,
+  getTraceDataForRegion: PropTypes.func.isRequired,
+  renderLineGraph: PropTypes.func.isRequired,
+  traceData: PropTypes.arrayOf(PropTypes.shape({
+    name: PropTypes.string,
+    x: PropTypes.arrayOf(PropTypes.string),
+    y: PropTypes.arrayOf(PropTypes.number),
+    trace: PropTypes.string,
+    id: PropTypes.string,
+  })).isRequired,
+  activeRegionIndex: PropTypes.number.isRequired,
+  handleRegionChange: PropTypes.func.isRequired,
+  onDotRef: PropTypes.func.isRequired,
+};
+
+ApprovalRateCarousel.defaultProps = {
+  activeRegionId: null,
+  lockedFrameHeight: null,
+  transition: null,
+};
+
+export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotApplicable }) {
   const widgetRef = useRef(null);
   const carouselFrameRef = useRef(null);
+  const dotButtonRefs = useRef([]);
+  const shouldFocusActiveDotRef = useRef(false);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [activeRegionIndex, setActiveRegionIndex] = useState(0);
@@ -35,6 +217,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [lockedFrameHeight, setLockedFrameHeight] = useState(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
 
   useEffect(() => {
     if (typeof globalThis === 'undefined' || typeof globalThis.matchMedia !== 'function') {
@@ -86,6 +269,17 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
       clearTimeout(cleanupTimer);
     };
   }, [transition]);
+
+  useEffect(() => {
+    if (!shouldFocusActiveDotRef.current) {
+      return;
+    }
+    const activeDot = dotButtonRefs.current[activeRegionIndex];
+    if (activeDot && typeof activeDot.focus === 'function') {
+      activeDot.focus();
+    }
+    shouldFocusActiveDotRef.current = false;
+  }, [activeRegionIndex]);
 
   const regions = useMemo(
     () => (widgetData && Array.isArray(widgetData.regions) ? widgetData.regions : []),
@@ -210,7 +404,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     };
   }, [regions, widgetData]);
 
-  const getTraceDataForRegion = (regionId) => {
+  const getTraceDataForRegion = useCallback((regionId) => {
     if (!regionId) {
       return [];
     }
@@ -231,7 +425,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
         id: APPROVAL_RATE_BY_DEADLINE_TRACE_IDS.NATIONAL,
       },
     ];
-  };
+  }, [monthLabels, nationalSeries, regionSeriesById]);
 
   const traceData = activeRegionId ? getTraceDataForRegion(activeRegionId) : [];
 
@@ -270,10 +464,13 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
     },
   }), [checkboxes, columnHeadings, footerData, setCheckboxes, tableRows]);
 
-  const handleRegionChange = (nextIndex) => {
+  const handleRegionChange = useCallback((nextIndex, source = 'dot') => {
     if (nextIndex < 0 || nextIndex >= regions.length || nextIndex === activeRegionIndex) {
       return;
     }
+
+    shouldFocusActiveDotRef.current = source !== 'dot';
+    setAnnouncement(`Showing Region ${regions[nextIndex]}`);
 
     if (prefersReducedMotion) {
       setActiveRegionIndex(nextIndex);
@@ -290,24 +487,45 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
       direction: nextIndex > activeRegionIndex ? 'next' : 'prev',
     });
     setActiveRegionIndex(nextIndex);
-  };
+  }, [activeRegionIndex, prefersReducedMotion, regions]);
 
   const hasMultipleRegions = regions.length > 1;
   const hasPreviousRegion = hasMultipleRegions && activeRegionIndex > 0;
   const hasNextRegion = hasMultipleRegions && activeRegionIndex < regions.length - 1;
-  const goToPreviousRegion = () => {
+  const goToPreviousRegion = useCallback(() => {
     if (!hasPreviousRegion) {
       return;
     }
-    handleRegionChange(activeRegionIndex - 1);
-  };
+    handleRegionChange(activeRegionIndex - 1, 'arrow');
+  }, [activeRegionIndex, handleRegionChange, hasPreviousRegion]);
 
-  const goToNextRegion = () => {
+  const goToNextRegion = useCallback(() => {
     if (!hasNextRegion) {
       return;
     }
-    handleRegionChange(activeRegionIndex + 1);
-  };
+    handleRegionChange(activeRegionIndex + 1, 'arrow');
+  }, [activeRegionIndex, handleRegionChange, hasNextRegion]);
+  const handleDotRef = useCallback((index, element) => {
+    dotButtonRefs.current[index] = element;
+  }, []);
+  const handleChartClick = useCallback((event) => {
+    if (!hasMultipleRegions || transition) {
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (!bounds.width) {
+      return;
+    }
+
+    const clickOffset = event.clientX - bounds.left;
+    if (clickOffset < bounds.width / 2) {
+      handleRegionChange(activeRegionIndex - 1, 'chart');
+      return;
+    }
+
+    handleRegionChange(activeRegionIndex + 1, 'chart');
+  }, [activeRegionIndex, handleRegionChange, hasMultipleRegions, transition]);
 
   const widgetClassName = [
     'approval-rate-by-deadline-widget',
@@ -317,14 +535,12 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
   ].join(' ');
 
   const subtitle = (
-    <div className="approval-rate-subtitle margin-bottom-3">
-      <div className="display-flex flex-wrap flex-align-center">
-        <WidgetContainerSubtitle marginY={0}>
-          Percentage of activity reports approved by the expected deadline.
-        </WidgetContainerSubtitle>
-        <FiltersNotApplicable showLeadingDash={false} />
-      </div>
-    </div>
+    <ApprovalRateSubtitle
+      showFilterWarning={
+        showFiltersNotApplicable
+        || Boolean(widgetData?.showDashboardFiltersNotApplicable)
+      }
+    />
   );
 
   const renderLineGraph = (graphData, key) => (
@@ -335,6 +551,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
       xAxisTitle="Months"
       yAxisTitle="Percentage"
       yAxisTickStep={10}
+      onChartClick={handleChartClick}
       legendConfig={APPROVAL_RATE_BY_DEADLINE_LEGEND_CONFIG}
       tableConfig={tableConfig}
       widgetRef={widgetRef}
@@ -368,95 +585,26 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
           selectAllIdPrefix="approval-rate-by-deadline-"
         />
       ) : (
-        <div>
-          <div className="text-center text-bold margin-top-2 margin-bottom-1">
-            {activeRegionId ? `Region ${activeRegionId}` : 'Region'}
-          </div>
-          <div className="approval-rate-carousel-shell position-relative">
-            <div
-              ref={carouselFrameRef}
-              className={[
-                'approval-rate-carousel-frame',
-                'position-relative',
-                'overflow-hidden',
-                isAnimating ? 'is-animating' : '',
-              ].join(' ')}
-              style={lockedFrameHeight ? { minHeight: `${lockedFrameHeight}px` } : undefined}
-            >
-              {hasMultipleRegions && (
-                <button
-                  type="button"
-                  className={[
-                    'approval-rate-carousel-nav',
-                    'approval-rate-carousel-nav--prev',
-                    !hasPreviousRegion ? 'is-hidden' : '',
-                  ].join(' ')}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={goToPreviousRegion}
-                  aria-label="Previous region"
-                  aria-hidden={!hasPreviousRegion}
-                  tabIndex={!hasPreviousRegion ? -1 : 0}
-                >
-                  <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--left" aria-hidden="true" />
-                </button>
-              )}
-              {transition ? (
-                <>
-                  <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--outgoing approval-rate-carousel-slide--${transition.direction}`}>
-                    {renderLineGraph(
-                      getTraceDataForRegion(regions[transition.from]),
-                      `approval-rate-outgoing-${transition.from}`,
-                    )}
-                  </div>
-                  <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--incoming approval-rate-carousel-slide--${transition.direction}`}>
-                    {renderLineGraph(
-                      getTraceDataForRegion(regions[transition.to]),
-                      `approval-rate-incoming-${transition.to}`,
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="approval-rate-carousel-slide approval-rate-carousel-slide--current">
-                  {renderLineGraph(traceData, `approval-rate-region-${activeRegionId}`)}
-                </div>
-              )}
-              {hasMultipleRegions && (
-                <button
-                  type="button"
-                  className={[
-                    'approval-rate-carousel-nav',
-                    'approval-rate-carousel-nav--next',
-                    !hasNextRegion ? 'is-hidden' : '',
-                  ].join(' ')}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={goToNextRegion}
-                  aria-label="Next region"
-                  aria-hidden={!hasNextRegion}
-                  tabIndex={!hasNextRegion ? -1 : 0}
-                >
-                  <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--right" aria-hidden="true" />
-                </button>
-              )}
-            </div>
-          </div>
-          {hasMultipleRegions && (
-            <div className="display-flex flex-justify-center flex-gap-1 margin-top-1">
-              {regions.map((regionId, index) => (
-                <button
-                  key={`approval-rate-dot-${regionId}`}
-                  type="button"
-                  className={[
-                    'approval-rate-carousel-dot',
-                    index === activeRegionIndex ? 'text-ink' : 'text-base-lightest',
-                  ].join(' ')}
-                  onClick={() => handleRegionChange(index)}
-                  aria-label={`Show Region ${regionId}`}
-                  aria-current={index === activeRegionIndex ? 'true' : undefined}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        <ApprovalRateCarousel
+          activeRegionId={activeRegionId}
+          announcement={announcement}
+          carouselFrameRef={carouselFrameRef}
+          hasMultipleRegions={hasMultipleRegions}
+          hasPreviousRegion={hasPreviousRegion}
+          hasNextRegion={hasNextRegion}
+          isAnimating={isAnimating}
+          lockedFrameHeight={lockedFrameHeight}
+          goToPreviousRegion={goToPreviousRegion}
+          goToNextRegion={goToNextRegion}
+          transition={transition}
+          regions={regions}
+          getTraceDataForRegion={getTraceDataForRegion}
+          renderLineGraph={renderLineGraph}
+          traceData={traceData}
+          activeRegionIndex={activeRegionIndex}
+          handleRegionChange={handleRegionChange}
+          onDotRef={handleDotRef}
+        />
       )}
     </WidgetContainer>
   );
@@ -465,6 +613,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading }) {
 ApprovalRateByDeadlineWidget.propTypes = {
   data: PropTypes.shape({
     regions: PropTypes.arrayOf(PropTypes.number),
+    showDashboardFiltersNotApplicable: PropTypes.bool,
     records: PropTypes.arrayOf(PropTypes.shape({
       month_label: PropTypes.string.isRequired,
       national_pct: PropTypes.number.isRequired,
@@ -474,14 +623,17 @@ ApprovalRateByDeadlineWidget.propTypes = {
     })),
   }),
   loading: PropTypes.bool,
+  showFiltersNotApplicable: PropTypes.bool,
 };
 
 ApprovalRateByDeadlineWidget.defaultProps = {
   data: {
     regions: EMPTY_ARRAY,
+    showDashboardFiltersNotApplicable: false,
     records: EMPTY_ARRAY,
   },
   loading: false,
+  showFiltersNotApplicable: false,
 };
 
 export default withWidgetData(ApprovalRateByDeadlineWidget, 'approvalRateByDeadline');

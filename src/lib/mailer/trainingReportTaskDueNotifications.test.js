@@ -387,7 +387,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Reminder:',
-        reportPath: 'http://localhost:3000/training-report/1234',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1234',
         templatePath: 'tr_owner_reminder_event',
       },
       {
@@ -400,7 +400,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Reminder:',
-        reportPath: 'http://localhost:3000/training-report/1234',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1234',
         templatePath: 'tr_collaborator_reminder_event',
       },
       {
@@ -413,7 +413,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1238',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1238',
         templatePath: 'tr_owner_reminder_event',
       },
       {
@@ -426,7 +426,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1238',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1238',
         templatePath: 'tr_collaborator_reminder_event',
       },
       {
@@ -439,7 +439,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1239',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1239',
         templatePath: 'tr_owner_reminder_event',
       },
       {
@@ -452,7 +452,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1239',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1239',
         templatePath: 'tr_collaborator_reminder_event',
       },
     ]);
@@ -588,7 +588,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Reminder:',
-        reportPath: 'http://localhost:3000/training-report/1234/session/1',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1234/session/1',
         templatePath: 'tr_owner_reminder_session',
       },
       {
@@ -601,7 +601,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Reminder:',
-        reportPath: 'http://localhost:3000/training-report/1234/session/1',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1234/session/1',
         templatePath: 'tr_collaborator_reminder_session',
       },
       {
@@ -614,7 +614,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Reminder:',
-        reportPath: 'http://localhost:3000/training-report/1234/session/1',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1234/session/1',
         templatePath: 'tr_poc_reminder_session',
       },
       {
@@ -627,7 +627,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Reminder:',
-        reportPath: 'http://localhost:3000/training-report/1234/session/1',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1234/session/1',
         templatePath: 'tr_poc_reminder_session',
       },
       {
@@ -640,7 +640,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1238/session/5',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1238/session/5',
         templatePath: 'tr_owner_reminder_session',
       },
       {
@@ -653,7 +653,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1238/session/5',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1238/session/5',
         templatePath: 'tr_collaborator_reminder_session',
       },
       {
@@ -666,7 +666,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1238/session/5',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1238/session/5',
         templatePath: 'tr_poc_reminder_session',
       },
       {
@@ -679,7 +679,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1239/session/6',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1239/session/6',
         templatePath: 'tr_owner_reminder_session',
       },
       {
@@ -692,7 +692,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1239/session/6',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1239/session/6',
         templatePath: 'tr_collaborator_reminder_session',
       },
       {
@@ -705,7 +705,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/1239/session/6',
+        reportPath: 'http://localhost:3000/training-report/RO1-012-1239/session/6',
         templatePath: 'tr_poc_reminder_session',
       },
     ]);
@@ -841,7 +841,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Reminder:',
-        reportPath: 'http://localhost:3000/training-report/view/1234',
+        reportPath: 'http://localhost:3000/training-report/view/RO1-012-1234',
         templatePath: 'tr_owner_reminder_event_not_completed',
       },
       {
@@ -854,7 +854,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/view/1238',
+        reportPath: 'http://localhost:3000/training-report/view/RO1-012-1238',
         templatePath: 'tr_owner_reminder_event_not_completed',
       },
       {
@@ -867,7 +867,7 @@ describe('trainingReportTaskDueNotifications', () => {
           'email@email.com',
         ],
         prefix: 'Past due:',
-        reportPath: 'http://localhost:3000/training-report/view/1239',
+        reportPath: 'http://localhost:3000/training-report/view/RO1-012-1239',
         templatePath: 'tr_owner_reminder_event_not_completed',
       },
     ]);

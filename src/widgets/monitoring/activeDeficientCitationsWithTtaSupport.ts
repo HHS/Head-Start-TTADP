@@ -161,21 +161,19 @@ export default async function activeDeficientCitationsWithTtaSupport(
         ON c.id = gc."citationId"
       WHERE c."calculated_finding_type" = 'Deficiency'
         AND c."deletedAt" IS NULL
-        AND c.reported_date < (m.month_start + INTERVAL '1 month')::date
+        AND c.initial_report_delivery_date < (m.month_start + INTERVAL '1 month')::date
         AND c.active_through >= m.month_start
       GROUP BY m.month_start
     ),
     tta_references AS (
       SELECT DISTINCT
         DATE_TRUNC('month', ar."startDate")::date AS month_start,
-        ref.reference->>'findingId' AS finding_uuid
+        jsonb_array_elements("monitoringReferences")->>'findingId' AS finding_uuid
       FROM "ActivityReportObjectives" aro
       JOIN "ActivityReportObjectiveCitations" aroc
         ON aroc."activityReportObjectiveId" = aro.id
       JOIN "ActivityReports" ar
         ON ar.id = aro."activityReportId"
-      JOIN LATERAL jsonb_array_elements(aroc."monitoringReferences") ref(reference)
-        ON true
       WHERE ar.id IN (:approvedReportIds)
     ),
     tta_deficiencies AS (
@@ -192,12 +190,12 @@ export default async function activeDeficientCitationsWithTtaSupport(
       WHERE gc."grantId" IN (:grantIds)
         AND c."calculated_finding_type" = 'Deficiency'
         AND c."deletedAt" IS NULL
-        AND c.reported_date < (m.month_start + INTERVAL '1 month')::date
+        AND c.initial_report_delivery_date < (m.month_start + INTERVAL '1 month')::date
         AND c.active_through >= m.month_start
       GROUP BY m.month_start
     )
     SELECT
-      m.month_start::text,
+      TO_CHAR(m.month_start,'YYYY-MM-DD') AS month_start,
       COALESCE(td.deficiencies_with_tta, 0)::int AS deficiencies_with_tta,
       COALESCE(ad.total_active_deficiencies, 0)::int AS total_active_deficiencies
     FROM months m

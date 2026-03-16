@@ -7,6 +7,7 @@ import { afterCommunicationDate, beforeCommunicationDate, withinCommunicationDat
 import { withPurpose, withoutPurpose } from './purpose';
 import { withoutRegion, withRegion } from './region';
 import { withIds, withoutIds } from './id';
+import { withMyReports, withoutMyReports } from './myReports';
 
 export const topicToQuery = {
   id: {
@@ -26,6 +27,10 @@ export const topicToQuery = {
   method: {
     in: (query: string[]) => withMethod(query),
     nin: (query: string[]) => withoutMethod(query),
+  },
+  myReports: {
+    in: (query: string[], _: unknown, userId: number) => withMyReports(query, _, userId),
+    nin: (query: string[], _: unknown, userId: number) => withoutMyReports(query, _, userId),
   },
   result: {
     in: (query: string[]) => withResult(query),

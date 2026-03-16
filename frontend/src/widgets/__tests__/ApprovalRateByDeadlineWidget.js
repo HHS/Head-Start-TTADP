@@ -49,8 +49,12 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
     expect(screen.getByText('Region 1')).toBeInTheDocument();
     expect(document.querySelectorAll('.approval-rate-carousel-dot').length).toBe(2);
-    expect(screen.getByRole('button', { name: /next region/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /previous region/i })).not.toBeInTheDocument();
+    const nextButton = screen.getByRole('button', { name: /next region/i });
+    const previousButton = screen.getByRole('button', { name: /previous region/i });
+    expect(nextButton).toBeInTheDocument();
+    expect(nextButton).not.toHaveClass('is-hidden');
+    expect(previousButton).toHaveClass('is-hidden');
+    expect(previousButton).toHaveAttribute('tabindex', '-1');
   });
 
   it('advances to the next region when clicking a dot', () => {
@@ -80,8 +84,12 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /next region/i }));
     expect(screen.getByText('Region 2')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /previous region/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /next region/i })).not.toBeInTheDocument();
+    const previousButton = screen.getByRole('button', { name: /previous region/i });
+    const nextButton = screen.getByRole('button', { name: /next region/i });
+    expect(previousButton).toBeInTheDocument();
+    expect(previousButton).not.toHaveClass('is-hidden');
+    expect(nextButton).toHaveClass('is-hidden');
+    expect(nextButton).toHaveAttribute('tabindex', '-1');
   });
 
   it('uses a generic legend label', () => {
@@ -106,6 +114,18 @@ describe('ApprovalRateByDeadlineWidget', () => {
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 
     expect(screen.queryByText('Region and national average')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Filters not applied/i)).not.toBeInTheDocument();
+  });
+
+  it('renders filters not applied warning when explicitly flagged via prop', () => {
+    render(
+      <ApprovalRateByDeadlineWidget
+        data={buildData()}
+        showFiltersNotApplicable
+        loading={false}
+      />,
+    );
+
     expect(screen.getByText(/Filters not applied/i)).toBeInTheDocument();
   });
 
