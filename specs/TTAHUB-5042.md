@@ -26,7 +26,29 @@ This allows internal normalization without breaking frontend contract.
   - `src/routes/monitoring/handlers.test.js`
   - goal/objective/report tests that assert `monitoringReferences`.
 
-### 2) Data model + migration plan (normalized junction)
+### 2) Backend request validation (Joi)
+- Add Joi validation middleware for targeted endpoints:
+  - `PUT /activity-reports/:activityReportId` body validation for citation payload shape (at least structural validation for nested citation objects).
+  - Monitoring route param validation for `recipientId` and `regionId` on `/tta/citation` and `/tta/review`.
+- Pattern to follow:
+  - `src/routes/activityReports/middleware.ts` and `src/routes/activityReports/middleware.test.js`.
+- Wire middleware in:
+  - `src/routes/activityReports/index.js`
+  - `src/routes/monitoring/index.js`.
+
+### 3) OpenAPI + test coverage hardening
+- OpenAPI currently includes activity-report endpoints but does **not** document monitoring/citations routes.
+- Add/update docs in `docs/openapi` for:
+  - monitoring TTA endpoints
+  - any response-shape clarifications for citation-related fields.
+- Expand tests across impacted layers:
+  - model tests (`src/models/tests/activityReportObjectiveCitation.test.js`)
+  - report cache/standard goals tests
+  - monitoring service tests
+  - route middleware tests for Joi validators.
+
+
+### 4) Data model + migration plan (normalized junction)
 - Add/reshape junction for ARO↔Citation links (many-to-many) with FK to `Citations.id`.
 - Add indexes/constraints:
   - FK on ARO and Citation
@@ -39,7 +61,7 @@ This allows internal normalization without breaking frontend contract.
   - `src/models/activityReportObjective.js`
   - `src/models/citation.js` (association additions only).
 
-### 3) Update write path (save/report cache)
+### 5) Update write path (save/report cache)
 - Refactor citation persistence logic in:
   - `src/services/reportCache.js` (`cacheCitations`)
   - `src/services/standardGoals.ts` (if citation hydration assumptions rely on JSONB row shape).
@@ -48,7 +70,7 @@ This allows internal normalization without breaking frontend contract.
   - only monitoring goals persist citations
   - per-grant citation behavior currently enforced in `cacheCitations`.
 
-### 4) Update read path + legacy response adapter
+### 6) Update read path + legacy response adapter
 - Replace direct `monitoringReferences` reads with normalized joins and construct legacy contract response objects.
 - Main consumers to refactor:
   - `src/goalServices/getGoalsForReport.ts`
@@ -61,42 +83,22 @@ This allows internal normalization without breaking frontend contract.
   - `src/goalServices/types.ts`.
 - Preserve fields expected by frontend and tests (`standardId`, `acro`, `findingSource`, `grantId`, `grantNumber`, `reviewName`, etc.) by deriving from `Citations` + related joins (and raw monitoring tables where fact tables don’t currently expose a field like review name/standardId).
 
-### 5) Backend request validation (Joi)
-- Add Joi validation middleware for targeted endpoints:
-  - `PUT /activity-reports/:activityReportId` body validation for citation payload shape (at least structural validation for nested citation objects).
-  - Monitoring route param validation for `recipientId` and `regionId` on `/tta/citation` and `/tta/review`.
-- Pattern to follow:
-  - `src/routes/activityReports/middleware.ts` and `src/routes/activityReports/middleware.test.js`.
-- Wire middleware in:
-  - `src/routes/activityReports/index.js`
-  - `src/routes/monitoring/index.js`.
 
-### 6) Monitoring service behavior updates
+### 7) Monitoring service behavior updates
 - Refactor `src/services/monitoring.ts` to stop relying on AROC virtuals from JSONB (`findingIds`, `reviewNames`, `grantNumber`) and instead compute from normalized joins.
 - Maintain output contract for monitoring pages:
   - review cards + citation cards in `frontend/src/pages/RecipientRecord/pages/Monitoring/components/*`.
 
-### 7) Process-data anonymization updates
+### 8) Process-data anonymization updates
 - Replace or adapt `processMonitoringReferences` in:
   - `src/tools/processData.js`
   - `src/tools/processData.test.js`.
 - If grant numbers are no longer persisted in AROC rows, convert this step to an equivalent anonymization on new persisted fields or remove safely with test updates.
 
-### 8) SSDI report SQL refactor
+### 9) SSDI report SQL refactor
 - Update:
   - `src/queries/dataRequests/internal/monitoring-citation-ar-report.sql`
 - Remove coupling to legacy `ActivityReportObjectiveCitations.monitoringReferences`/citation-text matching and join through normalized citation linkage to maintain report correctness.
-
-### 9) OpenAPI + test coverage hardening
-- OpenAPI currently includes activity-report endpoints but does **not** document monitoring/citations routes.
-- Add/update docs in `docs/openapi` for:
-  - monitoring TTA endpoints
-  - any response-shape clarifications for citation-related fields.
-- Expand tests across impacted layers:
-  - model tests (`src/models/tests/activityReportObjectiveCitation.test.js`)
-  - report cache/standard goals tests
-  - monitoring service tests
-  - route middleware tests for Joi validators.
 
 ### 10) Verification and rollout
 - Run backend + frontend lint/tests.
@@ -165,12 +167,12 @@ This allows internal normalization without breaking frontend contract.
 
 ## Execution todos (for tracked implementation)
 - `contract-baseline`: Capture and lock payload contracts + fixtures for saveReport and monitoring endpoints.
+- `docs-openapi`: Add/update OpenAPI coverage for impacted endpoints.
+- `validation-middleware`: Add Joi validators + route wiring for saveReport and monitoring params.
 - `schema-migration`: Design and add normalized ARO↔Citation migration + backfill.
 - `model-associations`: Update Sequelize models/associations for new linkage.
 - `write-path-refactor`: Refactor report cache/save path to persist normalized citation links.
 - `read-adapter-refactor`: Rebuild legacy `monitoringReferences` contract from normalized data in goal/recipient/monitoring services.
-- `validation-middleware`: Add Joi validators + route wiring for saveReport and monitoring params.
 - `processdata-update`: Replace monitoringReferences anonymization logic + tests.
 - `ssdi-query-update`: Refactor monitoring-citation SSDI SQL to normalized joins.
-- `docs-openapi`: Add/update OpenAPI coverage for impacted endpoints.
 - `test-sweep`: Update/add backend/frontend tests and run full relevant suites.
