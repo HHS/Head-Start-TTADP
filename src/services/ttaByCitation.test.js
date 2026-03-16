@@ -1,4 +1,6 @@
+import { Op } from 'sequelize';
 import { ttaByCitations, mapFindingType } from './monitoring';
+import updateMonitoringFactTables from '../tools/updateMonitoringFactTables';
 import {
   createAdditionalMonitoringData,
   createMonitoringData,
@@ -14,12 +16,110 @@ const {
   Grant,
   GrantNumberLink,
   Recipient,
+  Citation,
+  DeliveredReview,
+  DeliveredReviewCitation,
+  GrantCitation,
+  GrantDeliveredReview,
 } = db;
 
 const RECIPIENT_ID = 9;
 const REGION_ID = 1;
 const GRANT_NUMBER = '01HP044446';
 const GRANT_ID = 665;
+const UNMATCHED_REVIEW_UUID = '00000000-0000-0000-0000-000000000000';
+
+const expectedCitationResponse = (findingId) => ([
+  {
+    category: 'source',
+    citationNumber: '1234',
+    findingType: 'determination',
+    grantNumbers: [
+      '01HP044446',
+    ],
+    lastTTADate: expect.any(String),
+    reviews: [
+      {
+        findingStatus: 'Complete',
+        name: 'REVIEW!!!',
+        objectives: [
+          {
+            activityReports: [
+              {
+                displayId: expect.any(String),
+                id: expect.any(Number),
+              },
+            ],
+            endDate: expect.any(String),
+            findingIds: [
+              findingId,
+            ],
+            grantNumber: GRANT_NUMBER,
+            reviewNames: [
+              'REVIEW!!!',
+            ],
+            specialists: [
+              {
+                name: 'Hermione Granger, NC, SS',
+                roles: expect.arrayContaining(['SS', 'NC']),
+              },
+              {
+                name: 'Hermione Granger, NC, SS',
+                roles: expect.arrayContaining(['SS', 'NC']),
+              },
+            ],
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            title: expect.any(String),
+            topics: [
+              'Spleunking',
+            ],
+          },
+          {
+            activityReports: [
+              {
+                displayId: expect.any(String),
+                id: expect.any(Number),
+              },
+            ],
+            endDate: expect.any(String),
+            findingIds: [
+              findingId,
+            ],
+            grantNumber: GRANT_NUMBER,
+            reviewNames: [
+              'REVIEW!!!',
+            ],
+            specialists: [
+              {
+                name: 'Hermione Granger, NC, SS',
+                roles: expect.arrayContaining(['SS']),
+              },
+              {
+                name: 'Hermione Granger, NC, SS',
+                roles: expect.arrayContaining(['SS']),
+              },
+            ],
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            title: expect.any(String),
+            topics: [
+              'Spleunking',
+            ],
+          },
+        ],
+        outcome: 'Complete',
+        reviewReceived: '02/22/2025',
+        reviewType: 'FA-1',
+        specialists: [
+          {
+            name: 'Hermione Granger, NC, SS',
+            roles: expect.arrayContaining(['SS']),
+          },
+        ],
+      },
+    ],
+    status: 'Complete',
+  },
+]);
 
 describe('ttaByCitations', () => {
   let findingId;
@@ -81,119 +181,100 @@ describe('ttaByCitations', () => {
   });
 
   afterAll(async () => {
-    await destroyMonitoringData(GRANT_NUMBER);
-    await destroyAdditionalMonitoringData(findingId, reviewId);
-    await destroyReportAndCitationData(
-      goal,
-      objectives,
-      reports,
-      topic,
-      citations,
-    );
+    try {
+      if (findingId) {
+        const factCitations = await Citation.findAll({
+          attributes: ['id'],
+          where: {
+            finding_uuid: findingId,
+          },
+        });
 
-    await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
-    await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
+        const factCitationIds = factCitations.map((citation) => citation.id);
 
-    await db.sequelize.close();
+        if (factCitationIds.length > 0) {
+          await DeliveredReviewCitation.destroy({
+            where: { citationId: factCitationIds },
+            force: true,
+          });
+        }
+
+        await GrantCitation.destroy({
+          where: { grantId: GRANT_ID },
+          force: true,
+        });
+
+        await GrantDeliveredReview.destroy({
+          where: { grantId: GRANT_ID },
+          force: true,
+        });
+
+        if (factCitationIds.length > 0) {
+          await Citation.destroy({
+            where: { id: factCitationIds },
+            force: true,
+          });
+        }
+      }
+
+      if (reviewId) {
+        await DeliveredReview.destroy({
+          where: {
+            review_uuid: {
+              [Op.in]: [reviewId, UNMATCHED_REVIEW_UUID],
+            },
+          },
+          force: true,
+        });
+      }
+
+      if (goal && objectives && reports && topic && citations) {
+        await destroyReportAndCitationData(
+          goal,
+          objectives,
+          reports,
+          topic,
+          citations,
+        );
+      }
+
+      if (findingId && reviewId) {
+        await destroyAdditionalMonitoringData(findingId, reviewId);
+      }
+
+      await destroyMonitoringData(GRANT_NUMBER);
+      await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
+      await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
+    } finally {
+      await db.sequelize.close();
+    }
   });
 
   it('fetches TTA, ordered by Citations', async () => {
+    await updateMonitoringFactTables();
+
     const data = await ttaByCitations(
       RECIPIENT_ID,
       REGION_ID,
     );
 
-    expect(data).toStrictEqual([
-      {
-        category: 'source',
-        citationNumber: '1234',
-        findingType: 'determination',
-        grantNumbers: [
-          '01HP044446',
-        ],
-        lastTTADate: expect.any(String),
-        reviews: [
-          {
-            findingStatus: 'Complete',
-            name: 'REVIEW!!!',
-            objectives: [
-              {
-                activityReports: [
-                  {
-                    displayId: expect.any(String),
-                    id: expect.any(Number),
-                  },
-                ],
-                endDate: expect.any(String),
-                findingIds: [
-                  findingId,
-                ],
-                grantNumber: GRANT_NUMBER,
-                reviewNames: [
-                  'REVIEW!!!',
-                ],
-                specialists: [
-                  {
-                    name: 'Hermione Granger, NC, SS',
-                    roles: expect.arrayContaining(['SS', 'NC']),
-                  },
-                  {
-                    name: 'Hermione Granger, NC, SS',
-                    roles: expect.arrayContaining(['SS', 'NC']),
-                  },
-                ],
-                status: OBJECTIVE_STATUS.IN_PROGRESS,
-                title: expect.any(String),
-                topics: [
-                  'Spleunking',
-                ],
-              },
-              {
-                activityReports: [
-                  {
-                    displayId: expect.any(String),
-                    id: expect.any(Number),
-                  },
-                ],
-                endDate: expect.any(String),
-                findingIds: [
-                  findingId,
-                ],
-                grantNumber: GRANT_NUMBER,
-                reviewNames: [
-                  'REVIEW!!!',
-                ],
-                specialists: [
-                  {
-                    name: 'Hermione Granger, NC, SS',
-                    roles: expect.arrayContaining(['SS']),
-                  },
-                  {
-                    name: 'Hermione Granger, NC, SS',
-                    roles: expect.arrayContaining(['SS']),
-                  },
-                ],
-                status: OBJECTIVE_STATUS.IN_PROGRESS,
-                title: expect.any(String),
-                topics: [
-                  'Spleunking',
-                ],
-              },
-            ],
-            outcome: 'Complete',
-            reviewReceived: '02/22/2025',
-            reviewType: 'FA-1',
-            specialists: [
-              {
-                name: 'Hermione Granger, NC, SS',
-                roles: expect.arrayContaining(['SS']),
-              },
-            ],
-          },
-        ],
-        status: 'Complete',
-      },
-    ]);
+    expect(data).toStrictEqual(expectedCitationResponse(findingId));
+  });
+
+  it('returns no citations when fact-table reviews cannot be matched', async () => {
+    await updateMonitoringFactTables();
+
+    await DeliveredReview.update(
+      { review_uuid: UNMATCHED_REVIEW_UUID },
+      { where: { review_uuid: reviewId } },
+    );
+
+    const data = await ttaByCitations(
+      RECIPIENT_ID,
+      REGION_ID,
+    );
+
+    expect(data).toStrictEqual([]);
   });
 
   describe('mapFindingType', () => {
