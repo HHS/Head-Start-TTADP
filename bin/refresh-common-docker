@@ -8,4 +8,4 @@ cd frontend && yarn remove @ttahub/common
 git restore package.json
 cd ..
 git restore package.json
-yarn docker:deps
+yarn docker:refresh

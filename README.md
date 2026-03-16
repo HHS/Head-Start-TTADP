@@ -23,6 +23,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 - [Tech Stack](./docs/tech-stack.md) — Technology versions
 - [Dev Setup](./docs/guides/dev-setup.md) — Local environment setup (Docker & native)
+- [Command Reference](./docs/guides/yarn-commands.md) — Task/Yarn command map (including Docker compose workflows)
 - [Infrastructure](./docs/guides/infrastructure.md) — Environments, CI/CD, production ops
 - [Testing](./docs/guides/testing.md) — Running and writing tests
 - [Observability](./docs/guides/observability.md) — Monitoring, logging, analytics

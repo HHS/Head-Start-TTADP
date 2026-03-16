@@ -261,9 +261,9 @@ describe('merge-coverage script', () => {
         toJSON: jest.fn().mockReturnValue({ merged: true }),
       };
       istanbulCoverage.createCoverageMap = jest.fn().mockReturnValue(mockCoverageMap);
-  
+
       main();
-  
+
       expect(fs.readdirSync).toHaveBeenCalledWith(DEFAULT_COVERAGE_DIR, { withFileTypes: true });
     });
   });
