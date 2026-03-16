@@ -14,7 +14,6 @@ import {
   createGoals,
   retrieveObjectiveOptionsByGoalTemplate,
   deleteGoal,
-  createGoalsForReport,
   getMissingDataForActivityReport,
   createGoalsFromTemplate,
   getGoalHistory,
@@ -24,7 +23,6 @@ import {
   createOrUpdateGoals,
   destroyGoal,
   goalByIdWithActivityReportsAndRegions,
-  createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
   getGoalHistory as getGoalHistoryService,
 } from '../../goalServices/goals';
