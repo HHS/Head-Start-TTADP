@@ -21,7 +21,15 @@ export async function submitSurveyFeedback(req, res) {
       });
     }
 
-    if (rating < 1 || rating > 10) {
+    const numericRating = Number(rating);
+
+    if (Number.isNaN(numericRating)) {
+      return res.status(400).json({
+        error: 'Rating must be a valid number',
+      });
+    }
+
+    if (numericRating < 1 || numericRating > 10) {
       return res.status(400).json({
         error: 'Rating must be between 1 and 10',
       });
@@ -41,7 +49,7 @@ export async function submitSurveyFeedback(req, res) {
 
     const feedback = await saveSurveyFeedbackService({
       pageId,
-      rating,
+      rating: numericRating,
       comment: comment || '',
       timestamp: timestamp || new Date().toISOString(),
       userId,
