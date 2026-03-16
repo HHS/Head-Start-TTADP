@@ -695,6 +695,9 @@ async function ttaByCitationsFromFactTables(
     });
   });
 
+  let unmatchedDeliveredReviewCount = 0;
+  const unmatchedReviewUuids = new Set<string>();
+
   deliveredReviewCitations.forEach((deliveredReviewCitation) => {
     const citationData = citationsById.get(deliveredReviewCitation.citationId);
     const { deliveredReview } = deliveredReviewCitation;
@@ -704,7 +707,8 @@ async function ttaByCitationsFromFactTables(
 
     const reviewDetailsForUuid = reviewByUuid.get(deliveredReview.review_uuid);
     if (!reviewDetailsForUuid) {
-      auditLogger.warn(`ttaByCitationsFromFactTables: skipping delivered review with no MonitoringReview match (recipientId=${recipientId}, regionId=${regionId}, citationId=${deliveredReviewCitation.citationId}, reviewUuid=${deliveredReview.review_uuid})`);
+      unmatchedDeliveredReviewCount += 1;
+      unmatchedReviewUuids.add(deliveredReview.review_uuid);
       return;
     }
 
@@ -737,6 +741,10 @@ async function ttaByCitationsFromFactTables(
       ) || citationData.status,
     });
   });
+
+  if (unmatchedDeliveredReviewCount > 0) {
+    auditLogger.warn(`ttaByCitationsFromFactTables: skipped ${unmatchedDeliveredReviewCount} delivered review citations with ${unmatchedReviewUuids.size} unmatched review UUIDs (recipientId=${recipientId}, regionId=${regionId})`);
+  }
 
   return [...citationsById.values()]
     .filter((citationData) => citationData.reviews.length > 0)
