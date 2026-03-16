@@ -24,27 +24,6 @@ const logContext = {
   namespace,
 };
 
-export async function createGoalsForReport(req, res) {
-  try {
-    const { goals, activityReportId, regionId } = req.body;
-
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
-
-    const canCreate = new Goal(user, null, regionId).canCreate();
-
-    if (!canCreate) {
-      res.sendStatus(401);
-      return;
-    }
-
-    const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId, userId);
-    res.json(newGoals);
-  } catch (error) {
-    await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
-  }
-}
-
 export async function getMissingDataForActivityReport(req, res) {
   try {
     const { regionId } = req.params;
