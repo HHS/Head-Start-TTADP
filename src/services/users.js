@@ -261,13 +261,13 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
   results.creators = [...results.collaborators];
 
   if (eventId) {
-    // get event report pilot that has the id event id.
+    // get event report pilot that has the matching full event display id.
     const eventReportPilot = await EventReportPilot.findOne({
       attributes: ['id', 'ownerId', 'data'],
       where: {
         data: {
           eventId: {
-            [Op.endsWith]: `-${eventId}`,
+            [Op.eq]: eventId,
           },
         },
       },

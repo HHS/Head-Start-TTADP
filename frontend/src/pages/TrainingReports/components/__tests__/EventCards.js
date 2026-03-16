@@ -365,7 +365,7 @@ describe('EventCards', () => {
       pocIds: [4],
       data: {
         eventName: 'Collab Event 1',
-        eventId: '-1234',
+        eventId: 'R01-PD-25-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         startDate: '01/02/2021',
         endDate: '01/03/2021',
@@ -395,13 +395,13 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('-1234')).toBeInTheDocument();
+    expect(screen.getByText('R01-PD-25-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
 
     // Show correct actions for collaborator event.
-    const button = screen.getByRole('button', { name: /actions for event -1234/i });
+    const button = screen.getByRole('button', { name: /actions for event R01-PD-25-1234/i });
     userEvent.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
@@ -416,7 +416,7 @@ describe('EventCards', () => {
     expect(screen.getByText(/are you sure you want to delete this event/i)).toBeInTheDocument();
     const confirmBtn = screen.getByRole('button', { name: /delete event/i });
     userEvent.click(confirmBtn);
-    expect(deleteFunction).toHaveBeenCalledWith('1234', 1);
+    expect(deleteFunction).toHaveBeenCalledWith('R01-PD-25-1234', 1);
   });
 
   it('renders an Alert message if there is one', () => {

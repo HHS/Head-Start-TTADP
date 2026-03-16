@@ -5,6 +5,7 @@ import {
   waitFor,
   act,
   screen,
+  fireEvent,
 } from '@testing-library/react';
 import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
 import Plotly from 'plotly.js-basic-dist';
@@ -602,7 +603,12 @@ const tableConfig = {
 };
 
 describe('LineGraph', () => {
-  const renderTest = (showTabularData = false, data = traces, yAxisTickStep = null) => {
+  const renderTest = (
+    showTabularData = false,
+    data = traces,
+    yAxisTickStep = null,
+    onChartClick = null,
+  ) => {
     act(() => {
       render(
         <LineGraph
@@ -611,6 +617,7 @@ describe('LineGraph', () => {
           xAxisTitle="Months"
           yAxisTitle="Percentage"
           yAxisTickStep={yAxisTickStep}
+          onChartClick={onChartClick}
           legendConfig={[
             {
               label: 'In person',
@@ -699,5 +706,15 @@ describe('LineGraph', () => {
     const lastCall = Plotly.newPlot.mock.calls[Plotly.newPlot.mock.calls.length - 1];
     const layoutArg = lastCall[2];
     expect(layoutArg.yaxis.dtick).toBe(10);
+  });
+
+  it('calls chart click callback when graph is clicked', async () => {
+    const onChartClick = jest.fn();
+    renderTest(false, traces, null, onChartClick);
+
+    const lineChart = await screen.findByTestId('lines');
+    fireEvent.click(lineChart, { clientX: 100 });
+
+    expect(onChartClick).toHaveBeenCalledTimes(1);
   });
 });

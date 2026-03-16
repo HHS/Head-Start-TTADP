@@ -40,7 +40,7 @@ const MESSAGE_TEMPLATES = {
     <>
       You submitted Training Event
       {' '}
-      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link>
       {' '}
       on
       {' '}
@@ -53,7 +53,7 @@ const MESSAGE_TEMPLATES = {
       {' '}
       for Training Event
       {' '}
-      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link>
       {' '}
       on
       {' '}
@@ -68,7 +68,7 @@ const MESSAGE_TEMPLATES = {
       {' '}
       of Training Event
       {' '}
-      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link>
       {' '}
       on
       {' '}
@@ -83,7 +83,7 @@ const MESSAGE_TEMPLATES = {
       {' '}
       of Training Event
       {' '}
-      <Link to={`/training-report/view/${eventId.split('-').pop()}`}>{eventId}</Link>
+      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link>
       {' '}
       was submitted on
       {' '}

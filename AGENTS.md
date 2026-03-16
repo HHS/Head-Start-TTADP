@@ -52,7 +52,7 @@ Three entry points: backend (`/src`), frontend (`/frontend/src`), worker (`/src/
 **Backend layered pattern:** Routes → Services → Models.
 - `routes/`: API endpoints organized by domain. Call services, never contain business logic directly.
 - `services/`: Business logic. Interact with models and handle associated-data updates.
-- `models/`: Sequelize database models.
+- `models/`: Sequelize database models. Subdirectories for hooks and model validation schemas
 - `policies/`: Authorization and access control. Routes check policies before proceeding.
 - `scopes/`: Reusable Sequelize query filters.
 - `middleware/`: Express middleware (auth, sessions, logging). Routes use `transactionWrapper.js` when needed.
