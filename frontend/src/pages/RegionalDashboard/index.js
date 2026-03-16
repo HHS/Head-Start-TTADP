@@ -18,6 +18,11 @@ import TabsNav from '../../components/TabsNav';
 import Dashboard from './components/Dashboard';
 import useDashboardFilterKey from '../../hooks/useDashboardFilterKey';
 
+const filterConfiguration = {
+  'recipient-spotlight': RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
+  default: DASHBOARD_FILTER_CONFIG,
+};
+
 const pageConfig = () => ({
   'training-reports': {
     h1Text: 'Regional dashboard - Training Reports',
@@ -31,12 +36,16 @@ const pageConfig = () => ({
     h1Text: 'Regional dashboard - Recipient spotlight',
     showFilters: true,
   },
+  monitoring: {
+    h1Text: 'Regional dashboard - Monitoring',
+    showFilters: false,
+  },
   'activity-reports': {
     h1Text: 'Regional dashboard - Activity Reports',
     showFilters: true,
   },
   default: {
-    h1Text: 'Regional TTA activity dashboard',
+    h1Text: 'Regional dashboard - Activity Reports',
     showFilters: true,
   },
 });
@@ -51,15 +60,14 @@ const links = [
     label: 'Training Reports',
   },
   {
+    to: '/dashboards/regional-dashboard/monitoring',
+    label: 'Monitoring',
+    featureFlag: 'monitoring-regional-dashboard',
+  },
+  {
     to: '/dashboards/regional-dashboard/recipient-spotlight',
     label: 'Recipient spotlight',
   },
-  /*
-  {
-    to: '/dashboards/regional-dashboard/all-reports',
-    label: 'All reports',
-  },
-  */
 ];
 
 export default function RegionalDashboard({ match }) {
@@ -70,12 +78,7 @@ export default function RegionalDashboard({ match }) {
   const filterKey = useDashboardFilterKey('regional-dashboard', reportType || 'activityReports');
 
   // Determine which filter config to use based on report type
-  const filterConfigToUse = useMemo(() => {
-    if (reportType === 'recipient-spotlight') {
-      return RECIPIENT_SPOTLIGHT_FILTER_CONFIG;
-    }
-    return DASHBOARD_FILTER_CONFIG;
-  }, [reportType]);
+  const filterConfigToUse = filterConfiguration[reportType] || filterConfiguration.default;
 
   const {
     // from useUserDefaultRegionFilters
