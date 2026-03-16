@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import AriaLiveContext from '../../AriaLiveContext';
 import UserContext from '../../UserContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
-import { submitDashboardFeedback } from '../../fetchers/feedback';
+import { submitSurveyFeedback } from '../../fetchers/feedback';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
@@ -34,7 +34,7 @@ import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHel
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 import NewActivityReportButton from '../../components/NewActivityReportButton';
 import LandingMessage from '../../components/LandingMessage';
-import DashboardFeedbackSurvey from '../../components/DashboardFeedbackSurvey';
+import FeedbackSurvey from '../../components/FeedbackSurvey';
 import './index.scss';
 
 const FILTER_KEY = 'landing-filters';
@@ -298,9 +298,9 @@ function Landing() {
             setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
-        <DashboardFeedbackSurvey
+        <FeedbackSurvey
           pageId="activity-reports-landing"
-          onSubmit={submitDashboardFeedback}
+          onSubmit={submitSurveyFeedback}
         />
       </>
     </>

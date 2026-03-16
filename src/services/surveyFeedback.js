@@ -1,9 +1,8 @@
+import { SurveyFeedback } from '../models';
 import { auditLogger } from '../logger';
 
 /**
- * Save dashboard feedback
- * For now, this logs the feedback. In the future, this can be extended
- * to store feedback in a database table via a migration.
+ * Save survey feedback.
  *
  * @param {Object} feedbackData - Feedback data
  * @param {string} feedbackData.pageId - Dashboard page identifier
@@ -13,7 +12,7 @@ import { auditLogger } from '../logger';
  * @param {number} feedbackData.userId - User ID
  * @returns {Promise<Object>} Saved feedback object
  */
-export async function saveDashboardFeedback(feedbackData) {
+export async function saveSurveyFeedback(feedbackData) {
   const {
     pageId,
     rating,
@@ -22,25 +21,28 @@ export async function saveDashboardFeedback(feedbackData) {
     userId,
   } = feedbackData;
 
-  // Log the feedback for analytics
-  auditLogger.info('Dashboard feedback submitted', {
+  const submittedAt = timestamp ? new Date(timestamp) : new Date();
+  const normalizedComment = comment || '';
+
+  const feedback = await SurveyFeedback.create({
     pageId,
     rating,
-    commentLength: comment.length,
-    timestamp,
+    comment: normalizedComment,
+    submittedAt,
     userId,
   });
 
-  // Return a mock response with an ID
-  // When database table is added, this will use Sequelize model to persist
-  return {
-    id: Date.now(), // Temporary ID generation
+  // Log the feedback for analytics
+  auditLogger.info('Survey feedback submitted', {
     pageId,
     rating,
-    comment,
-    timestamp,
+    commentLength: normalizedComment.length,
+    timestamp: submittedAt.toISOString(),
     userId,
-  };
+    feedbackId: feedback.id,
+  });
+
+  return feedback;
 }
 
-export default saveDashboardFeedback;
+export default saveSurveyFeedback;

@@ -1,6 +1,6 @@
-# Dashboard Feedback Survey
+# FeedbackSurvey
 
-A reusable React component for collecting user feedback on dashboard pages.
+A reusable React component for collecting page-level feedback.
 
 ## Features
 
@@ -19,17 +19,17 @@ A reusable React component for collecting user feedback on dashboard pages.
 ### Basic Implementation
 
 ```jsx
-import DashboardFeedbackSurvey from '../../components/DashboardFeedbackSurvey';
-import { submitDashboardFeedback } from '../../fetchers/feedback';
+import FeedbackSurvey from '../../components/FeedbackSurvey';
+import { submitSurveyFeedback } from '../../fetchers/feedback';
 
 function MyDashboard() {
   return (
     <div>
       {/* Your dashboard content */}
       
-      <DashboardFeedbackSurvey
+      <FeedbackSurvey
         pageId="my-dashboard"
-        onSubmit={submitDashboardFeedback}
+        onSubmit={submitSurveyFeedback}
       />
     </div>
   );
@@ -60,16 +60,16 @@ function MyDashboard() {
 ### QA Dashboard
 ```jsx
 // frontend/src/pages/QADashboard/index.js
-import DashboardFeedbackSurvey from '../../components/DashboardFeedbackSurvey';
-import { submitDashboardFeedback } from '../../fetchers/feedback';
+import FeedbackSurvey from '../../components/FeedbackSurvey';
+import { submitSurveyFeedback } from '../../fetchers/feedback';
 
 export default function QADashboard() {
   return (
     <>
       {/* Dashboard content */}
-      <DashboardFeedbackSurvey
+      <FeedbackSurvey
         pageId="qa-dashboard"
-        onSubmit={submitDashboardFeedback}
+        onSubmit={submitSurveyFeedback}
       />
     </>
   );
@@ -78,23 +78,23 @@ export default function QADashboard() {
 
 ### Regional Dashboard
 ```jsx
-<DashboardFeedbackSurvey
+<FeedbackSurvey
   pageId="regional-dashboard"
-  onSubmit={submitDashboardFeedback}
+  onSubmit={submitSurveyFeedback}
 />
 ```
 
 ### Resources Dashboard
 ```jsx
-<DashboardFeedbackSurvey
+<FeedbackSurvey
   pageId="resources-dashboard"
-  onSubmit={submitDashboardFeedback}
+  onSubmit={submitSurveyFeedback}
 />
 ```
 
 ## Backend API
 
-The component submits feedback to `/api/feedback/dashboard` endpoint.
+The component submits feedback to `/api/feedback/survey` endpoint.
 
 **Request:**
 ```json
@@ -117,7 +117,7 @@ The component submits feedback to `/api/feedback/dashboard` endpoint.
 ## Local Storage
 
 The component uses localStorage to track dismissal per page:
-- Key format: `dashboard-feedback-dismissed-{pageId}`
+- Key format: `survey-feedback-dismissed-{pageId}`
 - Value: `"true"` when dismissed
 
 Users can clear their browser's localStorage to see the survey again.
@@ -130,7 +130,7 @@ The component uses project colors from `colors.scss`:
 - Text: `$base-darkest`
 - Links: `$text-link`
 
-Customize by editing `DashboardFeedbackSurvey.scss`.
+Customize by editing `FeedbackSurvey.scss`.
 
 ## Accessibility
 
@@ -144,13 +144,11 @@ Customize by editing `DashboardFeedbackSurvey.scss`.
 Run tests:
 ```bash
 cd frontend
-TZ=America/New_York yarn test --watchAll=false --testPathPattern=DashboardFeedbackSurvey
+TZ=America/New_York yarn test --watchAll=false --testPathPattern=FeedbackSurvey
 ```
 
 ## Future Enhancements
 
-- [ ] Add database persistence (currently logs to audit log)
-- [ ] Create migration for `DashboardFeedback` table
 - [ ] Add admin analytics dashboard to view feedback
 - [ ] Support custom positioning options
 - [ ] Add animation for show/hide transitions

@@ -5,7 +5,7 @@ import {
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
-import './DashboardFeedbackSurvey.scss';
+import './FeedbackSurvey.scss';
 
 const RATING_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const MAX_COMMENT_LENGTH = 300;
@@ -15,8 +15,8 @@ const SURVEY_STATUS = {
   OPEN: 'open',
 };
 
-function DashboardFeedbackSurvey({ pageId, onSubmit }) {
-  const storageKey = `dashboard-feedback-dismissed-${pageId}`;
+function FeedbackSurvey({ pageId, onSubmit }) {
+  const storageKey = `survey-feedback-dismissed-${pageId}`;
   const [surveyStatus, setSurveyStatus] = useState(SURVEY_STATUS.OPEN);
   const [selectedRating, setSelectedRating] = useState(null);
   const [comment, setComment] = useState('');
@@ -72,18 +72,18 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
   }
 
   if (surveyStatus === SURVEY_STATUS.COLLAPSED) {
-    const reopenTooltipId = `dashboard-feedback-reopen-tooltip-${pageId}`;
+    const reopenTooltipId = `survey-feedback-reopen-tooltip-${pageId}`;
 
     return (
       <button
         type="button"
-        className="dashboard-feedback-survey__reopen-button"
+        className="survey-feedback__reopen-button"
         onClick={handleReopen}
         aria-label="Reopen survey"
         aria-describedby={reopenTooltipId}
       >
         <FontAwesomeIcon icon={faChevronUp} />
-        <span id={reopenTooltipId} role="tooltip" className="dashboard-feedback-survey__reopen-tooltip">
+        <span id={reopenTooltipId} role="tooltip" className="survey-feedback__reopen-tooltip">
           Expand survey
         </span>
       </button>
@@ -91,12 +91,12 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
   }
 
   return (
-    <div className="dashboard-feedback-survey" role="complementary" aria-label="Dashboard feedback survey">
-      <div className="dashboard-feedback-survey__header">
-        <h3 className="dashboard-feedback-survey__title">How useful is this dashboard page?</h3>
+    <div className="survey-feedback" role="complementary" aria-label="Survey feedback">
+      <div className="survey-feedback__header">
+        <h3 className="survey-feedback__title">How useful is this page?</h3>
         <button
           type="button"
-          className="dashboard-feedback-survey__close-button"
+          className="survey-feedback__close-button"
           onClick={handleDismiss}
           aria-label="Dismiss survey"
         >
@@ -105,15 +105,15 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
       </div>
 
       <Fieldset legend="Rate this page" legendStyle="srOnly">
-        <div className="dashboard-feedback-survey__rating-scale">
-          <span className="dashboard-feedback-survey__scale-label">Not useful</span>
-          <div className="dashboard-feedback-survey__rating-options">
+        <div className="survey-feedback__rating-scale">
+          <span className="survey-feedback__scale-label">Not useful</span>
+          <div className="survey-feedback__rating-options">
             {RATING_OPTIONS.map((rating) => (
-              <div key={rating} className="dashboard-feedback-survey__rating-option">
+              <div key={rating} className="survey-feedback__rating-option">
                 <input
                   type="radio"
                   id={`rating-${rating}-${pageId}`}
-                  name={`dashboard-rating-${pageId}`}
+                  name={`survey-rating-${pageId}`}
                   value={rating}
                   checked={selectedRating === rating}
                   onChange={() => setSelectedRating(rating)}
@@ -128,14 +128,14 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
               </div>
             ))}
           </div>
-          <span className="dashboard-feedback-survey__scale-label">Very useful</span>
+          <span className="survey-feedback__scale-label">Very useful</span>
         </div>
       </Fieldset>
 
-      <div className="dashboard-feedback-survey__comment-section">
+      <div className="survey-feedback__comment-section">
         <button
           type="button"
-          className="dashboard-feedback-survey__expand-button"
+          className="survey-feedback__expand-button"
           onClick={() => setIsCommentExpanded(!isCommentExpanded)}
           aria-expanded={isCommentExpanded}
         >
@@ -147,7 +147,7 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
         </button>
 
         {isCommentExpanded && (
-          <div className="dashboard-feedback-survey__textarea-container">
+          <div className="survey-feedback__textarea-container">
             <Label htmlFor={`feedback-comment-${pageId}`}>
               Additional comments (optional)
             </Label>
@@ -159,7 +159,7 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
               maxLength={MAX_COMMENT_LENGTH}
               aria-describedby={`char-count-${pageId}`}
             />
-            <div id={`char-count-${pageId}`} className="dashboard-feedback-survey__char-count">
+            <div id={`char-count-${pageId}`} className="survey-feedback__char-count">
               {comment.length}
               /
               {MAX_COMMENT_LENGTH}
@@ -170,7 +170,7 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
         )}
       </div>
 
-      <div className="dashboard-feedback-survey__actions">
+      <div className="survey-feedback__actions">
         <Button
           type="button"
           onClick={handleSubmit}
@@ -183,9 +183,9 @@ function DashboardFeedbackSurvey({ pageId, onSubmit }) {
   );
 }
 
-DashboardFeedbackSurvey.propTypes = {
+FeedbackSurvey.propTypes = {
   pageId: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
 };
 
-export default DashboardFeedbackSurvey;
+export default FeedbackSurvey;

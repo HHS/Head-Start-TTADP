@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import DashboardFeedbackSurvey from '../DashboardFeedbackSurvey';
+import FeedbackSurvey from '../FeedbackSurvey';
 
-describe('DashboardFeedbackSurvey', () => {
+describe('FeedbackSurvey', () => {
   const defaultProps = {
     pageId: 'test-dashboard',
     onSubmit: jest.fn(),
@@ -20,13 +20,13 @@ describe('DashboardFeedbackSurvey', () => {
 
   it('renders the survey component', () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
-    expect(screen.getByText('How useful is this dashboard page?')).toBeInTheDocument();
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    expect(screen.getByText('How useful is this page?')).toBeInTheDocument();
   });
 
   it('displays rating options from 1 to 10', () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
     for (let i = 1; i <= 10; i += 1) {
       expect(screen.getByLabelText(i.toString())).toBeInTheDocument();
     }
@@ -34,7 +34,7 @@ describe('DashboardFeedbackSurvey', () => {
 
   it('allows selecting a rating', async () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
     const rating5 = screen.getByLabelText('5');
     await userEvent.click(rating5);
     expect(rating5).toBeChecked();
@@ -42,7 +42,7 @@ describe('DashboardFeedbackSurvey', () => {
 
   it('only allows one rating to be selected at a time', async () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
     const rating3 = screen.getByLabelText('3');
     const rating7 = screen.getByLabelText('7');
 
@@ -56,7 +56,7 @@ describe('DashboardFeedbackSurvey', () => {
 
   it('expands and collapses comment section', async () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
 
     const expandButton = screen.getByRole('button', { name: /add additional comments/i });
     expect(screen.queryByLabelText(/additional comments/i)).not.toBeInTheDocument();
@@ -71,7 +71,7 @@ describe('DashboardFeedbackSurvey', () => {
 
   it('limits comment length to 300 characters', async () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
 
     await userEvent.click(screen.getByRole('button', { name: /add additional comments/i }));
     const textarea = screen.getByLabelText(/additional comments/i);
@@ -85,14 +85,14 @@ describe('DashboardFeedbackSurvey', () => {
 
   it('disables submit button when no rating is selected', () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
     const submitButton = screen.getByRole('button', { name: /submit feedback/i });
     expect(submitButton).toBeDisabled();
   });
 
   it('enables submit button when rating is selected', async () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
     const rating8 = screen.getByLabelText('8');
     await userEvent.click(rating8);
 
@@ -103,7 +103,7 @@ describe('DashboardFeedbackSurvey', () => {
   it('calls onSubmit with correct data when submitted', async () => {
     const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
     render(
-      <DashboardFeedbackSurvey
+      <FeedbackSurvey
         pageId="test-dashboard"
         onSubmit={mockOnSubmit}
       />,
@@ -128,46 +128,46 @@ describe('DashboardFeedbackSurvey', () => {
 
   it('dismisses survey and stores in localStorage when X is clicked', async () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
 
     const closeButton = screen.getByRole('button', { name: /dismiss survey/i });
     await userEvent.click(closeButton);
 
     await waitFor(() => {
-      expect(localStorage.getItem('dashboard-feedback-dismissed-test-dashboard')).toBe('collapsed');
+      expect(localStorage.getItem('survey-feedback-dismissed-test-dashboard')).toBe('collapsed');
     });
-    expect(screen.queryByText('How useful is this dashboard page?')).not.toBeInTheDocument();
+    expect(screen.queryByText('How useful is this page?')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reopen survey/i })).toBeInTheDocument();
   });
 
   it('shows reopen button if previously dismissed', () => {
     const { pageId, onSubmit } = defaultProps;
-    localStorage.setItem('dashboard-feedback-dismissed-test-dashboard', 'collapsed');
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
-    expect(screen.queryByText('How useful is this dashboard page?')).not.toBeInTheDocument();
+    localStorage.setItem('survey-feedback-dismissed-test-dashboard', 'collapsed');
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    expect(screen.queryByText('How useful is this page?')).not.toBeInTheDocument();
     const reopenButton = screen.getByRole('button', { name: /reopen survey/i });
     expect(reopenButton).toBeInTheDocument();
     expect(screen.getByRole('tooltip', { name: /expand survey/i })).toBeInTheDocument();
     expect(reopenButton).toHaveAttribute(
       'aria-describedby',
-      'dashboard-feedback-reopen-tooltip-test-dashboard',
+      'survey-feedback-reopen-tooltip-test-dashboard',
     );
   });
 
   it('reopens survey when reopen button is clicked', async () => {
     const { pageId, onSubmit } = defaultProps;
-    localStorage.setItem('dashboard-feedback-dismissed-test-dashboard', 'collapsed');
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    localStorage.setItem('survey-feedback-dismissed-test-dashboard', 'collapsed');
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
 
     await userEvent.click(screen.getByRole('button', { name: /reopen survey/i }));
-    expect(screen.getByText('How useful is this dashboard page?')).toBeInTheDocument();
-    expect(localStorage.getItem('dashboard-feedback-dismissed-test-dashboard')).toBeNull();
+    expect(screen.getByText('How useful is this page?')).toBeInTheDocument();
+    expect(localStorage.getItem('survey-feedback-dismissed-test-dashboard')).toBeNull();
   });
 
   it('dismisses survey after successful submission', async () => {
     const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
     render(
-      <DashboardFeedbackSurvey
+      <FeedbackSurvey
         pageId="test-dashboard"
         onSubmit={mockOnSubmit}
       />,
@@ -177,8 +177,8 @@ describe('DashboardFeedbackSurvey', () => {
     await userEvent.click(screen.getByRole('button', { name: /submit feedback/i }));
 
     await waitFor(() => {
-      expect(localStorage.getItem('dashboard-feedback-dismissed-test-dashboard')).toBe('completed');
-      expect(screen.queryByText('How useful is this dashboard page?')).not.toBeInTheDocument();
+      expect(localStorage.getItem('survey-feedback-dismissed-test-dashboard')).toBe('completed');
+      expect(screen.queryByText('How useful is this page?')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /reopen survey/i })).not.toBeInTheDocument();
     });
   });
@@ -188,7 +188,7 @@ describe('DashboardFeedbackSurvey', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     render(
-      <DashboardFeedbackSurvey
+      <FeedbackSurvey
         pageId="test-dashboard"
         onSubmit={mockOnSubmit}
       />,
@@ -199,7 +199,7 @@ describe('DashboardFeedbackSurvey', () => {
 
     await waitFor(() => {
       expect(consoleErrorSpy).toHaveBeenCalled();
-      expect(screen.getByText('How useful is this dashboard page?')).toBeInTheDocument();
+      expect(screen.getByText('How useful is this page?')).toBeInTheDocument();
     });
 
     consoleErrorSpy.mockRestore();
@@ -207,14 +207,14 @@ describe('DashboardFeedbackSurvey', () => {
 
   it('displays scale labels', () => {
     const { pageId, onSubmit } = defaultProps;
-    render(<DashboardFeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
     expect(screen.getByText('Not useful')).toBeInTheDocument();
     expect(screen.getByText('Very useful')).toBeInTheDocument();
   });
 
   it('uses unique IDs based on pageId', () => {
     render(
-      <DashboardFeedbackSurvey
+      <FeedbackSurvey
         pageId="unique-page"
         onSubmit={jest.fn()}
       />,
@@ -225,7 +225,7 @@ describe('DashboardFeedbackSurvey', () => {
   it('trims whitespace from comment before submission', async () => {
     const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
     render(
-      <DashboardFeedbackSurvey
+      <FeedbackSurvey
         pageId="test-dashboard"
         onSubmit={mockOnSubmit}
       />,
