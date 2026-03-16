@@ -7,7 +7,7 @@ export default function LegendControlFieldset({
   legend,
 }) {
   return (
-    <Fieldset className="ttahub-legend-control-fieldset grid-row text-align-center margin-bottom-3 border-0 padding-0">
+    <Fieldset className="ttahub-legend-control-fieldset grid-row text-align-center margin-bottom-3 border-0 padding-0 display-flex desktop:flex-justify-center">
       <legend className="usa-sr-only">{legend}</legend>
       {children}
     </Fieldset>
