@@ -161,7 +161,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
         ON c.id = gc."citationId"
       WHERE c."calculated_finding_type" = 'Deficiency'
         AND c."deletedAt" IS NULL
-        AND c.reported_date < (m.month_start + INTERVAL '1 month')::date
+        AND c.initial_report_delivery_date < (m.month_start + INTERVAL '1 month')::date
         AND c.active_through >= m.month_start
       GROUP BY m.month_start
     ),
@@ -190,12 +190,12 @@ export default async function activeDeficientCitationsWithTtaSupport(
       WHERE gc."grantId" IN (:grantIds)
         AND c."calculated_finding_type" = 'Deficiency'
         AND c."deletedAt" IS NULL
-        AND c.reported_date < (m.month_start + INTERVAL '1 month')::date
+        AND c.initial_report_delivery_date < (m.month_start + INTERVAL '1 month')::date
         AND c.active_through >= m.month_start
       GROUP BY m.month_start
     )
     SELECT
-      m.month_start::text,
+      TO_CHAR(m.month_start,'YYYY-MM-DD') AS month_start,
       COALESCE(td.deficiencies_with_tta, 0)::int AS deficiencies_with_tta,
       COALESCE(ad.total_active_deficiencies, 0)::int AS total_active_deficiencies
     FROM months m

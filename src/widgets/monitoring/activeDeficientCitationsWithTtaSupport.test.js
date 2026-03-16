@@ -107,6 +107,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
       finding_uuid: uuid(),
       calculated_finding_type: 'Deficiency',
       reported_date: '2025-01-10',
+      initial_report_delivery_date: '2025-01-10',
       active_through: '2025-03-31',
     });
 
@@ -115,6 +116,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
       finding_uuid: uuid(),
       calculated_finding_type: 'Deficiency',
       reported_date: '2025-01-15',
+      initial_report_delivery_date: '2025-01-15',
       active_through: '2025-02-28',
     });
 
