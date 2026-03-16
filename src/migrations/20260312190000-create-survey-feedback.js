@@ -37,8 +37,7 @@ module.exports = {
           },
           comment: {
             type: Sequelize.TEXT,
-            allowNull: false,
-            defaultValue: '',
+            allowNull: true,
           },
           submittedAt: {
             type: Sequelize.DATE,
