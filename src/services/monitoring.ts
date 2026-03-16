@@ -31,6 +31,7 @@ const {
   DeliveredReview,
   DeliveredReviewCitation,
   GrantCitation,
+  GrantDeliveredReview,
   MonitoringFindingLink,
   MonitoringFindingHistory,
   MonitoringFindingHistoryStatus,
@@ -90,6 +91,10 @@ async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: n
 }
 
 async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<ActivityReportObjectiveCitationResponse[]> {
+  if (grantNumbers.length === 0) {
+    return [];
+  }
+
   const objectives = await Objective.findAll({
     attributes: [
       'id',
@@ -584,6 +589,17 @@ async function ttaByCitationsFromFactTables(
             [Op.gte]: MIN_DELIVERY_DATE,
           },
         },
+        include: [
+          {
+            model: GrantDeliveredReview,
+            as: 'grantDeliveredReviews',
+            required: true,
+            attributes: ['grantId'],
+            where: {
+              grantId: grantIds,
+            },
+          },
+        ],
       },
     ],
   }) as unknown as IDeliveredReviewCitationRow[];
@@ -730,7 +746,7 @@ async function ttaByCitationsFromFactTables(
       status: citationData.status,
       findingType: citationData.findingType,
       category: citationData.category,
-      grantNumbers: citationData.grantNumbers,
+      grantNumbers: [...citationData.grantNumbers].sort(),
       lastTTADate: citationData.lastTTADateMoment
         ? citationData.lastTTADateMoment.format('MM/DD/YYYY')
         : '',
@@ -743,6 +759,10 @@ export async function ttaByCitations(
   regionId: number,
 ): Promise<ITTAByCitationResponse[]> {
   const grantNumbers = await grantNumbersByRecipientAndRegion(recipientId, regionId);
+  if (grantNumbers.length === 0) {
+    return [];
+  }
+
   const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
 
   return ttaByCitationsFromFactTables(

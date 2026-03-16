@@ -27,6 +27,7 @@ const RECIPIENT_ID = 9;
 const REGION_ID = 1;
 const GRANT_NUMBER = '01HP044446';
 const GRANT_ID = 665;
+const EMPTY_RECIPIENT_ID = 999999;
 const UNMATCHED_REVIEW_UUID = '00000000-0000-0000-0000-000000000000';
 
 const expectedCitationResponse = (findingId, status = 'Complete') => ([
@@ -278,6 +279,15 @@ describe('ttaByCitations', () => {
     );
 
     expect(data).toStrictEqual(expectedCitationResponse(findingId));
+  });
+
+  it('returns no citations when the recipient has no grants in the region', async () => {
+    const data = await ttaByCitations(
+      EMPTY_RECIPIENT_ID,
+      REGION_ID,
+    );
+
+    expect(data).toStrictEqual([]);
   });
 
   it('prefers calculated status when it differs from raw status', async () => {
