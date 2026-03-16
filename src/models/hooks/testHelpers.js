@@ -19,6 +19,8 @@ export const draftObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  language: ['English'],
+  activityReason: 'reason',
   creatorRole: 'TTAC',
   version: 2,
 };

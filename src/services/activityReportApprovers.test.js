@@ -53,7 +53,10 @@ const submittedReport = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  language: ['English'],
+  activityReason: 'reason',
   version: 2,
+  creatorRole: 'TTAC',
 };
 
 const draftReport = {

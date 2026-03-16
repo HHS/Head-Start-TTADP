@@ -80,15 +80,6 @@ function getGrants(recipients: string): string[] {
     .split(' ');
 }
 
-/**
- * Extracts the text of the dropdown's selected value
- *
- * @param selectedOption - dropdown
- */
-async function extractSelectedDisplayedValue(selectedOption) {
-  return selectedOption.evaluate((sel) => sel.options[sel.options.selectedIndex].textContent);
-}
-
 interface ActivitySummaryConfig {
   recipients?: number;
   ttaType?: 'Training' | 'Technical Assistance' | 'Both';

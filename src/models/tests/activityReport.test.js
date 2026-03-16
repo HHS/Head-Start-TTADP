@@ -1,5 +1,6 @@
 /* eslint-disable dot-notation */
 import moment from 'moment';
+import { ValidationError } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
@@ -14,7 +15,7 @@ import db, {
   Grant,
 } from '..';
 import { auditLogger } from '../../logger';
-import { copyStatus } from '../hooks/activityReport';
+import { copyStatus, validateForSubmission, validateForApproval } from '../hooks/activityReport';
 
 jest.mock('bull');
 
@@ -248,6 +249,160 @@ describe('Activity Reports model', () => {
     instance.submissionStatus = REPORT_STATUSES.NEEDS_ACTION;
     copyStatus(instance);
     expect(instance.calculatedStatus).not.toEqual(REPORT_STATUSES.NEEDS_ACTION);
+  });
+
+  describe('validateForSubmission', () => {
+    const validDataValues = {
+      deliveryMethod: 'in-person',
+      duration: 1,
+      startDate: '2021-01-01',
+      endDate: '2021-01-01',
+      activityRecipientType: 'recipient',
+      requester: 'grantee',
+      targetPopulations: ['target pop'],
+      participants: ['participant'],
+      topics: ['topic'],
+      ttaType: ['training'],
+      creatorRole: 'COR',
+      activityReason: 'recipient request',
+      language: ['English'],
+      numberOfParticipants: 5,
+    };
+
+    const makeInstance = (submissionStatus, changed, dataValues) => ({
+      submissionStatus,
+      changed: () => changed,
+      dataValues,
+    });
+
+    it('does not throw when status change is not to SUBMITTED', () => {
+      const instance = makeInstance(
+        REPORT_STATUSES.DRAFT,
+        ['submissionStatus'],
+        validDataValues,
+      );
+      expect(() => validateForSubmission(instance)).not.toThrow();
+    });
+
+    it('does not throw when submissionStatus is not in changed fields', () => {
+      const instance = makeInstance(
+        REPORT_STATUSES.SUBMITTED,
+        ['duration'],
+        validDataValues,
+      );
+      expect(() => validateForSubmission(instance)).not.toThrow();
+    });
+
+    it('does not throw when all required fields are present on SUBMITTED transition', () => {
+      const instance = makeInstance(
+        REPORT_STATUSES.SUBMITTED,
+        ['submissionStatus'],
+        validDataValues,
+      );
+      expect(() => validateForSubmission(instance)).not.toThrow();
+    });
+
+    it('throws ValidationError when a required field is missing on SUBMITTED transition', () => {
+      const instance = makeInstance(
+        REPORT_STATUSES.SUBMITTED,
+        ['submissionStatus'],
+        { ...validDataValues, deliveryMethod: undefined },
+      );
+      expect(() => validateForSubmission(instance)).toThrow(ValidationError);
+    });
+
+    it('requires numberOfParticipantsInPerson and numberOfParticipantsVirtually for hybrid delivery', () => {
+      const hybridDataValues = {
+        ...validDataValues,
+        deliveryMethod: 'hybrid',
+        numberOfParticipants: undefined,
+        numberOfParticipantsInPerson: 3,
+        numberOfParticipantsVirtually: 2,
+      };
+      const instance = makeInstance(
+        REPORT_STATUSES.SUBMITTED,
+        ['submissionStatus'],
+        hybridDataValues,
+      );
+      expect(() => validateForSubmission(instance)).not.toThrow();
+    });
+
+    it('throws for hybrid delivery when in-person count is missing', () => {
+      const hybridDataValues = {
+        ...validDataValues,
+        deliveryMethod: 'hybrid',
+        numberOfParticipants: undefined,
+        numberOfParticipantsInPerson: undefined,
+        numberOfParticipantsVirtually: 2,
+      };
+      const instance = makeInstance(
+        REPORT_STATUSES.SUBMITTED,
+        ['submissionStatus'],
+        hybridDataValues,
+      );
+      expect(() => validateForSubmission(instance)).toThrow(ValidationError);
+    });
+  });
+
+  describe('validateForApproval', () => {
+    const validDataValues = {
+      deliveryMethod: 'virtual',
+      duration: 2,
+      startDate: '2021-06-01',
+      endDate: '2021-06-01',
+      activityRecipientType: 'recipient',
+      requester: 'grantee',
+      targetPopulations: ['target pop'],
+      participants: ['participant'],
+      topics: ['topic'],
+      ttaType: ['training'],
+      creatorRole: 'COR',
+      activityReason: 'recipient request',
+      language: ['English'],
+      numberOfParticipants: 10,
+    };
+
+    const makeInstance = (calculatedStatus, changed, dataValues) => ({
+      calculatedStatus,
+      changed: () => changed,
+      dataValues,
+    });
+
+    it('does not throw when calculatedStatus is not in changed fields', () => {
+      const instance = makeInstance(
+        REPORT_STATUSES.APPROVED,
+        ['submissionStatus'],
+        validDataValues,
+      );
+      expect(() => validateForApproval(instance)).not.toThrow();
+    });
+
+    it('does not throw when transitioning to a non-APPROVED status', () => {
+      const instance = makeInstance(
+        REPORT_STATUSES.NEEDS_ACTION,
+        ['calculatedStatus'],
+        validDataValues,
+      );
+      expect(() => validateForApproval(instance)).not.toThrow();
+    });
+
+    it('does not throw when all required fields are present on APPROVED transition', () => {
+      const instance = makeInstance(
+        REPORT_STATUSES.APPROVED,
+        ['calculatedStatus'],
+        validDataValues,
+      );
+      expect(() => validateForApproval(instance)).not.toThrow();
+    });
+
+    it('throws ValidationError when a required field is missing on APPROVED transition', () => {
+      const instance = makeInstance(
+        REPORT_STATUSES.APPROVED,
+        ['calculatedStatus'],
+        { ...validDataValues, topics: null },
+      );
+      expect(() => validateForApproval(instance)).toThrow(ValidationError);
+    });
   });
 
   it('propagateApprovedStatus', async () => {

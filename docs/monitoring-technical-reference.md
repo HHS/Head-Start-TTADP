@@ -210,7 +210,7 @@ Remap incoming XML fields with remapDef
 ### Triggering Imports Manually
 You can manually trigger each import phase with the following CLI command:
 ```
-yarn import:system <action> <importId> [timeBox]
+yarn cli:import-system -- <action> <importId> [timeBox]
 ```
 ### Actions
 | Action | Description |
@@ -222,7 +222,8 @@ yarn import:system <action> <importId> [timeBox]
 
 ### Example
 ```
-yarn import:system download 7 yarn import:system process 7
+yarn cli:import-system -- download 7
+yarn cli:import-system -- process 7
 ```
 Note: You must be logged into the production environment for this to work on real data.
 
@@ -235,8 +236,8 @@ Note: You must be logged into the production environment for this to work on rea
 ### Triggering Imports via Queued Background Jobs
 While the import system is usually triggered directly, it also supports background job queuing using Bull.
 ```
-yarn import:system queueDownload <importId>
-yarn import:system queueProcess <importId>
+yarn cli:import-system -- queueDownload <importId>
+yarn cli:import-system -- queueProcess <importId>
 ```
 These enqueue jobs to be picked up by a queue worker running the appropriate logic asynchronously.
 

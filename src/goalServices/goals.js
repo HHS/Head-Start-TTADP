@@ -1507,7 +1507,43 @@ export async function getGoalHistory(id) {
         model: Objective,
         as: 'objectives',
         required: false,
-        attributes: ['id', 'title', 'status'],
+        attributes: [
+          'id',
+          'title',
+          'status',
+          [
+            sequelize.literal(`(
+              SELECT ARRAY(
+                SELECT specialist_str
+                FROM (
+                  SELECT concat_ws(', ', specialists.name, string_agg(DISTINCT specialists.role_name, ', ' ORDER BY specialists.role_name)) AS specialist_str
+                  FROM (
+                        SELECT ar."userId" AS user_id, u.name, r.name AS role_name, aro."objectiveId" AS objective_id
+                    FROM "ActivityReportObjectives" aro
+                    JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
+                      AND ar."calculatedStatus" = 'approved'
+                    JOIN "Users" u ON u.id = ar."userId"
+                    LEFT JOIN "UserRoles" ur ON ur."userId" = u.id
+                    LEFT JOIN "Roles" r ON r.id = ur."roleId"
+                    UNION ALL
+                        SELECT arc."userId" AS user_id, u.name, r.name AS role_name, aro."objectiveId" AS objective_id
+                    FROM "ActivityReportObjectives" aro
+                    JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
+                      AND ar."calculatedStatus" = 'approved'
+                    JOIN "ActivityReportCollaborators" arc ON arc."activityReportId" = ar.id
+                    JOIN "Users" u ON u.id = arc."userId"
+                    LEFT JOIN "CollaboratorRoles" cr ON cr."activityReportCollaboratorId" = arc.id
+                    LEFT JOIN "Roles" r ON r.id = cr."roleId"
+                  ) AS specialists
+                      WHERE specialists.objective_id = "objectives"."id"
+                  GROUP BY specialists.user_id, specialists.name
+                  ORDER BY specialists.name
+                ) AS sorted_specialists
+              )
+            )`),
+            'ttaSpecialists',
+          ],
+        ],
         where: {
           [Op.or]: [
             { createdVia: 'rtr' },
@@ -1528,6 +1564,7 @@ export async function getGoalHistory(id) {
                 where: {
                   calculatedStatus: REPORT_STATUSES.APPROVED,
                 },
+                include: [],
               },
               {
                 model: sequelize.models.Topic,
@@ -1595,7 +1632,7 @@ export async function getGoalHistory(id) {
     ],
     order: [
       ['createdAt', 'DESC'],
-      [{ model: sequelize.models.GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'DESC'],
+      [{ model: sequelize.models.GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'ASC'],
     ],
   });
 
@@ -1609,8 +1646,10 @@ export async function getGoalHistory(id) {
     };
   }
 
+  const goalsWithPreparedSpecialists = goalsWithDetails.map((g) => g.toJSON());
+
   const activityReportIds = new Set(
-    goalsWithDetails
+    goalsWithPreparedSpecialists
       .flatMap((g) => g.objectives || [])
       .flatMap((o) => o.activityReportObjectives || [])
       .map((aro) => aro.activityReport?.id)
@@ -1619,12 +1658,13 @@ export async function getGoalHistory(id) {
 
   const overview = {
     activityReports: activityReportIds.size,
-    objectives: goalsWithDetails.reduce((sum, g) => sum + (g.objectives?.length || 0), 0),
-    closures: goalsWithDetails.filter((g) => g.status === 'Closed').length,
-    suspensions: goalsWithDetails.filter((g) => g.status === 'Suspended').length,
+    objectives: goalsWithPreparedSpecialists
+      .reduce((sum, g) => sum + (g.objectives?.length || 0), 0),
+    closures: goalsWithPreparedSpecialists.filter((g) => g.status === 'Closed').length,
+    suspensions: goalsWithPreparedSpecialists.filter((g) => g.status === 'Suspended').length,
   };
 
-  return { goals: goalsWithDetails, overview, regionId: grantRecord.regionId };
+  return { goals: goalsWithPreparedSpecialists, overview, regionId: grantRecord.regionId };
 }
 
 export async function closeMultiRecipientGoalsFromAdmin(data, userId) {

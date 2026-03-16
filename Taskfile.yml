@@ -1,0 +1,140 @@
+version: "3"
+
+vars:
+  PROJECT_NAME: "ttahub"
+  COMPOSE_FILE: "docker/compose/docker-compose.yml"
+  DEFAULT_TARGET: "backend"
+  DEV_DEBUG:
+    sh: |
+      if [[ "$DEV_DEBUG" == "true" ]]; then echo " -f docker/compose/dev.debug.yaml"; 
+      else echo ""; fi
+  USE_LOCAL_POSTGRES:
+    sh: |
+      if [[ "$POSTGRES_HOST" == "host.docker.internal" ]]; then echo "true"
+      else echo "false"; fi
+  CMD: ""
+
+tasks:
+  default:
+    desc: Show available tasks
+    aliases: [help]
+    cmds:
+      - task --list
+
+  # --- Stack Up ---
+
+  stack-up:
+    desc: Start basic local dev stack (frontend/backend/db/redis/redis)
+    cmds:
+      - task: _stack-up-base
+
+  stack-up-full:
+    desc: Start full local stack (dev + all extras)
+    cmds:
+      - task: _stack-up-base
+        vars: { STACK: '--profile fullstack' }
+
+  _stack-up-base:
+    desc: Internal task to abstract common stack-up steps
+    internal: true
+    vars:
+      STACK: '{{default .DEV_DEBUG .STACK.DEV_DEBUG}}'
+    cmds:
+      - yarn deps:install
+      - cmd: docker compose -f {{.COMPOSE_FILE}} down
+        ignore_error: true
+      - |
+        echo "Initializing database..."
+        docker compose -f {{.COMPOSE_FILE}} up --build --detach --wait db redis
+        docker/scripts/dev-db-init.sh
+      - |
+        echo "Starting stack..."
+        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --build --wait --build || \
+        (echo "--- ERROR ---" && docker compose -f {{.COMPOSE_FILE}} logs -n 10 && docker ps && exit 1)
+        docker compose -f {{.COMPOSE_FILE}} logs -n 1
+      - cmd: |
+          echo "----------------------"
+          echo "All services healthy, use 'task stack-logs' (or yarn docker:logs) to tail logs"
+          echo "----------------------"
+        silent: true
+      - cmd: docker ps
+
+  # --- Stack Down ---
+
+  stack-down:
+    desc: Stop compose stacks for this repo
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} --profile fullstack down --remove-orphans
+
+  reseed:
+    desc: Reseed the database via testing server
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up --detach --wait testingonly
+      - curl http://localhost:9999/testingOnly/reseed
+
+  refresh:
+    desc: Rebuild frontend and backend code, reinstall deps, restart stack
+    cmds: 
+      - task: stack-down
+      - yarn deps:install
+      - yarn build
+      - task: reseed
+      - docker compose -f {{.COMPOSE_FILE}} build --no-cache
+      - task: stack-up
+
+  reset:
+    desc: Remove containers, images, networks, volumes and reinitialize stack
+    cmds:
+      - task: stack-down
+      - docker compose -f {{.COMPOSE_FILE}} down --volumes --rmi all --remove-orphans
+
+  # --- Utility ---
+
+  stack-logs:
+    desc: Tail current running stack logs
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} logs --follow
+    ignore_error: true
+
+  stack-shell:
+    desc: Open shell in a running container (TARGET defaults to backend)
+    vars:
+      TARGET: '{{default "backend" .TARGET}}'
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} exec {{.TARGET}} /bin/bash
+    ignore_error: true
+
+  stack-exec:
+    desc: Execute command in running container (TARGET defaults to backend)
+    vars: { TARGET: '{{default .DEFAULT_TARGET .TARGET}}' }
+    cmds:
+      - task: cmd-helper
+        vars: { CMD_FORM: "exec" }
+
+  stack-run:
+    desc: Run one-off command in new container (TARGET defaults to backend)
+    vars: { TARGET: '{{default .DEFAULT_TARGET .TARGET}}' }
+    cmds:
+      - task: cmd-helper
+        vars: { CMD_FORM: "run --rm --no-deps" }
+
+  # --- Internal ---
+
+  cmd-helper:
+    desc: Internal utility for running some similar commands
+    internal: true
+    vars:
+      TARGET: '{{default .DEFAULT_TARGET .TARGET}}'
+      CMD_FORM: '{{default "exec" .CMD_FORM}}'
+    cmds:
+      - |
+        bash -lc "set -euo pipefail; \
+        
+        if [ -n '{{.CMD}}' ]; then \
+          echo '[{{.TARGET}}]: {{.CMD}}'; \
+          docker compose -f {{.COMPOSE_FILE}} {{.CMD_FORM}} {{.TARGET}} {{.CMD}}; \
+        else \
+          echo 'Provide a command via -- <cmd> or CMD=<cmd>' >&2; \
+          exit 1; \
+        fi"
+    silent: true

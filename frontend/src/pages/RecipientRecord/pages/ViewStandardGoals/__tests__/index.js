@@ -47,9 +47,25 @@ const mockGoalHistory = [
         id: 1,
         title: 'Implement new curriculum',
         status: OBJECTIVE_STATUS.IN_PROGRESS,
+        ttaSpecialists: [
+          'Alice Specialist, Program Specialist',
+          'Bob Collaborator, Grants Specialist',
+        ],
         activityReportObjectives: [
           {
-            activityReport: { id: 101, displayId: 'R-101' },
+            activityReport: {
+              id: 101,
+              displayId: 'R-101',
+              author: { id: 10, name: 'Alice Specialist', roles: [{ name: 'Program Specialist' }] },
+              activityReportCollaborators: [
+                {
+                  id: 1,
+                  userId: 11,
+                  user: { id: 11, name: 'Bob Collaborator' },
+                  roles: [{ name: 'Grants Specialist' }],
+                },
+              ],
+            },
             topics: [{ id: 1, name: 'Topic A' }, { id: 2, name: 'Topic B' }],
             resources: [{ id: 1, url: 'http://example.com/resource1', title: 'Resource 1' }],
             files: [
@@ -61,7 +77,12 @@ const mockGoalHistory = [
             ],
           },
           {
-            activityReport: { id: 102, displayId: 'R-102' },
+            activityReport: {
+              id: 102,
+              displayId: 'R-102',
+              author: { id: 10, name: 'Alice Specialist', roles: [{ name: 'Program Specialist' }] },
+              activityReportCollaborators: [],
+            },
             topics: [{ id: 2, name: 'Topic B' }, { id: 3, name: 'Topic C' }],
             resources: [{ id: 2, url: 'http://example.com/resource2' }],
             files: [
@@ -94,13 +115,13 @@ const mockGoalHistory = [
         activityReportObjectives: null,
       },
     ],
-    // status changes out of order to test sorting, added 'Closed' status
+    // status changes sorted by backend
     statusChanges: [
       {
-        id: 2, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 2, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
         id: 3, goalId: 1, userId: 2, oldStatus: GOAL_STATUS.IN_PROGRESS, newStatus: GOAL_STATUS.SUSPENDED, createdAt: '2025-01-10T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
@@ -367,7 +388,7 @@ describe('ViewGoalDetails', () => {
     const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
     const updates = within(updatesList).getAllByRole('listitem');
 
-    // check sorting (component sorts ascending) and formatting
+    // check ordering and formatting
     expect(updates).toHaveLength(6);
     expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2025-01-01T00:00:00.000Z')} by Test User`);
     expect(updates[1]).toHaveTextContent(`Started on ${formatDate('2025-01-02T00:00:00.000Z')} by Test User`);
@@ -448,6 +469,81 @@ describe('ViewGoalDetails', () => {
     expect(files[0]).toHaveTextContent('report101-file1.pdf');
     expect(files[1]).toHaveTextContent('report101-file2.docx');
     expect(files[2]).toHaveTextContent('report102-file1.xlsx');
+  });
+
+  test('renders TTA specialists from approved ARs under objectives, deduplicated', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
+    await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+
+    // objective 1 has two ARs: both with author Alice (id 10) and AR-101 has collaborator Bob
+    // Alice should appear once (deduplicated), Bob should appear once
+    const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
+    const specialistsLabel = within(objective1).getByText('TTA specialists');
+    expect(specialistsLabel).toBeInTheDocument();
+
+    // Get the specialists text content (comma-separated format)
+    const specialistsContainer = specialistsLabel.closest('div').parentElement;
+    const specialistsValue = within(specialistsContainer).getByTestId('read-only-value');
+
+    // Check that both specialists are present with their roles
+    expect(specialistsValue).toHaveTextContent('Alice Specialist, Program Specialist');
+    expect(specialistsValue).toHaveTextContent('Bob Collaborator, Grants Specialist');
+    expect(specialistsValue).toHaveTextContent('Alice Specialist, Program Specialist; Bob Collaborator, Grants Specialist');
+    // Verify Alice only appears once (deduplicated even though she's author on both ARs)
+    const aliceMatches = specialistsValue.textContent.match(/Alice Specialist/g);
+    expect(aliceMatches).toHaveLength(1);
+  });
+
+  test('does not render TTA specialists when no approved ARs exist for the objective', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
+    await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+
+    // objective 2 has no activityReportObjectives
+    const objective2 = within(firstAccordionContent).getByText('Objective with no reports/topics/resources').closest('div.margin-bottom-3');
+    expect(within(objective2).queryByText('TTA specialists')).not.toBeInTheDocument();
+  });
+
+  test('does not render TTA specialists from non-approved ARs', async () => {
+    // Backend filters non-approved ARs at the query level, so objectives
+    // with only non-approved reports will have an empty activityReportObjectives array
+    const goalWithNonApprovedARs = [
+      {
+        ...mockGoalHistory[0],
+        objectives: [
+          {
+            id: 10,
+            title: 'Objective with only non-approved ARs',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            // Backend filtered out all non-approved ARs, so array is empty
+            activityReportObjectives: [],
+          },
+        ],
+      },
+    ];
+    fetchMock.get(goalHistoryUrl, { goals: goalWithNonApprovedARs, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
+    await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+
+    // Objective has no AROs because backend filtered out all non-approved ARs
+    const objective = within(firstAccordionContent).getByText('Objective with only non-approved ARs').closest('div.margin-bottom-3');
+    // TTA specialists should not appear because there are no approved ARs
+    expect(within(objective).queryByText('TTA specialists')).not.toBeInTheDocument();
+    // Reports section should also not appear since no approved ARs exist
+    expect(within(objective).queryByText('Reports')).not.toBeInTheDocument();
   });
 
   test('renders root causes', async () => {

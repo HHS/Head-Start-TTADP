@@ -5,13 +5,16 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import { getUniqueId } from '../testUtils';
 import db, {
   ActivityReport,
+  ActivityReportCollaborator,
   ActivityReportObjective,
+  CollaboratorRole,
   Goal,
   GoalTemplate,
   Grant,
   Objective,
   Permission,
   Recipient,
+  Role,
   User,
 } from '../models';
 import SCOPES from '../middleware/scopeConstants';
@@ -30,6 +33,9 @@ const REGION_ID = 1;
 
 describe('getGoalHistory (database-backed)', () => {
   let user;
+  let collaboratorUser;
+  let collaborator;
+  let collaboratorRole;
   let permission;
   let recipient;
   let grant;
@@ -187,9 +193,38 @@ describe('getGoalHistory (database-backed)', () => {
         status: 'Suspended',
       }),
     ]);
+
+    // Create a collaborator user and attach them to report1 with a known role.
+    collaboratorUser = await User.create({
+      homeRegionId: REGION_ID,
+      hsesUsername: faker.internet.email(),
+      hsesUserId: `fake${faker.datatype.number({ min: 100001, max: 200000 })}`,
+      email: faker.internet.email(),
+      name: faker.name.findName(),
+      role: ['Health Specialist'],
+      lastLogin: new Date(),
+    });
+
+    collaborator = await ActivityReportCollaborator.create({
+      activityReportId: report1.id,
+      userId: collaboratorUser.id,
+    });
+
+    const healthSpecialistRole = await Role.findOne({ where: { fullName: 'Health Specialist' } });
+    if (!healthSpecialistRole) throw new Error('Health Specialist role not found in database');
+    collaboratorRole = await CollaboratorRole.create({
+      activityReportCollaboratorId: collaborator.id,
+      roleId: healthSpecialistRole.id,
+    });
   });
 
   afterAll(async () => {
+    await CollaboratorRole.destroy({
+      where: { id: collaboratorRole.id },
+    });
+    await ActivityReportCollaborator.destroy({
+      where: { id: collaborator.id },
+    });
     await ActivityReportObjective.destroy({
       where: { id: [aro1.id, aro2.id, aro3.id] },
     });
@@ -219,7 +254,7 @@ describe('getGoalHistory (database-backed)', () => {
       where: { id: recipient.id },
     });
     await User.destroy({
-      where: { id: user.id },
+      where: { id: [user.id, collaboratorUser.id] },
     });
     await db.sequelize.close();
   });
@@ -327,5 +362,48 @@ describe('getGoalHistory (database-backed)', () => {
   it('returns null when the goal does not exist', async () => {
     const result = await getGoalHistory(99999999);
     expect(result).toBeNull();
+  });
+
+  it('includes only id and displayId on activity reports within objective AROs (not author or collaborators)', async () => {
+    const result = await getGoalHistory(goalSuspended.id);
+
+    const aros = result.goals
+      .flatMap((g) => g.objectives || [])
+      .flatMap((o) => o.activityReportObjectives || [])
+      .filter((aro) => aro.activityReport);
+
+    expect(aros.length).toBeGreaterThan(0);
+
+    aros.forEach((aro) => {
+      expect(aro.activityReport.id).toBeDefined();
+      expect(aro.activityReport.displayId).toBeDefined();
+      // author and activityReportCollaborators are no longer fetched;
+      // specialist data is aggregated via SQL into ttaSpecialists instead
+      expect(aro.activityReport.author).toBeUndefined();
+      expect(aro.activityReport.activityReportCollaborators).toBeUndefined();
+    });
+  });
+
+  it('returns backend-prepared, deduplicated and sorted TTA specialists per objective', async () => {
+    const result = await getGoalHistory(goalSuspended.id);
+
+    const suspendedGoal = result.goals.find((g) => g.id === goalSuspended.id);
+    const targetObjective = (suspendedGoal.objectives || []).find((o) => o.id === objective1.id);
+
+    expect(targetObjective.ttaSpecialists).toBeDefined();
+    expect(targetObjective.ttaSpecialists).toHaveLength(2);
+
+    // Backend processing guarantees both distinct and sorted specialist strings.
+    expect(new Set(targetObjective.ttaSpecialists).size)
+      .toBe(targetObjective.ttaSpecialists.length);
+    const sortedSpecialists = [...targetObjective.ttaSpecialists]
+      .sort((a, b) => a.localeCompare(b));
+    expect(targetObjective.ttaSpecialists).toEqual(sortedSpecialists);
+
+    const authorMatches = targetObjective.ttaSpecialists
+      .filter((entry) => entry.includes(user.name));
+    expect(authorMatches).toHaveLength(1);
+
+    expect(targetObjective.ttaSpecialists.join(' | ')).toContain(collaboratorUser.name);
   });
 });

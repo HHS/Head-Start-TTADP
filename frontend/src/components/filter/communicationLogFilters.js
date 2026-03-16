@@ -3,6 +3,7 @@ import moment from 'moment';
 import {
   DATE_CONDITIONS,
   FILTER_CONDITIONS,
+  MY_REPORTS_FILTER_CONDITIONS,
   IS,
   IS_NOT,
   SELECT_CONDITIONS,
@@ -15,6 +16,7 @@ import FilterCommunicationResult from './FilterCommunicationResult';
 import FilterInput from './FilterInput';
 import { handleArrayQuery } from './helpers';
 import FilterRegionalSelect from './FilterRegionSelect';
+import MyReportsSelect from './MyReportsSelect';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -24,6 +26,11 @@ const EMPTY_SINGLE_SELECT = {
 const EMPTY_MULTI_SELECT = {
   is: [],
   'is not': [],
+};
+
+const EMPTY_MY_REPORTS_MULTI_SELECT = {
+  'where I\'m the': [],
+  'where I\'m not the': [],
 };
 
 const EMPTY_TEXT_INPUT = {
@@ -126,6 +133,22 @@ export const regionFilter = {
     <FilterRegionalSelect
       appliedRegion={query}
       onApply={onApplyQuery}
+    />
+  ),
+};
+
+export const myReportsFilter = {
+  id: 'myReports',
+  display: 'My reports',
+  conditions: MY_REPORTS_FILTER_CONDITIONS,
+  defaultValues: EMPTY_MY_REPORTS_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <MyReportsSelect
+      inputId={`my-reports-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+      isCommLog
     />
   ),
 };

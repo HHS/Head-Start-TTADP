@@ -9,7 +9,14 @@ import { Redirect, useParams } from 'react-router';
 import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import { FormProvider, useForm } from 'react-hook-form';
-import { defaultValues, formatRegionalCommunicationLogUrl, resetFormData } from '../../components/CommunicationLog/constants';
+import {
+  defaultValues,
+  formatRegionalCommunicationLogUrl,
+  resetFormData,
+  GENERIC_SAVE_ERROR,
+  LOG_NOT_FOUND_SAVE_ERROR,
+  isCommunicationLogNotFoundError,
+} from '../../components/CommunicationLog/constants';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import pages from './pages';
 import {
@@ -92,7 +99,8 @@ export default function RegionalCommunicationLog() {
       // update the sidebar message
       updateShowSavedDraft(true);
     } catch (err) {
-      setError('There was an error saving the communication log. Please try again later.');
+      const isMissingLog = isCommunicationLogNotFoundError(err);
+      setError(isMissingLog ? LOG_NOT_FOUND_SAVE_ERROR : GENERIC_SAVE_ERROR);
     } finally {
       setReportFetched(true);
       setIsAppLoading(false);
