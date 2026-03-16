@@ -216,7 +216,7 @@ and choose the production option (option 2 as of the writing of these instructio
 2. `/tmp/lifecycle/shell` to get a shell with the correct environment
 3. `node ./build/server/src/tools/importSystemCLI.js download 1` to fetch the next zip file from ITAMS
 4. `node ./build/server/src/tools/importSystemCLI.js process 1` to process the contents of the zip file into the database
-5. `yarn createMonitoringGoalsCLI` to create any monitoring Goals indicated by the new data
+5. `yarn cli:create-monitoring-goals` to create any monitoring Goals indicated by the new data
 
 The download and process steps will need to be run once each per day that needs catchup, such as on a Monday after the weekend. Thus, the steps would go: 1,2,3,4,3,4,3,4,5.
 
@@ -243,7 +243,7 @@ While process does run every night automatically, it can also be run on-demand v
 The script can be run using the following:
 
 ```
-yarn processData:local
+yarn cli:process-data
 ```
 
 The transformed database can then be restored in the non-production environments.

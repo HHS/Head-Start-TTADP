@@ -171,5 +171,11 @@ describe('Communication Log policies', () => {
       const policy = new CommunicationLog(user, 1);
       expect(policy.log).toEqual({ recipientId: 0, userId: 0 });
     });
+
+    it('assigns default value to log when null is provided', () => {
+      const user = createUser({});
+      const policy = new CommunicationLog(user, 1, null);
+      expect(policy.log).toEqual({ recipientId: 0, userId: 0 });
+    });
   });
 });

@@ -10,7 +10,12 @@ import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
 import { getCommunicationLogById, updateCommunicationLogById } from '../../../fetchers/communicationLog';
-import { resetFormData } from '../constants';
+import {
+  resetFormData,
+  GENERIC_SAVE_ERROR,
+  LOG_NOT_FOUND_SAVE_ERROR,
+  isCommunicationLogNotFoundError,
+} from '../constants';
 import useHookFormPageState from '../../../hooks/useHookFormPageState';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
@@ -159,6 +164,9 @@ const LogFormNavigator = ({
 
   const onFormSubmit = async () => {
     try {
+      setError(null);
+      updateErrorMessage('');
+
       const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm));
 
       if (!allPagesComplete) {
@@ -181,7 +189,11 @@ const LogFormNavigator = ({
         { message: 'You successfully saved the communication log.' },
       );
     } catch (err) {
-      setError('There was an error saving the communication log. Please try again later.');
+      const isMissingLog = isCommunicationLogNotFoundError(err);
+      const message = isMissingLog ? LOG_NOT_FOUND_SAVE_ERROR : GENERIC_SAVE_ERROR;
+      setError(message);
+      updateErrorMessage(message);
+      window.scrollTo(0, 0);
     } finally {
       setIsAppLoading(false);
     }

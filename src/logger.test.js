@@ -1,0 +1,124 @@
+import path from 'path';
+
+const ORIGINAL_ENV = process.env;
+
+const loadTesting = () => {
+  jest.resetModules();
+  // eslint-disable-next-line global-require
+  return require('./logger').testingHooks;
+};
+
+const loadLogger = () => {
+  jest.resetModules();
+  // eslint-disable-next-line global-require
+  return require('./logger');
+};
+
+const getCurrentLine = () => {
+  const stackLine = new Error().stack.split('\n')[2];
+  const lineMatch = stackLine.match(/:(\d+):\d+\)?$/);
+  return Number(lineMatch[1]);
+};
+
+describe('logger callsite helpers', () => {
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+  });
+
+  afterAll(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it('disables callsite metadata when LOG_INCLUDE_CALLSITE is false', () => {
+    process.env = { ...ORIGINAL_ENV, LOG_INCLUDE_CALLSITE: 'false' };
+
+    const { shouldIncludeCallsite } = loadTesting();
+
+    expect(shouldIncludeCallsite()).toBe(false);
+  });
+
+  it('enables callsite metadata only when LOG_INCLUDE_CALLSITE is true', () => {
+    process.env = { ...ORIGINAL_ENV, LOG_INCLUDE_CALLSITE: 'true' };
+
+    let testing = loadTesting();
+    expect(testing.shouldIncludeCallsite()).toBe(true);
+
+    process.env = { ...ORIGINAL_ENV, LOG_INCLUDE_CALLSITE: 'false' };
+
+    testing = loadTesting();
+    expect(testing.shouldIncludeCallsite()).toBe(false);
+
+    process.env = { ...ORIGINAL_ENV, LOG_INCLUDE_CALLSITE: '1' };
+
+    testing = loadTesting();
+    expect(testing.shouldIncludeCallsite()).toBe(false);
+  });
+
+  it('extracts first app callsite from stack and returns repo-relative path', () => {
+    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
+    const { getCallsiteFromStack } = loadTesting();
+
+    const appFile = path.join(process.cwd(), 'src', 'services', 'example.js').replaceAll('\\', '/');
+    const stack = [
+      'Error',
+      `    at format.transform (${path.join(process.cwd(), 'src', 'logger.js').replaceAll('\\', '/')} :40:10)`,
+      `    at getCallsite (${path.join(process.cwd(), 'node_modules', 'winston', 'lib', 'winston', 'logger.js').replaceAll('\\', '/')} :250:18)`,
+      `    at Transform._read (${path.join(process.cwd(), 'node_modules', 'readable-stream', 'lib', '_stream_transform.js').replaceAll('\\', '/')} :166:10)`,
+      `    at performThing (${appFile}:25:9)`,
+    ].join('\n').replaceAll(' :', ':');
+
+    expect(getCallsiteFromStack(stack)).toEqual({
+      sourceFile: 'src/services/example.js',
+      sourceLine: 25,
+      sourceFunction: 'performThing',
+    });
+  });
+
+  it('adds location suffix to string formatter output when source metadata exists', () => {
+    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
+    const { formatFunc } = loadTesting();
+
+    const output = formatFunc({
+      level: 'info',
+      message: 'hello',
+      label: 'AUDIT',
+      timestamp: '2026-02-20T00:00:00.000Z',
+      meta: { userId: 1 },
+      sourceFile: 'src/routes/example.js',
+      sourceLine: 42,
+    });
+
+    expect(output).toBe(
+      '2026-02-20T00:00:00.000Z AUDIT info: hello {"userId":1} (src/routes/example.js:42)',
+    );
+  });
+
+  it('emits the correct source file and line for a real log call', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_INCLUDE_CALLSITE: 'true',
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const { logger } = loadLogger();
+
+    const expectedLine = getCurrentLine() + 1;
+    logger.info('line probe');
+
+    await new Promise((resolve) => {
+      setImmediate(resolve);
+    });
+
+    const output = stdoutSpy.mock.calls
+      .map(([chunk]) => String(chunk))
+      .find((chunk) => chunk.includes('"message":"line probe"'));
+
+    stdoutSpy.mockRestore();
+
+    expect(output).toBeDefined();
+    const parsed = JSON.parse(output.trim());
+    expect(parsed.sourceFile).toBe('src/logger.test.js');
+    expect(parsed.sourceLine).toBe(expectedLine);
+  });
+});

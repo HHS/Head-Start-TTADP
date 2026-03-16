@@ -6,7 +6,7 @@ title Manual Import CLI Flow
 start
 
 :Import is triggered via CLI;
-:Run `yarn import:system download <importId>`;
+:Run `yarn cli:import-system -- download <importId>`;
 :Connect to SFTP and check for files;
 
 if (New files?) then (yes)
@@ -21,7 +21,7 @@ if (New files?) then (yes)
   repeat while (More files)
 endif
 
-:Run `yarn import:system process <importId>`;
+:Run `yarn cli:import-system -- process <importId>`;
 if (Files to process?) then (yes)
   :Download ZIP from S3;
   :Extract XML files;
