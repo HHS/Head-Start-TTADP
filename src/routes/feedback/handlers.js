@@ -13,7 +13,7 @@ export async function submitSurveyFeedback(req, res) {
       comment,
       timestamp,
     } = req.body;
-    const { session: { userId } } = req;
+    const userId = req.session?.userId;
 
     if (!pageId || !rating) {
       return res.status(400).json({
