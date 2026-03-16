@@ -542,7 +542,7 @@ async function ttaByCitationsFromFactTables(
         citationId,
         findingUuid: citationData.finding_uuid,
         citationNumber: citationData.citation,
-        status: citationData.raw_status || citationData.calculated_status || '',
+        status: citationData.calculated_status || citationData.raw_status || '',
         findingType: citationData.calculated_finding_type || citationData.raw_finding_type || '',
         category: citationData.source_category || '',
         grantNumbers: [],

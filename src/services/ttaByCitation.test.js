@@ -29,7 +29,7 @@ const GRANT_NUMBER = '01HP044446';
 const GRANT_ID = 665;
 const UNMATCHED_REVIEW_UUID = '00000000-0000-0000-0000-000000000000';
 
-const expectedCitationResponse = (findingId) => ([
+const expectedCitationResponse = (findingId, status = 'Complete') => ([
   {
     category: 'source',
     citationNumber: '1234',
@@ -117,7 +117,7 @@ const expectedCitationResponse = (findingId) => ([
         ],
       },
     ],
-    status: 'Complete',
+    status,
   },
 ]);
 
@@ -199,17 +199,15 @@ describe('ttaByCitations', () => {
           });
         }
 
-        await GrantCitation.destroy({
-          where: { grantId: GRANT_ID },
-          force: true,
-        });
-
-        await GrantDeliveredReview.destroy({
-          where: { grantId: GRANT_ID },
-          force: true,
-        });
-
         if (factCitationIds.length > 0) {
+          await GrantCitation.destroy({
+            where: {
+              grantId: GRANT_ID,
+              citationId: factCitationIds,
+            },
+            force: true,
+          });
+
           await Citation.destroy({
             where: { id: factCitationIds },
             force: true,
@@ -218,6 +216,27 @@ describe('ttaByCitations', () => {
       }
 
       if (reviewId) {
+        const deliveredReviews = await DeliveredReview.findAll({
+          attributes: ['id'],
+          where: {
+            review_uuid: {
+              [Op.in]: [reviewId, UNMATCHED_REVIEW_UUID],
+            },
+          },
+        });
+
+        const deliveredReviewIds = deliveredReviews.map((review) => review.id);
+
+        if (deliveredReviewIds.length > 0) {
+          await GrantDeliveredReview.destroy({
+            where: {
+              grantId: GRANT_ID,
+              deliveredReviewId: deliveredReviewIds,
+            },
+            force: true,
+          });
+        }
+
         await DeliveredReview.destroy({
           where: {
             review_uuid: {
@@ -259,6 +278,25 @@ describe('ttaByCitations', () => {
     );
 
     expect(data).toStrictEqual(expectedCitationResponse(findingId));
+  });
+
+  it('prefers calculated status when it differs from raw status', async () => {
+    await updateMonitoringFactTables();
+
+    await Citation.update(
+      {
+        raw_status: 'Corrected',
+        calculated_status: 'Active',
+      },
+      { where: { finding_uuid: findingId } },
+    );
+
+    const data = await ttaByCitations(
+      RECIPIENT_ID,
+      REGION_ID,
+    );
+
+    expect(data).toStrictEqual(expectedCitationResponse(findingId, 'Active'));
   });
 
   it('returns no citations when fact-table reviews cannot be matched', async () => {
