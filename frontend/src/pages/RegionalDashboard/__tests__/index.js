@@ -150,7 +150,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${standardGoalsListUrl}?${regionInParams}`, standardGoalsListResponse);
 
     renderDashboard(user);
-    let heading = await screen.findByText(/regional tta activity dashboard/i);
+    let heading = await screen.findByText(/Regional dashboard - Activity Reports/i);
     expect(heading).toBeVisible();
 
     // Open filters menu.
@@ -172,14 +172,14 @@ describe('Regional Dashboard page', () => {
     act(() => userEvent.click(apply));
 
     // Verify page render after apply.
-    heading = await screen.findByText(/regional tta activity dashboard/i);
+    heading = await screen.findByText(/Regional dashboard - Activity Reports/i);
     expect(heading).toBeVisible();
 
     // Remove Region 1 filter pill.
     const removeRegion = await screen.findByRole('button', { name: /this button removes the filter: region is 1/i });
     act(() => userEvent.click(removeRegion));
 
-    heading = await screen.findByText(/regional tta activity dashboard/i);
+    heading = await screen.findByText(/Regional dashboard - Activity Reports/i);
     expect(heading).toBeVisible();
   });
 
@@ -198,7 +198,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
 
     renderDashboard(user);
-    const heading = await screen.findByText(/Regional TTA activity dashboard/i);
+    const heading = await screen.findByText(/Regional dashboard - Activity Reports/i);
     expect(heading).toBeVisible();
   });
 
@@ -277,6 +277,21 @@ describe('Regional Dashboard page', () => {
     renderDashboard(user, 'recipient-spotlight');
     const heading = await screen.findByText(/regional dashboard - recipient spotlight/i);
     expect(heading).toBeVisible();
+  });
+
+  it('navigates to /monitoring and hides filters', async () => {
+    const user = {
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    renderDashboard(user, 'monitoring');
+    const heading = await screen.findByText(/regional dashboard - monitoring/i);
+    expect(heading).toBeVisible();
+    expect(document.querySelector('.ttahub-dashboard--filters')).toBeNull();
   });
 
   it('shows filters for recipient-spotlight', async () => {
