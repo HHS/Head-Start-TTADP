@@ -30,15 +30,15 @@ function generateWhere(escapedRoles: string[], exclude: boolean) {
 
   if (exclude) {
     return {
-      where: {
-        [Op.in]: sequelize.literal(`("CommunicationLogs"."id" NOT IN (${roleSubQuery}))`),
+      id: {
+        [Op.notIn]: sequelize.literal(`(${roleSubQuery})`),
       },
     };
   }
 
   return {
-    where: {
-      [Op.in]: sequelize.literal(`("CommunicationLogs"."id" IN (${roleSubQuery}))`),
+    id: {
+      [Op.in]: sequelize.literal(`(${roleSubQuery})`),
     },
   };
 }
