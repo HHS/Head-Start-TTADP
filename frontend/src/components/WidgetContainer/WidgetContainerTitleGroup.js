@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ContextMenu from '../ContextMenu';
 import useMarginFromConfig from '../../hooks/useMarginFromConfig';
 import WidgetContainerSubtitle from './WidgetContainerSubtitle';
+import './WidgetContainerTitleGroup.css';
 
 const WidgetContainerTitleGroup = ({
   children,
@@ -32,7 +33,7 @@ const WidgetContainerTitleGroup = ({
   return (
     <div className={`smart-hub--table-widget-container  ${showHeaderBorder ? 'border-bottom smart-hub-border-base-lighter' : ''} ${className}`}>
       <div className="desktop:display-flex flex-align-center flex-gap-2">
-        <div>
+        <div className="smart-hub--table-widget-heading-titles">
           <h2 className={`smart-hub--table-widget-heading ${h2Margins} font-sans-lg`}>
             {title}
           </h2>
