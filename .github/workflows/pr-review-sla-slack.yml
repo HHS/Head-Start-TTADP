@@ -26,7 +26,7 @@ jobs:
     env:
       # Configure these in repo Variables to tune urgency windows.
       DEFAULT_SLA_HOURS: "8"
-      SLA_BY_LABEL: '{"review:urgent":1,"review:standard":2,"review:low":4}'
+      SLA_BY_LABEL: '{"review:urgent":0.1667,"review:standard":2,"review:low":4}'
       ALERT_LABEL: "review-alerted"
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       SLACK_CHANNEL: "acf-head-start-eng-reviews"
