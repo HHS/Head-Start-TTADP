@@ -10,7 +10,7 @@ const {
   beforeCreate,
 } = require('./hooks/goal');
 const { GOAL_CREATED_VIA, CREATION_METHOD } = require('../constants');
-// test trigger
+// test trigger no longer in draft.
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
 /**
