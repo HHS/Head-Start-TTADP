@@ -76,6 +76,7 @@ const createMonitoringGoals = async () => {
         ON mf."statusId" = mfs."statusId"
       CROSS JOIN monitoring_dates
       WHERE mfh."sourceDeletedAt" IS NULL
+        AND mf."sourceDeletedAt" IS NULL
         AND (
           mr."reportDeliveryDate" > monitoring_start_date
           OR mr."reportDeliveryDate" IS NULL
