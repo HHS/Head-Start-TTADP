@@ -3,21 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "license": "ISC",
-  "engines": {
-    "node": "22.22.0"
-  },
-  "scripts": {
-    "start": "cross-env DISABLE_ESLINT_PLUGIN=true craco start --verbose",
-    "build:local": "INLINE_RUNTIME_CHUNK=false craco build",
-    "build": "INLINE_RUNTIME_CHUNK=false FAST_REFRESH=false BUILD_PATH='../build/server/client' craco build",
-    "eject": "craco eject",
-    "test": "cross-env TZ=America/New_York craco test",
-    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/craco test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
-    "lint": "eslint src",
-    "lint:fix": "eslint --fix src",
-    "lint:fix:single": "eslint --fix",
-    "lint:ci": "eslint -f eslint-formatter-multiple src"
-  },
   "dependencies": {
     "@babel/runtime": "^7.26.10",
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
@@ -81,62 +66,25 @@
     "use-deep-compare-effect": "^1.6.1",
     "uuid": "^8.3.2"
   },
-  "devDependencies": {
-    "@craco/craco": "^7.1.0",
-    "@sheerun/mutationobserver-shim": "^0.3.3",
-    "@testing-library/dom": "^8.11.1",
-    "@testing-library/jest-dom": "^5.11.9",
-    "@testing-library/react": "^12.1.2",
-    "@testing-library/react-hooks": "^8.0.1",
-    "@testing-library/user-event": "^13.5.0",
-    "cross-env": "^7.0.2",
-    "eslint": "^7.20.0",
-    "eslint-config-airbnb": "^18.2.0",
-    "eslint-formatter-multiple": "^1.0.0",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-jest": "^24.1.5",
-    "eslint-plugin-jsx-a11y": "^6.3.1",
-    "eslint-plugin-react": "^7.20.5",
-    "eslint-plugin-react-hooks": "^4.0.8",
-    "eslint-plugin-testing-library": "^3.10.1",
-    "fetch-mock": "^9.11.0",
-    "history": "4.10.1",
-    "jest-fetch-mock": "^3.0.3",
-    "jest-junit": "^13.0.0",
-    "mutationobserver-shim": "^0.3.7",
-    "postcss": "^8.4.39",
-    "react-scripts": "^5.0.1",
-    "react-select-event": "^5.1.0"
+  "engines": {
+    "node": "22.22.0"
+  },
+  "scripts": {
+    "start": "cross-env DISABLE_ESLINT_PLUGIN=true craco start --verbose",
+    "build:local": "INLINE_RUNTIME_CHUNK=false craco build",
+    "build": "INLINE_RUNTIME_CHUNK=false FAST_REFRESH=false BUILD_PATH='../build/server/client' craco build",
+    "eject": "craco eject",
+    "test": "cross-env TZ=America/New_York craco test",
+    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/craco test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
+    "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
+    "lint:fix:single": "eslint --fix",
+    "lint:ci": "eslint -f eslint-formatter-multiple src"
   },
   "resolutions": {
     "dompurify": "^3.3.2",
     "immutable": "^3.8.3",
     "sqlite3": "^6.0.1"
-  },
-  "jest": {
-    "coveragePathIgnorePatterns": [
-      "<rootDir>/src/index.js",
-      "<rootDir>/src/setupProxy.js",
-      "<rootDir>/src/pages/NotFound/index.js",
-      "<rootDir>/src/polyfills.js",
-      "<rootDir>/src/pages/Widgets/index.js",
-      "<rootDir>/src/widgets/Example.js",
-      "<rootDir>/src/pages/RegionalDashboard/formatDateRange.js",
-      "<rootDir>/src/pages/RegionalDashboard/constants.js",
-      "<rootDir>/src/pages/makecolors.js",
-      "<rootDir>/src/NetworkContext.js",
-      "<rootDir>/src/hooks/helpers.js",
-      "<rootDir>/src/testHelpers.js",
-      "<rootDir>/src/pages/activityReports/testHelpers.js"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "statements": 90,
-        "functions": 90,
-        "branches": 90,
-        "lines": 90
-      }
-    }
   },
   "eslintConfig": {
     "root": true,
@@ -203,5 +151,57 @@
       "not dead",
       "not op_mini all"
     ]
+  },
+  "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "@sheerun/mutationobserver-shim": "^0.3.3",
+    "@testing-library/dom": "^8.11.1",
+    "@testing-library/jest-dom": "^5.11.9",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/react-hooks": "^8.0.1",
+    "@testing-library/user-event": "^13.5.0",
+    "cross-env": "^7.0.2",
+    "eslint": "^7.20.0",
+    "eslint-config-airbnb": "^18.2.0",
+    "eslint-formatter-multiple": "^1.0.0",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-jest": "^24.1.5",
+    "eslint-plugin-jsx-a11y": "^6.3.1",
+    "eslint-plugin-react": "^7.20.5",
+    "eslint-plugin-react-hooks": "^4.0.8",
+    "eslint-plugin-testing-library": "^3.10.1",
+    "fetch-mock": "^9.11.0",
+    "history": "4.10.1",
+    "jest-fetch-mock": "^3.0.3",
+    "jest-junit": "^13.0.0",
+    "mutationobserver-shim": "^0.3.7",
+    "postcss": "^8.4.39",
+    "react-scripts": "^5.0.1",
+    "react-select-event": "^5.1.0"
+  },
+  "jest": {
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/src/index.js",
+      "<rootDir>/src/setupProxy.js",
+      "<rootDir>/src/pages/NotFound/index.js",
+      "<rootDir>/src/polyfills.js",
+      "<rootDir>/src/pages/Widgets/index.js",
+      "<rootDir>/src/widgets/Example.js",
+      "<rootDir>/src/pages/RegionalDashboard/formatDateRange.js",
+      "<rootDir>/src/pages/RegionalDashboard/constants.js",
+      "<rootDir>/src/pages/makecolors.js",
+      "<rootDir>/src/NetworkContext.js",
+      "<rootDir>/src/hooks/helpers.js",
+      "<rootDir>/src/testHelpers.js",
+      "<rootDir>/src/pages/activityReports/testHelpers.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 90,
+        "functions": 90,
+        "branches": 90,
+        "lines": 90
+      }
+    }
   }
 }
