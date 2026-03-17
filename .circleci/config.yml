@@ -712,7 +712,10 @@ jobs:
             goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
             echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
           fi
-          echo $(grep -o "Error.*" cmd_log.txt | tail -n 1) >> monitoring-updates.txt
+          last_error=$(grep -oi "error.*" cmd_log.txt | tail -n 1 || true)
+          if [ -n "$last_error" ]; then
+            echo "$last_error" >> monitoring-updates.txt
+          fi
           cat monitoring-updates.txt
     - when:
         condition:
@@ -721,6 +724,9 @@ jobs:
         - notify_slack:
             message_text_file: monitoring-updates.txt
             slack_channel: << parameters.slack_channel >>
+    - store_artifacts:
+        when: always
+        path: cmd_log.txt
 
   clear_cache_job:
     executor: docker-executor
