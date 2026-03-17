@@ -106,17 +106,25 @@ tasks:
 
   stack-exec:
     desc: Execute command in running container (TARGET defaults to backend)
-    vars: { TARGET: '{{default .DEFAULT_TARGET .TARGET}}' }
+    vars:
+      TARGET: '{{default .DEFAULT_TARGET .TARGET}}'
+      CMD: '{{default .CLI_ARGS .CMD}}'
     cmds:
       - task: cmd-helper
-        vars: { CMD_FORM: "exec" }
+        vars:
+          CMD_FORM: "exec"
+          CMD: '{{.CMD}}'
 
   stack-run:
     desc: Run one-off command in new container (TARGET defaults to backend)
-    vars: { TARGET: '{{default .DEFAULT_TARGET .TARGET}}' }
+    vars:
+      TARGET: '{{default .DEFAULT_TARGET .TARGET}}'
+      CMD: '{{default .CLI_ARGS .CMD}}'
     cmds:
       - task: cmd-helper
-        vars: { CMD_FORM: "run --rm --no-deps" }
+        vars:
+          CMD_FORM: "run --rm --no-deps"
+          CMD: '{{.CMD}}'
 
   # --- Internal ---
 
