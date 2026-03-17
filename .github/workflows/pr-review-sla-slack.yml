@@ -96,6 +96,7 @@ jobs:
 
             for (const pr of pulls) {
               if (pr.draft) {
+                core.info(`Skipping PR #${pr.number}: draft PR.`);
                 continue;
               }
 
@@ -104,6 +105,7 @@ jobs:
                 || (pr.requested_teams || []).length > 0;
 
               if (!hasRequestedReviewers) {
+                core.info(`Skipping PR #${pr.number}: no requested reviewers or teams.`);
                 continue;
               }
 
@@ -145,6 +147,7 @@ jobs:
               });
 
               if (hasReviewSinceLastCommit) {
+                core.info(`Skipping PR #${pr.number}: review already submitted after latest commit.`);
                 if ((pr.labels || []).some((l) => l.name === alertLabel)) {
                   await github.rest.issues.removeLabel({
                     owner,
@@ -158,10 +161,13 @@ jobs:
 
               const elapsedHours = (now.getTime() - lastCommitDate.getTime()) / 36e5;
               if (elapsedHours < slaHours) {
+                const roundedElapsed = Math.round(elapsedHours * 100) / 100;
+                core.info(`Skipping PR #${pr.number}: SLA window not reached (${roundedElapsed}h elapsed < ${slaHours}h SLA).`);
                 continue;
               }
 
               if ((pr.labels || []).some((l) => l.name === alertLabel)) {
+                core.info(`Skipping PR #${pr.number}: already has ${alertLabel} label.`);
                 continue;
               }
 
