@@ -5,6 +5,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { useMediaQuery } from 'react-responsive';
 import colors from '../colors';
 import LegendControl from './LegendControl';
 import LegendControlFieldset from './LegendControlFieldset';
@@ -13,6 +14,8 @@ import { arrayExistsAndHasLength } from '../Constants';
 import NoResultsFound from '../components/NoResultsFound';
 
 const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
+const MAX_WIDTH_MEDIUM = 1200;
+const MAX_WIDTH_SMALL = 850;
 
 const TRACE_CONFIG = {
   circle: (data) => ({
@@ -92,6 +95,7 @@ export default function LineGraph({
   tableConfig,
   widgetRef,
   showTabularData,
+  drawerConfig,
 }) {
   // the state for the legend and which traces are visible
   const [legends, setLegends] = useState(legendConfig);
@@ -101,10 +105,10 @@ export default function LineGraph({
 
   const hasData = data && data.length && data.some((d) => d.x.length > 0);
 
+  const isMediumWidget = useMediaQuery({ maxWidth: MAX_WIDTH_MEDIUM });
+  const isSmallWidget = useMediaQuery({ maxWidth: MAX_WIDTH_SMALL });
+
   useEffect(() => {
-    if (!lines || showTabularData || !arrayExistsAndHasLength(data) || !hasData) {
-      return () => {};
-    }
     const chartElement = lines.current;
     const handleChartClick = onChartClick
       ? (event) => onChartClick(event)
@@ -114,7 +118,27 @@ export default function LineGraph({
       chartElement.addEventListener('click', handleChartClick);
     }
 
-    const xTickStep = (() => {
+    return () => {
+      if (chartElement && handleChartClick) {
+        chartElement.removeEventListener('click', handleChartClick);
+      }
+    };
+  }, [data, hasData, onChartClick, showTabularData]);
+
+  useEffect(() => {
+    if (!lines || showTabularData || !arrayExistsAndHasLength(data) || !hasData) {
+      return;
+    }
+
+    const xAxisConfig = (() => {
+      if (isSmallWidget) {
+        return { autotick: true, nticks: 4 };
+      }
+
+      if (isMediumWidget) {
+        return { nticks: 8, autotick: true };
+      }
+
       const value = data[0].x.length;
       let divisor = value;
       if (value > 12) {
@@ -125,7 +149,9 @@ export default function LineGraph({
         divisor = 4;
       }
 
-      return parseInt(value / divisor, DECIMAL_BASE);
+      const xTickStep = parseInt(value / divisor, DECIMAL_BASE);
+
+      return { autotick: false, tick0: 0, dtick: xTickStep };
     })();
 
     const layout = {
@@ -148,15 +174,15 @@ export default function LineGraph({
       },
       showlegend: false,
       xaxis: {
+        ...xAxisConfig,
         showgrid: false,
         hovermode: 'closest',
-        autotick: false,
         ticks: 'outside',
-        tick0: 0,
-        dtick: xTickStep,
         ticklen: 5,
         tickwidth: 1,
         tickcolor: '#000',
+        tickangle: 0,
+        automargin: true,
         title: {
           text: xAxisTitle,
           standoff: 40,
@@ -213,20 +239,26 @@ export default function LineGraph({
     import('plotly.js-basic-dist').then((Plotly) => {
       if (lines.current) Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
     });
-    return () => {
-      if (chartElement && handleChartClick) {
-        chartElement.removeEventListener('click', handleChartClick);
-      }
-    };
-  }, [data, hideYAxis, legends, showTabularData,
-    xAxisTitle, yAxisTitle, yAxisTickStep, hasData, lines, onChartClick]);
+  }, [
+    data,
+    hasData,
+    hideYAxis,
+    isMediumWidget,
+    isSmallWidget,
+    legends,
+    onChartClick,
+    showTabularData,
+    xAxisTitle,
+    yAxisTickStep,
+    yAxisTitle,
+  ]);
 
   if (!hasData) {
-    return <NoResultsFound />;
+    return <NoResultsFound drawerConfig={drawerConfig} />;
   }
 
   return (
-    <div className="ttahub-three-trace-line-graph padding-3" ref={widgetRef}>
+    <div className="ttahub-three-trace-line-graph" ref={widgetRef}>
       { showTabularData
         ? (
           <HorizontalTableWidget
@@ -247,7 +279,7 @@ export default function LineGraph({
           />
         )
         : (
-          <div>
+          <div className="padding-3">
             <LegendControlFieldset legend="Toggle individual lines by checking or unchecking a legend item.">
               {legends.map((legend) => (
                 <LegendControl
@@ -332,6 +364,10 @@ LineGraph.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   widgetRef: PropTypes.object.isRequired,
   showTabularData: PropTypes.bool.isRequired,
+  drawerConfig: PropTypes.shape({
+    title: PropTypes.string,
+    tagName: PropTypes.string,
+  }),
 };
 
 LineGraph.defaultProps = {
@@ -361,4 +397,8 @@ LineGraph.defaultProps = {
       shape: 'square',
     },
   ],
+  drawerConfig: {
+    title: 'QA dashboard filters',
+    tagName: 'ttahub-qa-dash-filters',
+  },
 };
