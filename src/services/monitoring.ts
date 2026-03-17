@@ -90,6 +90,19 @@ async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: n
   return grants.map((gr) => gr.number);
 }
 
+async function recipientGrantsByRecipientAndRegion(
+  recipientId: number,
+  regionId: number,
+) {
+  return Grant.unscoped().findAll({
+    attributes: ['id', 'number'],
+    where: {
+      recipientId,
+      regionId,
+    },
+  }) as Promise<{ id: number; number: string }[]>;
+}
+
 async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<ActivityReportObjectiveCitationResponse[]> {
   if (grantNumbers.length === 0) {
     return [];
@@ -487,16 +500,9 @@ interface IFindingHistoryStatusRow {
 async function ttaByCitationsFromFactTables(
   recipientId: number,
   regionId: number,
+  recipientGrants: { id: number; number: string }[],
   citationsOnActivityReports: ActivityReportObjectiveCitationResponse[],
 ): Promise<ITTAByCitationResponse[]> {
-  const recipientGrants = await Grant.unscoped().findAll({
-    attributes: ['id', 'number'],
-    where: {
-      recipientId,
-      regionId,
-    },
-  }) as { id: number; number: string }[];
-
   if (recipientGrants.length === 0) {
     return [];
   }
@@ -758,7 +764,15 @@ async function ttaByCitationsFromFactTables(
       lastTTADate: citationData.lastTTADateMoment
         ? citationData.lastTTADateMoment.format('MM/DD/YYYY')
         : '',
-      reviews: citationData.reviews,
+      reviews: [...citationData.reviews].sort((a, b) => {
+        const dateComparison = moment(b.reviewReceived, 'MM/DD/YYYY')
+          .diff(moment(a.reviewReceived, 'MM/DD/YYYY'));
+        if (dateComparison !== 0) {
+          return dateComparison;
+        }
+
+        return a.name.localeCompare(b.name);
+      }),
     }));
 }
 
@@ -766,7 +780,8 @@ export async function ttaByCitations(
   recipientId: number,
   regionId: number,
 ): Promise<ITTAByCitationResponse[]> {
-  const grantNumbers = await grantNumbersByRecipientAndRegion(recipientId, regionId);
+  const recipientGrants = await recipientGrantsByRecipientAndRegion(recipientId, regionId);
+  const grantNumbers = recipientGrants.map((grant) => grant.number);
   if (grantNumbers.length === 0) {
     return [];
   }
@@ -776,6 +791,7 @@ export async function ttaByCitations(
   return ttaByCitationsFromFactTables(
     recipientId,
     regionId,
+    recipientGrants,
     citationsOnActivityReports,
   );
 }
