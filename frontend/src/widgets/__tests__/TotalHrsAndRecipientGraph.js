@@ -8,7 +8,7 @@ import {
   screen,
   act,
 } from '@testing-library/react';
-import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
+import { TRACE_IDS as TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
 import LegendControl from '../LegendControl';
 import { TotalHrsAndRecipientGraph } from '../TotalHrsAndRecipientGraph';
 
@@ -106,6 +106,29 @@ describe('Total Hrs And Recipient Graph Widget', () => {
     renderTotalHrsAndRecipientGraph({ data });
 
     expect(await screen.findByText(/Total TTA Hours/i)).toBeInTheDocument();
+  });
+
+  it('derives legend labels from trace data', async () => {
+    const data = [
+      {
+        ...TEST_DATA_DAYS[0],
+        name: 'Hours of Training custom',
+      },
+      {
+        ...TEST_DATA_DAYS[1],
+        name: 'Hours of Technical Assistance custom',
+      },
+      {
+        ...TEST_DATA_DAYS[2],
+        name: 'Hours of Both custom',
+      },
+    ];
+
+    renderTotalHrsAndRecipientGraph({ data });
+
+    expect(await screen.findByRole('checkbox', { name: 'Training custom' })).toBeInTheDocument();
+    expect(await screen.findByRole('checkbox', { name: 'Technical Assistance custom' })).toBeInTheDocument();
+    expect(await screen.findByRole('checkbox', { name: 'Both custom' })).toBeInTheDocument();
   });
 
   it('handles checkbox clicks', async () => {

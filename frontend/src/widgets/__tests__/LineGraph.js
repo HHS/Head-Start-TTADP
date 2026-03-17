@@ -7,12 +7,17 @@ import {
   screen,
   fireEvent,
 } from '@testing-library/react';
-import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
+import { TRACE_IDS as TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
+import { useMediaQuery } from 'react-responsive';
 import Plotly from 'plotly.js-basic-dist';
 import LineGraph from '../LineGraph';
 
 jest.mock('plotly.js-basic-dist', () => ({
   newPlot: jest.fn(),
+}));
+
+jest.mock('react-responsive', () => ({
+  useMediaQuery: jest.fn(() => false),
 }));
 
 const traces = [
@@ -648,6 +653,7 @@ describe('LineGraph', () => {
 
   beforeEach(() => {
     Plotly.newPlot.mockClear();
+    useMediaQuery.mockImplementation(() => false);
   });
 
   it('switches legends', () => {
@@ -706,6 +712,22 @@ describe('LineGraph', () => {
     const lastCall = Plotly.newPlot.mock.calls[Plotly.newPlot.mock.calls.length - 1];
     const layoutArg = lastCall[2];
     expect(layoutArg.yaxis.dtick).toBe(10);
+  });
+
+  it('uses nticks on small widget widths', async () => {
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850);
+
+    renderTest();
+
+    await waitFor(() => {
+      expect(Plotly.newPlot).toHaveBeenCalled();
+    });
+
+    const lastCall = Plotly.newPlot.mock.calls[Plotly.newPlot.mock.calls.length - 1];
+    const layoutArg = lastCall[2];
+    expect(layoutArg.xaxis.autotick).toBe(true);
+    expect(layoutArg.xaxis.nticks).toBe(4);
+    expect(layoutArg.xaxis.dtick).toBeUndefined();
   });
 
   it('calls chart click callback when graph is clicked', async () => {
