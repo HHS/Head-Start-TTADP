@@ -176,6 +176,28 @@ jobs:
 
               let humorHeader = ':eyes: *Friendly review ping*';
               let humorNudge = 'A quick review now can save future archaeology.';
+              const quotes = [
+                'All good things come to those who review.',
+                'Time and tide wait for no PR.',
+                'Soon is the enemy of done; review now.',
+                'A stitch in time saves nine merge conflicts.',
+                'The best time to review was earlier. The second best time is now.',
+                'Minutes are tiny, but they add up to big delays.',
+                'Every pending PR tells a story. Help it reach the ending.',
+                'Today\'s quick review prevents tomorrow\'s long incident.',
+                'The clock is undefeated, but we can still beat the queue.',
+                'Review early, merge calmly.',
+                'Time flies like an arrow; PRs queue like a freeway.',
+                'Progress loves momentum. A review keeps it moving.',
+                'Small feedback now beats large rewrites later.',
+                'With great merge power comes great review responsibility.',
+                'If you have time to scroll, you have time to review.',
+                'This PR is marinating. Chef says it\'s ready.',
+                'A PR in hand is worth two in rebasing.',
+                'Review kindness is a team superpower.',
+                'Later is a risky dependency.',
+                'The fastest path to done is one thoughtful review.',
+              ];
 
               if (overdueHours >= 3) {
                 humorHeader = ':rotating_light: *Code is aging in PR years*';
@@ -188,6 +210,9 @@ jobs:
                 humorNudge = 'The SLA timer just beeped. A review would be awesome.';
               }
 
+              const quoteSeed = (pr.number * 31) + Math.round(overdueHours * 10);
+              const quote = quotes[Math.abs(quoteSeed) % quotes.length];
+
               const text = [
                 humorHeader,
                 `*PR:* <${pr.html_url}|#${pr.number} ${pr.title}>`,
@@ -198,6 +223,7 @@ jobs:
                 `*Elapsed since last commit:* ${rounded}h (SLA ${slaHours}h)`,
                 `*Past SLA by:* ${roundedOverdue}h`,
                 `_${humorNudge}_`,
+                `:speech_balloon: _"${quote}"_`,
               ].join('\n');
 
               if (dryRun) {
