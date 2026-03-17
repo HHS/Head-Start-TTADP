@@ -1,5 +1,4 @@
 import { filterAssociation } from './utils';
-import { auditLogger } from '../../logger';
 
 const userQuery = `
   SELECT
