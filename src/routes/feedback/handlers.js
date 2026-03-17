@@ -60,7 +60,11 @@ export async function submitSurveyFeedback(req, res) {
       feedbackId: feedback.id,
     });
   } catch (error) {
-    req.logger.error('Error submitting survey feedback:', error);
+    if (req && req.logger && typeof req.logger.error === 'function') {
+      req.logger.error('Error submitting survey feedback:', error);
+    } else {
+      console.error('Error submitting survey feedback:', error);
+    }
     return res.status(500).json({
       error: 'Failed to submit feedback',
     });
