@@ -10,20 +10,22 @@ import ContentFromFeedByTag from './ContentFromFeedByTag';
 import colors from '../colors';
 import './NoResultsFound.scss';
 
-function NoResultsFound({ customMessage, hideFilterHelp }) {
+function NoResultsFound({ customMessage, hideFilterHelp, drawerConfig }) {
   const drawerTriggerRef = useRef(null);
+  const showFilterHelp = !hideFilterHelp && Boolean(drawerConfig?.title && drawerConfig?.tagName);
+
   return (
     <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center text-center height-full">
       <FontAwesomeIcon icon={faChartColumn} color={colors.baseDarkest} size="2x" />
       <h3 className="margin-y-1">No results found.</h3>
       <span className="margin-bottom-1">{customMessage || 'Try removing or changing the selected filters.'}</span>
-      {!hideFilterHelp && (
+      {showFilterHelp && (
       <>
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           Get help using filters
         </DrawerTriggerButton>
-        <Drawer title="QA dashboard filters" triggerRef={drawerTriggerRef}>
-          <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" />
+        <Drawer title={drawerConfig.title} triggerRef={drawerTriggerRef}>
+          <ContentFromFeedByTag tagName={drawerConfig.tagName} />
         </Drawer>
       </>
       )}
@@ -34,11 +36,19 @@ function NoResultsFound({ customMessage, hideFilterHelp }) {
 NoResultsFound.propTypes = {
   customMessage: PropTypes.string,
   hideFilterHelp: PropTypes.bool,
+  drawerConfig: PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    tagName: PropTypes.string.isRequired,
+  }),
 };
 
 NoResultsFound.defaultProps = {
   customMessage: '',
   hideFilterHelp: false,
+  drawerConfig: {
+    title: 'QA dashboard filters',
+    tagName: 'ttahub-qa-dash-filters',
+  },
 };
 
 export default NoResultsFound;

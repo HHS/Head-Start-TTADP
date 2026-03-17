@@ -23,3 +23,43 @@ export const APPROVAL_RATE_BY_DEADLINE_LEGEND_CONFIG = [
     traceId: APPROVAL_RATE_BY_DEADLINE_TRACE_IDS.NATIONAL,
   },
 ];
+
+const LEGEND_SHAPES = ['circle', 'triangle', 'square'];
+
+const identity = (label) => label;
+
+export const deriveLineGraphLegendConfig = (
+  data,
+  fallbackConfig = [],
+  labelFormatter = identity,
+) => {
+  if (!Array.isArray(data) || !data.length) {
+    return fallbackConfig;
+  }
+
+  const derivedLegendConfig = data.map((trace) => {
+    if (
+      !trace
+      || !trace.id
+      || !trace.trace
+      || !trace.name
+      || !LEGEND_SHAPES.includes(trace.trace)
+    ) {
+      return null;
+    }
+
+    return {
+      label: labelFormatter(trace.name),
+      selected: true,
+      shape: trace.trace,
+      id: `${trace.id}-checkbox`,
+      traceId: trace.id,
+    };
+  });
+
+  if (derivedLegendConfig.some((legend) => !legend)) {
+    return fallbackConfig;
+  }
+
+  return derivedLegendConfig;
+};

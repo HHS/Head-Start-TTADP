@@ -45,7 +45,7 @@ test('Regional Dashboard', async ({ page }) => {
 
   await Promise.all([
     page.waitForEvent('download'),
-    page.locator('#rd-save-screenshot').click()
+    page.locator('#rd-total-tta-hours-save-screenshot').click()
   ]);
 
   // print a screenshot of the topics graph

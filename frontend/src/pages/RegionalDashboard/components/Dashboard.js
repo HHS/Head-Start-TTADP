@@ -5,6 +5,7 @@ import ActivityReportDashboard from './ActivityReportDashboard';
 import TrainingReportDashboard from './TrainingReportDashboard';
 import AllReports from './AllReports';
 import RecipientSpotlightDashboard from './RecipientSpotlightDashboard';
+import MonitoringReportDashboard from './MonitoringReportDashboard';
 import { expandFilters } from '../../../utils';
 
 export default function Dashboard({
@@ -27,6 +28,9 @@ export default function Dashboard({
       break;
     case 'recipient-spotlight':
       DashboardComponent = RecipientSpotlightDashboard;
+      break;
+    case 'monitoring':
+      DashboardComponent = MonitoringReportDashboard;
       break;
     default:
       break;
