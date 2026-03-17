@@ -502,8 +502,8 @@ interface IReviewDetailRow {
   reviewId: string;
   name: string;
   reviewType: string;
-  reportDeliveryDate: Date;
-  outcome: string;
+  reportDeliveryDate: Date | string;
+  outcome: string | null;
 }
 
 interface IPlainable {
@@ -601,14 +601,14 @@ function toDeliveredReviewCitationRow(value: unknown): IDeliveredReviewCitationR
 
 function toReviewDetailRow(value: unknown): IReviewDetailRow | null {
   const row = toPlainRecord(value);
+  const reportDeliveryDate = row?.reportDeliveryDate;
 
   if (
     !row
     || typeof row.reviewId !== 'string'
     || typeof row.name !== 'string'
     || typeof row.reviewType !== 'string'
-    || !(row.reportDeliveryDate instanceof Date)
-    || typeof row.outcome !== 'string'
+    || !(reportDeliveryDate instanceof Date || typeof reportDeliveryDate === 'string')
   ) {
     return null;
   }
@@ -617,8 +617,8 @@ function toReviewDetailRow(value: unknown): IReviewDetailRow | null {
     reviewId: row.reviewId,
     name: row.name,
     reviewType: row.reviewType,
-    reportDeliveryDate: row.reportDeliveryDate,
-    outcome: row.outcome,
+    reportDeliveryDate,
+    outcome: optionalString(row.outcome),
   };
 }
 
