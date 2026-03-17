@@ -10,3 +10,4 @@ RUN mkdir -p /home/node/.cache/yarn && \
     mkdir -p /app/node_modules && \
     chown -R node:node /app && \
     chown -R node:node /app/node_modules
+
