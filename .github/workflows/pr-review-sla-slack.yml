@@ -214,7 +214,7 @@ jobs:
               const quote = quotes[Math.abs(quoteSeed) % quotes.length];
 
               const text = [
-                humorHeader,
+                `*Alert:* ${humorHeader}`,
                 `*PR:* <${pr.html_url}|#${pr.number} ${pr.title}>`,
                 `*Leave a review:* <${pr.html_url}/files|Open changed files>`,
                 `*Author:* @${pr.user.login}`,
@@ -222,8 +222,8 @@ jobs:
                 `*Urgency:* ${urgencyText}`,
                 `*Elapsed since last commit:* ${rounded}h (SLA ${slaHours}h)`,
                 `*Past SLA by:* ${roundedOverdue}h`,
-                `_${humorNudge}_`,
-                `:speech_balloon: _"${quote}"_`,
+                `*Nudge:* _${humorNudge}_`,
+                `*Quote:* :speech_balloon: _"${quote}"_`,
               ].join('\n');
 
               if (dryRun) {
