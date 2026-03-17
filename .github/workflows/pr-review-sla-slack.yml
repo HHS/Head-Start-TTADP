@@ -3,6 +3,8 @@ name: PR Review SLA Slack Alerts
 on:
   schedule:
     - cron: "*/15 * * * *"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -19,7 +21,7 @@ permissions:
 jobs:
   review_sla_alerts:
     # Keep this automation separate and opt-in.
-    if: ${{ github.event_name == 'workflow_dispatch' || vars.ENABLE_PR_REVIEW_SLA_ALERTS == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || vars.ENABLE_PR_REVIEW_SLA_ALERTS == 'true' }}
     runs-on: ubuntu-latest
     env:
       # Configure these in repo Variables to tune urgency windows.
