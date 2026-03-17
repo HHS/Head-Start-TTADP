@@ -8,8 +8,8 @@ import React, {
 import PropTypes from 'prop-types';
 import FocusTrap from 'focus-trap-react';
 import { uniqueId } from 'lodash';
-import './Drawer.scss';
 import useOnClickOutside from '../hooks/useOnOutsideClick';
+import './Drawer.scss';
 
 const ESCAPE_KEY_CODE = 27;
 
@@ -106,7 +106,7 @@ export default function Drawer({
                 ref={closeButtonRef}
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="usa-button usa-button--outline smart-hub-button--no-margin"
+                className="usa-button usa-button--outline margin-y-0 margin-x-1"
               >
                 Close
               </button>
