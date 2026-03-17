@@ -89,18 +89,26 @@ This allows internal normalization without breaking frontend contract.
 - Maintain output contract for monitoring pages:
   - review cards + citation cards in `frontend/src/pages/RecipientRecord/pages/Monitoring/components/*`.
 
-### 8) Process-data anonymization updates
+### 8) Regional dashboard monitoring widget refactor (behavior-preserving)
+- Refactor `src/widgets/monitoring/activeDeficientCitationsWithTtaSupport.ts` to stop extracting TTA references from `ActivityReportObjectiveCitations.monitoringReferences` JSONB.
+- Rebuild monthly TTA-reference matching from normalized ARO↔Citation linkage while preserving finding-level semantics against `Citations`.
+- Preserve existing widget behavior and contract:
+  - same response shape and traces (`Active deficiencies with TTA support`, `All active deficiencies`)
+  - same month continuity logic between first and last scoped approved-report months
+  - same deficiency activity window logic (`initial_report_delivery_date` and `active_through`).
+
+### 9) Process-data anonymization updates
 - Replace or adapt `processMonitoringReferences` in:
   - `src/tools/processData.js`
   - `src/tools/processData.test.js`.
 - If grant numbers are no longer persisted in AROC rows, convert this step to an equivalent anonymization on new persisted fields or remove safely with test updates.
 
-### 9) SSDI report SQL refactor
+### 10) SSDI report SQL refactor
 - Update:
   - `src/queries/dataRequests/internal/monitoring-citation-ar-report.sql`
 - Remove coupling to legacy `ActivityReportObjectiveCitations.monitoringReferences`/citation-text matching and join through normalized citation linkage to maintain report correctness.
 
-### 10) Verification and rollout
+### 11) Verification and rollout
 - Run backend + frontend lint/tests.
 - Add migration/backfill verification queries:
   - row counts old vs new linkage
@@ -108,6 +116,7 @@ This allows internal normalization without breaking frontend contract.
 - Verify no contract regressions on:
   - Activity Report edit/review flows
   - Recipient Monitoring (By review / By citation pages)
+  - Regional dashboard monitoring widget (`activeDeficientCitationsWithTtaSupport`) including trace shape, month continuity, and monthly count semantics
   - SSDI monitoring-citation report output.
 
 ## Additional Context (codebase findings)
@@ -137,6 +146,10 @@ This allows internal normalization without breaking frontend contract.
   - `src/services/recipient.js`.
 - Monitoring pages data:
   - `src/services/monitoring.ts` + `src/services/ttaByCitation.test.js` + `src/services/ttaByReview.test.js`.
+- Regional dashboard monitoring widget:
+  - `src/widgets/monitoring/activeDeficientCitationsWithTtaSupport.ts`
+  - `src/widgets/monitoring/activeDeficientCitationsWithTtaSupport.test.js`
+  - `docs/regional-dashboard/monitoring.md` (update data-source notes as part of refactor).
 - Anonymization:
   - `src/tools/processData.js` + `src/tools/processData.test.js`.
 - SSDI query:
@@ -164,6 +177,7 @@ This allows internal normalization without breaking frontend contract.
 - We preserve frontend/backend API contract while changing internal persistence.
 - ARO↔Citation linkage is at finding-level (`Citations.id`), with citation-grouped payload reconstruction in service layer.
 - We keep refactor backend-first and avoid frontend behavior changes unless contract gaps force it.
+- `activeDeficientCitationsWithTtaSupport` is a behavior-preserving refactor in this scope (no intentional metric or month-window changes).
 
 ## Execution todos (for tracked implementation)
 - `contract-baseline`: Capture and lock payload contracts + fixtures for saveReport and monitoring endpoints.
@@ -173,6 +187,7 @@ This allows internal normalization without breaking frontend contract.
 - `model-associations`: Update Sequelize models/associations for new linkage.
 - `write-path-refactor`: Refactor report cache/save path to persist normalized citation links.
 - `read-adapter-refactor`: Rebuild legacy `monitoringReferences` contract from normalized data in goal/recipient/monitoring services.
+- `monitoring-widget-refactor`: Refactor `activeDeficientCitationsWithTtaSupport` to normalized ARO↔Citation linkage and update widget docs/tests while preserving behavior.
 - `processdata-update`: Replace monitoringReferences anonymization logic + tests.
 - `ssdi-query-update`: Refactor monitoring-citation SSDI SQL to normalized joins.
 - `test-sweep`: Update/add backend/frontend tests and run full relevant suites.
