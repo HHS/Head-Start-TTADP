@@ -1325,6 +1325,7 @@ class Users{
 }
 
 enum enum_Users_flags {
+ monitoring-regional-dashboard
  quality_assurance_dashboard
 }
 
