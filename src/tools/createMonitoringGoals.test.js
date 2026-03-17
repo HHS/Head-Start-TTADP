@@ -1439,6 +1439,7 @@ describe('createMonitoringGoals', () => {
     const findingId5 = uuidv4();
     const findingId6 = uuidv4();
     const findingId7 = uuidv4();
+    const findingId7Deleted = uuidv4(); // Active status but source-deleted — must not trigger goal creation
     const findingId8 = uuidv4();
     const findingId9 = uuidv4();
     const findingId9B = uuidv4();
@@ -1554,6 +1555,20 @@ describe('createMonitoringGoals', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
+      },
+      {
+        // 7 (deleted) — same review, Active-status finding, but source-deleted; must be excluded
+        reviewId: grantThatsMonitoringFindingStatusIsNotActiveNumberReviewId7,
+        findingHistoryId: uuidv4(),
+        findingId: findingId7Deleted,
+        statusId: statusId1,
+        narrative: faker.random.words(10),
+        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        determination: faker.random.words(5),
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: new Date(),
       },
       {
         // 8
@@ -1819,6 +1834,16 @@ describe('createMonitoringGoals', () => {
         hash: faker.datatype.uuid(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
+      },
+      {
+        // 7 (deleted)
+        findingId: findingId7Deleted,
+        statusId: statusId1,
+        findingType: faker.random.word(),
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: new Date(),
       },
       {
         // 8
@@ -2207,6 +2232,21 @@ describe('createMonitoringGoals', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
+      },
+      {
+        // 7 (deleted) — source-deleted Active finding; must not trigger a monitoring goal
+        findingId: findingId7Deleted,
+        granteeId: grantThatsMonitoringFindingStatusIsNotActiveNumberGranteeId7,
+        statusId: statusId1,
+        findingType: faker.random.word(),
+        source: faker.random.word(),
+        correctionDeadLine: new Date(),
+        reportedDate: new Date(),
+        closedDate: null,
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: new Date(),
       },
       {
         // 8
@@ -2731,6 +2771,7 @@ describe('createMonitoringGoals', () => {
     expect(grant6Goals.length).toBe(0);
 
     // CASE 7: Does not create a monitoring goal for a grant that has a monitoring finding with a status that is not active.
+    // This grant also has a source-deleted finding with Active status (findingId7Deleted) that must be excluded.
     const grant7Goals = await Goal.findAll({ where: { grantId: grantThatsMonitoringFindingStatusIsNotActive7.id } });
     expect(grant7Goals.length).toBe(0);
 
