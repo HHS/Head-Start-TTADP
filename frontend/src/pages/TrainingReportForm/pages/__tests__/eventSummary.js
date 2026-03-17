@@ -66,6 +66,7 @@ describe('eventSummary', () => {
       user = defaultUser,
       creators = defaultCreators,
       defaultValues = defaultFormValues,
+      onHookForm = () => {},
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
@@ -91,7 +92,8 @@ describe('eventSummary', () => {
       };
 
       // set the hook form data that is returned from getValues().
-      hookForm.getValues = () => defaultFormValues;
+      hookForm.getValues = () => defaultValues;
+      onHookForm(hookForm);
 
       return (
         <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
@@ -277,6 +279,68 @@ describe('eventSummary', () => {
 
       // Confirm the intended audience readonly field is still present
       expect(await screen.findByText(/Event intended audience/i)).toBeInTheDocument();
+    });
+
+    it('hides poc editable field for admins when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
+      const adminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: ADMIN },
+        ],
+      };
+
+      const defaultValues = {
+        ...defaultFormValues,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      act(() => {
+        render(<RenderEventSummary user={adminUser} defaultValues={defaultValues} />);
+      });
+
+      expect(screen.queryByRole('combobox', { name: /event region point of contact/i })).not.toBeInTheDocument();
+      expect(await screen.findByRole('group', { name: /event intended audience required/i })).toBeInTheDocument();
+    });
+
+    it('short-circuits pocIds validation when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
+      const adminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: ADMIN },
+        ],
+      };
+
+      const defaultValues = {
+        ...defaultFormValues,
+      };
+
+      let hookForm;
+
+      act(() => {
+        render(
+          <RenderEventSummary
+            user={adminUser}
+            defaultValues={defaultValues}
+            onHookForm={(value) => { hookForm = value; }}
+          />,
+        );
+      });
+
+      expect(await screen.findByRole('combobox', { name: /event region point of contact/i })).toBeInTheDocument();
+
+      defaultValues.eventOrganizer = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
+
+      act(() => {
+        hookForm.setValue('pocIds', []);
+      });
+
+      let isValid;
+      await act(async () => {
+        isValid = await hookForm.trigger('pocIds');
+      });
+
+      expect(isValid).toBe(true);
+      expect(screen.queryByText('Select at least one event region point of contact')).not.toBeInTheDocument();
     });
   });
 });

@@ -421,6 +421,11 @@ const EventSummary = ({
                 control={control}
                 rules={{
                   validate: (value) => {
+                    // eslint-disable-next-line max-len
+                    if (data.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
+                      return true;
+                    }
+
                     if (!value || value.length === 0) {
                       return (
                         'Select at least one event region '
