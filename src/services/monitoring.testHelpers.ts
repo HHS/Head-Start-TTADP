@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid';
+import { Op } from 'sequelize';
 import db from '../models';
 import {
   createGoal, createReport, destroyGoal, destroyReport,
@@ -36,7 +37,16 @@ async function createAdditionalMonitoringData(
   findingId: string,
   reviewId: string,
   granteeId: string,
+  options: {
+    statusId?: number;
+    standardId?: number;
+  } = {},
 ) {
+  const {
+    statusId = 6006,
+    standardId = 99_999,
+  } = options;
+
   const timestamps = {
     sourceCreatedAt: new Date(),
     sourceUpdatedAt: new Date(),
@@ -49,7 +59,7 @@ async function createAdditionalMonitoringData(
   await MonitoringFinding.create({
     findingId,
     name: 'Finding 1',
-    statusId: 6006,
+    statusId,
     findingType: 'Finding Type',
     hash: 'hash',
     source: 'source',
@@ -59,7 +69,7 @@ async function createAdditionalMonitoringData(
   await MonitoringFindingGrant.create({
     findingId,
     granteeId,
-    statusId: 6006,
+    statusId,
     findingType: 'Finding Type',
     hash: 'hash',
     ...timestamps,
@@ -73,7 +83,7 @@ async function createAdditionalMonitoringData(
     reviewId,
     findingHistoryId: uuid(),
     findingId,
-    statusId: 6006,
+    statusId,
     narrative: 'narrative',
     ordinal: 1,
     determination: 'determination',
@@ -83,46 +93,52 @@ async function createAdditionalMonitoringData(
 
   await MonitoringFindingHistoryStatusLink.findOrCreate({
     where: {
-      statusId: 6006,
+      statusId,
     },
   });
 
-  await MonitoringFindingHistoryStatus.create({
-    statusId: 6006,
-    name: 'Complete',
-    ...timestamps,
+  await MonitoringFindingHistoryStatus.findOrCreate({
+    where: { statusId },
+    defaults: {
+      statusId,
+      name: 'Complete',
+      ...timestamps,
+    },
   });
 
-  await MonitoringStandard.create({
-    contentId: 'contentId',
-    standardId: 99_999,
-    citation: '1234',
-    text: 'text',
-    guidance: 'guidance',
-    citable: 1,
-    hash: 'hash',
-    ...timestamps,
+  await MonitoringStandard.findOrCreate({
+    where: { standardId },
+    defaults: {
+      contentId: `content-${standardId}`,
+      standardId,
+      citation: '1234',
+      text: 'text',
+      guidance: 'guidance',
+      citable: 1,
+      hash: 'hash',
+      ...timestamps,
+    },
   });
 
   await MonitoringStandardLink.findOrCreate({
-    where: { standardId: 99_999 },
+    where: { standardId },
   });
 
   await MonitoringFindingStandard.create({
-    standardId: 99_999,
+    standardId,
     findingId,
     name: 'Standard',
     ...timestamps,
   });
 
   await MonitoringFindingStatusLink.findOrCreate({
-    where: { statusId: 6006 },
+    where: { statusId },
   });
 
   await MonitoringFindingStatus.findOrCreate({
-    where: { statusId: 6006 },
+    where: { statusId },
     defaults: {
-      statusId: 6006,
+      statusId,
       name: 'Complete',
       ...timestamps,
     },
@@ -134,18 +150,70 @@ async function createAdditionalMonitoringData(
   };
 }
 
-async function destroyAdditionalMonitoringData(findingId: string, reviewId: string) {
-  await MonitoringFindingStandard.destroy({ where: { findingId }, force: true });
-  await MonitoringFindingStatus.destroy({ where: { statusId: 6006 }, force: true });
-  await MonitoringFindingGrant.destroy({ where: { findingId }, force: true });
-  await MonitoringFindingHistoryStatus.destroy({ where: { statusId: 6006 }, force: true });
-  await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 6006 }, force: true });
-  await MonitoringFindingHistory.destroy({ where: { reviewId }, force: true });
-  await MonitoringStandard.destroy({ where: { standardId: 99_999 }, force: true });
-  await MonitoringFinding.destroy({ where: { findingId }, force: true });
-  await MonitoringFindingStatusLink.destroy({ where: { statusId: 6006 }, force: true });
-  await MonitoringFindingLink.destroy({ where: { findingId }, force: true });
-  await MonitoringStandardLink.destroy({ where: { standardId: 99_999 }, force: true });
+async function destroyAdditionalMonitoringData(
+  findingId: string,
+  reviewId: string,
+  options: {
+    statusId?: number;
+    standardId?: number;
+  } = {},
+) {
+  const {
+    statusId = 6006,
+    standardId = 99_999,
+  } = options;
+
+  const findings = await MonitoringFinding.findAll({
+    attributes: ['findingId'],
+    where: {
+      [Op.or]: [
+        { findingId },
+        { statusId },
+      ],
+    },
+  });
+
+  const findingIds = [...new Set([
+    findingId,
+    ...findings.map((finding) => finding.findingId),
+  ])];
+
+  await MonitoringFindingStandard.destroy({ where: { findingId: findingIds }, force: true });
+  await MonitoringFindingGrant.destroy({
+    where: {
+      [Op.or]: [
+        { findingId: findingIds },
+        { statusId },
+      ],
+    },
+    force: true,
+  });
+  await MonitoringFindingHistory.destroy({
+    where: {
+      [Op.or]: [
+        { reviewId },
+        { statusId },
+        { findingId: findingIds },
+      ],
+    },
+    force: true,
+  });
+  await MonitoringFinding.destroy({
+    where: {
+      [Op.or]: [
+        { findingId: findingIds },
+        { statusId },
+      ],
+    },
+    force: true,
+  });
+  await MonitoringFindingHistoryStatus.destroy({ where: { statusId }, force: true });
+  await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId }, force: true });
+  await MonitoringFindingStatus.destroy({ where: { statusId }, force: true });
+  await MonitoringFindingStatusLink.destroy({ where: { statusId }, force: true });
+  await MonitoringFindingLink.destroy({ where: { findingId: findingIds }, force: true });
+  await MonitoringStandard.destroy({ where: { standardId }, force: true });
+  await MonitoringStandardLink.destroy({ where: { standardId }, force: true });
 }
 
 async function createMonitoringData(
@@ -157,7 +225,7 @@ async function createMonitoringData(
   findingId = uuid(),
 ) {
   await MonitoringClassSummary.findOrCreate({
-    where: { grantNumber },
+    where: { grantNumber, reviewId },
     defaults: {
       reviewId,
       grantNumber,
@@ -172,7 +240,11 @@ async function createMonitoringData(
   });
 
   await MonitoringReviewGrantee.findOrCreate({
-    where: { grantNumber },
+    where: {
+      grantNumber,
+      reviewId,
+      granteeId,
+    },
     defaults: {
       reviewId,
       granteeId,
@@ -243,8 +315,14 @@ async function destroyMonitoringData(
   statusId = 6006,
 ) {
   const grantees = await MonitoringReviewGrantee.findAll({
-    attribtes: ['id'],
-    where: { grantNumber },
+    attributes: ['id'],
+    where: {
+      [Op.or]: [
+        { grantNumber, reviewId },
+        { grantNumber },
+        { reviewId },
+      ],
+    },
   });
 
   const granteeIds = grantees.map((grantee) => grantee.id);
@@ -256,10 +334,28 @@ async function destroyMonitoringData(
   });
 
   await MonitoringReviewGrantee.destroy(
-    { where: { reviewId }, force: true, individualHooks: true },
+    {
+      where: {
+        [Op.or]: [
+          { grantNumber, reviewId },
+          { grantNumber },
+          { reviewId },
+        ],
+      },
+      force: true,
+      individualHooks: true,
+    },
   );
   await MonitoringClassSummary.destroy({
-    where: { reviewId }, force: true, individualHooks: true,
+    where: {
+      [Op.or]: [
+        { grantNumber, reviewId },
+        { grantNumber },
+        { reviewId },
+      ],
+    },
+    force: true,
+    individualHooks: true,
   });
   await MonitoringReview.destroy({
     where: { reviewId },

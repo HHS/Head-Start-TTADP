@@ -1,3 +1,4 @@
+import { v4 as uuid } from 'uuid';
 import { Op } from 'sequelize';
 import { ttaByCitations, mapFindingType } from './monitoring';
 import updateMonitoringFactTables from '../tools/updateMonitoringFactTables';
@@ -23,12 +24,19 @@ const {
   GrantDeliveredReview,
 } = db;
 
+const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 const RECIPIENT_ID = 9;
 const REGION_ID = 1;
-const GRANT_NUMBER = '01HP044446';
-const GRANT_ID = 665;
+const GRANT_NUMBER = `01HP${TEST_KEY}`;
+const GRANT_ID = 700000 + parseInt(TEST_KEY.slice(0, 6), 16);
 const EMPTY_RECIPIENT_ID = 999999;
 const UNMATCHED_REVIEW_UUID = '00000000-0000-0000-0000-000000000000';
+const REVIEW_ID = uuid();
+const GRANTEE_ID = uuid();
+const REVIEW_STATUS_ID = 70601;
+const FINDING_STATUS_ID = 80601;
+const CONTENT_ID = uuid();
+const STANDARD_ID = 90601;
 
 const expectedCitationResponse = (findingId, status = 'Complete') => ([
   {
@@ -36,7 +44,7 @@ const expectedCitationResponse = (findingId, status = 'Complete') => ([
     citationNumber: '1234',
     findingType: 'determination',
     grantNumbers: [
-      '01HP044446',
+      GRANT_NUMBER,
     ],
     lastTTADate: expect.any(String),
     reviews: [
@@ -159,12 +167,22 @@ describe('ttaByCitations', () => {
       reviewId: createdReviewId,
       findingId: createdFindingId,
       granteeId,
-    } = await createMonitoringData(GRANT_NUMBER);
+    } = await createMonitoringData(
+      GRANT_NUMBER,
+      REVIEW_ID,
+      GRANTEE_ID,
+      REVIEW_STATUS_ID,
+      CONTENT_ID,
+    );
 
     const result = await createAdditionalMonitoringData(
       createdFindingId,
       createdReviewId,
       granteeId,
+      {
+        statusId: FINDING_STATUS_ID,
+        standardId: STANDARD_ID,
+      },
     );
     findingId = result.findingId;
     reviewId = result.reviewId;
@@ -182,92 +200,92 @@ describe('ttaByCitations', () => {
   });
 
   afterAll(async () => {
-    try {
-      if (findingId) {
-        const factCitations = await Citation.findAll({
-          attributes: ['id'],
-          where: {
-            finding_uuid: findingId,
-          },
+    if (findingId) {
+      const factCitations = await Citation.findAll({
+        attributes: ['id'],
+        where: {
+          finding_uuid: findingId,
+        },
+      });
+
+      const factCitationIds = factCitations.map((citation) => citation.id);
+
+      if (factCitationIds.length > 0) {
+        await DeliveredReviewCitation.destroy({
+          where: { citationId: factCitationIds },
+          force: true,
         });
-
-        const factCitationIds = factCitations.map((citation) => citation.id);
-
-        if (factCitationIds.length > 0) {
-          await DeliveredReviewCitation.destroy({
-            where: { citationId: factCitationIds },
-            force: true,
-          });
-        }
-
-        if (factCitationIds.length > 0) {
-          await GrantCitation.destroy({
-            where: {
-              grantId: GRANT_ID,
-              citationId: factCitationIds,
-            },
-            force: true,
-          });
-
-          await Citation.destroy({
-            where: { id: factCitationIds },
-            force: true,
-          });
-        }
       }
 
-      if (reviewId) {
-        const deliveredReviews = await DeliveredReview.findAll({
-          attributes: ['id'],
+      if (factCitationIds.length > 0) {
+        await GrantCitation.destroy({
           where: {
-            review_uuid: {
-              [Op.in]: [reviewId, UNMATCHED_REVIEW_UUID],
-            },
+            grantId: GRANT_ID,
+            citationId: factCitationIds,
           },
+          force: true,
         });
 
-        const deliveredReviewIds = deliveredReviews.map((review) => review.id);
+        await Citation.destroy({
+          where: { id: factCitationIds },
+          force: true,
+        });
+      }
+    }
 
-        if (deliveredReviewIds.length > 0) {
-          await GrantDeliveredReview.destroy({
-            where: {
-              grantId: GRANT_ID,
-              deliveredReviewId: deliveredReviewIds,
-            },
-            force: true,
-          });
-        }
+    if (reviewId) {
+      const deliveredReviews = await DeliveredReview.findAll({
+        attributes: ['id'],
+        where: {
+          review_uuid: {
+            [Op.in]: [reviewId, UNMATCHED_REVIEW_UUID],
+          },
+        },
+      });
 
-        await DeliveredReview.destroy({
+      const deliveredReviewIds = deliveredReviews.map((review) => review.id);
+
+      if (deliveredReviewIds.length > 0) {
+        await GrantDeliveredReview.destroy({
           where: {
-            review_uuid: {
-              [Op.in]: [reviewId, UNMATCHED_REVIEW_UUID],
-            },
+            grantId: GRANT_ID,
+            deliveredReviewId: deliveredReviewIds,
           },
           force: true,
         });
       }
 
-      if (goal && objectives && reports && topic && citations) {
-        await destroyReportAndCitationData(
-          goal,
-          objectives,
-          reports,
-          topic,
-          citations,
-        );
-      }
-
-      if (findingId && reviewId) {
-        await destroyAdditionalMonitoringData(findingId, reviewId);
-      }
-
-      await destroyMonitoringData(GRANT_NUMBER);
-      await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
-      await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
-    } finally {
-      await db.sequelize.close();
+      await DeliveredReview.destroy({
+        where: {
+          review_uuid: {
+            [Op.in]: [reviewId, UNMATCHED_REVIEW_UUID],
+          },
+        },
+        force: true,
+      });
     }
+
+    if (goal && objectives && reports && topic && citations) {
+      await destroyReportAndCitationData(
+        goal,
+        objectives,
+        reports,
+        topic,
+        citations,
+      );
+    }
+
+    if (findingId && reviewId) {
+      await destroyAdditionalMonitoringData(findingId, reviewId, {
+        statusId: FINDING_STATUS_ID,
+        standardId: STANDARD_ID,
+      });
+    }
+
+    await destroyMonitoringData(GRANT_NUMBER, REVIEW_ID, REVIEW_STATUS_ID);
+    await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
+    await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
+    await db.sequelize.close();
   });
 
   it('fetches TTA, ordered by Citations', async () => {
