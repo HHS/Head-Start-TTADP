@@ -81,7 +81,8 @@ describe('ttaByReviews', () => {
         statusId: FINDING_STATUS_ID,
         standardId: STANDARD_ID,
       },
-    ); findingId = result.findingId;
+    );
+    findingId = result.findingId;
     reviewId = result.reviewId;
 
     const arocResult = await createReportAndCitationData(

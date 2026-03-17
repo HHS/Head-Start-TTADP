@@ -481,6 +481,7 @@ interface IDeliveredReviewRow {
   review_type: string;
   report_delivery_date: string;
   review_status: string;
+  grantDeliveredReviews?: { grantId: number }[];
 }
 
 interface IDeliveredReviewCitationRow {
@@ -497,6 +498,155 @@ interface IFindingHistoryStatusRow {
   };
 }
 
+interface IReviewDetailRow {
+  reviewId: string;
+  name: string;
+  reviewType: string;
+  reportDeliveryDate: Date;
+  outcome: string;
+}
+
+interface IPlainable {
+  get(options?: { plain?: boolean }): unknown;
+}
+
+function toPlainRecord(value: unknown): Record<string, unknown> | null {
+  const plainValue = value && typeof value === 'object' && 'get' in value
+    && typeof (value as IPlainable).get === 'function'
+    ? (value as IPlainable).get({ plain: true })
+    : value;
+
+  return plainValue && typeof plainValue === 'object' && !Array.isArray(plainValue)
+    ? plainValue as Record<string, unknown>
+    : null;
+}
+
+function optionalString(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
+}
+
+function toGrantCitationRow(value: unknown): IGrantCitationRow | null {
+  const row = toPlainRecord(value);
+  const citation = toPlainRecord(row?.citation);
+
+  if (
+    !row
+    || !citation
+    || typeof row.grantId !== 'number'
+    || typeof row.citationId !== 'number'
+    || typeof citation.id !== 'number'
+    || typeof citation.finding_uuid !== 'string'
+    || typeof citation.citation !== 'string'
+  ) {
+    return null;
+  }
+
+  return {
+    grantId: row.grantId,
+    citationId: row.citationId,
+    citation: {
+      id: citation.id,
+      finding_uuid: citation.finding_uuid,
+      citation: citation.citation,
+      raw_status: optionalString(citation.raw_status),
+      calculated_status: optionalString(citation.calculated_status),
+      raw_finding_type: optionalString(citation.raw_finding_type),
+      calculated_finding_type: optionalString(citation.calculated_finding_type),
+      source_category: optionalString(citation.source_category),
+    },
+  };
+}
+
+function toDeliveredReviewCitationRow(value: unknown): IDeliveredReviewCitationRow | null {
+  const row = toPlainRecord(value);
+  const deliveredReview = toPlainRecord(row?.deliveredReview);
+  const grantDeliveredReviews = Array.isArray(deliveredReview?.grantDeliveredReviews)
+    ? deliveredReview.grantDeliveredReviews
+      .map((grantDeliveredReview) => toPlainRecord(grantDeliveredReview))
+      .filter(
+        (grantDeliveredReview): grantDeliveredReview is Record<string, unknown> => !!grantDeliveredReview
+          && typeof grantDeliveredReview.grantId === 'number',
+      )
+      .map((grantDeliveredReview) => ({ grantId: grantDeliveredReview.grantId as number }))
+    : [];
+
+  if (
+    !row
+    || !deliveredReview
+    || typeof row.citationId !== 'number'
+    || typeof row.deliveredReviewId !== 'number'
+    || typeof deliveredReview.id !== 'number'
+    || typeof deliveredReview.review_uuid !== 'string'
+    || typeof deliveredReview.review_type !== 'string'
+    || typeof deliveredReview.report_delivery_date !== 'string'
+    || typeof deliveredReview.review_status !== 'string'
+    || grantDeliveredReviews.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    citationId: row.citationId,
+    deliveredReviewId: row.deliveredReviewId,
+    deliveredReview: {
+      id: deliveredReview.id,
+      review_uuid: deliveredReview.review_uuid,
+      review_type: deliveredReview.review_type,
+      report_delivery_date: deliveredReview.report_delivery_date,
+      review_status: deliveredReview.review_status,
+      grantDeliveredReviews,
+    },
+  };
+}
+
+function toReviewDetailRow(value: unknown): IReviewDetailRow | null {
+  const row = toPlainRecord(value);
+
+  if (
+    !row
+    || typeof row.reviewId !== 'string'
+    || typeof row.name !== 'string'
+    || typeof row.reviewType !== 'string'
+    || !(row.reportDeliveryDate instanceof Date)
+    || typeof row.outcome !== 'string'
+  ) {
+    return null;
+  }
+
+  return {
+    reviewId: row.reviewId,
+    name: row.name,
+    reviewType: row.reviewType,
+    reportDeliveryDate: row.reportDeliveryDate,
+    outcome: row.outcome,
+  };
+}
+
+function toFindingHistoryStatusRow(value: unknown): IFindingHistoryStatusRow | null {
+  const row = toPlainRecord(value);
+  const statusLink = toPlainRecord(row?.monitoringFindingStatusLink);
+  const monitoringFindingHistoryStatuses = Array.isArray(statusLink?.monitoringFindingHistoryStatuses)
+    ? statusLink.monitoringFindingHistoryStatuses
+      .map((status) => toPlainRecord(status))
+      .filter(
+        (status): status is Record<string, unknown> => !!status && typeof status.name === 'string',
+      )
+      .map((status) => ({ name: status.name as string }))
+    : [];
+
+  if (!row || typeof row.findingId !== 'string' || typeof row.reviewId !== 'string') {
+    return null;
+  }
+
+  return {
+    findingId: row.findingId,
+    reviewId: row.reviewId,
+    monitoringFindingStatusLink: statusLink
+      ? { monitoringFindingHistoryStatuses }
+      : undefined,
+  };
+}
+
 async function ttaByCitationsFromFactTables(
   recipientId: number,
   regionId: number,
@@ -510,7 +660,7 @@ async function ttaByCitationsFromFactTables(
   const grantNumberById = new Map<number, string>(recipientGrants.map((gr) => [gr.id, gr.number]));
   const grantIds = recipientGrants.map((gr) => gr.id);
 
-  const grantCitations = await GrantCitation.findAll({
+  const grantCitationModels = await GrantCitation.findAll({
     attributes: ['grantId', 'citationId'],
     where: {
       grantId: grantIds,
@@ -532,7 +682,11 @@ async function ttaByCitationsFromFactTables(
         ],
       },
     ],
-  }) as unknown as IGrantCitationRow[];
+  });
+
+  const grantCitations = grantCitationModels
+    .map((grantCitation) => toGrantCitationRow(grantCitation))
+    .filter((grantCitation): grantCitation is IGrantCitationRow => !!grantCitation);
 
   if (grantCitations.length === 0) {
     return [];
@@ -572,7 +726,7 @@ async function ttaByCitationsFromFactTables(
 
   const citationIds = [...citationsById.keys()];
 
-  const deliveredReviewCitations = await DeliveredReviewCitation.findAll({
+  const deliveredReviewCitationModels = await DeliveredReviewCitation.findAll({
     attributes: ['citationId', 'deliveredReviewId'],
     where: {
       citationId: citationIds,
@@ -608,7 +762,13 @@ async function ttaByCitationsFromFactTables(
         ],
       },
     ],
-  }) as unknown as IDeliveredReviewCitationRow[];
+  });
+
+  const deliveredReviewCitations = deliveredReviewCitationModels
+    .map((deliveredReviewCitation) => toDeliveredReviewCitationRow(deliveredReviewCitation))
+    .filter(
+      (deliveredReviewCitation): deliveredReviewCitation is IDeliveredReviewCitationRow => !!deliveredReviewCitation,
+    );
 
   if (deliveredReviewCitations.length === 0) {
     return [];
@@ -618,7 +778,7 @@ async function ttaByCitationsFromFactTables(
     .map((drc) => drc.deliveredReview?.review_uuid)
     .filter((reviewUuid) => !!reviewUuid));
 
-  const reviewDetails = await MonitoringReview.findAll({
+  const reviewDetailModels = await MonitoringReview.findAll({
     attributes: [
       'reviewId',
       'name',
@@ -629,21 +789,15 @@ async function ttaByCitationsFromFactTables(
     where: {
       reviewId: reviewUuids,
     },
-  }) as {
-    reviewId: string;
-    name: string;
-    reviewType: string;
-    reportDeliveryDate: Date;
-    outcome: string;
-  }[];
+  });
 
-  const reviewByUuid = new Map<string, {
-    name: string;
-    reviewType: string;
-    reportDeliveryDate: Date;
-    outcome: string;
-  }>(
+  const reviewDetails = reviewDetailModels
+    .map((review) => toReviewDetailRow(review))
+    .filter((review): review is IReviewDetailRow => !!review);
+
+  const reviewByUuid = new Map<string, IReviewDetailRow>(
     reviewDetails.map((review) => [review.reviewId, {
+      reviewId: review.reviewId,
       name: review.name,
       reviewType: review.reviewType,
       reportDeliveryDate: review.reportDeliveryDate,
@@ -653,7 +807,7 @@ async function ttaByCitationsFromFactTables(
 
   const findingUuids = uniq([...citationsById.values()].map((c) => c.findingUuid));
 
-  const findingHistoryStatuses = await MonitoringFindingHistory.findAll({
+  const findingHistoryStatusModels = await MonitoringFindingHistory.findAll({
     attributes: [
       'findingId',
       'reviewId',
@@ -678,7 +832,11 @@ async function ttaByCitationsFromFactTables(
         ],
       },
     ],
-  }) as unknown as IFindingHistoryStatusRow[];
+  });
+
+  const findingHistoryStatuses = findingHistoryStatusModels
+    .map((history) => toFindingHistoryStatusRow(history))
+    .filter((history): history is IFindingHistoryStatusRow => !!history);
 
   const findingStatusByFindingAndReview = new Map<string, string>();
   findingHistoryStatuses.forEach((history) => {
@@ -691,8 +849,8 @@ async function ttaByCitationsFromFactTables(
 
   const objectivesByFindingAndReview = new Map<string, ActivityReportObjectiveCitationResponse[]>();
   citationsOnActivityReports.forEach((objective) => {
-    objective.findingIds.forEach((findingId) => {
-      objective.reviewNames.forEach((reviewName) => {
+    uniq(objective.findingIds).forEach((findingId) => {
+      uniq(objective.reviewNames).forEach((reviewName) => {
         const key = `${findingId}::${reviewName}`;
         const existingObjectives = objectivesByFindingAndReview.get(key) || [];
         existingObjectives.push(objective);
@@ -744,7 +902,7 @@ async function ttaByCitationsFromFactTables(
       objectives,
       findingStatus: findingStatusByFindingAndReview.get(
         `${citationData.findingUuid}::${deliveredReview.review_uuid}`,
-      ) || citationData.status,
+      ) || '',
     });
   });
 
