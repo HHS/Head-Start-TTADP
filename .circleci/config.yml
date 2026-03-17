@@ -522,7 +522,7 @@ jobs:
     - run:
         name: Build and start server
         command: ./bin/prod-style-server
-        wait_for_completion: false
+        background: true
     - run:
         name: Wait for Node.js server to start
         command: ./bin/ping-server 8080 localhost "" 20

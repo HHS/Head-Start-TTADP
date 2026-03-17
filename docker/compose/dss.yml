@@ -3,21 +3,6 @@ x-project-labels: &project-labels
   com.ttahub.stack: dss
 
 services:
-  db:
-    image: postgres:15.12
-    labels: *project-labels
-    environment:
-      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-something_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-ttasmarthub}
-    volumes:
-      - dss-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DB:-ttasmarthub}"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-    shm_size: 1g
 
   server:
     labels: *project-labels
@@ -50,13 +35,25 @@ services:
       - dss-frontend-node-modules:/workspace/frontend/node_modules
       - dss-backend-yarn-cache:/yarn-cache
 
-networks:
-  default:
+  db:
+    image: postgres:15.12
     labels: *project-labels
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-something_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ttasmarthub}
+    volumes:
+      - dss-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DB:-ttasmarthub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    shm_size: 1g
 
 volumes:
   dss-db-data:
-    labels: *project-labels
+    name: dss-db-data
   dss-backend-node-modules:
     name: dss-backend-node-modules
   dss-frontend-node-modules:
