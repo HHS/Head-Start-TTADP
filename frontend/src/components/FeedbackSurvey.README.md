@@ -116,11 +116,11 @@ The component submits feedback to `/api/feedback/survey` endpoint.
 
 ## Local Storage
 
-The component uses localStorage to track dismissal per page:
+The component uses localStorage to track survey status per page:
 - Key format: `survey-feedback-dismissed-{pageId}`
-- Value: `"true"` when dismissed
+- Value: `"collapsed"` when the user dismisses the survey without submitting, `"completed`" after a successful submission, or legacy `"true"` (treated the same as `"collapsed"` for backward compatibility)
 
-Users can clear their browser's localStorage to see the survey again.
+Users can clear their browser's localStorage (or remove the specific key for a page) to see the survey again.
 
 ## Styling
 
