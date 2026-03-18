@@ -90,6 +90,7 @@ describe('RecipientSpotlightDashboardCards', () => {
         noTTA: false,
         DRS: false,
         FEI: false,
+        underenrolled: false,
         indicatorCount: 1,
       },
     ];
@@ -115,6 +116,7 @@ describe('RecipientSpotlightDashboardCards', () => {
         noTTA: false,
         DRS: false,
         FEI: false,
+        underenrolled: false,
         indicatorCount: 1,
       },
       {
@@ -130,6 +132,7 @@ describe('RecipientSpotlightDashboardCards', () => {
         noTTA: false,
         DRS: false,
         FEI: false,
+        underenrolled: false,
         indicatorCount: 1,
       },
     ];
@@ -155,6 +158,7 @@ describe('RecipientSpotlightDashboardCards', () => {
         noTTA: false,
         DRS: false,
         FEI: false,
+        underenrolled: false,
         indicatorCount: 1,
       },
       {
@@ -170,6 +174,7 @@ describe('RecipientSpotlightDashboardCards', () => {
         noTTA: false,
         DRS: false,
         FEI: false,
+        underenrolled: false,
         indicatorCount: 1,
       },
     ];
@@ -195,6 +200,7 @@ describe('RecipientSpotlightDashboardCards', () => {
         noTTA: false,
         DRS: false,
         FEI: false,
+        underenrolled: false,
         indicatorCount: 1,
       },
     ];

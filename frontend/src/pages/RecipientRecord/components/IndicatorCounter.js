@@ -9,7 +9,7 @@ export default function IndicatorCounter({
     const indicators = [];
     for (let i = 0; i < totalCount; i += 1) {
       indicators.push(
-        <div className={`height-2 flex-fill radius-md ttahub--indicator-box-${i < count ? 'filled' : 'empty'} margin-right-1`} key={`indicator-${i}`} />,
+        <div className={`height-2 flex-fill radius-md ttahub--indicator-box-${i < count ? 'filled' : 'empty'}`} key={`indicator-${i}`} />,
       );
     }
     return indicators;

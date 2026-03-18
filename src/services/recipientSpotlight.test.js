@@ -700,6 +700,7 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients[0]).toHaveProperty('newRecipients');
       expect(result.recipients[0]).toHaveProperty('newStaff');
       expect(result.recipients[0]).toHaveProperty('noTTA');
+      expect(result.recipients[0]).toHaveProperty('underenrolled');
       expect(result.recipients[0]).toHaveProperty('DRS');
       expect(result.recipients[0]).toHaveProperty('FEI');
       expect(result.overview).toHaveProperty('numRecipients');
@@ -1079,7 +1080,7 @@ describe('recipientSpotlight service', () => {
       }
     });
 
-    it('confirms DRS and FEI are set to false for MVP', async () => {
+    it('confirms underenrolled, DRS, and FEI are set to false for MVP placeholders', async () => {
       // Use a recipient with an indicator since we filter out 0-indicator recipients
       const scopes = createScopesWithRecipientAndRegion(childIncidentsRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(
@@ -1094,6 +1095,7 @@ describe('recipientSpotlight service', () => {
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
+      expect(result.recipients[0].underenrolled).toBe(false);
       expect(result.recipients[0].DRS).toBe(false);
       expect(result.recipients[0].FEI).toBe(false);
     });

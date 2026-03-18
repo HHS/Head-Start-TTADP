@@ -3,9 +3,13 @@ import { PRIORITY_INDICATORS } from '@ttahub/common';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-// Filter out DRS and FEI from the options, but keep them in the constant for future use
-const PRIORITY_INDICATOR_OPTIONS = PRIORITY_INDICATORS
-  .filter((label) => label !== 'DRS' && label !== 'FEI')
+const INDICATORS_WITH_UNDERENROLLED = PRIORITY_INDICATORS.includes('Underenrolled')
+  ? PRIORITY_INDICATORS
+  : [...PRIORITY_INDICATORS, 'Underenrolled'];
+
+// Keep DRS excluded from filter options because it is not currently surfaced in the spotlight UI.
+const PRIORITY_INDICATOR_OPTIONS = INDICATORS_WITH_UNDERENROLLED
+  .filter((label) => label !== 'DRS')
   .map((label, value) => ({ value, label }));
 
 export default function FilterPriorityIndicator({

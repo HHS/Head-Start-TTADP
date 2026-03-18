@@ -130,6 +130,7 @@ RecipientSpotlightDashboardCards.propTypes = {
     noTTA: PropTypes.bool,
     DRS: PropTypes.bool,
     FEI: PropTypes.bool,
+    underenrolled: PropTypes.bool,
     indicatorCount: PropTypes.number,
   })),
   count: PropTypes.number.isRequired,

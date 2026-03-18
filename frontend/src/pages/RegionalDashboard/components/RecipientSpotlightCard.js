@@ -7,8 +7,7 @@ import ExpanderButton from '../../../components/ExpanderButton';
 import IndicatorCounter from '../../RecipientRecord/components/IndicatorCounter';
 import './RecipientSpotlightCard.scss';
 
-// Number of priority indicators currently shown (DRS and FEI temporarily hidden)
-const DISPLAYED_INDICATOR_COUNT = 5;
+const DISPLAYED_INDICATOR_COUNT = 7;
 
 const INDICATOR_DETAILS = {
   childIncidents: {
@@ -19,15 +18,10 @@ const INDICATOR_DETAILS = {
     label: 'Deficiency',
     description: 'Recipient has at least one active monitoring deficiency',
   },
-  // Temporarily hidden - will be added back later
-  // DRS: {
-  //   label: 'DRS',
-  //   description: 'Recipient meets the conditions for the Designation Renewal System (DRS)',
-  // },
-  // FEI: {
-  //   label: 'FEI',
-  //   description: 'Recipient is currently in the Full Enrollment Initiative (FEI)',
-  // },
+  FEI: {
+    label: 'FEI',
+    description: 'Recipient is currently in the Full Enrollment Initiative (FEI) including 6-month evaluation and designated chronically underenrolled (DCU) periods',
+  },
   newRecipients: {
     label: 'New recipient',
     description: 'Recipient is in the first 4 years as a Head Start program with no previous OHS grant',
@@ -39,6 +33,10 @@ const INDICATOR_DETAILS = {
   noTTA: {
     label: 'No TTA',
     description: 'Recipient does not have any TTA reports in last 12 months',
+  },
+  underenrolled: {
+    label: 'Underenrolled',
+    description: 'Recipient reports below 97% enrollment but has not reached 4 consecutive months of underenrollment',
   },
 };
 
@@ -53,12 +51,11 @@ export default function RecipientSpotlightCard({ recipient }) {
     const indicators = [
       recip.childIncidents,
       recip.deficiency,
+      recip.FEI,
       recip.newRecipients,
       recip.newStaff,
       recip.noTTA,
-      // Temporarily hidden - will be added back later
-      // recip.DRS,
-      // recip.FEI,
+      recip.underenrolled,
     ];
     return indicators.filter(Boolean).length;
   };
@@ -185,5 +182,6 @@ RecipientSpotlightCard.propTypes = {
     noTTA: PropTypes.bool,
     DRS: PropTypes.bool,
     FEI: PropTypes.bool,
+    underenrolled: PropTypes.bool,
   }).isRequired,
 };
