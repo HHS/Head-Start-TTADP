@@ -54,15 +54,25 @@ jobs:
                 if (dryRun) {
                   core.info(`DRY_RUN enabled: would create label ${name}, but not mutating repository state.`);
                 } else {
-                  await github.rest.issues.createLabel({
-                    owner,
-                    repo,
-                    name,
-                    color: 'D4C5F9',
-                    description: 'PR has triggered an overdue review Slack alert',
-                  });
-                  core.info(`Created label ${name}.`);
+                  try {
+                    await github.rest.issues.createLabel({
+                      owner,
+                      repo,
+                      name,
+                      color: 'D4C5F9',
+                      description: 'PR has triggered an overdue review Slack alert',
+                    });
+                    core.info(`Created label ${name}.`);
+                  } catch (createError) {
+                    if (createError.status === 403) {
+                      core.warning(`Could not create label ${name}: GITHUB_TOKEN lacks permission (${createError.message}).`);
+                    } else {
+                      throw createError;
+                    }
+                  }
                 }
+              } else if (error.status === 403) {
+                core.warning(`Could not validate label ${name}: GITHUB_TOKEN lacks permission (${error.message}).`);
               } else {
                 throw error;
               }
@@ -87,6 +97,19 @@ jobs:
             }
 
             const now = new Date();
+
+            const tryMutateLabel = async (operation, fn) => {
+              try {
+                await fn();
+                return true;
+              } catch (error) {
+                if (error.status === 403) {
+                  core.warning(`Skipping label ${operation}: GITHUB_TOKEN lacks permission (${error.message}).`);
+                  return false;
+                }
+                throw error;
+              }
+            };
 
             const pulls = await github.paginate(github.rest.pulls.list, {
               owner,
@@ -158,12 +181,14 @@ jobs:
               if (hasReviewSinceLastCommit) {
                 core.info(`Skipping PR #${pr.number}: review already submitted after latest commit.`);
                 if ((pr.labels || []).some((l) => l.name === alertLabel)) {
-                  await github.rest.issues.removeLabel({
-                    owner,
-                    repo,
-                    issue_number: pr.number,
-                    name: alertLabel,
-                  }).catch(() => {});
+                  await tryMutateLabel('remove', async () => {
+                    await github.rest.issues.removeLabel({
+                      owner,
+                      repo,
+                      issue_number: pr.number,
+                      name: alertLabel,
+                    });
+                  });
                 }
                 continue;
               }
@@ -281,11 +306,13 @@ jobs:
                 core.info(`Slack notified for PR #${pr.number}`);
               }
 
-              await github.rest.issues.addLabels({
-                owner,
-                repo,
-                issue_number: pr.number,
-                labels: [alertLabel],
+              await tryMutateLabel('add', async () => {
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  labels: [alertLabel],
+                });
               });
 
               notified += 1;
