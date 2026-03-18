@@ -1,47 +1,42 @@
 @import '../colors.scss';
 
+$survey-left-default: 8rem;
+$survey-left-small: 7.5rem;
+$survey-left-medium: 10rem;
+$survey-left-large: 15rem;
+$survey-max-height: 20vh;
+$survey-close-icon-size: 1.25rem;
+$survey-thumb-icon-size: 1.25rem;
+$survey-textarea-max-height: 80px;
+$tooltip-nudge-y: 4px;
+$tooltip-caret-size: 0.35rem;
+
 .survey-feedback {
+  // These offsets align the fixed survey with the responsive side navigation widths.
   position: fixed;
   bottom: 0;
-  left: 8rem;
+  left: $survey-left-default;
   right: 0;
   background-color: $base-lighter;
   border-top: 2px solid $base-light;
-  padding: 1.5rem;
-  max-height: 20vh;
+  // Keep the survey visible while preserving page context on short viewports.
+  max-height: $survey-max-height;
   overflow-y: auto;
   z-index: 1000;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 
   @media all and (min-width: 30em) {
-    left: 7.5rem;
+    left: $survey-left-small;
   }
 
   @media all and (min-width: 40em) {
-    left: 10rem;
+    left: $survey-left-medium;
   }
 
   @media all and (min-width: 64em) {
-    left: 15rem;
+    left: $survey-left-large;
   }
 
-  @media (min-width: 768px) {
-    padding: 1.5rem 3rem;
-  }
-}
-
-.survey-feedback__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-}
-
-.survey-feedback__title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin: 0;
-  color: $base-darkest;
 }
 
 .survey-feedback__close-button {
@@ -50,7 +45,7 @@
   cursor: pointer;
   padding: 0.25rem;
   color: $base-dark;
-  font-size: 1.25rem;
+  font-size: $survey-close-icon-size;
   line-height: 1;
   transition: color 0.2s;
 
@@ -64,37 +59,13 @@
   }
 }
 
-.survey-feedback__rating-scale {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
-
-  @media (max-width: 767px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-.survey-feedback__thumbs-options {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
 .survey-feedback__thumb-button {
-  align-items: center;
   background-color: $base-lightest;
   border: 1px solid $base-light;
   border-radius: 0.25rem;
   color: $ttahub-blue;
   cursor: pointer;
-  display: inline-flex;
-  font-size: 1.25rem;
-  height: 2.5rem;
-  justify-content: center;
-  width: 2.5rem;
+  font-size: $survey-thumb-icon-size;
 
   &:hover {
     border-color: $ttahub-blue;
@@ -112,29 +83,21 @@
   }
 }
 
-.survey-feedback__scale-label {
-  font-size: 0.875rem;
-  color: $base-dark;
-  white-space: nowrap;
-  font-weight: 600;
-}
-
-.survey-feedback__rating-options {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+.survey-feedback__rating-scale {
+  @media (max-width: 767px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .survey-feedback__rating-option {
-  display: flex;
-  align-items: center;
-
   .usa-radio__input {
     margin-top: 0;
   }
 
   .usa-radio__label {
     margin-top: 0;
+    // Matches USWDS radio hit-area while keeping compact single-digit labels aligned.
     padding-left: 1.75rem;
     font-size: 0.875rem;
     min-height: auto;
@@ -145,12 +108,9 @@
   }
 
   .usa-radio__label::after {
+    // Optical centering for the selected inner dot with the compact label layout.
     top: 4px;
   }
-}
-
-.survey-feedback__comment-section {
-  margin-bottom: 1rem;
 }
 
 .survey-feedback__expand-button {
@@ -159,11 +119,7 @@
   color: $text-link;
   cursor: pointer;
   padding: 0;
-  font-size: 0.875rem;
   text-decoration: underline;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
 
   &:hover {
     color: $ttahub-blue;
@@ -176,48 +132,15 @@
 }
 
 .survey-feedback__textarea-container {
-  margin-top: 0.75rem;
-
-  .usa-label {
-    font-size: 0.875rem;
-    margin-top: 0;
-  }
-
   textarea {
-    max-height: 80px;
-  }
-}
-
-.survey-feedback__char-count {
-  font-size: 0.75rem;
-  color: $base-medium;
-  text-align: left;
-  margin-top: 0.25rem;
-}
-
-.survey-feedback__actions {
-  display: flex;
-  justify-content: flex-start;
-
-  button {
-    font-size: 0.875rem;
-    padding: 0.5rem 1rem;
+    max-height: $survey-textarea-max-height;
   }
 }
 
 .survey-feedback__reopen-button {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
   border: 1px solid $ttahub-blue;
   background-color: $ttahub-blue;
   color: $base-lightest;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
   z-index: 1001;
   overflow: visible;
@@ -242,7 +165,7 @@
   position: absolute;
   bottom: calc(100% + 0.5rem);
   left: calc(50% - 0.25rem);
-  transform: translateX(-50%) translateY(4px);
+  transform: translateX(-50%) translateY($tooltip-nudge-y);
   background-color: $base-darkest;
   color: $base-lightest;
   padding: 0.25rem 0.5rem;
@@ -261,9 +184,9 @@
     left: 50%;
     top: 100%;
     transform: translateX(-50%);
-    border-left: 0.35rem solid transparent;
-    border-right: 0.35rem solid transparent;
-    border-top: 0.35rem solid $base-darkest;
+    border-left: $tooltip-caret-size solid transparent;
+    border-right: $tooltip-caret-size solid transparent;
+    border-top: $tooltip-caret-size solid $base-darkest;
   }
 }
 

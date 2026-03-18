@@ -124,7 +124,7 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
     return (
       <button
         type="button"
-        className="survey-feedback__reopen-button"
+        className="survey-feedback__reopen-button position-fixed right-2 bottom-2 width-5 height-5 radius-pill display-flex flex-align-center flex-justify-center"
         onClick={handleReopen}
         aria-label="Reopen survey"
         aria-describedby={reopenTooltipId}
@@ -138,9 +138,9 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
   }
 
   return (
-    <div className="survey-feedback" role="complementary" aria-label="Survey feedback">
-      <div className="survey-feedback__header">
-        <h3 className="survey-feedback__title">{title}</h3>
+    <div className="survey-feedback padding-3 tablet:padding-x-6" role="complementary" aria-label="Survey feedback">
+      <div className="display-flex flex-justify flex-align-start margin-bottom-2">
+        <h3 className="margin-0 font-sans-lg text-bold text-base-darkest">{title}</h3>
         <button
           type="button"
           className="survey-feedback__close-button"
@@ -153,10 +153,10 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
 
       <Fieldset legend="Rate this page" legendStyle="srOnly">
         {useThumbRating ? (
-          <div className="survey-feedback__thumbs-options" role="radiogroup" aria-label="Rate this page">
+          <div className="display-flex flex-gap-2 margin-bottom-2" role="radiogroup" aria-label="Rate this page">
             <button
               type="button"
-              className={`survey-feedback__thumb-button ${selectedRating === THUMBS_RATINGS.UP ? 'is-selected' : ''}`}
+              className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.UP ? 'is-selected' : ''}`}
               onClick={() => setSelectedRating(THUMBS_RATINGS.UP)}
               aria-pressed={selectedRating === THUMBS_RATINGS.UP}
               aria-label="Thumbs up"
@@ -165,7 +165,7 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
             </button>
             <button
               type="button"
-              className={`survey-feedback__thumb-button ${selectedRating === THUMBS_RATINGS.DOWN ? 'is-selected' : ''}`}
+              className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.DOWN ? 'is-selected' : ''}`}
               onClick={() => setSelectedRating(THUMBS_RATINGS.DOWN)}
               aria-pressed={selectedRating === THUMBS_RATINGS.DOWN}
               aria-label="Thumbs down"
@@ -174,11 +174,11 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
             </button>
           </div>
         ) : (
-          <div className="survey-feedback__rating-scale">
-            <span className="survey-feedback__scale-label">Not useful</span>
-            <div className="survey-feedback__rating-options">
+          <div className="display-flex flex-align-center flex-wrap flex-gap-1 margin-bottom-2 survey-feedback__rating-scale">
+            <span className="font-sans-2xs text-base-dark text-bold">Not useful</span>
+            <div className="display-flex flex-gap-1 flex-wrap">
               {RATING_OPTIONS.map((rating) => (
-                <div key={rating} className="survey-feedback__rating-option">
+                <div key={rating} className="survey-feedback__rating-option display-flex flex-align-center">
                   <input
                     type="radio"
                     id={`rating-${rating}-${pageId}`}
@@ -197,16 +197,16 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
                 </div>
               ))}
             </div>
-            <span className="survey-feedback__scale-label">Very useful</span>
+            <span className="font-sans-2xs text-base-dark text-bold">Very useful</span>
           </div>
         )}
       </Fieldset>
 
-      <div className="survey-feedback__comment-section">
+      <div className="margin-bottom-2">
         {!useThumbRating && (
           <button
             type="button"
-            className="survey-feedback__expand-button"
+            className="survey-feedback__expand-button display-flex flex-align-center flex-gap-1 font-sans-2xs"
             onClick={() => setIsCommentExpanded(!isCommentExpanded)}
             aria-expanded={isCommentExpanded}
           >
@@ -219,13 +219,14 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
         )}
 
         {shouldShowCommentSection && (
-          <div className="survey-feedback__textarea-container">
-            <Label htmlFor={`feedback-comment-${pageId}`}>
+          <div className="survey-feedback__textarea-container margin-top-2">
+            <Label htmlFor={`feedback-comment-${pageId}`} className="font-sans-2xs margin-top-0">
               {commentLabel}
             </Label>
             <Textarea
               id={`feedback-comment-${pageId}`}
               name="feedback-comment"
+              className="font-sans-2xs"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={MAX_COMMENT_LENGTH}
@@ -235,7 +236,7 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
               }}
               aria-describedby={`char-count-${pageId}`}
             />
-            <div id={`char-count-${pageId}`} className="survey-feedback__char-count">
+            <div id={`char-count-${pageId}`} className="font-sans-3xs text-base margin-top-1 text-left">
               {comment.length}
               /
               {MAX_COMMENT_LENGTH}
@@ -246,9 +247,10 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
         )}
       </div>
 
-      <div className="survey-feedback__actions">
+      <div className="display-flex flex-justify-start">
         <Button
           type="button"
+          className="font-sans-2xs padding-y-1 padding-x-2"
           onClick={handleSubmit}
           disabled={isSubmitDisabled}
         >

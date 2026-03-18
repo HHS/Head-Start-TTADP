@@ -7,6 +7,13 @@ import transactionWrapper from '../transactionWrapper';
 const router = express.Router();
 
 router.post(
+  '/',
+  nameTransactionByPath,
+  validateSubmitSurveyFeedbackBody,
+  transactionWrapper(submitSurveyFeedback),
+);
+
+router.post(
   '/survey',
   nameTransactionByPath,
   validateSubmitSurveyFeedbackBody,
