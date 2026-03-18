@@ -1,9 +1,11 @@
-import db, { FeedbackSurvey } from '../models';
+import db from '../models';
 import { saveFeedbackSurvey } from './feedbackSurvey';
 import { createUser } from '../testUtils';
 
+const { FeedbackSurvey } = db;
+
 describe('Survey feedback service', () => {
-  let user;
+  let user: { id: number };
 
   beforeAll(async () => {
     user = await createUser();

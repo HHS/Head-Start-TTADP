@@ -1,10 +1,17 @@
 import db from '../../models';
 import saveFeedbackSurveyService from '../../services/feedbackSurvey';
 import { submitSurveyFeedback } from './handlers';
+import { validateSubmitSurveyFeedbackBody } from './middleware';
 
 jest.mock('../../services/feedbackSurvey');
 
+const saveFeedbackSurveyServiceMock = saveFeedbackSurveyService as jest.Mock;
+
 describe('Feedback handlers', () => {
+  const invokeSubmitSurveyFeedback = async (request, response) => (
+    submitSurveyFeedback(request as never, response as never)
+  );
+
   const mockResponse = () => {
     const json = jest.fn();
     const status = jest.fn(() => ({ json }));
@@ -27,7 +34,7 @@ describe('Feedback handlers', () => {
     };
 
     const { response, status, json } = mockResponse();
-    await submitSurveyFeedback(request, response);
+    await invokeSubmitSurveyFeedback(request, response);
 
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({
@@ -43,7 +50,7 @@ describe('Feedback handlers', () => {
     };
 
     const { response, status, json } = mockResponse();
-    await submitSurveyFeedback(request, response);
+    await invokeSubmitSurveyFeedback(request, response);
 
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({ error: 'Rating must be between 1 and 10' });
@@ -57,7 +64,7 @@ describe('Feedback handlers', () => {
     };
 
     const { response, status, json } = mockResponse();
-    await submitSurveyFeedback(request, response);
+    await invokeSubmitSurveyFeedback(request, response);
 
     expect(status).toHaveBeenCalledWith(401);
     expect(json).toHaveBeenCalledWith({
@@ -77,7 +84,7 @@ describe('Feedback handlers', () => {
     };
 
     const { response, status, json } = mockResponse();
-    await submitSurveyFeedback(request, response);
+    await invokeSubmitSurveyFeedback(request, response);
 
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({
@@ -86,7 +93,7 @@ describe('Feedback handlers', () => {
   });
 
   it('returns 201 and feedback id on success', async () => {
-    saveFeedbackSurveyService.mockResolvedValue({ id: 123 });
+    saveFeedbackSurveyServiceMock.mockResolvedValue({ id: 123 });
 
     const request = {
       body: {
@@ -104,9 +111,9 @@ describe('Feedback handlers', () => {
       status: jest.fn(() => ({ json: localJson })),
     };
 
-    await submitSurveyFeedback(request, localResponse);
+    await invokeSubmitSurveyFeedback(request, localResponse);
 
-    expect(saveFeedbackSurveyService).toHaveBeenCalledWith({
+    expect(saveFeedbackSurveyServiceMock).toHaveBeenCalledWith({
       pageId: 'qa-dashboard',
       rating: 8,
       surveyType: 'scale',
@@ -124,7 +131,7 @@ describe('Feedback handlers', () => {
 
   it('returns 500 when service throws', async () => {
     const error = new Error('DB down');
-    saveFeedbackSurveyService.mockRejectedValue(error);
+    saveFeedbackSurveyServiceMock.mockRejectedValue(error);
 
     const logger = { error: jest.fn() };
     const request = {
@@ -141,7 +148,7 @@ describe('Feedback handlers', () => {
       status: jest.fn(() => ({ json: localJson })),
     };
 
-    await submitSurveyFeedback(request, localResponse);
+    await invokeSubmitSurveyFeedback(request, localResponse);
 
     expect(localResponse.status).toHaveBeenCalledWith(500);
     expect(localJson).toHaveBeenCalledWith({ error: 'Failed to submit feedback' });
@@ -156,7 +163,7 @@ describe('Feedback handlers', () => {
     };
 
     const { response, status, json } = mockResponse();
-    await submitSurveyFeedback(request, response);
+    await invokeSubmitSurveyFeedback(request, response);
 
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({
@@ -172,7 +179,7 @@ describe('Feedback handlers', () => {
     };
 
     const { response, status, json } = mockResponse();
-    await submitSurveyFeedback(request, response);
+    await invokeSubmitSurveyFeedback(request, response);
 
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({
@@ -193,7 +200,7 @@ describe('Feedback handlers', () => {
     };
 
     const { response, status, json } = mockResponse();
-    await submitSurveyFeedback(request, response);
+    await invokeSubmitSurveyFeedback(request, response);
 
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({
@@ -202,7 +209,7 @@ describe('Feedback handlers', () => {
   });
 
   it('passes surveyType and thumbs for thumbs submissions', async () => {
-    saveFeedbackSurveyService.mockResolvedValue({ id: 456 });
+    saveFeedbackSurveyServiceMock.mockResolvedValue({ id: 456 });
 
     const request = {
       body: {
@@ -222,9 +229,9 @@ describe('Feedback handlers', () => {
       status: jest.fn(() => ({ json: localJson })),
     };
 
-    await submitSurveyFeedback(request, localResponse);
+    await invokeSubmitSurveyFeedback(request, localResponse);
 
-    expect(saveFeedbackSurveyService).toHaveBeenCalledWith({
+    expect(saveFeedbackSurveyServiceMock).toHaveBeenCalledWith({
       pageId: 'qa-dashboard',
       rating: 1,
       surveyType: 'thumbs',
@@ -232,6 +239,53 @@ describe('Feedback handlers', () => {
       comment: 'Needs work',
       timestamp: '2026-03-12T12:00:00.000Z',
       userId: 7,
+    });
+  });
+
+  describe('validateSubmitSurveyFeedbackBody', () => {
+    const makeValidationResponse = () => {
+      const json = jest.fn();
+      const status = jest.fn(() => ({ json }));
+      return { status, json, response: { status } };
+    };
+
+    it('returns 400 when rating for thumbs does not match selected thumb', () => {
+      const req: { body: Record<string, unknown> } = {
+        body: {
+          pageId: 'qa-dashboard',
+          rating: 10,
+          surveyType: 'thumbs',
+          thumbs: 'down',
+        },
+      };
+      const next = jest.fn();
+      const { response, status, json } = makeValidationResponse();
+
+      validateSubmitSurveyFeedbackBody(req as never, response as never, next);
+
+      expect(status).toHaveBeenCalledWith(400);
+      expect(json).toHaveBeenCalledWith({
+        error: 'Thumbs surveys must use rating 10 for up and 1 for down',
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('applies defaults and calls next for valid payload', () => {
+      const req: { body: Record<string, unknown> } = {
+        body: {
+          pageId: 'qa-dashboard',
+          rating: '8',
+        },
+      };
+      const next = jest.fn();
+      const { response } = makeValidationResponse();
+
+      validateSubmitSurveyFeedbackBody(req as never, response as never, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(req.body.surveyType).toBe('scale');
+      expect(req.body.comment).toBe('');
+      expect(req.body.rating).toBe(8);
     });
   });
 });
