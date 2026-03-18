@@ -176,14 +176,12 @@ jobs:
                 ...(pr.requested_teams || []).map((t) => `@${t.slug}`),
               ];
 
-              const rounded = Math.round(elapsedHours * 10) / 10;
               const overdueHours = Math.max(0, elapsedHours - slaHours);
               const roundedOverdue = Math.round(overdueHours * 10) / 10;
               const urgencyText = selectedLabel || 'no urgency label';
               const reviewTarget = reviewers.length ? reviewers.join(', ') : '(none)';
 
-              let humorHeader = ':eyes: *Friendly review ping*';
-              let humorNudge = 'A quick review now can save future archaeology.';
+              let humorHeader = ':eyes: Friendly review ping';
               const quotes = [
                 'All good things come to those who review.',
                 'Time and tide wait for no PR.',
@@ -208,30 +206,27 @@ jobs:
               ];
 
               if (overdueHours >= 3) {
-                humorHeader = ':rotating_light: *Code is aging in PR years*';
-                humorNudge = 'This PR has entered vintage status. Please review before it becomes a historical artifact.';
+                humorHeader = ':rotating_light: Code is aging in PR years';
               } else if (overdueHours >= 1) {
-                humorHeader = ':coffee: *Review break suggestion*';
-                humorNudge = 'Perfect time for a coffee and a review pass.';
+                humorHeader = ':coffee: Review break suggestion';
               } else if (overdueHours >= 0.25) {
-                humorHeader = ':hourglass_flowing_sand: *Gentle nudge*';
-                humorNudge = 'The SLA timer just beeped. A review would be awesome.';
+                humorHeader = ':hourglass_flowing_sand: Gentle nudge';
               }
 
               const quoteSeed = (pr.number * 31) + Math.round(overdueHours * 10);
               const quote = quotes[Math.abs(quoteSeed) % quotes.length];
 
               const text = [
-                `*Alert:* ${humorHeader}`,
+                '*PR Review Alert*',
+                `_${humorHeader}_`,
                 `*PR:* <${pr.html_url}|#${pr.number} ${pr.title}>`,
                 `*Leave a review:* <${pr.html_url}/files|Open changed files>`,
                 `*Author:* @${pr.user.login}`,
                 `*Requested reviewers:* ${reviewTarget}`,
-                `*Urgency:* ${urgencyText}`,
-                `*Elapsed since last commit:* ${rounded}h (SLA ${slaHours}h)`,
+                `*Timeframe:* ${urgencyText}`,
                 `*Past SLA by:* ${roundedOverdue}h`,
-                `*Nudge:* _${humorNudge}_`,
-                `*Quote:* :speech_balloon: _"${quote}"_`,
+                '',
+                `_"${quote}"_`,
               ].join('\n');
 
               if (dryRun) {
