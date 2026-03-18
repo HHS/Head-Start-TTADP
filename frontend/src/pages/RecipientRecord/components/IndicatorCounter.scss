@@ -2,7 +2,8 @@
 @use '../../../colors.scss' as *;
 
 .ttahub--indicator-counter {
-  max-width: 400px;
+  max-width: 500px;
+  gap: .5rem;
 }
 
 .ttahub--indicator-box-filled {

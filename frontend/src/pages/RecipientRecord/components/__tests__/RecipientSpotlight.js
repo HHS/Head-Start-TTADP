@@ -22,6 +22,7 @@ const mockSpotlightData = {
       noTTA: true,
       DRS: false,
       FEI: false,
+      underenrolled: false,
     },
   ],
   overview: {
@@ -45,6 +46,7 @@ const noIndicatorsMockData = {
     noTTA: false,
     DRS: false,
     FEI: false,
+    underenrolled: false,
   }],
   overview: {
     numRecipients: '0',
@@ -102,7 +104,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Recipient grant may need prioritized attention/i)).toBeInTheDocument();
-      expect(screen.getByText(/3 of 5 priority indicators/i)).toBeInTheDocument();
+      expect(screen.getByText(/3 of 7 priority indicators/i)).toBeInTheDocument();
     });
   });
 
@@ -115,7 +117,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/No priority indicators identified/i)).toBeInTheDocument();
-      expect(screen.getByText(/0 of 5 priority indicators/i)).toBeInTheDocument();
+      expect(screen.getByText(/0 of 7 priority indicators/i)).toBeInTheDocument();
     });
   });
 
@@ -132,15 +134,16 @@ describe('RecipientSpotlight', () => {
       expect(badIndicators).toHaveLength(3);
 
       // Find all indicators with good-indicator class (false)
-      // FEI and DRS are now hidden, so only 2 good indicators remain (deficiency and newStaff)
       const goodIndicators = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
-      expect(goodIndicators).toHaveLength(2);
+      expect(goodIndicators).toHaveLength(4);
     });
 
     // Verify specific indicators from our mock data
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('New recipients')).toBeInTheDocument();
     expect(screen.getByText('No TTA')).toBeInTheDocument();
+    expect(screen.getByText('FEI')).toBeInTheDocument();
+    expect(screen.getByText('Underenrolled')).toBeInTheDocument();
   });
 
   it('handles API error gracefully with NoResultsFound', async () => {
@@ -200,6 +203,8 @@ describe('RecipientSpotlight', () => {
       expect(screen.getByText(/Recipient grant has experienced more than one child incident/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant is currently in the Full Enrollment Initiative \(FEI\) including 6-month evaluation/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant reports below 97% enrollment but has not reached 4 consecutive months of underenrollment/i)).toBeInTheDocument();
     });
   });
 
@@ -214,7 +219,6 @@ describe('RecipientSpotlight', () => {
       expect(screen.getByText(/Recipient grant has at least one active monitoring deficiency/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient grant has changed the name of the director or fiscal officer/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
-      // newRecipients description is not grant-scoped
       expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
     });
   });
@@ -282,7 +286,7 @@ describe('RecipientSpotlight', () => {
     await waitFor(() => {
       // In our mockSpotlightData, we have:
       // childIncidents: true, deficiency: false, newRecipients: true,
-      // newStaff: false, noTTA: true
+      // newStaff: false, noTTA: true, FEI: false, underenrolled: false
 
       // Check that cells with true values get the bad-indicator class
       const trueIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-bad-indicator');
@@ -290,7 +294,7 @@ describe('RecipientSpotlight', () => {
 
       // Check that cells with false values get the good-indicator class
       const falseIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
-      expect(falseIndicatorCells).toHaveLength(2);
+      expect(falseIndicatorCells).toHaveLength(4);
     });
   });
 });

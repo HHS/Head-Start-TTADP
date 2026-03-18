@@ -2,7 +2,7 @@
 
 // Increase specificity by combining classes to override DataCard's padding-3
 .ttahub-data-card.ttahub-recipient-spotlight-card {
-  @media (max-width: 639px) {
+  @media (max-width: 679px) {
     padding: 1rem; // 16px
   }
 }
@@ -13,6 +13,7 @@
 
 .ttahub-recipient-spotlight-card__field button {
   margin: 0px;
+  min-width: 178px;
 }
 
 .ttahub-recipient-spotlight-card {
@@ -41,20 +42,25 @@
       gap: 1rem; // 16px
     }
 
+    @media(max-width: 800px) {
+    .ttahub--indicator-counter {
+        gap: .25rem;
+    }
+  }
+
     // Tablet: 3 columns with specific layout
     @media (min-width: 640px) and (max-width: 880px) {
       grid-template-columns: repeat(3, 1fr);
 
       // First three items span the first row
-      & > :nth-child(1),
-      & > :nth-child(2),
-      & > :nth-child(3) {
+      .ttahub-recipient-spotlight-card__grid > :nth-child(2),
+      .ttahub-recipient-spotlight-card__grid > :nth-child(3) {
         grid-column: span 1;
       }
 
       // Fourth item (indicators) spans 2 columns
       & > :nth-child(4) {
-        grid-column: span 2;
+        grid-column: span 3;
       }
 
       // Fifth item (expander button) spans 1 column
@@ -66,20 +72,10 @@
     // Desktop: 5 columns with specific widths
     @media (min-width: 881px) {
       grid-template-columns: 3fr 2fr 2fr 3fr 2fr;
-      gap: 0;
     }
   }
 
-  // Add spacing on desktop only
-  &__field {
-    @media (min-width: 881px) {
-      padding-right: 1.5rem;
 
-      &:last-child {
-        padding-right: 0;
-      }
-    }
-  }
 
   // Expanded indicator details
   &__details {
