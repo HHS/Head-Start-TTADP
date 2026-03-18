@@ -8,7 +8,7 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       await queryInterface.createTable(
-        'SurveyFeedbacks',
+        'FeedbackSurveys',
         {
           id: {
             type: Sequelize.INTEGER,
@@ -35,6 +35,15 @@ module.exports = {
             type: Sequelize.INTEGER,
             allowNull: false,
           },
+          surveyType: {
+            type: Sequelize.ENUM('scale', 'thumbs'),
+            allowNull: false,
+            defaultValue: 'scale',
+          },
+          thumbs: {
+            type: Sequelize.ENUM('up', 'down'),
+            allowNull: true,
+          },
           comment: {
             type: Sequelize.TEXT,
             allowNull: true,
@@ -55,18 +64,18 @@ module.exports = {
         { transaction },
       );
 
-      await queryInterface.addIndex('SurveyFeedbacks', ['pageId'], {
-        name: 'survey_feedbacks_page_id_idx',
+      await queryInterface.addIndex('FeedbackSurveys', ['pageId'], {
+        name: 'feedback_surveys_page_id_idx',
         transaction,
       });
 
-      await queryInterface.addIndex('SurveyFeedbacks', ['userId'], {
-        name: 'survey_feedbacks_user_id_idx',
+      await queryInterface.addIndex('FeedbackSurveys', ['userId'], {
+        name: 'feedback_surveys_user_id_idx',
         transaction,
       });
 
-      await queryInterface.addIndex('SurveyFeedbacks', ['submittedAt'], {
-        name: 'survey_feedbacks_submitted_at_idx',
+      await queryInterface.addIndex('FeedbackSurveys', ['submittedAt'], {
+        name: 'feedback_surveys_submitted_at_idx',
         transaction,
       });
     });
@@ -77,10 +86,10 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.removeIndex('SurveyFeedbacks', 'survey_feedbacks_page_id_idx', { transaction });
-      await queryInterface.removeIndex('SurveyFeedbacks', 'survey_feedbacks_user_id_idx', { transaction });
-      await queryInterface.removeIndex('SurveyFeedbacks', 'survey_feedbacks_submitted_at_idx', { transaction });
-      await queryInterface.dropTable('SurveyFeedbacks', { transaction });
+      await queryInterface.removeIndex('FeedbackSurveys', 'feedback_surveys_page_id_idx', { transaction });
+      await queryInterface.removeIndex('FeedbackSurveys', 'feedback_surveys_user_id_idx', { transaction });
+      await queryInterface.removeIndex('FeedbackSurveys', 'feedback_surveys_submitted_at_idx', { transaction });
+      await queryInterface.dropTable('FeedbackSurveys', { transaction });
     });
   },
 };

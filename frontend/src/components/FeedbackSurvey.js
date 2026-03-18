@@ -61,11 +61,19 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
   const handleSubmit = async () => {
     if (!selectedRating) return;
 
+    const surveyType = useThumbRating ? 'thumbs' : 'scale';
+    let thumbs = null;
+    if (useThumbRating) {
+      thumbs = selectedRating === THUMBS_RATINGS.UP ? 'up' : 'down';
+    }
+
     setIsSubmitting(true);
     try {
       await onSubmit({
         pageId,
         rating: selectedRating,
+        surveyType,
+        thumbs,
         comment: comment.trim(),
         timestamp: new Date().toISOString(),
       });

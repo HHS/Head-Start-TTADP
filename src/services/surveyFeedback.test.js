@@ -1,5 +1,5 @@
-import db, { SurveyFeedback } from '../models';
-import { saveSurveyFeedback } from './surveyFeedback';
+import db, { FeedbackSurvey } from '../models';
+import { saveFeedbackSurvey } from './feedbackSurvey';
 import { createUser } from '../testUtils';
 
 describe('Survey feedback service', () => {
@@ -10,14 +10,16 @@ describe('Survey feedback service', () => {
   });
 
   afterAll(async () => {
-    await SurveyFeedback.destroy({ where: { userId: user.id } });
+    await FeedbackSurvey.destroy({ where: { userId: user.id } });
     await db.sequelize.close();
   });
 
   it('persists survey feedback', async () => {
-    const feedback = await saveSurveyFeedback({
+    const feedback = await saveFeedbackSurvey({
       pageId: 'qa-dashboard',
       rating: 9,
+      surveyType: 'scale',
+      thumbs: null,
       comment: 'Useful content',
       timestamp: '2026-03-12T12:30:00.000Z',
       userId: user.id,
@@ -25,32 +27,52 @@ describe('Survey feedback service', () => {
 
     expect(feedback).toBeDefined();
 
-    const storedFeedback = await SurveyFeedback.findOne({
+    const storedFeedback = await FeedbackSurvey.findOne({
       where: { id: feedback.id },
     });
 
     expect(storedFeedback).toBeDefined();
     expect(storedFeedback.pageId).toBe('qa-dashboard');
     expect(storedFeedback.rating).toBe(9);
+    expect(storedFeedback.surveyType).toBe('scale');
+    expect(storedFeedback.thumbs).toBeNull();
     expect(storedFeedback.comment).toBe('Useful content');
     expect(storedFeedback.userId).toBe(user.id);
     expect(storedFeedback.submittedAt.toISOString()).toBe('2026-03-12T12:30:00.000Z');
   });
 
-  it('defaults comment to empty string and submittedAt to now when missing', async () => {
+  it('defaults comment to empty string, surveyType to scale, and submittedAt to now when missing', async () => {
     const before = Date.now();
 
-    const feedback = await saveSurveyFeedback({
+    const feedback = await saveFeedbackSurvey({
       pageId: 'activity-reports-landing',
       rating: 6,
       userId: user.id,
     });
 
-    const storedFeedback = await SurveyFeedback.findOne({
+    const storedFeedback = await FeedbackSurvey.findOne({
       where: { id: feedback.id },
     });
 
     expect(storedFeedback.comment).toBe('');
+    expect(storedFeedback.surveyType).toBe('scale');
+    expect(storedFeedback.thumbs).toBeNull();
     expect(new Date(storedFeedback.submittedAt).getTime()).toBeGreaterThanOrEqual(before);
+  });
+
+  it('persists thumbs metadata for thumbs surveys', async () => {
+    const feedback = await saveFeedbackSurvey({
+      pageId: 'collaboration-reports-landing',
+      rating: 1,
+      surveyType: 'thumbs',
+      thumbs: 'down',
+      comment: 'This page is confusing',
+      userId: user.id,
+    });
+
+    const storedFeedback = await FeedbackSurvey.findOne({ where: { id: feedback.id } });
+
+    expect(storedFeedback.surveyType).toBe('thumbs');
+    expect(storedFeedback.thumbs).toBe('down');
   });
 });

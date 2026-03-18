@@ -26,7 +26,7 @@ export default (sequelize, DataTypes) => {
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
       User.hasMany(models.SiteAlert, { foreignKey: 'userId', as: 'siteAlerts' });
       User.hasMany(models.CommunicationLog, { foreignKey: 'userId', as: 'communicationLogs' });
-      User.hasMany(models.SurveyFeedback, { foreignKey: 'userId', as: 'surveyFeedback' });
+      User.hasMany(models.FeedbackSurvey, { foreignKey: 'userId', as: 'feedbackSurveys' });
 
       // User can belong to a national center through a national center user.
       User.hasMany(models.NationalCenterUser, { foreignKey: 'userId', as: 'nationalCenterUsers' });
