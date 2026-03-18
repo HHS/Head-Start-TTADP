@@ -244,4 +244,146 @@ describe('FeedbackSurvey', () => {
       );
     });
   });
+
+  it('renders thumbs mode title and controls when useThumbRating is true', () => {
+    render(
+      <FeedbackSurvey
+        pageId="thumbs-page"
+        onSubmit={jest.fn()}
+        useThumbRating
+      />,
+    );
+
+    expect(screen.getByText('How are we doing on this page?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /thumbs up/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /thumbs down/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /add additional comments/i })).not.toBeInTheDocument();
+  });
+
+  it('only allows one thumb selection at a time', async () => {
+    render(
+      <FeedbackSurvey
+        pageId="thumbs-page"
+        onSubmit={jest.fn()}
+        useThumbRating
+      />,
+    );
+
+    const thumbsUp = screen.getByRole('button', { name: /thumbs up/i });
+    const thumbsDown = screen.getByRole('button', { name: /thumbs down/i });
+
+    await userEvent.click(thumbsUp);
+    expect(thumbsUp).toHaveAttribute('aria-pressed', 'true');
+    expect(thumbsDown).toHaveAttribute('aria-pressed', 'false');
+
+    await userEvent.click(thumbsDown);
+    expect(thumbsDown).toHaveAttribute('aria-pressed', 'true');
+    expect(thumbsUp).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('shows optional comments for thumbs up and allows submit without comments', async () => {
+    const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
+    render(
+      <FeedbackSurvey
+        pageId="thumbs-page"
+        onSubmit={mockOnSubmit}
+        useThumbRating
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /thumbs up/i }));
+
+    expect(screen.getByLabelText(/tell us what you like about this page \(optional\):/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /submit feedback/i })).not.toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: /submit feedback/i }));
+
+    await waitFor(() => {
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rating: 10,
+          comment: '',
+        }),
+      );
+    });
+  });
+
+  it('requires comments for thumbs down with the expected prompt', async () => {
+    const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
+    render(
+      <FeedbackSurvey
+        pageId="thumbs-page"
+        onSubmit={mockOnSubmit}
+        useThumbRating
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /thumbs down/i }));
+
+    const textarea = screen.getByLabelText(/tell us what we can do better:/i);
+    expect(textarea).toBeRequired();
+
+    const submitButton = screen.getByRole('button', { name: /submit feedback/i });
+    expect(submitButton).toBeDisabled();
+
+    await userEvent.type(textarea, 'Need faster page loading');
+    expect(submitButton).not.toBeDisabled();
+
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rating: 1,
+          comment: 'Need faster page loading',
+        }),
+      );
+    });
+  });
+
+  it('scrolls to and focuses comments when thumbs down makes comments required', async () => {
+    const scrollIntoViewMock = jest.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+    render(
+      <FeedbackSurvey
+        pageId="thumbs-page"
+        onSubmit={jest.fn()}
+        useThumbRating
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /thumbs down/i }));
+
+    const textarea = screen.getByLabelText(/tell us what we can do better:/i);
+    await waitFor(() => {
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+      expect(textarea).toHaveFocus();
+    });
+
+    HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  });
+
+  it('scrolls to comments when thumbs up is selected', async () => {
+    const scrollIntoViewMock = jest.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+    render(
+      <FeedbackSurvey
+        pageId="thumbs-page"
+        onSubmit={jest.fn()}
+        useThumbRating
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /thumbs up/i }));
+
+    await waitFor(() => {
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+    });
+
+    HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  });
 });

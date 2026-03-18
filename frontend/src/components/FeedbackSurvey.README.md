@@ -7,6 +7,7 @@ A reusable React component for collecting page-level feedback.
 - ✅ Fixed position popup from bottom (20% viewport height)
 - ✅ Light gray background (`$base-lighter` color)
 - ✅ 1-10 rating scale with radio buttons
+- ✅ Optional thumbs up/down mode via prop
 - ✅ Expandable comment section (300 character limit)
 - ✅ Dismissible with 'X' button
 - ✅ Per-page dismissal stored in localStorage
@@ -42,6 +43,14 @@ function MyDashboard() {
 |------|------|----------|-------------|
 | `pageId` | string | Yes | Unique identifier for the dashboard page. Used for localStorage key. |
 | `onSubmit` | function | Yes | Async function called when user submits feedback. Receives feedback object. |
+| `useThumbRating` | boolean | No | Defaults to `false`. When `true`, renders thumbs up/down controls and updates comment behavior based on selection. |
+
+### Thumbs Mode Behavior (`useThumbRating={true}`)
+
+- Header question changes to `How are we doing on this page?`
+- Rating control changes from 1-10 radios to mutually exclusive thumbs up/down buttons
+- Thumbs up maps to rating `10` and shows `Tell us what you like about this page (optional):`
+- Thumbs down maps to rating `1` and requires comments with label `Tell us what we can do better:`
 
 ### Feedback Object Structure
 
