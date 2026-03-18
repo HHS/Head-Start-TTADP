@@ -592,6 +592,10 @@ describe('citations service', () => {
     // grant1 has 2 active, non-deleted citations and grant1a has 1.
     expect(citationsToAssert.length).toBe(3);
 
+    // The source-deleted citation must be excluded entirely.
+    const deletedCitation = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 4 - Deleted');
+    expect(deletedCitation).toBeUndefined();
+
     // Assert the citations.
     // Get the citation with the text 'Grant 1 - Citation 1 - Good'.
     const citation1 = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 1 - Good');
