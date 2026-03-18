@@ -8,6 +8,8 @@ import useFilters from '../../hooks/useFilters';
 import './index.scss';
 import NewReportButton from '../../components/NewReportButton';
 import LandingMessage from '../../components/LandingMessage';
+import FeedbackSurvey from '../../components/FeedbackSurvey';
+import { submitSurveyFeedback } from '../../fetchers/feedback';
 
 const FILTER_KEY = 'collab-landing-filters';
 
@@ -59,6 +61,11 @@ export const CollabReportsLanding = () => {
       </div>
       <CollabReports title="My Collaboration Reports" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />
       <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
+      <FeedbackSurvey
+        pageId="collaboration-reports-landing"
+        onSubmit={submitSurveyFeedback}
+        useThumbRating
+      />
     </div>
   );
 };

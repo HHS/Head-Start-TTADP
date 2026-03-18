@@ -77,6 +77,41 @@
   }
 }
 
+.survey-feedback__thumbs-options {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.survey-feedback__thumb-button {
+  align-items: center;
+  background-color: $base-lightest;
+  border: 1px solid $base-light;
+  border-radius: 0.25rem;
+  color: $ttahub-blue;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1.25rem;
+  height: 2.5rem;
+  justify-content: center;
+  width: 2.5rem;
+
+  &:hover {
+    border-color: $ttahub-blue;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $blue-vivid-focus;
+    outline-offset: 2px;
+  }
+
+  &.is-selected {
+    background-color: $ttahub-blue;
+    border-color: $ttahub-blue;
+    color: $base-lightest;
+  }
+}
+
 .survey-feedback__scale-label {
   font-size: 0.875rem;
   color: $base-dark;
@@ -156,13 +191,13 @@
 .survey-feedback__char-count {
   font-size: 0.75rem;
   color: $base-medium;
-  text-align: right;
+  text-align: left;
   margin-top: 0.25rem;
 }
 
 .survey-feedback__actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 
   button {
     font-size: 0.875rem;

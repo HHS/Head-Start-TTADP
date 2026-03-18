@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Textarea, Label, Fieldset,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import {
+  faTimes,
+  faChevronDown,
+  faChevronUp,
+  faThumbsUp,
+  faThumbsDown,
+} from '@fortawesome/free-solid-svg-icons';
 import './FeedbackSurvey.scss';
 
 const RATING_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -15,13 +21,19 @@ const SURVEY_STATUS = {
   OPEN: 'open',
 };
 
-function FeedbackSurvey({ pageId, onSubmit }) {
+const THUMBS_RATINGS = {
+  DOWN: 1,
+  UP: 10,
+};
+
+function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
   const storageKey = `survey-feedback-dismissed-${pageId}`;
   const [surveyStatus, setSurveyStatus] = useState(SURVEY_STATUS.OPEN);
   const [selectedRating, setSelectedRating] = useState(null);
   const [comment, setComment] = useState('');
   const [isCommentExpanded, setIsCommentExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const commentInputRef = useRef(null);
 
   useEffect(() => {
     const dismissed = localStorage.getItem(storageKey);
@@ -67,6 +79,33 @@ function FeedbackSurvey({ pageId, onSubmit }) {
     }
   };
 
+  const isThumbsDownSelected = selectedRating === THUMBS_RATINGS.DOWN;
+  const shouldShowCommentSection = useThumbRating ? !!selectedRating : isCommentExpanded;
+  const isCommentRequired = useThumbRating && isThumbsDownSelected;
+  const isSubmitDisabled = !selectedRating
+    || isSubmitting
+    || (isCommentRequired && !comment.trim());
+  let commentLabel = 'Additional comments (optional)';
+  if (useThumbRating) {
+    commentLabel = isCommentRequired
+      ? 'Tell us what we can do better:'
+      : 'Tell us what you like about this page (optional):';
+  }
+  const title = useThumbRating ? 'How are we doing on this page?' : 'How useful is this page?';
+
+  useEffect(() => {
+    if (!useThumbRating || !selectedRating || !commentInputRef.current) {
+      return;
+    }
+
+    if (typeof commentInputRef.current.scrollIntoView === 'function') {
+      commentInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (isCommentRequired) {
+      commentInputRef.current.focus();
+    }
+  }, [isCommentRequired, selectedRating, useThumbRating]);
+
   if (surveyStatus === SURVEY_STATUS.COMPLETED) {
     return null;
   }
@@ -93,7 +132,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
   return (
     <div className="survey-feedback" role="complementary" aria-label="Survey feedback">
       <div className="survey-feedback__header">
-        <h3 className="survey-feedback__title">How useful is this page?</h3>
+        <h3 className="survey-feedback__title">{title}</h3>
         <button
           type="button"
           className="survey-feedback__close-button"
@@ -105,51 +144,76 @@ function FeedbackSurvey({ pageId, onSubmit }) {
       </div>
 
       <Fieldset legend="Rate this page" legendStyle="srOnly">
-        <div className="survey-feedback__rating-scale">
-          <span className="survey-feedback__scale-label">Not useful</span>
-          <div className="survey-feedback__rating-options">
-            {RATING_OPTIONS.map((rating) => (
-              <div key={rating} className="survey-feedback__rating-option">
-                <input
-                  type="radio"
-                  id={`rating-${rating}-${pageId}`}
-                  name={`survey-rating-${pageId}`}
-                  value={rating}
-                  checked={selectedRating === rating}
-                  onChange={() => setSelectedRating(rating)}
-                  className="usa-radio__input"
-                />
-                <label
-                  htmlFor={`rating-${rating}-${pageId}`}
-                  className="usa-radio__label"
-                >
-                  {rating}
-                </label>
-              </div>
-            ))}
+        {useThumbRating ? (
+          <div className="survey-feedback__thumbs-options" role="radiogroup" aria-label="Rate this page">
+            <button
+              type="button"
+              className={`survey-feedback__thumb-button ${selectedRating === THUMBS_RATINGS.UP ? 'is-selected' : ''}`}
+              onClick={() => setSelectedRating(THUMBS_RATINGS.UP)}
+              aria-pressed={selectedRating === THUMBS_RATINGS.UP}
+              aria-label="Thumbs up"
+            >
+              <FontAwesomeIcon icon={faThumbsUp} />
+            </button>
+            <button
+              type="button"
+              className={`survey-feedback__thumb-button ${selectedRating === THUMBS_RATINGS.DOWN ? 'is-selected' : ''}`}
+              onClick={() => setSelectedRating(THUMBS_RATINGS.DOWN)}
+              aria-pressed={selectedRating === THUMBS_RATINGS.DOWN}
+              aria-label="Thumbs down"
+            >
+              <FontAwesomeIcon icon={faThumbsDown} />
+            </button>
           </div>
-          <span className="survey-feedback__scale-label">Very useful</span>
-        </div>
+        ) : (
+          <div className="survey-feedback__rating-scale">
+            <span className="survey-feedback__scale-label">Not useful</span>
+            <div className="survey-feedback__rating-options">
+              {RATING_OPTIONS.map((rating) => (
+                <div key={rating} className="survey-feedback__rating-option">
+                  <input
+                    type="radio"
+                    id={`rating-${rating}-${pageId}`}
+                    name={`survey-rating-${pageId}`}
+                    value={rating}
+                    checked={selectedRating === rating}
+                    onChange={() => setSelectedRating(rating)}
+                    className="usa-radio__input"
+                  />
+                  <label
+                    htmlFor={`rating-${rating}-${pageId}`}
+                    className="usa-radio__label"
+                  >
+                    {rating}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <span className="survey-feedback__scale-label">Very useful</span>
+          </div>
+        )}
       </Fieldset>
 
       <div className="survey-feedback__comment-section">
-        <button
-          type="button"
-          className="survey-feedback__expand-button"
-          onClick={() => setIsCommentExpanded(!isCommentExpanded)}
-          aria-expanded={isCommentExpanded}
-        >
-          <FontAwesomeIcon icon={isCommentExpanded ? faChevronUp : faChevronDown} />
-          {' '}
-          {isCommentExpanded ? 'Hide' : 'Add'}
-          {' '}
-          additional comments
-        </button>
+        {!useThumbRating && (
+          <button
+            type="button"
+            className="survey-feedback__expand-button"
+            onClick={() => setIsCommentExpanded(!isCommentExpanded)}
+            aria-expanded={isCommentExpanded}
+          >
+            <FontAwesomeIcon icon={isCommentExpanded ? faChevronUp : faChevronDown} />
+            {' '}
+            {isCommentExpanded ? 'Hide' : 'Add'}
+            {' '}
+            additional comments
+          </button>
+        )}
 
-        {isCommentExpanded && (
+        {shouldShowCommentSection && (
           <div className="survey-feedback__textarea-container">
             <Label htmlFor={`feedback-comment-${pageId}`}>
-              Additional comments (optional)
+              {commentLabel}
             </Label>
             <Textarea
               id={`feedback-comment-${pageId}`}
@@ -157,6 +221,10 @@ function FeedbackSurvey({ pageId, onSubmit }) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={MAX_COMMENT_LENGTH}
+              required={isCommentRequired}
+              inputRef={(el) => {
+                commentInputRef.current = el;
+              }}
               aria-describedby={`char-count-${pageId}`}
             />
             <div id={`char-count-${pageId}`} className="survey-feedback__char-count">
@@ -174,7 +242,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
         <Button
           type="button"
           onClick={handleSubmit}
-          disabled={!selectedRating || isSubmitting}
+          disabled={isSubmitDisabled}
         >
           {isSubmitting ? 'Submitting...' : 'Submit feedback'}
         </Button>
@@ -186,6 +254,11 @@ function FeedbackSurvey({ pageId, onSubmit }) {
 FeedbackSurvey.propTypes = {
   pageId: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
+  useThumbRating: PropTypes.bool,
+};
+
+FeedbackSurvey.defaultProps = {
+  useThumbRating: false,
 };
 
 export default FeedbackSurvey;
