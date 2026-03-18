@@ -88,23 +88,23 @@ class ActivityReportGoals{
 
 class ActivityReportObjectiveCitations{
  * id : integer : <generated>
- citationId : integer : REFERENCES "Citations".id
+ * citationId : integer : REFERENCES "Citations".id
+ * acro : text
  * activityReportObjectiveId : integer
  * citation : text
  * createdAt : timestamp with time zone : now()
+ * findingId : text
+ * findingSource : text
+ * findingType : text
+ * grantId : integer
+ * grantNumber : text
+ * monitoringFindingStatusName : text
+ * reportDeliveryDate : text
+ * reviewName : text
+ * severity : integer
+ * standardId : integer
  * updatedAt : timestamp with time zone : now()
- acro : text
- findingId : text
- findingSource : text
- findingType : text
- grantId : integer
- grantNumber : text
- monitoringFindingStatusName : text
  monitoringReferences : jsonb
- reportDeliveryDate : text
- reviewName : text
- severity : integer
- standardId : integer
 }
 
 class ActivityReportObjectiveCourses{

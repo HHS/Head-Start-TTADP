@@ -11,54 +11,54 @@ const CITATION_INDEX_NAME = 'aroc_citation_id_idx';
 const ARO_CITATION_INDEX_NAME = 'aroc_activity_objective_citation_id_idx';
 
 // Flattened columns that persist monitoring reference metadata directly on AROC rows.
-const flattenedColumnConfigs = (Sequelize) => ([
+const flattenedColumnConfigs = (Sequelize, allowNull = true) => ([
   {
     name: 'citationId',
-    definition: { type: Sequelize.INTEGER, allowNull: true },
+    definition: { type: Sequelize.INTEGER, allowNull },
   },
   {
     name: 'findingId',
-    definition: { type: Sequelize.TEXT, allowNull: true },
+    definition: { type: Sequelize.TEXT, allowNull },
   },
   {
     name: 'grantId',
-    definition: { type: Sequelize.INTEGER, allowNull: true },
+    definition: { type: Sequelize.INTEGER, allowNull },
   },
   {
     name: 'grantNumber',
-    definition: { type: Sequelize.TEXT, allowNull: true },
+    definition: { type: Sequelize.TEXT, allowNull },
   },
   {
     name: 'reviewName',
-    definition: { type: Sequelize.TEXT, allowNull: true },
+    definition: { type: Sequelize.TEXT, allowNull },
   },
   {
     name: 'standardId',
-    definition: { type: Sequelize.INTEGER, allowNull: true },
+    definition: { type: Sequelize.INTEGER, allowNull },
   },
   {
     name: 'findingType',
-    definition: { type: Sequelize.TEXT, allowNull: true },
+    definition: { type: Sequelize.TEXT, allowNull },
   },
   {
     name: 'findingSource',
-    definition: { type: Sequelize.TEXT, allowNull: true },
+    definition: { type: Sequelize.TEXT, allowNull },
   },
   {
     name: 'acro',
-    definition: { type: Sequelize.TEXT, allowNull: true },
+    definition: { type: Sequelize.TEXT, allowNull },
   },
   {
     name: 'severity',
-    definition: { type: Sequelize.INTEGER, allowNull: true },
+    definition: { type: Sequelize.INTEGER, allowNull },
   },
   {
     name: 'reportDeliveryDate',
-    definition: { type: Sequelize.TEXT, allowNull: true },
+    definition: { type: Sequelize.TEXT, allowNull },
   },
   {
     name: 'monitoringFindingStatusName',
-    definition: { type: Sequelize.TEXT, allowNull: true },
+    definition: { type: Sequelize.TEXT, allowNull },
   },
 ]);
 
@@ -301,6 +301,32 @@ module.exports = {
         { transaction },
       );
 
+      // Remove rows that cannot satisfy required flattened-column constraints.
+      // These legacy rows are incomplete and cannot be represented by the updated model.
+      await queryInterface.sequelize.query(
+        `
+          DELETE FROM "${AROC_TABLE}"
+          WHERE "citationId" IS NULL
+             OR "findingId" IS NULL
+             OR "grantId" IS NULL
+             OR "grantNumber" IS NULL
+             OR "reviewName" IS NULL
+             OR "standardId" IS NULL
+             OR "findingType" IS NULL
+             OR "findingSource" IS NULL
+             OR acro IS NULL
+             OR severity IS NULL
+             OR "reportDeliveryDate" IS NULL
+             OR "monitoringFindingStatusName" IS NULL;
+        `,
+        { transaction },
+      );
+
+      // Align DB nullability with model-level required flattened columns.
+      await Promise.all(flattenedColumnConfigs(Sequelize, false).map(({ name, definition }) => (
+        queryInterface.changeColumn(AROC_TABLE, name, definition, { transaction })
+      )));
+
       // Enforce referential integrity from AROC.citationId to Citations.id.
       await queryInterface.addConstraint(AROC_TABLE, {
         fields: ['citationId'],
@@ -355,7 +381,7 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       // Remove indexes and constraints created during the up migration.
-      await queryInterface.removeIndex(AROC_TABLE, CITATION_FK_NAME, { transaction });
+      await queryInterface.removeConstraint(AROC_TABLE, CITATION_FK_NAME, { transaction });
       await queryInterface.removeIndex(AROC_TABLE, DEDUPE_INDEX_NAME, { transaction });
       await queryInterface.removeIndex(AROC_TABLE, CITATION_INDEX_NAME, { transaction });
       await queryInterface.removeIndex(AROC_TABLE, ARO_CITATION_INDEX_NAME, { transaction });
