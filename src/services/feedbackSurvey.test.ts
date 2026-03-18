@@ -1,19 +1,25 @@
 import db from '../models';
-import { saveFeedbackSurvey } from './feedbackSurvey';
+import { saveFeedbackSurvey, getFeedbackSurveys } from './feedbackSurvey';
 import { createUser } from '../testUtils';
 
 const { FeedbackSurvey } = db;
 
 describe('Survey feedback service', () => {
   let user: { id: number };
+  let secondUser: { id: number };
 
   beforeAll(async () => {
     user = await createUser();
+    secondUser = await createUser();
   });
 
   afterAll(async () => {
-    await FeedbackSurvey.destroy({ where: { userId: user.id } });
+    await FeedbackSurvey.destroy({ where: { userId: [user.id, secondUser.id] } });
     await db.sequelize.close();
+  });
+
+  afterEach(async () => {
+    await FeedbackSurvey.destroy({ where: { userId: [user.id, secondUser.id] } });
   });
 
   it('persists survey feedback', async () => {
@@ -76,5 +82,72 @@ describe('Survey feedback service', () => {
 
     expect(storedFeedback.surveyType).toBe('thumbs');
     expect(storedFeedback.thumbs).toBe('down');
+  });
+
+  it('retrieves and filters feedback survey submissions', async () => {
+    await saveFeedbackSurvey({
+      pageId: 'qa-dashboard',
+      rating: 10,
+      surveyType: 'thumbs',
+      thumbs: 'up',
+      comment: 'Great page',
+      timestamp: '2026-03-12T12:30:00.000Z',
+      userId: user.id,
+    });
+
+    await saveFeedbackSurvey({
+      pageId: 'recipient-record',
+      rating: 4,
+      surveyType: 'scale',
+      thumbs: null,
+      comment: 'Needs work',
+      timestamp: '2026-03-13T12:30:00.000Z',
+      userId: secondUser.id,
+    });
+
+    const filtered = await getFeedbackSurveys({
+      pageId: 'qa',
+      surveyType: 'thumbs',
+      thumbs: 'up',
+      q: 'Great',
+      sortBy: 'submittedAt',
+      sortDir: 'desc',
+    });
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].pageId).toBe('qa-dashboard');
+    expect(filtered[0].surveyType).toBe('thumbs');
+    expect(filtered[0].thumbs).toBe('up');
+  });
+
+  it('sorts feedback survey submissions by rating ascending', async () => {
+    await saveFeedbackSurvey({
+      pageId: 'page-a',
+      rating: 8,
+      surveyType: 'scale',
+      thumbs: null,
+      comment: 'one',
+      timestamp: '2026-03-12T12:30:00.000Z',
+      userId: user.id,
+    });
+
+    await saveFeedbackSurvey({
+      pageId: 'page-b',
+      rating: 2,
+      surveyType: 'scale',
+      thumbs: null,
+      comment: 'two',
+      timestamp: '2026-03-13T12:30:00.000Z',
+      userId: secondUser.id,
+    });
+
+    const sorted = await getFeedbackSurveys({
+      sortBy: 'rating',
+      sortDir: 'asc',
+      limit: 10,
+    });
+
+    expect(sorted.length).toBeGreaterThanOrEqual(2);
+    expect(sorted[0].rating).toBeLessThanOrEqual(sorted[1].rating);
   });
 });

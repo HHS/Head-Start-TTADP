@@ -13,6 +13,7 @@ import TrainingReports from './TrainingReports';
 import Courses from './Courses';
 import CourseEdit from './CourseEdit';
 import FeedPreview from './FeedPreview';
+import FeedbackSurveys from './FeedbackSurveys';
 import BuildInfo from '../../components/BuildInfo';
 
 function Admin() {
@@ -50,6 +51,9 @@ function Admin() {
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/feed-preview">
           Confluence feed preview
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/feedback-surveys">
+          Feedback surveys
         </NavLink>
       </div>
       <h2>Engineer only</h2>
@@ -108,6 +112,10 @@ function Admin() {
         <Route
           path="/admin/feed-preview"
           render={() => <FeedPreview />}
+        />
+        <Route
+          path="/admin/feedback-surveys"
+          render={() => <FeedbackSurveys />}
         />
       </Switch>
       <BuildInfo />

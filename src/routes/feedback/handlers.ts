@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import saveFeedbackSurveyService from '../../services/feedbackSurvey';
+import { auditLogger } from '../../logger';
 
 type ThumbsValue = 'up' | 'down' | null;
 type SurveyType = 'scale' | 'thumbs';
@@ -112,7 +113,7 @@ export async function submitSurveyFeedback(req: Request, res: Response) {
     if (reqData && reqData.logger && typeof reqData.logger.error === 'function') {
       reqData.logger.error('Error submitting survey feedback:', error);
     } else {
-      console.error('Error submitting survey feedback:', error);
+      auditLogger.error('Error submitting survey feedback:', error);
     }
     return res.status(500).json({
       error: 'Failed to submit feedback',
