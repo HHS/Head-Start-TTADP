@@ -30,7 +30,7 @@ Office of Head Start TTA Smart Hub — full-stack monorepo (Express API, React S
 - `yarn lint:fix` — eslint autofix backend
 
 **Frontend:**
-- `cd frontend && yarn test --watchAll=false` — run frontend tests (Jest via craco, requires `TZ=America/New_York`)
+- `cd frontend && yarn test --watchAll=false` — run frontend tests (Jest, requires `TZ=America/New_York`)
 - `cd frontend && yarn lint` — eslint frontend
 - `cd frontend && yarn lint:fix` — eslint autofix frontend
 
@@ -69,7 +69,7 @@ Three entry points: backend (`/src`), frontend (`/frontend/src`), worker (`/src/
 ## Non-obvious Architecture
 - **Only worker instance 0 runs cron jobs** — never duplicate cron registration.
 - `yarn db:migrate` also runs the logical data model CLI (`yarn ldm`) — don't skip this.
-- Frontend proxies unknown paths to the backend API via CRA proxy config.
+- Frontend proxies `/api` requests to the backend via Vite dev server proxy config.
 
 ## Traps to Avoid
 
