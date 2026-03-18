@@ -181,7 +181,7 @@ jobs:
               const urgencyText = selectedLabel || 'no urgency label';
               const reviewTarget = reviewers.length ? reviewers.join(', ') : '(none)';
 
-              let humorHeader = ':eyes: Friendly review ping';
+              let alertIcon = ':eyes:';
               const quotes = [
                 'All good things come to those who review.',
                 'Time and tide wait for no PR.',
@@ -206,20 +206,25 @@ jobs:
               ];
 
               if (overdueHours >= 3) {
-                humorHeader = ':rotating_light: Code is aging in PR years';
+                alertIcon = ':rotating_light:';
               } else if (overdueHours >= 1) {
-                humorHeader = ':coffee: Review break suggestion';
+                alertIcon = ':coffee:';
               } else if (overdueHours >= 0.25) {
-                humorHeader = ':hourglass_flowing_sand: Gentle nudge';
+                alertIcon = ':hourglass_flowing_sand:';
               }
+
+              const borderColorByPriority = {
+                'review:urgent': '#D92D20',
+                'review:standard': '#F79009',
+                'review:low': '#12B76A',
+              };
+              const borderColor = borderColorByPriority[selectedLabel] || '#667085';
 
               const quoteSeed = (pr.number * 31) + Math.round(overdueHours * 10);
               const quote = quotes[Math.abs(quoteSeed) % quotes.length];
 
               const text = [
-                '*PR Review Alert*',
-                `_${humorHeader}_`,
-                `*PR:* <${pr.html_url}|#${pr.number} ${pr.title}>`,
+                `*PR:* ${alertIcon} <${pr.html_url}|#${pr.number} ${pr.title}>`,
                 `*Leave a review:* <${pr.html_url}/files|Open changed files>`,
                 `*Author:* @${pr.user.login}`,
                 `*Requested reviewers:* ${reviewTarget}`,
@@ -231,11 +236,18 @@ jobs:
 
               if (dryRun) {
                 core.info(`[DRY RUN] Would notify Slack for PR #${pr.number}`);
+                core.info(`[DRY RUN] Border color: ${borderColor}`);
                 core.info(text);
               } else {
                 const payload = {
                   channel,
-                  text,
+                  text: `PR #${pr.number} review reminder`,
+                  attachments: [
+                    {
+                      color: borderColor,
+                      text,
+                    },
+                  ],
                 };
 
                 const response = await fetch('https://slack.com/api/chat.postMessage', {
