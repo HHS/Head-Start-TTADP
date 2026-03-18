@@ -483,8 +483,9 @@ components:
       type: object
       description: >
         Objective data associated to one or more citations. `findingIds`, `reviewNames`, and
-        `grantNumber` are primarily derived from flattened `ActivityReportObjectiveCitations`
-        columns, with `monitoringReferences` used as a legacy fallback.
+        `grantNumber` are derived by aggregating flattened
+        `ActivityReportObjectiveCitations` row fields (`findingId`, `reviewName`,
+        `grantNumber`) per objective.
       properties:
         title:
           type: string
