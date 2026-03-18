@@ -76,6 +76,7 @@ const createMonitoringGoals = async () => {
         ON mf."statusId" = mfs."statusId"
       CROSS JOIN monitoring_dates
       WHERE mfh."sourceDeletedAt" IS NULL
+        AND mf."sourceDeletedAt" IS NULL
         AND (
           mr."reportDeliveryDate" > monitoring_start_date
           OR mr."reportDeliveryDate" IS NULL
@@ -131,7 +132,7 @@ const createMonitoringGoals = async () => {
       ),
       grants_needing_goal AS (
       SELECT
-        grta."activeGrantId" "grantId"
+        gr.id "grantId"
       FROM open_citations oc
       JOIN ordered_citation_reviews ocr
         ON oc.fid = ocr.fid
@@ -139,22 +140,16 @@ const createMonitoringGoals = async () => {
         ON mrg."reviewId" = ocr.rid
       JOIN "Grants" gr
         ON gr.number = mrg."grantNumber"
-      JOIN "GrantRelationshipToActive" grta
-        ON gr.id = grta."grantId"
-        AND grta."activeGrantId" IS NOT NULL
       JOIN "MonitoringFindingGrants" mfg
         ON oc.fid = mfg."findingId"
         AND mrg."granteeId" = mfg."granteeId"
       LEFT JOIN "Goals" g
-        ON (grta."grantId" = g."grantId" OR grta."activeGrantId" = g."grantId")
+        ON gr.id = g."grantId"
         AND g."goalTemplateId" = (SELECT monitoring_gtid FROM monitoring_template)
         AND g."deletedAt" IS NULL
         AND g.status != 'Closed'
-      JOIN "Grants" gr2
-        ON grta."activeGrantId" = gr2.id
-        AND gr."recipientId" = gr2."recipientId"
       CROSS JOIN monitoring_dates
-      WHERE NOT gr2.cdi
+      WHERE NOT gr.cdi
         AND ocr.rdd BETWEEN monitoring_start_date AND NOW()
         AND ocr.review_type IN (
           'AIAN-DEF',

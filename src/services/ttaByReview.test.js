@@ -1,3 +1,4 @@
+import { v4 as uuid } from 'uuid';
 import moment from 'moment';
 import {
   createAdditionalMonitoringData,
@@ -16,10 +17,17 @@ const {
   Recipient,
 } = db;
 
+const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 const RECIPIENT_ID = 9;
 const REGION_ID = 1;
-const GRANT_NUMBER = '01HP044446';
-const GRANT_ID = 665;
+const GRANT_NUMBER = `01HP${TEST_KEY}`;
+const GRANT_ID = 710000 + parseInt(TEST_KEY.slice(0, 6), 16);
+const REVIEW_ID = uuid();
+const GRANTEE_ID = uuid();
+const REVIEW_STATUS_ID = 70602;
+const FINDING_STATUS_ID = 80602;
+const CONTENT_ID = uuid();
+const STANDARD_ID = 90602;
 
 describe('ttaByReviews', () => {
   let findingId;
@@ -57,13 +65,24 @@ describe('ttaByReviews', () => {
       reviewId: createdReviewId,
       findingId: createdFindingId,
       granteeId,
-    } = await createMonitoringData(GRANT_NUMBER);
+    } = await createMonitoringData(
+      GRANT_NUMBER,
+      REVIEW_ID,
+      GRANTEE_ID,
+      REVIEW_STATUS_ID,
+      CONTENT_ID,
+    );
 
     const result = await createAdditionalMonitoringData(
       createdFindingId,
       createdReviewId,
       granteeId,
-    ); findingId = result.findingId;
+      {
+        statusId: FINDING_STATUS_ID,
+        standardId: STANDARD_ID,
+      },
+    );
+    findingId = result.findingId;
     reviewId = result.reviewId;
 
     const arocResult = await createReportAndCitationData(
@@ -79,8 +98,11 @@ describe('ttaByReviews', () => {
   });
 
   afterAll(async () => {
-    await destroyMonitoringData(GRANT_NUMBER);
-    await destroyAdditionalMonitoringData(findingId, reviewId);
+    await destroyMonitoringData(GRANT_NUMBER, REVIEW_ID, REVIEW_STATUS_ID);
+    await destroyAdditionalMonitoringData(findingId, reviewId, {
+      statusId: FINDING_STATUS_ID,
+      standardId: STANDARD_ID,
+    });
 
     await destroyReportAndCitationData(
       goal,
@@ -120,7 +142,7 @@ describe('ttaByReviews', () => {
                 findingIds: [
                   findingId,
                 ],
-                grantNumber: '01HP044446',
+                grantNumber: GRANT_NUMBER,
                 reviewNames: [
                   'REVIEW!!!',
                 ],
@@ -151,7 +173,7 @@ describe('ttaByReviews', () => {
                 findingIds: [
                   findingId,
                 ],
-                grantNumber: '01HP044446',
+                grantNumber: GRANT_NUMBER,
                 reviewNames: [
                   'REVIEW!!!',
                 ],
@@ -176,7 +198,7 @@ describe('ttaByReviews', () => {
           },
         ],
         grants: [
-          '01HP044446',
+          GRANT_NUMBER,
         ],
         id: expect.any(Number),
         lastTTADate: moment().format('MM/DD/YYYY'),

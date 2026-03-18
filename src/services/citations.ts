@@ -145,7 +145,8 @@ export async function getCitationsByGrantIds(
       JOIN grant_recipients
         ON mrg."grantNumber" = grnumber
       CROSS JOIN monitoring_dates
-      WHERE mfh."sourceDeletedAt" IS NULL
+      WHERE mf."sourceDeletedAt" IS NULL
+        AND mfh."sourceDeletedAt" IS NULL
         AND (mr."reportDeliveryDate" > monitoring_start_date OR mr."reportDeliveryDate" IS NULL)
       ORDER BY 1,mr."startDate" DESC, mr."sourceCreatedAt" DESC, mr.id DESC
       ),
