@@ -2,7 +2,7 @@ name: PR Review SLA Slack Alerts
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/15 * * * 1-5"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
@@ -29,15 +29,52 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Configure these in repo Variables to tune urgency windows.
-      DEFAULT_SLA_HOURS: "8"
-      SLA_BY_LABEL: '{"review:urgent":0.0167,"review:standard":2,"review:low":4}'
+      DEFAULT_SLA_HOURS: "48"
+      SLA_BY_LABEL: '{"review:urgent":1,"review:standard":24,"review:low":48}'
       ALERT_LABEL: "review-alerted"
+      BUSINESS_TIMEZONE: "America/New_York"
+      HOLIDAY_DATES: ${{ vars.PR_REVIEW_SLA_HOLIDAY_DATES || '' }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       SLACK_CHANNEL: "acf-head-start-eng-reviews"
       DRY_RUN: ${{ github.event.inputs.dry_run || vars.PR_REVIEW_SLA_DRY_RUN || 'true' }}
 
     steps:
+      - name: Skip weekends and holidays
+        id: business-day-check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tz = process.env.BUSINESS_TIMEZONE || 'America/New_York';
+            const holidays = (process.env.HOLIDAY_DATES || '')
+              .split(',')
+              .map((d) => d.trim())
+              .filter(Boolean);
+
+            const dayName = new Intl.DateTimeFormat('en-US', {
+              timeZone: tz,
+              weekday: 'short',
+            }).format(new Date());
+
+            const dateKey = new Intl.DateTimeFormat('en-CA', {
+              timeZone: tz,
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            }).format(new Date());
+
+            const isWeekend = dayName === 'Sat' || dayName === 'Sun';
+            const isHoliday = holidays.includes(dateKey);
+            const shouldRun = !isWeekend && !isHoliday;
+
+            core.info(`Business-day check (${tz}): date=${dateKey}, day=${dayName}, holiday=${isHoliday}`);
+            if (!shouldRun) {
+              core.info('Skipping PR review SLA workflow on weekend/holiday.');
+            }
+
+            core.setOutput('should_run', shouldRun ? 'true' : 'false');
+
       - name: Ensure alert label exists
+        if: steps.business-day-check.outputs.should_run == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -79,12 +116,13 @@ jobs:
             }
 
       - name: Find overdue PRs and notify Slack
+        if: steps.business-day-check.outputs.should_run == 'true'
         uses: actions/github-script@v7
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const defaultSlaHours = Number(process.env.DEFAULT_SLA_HOURS || '24');
+            const defaultSlaHours = Number(process.env.DEFAULT_SLA_HOURS || '48');
             const slaByLabel = JSON.parse(process.env.SLA_BY_LABEL || '{}');
             const alertLabel = process.env.ALERT_LABEL || 'review-alerted';
             const slackBotToken = process.env.SLACK_BOT_TOKEN;
@@ -212,7 +250,7 @@ jobs:
 
               const overdueHours = Math.max(0, elapsedHours - slaHours);
               const roundedOverdue = Math.round(overdueHours * 10) / 10;
-              const urgencyText = selectedLabel || 'no urgency label';
+              const urgencyText = selectedLabel || 'review:low (default)';
               const reviewTarget = reviewers.length ? reviewers.join(', ') : '(none)';
 
               let alertIcon = ':eyes:';
