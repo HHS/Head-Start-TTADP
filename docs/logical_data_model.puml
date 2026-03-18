@@ -448,7 +448,7 @@ class FeedbackSurveys{
  * pageId : varchar(255)
  * rating : integer
  * submittedAt : timestamp with time zone
-!issue='column default does not match model' * surveyType : enum : 'scale'::"enum_FeedbackSurveys_surveyType"
+ * surveyType : enum : 'scale'::"enum_FeedbackSurveys_surveyType"
  * updatedAt : timestamp with time zone
  comment : text
  thumbs : enum
