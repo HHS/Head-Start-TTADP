@@ -33,7 +33,7 @@ export default (sequelize, DataTypes) => {
     },
     citationId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       references: {
         model: 'Citations',
         key: 'id',
@@ -54,47 +54,47 @@ export default (sequelize, DataTypes) => {
     },
     grantNumber: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     findingId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     grantId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
     },
     reviewName: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     standardId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
     },
     findingType: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     findingSource: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     acro: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     severity: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
     },
     reportDeliveryDate: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     monitoringFindingStatusName: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     createdAt: {
       type: DataTypes.DATE,
