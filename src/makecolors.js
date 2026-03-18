@@ -3,7 +3,14 @@
 const fs = require('node:fs');
 const { promises: fsPromises } = require('node:fs');
 const crypto = require('node:crypto');
-const colors = require('../frontend/src/colors');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+
+async function getColors() {
+  const colorsModulePath = path.resolve(__dirname, '../frontend/src/colors.js');
+  const { default: colors } = await import(pathToFileURL(colorsModulePath).href);
+  return colors;
+}
 
 async function generateHashes() {
   try {
@@ -46,6 +53,7 @@ function getPropName(key) {
 
 async function makeColors() {
   try {
+    const colors = await getColors();
     const entries = Object.entries(colors);
 
     const propNames = entries.map(([key]) => getPropName(key));

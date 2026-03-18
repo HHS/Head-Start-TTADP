@@ -1,7 +1,9 @@
 import '@testing-library/jest-dom';
 import { act } from 'react-dom/test-utils';
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent, render, screen, waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import IdleModal from '../IdleModal';
@@ -62,14 +64,17 @@ describe('IdleModal', () => {
   it('a shown modal is removed after action is taken', () => {
     const logout = jest.fn();
     renderIdleModal(20, 10, logout);
+
     act(() => {
       jest.advanceTimersByTime(12);
-      const modal = document.querySelector('#IdleReportModal');
-      expect(modal).toHaveClass('is-visible');
-
-      const testDiv = screen.getByTestId('test');
-      userEvent.type(testDiv, 'test');
     });
+
+    const modal = document.querySelector('#IdleReportModal');
+    expect(modal).toHaveClass('is-visible');
+
+    const testDiv = screen.getByTestId('test');
+    fireEvent.mouseDown(testDiv);
+
     expect(logout).not.toHaveBeenCalled();
     expect(screen.queryByTestId('modal')).toBeNull();
   });
