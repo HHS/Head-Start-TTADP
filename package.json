@@ -66,6 +66,8 @@
     "cli:reconcile-legacy:local": "bin/run-tool --local src/tools/reconcileLegacyReports.js",
     "cli:restore-topics": "bin/run-tool src/tools/restoreTopicsCLI.js",
     "cli:restore-topics:local": "bin/run-tool --local src/tools/restoreTopicsCLI.js",
+    "cli:seed-feedback-surveys": "bin/run-tool src/tools/seedFeedbackSurveysCLI.ts",
+    "cli:seed-feedback-surveys:local": "bin/run-tool --local src/tools/seedFeedbackSurveysCLI.ts",
     "cli:update-completed-event-report-pilots": "bin/run-tool src/tools/updateCompletedEventReportPilotsCLI.js",
     "cli:update-completed-event-report-pilots:local": "bin/run-tool --local src/tools/updateCompletedEventReportPilotsCLI.js",
     "cli:updateMonitoringFactTables": "node ./build/server/src/tools/updateMonitoringFactTablesCLI.js",

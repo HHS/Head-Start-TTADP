@@ -17,10 +17,26 @@ type FeedbackSurveyQuery = {
   surveyType?: SurveyType;
   thumbs?: ThumbsValue;
   q?: string;
+  createdAtFrom?: string;
+  createdAtTo?: string;
   sortBy?: SortBy;
   sortDir?: SortDir;
   limit?: string;
 };
+
+function isValidDateFilter(value?: string) {
+  if (!value) {
+    return true;
+  }
+
+  const validDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+  if (!validDatePattern.test(value)) {
+    return false;
+  }
+
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime());
+}
 
 export async function listFeedbackSurveys(req: Request, res: Response) {
   try {
@@ -29,6 +45,8 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       surveyType,
       thumbs,
       q,
+      createdAtFrom,
+      createdAtTo,
       sortBy,
       sortDir,
       limit,
@@ -42,11 +60,25 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       });
     }
 
+    if (!isValidDateFilter(createdAtFrom) || !isValidDateFilter(createdAtTo)) {
+      return res.status(httpCodes.BAD_REQUEST).json({
+        error: 'createdAtFrom and createdAtTo must be valid dates in YYYY-MM-DD format',
+      });
+    }
+
+    if (createdAtFrom && createdAtTo && createdAtFrom > createdAtTo) {
+      return res.status(httpCodes.BAD_REQUEST).json({
+        error: 'createdAtFrom must be before or equal to createdAtTo',
+      });
+    }
+
     const results = await getFeedbackSurveys({
       pageId,
       surveyType,
       thumbs,
       q,
+      createdAtFrom,
+      createdAtTo,
       sortBy,
       sortDir,
       limit: parsedLimit,

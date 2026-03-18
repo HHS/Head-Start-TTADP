@@ -36,6 +36,8 @@ describe('admin/feedback-surveys', () => {
         surveyType: 'thumbs',
         thumbs: 'up',
         q: 'great',
+        createdAtFrom: '2026-03-01',
+        createdAtTo: '2026-03-31',
         sortBy: 'rating',
         sortDir: 'asc',
         limit: '100',
@@ -49,6 +51,8 @@ describe('admin/feedback-surveys', () => {
       surveyType: 'thumbs',
       thumbs: 'up',
       q: 'great',
+      createdAtFrom: '2026-03-01',
+      createdAtTo: '2026-03-31',
       sortBy: 'rating',
       sortDir: 'asc',
       limit: 100,
@@ -98,6 +102,8 @@ describe('admin/feedback-surveys', () => {
       surveyType: undefined,
       thumbs: undefined,
       q: undefined,
+      createdAtFrom: undefined,
+      createdAtTo: undefined,
       sortBy: undefined,
       sortDir: undefined,
       limit: 200,
@@ -115,5 +121,38 @@ describe('admin/feedback-surveys', () => {
 
     expect(getFeedbackSurveys).not.toHaveBeenCalled();
     expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+  });
+
+  it('rejects invalid createdAt filters', async () => {
+    const req = {
+      query: {
+        createdAtFrom: '03/01/2026',
+      },
+    };
+
+    await listFeedbackSurveys(req, mockResponse);
+
+    expect(getFeedbackSurveys).not.toHaveBeenCalled();
+    expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+    expect(json).toHaveBeenCalledWith({
+      error: 'createdAtFrom and createdAtTo must be valid dates in YYYY-MM-DD format',
+    });
+  });
+
+  it('rejects reversed createdAt filters', async () => {
+    const req = {
+      query: {
+        createdAtFrom: '2026-03-31',
+        createdAtTo: '2026-03-01',
+      },
+    };
+
+    await listFeedbackSurveys(req, mockResponse);
+
+    expect(getFeedbackSurveys).not.toHaveBeenCalled();
+    expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+    expect(json).toHaveBeenCalledWith({
+      error: 'createdAtFrom must be before or equal to createdAtTo',
+    });
   });
 });
