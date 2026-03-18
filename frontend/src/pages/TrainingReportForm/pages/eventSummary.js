@@ -380,88 +380,95 @@ const EventSummary = ({
           </FormItem>
         </div>
         <div className={adminCanEdit ? 'margin-top-2' : 'margin-top-2 margin-bottom-3'}>
-          { adminCanEdit ? (
-            <>
-              <div className="margin-top-2">
-                <FormItem
-                  label="Event region point of contact "
-                  name="pocIds"
-                  required
-                >
-
-                  <Controller
-                    render={({ onChange: controllerOnChange, value, onBlur }) => (
-                      <Select
-                        value={pointOfContact.filter((option) => (
-                          value.includes(option.id)
-                        ))}
-                        inputId="pocIds"
-                        name="pocIds"
-                        className="usa-select"
-                        styles={selectOptionsReset}
-                        components={{
-                          DropdownIndicator: null,
-                        }}
-                        onChange={(s) => {
-                          controllerOnChange(s.map((option) => option.id));
-                        }}
-                        inputRef={register({
-                          required:
-                            'Select at least one event region point of contact',
-                        })}
-                        getOptionLabel={(option) => option.fullName}
-                        getOptionValue={(option) => option.id}
-                        options={pointOfContact}
-                        onBlur={onBlur}
-                        required
-                        isMulti
-                      />
-                    )}
-                    control={control}
-                    rules={{
-                      validate: (value) => {
-                        if (!value || value.length === 0) {
-                          return (
-                            'Select at least one event region '
-                            + 'point of contact'
-                          );
-                        }
-                        return true;
-                      },
-                    }}
+          {(
+            adminCanEdit
+            && data.eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
+          ) && (
+          <div className="margin-top-2">
+            <FormItem
+              label="Event region point of contact "
+              name="pocIds"
+              required
+            >
+              <Controller
+                render={({ onChange: controllerOnChange, value, onBlur }) => (
+                  <Select
+                    value={pointOfContact.filter((option) => (
+                      value.includes(option.id)
+                    ))}
+                    inputId="pocIds"
                     name="pocIds"
-                    defaultValue={[]}
+                    className="usa-select"
+                    styles={selectOptionsReset}
+                    components={{
+                      DropdownIndicator: null,
+                    }}
+                    onChange={(s) => {
+                      controllerOnChange(s.map((option) => option.id));
+                    }}
+                    inputRef={register({
+                      required:
+                            'Select at least one event region point of contact',
+                    })}
+                    getOptionLabel={(option) => option.fullName}
+                    getOptionValue={(option) => option.id}
+                    options={pointOfContact}
+                    onBlur={onBlur}
+                    required
+                    isMulti
+                  />
+                )}
+                control={control}
+                rules={{
+                  validate: (value) => {
+                    // eslint-disable-next-line max-len
+                    if (data.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
+                      return true;
+                    }
+
+                    if (!value || value.length === 0) {
+                      return (
+                        'Select at least one event region '
+                            + 'point of contact'
+                      );
+                    }
+                    return true;
+                  },
+                }}
+                name="pocIds"
+                defaultValue={[]}
+              />
+            </FormItem>
+          </div>
+          )}
+          { adminCanEdit ? (
+            <Fieldset>
+              <div className={data.eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS ? 'margin-top-3' : ''}>
+                <FormItem
+                  label="Event intended audience"
+                  name="eventIntendedAudience"
+                  fieldSetWrapper
+                >
+                  <Radio
+                    id="category-recipients"
+                    name="eventIntendedAudience"
+                    label="Recipients"
+                    value="recipients"
+                    className="smart-hub--report-checkbox"
+                    inputRef={register({ required: 'Select one' })}
+                    required
+                  />
+                  <Radio
+                    id="category-regionalOffice"
+                    name="eventIntendedAudience"
+                    label="Regional office/TTA"
+                    value="regional-office-tta"
+                    className="smart-hub--report-checkbox"
+                    inputRef={register({ required: 'Select one' })}
                   />
                 </FormItem>
               </div>
-              <Fieldset>
-                <div className="margin-top-3">
-                  <FormItem
-                    label="Event intended audience"
-                    name="eventIntendedAudience"
-                    fieldSetWrapper
-                  >
-                    <Radio
-                      id="category-recipients"
-                      name="eventIntendedAudience"
-                      label="Recipients"
-                      value="recipients"
-                      className="smart-hub--report-checkbox"
-                      inputRef={register({ required: 'Select one' })}
-                      required
-                    />
-                    <Radio
-                      id="category-regionalOffice"
-                      name="eventIntendedAudience"
-                      label="Regional office/TTA"
-                      value="regional-office-tta"
-                      className="smart-hub--report-checkbox"
-                      inputRef={register({ required: 'Select one' })}
-                    />
-                  </FormItem>
-                </div>
-              </Fieldset>
-            </>
+            </Fieldset>
           ) : (
             <div className="margin-top-3">
               {eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && (

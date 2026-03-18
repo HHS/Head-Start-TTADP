@@ -159,6 +159,7 @@ const updateMonitoringFactTables = async () => {
       ON mf."findingId" = mfst."findingId"
     JOIN "MonitoringStandards" ms
       ON mfst."standardId" = ms."standardId"
+    WHERE mf."sourceDeletedAt" IS NULL
     ;
 
     -- Connect findings to their most recent DELIVERED review and also

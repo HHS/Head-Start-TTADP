@@ -149,9 +149,14 @@ Monitoring goals are created only when all of the following are true:
 - Monitoring goal creation is enabled (`ENABLE_MONITORING_GOAL_CREATION=true`).
 - The review type is in the allowlist: `AIAN-DEF`, `RAN`, `Follow-up`, `FA-1`, `FA1-FR`, `FA1-PSR`, `FA-2`, `FA2-CR`, `FA2-CSR`, `Special`.
 - The review `reportDeliveryDate` is between the cutoff date (`2025-01-21`) and now.
-- There is an `Active` or `Elevated Deficiency` finding linked to the review and grantee.
-- The grant maps to an active grant via `GrantRelationshipToActive` and is not CDI.
-- There is no existing open monitoring goal on the active or replaced grant.
+- There is at least one open finding linked to the review and grantee. "Open" means either:
+  - Finding status is `Active` or `Elevated Deficiency`, or
+  - The finding's most recent linked review has a `NULL` `reportDeliveryDate`.
+- Findings are excluded from open status if a Monitoring goal was closed after the finding's latest delivered review date.
+- The grant is not CDI.
+- There is no existing non-closed monitoring goal on the same grant.
+
+Also in the same job, eligible Monitoring goals originally created via `rtr` or `activityReport` can be re-marked as `createdVia='monitoring'` to support follow-up TTA workflows on replacement grants.
 
 ## Finding Type Display
 Monitoring finding display uses determination first logic:

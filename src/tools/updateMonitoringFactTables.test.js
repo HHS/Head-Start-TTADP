@@ -81,6 +81,7 @@ describe('updateMonitoringFactTables', () => {
   const granteeIdA1 = uuidv4();
   const granteeIdA2 = uuidv4();
   const findingIdA = uuidv4();
+  const findingIdADeleted = uuidv4(); // Active-status finding with sourceDeletedAt — must not produce a Citation
 
   // ----------------------------------------------------------
   // Scenario B: Corrected finding across two delivered reviews
@@ -283,6 +284,36 @@ describe('updateMonitoringFactTables', () => {
         findingId: findingIdA, granteeId: granteeIdA2, statusId: FINDING_STATUS_ACTIVE_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
       },
     ]);
+
+    // Source-deleted finding on the same review — must be excluded from Citations
+    await MonitoringFindingLink.findOrCreate({ where: { findingId: findingIdADeleted }, defaults: linkTimestamps });
+    await MonitoringFinding.create({
+      findingId: findingIdADeleted,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Deficiency',
+      source: 'FA-1',
+      name: 'Finding A (deleted)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceDeletedAt: new Date(),
+    });
+    await MonitoringFindingHistory.create({
+      reviewId: reviewIdA,
+      findingHistoryId: uuidv4(),
+      findingId: findingIdADeleted,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      narrative: 'Narrative for source-deleted finding A',
+      ordinal: 2,
+      determination: 'Deficiency',
+      name: 'History A (deleted)',
+      ...timestamps,
+    });
+    await MonitoringFindingStandard.create({
+      findingId: findingIdADeleted, standardId: STANDARD_ID_1, name: 'Standard A (deleted)', ...timestamps,
+    });
+    await MonitoringFindingGrant.create({
+      findingId: findingIdADeleted, granteeId: granteeIdA1, statusId: FINDING_STATUS_ACTIVE_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
+    });
 
     // =====================================================
     // Scenario B: Corrected finding, two delivered reviews
@@ -487,7 +518,7 @@ describe('updateMonitoringFactTables', () => {
     await Citation.destroy({ where: {}, force: true, individualHooks: false });
     await DeliveredReview.destroy({ where: {}, force: true, individualHooks: false });
 
-    const allFindingIds = [findingIdA, findingIdB, findingIdC, findingIdD];
+    const allFindingIds = [findingIdA, findingIdADeleted, findingIdB, findingIdC, findingIdD];
     const allReviewIds = [reviewIdA, reviewIdB1, reviewIdB2, reviewIdC, reviewIdD1, reviewIdD2];
     const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD];
     const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD];
@@ -581,6 +612,11 @@ describe('updateMonitoringFactTables', () => {
         expect(j.recipient_name).toMatch(/^Recipient A /);
         expect(j.region_id).toBe(1);
       });
+    });
+
+    it('excludes source-deleted findings from Citations', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdADeleted } });
+      expect(citation).toBeNull();
     });
   });
 
