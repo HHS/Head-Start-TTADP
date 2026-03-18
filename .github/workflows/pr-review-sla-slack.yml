@@ -40,20 +40,25 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const name = process.env.ALERT_LABEL;
+            const dryRun = String(process.env.DRY_RUN || '').toLowerCase() === 'true';
 
             try {
               await github.rest.issues.getLabel({ owner, repo, name });
               core.info(`Label ${name} already exists.`);
             } catch (error) {
               if (error.status === 404) {
-                await github.rest.issues.createLabel({
-                  owner,
-                  repo,
-                  name,
-                  color: 'D4C5F9',
-                  description: 'PR has triggered an overdue review Slack alert',
-                });
-                core.info(`Created label ${name}.`);
+                if (dryRun) {
+                  core.info(`DRY_RUN enabled: would create label ${name}, but not mutating repository state.`);
+                } else {
+                  await github.rest.issues.createLabel({
+                    owner,
+                    repo,
+                    name,
+                    color: 'D4C5F9',
+                    description: 'PR has triggered an overdue review Slack alert',
+                  });
+                  core.info(`Created label ${name}.`);
+                }
               } else {
                 throw error;
               }
