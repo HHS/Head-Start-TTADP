@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import createPlotlyComponent from 'react-plotly.js/factory';
 import {
   Alert,
   Grid,
@@ -9,19 +10,40 @@ import {
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
+import colors from '../../colors';
 import { getFeedbackSurveys } from '../../fetchers/Admin';
+
+let Plot = null;
+
+import('plotly.js-basic-dist')
+  .then((Plotly) => {
+    Plot = createPlotlyComponent(Plotly);
+  });
 
 const DEFAULT_FILTERS = {
   q: '',
   pageId: '',
   surveyType: '',
   thumbs: '',
+  createdAtFrom: '',
+  createdAtTo: '',
 };
 
 const DEFAULT_SORT = {
   sortBy: 'submittedAt',
   sortDir: 'desc',
 };
+
+const MONTH_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  year: 'numeric',
+});
+
+function getMonthKey(date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  return `${year}-${month}`;
+}
 
 function formatDate(date) {
   if (!date) {
@@ -86,6 +108,66 @@ export default function FeedbackSurveys() {
     setSort(DEFAULT_SORT);
   };
 
+  const scaleChartData = useMemo(() => {
+    const counts = new Map();
+
+    rows
+      .filter((row) => row.surveyType === 'scale')
+      .forEach((row) => {
+        const rating = Number(row.rating);
+
+        if (!Number.isFinite(rating)) {
+          return;
+        }
+
+        counts.set(rating, (counts.get(rating) || 0) + 1);
+      });
+
+    const sortedRatings = [...counts.keys()].sort((a, b) => a - b);
+
+    return {
+      labels: sortedRatings.map((rating) => `Rating ${rating}`),
+      values: sortedRatings.map((rating) => counts.get(rating)),
+    };
+  }, [rows]);
+
+  const thumbsChartData = useMemo(() => {
+    const byMonth = new Map();
+
+    rows
+      .filter((row) => row.surveyType === 'thumbs')
+      .forEach((row) => {
+        if (row.thumbs !== 'up' && row.thumbs !== 'down') {
+          return;
+        }
+
+        const date = new Date(row.submittedAt || row.createdAt);
+        if (Number.isNaN(date.getTime())) {
+          return;
+        }
+
+        const monthKey = getMonthKey(date);
+        if (!byMonth.has(monthKey)) {
+          byMonth.set(monthKey, {
+            label: MONTH_FORMATTER.format(date),
+            up: 0,
+            down: 0,
+          });
+        }
+
+        const current = byMonth.get(monthKey);
+        current[row.thumbs] += 1;
+      });
+
+    const sortedMonths = [...byMonth.keys()].sort();
+
+    return {
+      x: sortedMonths.map((month) => byMonth.get(month).label),
+      up: sortedMonths.map((month) => byMonth.get(month).up),
+      down: sortedMonths.map((month) => byMonth.get(month).down),
+    };
+  }, [rows]);
+
   return (
     <>
       <Helmet>
@@ -140,6 +222,26 @@ export default function FeedbackSurveys() {
               <option value="down">Down</option>
             </Select>
           </Grid>
+          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
+            <Label htmlFor="feedback-created-at-from">Created at (from)</Label>
+            <TextInput
+              id="feedback-created-at-from"
+              name="createdAtFrom"
+              type="date"
+              value={filters.createdAtFrom}
+              onChange={onFilterChange}
+            />
+          </Grid>
+          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
+            <Label htmlFor="feedback-created-at-to">Created at (to)</Label>
+            <TextInput
+              id="feedback-created-at-to"
+              name="createdAtTo"
+              type="date"
+              value={filters.createdAtTo}
+              onChange={onFilterChange}
+            />
+          </Grid>
         </Grid>
 
         <Grid row gap className="margin-bottom-3">
@@ -175,6 +277,142 @@ export default function FeedbackSurveys() {
             </button>
           </Grid>
         </Grid>
+
+        {!loading && (
+          <section className="margin-bottom-4" aria-label="Feedback survey charts">
+            <h2 className="margin-top-0">Feedback trends</h2>
+            <Grid row gap>
+              <Grid desktop={{ col: 6 }} tablet={{ col: 12 }} col={12}>
+                <h3 className="margin-top-0">Feedback by scale</h3>
+                {scaleChartData.values.length === 0 && (
+                  <p>No scale feedback responses for the selected filters.</p>
+                )}
+                {scaleChartData.values.length > 0 && !Plot && (
+                  <p>Loading chart...</p>
+                )}
+                {scaleChartData.values.length > 0 && Plot && (
+                  <Plot
+                    useResizeHandler
+                    style={{ width: '100%', height: '320px' }}
+                    data={[
+                      {
+                        type: 'pie',
+                        labels: scaleChartData.labels,
+                        values: scaleChartData.values,
+                        textinfo: 'label+percent',
+                        marker: {
+                          colors: [
+                            colors.ttahubBlue,
+                            colors.ttahubMediumBlue,
+                            colors.ttahubMediumDeepTeal,
+                            colors.ttahubOrange,
+                            colors.ttahubMagenta,
+                            colors.info,
+                            colors.success,
+                            colors.warning,
+                            colors.baseMedium,
+                            colors.baseLight,
+                          ],
+                        },
+                        hovertemplate: '%{label}: %{value}<extra></extra>',
+                      },
+                    ]}
+                    layout={{
+                      margin: {
+                        l: 20,
+                        r: 20,
+                        t: 20,
+                        b: 20,
+                      },
+                      showlegend: true,
+                      legend: {
+                        orientation: 'h',
+                        y: -0.2,
+                      },
+                    }}
+                    config={{
+                      responsive: true,
+                      displayModeBar: false,
+                    }}
+                  />
+                )}
+              </Grid>
+              <Grid desktop={{ col: 6 }} tablet={{ col: 12 }} col={12}>
+                <h3 className="margin-top-0">Thumbs up and down by month</h3>
+                {thumbsChartData.x.length === 0 && (
+                  <p>No thumbs feedback responses for the selected filters.</p>
+                )}
+                {thumbsChartData.x.length > 0 && !Plot && (
+                  <p>Loading chart...</p>
+                )}
+                {thumbsChartData.x.length > 0 && Plot && (
+                  <Plot
+                    useResizeHandler
+                    style={{ width: '100%', height: '320px' }}
+                    data={[
+                      {
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Thumbs up',
+                        x: thumbsChartData.x,
+                        y: thumbsChartData.up,
+                        line: {
+                          color: colors.success,
+                          width: 3,
+                        },
+                        marker: {
+                          size: 10,
+                        },
+                      },
+                      {
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Thumbs down',
+                        x: thumbsChartData.x,
+                        y: thumbsChartData.down,
+                        line: {
+                          color: colors.error,
+                          width: 3,
+                        },
+                        marker: {
+                          size: 10,
+                        },
+                      },
+                    ]}
+                    layout={{
+                      margin: {
+                        l: 40,
+                        r: 20,
+                        t: 20,
+                        b: 60,
+                      },
+                      xaxis: {
+                        title: {
+                          text: 'Month',
+                        },
+                      },
+                      yaxis: {
+                        title: {
+                          text: 'Count',
+                        },
+                        rangemode: 'tozero',
+                        dtick: 1,
+                      },
+                      legend: {
+                        orientation: 'h',
+                        y: -0.2,
+                      },
+                    }}
+                    config={{
+                      responsive: true,
+                      displayModeBar: false,
+                    }}
+                  />
+                )}
+              </Grid>
+            </Grid>
+          </section>
+        )}
 
         {error && (
           <Alert type="error" role="alert">

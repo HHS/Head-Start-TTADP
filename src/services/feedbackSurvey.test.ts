@@ -150,4 +150,48 @@ describe('Survey feedback service', () => {
     expect(sorted.length).toBeGreaterThanOrEqual(2);
     expect(sorted[0].rating).toBeLessThanOrEqual(sorted[1].rating);
   });
+
+  it('filters feedback survey submissions by createdAt date range', async () => {
+    const outsideRange = await saveFeedbackSurvey({
+      pageId: 'created-at-a',
+      rating: 5,
+      surveyType: 'scale',
+      thumbs: null,
+      comment: 'outside range',
+      timestamp: '2026-03-01T12:00:00.000Z',
+      userId: user.id,
+    });
+
+    const insideRange = await saveFeedbackSurvey({
+      pageId: 'created-at-b',
+      rating: 9,
+      surveyType: 'scale',
+      thumbs: null,
+      comment: 'inside range',
+      timestamp: '2026-03-20T12:00:00.000Z',
+      userId: secondUser.id,
+    });
+
+    await FeedbackSurvey.update(
+      { createdAt: new Date('2026-03-01T12:00:00.000Z') },
+      { where: { id: outsideRange.id } },
+    );
+
+    await FeedbackSurvey.update(
+      { createdAt: new Date('2026-03-20T12:00:00.000Z') },
+      { where: { id: insideRange.id } },
+    );
+
+    const filtered = await getFeedbackSurveys({
+      pageId: 'created-at-',
+      createdAtFrom: '2026-03-15',
+      createdAtTo: '2026-03-25',
+      sortBy: 'submittedAt',
+      sortDir: 'asc',
+      limit: 10,
+    });
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].pageId).toBe('created-at-b');
+  });
 });

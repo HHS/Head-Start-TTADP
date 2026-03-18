@@ -89,10 +89,12 @@ describe('Admin', () => {
 
     it('passes query parameters', async () => {
       const res = [{ id: 2 }];
-      fetchMock.get('/api/admin/feedback-surveys?pageId=qa&surveyType=thumbs&sortBy=rating&sortDir=asc', res);
+      fetchMock.get('/api/admin/feedback-surveys?pageId=qa&surveyType=thumbs&createdAtFrom=2026-03-01&createdAtTo=2026-03-31&sortBy=rating&sortDir=asc', res);
       const fetched = await getFeedbackSurveys({
         pageId: 'qa',
         surveyType: 'thumbs',
+        createdAtFrom: '2026-03-01',
+        createdAtTo: '2026-03-31',
         sortBy: 'rating',
         sortDir: 'asc',
       });

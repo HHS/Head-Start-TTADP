@@ -25,6 +25,8 @@ export type GetFeedbackSurveysInput = {
   surveyType?: SurveyType;
   thumbs?: Exclude<ThumbsValue, null>;
   q?: string;
+  createdAtFrom?: string;
+  createdAtTo?: string;
   sortBy?: SortBy;
   sortDir?: SortDir;
   limit?: number;
@@ -76,6 +78,8 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     surveyType,
     thumbs,
     q,
+    createdAtFrom,
+    createdAtTo,
     sortBy = 'submittedAt',
     sortDir = 'desc',
     limit = 500,
@@ -85,6 +89,10 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     pageId?: { [Op.iLike]: string };
     surveyType?: SurveyType;
     thumbs?: Exclude<ThumbsValue, null>;
+    createdAt?: {
+      [Op.gte]?: Date;
+      [Op.lt]?: Date;
+    };
     [Op.or]?: Array<{
       pageId?: { [Op.iLike]: string };
       comment?: { [Op.iLike]: string };
@@ -112,6 +120,20 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
       { '$user.name$': { [Op.iLike]: `%${q}%` } },
       { '$user.email$': { [Op.iLike]: `%${q}%` } },
     ];
+  }
+
+  if (createdAtFrom || createdAtTo) {
+    where.createdAt = {};
+
+    if (createdAtFrom) {
+      where.createdAt[Op.gte] = new Date(`${createdAtFrom}T00:00:00.000Z`);
+    }
+
+    if (createdAtTo) {
+      const nextDay = new Date(`${createdAtTo}T00:00:00.000Z`);
+      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+      where.createdAt[Op.lt] = nextDay;
+    }
   }
 
   const safeSortBy: SortBy[] = ['submittedAt', 'rating', 'pageId', 'surveyType'];
