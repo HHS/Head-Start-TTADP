@@ -1,20 +1,22 @@
-import { FeedbackSurvey } from '../models';
+import db from '../models';
 import { auditLogger } from '../logger';
 
-/**
- * Save survey feedback.
- *
- * @param {Object} feedbackData - Feedback data
- * @param {string} feedbackData.pageId - Dashboard page identifier
- * @param {number} feedbackData.rating - User rating (1-10)
- * @param {string} feedbackData.surveyType - Survey type: scale or thumbs
- * @param {string|null} feedbackData.thumbs - Thumbs selection for thumbs survey
- * @param {string} feedbackData.comment - Optional user comment
- * @param {string} feedbackData.timestamp - ISO timestamp
- * @param {number} feedbackData.userId - User ID
- * @returns {Promise<Object>} Saved feedback object
- */
-export async function saveFeedbackSurvey(feedbackData) {
+const { FeedbackSurvey } = db;
+
+type SurveyType = 'scale' | 'thumbs';
+type ThumbsValue = 'up' | 'down' | null;
+
+export type SaveFeedbackSurveyInput = {
+  pageId: string;
+  rating: number;
+  userId: number;
+  surveyType?: SurveyType;
+  thumbs?: ThumbsValue;
+  comment?: string;
+  timestamp?: string;
+};
+
+export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) {
   const {
     pageId,
     rating,
@@ -27,7 +29,7 @@ export async function saveFeedbackSurvey(feedbackData) {
 
   const submittedAt = timestamp ? new Date(timestamp) : new Date();
   const normalizedComment = comment || '';
-  const normalizedSurveyType = surveyType || 'scale';
+  const normalizedSurveyType: SurveyType = surveyType || 'scale';
 
   const feedback = await FeedbackSurvey.create({
     pageId,

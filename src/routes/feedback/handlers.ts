@@ -1,14 +1,31 @@
+import { Request, Response } from 'express';
 import saveFeedbackSurveyService from '../../services/feedbackSurvey';
 
-const SURVEY_TYPES = ['scale', 'thumbs'];
-const THUMBS_OPTIONS = ['up', 'down'];
+type ThumbsValue = 'up' | 'down' | null;
+type SurveyType = 'scale' | 'thumbs';
 
-/**
- * Handler for submitting survey feedback
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
-export async function submitSurveyFeedback(req, res) {
+type FeedbackBody = {
+  pageId?: string;
+  rating?: number | string;
+  surveyType?: SurveyType;
+  thumbs?: ThumbsValue;
+  comment?: string;
+  timestamp?: string;
+};
+
+type FeedbackRequestData = {
+  body: FeedbackBody;
+  session?: {
+    userId?: number;
+  };
+  logger?: {
+    error?: (...args: unknown[]) => void;
+  };
+};
+
+export async function submitSurveyFeedback(req: Request, res: Response) {
+  const reqData = req as Request & FeedbackRequestData;
+
   try {
     const {
       pageId,
@@ -17,10 +34,10 @@ export async function submitSurveyFeedback(req, res) {
       thumbs,
       comment,
       timestamp,
-    } = req.body;
-    const userId = req.session?.userId;
+    } = reqData.body;
+    const userId = reqData.session?.userId;
 
-    if (!pageId || !rating) {
+    if (!pageId || rating === undefined || rating === null) {
       return res.status(400).json({
         error: 'Missing required fields: pageId and rating are required',
       });
@@ -40,17 +57,17 @@ export async function submitSurveyFeedback(req, res) {
       });
     }
 
-    const normalizedSurveyType = surveyType || 'scale';
+    const normalizedSurveyType: SurveyType = surveyType || 'scale';
 
-    if (!SURVEY_TYPES.includes(normalizedSurveyType)) {
+    if (!['scale', 'thumbs'].includes(normalizedSurveyType)) {
       return res.status(400).json({
         error: 'Survey type must be one of scale or thumbs',
       });
     }
 
-    let normalizedThumbs = null;
+    let normalizedThumbs: ThumbsValue = null;
     if (normalizedSurveyType === 'thumbs') {
-      if (!thumbs || !THUMBS_OPTIONS.includes(thumbs)) {
+      if (!thumbs || !['up', 'down'].includes(thumbs)) {
         return res.status(400).json({
           error: 'Thumbs value must be one of up or down for thumbs surveys',
         });
@@ -91,9 +108,9 @@ export async function submitSurveyFeedback(req, res) {
       success: true,
       feedbackId: feedback.id,
     });
-  } catch (error) {
-    if (req && req.logger && typeof req.logger.error === 'function') {
-      req.logger.error('Error submitting survey feedback:', error);
+  } catch (error: unknown) {
+    if (reqData && reqData.logger && typeof reqData.logger.error === 'function') {
+      reqData.logger.error('Error submitting survey feedback:', error);
     } else {
       console.error('Error submitting survey feedback:', error);
     }
