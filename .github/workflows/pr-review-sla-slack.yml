@@ -18,6 +18,10 @@ permissions:
   pull-requests: read
   issues: write
 
+concurrency:
+  group: pr-review-sla-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   review_sla_alerts:
     # Keep this automation separate and opt-in.
