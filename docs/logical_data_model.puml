@@ -441,6 +441,19 @@ class EventReportPilots{
  version : integer
 }
 
+class FeedbackSurveys{
+ * id : integer : <generated>
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * pageId : varchar(255)
+ * rating : integer
+ * submittedAt : timestamp with time zone
+!issue='column default does not match model' * surveyType : enum : 'scale'::"enum_FeedbackSurveys_surveyType"
+ * updatedAt : timestamp with time zone
+ comment : text
+ thumbs : enum
+}
+
 class Files{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
@@ -1252,17 +1265,6 @@ class SiteAlerts{
  variant : enum
 }
 
-class SurveyFeedbacks{
- * id : integer : <generated>
- * userId : integer : REFERENCES "Users".id
- * createdAt : timestamp with time zone
- * pageId : varchar(255)
- * rating : integer
- * submittedAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- comment : text
-}
-
 class Topics{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
@@ -1828,6 +1830,20 @@ class ZALEventReportPilotNationalCenterUsers{
 }
 
 class ZALEventReportPilots{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALFeedbackSurveys{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2765,20 +2781,6 @@ class ZALSiteAlerts{
  session_sig : text
 }
 
-class ZALSurveyFeedbacks{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
 class ZALTopics{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3057,6 +3059,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : user, co
 Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSpecialists : specialist, collabReportSpecialists
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : user, eventReportPilotNationalCenterUsers
+Users "1" --[#black,dashed,thickness=2]--{  "n" FeedbackSurveys : user, feedbackSurveys
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : user, goalCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalStatusChanges : user, goalStatusChanges
 Users "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : user, groupCollaborators
@@ -3066,7 +3069,6 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : trainer, sessionTrainers
 Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : approver, submitter, sessionReportsAsApprover
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
-Users "1" --[#black,dashed,thickness=2]--{  "n" SurveyFeedbacks : user, surveyFeedback
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserValidationStatus : user, validationStatus

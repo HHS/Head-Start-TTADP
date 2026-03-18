@@ -1,4 +1,7 @@
-import saveSurveyFeedbackService from '../../services/surveyFeedback';
+import saveFeedbackSurveyService from '../../services/feedbackSurvey';
+
+const SURVEY_TYPES = ['scale', 'thumbs'];
+const THUMBS_OPTIONS = ['up', 'down'];
 
 /**
  * Handler for submitting survey feedback
@@ -10,6 +13,8 @@ export async function submitSurveyFeedback(req, res) {
     const {
       pageId,
       rating,
+      surveyType,
+      thumbs,
       comment,
       timestamp,
     } = req.body;
@@ -35,6 +40,31 @@ export async function submitSurveyFeedback(req, res) {
       });
     }
 
+    const normalizedSurveyType = surveyType || 'scale';
+
+    if (!SURVEY_TYPES.includes(normalizedSurveyType)) {
+      return res.status(400).json({
+        error: 'Survey type must be one of scale or thumbs',
+      });
+    }
+
+    let normalizedThumbs = null;
+    if (normalizedSurveyType === 'thumbs') {
+      if (!thumbs || !THUMBS_OPTIONS.includes(thumbs)) {
+        return res.status(400).json({
+          error: 'Thumbs value must be one of up or down for thumbs surveys',
+        });
+      }
+
+      normalizedThumbs = thumbs;
+      const expectedRating = thumbs === 'up' ? 10 : 1;
+      if (numericRating !== expectedRating) {
+        return res.status(400).json({
+          error: 'Thumbs surveys must use rating 10 for up and 1 for down',
+        });
+      }
+    }
+
     if (!userId) {
       return res.status(401).json({
         error: 'User must be authenticated to submit feedback',
@@ -47,9 +77,11 @@ export async function submitSurveyFeedback(req, res) {
       });
     }
 
-    const feedback = await saveSurveyFeedbackService({
+    const feedback = await saveFeedbackSurveyService({
       pageId,
       rating: numericRating,
+      surveyType: normalizedSurveyType,
+      thumbs: normalizedThumbs,
       comment: comment || '',
       timestamp: timestamp || new Date().toISOString(),
       userId,

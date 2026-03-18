@@ -119,6 +119,8 @@ describe('FeedbackSurvey', () => {
         expect.objectContaining({
           pageId: 'test-dashboard',
           rating: 7,
+          surveyType: 'scale',
+          thumbs: null,
           comment: 'Great dashboard!',
           timestamp: expect.any(String),
         }),
@@ -302,6 +304,8 @@ describe('FeedbackSurvey', () => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           rating: 10,
+          surveyType: 'thumbs',
+          thumbs: 'up',
           comment: '',
         }),
       );
@@ -335,6 +339,8 @@ describe('FeedbackSurvey', () => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           rating: 1,
+          surveyType: 'thumbs',
+          thumbs: 'down',
           comment: 'Need faster page loading',
         }),
       );

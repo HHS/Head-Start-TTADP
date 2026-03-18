@@ -58,6 +58,8 @@ function MyDashboard() {
 {
   pageId: 'qa-dashboard',
   rating: 7,              // 1-10
+  surveyType: 'scale',    // 'scale' or 'thumbs'
+  thumbs: null,           // 'up' | 'down' for thumbs surveys, else null
   comment: 'Great dashboard!',
   timestamp: '2026-03-09T15:00:00.000Z',
   userId: 123             // Added by backend
@@ -110,6 +112,8 @@ The component submits feedback to `/api/feedback/survey` endpoint.
 {
   "pageId": "qa-dashboard",
   "rating": 8,
+  "surveyType": "scale",
+  "thumbs": null,
   "comment": "Very helpful visualization",
   "timestamp": "2026-03-09T15:00:00.000Z"
 }

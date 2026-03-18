@@ -1,13 +1,13 @@
 const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
-  class SurveyFeedback extends Model {
+  class FeedbackSurvey extends Model {
     static associate(models) {
-      SurveyFeedback.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      FeedbackSurvey.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     }
   }
 
-  SurveyFeedback.init({
+  FeedbackSurvey.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -30,6 +30,24 @@ export default (sequelize, DataTypes) => {
         max: 10,
       },
     },
+    surveyType: {
+      type: DataTypes.ENUM('scale', 'thumbs'),
+      allowNull: false,
+      defaultValue: 'scale',
+      validate: {
+        isIn: [['scale', 'thumbs']],
+      },
+    },
+    thumbs: {
+      type: DataTypes.ENUM('up', 'down'),
+      allowNull: true,
+      validate: {
+        isIn: {
+          args: [['up', 'down']],
+          msg: 'Thumbs must be one of up or down',
+        },
+      },
+    },
     comment: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -40,8 +58,9 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'SurveyFeedback',
+    modelName: 'FeedbackSurvey',
+    tableName: 'FeedbackSurveys',
   });
 
-  return SurveyFeedback;
+  return FeedbackSurvey;
 };
