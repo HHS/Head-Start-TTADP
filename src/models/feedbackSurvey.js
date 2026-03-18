@@ -33,7 +33,9 @@ export default (sequelize, DataTypes) => {
     surveyType: {
       type: DataTypes.ENUM('scale', 'thumbs'),
       allowNull: false,
-      defaultValue: 'scale',
+      // Keep enum default typed to match database representation in LDM checks.
+      // eslint-disable-next-line @typescript-eslint/quotes
+      defaultValue: sequelize.literal(`'scale'::"enum_FeedbackSurveys_surveyType"`),
       validate: {
         isIn: [['scale', 'thumbs']],
       },
