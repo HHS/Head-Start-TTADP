@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import db from '../models';
 import { auditLogger } from '../logger';
 
@@ -14,6 +15,19 @@ export type SaveFeedbackSurveyInput = {
   thumbs?: ThumbsValue;
   comment?: string;
   timestamp?: string;
+};
+
+type SortBy = 'submittedAt' | 'rating' | 'pageId' | 'surveyType';
+type SortDir = 'asc' | 'desc';
+
+export type GetFeedbackSurveysInput = {
+  pageId?: string;
+  surveyType?: SurveyType;
+  thumbs?: Exclude<ThumbsValue, null>;
+  q?: string;
+  sortBy?: SortBy;
+  sortDir?: SortDir;
+  limit?: number;
 };
 
 export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) {
@@ -54,6 +68,70 @@ export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) 
   });
 
   return feedback;
+}
+
+export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) {
+  const {
+    pageId,
+    surveyType,
+    thumbs,
+    q,
+    sortBy = 'submittedAt',
+    sortDir = 'desc',
+    limit = 500,
+  } = filters;
+
+  const where = {} as {
+    pageId?: { [Op.iLike]: string };
+    surveyType?: SurveyType;
+    thumbs?: Exclude<ThumbsValue, null>;
+    [Op.or]?: Array<{
+      pageId?: { [Op.iLike]: string };
+      comment?: { [Op.iLike]: string };
+      '$user.name$'?: { [Op.iLike]: string };
+      '$user.email$'?: { [Op.iLike]: string };
+    }>;
+  };
+
+  if (pageId) {
+    where.pageId = { [Op.iLike]: `%${pageId}%` };
+  }
+
+  if (surveyType) {
+    where.surveyType = surveyType;
+  }
+
+  if (thumbs) {
+    where.thumbs = thumbs;
+  }
+
+  if (q) {
+    where[Op.or] = [
+      { pageId: { [Op.iLike]: `%${q}%` } },
+      { comment: { [Op.iLike]: `%${q}%` } },
+      { '$user.name$': { [Op.iLike]: `%${q}%` } },
+      { '$user.email$': { [Op.iLike]: `%${q}%` } },
+    ];
+  }
+
+  const safeSortBy: SortBy[] = ['submittedAt', 'rating', 'pageId', 'surveyType'];
+  const safeSortDir: SortDir[] = ['asc', 'desc'];
+  const normalizedSortBy = safeSortBy.includes(sortBy) ? sortBy : 'submittedAt';
+  const normalizedSortDir = safeSortDir.includes(sortDir) ? sortDir : 'desc';
+
+  const rows = await FeedbackSurvey.findAll({
+    where,
+    include: [{
+      model: db.User,
+      as: 'user',
+      attributes: ['id', 'name', 'email'],
+      required: false,
+    }],
+    order: [[normalizedSortBy, normalizedSortDir.toUpperCase()]],
+    limit,
+  });
+
+  return rows;
 }
 
 export default saveFeedbackSurvey;

@@ -104,4 +104,17 @@ describe('Admin landing page', () => {
     const heading = await screen.findByRole('heading', { name: /Preview confluence RSS feed/i });
     expect(heading).toBeVisible();
   });
+
+  it('displays the feedback surveys page', async () => {
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', []);
+    history.push('/admin/feedback-surveys');
+    render(
+      <Router history={history}>
+        <Admin />
+      </Router>,
+    );
+
+    const heading = await screen.findByRole('heading', { name: /feedback survey responses/i });
+    expect(heading).toBeVisible();
+  });
 });

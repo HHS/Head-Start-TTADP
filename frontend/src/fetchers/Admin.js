@@ -9,6 +9,23 @@ export const getUsers = async () => {
   return users.json();
 };
 
+export const getFeedbackSurveys = async (params = {}) => {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      query.append(key, value);
+    }
+  });
+
+  const url = query.toString()
+    ? join('/', 'api', 'admin', 'feedback-surveys').concat(`?${query.toString()}`)
+    : join('/', 'api', 'admin', 'feedback-surveys');
+
+  const feedback = await get(url);
+  return feedback.json();
+};
+
 export const getFeatures = async () => {
   const features = await get((join('/', 'api', 'admin', 'users', 'features')));
   return features.json();

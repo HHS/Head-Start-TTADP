@@ -12,6 +12,7 @@ import ssRouter from './ss';
 import trainingReportRouter from './trainingReport';
 import legacyReportRouter from './legacyReports';
 import courseRouter from './course';
+import feedbackSurveyRouter from './feedbackSurvey';
 import buildInfo from './buildInfo';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
@@ -33,6 +34,7 @@ router.use('/national-center', nationalCenterRouter);
 router.use('/training-reports', trainingReportRouter);
 router.use('/legacy-reports', legacyReportRouter);
 router.use('/courses', courseRouter);
+router.use('/feedback-surveys', feedbackSurveyRouter);
 router.use('/ss', ssRouter);
 router.use('/buildInfo', buildInfo);
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { Controller, useForm } from 'react-hook-form';
 import {
   Button, Textarea, Label, Fieldset,
 } from '@trussworks/react-uswds';
@@ -29,11 +30,21 @@ const THUMBS_RATINGS = {
 function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
   const storageKey = `survey-feedback-dismissed-${pageId}`;
   const [surveyStatus, setSurveyStatus] = useState(SURVEY_STATUS.OPEN);
-  const [selectedRating, setSelectedRating] = useState(null);
-  const [comment, setComment] = useState('');
   const [isCommentExpanded, setIsCommentExpanded] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const commentInputRef = useRef(null);
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { isSubmitting },
+  } = useForm({
+    defaultValues: {
+      rating: null,
+      comment: '',
+    },
+  });
+  const selectedRating = watch('rating');
+  const comment = watch('comment') || '';
 
   useEffect(() => {
     const dismissed = localStorage.getItem(storageKey);
@@ -58,23 +69,20 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
     setSurveyStatus(SURVEY_STATUS.OPEN);
   };
 
-  const handleSubmit = async () => {
-    if (!selectedRating) return;
-
+  const handleSurveySubmit = async ({ rating, comment: formComment }) => {
     const surveyType = useThumbRating ? 'thumbs' : 'scale';
     let thumbs = null;
     if (useThumbRating) {
-      thumbs = selectedRating === THUMBS_RATINGS.UP ? 'up' : 'down';
+      thumbs = rating === THUMBS_RATINGS.UP ? 'up' : 'down';
     }
 
-    setIsSubmitting(true);
     try {
       await onSubmit({
         pageId,
-        rating: selectedRating,
+        rating,
         surveyType,
         thumbs,
-        comment: comment.trim(),
+        comment: (formComment || '').trim(),
         timestamp: new Date().toISOString(),
       });
       localStorage.setItem(storageKey, SURVEY_STATUS.COMPLETED);
@@ -82,8 +90,6 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to submit feedback:', error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -151,112 +157,133 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
         </button>
       </div>
 
-      <Fieldset legend="Rate this page" legendStyle="srOnly">
-        {useThumbRating ? (
-          <div className="display-flex flex-gap-2 margin-bottom-2" role="radiogroup" aria-label="Rate this page">
+      <form onSubmit={handleSubmit(handleSurveySubmit)} noValidate>
+        <Fieldset legend="Rate this page" legendStyle="srOnly">
+          <Controller
+            name="rating"
+            control={control}
+            render={({ onChange }) => (
+              <>
+                {useThumbRating ? (
+                  <div className="display-flex flex-gap-2 margin-bottom-2" role="radiogroup" aria-label="Rate this page">
+                    <button
+                      type="button"
+                      className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.UP ? 'is-selected' : ''}`}
+                      onClick={() => onChange(THUMBS_RATINGS.UP)}
+                      aria-pressed={selectedRating === THUMBS_RATINGS.UP}
+                      aria-label="Thumbs up"
+                    >
+                      <FontAwesomeIcon icon={faThumbsUp} />
+                    </button>
+                    <button
+                      type="button"
+                      className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.DOWN ? 'is-selected' : ''}`}
+                      onClick={() => onChange(THUMBS_RATINGS.DOWN)}
+                      aria-pressed={selectedRating === THUMBS_RATINGS.DOWN}
+                      aria-label="Thumbs down"
+                    >
+                      <FontAwesomeIcon icon={faThumbsDown} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="display-flex flex-align-center flex-wrap flex-gap-1 margin-bottom-2 survey-feedback__rating-scale">
+                    <span className="font-sans-2xs text-base-dark text-bold">Not useful</span>
+                    <div className="display-flex flex-gap-1 flex-wrap">
+                      {RATING_OPTIONS.map((rating) => (
+                        <div key={rating} className="survey-feedback__rating-option display-flex flex-align-center">
+                          <input
+                            type="radio"
+                            id={`rating-${rating}-${pageId}`}
+                            name={`survey-rating-${pageId}`}
+                            value={rating}
+                            checked={selectedRating === rating}
+                            onChange={() => onChange(rating)}
+                            className="usa-radio__input"
+                          />
+                          <label
+                            htmlFor={`rating-${rating}-${pageId}`}
+                            className="usa-radio__label"
+                          >
+                            {rating}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <span className="font-sans-2xs text-base-dark text-bold">Very useful</span>
+                  </div>
+                )}
+              </>
+            )}
+          />
+        </Fieldset>
+
+        <div className="margin-bottom-2">
+          {!useThumbRating && (
             <button
               type="button"
-              className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.UP ? 'is-selected' : ''}`}
-              onClick={() => setSelectedRating(THUMBS_RATINGS.UP)}
-              aria-pressed={selectedRating === THUMBS_RATINGS.UP}
-              aria-label="Thumbs up"
+              className="survey-feedback__expand-button display-flex flex-align-center flex-gap-1 font-sans-2xs"
+              onClick={() => setIsCommentExpanded(!isCommentExpanded)}
+              aria-expanded={isCommentExpanded}
             >
-              <FontAwesomeIcon icon={faThumbsUp} />
-            </button>
-            <button
-              type="button"
-              className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.DOWN ? 'is-selected' : ''}`}
-              onClick={() => setSelectedRating(THUMBS_RATINGS.DOWN)}
-              aria-pressed={selectedRating === THUMBS_RATINGS.DOWN}
-              aria-label="Thumbs down"
-            >
-              <FontAwesomeIcon icon={faThumbsDown} />
-            </button>
-          </div>
-        ) : (
-          <div className="display-flex flex-align-center flex-wrap flex-gap-1 margin-bottom-2 survey-feedback__rating-scale">
-            <span className="font-sans-2xs text-base-dark text-bold">Not useful</span>
-            <div className="display-flex flex-gap-1 flex-wrap">
-              {RATING_OPTIONS.map((rating) => (
-                <div key={rating} className="survey-feedback__rating-option display-flex flex-align-center">
-                  <input
-                    type="radio"
-                    id={`rating-${rating}-${pageId}`}
-                    name={`survey-rating-${pageId}`}
-                    value={rating}
-                    checked={selectedRating === rating}
-                    onChange={() => setSelectedRating(rating)}
-                    className="usa-radio__input"
-                  />
-                  <label
-                    htmlFor={`rating-${rating}-${pageId}`}
-                    className="usa-radio__label"
-                  >
-                    {rating}
-                  </label>
-                </div>
-              ))}
-            </div>
-            <span className="font-sans-2xs text-base-dark text-bold">Very useful</span>
-          </div>
-        )}
-      </Fieldset>
-
-      <div className="margin-bottom-2">
-        {!useThumbRating && (
-          <button
-            type="button"
-            className="survey-feedback__expand-button display-flex flex-align-center flex-gap-1 font-sans-2xs"
-            onClick={() => setIsCommentExpanded(!isCommentExpanded)}
-            aria-expanded={isCommentExpanded}
-          >
-            <FontAwesomeIcon icon={isCommentExpanded ? faChevronUp : faChevronDown} />
-            {' '}
-            {isCommentExpanded ? 'Hide' : 'Add'}
-            {' '}
-            additional comments
-          </button>
-        )}
-
-        {shouldShowCommentSection && (
-          <div className="survey-feedback__textarea-container margin-top-2">
-            <Label htmlFor={`feedback-comment-${pageId}`} className="font-sans-2xs margin-top-0">
-              {commentLabel}
-            </Label>
-            <Textarea
-              id={`feedback-comment-${pageId}`}
-              name="feedback-comment"
-              className="font-sans-2xs"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              maxLength={MAX_COMMENT_LENGTH}
-              required={isCommentRequired}
-              inputRef={(el) => {
-                commentInputRef.current = el;
-              }}
-              aria-describedby={`char-count-${pageId}`}
-            />
-            <div id={`char-count-${pageId}`} className="font-sans-3xs text-base margin-top-1 text-left">
-              {comment.length}
-              /
-              {MAX_COMMENT_LENGTH}
+              <FontAwesomeIcon icon={isCommentExpanded ? faChevronUp : faChevronDown} />
               {' '}
-              characters
-            </div>
-          </div>
-        )}
-      </div>
+              {isCommentExpanded ? 'Hide' : 'Add'}
+              {' '}
+              additional comments
+            </button>
+          )}
 
-      <div className="display-flex flex-justify-start">
-        <Button
-          type="button"
-          className="font-sans-2xs padding-y-1 padding-x-2"
-          onClick={handleSubmit}
-          disabled={isSubmitDisabled}
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit feedback'}
-        </Button>
-      </div>
+          {shouldShowCommentSection && (
+            <div className="survey-feedback__textarea-container margin-top-2">
+              <Label htmlFor={`feedback-comment-${pageId}`} className="font-sans-2xs margin-top-0">
+                {commentLabel}
+              </Label>
+              <Controller
+                name="comment"
+                control={control}
+                rules={{
+                  validate: (value) => (
+                    !isCommentRequired || Boolean((value || '').trim()) || 'Comment is required'
+                  ),
+                }}
+                render={({ onChange, onBlur, value }) => (
+                  <Textarea
+                    id={`feedback-comment-${pageId}`}
+                    name="feedback-comment"
+                    className="font-sans-2xs"
+                    value={value || ''}
+                    onChange={(e) => onChange(e.target.value)}
+                    onBlur={onBlur}
+                    maxLength={MAX_COMMENT_LENGTH}
+                    required={isCommentRequired}
+                    inputRef={(el) => {
+                      commentInputRef.current = el;
+                    }}
+                    aria-describedby={`char-count-${pageId}`}
+                  />
+                )}
+              />
+              <div id={`char-count-${pageId}`} className="font-sans-3xs text-base margin-top-1 text-left">
+                {comment.length}
+                /
+                {MAX_COMMENT_LENGTH}
+                {' '}
+                characters
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="display-flex flex-justify-start">
+          <Button
+            type="submit"
+            className="font-sans-2xs padding-y-1 padding-x-2"
+            disabled={isSubmitDisabled}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit feedback'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   getUsers,
   updateUser,
   getRecipients,
+  getFeedbackSurveys,
   getFeatures,
   getRedisInfo,
   flushRedis,
@@ -75,6 +76,27 @@ describe('Admin', () => {
       fetchMock.get(join('/', 'api', 'admin', 'recipients'), recipients);
       const fetchedRecipients = await getRecipients();
       expect(fetchedRecipients).toEqual(recipients);
+    });
+  });
+
+  describe('getFeedbackSurveys', () => {
+    it('gets feedback surveys', async () => {
+      const res = [{ id: 1 }];
+      fetchMock.get(join('/', 'api', 'admin', 'feedback-surveys'), res);
+      const fetched = await getFeedbackSurveys();
+      expect(fetched).toEqual(res);
+    });
+
+    it('passes query parameters', async () => {
+      const res = [{ id: 2 }];
+      fetchMock.get('/api/admin/feedback-surveys?pageId=qa&surveyType=thumbs&sortBy=rating&sortDir=asc', res);
+      const fetched = await getFeedbackSurveys({
+        pageId: 'qa',
+        surveyType: 'thumbs',
+        sortBy: 'rating',
+        sortDir: 'asc',
+      });
+      expect(fetched).toEqual(res);
     });
   });
 
