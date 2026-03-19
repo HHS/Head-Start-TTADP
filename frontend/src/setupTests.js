@@ -18,7 +18,7 @@ import '@trussworks/react-uswds/lib/index.css';
 
 // See https://github.com/plotly/react-plotly.js/issues/115
 window.URL.createObjectURL = () => {};
-process.env.REACT_APP_WEBSOCKET_URL = 'wss://test';
+process.env.REACT_APP_WEBSOCKET_URL = 'wss://localhost';
 process.env.REACT_APP_INACTIVE_MODAL_TIMEOUT = '1800000';
 process.env.REACT_APP_SESSION_TIMEOUT = '3600000';
 
