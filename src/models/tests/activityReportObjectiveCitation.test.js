@@ -27,7 +27,7 @@ describe('activityReportObjectiveCitation model', () => {
 
     flattenedColumns.forEach((column) => {
       expect(ActivityReportObjectiveCitation.rawAttributes[column]).toBeDefined();
-      expect(ActivityReportObjectiveCitation.rawAttributes[column].allowNull).toBe(true);
+      expect(ActivityReportObjectiveCitation.rawAttributes[column].allowNull).toBe(false);
     });
 
     expect(ActivityReportObjectiveCitation.rawAttributes.citationId.references).toEqual({
@@ -35,7 +35,7 @@ describe('activityReportObjectiveCitation model', () => {
       key: 'id',
     });
 
-    expect(ActivityReportObjectiveCitation.rawAttributes.monitoringReferences).toBeUndefined();
+    expect(ActivityReportObjectiveCitation.rawAttributes.monitoringReferences).toBeDefined();
     expect(ActivityReportObjectiveCitation.rawAttributes.findingIds).toBeUndefined();
     expect(ActivityReportObjectiveCitation.rawAttributes.reviewNames).toBeUndefined();
   });
