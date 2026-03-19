@@ -3,8 +3,6 @@ name: PR Review SLA Slack Alerts
 on:
   schedule:
     - cron: "*/15 * * * 1-5"
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -25,11 +23,11 @@ concurrency:
 jobs:
   review_sla_alerts:
     # Keep this automation separate and opt-in.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || vars.ENABLE_PR_REVIEW_SLA_ALERTS == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.ENABLE_PR_REVIEW_SLA_ALERTS == 'true' }}
     runs-on: ubuntu-latest
     env:
       # Configure these in repo Variables to tune urgency windows.
-      DEFAULT_SLA_HOURS: "48"
+      DEFAULT_SLA_HOURS: "24"
       SLA_BY_LABEL: '{"review:urgent":1,"review:standard":24,"review:low":48}'
       ALERT_LABEL: "review-alerted"
       BUSINESS_TIMEZONE: "America/New_York"
@@ -186,6 +184,7 @@ jobs:
               const selectedLabel = matchingLabels
                 .sort((a, b) => Number(slaByLabel[a]) - Number(slaByLabel[b]))[0] || null;
 
+              const effectiveLabel = selectedLabel || 'review:standard';
               const slaHours = selectedLabel ? Number(slaByLabel[selectedLabel]) : defaultSlaHours;
 
               const commits = await github.paginate(github.rest.pulls.listCommits, {
@@ -250,7 +249,7 @@ jobs:
 
               const overdueHours = Math.max(0, elapsedHours - slaHours);
               const roundedOverdue = Math.round(overdueHours * 10) / 10;
-              const urgencyText = selectedLabel || 'review:low (default)';
+              const urgencyText = selectedLabel || 'review:standard (default)';
               const reviewTarget = reviewers.length ? reviewers.join(', ') : '(none)';
 
               let alertIcon = ':eyes:';
@@ -290,7 +289,7 @@ jobs:
                 'review:standard': '#F79009',
                 'review:low': '#12B76A',
               };
-              const borderColor = borderColorByPriority[selectedLabel] || '#667085';
+              const borderColor = borderColorByPriority[effectiveLabel] || '#667085';
 
               const quoteSeed = (pr.number * 31) + Math.round(overdueHours * 10);
               const quote = quotes[Math.abs(quoteSeed) % quotes.length];
