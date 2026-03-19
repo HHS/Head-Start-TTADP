@@ -164,31 +164,6 @@ describe('standardGoals with Data', () => {
         topicId: topicOnNonApprovedReport.id,
       });
 
-      // Create citations for both approved and non-approved reports' objectives
-      citationOnApprovedReport = await ActivityReportObjectiveCitation.create({
-        activityReportObjectiveId: activityReportObjectiveForApprovedReport.id,
-        citation: 'Citation on approved report',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1',
-          findingType: 'Type 1',
-          findingSource: 'Source 1',
-        }],
-      });
-
-      citationOnNonApprovedReport = await ActivityReportObjectiveCitation.create({
-        activityReportObjectiveId: activityReportObjectiveForNonApprovedReport.id,
-        citation: 'Citation on non-approved report',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 2,
-          reviewName: 'Review 2',
-          findingType: 'Type 2',
-          findingSource: 'Source 2',
-        }],
-      });
-
       normalizedCitationOnApprovedReport = await Citation.create({
         mfid: faker.datatype.number({ min: 100000, max: 999999 }),
         finding_uuid: `approved-finding-${Date.now()}`,
@@ -217,29 +192,65 @@ describe('standardGoals with Data', () => {
         citationId: normalizedCitationOnNonApprovedReport.id,
       });
 
-      await citationOnApprovedReport.update({
+      // Create citations for both approved and non-approved reports' objectives.
+      // Keep legacy monitoringReferences and flattened fields aligned for test readability.
+      citationOnApprovedReport = await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: activityReportObjectiveForApprovedReport.id,
         citationId: normalizedCitationOnApprovedReport.id,
+        citation: 'Citation on approved report',
+        monitoringReferences: [{
+          grantId: grant.id,
+          findingId: normalizedCitationOnApprovedReport.finding_uuid,
+          reviewName: 'Review 1',
+          standardId: 200001,
+          grantNumber: grant.number,
+          findingType: 'Type 1',
+          findingSource: 'Source 1',
+          acro: 'AOC',
+          severity: 3,
+          reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+          monitoringFindingStatusName: 'Complete',
+        }],
         findingId: normalizedCitationOnApprovedReport.finding_uuid,
         grantId: grant.id,
         grantNumber: grant.number,
         reviewName: 'Review 1',
+        standardId: 200001,
         findingType: 'Type 1',
         findingSource: 'Source 1',
         acro: 'AOC',
         severity: 3,
+        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
         monitoringFindingStatusName: 'Complete',
       });
 
-      await citationOnNonApprovedReport.update({
+      citationOnNonApprovedReport = await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: activityReportObjectiveForNonApprovedReport.id,
         citationId: normalizedCitationOnNonApprovedReport.id,
+        citation: 'Citation on non-approved report',
+        monitoringReferences: [{
+          grantId: grant.id,
+          findingId: normalizedCitationOnNonApprovedReport.finding_uuid,
+          reviewName: 'Review 2',
+          standardId: 200002,
+          grantNumber: grant.number,
+          findingType: 'Type 2',
+          findingSource: 'Source 2',
+          acro: 'AOC',
+          severity: 3,
+          reportDeliveryDate: '2025-02-17T05:00:00+00:00',
+          monitoringFindingStatusName: 'Complete',
+        }],
         findingId: normalizedCitationOnNonApprovedReport.finding_uuid,
         grantId: grant.id,
         grantNumber: grant.number,
         reviewName: 'Review 2',
+        standardId: 200002,
         findingType: 'Type 2',
         findingSource: 'Source 2',
         acro: 'AOC',
         severity: 3,
+        reportDeliveryDate: '2025-02-17T05:00:00+00:00',
         monitoringFindingStatusName: 'Complete',
       });
     });
@@ -426,10 +437,12 @@ describe('standardGoals with Data', () => {
       expect(objectiveCitations).not.toContain('Type 2 - Citation on non-approved report - Source 2');
     });
 
-    it('only uses directly included citation monitoringReferences', async () => {
+    it('only uses directly included flattened citation references', async () => {
       await ActivityReportObjectiveCitation.update({
         monitoringReferences: [],
-        grantNumber: null,
+        acro: '',
+        findingType: '',
+        findingSource: '',
       }, {
         where: {
           id: [
