@@ -377,15 +377,15 @@ export const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
       AND zgr.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
 
       -- Handle cases where no match was found and assign default value
-      IF transformed_grant_number IS NULL THEN
-        SELECT zgr.new_row_data ->> 'number'
-        INTO transformed_grant_number
-        FROM "ZALGrants" zgr
-        JOIN "Grants" gr ON zrec.data_id = gr.id
-        WHERE gr.id = grant_id
-        AND zrec.dml_timestamp >= NOW() - INTERVAL '30 minutes'
-        AND zrec.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
-      END IF;
+       IF transformed_grant_number IS NULL THEN
+         SELECT zgr.new_row_data ->> 'number'
+         INTO transformed_grant_number
+         FROM "ZALGrants" zgr
+         JOIN "Grants" gr ON zgr.data_id = gr.id
+         WHERE gr.id = grant_id
+         AND zgr.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+         AND zgr.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
+       END IF;
 
       -- Handle cases where no match was found and assign default value
       IF transformed_grant_number IS NULL THEN
@@ -1056,36 +1056,19 @@ export const processTraningReports = async (where = '') => {
   `);
 };
 
-// anonymize grantNumber inside ActivityReportObjectiveCitations.monitoringReferences
+// Anonymize grant numbers persisted on flattened AROC columns.
+// Citation linkage now lives on ActivityReportObjectiveCitations via citationId/findingId.
 export const processMonitoringReferences = async (where = '') => sequelize.query(/* sql */`
   UPDATE "ActivityReportObjectiveCitations" aroc
-  SET "monitoringReferences" = COALESCE(
+  SET "grantNumber" = COALESCE(
     (
-      SELECT jsonb_agg(
-        CASE
-          WHEN ref ? 'grantNumber' THEN
-            jsonb_set(
-              ref,
-              '{grantNumber}',
-              to_jsonb(
-                "convertGrantNumber"(
-                  ref ->> 'grantNumber',
-                  COALESCE(
-                    NULLIF(ref ->> 'originalGrantId', '')::int,
-                    NULLIF(ref ->> 'grantId', '')::int
-                  )
-                )
-              ),
-              true
-            )
-          ELSE ref
-        END
-      )
-      FROM jsonb_array_elements(aroc."monitoringReferences") AS ref
+      SELECT gr."number"
+      FROM "Grants" gr
+      WHERE gr.id = aroc."grantId"
     ),
-    aroc."monitoringReferences"
+    "convertGrantNumber"(aroc."grantNumber", aroc."grantId")
   )
-  WHERE aroc."monitoringReferences" IS NOT NULL
+  WHERE NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL
   ${where};
 `);
 

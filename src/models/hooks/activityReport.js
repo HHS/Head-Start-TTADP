@@ -172,7 +172,7 @@ const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) =>
         // This will create a new life cycle for the goal
         // if its currently closed and all related tables.
         // This is the same function as if they had saved on the AR goals and objectives page.
-        await saveStandardGoalsForReport(updateStatusGoals, userId, { id: instance.id });
+        await saveStandardGoalsForReport(updateStatusGoals, { id: instance.id });
       }
     }
   } catch (e) {

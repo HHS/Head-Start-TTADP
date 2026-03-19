@@ -25,7 +25,7 @@ import {
   getReportsByManyIds,
   getGroups,
 } from './handlers';
-import { checkReviewReportBody } from './middleware';
+import { checkReviewReportBody, checkSaveReportCitationBody } from './middleware';
 import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
 import { nameTransactionByBase, nameTransactionByPath } from '../../middleware/newRelicMiddleware';
@@ -56,7 +56,7 @@ router.put('/legacy/:legacyReportId', userAdminAccessMiddleware, transactionWrap
 router.get('/:activityReportId', nameTransactionByBase, checkActivityReportIdParam, transactionWrapper(getReport));
 router.get('/', transactionWrapper(getReports));
 router.post('/reportsByManyIds', transactionWrapper(getReportsByManyIds));
-router.put('/:activityReportId', checkActivityReportIdParam, transactionWrapper(saveReport));
+
 router.delete('/:activityReportId', checkActivityReportIdParam, transactionWrapper(softDeleteReport));
 router.put('/:activityReportId/reset', checkActivityReportIdParam, transactionWrapper(resetToDraft));
 router.put(
@@ -69,5 +69,11 @@ router.put('/:activityReportId/submit', checkActivityReportIdParam, transactionW
 router.put('/:activityReportId/unlock', checkActivityReportIdParam, transactionWrapper(unlockReport));
 router.put('/:activityReportId/goals/edit', checkActivityReportIdParam, transactionWrapper(setGoalAsActivelyEdited));
 router.get('/:activityReportId/activity-recipients', transactionWrapper(getActivityRecipientsForExistingReport));
+router.put(
+  '/:activityReportId',
+  checkActivityReportIdParam,
+  checkSaveReportCitationBody,
+  transactionWrapper(saveReport),
+);
 
 export default router;
