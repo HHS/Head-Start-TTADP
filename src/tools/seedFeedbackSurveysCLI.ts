@@ -34,6 +34,10 @@ type SeedOptions = {
   rowsPerMonth: number;
 };
 
+type UserIdRow = {
+  id: number;
+};
+
 function randomItem<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
@@ -68,14 +72,20 @@ function getOptions(): SeedOptions {
 }
 
 async function seedFeedbackSurveys() {
-  const { FeedbackSurvey, User, sequelize } = db;
+  const { sequelize } = db;
+  const { User, FeedbackSurvey } = sequelize.models;
   const { months, rowsPerMonth } = getOptions();
+
+  if (!User || !FeedbackSurvey) {
+    throw new Error('Cannot seed feedback surveys: required models are not loaded.');
+  }
 
   const users = await User.findAll({
     attributes: ['id'],
     limit: 200,
     order: [['id', 'ASC']],
-  });
+    raw: true,
+  }) as UserIdRow[];
 
   if (!users.length) {
     throw new Error('Cannot seed feedback surveys: no users found. Run db seeds first (yarn db:seed).');
