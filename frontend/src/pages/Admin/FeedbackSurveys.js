@@ -168,6 +168,17 @@ export default function FeedbackSurveys() {
     };
   }, [rows]);
 
+  const thumbsYAxisTickStep = useMemo(() => {
+    const maxCount = Math.max(0, ...thumbsChartData.up, ...thumbsChartData.down);
+
+    if (maxCount <= 10) {
+      return 1;
+    }
+
+    // Keep roughly 6-8 Y-axis labels to avoid overlap on dense datasets.
+    return Math.ceil(maxCount / 7);
+  }, [thumbsChartData]);
+
   return (
     <>
       <Helmet>
@@ -396,7 +407,8 @@ export default function FeedbackSurveys() {
                           text: 'Count',
                         },
                         rangemode: 'tozero',
-                        dtick: 1,
+                        dtick: thumbsYAxisTickStep,
+                        automargin: true,
                       },
                       legend: {
                         orientation: 'h',
