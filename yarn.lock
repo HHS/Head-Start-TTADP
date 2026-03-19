@@ -10134,7 +10134,7 @@ netmask@^2.0.2:
   resolved "https://registry.yarnpkg.com/netmask/-/netmask-2.0.2.tgz#8b01a07644065d536383835823bc52004ebac5e7"
   integrity sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==
 
-newrelic@^13.17.0:
+newrelic@^13.16.0:
   version "13.17.0"
   resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-13.17.0.tgz#ef18190c7b556b20c58d557952977ba8f70fd8e3"
   integrity sha512-+YdPJF3Zb1ZbtBAe3danheXYXxbn75QIYoh98tsddsDpw8Qv4raLQZ2Oz8rJSjclEGdQvhmIfQrg1JqCSuDsYQ==
