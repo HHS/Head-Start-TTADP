@@ -67,6 +67,7 @@ export function reduceObjectives(
       resources,
       files,
       courses,
+      citations: (objective as IObjectiveModelInstance).citations,
       value: id,
       ids: [id],
       goalId: objective.goalId,
@@ -229,7 +230,7 @@ function mergeFormattedCitations(
         ...citation,
         monitoringReferences: uniqBy(
           citation.monitoringReferences || [],
-          (reference) => monitoringReferenceIdentity(reference),
+          (reference: CitationMonitoringReference) => monitoringReferenceIdentity(reference),
         ),
       });
       return;
@@ -237,7 +238,7 @@ function mergeFormattedCitations(
 
     existing.monitoringReferences = uniqBy(
       [...(existing.monitoringReferences || []), ...(citation.monitoringReferences || [])],
-      (reference) => monitoringReferenceIdentity(reference),
+      (reference: CitationMonitoringReference) => monitoringReferenceIdentity(reference),
     );
   });
 
