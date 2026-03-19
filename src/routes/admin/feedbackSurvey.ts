@@ -9,7 +9,7 @@ const logContext = { namespace };
 
 type SurveyType = 'scale' | 'thumbs';
 type ThumbsValue = 'up' | 'down';
-type SortBy = 'submittedAt' | 'rating' | 'pageId' | 'surveyType';
+type SortBy = 'submittedAt' | 'createdAt' | 'rating' | 'pageId' | 'surveyType';
 type SortDir = 'asc' | 'desc';
 
 type FeedbackSurveyQuery = {

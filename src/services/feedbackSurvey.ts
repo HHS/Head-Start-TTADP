@@ -17,7 +17,7 @@ export type SaveFeedbackSurveyInput = {
   timestamp?: string;
 };
 
-type SortBy = 'submittedAt' | 'rating' | 'pageId' | 'surveyType';
+type SortBy = 'submittedAt' | 'createdAt' | 'rating' | 'pageId' | 'surveyType';
 type SortDir = 'asc' | 'desc';
 
 export type GetFeedbackSurveysInput = {
@@ -136,7 +136,7 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     }
   }
 
-  const safeSortBy: SortBy[] = ['submittedAt', 'rating', 'pageId', 'surveyType'];
+  const safeSortBy: SortBy[] = ['submittedAt', 'createdAt', 'rating', 'pageId', 'surveyType'];
   const safeSortDir: SortDir[] = ['asc', 'desc'];
   const normalizedSortBy = safeSortBy.includes(sortBy) ? sortBy : 'submittedAt';
   const normalizedSortDir = safeSortDir.includes(sortDir) ? sortDir : 'desc';
