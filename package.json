@@ -119,7 +119,7 @@
   },
   "resolutions": {
     "@tootallnate/once": "^3.0.1",
-    "fast-xml-parser": "^5.5.6",
+    "fast-xml-parser": "^5.5.7",
     "sqlite3": "^5.1.7",
     "tar": "^7.5.11"
   },
@@ -264,13 +264,13 @@
     ]
   },
   "devDependencies": {
+    "@axe-core/cli": "^4.11.0",
     "@babel/cli": "^7.11.6",
     "@babel/core": "^7.11.6",
     "@babel/node": "^7.10.5",
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.5",
     "@babel/preset-typescript": "^7.18.6",
-    "@axe-core/cli": "^4.11.0",
     "@cucumber/cucumber": "^12.2.0",
     "@playwright/test": "^1.56.1",
     "@redocly/cli": "^2.7.0",
@@ -310,9 +310,9 @@
     "umzug": "^3.2.1"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.972.20",
-    "@aws-sdk/lib-storage": "^3.972.20",
-    "@aws-sdk/s3-request-presigner": "^3.972.20",
+    "@aws-sdk/client-s3": "^3.1012.0",
+    "@aws-sdk/lib-storage": "^3.1012.0",
+    "@aws-sdk/s3-request-presigner": "^3.1012.0",
     "@axe-core/playwright": "^4.11.0",
     "@babel/runtime": "^7.26.10",
     "@braintree/sanitize-url": "^7.1.1",
@@ -368,7 +368,7 @@
     "moment-timezone": "^0.5.45",
     "multiparty": "^4.2.2",
     "mz": "^2.7.0",
-    "newrelic": "^13.6.4",
+    "newrelic": "^13.17.0",
     "nodemailer": "^7.0.11",
     "openid-client": "^6.6.4",
     "opentelemetry": "^0.1.0",
