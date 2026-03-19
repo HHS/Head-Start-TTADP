@@ -611,6 +611,8 @@ async function destroyReportAndCitationData(
   topic: { id: number },
   citations: { id: number; activityReportObjectiveId?: number }[],
 ) {
+  const citationRowIds = citations.map((citation) => citation.id);
+
   const activityReportObjectiveIds = [...new Set(
     citations
       .map((citation) => citation.activityReportObjectiveId)
@@ -621,10 +623,17 @@ async function destroyReportAndCitationData(
       ),
   )];
 
-  const activityReportObjectiveCitationRows = activityReportObjectiveIds.length > 0
+  let citationRowWhere: { activityReportObjectiveId: number[] } | { id: number[] } | null = null;
+  if (activityReportObjectiveIds.length > 0) {
+    citationRowWhere = { activityReportObjectiveId: activityReportObjectiveIds };
+  } else if (citationRowIds.length > 0) {
+    citationRowWhere = { id: citationRowIds };
+  }
+
+  const activityReportObjectiveCitationRows = citationRowWhere
     ? await ActivityReportObjectiveCitation.findAll({
       attributes: ['citationId'],
-      where: { activityReportObjectiveId: activityReportObjectiveIds },
+      where: citationRowWhere,
       raw: true,
     })
     : [];
@@ -634,6 +643,14 @@ async function destroyReportAndCitationData(
       .map((citationRow) => citationRow.citationId)
       .filter((citationId): citationId is number => Number.isInteger(citationId)),
   )];
+
+  if (citationRowWhere) {
+    await ActivityReportObjectiveCitation.destroy({
+      where: citationRowWhere,
+      force: true,
+      individualHooks: true,
+    });
+  }
 
   if (normalizedCitationIds.length > 0) {
     const deliveredReviewLinks = await DeliveredReviewCitation.findAll({
@@ -684,12 +701,6 @@ async function destroyReportAndCitationData(
       individualHooks: true,
     });
   }
-
-  await ActivityReportObjectiveCitation.destroy({
-    where: { id: citations.map((c) => c.id) },
-    force: true,
-    individualHooks: true,
-  });
 
   await ActivityReportObjectiveTopic.destroy({
     where: { topicId: topic.id },
