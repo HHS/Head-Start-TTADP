@@ -1,3 +1,4 @@
+import { v4 as uuid } from 'uuid';
 import { createMonitoringData, destroyMonitoringData } from './monitoring.testHelpers';
 import {
   classScore,
@@ -14,10 +15,19 @@ const {
   MonitoringReview,
 } = db;
 
+const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 const RECIPIENT_ID = 9;
 const REGION_ID = 1;
-const GRANT_NUMBER = '01HP044446';
-const GRANT_ID = 665;
+const GRANT_NUMBER = `01HP${TEST_KEY}`;
+const GRANT_ID = 720000 + parseInt(TEST_KEY.slice(0, 6), 16);
+const CLASS_SCORE_REVIEW_ID = uuid();
+const CLASS_SCORE_GRANTEE_ID = uuid();
+const CLASS_SCORE_STATUS_ID = 70603;
+const CLASS_SCORE_CONTENT_ID = uuid();
+const MONITORING_DATA_REVIEW_ID = uuid();
+const MONITORING_DATA_GRANTEE_ID = uuid();
+const MONITORING_DATA_STATUS_ID = 70604;
+const MONITORING_DATA_CONTENT_ID = uuid();
 
 describe('monitoring services', () => {
   beforeAll(async () => {
@@ -43,10 +53,16 @@ describe('monitoring services', () => {
 
   describe('classScore', () => {
     beforeAll(async () => {
-      await createMonitoringData(GRANT_NUMBER);
+      await createMonitoringData(
+        GRANT_NUMBER,
+        CLASS_SCORE_REVIEW_ID,
+        CLASS_SCORE_GRANTEE_ID,
+        CLASS_SCORE_STATUS_ID,
+        CLASS_SCORE_CONTENT_ID,
+      );
     });
     afterAll(async () => {
-      await destroyMonitoringData(GRANT_NUMBER);
+      await destroyMonitoringData(GRANT_NUMBER, CLASS_SCORE_REVIEW_ID, CLASS_SCORE_STATUS_ID);
       await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     });
     it('returns data in the correct format', async () => {
@@ -117,10 +133,20 @@ describe('monitoring services', () => {
   });
   describe('monitoringData', () => {
     beforeAll(async () => {
-      await createMonitoringData(GRANT_NUMBER);
+      await createMonitoringData(
+        GRANT_NUMBER,
+        MONITORING_DATA_REVIEW_ID,
+        MONITORING_DATA_GRANTEE_ID,
+        MONITORING_DATA_STATUS_ID,
+        MONITORING_DATA_CONTENT_ID,
+      );
     });
     afterAll(async () => {
-      await destroyMonitoringData(GRANT_NUMBER);
+      await destroyMonitoringData(
+        GRANT_NUMBER,
+        MONITORING_DATA_REVIEW_ID,
+        MONITORING_DATA_STATUS_ID,
+      );
       await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     });
     it('returns null when nothing is found', async () => {
