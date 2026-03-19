@@ -1,9 +1,11 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
+  fireEvent,
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -125,5 +127,43 @@ describe('FeedbackSurveys', () => {
 
     expect(await screen.findByText(/no thumbs feedback responses for the selected filters/i)).toBeVisible();
     expect(screen.queryByText(/no scale feedback responses for the selected filters/i)).not.toBeInTheDocument();
+  });
+
+  it('renders export button and prints report with applied filters summary', async () => {
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+      {
+        id: 8,
+        userId: 101,
+        user: { name: 'Print User', email: 'print@example.com' },
+        pageId: 'recipient-record',
+        surveyType: 'thumbs',
+        rating: 10,
+        thumbs: 'down',
+        comment: 'Needs work',
+        submittedAt: '2026-03-18T12:00:00.000Z',
+      },
+    ]);
+
+    const printSpy = jest.spyOn(window, 'print').mockImplementation(() => {});
+
+    render(<FeedbackSurveys />);
+
+    const appliedFiltersSection = await screen.findByRole('region', {
+      name: /applied filters for exported feedback survey report/i,
+    });
+    const withinAppliedFilters = within(appliedFiltersSection);
+
+    expect(withinAppliedFilters.getByRole('heading', { name: /applied filters/i })).toBeVisible();
+    expect(withinAppliedFilters.getByText('Sort by')).toBeVisible();
+    expect(withinAppliedFilters.getByText('submittedAt')).toBeVisible();
+    expect(withinAppliedFilters.getByText('Result count')).toBeVisible();
+    expect(withinAppliedFilters.getByText('1')).toBeVisible();
+
+    const printButton = screen.getByRole('button', { name: /print to pdf/i });
+    fireEvent.click(printButton);
+
+    expect(printSpy).toHaveBeenCalled();
+
+    printSpy.mockRestore();
   });
 });

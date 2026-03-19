@@ -11,6 +11,7 @@ import {
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
 import colors from '../../colors';
+import PrintToPDF from '../../components/PrintToPDF';
 import { getFeedbackSurveys } from '../../fetchers/Admin';
 
 let Plot = null;
@@ -56,6 +57,10 @@ function formatDate(date) {
   }
 
   return parsed.toLocaleString();
+}
+
+function formatFilterValue(value) {
+  return value || 'All';
 }
 
 export default function FeedbackSurveys() {
@@ -179,6 +184,18 @@ export default function FeedbackSurveys() {
     return Math.ceil(maxCount / 7);
   }, [thumbsChartData]);
 
+  const appliedFilters = useMemo(() => ([
+    { label: 'Search', value: formatFilterValue(filters.q) },
+    { label: 'Page ID', value: formatFilterValue(filters.pageId) },
+    { label: 'Survey type', value: formatFilterValue(filters.surveyType) },
+    { label: 'Thumbs', value: formatFilterValue(filters.thumbs) },
+    { label: 'Created at (from)', value: formatFilterValue(filters.createdAtFrom) },
+    { label: 'Created at (to)', value: formatFilterValue(filters.createdAtTo) },
+    { label: 'Sort by', value: formatFilterValue(sort.sortBy) },
+    { label: 'Sort direction', value: formatFilterValue(sort.sortDir) },
+    { label: 'Result count', value: `${rows.length}` },
+  ]), [filters, rows.length, sort.sortBy, sort.sortDir]);
+
   return (
     <>
       <Helmet>
@@ -186,10 +203,35 @@ export default function FeedbackSurveys() {
       </Helmet>
       <Container>
         <h1>Feedback Survey Responses</h1>
-        <p className="usa-hint">View and filter feedback submitted from in-app surveys.</p>
+        <p className="usa-hint no-print">View and filter feedback submitted from in-app surveys.</p>
 
-        <Grid row gap className="margin-bottom-3">
-          <Grid desktop={{ col: 4 }} tablet={{ col: 6 }} col={12}>
+        <section className="print-only margin-bottom-4" aria-label="Applied filters for exported feedback survey report">
+          <h2 className="margin-top-0">Applied filters</h2>
+          <p className="margin-top-0">
+            Generated on
+            {' '}
+            {new Date().toLocaleString()}
+          </p>
+          <Table fullWidth bordered>
+            <thead>
+              <tr>
+                <th scope="col">Filter</th>
+                <th scope="col">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {appliedFilters.map((filterRow) => (
+                <tr key={filterRow.label}>
+                  <td>{filterRow.label}</td>
+                  <td>{filterRow.value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </section>
+
+        <Grid row gap className="margin-bottom-3 no-print">
+          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-search">Search</Label>
             <TextInput
               id="feedback-search"
@@ -198,7 +240,7 @@ export default function FeedbackSurveys() {
               onChange={onFilterChange}
             />
           </Grid>
-          <Grid desktop={{ col: 4 }} tablet={{ col: 6 }} col={12}>
+          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-page-id">Page ID</Label>
             <TextInput
               id="feedback-page-id"
@@ -207,7 +249,10 @@ export default function FeedbackSurveys() {
               onChange={onFilterChange}
             />
           </Grid>
-          <Grid desktop={{ col: 2 }} tablet={{ col: 6 }} col={12}>
+        </Grid>
+
+        <Grid row gap className="margin-bottom-3 no-print">
+          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-survey-type">Survey type</Label>
             <Select
               id="feedback-survey-type"
@@ -220,7 +265,7 @@ export default function FeedbackSurveys() {
               <option value="thumbs">Thumbs</option>
             </Select>
           </Grid>
-          <Grid desktop={{ col: 2 }} tablet={{ col: 6 }} col={12}>
+          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-thumbs">Thumbs</Label>
             <Select
               id="feedback-thumbs"
@@ -233,6 +278,9 @@ export default function FeedbackSurveys() {
               <option value="down">Down</option>
             </Select>
           </Grid>
+        </Grid>
+
+        <Grid row gap className="margin-bottom-3 no-print">
           <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-created-at-from">Created at (from)</Label>
             <TextInput
@@ -255,7 +303,7 @@ export default function FeedbackSurveys() {
           </Grid>
         </Grid>
 
-        <Grid row gap className="margin-bottom-3">
+        <Grid row gap className="margin-bottom-3 no-print">
           <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-sort-by">Sort by</Label>
             <Select
@@ -269,6 +317,19 @@ export default function FeedbackSurveys() {
               <option value="pageId">Page ID</option>
               <option value="surveyType">Survey type</option>
             </Select>
+            <div className="display-flex flex-align-center margin-top-2">
+              <button
+                type="button"
+                className="usa-button usa-button--outline margin-bottom-0 margin-right-2"
+                onClick={clearFilters}
+              >
+                Reset filters
+              </button>
+              <PrintToPDF
+                id="feedback-surveys-export"
+                className="usa-button--outline margin-bottom-0"
+              />
+            </div>
           </Grid>
           <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-sort-dir">Sort direction</Label>
@@ -282,15 +343,14 @@ export default function FeedbackSurveys() {
               <option value="asc">Ascending</option>
             </Select>
           </Grid>
-          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12} className="display-flex flex-align-end">
-            <button type="button" className="usa-button usa-button--outline" onClick={clearFilters}>
-              Reset filters
-            </button>
-          </Grid>
         </Grid>
 
         {!loading && (
-          <section className="margin-bottom-4" aria-label="Feedback survey charts">
+          <section
+            className="margin-bottom-4"
+            aria-label="Feedback survey charts"
+            style={{ breakBefore: 'page', pageBreakBefore: 'always' }}
+          >
             <h2 className="margin-top-0">Feedback trends</h2>
             <Grid row gap>
               <Grid desktop={{ col: 6 }} tablet={{ col: 12 }} col={12}>
@@ -439,32 +499,38 @@ export default function FeedbackSurveys() {
         )}
 
         {!loading && rows.length > 0 && (
-          <Table fullWidth striped stackedStyle="default">
-            <thead>
-              <tr>
-                <th scope="col">Submitted</th>
-                <th scope="col">User</th>
-                <th scope="col">Page ID</th>
-                <th scope="col">Survey type</th>
-                <th scope="col">Rating</th>
-                <th scope="col">Thumbs</th>
-                <th scope="col">Comment</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id}>
-                  <td data-label="Submitted">{formatDate(row.submittedAt)}</td>
-                  <td data-label="User">{row.user?.name || row.user?.email || `User #${row.userId}`}</td>
-                  <td data-label="Page ID">{row.pageId}</td>
-                  <td data-label="Survey type">{row.surveyType}</td>
-                  <td data-label="Rating">{row.surveyType === 'scale' ? row.rating : '--'}</td>
-                  <td data-label="Thumbs">{row.surveyType === 'thumbs' ? (row.thumbs || '--') : '--'}</td>
-                  <td data-label="Comment">{row.comment || '--'}</td>
+          <section
+            aria-label="Raw feedback survey rows"
+            style={{ breakBefore: 'page', pageBreakBefore: 'always' }}
+          >
+            <h2 className="margin-top-0">Raw feedback rows</h2>
+            <Table fullWidth striped stackedStyle="default">
+              <thead>
+                <tr>
+                  <th scope="col">Submitted</th>
+                  <th scope="col">User</th>
+                  <th scope="col">Page ID</th>
+                  <th scope="col">Survey type</th>
+                  <th scope="col">Rating</th>
+                  <th scope="col">Thumbs</th>
+                  <th scope="col">Comment</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id}>
+                    <td data-label="Submitted">{formatDate(row.submittedAt)}</td>
+                    <td data-label="User">{row.user?.name || row.user?.email || `User #${row.userId}`}</td>
+                    <td data-label="Page ID">{row.pageId}</td>
+                    <td data-label="Survey type">{row.surveyType}</td>
+                    <td data-label="Rating">{row.surveyType === 'scale' ? row.rating : '--'}</td>
+                    <td data-label="Thumbs">{row.surveyType === 'thumbs' ? (row.thumbs || '--') : '--'}</td>
+                    <td data-label="Comment">{row.comment || '--'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </section>
         )}
       </Container>
     </>
