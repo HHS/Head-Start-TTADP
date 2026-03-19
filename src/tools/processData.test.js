@@ -19,9 +19,9 @@ import {
   MonitoringReviewLink,
   MonitoringReviewStatusLink,
   MonitoringClassSummary,
-  Goal,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
+  Citation,
   Objective,
   ZALGoal,
 } from '../models';
@@ -485,7 +485,11 @@ describe('processData', () => {
     const TEST_FINDING_ID = 'FINDING-099002';
     const TEST_REVIEW_NAME = 'REVIEW!!!';
 
-    const createCitationFixture = async ({ findingId, grantNumber }) => {
+    const createCitationFixture = async ({
+      findingId,
+      grantNumber,
+      grantId = TEST_GRANT_ID,
+    }) => {
       const report = await ActivityReport.create(reportObject);
       const objective = await Objective.create({
         title: `Objective ${findingId}`,
@@ -495,19 +499,49 @@ describe('processData', () => {
         activityReportId: report.id,
         objectiveId: objective.id,
       });
+      const normalizedCitation = await Citation.create({
+        mfid: Math.floor(Math.random() * 900000) + 100000,
+        finding_uuid: findingId,
+        citation: 'Citation',
+        raw_finding_type: 'Deficiency',
+        calculated_finding_type: 'Deficiency',
+        source_category: 'Monitoring',
+      });
       const citation = await ActivityReportObjectiveCitation.create({
         activityReportObjectiveId: aro.id,
+        citationId: normalizedCitation.id,
         citation: 'Citation',
+        monitoringReferences: [{
+          findingId,
+          grantId,
+          grantNumber,
+          reviewName: TEST_REVIEW_NAME,
+          standardId: 1,
+          findingType: 'Deficiency',
+          findingSource: 'Monitoring',
+          acro: 'DEF',
+          severity: 2,
+          reportDeliveryDate: '2025-01-10',
+          monitoringFindingStatusName: 'Open',
+        }],
         findingId,
-        grantId: TEST_GRANT_ID,
+        grantId,
         grantNumber,
         reviewName: TEST_REVIEW_NAME,
+        standardId: 1,
+        findingType: 'Deficiency',
+        findingSource: 'Monitoring',
+        acro: 'DEF',
+        severity: 2,
+        reportDeliveryDate: '2025-01-10',
+        monitoringFindingStatusName: 'Open',
       });
 
       return {
         report,
         objective,
         aro,
+        normalizedCitation,
         citation,
       };
     };
@@ -516,9 +550,11 @@ describe('processData', () => {
       report,
       objective,
       aro,
+      normalizedCitation,
       citation,
     }) => {
       await ActivityReportObjectiveCitation.destroy({ where: { id: citation.id } });
+      await Citation.destroy({ where: { id: normalizedCitation.id }, force: true });
       await ActivityReportObjective.destroy({ where: { id: aro.id } });
       await Objective.destroy({ where: { id: objective.id } });
       await NextStep.destroy({ where: { activityReportId: report.id } });
@@ -611,23 +647,17 @@ describe('processData', () => {
       }
     });
 
-    it('does not reintroduce grant numbers when rows omit persisted copies', async () => {
-      const grantBefore = await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true });
-      const grantNumberBefore = grantBefore.number;
-      const findingId = `${TEST_FINDING_ID}-NO-LEGACY-${uuidv4()}`;
+    it('keeps grant numbers non-null when no grant mapping exists', async () => {
+      const findingId = `${TEST_FINDING_ID}-UNMAPPED-${uuidv4()}`;
       const fixture = await createCitationFixture({
         findingId,
-        grantNumber: null,
+        grantId: 123456789,
+        grantNumber: `UNMAPPED-${uuidv4()}`,
       });
-      const obfuscated = `98GN${String(TEST_GRANT_ID).padStart(6, '0')}`;
 
       try {
-        await sequelize.transaction(async (transaction) => {
+        await sequelize.transaction(async () => {
           await convertGrantNumberCreate();
-          await Grant.update(
-            { number: obfuscated },
-            { where: { id: TEST_GRANT_ID }, transaction },
-          );
           await processMonitoringReferences();
           await convertGrantNumberDrop();
         });
@@ -637,13 +667,8 @@ describe('processData', () => {
           raw: true,
         });
         expect(row).toBeTruthy();
-        expect(row.grantNumber).toBeNull();
-        expect(obfuscated).not.toBe(grantNumberBefore);
+        expect(row.grantNumber).toBe('UnknownGrant');
       } finally {
-        await Grant.update(
-          { number: grantNumberBefore },
-          { where: { id: TEST_GRANT_ID } },
-        );
         await destroyCitationFixture(fixture);
       }
     });
