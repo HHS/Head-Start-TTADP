@@ -217,8 +217,6 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
     return [];
   }
 
-  console.log({ citations: JSON.stringify(citations, null, 2) });
-
   // Create citations to save.
   if (citations && citations.length > 0) {
     // Get the grant id from the goal.
