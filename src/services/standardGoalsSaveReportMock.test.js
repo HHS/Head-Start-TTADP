@@ -170,13 +170,13 @@ describe('Goals DB service', () => {
             },
           },
         ]);
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
         expect(Objective.destroy).not.toHaveBeenCalled();
       });
 
       it('deletes the ActivityReportObjective', async () => {
         ActivityReportObjective.findAll.mockResolvedValue([]);
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
         // with an empty result set no db call will be made
         expect(ActivityReportObjective.destroy).not.toHaveBeenCalled();
       });
@@ -211,7 +211,7 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
 
         expect(Goal.destroy).toHaveBeenCalled();
       });
@@ -254,7 +254,7 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
         expect(Goal.destroy).not.toHaveBeenCalled();
       });
 
@@ -296,7 +296,7 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
         expect(Goal.destroy).not.toHaveBeenCalled();
       });
     });
@@ -318,7 +318,7 @@ describe('Goals DB service', () => {
         {
           isNew: true, grantIds: [mockGrantId], name: 'name', status: 'Closed', objectives: [], goalTemplateId: 1,
         },
-      ], 1, { id: mockActivityReportId });
+      ], { id: mockActivityReportId });
       expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
         createdVia: 'activityReport',
         goalTemplateId: 1,
@@ -335,7 +335,7 @@ describe('Goals DB service', () => {
         {
           isNew: true, grantIds: [mockGrantId], name: 'Dont create a monitoring goal', status: 'In progress', objectives: [], goalTemplateId: 1,
         },
-      ], 1, { id: mockActivityReportId });
+      ], { id: mockActivityReportId });
 
       expect(Goal.create).not.toHaveBeenCalledWith();
     });
@@ -361,7 +361,7 @@ describe('Goals DB service', () => {
         {
           isNew: true, grantIds: [1, 2, 3], name: 'Create some monitoring goals', status: 'In progress', objectives: [], goalTemplateId: 1,
         },
-      ], 1, { id: mockActivityReportId });
+      ], { id: mockActivityReportId });
 
       expect(Goal.create).not.toHaveBeenCalled();
     });
@@ -409,7 +409,7 @@ describe('Goals DB service', () => {
         templateName: 'title',
         standard: 'Standard',
       });
-      await saveStandardGoalsForReport([goalWithNewObjective], 1, { id: mockActivityReportId });
+      await saveStandardGoalsForReport([goalWithNewObjective], { id: mockActivityReportId });
       expect(Objective.create).toHaveBeenCalledWith({
         createdVia: 'activityReport',
         goalId: mockGoalId,
@@ -443,7 +443,7 @@ describe('Goals DB service', () => {
       });
 
       Objective.findOne.mockResolvedValue({ id: mockObjectiveId });
-      await saveStandardGoalsForReport([existingGoal], 1, { id: mockActivityReportId });
+      await saveStandardGoalsForReport([existingGoal], { id: mockActivityReportId });
       expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title' }, { individualHooks: true });
     });
 
@@ -485,7 +485,7 @@ describe('Goals DB service', () => {
 
       Goal.findAll = jest.fn().mockResolvedValue(mockExistingGoals);
 
-      await saveStandardGoalsForReport(goals, 1, report);
+      await saveStandardGoalsForReport(goals, report);
 
       expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith([mockGoalId], [{
         grantId: 1,
@@ -522,7 +522,7 @@ describe('Goals DB service', () => {
         set: jest.fn(),
       });
 
-      await saveStandardGoalsForReport(goals, 1, report);
+      await saveStandardGoalsForReport(goals, report);
 
       expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
         createdVia: 'activityReport',
@@ -567,7 +567,7 @@ describe('Goals DB service', () => {
         set: jest.fn(),
       });
 
-      await saveStandardGoalsForReport(goals, 1, report);
+      await saveStandardGoalsForReport(goals, report);
 
       expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
         grantId: 1,

@@ -8,6 +8,27 @@ import { auditLogger } from '../../logger';
 
 const errorMessage = 'Received malformed request body';
 
+interface SaveReportCitationMonitoringReferenceBody {
+  grantId: number;
+}
+
+interface SaveReportCitationBody {
+  citation: string;
+  monitoringReferences: SaveReportCitationMonitoringReferenceBody[];
+}
+
+interface SaveReportObjectiveBody {
+  citations?: SaveReportCitationBody[] | null;
+}
+
+interface SaveReportGoalBody {
+  objectives?: SaveReportObjectiveBody[];
+}
+
+interface SaveReportBody {
+  goals?: SaveReportGoalBody[] | null;
+}
+
 const validateTimezone = (value: string, helpers: Joi.CustomHelpers) => {
   if (!moment.tz.zone(value)) {
     return helpers.error('any.invalid');
@@ -34,8 +55,53 @@ const reviewReportSchema = Joi.object({
     }),
 });
 
+const monitoringReferenceSchema = Joi.object({
+  grantId: Joi.number().integer().positive().required(),
+}).unknown(true);
+
+const citationSchema = Joi.object({
+  citation: Joi.string().trim().required(),
+  monitoringReferences: Joi.array().items(monitoringReferenceSchema).required(),
+}).unknown(true);
+
+const saveReportCitationSchema = Joi.object({
+  goals: Joi.array().items(
+    Joi.object({
+      objectives: Joi.array().items(
+        Joi.object({
+          citations: Joi.alternatives().try(
+            Joi.array().items(citationSchema),
+            Joi.valid(null),
+          ).optional(),
+        }).unknown(true),
+      ).optional(),
+    }).unknown(true),
+  ).optional(),
+}).unknown(true);
+
 export function checkReviewReportBody(req: Request, res: Response, next: NextFunction) {
   const { error } = reviewReportSchema.validate(req.body, {
+    abortEarly: false,
+    allowUnknown: false,
+  });
+
+  if (error) {
+    const msg = `${errorMessage}: ${error.message}`;
+    auditLogger.error(msg);
+    return res.status(httpCodes.BAD_REQUEST).send(msg);
+  }
+
+  return next();
+}
+
+export function checkSaveReportCitationBody(req: Request, res: Response, next: NextFunction) {
+  const requestBody = req.body as SaveReportBody | undefined;
+
+  if (!requestBody || requestBody.goals === undefined || requestBody.goals === null) {
+    return next();
+  }
+
+  const { error } = saveReportCitationSchema.validate(requestBody, {
     abortEarly: false,
     allowUnknown: false,
   });
