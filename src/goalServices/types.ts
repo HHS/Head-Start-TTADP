@@ -202,6 +202,7 @@ interface IObjective {
   resources: IResource[];
   files: IFile[];
   courses: ICourse[];
+  citations: ICitation[];
 }
 
 interface IObjectiveModelInstance extends IObjective {
