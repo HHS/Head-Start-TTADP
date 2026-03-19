@@ -8,14 +8,7 @@ declare global {
     __smartHubSnapshotPageState?: { activityReportId?: string };
   }
 }
-import { blur } from './common';
-
-async function getFullName(page: Page) {
-  await page.goto('/');
-  const welcomeText = page.getByRole('heading', { name: /welcome to the tta hub,/i });
-  const text = await welcomeText.textContent();
-  return text ? text.replace(/welcome to the tta hub, /i, '') : '';
-}
+import { blur, getFullName } from './common';
 /**
  * Formats goals from the heading string to use in the "View objective (x)" selectors
  *

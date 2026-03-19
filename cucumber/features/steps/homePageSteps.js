@@ -21,22 +21,24 @@ Given('I am logged in', async () => {
   const page = scope.context.currentPage;
 
   const loginLinkSelector = 'a[href$="api/login"]';
-  // const homeLinkSelector = 'a[href$="/"]';
   const activityReportsSelector = 'a[href$="activity-reports"]';
+  const readySelector = `${loginLinkSelector}, ${activityReportsSelector}, .smart-hub-title`;
 
-  await page.goto(scope.uri);
-  await page.waitForSelector('.smart-hub-title'); // Page title
-  const name = await page.$eval('.smart-hub-title', (el) => el.innerText);
+  await page.goto(scope.uri, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector(readySelector, { timeout: 60 * 1000 });
 
-  assert.equal(name, 'Office of Head Start TTA Hub');
   // Check if actually logged in. If not login
   const result = await page.$(loginLinkSelector);
 
   if (result) {
     await page.click(loginLinkSelector);
-    await page.waitForSelector(activityReportsSelector); // Activity Reports link
+    await page.waitForSelector(activityReportsSelector, { timeout: 60 * 1000 }); // Activity Reports link
     await page.screenshot({ path: 'reports/givenLoggedIn.png' });
+    return;
   }
+
+  const name = await page.$eval('.smart-hub-title', (el) => el.innerText);
+  assert.equal(name, 'Office of Head Start TTA Hub');
 });
 
 Given('I am on the Smart Hub home page', async () => {

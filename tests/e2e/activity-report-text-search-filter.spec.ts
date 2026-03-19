@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { getFullName } from './common';
 
 async function blur(page) {
   await page.getByText('Office of Head Start TTA Hub').click();
@@ -21,13 +22,6 @@ const waitForLandingFilterRequests = (page: Page): Promise<any>[] => {
     page.waitForResponse(overview),
     page.waitForResponse(alerts),
   ];
-}
-
-async function getFullName(page) {
-  await page.goto('/');
-  const welcomeText = await page.getByRole('heading', { name: /welcome to the tta hub,/i });
-  const text = await welcomeText.textContent();
-  return text.replace(/welcome to the tta hub, /i, '');
 }
 
 test.describe('Activity Report Text Search Filter', () => {
