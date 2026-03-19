@@ -120,6 +120,7 @@
   "resolutions": {
     "@tootallnate/once": "^3.0.1",
     "fast-xml-parser": "^5.5.7",
+    "flatted": "^3.4.2",
     "sqlite3": "^5.1.7",
     "tar": "^7.5.11"
   },
