@@ -25,6 +25,7 @@ describe('FeedbackSurveys', () => {
         rating: 10,
         thumbs: 'up',
         comment: 'Great',
+        createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
       {
@@ -36,6 +37,7 @@ describe('FeedbackSurveys', () => {
         rating: 7,
         thumbs: null,
         comment: 'Helpful',
+        createdAt: '2026-03-18T10:10:00.000Z',
         submittedAt: '2026-03-18T12:10:00.000Z',
       },
     ]);
@@ -47,6 +49,7 @@ describe('FeedbackSurveys', () => {
     expect(screen.getByText('qa-dashboard')).toBeVisible();
     expect(screen.getByText('Great')).toBeVisible();
     expect(screen.getByText('John Doe')).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: /created at/i })).toBeVisible();
     expect(screen.getByRole('heading', { name: /feedback by scale/i })).toBeVisible();
     expect(screen.getByRole('heading', { name: /thumbs up and down by month/i })).toBeVisible();
 
@@ -87,6 +90,20 @@ describe('FeedbackSurveys', () => {
     });
   });
 
+  it('sorts by created at', async () => {
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', []);
+    fetchMock.get('begin:/api/admin/feedback-surveys?sortBy=createdAt', []);
+
+    render(<FeedbackSurveys />);
+
+    const sortByInput = await screen.findByLabelText(/sort by/i);
+    await userEvent.selectOptions(sortByInput, 'createdAt');
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=desc&limit=500')).toBe(true);
+    });
+  });
+
   it('shows no scale chart message when filtered results have no scale responses', async () => {
     fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
@@ -98,6 +115,7 @@ describe('FeedbackSurveys', () => {
         rating: 10,
         thumbs: 'up',
         comment: 'Looks good',
+        createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
     ]);
@@ -119,6 +137,7 @@ describe('FeedbackSurveys', () => {
         rating: 6,
         thumbs: null,
         comment: 'Okay',
+        createdAt: '2026-03-18T10:10:00.000Z',
         submittedAt: '2026-03-18T12:10:00.000Z',
       },
     ]);
@@ -140,6 +159,7 @@ describe('FeedbackSurveys', () => {
         rating: 10,
         thumbs: 'down',
         comment: 'Needs work',
+        createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
     ]);

@@ -46,7 +46,7 @@ function getMonthKey(date) {
   return `${year}-${month}`;
 }
 
-function formatDate(date) {
+function formatDateOnly(date) {
   if (!date) {
     return '--';
   }
@@ -56,7 +56,7 @@ function formatDate(date) {
     return '--';
   }
 
-  return parsed.toLocaleString();
+  return parsed.toLocaleDateString();
 }
 
 function formatFilterValue(value) {
@@ -313,6 +313,7 @@ export default function FeedbackSurveys() {
               onChange={onSortChange}
             >
               <option value="submittedAt">Submitted</option>
+              <option value="createdAt">Created at</option>
               <option value="rating">Rating</option>
               <option value="pageId">Page ID</option>
               <option value="surveyType">Survey type</option>
@@ -508,6 +509,7 @@ export default function FeedbackSurveys() {
               <thead>
                 <tr>
                   <th scope="col">Submitted</th>
+                  <th scope="col">Created at</th>
                   <th scope="col">User</th>
                   <th scope="col">Page ID</th>
                   <th scope="col">Survey type</th>
@@ -519,7 +521,8 @@ export default function FeedbackSurveys() {
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.id}>
-                    <td data-label="Submitted">{formatDate(row.submittedAt)}</td>
+                    <td data-label="Submitted">{formatDateOnly(row.submittedAt)}</td>
+                    <td data-label="Created at">{formatDateOnly(row.createdAt)}</td>
                     <td data-label="User">{row.user?.name || row.user?.email || `User #${row.userId}`}</td>
                     <td data-label="Page ID">{row.pageId}</td>
                     <td data-label="Survey type">{row.surveyType}</td>
