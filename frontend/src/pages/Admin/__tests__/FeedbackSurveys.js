@@ -15,7 +15,7 @@ describe('FeedbackSurveys', () => {
   afterEach(() => fetchMock.restore());
 
   it('renders returned feedback survey rows', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=desc&limit=500', [
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 1,
         userId: 11,
@@ -49,7 +49,7 @@ describe('FeedbackSurveys', () => {
     expect(screen.getByRole('cell', { name: 'qa-dashboard' })).toBeVisible();
     expect(screen.getByText('Great')).toBeVisible();
     expect(screen.getByText('John Doe')).toBeVisible();
-    expect(screen.getByRole('columnheader', { name: /created at/i })).toBeVisible();
+    expect(screen.queryByRole('columnheader', { name: /created at/i })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /feedback by scale/i })).toBeVisible();
     expect(screen.getByRole('heading', { name: /thumbs up and down by month/i })).toBeVisible();
 
@@ -63,7 +63,7 @@ describe('FeedbackSurveys', () => {
   });
 
   it('applies filters and requests filtered data', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=desc&limit=500', [
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 4,
         userId: 22,
@@ -85,12 +85,12 @@ describe('FeedbackSurveys', () => {
     await userEvent.selectOptions(pageIdInput, 'qa-dashboard');
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?pageId=qa-dashboard&sortBy=createdAt&sortDir=desc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?pageId=qa-dashboard&sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
     });
   });
 
   it('applies created at date filters', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=desc&limit=500', []);
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', []);
     fetchMock.get('begin:/api/admin/feedback-surveys?createdAtFrom=', []);
 
     render(<FeedbackSurveys />);
@@ -99,12 +99,12 @@ describe('FeedbackSurveys', () => {
     await userEvent.type(createdAtFromInput, '2026-03-01');
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?createdAtFrom=2026-03-01&sortBy=createdAt&sortDir=desc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?createdAtFrom=2026-03-01&sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
     });
   });
 
-  it('sorts by created at when the column header is clicked', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=desc&limit=500', [
+  it('sorts by submitted when the column header is clicked', async () => {
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 9,
         userId: 31,
@@ -118,20 +118,20 @@ describe('FeedbackSurveys', () => {
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
     ]);
-    fetchMock.get('begin:/api/admin/feedback-surveys?sortBy=createdAt', []);
+    fetchMock.get('begin:/api/admin/feedback-surveys?sortBy=submittedAt', []);
 
     render(<FeedbackSurveys />);
 
-    const createdAtSortButton = await screen.findByRole('button', { name: /created at/i });
-    await userEvent.click(createdAtSortButton);
+    const submittedSortButton = await screen.findByRole('button', { name: /submitted/i });
+    await userEvent.click(submittedSortButton);
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=asc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=asc&limit=500')).toBe(true);
     });
   });
 
   it('shows no scale chart message when filtered results have no scale responses', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=desc&limit=500', [
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 11,
         userId: 91,
@@ -153,7 +153,7 @@ describe('FeedbackSurveys', () => {
   });
 
   it('shows no thumbs chart message when filtered results have no thumbs responses', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=desc&limit=500', [
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 12,
         userId: 92,
@@ -175,7 +175,7 @@ describe('FeedbackSurveys', () => {
   });
 
   it('renders export button and prints report with applied filters summary', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=desc&limit=500', [
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 8,
         userId: 101,
@@ -207,7 +207,7 @@ describe('FeedbackSurveys', () => {
 
     expect(withinAppliedFilters.getByRole('heading', { name: /applied filters/i })).toBeVisible();
     expect(withinAppliedFilters.getByText('Sort by')).toBeVisible();
-    expect(withinAppliedFilters.getByText('createdAt')).toBeVisible();
+    expect(withinAppliedFilters.getByText('submittedAt')).toBeVisible();
     expect(withinAppliedFilters.getByText('Result count')).toBeVisible();
     expect(withinAppliedFilters.getByText('1')).toBeVisible();
 

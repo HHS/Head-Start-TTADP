@@ -6,7 +6,6 @@ import {
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faTimes,
   faChevronDown,
   faChevronUp,
   faThumbsUp,
@@ -31,6 +30,8 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
   const storageKey = `survey-feedback-dismissed-${pageId}`;
   const [surveyStatus, setSurveyStatus] = useState(SURVEY_STATUS.OPEN);
   const [isCommentExpanded, setIsCommentExpanded] = useState(false);
+  const surveyContainerRef = useRef(null);
+  const commentSectionRef = useRef(null);
   const commentInputRef = useRef(null);
   const {
     control,
@@ -107,17 +108,47 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
   }
   const title = useThumbRating ? 'How are we doing on this page?' : 'How useful is this page?';
 
+  const scrollCommentSectionToCenter = (focusComment) => {
+    const tryScroll = (remainingAttempts = 4) => {
+      const container = surveyContainerRef.current;
+      const commentSection = commentSectionRef.current;
+
+      if (!container || !commentSection) {
+        if (remainingAttempts > 0) {
+          requestAnimationFrame(() => tryScroll(remainingAttempts - 1));
+        }
+        return;
+      }
+
+      const targetTop = commentSection.offsetTop - ((container.clientHeight - commentSection.clientHeight) / 2);
+      const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+      const clampedTargetTop = Math.max(0, Math.min(targetTop, maxScrollTop));
+
+      container.scrollTo({
+        top: clampedTargetTop,
+        behavior: 'smooth',
+      });
+
+      if (focusComment) {
+        commentInputRef.current?.focus();
+      }
+    };
+
+    // Defer so React can commit the conditional comment section before we measure/scroll.
+    requestAnimationFrame(() => tryScroll());
+  };
+
+  const handleThumbSelection = (rating, onChange) => {
+    onChange(rating);
+    scrollCommentSectionToCenter(rating === THUMBS_RATINGS.DOWN);
+  };
+
   useEffect(() => {
-    if (!useThumbRating || !selectedRating || !commentInputRef.current) {
+    if (!useThumbRating || !selectedRating || !surveyContainerRef.current || !commentSectionRef.current) {
       return;
     }
 
-    if (typeof commentInputRef.current.scrollIntoView === 'function') {
-      commentInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    if (isCommentRequired) {
-      commentInputRef.current.focus();
-    }
+    scrollCommentSectionToCenter(isCommentRequired);
   }, [isCommentRequired, selectedRating, useThumbRating]);
 
   if (surveyStatus === SURVEY_STATUS.COMPLETED) {
@@ -144,16 +175,21 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
   }
 
   return (
-    <div className="survey-feedback padding-3 tablet:padding-x-6" role="complementary" aria-label="Survey feedback">
+    <div
+      ref={surveyContainerRef}
+      className="survey-feedback padding-3 tablet:padding-x-6"
+      role="complementary"
+      aria-label="Survey feedback"
+    >
       <div className="display-flex flex-justify flex-align-start margin-bottom-2">
         <h3 className="margin-0 font-sans-lg text-bold text-base-darkest">{title}</h3>
         <button
           type="button"
           className="survey-feedback__close-button"
           onClick={handleDismiss}
-          aria-label="Dismiss survey"
+          aria-label="Collapse survey"
         >
-          <FontAwesomeIcon icon={faTimes} />
+          <FontAwesomeIcon icon={faChevronDown} />
         </button>
       </div>
 
@@ -169,7 +205,7 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
                     <button
                       type="button"
                       className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.UP ? 'is-selected' : ''}`}
-                      onClick={() => onChange(THUMBS_RATINGS.UP)}
+                      onClick={() => handleThumbSelection(THUMBS_RATINGS.UP, onChange)}
                       aria-pressed={selectedRating === THUMBS_RATINGS.UP}
                       aria-label="Thumbs up"
                     >
@@ -178,7 +214,7 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
                     <button
                       type="button"
                       className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.DOWN ? 'is-selected' : ''}`}
-                      onClick={() => onChange(THUMBS_RATINGS.DOWN)}
+                      onClick={() => handleThumbSelection(THUMBS_RATINGS.DOWN, onChange)}
                       aria-pressed={selectedRating === THUMBS_RATINGS.DOWN}
                       aria-label="Thumbs down"
                     >
@@ -234,7 +270,7 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
           )}
 
           {shouldShowCommentSection && (
-            <div className="survey-feedback__textarea-container margin-top-2">
+            <div ref={commentSectionRef} className="survey-feedback__textarea-container margin-top-2">
               <Label htmlFor={`feedback-comment-${pageId}`} className="font-sans-2xs margin-top-0">
                 {commentLabel}
               </Label>
