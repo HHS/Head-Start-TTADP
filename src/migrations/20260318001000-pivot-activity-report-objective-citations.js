@@ -332,7 +332,7 @@ module.exports = {
         type: 'foreign key',
         name: CITATION_FK_NAME,
         references: { table: CITATIONS_TABLE, field: 'id' },
-        onDelete: 'SET NULL',
+        onDelete: 'RESTRICT',
         onUpdate: 'CASCADE',
         transaction,
       });
