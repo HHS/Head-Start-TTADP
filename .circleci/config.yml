@@ -520,8 +520,9 @@ jobs:
     - set_env_vars:
         target_env: staging
     - run:
-        name: Build and start scan target
+        name: Build and start server
         command: ./bin/prod-style-server
+        background: true
     - run:
         name: Wait for Node.js server to start
         command: ./bin/ping-server 8080 localhost "" 20

@@ -5,9 +5,10 @@ set -euxo pipefail
 mkdir -p reports/server
 rm -f reports/server/*
 
-docker compose -f docker/compose/dss.yml run --rm server yarn install --production=false
-docker compose -f docker/compose/dss.yml run --rm server yarn --cwd frontend install --production=false
-docker compose -f docker/compose/dss.yml run --rm server yarn build
-docker compose -f docker/compose/dss.yml run --rm server yarn --cwd frontend run build
-docker compose -f docker/compose/dss.yml run --rm server yarn db:migrate:ci
-docker compose -f docker/compose/dss.yml up -d
+docker compose -f docker/compose/dss.yml down --remove-orphans
+docker compose -f docker/compose/dss.yml run server yarn install 
+docker compose -f docker/compose/dss.yml run server yarn --cwd frontend install
+docker compose -f docker/compose/dss.yml run server yarn build
+docker compose -f docker/compose/dss.yml run server yarn --cwd frontend run build
+docker compose -f docker/compose/dss.yml run server yarn db:migrate:ci
+docker compose -f docker/compose/dss.yml up
