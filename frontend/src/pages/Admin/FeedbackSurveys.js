@@ -38,13 +38,12 @@ const DEFAULT_FILTERS = {
 };
 
 const DEFAULT_SORT = {
-  sortBy: 'createdAt',
+  sortBy: 'submittedAt',
   sortDir: 'desc',
 };
 
 const SORTABLE_COLUMNS = {
   submittedAt: 'Submitted',
-  createdAt: 'Created at',
   pageId: 'Page ID',
   surveyType: 'Survey type',
   rating: 'Rating',
@@ -119,7 +118,6 @@ function getSortIcons(sort, column) {
 function getCsvColumns() {
   return [
     { header: 'Submitted', value: (row) => formatDateOnly(row.submittedAt) },
-    { header: 'Created at', value: (row) => formatDateOnly(row.createdAt) },
     { header: 'User', value: (row) => row.user?.name || row.user?.email || `User #${row.userId}` },
     { header: 'Page ID', value: (row) => row.pageId || '' },
     { header: 'Survey type', value: (row) => row.surveyType || '' },
@@ -670,18 +668,6 @@ export default function FeedbackSurveys() {
                       </span>
                     </button>
                   </th>
-                  <th
-                    scope="col"
-                    aria-sort={getAriaSort(sort, 'createdAt')}
-                  >
-                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('createdAt')}>
-                      <span>{SORTABLE_COLUMNS.createdAt}</span>
-                      <span className="feedback-sort-icons" aria-hidden="true">
-                        <span>{getSortIcons(sort, 'createdAt').up}</span>
-                        <span>{getSortIcons(sort, 'createdAt').down}</span>
-                      </span>
-                    </button>
-                  </th>
                   <th scope="col">User</th>
                   <th
                     scope="col"
@@ -727,7 +713,6 @@ export default function FeedbackSurveys() {
                 {rows.map((row) => (
                   <tr key={row.id}>
                     <td data-label="Submitted">{formatDateOnly(row.submittedAt)}</td>
-                    <td data-label="Created at">{formatDateOnly(row.createdAt)}</td>
                     <td data-label="User">{row.user?.name || row.user?.email || `User #${row.userId}`}</td>
                     <td data-label="Page ID">{row.pageId}</td>
                     <td data-label="Survey type">{row.surveyType}</td>
