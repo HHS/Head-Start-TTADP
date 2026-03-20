@@ -18,7 +18,7 @@ export default function IndicatorCounter({
   const marginClass = noTopMargin ? 'margin-top-0' : 'margin-top-2';
 
   return (
-    <div className={`ttahub--indicator-counter display-flex flex-row flex-align-center ${marginClass}`}>
+    <div className={`ttahub--indicator-counter display-flex flex-row flex-align-center flex-gap-1 maxw-mobile-lg ${marginClass}`}>
       {renderIndicators()}
       {showCountInline && (
         <p className="usa-prose margin-y-0 margin-left-1">
