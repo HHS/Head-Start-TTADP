@@ -6,7 +6,6 @@ const singleLineLogger = (
 ) => console.log(queryString.replace(/\n/g, '\\n')); // eslint-disable-line no-console
 
 const dbLogging = isTrue('LOG_QUERIES') ? singleLineLogger : false;
-const suppressSuccessMessage = isTrue('SUPPRESS_SUCCESS_MESSAGE');
 
 const connectionValidation = async (connection) => {
   try {
@@ -33,10 +32,6 @@ const connectionValidation = async (connection) => {
 
     const result = await connection.query(queryConfig);
 
-    if (!suppressSuccessMessage) {
-      // eslint-disable-next-line no-console
-      console.info('Connection validated successfully');
-    }
     return !!result;
   } catch (error) {
     // eslint-disable-next-line no-console
