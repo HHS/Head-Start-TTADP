@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
       });
       ActivityReportObjectiveCitation.belongsTo(models.Citation, {
         foreignKey: 'citationId',
-        onDelete: 'set null',
+        onDelete: 'cascade',
         as: 'citationModel',
       });
     }
