@@ -78,7 +78,7 @@ export interface ActivityReportObjectiveCitation {
   id?: number;
   activityReportObjectiveId?: number;
   citation: string;
-  monitoringReferences: MonitoringReference[];
+  monitoringReferences?: MonitoringReference[] | null;
   createdAt?: Date;
   updatedAt?: Date;
   toJSON?: () => ActivityReportObjectiveCitationJSON;
