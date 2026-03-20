@@ -507,6 +507,7 @@ export default function FeedbackSurveys() {
                     config={{
                       responsive: true,
                       displayModeBar: true,
+                      displaylogo: false,
                       toImageButtonOptions: {
                         format: 'png',
                         filename: 'feedback-by-scale',
