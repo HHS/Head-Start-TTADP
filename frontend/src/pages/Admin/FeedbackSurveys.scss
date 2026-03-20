@@ -8,6 +8,7 @@
   .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled:focus,
   .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled:active {
     background: #fff;
+    cursor: pointer;
   }
 
   .feedback-sort-label {

@@ -1,4 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import {
   Alert,
@@ -12,6 +17,7 @@ import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
 import colors from '../../colors';
 import PrintToPDF from '../../components/PrintToPDF';
+import MediaCaptureButton from '../../components/MediaCaptureButton';
 import { getFeedbackSurveys } from '../../fetchers/Admin';
 import './FeedbackSurveys.scss';
 
@@ -32,7 +38,7 @@ const DEFAULT_FILTERS = {
 };
 
 const DEFAULT_SORT = {
-  sortBy: 'submittedAt',
+  sortBy: 'createdAt',
   sortDir: 'desc',
 };
 
@@ -144,6 +150,8 @@ export default function FeedbackSurveys() {
   const [rows, setRows] = useState([]);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sort, setSort] = useState(DEFAULT_SORT);
+  const scaleChartRef = useRef(null);
+  const thumbsChartRef = useRef(null);
 
   useEffect(() => {
     async function fetchRows() {
@@ -186,7 +194,7 @@ export default function FeedbackSurveys() {
 
       return {
         sortBy,
-        sortDir: 'desc',
+        sortDir: 'asc',
       };
     });
   };
@@ -445,7 +453,7 @@ export default function FeedbackSurveys() {
           </Grid>
         </Grid>
 
-        {!loading && (
+        {rows.length > 0 && (
           <section
             className="margin-bottom-4"
             aria-label="Feedback survey charts"
@@ -462,58 +470,65 @@ export default function FeedbackSurveys() {
                   <p>Loading chart...</p>
                 )}
                 {scaleChartData.values.length > 0 && Plot && (
-                  <Plot
-                    className="feedback-chart feedback-scale-chart"
-                    useResizeHandler
-                    style={{ width: '100%', height: '320px' }}
-                    data={[
-                      {
-                        type: 'pie',
-                        labels: scaleChartData.labels,
-                        values: scaleChartData.values,
-                        textinfo: 'label+percent',
-                        marker: {
-                          colors: [
-                            colors.ttahubBlue,
-                            colors.ttahubMediumBlue,
-                            colors.ttahubMediumDeepTeal,
-                            colors.ttahubOrange,
-                            colors.ttahubMagenta,
-                            colors.info,
-                            colors.success,
-                            colors.warning,
-                            colors.baseMedium,
-                            colors.baseLight,
-                          ],
-                        },
-                        hovertemplate: '%{label}: %{value}<extra></extra>',
-                      },
-                    ]}
-                    layout={{
-                      paper_bgcolor: '#ffffff',
-                      plot_bgcolor: '#ffffff',
-                      margin: {
-                        l: 20,
-                        r: 20,
-                        t: 20,
-                        b: 20,
-                      },
-                      showlegend: true,
-                      legend: {
-                        orientation: 'h',
-                        y: -0.2,
-                      },
-                    }}
-                    config={{
-                      responsive: true,
-                      displayModeBar: true,
-                      displaylogo: false,
-                      toImageButtonOptions: {
-                        format: 'png',
-                        filename: 'feedback-by-scale',
-                      },
-                    }}
-                  />
+                  <>
+                    <MediaCaptureButton
+                      reference={scaleChartRef}
+                      buttonText="Save screenshot"
+                      id="feedback-surveys-save-screenshot-scale"
+                      className="margin-bottom-1"
+                      title="feedback-by-scale"
+                    />
+                    <div ref={scaleChartRef}>
+                      <Plot
+                        className="feedback-chart feedback-scale-chart"
+                        useResizeHandler
+                        style={{ width: '100%', height: '320px' }}
+                        data={[
+                          {
+                            type: 'pie',
+                            labels: scaleChartData.labels,
+                            values: scaleChartData.values,
+                            textinfo: 'label+percent',
+                            marker: {
+                              colors: [
+                                colors.ttahubBlue,
+                                colors.ttahubMediumBlue,
+                                colors.ttahubMediumDeepTeal,
+                                colors.ttahubOrange,
+                                colors.ttahubMagenta,
+                                colors.info,
+                                colors.success,
+                                colors.warning,
+                                colors.baseMedium,
+                                colors.baseLight,
+                              ],
+                            },
+                            hovertemplate: '%{label}: %{value}<extra></extra>',
+                          },
+                        ]}
+                        layout={{
+                          paper_bgcolor: '#ffffff',
+                          plot_bgcolor: '#ffffff',
+                          margin: {
+                            l: 20,
+                            r: 20,
+                            t: 20,
+                            b: 20,
+                          },
+                          showlegend: true,
+                          legend: {
+                            orientation: 'h',
+                            y: -0.2,
+                          },
+                        }}
+                        config={{
+                          responsive: true,
+                          displayModeBar: false,
+                          displaylogo: false,
+                        }}
+                      />
+                    </div>
+                  </>
                 )}
               </Grid>
               <Grid desktop={{ col: 6 }} tablet={{ col: 12 }} col={12}>
@@ -525,90 +540,97 @@ export default function FeedbackSurveys() {
                   <p>Loading chart...</p>
                 )}
                 {thumbsChartData.x.length > 0 && Plot && (
-                  <Plot
-                    className="feedback-chart feedback-thumbs-chart"
-                    useResizeHandler
-                    style={{ width: '100%', height: '320px' }}
-                    data={[
-                      {
-                        type: 'scatter',
-                        mode: 'lines+markers',
-                        name: 'Thumbs up',
-                        x: thumbsChartData.x,
-                        y: thumbsChartData.up,
-                        line: {
-                          color: colors.success,
-                          width: 3,
-                        },
-                        marker: {
-                          size: 10,
-                        },
-                      },
-                      {
-                        type: 'scatter',
-                        mode: 'lines+markers',
-                        name: 'Thumbs down',
-                        x: thumbsChartData.x,
-                        y: thumbsChartData.down,
-                        line: {
-                          color: colors.error,
-                          width: 3,
-                        },
-                        marker: {
-                          size: 10,
-                        },
-                      },
-                    ]}
-                    layout={{
-                      paper_bgcolor: '#ffffff',
-                      plot_bgcolor: '#ffffff',
-                      margin: {
-                        l: 40,
-                        r: 20,
-                        t: 20,
-                        b: 60,
-                      },
-                      xaxis: {
-                        title: {
-                          text: 'Month',
-                        },
-                      },
-                      yaxis: {
-                        title: {
-                          text: 'Count',
-                        },
-                        rangemode: 'tozero',
-                        dtick: thumbsYAxisTickStep,
-                        automargin: true,
-                      },
-                      legend: {
-                        orientation: 'h',
-                        y: -0.2,
-                      },
-                    }}
-                    config={{
-                      responsive: true,
-                      displayModeBar: true,
-                      displaylogo: false,
-                      modeBarButtonsToRemove: [
-                        'zoom2d',
-                        'pan2d',
-                        'select2d',
-                        'lasso2d',
-                        'zoomIn2d',
-                        'zoomOut2d',
-                        'autoScale2d',
-                        'resetScale2d',
-                        'hoverClosestCartesian',
-                        'hoverCompareCartesian',
-                        'toggleSpikelines',
-                      ],
-                      toImageButtonOptions: {
-                        format: 'png',
-                        filename: 'feedback-thumbs-by-month',
-                      },
-                    }}
-                  />
+                  <>
+                    <MediaCaptureButton
+                      reference={thumbsChartRef}
+                      buttonText="Save screenshot"
+                      id="feedback-surveys-save-screenshot-thumbs"
+                      className="margin-bottom-1"
+                      title="feedback-thumbs-by-month"
+                    />
+                    <div ref={thumbsChartRef}>
+                      <Plot
+                        className="feedback-chart feedback-thumbs-chart"
+                        useResizeHandler
+                        style={{ width: '100%', height: '320px' }}
+                        data={[
+                          {
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: 'Thumbs up',
+                            x: thumbsChartData.x,
+                            y: thumbsChartData.up,
+                            line: {
+                              color: colors.success,
+                              width: 3,
+                            },
+                            marker: {
+                              size: 10,
+                            },
+                          },
+                          {
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: 'Thumbs down',
+                            x: thumbsChartData.x,
+                            y: thumbsChartData.down,
+                            line: {
+                              color: colors.error,
+                              width: 3,
+                            },
+                            marker: {
+                              size: 10,
+                            },
+                          },
+                        ]}
+                        layout={{
+                          paper_bgcolor: '#ffffff',
+                          plot_bgcolor: '#ffffff',
+                          margin: {
+                            l: 40,
+                            r: 20,
+                            t: 20,
+                            b: 60,
+                          },
+                          xaxis: {
+                            title: {
+                              text: 'Month',
+                            },
+                          },
+                          yaxis: {
+                            title: {
+                              text: 'Count',
+                            },
+                            rangemode: 'tozero',
+                            dtick: thumbsYAxisTickStep,
+                            automargin: true,
+                          },
+                          legend: {
+                            orientation: 'h',
+                            y: -0.2,
+                          },
+                        }}
+                        config={{
+                          responsive: true,
+                          displayModeBar: false,
+                          displaylogo: false,
+                          modeBarButtonsToRemove: [
+                            'zoom2d',
+                            'pan2d',
+                            'select2d',
+                            'lasso2d',
+                            'zoomIn2d',
+                            'zoomOut2d',
+                            'autoScale2d',
+                            'resetScale2d',
+                            'hoverClosestCartesian',
+                            'hoverCompareCartesian',
+                            'toggleSpikelines',
+                          ],
+                        }}
+                      />
+                    </div>
+                  </>
                 )}
               </Grid>
             </Grid>
@@ -627,7 +649,7 @@ export default function FeedbackSurveys() {
           <p>No feedback survey responses matched your filters.</p>
         )}
 
-        {!loading && rows.length > 0 && (
+        {rows.length > 0 && (
           <section
             aria-label="Raw feedback survey rows"
             style={{ breakBefore: 'page', pageBreakBefore: 'always' }}
