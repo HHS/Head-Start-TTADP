@@ -1,4 +1,3 @@
-const { flatten } = require('dot-wild');
 const { prepMigration } = require('../lib/migration');
 
 const AROC_TABLE = 'ActivityReportObjectiveCitations';
