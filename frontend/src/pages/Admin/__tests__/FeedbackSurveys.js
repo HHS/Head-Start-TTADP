@@ -46,7 +46,7 @@ describe('FeedbackSurveys', () => {
 
     expect(await screen.findByRole('heading', { name: /feedback survey responses/i })).toBeVisible();
     expect(await screen.findByText('Jane Doe')).toBeVisible();
-    expect(screen.getByText('qa-dashboard')).toBeVisible();
+    expect(screen.getByRole('cell', { name: 'qa-dashboard' })).toBeVisible();
     expect(screen.getByText('Great')).toBeVisible();
     expect(screen.getByText('John Doe')).toBeVisible();
     expect(screen.getByRole('columnheader', { name: /created at/i })).toBeVisible();
@@ -54,25 +54,38 @@ describe('FeedbackSurveys', () => {
     expect(screen.getByRole('heading', { name: /thumbs up and down by month/i })).toBeVisible();
 
     // Thumbs surveys should not render a scale value.
-    const thumbsRow = screen.getByText('qa-dashboard').closest('tr');
+    const thumbsRow = screen.getByRole('cell', { name: 'qa-dashboard' }).closest('tr');
     expect(thumbsRow).toHaveTextContent('--');
 
     // Scale surveys should not render a thumbs value.
-    const scaleRow = screen.getByText('activity-reports').closest('tr');
+    const scaleRow = screen.getByRole('cell', { name: 'activity-reports' }).closest('tr');
     expect(scaleRow).toHaveTextContent('7');
   });
 
   it('applies filters and requests filtered data', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', []);
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+      {
+        id: 4,
+        userId: 22,
+        user: { name: 'Filter User', email: 'filter@example.com' },
+        pageId: 'qa-dashboard',
+        surveyType: 'thumbs',
+        rating: 10,
+        thumbs: 'up',
+        comment: 'Filter row',
+        createdAt: '2026-03-18T10:00:00.000Z',
+        submittedAt: '2026-03-18T12:00:00.000Z',
+      },
+    ]);
     fetchMock.get('begin:/api/admin/feedback-surveys?pageId=', []);
 
     render(<FeedbackSurveys />);
 
     const pageIdInput = await screen.findByLabelText(/page id/i);
-    await userEvent.type(pageIdInput, 'qa');
+    await userEvent.selectOptions(pageIdInput, 'qa-dashboard');
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?pageId=qa&sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?pageId=qa-dashboard&sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
     });
   });
 
@@ -90,14 +103,27 @@ describe('FeedbackSurveys', () => {
     });
   });
 
-  it('sorts by created at', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', []);
+  it('sorts by created at when the column header is clicked', async () => {
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+      {
+        id: 9,
+        userId: 31,
+        user: { name: 'Sort User', email: 'sort@example.com' },
+        pageId: 'sort-page',
+        surveyType: 'scale',
+        rating: 6,
+        thumbs: null,
+        comment: 'Sort row',
+        createdAt: '2026-03-18T10:00:00.000Z',
+        submittedAt: '2026-03-18T12:00:00.000Z',
+      },
+    ]);
     fetchMock.get('begin:/api/admin/feedback-surveys?sortBy=createdAt', []);
 
     render(<FeedbackSurveys />);
 
-    const sortByInput = await screen.findByLabelText(/sort by/i);
-    await userEvent.selectOptions(sortByInput, 'createdAt');
+    const createdAtSortButton = await screen.findByRole('button', { name: /created at/i });
+    await userEvent.click(createdAtSortButton);
 
     await waitFor(() => {
       expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=createdAt&sortDir=desc&limit=500')).toBe(true);
@@ -165,6 +191,12 @@ describe('FeedbackSurveys', () => {
     ]);
 
     const printSpy = jest.spyOn(window, 'print').mockImplementation(() => {});
+    const originalCreateObjectURL = window.URL.createObjectURL;
+    const originalRevokeObjectURL = window.URL.revokeObjectURL;
+    const createObjectURLSpy = jest.fn(() => 'blob:feedback-survey-export');
+    const revokeObjectURLSpy = jest.fn();
+    window.URL.createObjectURL = createObjectURLSpy;
+    window.URL.revokeObjectURL = revokeObjectURLSpy;
 
     render(<FeedbackSurveys />);
 
@@ -184,6 +216,14 @@ describe('FeedbackSurveys', () => {
 
     expect(printSpy).toHaveBeenCalled();
 
+    const exportButton = screen.getByRole('button', { name: /export table/i });
+    fireEvent.click(exportButton);
+
+    expect(createObjectURLSpy).toHaveBeenCalled();
+    expect(revokeObjectURLSpy).toHaveBeenCalled();
+
     printSpy.mockRestore();
+    window.URL.createObjectURL = originalCreateObjectURL;
+    window.URL.revokeObjectURL = originalRevokeObjectURL;
   });
 });

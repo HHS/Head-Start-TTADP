@@ -30,8 +30,14 @@ function ColumnHeader({
       <a
         role="button"
         tabIndex={0}
-        onClick={() => onUpdateSort(name)}
-        onKeyPress={() => onUpdateSort(name)}
+        onClick={(e) => {
+          e.preventDefault();
+          onUpdateSort(name);
+        }}
+        onKeyPress={(e) => {
+          e.preventDefault();
+          onUpdateSort(name);
+        }}
         className={`sortable ${sortClassName}`}
         aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
       >
