@@ -301,10 +301,14 @@ function MyAlerts(props) {
               <a
                 role="button"
                 tabIndex={0}
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
                   sortHandler(name);
                 }}
-                onKeyPress={() => sortHandler(name)}
+                onKeyPress={(e) => {
+                  e.preventDefault();
+                  sortHandler(name);
+                }}
                 className={`sortable ${sortClassName}`}
                 aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
                 }`}

@@ -1,0 +1,53 @@
+.feedback-surveys-page {
+  .usa-table--borderless > thead > tr > th[aria-sort] {
+    background: #fff;
+  }
+
+  .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled,
+  .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled:hover,
+  .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled:focus,
+  .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled:active {
+    background: #fff;
+  }
+
+  .feedback-sort-label {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.25rem;
+  }
+
+  .feedback-sort-icons {
+    color: #71767a;
+    display: inline-flex;
+    flex-direction: column;
+    font-size: 0.65rem;
+    line-height: 0.75;
+  }
+
+  .feedback-sort-icons > span {
+    margin-bottom: 0.1rem;
+  }
+
+  .feedback-sort-icons > span:last-child {
+    margin-bottom: 0;
+  }
+
+  .feedback-chart.js-plotly-plot .plotly .modebar-group .modebar-btn[data-title='Download plot as a png'],
+  .feedback-chart.js-plotly-plot .plotly .modebar-group .modebar-btn[data-title='Download plot as a png']:hover,
+  .feedback-chart.js-plotly-plot .plotly .modebar-group .modebar-btn[data-title='Download plot as a png']:focus,
+  .feedback-chart.js-plotly-plot .plotly .modebar-group .modebar-btn[data-title='Download plot as a png']:active {
+    background: #fff;
+    border: 0;
+    box-shadow: none;
+    color: #1b1b1b;
+  }
+
+  .feedback-chart.js-plotly-plot .plotly .modebar-group .modebar-btn[data-title='Download plot as a png'] svg {
+    background-color: #fff;
+    fill: #1b1b1b;
+  }
+
+  .feedback-chart.js-plotly-plot .plotly .modebar-group .modebar-btn[data-title='Download plot as a png'] svg path {
+    fill: #1b1b1b;
+  }
+}

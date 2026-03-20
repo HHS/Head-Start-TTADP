@@ -13,6 +13,7 @@ import Container from '../../components/Container';
 import colors from '../../colors';
 import PrintToPDF from '../../components/PrintToPDF';
 import { getFeedbackSurveys } from '../../fetchers/Admin';
+import './FeedbackSurveys.scss';
 
 let Plot = null;
 
@@ -33,6 +34,21 @@ const DEFAULT_FILTERS = {
 const DEFAULT_SORT = {
   sortBy: 'submittedAt',
   sortDir: 'desc',
+};
+
+const SORTABLE_COLUMNS = {
+  submittedAt: 'Submitted',
+  createdAt: 'Created at',
+  pageId: 'Page ID',
+  surveyType: 'Survey type',
+  rating: 'Rating',
+};
+
+const SORT_ICONS = {
+  upFilled: '\u25B2',
+  upOutline: '\u25B3',
+  downFilled: '\u25BC',
+  downOutline: '\u25BD',
 };
 
 const MONTH_FORMATTER = new Intl.DateTimeFormat('en-US', {
@@ -61,6 +77,65 @@ function formatDateOnly(date) {
 
 function formatFilterValue(value) {
   return value || 'All';
+}
+
+function getAriaSort(sort, column) {
+  if (sort.sortBy !== column) {
+    return 'none';
+  }
+
+  return sort.sortDir === 'asc' ? 'ascending' : 'descending';
+}
+
+function getSortIcons(sort, column) {
+  const isSorted = sort.sortBy === column;
+
+  if (!isSorted) {
+    return {
+      up: SORT_ICONS.upOutline,
+      down: SORT_ICONS.downOutline,
+    };
+  }
+
+  if (sort.sortDir === 'asc') {
+    return {
+      up: SORT_ICONS.upFilled,
+      down: SORT_ICONS.downOutline,
+    };
+  }
+
+  return {
+    up: SORT_ICONS.upOutline,
+    down: SORT_ICONS.downFilled,
+  };
+}
+
+function getCsvColumns() {
+  return [
+    { header: 'Submitted', value: (row) => formatDateOnly(row.submittedAt) },
+    { header: 'Created at', value: (row) => formatDateOnly(row.createdAt) },
+    { header: 'User', value: (row) => row.user?.name || row.user?.email || `User #${row.userId}` },
+    { header: 'Page ID', value: (row) => row.pageId || '' },
+    { header: 'Survey type', value: (row) => row.surveyType || '' },
+    { header: 'Rating', value: (row) => (row.surveyType === 'scale' ? row.rating : '--') },
+    { header: 'Thumbs', value: (row) => (row.surveyType === 'thumbs' ? (row.thumbs || '--') : '--') },
+    { header: 'Comment', value: (row) => row.comment || '--' },
+  ];
+}
+
+function escapeCsvValue(value) {
+  const normalized = value === null || value === undefined ? '' : `${value}`;
+  const escaped = normalized.replace(/"/g, '""');
+  return `"${escaped}"`;
+}
+
+function buildCsv(rows) {
+  const csvColumns = getCsvColumns();
+  const header = csvColumns.map((column) => escapeCsvValue(column.header)).join(',');
+  const lines = rows.map((row) => csvColumns
+    .map((column) => escapeCsvValue(column.value(row)))
+    .join(','));
+  return [header, ...lines].join('\n');
 }
 
 export default function FeedbackSurveys() {
@@ -100,12 +175,35 @@ export default function FeedbackSurveys() {
     }));
   };
 
-  const onSortChange = (event) => {
-    const { name, value } = event.target;
-    setSort((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const onSortColumn = (sortBy) => {
+    setSort((prev) => {
+      if (prev.sortBy === sortBy) {
+        return {
+          sortBy,
+          sortDir: prev.sortDir === 'asc' ? 'desc' : 'asc',
+        };
+      }
+
+      return {
+        sortBy,
+        sortDir: 'desc',
+      };
+    });
+  };
+
+  const exportTable = () => {
+    const csv = buildCsv(rows);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const downloadLink = document.createElement('a');
+    const datePart = new Date().toISOString().slice(0, 10);
+
+    downloadLink.href = url;
+    downloadLink.setAttribute('download', `feedback-surveys-${datePart}.csv`);
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    window.URL.revokeObjectURL(url);
   };
 
   const clearFilters = () => {
@@ -196,12 +294,24 @@ export default function FeedbackSurveys() {
     { label: 'Result count', value: `${rows.length}` },
   ]), [filters, rows.length, sort.sortBy, sort.sortDir]);
 
+  const pageIdOptions = useMemo(() => {
+    const uniquePageIds = new Set(rows
+      .map((row) => row.pageId)
+      .filter((pageId) => !!pageId));
+
+    if (filters.pageId) {
+      uniquePageIds.add(filters.pageId);
+    }
+
+    return [...uniquePageIds].sort((a, b) => a.localeCompare(b));
+  }, [filters.pageId, rows]);
+
   return (
     <>
       <Helmet>
         <title>Feedback Survey Responses</title>
       </Helmet>
-      <Container>
+      <Container className="feedback-surveys-page">
         <h1>Feedback Survey Responses</h1>
         <p className="usa-hint no-print">View and filter feedback submitted from in-app surveys.</p>
 
@@ -239,15 +349,21 @@ export default function FeedbackSurveys() {
               value={filters.q}
               onChange={onFilterChange}
             />
+            <p className="usa-hint margin-top-1 margin-bottom-0">Searches comment, page ID, and user name/email.</p>
           </Grid>
           <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-page-id">Page ID</Label>
-            <TextInput
+            <Select
               id="feedback-page-id"
               name="pageId"
               value={filters.pageId}
               onChange={onFilterChange}
-            />
+            >
+              <option value="">All</option>
+              {pageIdOptions.map((pageId) => (
+                <option key={pageId} value={pageId}>{pageId}</option>
+              ))}
+            </Select>
           </Grid>
         </Grid>
 
@@ -304,20 +420,8 @@ export default function FeedbackSurveys() {
         </Grid>
 
         <Grid row gap className="margin-bottom-3 no-print">
-          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
-            <Label htmlFor="feedback-sort-by">Sort by</Label>
-            <Select
-              id="feedback-sort-by"
-              name="sortBy"
-              value={sort.sortBy}
-              onChange={onSortChange}
-            >
-              <option value="submittedAt">Submitted</option>
-              <option value="createdAt">Created at</option>
-              <option value="rating">Rating</option>
-              <option value="pageId">Page ID</option>
-              <option value="surveyType">Survey type</option>
-            </Select>
+          <Grid desktop={{ col: 12 }} tablet={{ col: 12 }} col={12}>
+            <Label>Actions</Label>
             <div className="display-flex flex-align-center margin-top-2">
               <button
                 type="button"
@@ -326,23 +430,18 @@ export default function FeedbackSurveys() {
               >
                 Reset filters
               </button>
+              <button
+                type="button"
+                className="usa-button usa-button--outline margin-bottom-0 margin-right-2"
+                onClick={exportTable}
+              >
+                Export table
+              </button>
               <PrintToPDF
                 id="feedback-surveys-export"
                 className="usa-button--outline margin-bottom-0"
               />
             </div>
-          </Grid>
-          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
-            <Label htmlFor="feedback-sort-dir">Sort direction</Label>
-            <Select
-              id="feedback-sort-dir"
-              name="sortDir"
-              value={sort.sortDir}
-              onChange={onSortChange}
-            >
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </Select>
           </Grid>
         </Grid>
 
@@ -364,6 +463,7 @@ export default function FeedbackSurveys() {
                 )}
                 {scaleChartData.values.length > 0 && Plot && (
                   <Plot
+                    className="feedback-chart feedback-scale-chart"
                     useResizeHandler
                     style={{ width: '100%', height: '320px' }}
                     data={[
@@ -390,6 +490,8 @@ export default function FeedbackSurveys() {
                       },
                     ]}
                     layout={{
+                      paper_bgcolor: '#ffffff',
+                      plot_bgcolor: '#ffffff',
                       margin: {
                         l: 20,
                         r: 20,
@@ -404,7 +506,11 @@ export default function FeedbackSurveys() {
                     }}
                     config={{
                       responsive: true,
-                      displayModeBar: false,
+                      displayModeBar: true,
+                      toImageButtonOptions: {
+                        format: 'png',
+                        filename: 'feedback-by-scale',
+                      },
                     }}
                   />
                 )}
@@ -419,6 +525,7 @@ export default function FeedbackSurveys() {
                 )}
                 {thumbsChartData.x.length > 0 && Plot && (
                   <Plot
+                    className="feedback-chart feedback-thumbs-chart"
                     useResizeHandler
                     style={{ width: '100%', height: '320px' }}
                     data={[
@@ -452,6 +559,8 @@ export default function FeedbackSurveys() {
                       },
                     ]}
                     layout={{
+                      paper_bgcolor: '#ffffff',
+                      plot_bgcolor: '#ffffff',
                       margin: {
                         l: 40,
                         r: 20,
@@ -478,7 +587,25 @@ export default function FeedbackSurveys() {
                     }}
                     config={{
                       responsive: true,
-                      displayModeBar: false,
+                      displayModeBar: true,
+                      displaylogo: false,
+                      modeBarButtonsToRemove: [
+                        'zoom2d',
+                        'pan2d',
+                        'select2d',
+                        'lasso2d',
+                        'zoomIn2d',
+                        'zoomOut2d',
+                        'autoScale2d',
+                        'resetScale2d',
+                        'hoverClosestCartesian',
+                        'hoverCompareCartesian',
+                        'toggleSpikelines',
+                      ],
+                      toImageButtonOptions: {
+                        format: 'png',
+                        filename: 'feedback-thumbs-by-month',
+                      },
                     }}
                   />
                 )}
@@ -505,15 +632,70 @@ export default function FeedbackSurveys() {
             style={{ breakBefore: 'page', pageBreakBefore: 'always' }}
           >
             <h2 className="margin-top-0">Raw feedback rows</h2>
-            <Table fullWidth striped stackedStyle="default">
+            <Table fullWidth striped stackedStyle="default" className="usa-table--borderless">
               <thead>
                 <tr>
-                  <th scope="col">Submitted</th>
-                  <th scope="col">Created at</th>
+                  <th
+                    scope="col"
+                    aria-sort={getAriaSort(sort, 'submittedAt')}
+                  >
+                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('submittedAt')}>
+                      <span>{SORTABLE_COLUMNS.submittedAt}</span>
+                      <span className="feedback-sort-icons" aria-hidden="true">
+                        <span>{getSortIcons(sort, 'submittedAt').up}</span>
+                        <span>{getSortIcons(sort, 'submittedAt').down}</span>
+                      </span>
+                    </button>
+                  </th>
+                  <th
+                    scope="col"
+                    aria-sort={getAriaSort(sort, 'createdAt')}
+                  >
+                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('createdAt')}>
+                      <span>{SORTABLE_COLUMNS.createdAt}</span>
+                      <span className="feedback-sort-icons" aria-hidden="true">
+                        <span>{getSortIcons(sort, 'createdAt').up}</span>
+                        <span>{getSortIcons(sort, 'createdAt').down}</span>
+                      </span>
+                    </button>
+                  </th>
                   <th scope="col">User</th>
-                  <th scope="col">Page ID</th>
-                  <th scope="col">Survey type</th>
-                  <th scope="col">Rating</th>
+                  <th
+                    scope="col"
+                    aria-sort={getAriaSort(sort, 'pageId')}
+                  >
+                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('pageId')}>
+                      <span>{SORTABLE_COLUMNS.pageId}</span>
+                      <span className="feedback-sort-icons" aria-hidden="true">
+                        <span>{getSortIcons(sort, 'pageId').up}</span>
+                        <span>{getSortIcons(sort, 'pageId').down}</span>
+                      </span>
+                    </button>
+                  </th>
+                  <th
+                    scope="col"
+                    aria-sort={getAriaSort(sort, 'surveyType')}
+                  >
+                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('surveyType')}>
+                      <span>{SORTABLE_COLUMNS.surveyType}</span>
+                      <span className="feedback-sort-icons" aria-hidden="true">
+                        <span>{getSortIcons(sort, 'surveyType').up}</span>
+                        <span>{getSortIcons(sort, 'surveyType').down}</span>
+                      </span>
+                    </button>
+                  </th>
+                  <th
+                    scope="col"
+                    aria-sort={getAriaSort(sort, 'rating')}
+                  >
+                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('rating')}>
+                      <span>{SORTABLE_COLUMNS.rating}</span>
+                      <span className="feedback-sort-icons" aria-hidden="true">
+                        <span>{getSortIcons(sort, 'rating').up}</span>
+                        <span>{getSortIcons(sort, 'rating').down}</span>
+                      </span>
+                    </button>
+                  </th>
                   <th scope="col">Thumbs</th>
                   <th scope="col">Comment</th>
                 </tr>
