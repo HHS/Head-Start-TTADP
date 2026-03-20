@@ -625,6 +625,7 @@ describe('reduceGoals', () => {
         ],
         files: [],
         courses: [],
+        citations: [],
       };
 
       const exists = {
