@@ -76,7 +76,7 @@ interface ICourse {
 
 interface ICitation {
   citation: string;
-  monitoringReferences: MonitoringReference[];
+  monitoringReferences: MonitoringReference[] | null;
   findingIds?: string[];
   reviewNames?: string[];
   grantNumber?: string;
