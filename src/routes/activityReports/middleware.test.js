@@ -153,8 +153,15 @@ describe('activityReports saveReport citation middleware', () => {
                       {
                         grantId: 1,
                         findingId: 'abc-123',
+                        grantNumber: '90AB1234',
                         reviewName: 'Monitoring review',
                         standardId: 1001,
+                        findingType: 'Deficiency',
+                        findingSource: 'OHS',
+                        acro: 'ACF',
+                        severity: 1,
+                        reportDeliveryDate: '2024-01-01',
+                        monitoringFindingStatusName: 'Active',
                       },
                     ],
                   },
@@ -248,5 +255,70 @@ describe('activityReports saveReport citation middleware', () => {
     expect(send).toHaveBeenCalled();
     expect(auditLogger.error).toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
+  });
+
+  const fullMonitoringReference = {
+    grantId: 1,
+    findingId: 'abc-123',
+    grantNumber: '90AB1234',
+    reviewName: 'Monitoring review',
+    standardId: 1001,
+    findingType: 'Deficiency',
+    findingSource: 'OHS',
+    acro: 'ACF',
+    severity: 1,
+    reportDeliveryDate: '2024-01-01',
+    monitoringFindingStatusName: 'Active',
+  };
+
+  const requiredMonitoringReferenceFields = [
+    'findingId',
+    'grantNumber',
+    'reviewName',
+    'standardId',
+    'findingType',
+    'findingSource',
+    'acro',
+    'severity',
+    'reportDeliveryDate',
+    'monitoringFindingStatusName',
+  ];
+
+  requiredMonitoringReferenceFields.forEach((field) => {
+    it(`returns 400 when monitoring reference is missing required field: ${field}`, () => {
+      const monitoringReference = { ...fullMonitoringReference };
+      delete monitoringReference[field];
+
+      const req = {
+        body: {
+          goals: [
+            {
+              objectives: [
+                {
+                  citations: [
+                    {
+                      citation: '78',
+                      monitoringReferences: [monitoringReference],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      };
+      const send = jest.fn();
+      const res = {
+        status: jest.fn(() => ({ send })),
+      };
+      const next = jest.fn();
+
+      checkSaveReportCitationBody(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(send).toHaveBeenCalled();
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 });
