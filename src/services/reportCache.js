@@ -228,6 +228,9 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
       const monitoringReferences = parseMonitoringReferences(citation.monitoringReferences);
 
       monitoringReferences.forEach((reference) => {
+        if (!reference || typeof reference !== 'object' || Array.isArray(reference)) {
+          return;
+        }
         const grantId = Number(reference.grantId);
         if (!Number.isInteger(grantId) || grantId !== grantForThisCitation) {
           return;

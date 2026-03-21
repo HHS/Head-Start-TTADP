@@ -557,6 +557,33 @@ describe('activityReportObjectiveCitation', () => {
     expect(sortedAroCitations[1].citationId).toBeTruthy();
   });
 
+  it('skips null and non-object entries in monitoringReferences without throwing', async () => {
+    const citationsToCreate = [
+      {
+        citation: 'Citation 1',
+        monitoringReferences: [null, 'string-value', 42, buildMonitoringReference({
+          grantId: grant.id,
+          findingId: findingIdOne,
+          reviewName: 'Review 1',
+          standardId: 200001,
+          grantNumber: grant.number,
+        })],
+      },
+    ];
+
+    let result;
+    await expect(async () => {
+      result = await cacheCitations(objective.id, aro.id, citationsToCreate);
+    }).not.toThrow();
+
+    expect(result).toHaveLength(1);
+    const [savedCitation] = await ActivityReportObjectiveCitation.findAll({
+      where: { activityReportObjectiveId: aro.id },
+    });
+    expect(savedCitation).toBeDefined();
+    expect(savedCitation.findingId).toBe(findingIdOne);
+  });
+
   it('correctly removes and prevents the saving of citations for non-monitoring goals', async () => {
     // Get all the citations for nonMonitoringAro.
     const nonMonitoringAroCitations = await ActivityReportObjectiveCitation.findAll({
