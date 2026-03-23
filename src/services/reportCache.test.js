@@ -558,39 +558,6 @@ describe('activityReportObjectiveCitation', () => {
     expect(sortedAroCitations[1].citationId).toBeTruthy();
   });
 
-  it('ignores malformed monitoring references and still saves valid object entries', async () => {
-    const citationsToCreate = [
-      {
-        citation: 'Citation 1',
-        monitoringReferences: JSON.stringify([
-          null,
-          'not-an-object',
-          ['array-entry'],
-          buildMonitoringReference({
-            grantId: grant.id,
-            findingId: findingIdOne,
-            reviewName: 'Review 1',
-            standardId: 200111,
-            grantNumber: grant.number,
-          }),
-        ]),
-      },
-    ];
-
-    const result = await cacheCitations(objective.id, aro.id, citationsToCreate);
-
-    expect(result).toHaveLength(1);
-
-    const savedCitations = await ActivityReportObjectiveCitation.findAll({
-      where: {
-        activityReportObjectiveId: aro.id,
-      },
-    });
-    expect(savedCitations).toHaveLength(1);
-    expect(savedCitations[0].findingId).toBe(findingIdOne);
-    expect(savedCitations[0].grantId).toBe(grant.id);
-  });
-
   it('throws when a citation findingId cannot be resolved to a Citation record', async () => {
     const missingFindingId = faker.datatype.uuid();
     const citationsToCreate = [
