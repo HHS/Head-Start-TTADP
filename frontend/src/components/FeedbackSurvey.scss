@@ -40,9 +40,7 @@ $tooltip-caret-size: 0.35rem;
 }
 
 .survey-feedback__close-button {
-  background: none;
-  border: none;
-  cursor: pointer;
+  min-width: 0;
   padding: 0.25rem;
   color: $base-dark;
   font-size: $survey-close-icon-size;
@@ -52,28 +50,16 @@ $tooltip-caret-size: 0.35rem;
   &:hover {
     color: $base-darkest;
   }
-
-  &:focus {
-    outline: 2px solid $blue-vivid-focus;
-    outline-offset: 2px;
-  }
 }
 
 .survey-feedback__thumb-button {
   background-color: $base-lightest;
-  border: 1px solid $base-light;
-  border-radius: 0.25rem;
+  border-color: $base-light;
   color: $ttahub-blue;
-  cursor: pointer;
   font-size: $survey-thumb-icon-size;
 
   &:hover {
     border-color: $ttahub-blue;
-  }
-
-  &:focus-visible {
-    outline: 2px solid $blue-vivid-focus;
-    outline-offset: 2px;
   }
 
   &.is-selected {
@@ -114,20 +100,12 @@ $tooltip-caret-size: 0.35rem;
 }
 
 .survey-feedback__expand-button {
-  background: none;
-  border: none;
   color: $text-link;
-  cursor: pointer;
   padding: 0;
   text-decoration: underline;
 
   &:hover {
     color: $ttahub-blue;
-  }
-
-  &:focus {
-    outline: 2px solid $blue-vivid-focus;
-    outline-offset: 2px;
   }
 }
 
@@ -141,7 +119,6 @@ $tooltip-caret-size: 0.35rem;
   border: 1px solid $ttahub-blue;
   background-color: $ttahub-blue;
   color: $base-lightest;
-  cursor: pointer;
   z-index: 1001;
   overflow: visible;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);

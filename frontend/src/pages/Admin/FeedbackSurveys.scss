@@ -3,10 +3,10 @@
     background: #fff;
   }
 
-  .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled,
-  .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled:hover,
-  .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled:focus,
-  .usa-table--borderless > thead > tr > th[aria-sort] .ttahub-button--unstyled:active {
+  .usa-table--borderless > thead > tr > th[aria-sort] .usa-button--unstyled,
+  .usa-table--borderless > thead > tr > th[aria-sort] .usa-button--unstyled:hover,
+  .usa-table--borderless > thead > tr > th[aria-sort] .usa-button--unstyled:focus,
+  .usa-table--borderless > thead > tr > th[aria-sort] .usa-button--unstyled:active {
     background: #fff;
     cursor: pointer;
   }
