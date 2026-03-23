@@ -16,6 +16,7 @@ import {
   Course,
   Citation,
   ActivityReportObjectiveTopic,
+  sequelize,
 } from '../models';
 import {
   cacheGoalMetadata,
@@ -555,6 +556,116 @@ describe('activityReportObjectiveCitation', () => {
       .toEqual([findingIdOne, findingIdThree].sort());
     expect(sortedAroCitations[0].citationId).toBeTruthy();
     expect(sortedAroCitations[1].citationId).toBeTruthy();
+  });
+
+  it('ignores malformed monitoring references and still saves valid object entries', async () => {
+    const citationsToCreate = [
+      {
+        citation: 'Citation 1',
+        monitoringReferences: JSON.stringify([
+          null,
+          'not-an-object',
+          ['array-entry'],
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdOne,
+            reviewName: 'Review 1',
+            standardId: 200111,
+            grantNumber: grant.number,
+          }),
+        ]),
+      },
+    ];
+
+    const result = await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    expect(result).toHaveLength(1);
+
+    const savedCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+    expect(savedCitations).toHaveLength(1);
+    expect(savedCitations[0].findingId).toBe(findingIdOne);
+    expect(savedCitations[0].grantId).toBe(grant.id);
+  });
+
+  it('throws when a citation findingId cannot be resolved to a Citation record', async () => {
+    const missingFindingId = faker.datatype.uuid();
+    const citationsToCreate = [
+      {
+        citation: 'Citation with unresolved finding',
+        monitoringReferences: [buildMonitoringReference({
+          grantId: grant.id,
+          findingId: missingFindingId,
+          reviewName: 'Review Missing',
+          standardId: 200112,
+          grantNumber: grant.number,
+        })],
+      },
+    ];
+
+    await expect(cacheCitations(objective.id, aro.id, citationsToCreate))
+      .rejects
+      .toThrow(`No Citation record found for finding IDs: ${missingFindingId}`);
+  });
+
+  it('rolls back citation changes when unresolved findingIds are encountered in a transaction', async () => {
+    const originalCitations = [
+      {
+        citation: 'Persisted citation',
+        monitoringReferences: [buildMonitoringReference({
+          grantId: grant.id,
+          findingId: findingIdOne,
+          reviewName: 'Review Original',
+          standardId: 200113,
+          grantNumber: grant.number,
+        })],
+      },
+    ];
+
+    await cacheCitations(objective.id, aro.id, originalCitations);
+
+    const missingFindingId = faker.datatype.uuid();
+    const unresolvedCitations = [
+      {
+        citation: 'Resolved citation update',
+        monitoringReferences: [buildMonitoringReference({
+          grantId: grant.id,
+          findingId: findingIdTwo,
+          reviewName: 'Review Updated',
+          standardId: 200114,
+          grantNumber: grant.number,
+        })],
+      },
+      {
+        citation: 'Unresolved citation update',
+        monitoringReferences: [buildMonitoringReference({
+          grantId: grant.id,
+          findingId: missingFindingId,
+          reviewName: 'Review Missing',
+          standardId: 200115,
+          grantNumber: grant.number,
+        })],
+      },
+    ];
+
+    await expect(sequelize.transaction(async () => {
+      await cacheCitations(objective.id, aro.id, unresolvedCitations);
+    }))
+      .rejects
+      .toThrow(`No Citation record found for finding IDs: ${missingFindingId}`);
+
+    const savedCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(savedCitations).toHaveLength(1);
+    expect(savedCitations[0].citation).toBe('Persisted citation');
+    expect(savedCitations[0].findingId).toBe(findingIdOne);
   });
 
   it('correctly removes and prevents the saving of citations for non-monitoring goals', async () => {

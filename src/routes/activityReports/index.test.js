@@ -44,6 +44,7 @@ describe('activityReports route wiring', () => {
     mockMiddleware = {
       checkReviewReportBody: jest.fn(),
       checkSaveReportCitationBody: jest.fn(),
+      checkSaveOtherEntityObjectivesCitationBody: jest.fn(),
     };
 
     mockCheckIdMiddleware = {
@@ -78,6 +79,16 @@ describe('activityReports route wiring', () => {
       mockCheckIdMiddleware.checkActivityReportIdParam,
       mockMiddleware.checkSaveReportCitationBody,
       mockHandlers.saveReport,
+    ]);
+  });
+
+  it('wires citation validation middleware for POST /objectives', () => {
+    const objectivesRoute = mockRouter.post.mock.calls.find(([path]) => path === '/objectives');
+
+    expect(objectivesRoute).toEqual([
+      '/objectives',
+      mockMiddleware.checkSaveOtherEntityObjectivesCitationBody,
+      mockHandlers.saveOtherEntityObjectivesForReport,
     ]);
   });
 });

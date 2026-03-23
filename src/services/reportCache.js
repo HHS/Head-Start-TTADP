@@ -1,10 +1,9 @@
+import { Op } from 'sequelize';
 import {
   processActivityReportObjectiveForResourcesById,
 } from './resource';
 import { auditLogger } from '../logger';
-
-const { Op } = require('sequelize');
-const {
+import {
   ActivityReportGoal,
   ActivityReportGoalFieldResponse,
   ActivityReportObjective,
@@ -20,7 +19,7 @@ const {
   Objective,
   sequelize,
   Topic,
-} = require('../models');
+} from '../models';
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
   const fileIds = files.map((file) => file.id);
@@ -360,14 +359,24 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
           .filter(([, citationId]) => citationId !== undefined),
       );
 
+      const unresolvedFindingIds = findingIdentifiers
+        .filter((findingIdentifier) => !citationIdByFindingId.has(findingIdentifier));
+
+      if (unresolvedFindingIds.length > 0) {
+        const errorMessage = `Unable to cache citations for objective ${objectiveId} `
+          + `and activity report objective ${activityReportObjectiveId}. `
+          + `No Citation record found for finding IDs: ${unresolvedFindingIds.join(', ')}`;
+        auditLogger.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+
       newCitations = newCitations
         .map((citation) => ({
           ...citation,
           citationId: citation.findingId
-            ? citationIdByFindingId.get(citation.findingId) || null
+            ? citationIdByFindingId.get(citation.findingId)
             : null,
-        }))
-        .filter((citation) => citation.citationId !== null);
+        }));
     }
 
     // If we have citations to save, create them.

@@ -39,6 +39,10 @@ interface SaveReportBody {
   goals?: SaveReportGoalBody[] | null;
 }
 
+interface SaveOtherEntityObjectivesBody {
+  objectivesWithoutGoals?: SaveReportObjectiveBody[] | null;
+}
+
 const validateTimezone = (value: string, helpers: Joi.CustomHelpers) => {
   if (!moment.tz.zone(value)) {
     return helpers.error('any.invalid');
@@ -84,17 +88,27 @@ const citationSchema = Joi.object({
   monitoringReferences: Joi.array().items(monitoringReferenceSchema).required(),
 }).unknown(true);
 
+const optionalCitationsSchema = Joi.alternatives().try(
+  Joi.array().items(citationSchema),
+  Joi.valid(null),
+).optional();
+
 const saveReportCitationSchema = Joi.object({
   goals: Joi.array().items(
     Joi.object({
       objectives: Joi.array().items(
         Joi.object({
-          citations: Joi.alternatives().try(
-            Joi.array().items(citationSchema),
-            Joi.valid(null),
-          ).optional(),
+          citations: optionalCitationsSchema,
         }).unknown(true),
       ).optional(),
+    }).unknown(true),
+  ).optional(),
+}).unknown(true);
+
+const saveOtherEntityObjectivesCitationSchema = Joi.object({
+  objectivesWithoutGoals: Joi.array().items(
+    Joi.object({
+      citations: optionalCitationsSchema,
     }).unknown(true),
   ).optional(),
 }).unknown(true);
@@ -122,6 +136,35 @@ export function checkSaveReportCitationBody(req: Request, res: Response, next: N
   }
 
   const { error } = saveReportCitationSchema.validate(requestBody, {
+    abortEarly: false,
+    allowUnknown: false,
+  });
+
+  if (error) {
+    const msg = `${errorMessage}: ${error.message}`;
+    auditLogger.error(msg);
+    return res.status(httpCodes.BAD_REQUEST).send(msg);
+  }
+
+  return next();
+}
+
+export function checkSaveOtherEntityObjectivesCitationBody(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const requestBody = req.body as SaveOtherEntityObjectivesBody | undefined;
+
+  if (
+    !requestBody
+    || requestBody.objectivesWithoutGoals === undefined
+    || requestBody.objectivesWithoutGoals === null
+  ) {
+    return next();
+  }
+
+  const { error } = saveOtherEntityObjectivesCitationSchema.validate(requestBody, {
     abortEarly: false,
     allowUnknown: false,
   });

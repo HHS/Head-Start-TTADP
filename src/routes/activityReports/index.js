@@ -25,7 +25,11 @@ import {
   getReportsByManyIds,
   getGroups,
 } from './handlers';
-import { checkReviewReportBody, checkSaveReportCitationBody } from './middleware';
+import {
+  checkReviewReportBody,
+  checkSaveOtherEntityObjectivesCitationBody,
+  checkSaveReportCitationBody,
+} from './middleware';
 import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
 import { nameTransactionByBase, nameTransactionByPath } from '../../middleware/newRelicMiddleware';
@@ -45,7 +49,11 @@ router.get('/activity-recipients', transactionWrapper(getActivityRecipients));
 router.get('/activity-recipients/:reportId', transactionWrapper(getActivityRecipientsForExistingReport));
 router.get('/goals', transactionWrapper(getGoals));
 router.post('/goals', transactionWrapper(createGoalsForReport));
-router.post('/objectives', transactionWrapper(saveOtherEntityObjectivesForReport));
+router.post(
+  '/objectives',
+  checkSaveOtherEntityObjectivesCitationBody,
+  transactionWrapper(saveOtherEntityObjectivesForReport),
+);
 router.get('/alerts', nameTransactionByPath, transactionWrapper(getReportAlerts));
 router.get('/storage-cleanup', nameTransactionByPath, transactionWrapper(getReportsForLocalStorageCleanup));
 router.get('/alerts/download-all', transactionWrapper(downloadAllAlerts));
