@@ -45,7 +45,7 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data, loading }) 
     <div className="margin-bottom-3">
       <WidgetContainerSubtitle marginY={0}>
         Active deficient citations addressed in approved Activity Reports (AR)
-        compared against all act ive deficiencies.
+        compared against all active deficiencies.
       </WidgetContainerSubtitle>
       <div className="margin-top-1">
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
@@ -71,7 +71,7 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data, loading }) 
         subtitle={subtitle}
         legendConfig={deriveLineGraphLegendConfig(data, DEFAULT_LEGEND_CONFIG)}
         drawerConfig={{
-          tagName: 'blank-for-testing',
+          tagName: 'ttahub-regional-dash-monitoring-filters',
           title: 'Monitoring dashboard filters',
         }}
       />
