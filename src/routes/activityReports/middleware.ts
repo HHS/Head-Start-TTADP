@@ -10,6 +10,16 @@ const errorMessage = 'Received malformed request body';
 
 interface SaveReportCitationMonitoringReferenceBody {
   grantId: number;
+  findingId: string;
+  grantNumber: string;
+  reviewName: string;
+  standardId: number;
+  findingType: string;
+  findingSource: string;
+  acro: string;
+  severity: number;
+  reportDeliveryDate: string;
+  monitoringFindingStatusName: string;
 }
 
 interface SaveReportCitationBody {
@@ -57,6 +67,16 @@ const reviewReportSchema = Joi.object({
 
 const monitoringReferenceSchema = Joi.object({
   grantId: Joi.number().integer().positive().required(),
+  findingId: Joi.string().trim().required(),
+  grantNumber: Joi.string().trim().required(),
+  reviewName: Joi.string().trim().required(),
+  standardId: Joi.number().integer().positive().required(),
+  findingType: Joi.string().trim().required(),
+  findingSource: Joi.string().trim().required(),
+  acro: Joi.string().trim().required(),
+  severity: Joi.number().integer().min(0).required(),
+  reportDeliveryDate: Joi.string().isoDate().required(),
+  monitoringFindingStatusName: Joi.string().trim().required(),
 }).unknown(true);
 
 const citationSchema = Joi.object({
