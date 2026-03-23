@@ -26,4 +26,122 @@
   }
 }
 
+@media print {
+  .ttahub-recipient-record--tabs_back-to-search {
+    display: none !important;
+  }
+
+  .maxw-desktop {
+    max-width: 100%;
+  }
+
+  .page-heading {
+    margin-left: 0 !important;
+    margin-bottom: 1rem !important;
+    font-size: 2.2rem;
+    line-height: 1.15;
+  }
+
+  h2.smart-hub-serif {
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+
+  .goal-history-print-goal-number {
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+
+  .recipient-goal-print-accent {
+    border-left: 4px solid $base-dark;
+    padding-left: 0.75rem;
+    margin-top: 0.15rem;
+  }
+
+  .view-standard-goals-accordion .usa-accordion__button {
+    display: none;
+  }
+
+  .usa-accordion__content.view-standard-goals-accordion {
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-bottom: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .view-standard-goals-accordion.usa-accordion__heading {
+    margin: 0;
+    padding: 0;
+  }
+
+  .goal-history-content {
+    margin-top: 0.5rem;
+    padding-top: 0;
+  }
+
+  .goal-history-content,
+  .goal-history-content * {
+    border-left-color: transparent;
+  }
+
+  .goal-history-content [data-testid='read-only-label'] {
+    margin-top: 0.6rem !important;
+    margin-bottom: 0.1rem !important;
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .goal-history-content [data-testid='read-only-value'] {
+    margin-top: 0 !important;
+    margin-bottom: 0.55rem;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  .usa-accordion__content.view-standard-goals-accordion--with-divider .goal-history-content {
+    border-top: 1px solid $base-lighter;
+    margin-top: 0.75rem;
+    padding-top: 0.85rem;
+  }
+
+  .goal-history-content .usa-summary-box {
+    border: 0;
+    padding: 0;
+    margin-bottom: 0.75rem;
+  }
+
+  .goal-history-content .usa-summary-box__heading {
+    font-size: 1.17em;
+    line-height: 1.2;
+  }
+
+  .goal-history-content .usa-summary-box__body {
+    padding: 0;
+  }
+
+  .goal-history-print-overview p {
+    margin-bottom: 0.2rem;
+  }
+
+  .goal-history-print-overview p:first-child {
+    margin-bottom: 0.4rem;
+  }
+
+  .goal-history-content h3 {
+    margin-top: 1rem;
+    margin-bottom: 0.35rem;
+    line-height: 1.2;
+  }
+
+  .goal-history-content .usa-list {
+    margin-top: 0.2rem;
+    margin-bottom: 0.6rem;
+    padding-left: 1rem;
+  }
+
+  .goal-history-content .resource-sections-container .usa-list {
+    margin-bottom: 0.25rem;
+  }
+}
+
 

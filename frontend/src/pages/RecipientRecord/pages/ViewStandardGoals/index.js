@@ -24,6 +24,7 @@ import Container from '../../../../components/Container';
 import colors from '../../../../colors';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
+import ContextMenu from '../../../../components/ContextMenu';
 import ReadOnlyField from '../../../../components/ReadOnlyField';
 import { Accordion } from '../../../../components/Accordion';
 import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
@@ -129,6 +130,11 @@ export default function ViewGoalDetails({
   };
 
   const { goalId } = getQueryParams();
+
+  const menuItems = [{
+    label: 'Print goal summary',
+    onClick: () => window.print(),
+  }];
 
   const canView = user.permissions.filter(
     (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
@@ -261,9 +267,13 @@ export default function ViewGoalDetails({
       title: `G-${goal.id} | ${goal.status}`,
       expanded: index === 0,
       handleToggle: () => { }, // Add dummy handler to satisfy prop-types
-      className: 'view-standard-goals-accordion',
+      className: `view-standard-goals-accordion${index > 0 ? ' view-standard-goals-accordion--with-divider' : ''}`,
       content: (
         <div className="goal-history-content">
+          <div className="print-only margin-bottom-2">
+            <h3 className="margin-top-0 margin-bottom-0 smart-hub-serif goal-history-print-goal-number">Goal number</h3>
+            <p className="margin-top-1 margin-bottom-2">{`G-${goal.id}`}</p>
+          </div>
           <SummaryBox>
             <SummaryBoxHeading headingLevel="h3">Goal updates</SummaryBoxHeading>
             <SummaryBoxContent>
@@ -530,60 +540,96 @@ export default function ViewGoalDetails({
 
       <Container className="margin-y-3 margin-left-2 maxw-desktop" paddingX={4} paddingY={5}>
         <div className="margin-bottom-3">
-          <h2 className="margin-top-0 margin-bottom-3 smart-hub-serif">Goal Summary</h2>
+          <div className="display-flex flex-justify margin-bottom-3">
+            <h2 className="margin-top-0 margin-bottom-0 smart-hub-serif">Goal summary</h2>
+            <div className="no-print">
+              <ContextMenu
+                label={`Actions for goal ${goalId}`}
+                menuItems={menuItems}
+              />
+            </div>
+          </div>
           <ReadOnlyField label="Recipient grant numbers">
             {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
           </ReadOnlyField>
           <ReadOnlyField label="Recipient's goal">
-            {firstGoal.name || goalTemplateName}
+            <div className="recipient-goal-print-accent">
+              {firstGoal.name || goalTemplateName}
+            </div>
           </ReadOnlyField>
         </div>
 
-        <DashboardOverviewContainer
-          loading={loading}
-          fieldData={[
-            {
-              key: 'activity-reports',
-              icon: faChartColumn,
-              iconColor: colors.success,
-              backgroundColor: colors.successLighter,
-              label1: 'Activity reports',
-              data: String(overview?.activityReports ?? 0),
-              showTooltip: true,
-              tooltipText: 'The number of Activity Reports the goal was used on.',
-            },
-            {
-              key: 'goal-objectives',
-              icon: faPenCircle,
-              iconColor: colors.ttahubMediumBlue,
-              backgroundColor: colors.ttahubBlueLight,
-              label1: 'Goal objectives',
-              data: String(overview?.objectives ?? 0),
-              showTooltip: true,
-              tooltipText: 'The number of objectives on the goal.',
-            },
-            {
-              key: 'goal-closures',
-              icon: faCheckCircle,
-              iconColor: colors.success,
-              backgroundColor: colors.successLighter,
-              label1: 'Goal closures',
-              data: String(overview?.closures ?? 0),
-              showTooltip: true,
-              tooltipText: 'The number of times the goal has been closed.',
-            },
-            {
-              key: 'goal-suspensions',
-              icon: faPauseCircle,
-              iconColor: colors.errorDark,
-              backgroundColor: colors.errorLighter,
-              label1: 'Goal suspensions',
-              data: String(overview?.suspensions ?? 0),
-              showTooltip: true,
-              tooltipText: 'The number of times the goal has been suspended.',
-            },
-          ]}
-        />
+        <div className="goal-history-dashboard no-print">
+          <DashboardOverviewContainer
+            loading={loading}
+            fieldData={[
+              {
+                key: 'activity-reports',
+                icon: faChartColumn,
+                iconColor: colors.success,
+                backgroundColor: colors.successLighter,
+                label1: 'Activity reports',
+                data: String(overview?.activityReports ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of Activity Reports the goal was used on.',
+              },
+              {
+                key: 'goal-objectives',
+                icon: faPenCircle,
+                iconColor: colors.ttahubMediumBlue,
+                backgroundColor: colors.ttahubBlueLight,
+                label1: 'Goal objectives',
+                data: String(overview?.objectives ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of objectives on the goal.',
+              },
+              {
+                key: 'goal-closures',
+                icon: faCheckCircle,
+                iconColor: colors.success,
+                backgroundColor: colors.successLighter,
+                label1: 'Goal closures',
+                data: String(overview?.closures ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of times the goal has been closed.',
+              },
+              {
+                key: 'goal-suspensions',
+                icon: faPauseCircle,
+                iconColor: colors.errorDark,
+                backgroundColor: colors.errorLighter,
+                label1: 'Goal suspensions',
+                data: String(overview?.suspensions ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of times the goal has been suspended.',
+              },
+            ]}
+          />
+        </div>
+
+        <div className="goal-history-print-overview print-only margin-bottom-4">
+          <p className="margin-bottom-1 text-bold">Goal information:</p>
+          <p className="margin-y-0">
+            <strong>{overview?.activityReports ?? 0}</strong>
+            {' '}
+            Activity Reports
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.objectives ?? 0}</strong>
+            {' '}
+            goal objectives
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.closures ?? 0}</strong>
+            {' '}
+            goal closures
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.suspensions ?? 0}</strong>
+            {' '}
+            goal suspensions
+          </p>
+        </div>
 
         <Accordion
           multiselectable

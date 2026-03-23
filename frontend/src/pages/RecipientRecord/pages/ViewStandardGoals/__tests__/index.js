@@ -375,6 +375,29 @@ describe('ViewGoalDetails', () => {
     expect(link).toHaveAttribute('href', '/recipient-tta-records/1/region/1/rttapa/');
   });
 
+  test('shows actions menu and prints goal summary', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+
+    const printSpy = jest.spyOn(window, 'print').mockImplementation(() => {});
+
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const actionsButton = await screen.findByRole('button', { name: /Actions for goal 1/i });
+    await act(async () => {
+      await userEvent.click(actionsButton);
+    });
+
+    const printGoalSummaryItem = await screen.findByRole('button', { name: 'Print goal summary' });
+    await act(async () => {
+      await userEvent.click(printGoalSummaryItem);
+    });
+
+    expect(printSpy).toHaveBeenCalled();
+    printSpy.mockRestore();
+  });
+
   test('renders goal status updates correctly sorted and formatted', async () => {
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
@@ -913,5 +936,37 @@ describe('ViewGoalDetails', () => {
     const zeroSpans = await screen.findAllByText('0');
     // All four widgets should show 0
     expect(zeroSpans.length).toBeGreaterThanOrEqual(4);
+  });
+
+  test('renders print goal information values from overview', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const heading = await screen.findByText('Goal information:');
+    const printOverview = heading.closest('.goal-history-print-overview');
+    const normalizedText = printOverview.textContent.replace(/\s+/g, ' ').trim();
+
+    expect(normalizedText).toContain('Goal information:');
+    expect(normalizedText).toContain('2 Activity Reports');
+    expect(normalizedText).toContain('3 goal objectives');
+    expect(normalizedText).toContain('1 goal closures');
+    expect(normalizedText).toContain('0 goal suspensions');
+  });
+
+  test('renders a print goal number heading for each goal history item', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const goalNumberHeadings = await screen.findAllByRole('heading', {
+      name: 'Goal number',
+      level: 3,
+      hidden: true,
+    });
+
+    expect(goalNumberHeadings).toHaveLength(mockGoalHistory.length);
   });
 });
