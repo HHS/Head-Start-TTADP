@@ -660,7 +660,7 @@ export default function FeedbackSurveys() {
                     scope="col"
                     aria-sort={getAriaSort(sort, 'submittedAt')}
                   >
-                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('submittedAt')}>
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('submittedAt')}>
                       <span>{SORTABLE_COLUMNS.submittedAt}</span>
                       <span className="feedback-sort-icons" aria-hidden="true">
                         <span>{getSortIcons(sort, 'submittedAt').up}</span>
@@ -673,7 +673,7 @@ export default function FeedbackSurveys() {
                     scope="col"
                     aria-sort={getAriaSort(sort, 'pageId')}
                   >
-                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('pageId')}>
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('pageId')}>
                       <span>{SORTABLE_COLUMNS.pageId}</span>
                       <span className="feedback-sort-icons" aria-hidden="true">
                         <span>{getSortIcons(sort, 'pageId').up}</span>
@@ -685,7 +685,7 @@ export default function FeedbackSurveys() {
                     scope="col"
                     aria-sort={getAriaSort(sort, 'surveyType')}
                   >
-                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('surveyType')}>
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('surveyType')}>
                       <span>{SORTABLE_COLUMNS.surveyType}</span>
                       <span className="feedback-sort-icons" aria-hidden="true">
                         <span>{getSortIcons(sort, 'surveyType').up}</span>
@@ -697,7 +697,7 @@ export default function FeedbackSurveys() {
                     scope="col"
                     aria-sort={getAriaSort(sort, 'rating')}
                   >
-                    <button type="button" className="ttahub-button--unstyled text-bold feedback-sort-label" onClick={() => onSortColumn('rating')}>
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('rating')}>
                       <span>{SORTABLE_COLUMNS.rating}</span>
                       <span className="feedback-sort-icons" aria-hidden="true">
                         <span>{getSortIcons(sort, 'rating').up}</span>

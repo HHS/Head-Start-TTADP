@@ -120,14 +120,19 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
         return;
       }
 
-      const targetTop = commentSection.offsetTop - ((container.clientHeight - commentSection.clientHeight) / 2);
+      const targetTop = commentSection.offsetTop
+        - ((container.clientHeight - commentSection.clientHeight) / 2);
       const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
       const clampedTargetTop = Math.max(0, Math.min(targetTop, maxScrollTop));
 
-      container.scrollTo({
-        top: clampedTargetTop,
-        behavior: 'smooth',
-      });
+      if (typeof container.scrollTo === 'function') {
+        container.scrollTo({
+          top: clampedTargetTop,
+          behavior: 'smooth',
+        });
+      } else {
+        commentSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
 
       if (focusComment) {
         commentInputRef.current?.focus();
@@ -144,7 +149,12 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
   };
 
   useEffect(() => {
-    if (!useThumbRating || !selectedRating || !surveyContainerRef.current || !commentSectionRef.current) {
+    if (
+      !useThumbRating
+      || !selectedRating
+      || !surveyContainerRef.current
+      || !commentSectionRef.current
+    ) {
       return;
     }
 
@@ -161,7 +171,8 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
     return (
       <button
         type="button"
-        className="survey-feedback__reopen-button position-fixed right-2 bottom-2 width-5 height-5 radius-pill display-flex flex-align-center flex-justify-center"
+        className={`usa-button survey-feedback__reopen-button position-fixed right-2 bottom-2
+          width-5 height-5 radius-pill display-flex flex-align-center flex-justify-center margin-0`}
         onClick={handleReopen}
         aria-label="Reopen survey"
         aria-describedby={reopenTooltipId}
@@ -185,9 +196,9 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
         <h3 className="margin-0 font-sans-lg text-bold text-base-darkest">{title}</h3>
         <button
           type="button"
-          className="survey-feedback__close-button"
+          className="usa-button usa-button--unstyled survey-feedback__close-button"
           onClick={handleDismiss}
-          aria-label="Collapse survey"
+          aria-label="Dismiss survey"
         >
           <FontAwesomeIcon icon={faChevronDown} />
         </button>
@@ -204,7 +215,7 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
                   <div className="display-flex flex-gap-2 margin-bottom-2" role="radiogroup" aria-label="Rate this page">
                     <button
                       type="button"
-                      className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.UP ? 'is-selected' : ''}`}
+                      className={`usa-button usa-button--outline survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 margin-0 ${selectedRating === THUMBS_RATINGS.UP ? 'is-selected' : ''}`}
                       onClick={() => handleThumbSelection(THUMBS_RATINGS.UP, onChange)}
                       aria-pressed={selectedRating === THUMBS_RATINGS.UP}
                       aria-label="Thumbs up"
@@ -213,7 +224,7 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
                     </button>
                     <button
                       type="button"
-                      className={`survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 ${selectedRating === THUMBS_RATINGS.DOWN ? 'is-selected' : ''}`}
+                      className={`usa-button usa-button--outline survey-feedback__thumb-button display-inline-flex flex-align-center flex-justify-center width-5 height-5 margin-0 ${selectedRating === THUMBS_RATINGS.DOWN ? 'is-selected' : ''}`}
                       onClick={() => handleThumbSelection(THUMBS_RATINGS.DOWN, onChange)}
                       aria-pressed={selectedRating === THUMBS_RATINGS.DOWN}
                       aria-label="Thumbs down"
@@ -257,7 +268,7 @@ function FeedbackSurvey({ pageId, onSubmit, useThumbRating }) {
           {!useThumbRating && (
             <button
               type="button"
-              className="survey-feedback__expand-button display-flex flex-align-center flex-gap-1 font-sans-2xs"
+              className="usa-button usa-button--unstyled survey-feedback__expand-button display-flex flex-align-center flex-gap-1 font-sans-2xs margin-0"
               onClick={() => setIsCommentExpanded(!isCommentExpanded)}
               aria-expanded={isCommentExpanded}
             >
