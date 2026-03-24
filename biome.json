@@ -19,14 +19,14 @@
     "rules": {
       "recommended": true,
       "a11y": {
-        "noLabelWithoutControl": "warn",
-        "noNoninteractiveElementToInteractiveRole": "warn",
-        "noNoninteractiveTabindex": "warn",
-        "noStaticElementInteractions": "warn",
-        "useAriaPropsSupportedByRole": "warn",
-        "useFocusableInteractive": "warn",
-        "useSemanticElements": "warn",
-        "useValidAnchor": "warn"
+        "noLabelWithoutControl": "error",
+        "noNoninteractiveElementToInteractiveRole": "error",
+        "noNoninteractiveTabindex": "error",
+        "noStaticElementInteractions": "error",
+        "useAriaPropsSupportedByRole": "error",
+        "useFocusableInteractive": "error",
+        "useSemanticElements": "error",
+        "useValidAnchor": "error"
       },
       "correctness": {
         "useExhaustiveDependencies": "warn",
@@ -49,14 +49,14 @@
       "quoteStyle": "single",
       "jsxQuoteStyle": "double",
       "trailingCommas": "es5",
-      "semicolons": "asNeeded"
+      "semicolons": "always"
     }
   },
   "assist": {
     "enabled": true,
     "actions": {
       "source": {
-        "organizeImports": "off"
+        "organizeImports": "on"
       }
     }
   }
