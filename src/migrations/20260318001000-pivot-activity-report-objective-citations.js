@@ -300,26 +300,26 @@ module.exports = {
         { transaction },
       );
 
-      // Remove rows that cannot satisfy required flattened-column constraints.
-      // These legacy rows are incomplete and cannot be represented by the updated model.
-      await queryInterface.sequelize.query(
-        `
-          DELETE FROM "${AROC_TABLE}"
-          WHERE "citationId" IS NULL
-             OR "findingId" IS NULL
-             OR "grantId" IS NULL
-             OR "grantNumber" IS NULL
-             OR "reviewName" IS NULL
-             OR "standardId" IS NULL
-             OR "findingType" IS NULL
-             OR "findingSource" IS NULL
-             OR acro IS NULL
-             OR severity IS NULL
-             OR "reportDeliveryDate" IS NULL
-             OR "monitoringFindingStatusName" IS NULL;
-        `,
-        { transaction },
-      );
+      // // Remove rows that cannot satisfy required flattened-column constraints.
+      // // These legacy rows are incomplete and cannot be represented by the updated model.
+      // await queryInterface.sequelize.query(
+      //   `
+      //     DELETE FROM "${AROC_TABLE}"
+      //     WHERE "citationId" IS NULL
+      //        OR "findingId" IS NULL
+      //        OR "grantId" IS NULL
+      //        OR "grantNumber" IS NULL
+      //        OR "reviewName" IS NULL
+      //        OR "standardId" IS NULL
+      //        OR "findingType" IS NULL
+      //        OR "findingSource" IS NULL
+      //        OR acro IS NULL
+      //        OR severity IS NULL
+      //        OR "reportDeliveryDate" IS NULL
+      //        OR "monitoringFindingStatusName" IS NULL;
+      //   `,
+      //   { transaction },
+      // );
 
       // Align DB nullability with model-level required flattened columns.
       await Promise.all(flattenedColumnConfigs(Sequelize, false).map(({ name, definition }) => (
