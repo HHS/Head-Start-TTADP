@@ -694,8 +694,6 @@ jobs:
     steps:
     - checkout
     - install_cf_tools
-    - cf_login:
-        target_env: << parameters.target_env >>
     - set_env_vars:
         target_env: << parameters.target_env >>
     - run:
@@ -727,6 +725,15 @@ jobs:
               },
               taskRuns: []
             }' > "${STATUS_FILE}"
+
+          if ! cf login -a "${cg_api}" \
+            -u "${cg_username}" \
+            -p "${cg_password}" \
+            -o "${cg_org}" \
+            -s "${cg_space}" >"${LOG_DIR}/phase-login.log" 2>&1; then
+            echo "Cloud Foundry login failed" | tee -a "${LOG_DIR}/phase-login.log"
+            exit 1
+          fi
 
           PHASE_NAMES=(
             "download"
@@ -771,18 +778,23 @@ jobs:
 
           cf logout >/dev/null 2>&1 || true
     - run:
+        when: always
         name: Create monitoring updates summary
         command: |
           chmod +x ./.circleci/scripts/build_import_summary.sh
           ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 6
     - notify_slack:
+        step_when: always
         message_text_file: monitoring-updates.txt
         slack_channel: << parameters.slack_channel >>
     - store_artifacts:
+        when: always
         path: import-artifacts
     - store_artifacts:
+        when: always
         path: monitoring-updates.txt
     - run:
+        when: always
         name: Fail if any import phase failed
         command: |
           STATUS_FILE="import-artifacts/import-status.json"
@@ -1468,6 +1480,11 @@ commands:
   notify_slack:
     description: "Notify Slack @ << parameters.slack_channel >>"
     parameters:
+      step_when:
+        description: "When to run the Slack notification step"
+        type: enum
+        enum: ["always", "on_success", "on_fail"]
+        default: "on_success"
       slack_bot_token:
         description: "Slack bot token"
         type: string
@@ -1486,6 +1503,7 @@ commands:
         default: ""
     steps:
     - run:
+        when: << parameters.step_when >>
         name: Notify Slack
         command: |
           if [[ -n "<< parameters.message_text >>" ]]; then
