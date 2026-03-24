@@ -1,19 +1,14 @@
-import React, { useRef, useContext } from 'react';
-import PropTypes from 'prop-types';
+import { Button, ModalToggleButton } from '@trussworks/react-uswds';
 import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Button,
-  ModalToggleButton,
-} from '@trussworks/react-uswds';
-import { deleteGroup, fetchGroups } from '../../../fetchers/groups';
-import VanillaModal from '../../../components/VanillaModal';
 import AppLoadingContext from '../../../AppLoadingContext';
+import VanillaModal from '../../../components/VanillaModal';
+import { deleteGroup, fetchGroups } from '../../../fetchers/groups';
 import './MyGroup.scss';
 
-export default function MyGroup({
-  group, setMyGroups, setError, isViewOnly, isCoOwner,
-}) {
+export default function MyGroup({ group, setMyGroups, setError, isViewOnly, isCoOwner }) {
   const modalRef = useRef();
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
 
@@ -48,36 +43,55 @@ export default function MyGroup({
 
   return (
     <tr key={group.id}>
-      <td data-label="Group name">
-        {group.name}
-      </td>
-      <td data-label="Owner">
-        {group.creator.name}
-      </td>
-      <td data-label="Access">
-        {determineGroupAccess()}
-      </td>
-      <td data-label="Last update">
-        {getLastUpdated()}
-      </td>
-      <td className={isViewOnly ? 'smart-hub--groups-view' : 'smart-hub--groups-edit-delete'} align="right">
-        {
-          isViewOnly
-            ? <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled">View group</Link>
-            : (
-              <>
-                <Link disabled={isAppLoading} to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
-                <ModalToggleButton disabled={isAppLoading} opener aria-label={`delete ${group.name}`} modalRef={modalRef} unstyled>Delete group</ModalToggleButton>
-              </>
-            )
-        }
+      <td data-label="Group name">{group.name}</td>
+      <td data-label="Owner">{group.creator.name}</td>
+      <td data-label="Access">{determineGroupAccess()}</td>
+      <td data-label="Last update">{getLastUpdated()}</td>
+      <td
+        className={isViewOnly ? 'smart-hub--groups-view' : 'smart-hub--groups-edit-delete'}
+        align="right"
+      >
+        {isViewOnly ? (
+          <Link
+            to={`/account/group/${group.id}`}
+            aria-label={`view ${group.name}`}
+            className="usa-button usa-button--unstyled"
+          >
+            View group
+          </Link>
+        ) : (
+          <>
+            <Link
+              disabled={isAppLoading}
+              to={`/account/my-groups/${group.id}`}
+              aria-label={`edit ${group.name}`}
+              className="usa-button usa-button--unstyled desktop:margin-right-3"
+            >
+              Edit group
+            </Link>
+            <ModalToggleButton
+              disabled={isAppLoading}
+              opener
+              aria-label={`delete ${group.name}`}
+              modalRef={modalRef}
+              unstyled
+            >
+              Delete group
+            </ModalToggleButton>
+          </>
+        )}
 
         <VanillaModal modalRef={modalRef} heading="Are you sure you want to continue?">
           <div>
-            <p className="usa-prose">
-              Your group will be permanently removed.
-            </p>
-            <ModalToggleButton closer modalRef={modalRef} data-focus="true" className="margin-right-1">Cancel</ModalToggleButton>
+            <p className="usa-prose">Your group will be permanently removed.</p>
+            <ModalToggleButton
+              closer
+              modalRef={modalRef}
+              data-focus="true"
+              className="margin-right-1"
+            >
+              Cancel
+            </ModalToggleButton>
             <Button
               type="button"
               className="usa-button--subtle"
@@ -114,9 +128,11 @@ MyGroup.propTypes = {
     editor: PropTypes.shape({
       name: PropTypes.string.isRequired,
     }).isRequired,
-    individuals: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string.isRequired,
-    }).isRequired),
+    individuals: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+      }).isRequired
+    ),
   }).isRequired,
   setMyGroups: PropTypes.func.isRequired,
   setError: PropTypes.func.isRequired,

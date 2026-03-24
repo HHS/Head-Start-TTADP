@@ -1,17 +1,17 @@
-import overview from './overview';
+import approvalRateByDeadline from './approvalRateByDeadline';
 import dashboardOverview from './dashboardOverview';
-import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
-import standardGoalsList from './standardGoalsList';
-import { topicFrequencyGraph } from './topicFrequencyGraph';
-import targetPopulationTable from './targetPopulationTable';
 import frequencyGraph from './frequencyGraph';
 import goalStatusByGoalName from './goalStatusByGoalName';
-import trOverview from './trOverview';
-import trStandardGoalList from './trStandardGoalList';
-import trSessionsByTopic from './trSessionsByTopic';
-import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
-import approvalRateByDeadline from './approvalRateByDeadline';
 import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
+import overview from './overview';
+import standardGoalsList from './standardGoalsList';
+import targetPopulationTable from './targetPopulationTable';
+import { topicFrequencyGraph } from './topicFrequencyGraph';
+import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
+import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
+import trOverview from './trOverview';
+import trSessionsByTopic from './trSessionsByTopic';
+import trStandardGoalList from './trStandardGoalList';
 
 /*
   All widgets need to be added to this object

@@ -1,18 +1,11 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { useController } from 'react-hook-form';
 import { Dropdown } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { useController } from 'react-hook-form';
 
-function SingleApproverSelect({
-  name,
-  options,
-}) {
+function SingleApproverSelect({ name, options }) {
   const {
-    field: {
-      onChange: onSelect,
-      value: selectValue,
-      onBlur: onBlurSelect,
-    },
+    field: { onChange: onSelect, value: selectValue, onBlur: onBlurSelect },
   } = useController({
     name,
     rules: {
@@ -37,16 +30,15 @@ function SingleApproverSelect({
     >
       <option value="">Select an approver</option>
       {options.map((approver) => (
-        <option key={approver.id} value={String(approver.id)}>{approver.fullName}</option>
+        <option key={approver.id} value={String(approver.id)}>
+          {approver.fullName}
+        </option>
       ))}
     </Dropdown>
   );
 }
 
-const value = PropTypes.oneOfType([
-  PropTypes.string,
-  PropTypes.number,
-]);
+const value = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
 
 SingleApproverSelect.propTypes = {
   name: PropTypes.string.isRequired,
@@ -57,10 +49,10 @@ SingleApproverSelect.propTypes = {
         PropTypes.shape({
           label: PropTypes.string.isRequired,
           value: value.isRequired,
-        }),
+        })
       ),
       label: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
 };
 

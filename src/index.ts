@@ -4,11 +4,11 @@ if (process.env.NODE_ENV === 'production') {
   require('newrelic');
 }
 
-// @ts-ignore
+// @ts-expect-error
 import { MeshServer } from '@mesh-kit/core/server';
 import app from './app';
-import { auditLogger } from './logger';
 import { generateRedisConfig } from './lib/queue';
+import { auditLogger } from './logger';
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
 Error.stackTraceLimit = 50;
@@ -21,11 +21,7 @@ const server = app.listen(port, () => {
 let meshServerInstance: MeshServer | null = null;
 
 if (!bypassSockets) {
-  const {
-    uri: redisUrl,
-    tlsEnabled,
-    redisOpts,
-  } = generateRedisConfig();
+  const { uri: redisUrl, tlsEnabled, redisOpts } = generateRedisConfig();
 
   const mesh = new MeshServer({
     server,
@@ -39,7 +35,8 @@ if (!bypassSockets) {
 
   meshServerInstance = mesh;
 
-  mesh.ready()
+  mesh
+    .ready()
     .then(() => {
       // allow mesh to track presence for rooms that are prefixed with 'ar-'
       mesh.trackPresence(/^ar-.*$/);

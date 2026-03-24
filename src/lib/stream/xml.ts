@@ -1,6 +1,6 @@
-import { Readable } from 'stream';
 import { SAXStream } from 'sax';
-import { simplifyObject, detectAndCast } from '../dataObjectUtils';
+import type { Readable } from 'stream';
+import { detectAndCast, simplifyObject } from '../dataObjectUtils';
 
 interface SchemaNode {
   name?: string;
@@ -37,9 +37,11 @@ const processSchema = (schema: SchemaNode, parentOccurrences: number | null = nu
           delete child.attributes;
         }
         // Compare occurrences and set optional if needed
-        if (parentOccurrences !== null
-          && child.occurrences !== undefined
-          && child.occurrences < parentOccurrences) {
+        if (
+          parentOccurrences !== null &&
+          child.occurrences !== undefined &&
+          child.occurrences < parentOccurrences
+        ) {
           child.optional = true;
         }
         // Process the child object
@@ -75,14 +77,17 @@ class XMLStream {
    *
    * @param xmlStream - The Readable stream containing XML data to be processed.
    */
-  constructor(xmlStream: Readable, private virtualRootNode = false) {
+  constructor(
+    xmlStream: Readable,
+    private virtualRootNode = false
+  ) {
     this.xmlStream = xmlStream;
     this.saxStream = new SAXStream(
       false, // Enable strict mode
       {
         trim: true,
         lowercase: true,
-      },
+      }
     );
   }
 
@@ -298,6 +303,4 @@ class XMLStream {
 }
 
 export default XMLStream;
-export {
-  SchemaNode,
-};
+export type { SchemaNode };

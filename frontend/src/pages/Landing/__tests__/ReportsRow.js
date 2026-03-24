@@ -1,16 +1,14 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, waitFor, act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
+import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import { mockWindowProperty } from '../../../testHelpers';
+import UserContext from '../../../UserContext';
 import { ReportsRow } from '../MyAlerts';
 import activityReports from '../mocks';
-import UserContext from '../../../UserContext';
 
 const user = {
   name: 'test@test.com',
@@ -47,7 +45,7 @@ describe('ReportsRow', () => {
             message={message}
           />
         </Router>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
@@ -60,7 +58,9 @@ describe('ReportsRow', () => {
     userEvent.click(context);
     const [deleteButton] = await screen.findAllByRole('button', { name: /delete/i });
     userEvent.click(deleteButton);
-    const confirmDelete = document.querySelector('[aria-label="This button will permanently delete the report."]');
+    const confirmDelete = document.querySelector(
+      '[aria-label="This button will permanently delete the report."]'
+    );
     userEvent.click(confirmDelete);
     expect(fetchMock.called()).toBe(true);
     await waitFor(() => expect(removeAlert).toHaveBeenCalled());

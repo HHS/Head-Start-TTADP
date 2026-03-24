@@ -7,11 +7,11 @@ export interface QueryOptions {
 
   activityReport: {
     subset: boolean;
-  }
+  };
   grant?: {
     subset: boolean;
-  }
+  };
   goal: {
     subset: boolean;
-  }
+  };
 }

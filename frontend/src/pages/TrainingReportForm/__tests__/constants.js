@@ -1,9 +1,9 @@
 import {
-  pageComplete,
-  pageTouched,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
+  pageComplete,
+  pageTouched,
 } from '../constants';
 
 describe('localStorage keys', () => {

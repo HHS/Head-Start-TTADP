@@ -1,6 +1,6 @@
-import { format, transports, createLogger } from 'winston';
 import expressWinston from 'express-winston';
 import path from 'path';
+import { createLogger, format, transports } from 'winston';
 import { isTrue } from './envParser';
 
 const stackFramePattern = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
@@ -91,15 +91,7 @@ const callsiteFormatter = format((info) => {
   };
 });
 
-const formatFunc = ({
-  level,
-  message,
-  label,
-  timestamp,
-  meta = {},
-  sourceFile,
-  sourceLine,
-}) => {
+const formatFunc = ({ level, message, label, timestamp, meta = {}, sourceFile, sourceLine }) => {
   const location = sourceFile && sourceLine ? ` (${sourceFile}:${sourceLine})` : '';
   return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(meta)}${location}`;
 };
@@ -108,47 +100,32 @@ const stringFormatter = format.combine(
   format.timestamp(),
   format.colorize(),
   format.align(),
-  format.printf(formatFunc),
+  format.printf(formatFunc)
 );
 
-const jsonFormatter = format.combine(
-  format.timestamp(),
-  format.json(),
-);
+const jsonFormatter = format.combine(format.timestamp(), format.json());
 
 const formatter = format.combine(
   ...(shouldIncludeCallsite() ? [callsiteFormatter()] : []),
-  isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter,
+  isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter
 );
 const level = process.env.LOG_LEVEL || 'info';
 
 const logger = createLogger({
   level,
   format: formatter,
-  transports: [
-    new transports.Console(),
-  ],
+  transports: [new transports.Console()],
 });
 
 const auditLogger = createLogger({
   level: 'info',
-  format: format.combine(
-    format.label({ label: 'AUDIT' }),
-    formatter,
-  ),
-  transports: [
-    new transports.Console(),
-  ],
+  format: format.combine(format.label({ label: 'AUDIT' }), formatter),
+  transports: [new transports.Console()],
 });
 
 const requestLogger = expressWinston.logger({
-  transports: [
-    new transports.Console(),
-  ],
-  format: format.combine(
-    format.label({ label: 'REQUEST' }),
-    formatter,
-  ),
+  transports: [new transports.Console()],
+  format: format.combine(format.label({ label: 'REQUEST' }), formatter),
   dynamicMeta: (req, res) => {
     if (req && req.session) {
       return {
@@ -180,6 +157,4 @@ const testingHooks = {
   formatFunc,
 };
 
-export {
-  logger, auditLogger, requestLogger, errorLogger, testingHooks,
-};
+export { logger, auditLogger, requestLogger, errorLogger, testingHooks };

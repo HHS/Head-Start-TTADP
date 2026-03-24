@@ -2,9 +2,12 @@ const { VALID_URL_REGEX } = require('@ttahub/common');
 
 const autoPopulateDomain = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
-  if (instance.url && (instance.domain === undefined
-    || instance.domain === null)) {
-    const [{ groups: { host, ip } }] = instance.url.matchAll(VALID_URL_REGEX);
+  if (instance.url && (instance.domain === undefined || instance.domain === null)) {
+    const [
+      {
+        groups: { host, ip },
+      },
+    ] = instance.url.matchAll(VALID_URL_REGEX);
     const domain = host || ip;
     if (domain) {
       instance.set('domain', domain);
@@ -19,11 +22,9 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateDomain(sequelize, instance, options);
 };
 
-const beforeUpdate = async (sequelize, instance, options) => {
-};
+const beforeUpdate = async (sequelize, instance, options) => {};
 
-const afterUpdate = async (sequelize, instance, options) => {
-};
+const afterUpdate = async (sequelize, instance, options) => {};
 
 const afterCreate = async (sequelize, instance, options) => {
   if (!instance.title) {
@@ -38,10 +39,4 @@ const afterCreate = async (sequelize, instance, options) => {
   }
 };
 
-export {
-  autoPopulateDomain,
-  beforeValidate,
-  beforeUpdate,
-  afterUpdate,
-  afterCreate,
-};
+export { autoPopulateDomain, beforeValidate, beforeUpdate, afterUpdate, afterCreate };

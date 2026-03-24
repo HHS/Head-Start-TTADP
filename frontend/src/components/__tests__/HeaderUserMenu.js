@@ -1,14 +1,12 @@
 import React from 'react';
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import {
-  screen, render, fireEvent,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import App from '../../App';
-import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../../testHelpers';
+import { mockDocumentProperty, mockRSSData, mockWindowProperty } from '../../testHelpers';
 
 const mockBuildInfo = {
   branch: 'main',
@@ -138,7 +136,7 @@ describe('HeaderUserMenu', () => {
     });
     afterEach(() => fetchMock.restore());
 
-    it('doesn\'t show the user menu', async () => {
+    it("doesn't show the user menu", async () => {
       // item with testid 'header-avatar' is not on the dom
       expect(screen.queryByTestId('header-avatar')).toBeNull();
     });

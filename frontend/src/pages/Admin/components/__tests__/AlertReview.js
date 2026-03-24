@@ -1,16 +1,19 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import AlertReview from '../AlertReview';
-
+import React from 'react';
 import { DEFAULT_ALERT } from '../../SiteAlerts';
+import AlertReview from '../AlertReview';
 
 describe('AlertReview', () => {
   afterEach(() => fetchMock.restore());
   const renderAlertReview = (alert, onDelete = jest.fn()) => {
-    render(<div className="smart-hub-header has-alerts"><AlertReview alert={alert} onDelete={onDelete} /></div>);
+    render(
+      <div className="smart-hub-header has-alerts">
+        <AlertReview alert={alert} onDelete={onDelete} />
+      </div>
+    );
   };
 
   it('renders a new alert', () => {

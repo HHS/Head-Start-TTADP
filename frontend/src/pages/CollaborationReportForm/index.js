@@ -3,30 +3,27 @@
   Collaboration report. Makes use of the navigator to split the long form into
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
-import React, {
-  useState, useEffect, useRef, useContext, useMemo,
-} from 'react';
-import PropTypes from 'prop-types';
-import { startCase, keyBy, mapValues } from 'lodash';
-import { Helmet } from 'react-helmet';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import { useHistory, Redirect } from 'react-router-dom';
+
 import { Alert, Grid } from '@trussworks/react-uswds';
-import { FormProvider, useForm } from 'react-hook-form';
-import { REPORT_STATUSES, DECIMAL_BASE, APPROVER_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { keyBy, mapValues, startCase } from 'lodash';
 import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { FormProvider, useForm } from 'react-hook-form';
+import { Redirect, useHistory } from 'react-router-dom';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import pages from './Pages';
-import Navigator from '../../components/Navigator';
-import { NOT_STARTED } from './constants';
-import { convertReportToFormData, isDateValid, findWhatsChanged } from './formDataHelpers';
+import AppLoadingContext from '../../AppLoadingContext';
 import {
-  LOCAL_STORAGE_CR_DATA_KEY,
   LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_CR_DATA_KEY,
   LOCAL_STORAGE_CR_EDITABLE_KEY,
 } from '../../Constants';
-import { getRegionWithReadWrite } from '../../permissions';
-import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
+import MeshPresenceManager from '../../components/MeshPresenceManager';
+import Navigator from '../../components/Navigator';
+import { getApprovers } from '../../fetchers/activityReports';
 import {
   createReport,
   getReport,
@@ -36,15 +33,17 @@ import {
 } from '../../fetchers/collaborationReports';
 import { getCollaborators } from '../../fetchers/collaborators';
 import { getGoalTemplates } from '../../fetchers/goalTemplates';
+import useHookFormPageState from '../../hooks/useHookFormPageState';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
-import AppLoadingContext from '../../AppLoadingContext';
-import NetworkContext, { isOnlineMode } from '../../NetworkContext';
-import UserContext from '../../UserContext';
-import MeshPresenceManager from '../../components/MeshPresenceManager';
 import useLocalStorageCleanup from '../../hooks/useLocalStorageCleanup';
 import usePresenceData from '../../hooks/usePresenceData';
-import { getApprovers } from '../../fetchers/activityReports';
-import useHookFormPageState from '../../hooks/useHookFormPageState';
+import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
+import NetworkContext, { isOnlineMode } from '../../NetworkContext';
+import { getRegionWithReadWrite } from '../../permissions';
+import UserContext from '../../UserContext';
+import { NOT_STARTED } from './constants';
+import { convertReportToFormData, findWhatsChanged, isDateValid } from './formDataHelpers';
+import pages from './Pages';
 import './index.scss';
 import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 
@@ -72,7 +71,10 @@ const defaultValues = {
   id: null,
 };
 
-const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
+const pagesByPos = keyBy(
+  pages.filter((p) => !p.review),
+  (page) => page.position
+);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 
 export const formatReportWithSaveBeforeConversion = async (
@@ -81,13 +83,12 @@ export const formatReportWithSaveBeforeConversion = async (
   user,
   userHasOneRole,
   reportId,
-  forceUpdate,
+  forceUpdate
 ) => {
   // if it isn't a new report, we compare it to the last response from the backend (formData)
   // and pass only the updated to save report
-  const creatorRole = !data.creatorRole && userHasOneRole
-    ? user.roles[0].fullName
-    : data.creatorRole;
+  const creatorRole =
+    !data.creatorRole && userHasOneRole ? user.roles[0].fullName : data.creatorRole;
 
   const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData) || {};
   const isEmpty = Object.keys(updatedFields).length === 0;
@@ -95,14 +96,17 @@ export const formatReportWithSaveBeforeConversion = async (
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
-  const updatedReport = isEmpty && !forceUpdate
-    ? formData
-    : await saveReport(
-      reportId.current, {
-        ...updatedFields,
-        version: 3,
-      }, {},
-    );
+  const updatedReport =
+    isEmpty && !forceUpdate
+      ? formData
+      : await saveReport(
+          reportId.current,
+          {
+            ...updatedFields,
+            version: 3,
+          },
+          {}
+        );
 
   let reportData = {
     ...updatedReport,
@@ -110,8 +114,8 @@ export const formatReportWithSaveBeforeConversion = async (
 
   if (thereIsANeedToParseDates) {
     // Check if dates are in YYYY-MM-DD format before parsing
-    const isYMDFormat = updatedReport.startDate
-      && updatedReport.startDate.match(/^\d{4}-\d{2}-\d{2}$/);
+    const isYMDFormat =
+      updatedReport.startDate && updatedReport.startDate.match(/^\d{4}-\d{2}-\d{2}$/);
     if (isYMDFormat) {
       reportData = {
         ...reportData,
@@ -129,18 +133,12 @@ export const formatReportWithSaveBeforeConversion = async (
 };
 
 export const convertFormDataToReport = (data) => {
-  const {
-    participants,
-    dataUsed,
-    goals,
-    reportGoals,
-    statesInvolved,
-    conductMethod,
-    ...rest
-  } = data;
+  const { participants, dataUsed, goals, reportGoals, statesInvolved, conductMethod, ...rest } =
+    data;
 
   const conductMethodValues = Array.isArray(conductMethod)
-    ? conductMethod[0] : conductMethod || null;
+    ? conductMethod[0]
+    : conductMethod || null;
   const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => s.value) : [];
   const participantValues = participants ? participants.map((p) => p.value) : [];
   const dataUsedValues = dataUsed ? dataUsed.map((d) => d.value) : [];
@@ -148,7 +146,9 @@ export const convertFormDataToReport = (data) => {
   const reportGoalsValues = reportGoals ? reportGoals.map((g) => g.value) : [];
 
   let reportGoalsToUse = goalsValues;
-  if (goalsValues.length === 0) { reportGoalsToUse = reportGoalsValues; }
+  if (goalsValues.length === 0) {
+    reportGoalsToUse = reportGoalsValues;
+  }
 
   return {
     ...rest,
@@ -161,7 +161,9 @@ export const convertFormDataToReport = (data) => {
 };
 
 function CollaborationReport({ match, location }) {
-  const { params: { currentPage, collabReportId } } = match;
+  const {
+    params: { currentPage, collabReportId },
+  } = match;
 
   const hookForm = useForm({
     mode: 'onBlur',
@@ -183,29 +185,30 @@ function CollaborationReport({ match, location }) {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
   const [shouldAutoSave, setShouldAutoSave] = useState(true);
-  const {
-    presenceData,
-    handlePresenceUpdate,
-  } = usePresenceData(setShouldAutoSave);
+  const { presenceData, handlePresenceUpdate } = usePresenceData(setShouldAutoSave);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
 
   const [formData, updateFormData, localStorageAvailable] = useTTAHUBLocalStorage(
-    LOCAL_STORAGE_CR_DATA_KEY(collabReportId), null,
+    LOCAL_STORAGE_CR_DATA_KEY(collabReportId),
+    null
   );
 
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   const [additionalData, updateAdditionalData] = useLocalStorage(
-    LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY(collabReportId), {},
+    LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY(collabReportId),
+    {}
   );
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useLocalStorage(
-    LOCAL_STORAGE_CR_EDITABLE_KEY(collabReportId), (collabReportId === 'new'), currentPage !== 'review',
+    LOCAL_STORAGE_CR_EDITABLE_KEY(collabReportId),
+    collabReportId === 'new',
+    currentPage !== 'review'
   );
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online
@@ -216,9 +219,8 @@ function CollaborationReport({ match, location }) {
   const reportId = useRef();
   const { user } = useContext(UserContext);
 
-  const showLastUpdatedTime = (
-    location.state && location.state.showLastUpdatedTime && connectionActive
-  ) || false;
+  const showLastUpdatedTime =
+    (location.state && location.state.showLastUpdatedTime && connectionActive) || false;
 
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
@@ -233,7 +235,7 @@ function CollaborationReport({ match, location }) {
     collabReportId,
     LOCAL_STORAGE_CR_DATA_KEY,
     LOCAL_STORAGE_CR_EDITABLE_KEY,
-    LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
+    LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY
   );
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
@@ -265,18 +267,16 @@ function CollaborationReport({ match, location }) {
           let fetchedReport;
           try {
             fetchedReport = await getReport(collabReportId);
-            const {
-              submissionStatus,
-              approvers,
-              calculatedStatus,
-            } = fetchedReport;
+            const { submissionStatus, approvers, calculatedStatus } = fetchedReport;
 
             // Before bothering with form data parsing or rendering, let us
             // make sure we BELONG here
             const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
             const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
             // eslint-disable-next-line max-len
-            const isApproverFromFetched = approvers.some(({ user: approver }) => user.id === approver.id);
+            const isApproverFromFetched = approvers.some(
+              ({ user: approver }) => user.id === approver.id
+            );
             const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
 
             if (isApproved || (isSubmitted && !isApproverFromFetched && !isNeedsAction)) {
@@ -325,18 +325,21 @@ function CollaborationReport({ match, location }) {
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
 
         // istanbul ignore next - hard to test collaborator mode
-        const isCollaborator = report.collabReportSpecialists
-          && report.collabReportSpecialists.some((u) => u.specialistId === user.id);
+        const isCollaborator =
+          report.collabReportSpecialists &&
+          report.collabReportSpecialists.some((u) => u.specialistId === user.id);
         const isAuthor = report.userId === user.id;
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
-        const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
-        && (report.calculatedStatus === REPORT_STATUSES.DRAFT
-          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
-        const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
-          report.calculatedStatus === REPORT_STATUSES.SUBMITTED
-          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION)
-        );
+        const canWriteAsCollaboratorOrAuthor =
+          (isCollaborator || isAuthor) &&
+          (report.calculatedStatus === REPORT_STATUSES.DRAFT ||
+            report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+        const canWriteAsApprover =
+          isMatchingApprover &&
+          isMatchingApprover.length > 0 &&
+          (report.calculatedStatus === REPORT_STATUSES.SUBMITTED ||
+            report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
 
         updateAdditionalData({
           collaborators: filteredCollaborators,
@@ -399,11 +402,13 @@ function CollaborationReport({ match, location }) {
         const networkErrorMessage = (
           <>
             {/* eslint-disable-next-line max-len */}
-            There&rsquo;s an issue with your connection. Some sections of this form may not load correctly.
+            There&rsquo;s an issue with your connection. Some sections of this form may not load
+            correctly.
             <br />
-            Your work is saved on this computer. If you continue to have problems,
-            {' '}
-            <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact us</a>
+            Your work is saved on this computer. If you continue to have problems,{' '}
+            <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">
+              contact us
+            </a>
             .
           </>
         );
@@ -426,37 +431,26 @@ function CollaborationReport({ match, location }) {
   }, [collabReportId, user, showLastUpdatedTime]);
 
   if (loading) {
-    return (
-      <div>
-        loading...
-      </div>
-    );
+    return <div>loading...</div>;
   }
 
   // This error message is a catch all assuming that the network storage is working
   // istanbul ignore next - hard to inject an error state
   if (error && !formData) {
-    return (
-      <Alert type="error">
-        {error}
-      </Alert>
-    );
+    return <Alert type="error">{error}</Alert>;
   }
 
   // istanbul ignore next
   if (!currentPage) {
-    return (
-      <Redirect to={`/collaboration-reports/${collabReportId}/activity-summary`} />
-    );
+    return <Redirect to={`/collaboration-reports/${collabReportId}/activity-summary`} />;
   }
 
   // istanbul ignore next - too hard to test
-  const approverCanEdit = isApprover
-    && formData
-    && (
-      formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
-      || formData.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
-    );
+  const approverCanEdit =
+    isApprover &&
+    formData &&
+    (formData.calculatedStatus === REPORT_STATUSES.SUBMITTED ||
+      formData.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
 
   const updatePage = (position) => {
     if (!editable && !approverCanEdit) {
@@ -522,7 +516,7 @@ function CollaborationReport({ match, location }) {
           user,
           userHasOneRole,
           reportId,
-          forceUpdate,
+          forceUpdate
         );
 
         const currentPageState = hookForm.getValues('pageState');
@@ -576,7 +570,9 @@ function CollaborationReport({ match, location }) {
       // show the saved draft message
       updateShowSavedDraft(true);
     } catch (e) {
-      updateErrorMessage('A network error has prevented us from saving your collaboration report to our database. Your work is safely saved to your web browser in the meantime.');
+      updateErrorMessage(
+        'A network error has prevented us from saving your collaboration report to our database. Your work is safely saved to your web browser in the meantime.'
+      );
     } finally {
       setIsAppLoading(false);
     }
@@ -668,20 +664,17 @@ function CollaborationReport({ match, location }) {
     return '';
   })();
 
-  const hideSideNav = formData
-    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
-    && !isApprover;
+  const hideSideNav =
+    formData && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED && !isApprover;
 
   const author = creatorNameWithRole ? (
-      // eslint-disable-next-line react/jsx-indent
-      <>
-        <hr />
-        <p>
-          <strong>Creator:</strong>
-          {' '}
-          {creatorNameWithRole}
-        </p>
-      </>
+    // eslint-disable-next-line react/jsx-indent
+    <>
+      <hr />
+      <p>
+        <strong>Creator:</strong> {creatorNameWithRole}
+      </p>
+    </>
   ) : null;
 
   /* istanbul ignore next: hard to test websocket functionality */
@@ -713,11 +706,7 @@ function CollaborationReport({ match, location }) {
         }
       }
 
-      return (
-        <Alert type="warning">
-          {usersText}
-        </Alert>
-      );
+      return <Alert type="warning">{usersText}</Alert>;
     }
     return null;
   };
@@ -727,9 +716,8 @@ function CollaborationReport({ match, location }) {
     if (presenceData.tabCount > 1) {
       return (
         <Alert type="warning">
-          You have this report open in multiple browser tabs.
-          {' '}
-          To prevent losing your work, please close the other tabs before continuing.
+          You have this report open in multiple browser tabs. To prevent losing your work, please
+          close the other tabs before continuing.
         </Alert>
       );
     }
@@ -738,41 +726,46 @@ function CollaborationReport({ match, location }) {
 
   return (
     <div className="smart-hub-collab-report" ref={formRef} tabIndex={-1}>
-      { error
-      && (
-      <Alert type="warning">
-        {error}
-      </Alert>
-      )}
+      {error && <Alert type="warning">{error}</Alert>}
       {renderMultiUserAlert() || renderMultipleTabAlert()}
       {/* Don't render the Mesh component unless working on a saved report */}
-      { collabReportId !== 'new' && (<MeshPresenceManager room={`cr-${collabReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />)}
-      <Helmet titleTemplate="%s - Collaboration Report | TTA Hub" defaultTitle="Collaboration Report | TTA Hub" />
+      {collabReportId !== 'new' && (
+        <MeshPresenceManager
+          room={`cr-${collabReportId}`}
+          onPresenceUpdate={handlePresenceUpdate}
+          onRevisionUpdate={handleRevisionUpdate}
+        />
+      )}
+      <Helmet
+        titleTemplate="%s - Collaboration Report | TTA Hub"
+        defaultTitle="Collaboration Report | TTA Hub"
+      />
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
-              Collaboration report for Region
-              {' '}
-              {formData?.regionId}
+              Collaboration report for Region {formData?.regionId}
             </h1>
             {author}
           </div>
         </Grid>
         {!hideSideNav && (
-        <Grid col="auto" className="flex-align-self-center">
-          {formData?.calculatedStatus && (
-            <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.calculatedStatus)}</div>
-          )}
-        </Grid>
+          <Grid col="auto" className="flex-align-self-center">
+            {formData?.calculatedStatus && (
+              <div
+                className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}
+              >
+                {startCase(formData.calculatedStatus)}
+              </div>
+            )}
+          </Grid>
         )}
       </Grid>
-      <NetworkContext.Provider value={
-        {
+      <NetworkContext.Provider
+        value={{
           connectionActive: isOnlineMode() && connectionActive,
           localStorageAvailable,
-        }
-      }
+        }}
       >
         <FormProvider {...hookForm}>
           <Navigator

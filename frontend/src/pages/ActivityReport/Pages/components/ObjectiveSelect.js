@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
-import Select from 'react-select';
 import { Label, ModalToggleButton } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
+import Select from 'react-select';
 import Req from '../../../../components/Req';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { OBJECTIVE_PROP } from './constants';
@@ -20,11 +20,9 @@ export default function ObjectiveSelect({
   // Do not mutate function parameters directly; instead, prepare a derived value
   const updatedSelectedObjectives = React.useMemo(() => {
     if (Array.isArray(selectedObjectives)) {
-      return selectedObjectives.map((obj) => (
-        obj && !obj.label
-          ? { ...obj, label: 'Create a new objective' }
-          : obj
-      ));
+      return selectedObjectives.map((obj) =>
+        obj && !obj.label ? { ...obj, label: 'Create a new objective' } : obj
+      );
     }
     if (selectedObjectives && !selectedObjectives.label) {
       return { ...selectedObjectives, label: 'Create a new objective' };
@@ -36,7 +34,7 @@ export default function ObjectiveSelect({
     <>
       <div className="display-flex flex-justify maxw-mobile-lg margin-top-4">
         <h3 className="margin-0">Objective summary</h3>
-        { onRemove && (
+        {onRemove && (
           <ModalToggleButton
             modalRef={modalRef}
             type="button"
@@ -49,9 +47,7 @@ export default function ObjectiveSelect({
         )}
       </div>
       <Label>
-        Select TTA objective&nbsp;
-        {' '}
-        <Req />
+        Select TTA objective&nbsp; <Req />
         {noObjectiveError}
         <Select
           name="objectives"
@@ -81,17 +77,10 @@ export default function ObjectiveSelect({
 
 ObjectiveSelect.propTypes = {
   onChange: PropTypes.func.isRequired,
-  selectedObjectives: PropTypes.oneOfType([
-    PropTypes.arrayOf(OBJECTIVE_PROP),
-    OBJECTIVE_PROP,
-  ]).isRequired,
-  options: PropTypes.arrayOf(
-    OBJECTIVE_PROP,
-  ).isRequired,
-  onRemove: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.func,
-  ]),
+  selectedObjectives: PropTypes.oneOfType([PropTypes.arrayOf(OBJECTIVE_PROP), OBJECTIVE_PROP])
+    .isRequired,
+  options: PropTypes.arrayOf(OBJECTIVE_PROP).isRequired,
+  onRemove: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
   noObjectiveError: PropTypes.node,
 };
 

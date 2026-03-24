@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import DropdownMenu from './DropdownMenu';
 import './ButtonSelect.scss';
 import colors from '../colors';
@@ -83,7 +83,7 @@ function ButtonSelect(props) {
           <strong>{labelText}</strong>
         </span>
         <fieldset className="margin-0 border-0 padding-0" data-testid="button-select-button-group">
-          { options.map((option) => (
+          {options.map((option) => (
             <button
               type="button"
               aria-pressed={option.value === checked}
@@ -96,11 +96,17 @@ function ButtonSelect(props) {
               }}
             >
               {option.label}
-              {option.value === checked ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color={colors.ttahubMediumBlue} icon={faCheck} /> : null}
+              {option.value === checked ? (
+                <FontAwesomeIcon
+                  className="smart-hub--button-select-checkmark"
+                  size="1x"
+                  color={colors.ttahubMediumBlue}
+                  icon={faCheck}
+                />
+              ) : null}
             </button>
           ))}
         </fieldset>
-
       </div>
     </DropdownMenu>
   );

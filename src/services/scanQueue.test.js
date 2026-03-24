@@ -1,11 +1,11 @@
 import Queue from 'bull';
-import addToScanQueue, {
-  scanQueue,
-  onFailedScanQueue,
-  onCompletedScanQueue,
-  processScanQueue,
-} from './scanQueue';
 import { auditLogger, logger } from '../logger';
+import addToScanQueue, {
+  onCompletedScanQueue,
+  onFailedScanQueue,
+  processScanQueue,
+  scanQueue,
+} from './scanQueue';
 
 jest.mock('bull');
 
@@ -47,7 +47,7 @@ describe('addToScanQueue', () => {
         backoff: expect.any(Object),
         removeOnComplete: true,
         removeOnFail: true,
-      }),
+      })
     );
   });
 
@@ -64,7 +64,9 @@ describe('addToScanQueue', () => {
     const result = { status: 200, data: { message: 'Success' } };
     const loggerSpy = jest.spyOn(logger, 'info');
     onCompletedScanQueue(job, result);
-    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 200 and result {"message":"Success"}'
+    );
   });
 
   it('onCompletedScanQueue logs error on failure', () => {
@@ -72,7 +74,9 @@ describe('addToScanQueue', () => {
     const result = { status: 400, data: { message: 'Failure' } };
     const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
     onCompletedScanQueue(job, result);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key completed with status 400 and result {"message":"Failure"}');
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 400 and result {"message":"Failure"}'
+    );
   });
 
   it('scanQueue on failed event triggers onFailedScanQueue', () => {
@@ -98,7 +102,9 @@ describe('addToScanQueue', () => {
       }
     });
     scanQueue.on('completed', onCompletedScanQueue);
-    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 200 and result {"message":"Success"}'
+    );
   });
 
   it('processScanQueue sets up listeners and processes the queue', () => {

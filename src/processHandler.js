@@ -1,6 +1,6 @@
-import { auditLogger } from './logger';
-import { sequelize, descriptiveDetails, isConnectionOpen } from './models';
 import { closeAllQueues } from './lib/queue';
+import { auditLogger } from './logger';
+import { descriptiveDetails, isConnectionOpen, sequelize } from './models';
 
 let isShuttingDown = false; // To prevent multiple shutdown attempts
 

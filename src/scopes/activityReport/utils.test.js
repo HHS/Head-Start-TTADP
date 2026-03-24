@@ -3,7 +3,7 @@ import { filterExactArray } from './utils';
 
 jest.mock('../../models', () => {
   const literal = (value) => ({ val: value });
-  const escape = (value) => `'${String(value).replace(/'/g, '\'\'')}'`;
+  const escape = (value) => `'${String(value).replace(/'/g, "''")}'`;
 
   return {
     sequelize: {
@@ -42,7 +42,14 @@ describe('filterExactArray', () => {
     const includeOperator = Op.and;
     const excludeOperator = Op.or;
     const customColumn = '"ActivityReport"."topics"';
-    const result = filterExactArray(customColumn, ['foo', 'bar'], false, includeOperator, excludeOperator, 'text[]');
+    const result = filterExactArray(
+      customColumn,
+      ['foo', 'bar'],
+      false,
+      includeOperator,
+      excludeOperator,
+      'text[]'
+    );
 
     expect(result[includeOperator]).toHaveLength(2);
     expect(result[includeOperator][0].val).toBe(`${customColumn} @> ARRAY['foo']::text[]`);

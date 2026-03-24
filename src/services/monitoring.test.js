@@ -1,19 +1,9 @@
 import { v4 as uuid } from 'uuid';
-import { createMonitoringData, destroyMonitoringData } from './monitoring.testHelpers';
-import {
-  classScore,
-  monitoringData,
-  ttaByReviews,
-  ttaByCitations,
-} from './monitoring';
 import db from '../models';
+import { classScore, monitoringData, ttaByCitations, ttaByReviews } from './monitoring';
+import { createMonitoringData, destroyMonitoringData } from './monitoring.testHelpers';
 
-const {
-  Grant,
-  GrantNumberLink,
-  MonitoringClassSummary,
-  MonitoringReview,
-} = db;
+const { Grant, GrantNumberLink, MonitoringClassSummary, MonitoringReview } = db;
 
 const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 const RECIPIENT_ID = 9;
@@ -58,7 +48,7 @@ describe('monitoring services', () => {
         CLASS_SCORE_REVIEW_ID,
         CLASS_SCORE_GRANTEE_ID,
         CLASS_SCORE_STATUS_ID,
-        CLASS_SCORE_CONTENT_ID,
+        CLASS_SCORE_CONTENT_ID
       );
     });
     afterAll(async () => {
@@ -138,14 +128,14 @@ describe('monitoring services', () => {
         MONITORING_DATA_REVIEW_ID,
         MONITORING_DATA_GRANTEE_ID,
         MONITORING_DATA_STATUS_ID,
-        MONITORING_DATA_CONTENT_ID,
+        MONITORING_DATA_CONTENT_ID
       );
     });
     afterAll(async () => {
       await destroyMonitoringData(
         GRANT_NUMBER,
         MONITORING_DATA_REVIEW_ID,
-        MONITORING_DATA_STATUS_ID,
+        MONITORING_DATA_STATUS_ID
       );
       await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     });
@@ -202,8 +192,14 @@ describe('monitoring services', () => {
       expect(data).not.toBeNull();
       expect(data.reviewDate).toEqual('02/22/2025');
 
-      await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C809' }, force: true });
-      await MonitoringReview.destroy({ where: { reviewId: 'D58FBB78-91CA-4236-8DB6-0022E7E8D909' }, force: true });
+      await MonitoringReview.destroy({
+        where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C809' },
+        force: true,
+      });
+      await MonitoringReview.destroy({
+        where: { reviewId: 'D58FBB78-91CA-4236-8DB6-0022E7E8D909' },
+        force: true,
+      });
     });
   });
   describe('Grant afterCreate', () => {

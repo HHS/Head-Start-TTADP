@@ -1,20 +1,18 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
-import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
-import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import selectEvent from 'react-select-event';
-import GoalsObjectives from '../GoalsObjectives';
-import { formatDateRange } from '../../../../utils';
-import UserContext from '../../../../UserContext';
+import AppLoadingContext from '../../../../AppLoadingContext';
 import FilterContext from '../../../../FilterContext';
 import { mockWindowProperty } from '../../../../testHelpers';
-import AppLoadingContext from '../../../../AppLoadingContext';
+import UserContext from '../../../../UserContext';
+import { formatDateRange } from '../../../../utils';
+import GoalsObjectives from '../GoalsObjectives';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -28,56 +26,58 @@ const defaultStatuses = {
 };
 
 describe('Goals and Objectives', () => {
-  const goals = [{
-    id: 4598,
-    status: GOAL_STATUS.IN_PROGRESS,
-    createdAt: '2021-06-15',
-    name: 'This is goal text 1.',
-    goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-    objectiveCount: 5,
-    goalNumbers: ['G-4598'],
-    reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-    objectives: [],
-    goalCollaborators: [],
-    ids: [4598],
-    onAR: false,
-    grant: { number: '12345' },
-    previousStatus: null,
-  },
+  const goals = [
+    {
+      id: 4598,
+      status: GOAL_STATUS.IN_PROGRESS,
+      createdAt: '2021-06-15',
+      name: 'This is goal text 1.',
+      goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+      objectiveCount: 5,
+      goalNumbers: ['G-4598'],
+      reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+      objectives: [],
+      goalCollaborators: [],
+      ids: [4598],
+      onAR: false,
+      grant: { number: '12345' },
+      previousStatus: null,
+    },
   ];
 
-  const noFilterGoals = [{
-    id: 4599,
-    status: GOAL_STATUS.IN_PROGRESS,
-    createdAt: '2021-06-15',
-    name: 'This is goal text 1.',
-    goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-    objectiveCount: 5,
-    goalNumbers: ['G-4599'],
-    reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-    objectives: [],
-    goalCollaborators: [],
-    ids: [4599],
-    onAR: false,
-    grant: { number: '12345' },
-    previousStatus: null,
-  },
-  {
-    id: 4600,
-    ids: [4600],
-    status: GOAL_STATUS.NOT_STARTED,
-    createdAt: '2021-07-15',
-    name: 'This is goal text 2.',
-    goalTopics: ['Program Planning and Services'],
-    objectiveCount: 1,
-    goalNumbers: ['G-4600'],
-    reasons: ['Monitoring | Deficiency'],
-    objectives: [],
-    goalCollaborators: [],
-    onAR: false,
-    grant: { number: '12346' },
-    previousStatus: null,
-  },
+  const noFilterGoals = [
+    {
+      id: 4599,
+      status: GOAL_STATUS.IN_PROGRESS,
+      createdAt: '2021-06-15',
+      name: 'This is goal text 1.',
+      goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+      objectiveCount: 5,
+      goalNumbers: ['G-4599'],
+      reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+      objectives: [],
+      goalCollaborators: [],
+      ids: [4599],
+      onAR: false,
+      grant: { number: '12345' },
+      previousStatus: null,
+    },
+    {
+      id: 4600,
+      ids: [4600],
+      status: GOAL_STATUS.NOT_STARTED,
+      createdAt: '2021-07-15',
+      name: 'This is goal text 2.',
+      goalTopics: ['Program Planning and Services'],
+      objectiveCount: 1,
+      goalNumbers: ['G-4600'],
+      reasons: ['Monitoring | Deficiency'],
+      objectives: [],
+      goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12346' },
+      previousStatus: null,
+    },
   ];
 
   const filterStatusGoals = [
@@ -135,14 +135,17 @@ describe('Goals and Objectives', () => {
                 regionId="1"
                 recipient={recipient}
                 location={{
-                  state: { ids }, hash: '', pathname: '', search: '',
+                  state: { ids },
+                  hash: '',
+                  pathname: '',
+                  search: '',
                 }}
                 recipientName="test"
               />
             </FilterContext.Provider>
           </UserContext.Provider>
         </AppLoadingContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 
@@ -160,24 +163,22 @@ describe('Goals and Objectives', () => {
       count: 1,
       goalRows: goals,
       statuses: defaultStatuses,
-      allGoalIds: [
-        { id: goals[0].id, goalIds: goals[0].ids },
-      ],
+      allGoalIds: [{ id: goals[0].id, goalIds: goals[0].ids }],
     });
 
     // Filters Status.
-    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started';
+    const filterStatusUrl =
+      '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started';
     fetchMock.get(filterStatusUrl, {
       count: 1,
       goalRows: filterStatusGoals,
       statuses: defaultStatuses,
-      allGoalIds: [
-        { id: filterStatusGoals[0].id, goalIds: filterStatusGoals[0].ids },
-      ],
+      allGoalIds: [{ id: filterStatusGoals[0].id, goalIds: filterStatusGoals[0].ids }],
     });
 
     // No Filters.
-    const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
+    const noFilterUrl =
+      '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl, {
       count: 2,
       goalRows: noFilterGoals,
@@ -190,7 +191,7 @@ describe('Goals and Objectives', () => {
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0 },
+      { rows: [], count: 0 }
     );
   });
 
@@ -206,13 +207,16 @@ describe('Goals and Objectives', () => {
   it('renders correctly when filter is changed', async () => {
     // Default with 2 Rows.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
-    fetchMock.get(goalsUrl,
+    fetchMock.get(
+      goalsUrl,
       {
         count: 2,
         goalRows: noFilterGoals,
         statuses: defaultStatuses,
         allGoalIds: [],
-      }, { overwriteRoutes: true });
+      },
+      { overwriteRoutes: true }
+    );
     act(() => renderGoalsAndObjectives());
 
     // Change Filter and Apply.
@@ -238,8 +242,10 @@ describe('Goals and Objectives', () => {
     fetchMock.restore();
 
     // Default with 2 Rows.
-    let goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started';
-    fetchMock.get(goalsUrl,
+    let goalsUrl =
+      '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started';
+    fetchMock.get(
+      goalsUrl,
       {
         count: 11,
         allGoalIds: [
@@ -253,7 +259,8 @@ describe('Goals and Objectives', () => {
           { id: 8 },
           { id: 9 },
           { id: 10 },
-          { id: 11 }],
+          { id: 11 },
+        ],
         goalRows: [
           { ...noFilterGoals[0], id: 1 },
           { ...noFilterGoals[0], id: 2 },
@@ -269,13 +276,16 @@ describe('Goals and Objectives', () => {
         ],
         statuses: defaultStatuses,
       },
-      { overwriteRoutes: true });
+      { overwriteRoutes: true }
+    );
 
     act(() => renderGoalsAndObjectives());
 
     // Go to the next page.
-    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=10&limit=10&status.in[]=Not%20Started';
-    fetchMock.get(goalsUrl,
+    goalsUrl =
+      '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=10&limit=10&status.in[]=Not%20Started';
+    fetchMock.get(
+      goalsUrl,
       {
         count: 11,
         allGoalIds: [
@@ -289,12 +299,13 @@ describe('Goals and Objectives', () => {
           { id: 8 },
           { id: 9 },
           { id: 10 },
-          { id: 11 }],
-        goalRows: [
-          { ...noFilterGoals[0], id: 11 },
+          { id: 11 },
         ],
+        goalRows: [{ ...noFilterGoals[0], id: 11 }],
         statuses: defaultStatuses,
-      }, { overwriteRoutes: true });
+      },
+      { overwriteRoutes: true }
+    );
 
     const [pageTwo] = await screen.findAllByRole('button', { name: /page 2/i });
     userEvent.click(pageTwo);
@@ -308,18 +319,18 @@ describe('Goals and Objectives', () => {
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
     await selectEvent.select(statusSelect, [GOAL_STATUS.CLOSED]);
 
-    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started&status.in[]=Closed';
-    fetchMock.get(goalsUrl,
+    goalsUrl =
+      '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20Started&status.in[]=Closed';
+    fetchMock.get(
+      goalsUrl,
       {
         count: 1,
-        allGoalIds: [
-          { id: 1 },
-        ],
-        goalRows: [
-          { ...noFilterGoals[0], id: 11 },
-        ],
+        allGoalIds: [{ id: 1 }],
+        goalRows: [{ ...noFilterGoals[0], id: 11 }],
         statuses: defaultStatuses,
-      }, { overwriteRoutes: true });
+      },
+      { overwriteRoutes: true }
+    );
 
     const apply = await screen.findByRole('button', { name: /apply filters to goals/i });
     userEvent.click(apply);
@@ -332,7 +343,9 @@ describe('Goals and Objectives', () => {
 
   it('renders correctly when filter is removed', async () => {
     act(() => renderGoalsAndObjectives());
-    const removeFilter = await screen.findByRole('button', { name: /this button removes the filter/i });
+    const removeFilter = await screen.findByRole('button', {
+      name: /this button removes the filter/i,
+    });
     userEvent.click(removeFilter);
 
     await screen.findByText(/this is goal text 1/i);
@@ -345,28 +358,30 @@ describe('Goals and Objectives', () => {
     fetchMock.restore();
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0, allGoalIds: [] },
+      { rows: [], count: 0, allGoalIds: [] }
     );
 
-    const response = [{
-      id: 4598,
-      ids: [4598],
-      status: GOAL_STATUS.NOT_STARTED,
-      createdAt: '2021-06-15',
-      name: 'This is goal text 1.',
-      goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-      objectiveCount: 5,
-      goalNumbers: ['G-4598'],
-      reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-      objectives: [],
-      goalCollaborators: [],
-      onAR: false,
-      grant: { number: '12345' },
-      previousStatus: null,
-    },
+    const response = [
+      {
+        id: 4598,
+        ids: [4598],
+        status: GOAL_STATUS.NOT_STARTED,
+        createdAt: '2021-06-15',
+        name: 'This is goal text 1.',
+        goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+        objectiveCount: 5,
+        goalNumbers: ['G-4598'],
+        reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+        objectives: [],
+        goalCollaborators: [],
+        onAR: false,
+        grant: { number: '12345' },
+        previousStatus: null,
+      },
     ];
 
-    const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
+    const noFilterUrl =
+      '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl, {
       count: 2,
       goalRows: response,
@@ -376,7 +391,9 @@ describe('Goals and Objectives', () => {
 
     act(() => renderGoalsAndObjectives());
 
-    const statusMenuToggle = await screen.findByRole('button', { name: 'Change status for goal 4598' });
+    const statusMenuToggle = await screen.findByRole('button', {
+      name: 'Change status for goal 4598',
+    });
     fetchMock.restore();
     expect(fetchMock.called()).toBe(false);
     fetchMock.put('/api/goals/changeStatus', [response[0]]);
@@ -397,7 +414,10 @@ describe('Goals and Objectives', () => {
 
     fetchMock.restore();
 
-    fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
+    fetchMock.get(
+      '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10',
+      { count: 1, goalRows: goals, statuses: defaultStatuses }
+    );
     const sortCreated = await screen.findByTestId('sortGoalsBy');
     userEvent.selectOptions(sortCreated, 'createdOn-asc');
 
@@ -406,7 +426,8 @@ describe('Goals and Objectives', () => {
 
   it('sorts by created on desc when new goals are created', async () => {
     // Created New Goal.
-    const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
+    const newGoalsUrl =
+      '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
     fetchMock.get(newGoalsUrl, {
       count: 3,
       goalRows: [
@@ -415,18 +436,19 @@ describe('Goals and Objectives', () => {
         { ...goals[0], id: 3 },
       ],
       statuses: defaultStatuses,
-      allGoalIds: [{
-        id: 1,
-        goalIds: [1],
-      },
-      {
-        id: 2,
-        goalIds: [2],
-      },
-      {
-        id: 3,
-        goalIds: [3],
-      },
+      allGoalIds: [
+        {
+          id: 1,
+          goalIds: [1],
+        },
+        {
+          id: 2,
+          goalIds: [2],
+        },
+        {
+          id: 3,
+          goalIds: [3],
+        },
       ],
     });
     act(() => renderGoalsAndObjectives([1]));
@@ -440,9 +462,10 @@ describe('Goals and Objectives', () => {
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0 },
+      { rows: [], count: 0 }
     );
-    const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
+    const newGoalsUrl =
+      '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
     fetchMock.get(newGoalsUrl, 500);
     act(() => renderGoalsAndObjectives([1]));
 
@@ -455,7 +478,7 @@ describe('Goals and Objectives', () => {
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0, allGoalIds: [] },
+      { rows: [], count: 0, allGoalIds: [] }
     );
     const goalToUse = {
       id: 1,
@@ -482,14 +505,14 @@ describe('Goals and Objectives', () => {
       goalsToDisplay.push({ ...goalToUse, id: i, goalText });
       allGoalIds.push({ id: i, goalIds: [i] });
     }
-    const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
-    fetchMock.get(noFilterUrl,
-      {
-        count: goalCount,
-        goalRows: goalsToDisplay.slice(0, 10),
-        statuses: defaultStatuses,
-        allGoalIds,
-      });
+    const noFilterUrl =
+      '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
+    fetchMock.get(noFilterUrl, {
+      count: goalCount,
+      goalRows: goalsToDisplay.slice(0, 10),
+      statuses: defaultStatuses,
+      allGoalIds,
+    });
 
     // Render.
     act(() => renderGoalsAndObjectives());
@@ -500,14 +523,14 @@ describe('Goals and Objectives', () => {
     expect(goalsPerPage.length).toBe(10);
 
     // Change per page.
-    const noFilterUrlMore = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=25';
-    fetchMock.get(noFilterUrlMore,
-      {
-        count: goalCount,
-        goalRows: goalsToDisplay.slice(0, 25),
-        statuses: defaultStatuses,
-        allGoalIds,
-      });
+    const noFilterUrlMore =
+      '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=25';
+    fetchMock.get(noFilterUrlMore, {
+      count: goalCount,
+      goalRows: goalsToDisplay.slice(0, 25),
+      statuses: defaultStatuses,
+      allGoalIds,
+    });
     const perPageDropDown = await screen.findByRole('combobox', { name: /per page/i });
     userEvent.selectOptions(perPageDropDown, '25');
 
@@ -518,7 +541,8 @@ describe('Goals and Objectives', () => {
   });
 
   it('respects select all on a per page basis', async () => {
-    const goalUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
+    const goalUrl =
+      '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
     fetchMock.get(goalUrl, {
       count: 12,
       goalRows: [
@@ -534,46 +558,47 @@ describe('Goals and Objectives', () => {
         { ...goals[0], id: 10 },
       ],
       statuses: defaultStatuses,
-      allGoalIds: [{
-        id: 1,
-        goalIds: [1],
-      },
-      {
-        id: 2,
-        goalIds: [2],
-      },
-      {
-        id: 3,
-        goalIds: [3],
-      },
-      {
-        id: 4,
-        goalIds: [4],
-      },
-      {
-        id: 5,
-        goalIds: [5],
-      },
-      {
-        id: 6,
-        goalIds: [6],
-      },
-      {
-        id: 7,
-        goalIds: [7],
-      },
-      {
-        id: 8,
-        goalIds: [8],
-      },
-      {
-        id: 9,
-        goalIds: [9],
-      },
-      {
-        id: 10,
-        goalIds: [10],
-      },
+      allGoalIds: [
+        {
+          id: 1,
+          goalIds: [1],
+        },
+        {
+          id: 2,
+          goalIds: [2],
+        },
+        {
+          id: 3,
+          goalIds: [3],
+        },
+        {
+          id: 4,
+          goalIds: [4],
+        },
+        {
+          id: 5,
+          goalIds: [5],
+        },
+        {
+          id: 6,
+          goalIds: [6],
+        },
+        {
+          id: 7,
+          goalIds: [7],
+        },
+        {
+          id: 8,
+          goalIds: [8],
+        },
+        {
+          id: 9,
+          goalIds: [9],
+        },
+        {
+          id: 10,
+          goalIds: [10],
+        },
       ],
     });
     act(() => renderGoalsAndObjectives([1]));
@@ -594,7 +619,8 @@ describe('Goals and Objectives', () => {
     expect(await screen.findByText(/10 selected/i)).toBeVisible();
 
     // Change per page.
-    const goalUrlMore = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=10&limit=10';
+    const goalUrlMore =
+      '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=10&limit=10';
     fetchMock.get(goalUrlMore, {
       count: 12,
       goalRows: [
@@ -602,14 +628,15 @@ describe('Goals and Objectives', () => {
         { ...goals[0], id: 12 },
       ],
       statuses: defaultStatuses,
-      allGoalIds: [{
-        id: 11,
-        goalIds: [11],
-      },
-      {
-        id: 12,
-        goalIds: [12],
-      },
+      allGoalIds: [
+        {
+          id: 11,
+          goalIds: [11],
+        },
+        {
+          id: 12,
+          goalIds: [12],
+        },
       ],
     });
 

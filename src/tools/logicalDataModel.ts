@@ -106,7 +106,7 @@ export function processClassDefinition(schema, key) {
       modelField = schema.model?.rawAttributes[field.name];
     }
     let column = '';
-    const issues:string[] = [];
+    const issues: string[] = [];
     // mark fields that do not allow null
     if (field.allowNull !== (modelField?.allowNull ?? true)) {
       issues.push(`!issue='column should${field.allowNull ? '' : ' not'} allow null'`); //eslint-disable-line
@@ -125,20 +125,32 @@ export function processClassDefinition(schema, key) {
 
     // highlight type when not matched in model
     if (modelField && field.type !== modelField.type.toString().toLowerCase()) {
-      issues.push(`!issue='column type does not match model: ${field.type} != ${modelField.type.toString().toLowerCase()}'`); //eslint-disable-line
+      issues.push(
+        `!issue='column type does not match model: ${field.type} != ${modelField.type.toString().toLowerCase()}'`
+      ); //eslint-disable-line
       column += `<color:${colors.error}>${field.type}</color>`;
     } else {
       column += `${field.type}`;
     }
 
     if (modelField) {
-      if (!(field.default === modelField.defaultValue
-        || field.default === modelField.defaultValue?.toString()
-        || field.default === modelField.defaultValue?.val)
-      && field.default !== '<generated>'
-      && !((field.default === 'null' || field.default === null) && modelField.defaultValue === undefined)
-      && !(['updatedAt', 'createdAt'].includes(field.name) && ['now()', 'CURRENT_TIMESTAMP'].includes(field.default))) {
-      issues.push(`!issue='column default does not match model'`); //eslint-disable-line
+      if (
+        !(
+          field.default === modelField.defaultValue ||
+          field.default === modelField.defaultValue?.toString() ||
+          field.default === modelField.defaultValue?.val
+        ) &&
+        field.default !== '<generated>' &&
+        !(
+          (field.default === 'null' || field.default === null) &&
+          modelField.defaultValue === undefined
+        ) &&
+        !(
+          ['updatedAt', 'createdAt'].includes(field.name) &&
+          ['now()', 'CURRENT_TIMESTAMP'].includes(field.default)
+        )
+      ) {
+        issues.push(`!issue='column default does not match model'`); //eslint-disable-line
       }
     }
     if (field.default) {
@@ -157,7 +169,9 @@ export function processClassDefinition(schema, key) {
         const wrapIfCapital = (s: string): string => (/[A-Z]/.test(s) ? `"${s}"` : s);
         const modelFieldReference = `"${modelField?.references?.model?.tableName || modelField?.references?.model}".${wrapIfCapital(modelField?.references?.key)}`;
         if (tableFieldReference !== modelFieldReference) {
-          issues.push(`!issue='column reference does not match model: ${tableFieldReference} !== ${modelFieldReference}'`); //eslint-disable-line
+          issues.push(
+            `!issue='column reference does not match model: ${tableFieldReference} !== ${modelFieldReference}'`
+          ); //eslint-disable-line
         }
       }
       column += ` : REFERENCES ${field.reference.replace('(', '.').replace(')', '')}`;
@@ -180,7 +194,7 @@ export function processClassDefinition(schema, key) {
 }
 
 export function processAssociations(associations, tables, schemas) {
-  let uml = '\n\' Associations\n\n';
+  let uml = "\n' Associations\n\n";
 
   interface Association {
     [key: string]: string[];
@@ -188,13 +202,13 @@ export function processAssociations(associations, tables, schemas) {
   interface AssociationIssues {
     [key: string]: string[][];
   }
-  const associationsByType:Association = {
+  const associationsByType: Association = {
     ['one-to-one']: [],
     ['one-to-many']: [],
     ['many-to-many']: [],
     ['missing-from-model']: [],
   };
-  const associationIssuesByType:AssociationIssues = {
+  const associationIssuesByType: AssociationIssues = {
     ['one-to-one']: [],
     ['one-to-many']: [],
     ['many-to-many']: [],
@@ -236,96 +250,104 @@ export function processAssociations(associations, tables, schemas) {
     sourceTarget[key].push(association);
   });
 
-  Object.keys(sourceTarget).sort().forEach((key) => {
-    let sourceNumber;
-    let targetNumber;
-    let relationKey = null;
+  Object.keys(sourceTarget)
+    .sort()
+    .forEach((key) => {
+      let sourceNumber;
+      let targetNumber;
+      let relationKey = null;
 
-    const resourceNames = key.split('***');
-    const leftResource = resourceNames[0];
-    const rightResource = resourceNames[1];
+      const resourceNames = key.split('***');
+      const leftResource = resourceNames[0];
+      const rightResource = resourceNames[1];
 
-    sourceTarget[key].forEach((association) => {
-      switch (association.associationType.toLowerCase()) {
-        case 'belongsto':
-          sourceNumber = sourceNumber || 1;
-          targetNumber = targetNumber || 1;
-          break;
-        case 'belongstomany':
-          sourceNumber = !sourceNumber || sourceNumber < 2 ? 2 : sourceNumber;
-          targetNumber = !targetNumber || targetNumber < 2 ? 2 : targetNumber;
-          break;
-        case 'hasone':
-          sourceNumber = sourceNumber || 1;
-          targetNumber = targetNumber || 1;
-          break;
-        case 'hasmany':
-          sourceNumber = sourceNumber || 1;
-          targetNumber = !targetNumber || targetNumber < 2 ? 2 : targetNumber;
-          break;
-        default:
-          sourceNumber = sourceNumber || 1;
-          targetNumber = targetNumber || 1;
-          break;
+      sourceTarget[key].forEach((association) => {
+        switch (association.associationType.toLowerCase()) {
+          case 'belongsto':
+            sourceNumber = sourceNumber || 1;
+            targetNumber = targetNumber || 1;
+            break;
+          case 'belongstomany':
+            sourceNumber = !sourceNumber || sourceNumber < 2 ? 2 : sourceNumber;
+            targetNumber = !targetNumber || targetNumber < 2 ? 2 : targetNumber;
+            break;
+          case 'hasone':
+            sourceNumber = sourceNumber || 1;
+            targetNumber = targetNumber || 1;
+            break;
+          case 'hasmany':
+            sourceNumber = sourceNumber || 1;
+            targetNumber = !targetNumber || targetNumber < 2 ? 2 : targetNumber;
+            break;
+          default:
+            sourceNumber = sourceNumber || 1;
+            targetNumber = targetNumber || 1;
+            break;
+        }
+      });
+      const issues: string[] = [];
+
+      relationKey = sourceTarget[key].map((association) => association.as).join(',');
+
+      let lineColor;
+      if (relationKey?.split(',').length === 1) {
+        lineColor = colors.error;
+        issues.push(`!issue='associations need to be defined both directions'`); //eslint-disable-line
+      } else {
+        lineColor = '#black';
+      }
+
+      relationKey = [
+        ...new Set(
+          relationKey.split(',').map((r) => {
+            const cleanR = r.trim();
+            const isCamel = isCamelCase(cleanR);
+            const isDistinct = relationKey.split(',').filter((v) => v === r).length === 1;
+            if (isCamel && isDistinct) return cleanR;
+            if (isCamel && !isDistinct) {
+              issues.push(`!issue='associations need to be distinct'`); //eslint-disable-line
+              return `<color:${colors.errorLighter}>${cleanR}</color>`;
+            }
+            if (!isCamel && isDistinct) {
+              issues.push(`!issue='associations need to be camel case'`); //eslint-disable-line
+              return `<color:${colors.error}>${cleanR}</color>`;
+            }
+            issues.push(`!issue='associations need to be distinct and camel case'`); //eslint-disable-line
+            return `<color:${colors.errorDark}>${cleanR}</color>`;
+          })
+        ),
+      ].join(', ');
+
+      if (sourceNumber === 1 && targetNumber === 1) {
+        associationsByType['one-to-one'].push(
+          `${leftResource} "1" --[${lineColor},plain,thickness=2]-- "1" ${rightResource} : ${relationKey}`
+        );
+        associationIssuesByType['one-to-one'].push(issues.map((i) => i));
+      } else if (
+        (sourceNumber === 1 && targetNumber === 2) ||
+        (sourceNumber === 2 && targetNumber === 1)
+      ) {
+        associationsByType['one-to-many'].push(
+          `${leftResource} "1" --[${lineColor},dashed,thickness=2]--{  "n" ${rightResource} : ${relationKey}`
+        );
+        associationIssuesByType['one-to-many'].push(issues.map((i) => i));
+      } else if (sourceNumber === 2 && targetNumber === 2) {
+        associationsByType['many-to-many'].push(
+          `${leftResource} "n" }--[${lineColor},dotted,thickness=2]--{ "n" ${rightResource} : ${relationKey}`
+        );
+        associationIssuesByType['many-to-many'].push(issues.map((i) => i));
+      } else {
+        associationsByType['missing-from-model'].push(
+          `${leftResource} o--[#yellow,bold,thickness=2]--o ${rightResource} : <color:${colors.blueVividFocus}>missing-from-model</color>`
+        );
+        associationIssuesByType['missing-from-model'].push(issues.map((i) => i));
       }
     });
-    const issues:string[] = [];
-
-    relationKey = sourceTarget[key].map((association) => association.as).join(',');
-
-    let lineColor;
-    if (relationKey?.split(',').length === 1) {
-      lineColor = colors.error;
-      issues.push(`!issue='associations need to be defined both directions'`); //eslint-disable-line
-    } else {
-      lineColor = '#black';
-    }
-
-    relationKey = [...new Set(
-      relationKey
-        .split(',')
-        .map((r) => {
-          const cleanR = r.trim();
-          const isCamel = isCamelCase(cleanR);
-          const isDistinct = relationKey.split(',').filter((v) => (v === r)).length === 1;
-          if (isCamel && isDistinct) return cleanR;
-          if (isCamel && !isDistinct) {
-            issues.push(`!issue='associations need to be distinct'`); //eslint-disable-line
-            return `<color:${colors.errorLighter}>${cleanR}</color>`;
-          }
-          if (!isCamel && isDistinct) {
-            issues.push(`!issue='associations need to be camel case'`); //eslint-disable-line
-            return `<color:${colors.error}>${cleanR}</color>`;
-          }
-          issues.push(`!issue='associations need to be distinct and camel case'`); //eslint-disable-line
-          return `<color:${colors.errorDark}>${cleanR}</color>`;
-        }),
-    )]
-      .join(', ');
-
-    if (sourceNumber === 1 && targetNumber === 1) {
-      associationsByType['one-to-one']
-        .push(`${leftResource} "1" --[${lineColor},plain,thickness=2]-- "1" ${rightResource} : ${relationKey}`);
-      associationIssuesByType['one-to-one'].push(issues.map((i) => i));
-    } else if ((sourceNumber === 1 && targetNumber === 2)
-      || (sourceNumber === 2 && targetNumber === 1)) {
-      associationsByType['one-to-many']
-        .push(`${leftResource} "1" --[${lineColor},dashed,thickness=2]--{  "n" ${rightResource} : ${relationKey}`);
-      associationIssuesByType['one-to-many'].push(issues.map((i) => i));
-    } else if (sourceNumber === 2 && targetNumber === 2) {
-      associationsByType['many-to-many']
-        .push(`${leftResource} "n" }--[${lineColor},dotted,thickness=2]--{ "n" ${rightResource} : ${relationKey}`);
-      associationIssuesByType['many-to-many'].push(issues.map((i) => i));
-    } else {
-      associationsByType['missing-from-model']
-        .push(`${leftResource} o--[#yellow,bold,thickness=2]--o ${rightResource} : <color:${colors.blueVividFocus}>missing-from-model</color>`);
-      associationIssuesByType['missing-from-model'].push(issues.map((i) => i));
-    }
-  });
 
   if (associationsByType['one-to-one'].length > 0) {
     uml += '\n';
-    for (let i = 0; i < associationsByType['one-to-one'].length; i++) { //eslint-disable-line
+    for (let i = 0; i < associationsByType['one-to-one'].length; i++) {
+      //eslint-disable-line
       if (associationIssuesByType['one-to-one'][i]?.length > 0) {
         uml += `${associationIssuesByType['one-to-one'][i].join('\n')}\n`;
       }
@@ -334,7 +356,8 @@ export function processAssociations(associations, tables, schemas) {
   }
   if (associationsByType['one-to-many'].length > 0) {
     uml += '\n';
-    for (let i = 0; i < associationsByType['one-to-many'].length; i++) { //eslint-disable-line
+    for (let i = 0; i < associationsByType['one-to-many'].length; i++) {
+      //eslint-disable-line
       if (associationIssuesByType['one-to-many'][i]?.length > 0) {
         uml += `${associationIssuesByType['one-to-many'][i].join('\n')}\n`;
       }
@@ -343,7 +366,8 @@ export function processAssociations(associations, tables, schemas) {
   }
   if (associationsByType['many-to-many'].length > 0) {
     uml += '\n';
-    for (let i = 0; i < associationsByType['many-to-many'].length; i++) { //eslint-disable-line
+    for (let i = 0; i < associationsByType['many-to-many'].length; i++) {
+      //eslint-disable-line
       if (associationIssuesByType['many-to-many'][i]?.length > 0) {
         uml += `${associationIssuesByType['many-to-many'][i].join('\n')}\n`;
       }
@@ -353,7 +377,8 @@ export function processAssociations(associations, tables, schemas) {
   if (associationsByType['missing-from-model'].length > 0) {
     uml += '\n';
     uml += `!issue='association missing from models'`; //eslint-disable-line
-    for (let i = 0; i < associationsByType['missing-from-model'].length; i++) { //eslint-disable-line
+    for (let i = 0; i < associationsByType['missing-from-model'].length; i++) {
+      //eslint-disable-line
       if (associationIssuesByType['missing-from-model'][i]?.length > 0) {
         uml += `${associationIssuesByType['missing-from-model'][i].join('\n')}\n`;
       }
@@ -369,7 +394,7 @@ export function writeUml(uml, dbRoot) {
   const root = path.dirname((require.main || {}).filename || './');
   if (fs.existsSync(path.join(root, 'README.md'))) {
     let readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
-    const umlRegex = /``` ?plantuml([\s\S]*?)\'db\/uml\.puml\n```/; // eslint-disable-line no-useless-escape
+    const umlRegex = /``` ?plantuml([\s\S]*?)'db\/uml\.puml\n```/; // eslint-disable-line no-useless-escape
     if (umlRegex.test(readme)) {
       const replacement = `\`\`\`plantuml\n${uml}\n'db/uml.puml\n\`\`\``;
       readme = readme.replace(umlRegex, replacement);
@@ -413,7 +438,8 @@ async function generateUML(schemas, tables, root) {
 
 export default async function generateUMLFromDB() {
   try {
-    const tableData = await db.sequelize.query(`
+    const tableData = await db.sequelize.query(
+      `
       SELECT
         table_schema,
         table_name "table",
@@ -465,22 +491,24 @@ export default async function generateUMLFromDB() {
       AND table_name != 'SequelizeMeta'
       --AND table_name NOT LIKE 'ZA%'
       GROUP BY 1,2
-    `, {
-      type: QueryTypes.SELECT,
-    });
+    `,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
 
     const tables = db.sequelize.models;
     const schemas = tableData.map((td) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const model:any = Object.values(db.sequelize.models)
+      const model: any = Object.values(db.sequelize.models)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .find((m: any) => m?.getTableName() === td?.table);
-      return ({
+      return {
         table: td?.table,
         model,
         attributes: td.fields,
         associations: model?.associations,
-      });
+      };
     });
     await generateUML(schemas, tables, 'docs');
   } catch (err) {

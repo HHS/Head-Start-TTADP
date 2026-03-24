@@ -1,24 +1,16 @@
 import faker from '@faker-js/faker';
-import db, {
-  User,
-  EventReportPilot,
-  Permission,
-  Role,
-  UserRole,
-} from '../models';
-
+import SCOPES from '../middleware/scopeConstants';
+import db, { EventReportPilot, Permission, Role, User, UserRole } from '../models';
 import {
-  usersWithPermissions,
-  userById,
-  userByEmail,
-  setFlag,
+  findAllUsersWithScope,
   getTrainingReportUsersByRegion,
   getUserNamesByIds,
-  findAllUsersWithScope,
+  setFlag,
+  userByEmail,
+  userById,
   usersByRoles,
+  usersWithPermissions,
 } from './users';
-
-import SCOPES from '../middleware/scopeConstants';
 
 describe('Users DB service', () => {
   afterAll(async () => {
@@ -145,10 +137,7 @@ describe('Users DB service', () => {
 
     it('retrieves the correct userNames', async () => {
       const users = await getUserNamesByIds([54, 55]);
-      expect(users).toStrictEqual([
-        'user 54, TTTT',
-        'user 55',
-      ]);
+      expect(users).toStrictEqual(['user 54, TTTT', 'user 55']);
     });
   });
 
@@ -311,18 +300,25 @@ describe('Users DB service', () => {
 
     beforeEach(async () => {
       await Promise.all(
-        users.map((u) => User.create({
-          id: u.id,
-          name: u.id,
-          hsesUsername: u.id,
-          hsesUserId: u.id,
-          permissions: [{
-            userId: u.id,
-            regionId: u.regionId,
-            scopeId: u.scopeId,
-          }],
-          lastLogin: new Date(),
-        }, { include: [{ model: Permission, as: 'permissions' }] })),
+        users.map((u) =>
+          User.create(
+            {
+              id: u.id,
+              name: u.id,
+              hsesUsername: u.id,
+              hsesUserId: u.id,
+              permissions: [
+                {
+                  userId: u.id,
+                  regionId: u.regionId,
+                  scopeId: u.scopeId,
+                },
+              ],
+              lastLogin: new Date(),
+            },
+            { include: [{ model: Permission, as: 'permissions' }] }
+          )
+        )
       );
     });
 
@@ -364,18 +360,25 @@ describe('Users DB service', () => {
     ];
     beforeEach(async () => {
       await Promise.all(
-        users.map((u) => User.create({
-          id: u.id,
-          name: u.id,
-          hsesUsername: u.id,
-          hsesUserId: u.id,
-          permissions: [{
-            userId: u.id,
-            regionId: u.regionId,
-            scopeId: u.scopeId,
-          }],
-          lastLogin: new Date(),
-        }, { include: [{ model: Permission, as: 'permissions' }] })),
+        users.map((u) =>
+          User.create(
+            {
+              id: u.id,
+              name: u.id,
+              hsesUsername: u.id,
+              hsesUserId: u.id,
+              permissions: [
+                {
+                  userId: u.id,
+                  regionId: u.regionId,
+                  scopeId: u.scopeId,
+                },
+              ],
+              lastLogin: new Date(),
+            },
+            { include: [{ model: Permission, as: 'permissions' }] }
+          )
+        )
       );
     });
 
@@ -450,18 +453,25 @@ describe('Users DB service', () => {
 
     beforeAll(async () => {
       await Promise.all(
-        users.map((u) => User.create({
-          id: u.id,
-          name: u.id,
-          hsesUsername: u.id,
-          hsesUserId: u.id,
-          permissions: [{
-            userId: u.id,
-            regionId: u.regionId,
-            scopeId: u.scopeId,
-          }],
-          lastLogin: new Date(),
-        }, { include: [{ model: Permission, as: 'permissions' }] })),
+        users.map((u) =>
+          User.create(
+            {
+              id: u.id,
+              name: u.id,
+              hsesUsername: u.id,
+              hsesUserId: u.id,
+              permissions: [
+                {
+                  userId: u.id,
+                  regionId: u.regionId,
+                  scopeId: u.scopeId,
+                },
+              ],
+              lastLogin: new Date(),
+            },
+            { include: [{ model: Permission, as: 'permissions' }] }
+          )
+        ),
         EventReportPilot.create({
           id: eventReportPilotId,
           ownerId: userIds[5],
@@ -472,7 +482,7 @@ describe('Users DB service', () => {
             eventId: eventDisplayId,
           },
           imported: {},
-        }),
+        })
       );
     });
 
@@ -634,13 +644,13 @@ describe('Users DB service', () => {
         lastLogin: new Date(),
       });
 
-      await Permission.bulkCreate([
-        user1, user2, user3, user4,
-      ].map((u) => ({
-        scopeId: SCOPES.SITE_ACCESS,
-        userId: u.id,
-        regionId: 14,
-      })));
+      await Permission.bulkCreate(
+        [user1, user2, user3, user4].map((u) => ({
+          scopeId: SCOPES.SITE_ACCESS,
+          userId: u.id,
+          regionId: 14,
+        }))
+      );
 
       await db.UserRole.create({
         userId: user4.id,

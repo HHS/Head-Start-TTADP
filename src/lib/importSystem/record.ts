@@ -1,27 +1,12 @@
-import {
-  Sequelize,
-  fn,
-  literal,
-  Op,
-} from 'sequelize';
+import { fn, literal, Op, Sequelize } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
-import { FileInfo as FTPFileInfo, FileListing } from '../stream/sftp';
-import { SchemaNode } from '../stream/xml';
-import { FileInfo as ZipFileInfo } from '../stream/zip';
+import { FILE_STATUSES, IMPORT_DATA_STATUSES, IMPORT_STATUSES } from '../../constants';
 import db from '../../models';
-import {
-  FILE_STATUSES,
-  IMPORT_STATUSES,
-  IMPORT_DATA_STATUSES,
-} from '../../constants';
+import type { FileListing, FileInfo as FTPFileInfo } from '../stream/sftp';
+import type { SchemaNode } from '../stream/xml';
+import type { FileInfo as ZipFileInfo } from '../stream/zip';
 
-const {
-  File,
-  Import,
-  ImportFile,
-  ImportDataFile,
-  ZALImportFile,
-} = db;
+const { File, Import, ImportFile, ImportDataFile, ZALImportFile } = db;
 
 /**
  * Retrieves the name of the prior file associated with the given importId.
@@ -32,7 +17,7 @@ const {
  */
 const getPriorFile = async (
   importId: number,
-  status: string | string[] = IMPORT_STATUSES.COLLECTED,
+  status: string | string[] = IMPORT_STATUSES.COLLECTED
 ): Promise<string | null> => {
   // Find the prior file associated with the given importId
   const importFile: { name: string } | null = await ImportFile.findOne({
@@ -73,9 +58,7 @@ const getPriorFile = async (
  * @param importId - The ID of the import.
  * @returns A boolean indicating if there are more files to download.
  */
-const importHasMoreToDownload = async (
-  importId: number,
-) => {
+const importHasMoreToDownload = async (importId: number) => {
   const pendingFiles = await ImportFile.findAll({
     attributes: ['id'],
     where: {
@@ -95,9 +78,7 @@ const importHasMoreToDownload = async (
  * @param importId - The ID of the import.
  * @returns A boolean indicating if there are more files to download.
  */
-const importHasMoreToProcess = async (
-  importId: number,
-) => {
+const importHasMoreToProcess = async (importId: number) => {
   const pendingFiles = await ImportFile.findAll({
     attributes: ['id'],
     where: {
@@ -120,10 +101,7 @@ const importHasMoreToProcess = async (
  * @returns A promise that resolves to the next import file to process, or undefined if no
  * import file is found.
  */
-const getNextFileToProcess = async (
-  importId: number,
-  maxAttempts = 5,
-) => {
+const getNextFileToProcess = async (importId: number, maxAttempts = 5) => {
   const tenMinutesAgo = new Date(new Date().getTime() - 10 * 60000);
 
   // Define the PostgresInterval interface
@@ -135,19 +113,28 @@ const getNextFileToProcess = async (
   // Use the PostgresInterval interface in the destructuring assignment
   /* eslint-disable @typescript-eslint/quotes */
   /* eslint-disable prefer-template */
-  const results = await ZALImportFile.findAll({
+  const results = (await ZALImportFile.findAll({
     attributes: [
       // Using Sequelize.fn to calculate the average difference in timestamps
-      [fn('AVG', fn(
-        'AGE',
-        fn('CAST', literal(`new_row_data->>'updatedAt' AS TIMESTAMP`)),
-        fn('CAST', literal(`old_row_data->>'updatedAt' AS TIMESTAMP`)),
-      )),
-      'avg'],
+      [
+        fn(
+          'AVG',
+          fn(
+            'AGE',
+            fn('CAST', literal(`new_row_data->>'updatedAt' AS TIMESTAMP`)),
+            fn('CAST', literal(`old_row_data->>'updatedAt' AS TIMESTAMP`))
+          )
+        ),
+        'avg',
+      ],
 
       // Using Sequelize.fn to calculate the standard deviation of the difference in timestamps
-      [literal(`STDDEV(extract ('epoch' from (new_row_data->>'updatedAt')::timestamp - (old_row_data->>'updatedAt')::timestamp)) * interval '1 sec'`),
-        'stddev'],
+      [
+        literal(
+          `STDDEV(extract ('epoch' from (new_row_data->>'updatedAt')::timestamp - (old_row_data->>'updatedAt')::timestamp)) * interval '1 sec'`
+        ),
+        'stddev',
+      ],
     ],
     where: {
       [Op.and]: [
@@ -157,22 +144,19 @@ const getNextFileToProcess = async (
       ],
     },
     raw: true, // This will give you raw JSON objects instead of model instances
-  }) as [{ avg: PostgresInterval, stddev: PostgresInterval }];
+  })) as [{ avg: PostgresInterval; stddev: PostgresInterval }];
   /* eslint-enable @typescript-eslint/quotes */
   /* eslint-disable prefer-template */
 
-  const [{
-    avg,
-    stddev,
-  }] = results
-    && results.length
-    && results[0]?.avg
-    && results[0]?.stddev
-    ? results
-    : [{
-      avg: { seconds: 120, milliseconds: 0 },
-      stddev: { seconds: 0, milliseconds: 0 },
-    }];
+  const [{ avg, stddev }] =
+    results && results.length && results[0]?.avg && results[0]?.stddev
+      ? results
+      : [
+          {
+            avg: { seconds: 120, milliseconds: 0 },
+            stddev: { seconds: 0, milliseconds: 0 },
+          },
+        ];
 
   // Calculate the total milliseconds for 3 * stddev
   const totalStdDevMilliseconds = 3 * (stddev.seconds || 0) * 1000 + 3 * (stddev.milliseconds || 0);
@@ -186,22 +170,18 @@ const getNextFileToProcess = async (
       where: {
         status: IMPORT_STATUSES.PROCESSING,
         [Op.and]: [
-          literal(`"updatedAt" + INTERVAL '${(avg.seconds || 0) + Math.floor((avg.milliseconds + totalStdDevMilliseconds) / 1000)} seconds ${(avg.milliseconds + totalStdDevMilliseconds) % 1000} milliseconds' > NOW()`),
+          literal(
+            `"updatedAt" + INTERVAL '${(avg.seconds || 0) + Math.floor((avg.milliseconds + totalStdDevMilliseconds) / 1000)} seconds ${(avg.milliseconds + totalStdDevMilliseconds) % 1000} milliseconds' > NOW()`
+          ),
         ],
       },
       lock: true, // Lock the row for update to prevent race conditions
-    },
+    }
   );
 
   // Find the next import file to process without join and locking mechanism
   const importFile = await ImportFile.findOne({
-    attributes: [
-      'id',
-      'fileId',
-      'status',
-      'processAttempts',
-      'importId',
-    ],
+    attributes: ['id', 'fileId', 'status', 'processAttempts', 'importId'],
     where: {
       importId,
       fileId: { [Op.ne]: null }, // Ensure fileId is not null
@@ -217,9 +197,7 @@ const getNextFileToProcess = async (
         },
       ],
     },
-    order: [
-      ['createdAt', 'ASC'],
-    ],
+    order: [['createdAt', 'ASC']],
     limit: 1, // Limit the result to 1 record
     lock: true, // Lock the row for update to prevent race conditions
     raw: true,
@@ -262,21 +240,14 @@ const getNextFileToProcess = async (
  * @param availableFiles - An array of available files with their details.
  * @returns A promise that resolves when all database operations are completed.
  */
-const recordAvailableFiles = async (
-  importId: number,
-  availableFiles: FileListing[],
-) => {
+const recordAvailableFiles = async (importId: number, availableFiles: FileListing[]) => {
   // Retrieve current import files from the database
   const currentImportFiles: {
-    id: number,
-    importId: number,
-    fileInfo: FTPFileInfo,
+    id: number;
+    importId: number;
+    fileInfo: FTPFileInfo;
   }[] = await ImportFile.findAll({
-    attributes: [
-      'id',
-      'importId',
-      ['ftpFileInfo', 'fileInfo'],
-    ],
+    attributes: ['id', 'importId', ['ftpFileInfo', 'fileInfo']],
     where: {
       importId,
     },
@@ -284,75 +255,84 @@ const recordAvailableFiles = async (
     lock: true, // Lock the row for update to prevent race conditions
   });
 
-  const fileMatches = (currentImportFile, availableFile) => (
-    importId === currentImportFile.importId
-    && availableFile?.fileInfo?.path === currentImportFile?.fileInfo?.path
-    && availableFile?.fileInfo?.name === currentImportFile?.fileInfo?.name
-  );
+  const fileMatches = (currentImportFile, availableFile) =>
+    importId === currentImportFile.importId &&
+    availableFile?.fileInfo?.path === currentImportFile?.fileInfo?.path &&
+    availableFile?.fileInfo?.name === currentImportFile?.fileInfo?.name;
 
   // Separate the available files into new, matched, and removed files
   // New files are those that are not already recorded in the database
   const newFiles = availableFiles
-    .filter((availableFile) => !currentImportFiles
-      .some((currentImportFile) => fileMatches(currentImportFile, availableFile)))
+    .filter(
+      (availableFile) =>
+        !currentImportFiles.some((currentImportFile) =>
+          fileMatches(currentImportFile, availableFile)
+        )
+    )
     .map(({ stream: _stream, ...availableFile }) => availableFile);
   // Matched files are those that are already recorded in the database
   const matchedFiles = availableFiles
-    .filter((availableFile) => currentImportFiles
-      .some((currentImportFile) => fileMatches(currentImportFile, availableFile)))
+    .filter((availableFile) =>
+      currentImportFiles.some((currentImportFile) => fileMatches(currentImportFile, availableFile))
+    )
     .map(({ stream: _stream, ...availableFile }) => availableFile);
   // Removed files are those that were recorded in the database but are no longer available
-  const removedFiles = currentImportFiles
-    .filter((currentImportFile) => !availableFiles
-      .some((availableFile) => fileMatches(currentImportFile, availableFile)));
+  const removedFiles = currentImportFiles.filter(
+    (currentImportFile) =>
+      !availableFiles.some((availableFile) => fileMatches(currentImportFile, availableFile))
+  );
 
   return Promise.all([
     // Create new files in the database if there are any
     ...(newFiles.length > 0
-      ? newFiles.map((newFile) => ImportFile.create(
-        {
-          importId,
-          ftpFileInfo: newFile.fileInfo,
-          status: IMPORT_STATUSES.IDENTIFIED,
-        },
-        {
-          lock: true, // Lock the row for update to prevent race conditions
-        },
-      ))
+      ? newFiles.map((newFile) =>
+          ImportFile.create(
+            {
+              importId,
+              ftpFileInfo: newFile.fileInfo,
+              status: IMPORT_STATUSES.IDENTIFIED,
+            },
+            {
+              lock: true, // Lock the row for update to prevent race conditions
+            }
+          )
+        )
       : []),
     // Update matched files in the database if there are any
     ...(matchedFiles.length > 0
-      ? matchedFiles.map(async (matchedFile) => ImportFile.update(
-        {
-          ftpFileInfo: matchedFile.fileInfo,
-        },
-        {
+      ? matchedFiles.map(async (matchedFile) =>
+          ImportFile.update(
+            {
+              ftpFileInfo: matchedFile.fileInfo,
+            },
+            {
+              where: {
+                importId,
+                ftpFileInfo: {
+                  [Op.contains]: {
+                    path: matchedFile.fileInfo.path,
+                    name: matchedFile.fileInfo.name,
+                  },
+                },
+              },
+              individualHooks: true,
+              lock: true, // Lock the row for update to prevent race conditions
+            }
+          )
+        )
+      : []),
+    // Delete removed files from the database if there are any
+    removedFiles.length > 0
+      ? ImportFile.destroy({
           where: {
             importId,
-            ftpFileInfo: {
-              [Op.contains]: {
-                path: matchedFile.fileInfo.path,
-                name: matchedFile.fileInfo.name,
-              },
-            },
+            id: removedFiles.map(({ id }) => id),
+            status: [IMPORT_STATUSES.IDENTIFIED],
           },
           individualHooks: true,
           lock: true, // Lock the row for update to prevent race conditions
-        },
-      ))
-      : []),
-    // Delete removed files from the database if there are any
-    (removedFiles.length > 0
-      ? ImportFile.destroy({
-        where: {
-          importId,
-          id: removedFiles.map(({ id }) => id),
-          status: [IMPORT_STATUSES.IDENTIFIED],
-        },
-        individualHooks: true,
-        lock: true, // Lock the row for update to prevent race conditions
-      })
-      : Promise.resolve()),
+        })
+      : Promise.resolve(),
   ]);
 };
 
@@ -371,85 +351,87 @@ const recordAvailableFiles = async (
  *          resolves with an array of results for the bulk create, update, and destroy operations.
  * @throws Errors from the database operations will propagate through the returned Promise.
  */
-const recordAvailableDataFiles = async (
-  importFileId: number,
-  availableFiles: ZipFileInfo[],
-) => {
+const recordAvailableDataFiles = async (importFileId: number, availableFiles: ZipFileInfo[]) => {
   const currentImportDataFiles: {
-    id: number,
-    importFileId: number,
-    fileInfo: ZipFileInfo,
+    id: number;
+    importFileId: number;
+    fileInfo: ZipFileInfo;
   }[] = await ImportDataFile.findAll({
-    attributes: [
-      'id',
-      'importFileId',
-      'fileInfo',
-    ],
+    attributes: ['id', 'importFileId', 'fileInfo'],
     where: {
       importFileId,
     },
     raw: true,
   });
 
-  const fileMatches = (currentImportDataFile, availableFile) => (
-    importFileId === currentImportDataFile?.importFileId
-    && availableFile.path === currentImportDataFile.fileInfo.path
-    && availableFile.name === currentImportDataFile.fileInfo.name
-  );
+  const fileMatches = (currentImportDataFile, availableFile) =>
+    importFileId === currentImportDataFile?.importFileId &&
+    availableFile.path === currentImportDataFile.fileInfo.path &&
+    availableFile.name === currentImportDataFile.fileInfo.name;
   // Separate the available files into new, matched, and removed files
   // New files are those that are not already recorded in the database
-  const newFiles = availableFiles
-    .filter((availableFile) => !currentImportDataFiles
-      .some((currentImportDataFile) => fileMatches(currentImportDataFile, availableFile)));
+  const newFiles = availableFiles.filter(
+    (availableFile) =>
+      !currentImportDataFiles.some((currentImportDataFile) =>
+        fileMatches(currentImportDataFile, availableFile)
+      )
+  );
   // Matched files are those that are already recorded in the database
-  const matchedFiles = availableFiles
-    .filter((availableFile) => currentImportDataFiles
-      .some((currentImportDataFile) => fileMatches(currentImportDataFile, availableFile)));
+  const matchedFiles = availableFiles.filter((availableFile) =>
+    currentImportDataFiles.some((currentImportDataFile) =>
+      fileMatches(currentImportDataFile, availableFile)
+    )
+  );
   // Removed files are those that were recorded in the database but are no longer available
-  const removedFiles = currentImportDataFiles
-    .filter((currentImportDataFile) => !availableFiles
-      .some((availableFile) => fileMatches(currentImportDataFile, availableFile)));
+  const removedFiles = currentImportDataFiles.filter(
+    (currentImportDataFile) =>
+      !availableFiles.some((availableFile) => fileMatches(currentImportDataFile, availableFile))
+  );
 
   return Promise.all([
     // Create new files in the database if there are any
     ...(newFiles.length > 0
-      ? newFiles.map((newFile) => ImportDataFile.create({
-        importFileId,
-        fileInfo: newFile,
-        status: IMPORT_DATA_STATUSES.IDENTIFIED,
-      }))
+      ? newFiles.map((newFile) =>
+          ImportDataFile.create({
+            importFileId,
+            fileInfo: newFile,
+            status: IMPORT_DATA_STATUSES.IDENTIFIED,
+          })
+        )
       : []),
     // Update matched files in the database if there are any
     ...(matchedFiles.length > 0
-      ? matchedFiles.map(async (matchedFile) => ImportDataFile.update(
-        {
-          importFileId,
-          fileInfo: matchedFile,
-        },
-        {
-          where: {
-            importFileId,
-            fileInfo: {
-              [Op.contains]: {
-                path: matchedFile.path,
-                name: matchedFile.name,
-              },
+      ? matchedFiles.map(async (matchedFile) =>
+          ImportDataFile.update(
+            {
+              importFileId,
+              fileInfo: matchedFile,
             },
-          },
-          individualHooks: true,
-        },
-      ))
+            {
+              where: {
+                importFileId,
+                fileInfo: {
+                  [Op.contains]: {
+                    path: matchedFile.path,
+                    name: matchedFile.name,
+                  },
+                },
+              },
+              individualHooks: true,
+            }
+          )
+        )
       : []),
     // Delete removed files from the database if there are any
-    (removedFiles.length > 0
+    removedFiles.length > 0
       ? ImportDataFile.destroy({
-        where: {
-          importFileId,
-          id: removedFiles.map(({ id }) => id),
-        },
-        individualHooks: true,
-      })
-      : Promise.resolve()),
+          where: {
+            importFileId,
+            id: removedFiles.map(({ id }) => id),
+          },
+          individualHooks: true,
+        })
+      : Promise.resolve(),
   ]);
 };
 
@@ -471,15 +453,13 @@ const updateAvailableDataFileMetadata = async (
   fileInfo: ZipFileInfo | { name: string },
   status: string,
   metadata: Record<
-  string,
-  string | number | string[] | SchemaNode | Record<
-  string,
-  string | number | Record<
-  string,
-  string | number
+    string,
+    | string
+    | number
+    | string[]
+    | SchemaNode
+    | Record<string, string | number | Record<string, string | number>>
   >
-  >
-  >,
 ) => {
   const result = ImportDataFile.update(
     {
@@ -494,7 +474,7 @@ const updateAvailableDataFileMetadata = async (
         },
       },
       individualHooks: true,
-    },
+    }
   );
 
   return result;
@@ -510,11 +490,11 @@ const updateAvailableDataFileMetadata = async (
  */
 const logFileToBeCollected = async (
   importId: number,
-  availableFile: FileListing,
+  availableFile: FileListing
 ): Promise<{
-  importFileId: number,
-  key: string,
-  attempts: number,
+  importFileId: number;
+  key: string;
+  attempts: number;
 }> => {
   let key;
 
@@ -567,7 +547,7 @@ const logFileToBeCollected = async (
           id: importFile.id,
         },
         lock: true, // Lock the row for update to prevent race conditions
-      },
+      }
     );
   } else {
     // Step 2: Fetch the associated file record
@@ -590,7 +570,7 @@ const logFileToBeCollected = async (
           id: importFile.id,
         },
         lock: true, // Lock the row for update to prevent race conditions
-      },
+      }
     );
   }
 
@@ -607,21 +587,18 @@ const logFileToBeCollected = async (
  * @param hash - The new hash value to set.
  * @returns A promise that resolves when the update is complete.
  */
-const setImportFileHash = async (
-  importFileId: number,
-  hash: string | null,
-  status?: string,
-) => ImportFile.update(
-  {
-    hash, // Set the 'hash' field of the import file to the new value
-    ...(status && { status }),
-  },
-  {
-    where: { id: importFileId }, // Specify the import file to update based on its ID
-    individualHooks: true, // Enable individual hooks for each updated record
-    lock: true, // Lock the row for update to prevent race conditions
-  },
-);
+const setImportFileHash = async (importFileId: number, hash: string | null, status?: string) =>
+  ImportFile.update(
+    {
+      hash, // Set the 'hash' field of the import file to the new value
+      ...(status && { status }),
+    },
+    {
+      where: { id: importFileId }, // Specify the import file to update based on its ID
+      individualHooks: true, // Enable individual hooks for each updated record
+      lock: true, // Lock the row for update to prevent race conditions
+    }
+  );
 
 /**
  * Updates the status of an import file.
@@ -633,19 +610,20 @@ const setImportFileStatus = async (
   importFileId: number,
   status: string,
   downloadAttempts: null | number = null,
-  processAttempts: null | number = null,
-) => ImportFile.update(
-  {
-    status, // Set the status field to the provided value
-    ...(downloadAttempts && { downloadAttempts }),
-    ...(processAttempts && { processAttempts }),
-  },
-  {
-    where: { id: importFileId }, // Specify the import file to update based on its ID
-    individualHooks: true, // Enable individual hooks for each updated record
-    lock: true, // Lock the row for update to prevent race conditions
-  },
-);
+  processAttempts: null | number = null
+) =>
+  ImportFile.update(
+    {
+      status, // Set the status field to the provided value
+      ...(downloadAttempts && { downloadAttempts }),
+      ...(processAttempts && { processAttempts }),
+    },
+    {
+      where: { id: importFileId }, // Specify the import file to update based on its ID
+      individualHooks: true, // Enable individual hooks for each updated record
+      lock: true, // Lock the row for update to prevent race conditions
+    }
+  );
 
 /**
  * Updates the status of an import data file.
@@ -653,18 +631,16 @@ const setImportFileStatus = async (
  * @param status - The new status value to set.
  * @returns A promise that resolves when the update is complete.
  */
-const setImportDataFileStatus = async (
-  importDataFileId: number,
-  status: string,
-) => ImportDataFile.update(
-  {
-    status, // Set the status field to the provided value
-  },
-  {
-    where: { id: importDataFileId }, // Specify the import file to update based on its ID
-    individualHooks: true, // Enable individual hooks for each updated record
-  },
-);
+const setImportDataFileStatus = async (importDataFileId: number, status: string) =>
+  ImportDataFile.update(
+    {
+      status, // Set the status field to the provided value
+    },
+    {
+      where: { id: importDataFileId }, // Specify the import file to update based on its ID
+      individualHooks: true, // Enable individual hooks for each updated record
+    }
+  );
 
 /**
  * Asynchronously sets the status of an import data file based on its path and name.
@@ -681,7 +657,7 @@ const setImportDataFileStatus = async (
 const setImportDataFileStatusByPath = async (
   importFileId: number,
   fileInfo: ZipFileInfo,
-  status: string,
+  status: string
 ) => {
   const importDataFile = await ImportDataFile.findOne({
     where: {
@@ -694,9 +670,7 @@ const setImportDataFileStatusByPath = async (
       },
     },
   });
-  return importDataFile
-    ? setImportDataFileStatus(importDataFile.id, status)
-    : Promise.resolve();
+  return importDataFile ? setImportDataFileStatus(importDataFile.id, status) : Promise.resolve();
 };
 
 /**
@@ -708,21 +682,20 @@ const setImportDataFileStatusByPath = async (
  *
  * @returns {Promise<any[]>} A promise that resolves to an array of raw import schedule objects.
  */
-const importSchedules = async (): Promise<{
-  id: number,
-  name: string,
-  schedule: string
-}[]> => Import.findAll({
-  attributes: [
-    'id',
-    'name',
-    'schedule',
-  ],
-  where: {
-    enabled: true,
-  },
-  raw: true,
-});
+const importSchedules = async (): Promise<
+  {
+    id: number;
+    name: string;
+    schedule: string;
+  }[]
+> =>
+  Import.findAll({
+    attributes: ['id', 'name', 'schedule'],
+    where: {
+      enabled: true,
+    },
+    raw: true,
+  });
 
 export {
   getPriorFile,

@@ -1,12 +1,13 @@
-import { Op } from 'sequelize';
 import { VALID_URL_REGEX } from '@ttahub/common';
+import { Op } from 'sequelize';
+import Semaphore from '../lib/semaphore';
 import {
   ActivityReport,
-  ActivityReportResource,
   ActivityReportGoal,
   ActivityReportGoalResource,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
+  ActivityReportResource,
   Goal,
   GoalResource,
   GoalTemplate,
@@ -15,7 +16,6 @@ import {
   NextStepResource,
   Resource,
 } from '../models';
-import Semaphore from '../lib/semaphore';
 
 const semaphore = new Semaphore(1);
 
@@ -71,37 +71,43 @@ const findOrCreateResource = async (url) => {
 const findOrCreateResources = async (urls) => {
   if (urls === undefined || urls === null || !Array.isArray(urls)) return [];
   let newURLs;
-  const filteredUrls = [...new Set(urls
-    .filter((url) => typeof url === 'string')
-    .filter((url) => url))];
+  const filteredUrls = [
+    ...new Set(urls.filter((url) => typeof url === 'string').filter((url) => url)),
+  ];
   await semaphore.acquire();
-  const currentResources = filteredUrls.length > 0
-    ? await Resource.findAll({
-      where: {
-        url: {
-          [Op.in]: filteredUrls,
-        },
-      },
-      raw: true,
-    }) || []
-    : [];
-  if (currentResources !== undefined
-    || currentResources !== null
-    || currentResources.length !== filteredUrls.length) {
-    const currentResourceURLs = new Set(currentResources
-      .map((currentResource) => currentResource.url));
+  const currentResources =
+    filteredUrls.length > 0
+      ? (await Resource.findAll({
+          where: {
+            url: {
+              [Op.in]: filteredUrls,
+            },
+          },
+          raw: true,
+        })) || []
+      : [];
+  if (
+    currentResources !== undefined ||
+    currentResources !== null ||
+    currentResources.length !== filteredUrls.length
+  ) {
+    const currentResourceURLs = new Set(
+      currentResources.map((currentResource) => currentResource.url)
+    );
     newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
   }
 
   const resources = [
-    ...await Promise.all(newURLs.map(async (url) => {
-      const matchingHeadStart = await handleEclkcMapping(url);
-      const resource = await Resource.create({
-        url,
-        mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
-      });
-      return resource.get({ plain: true });
-    })),
+    ...(await Promise.all(
+      newURLs.map(async (url) => {
+        const matchingHeadStart = await handleEclkcMapping(url);
+        const resource = await Resource.create({
+          url,
+          mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
+        });
+        return resource.get({ plain: true });
+      })
+    )),
     ...(currentResources || []),
   ].sort((a, b) => a.id < b.id);
   semaphore.release();
@@ -112,70 +118,66 @@ const findOrCreateResources = async (urls) => {
 // Helper functions
 // -----------------------------------------------------------------------------
 // Identify if passed sourceFields contain one or more of the autoDetectedFields.
-const calculateIsAutoDetected = (sourceFields, autoDetectedFields) => (
-  !!sourceFields?.some?.((field) => autoDetectedFields?.includes?.(field))
-);
+const calculateIsAutoDetected = (sourceFields, autoDetectedFields) =>
+  !!sourceFields?.some?.((field) => autoDetectedFields?.includes?.(field));
 
 // Remap the value of an object attribute to a new attribute
-const remapAttributes = (collection, from, to) => (
-  Array.isArray(collection)
-  && collection.length > 0
-  && typeof from === 'string'
-  && typeof to === 'string'
+const remapAttributes = (collection, from, to) =>
+  Array.isArray(collection) &&
+  collection.length > 0 &&
+  typeof from === 'string' &&
+  typeof to === 'string'
     ? collection.map((c) => {
-      const result = c;
-      result[to] = result[from];
-      result[from] = undefined;
-      delete result[from];
-      return result;
-    })
-    : []
-);
+        const result = c;
+        result[to] = result[from];
+        result[from] = undefined;
+        delete result[from];
+        return result;
+      })
+    : [];
 
 // Use regex to find all urls within the field
 const collectURLsFromField = (field) => {
   if (typeof field !== 'string') return [];
   const urls = field.match(VALID_URL_REGEX) || [];
-  return urls
-    .reduce((matches, match) => {
-      const exists = matches.find((m) => m === match);
-      if (exists) {
-        return matches;
-      }
-      return [...matches, match.replace(/&nbsp(;)?$/gmi, '')];
-    }, []);
+  return urls.reduce((matches, match) => {
+    const exists = matches.find((m) => m === match);
+    if (exists) {
+      return matches;
+    }
+    return [...matches, match.replace(/&nbsp(;)?$/gim, '')];
+  }, []);
 };
 
 // Generate a colection of resoruce objects from the list of urls passed
-const resourcesFromField = (
-  genericId,
-  urlsFromField,
-  field,
-  seed = [],
-) => (typeof genericId === 'number'
-  && genericId === parseInt(genericId, 10)
-  && typeof field === 'string'
-  && Array.isArray(urlsFromField)
-  && Array.isArray(seed)
-  ? urlsFromField.reduce((resources, url) => {
-    const exists = resources.find((resource) => resource.url === url
-      && resource.genericId === genericId);
-    if (exists) {
-      exists.sourceFields = [...new Set([...exists.sourceFields, field])];
-      return resources;
-    }
-    return [...resources, {
-      genericId,
-      sourceFields: [field],
-      url,
-    }];
-  }, seed)
-  : seed);
+const resourcesFromField = (genericId, urlsFromField, field, seed = []) =>
+  typeof genericId === 'number' &&
+  genericId === parseInt(genericId, 10) &&
+  typeof field === 'string' &&
+  Array.isArray(urlsFromField) &&
+  Array.isArray(seed)
+    ? urlsFromField.reduce((resources, url) => {
+        const exists = resources.find(
+          (resource) => resource.url === url && resource.genericId === genericId
+        );
+        if (exists) {
+          exists.sourceFields = [...new Set([...exists.sourceFields, field])];
+          return resources;
+        }
+        return [
+          ...resources,
+          {
+            genericId,
+            sourceFields: [field],
+            url,
+          },
+        ];
+      }, seed)
+    : seed;
 
 const toSourceFieldList = (sourceFields) => {
   if (Array.isArray(sourceFields)) {
-    return sourceFields
-      .filter((field) => typeof field === 'string' && field.length > 0);
+    return sourceFields.filter((field) => typeof field === 'string' && field.length > 0);
   }
   if (typeof sourceFields === 'string' && sourceFields.length > 0) {
     return [sourceFields];
@@ -196,63 +198,69 @@ const coerceSourceFieldList = (resource, clone = false) => {
 
 // Merge all the records that share the same url and genericId, collecting all
 // the sourceFields they are from.
-const mergeRecordsByUrlAndGenericId = (records) => (
+const mergeRecordsByUrlAndGenericId = (records) =>
   Array.isArray(records)
     ? records
-      .filter((resource) => (typeof resource.genericId === 'number'
-        && resource.genericId === parseInt(resource.genericId, 10)
-        && typeof resource.url === 'string'
-        && Array.isArray(resource.sourceFields)
-        && resource.sourceFields.length > 0))
-      .reduce((resources, resource) => {
-        const exists = resources.find((r) => r.genericId === resource.genericId
-          && r.url === resource.url);
-        if (exists) {
-          exists.sourceFields = Array.isArray(resource.sourceFields)
-            ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
-            : exists.sourceFields;
-          return resources;
-        }
-        return [...resources, resource];
-      }, [])
-    : []);
+        .filter(
+          (resource) =>
+            typeof resource.genericId === 'number' &&
+            resource.genericId === parseInt(resource.genericId, 10) &&
+            typeof resource.url === 'string' &&
+            Array.isArray(resource.sourceFields) &&
+            resource.sourceFields.length > 0
+        )
+        .reduce((resources, resource) => {
+          const exists = resources.find(
+            (r) => r.genericId === resource.genericId && r.url === resource.url
+          );
+          if (exists) {
+            exists.sourceFields = Array.isArray(resource.sourceFields)
+              ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
+              : exists.sourceFields;
+            return resources;
+          }
+          return [...resources, resource];
+        }, [])
+    : [];
 
 // Merge all the records that share the same resourceId and genericId, collecting all
 // the sourceFields they are from.
-const mergeRecordsByResourceIdAndGenericId = (records) => (
+const mergeRecordsByResourceIdAndGenericId = (records) =>
   Array.isArray(records)
     ? records
-      .filter((resource) => (typeof resource.genericId === 'number'
-        && resource.genericId === parseInt(resource.genericId, 10)
-        && typeof resource.resourceId === 'number'
-        && resource.resourceId === parseInt(resource.resourceId, 10)
-        && Array.isArray(resource.sourceFields)
-        && resource.sourceFields.length > 0))
-      .reduce((resources, resource) => {
-        const exists = resources.find((r) => r.genericId === resource.genericId
-          && r.resourceId === resource.resourceId);
-        if (exists) {
-          exists.sourceFields = Array.isArray(resource.sourceFields)
-            ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
-            : exists.sourceFields;
-          return resources;
-        }
-        return [...resources, resource];
-      }, [])
-    : []);
+        .filter(
+          (resource) =>
+            typeof resource.genericId === 'number' &&
+            resource.genericId === parseInt(resource.genericId, 10) &&
+            typeof resource.resourceId === 'number' &&
+            resource.resourceId === parseInt(resource.resourceId, 10) &&
+            Array.isArray(resource.sourceFields) &&
+            resource.sourceFields.length > 0
+        )
+        .reduce((resources, resource) => {
+          const exists = resources.find(
+            (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+          );
+          if (exists) {
+            exists.sourceFields = Array.isArray(resource.sourceFields)
+              ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
+              : exists.sourceFields;
+            return resources;
+          }
+          return [...resources, resource];
+        }, [])
+    : [];
 
 // Replace the url with the corresponding resourceId
-const transformRecordByURLToResource = (records, resources) => (
-  Array.isArray(records)
-  && Array.isArray(resources)
+const transformRecordByURLToResource = (records, resources) =>
+  Array.isArray(records) && Array.isArray(resources)
     ? records
-      .map(({ url, ...resource }) => ({
-        ...resource,
-        resourceId: resources.find((r) => r.url === url)?.id,
-      }))
-      .filter((resource) => resource.resourceId !== undefined
-        && resource.resourceId !== null)
-    : []);
+        .map(({ url, ...resource }) => ({
+          ...resource,
+          resourceId: resources.find((r) => r.url === url)?.id,
+        }))
+        .filter((resource) => resource.resourceId !== undefined && resource.resourceId !== null)
+    : [];
 
 // Compare the incomingResources and the currentResources to generate five sets of modifications:
 // new: completely new records to be added.
@@ -268,13 +276,8 @@ const transformRecordByURLToResource = (records, resources) => (
 // create: new
 // update: expanded, delta, reduced
 // destroy: remove
-const filterResourcesForSync = (
-  incomingResources,
-  currentResources,
-  ignoreDestroy,
-) => {
-  if (!Array.isArray(incomingResources)
-    || !Array.isArray(currentResources)) {
+const filterResourcesForSync = (incomingResources, currentResources, ignoreDestroy) => {
+  if (!Array.isArray(incomingResources) || !Array.isArray(currentResources)) {
     return {
       create: [],
       update: [],
@@ -282,22 +285,24 @@ const filterResourcesForSync = (
     };
   }
 
-  const coercedIncomingResources = incomingResources
-    .map((resource) => coerceSourceFieldList(resource, true));
-  const coercedCurrentResources = currentResources
-    .map((resource) => coerceSourceFieldList(resource));
+  const coercedIncomingResources = incomingResources.map((resource) =>
+    coerceSourceFieldList(resource, true)
+  );
+  const coercedCurrentResources = currentResources.map((resource) =>
+    coerceSourceFieldList(resource)
+  );
 
   // pull all of the new and expanded resources in a single pass over the incomingResources.
-  const newExpandedResources = coercedIncomingResources
-    .reduce((resources, resource) => {
-      const matchingFromFields = coercedCurrentResources
-        .filter((cr) => cr.genericId === resource.genericId
-        && cr.resourceId === resource.resourceId);
+  const newExpandedResources = coercedIncomingResources.reduce(
+    (resources, resource) => {
+      const matchingFromFields = coercedCurrentResources.filter(
+        (cr) => cr.genericId === resource.genericId && cr.resourceId === resource.resourceId
+      );
       const isCreated = matchingFromFields.length === 0;
       if (isCreated) {
-        const created = resources.created
-          ?.find((r) => r.genericId === resource.genericId
-          && r.resourceId === resource.resourceId);
+        const created = resources.created?.find(
+          (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+        );
         if (created) {
           created.sourceFields = [...new Set([...created.sourceFields, ...resource.sourceFields])];
           return resources;
@@ -315,23 +320,23 @@ const filterResourcesForSync = (
         };
       }
 
-      const isExpanded = matchingFromFields
-        .filter((mff) => resource.sourceFields
-          .filter((l) => mff.sourceFields.includes(l))
-          .length < resource.sourceFields.length)
-        .length > 0;
+      const isExpanded =
+        matchingFromFields.filter(
+          (mff) =>
+            resource.sourceFields.filter((l) => mff.sourceFields.includes(l)).length <
+            resource.sourceFields.length
+        ).length > 0;
       if (isExpanded) {
-        const expanded = resources.expanded
-          ?.find((r) => r.genericId === resource.genericId
-            && r.resourceId === resource.resourceId);
-        const matching = matchingFromFields
-          .find((r) => r.genericId === resource.genericId
-            && r.resourceId === resource.resourceId);
+        const expanded = resources.expanded?.find(
+          (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+        );
+        const matching = matchingFromFields.find(
+          (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+        );
         if (expanded) {
-          expanded.sourceFields = [...new Set([
-            ...expanded.sourceFields,
-            ...resource.sourceFields,
-          ])];
+          expanded.sourceFields = [
+            ...new Set([...expanded.sourceFields, ...resource.sourceFields]),
+          ];
           return resources;
         }
         return {
@@ -341,28 +346,25 @@ const filterResourcesForSync = (
             {
               genericId: resource.genericId,
               resourceId: resource.resourceId,
-              sourceFields: [...new Set([
-                ...matching.sourceFields,
-                ...resource.sourceFields,
-              ])],
+              sourceFields: [...new Set([...matching.sourceFields, ...resource.sourceFields])],
             },
           ],
         };
       }
 
       return resources;
-    }, { created: [], expanded: [] });
+    },
+    { created: [], expanded: [] }
+  );
 
   // pull all of the removed and reduced resources in a single pass over the currentResources.
-  const removedReducedResources = coercedCurrentResources
-    .reduce((resources, resource) => {
-      const isRemoved = !coercedIncomingResources.some((rff) => (
-        rff.genericId === resource.genericId
-        && rff.resourceId === resource.resourceId
-      ));
+  const removedReducedResources = coercedCurrentResources.reduce(
+    (resources, resource) => {
+      const isRemoved = !coercedIncomingResources.some(
+        (rff) => rff.genericId === resource.genericId && rff.resourceId === resource.resourceId
+      );
       if (isRemoved && resource.onApprovedAR !== true) {
-        const removed = resources.removed
-          ?.find((r) => r.genericId === resource.genericId);
+        const removed = resources.removed?.find((r) => r.genericId === resource.genericId);
         if (removed) {
           removed.resourceIds = [...removed.resourceIds, resource.resourceId];
           return resources;
@@ -379,57 +381,64 @@ const filterResourcesForSync = (
         };
       }
 
-      const matchingFromFields = coercedIncomingResources
-        .filter((rff) => rff.genericId === resource.genericId
-        && rff.resourceId === resource.resourceId);
-      const isReduced = matchingFromFields
-        .filter((mff) => resource.sourceFields
-          .filter((l) => mff.sourceFields.includes(l))
-          .length < resource.sourceFields.length)
-        .length > 0;
+      const matchingFromFields = coercedIncomingResources.filter(
+        (rff) => rff.genericId === resource.genericId && rff.resourceId === resource.resourceId
+      );
+      const isReduced =
+        matchingFromFields.filter(
+          (mff) =>
+            resource.sourceFields.filter((l) => mff.sourceFields.includes(l)).length <
+            resource.sourceFields.length
+        ).length > 0;
       if (isReduced) {
-        const reduced = resources.reduced
-          ?.find((r) => r.genericId === resource.genericId
-            && r.resourceId === resource.resourceId);
-        const matching = matchingFromFields
-          .find((r) => r.genericId === resource.genericId
-            && r.resourceId === resource.resourceId);
+        const reduced = resources.reduced?.find(
+          (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+        );
+        const matching = matchingFromFields.find(
+          (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+        );
         if (reduced) {
-          reduced.sourceFields = reduced.sourceFields
-            .filter((sourceField) => matching.sourceFields.includes(sourceField));
+          reduced.sourceFields = reduced.sourceFields.filter((sourceField) =>
+            matching.sourceFields.includes(sourceField)
+          );
           return resources;
         }
         return {
-          removed: (resources.removed || []),
+          removed: resources.removed || [],
           reduced: [
             ...resources.reduced,
             {
               genericId: resource.genericId,
               resourceId: resource.resourceId,
-              sourceFields: resource.sourceFields
-                .filter((sourceField) => matching.sourceFields.includes(sourceField)),
+              sourceFields: resource.sourceFields.filter((sourceField) =>
+                matching.sourceFields.includes(sourceField)
+              ),
             },
           ],
         };
       }
 
       return resources;
-    }, { removed: [], reduced: [] });
+    },
+    { removed: [], reduced: [] }
+  );
 
   // collect the intersection of the expanded and reduced datasets to generate the delta dataset.
   const deltaFromExpanded = (newExpandedResources.expanded || []).filter((neResource) => {
-    const isRemoved = (removedReducedResources.reduced || []).some((rrResource) => (
-      neResource.genericId === rrResource.genericId
-      && neResource.resourceId === rrResource.resourceId
-    ));
+    const isRemoved = (removedReducedResources.reduced || []).some(
+      (rrResource) =>
+        neResource.genericId === rrResource.genericId &&
+        neResource.resourceId === rrResource.resourceId
+    );
     return isRemoved;
   });
 
   const deltaFromReduced = (removedReducedResources.reduced || []).filter((rrResource) => {
-    const isAdded = (newExpandedResources.expanded || []).some((neResource) => (
-      neResource.genericId === rrResource.genericId
-      && neResource.resourceId === rrResource.resourceId
-    ));
+    const isAdded = (newExpandedResources.expanded || []).some(
+      (neResource) =>
+        neResource.genericId === rrResource.genericId &&
+        neResource.resourceId === rrResource.resourceId
+    );
     return isAdded;
   });
 
@@ -437,17 +446,20 @@ const filterResourcesForSync = (
   // Generate the delta dataset
   resourceActions.delta = deltaFromExpanded
     ?.reduce((delta, resource) => {
-      const exists = delta.find((r) => r.genericId === resource.genericId
-        && r.resourceId === resource.resourceId);
-      const fromReduced = deltaFromReduced
-        ?.find((r) => r.genericId === resource.genericId
-        && r.resourceId === resource.resourceId);
-      const fromOriginal = coercedCurrentResources
-        .find((r) => r.genericId === resource.genericId
-        && r.resourceId === resource.resourceId);
-      const deltaSourceFields = resource.sourceFields
-        .filter((sourceField) => !fromOriginal.sourceFields.includes(sourceField)
-          || fromReduced?.sourceFields.includes(sourceField));
+      const exists = delta.find(
+        (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+      );
+      const fromReduced = deltaFromReduced?.find(
+        (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+      );
+      const fromOriginal = coercedCurrentResources.find(
+        (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+      );
+      const deltaSourceFields = resource.sourceFields.filter(
+        (sourceField) =>
+          !fromOriginal.sourceFields.includes(sourceField) ||
+          fromReduced?.sourceFields.includes(sourceField)
+      );
       if (exists) {
         exists.sourceFields = deltaSourceFields;
         return delta;
@@ -464,24 +476,29 @@ const filterResourcesForSync = (
       ...resource,
     }));
   // Remove the records of the delta dataset from the expanded dataset.
-  resourceActions.expanded = newExpandedResources.expanded?.filter((neResource) => (
-    !resourceActions.delta?.some((dResource) => (
-      dResource.genericId === neResource.genericId
-      && dResource.resourceId === neResource.resourceId
-    ))
-  ))?.map((resource) => ({ ...resource }));
+  resourceActions.expanded = newExpandedResources.expanded
+    ?.filter(
+      (neResource) =>
+        !resourceActions.delta?.some(
+          (dResource) =>
+            dResource.genericId === neResource.genericId &&
+            dResource.resourceId === neResource.resourceId
+        )
+    )
+    ?.map((resource) => ({ ...resource }));
   // Remove the records of the delta dataset from the reduced dataset.
-  resourceActions.reduced = removedReducedResources.reduced?.filter((rrResource) => (
-    !resourceActions.delta?.some((dResource) => (
-      dResource.genericId === rrResource.genericId
-      && dResource.resourceId === rrResource.resourceId
-    ))
-  ));
+  resourceActions.reduced = removedReducedResources.reduced?.filter(
+    (rrResource) =>
+      !resourceActions.delta?.some(
+        (dResource) =>
+          dResource.genericId === rrResource.genericId &&
+          dResource.resourceId === rrResource.resourceId
+      )
+  );
 
-  resourceActions.new = newExpandedResources.created
-    ?.map((resource) => ({
-      ...resource,
-    }));
+  resourceActions.new = newExpandedResources.created?.map((resource) => ({
+    ...resource,
+  }));
 
   // Recreate the remove dataset combining the removed and reduced where the reduced no longer
   // references any sourceFields.
@@ -490,8 +507,7 @@ const filterResourcesForSync = (
     ...resourceActions.reduced
       .filter((resource) => resource.sourceFields.length === 0)
       .reduce((resources, resource) => {
-        const exists = resources
-          .find((r) => r.genericId === resource.genericId);
+        const exists = resources.find((r) => r.genericId === resource.genericId);
 
         if (exists) {
           exists.resourceIds = [...exists.resourceIds, resource.resourceId];
@@ -508,8 +524,7 @@ const filterResourcesForSync = (
         ];
       }, []),
   ].reduce((resources, resource) => {
-    const exists = resources
-      .find((r) => r.genericId === resource.genericId);
+    const exists = resources.find((r) => r.genericId === resource.genericId);
 
     if (exists) {
       exists.resourceIds = [...exists.resourceIds, resource.resourceIds];
@@ -533,9 +548,7 @@ const filterResourcesForSync = (
       ...(resourceActions.delta || []),
       ...(resourceActions.reduced || []),
     ],
-    destroy: !ignoreDestroy
-      ? resourceActions.removed
-      : [],
+    destroy: !ignoreDestroy ? resourceActions.removed : [],
   };
 };
 
@@ -543,32 +556,32 @@ const getResourcesForModel = async (
   model,
   resourceTableForeignKey,
   genericId,
-  includeAutoDetected = false,
-) => (
+  includeAutoDetected = false
+) =>
   includeAutoDetected
     ? model.findAll({
-      where: {
-        [resourceTableForeignKey]: genericId,
-      },
-      include: [
-        {
-          model: Resource,
-          as: 'resource',
+        where: {
+          [resourceTableForeignKey]: genericId,
         },
-      ],
-    })
+        include: [
+          {
+            model: Resource,
+            as: 'resource',
+          },
+        ],
+      })
     : model.findAll({
-      where: {
-        [resourceTableForeignKey]: genericId,
-        sourceFields: { [Op.contains]: ['resource'] },
-      },
-      include: [
-        {
-          model: Resource,
-          as: 'resource',
+        where: {
+          [resourceTableForeignKey]: genericId,
+          sourceFields: { [Op.contains]: ['resource'] },
         },
-      ],
-    }));
+        include: [
+          {
+            model: Resource,
+            as: 'resource',
+          },
+        ],
+      });
 
 // Generic method for running the processFunction for an entity based on the data found at
 // the passed id
@@ -580,22 +593,25 @@ const genericProcessEntityForResourcesById = async (
   id,
   urls,
   resourceIds,
-  ignoreDestroy = false,
+  ignoreDestroy = false
 ) => {
   const entity = await tableModel.findOne({
     where: { id },
-    include: [{
-      model: resourceTableModel,
-      as: resourceTableAs,
-      include: [{
-        model: Resource,
-        as: 'resource',
-      }],
-    }],
+    include: [
+      {
+        model: resourceTableModel,
+        as: resourceTableAs,
+        include: [
+          {
+            model: Resource,
+            as: 'resource',
+          },
+        ],
+      },
+    ],
   });
 
-  return entity
-    && typeof entity === 'object'
+  return entity && typeof entity === 'object'
     ? processFunction(entity, urls, resourceIds, ignoreDestroy)
     : Promise.resolve();
 };
@@ -610,38 +626,48 @@ const genericProcessEntityForResources = async (
   entity,
   urls,
   resourceIds,
-  ignoreDestroy = false,
+  ignoreDestroy = false
 ) => {
   // Either used the current resource data from the entity passed in or look it up.
   const currentResources = entity[resourceTableAs]
     ? entity[resourceTableAs]
     : await resourceTableModel.findAll({
-      where: { [resourceTableForeignKey]: entity.id },
-      include: [{
-        model: Resource,
-        as: 'resource',
-      }],
-      raw: true,
-    });
+        where: { [resourceTableForeignKey]: entity.id },
+        include: [
+          {
+            model: Resource,
+            as: 'resource',
+          },
+        ],
+        raw: true,
+      });
 
   // convert to generic genericId to use generic modifier methods
-  const currentResourcesGeneric = remapAttributes(currentResources, resourceTableForeignKey, 'genericId');
+  const currentResourcesGeneric = remapAttributes(
+    currentResources,
+    resourceTableForeignKey,
+    'genericId'
+  );
 
   // Use regex to pull urls from the required fields
   const urlsFrom = {};
-  columns.forEach((column) => { urlsFrom[column] = collectURLsFromField(entity[column]); });
-  urlsFrom.resource = urls && Array.isArray(urls) && urls.length > 0
-    ? urls.map((url) => collectURLsFromField(url)).flat(Infinity)
-    : [];
+  columns.forEach((column) => {
+    urlsFrom[column] = collectURLsFromField(entity[column]);
+  });
+  urlsFrom.resource =
+    urls && Array.isArray(urls) && urls.length > 0
+      ? urls.map((url) => collectURLsFromField(url)).flat(Infinity)
+      : [];
 
   // Create an array of resource objects from the passed resourceIds
-  const incomingResourcesById = resourceIds && Array.isArray(resourceIds)
-    ? resourceIds.map((resourceId) => ({
-      genericId: entity.id,
-      resourceId,
-      sourceFields: ['resource'],
-    }))
-    : [];
+  const incomingResourcesById =
+    resourceIds && Array.isArray(resourceIds)
+      ? resourceIds.map((resourceId) => ({
+          genericId: entity.id,
+          resourceId,
+          sourceFields: ['resource'],
+        }))
+      : [];
 
   // Find or create resources for each of the urls collected.
   // Create an array of resource objects from all the data collected for the field.
@@ -649,11 +675,9 @@ const genericProcessEntityForResources = async (
   let incomingResourcesRaw = [];
   Object.keys(urlsFrom).forEach((key) => {
     urlsFromFlat = urlsFromFlat.concat(urlsFrom[key]);
-    incomingResourcesRaw = incomingResourcesRaw.concat(resourcesFromField(
-      entity.id,
-      urlsFrom[key],
-      key,
-    ));
+    incomingResourcesRaw = incomingResourcesRaw.concat(
+      resourcesFromField(entity.id, urlsFrom[key], key)
+    );
   });
   const resourcesWithId = await findOrCreateResources([...new Set(urlsFromFlat)]);
 
@@ -664,7 +688,7 @@ const genericProcessEntityForResources = async (
   // Replace the url with the associated resourceId.
   const incomingResourcesTransformed = transformRecordByURLToResource(
     incomingResourcesMerged,
-    resourcesWithId,
+    resourcesWithId
   );
 
   // Merge in the passed resources from resourceIds
@@ -677,7 +701,7 @@ const genericProcessEntityForResources = async (
   const filteredResources = filterResourcesForSync(
     incomingResources,
     currentResourcesGeneric,
-    ignoreDestroy,
+    ignoreDestroy
   );
 
   // switch from generic genericId to activityReportObjectiveId.
@@ -689,114 +713,101 @@ const genericProcessEntityForResources = async (
 
   // Save the distinct datasets to the database.
   await syncFunction(resourcesToSync);
-  return getResourcesForModel(
-    resourceTableModel,
-    resourceTableForeignKey,
-    entity.id,
-    true,
-  );
+  return getResourcesForModel(resourceTableModel, resourceTableForeignKey, entity.id, true);
 };
 
 // Generic sync for resources
 const genericSyncResourcesForEntity = async (
   resourceTableModel,
   resourceTableForeignKey,
-  resources,
-) => Promise.all([
-  ...resources.create.map(async (resource) => resourceTableModel.create({
-    [resourceTableForeignKey]: resource[resourceTableForeignKey],
-    resourceId: resource.resourceId,
-    sourceFields: resource.sourceFields,
-    ...(Object.values(resourceTableModel?.rawAttributes)
-      ?.map(({ fieldName }) => fieldName)
-      .includes('onAR')
-      && { onAR: false, onApprovedAR: false }),
-  })),
-  ...resources.update.map(async (resource) => resourceTableModel.update(
-    {
-      sourceFields: resource.sourceFields,
-    },
-    {
-      where: {
+  resources
+) =>
+  Promise.all([
+    ...resources.create.map(async (resource) =>
+      resourceTableModel.create({
         [resourceTableForeignKey]: resource[resourceTableForeignKey],
         resourceId: resource.resourceId,
-      },
-      individualHooks: true,
-    },
-  )),
-  ...resources.destroy.map(async (resource) => (resource.resourceIds.length > 0
-    ? resourceTableModel.destroy({
-      where: {
-        [resourceTableForeignKey]: resource[resourceTableForeignKey],
-        resourceId: { [Op.in]: resource.resourceIds },
-      },
-      individualHooks: true,
-    })
-    : Promise.resolve())),
-]);
+        sourceFields: resource.sourceFields,
+        ...(Object.values(resourceTableModel?.rawAttributes)
+          ?.map(({ fieldName }) => fieldName)
+          .includes('onAR') && { onAR: false, onApprovedAR: false }),
+      })
+    ),
+    ...resources.update.map(async (resource) =>
+      resourceTableModel.update(
+        {
+          sourceFields: resource.sourceFields,
+        },
+        {
+          where: {
+            [resourceTableForeignKey]: resource[resourceTableForeignKey],
+            resourceId: resource.resourceId,
+          },
+          individualHooks: true,
+        }
+      )
+    ),
+    ...resources.destroy.map(async (resource) =>
+      resource.resourceIds.length > 0
+        ? resourceTableModel.destroy({
+            where: {
+              [resourceTableForeignKey]: resource[resourceTableForeignKey],
+              resourceId: { [Op.in]: resource.resourceIds },
+            },
+            individualHooks: true,
+          })
+        : Promise.resolve()
+    ),
+  ]);
 // -----------------------------------------------------------------------------
 // ActivityReports Resource Processing
 // -----------------------------------------------------------------------------
 
 // Identify if passed sourceFields contain one or more of the ACTIVITY_REPORT_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.REPORT and log exceptions
-const calculateIsAutoDetectedForActivityReport = (
-  sourceFields,
-) => calculateIsAutoDetected(sourceFields, REPORT_AUTODETECTED_FIELDS);
+const calculateIsAutoDetectedForActivityReport = (sourceFields) =>
+  calculateIsAutoDetected(sourceFields, REPORT_AUTODETECTED_FIELDS);
 
 // Using the five dataset, each can be run in "parallel" to reduce latancy when applied to the
 // database. This should result in better performance.
-const syncResourcesForActivityReport = async (
-  resources,
-) => genericSyncResourcesForEntity(
-  ActivityReportResource,
-  'activityReportId',
-  resources,
-);
+const syncResourcesForActivityReport = async (resources) =>
+  genericSyncResourcesForEntity(ActivityReportResource, 'activityReportId', resources);
 
 // Process the current values on the report into the database for all referenced resources.
 const processActivityReportForResources = async (
   activityReport,
   urls,
   resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResources(
-  ActivityReportResource,
-  'activityReportResources',
-  'activityReportId',
-  REPORT_AUTODETECTED_FIELDS,
-  syncResourcesForActivityReport,
-  activityReport,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
+  ignoreDestroy
+) =>
+  genericProcessEntityForResources(
+    ActivityReportResource,
+    'activityReportResources',
+    'activityReportId',
+    REPORT_AUTODETECTED_FIELDS,
+    syncResourcesForActivityReport,
+    activityReport,
+    urls,
+    resourceIds,
+    ignoreDestroy
+  );
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
-const processActivityReportForResourcesById = async (
-  activityReportId,
-  urls,
-) => genericProcessEntityForResourcesById(
-  ActivityReport,
-  ActivityReportResource,
-  'activityReportResources',
-  processActivityReportForResources,
-  activityReportId,
-  urls,
-  [],
-  false,
-);
+const processActivityReportForResourcesById = async (activityReportId, urls) =>
+  genericProcessEntityForResourcesById(
+    ActivityReport,
+    ActivityReportResource,
+    'activityReportResources',
+    processActivityReportForResources,
+    activityReportId,
+    urls,
+    [],
+    false
+  );
 
-const getResourcesForActivityReports = async (
-  reportIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  ActivityReportResource,
-  'activityReportId',
-  reportIds,
-  includeAutoDetected,
-);
+const getResourcesForActivityReports = async (reportIds, includeAutoDetected = false) =>
+  getResourcesForModel(ActivityReportResource, 'activityReportId', reportIds, includeAutoDetected);
 
 // -----------------------------------------------------------------------------
 // NextSteps Resource Processing
@@ -804,64 +815,44 @@ const getResourcesForActivityReports = async (
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.NEXTSTEPS
 // and log exceptions
-const calculateIsAutoDetectedForNextStep = (
-  sourceFields,
-) => calculateIsAutoDetected(sourceFields, NEXTSTEP_AUTODETECTED_FIELDS);
+const calculateIsAutoDetectedForNextStep = (sourceFields) =>
+  calculateIsAutoDetected(sourceFields, NEXTSTEP_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
-const syncResourcesForNextStep = async (
-  resources,
-) => genericSyncResourcesForEntity(
-  NextStepResource,
-  'nextStepId',
-  resources,
-);
+const syncResourcesForNextStep = async (resources) =>
+  genericSyncResourcesForEntity(NextStepResource, 'nextStepId', resources);
 
 // Process the current values on the report into the database for all referenced resources.
-const processNextStepForResources = async (
-  nextStep,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResources(
-  NextStepResource,
-  'nextStepResources',
-  'nextStepId',
-  NEXTSTEP_AUTODETECTED_FIELDS,
-  syncResourcesForNextStep,
-  nextStep,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
+const processNextStepForResources = async (nextStep, urls, resourceIds, ignoreDestroy) =>
+  genericProcessEntityForResources(
+    NextStepResource,
+    'nextStepResources',
+    'nextStepId',
+    NEXTSTEP_AUTODETECTED_FIELDS,
+    syncResourcesForNextStep,
+    nextStep,
+    urls,
+    resourceIds,
+    ignoreDestroy
+  );
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
-const processNextStepForResourcesById = async (
-  nextStepId,
-  urls,
-  resourceIds,
-) => genericProcessEntityForResourcesById(
-  NextStep,
-  NextStepResource,
-  'nextStepResources',
-  processNextStepForResources,
-  nextStepId,
-  urls,
-  resourceIds,
-  false,
-);
+const processNextStepForResourcesById = async (nextStepId, urls, resourceIds) =>
+  genericProcessEntityForResourcesById(
+    NextStep,
+    NextStepResource,
+    'nextStepResources',
+    processNextStepForResources,
+    nextStepId,
+    urls,
+    resourceIds,
+    false
+  );
 
-const getResourcesForNextSteps = async (
-  nextStepIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  NextStepResource,
-  'nextStepId',
-  nextStepIds,
-  includeAutoDetected,
-);
+const getResourcesForNextSteps = async (nextStepIds, includeAutoDetected = false) =>
+  getResourcesForModel(NextStepResource, 'nextStepId', nextStepIds, includeAutoDetected);
 
 // -----------------------------------------------------------------------------
 // Goals Resource Processing
@@ -869,65 +860,44 @@ const getResourcesForNextSteps = async (
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.GOAL
 // and log exceptions
-const calculateIsAutoDetectedForGoal = (
-  sourceFields,
-) => calculateIsAutoDetected(sourceFields, GOAL_AUTODETECTED_FIELDS);
+const calculateIsAutoDetectedForGoal = (sourceFields) =>
+  calculateIsAutoDetected(sourceFields, GOAL_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
-const syncResourcesForGoal = async (
-  resources,
-) => genericSyncResourcesForEntity(
-  GoalResource,
-  'goalId',
-  resources,
-);
+const syncResourcesForGoal = async (resources) =>
+  genericSyncResourcesForEntity(GoalResource, 'goalId', resources);
 
 // Process the current values on the report into the database for all referenced resources.
-const processGoalForResources = async (
-  goal,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResources(
-  GoalResource,
-  'goalResources',
-  'goalId',
-  GOAL_AUTODETECTED_FIELDS,
-  syncResourcesForGoal,
-  goal,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
+const processGoalForResources = async (goal, urls, resourceIds, ignoreDestroy) =>
+  genericProcessEntityForResources(
+    GoalResource,
+    'goalResources',
+    'goalId',
+    GOAL_AUTODETECTED_FIELDS,
+    syncResourcesForGoal,
+    goal,
+    urls,
+    resourceIds,
+    ignoreDestroy
+  );
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
-const processGoalForResourcesById = async (
-  goalId,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResourcesById(
-  Goal,
-  GoalResource,
-  'goalResources',
-  processGoalForResources,
-  goalId,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
+const processGoalForResourcesById = async (goalId, urls, resourceIds, ignoreDestroy) =>
+  genericProcessEntityForResourcesById(
+    Goal,
+    GoalResource,
+    'goalResources',
+    processGoalForResources,
+    goalId,
+    urls,
+    resourceIds,
+    ignoreDestroy
+  );
 
-const getResourcesForGoals = async (
-  goalIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  GoalResource,
-  'goalId',
-  goalIds,
-  includeAutoDetected,
-);
+const getResourcesForGoals = async (goalIds, includeAutoDetected = false) =>
+  getResourcesForModel(GoalResource, 'goalId', goalIds, includeAutoDetected);
 
 // -----------------------------------------------------------------------------
 // Goal Template Resource Processing
@@ -935,37 +905,27 @@ const getResourcesForGoals = async (
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.GOAL
 // and log exceptions
-const calculateIsAutoDetectedForGoalTemplate = (
-  sourceFields,
-) => calculateIsAutoDetected(sourceFields, GOALTEMPLATE_AUTODETECTED_FIELDS);
+const calculateIsAutoDetectedForGoalTemplate = (sourceFields) =>
+  calculateIsAutoDetected(sourceFields, GOALTEMPLATE_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
-const syncResourcesForGoalTemplate = async (
-  resources,
-) => genericSyncResourcesForEntity(
-  GoalTemplateResource,
-  'goalTemplateId',
-  resources,
-);
+const syncResourcesForGoalTemplate = async (resources) =>
+  genericSyncResourcesForEntity(GoalTemplateResource, 'goalTemplateId', resources);
 
 // Process the current values on the report into the database for all referenced resources.
-const processGoalTemplateForResources = async (
-  goalTemplate,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResources(
-  GoalTemplateResource,
-  'goalTemplateResources',
-  'goalTemplateId',
-  GOALTEMPLATE_AUTODETECTED_FIELDS,
-  syncResourcesForGoalTemplate,
-  goalTemplate,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
+const processGoalTemplateForResources = async (goalTemplate, urls, resourceIds, ignoreDestroy) =>
+  genericProcessEntityForResources(
+    GoalTemplateResource,
+    'goalTemplateResources',
+    'goalTemplateId',
+    GOALTEMPLATE_AUTODETECTED_FIELDS,
+    syncResourcesForGoalTemplate,
+    goalTemplate,
+    urls,
+    resourceIds,
+    ignoreDestroy
+  );
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
@@ -973,27 +933,26 @@ const processGoalTemplateForResourcesById = async (
   goalTemplateId,
   urls,
   resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResourcesById(
-  GoalTemplate,
-  GoalTemplateResource,
-  'goalTemplateResources',
-  processGoalTemplateForResources,
-  goalTemplateId,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
+  ignoreDestroy
+) =>
+  genericProcessEntityForResourcesById(
+    GoalTemplate,
+    GoalTemplateResource,
+    'goalTemplateResources',
+    processGoalTemplateForResources,
+    goalTemplateId,
+    urls,
+    resourceIds,
+    ignoreDestroy
+  );
 
-const getResourcesForGoalTemplates = async (
-  goalTemplateIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  GoalTemplateResource,
-  'goalTemplateId',
-  goalTemplateIds,
-  includeAutoDetected,
-);
+const getResourcesForGoalTemplates = async (goalTemplateIds, includeAutoDetected = false) =>
+  getResourcesForModel(
+    GoalTemplateResource,
+    'goalTemplateId',
+    goalTemplateIds,
+    includeAutoDetected
+  );
 
 // -----------------------------------------------------------------------------
 // Report Goal Resource Processing
@@ -1001,64 +960,57 @@ const getResourcesForGoalTemplates = async (
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.REPORTGOAL
 // and log exceptions
-const calculateIsAutoDetectedForActivityReportGoal = (
-  sourceFields,
-) => calculateIsAutoDetected(sourceFields, REPORTGOAL_AUTODETECTED_FIELDS);
+const calculateIsAutoDetectedForActivityReportGoal = (sourceFields) =>
+  calculateIsAutoDetected(sourceFields, REPORTGOAL_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
-const syncResourcesForActivityReportGoal = async (
-  resources,
-) => genericSyncResourcesForEntity(
-  ActivityReportGoalResource,
-  'activityReportGoalId',
-  resources,
-);
+const syncResourcesForActivityReportGoal = async (resources) =>
+  genericSyncResourcesForEntity(ActivityReportGoalResource, 'activityReportGoalId', resources);
 
 // Process the current values on the report into the database for all referenced resources.
 const processActivityReportGoalForResources = async (
   activityReportGoal,
   urls,
   resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResources(
-  ActivityReportGoalResource,
-  'activityReportGoalResources',
-  'activityReportGoalId',
-  REPORTGOAL_AUTODETECTED_FIELDS,
-  syncResourcesForActivityReportGoal,
-  activityReportGoal,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
+  ignoreDestroy
+) =>
+  genericProcessEntityForResources(
+    ActivityReportGoalResource,
+    'activityReportGoalResources',
+    'activityReportGoalId',
+    REPORTGOAL_AUTODETECTED_FIELDS,
+    syncResourcesForActivityReportGoal,
+    activityReportGoal,
+    urls,
+    resourceIds,
+    ignoreDestroy
+  );
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
-const processActivityReportGoalForResourcesById = async (
-  activityReportGoalId,
-  urls,
-  resourceIds,
-) => genericProcessEntityForResourcesById(
-  ActivityReportGoal,
-  ActivityReportGoalResource,
-  'activityReportGoalResources',
-  processActivityReportGoalForResources,
-  activityReportGoalId,
-  urls,
-  resourceIds,
-  false,
-);
+const processActivityReportGoalForResourcesById = async (activityReportGoalId, urls, resourceIds) =>
+  genericProcessEntityForResourcesById(
+    ActivityReportGoal,
+    ActivityReportGoalResource,
+    'activityReportGoalResources',
+    processActivityReportGoalForResources,
+    activityReportGoalId,
+    urls,
+    resourceIds,
+    false
+  );
 
 const getResourcesForActivityReportGoals = async (
   activityReportGoalIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  ActivityReportGoalResource,
-  'activityReportGoalId',
-  activityReportGoalIds,
-  includeAutoDetected,
-);
+  includeAutoDetected = false
+) =>
+  getResourcesForModel(
+    ActivityReportGoalResource,
+    'activityReportGoalId',
+    activityReportGoalIds,
+    includeAutoDetected
+  );
 
 // -----------------------------------------------------------------------------
 // Report Objectives Resource Processing
@@ -1066,64 +1018,65 @@ const getResourcesForActivityReportGoals = async (
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.REPORTOBJECTIVES
 // and log exceptions
-const calculateIsAutoDetectedForActivityReportObjective = (
-  sourceFields,
-) => calculateIsAutoDetected(sourceFields, REPORTOBJECTIVE_AUTODETECTED_FIELDS);
+const calculateIsAutoDetectedForActivityReportObjective = (sourceFields) =>
+  calculateIsAutoDetected(sourceFields, REPORTOBJECTIVE_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
-const syncResourcesForActivityReportObjective = async (
-  resources,
-) => genericSyncResourcesForEntity(
-  ActivityReportObjectiveResource,
-  'activityReportObjectiveId',
-  resources,
-);
+const syncResourcesForActivityReportObjective = async (resources) =>
+  genericSyncResourcesForEntity(
+    ActivityReportObjectiveResource,
+    'activityReportObjectiveId',
+    resources
+  );
 
 // Process the current values on the report into the database for all referenced resources.
 const processActivityReportObjectiveForResources = async (
   activityReportObjective,
   urls,
   resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResources(
-  ActivityReportObjectiveResource,
-  'activityReportObjectiveResources',
-  'activityReportObjectiveId',
-  REPORTOBJECTIVE_AUTODETECTED_FIELDS,
-  syncResourcesForActivityReportObjective,
-  activityReportObjective,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
+  ignoreDestroy
+) =>
+  genericProcessEntityForResources(
+    ActivityReportObjectiveResource,
+    'activityReportObjectiveResources',
+    'activityReportObjectiveId',
+    REPORTOBJECTIVE_AUTODETECTED_FIELDS,
+    syncResourcesForActivityReportObjective,
+    activityReportObjective,
+    urls,
+    resourceIds,
+    ignoreDestroy
+  );
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
 const processActivityReportObjectiveForResourcesById = async (
   activityReportObjectiveId,
   urls,
-  resourceIds,
-) => genericProcessEntityForResourcesById(
-  ActivityReportObjective,
-  ActivityReportObjectiveResource,
-  'activityReportObjectiveResources',
-  processActivityReportObjectiveForResources,
-  activityReportObjectiveId,
-  urls,
-  resourceIds,
-  false,
-);
+  resourceIds
+) =>
+  genericProcessEntityForResourcesById(
+    ActivityReportObjective,
+    ActivityReportObjectiveResource,
+    'activityReportObjectiveResources',
+    processActivityReportObjectiveForResources,
+    activityReportObjectiveId,
+    urls,
+    resourceIds,
+    false
+  );
 
 const getResourcesForActivityReportObjectives = async (
   activityReportObjectiveIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  ActivityReportObjectiveResource,
-  'activityReportObjectiveId',
-  activityReportObjectiveIds,
-  includeAutoDetected,
-);
+  includeAutoDetected = false
+) =>
+  getResourcesForModel(
+    ActivityReportObjectiveResource,
+    'activityReportObjectiveId',
+    activityReportObjectiveIds,
+    includeAutoDetected
+  );
 
 // -----------------------------------------------------------------------------
 

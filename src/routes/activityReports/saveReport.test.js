@@ -3,20 +3,20 @@ import { Op } from 'sequelize';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 import {
+  ActivityRecipient,
   ActivityReport,
   ActivityReportGoal,
-  ActivityRecipient,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   Goal,
   Grant,
   NextStep,
   Objective,
-  Recipient,
-  User,
   Permission,
-  Topic,
+  Recipient,
   sequelize,
+  Topic,
+  User,
 } from '../../models';
 import { createReport, saveReport } from './handlers';
 
@@ -250,9 +250,11 @@ describe('saveReport', () => {
     const requestBody = {
       ECLKCResourcesUsed: [],
       activityRecipientType: 'recipient',
-      activityRecipients: [{
-        activityRecipientId: grantAndRecipientId,
-      }],
+      activityRecipients: [
+        {
+          activityRecipientId: grantAndRecipientId,
+        },
+      ],
       activityType: [],
       additionalNotes: null,
       files: [],
@@ -279,7 +281,10 @@ describe('saveReport', () => {
       approvers: [],
       creatorRole: 'Grants Specialist',
       pageState: {
-        1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Not started',
+        3: 'Not started',
+        4: 'Not started',
       },
       userId: firstUser.id,
       regionId: 1,
@@ -310,43 +315,53 @@ describe('saveReport', () => {
       goalEndDate: '',
       goalIsRttapa: '',
       goalName: '',
-      goals: [{
-        goalTemplateId: 1,
-        label: firstGoal.name,
-        objectives: [{
-          title: 'first objective for goal',
-          topics: [{ id: firstTopic.id, name: firstTopic.name }],
-          resources: [],
-          files: [],
-          ttaProvided: '<marquee>we are sliding</marquee>\n',
-          status: OBJECTIVE_STATUS.NOT_STARTED,
-          label: 'Create a new objective',
-        }],
-        isNew: true,
-        endDate: '',
-        grantIds: [firstGoal.grantId],
-        goalIds: [firstGoal.id],
-        oldGrantIds: [],
-        name: firstGoal.name,
-        status: GOAL_STATUS.DRAFT,
-        onApprovedAR: false,
-        isRttapa: 'No',
-        isActivelyBeingEditing: false,
-        regionId: 1,
-      }],
+      goals: [
+        {
+          goalTemplateId: 1,
+          label: firstGoal.name,
+          objectives: [
+            {
+              title: 'first objective for goal',
+              topics: [{ id: firstTopic.id, name: firstTopic.name }],
+              resources: [],
+              files: [],
+              ttaProvided: '<marquee>we are sliding</marquee>\n',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              label: 'Create a new objective',
+            },
+          ],
+          isNew: true,
+          endDate: '',
+          grantIds: [firstGoal.grantId],
+          goalIds: [firstGoal.id],
+          oldGrantIds: [],
+          name: firstGoal.name,
+          status: GOAL_STATUS.DRAFT,
+          onApprovedAR: false,
+          isRttapa: 'No',
+          isActivelyBeingEditing: false,
+          regionId: 1,
+        },
+      ],
       pageState: {
-        1: 'In progress', 2: 'Complete', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Complete',
+        3: 'Not started',
+        4: 'Not started',
       },
       startDate: null,
       version: 2,
       approverUserIds: [],
     };
 
-    await saveReport({
-      body: secondRequestBody,
-      session: { userId: firstUser.id },
-      params: { activityReportId: firstReport.id },
-    }, mockResponse);
+    await saveReport(
+      {
+        body: secondRequestBody,
+        session: { userId: firstUser.id },
+        params: { activityReportId: firstReport.id },
+      },
+      mockResponse
+    );
 
     let allObjectivesForGoals = await Objective.findAll({
       where: {
@@ -363,9 +378,11 @@ describe('saveReport', () => {
     const thirdRequestBody = {
       ECLKCResourcesUsed: [],
       activityRecipientType: 'recipient',
-      activityRecipients: [{
-        activityRecipientId: grantAndRecipientId,
-      }],
+      activityRecipients: [
+        {
+          activityRecipientId: grantAndRecipientId,
+        },
+      ],
       activityType: [],
       additionalNotes: null,
       files: [],
@@ -392,7 +409,10 @@ describe('saveReport', () => {
       approvers: [],
       creatorRole: 'Grants Specialist',
       pageState: {
-        1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Not started',
+        3: 'Not started',
+        4: 'Not started',
       },
       userId: firstUser.id,
       regionId: 1,
@@ -425,43 +445,53 @@ describe('saveReport', () => {
       goalEndDate: '',
       goalIsRttapa: '',
       goalName: '',
-      goals: [{
-        goalTemplateId: 1,
-        label: firstGoal.name,
-        objectives: [{
-          title: 'second objective for goal',
-          topics: [{ id: secondTopic.id, name: secondTopic.name }],
-          resources: [],
-          files: [],
-          ttaProvided: '<marquee>we are sliding</marquee>\n',
-          status: OBJECTIVE_STATUS.NOT_STARTED,
-          label: 'Create a new objective',
-        }],
-        isNew: true,
-        endDate: '',
-        grantIds: [firstGoal.grantId],
-        goalIds: [firstGoal.id],
-        oldGrantIds: [],
-        name: firstGoal.name,
-        status: GOAL_STATUS.DRAFT,
-        onApprovedAR: false,
-        isRttapa: 'No',
-        isActivelyBeingEditing: false,
-        regionId: 1,
-      }],
+      goals: [
+        {
+          goalTemplateId: 1,
+          label: firstGoal.name,
+          objectives: [
+            {
+              title: 'second objective for goal',
+              topics: [{ id: secondTopic.id, name: secondTopic.name }],
+              resources: [],
+              files: [],
+              ttaProvided: '<marquee>we are sliding</marquee>\n',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              label: 'Create a new objective',
+            },
+          ],
+          isNew: true,
+          endDate: '',
+          grantIds: [firstGoal.grantId],
+          goalIds: [firstGoal.id],
+          oldGrantIds: [],
+          name: firstGoal.name,
+          status: GOAL_STATUS.DRAFT,
+          onApprovedAR: false,
+          isRttapa: 'No',
+          isActivelyBeingEditing: false,
+          regionId: 1,
+        },
+      ],
       pageState: {
-        1: 'In progress', 2: 'Complete', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Complete',
+        3: 'Not started',
+        4: 'Not started',
       },
       startDate: null,
       version: 2,
       approverUserIds: [],
     };
 
-    await saveReport({
-      body: fourthRequestBody,
-      session: { userId: firstUser.id },
-      params: { activityReportId: secondReport.id },
-    }, mockResponse);
+    await saveReport(
+      {
+        body: fourthRequestBody,
+        session: { userId: firstUser.id },
+        params: { activityReportId: secondReport.id },
+      },
+      mockResponse
+    );
 
     newReports = await ActivityReport.findAll({
       where: {
@@ -508,40 +538,44 @@ describe('saveReport', () => {
 
     const fifthRequestBody = {
       recipientsWhoHaveGoalsThatShouldBeRemoved: [firstGrant.id],
-      goals: [{
-        goalTemplateId: 1,
-        id: firstGoal.id,
-        name: firstGoal.name,
-        status: firstGoal.status,
-        timeframe: null,
-        isFromSmartsheetTtaPlan: false,
-        endDate: null,
-        grantId: grantAndRecipientId,
-        onAR: true,
-        onApprovedAR: false,
-        isRttapa: 'No',
-        createdVia: 'rtr',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        activityReportGoals: [
-          {
-            endDate: new Date(),
-            activityReportId: secondReport.id,
-            goalId: firstGoal.id,
-          },
-        ],
-        grant: firstGrant,
-        objectives,
-        goalNumbers: [`G-${firstGoal.id}`],
-        goalIds: [firstGoal.id],
-        grants: [firstGrant],
-        grantIds: [secondGrant.id],
-        isNew: false,
-        initialRttapa: 'No',
-      }],
-      activityRecipients: [{
-        activityRecipientId: secondGrant.id,
-      }],
+      goals: [
+        {
+          goalTemplateId: 1,
+          id: firstGoal.id,
+          name: firstGoal.name,
+          status: firstGoal.status,
+          timeframe: null,
+          isFromSmartsheetTtaPlan: false,
+          endDate: null,
+          grantId: grantAndRecipientId,
+          onAR: true,
+          onApprovedAR: false,
+          isRttapa: 'No',
+          createdVia: 'rtr',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          activityReportGoals: [
+            {
+              endDate: new Date(),
+              activityReportId: secondReport.id,
+              goalId: firstGoal.id,
+            },
+          ],
+          grant: firstGrant,
+          objectives,
+          goalNumbers: [`G-${firstGoal.id}`],
+          goalIds: [firstGoal.id],
+          grants: [firstGrant],
+          grantIds: [secondGrant.id],
+          isNew: false,
+          initialRttapa: 'No',
+        },
+      ],
+      activityRecipients: [
+        {
+          activityRecipientId: secondGrant.id,
+        },
+      ],
       duration: null,
       endDate: null,
       numberOfParticipants: null,
@@ -549,15 +583,21 @@ describe('saveReport', () => {
       version: 2,
       approverUserIds: [],
       pageState: {
-        1: 'In progress', 2: 'Complete', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Complete',
+        3: 'Not started',
+        4: 'Not started',
       },
     };
 
-    await saveReport({
-      body: fifthRequestBody,
-      session: { userId: firstUser.id },
-      params: { activityReportId: secondReport.id },
-    }, mockResponse);
+    await saveReport(
+      {
+        body: fifthRequestBody,
+        session: { userId: firstUser.id },
+        params: { activityReportId: secondReport.id },
+      },
+      mockResponse
+    );
 
     // now, we can confirm that the data is structured as expected
 
@@ -690,9 +730,11 @@ describe('saveReport', () => {
     const requestBody = {
       ECLKCResourcesUsed: [],
       activityRecipientType: 'recipient',
-      activityRecipients: [{
-        activityRecipientId: grantAndRecipientId,
-      }],
+      activityRecipients: [
+        {
+          activityRecipientId: grantAndRecipientId,
+        },
+      ],
       activityType: [],
       additionalNotes: null,
       files: [],
@@ -719,7 +761,10 @@ describe('saveReport', () => {
       approvers: [],
       creatorRole: 'Grants Specialist',
       pageState: {
-        1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Not started',
+        3: 'Not started',
+        4: 'Not started',
       },
       userId: secondUser.id,
       regionId: 1,
@@ -750,43 +795,53 @@ describe('saveReport', () => {
       goalEndDate: '',
       goalIsRttapa: '',
       goalName: '',
-      goals: [{
-        goalTemplateId: 2,
-        label: thirdGoal.name,
-        objectives: [{
-          title: 'first objective for goal',
-          topics: [{ id: firstTopic.id, name: firstTopic.name }],
-          resources: [],
-          files: [],
-          ttaProvided: '<marquee>we are sliding</marquee>\n',
-          status: OBJECTIVE_STATUS.NOT_STARTED,
-          label: 'Create a new objective',
-        }],
-        isNew: true,
-        endDate: '',
-        grantIds: [thirdGoal.grantId],
-        goalIds: [thirdGoal.id],
-        oldGrantIds: [],
-        name: thirdGoal.name,
-        status: GOAL_STATUS.DRAFT,
-        onApprovedAR: false,
-        isRttapa: 'No',
-        isActivelyBeingEditing: false,
-        regionId: 1,
-      }],
+      goals: [
+        {
+          goalTemplateId: 2,
+          label: thirdGoal.name,
+          objectives: [
+            {
+              title: 'first objective for goal',
+              topics: [{ id: firstTopic.id, name: firstTopic.name }],
+              resources: [],
+              files: [],
+              ttaProvided: '<marquee>we are sliding</marquee>\n',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              label: 'Create a new objective',
+            },
+          ],
+          isNew: true,
+          endDate: '',
+          grantIds: [thirdGoal.grantId],
+          goalIds: [thirdGoal.id],
+          oldGrantIds: [],
+          name: thirdGoal.name,
+          status: GOAL_STATUS.DRAFT,
+          onApprovedAR: false,
+          isRttapa: 'No',
+          isActivelyBeingEditing: false,
+          regionId: 1,
+        },
+      ],
       pageState: {
-        1: 'In progress', 2: 'Complete', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Complete',
+        3: 'Not started',
+        4: 'Not started',
       },
       startDate: null,
       version: 2,
       approverUserIds: [],
     };
 
-    await saveReport({
-      body: secondRequestBody,
-      session: { userId: secondUser.id },
-      params: { activityReportId: thirdReport.id },
-    }, mockResponse);
+    await saveReport(
+      {
+        body: secondRequestBody,
+        session: { userId: secondUser.id },
+        params: { activityReportId: thirdReport.id },
+      },
+      mockResponse
+    );
 
     let allObjectivesForGoals = await Objective.findAll({
       where: {
@@ -800,9 +855,11 @@ describe('saveReport', () => {
     const thirdRequestBody = {
       ECLKCResourcesUsed: [],
       activityRecipientType: 'recipient',
-      activityRecipients: [{
-        activityRecipientId: secondGrant.id,
-      }],
+      activityRecipients: [
+        {
+          activityRecipientId: secondGrant.id,
+        },
+      ],
       activityType: [],
       additionalNotes: null,
       files: [],
@@ -829,7 +886,10 @@ describe('saveReport', () => {
       approvers: [],
       creatorRole: 'Grants Specialist',
       pageState: {
-        1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Not started',
+        3: 'Not started',
+        4: 'Not started',
       },
       userId: secondUser.id,
       regionId: 1,
@@ -847,7 +907,7 @@ describe('saveReport', () => {
         body: thirdRequestBody,
         session: { userId: secondUser.id },
       },
-      mockResponse,
+      mockResponse
     );
 
     newReports = await ActivityReport.findAll({
@@ -867,43 +927,53 @@ describe('saveReport', () => {
       goalEndDate: '',
       goalIsRttapa: '',
       goalName: '',
-      goals: [{
-        goalTemplateId: 3,
-        label: fourthGoal.name,
-        objectives: [{
-          title: 'second objective for goal',
-          topics: [{ id: secondTopic.id, name: secondTopic.name }],
-          resources: [],
-          files: [],
-          ttaProvided: '<marquee>we are sliding</marquee>\n',
-          status: OBJECTIVE_STATUS.NOT_STARTED,
-          label: 'Create a new objective',
-        }],
-        isNew: true,
-        endDate: '',
-        grantIds: [fourthGoal.grantId],
-        goalIds: [fourthGoal.id],
-        oldGrantIds: [],
-        name: fourthGoal.name,
-        status: GOAL_STATUS.DRAFT,
-        onApprovedAR: false,
-        isRttapa: 'No',
-        isActivelyBeingEditing: false,
-        regionId: 1,
-      }],
+      goals: [
+        {
+          goalTemplateId: 3,
+          label: fourthGoal.name,
+          objectives: [
+            {
+              title: 'second objective for goal',
+              topics: [{ id: secondTopic.id, name: secondTopic.name }],
+              resources: [],
+              files: [],
+              ttaProvided: '<marquee>we are sliding</marquee>\n',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              label: 'Create a new objective',
+            },
+          ],
+          isNew: true,
+          endDate: '',
+          grantIds: [fourthGoal.grantId],
+          goalIds: [fourthGoal.id],
+          oldGrantIds: [],
+          name: fourthGoal.name,
+          status: GOAL_STATUS.DRAFT,
+          onApprovedAR: false,
+          isRttapa: 'No',
+          isActivelyBeingEditing: false,
+          regionId: 1,
+        },
+      ],
       pageState: {
-        1: 'In progress', 2: 'Complete', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Complete',
+        3: 'Not started',
+        4: 'Not started',
       },
       startDate: null,
       version: 2,
       approverUserIds: [],
     };
 
-    await saveReport({
-      body: fourthRequestBody,
-      session: { userId: secondUser.id },
-      params: { activityReportId: fourthReport.id },
-    }, mockResponse);
+    await saveReport(
+      {
+        body: fourthRequestBody,
+        session: { userId: secondUser.id },
+        params: { activityReportId: fourthReport.id },
+      },
+      mockResponse
+    );
 
     allObjectivesForGoals = await Objective.findAll({
       where: {
@@ -918,19 +988,27 @@ describe('saveReport', () => {
 
     const fifthRequestBody = {
       pageState: {
-        1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
+        1: 'In progress',
+        2: 'Not started',
+        3: 'Not started',
+        4: 'Not started',
       },
       recipientsWhoHaveGoalsThatShouldBeRemoved: [secondGrant.id],
-      activityRecipients: [{
-        activityRecipientId: grantAndRecipientId,
-      }],
+      activityRecipients: [
+        {
+          activityRecipientId: grantAndRecipientId,
+        },
+      ],
     };
 
-    await saveReport({
-      body: fifthRequestBody,
-      session: { userId: secondUser.id },
-      params: { activityReportId: fourthReport.id },
-    }, mockResponse);
+    await saveReport(
+      {
+        body: fifthRequestBody,
+        session: { userId: secondUser.id },
+        params: { activityReportId: fourthReport.id },
+      },
+      mockResponse
+    );
 
     allObjectivesForGoals = await Objective.findAll({
       where: {

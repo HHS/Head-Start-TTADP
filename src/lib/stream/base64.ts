@@ -15,7 +15,7 @@ class Base64Stream extends Transform {
   _transform(
     chunk: Buffer,
     encoding: BufferEncoding,
-    callback: (error?: Error | null, data?: Buffer) => void,
+    callback: (error?: Error | null, data?: Buffer) => void
   ): void {
     try {
       if (this.mode === 'encode') {
@@ -45,8 +45,10 @@ class Base64Stream extends Transform {
   _flush(callback: (error?: Error | null, data?: Buffer) => void): void {
     if (this.mode === 'decode' && this.leftover.length > 0) {
       // Pad the leftover data to make it a multiple of 4 characters
-      const paddedLeftover = this.leftover
-        .padEnd(this.leftover.length + (4 - (this.leftover.length % 4)), '=');
+      const paddedLeftover = this.leftover.padEnd(
+        this.leftover.length + (4 - (this.leftover.length % 4)),
+        '='
+      );
 
       try {
         const decoded = Buffer.from(paddedLeftover, 'base64');
@@ -66,7 +68,4 @@ class Base64Stream extends Transform {
   }
 }
 
-export {
-  type Base64StreamMode,
-  Base64Stream,
-};
+export { type Base64StreamMode, Base64Stream };

@@ -1,10 +1,8 @@
 import { QueryTypes } from 'sequelize';
-import { sequelize } from '../models';
 import { auditLogger } from '../logger';
+import { sequelize } from '../models';
 
-const runSelectQuery = (query) => (
-  sequelize.query(query, { type: QueryTypes.SELECT })
-);
+const runSelectQuery = (query) => sequelize.query(query, { type: QueryTypes.SELECT });
 
 const countAndLastUpdated = async (tableName) => {
   const updatedAtQuery = `SELECT "updatedAt" FROM "${tableName}" ORDER BY "updatedAt" DESC LIMIT 1`;
@@ -40,17 +38,16 @@ const dataValidation = async () => {
   });
   await Promise.allSettled(tableChecks);
 
-  query = 'SELECT "regionId", "status", count(*) FROM "Grants" GROUP BY "regionId", "status" ORDER BY "regionId", "status"';
+  query =
+    'SELECT "regionId", "status", count(*) FROM "Grants" GROUP BY "regionId", "status" ORDER BY "regionId", "status"';
   results = await runSelectQuery(query);
   auditLogger.info(`Grants data counts: ${JSON.stringify(results, null, 2)}`);
 
-  query = 'SELECT "regionId", "submissionStatus", count(*) FROM "ActivityReports" GROUP BY "regionId", "submissionStatus" ORDER BY "regionId", "submissionStatus"';
+  query =
+    'SELECT "regionId", "submissionStatus", count(*) FROM "ActivityReports" GROUP BY "regionId", "submissionStatus" ORDER BY "regionId", "submissionStatus"';
   results = await runSelectQuery(query);
   auditLogger.info(`ActivityReports data counts: ${JSON.stringify(results, null, 2)}`);
 };
 
-export {
-  runSelectQuery,
-  countAndLastUpdated,
-};
+export { runSelectQuery, countAndLastUpdated };
 export default dataValidation;

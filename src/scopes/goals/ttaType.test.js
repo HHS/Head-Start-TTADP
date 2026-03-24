@@ -1,5 +1,5 @@
-import { withTtaType, withoutTtaType } from './ttaType';
 import { filterAssociation } from '../utils';
+import { withoutTtaType, withTtaType } from './ttaType';
 
 jest.mock('../utils', () => ({
   filterAssociation: jest.fn(),
@@ -34,7 +34,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'ILIKE',
-        true,
+        true
       );
     });
 
@@ -47,7 +47,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'ILIKE',
-        true,
+        true
       );
     });
 
@@ -60,7 +60,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'ILIKE',
-        true,
+        true
       );
     });
 
@@ -73,7 +73,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'ILIKE',
-        true,
+        true
       );
     });
 
@@ -86,7 +86,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'ILIKE',
-        true,
+        true
       );
     });
   });
@@ -115,7 +115,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'NOT ILIKE',
-        true,
+        true
       );
     });
 
@@ -128,7 +128,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'NOT ILIKE',
-        true,
+        true
       );
     });
 
@@ -141,7 +141,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'NOT ILIKE',
-        true,
+        true
       );
     });
 
@@ -154,7 +154,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'NOT ILIKE',
-        true,
+        true
       );
     });
 
@@ -167,7 +167,7 @@ describe('ttaType scopes', () => {
         false,
         expect.any(Function),
         'NOT ILIKE',
-        true,
+        true
       );
     });
   });

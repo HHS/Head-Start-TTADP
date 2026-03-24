@@ -65,7 +65,9 @@ describe('logger callsite helpers', () => {
       `    at getCallsite (${path.join(process.cwd(), 'node_modules', 'winston', 'lib', 'winston', 'logger.js').replaceAll('\\', '/')} :250:18)`,
       `    at Transform._read (${path.join(process.cwd(), 'node_modules', 'readable-stream', 'lib', '_stream_transform.js').replaceAll('\\', '/')} :166:10)`,
       `    at performThing (${appFile}:25:9)`,
-    ].join('\n').replaceAll(' :', ':');
+    ]
+      .join('\n')
+      .replaceAll(' :', ':');
 
     expect(getCallsiteFromStack(stack)).toEqual({
       sourceFile: 'src/services/example.js',
@@ -89,7 +91,7 @@ describe('logger callsite helpers', () => {
     });
 
     expect(output).toBe(
-      '2026-02-20T00:00:00.000Z AUDIT info: hello {"userId":1} (src/routes/example.js:42)',
+      '2026-02-20T00:00:00.000Z AUDIT info: hello {"userId":1} (src/routes/example.js:42)'
     );
   });
 

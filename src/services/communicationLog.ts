@@ -1,16 +1,11 @@
-import { WhereOptions, Op } from 'sequelize';
 import stringify from 'csv-stringify/lib/sync';
 import moment from 'moment';
-import db from '../models';
-import { communicationLogToCsvRecord } from '../lib/transform';
+import { Op, type WhereOptions } from 'sequelize';
 import { SORT_DIR } from '../constants';
+import { communicationLogToCsvRecord } from '../lib/transform';
+import db from '../models';
 
-const {
-  sequelize,
-  CommunicationLog,
-  CommunicationLogRecipient,
-  CommunicationLogFile,
-} = db;
+const { sequelize, CommunicationLog, CommunicationLogRecipient, CommunicationLogFile } = db;
 
 interface CommLogData {
   id: number;
@@ -27,14 +22,16 @@ interface CommLogData {
     label: string;
   };
   files?: {
-    id: number
+    id: number;
   }[];
   userId: number;
 }
 
 export const formatCommunicationDateWithJsonData = (data: CommLogData): CommLogData => {
   if (data.communicationDate) {
-    const formattedCommunicationDate = moment(data.communicationDate, 'MM/DD/YYYY').format('MM/DD/YYYY');
+    const formattedCommunicationDate = moment(data.communicationDate, 'MM/DD/YYYY').format(
+      'MM/DD/YYYY'
+    );
 
     if (formattedCommunicationDate === 'Invalid date') {
       return {
@@ -87,64 +84,56 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   let result = [];
   switch (safeSortBy) {
     case COMMUNICATION_LOG_SORT_KEYS.ID:
-      result = [[
-        sequelize.col('id'), direction,
-      ]];
+      result = [[sequelize.col('id'), direction]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RECIPIENT:
-      result = [[
-        sequelize.literal(`(
+      result = [
+        [
+          sequelize.literal(`(
           SELECT MIN(r.name)
           FROM "Recipients" r
           JOIN "CommunicationLogRecipients" clr ON r.id = clr."recipientId"
           WHERE clr."communicationLogId" = "CommunicationLog".id
         ) ${direction}`),
-      ], [
-        sequelize.col('id'), direction,
-      ]];
+        ],
+        [sequelize.col('id'), direction],
+      ];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.GOALS:
-      result = [[
-        sequelize.literal(`(
+      result = [
+        [
+          sequelize.literal(`(
           SELECT MIN(g->>'label')
           FROM jsonb_array_elements(data->'goals') g
         ) ${direction}`),
-      ], [
-        sequelize.col('id'), direction,
-      ]];
+        ],
+        [sequelize.col('id'), direction],
+      ];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.AUTHOR:
-      result = [[
-        sequelize.literal(`author.name ${direction}`),
-      ], [
-        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`),
-      ], [
-        sequelize.col('id'), direction,
-      ]];
+      result = [
+        [sequelize.literal(`author.name ${direction}`)],
+        [sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`)],
+        [sequelize.col('id'), direction],
+      ];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.PURPOSE:
-      result = [[
-        sequelize.literal(`data->>'purpose' ${direction}`),
-      ],
-      [
-        sequelize.col('id'), direction,
-      ]];
+      result = [
+        [sequelize.literal(`data->>'purpose' ${direction}`)],
+        [sequelize.col('id'), direction],
+      ];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RESULT:
-      result = [[
-        sequelize.literal(`data->>'result' ${direction}`),
-      ], [
-        sequelize.col('id'), direction,
-      ]];
+      result = [
+        [sequelize.literal(`data->>'result' ${direction}`)],
+        [sequelize.col('id'), direction],
+      ];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.DATE:
     default:
-      result = [[
-        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`),
-      ],
-      [
-        sequelize.col('id'), direction,
-      ],
+      result = [
+        [sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`)],
+        [sequelize.col('id'), direction],
       ];
       break;
   }
@@ -152,11 +141,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
 };
 
 const LOG_INCLUDE_ATTRIBUTES = {
-  include: [
-    [
-      sequelize.col('author.name'), 'authorName',
-    ],
-  ],
+  include: [[sequelize.col('author.name'), 'authorName']],
 };
 
 const LOG_WHERE_OPTIONS = (id: number) => ({
@@ -174,36 +159,33 @@ const LOG_WHERE_OPTIONS = (id: number) => ({
     },
     {
       model: db.User,
-      attributes: [
-        'name',
-        'id',
-      ],
+      attributes: ['name', 'id'],
       as: 'author',
       required: true,
     },
   ],
 });
 
-const logById = async (id: number) => CommunicationLog.findOne({
-  ...LOG_WHERE_OPTIONS(id),
-  attributes: LOG_INCLUDE_ATTRIBUTES,
-});
+const logById = async (id: number) =>
+  CommunicationLog.findOne({
+    ...LOG_WHERE_OPTIONS(id),
+    attributes: LOG_INCLUDE_ATTRIBUTES,
+  });
 
-const createLog = async (
-  recipientIds: number[],
-  userId: number,
-  data: CommLogData,
-) => {
-  const log = await CommunicationLog.create({
-    userId,
-    data: formatCommunicationDateWithJsonData(data),
-  }, { returning: ['id'] });
+const createLog = async (recipientIds: number[], userId: number, data: CommLogData) => {
+  const log = await CommunicationLog.create(
+    {
+      userId,
+      data: formatCommunicationDateWithJsonData(data),
+    },
+    { returning: ['id'] }
+  );
 
   await CommunicationLogRecipient.bulkCreate(
     recipientIds.map((recipientId) => ({
       recipientId,
       communicationLogId: log.id,
-    })),
+    }))
   );
 
   return logById(log.id);
@@ -215,16 +197,12 @@ const logsByScopes = async (
   direction = 'desc',
   limit: number = COMMUNICATION_LOGS_PER_PAGE,
   scopes: WhereOptions[] = [],
-  format:'json' | 'csv' = 'json',
+  format: 'json' | 'csv' = 'json'
 ) => {
   const queryParams = {
-    attributes: [
-      'id',
-    ],
+    attributes: ['id'],
     where: {
-      [Op.and]: [
-        ...scopes,
-      ],
+      [Op.and]: [...scopes],
     },
     include: [
       {
@@ -243,9 +221,8 @@ const logsByScopes = async (
     limit?: number;
   };
 
-  const validatedLimit = (Number.isInteger(limit) && limit > 0 && limit <= 100)
-    ? limit
-    : COMMUNICATION_LOGS_PER_PAGE;
+  const validatedLimit =
+    Number.isInteger(limit) && limit > 0 && limit <= 100 ? limit : COMMUNICATION_LOGS_PER_PAGE;
 
   if (format === 'json') {
     queryParams.offset = offset;
@@ -254,34 +231,30 @@ const logsByScopes = async (
 
   const scopedLogs = await CommunicationLog.findAndCountAll(queryParams);
   const scopedIds = scopedLogs.rows.map((log) => log.id);
-  const logs = await CommunicationLog
-    .findAll({
-      attributes: LOG_INCLUDE_ATTRIBUTES,
-      where: {
-        id: scopedIds,
+  const logs = await CommunicationLog.findAll({
+    attributes: LOG_INCLUDE_ATTRIBUTES,
+    where: {
+      id: scopedIds,
+    },
+    include: [
+      {
+        model: db.Recipient,
+        as: 'recipients',
+        required: false,
       },
-      include: [
-        {
-          model: db.Recipient,
-          as: 'recipients',
-          required: false,
-        },
-        {
-          model: db.File,
-          as: 'files',
-          required: false,
-        },
-        {
-          model: db.User,
-          attributes: [
-            'name',
-            'id',
-          ],
-          as: 'author',
-        },
-      ],
-      order: orderLogsBy(sortBy, direction),
-    });
+      {
+        model: db.File,
+        as: 'files',
+        required: false,
+      },
+      {
+        model: db.User,
+        attributes: ['name', 'id'],
+        as: 'author',
+      },
+    ],
+    order: orderLogsBy(sortBy, direction),
+  });
 
   return {
     // using the sequelize literal in the where clause above causes the count to be incorrect
@@ -295,7 +268,7 @@ const csvLogsByScopes = async (
   sortBy = 'communicationDate',
   offset = 0,
   direction = 'desc',
-  scopes: WhereOptions[] = [],
+  scopes: WhereOptions[] = []
 ) => {
   const { rows: logs } = await logsByScopes(
     sortBy,
@@ -303,7 +276,7 @@ const csvLogsByScopes = async (
     direction,
     COMMUNICATION_LOGS_PER_PAGE,
     scopes,
-    'csv',
+    'csv'
   );
 
   // convert to csv
@@ -316,10 +289,7 @@ const csvLogsByScopes = async (
     quoted_empty: true,
   };
 
-  return stringify(
-    data,
-    options,
-  );
+  return stringify(data, options);
 };
 
 const csvLogsByRecipientAndScopes = async (
@@ -327,22 +297,20 @@ const csvLogsByRecipientAndScopes = async (
   sortBy = 'communicationDate',
   offset = 0,
   direction = 'desc',
-  scopes: WhereOptions[] = [],
-) => csvLogsByScopes(
-  sortBy,
-  offset,
-  direction,
-  [
+  scopes: WhereOptions[] = []
+) =>
+  csvLogsByScopes(sortBy, offset, direction, [
     ...scopes,
     {
       id: {
         // we do this instead of an inner join since we want to include other recipients
         // not just the recipient with the specified ID
-        [Op.in]: sequelize.literal(`(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`),
+        [Op.in]: sequelize.literal(
+          `(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`
+        ),
       },
     },
-  ],
-);
+  ]);
 
 const logsByRecipientAndScopes = async (
   recipientId: number,
@@ -350,58 +318,48 @@ const logsByRecipientAndScopes = async (
   offset = 0,
   direction = 'desc',
   limit = COMMUNICATION_LOGS_PER_PAGE,
-  scopes: WhereOptions[] = [],
-) => logsByScopes(
-  sortBy,
-  offset,
-  direction,
-  limit,
-  [
+  scopes: WhereOptions[] = []
+) =>
+  logsByScopes(sortBy, offset, direction, limit, [
     ...scopes,
     {
       id: {
         // we do this instead of an inner join since we want to include other recipients
         // not just the recipient with the specified ID
-        [Op.in]: sequelize.literal(`(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`),
+        [Op.in]: sequelize.literal(
+          `(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`
+        ),
       },
     },
-  ],
-);
+  ]);
 
-const deleteLog = async (id: number) => sequelize.transaction(async (transaction) => {
-  await CommunicationLogFile.destroy({
-    where: {
-      communicationLogId: id,
-    },
-    individualHooks: true,
-    transaction,
-  });
+const deleteLog = async (id: number) =>
+  sequelize.transaction(async (transaction) => {
+    await CommunicationLogFile.destroy({
+      where: {
+        communicationLogId: id,
+      },
+      individualHooks: true,
+      transaction,
+    });
 
-  await CommunicationLogRecipient.destroy({
-    where: {
-      communicationLogId: id,
-    },
-    transaction,
-  });
+    await CommunicationLogRecipient.destroy({
+      where: {
+        communicationLogId: id,
+      },
+      transaction,
+    });
 
-  return CommunicationLog.destroy({
-    where: {
-      id,
-    },
-    transaction,
+    return CommunicationLog.destroy({
+      where: {
+        id,
+      },
+      transaction,
+    });
   });
-});
 
 const updateLog = async (id: number, logData: CommLogData) => {
-  const {
-    files,
-    id: logId,
-    userId,
-    author,
-    authorName,
-    recipients,
-    ...data
-  } = logData;
+  const { files, id: logId, userId, author, authorName, recipients, ...data } = logData;
 
   // Only process recipients if array is provided and non-empty
   // This prevents accidental deletion of all recipients when recipients array is empty/undefined
@@ -426,17 +384,20 @@ const updateLog = async (id: number, logData: CommLogData) => {
       })),
       {
         ignoreDuplicates: true,
-      },
+      }
     );
   }
 
-  await CommunicationLog.update({
-    data: formatCommunicationDateWithJsonData(data as CommLogData),
-  }, {
-    where: {
-      id,
+  await CommunicationLog.update(
+    {
+      data: formatCommunicationDateWithJsonData(data as CommLogData),
     },
-  });
+    {
+      where: {
+        id,
+      },
+    }
+  );
 
   return logById(id);
 };

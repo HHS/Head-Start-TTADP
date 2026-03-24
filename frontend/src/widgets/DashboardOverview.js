@@ -1,29 +1,34 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faChartColumn, faUserFriends, faUser, faClock, faBuilding,
+  faBuilding,
+  faChartColumn,
+  faClock,
+  faUser,
+  faUserFriends,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Grid } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import withWidgetData from './withWidgetData';
 import './DashboardOverview.css';
 import colors from '../colors';
-import { DashboardOverviewContainer } from './DashboardOverviewContainer';
 import Tooltip from '../components/Tooltip';
+import { DashboardOverviewContainer } from './DashboardOverviewContainer';
 
-export function Field({
-  label,
-  data,
-  icon,
-  iconColor,
-  backgroundColor,
-  showTooltip,
-  tooltipText,
-}) {
+export function Field({ label, data, icon, iconColor, backgroundColor, showTooltip, tooltipText }) {
   return (
-    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-y-2 padding-x-1">
+    <Grid
+      gap={4}
+      desktop={{ col: 'fill' }}
+      tablet={{ col: 5 }}
+      mobileLg={{ col: 12 }}
+      className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-y-2 padding-x-1"
+    >
       <span className="smart-hub--dashboard-overview-field-icon flex-1 display-flex flex-justify-center flex-align-center">
-        <span className="smart-hub--dashboard-overview-field-icon-background display-flex flex-justify-center flex-align-center" style={{ backgroundColor }}>
+        <span
+          className="smart-hub--dashboard-overview-field-icon-background display-flex flex-justify-center flex-align-center"
+          style={{ backgroundColor }}
+        >
           <FontAwesomeIcon color={iconColor} icon={icon} />
         </span>
       </span>
@@ -36,7 +41,9 @@ export function Field({
             buttonLabel={`${tooltipText} click to visually reveal this information`}
             tooltipText={tooltipText}
           />
-        ) : label}
+        ) : (
+          label
+        )}
       </span>
     </Grid>
   );
@@ -62,7 +69,7 @@ Field.defaultProps = {
   showTooltip: false,
 };
 
-const getDashboardFields = (data, showTooltip) => ([
+const getDashboardFields = (data, showTooltip) => [
   {
     lookUpKey: 'Activity reports',
     key: 'activity-reports',
@@ -153,23 +160,13 @@ const getDashboardFields = (data, showTooltip) => ([
     data: data.recipientPercentage,
     drawerTagName: 'ttahub-spotlight-priority-indicators',
   },
-]);
+];
 
-export function DashboardOverviewWidget({
-  data,
-  loading,
-  fields,
-  showTooltips,
-  maxToolTipWidth,
-}) {
+export function DashboardOverviewWidget({ data, loading, fields, showTooltips, maxToolTipWidth }) {
   // Get the fields we need while maintaining the order.
-  const fieldsToDisplay = fields.map(
-    (field) => getDashboardFields(
-      data, showTooltips,
-    ).find(
-      (f) => f.lookUpKey === field,
-    ),
-  ).filter(Boolean);
+  const fieldsToDisplay = fields
+    .map((field) => getDashboardFields(data, showTooltips).find((f) => f.lookUpKey === field))
+    .filter(Boolean);
 
   return (
     <DashboardOverviewContainer

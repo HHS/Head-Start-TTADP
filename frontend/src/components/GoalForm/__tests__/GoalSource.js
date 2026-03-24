@@ -1,10 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { GOAL_SOURCES } from '@ttahub/common';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render, screen, act } from '@testing-library/react';
-import GoalSource from '../GoalSource';
+import { GOAL_SOURCES } from '@ttahub/common';
+import React from 'react';
 import FormFieldThatIsSometimesReadOnly from '../FormFieldThatIsSometimesReadOnly';
+import GoalSource from '../GoalSource';
 
 const defaults = {
   sources: [],
@@ -30,7 +30,11 @@ describe('GoalSource', () => {
       permissions,
     } = props;
     render(
-      <FormFieldThatIsSometimesReadOnly label="Goal source" value={source} permissions={permissions}>
+      <FormFieldThatIsSometimesReadOnly
+        label="Goal source"
+        value={source}
+        permissions={permissions}
+      >
         <GoalSource
           error={<></>}
           source={source}
@@ -42,7 +46,7 @@ describe('GoalSource', () => {
           userCanEdit={userCanEdit}
           createdViaTr={createdViaTr}
         />
-      </FormFieldThatIsSometimesReadOnly>,
+      </FormFieldThatIsSometimesReadOnly>
     );
   };
 

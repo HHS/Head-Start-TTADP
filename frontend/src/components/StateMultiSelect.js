@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { ALL_STATES_FLATTENED, ALL_STATES } from '@ttahub/common';
+import { ALL_STATES, ALL_STATES_FLATTENED } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import UserContext from '../UserContext';
+import React, { useContext, useEffect, useState } from 'react';
 import { getStateCodes } from '../fetchers/users';
 import { allRegionsUserHasActivityReportPermissionTo } from '../permissions';
+import UserContext from '../UserContext';
 import MultiSelect from './MultiSelect';
 
-export default function StateMultiSelect({
-  name, control,
-}) {
+export default function StateMultiSelect({ name, control }) {
   const { user } = useContext(UserContext);
   const [stateCodes, setStateCodes] = useState();
 
@@ -41,10 +39,11 @@ export default function StateMultiSelect({
 
       // and then, just in case they have permissions to other regions,
       // we loop through and add to the list
-      codes = [...codes, ...Array.from(
-        new Set(
-          allowedRegions.reduce(
-            (acc, curr) => {
+      codes = [
+        ...codes,
+        ...Array.from(
+          new Set(
+            allowedRegions.reduce((acc, curr) => {
               if (curr === 11 || curr === 12) {
                 // we've already handled these in the fetch above
                 return acc;
@@ -54,10 +53,10 @@ export default function StateMultiSelect({
                 return acc;
               }
               return [...acc, ...ALL_STATES[curr - 1]];
-            }, [],
-          ),
+            }, [])
+          )
         ),
-      )];
+      ];
 
       codes = codes.sort((firstCode, secondCode) => {
         if (firstCode.value < secondCode.value) {

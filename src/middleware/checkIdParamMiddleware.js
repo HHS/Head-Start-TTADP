@@ -55,11 +55,7 @@ export function checkCollabReportIdParam(req, res, next) {
  * @param {*} next - next middleware
  */
 export function checkFileIdParam(req, res, next) {
-  if (
-    req.params
-    && req.params.fileId
-    && canBeInt(req.params.fileId)
-  ) {
+  if (req.params && req.params.fileId && canBeInt(req.params.fileId)) {
     return next();
   }
 
@@ -135,7 +131,11 @@ export function checkObjectiveTemplateIdParam(req, res, next) {
  * @param {*} next - next middleware
  */
 export function checkGroupIdParam(req, res, next) {
-  if (req.params && req.params.groupId && (req.params.groupId === 'new' || canBeInt(req.params.groupId))) {
+  if (
+    req.params &&
+    req.params.groupId &&
+    (req.params.groupId === 'new' || canBeInt(req.params.groupId))
+  ) {
     return next();
   }
 
@@ -206,7 +206,7 @@ export function checkIdParam(req, res, next, paramName) {
     return next();
   }
 
-  const msg = `${errorMessage}: ${paramName} ${req.params ? (req.params[paramName] || 'undefined') : 'undefined'}`;
+  const msg = `${errorMessage}: ${paramName} ${req.params ? req.params[paramName] || 'undefined' : 'undefined'}`;
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }

@@ -7,12 +7,7 @@ const { CollabReportApprover, User } = db;
  * @param values Object containing approver properties to create or update
  */
 export async function upsertApprover(values) {
-  const {
-    collabReportId,
-    userId,
-    status,
-    note,
-  } = values;
+  const { collabReportId, userId, status, note } = values;
 
   let approver = await CollabReportApprover.findOne({
     where: {
@@ -39,10 +34,7 @@ export async function upsertApprover(values) {
 
   // Create if no approver found
   if (!approver) {
-    approver = await CollabReportApprover.create(
-      values,
-      { individualHooks: true },
-    );
+    approver = await CollabReportApprover.create(values, { individualHooks: true });
   }
 
   // If soft deleted record, restore instead
@@ -56,12 +48,14 @@ export async function upsertApprover(values) {
   // Finally, get the complete approver object from the db
   approver = await CollabReportApprover.findOne({
     where: { collabReportId, userId },
-    include: [{
-      model: User,
-      as: 'user',
-      attributes: ['id', 'name', 'email'],
-      raw: true,
-    }],
+    include: [
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'email'],
+        raw: true,
+      },
+    ],
   });
 
   return approver;
@@ -104,10 +98,12 @@ export async function syncCRApprovers(collabReportId: number, approverUserIds: n
 
   // Create or restore approvers
   if (approverUserIds.length > 0) {
-    const upsertApproverPromises = approverUserIds.map(async (userId) => upsertApprover({
-      collabReportId,
-      userId,
-    }));
+    const upsertApproverPromises = approverUserIds.map(async (userId) =>
+      upsertApprover({
+        collabReportId,
+        userId,
+      })
+    );
 
     await Promise.all(upsertApproverPromises);
   }
@@ -115,11 +111,13 @@ export async function syncCRApprovers(collabReportId: number, approverUserIds: n
   // Finally, return the new list of approvers
   return CollabReportApprover.findAll({
     where: { collabReportId },
-    include: [{
-      model: User,
-      as: 'user',
-      attributes: ['id', 'name', 'email'],
-      raw: true,
-    }],
+    include: [
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'email'],
+        raw: true,
+      },
+    ],
   });
 }

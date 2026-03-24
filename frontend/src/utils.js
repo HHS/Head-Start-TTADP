@@ -1,16 +1,16 @@
+import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { ContentState, EditorState } from 'draft-js';
+import htmlToDraft from 'html-to-draftjs';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
-import htmlToDraft from 'html-to-draftjs';
-import { EditorState, ContentState } from 'draft-js';
-import { DECIMAL_BASE, REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
 import {
-  ECLKC_GOVERNMENT_HOSTNAME_EXTENSION,
-  HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION,
-  WITHIN,
-  QUERY_CONDITIONS,
+  DATE_DISPLAY_FORMAT,
   DATE_FMT,
   DATE_FORMAT,
-  DATE_DISPLAY_FORMAT,
+  ECLKC_GOVERNMENT_HOSTNAME_EXTENSION,
+  HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION,
+  QUERY_CONDITIONS,
+  WITHIN,
 } from './Constants';
 
 /**
@@ -35,8 +35,10 @@ export const isValidURL = (url) => {
  */
 export const isInternalGovernmentLink = (url) => {
   const newUrl = new URL(url);
-  return newUrl.host.endsWith(ECLKC_GOVERNMENT_HOSTNAME_EXTENSION)
-    || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
+  return (
+    newUrl.host.endsWith(ECLKC_GOVERNMENT_HOSTNAME_EXTENSION) ||
+    newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION)
+  );
 };
 
 /**
@@ -53,11 +55,11 @@ export const isExternalURL = (url) => {
     return false;
   }
 
-  return (newUrl.host !== currentHost.host);
+  return newUrl.host !== currentHost.host;
 };
 
-export const reportIsEditable = (status) => status === REPORT_STATUSES.DRAFT
-  || status === REPORT_STATUSES.NEEDS_ACTION;
+export const reportIsEditable = (status) =>
+  status === REPORT_STATUSES.DRAFT || status === REPORT_STATUSES.NEEDS_ACTION;
 
 /**
  * Given an html string.
@@ -72,7 +74,7 @@ export const getEditorState = (name) => {
 };
 
 export const getDistinctSortedArray = (arr) => {
-  let distinctList = arr.filter(((a) => a !== null));
+  let distinctList = arr.filter((a) => a !== null);
   distinctList = [...new Set(distinctList)];
   distinctList = distinctList.sort();
   return distinctList;
@@ -128,36 +130,39 @@ export function decodeQueryParam(param) {
 
 export function queryStringToFilters(queryString) {
   const queries = queryString.split('&');
-  return queries.map((q) => {
-    const [topicAndCondition, query] = q.split('=');
-    const [topic, searchCondition] = topicAndCondition.split('.');
+  return queries
+    .map((q) => {
+      const [topicAndCondition, query] = q.split('=');
+      const [topic, searchCondition] = topicAndCondition.split('.');
 
-    const queryKeys = Object.keys(QUERY_CONDITIONS);
-    const queryConditions = Object.values(QUERY_CONDITIONS);
+      const queryKeys = Object.keys(QUERY_CONDITIONS);
+      const queryConditions = Object.values(QUERY_CONDITIONS);
 
-    const decodedQueryParam = decodeQueryParam(query);
+      const decodedQueryParam = decodeQueryParam(query);
 
-    const findCondition = (queryCondition) => {
-      const decoded = decodeURIComponent(searchCondition);
-      return decoded === queryCondition;
-    };
-
-    const index = queryConditions.findIndex(findCondition);
-
-    const condition = queryKeys[index];
-
-    if (topic && condition && query) {
-      return {
-        id: uuidv4(),
-        topic,
-        condition,
-        // we use is and is not for query parameters
-        query: condition === 'is not' || condition === 'is' ? [decodedQueryParam] : decodedQueryParam,
+      const findCondition = (queryCondition) => {
+        const decoded = decodeURIComponent(searchCondition);
+        return decoded === queryCondition;
       };
-    }
 
-    return null;
-  }).filter((query) => query);
+      const index = queryConditions.findIndex(findCondition);
+
+      const condition = queryKeys[index];
+
+      if (topic && condition && query) {
+        return {
+          id: uuidv4(),
+          topic,
+          condition,
+          // we use is and is not for query parameters
+          query:
+            condition === 'is not' || condition === 'is' ? [decodedQueryParam] : decodedQueryParam,
+        };
+      }
+
+      return null;
+    })
+    .filter((query) => query);
 }
 
 export function filtersToQueryString(filters, region) {
@@ -203,16 +208,18 @@ export function filtersToQueryString(filters, region) {
  * @param {Object} format
  * @returns a date string
  */
-export function formatDateRange(format = {
-  lastThirtyDays: false,
-  yearToDate: false,
-  withSpaces: false,
-  forDateTime: false,
-  lastThreeMonths: false,
-  lastSixMonths: false,
-  sep: '-',
-  string: '',
-}) {
+export function formatDateRange(
+  format = {
+    lastThirtyDays: false,
+    yearToDate: false,
+    withSpaces: false,
+    forDateTime: false,
+    lastThreeMonths: false,
+    lastSixMonths: false,
+    sep: '-',
+    string: '',
+  }
+) {
   const selectedFormat = format.forDateTime ? DATE_FMT : DATE_FORMAT;
 
   let { sep } = format;
@@ -328,11 +335,23 @@ export const getPageInfo = (offset, totalCount, currentPage, perPage) => {
 };
 
 export const SUPPORTED_DATE_FORMATS = [
-  'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
-  'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
-  'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-M-DD', 'YYYY-MM-D',
-  'M.D.YYYY', 'MM.D.YYYY', 'M.DD.YYYY',
-  'M.D.YY', 'MM.DD.YY',
+  'MM/DD/YYYY',
+  'M/D/YYYY',
+  'M/DD/YYYY',
+  'MM/D/YYYY',
+  'MM/DD/YY',
+  'M/D/YY',
+  'M/DD/YY',
+  'MM/D/YY',
+  'YYYY-MM-DD',
+  'YYYY-M-D',
+  'YYYY-M-DD',
+  'YYYY-MM-D',
+  'M.D.YYYY',
+  'MM.D.YYYY',
+  'M.DD.YYYY',
+  'M.D.YY',
+  'MM.DD.YY',
 ];
 
 export function isValidDate(value) {
@@ -359,23 +378,16 @@ export function isValidDate(value) {
  *   }[]
  * }
  */
-export function getCollabReportStatusDisplayAndClassnames(
-  userId,
-  report,
-) {
-  const {
-    calculatedStatus,
-    author,
-    collaboratingSpecialists = [],
-    approvers = [],
-  } = report;
+export function getCollabReportStatusDisplayAndClassnames(userId, report) {
+  const { calculatedStatus, author, collaboratingSpecialists = [], approvers = [] } = report;
 
   let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
   let displayStatus = calculatedStatus;
 
   // Check if user is the report creator or collaborator
-  const isCreatorOrCollaborator = (author && userId === author.id)
-    || collaboratingSpecialists.some((specialist) => specialist.id === userId);
+  const isCreatorOrCollaborator =
+    (author && userId === author.id) ||
+    collaboratingSpecialists.some((specialist) => specialist.id === userId);
 
   // Check if user is an approver
   const userApprover = approvers.find((approver) => approver.user && approver.user.id === userId);
@@ -388,10 +400,10 @@ export function getCollabReportStatusDisplayAndClassnames(
       displayStatus = 'Needs action';
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
     } else if (
-      calculatedStatus === REPORT_STATUSES.SUBMITTED
-      && approvers.length > 0
-      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
-      && !approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
+      calculatedStatus === REPORT_STATUSES.SUBMITTED &&
+      approvers.length > 0 &&
+      approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED) &&
+      !approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
     ) {
       // -- if the report is submitted and the report has been approved by one approver
       // but not by all reviewers, they see "Reviewed"
@@ -412,8 +424,9 @@ export function getCollabReportStatusDisplayAndClassnames(
       displayStatus = 'Reviewed';
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
     } else if (
-      calculatedStatus === REPORT_STATUSES.SUBMITTED
-      || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      calculatedStatus === REPORT_STATUSES.SUBMITTED ||
+      calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+    ) {
       // If they haven't reviewed it yet and the report is submitted, they see "Needs action"
       displayStatus = 'Needs action';
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
@@ -430,7 +443,7 @@ export function getCollabReportStatusDisplayAndClassnames(
 export function getStatusDisplayAndClassnames(
   calculatedStatus,
   approvers = [],
-  justSubmitted = false,
+  justSubmitted = false
 ) {
   let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
   let displayStatus = calculatedStatus;
@@ -446,27 +459,30 @@ export function getStatusDisplayAndClassnames(
   }
 
   if (
-    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
-      && approvers && approvers.length > 0
-      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
+    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION &&
+    approvers &&
+    approvers.length > 0 &&
+    approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
   ) {
     displayStatus = 'Reviewed';
     statusClassName = 'smart-hub--table-tag-status smart-hub--status-reviewed';
   }
 
   if (
-    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
-      && approvers && approvers.length > 0
-      && approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
+    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION &&
+    approvers &&
+    approvers.length > 0 &&
+    approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
   ) {
     displayStatus = 'Needs action';
     statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
   }
 
   if (
-    calculatedStatus !== REPORT_STATUSES.APPROVED
-      && approvers && approvers.length > 0
-      && approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
+    calculatedStatus !== REPORT_STATUSES.APPROVED &&
+    approvers &&
+    approvers.length > 0 &&
+    approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
   ) {
     displayStatus = REPORT_STATUSES.APPROVED;
     statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.APPROVED}`;

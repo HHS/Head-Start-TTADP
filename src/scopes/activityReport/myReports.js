@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
-import { sequelize } from '../../models';
 import { auditLogger } from '../../logger';
+import { sequelize } from '../../models';
 // this should return an array of activityReport ids.
 // That where clause will be finished when the function is called.
 export function myReportsScopes(userId, roles, exclude) {
@@ -40,9 +40,7 @@ export function myReportsScopes(userId, roles, exclude) {
   reportSql = `"ActivityReport"."id" ${exclude ? ' NOT ' : ''} IN (${reportSql})`;
 
   return {
-    [Op.or]: [
-      sequelize.literal(reportSql),
-    ],
+    [Op.or]: [sequelize.literal(reportSql)],
   };
 }
 

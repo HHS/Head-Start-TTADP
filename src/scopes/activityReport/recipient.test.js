@@ -1,17 +1,17 @@
 /* eslint-disable max-len */
 import {
-  Op,
-  filtersToScopes,
-  ActivityReport,
   ActivityRecipient,
-  OtherEntity,
-  Recipient,
-  Grant,
+  ActivityReport,
   draftReport,
   faker,
+  filtersToScopes,
+  Grant,
+  Op,
+  OtherEntity,
+  Recipient,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('recipient filtersToScopes', () => {
@@ -85,8 +85,9 @@ describe('recipient filtersToScopes', () => {
           where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
         });
         expect(found.length).toBe(2);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+        expect(found.map((f) => f.id)).toEqual(
+          expect.arrayContaining([reportIncluded1.id, reportIncluded2.id])
+        );
       });
 
       it('excludes other-entities that do not partial match or have no other-entities', async () => {
@@ -96,8 +97,9 @@ describe('recipient filtersToScopes', () => {
           where: { [Op.and]: [scope, { id: possibleIds }] },
         });
         expect(found.length).toBe(2);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([reportExcluded.id, sharedTestData.globallyExcludedReport.id]));
+        expect(found.map((f) => f.id)).toEqual(
+          expect.arrayContaining([reportExcluded.id, sharedTestData.globallyExcludedReport.id])
+        );
       });
     });
 
@@ -118,17 +120,27 @@ describe('recipient filtersToScopes', () => {
 
       beforeAll(async () => {
         recipientIncluded1 = await Recipient.create({ id: 50, name: '1234', uei: 'NNA5N2KHMGN2' });
-        recipientIncluded2 = await Recipient.create({ id: 51, name: 'testing 1234', uei: 'NNA5N2KHMBA2' });
+        recipientIncluded2 = await Recipient.create({
+          id: 51,
+          name: 'testing 1234',
+          uei: 'NNA5N2KHMBA2',
+        });
         recipientExcluded = await Recipient.create({ id: 52, name: '4321', uei: 'NNA5N2KHMBC2' });
 
         grantIncluded1 = await Grant.create({
-          id: recipientIncluded1.id, number: 1234, recipientId: recipientIncluded1.id,
+          id: recipientIncluded1.id,
+          number: 1234,
+          recipientId: recipientIncluded1.id,
         });
         grantIncluded2 = await Grant.create({
-          id: recipientIncluded2.id, number: 1235, recipientId: recipientIncluded2.id,
+          id: recipientIncluded2.id,
+          number: 1235,
+          recipientId: recipientIncluded2.id,
         });
         grantExcluded = await Grant.create({
-          id: recipientExcluded.id, number: 456, recipientId: recipientExcluded.id,
+          id: recipientExcluded.id,
+          number: 456,
+          recipientId: recipientExcluded.id,
         });
 
         reportIncluded1 = await ActivityReport.create({ ...draftReport });
@@ -183,8 +195,9 @@ describe('recipient filtersToScopes', () => {
           where: { [Op.and]: [scope, { id: possibleIds }] },
         });
         expect(found.length).toBe(2);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+        expect(found.map((f) => f.id)).toEqual(
+          expect.arrayContaining([reportIncluded1.id, reportIncluded2.id])
+        );
       });
 
       it('excludes recipients that do not partial match or have no recipients', async () => {
@@ -194,8 +207,9 @@ describe('recipient filtersToScopes', () => {
           where: { [Op.and]: [scope, { id: possibleIds }] },
         });
         expect(found.length).toBe(2);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([reportExcluded.id, sharedTestData.globallyExcludedReport.id]));
+        expect(found.map((f) => f.id)).toEqual(
+          expect.arrayContaining([reportExcluded.id, sharedTestData.globallyExcludedReport.id])
+        );
       });
 
       it('grant number with matches', async () => {
@@ -205,8 +219,9 @@ describe('recipient filtersToScopes', () => {
           where: { [Op.and]: [scope, { id: possibleIds }] },
         });
         expect(found.length).toBe(2);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+        expect(found.map((f) => f.id)).toEqual(
+          expect.arrayContaining([reportIncluded1.id, reportIncluded2.id])
+        );
       });
 
       it('grant number with no matches', async () => {
@@ -225,8 +240,9 @@ describe('recipient filtersToScopes', () => {
           where: { [Op.and]: [scope, { id: possibleIds }] },
         });
         expect(found.length).toBe(2);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([reportExcluded.id, sharedTestData.globallyExcludedReport.id]));
+        expect(found.map((f) => f.id)).toEqual(
+          expect.arrayContaining([reportExcluded.id, sharedTestData.globallyExcludedReport.id])
+        );
       });
     });
 
@@ -388,8 +404,7 @@ describe('recipient filtersToScopes', () => {
           where: { [Op.and]: [scope, { id: reportIds }] },
         });
         expect(found.length).toBe(1);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([multiRecipientReport.id]));
+        expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([multiRecipientReport.id]));
       });
 
       it('retrieves reports with one recipient', async () => {
@@ -399,8 +414,9 @@ describe('recipient filtersToScopes', () => {
           where: { [Op.and]: [scope, { id: reportIds }] },
         });
         expect(found.length).toBe(2);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([singleRecipientReport.id, excludedReport.id]));
+        expect(found.map((f) => f.id)).toEqual(
+          expect.arrayContaining([singleRecipientReport.id, excludedReport.id])
+        );
       });
     });
 
@@ -421,10 +437,14 @@ describe('recipient filtersToScopes', () => {
         recipientExcluded = await Recipient.create({ id: 56, name: '4321', uei: 'NNA5N2KHMBA2' });
 
         grantIncluded = await Grant.create({
-          id: recipientIncluded.id, number: 2234, recipientId: recipientIncluded.id,
+          id: recipientIncluded.id,
+          number: 2234,
+          recipientId: recipientIncluded.id,
         });
         grantExcluded = await Grant.create({
-          id: recipientExcluded.id, number: 2236, recipientId: recipientExcluded.id,
+          id: recipientExcluded.id,
+          number: 2236,
+          recipientId: recipientExcluded.id,
         });
 
         reportIncluded = await ActivityReport.create({ ...draftReport });
@@ -438,10 +458,7 @@ describe('recipient filtersToScopes', () => {
           activityReportId: reportExcluded.id,
           grantId: grantExcluded.id,
         });
-        possibleIds = [
-          reportIncluded.id,
-          reportExcluded.id,
-        ];
+        possibleIds = [reportIncluded.id, reportExcluded.id];
       });
 
       afterAll(async () => {
@@ -469,8 +486,7 @@ describe('recipient filtersToScopes', () => {
           where: { [Op.and]: [scope, { id: possibleIds }] },
         });
         expect(found.length).toBe(1);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([reportIncluded.id]));
+        expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportIncluded.id]));
       });
     });
   });

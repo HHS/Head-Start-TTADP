@@ -8,15 +8,17 @@ FROM "Programs" "Programs"
 WHERE "Programs"."programType"`;
 
 function subQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`${term}`)})`));
+  return searchTerms.map((term) =>
+    sequelize.literal(
+      `"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`${term}`)})`
+    )
+  );
 }
 
 export function withProgramTypes(types) {
   return {
     where: {
-      [Op.or]: [
-        filterAssociation(programTypeFilter, types, false, subQuery, '='),
-      ],
+      [Op.or]: [filterAssociation(programTypeFilter, types, false, subQuery, '=')],
     },
   };
 }
@@ -24,9 +26,7 @@ export function withProgramTypes(types) {
 export function withoutProgramTypes(types) {
   return {
     where: {
-      [Op.and]: [
-        filterAssociation(programTypeFilter, types, true, subQuery, '='),
-      ],
+      [Op.and]: [filterAssociation(programTypeFilter, types, true, subQuery, '=')],
     },
   };
 }

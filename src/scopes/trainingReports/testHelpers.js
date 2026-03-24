@@ -1,15 +1,14 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import filtersToScopes from '../index';
-
+import { Op } from 'sequelize';
 import {
-  User,
   EventReportPilot,
-  NationalCenterUser,
-  NationalCenter,
   EventReportPilotNationalCenterUser,
+  NationalCenter,
+  NationalCenterUser,
   sequelize,
+  User,
 } from '../../models';
+import filtersToScopes from '../index';
 
 // Mock user data
 export const mockUser = {

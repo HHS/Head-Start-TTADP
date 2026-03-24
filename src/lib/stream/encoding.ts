@@ -1,5 +1,5 @@
-import { Transform } from 'stream';
 import * as chardet from 'chardet';
+import { Transform } from 'stream';
 
 class EncodingConverter extends Transform {
   private detectEncoding: boolean;
@@ -23,19 +23,21 @@ class EncodingConverter extends Transform {
 
   constructor(
     private targetEncoding: string,
-    private sourceEncoding?: string,
+    private sourceEncoding?: string
   ) {
     super();
-    if (targetEncoding
-      && EncodingConverter.supportedEncodings
-        .has(targetEncoding.toLowerCase() as BufferEncoding)) {
+    if (
+      targetEncoding &&
+      EncodingConverter.supportedEncodings.has(targetEncoding.toLowerCase() as BufferEncoding)
+    ) {
       this.targetEncoding = targetEncoding.toLowerCase();
     } else {
       throw new Error(`Unsupported encoding detected: ${targetEncoding}`);
     }
-    if (sourceEncoding
-      && EncodingConverter.supportedEncodings
-        .has(sourceEncoding.toLowerCase() as BufferEncoding)) {
+    if (
+      sourceEncoding &&
+      EncodingConverter.supportedEncodings.has(sourceEncoding.toLowerCase() as BufferEncoding)
+    ) {
       this.sourceEncoding = sourceEncoding.toLowerCase();
     } else if (sourceEncoding) {
       throw new Error(`Unsupported encoding detected: ${sourceEncoding}`);
@@ -48,7 +50,7 @@ class EncodingConverter extends Transform {
   _transform(
     chunk: Buffer,
     _encoding: string,
-    callback: (error?: Error | null, data?: Buffer) => void,
+    callback: (error?: Error | null, data?: Buffer) => void
   ): void {
     if (this.detectEncoding) {
       // Continue collecting chunks until we have enough to detect the encoding
@@ -61,9 +63,11 @@ class EncodingConverter extends Transform {
 
         // Check if the detected encoding is supported
         // eslint-disable-next-line max-len
-        this.sourceEncoding = detectedEncoding && EncodingConverter.supportedEncodings.has(detectedEncoding.toLowerCase() as BufferEncoding)
-          ? detectedEncoding.toLowerCase()
-          : 'utf-8';
+        this.sourceEncoding =
+          detectedEncoding &&
+          EncodingConverter.supportedEncodings.has(detectedEncoding.toLowerCase() as BufferEncoding)
+            ? detectedEncoding.toLowerCase()
+            : 'utf-8';
 
         // If the source encoding matches the target encoding, pass through the entire buffer
         if (this.sourceEncoding === this.targetEncoding) {

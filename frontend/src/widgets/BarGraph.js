@@ -1,19 +1,18 @@
-import React, { useRef, useLayoutEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
 import createPlotlyComponent from 'react-plotly.js/factory';
-import NoResultsFound from '../components/NoResultsFound';
 import colors from '../colors';
+import NoResultsFound from '../components/NoResultsFound';
 import './BarGraph.css';
 
 let Plot = null;
 let BottomAxis = null;
 
-import('plotly.js-basic-dist')
-  .then((Plotly) => {
-    Plot = createPlotlyComponent(Plotly);
-    BottomAxis = createPlotlyComponent(Plotly);
-  });
+import('plotly.js-basic-dist').then((Plotly) => {
+  Plot = createPlotlyComponent(Plotly);
+  BottomAxis = createPlotlyComponent(Plotly);
+});
 
 function BarGraph({
   data,
@@ -126,13 +125,13 @@ function BarGraph({
     <div ref={widgetRef}>
       <div className="ttahub-bar-graph maxh-mobile-lg overflow-y-scroll" ref={parentRef}>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <div className="ttahub-bar-graph--bars-top" style={{ height: barGraphTopHeight }} tabIndex={0}>
+        <div
+          className="ttahub-bar-graph--bars-top"
+          style={{ height: barGraphTopHeight }}
+          tabIndex={0}
+        >
           <span className="usa-sr-only">Use the arrow keys to scroll graph</span>
-          <Plot
-            data={[trace]}
-            layout={layout}
-            config={config}
-          />
+          <Plot data={[trace]} layout={layout} config={config} />
         </div>
       </div>
       <div className="height-5 width-full">
@@ -164,15 +163,12 @@ BarGraph.propTypes = {
     PropTypes.shape({
       category: PropTypes.string,
       count: PropTypes.number,
-    }),
+    })
   ),
   leftMargin: PropTypes.number,
   topMargin: PropTypes.number,
   barHeightMultiplier: PropTypes.number,
-  barGraphTopHeight: PropTypes.oneOfType([
-    PropTypes.number,
-    PropTypes.string,
-  ]),
+  barGraphTopHeight: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   widgetRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   xAxisConfig: PropTypes.shape({
     title: PropTypes.shape({

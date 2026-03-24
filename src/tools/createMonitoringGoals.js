@@ -1,10 +1,6 @@
 import { Op } from 'sequelize';
-import {
-  sequelize,
-  GoalTemplate,
-  Goal,
-} from '../models';
 import { auditLogger } from '../logger';
+import { Goal, GoalTemplate, sequelize } from '../models';
 
 const createMonitoringGoals = async () => {
   // This section is here to temporarily disable monitoring goal creation
@@ -33,7 +29,8 @@ const createMonitoringGoals = async () => {
     // 1. Create monitoring goals for grants that need them.
     let goals = [];
     await sequelize.transaction(async (transaction) => {
-      [goals] = await sequelize.query(`
+      [goals] = await sequelize.query(
+        `
       WITH
       -- making a convenient single source for monitoring dates that
       -- get used in the logic
@@ -185,7 +182,9 @@ const createMonitoringGoals = async () => {
       SELECT
         "name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "goalTemplateId", "grantId", "onApprovedAR", "createdVia", "isRttapa", "onAR", "source"
       FROM new_goals;
-    `, { transaction });
+    `,
+        { transaction }
+      );
 
       // Bulk insert the goals returned from the above query using sequelize Goal.bulkCreate.
       // We need to do this to ensure we enter the Goal Status Change on create.
@@ -302,7 +301,8 @@ const createMonitoringGoals = async () => {
       //    where follow-up TTA is being performed beyond the initial review, which will usually
       //    be recorded on the currently active grant anyway.
       auditLogger.info('Marking monitoring goals for follow-up TTA eligibility');
-      await sequelize.query(`
+      await sequelize.query(
+        `
       WITH eligible_grants AS (
       SELECT DISTINCT
         gr."replacingGrantId" grid
@@ -331,7 +331,9 @@ const createMonitoringGoals = async () => {
       FROM goals_to_update
       WHERE id = gid
       ;
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   } catch (error) {
     // eslint-disable-next-line no-console

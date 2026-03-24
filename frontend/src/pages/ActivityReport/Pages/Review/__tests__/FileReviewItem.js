@@ -7,11 +7,7 @@ import FileReviewItem from '../FileReviewItem';
 
 // eslint-disable-next-line react/prop-types
 const RenderFileReviewItem = ({ status = 'APPROVED' }) => (
-  <FileReviewItem
-    filename="filename"
-    url="http://localhost:3000"
-    status={status}
-  />
+  <FileReviewItem filename="filename" url="http://localhost:3000" status={status} />
 );
 
 describe('ReviewPage', () => {

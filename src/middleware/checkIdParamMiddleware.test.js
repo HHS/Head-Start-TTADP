@@ -1,23 +1,23 @@
+import { auditLogger } from '../logger';
 import {
   checkActivityReportIdParam,
-  checkReportIdParam,
-  checkFileIdParam,
-  checkObjectiveIdParam,
-  checkObjectiveTemplateIdParam,
-  checkGroupIdParam,
   checkAlertIdParam,
-  checkIdParam,
-  checkRecipientIdParam,
-  checkRegionIdParam,
-  checkIdIdParam,
   checkCommunicationLogIdParam,
+  checkFileIdParam,
   checkGoalGroupIdParam,
   checkGoalTemplateIdParam,
-  checkSessionAttachmentIdParam,
   checkGrantIdParam,
   checkGrantIdQueryParam,
+  checkGroupIdParam,
+  checkIdIdParam,
+  checkIdParam,
+  checkObjectiveIdParam,
+  checkObjectiveTemplateIdParam,
+  checkRecipientIdParam,
+  checkRegionIdParam,
+  checkReportIdParam,
+  checkSessionAttachmentIdParam,
 } from './checkIdParamMiddleware';
-import { auditLogger } from '../logger';
 
 jest.mock('../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Promise.resolve()));
 jest.mock('../logger');
@@ -320,7 +320,9 @@ describe('checkIdParamMiddleware', () => {
 
       checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveTemplateId undefined`);
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        `${errorMessage}: objectiveTemplateId undefined`
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -355,7 +357,9 @@ describe('checkIdParamMiddleware', () => {
 
       checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveTemplateId undefined`);
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        `${errorMessage}: objectiveTemplateId undefined`
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
   });

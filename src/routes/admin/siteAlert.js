@@ -1,21 +1,14 @@
 import express from 'express';
 import httpCodes from 'http-codes';
-import { SiteAlert } from '../../models';
-import transactionWrapper from '../transactionWrapper';
+import { auditLogger } from '../../logger';
 import { checkAlertIdParam } from '../../middleware/checkIdParamMiddleware';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
-import { auditLogger } from '../../logger';
+import { SiteAlert } from '../../models';
+import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'SERVICE:ADMIN:SITEALERTS';
 
-const ALERT_FIELDS = [
-  'status',
-  'message',
-  'endDate',
-  'startDate',
-  'variant',
-  'size',
-];
+const ALERT_FIELDS = ['status', 'message', 'endDate', 'startDate', 'variant', 'size'];
 
 /**
  *
@@ -23,7 +16,7 @@ const ALERT_FIELDS = [
  */
 const isValidNewAlert = (req) => {
   const { body } = req;
-  return ALERT_FIELDS.every((field) => !!(body[field]));
+  return ALERT_FIELDS.every((field) => !!body[field]);
 };
 
 // since all the functions below are admin only and region agnostic, we can check them all via
@@ -99,15 +92,7 @@ async function createAlert(req, res) {
     if (!isValid) {
       res.sendStatus(httpCodes.BAD_REQUEST);
     } else {
-      const {
-        status,
-        message,
-        title,
-        endDate,
-        startDate,
-        variant,
-        size,
-      } = req.body;
+      const { status, message, title, endDate, startDate, variant, size } = req.body;
 
       const alert = await SiteAlert.create({
         status,
@@ -158,15 +143,19 @@ const router = express.Router();
 router.get('/', userAdminAccessMiddleware, transactionWrapper(getAlerts));
 router.get('/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(getAlert));
 router.post('/', userAdminAccessMiddleware, transactionWrapper(createAlert));
-router.put('/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(saveAlert));
-router.delete('/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(deleteAlert));
+router.put(
+  '/:alertId',
+  checkAlertIdParam,
+  userAdminAccessMiddleware,
+  transactionWrapper(saveAlert)
+);
+router.delete(
+  '/:alertId',
+  checkAlertIdParam,
+  userAdminAccessMiddleware,
+  transactionWrapper(deleteAlert)
+);
 
-export {
-  getAlerts,
-  getAlert,
-  deleteAlert,
-  createAlert,
-  saveAlert,
-};
+export { getAlerts, getAlert, deleteAlert, createAlert, saveAlert };
 
 export default router;

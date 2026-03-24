@@ -1,40 +1,37 @@
-import React from 'react';
 import moment from 'moment-timezone';
+import React from 'react';
+import { DATE_DISPLAY_FORMAT, DATEPICKER_VALUE_FORMAT } from '../../Constants';
 import Container from '../Container';
-import {
-  DATE_DISPLAY_FORMAT,
-  DATEPICKER_VALUE_FORMAT,
-} from '../../Constants';
-import {
-  formatTtaType,
-  formatDelivery,
-  formatSimpleArray,
-  calculateGoalsAndObjectives,
-  formatNextSteps,
-  reportDataPropTypes,
-  mapAttachments,
-} from './helpers';
 import ReadOnlyContent from '../ReadOnlyContent';
+import {
+  calculateGoalsAndObjectives,
+  formatDelivery,
+  formatNextSteps,
+  formatSimpleArray,
+  formatTtaType,
+  mapAttachments,
+  reportDataPropTypes,
+} from './helpers';
 
 export default function SubmittedReport({ data }) {
-  const {
-    reportId, ttaType, deliveryMethod, virtualDeliveryType,
-  } = data;
+  const { reportId, ttaType, deliveryMethod, virtualDeliveryType } = data;
 
   // first table
   const isRecipient = data.activityRecipientType === 'recipient';
-  const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
+  const arRecipients = data.activityRecipients
+    .map((arRecipient) => arRecipient.name)
+    .sort()
+    .join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
   const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
-  const collaborators = data.activityReportCollaborators.map(
-    (a) => a.fullName,
-  );
+  const collaborators = data.activityReportCollaborators.map((a) => a.fullName);
 
   const attendees = formatSimpleArray(data.participants);
   const languages = formatSimpleArray(data.language);
-  const participantCount = deliveryMethod === 'hybrid'
-    ? data.numberOfParticipantsInPerson.toString()
-    : data.numberOfParticipants.toString();
+  const participantCount =
+    deliveryMethod === 'hybrid'
+      ? data.numberOfParticipantsInPerson.toString()
+      : data.numberOfParticipants.toString();
 
   const participantVirtualCount = data.numberOfParticipantsVirtually
     ? data.numberOfParticipantsVirtually.toString()
@@ -52,23 +49,34 @@ export default function SubmittedReport({ data }) {
   // third table
   let {
     // eslint-disable-next-line prefer-const
-    context, displayId,
+    context,
+    displayId,
   } = data;
   if (context === '') context = 'None provided';
 
   // next steps table
-  const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
-  const nextStepsLabel = isRecipient ? 'Recipient\'s next steps' : 'Other entities next steps';
+  const specialistNextSteps = formatNextSteps(
+    data.specialistNextSteps,
+    "Specialist's next steps",
+    true
+  );
+  const nextStepsLabel = isRecipient ? "Recipient's next steps" : 'Other entities next steps';
   const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
-  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
+  const submittedAt = data.submittedDate
+    ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT)
+    : '';
 
   const creator = data.author.fullName;
 
   const getNumberOfParticipants = () => {
     const isHybrid = deliveryMethod === 'hybrid';
-    let numberOfParticipants = { [isHybrid ? 'Number of participants attending in person' : 'Number of participants attending']: participantCount };
+    let numberOfParticipants = {
+      [isHybrid
+        ? 'Number of participants attending in person'
+        : 'Number of participants attending']: participantCount,
+    };
     if (deliveryMethod === 'hybrid') {
       numberOfParticipants = {
         ...numberOfParticipants,
@@ -80,50 +88,31 @@ export default function SubmittedReport({ data }) {
 
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
-      <h1 className="landing">
-        TTA activity report
-        {' '}
-        {displayId}
-      </h1>
+      <h1 className="landing">TTA activity report {displayId}</h1>
       <div className="ttahub-activity-report-view-creator-data margin-bottom-4">
         <p>
-          <strong>Creator:</strong>
-          {' '}
-          {creator}
+          <strong>Creator:</strong> {creator}
         </p>
         <p>
-          <strong>Collaborators:</strong>
-          {' '}
+          <strong>Collaborators:</strong>{' '}
           {collaborators.map((collaborator) => collaborator).join(', ')}
         </p>
         <p>
-          <strong>Managers:</strong>
-          {' '}
-          {approvingManagers}
+          <strong>Managers:</strong> {approvingManagers}
         </p>
         <p className="no-print">
-          <strong>Date created:</strong>
-          {' '}
-          {createdAt}
+          <strong>Date created:</strong> {createdAt}
         </p>
-        { submittedAt !== ''
-          ? (
-            <p>
-              <strong>Date submitted:</strong>
-              {' '}
-              {submittedAt}
-            </p>
-          )
-          : null }
-        { approvedAt !== ''
-          ? (
-            <p>
-              <strong>Date approved:</strong>
-              {' '}
-              {approvedAt}
-            </p>
-          )
-          : null }
+        {submittedAt !== '' ? (
+          <p>
+            <strong>Date submitted:</strong> {submittedAt}
+          </p>
+        ) : null}
+        {approvedAt !== '' ? (
+          <p>
+            <strong>Date approved:</strong> {approvedAt}
+          </p>
+        ) : null}
       </div>
 
       <ReadOnlyContent
@@ -178,24 +167,21 @@ export default function SubmittedReport({ data }) {
       <ReadOnlyContent
         key={`supporting-attachments${reportId}`}
         title="Supporting attachments"
-        sections={
-            [{
-              heading: '',
-              data: {
-                Attachments: attachments,
-              },
-              striped: false,
-            }]
-          }
+        sections={[
+          {
+            heading: '',
+            data: {
+              Attachments: attachments,
+            },
+            striped: false,
+          },
+        ]}
       />
 
       <ReadOnlyContent
         key={`next-steps${reportId}`}
         title="Next steps"
-        sections={[
-          ...specialistNextSteps,
-          ...recipientNextSteps,
-        ]}
+        sections={[...specialistNextSteps, ...recipientNextSteps]}
       />
     </Container>
   );

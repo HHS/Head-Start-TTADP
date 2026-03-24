@@ -1,6 +1,6 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ReviewItem, { mapUrlValue } from '../ReviewItem';
 
@@ -97,14 +97,8 @@ describe('ReviewItem link rendering', () => {
 
     render(
       <MemoryRouter>
-        <ReviewItem
-          label="Test Label"
-          name="testName"
-          path=""
-          isFile={false}
-          isRichText={false}
-        />
-      </MemoryRouter>,
+        <ReviewItem label="Test Label" name="testName" path="" isFile={false} isRichText={false} />
+      </MemoryRouter>
     );
 
     const link = screen.getByRole('link', { name: 'http://example.com/internal-link' });
@@ -118,13 +112,7 @@ describe('ReviewItem link rendering', () => {
     });
 
     render(
-      <ReviewItem
-        label="Test Label"
-        name="testName"
-        path=""
-        isFile={false}
-        isRichText={false}
-      />,
+      <ReviewItem label="Test Label" name="testName" path="" isFile={false} isRichText={false} />
     );
 
     const link = screen.getByRole('link', { name: 'http://external.com' });
@@ -143,13 +131,7 @@ describe('ReviewItem "None provided" tests', () => {
       watch: jest.fn(() => null),
     });
 
-    render(
-      <ReviewItem
-        label="Test Label"
-        name="testName"
-        path=""
-      />,
-    );
+    render(<ReviewItem label="Test Label" name="testName" path="" />);
 
     expect(screen.getByText('None provided')).toBeInTheDocument();
   });
@@ -159,13 +141,7 @@ describe('ReviewItem "None provided" tests', () => {
       watch: jest.fn(() => undefined),
     });
 
-    render(
-      <ReviewItem
-        label="Test Label"
-        name="testName"
-        path=""
-      />,
-    );
+    render(<ReviewItem label="Test Label" name="testName" path="" />);
 
     expect(screen.getByText('None provided')).toBeInTheDocument();
   });
@@ -175,13 +151,7 @@ describe('ReviewItem "None provided" tests', () => {
       watch: jest.fn(() => []),
     });
 
-    render(
-      <ReviewItem
-        label="Test Label"
-        name="testName"
-        path=""
-      />,
-    );
+    render(<ReviewItem label="Test Label" name="testName" path="" />);
 
     expect(screen.getByText('None provided')).toBeInTheDocument();
   });
@@ -191,32 +161,19 @@ describe('ReviewItem "None provided" tests', () => {
       watch: jest.fn(() => '<p></p>'),
     });
 
-    render(
-      <ReviewItem
-        label="Test Label"
-        name="testName"
-        path=""
-        isRichText
-      />,
-    );
+    render(<ReviewItem label="Test Label" name="testName" path="" isRichText />);
 
     expect(screen.getByText('None provided')).toBeInTheDocument();
   });
 
   it('should NOT show "None provided" when value has formatted content with bullets and bold', () => {
-    const formattedContent = '<p>Here is some content:</p><ul><li><strong>Bold bullet 1</strong></li><li><strong>Bold bullet 2</strong></li></ul><p></p>';
+    const formattedContent =
+      '<p>Here is some content:</p><ul><li><strong>Bold bullet 1</strong></li><li><strong>Bold bullet 2</strong></li></ul><p></p>';
     useFormContext.mockReturnValue({
       watch: jest.fn(() => formattedContent),
     });
 
-    render(
-      <ReviewItem
-        label="Test Label"
-        name="testName"
-        path=""
-        isRichText
-      />,
-    );
+    render(<ReviewItem label="Test Label" name="testName" path="" isRichText />);
 
     expect(screen.queryByText('None provided')).not.toBeInTheDocument();
   });
@@ -226,13 +183,7 @@ describe('ReviewItem "None provided" tests', () => {
       watch: jest.fn(() => [{ wrongKey: 'value' }, { alsoWrong: 'data' }]),
     });
 
-    render(
-      <ReviewItem
-        label="Test Label"
-        name="testName"
-        path="correctKey"
-      />,
-    );
+    render(<ReviewItem label="Test Label" name="testName" path="correctKey" />);
 
     expect(screen.getByText('None provided')).toBeInTheDocument();
   });
@@ -242,13 +193,7 @@ describe('ReviewItem "None provided" tests', () => {
       watch: jest.fn(() => null),
     });
 
-    const { container } = render(
-      <ReviewItem
-        label="Test Label"
-        name="testName"
-        path=""
-      />,
-    );
+    const { container } = render(<ReviewItem label="Test Label" name="testName" path="" />);
 
     const divElement = container.querySelector('.smart-hub-review-item--empty');
     expect(divElement).toBeInTheDocument();

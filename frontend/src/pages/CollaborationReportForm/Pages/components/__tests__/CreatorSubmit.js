@@ -4,76 +4,79 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import CreatorSubmit from '../CreatorSubmit';
 
 // Mock dependencies
-jest.mock('../../../../../components/IncompletePages', () => function MockIncompletePages({ incompletePages }) {
-  return (
-    <div data-testid="incomplete-pages">
-      Incomplete Pages:
-      {' '}
-      {incompletePages.join(', ')}
-    </div>
-  );
-});
+jest.mock(
+  '../../../../../components/IncompletePages',
+  () =>
+    function MockIncompletePages({ incompletePages }) {
+      return (
+        <div data-testid="incomplete-pages">Incomplete Pages: {incompletePages.join(', ')}</div>
+      );
+    }
+);
 
-jest.mock('../../../../../components/FormItem', () => function MockFormItem({ children, label, name }) {
-  return (
-    <div data-testid={`form-item-${name}`}>
-      <label>{label}</label>
-      {children}
-    </div>
-  );
-});
+jest.mock(
+  '../../../../../components/FormItem',
+  () =>
+    function MockFormItem({ children, label, name }) {
+      return (
+        <div data-testid={`form-item-${name}`}>
+          <label>{label}</label>
+          {children}
+        </div>
+      );
+    }
+);
 
-jest.mock('../../../../ActivityReport/Pages/Review/Submitter/components/ApproverSelect', () => function MockApproverSelect({
-  name,
-  valueProperty,
-  labelProperty,
-  options,
-}) {
-  return (
-    <select
-      name={name}
-      data-testid="approver-select"
-      data-value-property={valueProperty}
-      data-label-property={labelProperty}
-    >
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  );
-});
+jest.mock(
+  '../../../../ActivityReport/Pages/Review/Submitter/components/ApproverSelect',
+  () =>
+    function MockApproverSelect({ name, valueProperty, labelProperty, options }) {
+      return (
+        <select
+          name={name}
+          data-testid="approver-select"
+          data-value-property={valueProperty}
+          data-label-property={labelProperty}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+);
 
-jest.mock('../CreatorNeedsAction', () => function MockCreatorNeedsAction(props) {
-  return (
-    <div data-testid="creator-needs-action">
-      CreatorNeedsAction Component
-      <div data-testid="needs-action-props">
-        {JSON.stringify({
-          onFormReview: typeof props.onFormReview,
-          availableApprovers: props.availableApprovers,
-          isCreator: props.isCreator,
-          isSubmitted: props.isSubmitted,
-        })}
-      </div>
-    </div>
-  );
-});
+jest.mock(
+  '../CreatorNeedsAction',
+  () =>
+    function MockCreatorNeedsAction(props) {
+      return (
+        <div data-testid="creator-needs-action">
+          CreatorNeedsAction Component
+          <div data-testid="needs-action-props">
+            {JSON.stringify({
+              onFormReview: typeof props.onFormReview,
+              availableApprovers: props.availableApprovers,
+              isCreator: props.isCreator,
+              isSubmitted: props.isSubmitted,
+            })}
+          </div>
+        </div>
+      );
+    }
+);
 
 // Test wrapper component
 const TestWrapper = ({ children, defaultValues = {} }) => {
   const methods = useForm({ defaultValues });
-  return (
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
-  );
+  return <FormProvider {...methods}>{children}</FormProvider>;
 };
 
 describe('CreatorSubmit Component', () => {
@@ -104,11 +107,12 @@ describe('CreatorSubmit Component', () => {
     jest.clearAllMocks();
   });
 
-  const renderComponent = (props = {}) => render(
-    <TestWrapper>
-      <CreatorSubmit {...defaultProps} {...props} />
-    </TestWrapper>,
-  );
+  const renderComponent = (props = {}) =>
+    render(
+      <TestWrapper>
+        <CreatorSubmit {...defaultProps} {...props} />
+      </TestWrapper>
+    );
 
   describe('Conditional Component Rendering', () => {
     it('returns CreatorNeedsAction component when isNeedsAction is true', () => {

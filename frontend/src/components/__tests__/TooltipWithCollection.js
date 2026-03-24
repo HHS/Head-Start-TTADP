@@ -1,14 +1,16 @@
 import '@testing-library/jest-dom';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen, fireEvent, act,
-} from '@testing-library/react';
 
 import TooltipWithCollection from '../TooltipWithCollection';
 
 describe('TooltipWithCollection', () => {
   const renderTooltip = (collection = ['Teddy', 'Cathy', 'Bobby', 'G-berg']) => {
-    render(<div data-testid="tooltip-container"><TooltipWithCollection collection={collection} collectionTitle="people who something" /></div>);
+    render(
+      <div data-testid="tooltip-container">
+        <TooltipWithCollection collection={collection} collectionTitle="people who something" />
+      </div>
+    );
   };
 
   afterAll(() => {
@@ -18,7 +20,9 @@ describe('TooltipWithCollection', () => {
   it('correctly modifies the dom when the button is clicked', async () => {
     renderTooltip();
 
-    const button = screen.getByRole('button', { name: 'Teddy Cathy Bobby G-berg click to visually reveal the people who something' });
+    const button = screen.getByRole('button', {
+      name: 'Teddy Cathy Bobby G-berg click to visually reveal the people who something',
+    });
     act(() => {
       fireEvent.click(button);
     });

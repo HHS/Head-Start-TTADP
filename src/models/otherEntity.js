@@ -1,6 +1,4 @@
-const {
-  Model,
-} = require('sequelize');
+const { Model } = require('sequelize');
 
 /**
  * OtherEntity table
@@ -21,15 +19,18 @@ export default (sequelize, DataTypes) => {
       OtherEntity.hasMany(models.Objective, { foreignKey: 'otherEntityId', as: 'objectives' });
     }
   }
-  OtherEntity.init({
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
+  OtherEntity.init(
+    {
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
     },
-  }, {
-    sequelize,
-    modelName: 'OtherEntity',
-  });
+    {
+      sequelize,
+      modelName: 'OtherEntity',
+    }
+  );
   return OtherEntity;
 };

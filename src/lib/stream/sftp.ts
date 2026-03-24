@@ -1,5 +1,5 @@
 import { Client } from 'ssh2';
-import { Readable } from 'stream';
+import type { Readable } from 'stream';
 import { auditLogger } from '../../logger';
 
 interface ConnectConfig {
@@ -9,8 +9,8 @@ interface ConnectConfig {
   password?: string;
   privateKey?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  algorithms?: Record<string, any>,
-  hostVerifier?: (hashedKey:string, callback: (response) => void) => boolean,
+  algorithms?: Record<string, any>;
+  hostVerifier?: (hashedKey: string, callback: (response) => void) => boolean;
 }
 
 interface ListFileOptions {
@@ -67,11 +67,7 @@ function modeToPermissions(mode: number): string {
 
   // Helper function to convert a single octal digit to rwx string
   function toRwxString(value: number): string {
-    return (
-      (value & READ ? 'r' : '-')
-      + (value & WRITE ? 'w' : '-')
-      + (value & EXECUTE ? 'x' : '-')
-    );
+    return (value & READ ? 'r' : '-') + (value & WRITE ? 'w' : '-') + (value & EXECUTE ? 'x' : '-');
   }
 
   // Extract the file type and permissions
@@ -197,12 +193,7 @@ class SftpClient {
 
         const {
           algorithms = {
-            serverHostKey: [
-              'ssh-ed25519',
-              'ecdsa-sha2-nistp256',
-              'rsa-sha2-512',
-              'rsa-sha2-256',
-            ],
+            serverHostKey: ['ssh-ed25519', 'ecdsa-sha2-nistp256', 'rsa-sha2-512', 'rsa-sha2-256'],
           },
           hostVerifier = () => true,
           ...connectionSettings
@@ -213,7 +204,10 @@ class SftpClient {
           ...connectionSettings,
           algorithms,
           // Accept any hashedKey
-          hostVerifier: (_hashedKey, callback) => { callback(true); return true; },
+          hostVerifier: (_hashedKey, callback) => {
+            callback(true);
+            return true;
+          },
         });
       } catch (err) {
         reject(err.message);
@@ -273,12 +267,7 @@ class SftpClient {
   public async listFiles(options: ListFileOptions): Promise<FileListing[]> {
     if (!this.isConnected()) await this.connect();
     // Destructure options to extract individual settings
-    const {
-      path,
-      fileMask,
-      priorFile,
-      includeStream = false,
-    } = options;
+    const { path, fileMask, priorFile, includeStream = false } = options;
 
     // Return a new promise that will handle the asynchronous file listing
     return new Promise((resolve, reject) => {
@@ -299,41 +288,45 @@ class SftpClient {
           }
 
           // Map the raw directory listing to a structured format
-          let files = list.map(({ filename, longname, attrs }) => {
-            // Convert file permissions to a string, assuming Unix-like permissions in octal
-            const permissions = attrs.permissions
-              ? attrs.permissions.toString(8)
-              : modeToPermissions(attrs.mode);
-            // Construct a file listing object with detailed file information
-            return {
-              fullPath: `${path}/${filename}`,
-              fileInfo: {
-                name: filename,
-                path,
-                type: longname[0],
-                size: attrs.size,
-                modifyTime: attrs.mtime * 1000,
-                accessTime: attrs.atime * 1000,
-                rights: {
-                  user: permissions.substring(1, 4),
-                  group: permissions.substring(4, 7),
-                  other: permissions.substring(7, 10),
+          let files = list
+            .map(({ filename, longname, attrs }) => {
+              // Convert file permissions to a string, assuming Unix-like permissions in octal
+              const permissions = attrs.permissions
+                ? attrs.permissions.toString(8)
+                : modeToPermissions(attrs.mode);
+              // Construct a file listing object with detailed file information
+              return {
+                fullPath: `${path}/${filename}`,
+                fileInfo: {
+                  name: filename,
+                  path,
+                  type: longname[0],
+                  size: attrs.size,
+                  modifyTime: attrs.mtime * 1000,
+                  accessTime: attrs.atime * 1000,
+                  rights: {
+                    user: permissions.substring(1, 4),
+                    group: permissions.substring(4, 7),
+                    other: permissions.substring(7, 10),
+                  },
+                  owner: attrs.uid,
+                  group: attrs.gid,
                 },
-                owner: attrs.uid,
-                group: attrs.gid,
-              },
-            };
-          // Filter the files based on the provided file mask and whether they come after a
-          // specified 'priorFile'
-          }).filter((file) => {
-            const matchesMask = fileMask && fileMask.length > 0
-              ? (new RegExp(fileMask)).test(file.fileInfo.name)
-              : true;
-            const afterPriorFile = priorFile && priorFile.length > 0
-              ? file.fileInfo.name.localeCompare(priorFile) > 0
-              : true;
-            return matchesMask && afterPriorFile;
-          });
+              };
+              // Filter the files based on the provided file mask and whether they come after a
+              // specified 'priorFile'
+            })
+            .filter((file) => {
+              const matchesMask =
+                fileMask && fileMask.length > 0
+                  ? new RegExp(fileMask).test(file.fileInfo.name)
+                  : true;
+              const afterPriorFile =
+                priorFile && priorFile.length > 0
+                  ? file.fileInfo.name.localeCompare(priorFile) > 0
+                  : true;
+              return matchesMask && afterPriorFile;
+            });
 
           // If the 'includeStream' option is true, attach a read stream for each file
           if (includeStream && files.length > 0) {
@@ -360,10 +353,7 @@ class SftpClient {
    *          The promise will be rejected if there is an error initiating the SFTP connection
    *          or creating the read stream.
    */
-  public async downloadAsStream(
-    remoteFilePath: string,
-    useCompression = false,
-  ): Promise<Readable> {
+  public async downloadAsStream(remoteFilePath: string, useCompression = false): Promise<Readable> {
     if (!this.isConnected()) await this.connect();
     // Return a promise that will resolve with the readable stream or reject with an error.
     return new Promise((resolve, reject) => {
@@ -387,8 +377,4 @@ class SftpClient {
 }
 
 export default SftpClient; // Export the FtpClient class as the default export
-export {
-  FileInfo,
-  ConnectConfig as SFTPSettings,
-  FileListing,
-}; // Export the FileInfo interface
+export type { FileInfo, ConnectConfig as SFTPSettings, FileListing }; // Export the FileInfo interface

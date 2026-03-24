@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react-hooks';
 import useRequestSort from '../useRequestSort';
 
 describe('useRequestSort', () => {
@@ -22,10 +22,12 @@ describe('useRequestSort', () => {
     });
 
     // When clicking the same column with desc direction, it should toggle to asc
-    expect(mockSetSortConfig).toHaveBeenCalledWith(expect.objectContaining({
-      sortBy: 'name',
-      direction: 'asc',
-    }));
+    expect(mockSetSortConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sortBy: 'name',
+        direction: 'asc',
+      })
+    );
   });
 
   it('sets direction to desc when clicking different column', () => {
@@ -48,10 +50,12 @@ describe('useRequestSort', () => {
     });
 
     // When clicking a different column, direction should be desc
-    expect(mockSetSortConfig).toHaveBeenCalledWith(expect.objectContaining({
-      sortBy: 'date',
-      direction: 'desc',
-    }));
+    expect(mockSetSortConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sortBy: 'date',
+        direction: 'desc',
+      })
+    );
   });
 
   it('keeps desc direction when clicking same column with asc', () => {
@@ -71,9 +75,11 @@ describe('useRequestSort', () => {
     });
 
     // When clicking same column with asc direction, it should stay desc (not toggle)
-    expect(mockSetSortConfig).toHaveBeenCalledWith(expect.objectContaining({
-      sortBy: 'name',
-      direction: 'desc',
-    }));
+    expect(mockSetSortConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sortBy: 'name',
+        direction: 'desc',
+      })
+    );
   });
 });

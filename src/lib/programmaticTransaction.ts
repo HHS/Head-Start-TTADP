@@ -1,6 +1,6 @@
-import { QueryTypes, Op } from 'sequelize';
-import db, { sequelize } from '../models';
+import { Op, QueryTypes } from 'sequelize';
 import { auditLogger } from '../logger';
+import db, { sequelize } from '../models';
 
 // Define the structure for maximum ID records
 interface MaxIdRecord {
@@ -13,12 +13,11 @@ interface MaxIdRecord {
 // - includeDDL (boolean): If true, includes tables with Data Definition Language (DDL) logs
 // (e.g., schema changes).  DDL refers to commands used to create, alter, and delete database
 // objects, such as CREATE TABLE, ALTER TABLE, etc.
-const fetchMaxIds = async (
-  includeDDL = false,
-): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRecord>(
-  // Use a different SQL query depending on whether to include DDL tables or not
-  includeDDL
-    ? /* sql */ `
+const fetchMaxIds = async (includeDDL = false): Promise<MaxIdRecord[]> =>
+  sequelize.query<MaxIdRecord>(
+    // Use a different SQL query depending on whether to include DDL tables or not
+    includeDDL
+      ? /* sql */ `
       SELECT
           cls.relname AS table_name, -- The name of the table in the database
           -- The highest ID value in the sequence, or 0 if no value
@@ -36,7 +35,7 @@ const fetchMaxIds = async (
       AND attr.attname = 'id' -- Ensure the sequence is linked to the 'id' column in the table
       AND seq_data.schemaname = 'public'; -- Only consider sequences in the 'public' schema
     `
-    : /* sql */ `
+      : /* sql */ `
       SELECT
           cls.relname AS table_name, -- The name of the table in the database
           -- The highest ID value in the sequence, or 0 if no value
@@ -56,8 +55,8 @@ const fetchMaxIds = async (
       AND attr.attname = 'id' -- Ensure the sequence is linked to the 'id' column in the table
       AND seq_data.schemaname = 'public'; -- Only consider sequences in the 'public' schema
     `,
-  { type: QueryTypes.SELECT }, // Use SELECT query type for fetching results
-);
+    { type: QueryTypes.SELECT } // Use SELECT query type for fetching results
+  );
 
 interface ChangeRecord {
   source_table: string;
@@ -72,22 +71,29 @@ interface ChangeRecord {
 
 // Fetch and aggregate changes from all audit tables based on fetched max IDs
 const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRecord[]> => {
-  const allChanges: ChangeRecord[] = (await Promise.all(maxIds.flatMap(async ({
-    table_name,
-    max_id,
-  }) => sequelize.query<ChangeRecord>(/* sql */ `
+  const allChanges: ChangeRecord[] = (
+    await Promise.all(
+      maxIds.flatMap(async ({ table_name, max_id }) =>
+        sequelize.query<ChangeRecord>(
+          /* sql */ `
     SELECT *, '${table_name}' AS source_table
     FROM "${table_name}"
     WHERE id > COALESCE(:maxId, 0)
     ORDER BY dml_timestamp DESC
-  `, {
-    replacements: { maxId: max_id },
-    type: QueryTypes.SELECT,
-  })))).flat();
+  `,
+          {
+            replacements: { maxId: max_id },
+            type: QueryTypes.SELECT,
+          }
+        )
+      )
+    )
+  ).flat();
 
   // Sort changes in reverse chronological order to ensure correct order for reversion
-  allChanges
-    .sort((a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime());
+  allChanges.sort(
+    (a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime()
+  );
 
   return allChanges;
 };
@@ -100,36 +106,40 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   }
   const tableName = change.source_table.replace('ZAL', '');
   try {
-    const generateReplacements = (delta) => Object.entries(delta.old_row_data).reduce(
-      (acc, [key, value]) => {
-        let parsedValue;
+    const generateReplacements = (delta) =>
+      Object.entries(delta.old_row_data).reduce(
+        (acc, [key, value]) => {
+          let parsedValue;
 
-        // Try to parse the value as JSON
-        try {
-          // @ts-ignore
-          // Argument of type 'unknown' is not assignable to parameter of type 'string'.ts(2345)
-          parsedValue = JSON.parse(value);
-        } catch (error) {
-          parsedValue = value; // If parsing fails, use the original value
-        }
+          // Try to parse the value as JSON
+          try {
+            // @ts-expect-error
+            // Argument of type 'unknown' is not assignable to parameter of type 'string'.ts(2345)
+            parsedValue = JSON.parse(value);
+          } catch (error) {
+            parsedValue = value; // If parsing fails, use the original value
+          }
 
-        return {
-          ...acc,
-          [key]: Array.isArray(parsedValue)
-            ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
-            : parsedValue,
-        };
-      },
-      { id: delta.data_id },
-    );
+          return {
+            ...acc,
+            [key]: Array.isArray(parsedValue)
+              ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
+              : parsedValue,
+          };
+        },
+        { id: delta.data_id }
+      );
 
     switch (change.dml_type) {
       case 'INSERT':
         // Use parameterized query to safely delete
-        await sequelize.query(/* sql */ `
+        await sequelize.query(
+          /* sql */ `
           DELETE FROM "${tableName}"
           WHERE id = :id;
-        `, { replacements: { id: change.data_id } });
+        `,
+          { replacements: { id: change.data_id } }
+        );
         break;
       case 'DELETE':
         // Insert with parameterized query
@@ -140,10 +150,15 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
 
           const replacements = generateReplacements(change);
 
-          await sequelize.query(/* sql */ `
+          await sequelize.query(
+            /* sql */ `
             INSERT INTO "${tableName}" (${columns})
-            VALUES (${Object.keys(replacements).map((key) => `:${key}`).join(', ')});
-          `, { replacements });
+            VALUES (${Object.keys(replacements)
+              .map((key) => `:${key}`)
+              .join(', ')});
+          `,
+            { replacements }
+          );
         }
         break;
       case 'UPDATE':
@@ -155,11 +170,14 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
 
           const replacements = generateReplacements(change);
 
-          await sequelize.query(/* sql */ `
+          await sequelize.query(
+            /* sql */ `
             UPDATE "${tableName}"
             SET ${setClause}
             WHERE id = :id;
-          `, { replacements });
+          `,
+            { replacements }
+          );
         }
         break;
       default:
@@ -188,9 +206,8 @@ const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   }
 };
 
-const captureSnapshot = async (
-  includeDDL = false,
-): Promise<MaxIdRecord[]> => fetchMaxIds(includeDDL);
+const captureSnapshot = async (includeDDL = false): Promise<MaxIdRecord[]> =>
+  fetchMaxIds(includeDDL);
 const rollbackToSnapshot = async (maxIds: MaxIdRecord[]): Promise<void> => revertAllChanges(maxIds);
 
 // This method of validating the transaction has not modified data is needed as the following
@@ -213,15 +230,15 @@ const hasModifiedData = async (snapShot, transactionId) => {
   }
 
   const buildCondition = (table, maxId) => {
-    let condition:{
+    let condition: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      id: any,
+      id: any;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      dml_txid?: any,
+      dml_txid?: any;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ddl_txid?: any,
+      ddl_txid?: any;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      object_identity?: any,
+      object_identity?: any;
     } = {
       id: { [Op.gt]: Number(maxId) },
       dml_txid: transactionId,
@@ -267,8 +284,8 @@ const hasModifiedData = async (snapShot, transactionId) => {
 };
 
 export {
-  MaxIdRecord,
-  ChangeRecord,
+  type MaxIdRecord,
+  type ChangeRecord,
   fetchMaxIds,
   fetchAndAggregateChanges,
   revertChange,

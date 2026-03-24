@@ -1,18 +1,18 @@
-import { REPORT_STATUSES } from '@ttahub/common';
 import { faker } from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { sequelize } from 'sequelize';
+import { captureSnapshot, rollbackToSnapshot } from '../../lib/programmaticTransaction';
 import db, {
-  User,
-  Recipient,
-  Grant,
-  Goal,
-  Objective,
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
+  Goal,
+  Grant,
+  Objective,
+  Recipient,
+  User,
 } from '..';
-import { captureSnapshot, rollbackToSnapshot } from '../../lib/programmaticTransaction';
 
 const mockUser = {
   name: 'Tim Test',
@@ -115,21 +115,17 @@ describe('activityReportObjectiveCitation', () => {
     });
 
     // Create goal.
-    goal = await Goal.create(
-      {
-        name: 'ipd citation goal 1',
-        grantId: grant.id,
-      },
-    );
+    goal = await Goal.create({
+      name: 'ipd citation goal 1',
+      grantId: grant.id,
+    });
 
     // Create objective.
-    objective = await Objective.create(
-      {
-        title: 'IPD citation objective ',
-        goalId: goal.id,
-        status: 'Not Started',
-      },
-    );
+    objective = await Objective.create({
+      title: 'IPD citation objective ',
+      goalId: goal.id,
+      status: 'Not Started',
+    });
 
     // Create activity report.
     report = await ActivityReport.create(sampleReport);
@@ -159,27 +155,46 @@ describe('activityReportObjectiveCitation', () => {
   });
 
   it('create aro citation', async () => {
-    const activityReportObjectiveCitation1 = await ActivityReportObjectiveCitation.create({
-      activityReportObjectiveId: activityReportObjective.id,
-      citation: 'Sample Citation 1',
-      monitoringReferences: [{
-        grantId: grant.id, findingId: 1, reviewName: 'Review Name 1', grantNumber: grant.number,
-      }],
-    }, { individualHooks: true });
+    const activityReportObjectiveCitation1 = await ActivityReportObjectiveCitation.create(
+      {
+        activityReportObjectiveId: activityReportObjective.id,
+        citation: 'Sample Citation 1',
+        monitoringReferences: [
+          {
+            grantId: grant.id,
+            findingId: 1,
+            reviewName: 'Review Name 1',
+            grantNumber: grant.number,
+          },
+        ],
+      },
+      { individualHooks: true }
+    );
 
-    const activityReportObjectiveCitation2 = await ActivityReportObjectiveCitation.create({
-      activityReportObjectiveId: activityReportObjective.id,
-      citation: 'Sample Citation 2',
-      monitoringReferences: [{
-        grantId: grant.id, findingId: 2, reviewName: 'Review Name 2', grantNumber: grant.number,
-      }],
-    }, { individualHooks: true });
+    const activityReportObjectiveCitation2 = await ActivityReportObjectiveCitation.create(
+      {
+        activityReportObjectiveId: activityReportObjective.id,
+        citation: 'Sample Citation 2',
+        monitoringReferences: [
+          {
+            grantId: grant.id,
+            findingId: 2,
+            reviewName: 'Review Name 2',
+            grantNumber: grant.number,
+          },
+        ],
+      },
+      { individualHooks: true }
+    );
 
-    const activityReportObjectiveCitation3 = await ActivityReportObjectiveCitation.create({
-      activityReportObjectiveId: activityReportObjective.id,
-      citation: 'Sample Citation 3',
-      monitoringReferences: [],
-    }, { individualHooks: true });
+    const activityReportObjectiveCitation3 = await ActivityReportObjectiveCitation.create(
+      {
+        activityReportObjectiveId: activityReportObjective.id,
+        citation: 'Sample Citation 3',
+        monitoringReferences: [],
+      },
+      { individualHooks: true }
+    );
 
     // Assert citations.
     let activityReportObjectiveCitationLookUp = await ActivityReportObjectiveCitation.findAll({
@@ -190,12 +205,14 @@ describe('activityReportObjectiveCitation', () => {
     expect(activityReportObjectiveCitationLookUp.length).toBe(2);
 
     // Assert citation values regardless of order.
-    activityReportObjectiveCitationLookUp = activityReportObjectiveCitationLookUp.map(
-      (c) => c.get({ plain: true }),
+    activityReportObjectiveCitationLookUp = activityReportObjectiveCitationLookUp.map((c) =>
+      c.get({ plain: true })
     );
 
     // Citation 1.
-    const citation1LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 1');
+    const citation1LookUp = activityReportObjectiveCitationLookUp.find(
+      (c) => c.citation === 'Sample Citation 1'
+    );
     expect(citation1LookUp).toBeDefined();
     expect(citation1LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
     const [reference] = citation1LookUp.monitoringReferences;
@@ -209,7 +226,9 @@ describe('activityReportObjectiveCitation', () => {
     expect(citation1LookUp.reviewNames).toStrictEqual(['Review Name 1']);
 
     // Citation 2.
-    const citation2LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 2');
+    const citation2LookUp = activityReportObjectiveCitationLookUp.find(
+      (c) => c.citation === 'Sample Citation 2'
+    );
     expect(citation2LookUp).toBeDefined();
     expect(citation2LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
     const [secondReference] = citation2LookUp.monitoringReferences;
@@ -219,7 +238,7 @@ describe('activityReportObjectiveCitation', () => {
 
     // citation 3 should have empty monitoring references
     const citationThree = await ActivityReportObjectiveCitation.findByPk(
-      activityReportObjectiveCitation3.id,
+      activityReportObjectiveCitation3.id
     );
 
     expect(citationThree.findingIds).toStrictEqual([]);

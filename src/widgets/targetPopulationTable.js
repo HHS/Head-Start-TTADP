@@ -1,18 +1,13 @@
-import { Op } from 'sequelize';
 import { REPORT_STATUSES, TARGET_POPULATIONS } from '@ttahub/common';
+import { Op } from 'sequelize';
 import { ActivityReport } from '../models';
 import { countBySingleKey } from './helpers';
 
 export default async function targetPopulationTable(scopes) {
   const res = await ActivityReport.findAll({
-    attributes: [
-      'targetPopulations',
-    ],
+    attributes: ['targetPopulations'],
     where: {
-      [Op.and]: [
-        scopes.activityReport,
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
-      ],
+      [Op.and]: [scopes.activityReport, { calculatedStatus: REPORT_STATUSES.APPROVED }],
     },
     raw: true,
   });

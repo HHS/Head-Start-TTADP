@@ -1,11 +1,11 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import { SCOPE_IDS } from '@ttahub/common';
-import GoalCardsHeader from '../GoalsCardsHeader';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import UserContext from '../../../UserContext';
+import GoalCardsHeader from '../GoalsCardsHeader';
 
 describe('GoalCardsHeader', () => {
   const history = createMemoryHistory();
@@ -45,9 +45,10 @@ describe('GoalCardsHeader', () => {
     hasMissingStandardGoals: true,
   };
 
-  const renderTest = (props = {}, userPermissions = [
-    { scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, regionId: 1 },
-  ]) => {
+  const renderTest = (
+    props = {},
+    userPermissions = [{ scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, regionId: 1 }]
+  ) => {
     const user = {
       id: 1,
       name: 'test user',
@@ -60,7 +61,7 @@ describe('GoalCardsHeader', () => {
           {/* eslint-disable-next-line react/jsx-props-no-spreading */}
           <GoalCardsHeader {...defaultProps} {...props} />
         </Router>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 

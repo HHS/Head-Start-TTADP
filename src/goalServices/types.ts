@@ -27,8 +27,7 @@ interface IReviewPrompt {
   responses: string[];
   grantId?: number;
   grantDisplayName?: string;
-  recipients:
-  {
+  recipients: {
     id: number;
     name: string;
   }[];
@@ -48,11 +47,11 @@ interface IFile {
   originalFileName: string;
   url: {
     url: string;
-  }
+  };
 }
 
 interface IFileModelInstance extends IFile {
-  dataValues?: IFile
+  dataValues?: IFile;
   toJSON?: () => IFile;
 }
 
@@ -144,14 +143,14 @@ interface IGrant {
     dataValues?: {
       name: string;
       id: number;
-    }
-  }
+    };
+  };
   goalId?: number;
   recipientNameWithPrograms: string;
 }
 
 interface IGrantModelInstance extends IGrant {
-  dataValues?: IGrant
+  dataValues?: IGrant;
 }
 
 interface IActivityReportGoal {
@@ -163,9 +162,11 @@ interface IActivityReportGoal {
   name: string;
   status: string;
   isActivelyEdited: boolean;
-  source: string | {
-    [key: string]: string;
-  };
+  source:
+    | string
+    | {
+        [key: string]: string;
+      };
   closeSuspendReason: string;
   closeSuspendContext: string;
   originalGoalId: number;
@@ -182,7 +183,7 @@ interface IObjective {
   activityReportObjectives?: IActivityReportObjectivesModelInstance[];
   otherEntityId: number | null;
   activityReports?: {
-    id: number
+    id: number;
   }[];
   grantId?: number;
   supportType?: string;
@@ -198,12 +199,12 @@ interface IObjective {
 }
 
 interface IObjectiveModelInstance extends IObjective {
-  dataValues?: IObjective
+  dataValues?: IObjective;
   getDataValue?: (key: string) => number | string | boolean | null;
   toJSON?: () => IObjective;
 }
 
-type IReducedObjective = Omit <IObjective, 'activityReportObjectives'> & {
+type IReducedObjective = Omit<IObjective, 'activityReportObjectives'> & {
   topics: ITopic[];
   resources: IResource[];
   files: IFile[];
@@ -272,18 +273,22 @@ interface IReducedGoal {
   recipientId: number;
   goalTemplateId: number;
   createdVia: string;
-  source: {
-    [key: string]: string;
-  } | string;
+  source:
+    | {
+        [key: string]: string;
+      }
+    | string;
   onAR: boolean;
   onApprovedAR: boolean;
   isCurated: boolean;
   rtrOrder: number;
   goalCollaborators: IGoalCollaborator[];
   objectives: IReducedObjective[];
-  prompts : {
-    [x: string]: IPrompt[];
-  } | IPrompt[];
+  prompts:
+    | {
+        [x: string]: IPrompt[];
+      }
+    | IPrompt[];
   promptsForReview: IReviewPrompt[];
   statusChanges?: { oldStatus: string }[];
   goalNumber: string;
@@ -305,15 +310,15 @@ interface IReducedGoal {
 }
 
 interface IGoalModelInstance extends IGoal {
-  dataValues?: IGoal
+  dataValues?: IGoal;
   toJSON?: () => IGoal;
 }
 
 interface IOtherEntityObjective {
   activityReportObjectives: IActivityReportObjectivesModelInstance[];
-  id: 9,
+  id: 9;
   otherEntityId: number;
-  goalId: null,
+  goalId: null;
   title: string;
   status: string;
   objectiveTemplateId: null | number;
@@ -342,11 +347,11 @@ interface IOtherEntityObjective {
 }
 
 interface IOtherEntityObjectiveModelInstance extends IOtherEntityObjective {
-  dataValues: IOtherEntityObjective,
-  toJSON: () => IOtherEntityObjective,
+  dataValues: IOtherEntityObjective;
+  toJSON: () => IOtherEntityObjective;
 }
 
-export {
+export type {
   IGrant,
   IPrompt,
   ICourse,

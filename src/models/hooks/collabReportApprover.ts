@@ -37,15 +37,15 @@ const calculateReportStatus = (approverStatus, approvals) => {
 };
 
 const updateReportStatus = async (sequelize, instance) => {
-  const report = await sequelize.models.CollabReport.findOne({
+  const report = (await sequelize.models.CollabReport.findOne({
     attributes: ['calculatedStatus', 'submissionStatus'],
     where: {
       id: instance.collabReportId,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
     },
-  }) as {
-    calculatedStatus: string,
-    submissionStatus: string
+  })) as {
+    calculatedStatus: string;
+    submissionStatus: string;
   } | null;
 
   // we only update any of the report status fields if the report is submitted
@@ -56,31 +56,39 @@ const updateReportStatus = async (sequelize, instance) => {
   // We allow users to create approvers before submitting the report. Calculated
   // status should only exist for submitted reports.
 
-  const foundApproverStatuses = await sequelize.models.CollabReportApprover.findAll({
+  const foundApproverStatuses = (await sequelize.models.CollabReportApprover.findAll({
     attributes: ['status'],
     where: { collabReportId: instance.collabReportId },
-  }) as { status: string }[];
+  })) as { status: string }[];
 
   const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
   const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
 
-  if (newCalculatedStatus === REPORT_STATUSES.APPROVED
-      && report.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+  if (
+    newCalculatedStatus === REPORT_STATUSES.APPROVED &&
+    report.calculatedStatus !== REPORT_STATUSES.APPROVED
+  ) {
     // if the report is being approved, we need to clear the notes on the approvers
-    await sequelize.models.CollabReportApprover.update({
-      note: '',
-    }, {
-      where: { collabReportId: instance.collabReportId },
-    });
+    await sequelize.models.CollabReportApprover.update(
+      {
+        note: '',
+      },
+      {
+        where: { collabReportId: instance.collabReportId },
+      }
+    );
   }
 
-  await sequelize.models.CollabReport.update({
-    calculatedStatus: newCalculatedStatus,
-  }, {
-    where: { id: instance.collabReportId },
-    individualHooks: true,
-  });
+  await sequelize.models.CollabReport.update(
+    {
+      calculatedStatus: newCalculatedStatus,
+    },
+    {
+      where: { id: instance.collabReportId },
+      individualHooks: true,
+    }
+  );
 };
 
 const afterCreate = async (sequelize, instance) => {
@@ -103,12 +111,15 @@ const afterDestroy = async (sequelize, instance) => {
 
     // Calculate status only with approvals, not this recently deleted instance
     const newCalculatedStatus = calculateReportStatusFromApprovals(approverStatuses);
-    await sequelize.models.CollabReport.update({
-      calculatedStatus: newCalculatedStatus,
-    }, {
-      where: { id: instance.collabReportId },
-      individualHooks: true,
-    });
+    await sequelize.models.CollabReport.update(
+      {
+        calculatedStatus: newCalculatedStatus,
+      },
+      {
+        where: { id: instance.collabReportId },
+        individualHooks: true,
+      }
+    );
   }
 };
 

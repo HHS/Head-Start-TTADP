@@ -1,7 +1,6 @@
-import { ITTAByReviewObjective } from './monitoring';
+import type { ITTAByReviewObjective } from './monitoring';
 
-export interface ActivityReportObjectiveCitationResponse
-  extends ITTAByReviewObjective {
+export interface ActivityReportObjectiveCitationResponse extends ITTAByReviewObjective {
   findingIds: string[];
   reviewNames: string[];
   grantNumber: string;

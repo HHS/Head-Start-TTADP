@@ -1,27 +1,27 @@
 import stringify from 'csv-stringify/lib/sync';
-import { Request, Response } from 'express';
-import { currentUserId } from '../../services/currentUser';
-import { userById } from '../../services/users';
-import {
-  isFile,
-  checkFolderPermissions,
-  FilterValues,
-  listQueryFiles,
-  readFiltersFromFile,
-  preprocessAndValidateFilters,
-  setFilters,
-  sanitizeFilename,
-  generateFilterString,
-  executeQuery,
-} from '../../services/ssdi';
-import User from '../../policies/user';
+import type { Request, Response } from 'express';
 import getCachedResponse from '../../lib/cache';
+import User from '../../policies/user';
+import { currentUserId } from '../../services/currentUser';
+import {
+  checkFolderPermissions,
+  executeQuery,
+  type FilterValues,
+  generateFilterString,
+  isFile,
+  listQueryFiles,
+  preprocessAndValidateFilters,
+  readFiltersFromFile,
+  sanitizeFilename,
+  setFilters,
+} from '../../services/ssdi';
+import { userById } from '../../services/users';
 
 const validateScriptPath = async (
   scriptPath: string,
   user,
   res: Response,
-  skipFileCheck = false,
+  skipFileCheck = false
 ) => {
   // Ensure the scriptPath is provided by the user
   if (!scriptPath) {
@@ -44,7 +44,9 @@ const validateScriptPath = async (
   // Check folder permissions based on the internal path and user
   const hasAccess = await checkFolderPermissions(user, scriptPath);
   if (!hasAccess) {
-    res.status(403).json({ error: 'Access forbidden: You do not have permission to run this query' });
+    res
+      .status(403)
+      .json({ error: 'Access forbidden: You do not have permission to run this query' });
     return true;
   }
 
@@ -60,17 +62,15 @@ const validateScriptPath = async (
 };
 
 // Filters out certain attributes from an object
-const filterAttributes = <T extends object>(
-  obj: T,
-  keysToRemove: (keyof T)[],
-): Partial<T> => Object.fromEntries(
-    Object.entries(obj).filter(([key]) => !keysToRemove.includes(key as keyof T)),
+const filterAttributes = <T extends object>(obj: T, keysToRemove: (keyof T)[]): Partial<T> =>
+  Object.fromEntries(
+    Object.entries(obj).filter(([key]) => !keysToRemove.includes(key as keyof T))
   ) as Partial<T>;
 
 // List all available query files with name and description
 const listQueries = async (req: Request, res: Response) => {
   // Trim the scriptPath and default to 'dataRequests' if it's not set or an empty string
-  const scriptPath = (req.query.path as string || '').trim() || 'dataRequests';
+  const scriptPath = ((req.query.path as string) || '').trim() || 'dataRequests';
 
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
@@ -153,7 +153,7 @@ const runQuery = async (req: Request, res: Response) => {
         ...req.body,
         ...req.query,
       },
-      ['path', 'format', 'cache'],
+      ['path', 'format', 'cache']
     );
 
     const policy = new User(user);
@@ -173,12 +173,9 @@ const runQuery = async (req: Request, res: Response) => {
       return;
     }
 
-    const {
-      result: validatedFilters,
-      errors,
-    } = preprocessAndValidateFilters(
+    const { result: validatedFilters, errors } = preprocessAndValidateFilters(
       filters,
-      filterValues,
+      filterValues
     );
 
     if (errors?.invalidFilters?.length || errors?.invalidTypes?.length) {
@@ -193,11 +190,11 @@ const runQuery = async (req: Request, res: Response) => {
     };
 
     const queryResultString = useCache
-      ? await getCachedResponse(
-        `${scriptPath} ${JSON.stringify(validatedFilters)}`,
-        run,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ) as any
+      ? ((await getCachedResponse(
+          `${scriptPath} ${JSON.stringify(validatedFilters)}`,
+          run
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        )) as any)
       : await run();
     const queryResult = JSON.parse(queryResultString);
 

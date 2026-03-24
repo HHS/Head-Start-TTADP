@@ -1,7 +1,9 @@
-import { v4 as uuid } from 'uuid';
 import { Op } from 'sequelize';
-import { ttaByCitations, mapFindingType } from './monitoring';
+import { v4 as uuid } from 'uuid';
+import { OBJECTIVE_STATUS } from '../constants';
+import db from '../models';
 import updateMonitoringFactTables from '../tools/updateMonitoringFactTables';
+import { mapFindingType, ttaByCitations } from './monitoring';
 import {
   createAdditionalMonitoringData,
   createMonitoringData,
@@ -10,8 +12,6 @@ import {
   destroyMonitoringData,
   destroyReportAndCitationData,
 } from './monitoring.testHelpers';
-import db from '../models';
-import { OBJECTIVE_STATUS } from '../constants';
 
 const {
   Grant,
@@ -38,14 +38,12 @@ const FINDING_STATUS_ID = 80601;
 const CONTENT_ID = uuid();
 const STANDARD_ID = 90601;
 
-const expectedCitationResponse = (findingId, status = 'Complete') => ([
+const expectedCitationResponse = (findingId, status = 'Complete') => [
   {
     category: 'source',
     citationNumber: '1234',
     findingType: 'determination',
-    grantNumbers: [
-      GRANT_NUMBER,
-    ],
+    grantNumbers: [GRANT_NUMBER],
     lastTTADate: expect.any(String),
     reviews: [
       {
@@ -60,13 +58,9 @@ const expectedCitationResponse = (findingId, status = 'Complete') => ([
               },
             ],
             endDate: expect.any(String),
-            findingIds: [
-              findingId,
-            ],
+            findingIds: [findingId],
             grantNumber: GRANT_NUMBER,
-            reviewNames: [
-              'REVIEW!!!',
-            ],
+            reviewNames: ['REVIEW!!!'],
             specialists: [
               {
                 name: 'Hermione Granger, NC, SS',
@@ -79,9 +73,7 @@ const expectedCitationResponse = (findingId, status = 'Complete') => ([
             ],
             status: OBJECTIVE_STATUS.IN_PROGRESS,
             title: expect.any(String),
-            topics: [
-              'Spleunking',
-            ],
+            topics: ['Spleunking'],
           },
           {
             activityReports: [
@@ -91,13 +83,9 @@ const expectedCitationResponse = (findingId, status = 'Complete') => ([
               },
             ],
             endDate: expect.any(String),
-            findingIds: [
-              findingId,
-            ],
+            findingIds: [findingId],
             grantNumber: GRANT_NUMBER,
-            reviewNames: [
-              'REVIEW!!!',
-            ],
+            reviewNames: ['REVIEW!!!'],
             specialists: [
               {
                 name: 'Hermione Granger, NC, SS',
@@ -110,9 +98,7 @@ const expectedCitationResponse = (findingId, status = 'Complete') => ([
             ],
             status: OBJECTIVE_STATUS.IN_PROGRESS,
             title: expect.any(String),
-            topics: [
-              'Spleunking',
-            ],
+            topics: ['Spleunking'],
           },
         ],
         outcome: 'Complete',
@@ -128,7 +114,7 @@ const expectedCitationResponse = (findingId, status = 'Complete') => ([
     ],
     status,
   },
-]);
+];
 
 describe('ttaByCitations', () => {
   let findingId;
@@ -172,7 +158,7 @@ describe('ttaByCitations', () => {
       REVIEW_ID,
       GRANTEE_ID,
       REVIEW_STATUS_ID,
-      CONTENT_ID,
+      CONTENT_ID
     );
 
     const result = await createAdditionalMonitoringData(
@@ -182,15 +168,12 @@ describe('ttaByCitations', () => {
       {
         statusId: FINDING_STATUS_ID,
         standardId: STANDARD_ID,
-      },
+      }
     );
     findingId = result.findingId;
     reviewId = result.reviewId;
 
-    const arocResult = await createReportAndCitationData(
-      GRANT_NUMBER,
-      findingId,
-    );
+    const arocResult = await createReportAndCitationData(GRANT_NUMBER, findingId);
 
     goal = arocResult.goal;
     objectives = arocResult.objectives;
@@ -266,13 +249,7 @@ describe('ttaByCitations', () => {
     }
 
     if (goal && objectives && reports && topic && citations) {
-      await destroyReportAndCitationData(
-        goal,
-        objectives,
-        reports,
-        topic,
-        citations,
-      );
+      await destroyReportAndCitationData(goal, objectives, reports, topic, citations);
     }
 
     if (findingId && reviewId) {
@@ -291,19 +268,13 @@ describe('ttaByCitations', () => {
   it('fetches TTA, ordered by Citations', async () => {
     await updateMonitoringFactTables();
 
-    const data = await ttaByCitations(
-      RECIPIENT_ID,
-      REGION_ID,
-    );
+    const data = await ttaByCitations(RECIPIENT_ID, REGION_ID);
 
     expect(data).toStrictEqual(expectedCitationResponse(findingId));
   });
 
   it('returns no citations when the recipient has no grants in the region', async () => {
-    const data = await ttaByCitations(
-      EMPTY_RECIPIENT_ID,
-      REGION_ID,
-    );
+    const data = await ttaByCitations(EMPTY_RECIPIENT_ID, REGION_ID);
 
     expect(data).toStrictEqual([]);
   });
@@ -316,13 +287,10 @@ describe('ttaByCitations', () => {
         raw_status: 'Corrected',
         calculated_status: 'Active',
       },
-      { where: { finding_uuid: findingId } },
+      { where: { finding_uuid: findingId } }
     );
 
-    const data = await ttaByCitations(
-      RECIPIENT_ID,
-      REGION_ID,
-    );
+    const data = await ttaByCitations(RECIPIENT_ID, REGION_ID);
 
     expect(data).toStrictEqual(expectedCitationResponse(findingId, 'Active'));
   });
@@ -332,13 +300,10 @@ describe('ttaByCitations', () => {
 
     await DeliveredReview.update(
       { review_uuid: UNMATCHED_REVIEW_UUID },
-      { where: { review_uuid: reviewId } },
+      { where: { review_uuid: reviewId } }
     );
 
-    const data = await ttaByCitations(
-      RECIPIENT_ID,
-      REGION_ID,
-    );
+    const data = await ttaByCitations(RECIPIENT_ID, REGION_ID);
 
     expect(data).toStrictEqual([]);
   });

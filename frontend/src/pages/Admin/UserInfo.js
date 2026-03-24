@@ -1,14 +1,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, {
-  useEffect, useState, useMemo, memo,
-} from 'react';
-import PropTypes from 'prop-types';
-import {
-  Label, TextInput, Grid, Fieldset,
-} from '@trussworks/react-uswds';
+
+import { Fieldset, Grid, Label, TextInput } from '@trussworks/react-uswds';
 import moment from 'moment';
-import RegionDropdown from '../../components/RegionDropdown';
+import PropTypes from 'prop-types';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import AdminMultiSelect from '../../components/AdminMultiSelect';
+import RegionDropdown from '../../components/RegionDropdown';
 import { getRoles } from '../../fetchers/Admin';
 
 const AuthoritiesList = memo(({ authorities }) => {
@@ -184,9 +181,11 @@ UserInfo.propTypes = {
     email: PropTypes.string,
     name: PropTypes.string,
     homeRegionId: PropTypes.number,
-    roles: PropTypes.arrayOf(PropTypes.shape({
-      fullName: PropTypes.string,
-    })),
+    roles: PropTypes.arrayOf(
+      PropTypes.shape({
+        fullName: PropTypes.string,
+      })
+    ),
     hsesUserId: PropTypes.string,
     hsesUsername: PropTypes.string,
     hsesAuthorities: PropTypes.arrayOf(PropTypes.string),

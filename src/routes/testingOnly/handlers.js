@@ -1,6 +1,6 @@
+import { query, reseed } from '../../../tests/utils/dbUtils';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
-import { reseed, query } from '../../../tests/utils/dbUtils';
 
 async function reseedDB(req, res) {
   try {
@@ -13,9 +13,13 @@ async function reseedDB(req, res) {
 
 async function queryDB(req, res) {
   try {
-    if (!req.body) { throw new Error('req.body is required'); }
+    if (!req.body) {
+      throw new Error('req.body is required');
+    }
     const { command, options = {} } = req.body;
-    if (!command) { throw new Error('command is required'); }
+    if (!command) {
+      throw new Error('command is required');
+    }
     const result = await query(command, options);
     res.status(result[0] ? 200 : 501).json(result);
   } catch (error) {

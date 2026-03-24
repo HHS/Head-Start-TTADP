@@ -1,7 +1,4 @@
-import {
-  syncGrantNumberLink,
-  clearGrantNumberLink,
-} from './genericLink';
+import { clearGrantNumberLink, syncGrantNumberLink } from './genericLink';
 
 const afterCreate = async (sequelize, instance, options) => {
   await Promise.all([
@@ -24,18 +21,11 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
-  await Promise.all([
-    clearGrantNumberLink(sequelize, instance, options),
-  ]);
+  await Promise.all([clearGrantNumberLink(sequelize, instance, options)]);
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
   await sequelize.models.GrantRelationshipToActive.refresh();
 };
 
-export {
-  afterCreate,
-  afterUpdate,
-  beforeDestroy,
-  afterDestroy,
-};
+export { afterCreate, afterUpdate, beforeDestroy, afterDestroy };

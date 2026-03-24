@@ -63,9 +63,7 @@ async function makeColors() {
 // https://www.figma.com/file/5Fr0NKQf9MQ5WGd8BWxA6i/TTA_SmartHub-Library-09132021?node-id=0%3A14
 
 // scss vars
-${
-  propNames.map((name, index) => `$${name}: ${values[index]};`).join('\n')
-}
+${propNames.map((name, index) => `$${name}: ${values[index]};`).join('\n')}
 
 // css custom properties
 :root {

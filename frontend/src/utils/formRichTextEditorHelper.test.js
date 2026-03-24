@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, act } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
 import { shouldUpdateFormData } from './formRichTextEditorHelper';
 
@@ -31,7 +31,7 @@ describe('shouldUpdateFormData', () => {
     render(
       <div className="rdw-editor-main" role="textbox" aria-label="rich editor">
         test
-      </div>,
+      </div>
     );
 
     const richEditor = await screen.findByRole('textbox', { name: 'rich editor' });
@@ -56,11 +56,9 @@ describe('shouldUpdateFormData', () => {
       contains: jest.fn(() => false),
     };
 
-    jest.spyOn(document, 'querySelectorAll').mockReturnValue([
-      mockEditor1,
-      mockEditor2,
-      mockEditor3,
-    ]);
+    jest
+      .spyOn(document, 'querySelectorAll')
+      .mockReturnValue([mockEditor1, mockEditor2, mockEditor3]);
     jest.spyOn(document, 'getSelection').mockReturnValue({
       anchorNode: document.createElement('div'),
     });
@@ -131,11 +129,9 @@ describe('shouldUpdateFormData', () => {
       contains: jest.fn(() => false),
     };
 
-    jest.spyOn(document, 'querySelectorAll').mockReturnValue([
-      mockEditor1,
-      mockEditor2,
-      mockEditor3,
-    ]);
+    jest
+      .spyOn(document, 'querySelectorAll')
+      .mockReturnValue([mockEditor1, mockEditor2, mockEditor3]);
     jest.spyOn(document, 'getSelection').mockReturnValue({
       anchorNode: document.createElement('div'),
     });

@@ -1,6 +1,7 @@
-import { v4 as uuid } from 'uuid';
 import { Op } from 'sequelize';
-import activeDeficientCitationsWithTtaSupport from './activeDeficientCitationsWithTtaSupport';
+import { v4 as uuid } from 'uuid';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
+import db from '../../models';
 import {
   createGoal,
   createGrant,
@@ -11,8 +12,7 @@ import {
   destroyGoal,
   destroyReport,
 } from '../../testUtils';
-import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
-import db from '../../models';
+import activeDeficientCitationsWithTtaSupport from './activeDeficientCitationsWithTtaSupport';
 
 const {
   Citation,
@@ -38,11 +38,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
   let grantCitationWithTta;
   let grantCitationWithoutTta;
 
-  const mockReport = ({
-    id,
-    startDate,
-    activityRecipients,
-  }) => ({
+  const mockReport = ({ id, startDate, activityRecipients }) => ({
     getDataValue: (key) => {
       if (key === 'id') return id;
       if (key === 'startDate') return startDate;
@@ -190,9 +186,9 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     const findAllQuery = findAllSpy.mock.calls[0][0];
 
     expect(querySpy).not.toHaveBeenCalled();
-    expect(findAllQuery.where[Op.and]).toEqual(expect.arrayContaining([
-      { startDate: { [Op.not]: null } },
-    ]));
+    expect(findAllQuery.where[Op.and]).toEqual(
+      expect.arrayContaining([{ startDate: { [Op.not]: null } }])
+    );
     const [activityRecipientsInclude] = findAllQuery.include;
     const [grantInclude] = activityRecipientsInclude.include;
     const [grantCitationsInclude] = grantInclude.include;
@@ -294,7 +290,11 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     const data = await activeDeficientCitationsWithTtaSupport({ activityReport: [] });
     const queryOptions = querySpy.mock.calls[0][1];
 
-    expect(queryOptions.replacements.monthStarts).toEqual(['2025-01-01', '2025-02-01', '2025-03-01']);
+    expect(queryOptions.replacements.monthStarts).toEqual([
+      '2025-01-01',
+      '2025-02-01',
+      '2025-03-01',
+    ]);
     expect(data).toEqual([
       {
         name: 'Active deficiencies with TTA support',

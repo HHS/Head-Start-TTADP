@@ -1,4 +1,4 @@
-import { getWhatsNewFeedData, getSingleFeedData } from './feed';
+import { getSingleFeedData, getWhatsNewFeedData } from './feed';
 
 jest.mock('axios', () => ({
   get: jest.fn(() => ({

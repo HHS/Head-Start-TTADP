@@ -1,30 +1,25 @@
-import moment from 'moment';
-import { uniq } from 'lodash';
-import { Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES, TRACE_IDS } from '@ttahub/common';
-import { IScopes } from '../types';
+import { uniq } from 'lodash';
+import moment from 'moment';
+import { Op, QueryTypes } from 'sequelize';
 import db, { sequelize } from '../../models';
+import type { IScopes } from '../types';
 
-const {
-  ActivityReport,
-  ActivityRecipient,
-  Grant,
-  GrantCitation,
-} = db;
+const { ActivityReport, ActivityRecipient, Grant, GrantCitation } = db;
 
 interface IActiveDeficientCitationsWithTtaSupport {
-  name: 'Active deficiencies with TTA support' | 'All active deficiencies',
-  x: string[],
-  y: number[],
-  month: string[],
-  id: string,
-  trace: 'circle' | 'triangle',
+  name: 'Active deficiencies with TTA support' | 'All active deficiencies';
+  x: string[];
+  y: number[];
+  month: string[];
+  id: string;
+  trace: 'circle' | 'triangle';
 }
 
 interface IMonthlyCounts {
-  month_start: string,
-  deficiencies_with_tta: number,
-  total_active_deficiencies: number,
+  month_start: string;
+  deficiencies_with_tta: number;
+  total_active_deficiencies: number;
 }
 
 type MonthCountByMonthStart = Map<string, IMonthlyCounts>;
@@ -37,7 +32,7 @@ type MonthCountByMonthStart = Map<string, IMonthlyCounts>;
  * of those deficiencies that also have an approved AR in that same month.
  */
 export default async function activeDeficientCitationsWithTtaSupport(
-  scopes: IScopes,
+  scopes: IScopes
 ): Promise<IActiveDeficientCitationsWithTtaSupport[]> {
   const approvedReports = await ActivityReport.findAll({
     attributes: ['id', 'startDate'],
@@ -82,8 +77,11 @@ export default async function activeDeficientCitationsWithTtaSupport(
   });
 
   const months = uniq(
-    approvedReports
-      .map((report: typeof approvedReports[number]) => moment(report.getDataValue('startDate') as string).startOf('month').format('YYYY-MM-DD')),
+    approvedReports.map((report: (typeof approvedReports)[number]) =>
+      moment(report.getDataValue('startDate') as string)
+        .startOf('month')
+        .format('YYYY-MM-DD')
+    )
   ).sort();
 
   const continuousMonths: string[] = [];
@@ -97,10 +95,20 @@ export default async function activeDeficientCitationsWithTtaSupport(
   }
 
   // activityRecipientIds = grant IDs
-  const grantIds = uniq(approvedReports.flatMap((report: typeof approvedReports[number]) => report.getDataValue('activityRecipients') as { grantId: number }[])
-    .map((ar: { grantId: number }) => ar.grantId));
+  const grantIds = uniq(
+    approvedReports
+      .flatMap(
+        (report: (typeof approvedReports)[number]) =>
+          report.getDataValue('activityRecipients') as { grantId: number }[]
+      )
+      .map((ar: { grantId: number }) => ar.grantId)
+  );
 
-  const approvedReportIds = uniq(approvedReports.map((report: typeof approvedReports[number]) => report.getDataValue('id') as number));
+  const approvedReportIds = uniq(
+    approvedReports.map(
+      (report: (typeof approvedReports)[number]) => report.getDataValue('id') as number
+    )
+  );
 
   if (!continuousMonths.length) {
     return [
@@ -124,7 +132,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
   }
 
   if (!grantIds.length) {
-    const x = continuousMonths.map((month) => (moment(month).format('MMM YYYY')));
+    const x = continuousMonths.map((month) => moment(month).format('MMM YYYY'));
     const zeroes = x.map(() => 0);
     return [
       {
@@ -211,11 +219,11 @@ export default async function activeDeficientCitationsWithTtaSupport(
         approvedReportIds,
       },
       type: QueryTypes.SELECT,
-    },
+    }
   );
 
   const rowsByMonthStart: MonthCountByMonthStart = new Map(
-    rows.map((row: IMonthlyCounts) => [row.month_start, row]),
+    rows.map((row: IMonthlyCounts) => [row.month_start, row])
   );
   const monthRows: IMonthlyCounts[] = Array.from(rowsByMonthStart.values());
 

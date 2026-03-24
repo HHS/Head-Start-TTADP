@@ -1,13 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import { render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render, screen,
-} from '@testing-library/react';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import DisplayWithPermission from '../DisplayWithPermission';
+import React from 'react';
+import { Router } from 'react-router';
 import UserContext from '../../UserContext';
+import DisplayWithPermission from '../DisplayWithPermission';
 
 const { ADMIN, READ_WRITE_TRAINING_REPORTS, READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
@@ -21,7 +19,7 @@ describe('display with permissions', () => {
             <h1>This is a test</h1>
           </DisplayWithPermission>
         </UserContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 
@@ -52,7 +50,6 @@ describe('display with permissions', () => {
 
   it('shows content if the user is an admin', () => {
     const user = {
-
       permissions: [
         {
           scopeId: ADMIN,

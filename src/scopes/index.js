@@ -1,11 +1,11 @@
 import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
-import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
-import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
 import { collabReportFiltersToScopes as collabReport } from './collabReports';
-import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
-import { grantsFiltersToScopes as grant } from './grants';
+import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
 import { goalsFiltersToScopes as goal } from './goals';
+import { grantsFiltersToScopes as grant } from './grants';
+import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
+import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
 import { getValidTopicsSet } from './utils';
 
 const models = {

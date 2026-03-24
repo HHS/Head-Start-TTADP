@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
-import { filterAssociation } from './utils';
 import { sequelize } from '../../models';
+import { filterAssociation } from './utils';
 
 const reasonFilter = (options) => {
   const useRecipient = options && options.recipientId;
@@ -16,16 +16,12 @@ const reasonFilter = (options) => {
 
 export function withReasons(reasons, options) {
   return {
-    [Op.or]: [
-      filterAssociation(reasonFilter(options), reasons, false),
-    ],
+    [Op.or]: [filterAssociation(reasonFilter(options), reasons, false)],
   };
 }
 
 export function withoutReasons(reasons, options) {
   return {
-    [Op.and]: [
-      filterAssociation(reasonFilter(options), reasons, true),
-    ],
+    [Op.and]: [filterAssociation(reasonFilter(options), reasons, true)],
   };
 }
