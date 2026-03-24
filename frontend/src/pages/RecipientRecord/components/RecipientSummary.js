@@ -1,10 +1,12 @@
-import PropTypes from 'prop-types';
 import React from 'react';
+import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './RecipientSummary.css';
 import { getDistinctSortedArray } from '../../../utils';
 
-function RecipientInformationSection({ heading, grants, property, distinct }) {
+function RecipientInformationSection({
+  heading, grants, property, distinct,
+}) {
   let valueList = grants.map((p) => p[property]).filter((v) => v);
   if (distinct) {
     valueList = getDistinctSortedArray(valueList);
@@ -12,14 +14,14 @@ function RecipientInformationSection({ heading, grants, property, distinct }) {
 
   return (
     <div className="margin-bottom-2">
-      <p className="margin-y-1">
-        <strong>{heading}</strong>
-      </p>
-      {valueList.map((item) => (
-        <p className="margin-y-1" key={`${item}_${property}`}>
-          {item}
-        </p>
-      ))}
+      <p className="margin-y-1"><strong>{heading}</strong></p>
+      {
+        valueList.map((item) => (
+          <p className="margin-y-1" key={`${item}_${property}`}>
+            {item}
+          </p>
+        ))
+      }
     </div>
   );
 }
@@ -28,14 +30,12 @@ RecipientInformationSection.propTypes = {
   heading: PropTypes.string.isRequired,
   property: PropTypes.string.isRequired,
   distinct: PropTypes.bool,
-  grants: PropTypes.arrayOf(
-    PropTypes.shape({
-      number: PropTypes.string,
-      status: PropTypes.string,
-      endDate: PropTypes.string,
-      id: PropTypes.number,
-    })
-  ).isRequired,
+  grants: PropTypes.arrayOf(PropTypes.shape({
+    number: PropTypes.string,
+    status: PropTypes.string,
+    endDate: PropTypes.string,
+    id: PropTypes.number,
+  })).isRequired,
 };
 
 RecipientInformationSection.defaultProps = {
@@ -54,17 +54,14 @@ export default function RecipientSummary({ summary }) {
       </div>
       <div className="padding-x-3 padding-bottom-3">
         <div className="margin-bottom-2">
+          <p className="margin-y-1"><strong>Recipient ID</strong></p>
           <p className="margin-y-1">
-            <strong>Recipient ID</strong>
+            {summary.uei}
           </p>
-          <p className="margin-y-1">{summary.uei}</p>
         </div>
-        <RecipientInformationSection
-          heading="Recipient type"
-          property="recipientType"
-          grants={[{ recipientType: summary.recipientType }]}
-        />
+        <RecipientInformationSection heading="Recipient type" property="recipientType" grants={[{ recipientType: summary.recipientType }]} />
       </div>
+
     </Container>
   );
 }
@@ -80,7 +77,7 @@ RecipientSummary.propTypes = {
         status: PropTypes.string,
         endDate: PropTypes.string,
         id: PropTypes.number,
-      })
+      }),
     ),
   }),
 };

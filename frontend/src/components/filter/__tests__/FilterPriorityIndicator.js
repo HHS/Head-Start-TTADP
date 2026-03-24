@@ -1,16 +1,23 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
 import React from 'react';
+import {
+  render,
+  screen,
+} from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import FilterPriorityIndicator from '../FilterPriorityIndicator';
 
 const { findByText } = screen;
 
 describe('FilterPriorityIndicator', () => {
-  const renderPriorityIndicatorSelect = (onApply, query = []) =>
+  const renderPriorityIndicatorSelect = (onApply, query = []) => (
     render(
-      <FilterPriorityIndicator onApply={onApply} inputId="priority-indicator-test" query={query} />
-    );
+      <FilterPriorityIndicator
+        onApply={onApply}
+        inputId="priority-indicator-test"
+        query={query}
+      />,
+    ));
 
   it('calls the onApply handler when a priority indicator is selected', async () => {
     const onApply = jest.fn();

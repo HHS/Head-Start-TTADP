@@ -31,7 +31,7 @@ const identity = (label) => label;
 export const deriveLineGraphLegendConfig = (
   data,
   fallbackConfig = [],
-  labelFormatter = identity
+  labelFormatter = identity,
 ) => {
   if (!Array.isArray(data) || !data.length) {
     return fallbackConfig;
@@ -39,11 +39,11 @@ export const deriveLineGraphLegendConfig = (
 
   const derivedLegendConfig = data.map((trace) => {
     if (
-      !trace ||
-      !trace.id ||
-      !trace.trace ||
-      !trace.name ||
-      !LEGEND_SHAPES.includes(trace.trace)
+      !trace
+      || !trace.id
+      || !trace.trace
+      || !trace.name
+      || !LEGEND_SHAPES.includes(trace.trace)
     ) {
       return null;
     }

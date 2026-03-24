@@ -2,54 +2,57 @@
   Activity report. Makes use of the navigator to split the long form into
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
-
-import { Alert, Grid } from '@trussworks/react-uswds';
-import { REPORT_STATUSES } from '@ttahub/common';
-import { keyBy, mapValues, startCase } from 'lodash';
-import moment from 'moment-timezone';
+import React, {
+  useState, useEffect, useRef, useContext, useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  keyBy, mapValues, startCase,
+} from 'lodash';
 import { Helmet } from 'react-helmet';
-import { useForm } from 'react-hook-form';
-import { Redirect, useHistory } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import { useHistory, Redirect } from 'react-router-dom';
+import { Alert, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
+import moment from 'moment-timezone';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { useForm } from 'react-hook-form';
 import pages from './Pages';
+import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
 import './index.scss';
+import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
   LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_AR_DATA_KEY,
   LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../../Constants';
-import MeshPresenceManager from '../../components/MeshPresenceManager';
-import { NOT_STARTED } from '../../components/Navigator/constants';
-import {
-  createReport,
-  getApprovers,
-  getGroupsForActivityReport,
-  getRecipients,
-  getRecipientsForExistingAR,
-  getReport,
-  reviewReport,
-  saveReport,
-  submitReport,
-} from '../../fetchers/activityReports';
-import { getCollaborators } from '../../fetchers/collaborators';
-import useHookFormLocalStorage from '../../hooks/useHookFormLocalStorage';
-import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
-import useLocalStorageCleanup, { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
-import usePresenceData from '../../hooks/usePresenceData';
-import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import { getRegionWithReadWrite } from '../../permissions';
-import UserContext from '../../UserContext';
 import {
   convertGoalsToFormData,
   convertReportToFormData,
-  extractGoalIdsInOrder,
   findWhatsChanged,
   packageGoals,
+  extractGoalIdsInOrder,
 } from './formDataHelpers';
+import {
+  submitReport,
+  saveReport,
+  getReport,
+  getRecipientsForExistingAR,
+  createReport,
+  getApprovers,
+  reviewReport,
+  getGroupsForActivityReport,
+  getRecipients,
+} from '../../fetchers/activityReports';
+import { getCollaborators } from '../../fetchers/collaborators';
+import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
+import NetworkContext, { isOnlineMode } from '../../NetworkContext';
+import UserContext from '../../UserContext';
+import MeshPresenceManager from '../../components/MeshPresenceManager';
+import useLocalStorageCleanup, { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
+import usePresenceData from '../../hooks/usePresenceData';
+import useHookFormLocalStorage from '../../hooks/useHookFormLocalStorage';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -88,10 +91,7 @@ const defaultValues = {
   activityReason: null,
 };
 
-const pagesByPos = keyBy(
-  pages.filter((p) => !p.review),
-  (page) => page.position
-);
+const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 
 export const formatReportWithSaveBeforeConversion = async (
@@ -101,12 +101,13 @@ export const formatReportWithSaveBeforeConversion = async (
   userHasOneRole,
   reportId,
   approverIds,
-  forceUpdate
+  forceUpdate,
 ) => {
   // if it isn't a new report, we compare it to the last response from the backend (lastSavedData)
   // and pass only the updated to save report
-  const creatorRole =
-    !data.creatorRole && userHasOneRole ? user.roles[0].fullName : data.creatorRole;
+  const creatorRole = !data.creatorRole && userHasOneRole
+    ? user.roles[0].fullName
+    : data.creatorRole;
 
   const updatedFields = findWhatsChanged({ ...data, creatorRole }, lastSavedData);
   const isEmpty = Object.keys(updatedFields).length === 0;
@@ -114,20 +115,17 @@ export const formatReportWithSaveBeforeConversion = async (
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
   // lastSavedData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
-  const updatedReport =
-    isEmpty && !forceUpdate
-      ? { ...lastSavedData }
-      : await saveReport(
-          reportId.current,
-          {
-            ...updatedFields,
-            version: 3,
-            approverUserIds: approverIds,
-            pageState: data.pageState,
-            activityRecipientType: 'recipient',
-          },
-          {}
-        );
+  const updatedReport = isEmpty && !forceUpdate
+    ? { ...lastSavedData }
+    : await saveReport(
+      reportId.current, {
+        ...updatedFields,
+        version: 3,
+        approverUserIds: approverIds,
+        pageState: data.pageState,
+        activityRecipientType: 'recipient',
+      }, {},
+    );
 
   let reportData = {
     ...updatedReport,
@@ -144,10 +142,10 @@ export const formatReportWithSaveBeforeConversion = async (
   return reportData;
 };
 
-function ActivityReport({ match, location, region }) {
-  const {
-    params: { currentPage, activityReportId },
-  } = match;
+function ActivityReport({
+  match, location, region,
+}) {
+  const { params: { currentPage, activityReportId } } = match;
 
   const history = useHistory();
   const [error, updateError] = useState();
@@ -156,7 +154,10 @@ function ActivityReport({ match, location, region }) {
   const [lastSaveTime, updateLastSaveTime] = useState(null);
   const [shouldAutoSave, setShouldAutoSave] = useState(true);
 
-  const { presenceData, handlePresenceUpdate } = usePresenceData(setShouldAutoSave);
+  const {
+    presenceData,
+    handlePresenceUpdate,
+  } = usePresenceData(setShouldAutoSave);
 
   // Store last saved data in a ref for comparison in findWhatsChanged()
   const lastSavedDataRef = useRef(null);
@@ -176,8 +177,7 @@ function ActivityReport({ match, location, region }) {
   useHookFormLocalStorage(LOCAL_STORAGE_AR_DATA_KEY(activityReportId), hookForm);
 
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
-    LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(activityReportId),
-    {
+    LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(activityReportId), {
       recipients: {
         grants: [],
         otherEntities: [],
@@ -185,15 +185,13 @@ function ActivityReport({ match, location, region }) {
       collaborators: [],
       availableApprovers: [],
       groups: [],
-    }
+    },
   );
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useLocalStorage(
-    LOCAL_STORAGE_AR_EDITABLE_KEY(activityReportId),
-    activityReportId === 'new',
-    currentPage !== 'review'
+    LOCAL_STORAGE_AR_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
   );
 
   const [isCollaboratorOrCreator, setIsCollaboratorOrCreator] = useState(false);
@@ -210,8 +208,9 @@ function ActivityReport({ match, location, region }) {
   // Track if form has been initialized with data from the server
   const [isFormInitialized, setIsFormInitialized] = useState(false);
 
-  const showLastUpdatedTime =
-    (location.state && location.state.showLastUpdatedTime && connectionActive) || false;
+  const showLastUpdatedTime = (
+    location.state && location.state.showLastUpdatedTime && connectionActive
+  ) || false;
 
   useEffect(() => {
     // Clear history state once mounted and activityReportId changes. This prevents someone from
@@ -271,9 +270,8 @@ function ActivityReport({ match, location, region }) {
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
 
-        const isCollaborator =
-          report.activityReportCollaborators &&
-          report.activityReportCollaborators.find((u) => u.userId === user.id);
+        const isCollaborator = report.activityReportCollaborators
+          && report.activityReportCollaborators.find((u) => u.userId === user.id);
 
         const isAuthor = report.userId === user.id;
 
@@ -282,16 +280,14 @@ function ActivityReport({ match, location, region }) {
 
         setIsCollaboratorOrCreator(isCollaborator || isAuthor);
 
-        const canWriteAsCollaboratorOrAuthor =
-          (isCollaborator || isAuthor) &&
-          (report.calculatedStatus === REPORT_STATUSES.DRAFT ||
-            report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+        const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
+        && (report.calculatedStatus === REPORT_STATUSES.DRAFT
+          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
 
-        const canWriteAsApprover =
-          isMatchingApprover &&
-          isMatchingApprover.length > 0 &&
-          (report.calculatedStatus === REPORT_STATUSES.SUBMITTED ||
-            report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+        const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
+          report.calculatedStatus === REPORT_STATUSES.SUBMITTED
+          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION)
+        );
 
         // Add recipientIds to groups.
         // TODO remove for standard goals.
@@ -322,16 +318,17 @@ function ActivityReport({ match, location, region }) {
             const localData = JSON.parse(stored);
 
             // Compare timestamps to determine which data is newer
-            const localTimestamp =
-              localData && localData.savedToStorageTime
-                ? new Date(localData.savedToStorageTime)
-                : null;
+            const localTimestamp = localData && localData.savedToStorageTime
+              ? new Date(localData.savedToStorageTime)
+              : null;
 
-            const serverTimestamp = report.updatedAt ? new Date(report.updatedAt) : null;
+            const serverTimestamp = report.updatedAt
+              ? new Date(report.updatedAt)
+              : null;
 
             // If localStorage data is newer, prefer it
-            const shouldUseLocalStorage =
-              localTimestamp && (!serverTimestamp || localTimestamp > serverTimestamp);
+            const shouldUseLocalStorage = localTimestamp
+              && (!serverTimestamp || localTimestamp > serverTimestamp);
 
             if (shouldUseLocalStorage) {
               // Merge localStorage data with fetched report
@@ -380,13 +377,11 @@ function ActivityReport({ match, location, region }) {
         const networkErrorMessage = (
           <>
             {/* eslint-disable-next-line max-len */}
-            There&rsquo;s an issue with your connection. Some sections of this form may not load
-            correctly.
+            There&rsquo;s an issue with your connection. Some sections of this form may not load correctly.
             <br />
-            Your work is saved on this computer. If you continue to have problems,{' '}
-            <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">
-              contact us
-            </a>
+            Your work is saved on this computer. If you continue to have problems,
+            {' '}
+            <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact us</a>
             .
           </>
         );
@@ -406,7 +401,11 @@ function ActivityReport({ match, location, region }) {
   }, [activityReportId, user, showLastUpdatedTime, region]);
 
   if (loading) {
-    return <div>loading...</div>;
+    return (
+      <div>
+        loading...
+      </div>
+    );
   }
 
   const formData = isFormInitialized ? getValues() : null;
@@ -415,39 +414,53 @@ function ActivityReport({ match, location, region }) {
   }
 
   if (error && !formData) {
-    return <Alert type="error">{error}</Alert>;
+    return (
+      <Alert type="error">
+        {error}
+      </Alert>
+    );
   }
 
   if (formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED) {
-    return <Redirect to={`/activity-reports/view/${activityReportId}`} />;
+    return (
+      <Redirect to={`/activity-reports/view/${activityReportId}`} />
+    );
   }
 
-  if (
-    connectionActive &&
-    isCollaboratorOrCreator &&
-    formData &&
-    formData.calculatedStatus === REPORT_STATUSES.SUBMITTED &&
-    !isPendingApprover
+  if (connectionActive
+    && isCollaboratorOrCreator
+    && formData
+    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+    && !isPendingApprover
   ) {
-    return <Redirect to={`/activity-reports/submitted/${activityReportId}`} />;
+    return (
+      <Redirect to={`/activity-reports/submitted/${activityReportId}`} />
+    );
   }
 
-  const approverCanEdit =
-    isApprover &&
-    formData &&
-    (formData.calculatedStatus === REPORT_STATUSES.SUBMITTED ||
-      formData.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+  const approverCanEdit = isApprover
+    && formData
+    && (
+      formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+      || formData.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+    );
 
   if (connectionActive && !editable && currentPage !== 'review' && !approverCanEdit) {
-    return <Redirect to={`/activity-reports/${activityReportId}/review`} />;
+    return (
+      <Redirect to={`/activity-reports/${activityReportId}/review`} />
+    );
   }
 
   if (!currentPage && editable && isPendingApprover) {
-    return <Redirect to={`/activity-reports/${activityReportId}/review`} />;
+    return (
+      <Redirect to={`/activity-reports/${activityReportId}/review`} />
+    );
   }
 
   if (!currentPage) {
-    return <Redirect to={`/activity-reports/${activityReportId}/activity-summary`} />;
+    return (
+      <Redirect to={`/activity-reports/${activityReportId}/activity-summary`} />
+    );
   }
 
   const updatePage = (position) => {
@@ -469,15 +482,17 @@ function ActivityReport({ match, location, region }) {
     const approverIds = data.approvers.map((a) => a.user.id);
     try {
       if (reportId.current === 'new') {
-        const savedReport = await createReport({
-          ...data,
-          ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => r.value),
-          nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => r.value),
-          regionId: data.regionId,
-          approverUserIds: approverIds,
-          version: 3,
-          activityRecipientType: 'recipient',
-        });
+        const savedReport = await createReport(
+          {
+            ...data,
+            ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
+            nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
+            regionId: data.regionId,
+            approverUserIds: approverIds,
+            version: 3,
+            activityRecipientType: 'recipient',
+          },
+        );
 
         if (!savedReport) {
           throw new Error('Report not found');
@@ -487,11 +502,7 @@ function ActivityReport({ match, location, region }) {
 
         cleanupLocalStorage('new', savedReport.id);
 
-        window.history.replaceState(
-          null,
-          null,
-          `/activity-reports/${savedReport.id}/${currentPage}`
-        );
+        window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
 
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
@@ -502,7 +513,7 @@ function ActivityReport({ match, location, region }) {
           savedReport.goalsAndObjectives,
           savedReport.activityRecipients.map((r) => r.activityRecipientId),
           savedReport.calculatedStatus,
-          savedReport.goalOrder
+          savedReport.goalOrder,
         );
 
         // GOAL ORDER RECALCULATION: Ensure goalOrder is correct after backend returns goals
@@ -524,13 +535,17 @@ function ActivityReport({ match, location, region }) {
           goalForEditing,
           grantIds,
           goalForEditing?.prompts || [],
-          goalForEditing?.originalIndex
+          goalForEditing?.originalIndex,
         );
         const goalOrder = extractGoalIdsInOrder(allGoalsInOrder);
 
         // If goalOrder changed from what backend has, persist the correct order immediately
         if (JSON.stringify(goalOrder) !== JSON.stringify(savedReport.goalOrder)) {
-          await saveReport(reportId.current, { goalOrder }, {});
+          await saveReport(
+            reportId.current,
+            { goalOrder },
+            {},
+          );
         }
 
         const reportData = {
@@ -553,7 +568,7 @@ function ActivityReport({ match, location, region }) {
         userHasOneRole,
         reportId,
         approverIds,
-        forceUpdate
+        forceUpdate,
       );
 
       let reportData = updatedReport;
@@ -562,7 +577,7 @@ function ActivityReport({ match, location, region }) {
       // by which one is open and which one is not
       const { goalForEditing, goals } = convertGoalsToFormData(
         updatedReport.goalsAndObjectives,
-        updatedReport.activityRecipients.map((r) => r.activityRecipientId)
+        updatedReport.activityRecipients.map((r) => r.activityRecipientId),
       );
 
       reportData = {
@@ -619,17 +634,17 @@ function ActivityReport({ match, location, region }) {
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
-  const tagClass =
-    formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED
-      ? 'smart-hub--tag-approved'
-      : '';
+  const tagClass = formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
 
   const author = creatorNameWithRole ? (
     <>
       <hr />
       <p>
-        <strong>Creator:</strong> {creatorNameWithRole}
+        <strong>Creator:</strong>
+        {' '}
+        {creatorNameWithRole}
       </p>
+
     </>
   ) : null;
 
@@ -662,7 +677,11 @@ function ActivityReport({ match, location, region }) {
         }
       }
 
-      return <Alert type="warning">{usersText}</Alert>;
+      return (
+        <Alert type="warning">
+          {usersText}
+        </Alert>
+      );
     }
     return null;
   };
@@ -672,8 +691,9 @@ function ActivityReport({ match, location, region }) {
     if (presenceData.tabCount > 1) {
       return (
         <Alert type="warning">
-          You have this report open in multiple browser tabs. To prevent losing your work, please
-          close the other tabs before continuing.
+          You have this report open in multiple browser tabs.
+          {' '}
+          To prevent losing your work, please close the other tabs before continuing.
         </Alert>
       );
     }
@@ -682,44 +702,39 @@ function ActivityReport({ match, location, region }) {
 
   return (
     <div className="smart-hub-activity-report">
-      {error && <Alert type="warning">{error}</Alert>}
+      { error
+      && (
+      <Alert type="warning">
+        {error}
+      </Alert>
+      )}
       {renderMultiUserAlert() || renderMultipleTabAlert()}
       {/* Don't render the Mesh component unless working on a saved report */}
-      {activityReportId !== 'new' && (
-        <MeshPresenceManager
-          room={`ar-${activityReportId}`}
-          onPresenceUpdate={handlePresenceUpdate}
-          onRevisionUpdate={handleRevisionUpdate}
-        />
-      )}
-      <Helmet
-        titleTemplate="%s - Activity Report | TTA Hub"
-        defaultTitle="Activity Report | TTA Hub"
-      />
+      { activityReportId !== 'new' && (<MeshPresenceManager room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />)}
+      <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row>
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
-              Activity report for Region {formData && formData.regionId}
+              Activity report for Region
+              {' '}
+              {formData && formData.regionId}
             </h1>
             {author}
           </div>
         </Grid>
         <Grid col="auto" className="flex-align-self-center">
           {formData && formData.calculatedStatus && (
-            <div
-              className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2 margin-left-2`}
-            >
-              {startCase(formData.calculatedStatus)}
-            </div>
+            <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2 margin-left-2`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
       </Grid>
-      <NetworkContext.Provider
-        value={{
+      <NetworkContext.Provider value={
+        {
           connectionActive: isOnlineMode() && connectionActive,
           localStorageAvailable: true,
-        }}
+        }
+      }
       >
         <ActivityReportNavigator
           key={currentPage}

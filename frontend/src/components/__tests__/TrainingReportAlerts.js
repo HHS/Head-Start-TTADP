@@ -1,24 +1,27 @@
 import '@testing-library/jest-dom';
-import { act, render, screen, waitFor } from '@testing-library/react';
-import { SCOPE_IDS } from '@ttahub/common';
-import fetchMock from 'fetch-mock';
 import React from 'react';
+import {
+  render,
+  screen,
+  waitFor,
+  act,
+} from '@testing-library/react';
+import { SCOPE_IDS } from '@ttahub/common';
 import { MemoryRouter } from 'react-router';
+import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import UserContext from '../../UserContext';
 import TrainingReportAlerts from '../TrainingReportAlerts';
+import UserContext from '../../UserContext';
 
 describe('TrainingReportAlerts', () => {
   const eventsUrl = join('/', 'api', 'events', 'alerts');
   const DEFAULT_USER = {
     id: 1,
-    permissions: [
-      {
-        regionId: 1,
-        userId: 1,
-        scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-      },
-    ],
+    permissions: [{
+      regionId: 1,
+      userId: 1,
+      scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+    }],
   };
 
   const renderComponent = (alerts = [], customUser = DEFAULT_USER) => {
@@ -30,7 +33,7 @@ describe('TrainingReportAlerts', () => {
           <UserContext.Provider value={{ user: customUser }}>
             <TrainingReportAlerts />
           </UserContext.Provider>
-        </MemoryRouter>
+        </MemoryRouter>,
       );
     });
   };
@@ -42,13 +45,11 @@ describe('TrainingReportAlerts', () => {
   it('does not fetch if the user lacks permissions', async () => {
     const user = {
       id: 1,
-      permissions: [
-        {
-          regionId: 1,
-          userId: 1,
-          scopeId: SCOPE_IDS.READ_REPORTS,
-        },
-      ],
+      permissions: [{
+        regionId: 1,
+        userId: 1,
+        scopeId: SCOPE_IDS.READ_REPORTS,
+      }],
     };
 
     act(() => {
@@ -64,7 +65,7 @@ describe('TrainingReportAlerts', () => {
         <UserContext.Provider value={{ user: null }}>
           <TrainingReportAlerts />
         </UserContext.Provider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -74,7 +75,7 @@ describe('TrainingReportAlerts', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('You have no events or sessions that require action')
+        screen.getByText('You have no events or sessions that require action'),
       ).toBeInTheDocument();
     });
   });
@@ -203,7 +204,10 @@ describe('TrainingReportAlerts', () => {
 
     await waitFor(() => {
       const link = screen.getByText('Create a session');
-      expect(link).toHaveAttribute('href', '/training-report/R01-PD-12345/session/new/');
+      expect(link).toHaveAttribute(
+        'href',
+        '/training-report/R01-PD-12345/session/new/',
+      );
     });
   });
 
@@ -224,7 +228,10 @@ describe('TrainingReportAlerts', () => {
 
     await waitFor(() => {
       const link = screen.getByText('Missing event info');
-      expect(link).toHaveAttribute('href', '/training-report/R01-PD-67890/event-summary');
+      expect(link).toHaveAttribute(
+        'href',
+        '/training-report/R01-PD-67890/event-summary',
+      );
     });
   });
 
@@ -247,7 +254,7 @@ describe('TrainingReportAlerts', () => {
       const link = screen.getByText('Missing session info');
       expect(link).toHaveAttribute(
         'href',
-        '/training-report/R01-PD-11111/session/123/session-summary'
+        '/training-report/R01-PD-11111/session/123/session-summary',
       );
     });
   });
@@ -292,7 +299,10 @@ describe('TrainingReportAlerts', () => {
 
     await waitFor(() => {
       const link = screen.getByText('Waiting for approval');
-      expect(link).toHaveAttribute('href', '/training-report/R01-PD-33333/session/456/review');
+      expect(link).toHaveAttribute(
+        'href',
+        '/training-report/R01-PD-33333/session/456/review',
+      );
     });
   });
 
@@ -314,7 +324,10 @@ describe('TrainingReportAlerts', () => {
 
     await waitFor(() => {
       const link = screen.getByText('Changes needed');
-      expect(link).toHaveAttribute('href', '/training-report/R01-PD-44444/session/789/review');
+      expect(link).toHaveAttribute(
+        'href',
+        '/training-report/R01-PD-44444/session/789/review',
+      );
     });
   });
 
@@ -351,14 +364,12 @@ describe('TrainingReportAlerts', () => {
           <UserContext.Provider value={{ user: DEFAULT_USER }}>
             <TrainingReportAlerts />
           </UserContext.Provider>
-        </MemoryRouter>
+        </MemoryRouter>,
       );
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByText('You have no events or sessions that require action')
-      ).toBeInTheDocument();
+      expect(screen.getByText('You have no events or sessions that require action')).toBeInTheDocument();
     });
   });
 

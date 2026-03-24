@@ -73,12 +73,6 @@
     "test:e2e:ui": "npx playwright test --ui tests/e2e",
     "test:bdd": "cucumber-js --publish ./cucumber/features/*.feature -f json:./reports/cucumber_report.json && node ./cucumber/index.js",
     "test:bdd:ci": "TTA_SMART_HUB_URI=http://localhost:3000 yarn test:bdd",
-    "cucumber": "yarn test:bdd",
-    "cucumber:ci": "yarn test:bdd:ci",
-    "e2e": "yarn test:e2e",
-    "e2e:api": "yarn test:e2e:api",
-    "e2e:utils": "yarn test:e2e:utils",
-    "e2e:ci": "yarn test:e2e:ci",
     "docker:start": "task stack-up",
     "docker:start:full": "task stack-up-full",
     "docker:stop": "task stack-down",
@@ -98,15 +92,11 @@
     "docker:lint:fix": "task stack-run TARGET=backend -- yarn lint:fix && task stack-run TARGET=frontend -- yarn lint:fix",
     "docker:import:system": "task stack-run TARGET=backend -- yarn cli:import-system",
     "docker:makecolors": "task stack-run TARGET=frontend -- yarn util:makecolors",
-    "docker:test:be": "task stack-run TARGET=backend -- yarn test",
     "coverage:backend": "./bin/build-coverage-report",
     "coverage:clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
     "coverage:merge": "node ./tools/merge-coverage.js",
     "check-coverage": "node ./tools/check-coverage.js --fail-on-uncovered=true",
     "docs:serve": "npx @redocly/cli preview-docs -p 5003 docs/openapi/index.yaml",
-    "ldm": "yarn db:ldm",
-    "ldm:ci": "yarn db:ldm:ci",
-    "makecolors": "yarn util:makecolors",
     "util:makecolors": "node ./src/makecolors.js",
     "publish:common": "yarn --cwd ./packages/common publish"
   },
@@ -120,61 +110,6 @@
     "flatted": "^3.4.2",
     "sqlite3": "^5.1.7",
     "tar": "^7.5.11"
-  },
-  "eslintConfig": {
-    "extends": [
-      "airbnb-base",
-      "airbnb-typescript/base",
-      "plugin:jest/recommended",
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaVersion": 2020,
-      "project": "./src/tsconfig.json"
-    },
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "ignorePatterns": [
-      "node_modules/*",
-      "playwright.config.js",
-      "tests/*",
-      "packages/*",
-      "frontend/public/*",
-      "ops/*",
-      "cucumber/*"
-    ],
-    "overrides": [
-      {
-        "files": [
-          "config/**/*.js"
-        ],
-        "parserOptions": {
-          "project": "./config/tsconfig.eslint.json"
-        }
-      }
-    ],
-    "rules": {
-      "linebreak-style": 0,
-      "@typescript-eslint/no-var-requires": 0,
-      "@typescript-eslint/no-unused-vars": 0,
-      "@typescript-eslint/no-empty-function": 0,
-      "@typescript-eslint/ban-ts-comment": 0
-    }
-  },
-  "eslint-formatter-multiple": {
-    "formatters": [
-      {
-        "name": "stylish",
-        "output": "console"
-      },
-      {
-        "name": "junit",
-        "output": "file",
-        "path": "reports/lint.xml"
-      }
-    ]
   },
   "jest": {
     "modulePathIgnorePatterns": [

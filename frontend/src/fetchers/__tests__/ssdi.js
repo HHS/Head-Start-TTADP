@@ -1,6 +1,6 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { containsFiltersThatAreNotApplicable, getSelfServiceData } from '../ssdi';
+import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../ssdi';
 
 const ssdiUrl = join('/', 'api', 'ssdi', 'api', 'dashboards', 'qa');
 
@@ -13,14 +13,12 @@ describe('SSDI fetcher', () => {
     const mockData = [{ data: 'Expected' }];
     const url = join(ssdiUrl, 'dashboard.sql', '?region.in[]=14');
     fetchMock.getOnce(url, mockData);
-    const res = await getSelfServiceData('qa-dashboard', [
-      {
-        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
-        topic: 'region',
-        condition: 'is',
-        query: '14',
-      },
-    ]);
+    const res = await getSelfServiceData('qa-dashboard', [{
+      id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
+      topic: 'region',
+      condition: 'is',
+      query: '14',
+    }]);
     expect(res).toEqual(mockData);
     expect(fetchMock.called(url)).toBeTruthy();
   });
@@ -69,22 +67,20 @@ describe('SSDI fetcher', () => {
     expect(fetchMock.called(url)).toBeTruthy();
   });
   it('handles error in filterName', async () => {
-    await expect(
-      getSelfServiceData('epicurean-delights', [
-        {
-          id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
-          topic: 'region',
-          condition: 'is',
-          query: '14',
-        },
-        {
-          id: '9ac8381c-2507-4b4a-a30c-6f1f8723401',
-          topic: 'pickles',
-          condition: 'are',
-          query: 'spicy',
-        },
-      ])
-    ).rejects.toThrow('Invalid filter name');
+    await expect(getSelfServiceData('epicurean-delights', [
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
+        topic: 'region',
+        condition: 'is',
+        query: '14',
+      },
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f8723401',
+        topic: 'pickles',
+        condition: 'are',
+        query: 'spicy',
+      },
+    ])).rejects.toThrow('Invalid filter name');
   });
 
   it('containsFiltersThatAreNotApplicable returns false if all filters are allowed', () => {
@@ -138,8 +134,6 @@ describe('SSDI fetcher', () => {
         query: 'ct',
       },
     ];
-    expect(
-      containsFiltersThatAreNotApplicable('recipients-with-class-scores-and-goals', filters)
-    ).toBe(false);
+    expect(containsFiltersThatAreNotApplicable('recipients-with-class-scores-and-goals', filters)).toBe(false);
   });
 });

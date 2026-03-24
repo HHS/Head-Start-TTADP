@@ -1,7 +1,7 @@
-import moment from 'moment';
-import PropTypes from 'prop-types';
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import moment from 'moment';
 import DataCard from '../../../components/DataCard';
 import ExpanderButton from '../../../components/ExpanderButton';
 import IndicatorCounter from '../../RecipientRecord/components/IndicatorCounter';
@@ -13,8 +13,7 @@ const DISPLAYED_INDICATOR_COUNT = 5;
 const INDICATOR_DETAILS = {
   childIncidents: {
     label: 'Child incidents',
-    description:
-      'Recipient has experienced more than one child incident cited in a RAN in the last 12 months',
+    description: 'Recipient has experienced more than one child incident cited in a RAN in the last 12 months',
   },
   deficiency: {
     label: 'Deficiency',
@@ -31,13 +30,11 @@ const INDICATOR_DETAILS = {
   // },
   newRecipients: {
     label: 'New recipient',
-    description:
-      'Recipient is in the first 4 years as a Head Start program with no previous OHS grant',
+    description: 'Recipient is in the first 4 years as a Head Start program with no previous OHS grant',
   },
   newStaff: {
     label: 'New staff',
-    description:
-      'Recipient has changed the name of the director or fiscal officer within the last two years in HSES, signifying a key hire',
+    description: 'Recipient has changed the name of the director or fiscal officer within the last two years in HSES, signifying a key hire',
   },
   noTTA: {
     label: 'No TTA',
@@ -72,8 +69,10 @@ export default function RecipientSpotlightCard({ recipient }) {
     return date.isValid() ? date.format('MM/DD/YYYY') : 'Invalid Date';
   };
 
-  const renderIndicatorDetails = () =>
-    Object.entries(INDICATOR_DETAILS).map(([key, { label, description }]) => {
+  const renderIndicatorDetails = () => Object.entries(
+    INDICATOR_DETAILS,
+  ).map(
+    ([key, { label, description }]) => {
       const isApplicable = recipient[key];
       const boxClassName = isApplicable
         ? 'ttahub-recipient-spotlight-card__indicator-box padding-y-1 padding-x-2 bg-white radius-md'
@@ -97,7 +96,8 @@ export default function RecipientSpotlightCard({ recipient }) {
           </p>
         </div>
       );
-    });
+    },
+  );
 
   const activeCount = calculateActiveIndicators(recipient);
   const indicatorDetails = renderIndicatorDetails();
@@ -121,12 +121,16 @@ export default function RecipientSpotlightCard({ recipient }) {
 
           <div className="ttahub-recipient-spotlight-card__field">
             <p className="usa-prose text-bold margin-y-0">Region</p>
-            <p className="usa-prose margin-y-0">{recipient.regionId}</p>
+            <p className="usa-prose margin-y-0">
+              {recipient.regionId}
+            </p>
           </div>
 
           <div className="ttahub-recipient-spotlight-card__field">
             <p className="usa-prose text-bold margin-y-0">Last TTA</p>
-            <p className="usa-prose margin-y-0">{formatDate(recipient.lastTTA)}</p>
+            <p className="usa-prose margin-y-0">
+              {formatDate(recipient.lastTTA)}
+            </p>
           </div>
 
           <div className="ttahub-recipient-spotlight-card__field">
@@ -157,7 +161,9 @@ export default function RecipientSpotlightCard({ recipient }) {
 
         {expanded && (
           <div className="ttahub-recipient-spotlight-card__details margin-top-2">
-            <div className="ttahub-recipient-spotlight-card__details-grid">{indicatorDetails}</div>
+            <div className="ttahub-recipient-spotlight-card__details-grid">
+              {indicatorDetails}
+            </div>
           </div>
         )}
       </div>

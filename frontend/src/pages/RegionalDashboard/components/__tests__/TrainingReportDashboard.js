@@ -1,9 +1,11 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
-import fetchMock from 'fetch-mock';
 import React from 'react';
-import AppLoadingContext from '../../../../AppLoadingContext';
+import {
+  render, screen,
+} from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import TrainingReportDashboard from '../TrainingReportDashboard';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 describe('Training report Dashboard page', () => {
   const hoursOfTrainingUrl = '/api/widgets/trHoursOfTrainingByNationalCenter';
@@ -33,7 +35,7 @@ describe('Training report Dashboard page', () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
         <TrainingReportDashboard />
-      </AppLoadingContext.Provider>
+      </AppLoadingContext.Provider>,
     );
   };
 

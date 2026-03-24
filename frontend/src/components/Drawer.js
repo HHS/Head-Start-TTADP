@@ -1,7 +1,13 @@
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import PropTypes from 'prop-types';
 import FocusTrap from 'focus-trap-react';
 import { uniqueId } from 'lodash';
-import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useOnClickOutside from '../hooks/useOnOutsideClick';
 import './Drawer.scss';
 
@@ -24,10 +30,7 @@ export default function Drawer({
     return header ? header.offsetHeight : 0;
   }, []);
 
-  useOnClickOutside(
-    useCallback(() => setIsOpen(false), []),
-    [elementRef, triggerRef]
-  );
+  useOnClickOutside(useCallback(() => setIsOpen(false), []), [elementRef, triggerRef]);
 
   useEffect(() => {
     const triggerElement = triggerRef ? triggerRef.current : null;
@@ -95,26 +98,19 @@ export default function Drawer({
         <div>
           <div>
             {title && (
-              <div
-                className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
+            <div
+              className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
+            >
+              <span className="text-bold font-serif-lg" id={uniqueDrawerID} role="heading" aria-level={1}>{title}</span>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="usa-button usa-button--outline margin-y-0 margin-x-1"
               >
-                <span
-                  className="text-bold font-serif-lg"
-                  id={uniqueDrawerID}
-                  role="heading"
-                  aria-level={1}
-                >
-                  {title}
-                </span>
-                <button
-                  ref={closeButtonRef}
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="usa-button usa-button--outline margin-y-0 margin-x-1"
-                >
-                  Close
-                </button>
-              </div>
+                Close
+              </button>
+            </div>
             )}
 
             <div
@@ -127,13 +123,13 @@ export default function Drawer({
           </div>
 
           {footer && (
-            <div
-              className={`bg-base-lightest padding-105 ${
-                stickyFooter ? 'position-sticky pin-bottom' : ''
-              }`}
-            >
-              {footer}
-            </div>
+          <div
+            className={`bg-base-lightest padding-105 ${
+              stickyFooter ? 'position-sticky pin-bottom' : ''
+            }`}
+          >
+            {footer}
+          </div>
           )}
         </div>
       </FocusTrap>

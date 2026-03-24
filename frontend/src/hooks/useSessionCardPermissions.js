@@ -1,8 +1,8 @@
-import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { useContext, useMemo } from 'react';
-import { TRAINING_EVENT_ORGANIZER } from '../Constants';
-import isAdmin from '../permissions';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import UserContext from '../UserContext';
+import isAdmin from '../permissions';
+import { TRAINING_EVENT_ORGANIZER } from '../Constants';
 
 export default function useSessionCardPermissions({
   session,
@@ -13,7 +13,12 @@ export default function useSessionCardPermissions({
   eventOrganizer,
 }) {
   const { approverId } = session;
-  const { status, pocComplete, collabComplete, facilitation } = session.data;
+  const {
+    status,
+    pocComplete,
+    collabComplete,
+    facilitation,
+  } = session.data;
 
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
@@ -24,13 +29,10 @@ export default function useSessionCardPermissions({
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
     const statusIsNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
     // eslint-disable-next-line max-len
-    const isRegionalNoNationalCenters =
-      eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
+    const isRegionalNoNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
     // eslint-disable-next-line max-len
-    const isRegionalWithNationalCenters =
-      eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
-    const facilitationIncludesRegion =
-      facilitation === 'regional_tta_staff' || facilitation === 'both';
+    const isRegionalWithNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
+    const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
     const facilitationIsNationalCenters = facilitation === 'national_center';
 
     // Admin override - can edit until event is complete
@@ -54,18 +56,16 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    const pocCanEdit =
-      isPoc &&
-      !isRegionalNoNationalCenters &&
-      !(pocComplete && !statusIsNeedsAction) &&
-      !(facilitationIsNationalCenters && statusIsNeedsAction);
+    const pocCanEdit = isPoc
+      && !isRegionalNoNationalCenters
+      && !(pocComplete && !statusIsNeedsAction)
+      && !(facilitationIsNationalCenters && statusIsNeedsAction);
 
     // For EDIT permissions, owners are treated identically to collaborators.
     // For DELETE permissions (see showSessionDelete below), owners are MORE permissive.
-    const ownerOrCollabCanEdit =
-      (isCollaborator || isOwner) &&
-      !(collabComplete && !statusIsNeedsAction) &&
-      !(isRegionalWithNationalCenters && facilitationIncludesRegion);
+    const ownerOrCollabCanEdit = (isCollaborator || isOwner)
+      && !(collabComplete && !statusIsNeedsAction)
+      && !(isRegionalWithNationalCenters && facilitationIncludesRegion);
 
     return pocCanEdit || ownerOrCollabCanEdit;
   }, [
@@ -86,13 +86,10 @@ export default function useSessionCardPermissions({
   const showSessionDelete = useMemo(() => {
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
     // eslint-disable-next-line max-len
-    const isRegionalNoNationalCenters =
-      eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
+    const isRegionalNoNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
     // eslint-disable-next-line max-len
-    const isRegionalWithNationalCenters =
-      eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
-    const facilitationIncludesRegion =
-      facilitation === 'regional_tta_staff' || facilitation === 'both';
+    const isRegionalWithNationalCenters = eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
+    const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
 
     // Admin override - can delete until event is complete
     if (isAdminUser) {
@@ -111,17 +108,16 @@ export default function useSessionCardPermissions({
       return false;
     }
 
-    const pocCanDelete =
-      isPoc &&
-      !isRegionalNoNationalCenters &&
-      !(isRegionalWithNationalCenters && facilitation === 'national_center');
+    const pocCanDelete = isPoc
+      && !isRegionalNoNationalCenters
+      && !(isRegionalWithNationalCenters && facilitation === 'national_center');
 
     // Owners have NO facilitation-based delete restrictions.
     const ownerCanDelete = isOwner;
 
     // Only collaborators are blocked by regional facilitation rules.
-    const collabCanDelete =
-      isCollaborator && !(isRegionalWithNationalCenters && facilitationIncludesRegion);
+    const collabCanDelete = isCollaborator
+      && !(isRegionalWithNationalCenters && facilitationIncludesRegion);
 
     return pocCanDelete || ownerCanDelete || collabCanDelete;
   }, [

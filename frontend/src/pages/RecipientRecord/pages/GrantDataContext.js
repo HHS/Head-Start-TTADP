@@ -1,5 +1,10 @@
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
-import React, { createContext, useCallback, useContext, useState } from 'react';
 
 const GrantDataContext = createContext();
 
@@ -39,16 +44,15 @@ export const GrantDataProvider = ({ children }) => {
   const hasSpotlightData = (grantNumber) => safeCheck(grantNumber, 'hasSpotlightData');
 
   return (
-    <GrantDataContext.Provider
-      value={{
-        grantData,
-        updateGrantMonitoringData,
-        updateGrantClassData,
-        updateGrantSpotlightData,
-        hasMonitoringData,
-        hasClassData,
-        hasSpotlightData,
-      }}
+    <GrantDataContext.Provider value={{
+      grantData,
+      updateGrantMonitoringData,
+      updateGrantClassData,
+      updateGrantSpotlightData,
+      hasMonitoringData,
+      hasClassData,
+      hasSpotlightData,
+    }}
     >
       {children}
     </GrantDataContext.Provider>

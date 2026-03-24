@@ -1,6 +1,6 @@
 import join from 'url-join';
-import { filtersToQueryString } from '../utils';
 import { get } from './index';
+import { filtersToQueryString } from '../utils';
 
 const ssdiUrl = join('/', 'api', 'ssdi');
 

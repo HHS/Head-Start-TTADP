@@ -1,9 +1,11 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
-import fetchMock from 'fetch-mock';
 import React from 'react';
-import { GrantDataProvider } from '../../pages/GrantDataContext';
+import {
+  render, screen, waitFor,
+} from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import RecipientSpotlight from '../RecipientSpotlight';
+import { GrantDataProvider } from '../../pages/GrantDataContext';
 
 // Sample data for tests (wrapped in recipients array to match new API format)
 const mockSpotlightData = {
@@ -31,21 +33,19 @@ const mockSpotlightData = {
 
 // Mock data with all indicators set to false
 const noIndicatorsMockData = {
-  recipients: [
-    {
-      recipientId: 1,
-      regionId: 1,
-      recipientName: 'Recipient A',
-      grantIds: [1, 2, 3],
-      childIncidents: false,
-      deficiency: false,
-      newRecipients: false,
-      newStaff: false,
-      noTTA: false,
-      DRS: false,
-      FEI: false,
-    },
-  ],
+  recipients: [{
+    recipientId: 1,
+    regionId: 1,
+    recipientName: 'Recipient A',
+    grantIds: [1, 2, 3],
+    childIncidents: false,
+    deficiency: false,
+    newRecipients: false,
+    newStaff: false,
+    noTTA: false,
+    DRS: false,
+    FEI: false,
+  }],
   overview: {
     numRecipients: '0',
     totalRecipients: '1',
@@ -80,7 +80,7 @@ describe('RecipientSpotlight', () => {
         <div data-testid="recipient-spotlight-container">
           <RecipientSpotlight recipientId={recipientId} regionId={regionId} />
         </div>
-      </GrantDataProvider>
+      </GrantDataProvider>,
     );
   };
 
@@ -90,30 +90,24 @@ describe('RecipientSpotlight', () => {
     renderRecipientSpotlight();
 
     expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-    expect(
-      screen.getByText("This is the grant's current number of priority indicators.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
   });
 
   it('shows recipient grant may need prioritized attention when indicators are present', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight();
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Recipient grant may need prioritized attention/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant may need prioritized attention/i)).toBeInTheDocument();
       expect(screen.getByText(/3 of 5 priority indicators/i)).toBeInTheDocument();
     });
   });
 
   it('shows "No priority indicators identified" when no indicators are present', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, noIndicatorsMockData);
 
     renderRecipientSpotlight();
@@ -126,8 +120,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('displays the correct number of indicators with their states', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight();
@@ -135,16 +128,12 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       // Find all indicators with bad-indicator class (true)
-      const badIndicators = document.querySelectorAll(
-        '.ttahub-recipient-spotlight-content-cell-bad-indicator'
-      );
+      const badIndicators = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-bad-indicator');
       expect(badIndicators).toHaveLength(3);
 
       // Find all indicators with good-indicator class (false)
       // FEI and DRS are now hidden, so only 2 good indicators remain (deficiency and newStaff)
-      const goodIndicators = document.querySelectorAll(
-        '.ttahub-recipient-spotlight-content-cell-good-indicator'
-      );
+      const goodIndicators = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
       expect(goodIndicators).toHaveLength(2);
     });
 
@@ -155,8 +144,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('handles API error gracefully with NoResultsFound', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, 500);
 
     renderRecipientSpotlight();
@@ -164,20 +152,15 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(
-        screen.getByText("This is the grant's current number of priority indicators.")
-      ).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
-      expect(
-        screen.getByText('There are no current priority indicators for this recipient.')
-      ).toBeInTheDocument();
+      expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
 
   it('handles empty response object gracefully with NoResultsFound', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, emptyMockSpotlightData);
 
     renderRecipientSpotlight();
@@ -185,14 +168,10 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(
-        screen.getByText("This is the grant's current number of priority indicators.")
-      ).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
-      expect(
-        screen.getByText('There are no current priority indicators for this recipient.')
-      ).toBeInTheDocument();
+      expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
 
@@ -206,63 +185,42 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Recipient grant may need prioritized attention/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant may need prioritized attention/i)).toBeInTheDocument();
     });
   });
 
   it('displays indicator descriptions correctly', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight();
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Recipient grant has experienced more than one child incident/i)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has experienced more than one child incident/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
     });
   });
 
   it('uses grant-scoped descriptions for grant-level indicators', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Recipient grant has experienced more than one child incident/i)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/Recipient grant has at least one active monitoring deficiency/i)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/Recipient grant has changed the name of the director or fiscal officer/i)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has experienced more than one child incident/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has at least one active monitoring deficiency/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has changed the name of the director or fiscal officer/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
       // newRecipients description is not grant-scoped
-      expect(
-        screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
     });
   });
 
   it('displays NoResultsFound component when API returns empty array', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, noResultsMockData);
 
     renderRecipientSpotlight();
@@ -270,20 +228,15 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(
-        screen.getByText("This is the grant's current number of priority indicators.")
-      ).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
-      expect(
-        screen.getByText('There are no current priority indicators for this recipient.')
-      ).toBeInTheDocument();
+      expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
 
   it('displays NoResultsFound component when API call fails with error', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, { throws: new Error('API error') });
 
     renderRecipientSpotlight();
@@ -291,14 +244,10 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-      expect(
-        screen.getByText("This is the grant's current number of priority indicators.")
-      ).toBeInTheDocument();
+      expect(screen.getByText("This is the grant's current number of priority indicators.")).toBeInTheDocument();
 
       expect(screen.getByText('No results found.')).toBeInTheDocument();
-      expect(
-        screen.getByText('There are no current priority indicators for this recipient.')
-      ).toBeInTheDocument();
+      expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
 
@@ -308,14 +257,13 @@ describe('RecipientSpotlight', () => {
     const OriginalAbortController = global.AbortController;
     global.AbortController = jest.fn(() => mockController);
 
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     const { unmount } = render(
       <GrantDataProvider>
         <RecipientSpotlight recipientId={1} regionId={1} />
-      </GrantDataProvider>
+      </GrantDataProvider>,
     );
 
     unmount();
@@ -325,8 +273,7 @@ describe('RecipientSpotlight', () => {
   });
 
   it('applies correct CSS classes based on indicator values', async () => {
-    const spotlightUrl =
-      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
+    const spotlightUrl = '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1';
     fetchMock.get(spotlightUrl, mockSpotlightData);
 
     renderRecipientSpotlight();
@@ -338,15 +285,11 @@ describe('RecipientSpotlight', () => {
       // newStaff: false, noTTA: true
 
       // Check that cells with true values get the bad-indicator class
-      const trueIndicatorCells = document.querySelectorAll(
-        '.ttahub-recipient-spotlight-content-cell-bad-indicator'
-      );
+      const trueIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-bad-indicator');
       expect(trueIndicatorCells).toHaveLength(3);
 
       // Check that cells with false values get the good-indicator class
-      const falseIndicatorCells = document.querySelectorAll(
-        '.ttahub-recipient-spotlight-content-cell-good-indicator'
-      );
+      const falseIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
       expect(falseIndicatorCells).toHaveLength(2);
     });
   });

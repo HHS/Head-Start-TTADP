@@ -1,18 +1,17 @@
 /* eslint-disable import/prefer-default-export */
-
-import moment from 'moment';
 import React from 'react';
+import moment from 'moment';
 import {
-  DATE_CONDITIONS,
-  EMPTY_MULTI_SELECT,
   FILTER_CONDITIONS,
+  EMPTY_MULTI_SELECT,
+  DATE_CONDITIONS,
   WITHOUT_ACTIVITY_DATE_CONDITIONS,
 } from '../../Constants';
+import FilterGroups from './FilterGroups';
+import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
 import { formatDateRange } from '../../utils';
 import FilterDateRange from './FilterDateRange';
-import FilterGroups from './FilterGroups';
 import GrantStatus, { displayGrantsStatus } from './GrantStatus';
-import { fixQueryWhetherStringOrArray, useDisplayGroups } from './utils';
 
 export const groupsFilter = {
   id: 'group',
@@ -21,7 +20,11 @@ export const groupsFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: useDisplayGroups,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterGroups inputId={`group-${condition}-${id}`} onApply={onApplyQuery} query={query} />
+    <FilterGroups
+      inputId={`group-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
   ),
 };
 
@@ -40,14 +43,8 @@ const withoutActivityDateValues = {
 };
 
 const RECIPIENT_WITHOUT_TTA_DATE_OPTIONS = [
-  {
-    label: 'Last thirty days',
-    value: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-  },
-  {
-    label: 'Last three months',
-    value: formatDateRange({ lastThreeMonths: true, forDateTime: true }),
-  },
+  { label: 'Last thirty days', value: formatDateRange({ lastThirtyDays: true, forDateTime: true }) },
+  { label: 'Last three months', value: formatDateRange({ lastThreeMonths: true, forDateTime: true }) },
   { label: 'Last six months', value: formatDateRange({ lastSixMonths: true, forDateTime: true }) },
   { label: 'Year to date', value: formatDateRange({ yearToDate: true, forDateTime: true }) },
 ];

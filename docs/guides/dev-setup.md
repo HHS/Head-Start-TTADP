@@ -105,9 +105,3 @@ If running E2E tests for the first time, install the required browsers:
 ```sh
 npx playwright install
 ```
-
-When switching between native and Docker workflows, reinstall dependencies with `yarn deps` to avoid mixed host/container state.
-
-On Windows:
-
-> Windows setup instructions have not yet been documented. Contributions welcome; please open a PR if you get this working.

@@ -1,19 +1,21 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
+import React from 'react';
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+} from '@testing-library/react';
+import { Router } from 'react-router';
+import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-import React from 'react';
-import { Router } from 'react-router';
-import AppLoadingContext from '../../../AppLoadingContext';
+import userEvent from '@testing-library/user-event';
 import { mockWindowProperty } from '../../../testHelpers';
+import CollaborationReportForm, { convertFormDataToReport, formatReportWithSaveBeforeConversion } from '..';
+import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
-import CollaborationReportForm, {
-  convertFormDataToReport,
-  formatReportWithSaveBeforeConversion,
-} from '..';
 
 const history = createMemoryHistory();
 
@@ -21,7 +23,9 @@ const user = {
   id: 1,
   name: 'Walter Burns',
   roles: [{ fullName: 'Reporter' }],
-  permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+  permissions: [
+    { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
+  ],
 };
 
 const dummyReport = {
@@ -47,30 +51,26 @@ const ReportComponent = ({
     <AppLoadingContext.Provider
       value={{ isAppLoading: true, setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
     >
-      <UserContext.Provider
-        value={{
-          user: {
-            ...user,
-            id: userId,
-            roles: userRoles,
-            flags: [],
-            permissions: [
-              {
-                scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-                userId,
-                regionId: region,
-              },
-            ],
-          },
-        }}
+      <UserContext.Provider value={{
+        user: {
+          ...user,
+          id: userId,
+          roles: userRoles,
+          flags: [],
+          permissions: [
+            {
+              scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+              userId,
+              regionId: region,
+            },
+          ],
+        },
+      }}
       >
         <CollaborationReportForm
           match={{ params: { currentPage, collabReportId: id }, path: '', url: '' }}
           location={{
-            state: { showLastUpdatedTime },
-            hash: '',
-            pathname: '',
-            search: '',
+            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
           }}
         />
       </UserContext.Provider>
@@ -90,48 +90,46 @@ describe('CollaborationReportForm', () => {
   });
 
   beforeEach(() => {
-    fetchMock.get('/api/users/collaborators?region=1', [
-      {
-        id: 2,
-        name: 'Hermione Granger',
-        roles: [
-          {
-            id: 16,
-            name: 'SS',
-            fullName: 'System Specialist',
-            isSpecialist: true,
-            deletedAt: null,
-            mapsTo: null,
-            createdAt: '2025-12-31T14:27:05.466Z',
-            updatedAt: '2025-12-31T14:27:05.466Z',
-            UserRole: {
-              id: 1,
-              userId: 1,
-              roleId: 16,
-              createdAt: '2025-12-31T14:27:05.468Z',
-              updatedAt: '2025-12-31T14:27:05.468Z',
-            },
+    fetchMock.get('/api/users/collaborators?region=1', [{
+      id: 2,
+      name: 'Hermione Granger',
+      roles: [
+        {
+          id: 16,
+          name: 'SS',
+          fullName: 'System Specialist',
+          isSpecialist: true,
+          deletedAt: null,
+          mapsTo: null,
+          createdAt: '2025-12-31T14:27:05.466Z',
+          updatedAt: '2025-12-31T14:27:05.466Z',
+          UserRole: {
+            id: 1,
+            userId: 1,
+            roleId: 16,
+            createdAt: '2025-12-31T14:27:05.468Z',
+            updatedAt: '2025-12-31T14:27:05.468Z',
           },
-          {
-            id: 17,
-            name: 'NC',
-            fullName: 'National Center',
-            isSpecialist: false,
-            deletedAt: null,
-            mapsTo: null,
-            createdAt: '2025-12-31T14:27:05.467Z',
-            updatedAt: '2025-12-31T14:27:05.467Z',
-            UserRole: {
-              id: 21,
-              userId: 1,
-              roleId: 17,
-              createdAt: '2025-12-31T14:27:05.837Z',
-              updatedAt: '2025-12-31T14:27:05.837Z',
-            },
+        },
+        {
+          id: 17,
+          name: 'NC',
+          fullName: 'National Center',
+          isSpecialist: false,
+          deletedAt: null,
+          mapsTo: null,
+          createdAt: '2025-12-31T14:27:05.467Z',
+          updatedAt: '2025-12-31T14:27:05.467Z',
+          UserRole: {
+            id: 21,
+            userId: 1,
+            roleId: 17,
+            createdAt: '2025-12-31T14:27:05.837Z',
+            updatedAt: '2025-12-31T14:27:05.837Z',
           },
-        ],
-      },
-    ]);
+        },
+      ],
+    }]);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
     fetchMock.get('/api/collaboration-reports/123', dummyReport);
     fetchMock.get('/api/goal-templates', [
@@ -146,12 +144,10 @@ describe('CollaborationReportForm', () => {
   });
 
   it('renders', async () => {
-    getItem.mockReturnValue(
-      JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      })
-    );
+    getItem.mockReturnValue(JSON.stringify({
+      regionId: 1,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    }));
 
     render(<ReportComponent id="new" />);
 
@@ -160,12 +156,10 @@ describe('CollaborationReportForm', () => {
   });
 
   it('keeps activity summary validation errors after review navigation', async () => {
-    getItem.mockReturnValue(
-      JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      })
-    );
+    getItem.mockReturnValue(JSON.stringify({
+      regionId: 1,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    }));
 
     render(<ReportComponent id="123" />);
 
@@ -200,12 +194,10 @@ describe('CollaborationReportForm', () => {
 
   // FIXME: Not yet implemented
   it('renders with single user role and sets creator role', async () => {
-    getItem.mockReturnValue(
-      JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      })
-    );
+    getItem.mockReturnValue(JSON.stringify({
+      regionId: 1,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    }));
 
     render(<ReportComponent id="new" userRoles={[{ fullName: 'Health Specialist' }]} />);
 
@@ -215,18 +207,16 @@ describe('CollaborationReportForm', () => {
 
   // FIXME: Not yet implemented
   it('renders with multiple user roles without setting creator role', async () => {
-    getItem.mockReturnValue(
-      JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      })
-    );
+    getItem.mockReturnValue(JSON.stringify({
+      regionId: 1,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    }));
 
     render(
       <ReportComponent
         id="new"
         userRoles={[{ fullName: 'Health Specialist' }, { fullName: 'Education Specialist' }]}
-      />
+      />,
     );
 
     const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
@@ -235,12 +225,10 @@ describe('CollaborationReportForm', () => {
 
   // FIXME: Not yet implemented
   it('renders without region prop and uses user region', async () => {
-    getItem.mockReturnValue(
-      JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      })
-    );
+    getItem.mockReturnValue(JSON.stringify({
+      regionId: 1,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    }));
 
     render(<ReportComponent id="new" region={undefined} />);
 
@@ -268,9 +256,7 @@ describe('CollaborationReportForm', () => {
     it('handles collaborators fetch error', async () => {
       render(<ReportComponent id="new" />);
 
-      expect(
-        await screen.findByText(/There’s an issue with your connection./i)
-      ).toBeInTheDocument();
+      expect(await screen.findByText(/There’s an issue with your connection./i)).toBeInTheDocument();
     });
   });
 
@@ -311,7 +297,7 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false
+        false,
       );
 
       expect(result).toBeDefined();
@@ -327,7 +313,7 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false
+        false,
       );
 
       expect(result).toBeDefined();
@@ -345,7 +331,7 @@ describe('CollaborationReportForm', () => {
         multiRoleUser,
         false,
         { current: 'test-id' },
-        false
+        false,
       );
 
       expect(result).toBeDefined();
@@ -354,9 +340,7 @@ describe('CollaborationReportForm', () => {
     it('returns formData when no changes detected and forceUpdate is false', async () => {
       // Mock findWhatsChanged to return empty object (no changes)
       const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest
-        .spyOn(originalModule, 'findWhatsChanged')
-        .mockReturnValue({});
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({});
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -364,7 +348,7 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false
+        false,
       );
 
       expect(result).toEqual(mockFormData);
@@ -374,8 +358,7 @@ describe('CollaborationReportForm', () => {
     it('calls saveReport when changes are detected', async () => {
       // Mock findWhatsChanged to return changes
       const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest
-        .spyOn(originalModule, 'findWhatsChanged')
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged')
         .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED });
 
       const result = await formatReportWithSaveBeforeConversion(
@@ -384,7 +367,7 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false
+        false,
       );
 
       expect(result.startDate).toBe('01/15/2025');
@@ -395,9 +378,7 @@ describe('CollaborationReportForm', () => {
     it('calls saveReport when forceUpdate is true even with no changes', async () => {
       // Mock findWhatsChanged to return no changes
       const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest
-        .spyOn(originalModule, 'findWhatsChanged')
-        .mockReturnValue({});
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({});
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -405,7 +386,7 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        true
+        true,
       );
 
       expect(result.startDate).toBe('2025-01-15');
@@ -416,8 +397,7 @@ describe('CollaborationReportForm', () => {
     it('converts dates from YYYY-MM-DD to MM/DD/YYYY format when changes are detected', async () => {
       // Mock findWhatsChanged to return changes
       const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest
-        .spyOn(originalModule, 'findWhatsChanged')
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged')
         .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED });
 
       const result = await formatReportWithSaveBeforeConversion(
@@ -426,7 +406,7 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false
+        false,
       );
 
       expect(result.startDate).toBe('01/15/2025');
@@ -437,9 +417,7 @@ describe('CollaborationReportForm', () => {
     it('does not convert dates when no changes are detected', async () => {
       // Mock findWhatsChanged to return no changes
       const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest
-        .spyOn(originalModule, 'findWhatsChanged')
-        .mockReturnValue({});
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({});
 
       const result = await formatReportWithSaveBeforeConversion(
         mockData,
@@ -447,7 +425,7 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false
+        false,
       );
 
       expect(result.startDate).toBe('01/15/2025'); // Original format preserved
@@ -468,8 +446,7 @@ describe('CollaborationReportForm', () => {
 
       // Mock findWhatsChanged to return changes
       const originalModule = await import('../formDataHelpers');
-      const findWhatsChangedSpy = jest
-        .spyOn(originalModule, 'findWhatsChanged')
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged')
         .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED });
 
       const result = await formatReportWithSaveBeforeConversion(
@@ -478,7 +455,7 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false
+        false,
       );
 
       // When dates are undefined from the API, moment parsing will result in 'Invalid date'
@@ -512,7 +489,7 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        false
+        false,
       );
 
       expect(result.startDate).toBe('01/15/2025');
@@ -524,10 +501,18 @@ describe('CollaborationReportForm', () => {
   // converts Participants, Data Used, and Goals from formData format to API format
   describe('convertFormDataToReport', () => {
     const formData = {
-      participants: [{ label: 'Head Start Staff', value: 'head_start_staff' }],
-      dataUsed: [{ label: 'Data 1', value: 'data_1' }],
-      goals: [{ label: 'Goal 1', value: 'goal_1' }],
-      reportGoals: [{ label: 'Goal 2', value: 'goal_2' }],
+      participants: [
+        { label: 'Head Start Staff', value: 'head_start_staff' },
+      ],
+      dataUsed: [
+        { label: 'Data 1', value: 'data_1' },
+      ],
+      goals: [
+        { label: 'Goal 1', value: 'goal_1' },
+      ],
+      reportGoals: [
+        { label: 'Goal 2', value: 'goal_2' },
+      ],
     };
 
     it('converts participants', () => {
@@ -652,7 +637,9 @@ describe('CollaborationReportForm', () => {
             { label: 'Goal 1', value: 'goal_1' },
             { label: 'Goal 2', value: 'goal_2' },
           ],
-          reportGoals: [{ label: 'Report Goal 1', value: 'report_goal_1' }],
+          reportGoals: [
+            { label: 'Report Goal 1', value: 'report_goal_1' },
+          ],
         };
         const result = convertFormDataToReport(data);
         expect(result.reportGoals).toEqual(['goal_1', 'goal_2']);
@@ -688,8 +675,12 @@ describe('CollaborationReportForm', () => {
             { label: 'Data 1', value: 'd1' },
             { label: 'Data 2', value: 'd2' },
           ],
-          goals: [{ label: 'Goal 1', value: 'g1' }],
-          reportGoals: [{ label: 'Report Goal 1', value: 'rg1' }],
+          goals: [
+            { label: 'Goal 1', value: 'g1' },
+          ],
+          reportGoals: [
+            { label: 'Report Goal 1', value: 'rg1' },
+          ],
           statesInvolved: [
             { label: 'Alabama', value: 'AL' },
             { label: 'Alaska', value: 'AK' },
@@ -781,12 +772,10 @@ describe('CollaborationReportForm', () => {
         creatorNameWithRole: 'Walter Burns - Reporter',
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       const { container } = render(<ReportComponent id="new" />);
       expect(container).toBeInTheDocument();
@@ -822,12 +811,10 @@ describe('CollaborationReportForm', () => {
         name: 'Report 1',
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="new" />);
 
@@ -865,14 +852,12 @@ describe('CollaborationReportForm', () => {
           creatorNameWithRole: 'Test User',
         });
 
-        getItem.mockReturnValue(
-          JSON.stringify({
-            regionId: 1,
-            calculatedStatus: REPORT_STATUSES.DRAFT,
-            startDate: 'invalid-date',
-            endDate: '01/15/2025',
-          })
-        );
+        getItem.mockReturnValue(JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          startDate: 'invalid-date',
+          endDate: '01/15/2025',
+        }));
 
         render(<ReportComponent id="new" />);
 
@@ -891,14 +876,12 @@ describe('CollaborationReportForm', () => {
           calculatedStatus: REPORT_STATUSES.DRAFT,
         });
 
-        getItem.mockReturnValue(
-          JSON.stringify({
-            regionId: 1,
-            calculatedStatus: REPORT_STATUSES.DRAFT,
-            startDate: '01/15/2025',
-            endDate: 'invalid-date',
-          })
-        );
+        getItem.mockReturnValue(JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          startDate: '01/15/2025',
+          endDate: 'invalid-date',
+        }));
 
         render(<ReportComponent id="new" />);
 
@@ -913,12 +896,10 @@ describe('CollaborationReportForm', () => {
       it('handles null savedReport by throwing error', async () => {
         fetchMock.post('/api/collaboration-reports', null);
 
-        getItem.mockReturnValue(
-          JSON.stringify({
-            regionId: 1,
-            calculatedStatus: REPORT_STATUSES.DRAFT,
-          })
-        );
+        getItem.mockReturnValue(JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        }));
 
         render(<ReportComponent id="new" />);
 
@@ -940,12 +921,10 @@ describe('CollaborationReportForm', () => {
           creatorNameWithRole: 'Test User',
         });
 
-        getItem.mockReturnValue(
-          JSON.stringify({
-            regionId: 1,
-            calculatedStatus: REPORT_STATUSES.DRAFT,
-          })
-        );
+        getItem.mockReturnValue(JSON.stringify({
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        }));
 
         render(<ReportComponent id="new" />);
 
@@ -968,13 +947,11 @@ describe('CollaborationReportForm', () => {
           startDate: '2025-01-15',
         });
 
-        getItem.mockReturnValue(
-          JSON.stringify({
-            id: '123',
-            regionId: 1,
-            calculatedStatus: REPORT_STATUSES.DRAFT,
-          })
-        );
+        getItem.mockReturnValue(JSON.stringify({
+          id: '123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        }));
 
         render(<ReportComponent id="123" />);
 
@@ -986,13 +963,11 @@ describe('CollaborationReportForm', () => {
       it('handles network error during save', async () => {
         fetchMock.put('/api/collaboration-reports/123', { throws: new Error('Network error') });
 
-        getItem.mockReturnValue(
-          JSON.stringify({
-            id: '123',
-            regionId: 1,
-            calculatedStatus: REPORT_STATUSES.DRAFT,
-          })
-        );
+        getItem.mockReturnValue(JSON.stringify({
+          id: '123',
+          regionId: 1,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        }));
 
         render(<ReportComponent id="123" />);
 
@@ -1026,13 +1001,11 @@ describe('CollaborationReportForm', () => {
         approvers: [],
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1053,17 +1026,15 @@ describe('CollaborationReportForm', () => {
         ],
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-          approvers: [
-            { user: { id: 1, name: 'Approver 1' } },
-            { user: { id: 2, name: 'Approver 2' } },
-          ],
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        approvers: [
+          { user: { id: 1, name: 'Approver 1' } },
+          { user: { id: 2, name: 'Approver 2' } },
+        ],
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1081,13 +1052,11 @@ describe('CollaborationReportForm', () => {
         approvers: [],
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1103,13 +1072,11 @@ describe('CollaborationReportForm', () => {
         throws: new Error('Submission failed'),
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1124,15 +1091,13 @@ describe('CollaborationReportForm', () => {
         approvers: [],
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-          additionalNotes: 'Test notes',
-          creatorRole: 'Health Specialist',
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        additionalNotes: 'Test notes',
+        creatorRole: 'Health Specialist',
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1162,14 +1127,12 @@ describe('CollaborationReportForm', () => {
 
       fetchMock.put('/api/collaboration-reports/123/approver', {});
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          displayId: 'R01-AR-123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        displayId: 'R01-AR-123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1186,14 +1149,12 @@ describe('CollaborationReportForm', () => {
 
       fetchMock.put('/api/collaboration-reports/123/approver', {});
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          displayId: 'R01-AR-123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        displayId: 'R01-AR-123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1207,14 +1168,12 @@ describe('CollaborationReportForm', () => {
     it('includes note and status in review', async () => {
       fetchMock.put('/api/collaboration-reports/123/approver', {});
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          displayId: 'R01-AR-123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        displayId: 'R01-AR-123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1231,14 +1190,12 @@ describe('CollaborationReportForm', () => {
 
       fetchMock.put('/api/collaboration-reports/123/approver', {});
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          displayId: 'R01-AR-123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        displayId: 'R01-AR-123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1252,14 +1209,12 @@ describe('CollaborationReportForm', () => {
     it('formats timezone correctly in review message', async () => {
       fetchMock.put('/api/collaboration-reports/123/approver', {});
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          displayId: 'R01-AR-123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        displayId: 'R01-AR-123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1275,14 +1230,12 @@ describe('CollaborationReportForm', () => {
         throws: new Error('Review failed'),
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          id: '123',
-          displayId: 'R01-AR-123',
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        id: '123',
+        displayId: 'R01-AR-123',
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1316,12 +1269,10 @@ describe('CollaborationReportForm', () => {
         id: 123,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+      }));
 
       render(<ReportComponent id="123" userId={1} />);
 
@@ -1340,12 +1291,10 @@ describe('CollaborationReportForm', () => {
         id: 123,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" userId={1} />);
 
@@ -1363,12 +1312,10 @@ describe('CollaborationReportForm', () => {
         id: 123,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" userId={1} />);
 
@@ -1388,12 +1335,10 @@ describe('CollaborationReportForm', () => {
         id: 123,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" userId={1} />);
 
@@ -1413,12 +1358,10 @@ describe('CollaborationReportForm', () => {
         approvers: [{ userId: 1 }],
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" userId={2} />);
 
@@ -1434,17 +1377,13 @@ describe('CollaborationReportForm', () => {
     it('handles network error with connection check', async () => {
       fetchMock.restore();
       fetchMock.get('/api/users/collaborators?region=1', { throws: new Error('Network error') });
-      fetchMock.get('/api/activity-reports/approvers?region=1', {
-        throws: new Error('Network error'),
-      });
+      fetchMock.get('/api/activity-reports/approvers?region=1', { throws: new Error('Network error') });
 
       getItem.mockReturnValue(null); // No local storage data
 
       render(<ReportComponent id="new" />);
 
-      expect(
-        await screen.findByText(/There’s an issue with your connection./i)
-      ).toBeInTheDocument();
+      expect(await screen.findByText(/There’s an issue with your connection./i)).toBeInTheDocument();
     });
   });
 
@@ -1476,12 +1415,10 @@ describe('CollaborationReportForm', () => {
         approvers: [],
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1497,12 +1434,10 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" userId={2} />);
 
@@ -1514,16 +1449,16 @@ describe('CollaborationReportForm', () => {
     it('sets isApprover true when user is matching approver', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
-        approvers: [{ user: { id: 1 }, status: 'pending' }],
+        approvers: [
+          { user: { id: 1 }, status: 'pending' },
+        ],
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" userId={1} />);
 
@@ -1536,16 +1471,16 @@ describe('CollaborationReportForm', () => {
     it('sets isPendingApprover true when approver status is null', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
-        approvers: [{ user: { id: 1 }, status: null }],
+        approvers: [
+          { user: { id: 1 }, status: null },
+        ],
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" userId={1} />);
 
@@ -1558,16 +1493,16 @@ describe('CollaborationReportForm', () => {
     it('sets isPendingApprover true when approver status is pending', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
-        approvers: [{ user: { id: 1 }, status: 'pending' }],
+        approvers: [
+          { user: { id: 1 }, status: 'pending' },
+        ],
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" userId={1} />);
 
@@ -1587,12 +1522,10 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
 
       render(<ReportComponent id="123" userId={1} />);
 
@@ -1609,12 +1542,10 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" showLastUpdatedTime />);
 
@@ -1652,12 +1583,9 @@ describe('CollaborationReportForm', () => {
 
       render(<ReportComponent id="123" />);
 
-      await waitFor(
-        () => {
-          expect(screen.getByText(/loading/)).toBeInTheDocument();
-        },
-        { timeout: 100 }
-      );
+      await waitFor(() => {
+        expect(screen.getByText(/loading/)).toBeInTheDocument();
+      }, { timeout: 100 });
       // formData is updated with invalid regionId
     });
 
@@ -1668,12 +1596,9 @@ describe('CollaborationReportForm', () => {
 
       render(<ReportComponent id="123" />);
 
-      await waitFor(
-        () => {
-          expect(screen.getByText(/loading/)).toBeInTheDocument();
-        },
-        { timeout: 100 }
-      );
+      await waitFor(() => {
+        expect(screen.getByText(/loading/)).toBeInTheDocument();
+      }, { timeout: 100 });
       // tagClass returns empty string when formData is null
     });
 
@@ -1683,11 +1608,9 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: undefined,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+      }));
 
       render(<ReportComponent id="123" />);
 
@@ -1725,12 +1648,10 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" currentPage="activity-summary" />);
 
@@ -1751,12 +1672,10 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
       });
 
-      getItem.mockReturnValue(
-        JSON.stringify({
-          regionId: 1,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-        })
-      );
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      }));
 
       render(<ReportComponent id="123" currentPage="activity-summary" />);
 

@@ -1,19 +1,23 @@
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from '@trussworks/react-uswds';
-import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
 import Container from '../../../../components/Container';
 import { getMonitoringData } from '../../../../fetchers/monitoring';
 import './ClassReview.scss';
 import { useGrantData } from '../GrantDataContext';
 
 const BadgeCompliant = () => (
-  <span className="ttahub-badge--success font-sans-2xs text-white text-bold">Compliant</span>
+  <span className="ttahub-badge--success font-sans-2xs text-white text-bold">
+    Compliant
+  </span>
 );
 
 const BadgeNoncompliant = (text = 'Noncompliant') => (
-  <span className="ttahub-badge--error font-sans-2xs text-white text-bold">{text}</span>
+  <span className="ttahub-badge--error font-sans-2xs text-white text-bold">
+    {text}
+  </span>
 );
 
 const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
@@ -51,36 +55,45 @@ const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            HSES monitoring{' '}
+            HSES monitoring
+            {' '}
             <FontAwesomeIcon icon={faExternalLinkAlt} size="sm" className="margin-left-1" />
           </Link>
         </div>
       </div>
       <div className="padding-x-3 padding-bottom-2">
+
         {/* Compliance */}
         {review.reviewStatus && review.reviewDate && (
-          <div className="margin-y-2">
-            <div className="display-flex flex-row flex-justify flex-align-center">
-              <p className="margin-y-1">
-                <strong>Last review status</strong>
-              </p>
-              {getComplianceBadge(review.reviewStatus)}
-            </div>
-            <p className="margin-0">
-              {review.reviewStatus} as of {review.reviewDate}
+        <div className="margin-y-2">
+          <div className="display-flex flex-row flex-justify flex-align-center">
+            <p className="margin-y-1">
+              <strong>Last review status</strong>
             </p>
+            {getComplianceBadge(review.reviewStatus)}
           </div>
+          <p className="margin-0">
+            {review.reviewStatus}
+            {' '}
+            as of
+            {' '}
+            {review.reviewDate}
+          </p>
+        </div>
         )}
 
         {/* Type */}
         {review.reviewType && (
-          <div className="margin-y-2">
-            <p className="margin-y-1">
-              <strong>Review type</strong>
-            </p>
-            <p className="margin-y-1">{review.reviewType}</p>
-          </div>
+        <div className="margin-y-2">
+          <p className="margin-y-1">
+            <strong>Review type</strong>
+          </p>
+          <p className="margin-y-1">
+            {review.reviewType}
+          </p>
+        </div>
         )}
+
       </div>
     </Container>
   );

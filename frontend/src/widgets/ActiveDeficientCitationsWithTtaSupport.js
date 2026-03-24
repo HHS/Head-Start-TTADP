@@ -1,14 +1,14 @@
-import { TRACE_IDS } from '@ttahub/common';
-import PropTypes from 'prop-types';
 import React, { useContext, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
+import { TRACE_IDS } from '@ttahub/common';
+import withWidgetData from './withWidgetData';
+import LineGraphWidget from './LineGraphWidget';
+import { deriveLineGraphLegendConfig } from './constants';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import DrawerTriggerButton from '../components/DrawerTriggerButton';
+import Drawer from '../components/Drawer';
 import AppLoadingContext from '../AppLoadingContext';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
-import Drawer from '../components/Drawer';
-import DrawerTriggerButton from '../components/DrawerTriggerButton';
-import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
-import { deriveLineGraphLegendConfig } from './constants';
-import LineGraphWidget from './LineGraphWidget';
-import withWidgetData from './withWidgetData';
 
 const EXPORT_NAME = 'Active deficient citations with TTA support';
 
@@ -44,8 +44,8 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data, loading }) 
   const subtitle = (
     <div className="margin-bottom-3">
       <WidgetContainerSubtitle marginY={0}>
-        Active deficient citations addressed in approved Activity Reports (AR) compared against all
-        active deficiencies.
+        Active deficient citations addressed in approved Activity Reports (AR)
+        compared against all active deficiencies.
       </WidgetContainerSubtitle>
       <div className="margin-top-1">
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
@@ -86,9 +86,8 @@ ActiveDeficientCitationsWithTtaSupportWidget.propTypes = {
         name: PropTypes.string,
         x: PropTypes.arrayOf(PropTypes.string),
         y: PropTypes.arrayOf(PropTypes.number),
-      })
-    ),
-    PropTypes.shape({}),
+      }),
+    ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
 };
@@ -110,7 +109,4 @@ ActiveDeficientCitationsWithTtaSupportWidget.defaultProps = {
   ],
 };
 
-export default withWidgetData(
-  ActiveDeficientCitationsWithTtaSupportWidget,
-  'activeDeficientCitationsWithTtaSupport'
-);
+export default withWidgetData(ActiveDeficientCitationsWithTtaSupportWidget, 'activeDeficientCitationsWithTtaSupport');

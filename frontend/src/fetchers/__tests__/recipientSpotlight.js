@@ -1,5 +1,5 @@
-import fetchMock from 'fetch-mock';
 import join from 'url-join';
+import fetchMock from 'fetch-mock';
 import { getRecipientSpotlight } from '../recipientSpotlight';
 
 const recipientUrl = join('/', 'api', 'recipient-spotlight');
@@ -24,10 +24,7 @@ describe('recipientSpotlight fetcher', () => {
     const sortDir = 'asc';
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(
-      `${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=0`,
-      mockResponse
-    );
+    fetchMock.getOnce(`${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=0`, mockResponse);
 
     const response = await getRecipientSpotlight(sortBy, sortDir);
 
@@ -40,10 +37,7 @@ describe('recipientSpotlight fetcher', () => {
     const limit = 5;
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(
-      `${recipientUrl}?sortBy=recipientName&direction=desc&offset=${offset}&limit=${limit}`,
-      mockResponse
-    );
+    fetchMock.getOnce(`${recipientUrl}?sortBy=recipientName&direction=desc&offset=${offset}&limit=${limit}`, mockResponse);
 
     const response = await getRecipientSpotlight('recipientName', 'desc', offset, null, limit);
 
@@ -55,10 +49,7 @@ describe('recipientSpotlight fetcher', () => {
     const filters = 'recipientId.in=123&region.in=1';
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(
-      `${recipientUrl}?sortBy=recipientName&direction=desc&offset=0&${filters}`,
-      mockResponse
-    );
+    fetchMock.getOnce(`${recipientUrl}?sortBy=recipientName&direction=desc&offset=0&${filters}`, mockResponse);
 
     const response = await getRecipientSpotlight('recipientName', 'desc', 0, filters);
 
@@ -74,12 +65,15 @@ describe('recipientSpotlight fetcher', () => {
     const filters = 'recipientId.in=123&region.in=1&status=inactive';
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(
-      `${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=${offset}&limit=${limit}&${filters}`,
-      mockResponse
-    );
+    fetchMock.getOnce(`${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=${offset}&limit=${limit}&${filters}`, mockResponse);
 
-    const response = await getRecipientSpotlight(sortBy, sortDir, offset, filters, limit);
+    const response = await getRecipientSpotlight(
+      sortBy,
+      sortDir,
+      offset,
+      filters,
+      limit,
+    );
 
     expect(response).toEqual(mockResponse);
     expect(fetchMock.called()).toBe(true);
@@ -99,7 +93,7 @@ describe('recipientSpotlight fetcher', () => {
       null,
       null,
       false,
-      controller.signal
+      controller.signal,
     );
 
     const lastOptions = fetchMock.lastOptions();

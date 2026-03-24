@@ -1,21 +1,16 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/prop-types */
-
-import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { render, screen } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
-import useEventAndSessionStaff from '../../../../hooks/useEventAndSessionStaff';
-import UserContext from '../../../../UserContext';
 import Submit from '../Submit';
+import UserContext from '../../../../UserContext';
+import useEventAndSessionStaff from '../../../../hooks/useEventAndSessionStaff';
 
 jest.mock('../../../../hooks/useEventAndSessionStaff');
-jest.mock(
-  '../../../../components/HookFormRichEditor',
-  () =>
-    function MockHookFormRichEditor({ id, name, ariaLabel }) {
-      return <textarea id={id} name={name} aria-label={ariaLabel} data-testid="rich-editor" />;
-    }
-);
+jest.mock('../../../../components/HookFormRichEditor', () => function MockHookFormRichEditor({ id, name, ariaLabel }) {
+  return <textarea id={id} name={name} aria-label={ariaLabel} data-testid="rich-editor" />;
+});
 
 const FormWrapper = ({ defaultValues, children }) => {
   const hookForm = useForm({
@@ -23,7 +18,11 @@ const FormWrapper = ({ defaultValues, children }) => {
     defaultValues,
   });
 
-  return <FormProvider {...hookForm}>{children}</FormProvider>;
+  return (
+    <FormProvider {...hookForm}>
+      {children}
+    </FormProvider>
+  );
 };
 
 const renderSubmit = (props, defaultValues = {}, user = { id: 1 }) => {
@@ -32,7 +31,7 @@ const renderSubmit = (props, defaultValues = {}, user = { id: 1 }) => {
       <FormWrapper defaultValues={defaultValues}>
         <Submit {...props} />
       </FormWrapper>
-    </UserContext.Provider>
+    </UserContext.Provider>,
   );
 };
 
@@ -99,7 +98,11 @@ describe('Submit', () => {
       // Current user has id: 2, which matches the second approver
       const user = { id: 2 };
 
-      renderSubmit({ ...defaultProps, isAdmin: true }, defaultValues, user);
+      renderSubmit(
+        { ...defaultProps, isAdmin: true },
+        defaultValues,
+        user,
+      );
 
       // The dropdown should be visible
       expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
