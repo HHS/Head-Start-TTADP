@@ -1,5 +1,17 @@
 @use '../../../../colors.scss' as *;
 
+$print-space-1: 0.25rem;
+$print-space-2: 0.5rem;
+$print-space-3: 0.75rem;
+$print-space-4: 1rem;
+
+$print-heading-size: 1.5rem;
+$print-line-tight: 1.15;
+$print-line-heading: 1.2;
+$print-label-size: 1rem;
+$print-label-line-height: 1.25;
+$print-value-line-height: 1.45;
+
 .goal-history-content {
   .responses-section {
     margin-bottom: 1.5rem;
@@ -9,10 +21,10 @@
     padding-left: 1.5rem;
     margin-top: 0.5rem;
   }
-  /*
-  /* ensure the spacing between resource items is the same. */
+
+  /* Ensure the spacing between resource items is the same. */
   .objective-details-section .usa-list li {
-    margin-bottom: 0.25rem;
+    margin-bottom: $print-space-1;
   }
   
   .resource-sections-container {
@@ -57,32 +69,32 @@
 
   .view-standard-goals-page-heading {
     margin-left: 0;
-    margin-bottom: 0.75rem;
+    margin-bottom: $print-space-3;
     font-size: 2.25rem;
-    line-height: 1.15;
+    line-height: $print-line-tight;
   }
 
   h2.smart-hub-serif {
-    font-size: 1.5rem;
-    line-height: 1.15;
+    font-size: $print-heading-size;
+    line-height: $print-line-tight;
   }
 
   .goal-history-print-goal-number {
-    font-size: 1.5rem;
-    line-height: 1.15;
+    font-size: $print-heading-size;
+    line-height: $print-line-tight;
   }
 
   .goal-summary-heading-row {
-    margin-bottom: 1rem;
+    margin-bottom: $print-space-4;
   }
 
   .recipient-goal-print-accent {
     border-left: 4px solid $base-dark;
-    padding-left: 0.75rem;
+    padding-left: $print-space-3;
   }
 
   .recipient-goal-print-accent [data-testid='read-only-label'] {
-    margin-bottom: 0.25rem;
+    margin-bottom: $print-space-1;
   }
 
   .recipient-goal-print-accent [data-testid='read-only-value'] {
@@ -106,7 +118,7 @@
   }
 
   .goal-history-content {
-    margin-top: 0.5rem;
+    margin-top: $print-space-2;
     padding-top: 0;
   }
 
@@ -116,34 +128,34 @@
   }
 
   .goal-history-content [data-testid='read-only-label'] {
-    margin-top: 0.5rem;
-    margin-bottom: 0.25rem;
-    font-size: 1rem;
-    line-height: 1.25;
+    margin-top: $print-space-2;
+    margin-bottom: $print-space-1;
+    font-size: $print-label-size;
+    line-height: $print-label-line-height;
   }
 
   .goal-history-content [data-testid='read-only-value'] {
     margin-top: 0;
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-    line-height: 1.45;
+    margin-bottom: $print-space-2;
+    font-size: $print-label-size;
+    line-height: $print-value-line-height;
   }
 
   .usa-accordion__content.view-standard-goals-accordion--with-divider .goal-history-content {
     border-top: 1px solid $base-lighter;
-    margin-top: 0.75rem;
-    padding-top: 1rem;
+    margin-top: $print-space-3;
+    padding-top: $print-space-4;
   }
 
   .goal-history-content .usa-summary-box {
     border: 0;
     padding: 0;
-    margin-bottom: 0.75rem;
+    margin-bottom: $print-space-3;
   }
 
   .goal-history-content .usa-summary-box__heading {
     font-size: 1.125rem;
-    line-height: 1.2;
+    line-height: $print-line-heading;
   }
 
   .goal-history-content .usa-summary-box__body {
@@ -151,27 +163,27 @@
   }
 
   .goal-history-print-overview p {
-    margin-bottom: 0.25rem;
+    margin-bottom: $print-space-1;
   }
 
   .goal-history-print-overview p:first-child {
-    margin-bottom: 0.5rem;
+    margin-bottom: $print-space-2;
   }
 
   .goal-history-content h3 {
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
+    margin-top: $print-space-4;
+    margin-bottom: $print-space-2;
+    line-height: $print-line-heading;
   }
 
   .goal-history-content .usa-list {
-    margin-top: 0.25rem;
-    margin-bottom: 0.5rem;
-    padding-left: 1rem;
+    margin-top: $print-space-1;
+    margin-bottom: $print-space-2;
+    padding-left: $print-space-4;
   }
 
   .goal-history-content .resource-sections-container .usa-list {
-    margin-bottom: 0.25rem;
+    margin-bottom: $print-space-1;
   }
 }
 
