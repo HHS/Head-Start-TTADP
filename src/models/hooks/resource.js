@@ -39,4 +39,4 @@ const afterCreate = async (sequelize, instance, options) => {
   }
 };
 
-export { autoPopulateDomain, beforeValidate, beforeUpdate, afterUpdate, afterCreate };
+export { afterCreate, afterUpdate, autoPopulateDomain, beforeUpdate, beforeValidate };

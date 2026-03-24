@@ -86,10 +86,10 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
-  autoPopulateTemplateTitleModifiedAt,
-  autoPopulateCreationMethod,
-  propagateTemplateTitle,
-  beforeValidate,
-  beforeUpdate,
   afterUpdate,
+  autoPopulateCreationMethod,
+  autoPopulateTemplateTitleModifiedAt,
+  beforeUpdate,
+  beforeValidate,
+  propagateTemplateTitle,
 };

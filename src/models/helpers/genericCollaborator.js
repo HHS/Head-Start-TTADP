@@ -411,9 +411,9 @@ const removeCollaboratorsForType = async (
 
 export {
   createCollaborator,
-  getCollaboratorRecord,
-  findOrCreateCollaborator,
-  getIdForCollaboratorType,
   currentUserPopulateCollaboratorForType,
+  findOrCreateCollaborator,
+  getCollaboratorRecord,
+  getIdForCollaboratorType,
   removeCollaboratorsForType,
 };

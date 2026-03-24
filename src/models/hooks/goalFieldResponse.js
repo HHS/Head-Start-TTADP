@@ -107,4 +107,4 @@ const afterCreate = async (sequelize, instance, options) => {
   await syncActivityReportGoalFieldResponses(sequelize, instance, options);
 };
 
-export { autoPopulateOnAR, autoPopulateOnApprovedAR, beforeValidate, afterUpdate, afterCreate };
+export { afterCreate, afterUpdate, autoPopulateOnApprovedAR, autoPopulateOnAR, beforeValidate };

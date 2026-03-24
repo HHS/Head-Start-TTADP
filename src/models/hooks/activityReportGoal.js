@@ -107,12 +107,12 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
-  beforeValidate,
-  processForEmbeddedResources,
-  recalculateOnAR,
-  propagateDestroyToMetadata,
   afterCreate,
-  beforeDestroy,
   afterDestroy,
   afterUpdate,
+  beforeDestroy,
+  beforeValidate,
+  processForEmbeddedResources,
+  propagateDestroyToMetadata,
+  recalculateOnAR,
 };

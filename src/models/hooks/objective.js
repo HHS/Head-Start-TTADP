@@ -296,13 +296,13 @@ const afterCreate = async (sequelize, instance, options) => {
 };
 
 export {
-  findOrCreateObjectiveTemplate,
-  autoPopulateOnApprovedAR,
-  preventTitleChangeWhenOnApprovedAR,
-  linkObjectiveGoalTemplates,
-  propagateTitle,
-  beforeValidate,
-  beforeUpdate,
-  afterUpdate,
   afterCreate,
+  afterUpdate,
+  autoPopulateOnApprovedAR,
+  beforeUpdate,
+  beforeValidate,
+  findOrCreateObjectiveTemplate,
+  linkObjectiveGoalTemplates,
+  preventTitleChangeWhenOnApprovedAR,
+  propagateTitle,
 };

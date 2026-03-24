@@ -68,4 +68,4 @@ class Base64Stream extends Transform {
   }
 }
 
-export { type Base64StreamMode, Base64Stream };
+export { Base64Stream, type Base64StreamMode };

@@ -32,4 +32,4 @@ async function health(req, res) {
   res.status(200).json();
 }
 
-export { queryDB, reseedDB, health };
+export { health, queryDB, reseedDB };

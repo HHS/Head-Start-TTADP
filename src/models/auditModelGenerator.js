@@ -312,11 +312,11 @@ const attachHooksForAuditing = (sequelize) => {
 };
 
 export {
-  generateZALDDL,
+  addAuditTransactionSettings,
+  attachHooksForAuditing,
+  generateAuditModel,
   generateZADescriptor,
   generateZAFilter,
-  generateAuditModel,
-  attachHooksForAuditing,
-  addAuditTransactionSettings,
+  generateZALDDL,
   removeFromAuditedTransactions,
 };

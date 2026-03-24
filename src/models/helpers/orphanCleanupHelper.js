@@ -60,4 +60,4 @@ const cleanupOrphanFiles = async (sequelize, fileId) =>
     }),
   ]);
 
-export { cleanupOrphanResources, cleanupOrphanFiles };
+export { cleanupOrphanFiles, cleanupOrphanResources };

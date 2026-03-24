@@ -403,12 +403,12 @@ const updateLog = async (id: number, logData: CommLogData) => {
 };
 
 export {
-  logById,
-  logsByRecipientAndScopes,
+  createLog,
   csvLogsByRecipientAndScopes,
-  logsByScopes,
   csvLogsByScopes,
   deleteLog,
+  logById,
+  logsByRecipientAndScopes,
+  logsByScopes,
   updateLog,
-  createLog,
 };

@@ -140,12 +140,12 @@ const beforeCreate = async (_sequelize, instance) => {
 };
 
 export {
-  calculateReportStatusFromApprovals,
-  calculateReportStatus,
-  beforeCreate,
-  beforeUpdate,
   afterCreate,
   afterDestroy,
   afterRestore,
   afterUpdate,
+  beforeCreate,
+  beforeUpdate,
+  calculateReportStatus,
+  calculateReportStatusFromApprovals,
 };

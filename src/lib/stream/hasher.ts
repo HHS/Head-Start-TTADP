@@ -66,7 +66,7 @@ const getHash = (
 };
 
 export default Hasher;
-export { Algorithms, type Algorithm, getHash };
+export { type Algorithm, Algorithms, getHash };
 
 // // Usage example:
 // import fs from 'fs';

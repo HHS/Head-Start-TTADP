@@ -18,4 +18,4 @@ const afterUpdate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
 };
 
-export { processForEmbeddedResources, afterCreate, afterUpdate };
+export { afterCreate, afterUpdate, processForEmbeddedResources };

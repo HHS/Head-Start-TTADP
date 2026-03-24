@@ -56,9 +56,9 @@ const processResourceQueue = () => {
 };
 
 export {
-  resourceQueue,
   addGetResourceMetadataToQueue,
-  onFailedResourceQueue,
   onCompletedResourceQueue,
+  onFailedResourceQueue,
   processResourceQueue,
+  resourceQueue,
 };

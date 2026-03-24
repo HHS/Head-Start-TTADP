@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
-
 import PropTypes from 'prop-types';
 import React from 'react';
 
@@ -22,16 +20,14 @@ function ColumnHeader({ displayName, name, sortBy, sortDirection, onUpdateSort }
 
   return (
     <th scope="col" aria-sort={fullAriaSort}>
-      <a
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         onClick={() => onUpdateSort(name)}
-        onKeyPress={() => onUpdateSort(name)}
         className={`sortable ${sortClassName}`}
         aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
       >
         {displayName}
-      </a>
+      </button>
     </th>
   );
 }

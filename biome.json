@@ -75,7 +75,14 @@
       "linter": {
         "rules": {
           "a11y": {
-            "noNoninteractiveTabindex": "warn"
+            "noLabelWithoutControl": "warn",
+            "noNoninteractiveElementToInteractiveRole": "warn",
+            "noNoninteractiveTabindex": "warn",
+            "noStaticElementInteractions": "warn",
+            "noSvgWithoutTitle": "warn",
+            "useAriaPropsSupportedByRole": "warn",
+            "useFocusableInteractive": "warn",
+            "useSemanticElements": "warn"
           }
         }
       }

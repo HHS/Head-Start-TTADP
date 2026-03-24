@@ -322,8 +322,8 @@ const downloadFilesFromSource = async (importId: number, timeBox = 5 * 60 * 1000
 };
 
 export {
-  collectNextFile,
   collectFilesFromSource,
+  collectNextFile,
   collectServerSettings,
   downloadFilesFromSource,
   sortFilesByFullPath,

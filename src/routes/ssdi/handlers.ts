@@ -226,12 +226,12 @@ const runQueryWithWildcard = (req: Request, res: Response) => {
 
 export {
   checkFolderPermissions,
-  validateScriptPath,
   filterAttributes,
-  listQueries,
-  listQueriesWithWildcard,
   getFilters,
   getFiltersWithWildcard,
+  listQueries,
+  listQueriesWithWildcard,
   runQuery,
   runQueryWithWildcard,
+  validateScriptPath,
 };

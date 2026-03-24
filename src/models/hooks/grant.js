@@ -28,4 +28,4 @@ const afterDestroy = async (sequelize, instance, options) => {
   await sequelize.models.GrantRelationshipToActive.refresh();
 };
 
-export { afterCreate, afterUpdate, beforeDestroy, afterDestroy };
+export { afterCreate, afterDestroy, afterUpdate, beforeDestroy };

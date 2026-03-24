@@ -49,5 +49,5 @@ const dataValidation = async () => {
   auditLogger.info(`ActivityReports data counts: ${JSON.stringify(results, null, 2)}`);
 };
 
-export { runSelectQuery, countAndLastUpdated };
+export { countAndLastUpdated, runSelectQuery };
 export default dataValidation;

@@ -49,5 +49,5 @@ const processScanQueue = () => {
   scanQueue.process(transactionQueueWrapper(processFileFromJob, 'scan'));
 };
 
-export { scanQueue, onFailedScanQueue, onCompletedScanQueue, processScanQueue };
+export { onCompletedScanQueue, onFailedScanQueue, processScanQueue, scanQueue };
 export default addToScanQueue;

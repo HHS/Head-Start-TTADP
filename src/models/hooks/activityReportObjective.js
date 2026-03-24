@@ -91,10 +91,10 @@ const afterDestroy = async (sequelize, instance, options) => {
 };
 
 export {
+  afterCreate,
+  afterDestroy,
+  beforeDestroy,
+  beforeValidate,
   propagateDestroyToMetadata,
   recalculateOnAR,
-  afterCreate,
-  beforeValidate,
-  beforeDestroy,
-  afterDestroy,
 };

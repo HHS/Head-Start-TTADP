@@ -82,12 +82,12 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
-  processForEmbeddedResources,
-  autoPopulateHash,
-  autoPopulateTemplateNameModifiedAt,
-  autoPopulateCreationMethod,
-  beforeValidate,
-  beforeUpdate,
   afterCreate,
   afterUpdate,
+  autoPopulateCreationMethod,
+  autoPopulateHash,
+  autoPopulateTemplateNameModifiedAt,
+  beforeUpdate,
+  beforeValidate,
+  processForEmbeddedResources,
 };
