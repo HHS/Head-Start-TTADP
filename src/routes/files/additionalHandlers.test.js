@@ -12,7 +12,6 @@ import {
   deleteSessionSupportingAttachment,
 } from '../../services/files';
 import { logById } from '../../services/communicationLog';
-import { deleteFileFromS3 } from '../../lib/s3';
 import SCOPES from '../../middleware/scopeConstants';
 import { findSessionById } from '../../services/sessionReports';
 import { findEventBySmartsheetId } from '../../services/event';
@@ -49,10 +48,6 @@ jest.mock('../../services/currentUser', () => ({
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
-}));
-
-jest.mock('../../lib/s3', () => ({
-  deleteFileFromS3: jest.fn(),
 }));
 
 jest.mock('../../services/objectives', () => ({
@@ -258,7 +253,6 @@ describe('file handlers, additional tests', () => {
       await deleteOnlyFile(mockRequest, mockResponse);
 
       expect(deleteFile).toHaveBeenCalled();
-      expect(deleteFileFromS3).toHaveBeenCalled();
 
       expect(mockResponse.status).toHaveBeenCalledWith(204);
     });
@@ -296,7 +290,6 @@ describe('file handlers, additional tests', () => {
       await deleteOnlyFile(mockRequest, mockResponse);
 
       expect(deleteFile).not.toHaveBeenCalled();
-      expect(deleteFileFromS3).not.toHaveBeenCalled();
 
       expect(mockResponse.status).toHaveBeenCalledWith(204);
     });

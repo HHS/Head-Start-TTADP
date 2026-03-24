@@ -139,6 +139,12 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
     return url;
   }
 
+  if (!key) {
+    url.error = new Error('S3 key is required');
+    auditLogger.error('Failed to generate signed download URL: missing key');
+    return url;
+  }
+
   const creds = {
     accessKeyId: s3Config.credentials.accessKeyId,
     secretAccessKey: s3Config.credentials.secretAccessKey,

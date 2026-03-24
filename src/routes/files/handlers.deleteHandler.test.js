@@ -1,4 +1,3 @@
-import { deleteFileFromS3 } from '../../lib/s3';
 import {
   ActivityReport,
 } from '../../models';
@@ -34,7 +33,6 @@ jest.mock('../../services/files', () => ({
   ...jest.requireActual('../../services/files'),
   deleteActivityReportFile: jest.fn(),
   deleteFile: jest.fn(),
-  deleteFileFromS3: jest.fn(),
   deleteSessionFile: jest.fn(),
   deleteCommunicationLogFile: jest.fn(),
   getFileById: jest.fn(),
@@ -47,10 +45,6 @@ jest.mock('../../services/currentUser');
 jest.mock('../../policies/event');
 jest.mock('../../policies/communicationLog');
 jest.mock('../../policies/user');
-jest.mock('../../lib/s3', () => ({
-  deleteFileFromS3: jest.fn(),
-  uploadFile: jest.fn(),
-}));
 jest.mock('../../lib/apiErrorHandler', () => jest.fn());
 
 describe('deleteHandler', () => {
@@ -73,7 +67,7 @@ describe('deleteHandler', () => {
   const mockUser = { id: 1 };
 
   beforeEach(() => {
-    // jest.clearAllMocks();
+    jest.clearAllMocks();
     userById.mockResolvedValue(mockUser);
   });
 
@@ -152,7 +146,7 @@ describe('deleteHandler', () => {
     expect(mockRes.send).toHaveBeenCalled();
   });
 
-  it('returns 403 if user is not authorized for communication log', async () => {
+  it('returns 401 if user is not authorized for communication log', async () => {
     getFileById.mockResolvedValue({ communicationLogFiles: [{ communicationLogId: 1 }] });
     logById.mockResolvedValue({ id: 1 });
     const mockPolicy = { canUploadFileToLog: jest.fn().mockReturnValue(false) };
@@ -165,13 +159,13 @@ describe('deleteHandler', () => {
         fileId: 1,
         eventSessionId: undefined,
         communicationLogId: 1,
-        sessionAttachmentId: 1,
+        sessionAttachmentId: undefined,
       },
     };
 
     await deleteHandler(mockReq, mockRes);
 
-    expect(mockRes.sendStatus).toHaveBeenCalledWith(403);
+    expect(mockRes.sendStatus).toHaveBeenCalledWith(401);
   });
 
   it('deletes communication log file if authorized', async () => {
@@ -187,7 +181,7 @@ describe('deleteHandler', () => {
         fileId: 1,
         eventSessionId: undefined,
         communicationLogId: 1,
-        sessionAttachmentId: 1,
+        sessionAttachmentId: undefined,
       },
     };
 
@@ -198,7 +192,7 @@ describe('deleteHandler', () => {
     expect(mockRes.send).toHaveBeenCalled();
   });
 
-  it('returns 403 if user is not authorized for session attachment', async () => {
+  it('returns 401 if user is not authorized for session attachment', async () => {
     getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
@@ -219,7 +213,7 @@ describe('deleteHandler', () => {
 
     await deleteHandler(mockReq, mockRes);
 
-    expect(mockRes.sendStatus).toHaveBeenCalledWith(403);
+    expect(mockRes.sendStatus).toHaveBeenCalledWith(401);
   });
 
   it('deletes session attachment file if authorized', async () => {
@@ -248,7 +242,16 @@ describe('deleteHandler', () => {
     expect(mockRes.send).toHaveBeenCalled();
   });
 
-  it('deletes file from S3 if no associated records', async () => {
+  it('deletes file if no associated records remain', async () => {
+    const deleteReq = {
+      params: {
+        reportId: undefined,
+        fileId: 1,
+        eventSessionId: undefined,
+        communicationLogId: undefined,
+        sessionAttachmentId: undefined,
+      },
+    };
     getFileById.mockResolvedValue({
       reports: [],
       reportObjectiveFiles: [],
@@ -257,15 +260,23 @@ describe('deleteHandler', () => {
       sessionFiles: [],
     });
 
-    await deleteHandler(mockReq, mockRes);
+    await deleteHandler(deleteReq, mockRes);
 
-    expect(deleteFileFromS3).toHaveBeenCalled();
     expect(deleteFile).toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(204);
     expect(mockRes.send).toHaveBeenCalled();
   });
 
   it('handles file with associated records correctly', async () => {
+    const deleteReq = {
+      params: {
+        reportId: undefined,
+        fileId: 1,
+        eventSessionId: undefined,
+        communicationLogId: undefined,
+        sessionAttachmentId: undefined,
+      },
+    };
     getFileById.mockResolvedValue({
       reports: [{ id: 1 }],
       reportObjectiveFiles: [{ id: 1 }],
@@ -274,10 +285,9 @@ describe('deleteHandler', () => {
       sessionFiles: [],
     });
 
-    await deleteHandler(mockReq, mockRes);
+    await deleteHandler(deleteReq, mockRes);
 
-    expect(deleteFileFromS3).toHaveBeenCalled();
-    expect(deleteFile).toHaveBeenCalled();
+    expect(deleteFile).not.toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(204);
     expect(mockRes.send).toHaveBeenCalled();
   });

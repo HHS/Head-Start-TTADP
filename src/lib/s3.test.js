@@ -284,6 +284,21 @@ describe('S3 helpers', () => {
       expect(res.error).toBeInstanceOf(Error);
     });
 
+    it('returns an error when the key is missing', async () => {
+      const {
+        getSignedDownloadUrl,
+        mockGetSignedUrl,
+        mockAuditLogger,
+      } = loadModule();
+      const client = { send: jest.fn() };
+      const res = getSignedDownloadUrl(undefined, 'bucket-one', client);
+      expect(res.url).toBeNull();
+      expect(res.error).toBeInstanceOf(Error);
+      expect(res.error.message).toBe('S3 key is required');
+      expect(mockGetSignedUrl).not.toHaveBeenCalled();
+      expect(mockAuditLogger.error).toHaveBeenCalledWith('Failed to generate signed download URL: missing key');
+    });
+
     it('creates a signed URL for the requested object with AWS S3', async () => {
       const env = {
         S3_BUCKET: 'env-bucket',
