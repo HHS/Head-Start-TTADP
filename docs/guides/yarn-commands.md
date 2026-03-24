@@ -22,11 +22,11 @@ This guide is the source of truth for local command usage. For common operations
 | Run Playwright API tests | `yarn test:e2e:api` |
 | Run Playwright utils tests | `yarn test:e2e:utils` |
 | Run Cucumber BDD tests | `yarn test:bdd` |
-| Run backend lint | `yarn lint` |
-| Run backend lint (CI formatter) | `yarn lint:ci` |
-| Run backend + frontend lint | `yarn lint:all` |
-| Auto-fix backend lint issues | `yarn lint:fix` |
-| Auto-fix backend + frontend lint issues | `yarn lint:fix:all` |
+| Run backend lint with Biome | `yarn lint` |
+| Run backend lint with Biome (CI formatter) | `yarn lint:ci` |
+| Run backend + frontend lint with Biome | `yarn lint:all` |
+| Auto-fix backend lint issues with Biome | `yarn lint:fix` |
+| Auto-fix backend + frontend lint issues with Biome | `yarn lint:fix:all` |
 | Build backend TypeScript | `yarn build` |
 | Build frontend production bundle | `yarn --cwd frontend build` |
 
@@ -47,8 +47,8 @@ This guide is the source of truth for local command usage. For common operations
 | Seed DB in Docker | `yarn docker:db:seed` |
 | Undo seed in Docker | `yarn docker:db:seed:undo` |
 | Run logical data model in Docker | `yarn docker:ldm` |
-| Run lint in Docker | `yarn docker:lint` |
-| Auto-fix lint in Docker | `yarn docker:lint:fix` |
+| Run Biome lint in Docker | `yarn docker:lint` |
+| Auto-fix Biome lint in Docker | `yarn docker:lint:fix` |
 | Import system data in Docker | `yarn docker:import:system` |
 | Run makecolors in Docker | `yarn docker:makecolors` |
 | Run dynamic security scan (DSS) | `yarn docker:dss` |

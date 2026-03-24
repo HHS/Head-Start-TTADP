@@ -6,7 +6,7 @@ For general coding standards, follow existing style in the surrounding code.
 ## Code Style
 - Prefer creating new backend files as TypeScript.
 - Follow existing style in the surrounding code.
-- Ensure changes pass lint checks.
+- Ensure changes pass Biome lint checks.
 - Reuse existing components and hooks before creating new ones.
 
 ## Testing
