@@ -609,7 +609,7 @@ describe('processData', () => {
         force: true,
       });
     });
-    it('obfuscates flattened monitoring reference grant numbers', async () => {
+    it('obfuscates flattened and legacy monitoring reference grant numbers', async () => {
       const grantBefore = await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true });
       const grantNumberBefore = grantBefore.number;
       const findingId = `${TEST_FINDING_ID}-${uuidv4()}`;
@@ -638,6 +638,9 @@ describe('processData', () => {
         expect(row).toBeTruthy();
         expect(row.grantNumber).not.toBe(grantNumberBefore);
         expect(row.grantNumber).toBe(obfuscated);
+        expect(row.monitoringReferences).toHaveLength(1);
+        expect(row.monitoringReferences[0].grantNumber).not.toBe(grantNumberBefore);
+        expect(row.monitoringReferences[0].grantNumber).toBe(obfuscated);
       } finally {
         await Grant.update(
           { number: grantNumberBefore },

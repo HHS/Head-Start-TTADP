@@ -1056,19 +1056,55 @@ export const processTraningReports = async (where = '') => {
   `);
 };
 
-// Anonymize grant numbers persisted on flattened AROC columns.
+// Anonymize grant numbers persisted on flattened AROC columns and legacy monitoringReferences.
 // Citation linkage now lives on ActivityReportObjectiveCitations via citationId/findingId.
 export const processMonitoringReferences = async (where = '') => sequelize.query(/* sql */`
   UPDATE "ActivityReportObjectiveCitations" aroc
-  SET "grantNumber" = COALESCE(
-    (
-      SELECT gr."number"
-      FROM "Grants" gr
-      WHERE gr.id = aroc."grantId"
-    ),
-    "convertGrantNumber"(aroc."grantNumber", aroc."grantId")
+  SET
+    "grantNumber" = CASE
+      WHEN NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL THEN COALESCE(
+        (
+          SELECT gr."number"
+          FROM "Grants" gr
+          WHERE gr.id = aroc."grantId"
+        ),
+        "convertGrantNumber"(aroc."grantNumber", aroc."grantId")
+      )
+      ELSE aroc."grantNumber"
+    END,
+    "monitoringReferences" = CASE
+      WHEN aroc."monitoringReferences" IS NOT NULL THEN COALESCE(
+        (
+          SELECT jsonb_agg(
+            CASE
+              WHEN ref ? 'grantNumber' THEN
+                jsonb_set(
+                  ref,
+                  '{grantNumber}',
+                  to_jsonb(
+                    "convertGrantNumber"(
+                      ref ->> 'grantNumber',
+                      COALESCE(
+                        NULLIF(ref ->> 'originalGrantId', '')::int,
+                        NULLIF(ref ->> 'grantId', '')::int
+                      )
+                    )
+                  ),
+                  true
+                )
+              ELSE ref
+            END
+          )
+          FROM jsonb_array_elements(aroc."monitoringReferences") AS ref
+        ),
+        aroc."monitoringReferences"
+      )
+      ELSE aroc."monitoringReferences"
+    END
+  WHERE (
+    NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL
+    OR aroc."monitoringReferences" IS NOT NULL
   )
-  WHERE NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL
   ${where};
 `);
 
