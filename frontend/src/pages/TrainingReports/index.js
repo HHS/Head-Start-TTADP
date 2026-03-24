@@ -1,93 +1,60 @@
-import React, {
-  useContext, useState, useEffect,
-} from 'react';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
+import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useHistory, Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { Link, useHistory } from 'react-router-dom';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import './index.scss';
-import {
-  Alert, Grid, Button,
-} from '@trussworks/react-uswds';
-import UserContext from '../../UserContext';
-import StaffProvider from '../../components/StaffProvider';
-import colors from '../../colors';
-import WidgetContainer from '../../components/WidgetContainer';
-import Tabs from '../../components/Tabs';
-import EventCards from './components/EventCards';
-import { getEventsByStatus, deleteEvent } from '../../fetchers/event';
-import { deleteSession } from '../../fetchers/session';
+import { Alert, Button, Grid } from '@trussworks/react-uswds';
 import AppLoadingContext from '../../AppLoadingContext';
-import { TRAINING_REPORT_FILTER_CONFIG } from './constants';
-import { filtersToQueryString, expandFilters } from '../../utils';
-import useFilters from '../../hooks/useFilters';
+import colors from '../../colors';
 import FilterPanel from '../../components/filter/FilterPanel';
-import { showFilterWithMyRegions } from '../regionHelpers';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import StaffProvider from '../../components/StaffProvider';
+import Tabs from '../../components/Tabs';
 import TrainingReportAlerts from '../../components/TrainingReportAlerts';
+import WidgetContainer from '../../components/WidgetContainer';
+import { deleteEvent, getEventsByStatus } from '../../fetchers/event';
+import { deleteSession } from '../../fetchers/session';
+import useFilters from '../../hooks/useFilters';
+import UserContext from '../../UserContext';
+import { expandFilters, filtersToQueryString } from '../../utils';
+import { showFilterWithMyRegions } from '../regionHelpers';
+import EventCards from './components/EventCards';
+import { TRAINING_REPORT_FILTER_CONFIG } from './constants';
 
 const FILTER_KEY = 'training-report-filters';
 
 const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) => ({
-  key: TRAINING_REPORT_STATUSES_URL_PARAMS[status], value: status,
+  key: TRAINING_REPORT_STATUSES_URL_PARAMS[status],
+  value: status,
 }));
 
 const MESSAGE_TEMPLATES = {
   eventSubmitted: (_sessionName, eventId, dateStr) => (
     <>
-      You submitted Training Event
-      {' '}
-      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link>
-      {' '}
-      on
-      {' '}
+      You submitted Training Event <Link to={`/training-report/view/${eventId}`}>{eventId}</Link> on{' '}
       {dateStr}
     </>
   ),
   sessionCreated: (_sessionName, eventId, dateStr) => (
     <>
-      You created a session
-      {' '}
-      for Training Event
-      {' '}
-      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link>
-      {' '}
-      on
-      {' '}
-      {dateStr}
+      You created a session for Training Event{' '}
+      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link> on {dateStr}
     </>
   ),
   sessionSubmitted: (sessionName, eventId, dateStr) => (
     <>
-      You submitted the session
-      {' '}
-      {sessionName}
-      {' '}
-      of Training Event
-      {' '}
-      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link>
-      {' '}
-      on
-      {' '}
-      {dateStr}
+      You submitted the session {sessionName} of Training Event{' '}
+      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link> on {dateStr}
     </>
   ),
   sessionReviewSubmitted: (sessionName, eventId, dateStr) => (
     <>
-      Your review for session
-      {' '}
-      {sessionName}
-      {' '}
-      of Training Event
-      {' '}
-      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link>
-      {' '}
-      was submitted on
-      {' '}
-      {dateStr}
+      Your review for session {sessionName} of Training Event{' '}
+      <Link to={`/training-report/view/${eventId}`}>{eventId}</Link> was submitted on {dateStr}
     </>
   ),
 };
@@ -107,23 +74,21 @@ export const evaluateMessageFromHistory = (history) => {
       return MESSAGE_TEMPLATES[messageTemplate](
         message.sessionName,
         message.eventId,
-        message.dateStr,
+        message.dateStr
       );
     }
 
     // default case
-    return MESSAGE_TEMPLATES.eventSubmitted(
-      message.sessionName,
-      message.eventId,
-      message.dateStr,
-    );
+    return MESSAGE_TEMPLATES.eventSubmitted(message.sessionName, message.eventId, message.dateStr);
   }
 
   return null;
 };
 
 export default function TrainingReports({ match }) {
-  const { params: { status } } = match;
+  const {
+    params: { status },
+  } = match;
   const { user } = useContext(UserContext);
   const [error, updateError] = useState();
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -148,7 +113,7 @@ export default function TrainingReports({ match }) {
     FILTER_KEY,
     true, // manage regions
     [],
-    TRAINING_REPORT_FILTER_CONFIG,
+    TRAINING_REPORT_FILTER_CONFIG
   );
 
   useEffect(() => {
@@ -240,40 +205,36 @@ export default function TrainingReports({ match }) {
     <StaffProvider>
       <div className="ttahub-training-reports">
         <Helmet>
-          <title>
-            {titleCaseStatus}
-            {' '}
-            - Training Reports
-          </title>
+          <title>{titleCaseStatus} - Training Reports</title>
         </Helmet>
         <>
           <RegionPermissionModal
             filters={filters}
             user={user}
-            showFilterWithMyRegions={
-            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
-          }
+            showFilterWithMyRegions={() =>
+              showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+            }
           />
-          {(msg) && (
-          <Alert
-            type="success"
-            role="alert"
-            className="margin-bottom-2"
-            cta={(
-              <Button
-                role="button"
-                unstyled
-                aria-label="dismiss alert"
-                onClick={() => setMsg(null)}
-              >
-                <span className="fa-sm margin-right-2">
-                  <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
-                </span>
-              </Button>
-            )}
-          >
-            {msg}
-          </Alert>
+          {msg && (
+            <Alert
+              type="success"
+              role="alert"
+              className="margin-bottom-2"
+              cta={
+                <Button
+                  role="button"
+                  unstyled
+                  aria-label="dismiss alert"
+                  onClick={() => setMsg(null)}
+                >
+                  <span className="fa-sm margin-right-2">
+                    <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
+                  </span>
+                </Button>
+              }
+            >
+              {msg}
+            </Alert>
           )}
           <Grid>
             <Grid row gap>
@@ -283,12 +244,15 @@ export default function TrainingReports({ match }) {
             </Grid>
             <Grid row>
               {error && (
-              <Alert className="margin-bottom-2" type="error" role="alert">
-                {error}
-              </Alert>
+                <Alert className="margin-bottom-2" type="error" role="alert">
+                  {error}
+                </Alert>
               )}
             </Grid>
-            <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+            <Grid
+              col={12}
+              className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2"
+            >
               <FilterPanel
                 applyButtonAria="apply filters for training reports"
                 filters={filters}
@@ -331,7 +295,6 @@ export default function TrainingReports({ match }) {
         </>
       </div>
     </StaffProvider>
-
   );
 }
 
@@ -342,11 +305,13 @@ TrainingReports.propTypes = {
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
     homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-      scopeId: PropTypes.number,
-      regionId: PropTypes.number,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number,
+        scopeId: PropTypes.number,
+        regionId: PropTypes.number,
+      })
+    ),
   }),
 };
 

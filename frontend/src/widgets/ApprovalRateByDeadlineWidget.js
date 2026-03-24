@@ -1,22 +1,14 @@
 /* global globalThis */
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+
 import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { arrayExistsAndHasLength, EMPTY_ARRAY, NOOP } from '../Constants';
+import FiltersNotApplicable from '../components/FiltersNotApplicable';
 import WidgetContainer from '../components/WidgetContainer';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
-import FiltersNotApplicable from '../components/FiltersNotApplicable';
 import useMediaCapture from '../hooks/useMediaCapture';
-import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import useWidgetExport from '../hooks/useWidgetExport';
-import withWidgetData from './withWidgetData';
-import LineGraph from './LineGraph';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import { arrayExistsAndHasLength, EMPTY_ARRAY, NOOP } from '../Constants';
+import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import {
   APPROVAL_RATE_BY_DEADLINE_EXPORT_NAME,
   APPROVAL_RATE_BY_DEADLINE_FIRST_COLUMN,
@@ -24,6 +16,9 @@ import {
   APPROVAL_RATE_BY_DEADLINE_TABLE_CAPTION,
   APPROVAL_RATE_BY_DEADLINE_TRACE_IDS,
 } from './constants';
+import HorizontalTableWidget from './HorizontalTableWidget';
+import LineGraph from './LineGraph';
+import withWidgetData from './withWidgetData';
 import './ApprovalRateByDeadlineWidget.css';
 
 function ApprovalRateSubtitle({ showFilterWarning }) {
@@ -33,9 +28,7 @@ function ApprovalRateSubtitle({ showFilterWarning }) {
         <WidgetContainerSubtitle marginY={0}>
           Percentage of activity reports approved by the expected deadline.
         </WidgetContainerSubtitle>
-        {showFilterWarning && (
-          <FiltersNotApplicable showLeadingDash={false} />
-        )}
+        {showFilterWarning && <FiltersNotApplicable showLeadingDash={false} />}
       </div>
     </div>
   );
@@ -66,7 +59,9 @@ function ApprovalRateCarousel({
       <h3 className="text-center text-bold font-sans-md margin-0 margin-top-2 margin-bottom-1">
         {activeRegionId ? `Region ${activeRegionId}` : 'Region'}
       </h3>
-      <span className="usa-sr-only" aria-live="polite" aria-atomic="true">{announcement}</span>
+      <span className="usa-sr-only" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </span>
       {hasMultipleRegions && (
         <p className="usa-sr-only">
           Click left side of the chart for previous region, right side for next region.
@@ -96,21 +91,28 @@ function ApprovalRateCarousel({
               aria-label="Previous region"
               tabIndex={hasPreviousRegion ? 0 : -1}
             >
-              <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--left" aria-hidden="true" />
+              <span
+                className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--left"
+                aria-hidden="true"
+              />
             </button>
           )}
           {transition ? (
             <>
-              <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--outgoing approval-rate-carousel-slide--${transition.direction}`}>
+              <div
+                className={`approval-rate-carousel-slide approval-rate-carousel-slide--outgoing approval-rate-carousel-slide--${transition.direction}`}
+              >
                 {renderLineGraph(
                   getTraceDataForRegion(regions[transition.from]),
-                  `approval-rate-outgoing-${transition.from}`,
+                  `approval-rate-outgoing-${transition.from}`
                 )}
               </div>
-              <div className={`approval-rate-carousel-slide approval-rate-carousel-slide--incoming approval-rate-carousel-slide--${transition.direction}`}>
+              <div
+                className={`approval-rate-carousel-slide approval-rate-carousel-slide--incoming approval-rate-carousel-slide--${transition.direction}`}
+              >
                 {renderLineGraph(
                   getTraceDataForRegion(regions[transition.to]),
-                  `approval-rate-incoming-${transition.to}`,
+                  `approval-rate-incoming-${transition.to}`
                 )}
               </div>
             </>
@@ -132,7 +134,10 @@ function ApprovalRateCarousel({
               aria-label="Next region"
               tabIndex={hasNextRegion ? 0 : -1}
             >
-              <span className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--right" aria-hidden="true" />
+              <span
+                className="approval-rate-carousel-nav-icon approval-rate-carousel-nav-icon--right"
+                aria-hidden="true"
+              />
             </button>
           )}
         </div>
@@ -167,10 +172,7 @@ ApprovalRateCarousel.propTypes = {
   activeRegionId: PropTypes.number,
   announcement: PropTypes.string.isRequired,
   carouselFrameRef: PropTypes.shape({
-    current: PropTypes.oneOfType([
-      PropTypes.object,
-      PropTypes.oneOf([null]),
-    ]),
+    current: PropTypes.oneOfType([PropTypes.object, PropTypes.oneOf([null])]),
   }).isRequired,
   hasMultipleRegions: PropTypes.bool.isRequired,
   hasPreviousRegion: PropTypes.bool.isRequired,
@@ -187,13 +189,15 @@ ApprovalRateCarousel.propTypes = {
   regions: PropTypes.arrayOf(PropTypes.number).isRequired,
   getTraceDataForRegion: PropTypes.func.isRequired,
   renderLineGraph: PropTypes.func.isRequired,
-  traceData: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    x: PropTypes.arrayOf(PropTypes.string),
-    y: PropTypes.arrayOf(PropTypes.number),
-    trace: PropTypes.string,
-    id: PropTypes.string,
-  })).isRequired,
+  traceData: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      x: PropTypes.arrayOf(PropTypes.string),
+      y: PropTypes.arrayOf(PropTypes.number),
+      trace: PropTypes.string,
+      id: PropTypes.string,
+    })
+  ).isRequired,
   activeRegionIndex: PropTypes.number.isRequired,
   handleRegionChange: PropTypes.func.isRequired,
   onDotRef: PropTypes.func.isRequired,
@@ -236,10 +240,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
     return () => mediaQuery.removeEventListener('change', updatePreference);
   }, []);
 
-  const widgetData = useMemo(
-    () => (data || { regions: EMPTY_ARRAY, records: EMPTY_ARRAY }),
-    [data],
-  );
+  const widgetData = useMemo(() => data || { regions: EMPTY_ARRAY, records: EMPTY_ARRAY }, [data]);
 
   useEffect(() => {
     if (!widgetData || !arrayExistsAndHasLength(widgetData.regions)) {
@@ -283,7 +284,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
 
   const regions = useMemo(
     () => (widgetData && Array.isArray(widgetData.regions) ? widgetData.regions : []),
-    [widgetData],
+    [widgetData]
   );
 
   const activeRegionId = regions[activeRegionIndex];
@@ -299,133 +300,130 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
     return `${safePct}% (${safeOnTime} of ${safeTotal})`;
   };
 
-  const {
-    columnHeadings,
-    footerData,
-    tableRows,
-    monthLabels,
-    nationalSeries,
-    regionSeriesById,
-  } = useMemo(() => {
-    if (!widgetData || !arrayExistsAndHasLength(widgetData.records)) {
-      return {
-        columnHeadings: [],
-        footerData: [],
-        tableRows: [],
-        monthLabels: [],
-        nationalSeries: [],
-        regionSeriesById: new Map(),
-      };
-    }
-
-    const months = widgetData.records.map((r) => r.month_label);
-    const regionHeadings = regions.map((regionId) => `Region ${regionId}`);
-    const tableHeadings = [...regionHeadings, 'National average'];
-    const nationalValues = widgetData.records.map((record) => Number(record.national_pct) || 0);
-    const regionSeriesMap = new Map();
-    const regionTotalsMap = new Map();
-    let nationalOnTimeTotal = 0;
-    let nationalCountTotal = 0;
-
-    regions.forEach((regionId) => {
-      let regionOnTimeTotal = 0;
-      let regionCountTotal = 0;
-      regionSeriesMap.set(
-        regionId,
-        widgetData.records.map((record) => {
-          const regionData = record.regions && record.regions[regionId]
-            ? record.regions[regionId]
-            : { pct: 0 };
-          regionOnTimeTotal += Number(regionData.on_time) || 0;
-          regionCountTotal += Number(regionData.total) || 0;
-          return Number(regionData.pct) || 0;
-        }),
-      );
-      regionTotalsMap.set(regionId, { onTime: regionOnTimeTotal, total: regionCountTotal });
-    });
-
-    widgetData.records.forEach((record) => {
-      nationalOnTimeTotal += Number(record.national_on_time) || 0;
-      nationalCountTotal += Number(record.national_total) || 0;
-    });
-
-    const tableData = widgetData.records.map((record, index) => {
-      const rowCells = regions.map((regionId) => {
-        const regionData = record.regions && record.regions[regionId]
-          ? record.regions[regionId]
-          : { pct: 0, on_time: 0, total: 0 };
+  const { columnHeadings, footerData, tableRows, monthLabels, nationalSeries, regionSeriesById } =
+    useMemo(() => {
+      if (!widgetData || !arrayExistsAndHasLength(widgetData.records)) {
         return {
-          value: formatPctWithCounts(regionData.pct, regionData.on_time, regionData.total),
-          title: `Region ${regionId}`,
+          columnHeadings: [],
+          footerData: [],
+          tableRows: [],
+          monthLabels: [],
+          nationalSeries: [],
+          regionSeriesById: new Map(),
+        };
+      }
+
+      const months = widgetData.records.map((r) => r.month_label);
+      const regionHeadings = regions.map((regionId) => `Region ${regionId}`);
+      const tableHeadings = [...regionHeadings, 'National average'];
+      const nationalValues = widgetData.records.map((record) => Number(record.national_pct) || 0);
+      const regionSeriesMap = new Map();
+      const regionTotalsMap = new Map();
+      let nationalOnTimeTotal = 0;
+      let nationalCountTotal = 0;
+
+      regions.forEach((regionId) => {
+        let regionOnTimeTotal = 0;
+        let regionCountTotal = 0;
+        regionSeriesMap.set(
+          regionId,
+          widgetData.records.map((record) => {
+            const regionData =
+              record.regions && record.regions[regionId] ? record.regions[regionId] : { pct: 0 };
+            regionOnTimeTotal += Number(regionData.on_time) || 0;
+            regionCountTotal += Number(regionData.total) || 0;
+            return Number(regionData.pct) || 0;
+          })
+        );
+        regionTotalsMap.set(regionId, { onTime: regionOnTimeTotal, total: regionCountTotal });
+      });
+
+      widgetData.records.forEach((record) => {
+        nationalOnTimeTotal += Number(record.national_on_time) || 0;
+        nationalCountTotal += Number(record.national_total) || 0;
+      });
+
+      const tableData = widgetData.records.map((record, index) => {
+        const rowCells = regions.map((regionId) => {
+          const regionData =
+            record.regions && record.regions[regionId]
+              ? record.regions[regionId]
+              : { pct: 0, on_time: 0, total: 0 };
+          return {
+            value: formatPctWithCounts(regionData.pct, regionData.on_time, regionData.total),
+            title: `Region ${regionId}`,
+          };
+        });
+
+        rowCells.push({
+          value: formatPctWithCounts(
+            record.national_pct,
+            record.national_on_time,
+            record.national_total
+          ),
+          title: 'National average',
+        });
+
+        return {
+          heading: record.month_label,
+          id: `approval-rate-row-${index}`,
+          data: rowCells,
         };
       });
 
-      rowCells.push({
-        value: formatPctWithCounts(
-          record.national_pct,
-          record.national_on_time,
-          record.national_total,
-        ),
-        title: 'National average',
-      });
+      const formatTotalCell = (onTime, total) => {
+        if (!total) {
+          return formatPctWithCounts(0, 0, 0);
+        }
+        const pct = Math.round((onTime / total) * 100);
+        return formatPctWithCounts(pct, onTime, total);
+      };
+
+      const totalsRow = [
+        '',
+        'Total',
+        ...regions.map((regionId) => {
+          const totals = regionTotalsMap.get(regionId) || { onTime: 0, total: 0 };
+          return formatTotalCell(totals.onTime, totals.total);
+        }),
+        formatTotalCell(nationalOnTimeTotal, nationalCountTotal),
+      ];
 
       return {
-        heading: record.month_label,
-        id: `approval-rate-row-${index}`,
-        data: rowCells,
+        columnHeadings: tableHeadings,
+        footerData: totalsRow,
+        tableRows: tableData,
+        monthLabels: months,
+        nationalSeries: nationalValues,
+        regionSeriesById: regionSeriesMap,
       };
-    });
+    }, [regions, widgetData]);
 
-    const formatTotalCell = (onTime, total) => {
-      if (!total) {
-        return formatPctWithCounts(0, 0, 0);
+  const getTraceDataForRegion = useCallback(
+    (regionId) => {
+      if (!regionId) {
+        return [];
       }
-      const pct = Math.round((onTime / total) * 100);
-      return formatPctWithCounts(pct, onTime, total);
-    };
-
-    const totalsRow = [
-      '',
-      'Total',
-      ...regions.map((regionId) => {
-        const totals = regionTotalsMap.get(regionId) || { onTime: 0, total: 0 };
-        return formatTotalCell(totals.onTime, totals.total);
-      }),
-      formatTotalCell(nationalOnTimeTotal, nationalCountTotal),
-    ];
-
-    return {
-      columnHeadings: tableHeadings,
-      footerData: totalsRow,
-      tableRows: tableData,
-      monthLabels: months,
-      nationalSeries: nationalValues,
-      regionSeriesById: regionSeriesMap,
-    };
-  }, [regions, widgetData]);
-
-  const getTraceDataForRegion = useCallback((regionId) => {
-    if (!regionId) {
-      return [];
-    }
-    const series = regionSeriesById.get(regionId) || [];
-    return [
-      {
-        name: 'Region',
-        x: monthLabels,
-        y: series,
-        trace: 'circle',
-        id: APPROVAL_RATE_BY_DEADLINE_TRACE_IDS.REGION,
-      },
-      {
-        name: 'National average',
-        x: monthLabels,
-        y: nationalSeries,
-        trace: 'triangle',
-        id: APPROVAL_RATE_BY_DEADLINE_TRACE_IDS.NATIONAL,
-      },
-    ];
-  }, [monthLabels, nationalSeries, regionSeriesById]);
+      const series = regionSeriesById.get(regionId) || [];
+      return [
+        {
+          name: 'Region',
+          x: monthLabels,
+          y: series,
+          trace: 'circle',
+          id: APPROVAL_RATE_BY_DEADLINE_TRACE_IDS.REGION,
+        },
+        {
+          name: 'National average',
+          x: monthLabels,
+          y: nationalSeries,
+          trace: 'triangle',
+          id: APPROVAL_RATE_BY_DEADLINE_TRACE_IDS.NATIONAL,
+        },
+      ];
+    },
+    [monthLabels, nationalSeries, regionSeriesById]
+  );
 
   const traceData = activeRegionId ? getTraceDataForRegion(activeRegionId) : [];
 
@@ -434,7 +432,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
     columnHeadings,
     checkboxes,
     APPROVAL_RATE_BY_DEADLINE_FIRST_COLUMN,
-    APPROVAL_RATE_BY_DEADLINE_EXPORT_NAME,
+    APPROVAL_RATE_BY_DEADLINE_EXPORT_NAME
   );
 
   const menuItems = useWidgetMenuItems(
@@ -442,52 +440,58 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
     setShowTabularData,
     capture,
     checkboxes,
-    exportRows,
+    exportRows
   );
 
-  const tableConfig = useMemo(() => ({
-    data: tableRows,
-    title: 'Approval rate by deadline',
-    firstHeading: APPROVAL_RATE_BY_DEADLINE_FIRST_COLUMN,
-    caption: APPROVAL_RATE_BY_DEADLINE_TABLE_CAPTION,
-    enableCheckboxes: true,
-    enableSorting: false,
-    showTotalColumn: false,
-    requestSort: NOOP,
-    headings: columnHeadings,
-    checkboxes,
-    setCheckboxes,
-    selectAllIdPrefix: 'approval-rate-by-deadline-',
-    footer: {
-      showFooter: true,
-      data: footerData,
-    },
-  }), [checkboxes, columnHeadings, footerData, setCheckboxes, tableRows]);
+  const tableConfig = useMemo(
+    () => ({
+      data: tableRows,
+      title: 'Approval rate by deadline',
+      firstHeading: APPROVAL_RATE_BY_DEADLINE_FIRST_COLUMN,
+      caption: APPROVAL_RATE_BY_DEADLINE_TABLE_CAPTION,
+      enableCheckboxes: true,
+      enableSorting: false,
+      showTotalColumn: false,
+      requestSort: NOOP,
+      headings: columnHeadings,
+      checkboxes,
+      setCheckboxes,
+      selectAllIdPrefix: 'approval-rate-by-deadline-',
+      footer: {
+        showFooter: true,
+        data: footerData,
+      },
+    }),
+    [checkboxes, columnHeadings, footerData, setCheckboxes, tableRows]
+  );
 
-  const handleRegionChange = useCallback((nextIndex, source = 'dot') => {
-    if (nextIndex < 0 || nextIndex >= regions.length || nextIndex === activeRegionIndex) {
-      return;
-    }
+  const handleRegionChange = useCallback(
+    (nextIndex, source = 'dot') => {
+      if (nextIndex < 0 || nextIndex >= regions.length || nextIndex === activeRegionIndex) {
+        return;
+      }
 
-    shouldFocusActiveDotRef.current = source !== 'dot';
-    setAnnouncement(`Showing Region ${regions[nextIndex]}`);
+      shouldFocusActiveDotRef.current = source !== 'dot';
+      setAnnouncement(`Showing Region ${regions[nextIndex]}`);
 
-    if (prefersReducedMotion) {
+      if (prefersReducedMotion) {
+        setActiveRegionIndex(nextIndex);
+        return;
+      }
+
+      if (carouselFrameRef.current) {
+        setLockedFrameHeight(carouselFrameRef.current.getBoundingClientRect().height);
+      }
+
+      setTransition({
+        from: activeRegionIndex,
+        to: nextIndex,
+        direction: nextIndex > activeRegionIndex ? 'next' : 'prev',
+      });
       setActiveRegionIndex(nextIndex);
-      return;
-    }
-
-    if (carouselFrameRef.current) {
-      setLockedFrameHeight(carouselFrameRef.current.getBoundingClientRect().height);
-    }
-
-    setTransition({
-      from: activeRegionIndex,
-      to: nextIndex,
-      direction: nextIndex > activeRegionIndex ? 'next' : 'prev',
-    });
-    setActiveRegionIndex(nextIndex);
-  }, [activeRegionIndex, prefersReducedMotion, regions]);
+    },
+    [activeRegionIndex, prefersReducedMotion, regions]
+  );
 
   const hasMultipleRegions = regions.length > 1;
   const hasPreviousRegion = hasMultipleRegions && activeRegionIndex > 0;
@@ -508,24 +512,27 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
   const handleDotRef = useCallback((index, element) => {
     dotButtonRefs.current[index] = element;
   }, []);
-  const handleChartClick = useCallback((event) => {
-    if (!hasMultipleRegions || transition) {
-      return;
-    }
+  const handleChartClick = useCallback(
+    (event) => {
+      if (!hasMultipleRegions || transition) {
+        return;
+      }
 
-    const bounds = event.currentTarget.getBoundingClientRect();
-    if (!bounds.width) {
-      return;
-    }
+      const bounds = event.currentTarget.getBoundingClientRect();
+      if (!bounds.width) {
+        return;
+      }
 
-    const clickOffset = event.clientX - bounds.left;
-    if (clickOffset < bounds.width / 2) {
-      handleRegionChange(activeRegionIndex - 1, 'chart');
-      return;
-    }
+      const clickOffset = event.clientX - bounds.left;
+      if (clickOffset < bounds.width / 2) {
+        handleRegionChange(activeRegionIndex - 1, 'chart');
+        return;
+      }
 
-    handleRegionChange(activeRegionIndex + 1, 'chart');
-  }, [activeRegionIndex, handleRegionChange, hasMultipleRegions, transition]);
+      handleRegionChange(activeRegionIndex + 1, 'chart');
+    },
+    [activeRegionIndex, handleRegionChange, hasMultipleRegions, transition]
+  );
 
   const widgetClassName = [
     'approval-rate-by-deadline-widget',
@@ -537,8 +544,7 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
   const subtitle = (
     <ApprovalRateSubtitle
       showFilterWarning={
-        showFiltersNotApplicable
-        || Boolean(widgetData?.showDashboardFiltersNotApplicable)
+        showFiltersNotApplicable || Boolean(widgetData?.showDashboardFiltersNotApplicable)
       }
     />
   );
@@ -614,13 +620,15 @@ ApprovalRateByDeadlineWidget.propTypes = {
   data: PropTypes.shape({
     regions: PropTypes.arrayOf(PropTypes.number),
     showDashboardFiltersNotApplicable: PropTypes.bool,
-    records: PropTypes.arrayOf(PropTypes.shape({
-      month_label: PropTypes.string.isRequired,
-      national_pct: PropTypes.number.isRequired,
-      national_total: PropTypes.number.isRequired,
-      national_on_time: PropTypes.number.isRequired,
-      regions: PropTypes.shape({}),
-    })),
+    records: PropTypes.arrayOf(
+      PropTypes.shape({
+        month_label: PropTypes.string.isRequired,
+        national_pct: PropTypes.number.isRequired,
+        national_total: PropTypes.number.isRequired,
+        national_on_time: PropTypes.number.isRequired,
+        regions: PropTypes.shape({}),
+      })
+    ),
   }),
   loading: PropTypes.bool,
   showFiltersNotApplicable: PropTypes.bool,

@@ -1,19 +1,17 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { OverviewWidgetField } from '../OverviewWidgetField';
 
-jest.mock('../../components/ContentFromFeedByTag', () => function MockContentFromFeedByTag({ tagName }) {
-  return (
-    <div data-testid="feed-by-tag">
-      Feed for
-      {' '}
-      {tagName}
-    </div>
-  );
-});
+jest.mock(
+  '../../components/ContentFromFeedByTag',
+  () =>
+    function MockContentFromFeedByTag({ tagName }) {
+      return <div data-testid="feed-by-tag">Feed for {tagName}</div>;
+    }
+);
 
 const mockIcon = {
   prefix: 'fas',
@@ -41,7 +39,7 @@ function renderField(extraProps = {}) {
         // eslint-disable-next-line react/jsx-props-no-spreading
         {...extraProps}
       />
-    </BrowserRouter>,
+    </BrowserRouter>
   );
 }
 
@@ -60,6 +58,8 @@ describe('OverviewWidgetField', () => {
     renderField({ drawerTagName: 'ttahub-spotlight-priority-indicators' });
     expect(screen.getByTestId('feed-by-tag')).toBeInTheDocument();
     expect(screen.getByText(/ttahub-spotlight-priority-indicators/)).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: baseProps.label1, hidden: true })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: baseProps.label1, hidden: true })
+    ).toBeInTheDocument();
   });
 });
