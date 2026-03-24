@@ -21,7 +21,7 @@ Implementation decisions:
 - Keep existing lint script names (`lint`, `lint:ci`, `lint:fix`, `lint:fix:single`, `lint:all`, `lint:fix:all`) and rewire them to Biome.
 - Add a root `biome.json` for repository-wide lint configuration and ignores.
 - Update the pre-commit hook to run Biome fixes on staged JS/TS files.
-- Keep CI lint artifacts at `reports/lint.xml` and `frontend/reports/lint.xml` using Biome's JUnit reporter output.
+- Keep CI lint artifacts at `lint-reports/lint.xml` and `frontend/lint-reports/lint.xml` using Biome's JUnit reporter output.
 - Remove ESLint-specific dependencies/config from `package.json` and `frontend/package.json`.
 
 ADR relationship:
