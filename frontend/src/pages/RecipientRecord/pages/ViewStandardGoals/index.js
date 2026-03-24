@@ -569,7 +569,7 @@ export default function ViewGoalDetails({
         <span>Back to RTTAPA</span>
       </Link>
 
-      <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
+      <h1 className="page-heading view-standard-goals-page-heading margin-top-0 margin-bottom-0 margin-left-2">
         TTA Goals for
         {' '}
         {recipient.name}
@@ -579,7 +579,7 @@ export default function ViewGoalDetails({
         {regionId}
       </h1>
 
-      <Container className="margin-y-3 margin-left-2 maxw-desktop" paddingX={4} paddingY={5}>
+      <Container className="margin-y-3 margin-left-2 maxw-desktop view-standard-goals-print-container" paddingX={4} paddingY={5}>
         <div className="margin-bottom-3 goal-summary-block">
           <div className="display-flex flex-justify margin-bottom-3 goal-summary-heading-row">
             <h2 className="margin-top-0 margin-bottom-0 smart-hub-serif">Goal summary</h2>
