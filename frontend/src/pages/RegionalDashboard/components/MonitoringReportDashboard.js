@@ -1,13 +1,11 @@
-import React, { useMemo } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDateRange } from '../../../utils';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 
-export default function MonitoringReportDashboard({
-  filtersToApply,
-}) {
+export default function MonitoringReportDashboard({ filtersToApply }) {
   const defaultFilters = useMemo(() => {
     const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
     const defaultDate = formatDateRange({
@@ -26,10 +24,10 @@ export default function MonitoringReportDashboard({
     ];
   }, []);
 
-  const filters = useMemo(() => ([
-    ...filtersToApply,
-    ...defaultFilters,
-  ]), [filtersToApply, defaultFilters]);
+  const filters = useMemo(
+    () => [...filtersToApply, ...defaultFilters],
+    [filtersToApply, defaultFilters]
+  );
 
   return (
     <div>

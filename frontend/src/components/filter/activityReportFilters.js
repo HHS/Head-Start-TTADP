@@ -1,38 +1,40 @@
-import React from 'react';
 import moment from 'moment';
-import { formatDateRange } from '../../utils';
+import React from 'react';
 import {
   DATE_CONDITIONS,
-  SELECT_CONDITIONS,
+  EMPTY_TEXT_INPUT,
   FILTER_CONDITIONS,
-  REGION_CONDITIONS,
   MY_REPORTS_FILTER_CONDITIONS,
+  REGION_CONDITIONS,
+  SELECT_CONDITIONS,
   SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
   SPECIALIST_NAME_CONDITIONS,
-  EMPTY_TEXT_INPUT,
 } from '../../Constants';
-import FilterDateRange from './FilterDateRange';
-import FilterInput from './FilterInput';
-import FilterReasonSelect from './FilterReasonSelect';
-import FilterRegionalSelect from './FilterRegionSelect';
-import FilterTopicSelect from './FilterTopicSelect';
+import { formatDateRange } from '../../utils';
 import FilterActivityReportGoalResponseSelect from './FilterActivityReportGoalResponseSelect';
-import FilterPopulationSelect from './FilterPopulationSelect';
-import FilterSingleOrMultiRecipientsSelect, { mapDisplayValue } from './FilterSingleOrMultiRecipientsSelect';
-import FilterProgramType from './FilterProgramType';
-import FilterSpecialistSelect from './FilterSpecialistSelect';
-import FilterStateSelect from './FilterStateSelect';
+import FilterDateRange from './FilterDateRange';
+import FilterDeliveryMethod from './FilterDeliveryMethod';
+import FilterDomainResultSelect from './FilterDomainResultSelect';
+import FilterGroups from './FilterGroups';
+import FilterInput from './FilterInput';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
-import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
-import FilterDomainResultSelect from './FilterDomainResultSelect';
-import GrantStatus, { displayGrantsStatus } from './GrantStatus';
-import MyReportsSelect from './MyReportsSelect';
-import FilterGroups from './FilterGroups';
-import FilterDeliveryMethod from './FilterDeliveryMethod';
+import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterPriorityIndicator from './FilterPriorityIndicator';
-import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
+import FilterProgramType from './FilterProgramType';
+import FilterReasonSelect from './FilterReasonSelect';
+import FilterRegionalSelect from './FilterRegionSelect';
+import FilterSingleOrMultiRecipientsSelect, {
+  mapDisplayValue,
+} from './FilterSingleOrMultiRecipientsSelect';
+import FilterSpecialistSelect from './FilterSpecialistSelect';
+import FilterStateSelect from './FilterStateSelect';
+import FilterTopicSelect from './FilterTopicSelect';
+import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
+import GrantStatus, { displayGrantsStatus } from './GrantStatus';
 import { handleArrayQuery } from './helpers';
+import MyReportsSelect from './MyReportsSelect';
+import { fixQueryWhetherStringOrArray, useDisplayGroups } from './utils';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -40,8 +42,8 @@ const EMPTY_MULTI_SELECT = {
 };
 
 const EMPTY_MY_REPORTS_MULTI_SELECT = {
-  'where I\'m the': [],
-  'where I\'m not the': [],
+  "where I'm the": [],
+  "where I'm not the": [],
 };
 
 const EMPTY_SINGLE_SELECT = {
@@ -324,10 +326,7 @@ export const regionFilter = {
   defaultValues: EMPTY_SINGLE_SELECT,
   displayQuery: handleStringQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterRegionalSelect
-      appliedRegion={query}
-      onApply={onApplyQuery}
-    />
+    <FilterRegionalSelect appliedRegion={query} onApply={onApplyQuery} />
   ),
 };
 
@@ -389,11 +388,7 @@ export const stateCodeFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterStateSelect
-      inputId={`state-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <FilterStateSelect inputId={`state-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
 };
 
@@ -436,11 +431,7 @@ export const myReportsFilter = {
   defaultValues: EMPTY_MY_REPORTS_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <MyReportsSelect
-      inputId={`my-reports-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <MyReportsSelect inputId={`my-reports-${id}`} onApply={onApplyQuery} query={query} />
   ),
 };
 
@@ -451,11 +442,7 @@ export const topicsFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterTopicSelect
-      inputId={`topic-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <FilterTopicSelect inputId={`topic-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
 };
 
@@ -482,11 +469,7 @@ export const groupsFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: useDisplayGroups,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterGroups
-      inputId={`group-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <FilterGroups inputId={`group-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
 };
 

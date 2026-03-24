@@ -5,12 +5,11 @@
   to that label. Be sure to pass in a description of the menu in the `label` prop. This prop
   is used as ellipsis' aria-label.
 */
-import React, {
-  useState, useEffect, useCallback, useRef,
-} from 'react';
-import { createPortal } from 'react-dom';
-import PropTypes from 'prop-types';
+
 import { Button } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './Menu.scss';
 
 const ESCAPE_KEY_CODE = 27;
@@ -37,11 +36,14 @@ function Menu({
   const menuRef = useRef(null);
   const clickingMenuItemRef = useRef(false);
 
-  const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) {
-      updateShown(false);
-    }
-  }, [updateShown]);
+  const onEscape = useCallback(
+    (event) => {
+      if (event.keyCode === ESCAPE_KEY_CODE) {
+        updateShown(false);
+      }
+    },
+    [updateShown]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', onEscape, false);
@@ -56,12 +58,7 @@ function Menu({
     if (fixed && containerRef.current && containerRef.current.getBoundingClientRect) {
       // containerRef.current.style = 'background: red';
       // get the button's position
-      const {
-        top,
-        height,
-        left: l,
-        width,
-      } = containerRef.current.getBoundingClientRect();
+      const { top, height, left: l, width } = containerRef.current.getBoundingClientRect();
 
       // we could be programmatically calculating the height and width offset numbers
       // but a little manual work up front will save on performance in the browser
@@ -193,11 +190,7 @@ function Menu({
   }, [shown]);
 
   return (
-    <div
-      onBlur={onBlur}
-      className="position-relative smart-hub-menu-container"
-      ref={containerRef}
-    >
+    <div onBlur={onBlur} className="position-relative smart-hub-menu-container" ref={containerRef}>
       <button
         ref={triggerRef}
         className={`smart-hub--menu-button usa-button usa-button--unstyled smart-hub--button__no-margin ${className}`}
@@ -209,41 +202,60 @@ function Menu({
       >
         {buttonText}
       </button>
-      {shown && (() => {
-        const menuContent = (
-          // needed fix below for safari's focus behavior with portals and blur events -
-          // blur fires before the click event on the menu item, so we set a ref to
-          // ignore the blur when clicking a menu item, then reset it in a mousedown
-          // event on the menu container
-          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-          <div ref={menuRef} onMouseDown={() => { clickingMenuItemRef.current = true; }} data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
-            <ul className="usa-list usa-list--unstyled" role="menu" onKeyDown={onMenuKeyDown}>
-              {menuItems.map((item) => (
-                <li key={item.label} role="menuitem">
-                  <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin" aria-label={item.label}>
-                    <div className="padding-2 padding-right-3">
-                      {item.label}
-                    </div>
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-        // Use portal when fixed to escape stacking context of sticky table columns
-        return fixed ? createPortal(menuContent, document.body) : menuContent;
-      })()}
+      {shown &&
+        (() => {
+          const menuContent = (
+            // needed fix below for safari's focus behavior with portals and blur events -
+            // blur fires before the click event on the menu item, so we set a ref to
+            // ignore the blur when clicking a menu item, then reset it in a mousedown
+            // event on the menu container
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+            <div
+              ref={menuRef}
+              onMouseDown={() => {
+                clickingMenuItemRef.current = true;
+              }}
+              data-testid="menu"
+              className={menuClass}
+              style={{ backgroundColor, ...menuPosition }}
+            >
+              <ul className="usa-list usa-list--unstyled" role="menu" onKeyDown={onMenuKeyDown}>
+                {menuItems.map((item) => (
+                  <li key={item.label} role="menuitem">
+                    <Button
+                      type="button"
+                      id={item.id || undefined}
+                      onClick={() => {
+                        updateShown(false);
+                        item.onClick();
+                      }}
+                      unstyled
+                      className="smart-hub--menu-button smart-hub--button__no-margin"
+                      aria-label={item.label}
+                    >
+                      <div className="padding-2 padding-right-3">{item.label}</div>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+          // Use portal when fixed to escape stacking context of sticky table columns
+          return fixed ? createPortal(menuContent, document.body) : menuContent;
+        })()}
     </div>
   );
 }
 
 Menu.propTypes = {
   label: PropTypes.string.isRequired,
-  menuItems: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
-    onClick: PropTypes.func,
-    id: PropTypes.string,
-  })).isRequired,
+  menuItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
+      onClick: PropTypes.func,
+      id: PropTypes.string,
+    })
+  ).isRequired,
   backgroundColor: PropTypes.string,
   buttonTestId: PropTypes.string,
   left: PropTypes.bool,

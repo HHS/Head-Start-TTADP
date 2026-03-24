@@ -1,32 +1,26 @@
-import React, {
-  useEffect,
-  useState,
-  useContext,
-} from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, useLocation } from 'react-router-dom';
-import {
-  Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading,
-} from '@trussworks/react-uswds';
-import PropTypes from 'prop-types';
 import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import AppLoadingContext from '../../../../AppLoadingContext';
+import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
+import colors from '../../../../colors';
+import { Accordion } from '../../../../components/Accordion';
+import Container from '../../../../components/Container';
+import ReadOnlyField from '../../../../components/ReadOnlyField';
 import {
   faArrowLeft,
   faChartColumn,
   faCheckCircle,
-  faPenCircle,
   faPauseCircle,
+  faPenCircle,
 } from '../../../../icons';
-import { DashboardOverviewContainer } from '../../../../widgets/DashboardOverviewContainer';
-import Container from '../../../../components/Container';
-import colors from '../../../../colors';
-import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
-import ReadOnlyField from '../../../../components/ReadOnlyField';
-import { Accordion } from '../../../../components/Accordion';
-import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
+import { DashboardOverviewContainer } from '../../../../widgets/DashboardOverviewContainer';
 import './index.scss';
 
 export const GoalUserIdentifier = ({ goal }) => {
@@ -34,20 +28,22 @@ export const GoalUserIdentifier = ({ goal }) => {
     return ' by OHS';
   }
 
-  return goal.goalCollaborators && goal.goalCollaborators.some(
-    (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
-  )
-    ? ` by ${goal.goalCollaborators.find(
-      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator',
-    ).user.name}`
+  return goal.goalCollaborators &&
+    goal.goalCollaborators.some(
+      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user
+    )
+    ? ` by ${
+        goal.goalCollaborators.find(
+          (c) => c.collaboratorType && c.collaboratorType.name === 'Creator'
+        ).user.name
+      }`
     : '';
 };
 
-export const StatusActionTag = ({
-  update, goalHistory, currentGoalIndex,
-}) => {
-  const isReopened = (update.reason === 'Goal created' || update.reason === 'Active monitoring citations')
-    && goalHistory.some((hist, index) => index > currentGoalIndex && hist.status === 'Closed');
+export const StatusActionTag = ({ update, goalHistory, currentGoalIndex }) => {
+  const isReopened =
+    (update.reason === 'Goal created' || update.reason === 'Active monitoring citations') &&
+    goalHistory.some((hist, index) => index > currentGoalIndex && hist.status === 'Closed');
 
   if (update.reason === 'Goal created' || update.reason === 'Active monitoring citations') {
     return <span>{isReopened ? 'Reopened on' : 'Added on'}</span>;
@@ -65,13 +61,7 @@ export const StatusActionTag = ({
     case 'Complete':
       return <span>Completed on</span>;
     default:
-      return (
-        <span>
-          {update.newStatus}
-          {' '}
-          on
-        </span>
-      );
+      return <span>{update.newStatus} on</span>;
   }
 };
 
@@ -80,9 +70,11 @@ StatusActionTag.propTypes = {
     newStatus: PropTypes.string,
     reason: PropTypes.string,
   }).isRequired,
-  goalHistory: PropTypes.arrayOf(PropTypes.shape({
-    status: PropTypes.string,
-  })).isRequired,
+  goalHistory: PropTypes.arrayOf(
+    PropTypes.shape({
+      status: PropTypes.string,
+    })
+  ).isRequired,
   currentGoalIndex: PropTypes.number.isRequired,
 };
 
@@ -91,15 +83,19 @@ export const userDisplayFromStatus = (goal, update) => {
     return <GoalUserIdentifier goal={goal} />;
   }
 
-  if (goal.standard === 'Monitoring'
-    && update.newStatus === GOAL_STATUS.NOT_STARTED
-    && update.reason === 'Active monitoring citations') {
+  if (
+    goal.standard === 'Monitoring' &&
+    update.newStatus === GOAL_STATUS.NOT_STARTED &&
+    update.reason === 'Active monitoring citations'
+  ) {
     return ' by OHS';
   }
 
-  if (goal.standard === 'Monitoring'
-    && update.newStatus === 'Closed'
-    && update.reason === 'No active monitoring citations') {
+  if (
+    goal.standard === 'Monitoring' &&
+    update.newStatus === 'Closed' &&
+    update.reason === 'No active monitoring citations'
+  ) {
     return ' by OHS';
   }
 
@@ -109,10 +105,7 @@ export const userDisplayFromStatus = (goal, update) => {
   return '';
 };
 
-export default function ViewGoalDetails({
-  recipient,
-  regionId,
-}) {
+export default function ViewGoalDetails({ recipient, regionId }) {
   const [fetchError, setFetchError] = useState('');
   const [goalHistory, setGoalHistory] = useState([]);
   const [overview, setOverview] = useState(null);
@@ -130,9 +123,10 @@ export default function ViewGoalDetails({
 
   const { goalId } = getQueryParams();
 
-  const canView = user.permissions.filter(
-    (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
-  ).length > 0;
+  const canView =
+    user.permissions.filter(
+      (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE)
+    ).length > 0;
 
   useEffect(() => {
     let isSubscribed = true; // Flag to track component mount status
@@ -217,19 +211,22 @@ export default function ViewGoalDetails({
   const accordionItems = goalHistory.map((goal, index) => {
     // doing this moment/format transform here in order to make grouping by below
     // a bit more readable
-    const statusUpdates = (goal.statusChanges && goal.statusChanges.length > 0
-      ? goal.statusChanges
-      : []).map((gsc) => ({
+    const statusUpdates = (
+      goal.statusChanges && goal.statusChanges.length > 0 ? goal.statusChanges : []
+    ).map((gsc) => ({
       ...gsc,
-      performedAt: moment.utc(
-        gsc.performedAt || gsc.createdAt,
-      ).format(DATE_DISPLAY_FORMAT),
+      performedAt: moment.utc(gsc.performedAt || gsc.createdAt).format(DATE_DISPLAY_FORMAT),
     }));
     // Deduplicate near-identical updates (same time and statuses) to avoid double-rendering.
     const dedupedStatusUpdates = statusUpdates.reduce((acc, curr) => {
-      if (!acc.find((gsc) => gsc.performedAt === curr.performedAt
-        && gsc.newStatus === curr.newStatus
-        && gsc.oldStatus === curr.oldStatus)) {
+      if (
+        !acc.find(
+          (gsc) =>
+            gsc.performedAt === curr.performedAt &&
+            gsc.newStatus === curr.newStatus &&
+            gsc.oldStatus === curr.oldStatus
+        )
+      ) {
         acc.push(curr);
       }
       return acc;
@@ -238,8 +235,9 @@ export default function ViewGoalDetails({
     // Ensure the list includes an initial "Added" item when there are updates
     // but no explicit add. Criteria to detect an existing "Added"-like update:
     // oldStatus is null or newStatus is Not Started.
-    const hasAddedUpdate = dedupedStatusUpdates.some((u) => u.oldStatus === null
-      || u.newStatus === GOAL_STATUS.NOT_STARTED);
+    const hasAddedUpdate = dedupedStatusUpdates.some(
+      (u) => u.oldStatus === null || u.newStatus === GOAL_STATUS.NOT_STARTED
+    );
     const displayUpdates = [...dedupedStatusUpdates];
     if (dedupedStatusUpdates.length > 0 && !hasAddedUpdate) {
       displayUpdates.unshift({
@@ -260,7 +258,7 @@ export default function ViewGoalDetails({
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
       expanded: index === 0,
-      handleToggle: () => { }, // Add dummy handler to satisfy prop-types
+      handleToggle: () => {}, // Add dummy handler to satisfy prop-types
       className: 'view-standard-goals-accordion',
       content: (
         <div className="goal-history-content">
@@ -278,21 +276,18 @@ export default function ViewGoalDetails({
                           goalHistory={goalHistory}
                           currentGoalIndex={index}
                         />
-                      </strong>
-                      {' '}
-                      <strong>
-                        {update.performedAt}
-                      </strong>
+                      </strong>{' '}
+                      <strong>{update.performedAt}</strong>
                       {getUserByFromStatus(update)}
-                      {(update.newStatus === GOAL_STATUS.SUSPENDED
-                        && updateIndex !== displayUpdates.length - 1) ? (
-                          <>
-                            <br />
-                            Reason:
-                            {' '}
-                            {update.reason}
-                          </>
-                        ) : <></>}
+                      {update.newStatus === GOAL_STATUS.SUSPENDED &&
+                      updateIndex !== displayUpdates.length - 1 ? (
+                        <>
+                          <br />
+                          Reason: {update.reason}
+                        </>
+                      ) : (
+                        <></>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -301,11 +296,8 @@ export default function ViewGoalDetails({
                   <li>
                     <strong>
                       {goal.status === GOAL_STATUS.NOT_STARTED ? 'Added' : `${goal.status}`}
-                    </strong>
-                    {' '}
-                    on
-                    {' '}
-                    <strong>{moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                    </strong>{' '}
+                    on <strong>{moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
                     <GoalUserIdentifier goal={goal} />
                   </li>
                 </ul>
@@ -314,194 +306,187 @@ export default function ViewGoalDetails({
           </SummaryBox>
 
           {goal.responses && goal.responses.length > 0 && (
-          <ReadOnlyField label="Root causes">
-            {goal.responses.map((response) => (
-              <div key={response.id}>
-                {Array.isArray(response.response) ? (
-                  response.response.join(', ')
-                ) : (
-                  <p>{response.response}</p>
-                )}
-              </div>
-            ))}
-          </ReadOnlyField>
+            <ReadOnlyField label="Root causes">
+              {goal.responses.map((response) => (
+                <div key={response.id}>
+                  {Array.isArray(response.response) ? (
+                    response.response.join(', ')
+                  ) : (
+                    <p>{response.response}</p>
+                  )}
+                </div>
+              ))}
+            </ReadOnlyField>
           )}
 
           <div className="goal-status-section margin-bottom-3">
             <ReadOnlyField label="Goal status">
               {goal.status}
-              {goal.status === GOAL_STATUS.SUSPENDED
-                ? (
-                  <>
-                    {' '}
-                    -
-                    {' '}
-                    {goal.reason}
-                  </>
-                )
-                : <></>}
+              {goal.status === GOAL_STATUS.SUSPENDED ? <> - {goal.reason}</> : <></>}
             </ReadOnlyField>
           </div>
 
           {objectives.length > 0 && (
-          <div className="objective-details-section margin-bottom-3">
-            {objectives.map((objective) => (
-              <div key={objective.id} className="margin-bottom-3">
-                <h3 className="smart-hub-serif">Objective summary</h3>
-                <ReadOnlyField label="TTA objective">
-                  {objective.title}
-                </ReadOnlyField>
+            <div className="objective-details-section margin-bottom-3">
+              {objectives.map((objective) => (
+                <div key={objective.id} className="margin-bottom-3">
+                  <h3 className="smart-hub-serif">Objective summary</h3>
+                  <ReadOnlyField label="TTA objective">{objective.title}</ReadOnlyField>
 
-                {/* Display Reports */}
-                {objective.activityReportObjectives
-                        && objective.activityReportObjectives.length > 0 && (
-                          <div className="margin-top-2">
-                            <ReadOnlyField label="Reports">
-                              {objective.activityReportObjectives
-                                .filter((aro) => aro.activityReport)
-                                .map((aro, reportIndex, array) => (
-                                  <React.Fragment key={`report-${aro.activityReport.id}`}>
-                                    <Link to={`/activity-reports/view/${aro.activityReport.id}`}>
-                                      {aro.activityReport.displayId}
-                                    </Link>
-                                    {reportIndex < array.length - 1 && ', '}
-                                  </React.Fragment>
-                                ))}
-                            </ReadOnlyField>
-                          </div>
-                )}
+                  {/* Display Reports */}
+                  {objective.activityReportObjectives &&
+                    objective.activityReportObjectives.length > 0 && (
+                      <div className="margin-top-2">
+                        <ReadOnlyField label="Reports">
+                          {objective.activityReportObjectives
+                            .filter((aro) => aro.activityReport)
+                            .map((aro, reportIndex, array) => (
+                              <React.Fragment key={`report-${aro.activityReport.id}`}>
+                                <Link to={`/activity-reports/view/${aro.activityReport.id}`}>
+                                  {aro.activityReport.displayId}
+                                </Link>
+                                {reportIndex < array.length - 1 && ', '}
+                              </React.Fragment>
+                            ))}
+                        </ReadOnlyField>
+                      </div>
+                    )}
 
-                {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
-                  <div className="margin-top-2">
-                    <ReadOnlyField label="TTA specialists">
-                      {objective.ttaSpecialists.join('; ')}
-                    </ReadOnlyField>
-                  </div>
-                ) : null}
-
-                {/* Display Topics */}
-                {!objective.activityReportObjectives
-                        || !objective.activityReportObjectives.some(
-                          (aro) => aro.topics && aro.topics.length > 0,
-                        ) ? null : (
-                          <div className="margin-top-2">
-                            <ReadOnlyField label="Topics">
-                              {(objective.activityReportObjectives || [])
-                                .flatMap((aro) => aro.topics || [])
-                                .filter(
-                                  (topic, i, self) => i === self.findIndex(
-                                    (t) => t.id === topic.id,
-                                  ),
-                                )
-                                .map((topic, topicIndex, array) => (
-                                  <React.Fragment key={`topic-${topic.id}`}>
-                                    {topic.name}
-                                    {topicIndex < array.length - 1 && ', '}
-                                  </React.Fragment>
-                                ))}
-                            </ReadOnlyField>
-                          </div>
-                  )}
-                {/* Check if there are any resources before rendering the section */}
-                {(
-                  // Check for courses
-                  ((objective.activityReportObjectives || [])
-                    .flatMap((aro) => aro.activityReportObjectiveCourses || [])
-                    .filter(
-                      (courseObj, i, self) => courseObj.course && i === self.findIndex(
-                        (c) => c.course && c.course.id === courseObj.course.id,
-                      ),
-                    ).length > 0)
-                  // Check for resources/links
-                  || ((objective.activityReportObjectives || []).some(
-                    (aro) => aro.resources && aro.resources.length > 0,
-                  ))
-                  // Check for files
-                  || ((objective.activityReportObjectives || []).some(
-                    (aro) => aro.files && aro.files.length > 0,
-                  ))
-                ) && (
-                  <>
-                    <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
-                    <div className="resource-sections-container">
-                      {/* Display Courses if present */}
-                      {(objective.activityReportObjectives || [])
-                        .flatMap((aro) => aro.activityReportObjectiveCourses || [])
-                        .filter(
-                          (courseObj, i, self) => courseObj.course && i === self.findIndex(
-                            (c) => c.course && c.course.id === courseObj.course.id,
-                          ),
-                        ).length > 0 && (
-                          <ul className="usa-list margin-top-0 margin-bottom-0 resource-link-wrapper">
-                            {objective.activityReportObjectives
-                              .flatMap((aro) => aro.activityReportObjectiveCourses || [])
-                              .filter(
-                                (courseObj, i, self) => courseObj.course && i === self.findIndex(
-                                  (c) => c.course && c.course.id === courseObj.course.id,
-                                ),
-                              )
-                              .map((courseObj) => (
-                                <li key={`course-${courseObj.course.id}`}>
-                                  {courseObj.course.name}
-                                </li>
-                              ))}
-                          </ul>
-                      )}
-
-                      {/* Display Resources */}
-                      {!objective.activityReportObjectives
-                              || !objective.activityReportObjectives.some(
-                                (aro) => aro.resources && aro.resources.length > 0,
-                              ) ? null : (
-                                <ul className="usa-list margin-top-0 resource-link-wrapper">
-                                  {(objective.activityReportObjectives || [])
-                                    .flatMap((aro) => aro.resources || [])
-                                    .filter(
-                                      (resource, i, self) => i === self.findIndex(
-                                        (r) => r.id === resource.id,
-                                      ),
-                                    )
-                                    .map((resource) => (
-                                      <li key={`resource-${resource.id}`}>
-                                        <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                                          {resource.title || resource.url}
-                                        </a>
-                                      </li>
-                                    ))}
-                                </ul>
-                        )}
-
-                      {/* Display Objective Files */}
-                      {!objective.activityReportObjectives
-                              || !objective.activityReportObjectives.some(
-                                (aro) => aro.files && aro.files.length > 0,
-                              ) ? null : (
-                                <ul className="usa-list margin-top-0 resource-link-wrapper">
-                                  {(objective.activityReportObjectives || [])
-                                    .flatMap((aro) => aro.files || [])
-                                    .filter(
-                                      (file, i, self) => i === self.findIndex(
-                                        (f) => f.id === file.id,
-                                      ),
-                                    )
-                                    .map((file) => (
-                                      <li key={`file-${file.id}`}>
-                                        {file.originalFileName}
-                                      </li>
-                                    ))}
-                                </ul>
-                        )}
+                  {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
+                    <div className="margin-top-2">
+                      <ReadOnlyField label="TTA specialists">
+                        {objective.ttaSpecialists.join('; ')}
+                      </ReadOnlyField>
                     </div>
-                  </>
-                )}
+                  ) : null}
 
-                {/* Display Objective Status */}
-                <ReadOnlyField label="Objective status" className="margin-top-2">
-                  {objective.status}
-                </ReadOnlyField>
-              </div>
-            ))}
-          </div>
+                  {/* Display Topics */}
+                  {!objective.activityReportObjectives ||
+                  !objective.activityReportObjectives.some(
+                    (aro) => aro.topics && aro.topics.length > 0
+                  ) ? null : (
+                    <div className="margin-top-2">
+                      <ReadOnlyField label="Topics">
+                        {(objective.activityReportObjectives || [])
+                          .flatMap((aro) => aro.topics || [])
+                          .filter(
+                            (topic, i, self) => i === self.findIndex((t) => t.id === topic.id)
+                          )
+                          .map((topic, topicIndex, array) => (
+                            <React.Fragment key={`topic-${topic.id}`}>
+                              {topic.name}
+                              {topicIndex < array.length - 1 && ', '}
+                            </React.Fragment>
+                          ))}
+                      </ReadOnlyField>
+                    </div>
+                  )}
+                  {/* Check if there are any resources before rendering the section */}
+                  {
+                    // Check for courses
+                    ((objective.activityReportObjectives || [])
+                      .flatMap((aro) => aro.activityReportObjectiveCourses || [])
+                      .filter(
+                        (courseObj, i, self) =>
+                          courseObj.course &&
+                          i ===
+                            self.findIndex((c) => c.course && c.course.id === courseObj.course.id)
+                      ).length > 0 ||
+                      // Check for resources/links
+                      (objective.activityReportObjectives || []).some(
+                        (aro) => aro.resources && aro.resources.length > 0
+                      ) ||
+                      // Check for files
+                      (objective.activityReportObjectives || []).some(
+                        (aro) => aro.files && aro.files.length > 0
+                      )) && (
+                      <>
+                        <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
+                        <div className="resource-sections-container">
+                          {/* Display Courses if present */}
+                          {(objective.activityReportObjectives || [])
+                            .flatMap((aro) => aro.activityReportObjectiveCourses || [])
+                            .filter(
+                              (courseObj, i, self) =>
+                                courseObj.course &&
+                                i ===
+                                  self.findIndex(
+                                    (c) => c.course && c.course.id === courseObj.course.id
+                                  )
+                            ).length > 0 && (
+                            <ul className="usa-list margin-top-0 margin-bottom-0 resource-link-wrapper">
+                              {objective.activityReportObjectives
+                                .flatMap((aro) => aro.activityReportObjectiveCourses || [])
+                                .filter(
+                                  (courseObj, i, self) =>
+                                    courseObj.course &&
+                                    i ===
+                                      self.findIndex(
+                                        (c) => c.course && c.course.id === courseObj.course.id
+                                      )
+                                )
+                                .map((courseObj) => (
+                                  <li key={`course-${courseObj.course.id}`}>
+                                    {courseObj.course.name}
+                                  </li>
+                                ))}
+                            </ul>
+                          )}
+
+                          {/* Display Resources */}
+                          {!objective.activityReportObjectives ||
+                          !objective.activityReportObjectives.some(
+                            (aro) => aro.resources && aro.resources.length > 0
+                          ) ? null : (
+                            <ul className="usa-list margin-top-0 resource-link-wrapper">
+                              {(objective.activityReportObjectives || [])
+                                .flatMap((aro) => aro.resources || [])
+                                .filter(
+                                  (resource, i, self) =>
+                                    i === self.findIndex((r) => r.id === resource.id)
+                                )
+                                .map((resource) => (
+                                  <li key={`resource-${resource.id}`}>
+                                    <a
+                                      href={resource.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {resource.title || resource.url}
+                                    </a>
+                                  </li>
+                                ))}
+                            </ul>
+                          )}
+
+                          {/* Display Objective Files */}
+                          {!objective.activityReportObjectives ||
+                          !objective.activityReportObjectives.some(
+                            (aro) => aro.files && aro.files.length > 0
+                          ) ? null : (
+                            <ul className="usa-list margin-top-0 resource-link-wrapper">
+                              {(objective.activityReportObjectives || [])
+                                .flatMap((aro) => aro.files || [])
+                                .filter(
+                                  (file, i, self) => i === self.findIndex((f) => f.id === file.id)
+                                )
+                                .map((file) => (
+                                  <li key={`file-${file.id}`}>{file.originalFileName}</li>
+                                ))}
+                            </ul>
+                          )}
+                        </div>
+                      </>
+                    )
+                  }
+
+                  {/* Display Objective Status */}
+                  <ReadOnlyField label="Objective status" className="margin-top-2">
+                    {objective.status}
+                  </ReadOnlyField>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       ),
@@ -514,18 +499,16 @@ export default function ViewGoalDetails({
         className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
         to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
       >
-        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
+        <FontAwesomeIcon
+          className="margin-right-1"
+          color={colors.ttahubMediumBlue}
+          icon={faArrowLeft}
+        />
         <span>Back to RTTAPA</span>
       </Link>
 
       <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
-        TTA Goals for
-        {' '}
-        {recipient.name}
-        {' '}
-        - Region
-        {' '}
-        {regionId}
+        TTA Goals for {recipient.name} - Region {regionId}
       </h1>
 
       <Container className="margin-y-3 margin-left-2 maxw-desktop" paddingX={4} paddingY={5}>
@@ -585,11 +568,7 @@ export default function ViewGoalDetails({
           ]}
         />
 
-        <Accordion
-          multiselectable
-          bordered
-          items={accordionItems}
-        />
+        <Accordion multiselectable bordered items={accordionItems} />
       </Container>
     </>
   );
@@ -603,7 +582,7 @@ ViewGoalDetails.propTypes = {
       PropTypes.shape({
         id: PropTypes.number,
         numberWithProgramTypes: PropTypes.string,
-      }),
+      })
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
