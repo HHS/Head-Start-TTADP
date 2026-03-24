@@ -144,6 +144,7 @@ workflows:
     - run_import_job:
         serial-group: import-data/<< pipeline.parameters.target_env >>
         target_env: "<< pipeline.parameters.target_env >>"
+        slack_channel: acf-head-start-alerts-lower
 
   reset_env_cron:
     #scheduled job to reset lower envs to a default state
@@ -693,26 +694,90 @@ jobs:
     steps:
     - checkout
     - install_cf_tools
+    - cf_login:
+        target_env: << parameters.target_env >>
     - set_env_vars:
         target_env: << parameters.target_env >>
     - run:
         name: Run monitoring import phases
-        no_output_timeout: 60m
+        no_output_timeout: 30m
         command: |
-          chmod +x ./.circleci/scripts/run_import_job.sh
-          ./.circleci/scripts/run_import_job.sh "<< parameters.target_env >>"
+          set -u
+          set -o pipefail
+
+          TARGET_ENV="<< parameters.target_env >>"
+          APP_NAME="tta-smarthub-${TARGET_ENV}"
+          ARTIFACT_DIR="import-artifacts"
+          STATUS_FILE="${ARTIFACT_DIR}/import-status.json"
+          LOG_DIR="${ARTIFACT_DIR}/logs"
+
+          mkdir -p "${LOG_DIR}"
+
+          jq -n \
+            --arg target_env "${TARGET_ENV}" \
+            --arg app_name "${APP_NAME}" \
+            --arg started_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg trigger_source "${CIRCLE_PIPELINE_TRIGGER_SOURCE:-unknown}" \
+            '{
+              metadata: {
+                targetEnv: $target_env,
+                appName: $app_name,
+                startedAt: $started_at,
+                triggerSource: $trigger_source
+              },
+              taskRuns: []
+            }' > "${STATUS_FILE}"
+
+          PHASE_NAMES=(
+            "download"
+            "process"
+            "create_monitoring_goals"
+            "maintain_monitoring_data"
+            "update_fact_tables"
+            "report_updates"
+          )
+
+          PHASE_COMMANDS=(
+            "yarn cli:import-system download 1"
+            "yarn cli:import-system process 1"
+            "yarn cli:create-monitoring-goals"
+            "yarn cli:maintain-monitoring-data"
+            "yarn cli:updateMonitoringFactTables"
+            "yarn cli:query-monitoring-data"
+          )
+
+          for ((idx=0; idx<${#PHASE_NAMES[@]}; idx+=1)); do
+            phase_name="${PHASE_NAMES[$idx]}"
+            command="${PHASE_COMMANDS[$idx]}"
+            log_file="${LOG_DIR}/phase-${phase_name}.log"
+            task_name="import-${phase_name}-${TARGET_ENV}-${CIRCLE_BUILD_NUM:-local}-${RANDOM}"
+
+            echo "PHASE_START ${phase_name} ${task_name}" | tee -a "${log_file}"
+
+            if ./bin/run-task.js "${APP_NAME}" \
+              --status-file "${STATUS_FILE}" \
+              --log-file "${log_file}" \
+              --command "${command}" \
+              --name "${task_name}" \
+              -m 2GB \
+              -k 2GB >>"${log_file}" 2>&1; then
+              echo "PHASE_SUCCESS ${phase_name}" | tee -a "${log_file}"
+            else
+              phase_exit=$?
+              echo "PHASE_FAILURE ${phase_name} exit ${phase_exit}" | tee -a "${log_file}"
+              break
+            fi
+          done
+
+          cf logout >/dev/null 2>&1 || true
     - run:
         name: Create monitoring updates summary
         command: |
           chmod +x ./.circleci/scripts/build_import_summary.sh
-          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt
-    - when:
-        condition:
-          equal: [ << parameters.target_env >>, "prod" ]
-        steps:
-        - notify_slack:
-            message_text_file: monitoring-updates.txt
-            slack_channel: << parameters.slack_channel >>
+          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 6
+    - notify_slack:
+        message_text_file: monitoring-updates.txt
+        slack_channel: << parameters.slack_channel >>
     - store_artifacts:
         path: import-artifacts
     - store_artifacts:
@@ -720,8 +785,18 @@ jobs:
     - run:
         name: Fail if any import phase failed
         command: |
-          status=$(jq -r '.overallStatus' import-artifacts/import-status.json)
-          if [ "$status" != "SUCCEEDED" ]; then
+          STATUS_FILE="import-artifacts/import-status.json"
+          EXPECTED_TASKS=6
+
+          if [[ ! -f "${STATUS_FILE}" ]]; then
+            echo "Import status file not found."
+            exit 1
+          fi
+
+          task_count=$(jq '.taskRuns | length' "${STATUS_FILE}")
+          failed_count=$(jq '[.taskRuns[] | select(.status != "SUCCEEDED")] | length' "${STATUS_FILE}")
+
+          if [[ "${task_count}" -ne "${EXPECTED_TASKS}" || "${failed_count}" -ne 0 ]]; then
             echo "Import data cron failed or ran partially."
             exit 1
           fi

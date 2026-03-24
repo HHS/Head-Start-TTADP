@@ -140,17 +140,8 @@ run_phase_task() {
   local log_file="$4"
 
   echo "PHASE_START ${phase_name} ${task_name}" | tee -a "$log_file"
-  cf run-task "$APP_NAME" --command "$command" --name "$task_name" -m 2GB -k 2GB >>"$log_file" 2>&1
-  local run_task_exit=$?
-  if [[ $run_task_exit -ne 0 ]]; then
-    echo "PHASE_FAILURE ${phase_name} failed to start task" | tee -a "$log_file"
-    return $run_task_exit
-  fi
-
-  ./bin/watch-task.js "$APP_NAME" "$task_name" >>"$log_file" 2>&1
+  ./bin/run-task.js "$APP_NAME" --command "$command" --name "$task_name" -m 2GB -k 2GB >>"$log_file" 2>&1
   local watch_exit=$?
-
-  cf logs "$APP_NAME" --recent | grep -F "$task_name" >>"$log_file" 2>&1 || true
 
   if [[ $watch_exit -eq 0 ]]; then
     echo "PHASE_SUCCESS ${phase_name}" | tee -a "$log_file"

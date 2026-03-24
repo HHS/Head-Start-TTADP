@@ -5,9 +5,11 @@
 
 const { parseArgs } = require('node:util');
 const { execSync } = require('child_process');
-
-const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED']);
-const NON_TERMINAL_STATUSES = new Set(['PENDING', 'RUNNING']);
+const {
+  TERMINAL_STATUSES,
+  NON_TERMINAL_STATUSES,
+  parseTaskStatus,
+} = require('./cf-task-utils');
 
 function parse() {
   const args = process.argv.slice(2);
@@ -28,29 +30,6 @@ function runCmd(cmd, verbose = true) {
   const output = execSync(cmd, { encoding: 'utf-8' });
   if (verbose) { console.log(output); }
   return output;
-}
-
-function parseTaskStatus(output, taskName) {
-  const lines = output
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => /^\d+\s+/.test(line));
-
-  const matchedLine = lines.find((line) => {
-    const [, name] = line.split(/\s+/);
-    return name === taskName;
-  });
-
-  if (!matchedLine) {
-    throw new Error(`Task ${taskName} not found`);
-  }
-
-  const [, , status] = matchedLine.split(/\s+/);
-  if (!status) {
-    throw new Error(`Task ${taskName} did not include a status`);
-  }
-
-  return status;
 }
 
 function checkStatus(appName, taskName, runCmdImpl = runCmd) {

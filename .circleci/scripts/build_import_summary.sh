@@ -5,21 +5,50 @@ set -euo pipefail
 ARTIFACT_DIR="${1:-import-artifacts}"
 STATUS_FILE="${ARTIFACT_DIR}/import-status.json"
 SUMMARY_FILE="${2:-monitoring-updates.txt}"
+EXPECTED_TASKS="${3:-6}"
+LOGIN_LOG="${ARTIFACT_DIR}/logs/phase-login.log"
 
 if [[ ! -f "$STATUS_FILE" ]]; then
   echo "Import status file not found: $STATUS_FILE" >&2
   exit 1
 fi
 
-overall_status=$(jq -r '.overallStatus' "$STATUS_FILE")
-failed_phase=$(jq -r '.failedPhase // empty' "$STATUS_FILE")
-partial_run=$(jq -r '.partialRun' "$STATUS_FILE")
+task_count=$(jq '.taskRuns | length' "$STATUS_FILE")
+failed_count=$(jq '[.taskRuns[] | select(.status != "SUCCEEDED")] | length' "$STATUS_FILE")
+target_env=$(jq -r '.metadata.targetEnv // empty' "$STATUS_FILE")
+started_at=$(jq -r '.metadata.startedAt // (.taskRuns[0].startedAt // empty)' "$STATUS_FILE")
+finished_at=$(jq -r '.taskRuns[-1].finishedAt // empty' "$STATUS_FILE")
+
+if [[ "$task_count" -eq "$EXPECTED_TASKS" && "$failed_count" -eq 0 ]]; then
+  overall_status="SUCCEEDED"
+else
+  overall_status="FAILED"
+fi
+
+partial_run="false"
+if [[ "$task_count" -lt "$EXPECTED_TASKS" ]]; then
+  partial_run="true"
+fi
+
+failed_phase=$(jq -r '
+  def phase_name:
+    (.logFile // .taskName // "unknown")
+    | split("/")
+    | last
+    | sub("^phase-"; "")
+    | sub("\\.log$"; "");
+  first(.taskRuns[]? | select(.status != "SUCCEEDED") | phase_name) // empty
+' "$STATUS_FILE")
+
+if [[ -z "$failed_phase" && "$task_count" -eq 0 && -f "$LOGIN_LOG" ]]; then
+  failed_phase="login"
+fi
 
 {
   echo "Import data cron status: ${overall_status}"
-  echo "Environment: $(jq -r '.targetEnv' "$STATUS_FILE")"
-  echo "Started: $(jq -r '.startedAt' "$STATUS_FILE")"
-  echo "Finished: $(jq -r '.finishedAt' "$STATUS_FILE")"
+  echo "Environment: ${target_env}"
+  echo "Started: ${started_at}"
+  echo "Finished: ${finished_at}"
   if [[ -n "$failed_phase" ]]; then
     echo "Failed phase: ${failed_phase}"
   fi
@@ -28,7 +57,15 @@ partial_run=$(jq -r '.partialRun' "$STATUS_FILE")
   fi
   echo
   echo "Phase results:"
-  jq -r '.phases[] | "- \(.name): \(.status) (exit \(.exitCode))"' "$STATUS_FILE"
+  jq -r '
+    def phase_name:
+      (.logFile // .taskName // "unknown")
+      | split("/")
+      | last
+      | sub("^phase-"; "")
+      | sub("\\.log$"; "");
+    .taskRuns[] | "- \(phase_name): \(.status) (exit \(.exitCode))"
+  ' "$STATUS_FILE"
 } > "$SUMMARY_FILE"
 
 report_log="${ARTIFACT_DIR}/logs/phase-report_updates.log"
