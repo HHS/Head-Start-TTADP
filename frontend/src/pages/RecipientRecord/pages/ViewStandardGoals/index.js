@@ -4,15 +4,22 @@ import React, {
   useContext,
 } from 'react';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading,
 } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import {
+  faArrowLeft,
+  faChartColumn,
+  faCheckCircle,
+  faPenCircle,
+  faPauseCircle,
+} from '../../../../icons';
+import { DashboardOverviewContainer } from '../../../../widgets/DashboardOverviewContainer';
 import Container from '../../../../components/Container';
 import colors from '../../../../colors';
 import AppLoadingContext from '../../../../AppLoadingContext';
@@ -108,6 +115,7 @@ export default function ViewGoalDetails({
 }) {
   const [fetchError, setFetchError] = useState('');
   const [goalHistory, setGoalHistory] = useState([]);
+  const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -142,7 +150,8 @@ export default function ViewGoalDetails({
 
         const data = await response.json();
         if (isSubscribed) {
-          setGoalHistory(data);
+          setGoalHistory(data.goals);
+          setOverview(data.overview);
         }
       } catch (err) {
         if (isSubscribed) {
@@ -200,20 +209,16 @@ export default function ViewGoalDetails({
     );
   }
 
-  const sortedGoalHistory = [...goalHistory].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-  );
-
-  const firstGoal = sortedGoalHistory[0] || {};
+  const firstGoal = goalHistory[0] || {};
   const goalTemplate = firstGoal.goalTemplate || {};
   const goalTemplateName = goalTemplate.templateName || 'Standard Goal';
 
   // Create accordion items from goal history
-  const accordionItems = sortedGoalHistory.map((goal, index) => {
+  const accordionItems = goalHistory.map((goal, index) => {
     // doing this moment/format transform here in order to make grouping by below
     // a bit more readable
     const statusUpdates = (goal.statusChanges && goal.statusChanges.length > 0
-      ? goal.statusChanges.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      ? goal.statusChanges
       : []).map((gsc) => ({
       ...gsc,
       performedAt: moment.utc(
@@ -270,7 +275,7 @@ export default function ViewGoalDetails({
                       <strong>
                         <StatusActionTag
                           update={update}
-                          goalHistory={sortedGoalHistory}
+                          goalHistory={goalHistory}
                           currentGoalIndex={index}
                         />
                       </strong>
@@ -365,6 +370,14 @@ export default function ViewGoalDetails({
                             </ReadOnlyField>
                           </div>
                 )}
+
+                {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
+                  <div className="margin-top-2">
+                    <ReadOnlyField label="TTA specialists">
+                      {objective.ttaSpecialists.join('; ')}
+                    </ReadOnlyField>
+                  </div>
+                ) : null}
 
                 {/* Display Topics */}
                 {!objective.activityReportObjectives
@@ -515,8 +528,8 @@ export default function ViewGoalDetails({
         {regionId}
       </h1>
 
-      <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
-        <div className="margin-bottom-5">
+      <Container className="margin-y-3 margin-left-2 maxw-desktop" paddingX={4} paddingY={5}>
+        <div className="margin-bottom-3">
           <h2 className="margin-top-0 margin-bottom-3 smart-hub-serif">Goal Summary</h2>
           <ReadOnlyField label="Recipient grant numbers">
             {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
@@ -525,6 +538,52 @@ export default function ViewGoalDetails({
             {firstGoal.name || goalTemplateName}
           </ReadOnlyField>
         </div>
+
+        <DashboardOverviewContainer
+          loading={loading}
+          fieldData={[
+            {
+              key: 'activity-reports',
+              icon: faChartColumn,
+              iconColor: colors.success,
+              backgroundColor: colors.successLighter,
+              label1: 'Activity reports',
+              data: String(overview?.activityReports ?? 0),
+              showTooltip: true,
+              tooltipText: 'The number of Activity Reports the goal was used on.',
+            },
+            {
+              key: 'goal-objectives',
+              icon: faPenCircle,
+              iconColor: colors.ttahubMediumBlue,
+              backgroundColor: colors.ttahubBlueLight,
+              label1: 'Goal objectives',
+              data: String(overview?.objectives ?? 0),
+              showTooltip: true,
+              tooltipText: 'The number of objectives on the goal.',
+            },
+            {
+              key: 'goal-closures',
+              icon: faCheckCircle,
+              iconColor: colors.success,
+              backgroundColor: colors.successLighter,
+              label1: 'Goal closures',
+              data: String(overview?.closures ?? 0),
+              showTooltip: true,
+              tooltipText: 'The number of times the goal has been closed.',
+            },
+            {
+              key: 'goal-suspensions',
+              icon: faPauseCircle,
+              iconColor: colors.errorDark,
+              backgroundColor: colors.errorLighter,
+              label1: 'Goal suspensions',
+              data: String(overview?.suspensions ?? 0),
+              showTooltip: true,
+              tooltipText: 'The number of times the goal has been suspended.',
+            },
+          ]}
+        />
 
         <Accordion
           multiselectable

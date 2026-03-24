@@ -446,6 +446,7 @@ describe('Users DB service', () => {
     ];
 
     const eventReportPilotId = faker.datatype.number({ min: 25000 });
+    const eventDisplayId = `R01-PD-25-${eventReportPilotId}`;
 
     beforeAll(async () => {
       await Promise.all(
@@ -468,7 +469,7 @@ describe('Users DB service', () => {
           collaboratorIds: [],
           regionId: [1],
           data: {
-            eventId: `-${eventReportPilotId}`,
+            eventId: eventDisplayId,
           },
           imported: {},
         }),
@@ -499,7 +500,7 @@ describe('Users DB service', () => {
     });
 
     it('adds missing creator id when event id is passed', async () => {
-      const result = await getTrainingReportUsersByRegion(5, eventReportPilotId);
+      const result = await getTrainingReportUsersByRegion(5, eventDisplayId);
 
       const collaboratorIds = result.collaborators.map((u) => u.id);
       const pointOfContact = result.pointOfContact.map((u) => u.id);
@@ -515,6 +516,38 @@ describe('Users DB service', () => {
       expect(creators.includes(userIds[2])).toBeTruthy();
       expect(creators.includes(userIds[5])).toBeTruthy();
       expect(creators.length).toBe(2);
+    });
+
+    describe('when a user has both POC and collaborator permissions', () => {
+      let dualPermUser;
+
+      beforeAll(async () => {
+        dualPermUser = await User.create({
+          id: faker.datatype.number({ min: 25000 }),
+          name: 'dual-perm-user',
+          hsesUsername: `dual-perm-${faker.datatype.number({ min: 25000 })}`,
+          hsesUserId: `dual-perm-${faker.datatype.number({ min: 25000 })}`,
+          lastLogin: new Date(),
+        });
+        await Permission.bulkCreate([
+          { userId: dualPermUser.id, regionId: 5, scopeId: SCOPES.POC_TRAINING_REPORTS },
+          { userId: dualPermUser.id, regionId: 5, scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS },
+        ]);
+      });
+
+      afterAll(async () => {
+        await Permission.destroy({ where: { userId: dualPermUser.id } });
+        await User.destroy({ where: { id: dualPermUser.id } });
+      });
+
+      it('appears in both pointOfContact and collaborators', async () => {
+        const result = await getTrainingReportUsersByRegion(5);
+        const pocIds = result.pointOfContact.map((u) => u.id);
+        const collabIds = result.collaborators.map((u) => u.id);
+
+        expect(pocIds).toContain(dualPermUser.id);
+        expect(collabIds).toContain(dualPermUser.id);
+      });
     });
   });
 

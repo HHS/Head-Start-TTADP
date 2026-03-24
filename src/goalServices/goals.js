@@ -1450,6 +1450,223 @@ Exampled request body, the data param:
   }
 }
  */
+export async function getGoalHistory(id) {
+  const goal = await Goal.findByPk(id);
+  if (!goal) return null;
+
+  const grantRecord = await Grant.findByPk(goal.grantId);
+  if (!grantRecord) return null;
+
+  const goalsWithDetails = await Goal.findAll({
+    where: {
+      goalTemplateId: goal.goalTemplateId,
+      grantId: goal.grantId,
+      prestandard: goal.prestandard,
+      [Op.or]: [
+        {
+          createdVia: {
+            [Op.ne]: 'activityReport',
+          },
+        },
+        {
+          onApprovedAR: true,
+        },
+      ],
+    },
+    attributes: {
+      include: [
+        [
+          sequelize.literal('"statusChanges"."reason"'), 'reason',
+        ],
+        [
+          sequelize.literal('"goalTemplate"."standard"'),
+          'standard',
+        ],
+      ],
+    },
+    include: [
+      {
+        model: sequelize.models.GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['id', 'createdAt', 'newStatus', 'oldStatus', 'reason', 'performedAt'],
+        include: [
+          {
+            model: sequelize.models.User,
+            as: 'user',
+            attributes: ['name'],
+            include: [{
+              model: sequelize.models.Role,
+              as: 'roles',
+              attributes: ['name'],
+              through: { attributes: [] },
+            }],
+          },
+        ],
+      },
+      {
+        model: Objective,
+        as: 'objectives',
+        required: false,
+        attributes: [
+          'id',
+          'title',
+          'status',
+          [
+            sequelize.literal(`(
+              SELECT ARRAY(
+                SELECT specialist_str
+                FROM (
+                  SELECT concat_ws(', ', specialists.name, string_agg(DISTINCT specialists.role_name, ', ' ORDER BY specialists.role_name)) AS specialist_str
+                  FROM (
+                        SELECT ar."userId" AS user_id, u.name, r.name AS role_name, aro."objectiveId" AS objective_id
+                    FROM "ActivityReportObjectives" aro
+                    JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
+                      AND ar."calculatedStatus" = 'approved'
+                    JOIN "Users" u ON u.id = ar."userId"
+                    LEFT JOIN "UserRoles" ur ON ur."userId" = u.id
+                    LEFT JOIN "Roles" r ON r.id = ur."roleId"
+                    UNION ALL
+                        SELECT arc."userId" AS user_id, u.name, r.name AS role_name, aro."objectiveId" AS objective_id
+                    FROM "ActivityReportObjectives" aro
+                    JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
+                      AND ar."calculatedStatus" = 'approved'
+                    JOIN "ActivityReportCollaborators" arc ON arc."activityReportId" = ar.id
+                    JOIN "Users" u ON u.id = arc."userId"
+                    LEFT JOIN "CollaboratorRoles" cr ON cr."activityReportCollaboratorId" = arc.id
+                    LEFT JOIN "Roles" r ON r.id = cr."roleId"
+                  ) AS specialists
+                      WHERE specialists.objective_id = "objectives"."id"
+                  GROUP BY specialists.user_id, specialists.name
+                  ORDER BY specialists.name
+                ) AS sorted_specialists
+              )
+            )`),
+            'ttaSpecialists',
+          ],
+        ],
+        where: {
+          [Op.or]: [
+            { createdVia: 'rtr' },
+            { onApprovedAR: true },
+          ],
+        },
+        include: [
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            required: false,
+            attributes: ['id'],
+            include: [
+              {
+                model: ActivityReport,
+                as: 'activityReport',
+                attributes: ['id', 'displayId'],
+                where: {
+                  calculatedStatus: REPORT_STATUSES.APPROVED,
+                },
+                include: [],
+              },
+              {
+                model: sequelize.models.Topic,
+                as: 'topics',
+                attributes: ['id', 'name'],
+              },
+              {
+                model: Resource,
+                as: 'resources',
+                attributes: ['id', 'url', 'title'],
+              },
+              {
+                model: File,
+                as: 'files',
+                attributes: ['id', 'originalFileName', 'fileSize', 'url', 'key'],
+              },
+              {
+                separate: true,
+                model: sequelize.models.ActivityReportObjectiveCourse,
+                as: 'activityReportObjectiveCourses',
+                required: false,
+                include: [
+                  {
+                    model: Course,
+                    as: 'course',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: Grant,
+        as: 'grant',
+        attributes: ['number'],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: ['templateName', 'standard'],
+      },
+      {
+        model: GoalFieldResponse,
+        as: 'responses',
+        attributes: ['id', 'response'],
+      },
+      {
+        model: sequelize.models.GoalCollaborator,
+        as: 'goalCollaborators',
+        attributes: ['id'],
+        include: [
+          {
+            model: sequelize.models.User,
+            as: 'user',
+            attributes: ['name'],
+          },
+          {
+            model: sequelize.models.CollaboratorType,
+            as: 'collaboratorType',
+            attributes: ['name'],
+          },
+        ],
+      },
+    ],
+    order: [
+      ['createdAt', 'DESC'],
+      [{ model: sequelize.models.GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'ASC'],
+    ],
+  });
+
+  if (!goalsWithDetails.length) {
+    return {
+      goals: [],
+      overview: {
+        activityReports: 0, objectives: 0, closures: 0, suspensions: 0,
+      },
+      regionId: grantRecord.regionId,
+    };
+  }
+
+  const goalsWithPreparedSpecialists = goalsWithDetails.map((g) => g.toJSON());
+
+  const activityReportIds = new Set(
+    goalsWithPreparedSpecialists
+      .flatMap((g) => g.objectives || [])
+      .flatMap((o) => o.activityReportObjectives || [])
+      .map((aro) => aro.activityReport?.id)
+      .filter(Boolean),
+  );
+
+  const overview = {
+    activityReports: activityReportIds.size,
+    objectives: goalsWithPreparedSpecialists
+      .reduce((sum, g) => sum + (g.objectives?.length || 0), 0),
+    closures: goalsWithPreparedSpecialists.filter((g) => g.status === 'Closed').length,
+    suspensions: goalsWithPreparedSpecialists.filter((g) => g.status === 'Suspended').length,
+  };
+
+  return { goals: goalsWithPreparedSpecialists, overview, regionId: grantRecord.regionId };
+}
+
 export async function closeMultiRecipientGoalsFromAdmin(data, userId) {
   const {
     selectedGoal,

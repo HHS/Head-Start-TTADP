@@ -4,6 +4,8 @@ import { GridContainer } from '@trussworks/react-uswds';
 import ActivityReportDashboard from './ActivityReportDashboard';
 import TrainingReportDashboard from './TrainingReportDashboard';
 import AllReports from './AllReports';
+import RecipientSpotlightDashboard from './RecipientSpotlightDashboard';
+import MonitoringReportDashboard from './MonitoringReportDashboard';
 import { expandFilters } from '../../../utils';
 
 export default function Dashboard({
@@ -12,6 +14,7 @@ export default function Dashboard({
   resetPagination,
   setResetPagination,
   filterKey,
+  userHasOnlyOneRegion,
 }) {
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
@@ -22,6 +25,12 @@ export default function Dashboard({
       break;
     case 'all-reports':
       DashboardComponent = AllReports;
+      break;
+    case 'recipient-spotlight':
+      DashboardComponent = RecipientSpotlightDashboard;
+      break;
+    case 'monitoring':
+      DashboardComponent = MonitoringReportDashboard;
       break;
     default:
       break;
@@ -34,6 +43,7 @@ export default function Dashboard({
         resetPagination={resetPagination}
         setResetPagination={setResetPagination}
         filterKey={filterKey}
+        userHasOnlyOneRegion={userHasOnlyOneRegion}
       />
     </GridContainer>
   );
@@ -45,6 +55,7 @@ Dashboard.propTypes = {
   setResetPagination: PropTypes.func.isRequired,
   filterKey: PropTypes.string.isRequired,
   reportType: PropTypes.string,
+  userHasOnlyOneRegion: PropTypes.bool.isRequired,
 };
 
 Dashboard.defaultProps = {

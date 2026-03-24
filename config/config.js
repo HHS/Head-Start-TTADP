@@ -1,10 +1,11 @@
 require('dotenv').config();
+const { isTrue } = require('../src/envParser');
 
 const singleLineLogger = (
   queryString,
 ) => console.log(queryString.replace(/\n/g, '\\n')); // eslint-disable-line no-console
 
-const suppressSuccessMessage = process.env.SUPPRESS_SUCCESS_MESSAGE === 'true';
+const dbLogging = isTrue('LOG_QUERIES') ? singleLineLogger : false;
 
 const connectionValidation = async (connection) => {
   try {
@@ -31,10 +32,6 @@ const connectionValidation = async (connection) => {
 
     const result = await connection.query(queryConfig);
 
-    if (!suppressSuccessMessage) {
-      // eslint-disable-next-line no-console
-      console.info('Connection validated successfully');
-    }
     return !!result;
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -62,7 +59,7 @@ module.exports = {
     host: (process.env.POSTGRES_HOST || 'localhost'),
     port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
-    logging: singleLineLogger,
+    logging: dbLogging,
     logQueryParameters: true,
     minifyAliases: true,
     pool: {
@@ -77,7 +74,7 @@ module.exports = {
     host: (process.env.POSTGRES_HOST || 'localhost'),
     port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
-    logging: false,
+    logging: dbLogging,
     minifyAliases: true,
     pool: {
       max: 10,
@@ -92,7 +89,7 @@ module.exports = {
     host: process.env.POSTGRES_HOST,
     port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
-    logging: singleLineLogger,
+    logging: dbLogging,
     minifyAliases: true,
     pool: {
       max: 10,
@@ -107,7 +104,7 @@ module.exports = {
     host: process.env.POSTGRES_HOST,
     port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
-    logging: singleLineLogger,
+    logging: dbLogging,
     minifyAliases: true,
     dialectOptions: {
       ssl: true,

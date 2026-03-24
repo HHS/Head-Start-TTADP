@@ -43,7 +43,10 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
   const log = await logById(Number(id));
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
-  return new Policy(user, Number(regionId), log);
+  return {
+    log,
+    policy: new Policy(user, Number(regionId), log),
+  };
 };
 
 async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) {
@@ -258,7 +261,12 @@ const communicationLogs = async (req: Request, res: Response) => {
 
 const updateLogById = async (req: Request, res: Response) => {
   try {
-    const policy = await getAuthorizationByLogId(req, res);
+    const { policy, log } = await getAuthorizationByLogId(req, res);
+    if (!log) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
     if (!policy.canUpdateLog()) {
       res.status(httpCodes.FORBIDDEN).send();
       return;
@@ -267,8 +275,13 @@ const updateLogById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { data } = req.body;
 
-    const log = await updateLog(Number(id), data);
-    res.status(httpCodes.OK).json(log);
+    const updatedLog = await updateLog(Number(id), data);
+    if (!updatedLog) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    res.status(httpCodes.OK).json(updatedLog);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -276,7 +289,12 @@ const updateLogById = async (req: Request, res: Response) => {
 
 const deleteLogById = async (req: Request, res: Response) => {
   try {
-    const policy = await getAuthorizationByLogId(req, res);
+    const { policy, log } = await getAuthorizationByLogId(req, res);
+    if (!log) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
     if (!policy.canDeleteLog()) {
       res.status(httpCodes.FORBIDDEN).send();
       return;
@@ -285,7 +303,8 @@ const deleteLogById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const operation = await deleteLog(Number(id));
     if (!operation) {
-      throw new Error('Failure to delete log');
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
     }
     res.status(httpCodes.NO_CONTENT).send();
   } catch (err) {

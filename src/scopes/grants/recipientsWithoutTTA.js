@@ -18,7 +18,8 @@ const grantsMissingActivitySql = (beginActivityDate, finishActivityDate) => sequ
       JOIN "ActivityReports" ar
         ON arr."activityReportId" = ar.id
       WHERE
-        ar."startDate" <= ${sequelize.escape(finishActivityDate)}
+        ar."calculatedStatus" = 'approved'
+        AND ar."startDate" <= ${sequelize.escape(finishActivityDate)}
         AND ar."endDate" >= ${sequelize.escape(beginActivityDate)}
     )
     SELECT

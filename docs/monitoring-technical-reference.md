@@ -92,51 +92,51 @@ Handles:
 Runs post-processing functions defined in `Import.postProcessingActions`. Example:
 
 - `createMonitoringGoals`
-  - creates monitoring goals
-  - reopens monitoring goals
+  - creates monitoring goals for grants with active findings, regardless if the grant is active.
+  - marks eligible AR/RTR monitoring goals as follow-up TTA eligible (`createdVia = 'monitoring'`)
+- `updateMonitoringFactTables` (via CLI after import pipeline)
+  - updates the [Monitoring Fact Tables](./monitoring-fact-tables.md) (`DeliveredReviews`, `Citations`, and their junction tables)
+  - runs after `maintainMonitoringData` in the CI pipeline
 
 ## Monitoring Goal Logic
 
-The `createMonitoringGoals` post-processing function is run after the import completes successfully. It handles three operations based on monitoring review and finding data:
+The `createMonitoringGoals` post-processing function is run after the import completes successfully.
+
+Monitoring goal creation runs only when `ENABLE_MONITORING_GOAL_CREATION=true`.
+
+It currently handles two operations based on monitoring review and finding data:
 
 ### When Monitoring Goals Are Created
 --------------------------------
 
 A new goal is created if:
 
-* A monitoring review was delivered after 2025-01-21
-* The review is Complete
+* Monitoring goal creation is enabled (`ENABLE_MONITORING_GOAL_CREATION=true`)
+* A monitoring review was delivered between 2025-01-21 and now
 * It is of a type like 'AIAN-DEF', 'RAN', 'FA-1', 'Follow-up', 'FA1-FR',
-          'FA-2', 'FA2-CR', 'Special'
-* There is at least one valid 'Active' Finding linked to the grant
-  * Findings are considered to be active if they have an 'Active' or 'Elevated Deficiency' status OR if their most recent follow-up review is not yet delivered.
-  * No finding will be considered active if a Monitoring Goal has been closed since the Finding's most recent review's reportDeliveryDate.
-* The grant has no existing goal linked to the Monitoring goal template
+          'FA1-PSR', 'FA-2', 'FA2-CR', 'FA2-CSR', 'Special'
+* There is at least one open finding linked to the grant
+  * A finding is considered open if it is currently 'Active' or 'Elevated Deficiency', or if its most recent linked review is not yet delivered.
+  * A finding is excluded when a Monitoring Goal was closed after that finding's latest delivered review date.
+* The grant is not CDI
+* The grant does not already have a non-closed Monitoring goal
 
 In short:
 
-"If a grant had a recent, complete monitoring review with active findings and doesn’t already have a goal => create one."
+"If a non-CDI grant has open findings tied to a recent delivered monitoring review and no non-closed Monitoring goal => create one."
 
 #### Goal Create flow diagram
 
 [`monitoring-goal-create-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/monitoring-goal-create-flow.puml)
 
-### When Monitoring Goals Are Reopened
+### Follow-up TTA Eligibility Marking
 ---------------------------------
 
-An existing goal is reopened (set to "Not Started") if:
-
-* A monitoring goal exists and was previously marked "Closed" or "Suspended"
-* The related review is still Complete, delivered after 2025-01-21
-* There are still active findings connected to that review
+Existing Monitoring goals created via `rtr` or `activityReport` are re-marked as `createdVia='monitoring'` when they are on replacement grants that correspond to grants with recently created curated Monitoring goals.
 
 In short:
 
-"If a previously closed/suspended monitoring goal is still valid due to active findings => reopen it."
-
-#### Goal Reopening flow diagram
-
-[`monitoring-goal-reopen-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/monitoring-goal-reopen-flow.puml)
+"If a replacement grant has RTR/AR-created Monitoring goals and its replaced grant has recent curated Monitoring goals => mark those replacement-grant goals as monitoring-created."
 
 ---
 
@@ -207,7 +207,7 @@ Remap incoming XML fields with remapDef
 ### Triggering Imports Manually
 You can manually trigger each import phase with the following CLI command:
 ```
-yarn import:system <action> <importId> [timeBox]
+yarn cli:import-system -- <action> <importId> [timeBox]
 ```
 ### Actions
 | Action | Description |
@@ -219,7 +219,8 @@ yarn import:system <action> <importId> [timeBox]
 
 ### Example
 ```
-yarn import:system download 7 yarn import:system process 7
+yarn cli:import-system -- download 7
+yarn cli:import-system -- process 7
 ```
 Note: You must be logged into the production environment for this to work on real data.
 
@@ -232,8 +233,8 @@ Note: You must be logged into the production environment for this to work on rea
 ### Triggering Imports via Queued Background Jobs
 While the import system is usually triggered directly, it also supports background job queuing using Bull.
 ```
-yarn import:system queueDownload <importId>
-yarn import:system queueProcess <importId>
+yarn cli:import-system -- queueDownload <importId>
+yarn cli:import-system -- queueProcess <importId>
 ```
 These enqueue jobs to be picked up by a queue worker running the appropriate logic asynchronously.
 

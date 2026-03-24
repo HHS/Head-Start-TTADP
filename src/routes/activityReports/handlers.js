@@ -37,7 +37,7 @@ import { upsertApprover, syncApprovers } from '../../services/activityReportAppr
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
-import { logger } from '../../logger';
+import { logger, auditLogger } from '../../logger';
 import {
   approverAssignedNotification,
   changesRequestedNotification,
@@ -465,7 +465,7 @@ async function checkEmailSettings(report, setting) {
 export async function reviewReport(req, res) {
   try {
     const { activityReportId } = req.params;
-    const { status, note } = req.body;
+    const { status, note, approvedAtTimezone } = req.body;
     const userId = await currentUserId(req, res);
 
     const user = await userById(userId);
@@ -490,6 +490,10 @@ export async function reviewReport(req, res) {
     ] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      await ActivityReportModel.update(
+        { approvedAtTimezone },
+        { where: { id: activityReportId } },
+      );
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
         reviewedReport,
         USER_SETTINGS.EMAIL.KEYS.APPROVAL,

@@ -19,7 +19,7 @@ note right
   Review must have:
   - Status: 'Complete'
   - Delivery Date: Jan 21, 2025 or later
-  - Review Type: FA-1, FA-2, RAN, 'AIAN-DEF', 'Follow-up', 'FA1-FR', 'FA2-CR', 'Special'
+  - Review Type: FA-1, FA-2, RAN, 'AIAN-DEF', 'Follow-up', 'FA1-FR', 'FA2-CR', 'FA1-PSR', 'FA2-CSR', 'Special'
   - At least one active finding
 end note
 

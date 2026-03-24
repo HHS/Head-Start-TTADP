@@ -15,6 +15,7 @@ const allowedTopicsForQuery = {
   'recipients-with-no-tta': [
     'recipient',
     'grantNumber',
+    'grantStatus',
     'programType',
     'stateCode',
     'region',

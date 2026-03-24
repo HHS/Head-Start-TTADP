@@ -39,6 +39,7 @@ newrelic_agent.log
 
 # Temp files
 .tmp
+/tmp
 
 # DB files
 .vscode/settings.json
@@ -65,3 +66,6 @@ CLAUDE-mine.md
 
 # Copilot Instructions, etc.
 .github/instructions/
+
+# Ignore claude
+.claude/

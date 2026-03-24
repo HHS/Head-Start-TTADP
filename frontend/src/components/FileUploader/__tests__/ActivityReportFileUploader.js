@@ -8,6 +8,11 @@ import FileRejections from '../FileRejections';
 import ActivityReportFileUploader from '../ActivityReportFileUploader';
 import { upload } from '../ReportFileUploader';
 
+jest.mock('../../../fetchers/File', () => ({
+  ...jest.requireActual('../../../fetchers/File'),
+  deleteReportFile: jest.fn().mockResolvedValue({}),
+}));
+
 describe('ActivityReportFileUploader', () => {
   const dispatchEvt = (node, type, data) => {
     const event = new Event(type, { bubbles: true });
@@ -55,7 +60,7 @@ describe('ActivityReportFileUploader', () => {
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
 
-    await dispatchEvt(dropzone, 'drop', data);
+    dispatchEvt(dropzone, 'drop', data);
     await flushPromises(rerender, ui);
 
     expect(mockOnChange).not.toHaveBeenCalled();
@@ -67,14 +72,16 @@ describe('ActivityReportFileUploader', () => {
     expect(screen.getByText('fileTwo')).toBeVisible();
   });
 
-  it('files can be removed', () => {
+  it('files can be removed', async () => {
     const mockOnChange = jest.fn();
     render(<ActivityReportFileUploader reportId="new" setErrorMessage={jest.fn()} id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
     const deleteButton = screen.getByText('Delete');
     fireEvent.click(deleteButton);
-    expect(mockOnChange).toHaveBeenCalledWith([{ id: 1, originalFileName: 'fileOne' }]);
+    await waitFor(() => {
+      expect(mockOnChange).toHaveBeenCalledWith([{ id: 1, originalFileName: 'fileOne' }]);
+    });
   });
   it('files are not removed if cancel is pressed', () => {
     const mockOnChange = jest.fn();
@@ -130,12 +137,12 @@ describe('ActivityReportFileUploader', () => {
   describe('upload', () => {
     afterEach(async () => fetchMock.restore());
     it('uploads files', async () => {
-      fetchMock.post('/api/files', {
+      fetchMock.post('/api/files', [{
         id: 1,
         name: 'test',
         size: 1,
         url: 1,
-      });
+      }]);
       const setErrorMessage = jest.fn();
       const response = await upload({ size: 1, name: 'test' }, 'reportId', 1, setErrorMessage);
       expect(response.id).toBe(1);

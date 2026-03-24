@@ -10,9 +10,18 @@ jest.mock('../logger');
 
 jest.mock('../lib/s3');
 
+const GranteeTestPlan = 'data/GranteeTTAPlanTest.csv';
+const R9GranteeTestPlan = 'data/R9GranteeTTAPlanTest.csv';
+
 describe('Import TTA plan goals', () => {
   beforeEach(async () => {
     downloadFile.mockReset();
+    if (logger.info?.mockReset) {
+      logger.info.mockReset();
+    }
+    if (logger.error?.mockReset) {
+      logger.error.mockReset();
+    }
   });
   afterAll(async () => {
     await db.sequelize.close();
@@ -23,7 +32,7 @@ describe('Import TTA plan goals', () => {
 
     beforeAll(async () => {
       try {
-        const fileName = 'GranteeTTAPlanTest.csv';
+        const fileName = GranteeTestPlan;
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
         const goals = await Goal.findAll({
           include: [
@@ -93,15 +102,16 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should update status if it is newer', async () => {
-      const fileName = 'GranteeTTAPlanTest.csv';
+      const fileName = GranteeTestPlan;
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const goalInProgress = await Goal.findOne({
-        where: { status: 'In Progress' },
+        where: { name: 'Strengthen connections and support for families to improve their well-being utilizing PFCE and SR data.' },
         include: [{
           model: Grant,
           as: 'grant',
           where: {
+            number: '14CH00002',
             regionId,
           },
           required: true,
@@ -143,15 +153,16 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should not update status if it is older', async () => {
-      const fileName = 'GranteeTTAPlanTest.csv';
+      const fileName = GranteeTestPlan;
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
       // Find a goal that was imported as 'Not Started', change to 'Suspended' and update
       const goalNotStarted = await Goal.findOne({
-        where: { status: 'Not Started' },
+        where: { name: 'Expand children\'s experiences with high quality early learning to prepare them for Kindergarten' },
         include: [{
           model: Grant,
           as: 'grant',
           where: {
+            number: '14CH00002',
             regionId,
           },
           required: true,
@@ -185,7 +196,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should update timeframe', async () => {
-      const fileName = 'GranteeTTAPlanTest.csv';
+      const fileName = GranteeTestPlan;
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
       // Find a goal that was imported, change the timeframe and update by running the import script
       const goalWithTimeframe = await Goal.findOne({
@@ -226,7 +237,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should set createdVia when creating a new goal', async () => {
-      const fileName = 'GranteeTTAPlanTest.csv';
+      const fileName = GranteeTestPlan;
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const aGoal = await Goal.findOne({
@@ -275,7 +286,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should not set createdVia when updating an existing goal', async () => {
-      const fileName = 'GranteeTTAPlanTest.csv';
+      const fileName = GranteeTestPlan;
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const aGoal = await Goal.findOne({
@@ -324,7 +335,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should set isRttapa when creating a new goal', async () => {
-      const fileName = 'GranteeTTAPlanTest.csv';
+      const fileName = GranteeTestPlan;
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const aGoal = await Goal.findOne({
@@ -365,7 +376,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should set isRttapa when updating goal', async () => {
-      const fileName = 'GranteeTTAPlanTest.csv';
+      const fileName = GranteeTestPlan;
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const aGoal = await Goal.findOne({
@@ -413,7 +424,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('is idempotent', async () => {
-      const fileName = 'GranteeTTAPlanTest.csv';
+      const fileName = GranteeTestPlan;
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const allGoals = await Goal.findAll({
@@ -445,7 +456,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should import goals from another region', async () => {
-      const fileName = 'R9GranteeTTAPlanTest.csv';
+      const fileName = R9GranteeTestPlan;
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       await importGoals(fileName, 9);

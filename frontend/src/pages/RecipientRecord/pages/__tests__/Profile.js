@@ -36,13 +36,14 @@ describe('Recipient Record - Profile', () => {
       recipientId: 1, regionId: 1, reviewStatus: 'Compliant', reviewDate: '02/02/2024', reviewType: 'Follow-up', grant: 'asdfsjkfd',
     });
     fetchMock.get('/api/monitoring/class/1/region/1/grant/asdfsjkfd', {});
+    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
     const summary = {
       recipientId: '44',
       grants: [
         {
           id: 1,
           number: 'asdfsjkfd',
-          status: 'Froglike',
+          status: 'Active',
           endDate: '2021-09-28',
         },
       ],
@@ -63,22 +64,23 @@ describe('Recipient Record - Profile', () => {
     expect(await screen.findByRole('heading', { name: /Monitoring review/i })).toBeInTheDocument();
   });
 
-  it('doesnt show the class/monitoring review headings if there is no grant data', async () => {
+  it('always shows grant heading even when no class or monitoring data', async () => {
     fetchMock.get('/api/monitoring/1/region/1/grant/asdfsjkfd', { body: null });
     fetchMock.get('/api/monitoring/class/1/region/1/grant/asdfsjkfd', {});
+    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
     const summary = {
       recipientId: '44',
       grants: [{
         id: 1,
         number: 'asdfsjkfd',
-        status: 'Froglike',
+        status: 'Active',
         endDate: '2021-09-28',
       }],
     };
     renderRecipientProfile(summary);
 
-    // should not see the heading "Grant number asdf"
-    expect(screen.queryByRole('heading', { name: /grant number asdfsjkfd/i })).not.toBeInTheDocument();
+    // Grant heading should always be visible now
+    expect(await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })).toBeInTheDocument();
   });
 
   it('displays class data', async () => {
@@ -86,19 +88,55 @@ describe('Recipient Record - Profile', () => {
     fetchMock.get('/api/monitoring/class/1/region/1/grant/asdfsjkfd', {
       recipientId: 1, regionId: 1, grantNumber: 'asdfsjkfd', received: '03/30/2023', ES: '5.8611', CO: '5.6296', IS: '3.2037',
     });
+    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
     const summary = {
       recipientId: '44',
       grants: [{
         id: 1,
         number: 'asdfsjkfd',
-        status: 'Froglike',
+        status: 'Active',
         endDate: '2021-09-28',
       }],
     };
     renderRecipientProfile(summary);
 
-    // should not see the heading "Grant number asdf"
     expect(await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: /CLASS® review/i })).toBeInTheDocument();
+  });
+
+  it('only shows active grants in the bottom grant-by-grant section', async () => {
+    fetchMock.get('/api/monitoring/1/region/1/grant/active-grant', {
+      recipientId: 1, regionId: 1, reviewStatus: 'Compliant', reviewDate: '02/02/2024', reviewType: 'Follow-up', grant: 'active-grant',
+    });
+    fetchMock.get('/api/monitoring/class/1/region/1/grant/active-grant', {});
+    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
+    const summary = {
+      recipientId: '44',
+      grants: [
+        {
+          id: 1,
+          number: 'active-grant',
+          status: 'Active',
+          endDate: '2021-09-28',
+        },
+        {
+          id: 2,
+          number: 'inactive-grant',
+          status: 'Inactive',
+          endDate: '2021-09-28',
+        },
+      ],
+    };
+    renderRecipientProfile(summary);
+
+    // Active grant should appear in the bottom section
+    expect(await screen.findByRole('heading', { name: /grant number active-grant/i })).toBeInTheDocument();
+
+    // Inactive grant should NOT appear in the bottom section
+    expect(screen.queryByRole('heading', { name: /grant number inactive-grant/i })).not.toBeInTheDocument();
+
+    // Both grants should still appear in the upper GrantList table (via recipientSummary)
+    expect(screen.getByText('active-grant')).toBeInTheDocument();
+    expect(screen.getByText('inactive-grant')).toBeInTheDocument();
   });
 });
