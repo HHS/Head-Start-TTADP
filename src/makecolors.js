@@ -46,7 +46,7 @@ function getPropName(key) {
 
 async function makeColors() {
   try {
-    const entries = Object.entries(colors);
+    const entries = Object.entries(colors.default);
 
     const propNames = entries.map(([key]) => getPropName(key));
     const values = entries.map(([, value]) => value);
