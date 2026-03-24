@@ -364,9 +364,9 @@ jobs:
     environment:
       SFTP_EXPOSED_PORT: 2222
     steps:
+    - checkout
     - attach_workspace:
         at: .
-    - checkout
     - run:
         name: Add GitHub to known_hosts
         command: |
@@ -448,9 +448,9 @@ jobs:
     executor: docker-executor
     resource_class: large
     steps:
+    - checkout
     - attach_workspace:
         at: .
-    - checkout
     - run:
         name: Audit checksums of color files
         command: |
@@ -520,9 +520,9 @@ jobs:
     executor: machine-executor
     resource_class: large
     steps:
+    - checkout
     - attach_workspace:
         at: .
-    - checkout
     - set_env_vars:
         target_env: staging
     - run:
@@ -542,6 +542,7 @@ jobs:
         name: Capture container logs
         when: always
         command: |
+          mkdir -p reports/server
           docker compose -f docker/compose/dss.yml logs --no-color > reports/server/docker-compose.log
     - run:
         name: Tear down scan services
@@ -827,9 +828,9 @@ commands:
       artifact_path:
         type: string
     steps:
+    - checkout
     - attach_workspace:
         at: .
-    - checkout
     - run:
         name: Start backend (8080) & watch logs
         command: |
