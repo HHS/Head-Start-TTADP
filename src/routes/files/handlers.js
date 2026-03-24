@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
-import { uploadFile, deleteFileFromS3, getSignedDownloadUrl } from '../../lib/s3';
+import { uploadFile, getSignedDownloadUrl } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
 import {
   deleteFile,
@@ -102,7 +102,6 @@ const deleteOnlyFile = async (req, res) => {
     + file.reportObjectiveFiles.length
     + file.objectiveFiles.length
     + file.objectiveTemplateFiles.length === 0) {
-      await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
     return res.status(204).send();
@@ -202,7 +201,6 @@ const deleteHandler = async (req, res) => {
       + sessionLength === 0);
 
     if (canDelete) {
-      await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
 
@@ -512,8 +510,8 @@ const uploadHandler = async (req, res) => {
     try {
       metadata = await metadataFn(originalFilename, fileName, size);
       const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
-      auditLogger.info(`${logContext.namespace}:uploadHandler Uploaded file ${originalFilename} as ${uploadedFile.Key}`);
-      const url = getSignedDownloadUrl(uploadedFile.Key);
+      auditLogger.info(`${logContext.namespace}:uploadHandler Uploaded file ${originalFilename} as ${uploadedFile.Key || fileName}`);
+      const url = getSignedDownloadUrl(fileName);
       await updateStatus(metadata.id, UPLOADED);
       fileResponse.push({ ...metadata, url });
     } catch (err) {
