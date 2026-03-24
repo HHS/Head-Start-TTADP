@@ -539,8 +539,8 @@ export default function ViewGoalDetails({
       </h1>
 
       <Container className="margin-y-3 margin-left-2 maxw-desktop" paddingX={4} paddingY={5}>
-        <div className="margin-bottom-3">
-          <div className="display-flex flex-justify margin-bottom-3">
+        <div className="margin-bottom-3 goal-summary-block">
+          <div className="display-flex flex-justify margin-bottom-3 goal-summary-heading-row">
             <h2 className="margin-top-0 margin-bottom-0 smart-hub-serif">Goal summary</h2>
             <div className="no-print">
               <ContextMenu
@@ -552,11 +552,11 @@ export default function ViewGoalDetails({
           <ReadOnlyField label="Recipient grant numbers">
             {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
           </ReadOnlyField>
-          <ReadOnlyField label="Recipient's goal">
-            <div className="recipient-goal-print-accent">
+          <div className="recipient-goal-print-accent">
+            <ReadOnlyField label="Recipient's goal">
               {firstGoal.name || goalTemplateName}
-            </div>
-          </ReadOnlyField>
+            </ReadOnlyField>
+          </div>
         </div>
 
         <div className="goal-history-dashboard no-print">

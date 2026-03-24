@@ -33,29 +33,47 @@
 
   .maxw-desktop {
     max-width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .maxw-desktop.padding-x-4.padding-y-5 {
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .page-heading {
     margin-left: 0 !important;
-    margin-bottom: 1rem !important;
-    font-size: 2.2rem;
+    margin-bottom: 0.75rem !important;
+    font-size: 2.25rem;
     line-height: 1.15;
   }
 
   h2.smart-hub-serif {
-    font-size: 2rem;
+    font-size: 1.5rem;
     line-height: 1.15;
   }
 
   .goal-history-print-goal-number {
-    font-size: 2rem;
+    font-size: 1.5rem;
     line-height: 1.15;
+  }
+
+  .goal-summary-heading-row {
+    margin-bottom: 0.9rem !important;
   }
 
   .recipient-goal-print-accent {
     border-left: 4px solid $base-dark;
     padding-left: 0.75rem;
-    margin-top: 0.15rem;
+  }
+
+  .recipient-goal-print-accent [data-testid='read-only-label'] {
+    margin-bottom: 0.15rem;
+  }
+
+  .recipient-goal-print-accent [data-testid='read-only-value'] {
+    margin-top: 0;
   }
 
   .view-standard-goals-accordion .usa-accordion__button {
