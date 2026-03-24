@@ -81,7 +81,7 @@
     "lint": "biome lint src",
     "lint:fix": "biome check --write src",
     "lint:fix:single": "biome check --write --no-errors-on-unmatched",
-    "lint:ci": "mkdir -p reports && biome lint --reporter junit src > reports/lint.xml"
+    "lint:ci": "mkdir -p lint-reports && biome lint --reporter junit src > lint-reports/lint.xml"
   },
   "resolutions": {
     "dompurify": "^3.3.2",

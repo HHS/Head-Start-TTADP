@@ -58,7 +58,7 @@
     "cli:update-completed-event-report-pilots": "bin/run-tool src/tools/updateCompletedEventReportPilotsCLI.js",
     "cli:updateMonitoringFactTables": "bin/run-tool src/tools/updateMonitoringFactTablesCLI.ts",
     "lint": "biome lint src",
-    "lint:ci": "mkdir -p reports && biome lint --reporter junit src > reports/lint.xml",
+    "lint:ci": "mkdir -p lint-reports && biome lint --reporter junit src > lint-reports/lint.xml",
     "lint:fix": "biome check --write src",
     "lint:fix:single": "biome check --write --no-errors-on-unmatched",
     "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",

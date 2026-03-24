@@ -324,7 +324,7 @@ jobs:
         key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
-        command: mkdir -p reports frontend/reports
+        command: mkdir -p reports frontend/reports lint-reports frontend/lint-reports
     - run: yarn build
     - run:
         name: Lint backend
@@ -344,10 +344,10 @@ jobs:
           chmod 744 ../tools/run-yarn-audit.js
           ../tools/run-yarn-audit.js;
     - store_artifacts:
-        path: reports
+        path: lint-reports
         destination: backend-lint.xml
     - store_artifacts:
-        path: frontend/reports
+        path: frontend/lint-reports
         destination: frontend-lint.xml
     - persist_to_workspace:
         root: .
