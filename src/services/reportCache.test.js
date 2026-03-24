@@ -439,7 +439,7 @@ describe('activityReportObjectiveCitation', () => {
     expect(deletedAroCitations).toHaveLength(0);
   });
 
-  it('should only return one citation if there is more than one with the same standard id', async () => {
+  it('should only return one citation if there is more than one with the same finding, grant, review, and standard', async () => {
     const citationsToCreate = [{
       citation: 'Citation 1',
       standardId: 200039,
@@ -490,6 +490,56 @@ describe('activityReportObjectiveCitation', () => {
     expect(savedCitation.standardId).toBe(200039);
     expect(savedCitation.findingId).toBe(findingIdOne);
     expect(savedCitation.reviewName).toBe('247691FUA');
+  });
+
+  it('preserves citations that share a standard id across different findings or reviews', async () => {
+    const citationsToCreate = [{
+      citation: 'Citation 1',
+      monitoringReferences: [
+        buildMonitoringReference({
+          grantId: grant.id,
+          findingId: findingIdOne,
+          reviewName: 'Review 1',
+          standardId: 200039,
+          grantNumber: grant.number,
+        }),
+        buildMonitoringReference({
+          grantId: grant.id,
+          findingId: findingIdTwo,
+          reviewName: 'Review 1',
+          standardId: 200039,
+          grantNumber: grant.number,
+        }),
+        buildMonitoringReference({
+          grantId: grant.id,
+          findingId: findingIdTwo,
+          reviewName: 'Review 2',
+          standardId: 200039,
+          grantNumber: grant.number,
+        }),
+      ],
+    }];
+
+    const result = await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    expect(result).toHaveLength(3);
+
+    const savedCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(savedCitations).toHaveLength(3);
+    expect(savedCitations.map((savedCitation) => [
+      savedCitation.findingId,
+      savedCitation.reviewName,
+      savedCitation.standardId,
+    ])).toEqual(expect.arrayContaining([
+      [findingIdOne, 'Review 1', 200039],
+      [findingIdTwo, 'Review 1', 200039],
+      [findingIdTwo, 'Review 2', 200039],
+    ]));
   });
 
   it('correctly saves aro citations per grant', async () => {

@@ -220,7 +220,6 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
   if (citations && citations.length > 0) {
     // Get the grant id from the goal.
     const grantForThisCitation = goal.grantId;
-    const standardIds = new Set();
     const citationReferenceKeys = new Set();
 
     newCitations = citations.reduce((acc, citation) => {
@@ -267,17 +266,11 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
           return;
         }
 
-        const standardIdKey = String(standardId);
-        if (standardIds.has(standardIdKey)) {
-          return;
-        }
-
-        const citationReferenceKey = [findingId, grantId, reviewName].join('::');
+        const citationReferenceKey = [findingId, grantId, reviewName, standardId].join('::');
         if (citationReferenceKeys.has(citationReferenceKey)) {
           return;
         }
 
-        standardIds.add(standardIdKey);
         citationReferenceKeys.add(citationReferenceKey);
 
         acc.push({
