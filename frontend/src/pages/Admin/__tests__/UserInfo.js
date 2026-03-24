@@ -124,7 +124,7 @@ describe('UserInfo', () => {
 
       // toggle to expand
       const toggleBtn = within(listScope).getByRole('button', { name: /show all/i });
-      await userEvent.click(toggleBtn);
+      userEvent.click(toggleBtn);
 
       // expanded: all 5 items visible (deduped)
       items = within(listScope).getAllByRole('listitem');
@@ -133,7 +133,7 @@ describe('UserInfo', () => {
       );
 
       // toggle back to collapse
-      await userEvent.click(within(listScope).getByRole('button', { name: /show less/i }));
+      userEvent.click(within(listScope).getByRole('button', { name: /show less/i }));
       items = within(listScope).getAllByRole('listitem');
       expect(items).toHaveLength(3);
     });

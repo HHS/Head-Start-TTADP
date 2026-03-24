@@ -291,9 +291,9 @@ describe('ReviewSubmit', () => {
       renderReview(
         allComplete, isApprover, isPendingApprover, calculatedStatus, formData, onSubmit, onReview,
       );
-      await userEvent.selectOptions(document.querySelector('.usa-select'), ['approved']);
+      userEvent.selectOptions(document.querySelector('.usa-select'), ['approved']);
       const reviewButton = await screen.findByRole('button', { name: 'Submit' });
-      await userEvent.click(reviewButton);
+      userEvent.click(reviewButton);
       const error = await screen.findByText('Unable to review report');
       expect(error).toBeVisible();
     });
@@ -315,7 +315,7 @@ describe('ReviewSubmit', () => {
         onSubmit,
       );
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
-      await userEvent.click(button);
+      userEvent.click(button);
       await waitFor(() => expect(onSubmit).not.toHaveBeenCalled());
     });
   });
@@ -346,7 +346,7 @@ describe('ReviewSubmit', () => {
         formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
-      await userEvent.click(button);
+      userEvent.click(button);
       await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     });
 
@@ -369,7 +369,7 @@ describe('ReviewSubmit', () => {
         formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
-      await userEvent.click(button);
+      userEvent.click(button);
       const error = await screen.findByText('Unable to submit report');
       expect(error).toBeVisible();
     });
@@ -388,7 +388,7 @@ describe('ReviewSubmit', () => {
 
     const history = renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus,
       formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
-    await userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
+    userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
     await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
   });
 

@@ -436,17 +436,17 @@ describe('My Alerts', () => {
     fetchMock.delete('/api/activity-reports/1', 204);
     renderMyAlerts(report);
     const menuButtons = await screen.findAllByTestId('context-menu-actions-btn');
-    await userEvent.click(menuButtons[0]);
+    userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findByRole('button', {
       name: 'Delete',
     });
-    await userEvent.click(viewButton);
+    userEvent.click(viewButton);
 
     const contextMenu = await screen.findAllByTestId('context-menu-actions-btn');
     expect(contextMenu).toBeTruthy();
     const button = await screen.findByRole('button', { name: /this button will permanently delete the report\./i, hidden: true });
-    await userEvent.click(button);
+    userEvent.click(button);
 
     await waitFor(() => {
       const modal = document.querySelector('#DeleteReportModal');

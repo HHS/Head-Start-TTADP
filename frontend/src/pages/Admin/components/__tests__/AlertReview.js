@@ -41,20 +41,20 @@ describe('AlertReview', () => {
     renderAlertReview({ ...DEFAULT_ALERT, message: newAlert.message });
 
     const titleInput = screen.getByLabelText(/Title/i);
-    await userEvent.type(titleInput, newAlert.title);
+    userEvent.type(titleInput, newAlert.title);
 
     const startDateInput = screen.getByLabelText(/Start date/i);
-    await userEvent.type(startDateInput, newAlert.startDate);
+    userEvent.type(startDateInput, newAlert.startDate);
 
     const endDateInput = screen.getByLabelText(/End date/i);
-    await userEvent.type(endDateInput, newAlert.endDate);
+    userEvent.type(endDateInput, newAlert.endDate);
 
     const statusInput = screen.getByRole('combobox', { name: /Status/i });
-    await userEvent.selectOptions(statusInput, newAlert.status);
+    userEvent.selectOptions(statusInput, newAlert.status);
 
     expect(fetchMock.called()).toBe(false);
     const saveButton = screen.getByRole('button', { name: 'Save changes' });
-    await userEvent.click(saveButton);
+    userEvent.click(saveButton);
     await waitFor(() => expect(fetchMock.called()).toBe(true));
   });
 
@@ -73,14 +73,14 @@ describe('AlertReview', () => {
     renderAlertReview(newAlert);
 
     const edit = screen.getByRole('checkbox', { name: 'Edit?' });
-    await userEvent.click(edit);
+    userEvent.click(edit);
 
     const statusInput = screen.getByRole('combobox', { name: /Status/i });
-    await userEvent.selectOptions(statusInput, 'Unpublished');
+    userEvent.selectOptions(statusInput, 'Unpublished');
 
     expect(fetchMock.called()).toBe(false);
     const saveButton = screen.getByRole('button', { name: 'Save changes' });
-    await userEvent.click(saveButton);
+    userEvent.click(saveButton);
     await waitFor(() => expect(fetchMock.called()).toBe(true));
   });
 
@@ -98,10 +98,10 @@ describe('AlertReview', () => {
     renderAlertReview(newAlert, onDelete);
 
     const edit = screen.getByRole('checkbox', { name: 'Edit?' });
-    await userEvent.click(edit);
+    userEvent.click(edit);
 
     const deleteButton = screen.getByRole('button', { name: 'Delete' });
-    await userEvent.click(deleteButton);
+    userEvent.click(deleteButton);
 
     expect(onDelete).toHaveBeenCalledWith(newAlert);
   });

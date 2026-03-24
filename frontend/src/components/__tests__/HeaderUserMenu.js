@@ -44,7 +44,7 @@ describe('HeaderUserMenu', () => {
 
   const openMenu = async (user = hydratedUser) => {
     const history = renderHeaderUserMenu(user);
-    await userEvent.click(screen.getByTestId('header-avatar'));
+    userEvent.click(screen.getByTestId('header-avatar'));
     return history;
   };
 
@@ -90,7 +90,7 @@ describe('HeaderUserMenu', () => {
         it('displays the admin button', async () => {
           const btn = await screen.findByRole('button', { name: /stop impersonating/i });
           expect(btn).toBeVisible();
-          await userEvent.click(btn);
+          userEvent.click(btn);
           expect(removeItem).toHaveBeenCalled();
         });
       });

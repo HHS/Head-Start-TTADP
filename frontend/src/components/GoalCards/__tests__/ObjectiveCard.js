@@ -143,7 +143,7 @@ describe('ObjectiveCard', () => {
 
     const completeButton = await screen.findByRole('button', { name: /complete/i });
     await act(async () => {
-      await userEvent.click(completeButton);
+      userEvent.click(completeButton);
     });
 
     expect(fetchMock.called('/api/objectives/status')).toBe(true);
@@ -168,7 +168,7 @@ describe('ObjectiveCard', () => {
 
     const completeButton = await screen.findByRole('button', { name: /complete/i });
     await act(async () => {
-      await userEvent.click(completeButton);
+      userEvent.click(completeButton);
     });
 
     expect(fetchMock.called('/api/objectives/status')).toBe(true);
@@ -226,12 +226,12 @@ describe('ObjectiveCard', () => {
 
     const contextInput = await screen.findByLabelText(/Additional context/i);
     await act(async () => {
-      await userEvent.type(contextInput, 'This is some context');
+      userEvent.type(contextInput, 'This is some context');
     });
 
     const submitButton = await screen.findByRole('button', { name: /submit/i });
     await act(async () => {
-      await userEvent.click(submitButton);
+      userEvent.click(submitButton);
     });
 
     expect(fetchMock.called('/api/objectives/status')).toBe(true);
