@@ -156,6 +156,20 @@ describe('FeedbackSurvey', () => {
     );
   });
 
+  it('does not render when previously completed', () => {
+    localStorage.setItem('survey-feedback-dismissed-test-dashboard', 'completed');
+
+    render(
+      <FeedbackSurvey
+        pageId="test-dashboard"
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('How useful is this page?')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /reopen survey/i })).not.toBeInTheDocument();
+  });
+
   it('reopens survey when reopen button is clicked', async () => {
     const { pageId, onSubmit } = defaultProps;
     localStorage.setItem('survey-feedback-dismissed-test-dashboard', 'collapsed');
@@ -391,5 +405,31 @@ describe('FeedbackSurvey', () => {
     });
 
     HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  });
+
+  it('uses container scrollTo when available', async () => {
+    const scrollToMock = jest.fn();
+    const originalScrollTo = HTMLElement.prototype.scrollTo;
+    HTMLElement.prototype.scrollTo = scrollToMock;
+
+    render(
+      <FeedbackSurvey
+        pageId="thumbs-page"
+        onSubmit={jest.fn()}
+        useThumbRating
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /thumbs up/i }));
+
+    await waitFor(() => {
+      expect(scrollToMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          behavior: 'smooth',
+        }),
+      );
+    });
+
+    HTMLElement.prototype.scrollTo = originalScrollTo;
   });
 });
