@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import {
   COMMUNICATION_METHODS,
@@ -9,6 +10,7 @@ import { createUser, createRecipient } from '../../testUtils';
 import { logsByRecipientAndScopes } from '../../services/communicationLog';
 import { communicationLogFiltersToScopes } from './index';
 import { withinCommunicationDate } from './communicationDate';
+import { withRoles, withoutRoles } from './role';
 
 describe('communicationLog filtersToScopes', () => {
   const userName = faker.name.findName();
@@ -249,18 +251,18 @@ describe('communicationLog filtersToScopes', () => {
 
   it('filters by role within', async () => {
     const scopes = communicationLogFiltersToScopes({
-      'role.in': [secondUserRole.fullName],
+      'role.in': [userRole.fullName],
     });
     const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
-    expect(count).toBe(1);
+    expect(count).toBe(3);
   });
 
   it('filters by role without', async () => {
     const scopes = communicationLogFiltersToScopes({
-      'role.nin': [secondUserRole.fullName],
+      'role.nin': [userRole.fullName],
     });
     const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
-    expect(count).toBe(3);
+    expect(count).toBe(1);
   });
 
   it('filters by communication date before', async () => {
@@ -428,6 +430,46 @@ describe('communicationLog filtersToScopes', () => {
       );
 
       expect(count).toBe(1);
+    });
+  });
+
+  describe('role scope unit tests', () => {
+    describe('withRoles', () => {
+      it('returns empty object for invalid roles', () => {
+        const result = withRoles(['COR']);
+        expect(result).toEqual({});
+      });
+
+      it('includes a comma-delimited array entry as multiple roles', () => {
+        const result = withRoles(['Early Childhood Specialist,Health Specialist']);
+        const sql = result.id[Op.in].val;
+
+        expect(sql).toContain("'Early Childhood Specialist'");
+        expect(sql).toContain("'Health Specialist'");
+      });
+    });
+
+    describe('withoutRoles', () => {
+      it('returns empty object for invalid roles', () => {
+        const result = withoutRoles(['COR']);
+        expect(result).toEqual({});
+      });
+
+      it('excludes multiple roles when passed as a comma-delimited array entry', () => {
+        const result = withoutRoles(['Early Childhood Specialist,Health Specialist']);
+        const sql = result.id[Op.notIn].val;
+
+        expect(sql).toContain("'Early Childhood Specialist'");
+        expect(sql).toContain("'Health Specialist'");
+      });
+
+      it('excludes multiple roles when passed as separate array values', () => {
+        const result = withoutRoles(['Early Childhood Specialist', 'Health Specialist']);
+        const sql = result.id[Op.notIn].val;
+
+        expect(sql).toContain("'Early Childhood Specialist'");
+        expect(sql).toContain("'Health Specialist'");
+      });
     });
   });
 });

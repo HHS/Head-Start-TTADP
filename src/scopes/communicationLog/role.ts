@@ -13,8 +13,8 @@ const ACCEPTABLE_ROLES = [
 
 function roleQuery(escapedRoles: string): string {
   return `
-  SELECT
-    "CommunicationLogs"."id"
+  SELECT DISTINCT
+    cl."id"
   FROM "Users" u
   INNER JOIN "CommunicationLogs" cl
   ON cl."userId" = u."id"
@@ -48,7 +48,8 @@ const normalizeAndEscapeRoles = (roles: RoleFilter): string[] => {
     return [];
   }
 
-  const roleList = Array.isArray(roles) ? roles : roles.split(',');
+  const roleList = (Array.isArray(roles) ? roles : [roles])
+    .flatMap((role) => role.split(','));
 
   return roleList
     .map((role) => role?.trim())
