@@ -41,8 +41,6 @@ yarn --cwd frontend test -- SomeComponent   # Run specific test
 yarn --cwd frontend test                    # Run all frontend tests once
 ```
 
-Frontend test scripts still use Jest and set `TZ=America/New_York` internally, so no extra env flags are needed.
-
 **All Tests:**
 
 ```bash
