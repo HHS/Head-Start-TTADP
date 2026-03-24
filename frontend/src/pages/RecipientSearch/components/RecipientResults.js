@@ -55,9 +55,7 @@ export default function RecipientResults({
           tabIndex={0}
           onClick={() => requestSort(name)}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
-          aria-label={`${displayName}. Activate to sort ${
-            sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
+          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
         >
           {displayName}
         </button>

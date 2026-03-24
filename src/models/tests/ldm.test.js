@@ -105,7 +105,10 @@ describe('Logical Data Model', () => {
     });
     it('column type does not match model', () => {
       expect(countOccurrencesInFile(fileContent, 'column type does not match model')).toStrictEqual(
-        { count: 0, matches: [] }
+        {
+          count: 0,
+          matches: [],
+        }
       );
     });
     it('column allow null match model', () => {
@@ -143,24 +146,36 @@ describe('Logical Data Model', () => {
     it('column default does not match model', () => {
       expect(
         countOccurrencesInFile(fileContent, 'column default does not match model')
-      ).toStrictEqual({ count: 0, matches: [] });
+      ).toStrictEqual({
+        count: 0,
+        matches: [],
+      });
     });
   });
   describe('associations', () => {
     it('associations need to be defined both directions', () => {
       expect(
         countOccurrencesInFile(fileContent, 'associations need to be defined both directions')
-      ).toStrictEqual({ count: 0, matches: [] });
+      ).toStrictEqual({
+        count: 0,
+        matches: [],
+      });
     });
     it('associations need to be distinct', () => {
       expect(countOccurrencesInFile(fileContent, 'associations need to be distinct')).toStrictEqual(
-        { count: 0, matches: [] }
+        {
+          count: 0,
+          matches: [],
+        }
       );
     });
     it('associations need to be camel case', () => {
       expect(
         countOccurrencesInFile(fileContent, 'associations need to be camel case')
-      ).toStrictEqual({ count: 0, matches: [] });
+      ).toStrictEqual({
+        count: 0,
+        matches: [],
+      });
     });
     it('association missing from models', () => {
       expect(countOccurrencesInFile(fileContent, 'association missing from models')).toStrictEqual({

@@ -296,9 +296,7 @@ function MyAlerts(props) {
               sortHandler(name);
             }}
             className={`sortable ${sortClassName}`}
-            aria-label={`${displayName}. Activate to sort ${
-              sortClassName === 'asc' ? 'descending' : 'ascending'
-            }`}
+            aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
           >
             {displayName}
           </button>

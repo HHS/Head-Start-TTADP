@@ -45,9 +45,9 @@ const getAllAlertsDownloadURL = (filterQuery) => {
 };
 
 export {
+  combineReportDataFromApi,
+  getAllAlertsDownloadURL,
+  getAllReportsDownloadURL,
   getReportsDownloadURL as default,
   getReportsDownloadURL,
-  getAllReportsDownloadURL,
-  getAllAlertsDownloadURL,
-  combineReportDataFromApi,
 };

@@ -107,7 +107,9 @@ module.exports = {
       // the column can't allow null now that we've populated it
       await queryInterface.sequelize.query(
         'ALTER TABLE "CommunicationLogs" ALTER COLUMN "recipientId" SET NOT NULL',
-        { transaction }
+        {
+          transaction,
+        }
       );
 
       // drop the table

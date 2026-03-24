@@ -23,7 +23,9 @@ module.exports = {
         'ActivityReportObjectives',
         'suspendReason',
         'closeSuspendReason',
-        { transaction }
+        {
+          transaction,
+        }
       );
       await addValuesToEnumIfTheyDontExist(
         queryInterface,
@@ -36,7 +38,9 @@ module.exports = {
         'ActivityReportObjectives',
         'suspendContext',
         'closeSuspendContext',
-        { transaction }
+        {
+          transaction,
+        }
       );
     }),
 

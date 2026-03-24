@@ -604,7 +604,10 @@ describe('handleApplyFilters', () => {
 
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&reportId.in[]=test',
-      { count: 0, rows: [] }
+      {
+        count: 0,
+        rows: [],
+      }
     );
     const query = await screen.findByRole('textbox');
     userEvent.type(query, 'test');

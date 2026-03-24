@@ -32,11 +32,7 @@ export const GoalUserIdentifier = ({ goal }) => {
     goal.goalCollaborators.some(
       (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user
     )
-    ? ` by ${
-        goal.goalCollaborators.find(
-          (c) => c.collaboratorType && c.collaboratorType.name === 'Creator'
-        ).user.name
-      }`
+    ? ` by ${goal.goalCollaborators.find((c) => c.collaboratorType && c.collaboratorType.name === 'Creator').user.name}`
     : '';
 };
 

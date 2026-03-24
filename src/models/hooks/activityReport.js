@@ -1010,7 +1010,9 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
           options.transaction,
           arGoal.goalId,
           GOAL_COLLABORATORS.UTILIZER,
-          { activityReportIds: [instance.id] }
+          {
+            activityReportIds: [instance.id],
+          }
         )
       ),
       ...arObjectives.map(async (arObjective) =>

@@ -36,6 +36,7 @@ const TTAHISTORY_FILTER_CONFIG = [
 ];
 
 TTAHISTORY_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
 export { TTAHISTORY_FILTER_CONFIG };
 
 export const GOALS_OBJECTIVES_FILTER_KEY = (recipientId) =>

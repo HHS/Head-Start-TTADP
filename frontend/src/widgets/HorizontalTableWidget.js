@@ -83,9 +83,7 @@ export default function HorizontalTableWidget({
             requestSort(key);
           }}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
-          aria-label={`${name}. Activate to sort ${
-            sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
+          aria-label={`${name}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
         >
           {displayName}
         </button>

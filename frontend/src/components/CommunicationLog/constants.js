@@ -100,15 +100,15 @@ const resetFormData = (reset, updatedLog) => {
 };
 
 export {
-  defaultValues,
   defaultLogValues,
-  recipientRecordRootUrl,
+  defaultValues,
   formatRecipientCommunicationLogUrl,
   formatRegionalCommunicationLogUrl,
-  pageComplete,
-  nextStepsFields,
-  resetFormData,
   GENERIC_SAVE_ERROR,
-  LOG_NOT_FOUND_SAVE_ERROR,
   isCommunicationLogNotFoundError,
+  LOG_NOT_FOUND_SAVE_ERROR,
+  nextStepsFields,
+  pageComplete,
+  recipientRecordRootUrl,
+  resetFormData,
 };

@@ -88,7 +88,10 @@ module.exports = {
 
       await queryInterface.sequelize.query(
         ' SELECT "ZAFRemoveAuditingOnTable"(\'NationalCenters\');',
-        { raw: true, transaction }
+        {
+          raw: true,
+          transaction,
+        }
       );
       // Drop old audit log table
       await queryInterface.dropTable('ZALNationalCenters', { transaction });

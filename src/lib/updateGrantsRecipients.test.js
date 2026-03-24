@@ -993,7 +993,9 @@ describe('Update grants, program personnel, and recipients', () => {
     // eslint-disable-next-line camelcase
     const res = await sequelize.query(
       `SELECT descriptor FROM "ZADescriptor" WHERE id = ${descriptor_id}`,
-      { type: QueryTypes.SELECT }
+      {
+        type: QueryTypes.SELECT,
+      }
     );
     expect(res[0].descriptor).toEqual('Grant data import from HSES');
   });

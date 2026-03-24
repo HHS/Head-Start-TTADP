@@ -83,30 +83,42 @@ module.exports = {
       await queryInterface.dropTable('ZALUserSettings', { transaction });
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFUserSettings" ()',
-        { transaction }
+        {
+          transaction,
+        }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFUserSettings" ()',
-        { transaction }
+        {
+          transaction,
+        }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFUserSettings" ()',
-        { transaction }
+        {
+          transaction,
+        }
       );
 
       // Remove ZALUserSettingOverrides and functions.
       await queryInterface.dropTable('ZALUserSettingOverrides', { transaction });
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFUserSettingOverrides" ()',
-        { transaction }
+        {
+          transaction,
+        }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFUserSettingOverrides" ()',
-        { transaction }
+        {
+          transaction,
+        }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFUserSettingOverrides" ()',
-        { transaction }
+        {
+          transaction,
+        }
       );
     }),
 };

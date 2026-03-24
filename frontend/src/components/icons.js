@@ -105,17 +105,17 @@ UserGroupIcon.propTypes = STATUS_ICON_PROP_TYPES;
 UserGroupIcon.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
 
 export {
-  InProgress,
+  Ceased,
   Closed,
+  Draft,
+  InProgress,
+  NeedsActionIcon,
   NoStatus,
   NotStarted,
-  Draft,
-  Ceased,
   Paused,
   Pencil,
   PendingApprovalIcon,
-  NeedsActionIcon,
   Trash,
-  UsersIcon,
   UserGroupIcon,
+  UsersIcon,
 };

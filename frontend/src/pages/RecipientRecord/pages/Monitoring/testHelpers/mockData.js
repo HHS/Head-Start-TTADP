@@ -356,4 +356,4 @@ const citationData = [
   },
 ];
 
-export { reviewData, citationData };
+export { citationData, reviewData };

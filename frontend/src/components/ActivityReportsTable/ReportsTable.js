@@ -125,9 +125,7 @@ export default function ReportsTable({
           }}
           onKeyDown={handleKeyDown}
           className={`sortable ${sortClassName} ttahub-button--unstyled text-bold`}
-          aria-label={`${displayName}. Activate to sort ${
-            sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
+          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
         >
           {displayName}
         </button>

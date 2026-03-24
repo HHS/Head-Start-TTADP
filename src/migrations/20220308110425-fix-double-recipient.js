@@ -11,11 +11,15 @@ module.exports = {
        */
       await queryInterface.sequelize.query(
         'UPDATE "Grants" SET "recipientId" = 7782 WHERE "id" = 9957;',
-        { transaction }
+        {
+          transaction,
+        }
       );
       await queryInterface.sequelize.query(
         'UPDATE "GrantGoals" SET "recipientId" = 7782 WHERE "id" = 9957;',
-        { transaction }
+        {
+          transaction,
+        }
       );
       await queryInterface.sequelize.query('DELETE FROM "Recipients" WHERE "id" = 5;', {
         transaction,
@@ -38,7 +42,9 @@ module.exports = {
       );
       await queryInterface.sequelize.query(
         'UPDATE "GrantGoals" SET "recipientId" = 5 WHERE "id" = 9957;',
-        { transaction }
+        {
+          transaction,
+        }
       );
     }),
 };

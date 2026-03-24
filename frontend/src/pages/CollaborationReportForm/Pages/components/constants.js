@@ -36,4 +36,4 @@ const reviewPageDefaultProps = {
   dateSubmitted: null,
 };
 
-export { reviewPagePropType, reviewPageDefaultProps, draftValuesPropType };
+export { draftValuesPropType, reviewPageDefaultProps, reviewPagePropType };

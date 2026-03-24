@@ -269,7 +269,10 @@ module.exports = {
           async (table) => {
             await queryInterface.sequelize.query(
               ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
-              { raw: true, transaction }
+              {
+                raw: true,
+                transaction,
+              }
             );
             // Drop old audit log table
             await queryInterface.sequelize.query(`TRUNCATE TABLE "${table}";`, { transaction });

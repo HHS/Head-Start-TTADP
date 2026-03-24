@@ -2104,7 +2104,9 @@ describe('recipientSpotlight service', () => {
       // Create additional grant number links
       await db.GrantNumberLink.bulkCreate(
         [{ grantNumber: 'G-REGION-SORT-1' }, { grantNumber: 'G-REGION-SORT-2' }],
-        { ignoreDuplicates: true }
+        {
+          ignoreDuplicates: true,
+        }
       );
 
       const recipientRegion1B = await Recipient.create({
@@ -2195,7 +2197,9 @@ describe('recipientSpotlight service', () => {
       // Create additional grant number links
       await db.GrantNumberLink.bulkCreate(
         [{ grantNumber: 'G-REGION-SORT-3' }, { grantNumber: 'G-REGION-SORT-4' }],
-        { ignoreDuplicates: true }
+        {
+          ignoreDuplicates: true,
+        }
       );
 
       const recipientRegionDescB = await Recipient.create({
@@ -2296,7 +2300,9 @@ describe('recipientSpotlight service', () => {
       // Create GrantNumberLinks for our test grant numbers
       await db.GrantNumberLink.bulkCreate(
         [{ grantNumber: 'G-MULTI-R1' }, { grantNumber: 'G-MULTI-R2' }],
-        { ignoreDuplicates: true }
+        {
+          ignoreDuplicates: true,
+        }
       );
 
       // Create a single recipient

@@ -41,7 +41,9 @@ module.exports = {
         queryInterface.addIndex(
           'GoalTemplateObjectiveTemplates',
           ['goalTemplateId', 'objectiveTemplateId'],
-          { transaction }
+          {
+            transaction,
+          }
         ),
         queryInterface.addIndex('GoalTemplateObjectiveTemplates', ['objectiveTemplateId'], {
           transaction,
@@ -95,7 +97,9 @@ module.exports = {
         queryInterface.removeIndex(
           'GoalTemplateObjectiveTemplates',
           ['goalTemplateId', 'objectiveTemplateId'],
-          { transaction }
+          {
+            transaction,
+          }
         ),
         queryInterface.removeIndex('GoalTemplateObjectiveTemplates', ['objectiveTemplateId'], {
           transaction,

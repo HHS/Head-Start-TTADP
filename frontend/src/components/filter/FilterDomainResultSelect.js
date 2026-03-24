@@ -3,7 +3,10 @@ import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
 const OPTIONS = ['Above all thresholds', 'Below quality', 'Below competitive'].map(
-  (label, value) => ({ value, label })
+  (label, value) => ({
+    value,
+    label,
+  })
 );
 
 export default function FilterDomainResultSelect({ onApply, inputId, query }) {

@@ -31,11 +31,15 @@ module.exports = {
 
       await queryInterface.sequelize.query(
         'DROP TYPE IF EXISTS "enum_ObjectiveResources_sourceFields";',
-        { transaction }
+        {
+          transaction,
+        }
       );
       await queryInterface.sequelize.query(
         'DROP TYPE IF EXISTS "enum_ObjectiveTemplateResources_sourceFields";',
-        { transaction }
+        {
+          transaction,
+        }
       );
     });
   },

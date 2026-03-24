@@ -40,9 +40,7 @@ export const CollabReportsLanding = () => {
       />
       <LandingMessage linkBase="/collaboration-reports/" />
       <div className="collab-report-header margin-top-0 margin-bottom-3 flex-column flex-align-start display-flex">
-        <h1 className="landing tablet:margin-right-2 margin-bottom-0">
-          {`Collaboration reports - ${regionLabel}`}
-        </h1>
+        <h1 className="landing tablet:margin-right-2 margin-bottom-0">{`Collaboration reports - ${regionLabel}`}</h1>
         <div className="margin-top-1">
           <NewReportButton to="/collaboration-reports/new/activity-summary">
             New Collaboration Report

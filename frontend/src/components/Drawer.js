@@ -128,9 +128,7 @@ export default function Drawer({
 
           {footer && (
             <div
-              className={`bg-base-lightest padding-105 ${
-                stickyFooter ? 'position-sticky pin-bottom' : ''
-              }`}
+              className={`bg-base-lightest padding-105 ${stickyFooter ? 'position-sticky pin-bottom' : ''}`}
             >
               {footer}
             </div>

@@ -256,17 +256,17 @@ const canSeeBehindFeatureFlag = (user, flag) => {
 };
 
 export {
-  isAdmin as default,
-  getRegionWithReadWrite,
-  hasReadWrite,
-  getUserRegions,
-  canEditOrCreateGoals,
   canChangeGoalStatus,
   canChangeObjectiveStatus,
+  canCreateCommunicationLog,
+  canEditOrCreateGoals,
   canEditOrCreateSessionReports,
+  canSeeBehindFeatureFlag,
+  getRegionWithReadWrite,
+  getUserRegions,
   hasApproveActivityReport,
   hasApproveActivityReportInRegion,
-  canSeeBehindFeatureFlag,
+  hasReadWrite,
   hasTrainingReportWritePermissions,
-  canCreateCommunicationLog,
+  isAdmin as default,
 };

@@ -73,7 +73,9 @@ describe('recipientSpotlight handlers', () => {
       );
       expect(filtersToScopes).toHaveBeenCalledWith(
         expect.objectContaining({ 'region.in': ['1'] }),
-        { userId: mockUserId }
+        {
+          userId: mockUserId,
+        }
       );
       expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
         mockScopes,

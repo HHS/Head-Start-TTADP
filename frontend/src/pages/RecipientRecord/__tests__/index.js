@@ -124,7 +124,11 @@ describe('recipient record page', () => {
     );
     fetchMock.get(
       `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`,
-      { count: 0, rows: [], topics: [] }
+      {
+        count: 0,
+        rows: [],
+        topics: [],
+      }
     );
     fetchMock.get('/api/widgets/frequencyGraph', 200);
     fetchMock.get(
@@ -253,7 +257,9 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get(
       '/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false',
-      { goalRows: [] }
+      {
+        goalRows: [],
+      }
     );
     memoryHistory.push('/recipient-tta-records/45/region/1/rttapa/print');
     act(() => renderRecipientRecord());

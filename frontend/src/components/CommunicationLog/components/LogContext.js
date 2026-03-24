@@ -48,4 +48,4 @@ LogProvider.propTypes = {
 
 const useLogContext = () => useContext(LogContext);
 
-export { LogProvider, useLogContext, LogContext };
+export { LogContext, LogProvider, useLogContext };

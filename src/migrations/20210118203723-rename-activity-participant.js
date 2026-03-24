@@ -8,7 +8,9 @@ module.exports = {
         'ActivityReports',
         'participantType',
         'activityRecipientType',
-        { transaction: t }
+        {
+          transaction: t,
+        }
       );
     }),
   down: async (queryInterface) =>
@@ -20,7 +22,9 @@ module.exports = {
         'ActivityReports',
         'activityRecipientType',
         'participantType',
-        { transaction: t }
+        {
+          transaction: t,
+        }
       );
     }),
 };

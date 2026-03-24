@@ -464,12 +464,16 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(
       '/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2',
       totalHoursResponse,
-      { overwriteRoutes: true }
+      {
+        overwriteRoutes: true,
+      }
     );
     fetchMock.get(
       '/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2',
       topicFrequencyResponse,
-      { overwriteRoutes: true }
+      {
+        overwriteRoutes: true,
+      }
     );
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2',
@@ -512,12 +516,16 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(
       '/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2',
       totalHoursResponse,
-      { overwriteRoutes: true }
+      {
+        overwriteRoutes: true,
+      }
     );
     fetchMock.get(
       '/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2',
       topicFrequencyResponse,
-      { overwriteRoutes: true }
+      {
+        overwriteRoutes: true,
+      }
     );
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2',

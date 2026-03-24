@@ -36,13 +36,7 @@ export const getCommunicationLogsByRecipientId = async (
   const queryString = `?sortBy=${sortBy}&direction=${direction}&offset=${offset}${limitQuery}&format=${format}&${query}`;
 
   const response = await get(
-    `${join(
-      communicationLogUrl,
-      'region',
-      String(regionId),
-      'recipient',
-      String(recipientId)
-    )}${queryString}`
+    `${join(communicationLogUrl, 'region', String(regionId), 'recipient', String(recipientId))}${queryString}`
   );
 
   if (format === 'csv') {
@@ -92,7 +86,9 @@ export const createRegionalCommunicationLog = async (regionId, data) => {
 export const createCommunicationLogByRecipientId = async (regionId, recipientId, data) => {
   const response = await post(
     join(communicationLogUrl, 'region', String(regionId), 'recipient', String(recipientId)),
-    { data }
+    {
+      data,
+    }
   );
 
   return response.json();

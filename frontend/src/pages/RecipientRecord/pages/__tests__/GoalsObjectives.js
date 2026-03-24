@@ -416,7 +416,11 @@ describe('Goals and Objectives', () => {
 
     fetchMock.get(
       '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10',
-      { count: 1, goalRows: goals, statuses: defaultStatuses }
+      {
+        count: 1,
+        goalRows: goals,
+        statuses: defaultStatuses,
+      }
     );
     const sortCreated = await screen.findByTestId('sortGoalsBy');
     userEvent.selectOptions(sortCreated, 'createdOn-asc');
