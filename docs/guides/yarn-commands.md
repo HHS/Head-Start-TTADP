@@ -25,7 +25,7 @@ This guide is the source of truth for local command usage. For common operations
 | Run backend lint | `yarn lint` |
 | Run backend lint (CI formatter) | `yarn lint:ci` |
 | Run backend + frontend lint | `yarn lint:all` |
-| Auto-fix backend lint issue | `yarn lint:fix` |
+| Auto-fix backend lint issues | `yarn lint:fix` |
 | Auto-fix backend + frontend lint issues  | `yarn lint:fix:all` |
 | Build backend TypeScript | `yarn build` |
 | Build frontend production bundle | `yarn --cwd frontend build` |
