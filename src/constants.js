@@ -231,6 +231,7 @@ const MAINTENANCE_TYPE = {
 
 const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
+  'monitoring-regional-dashboard',
 ];
 
 const MAINTENANCE_CATEGORY = {

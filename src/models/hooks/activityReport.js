@@ -1,6 +1,7 @@
 const httpContext = require('express-http-context');
-const { Op } = require('sequelize');
+const { Op, ValidationError, ValidationErrorItem } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
+const activityReportSchema = require('../schemas/activityReport');
 const {
   OBJECTIVE_STATUS,
   GOAL_COLLABORATORS,
@@ -1008,7 +1009,43 @@ const beforeValidate = async (sequelize, instance, options) => {
   setSubmittedDate(sequelize, instance, options);
 };
 
+const validateForSubmission = (instance) => {
+  const changed = instance.changed();
+  if (
+    Array.isArray(changed)
+    && changed.includes('submissionStatus')
+    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED
+  ) {
+    const { error } = activityReportSchema.validate(instance.dataValues);
+    if (error) {
+      const items = error.details.map(
+        (d) => new ValidationErrorItem(d.message, 'Validation error', d.path.join('.'), d.context?.value),
+      );
+      throw new ValidationError('Activity report validation failed', items);
+    }
+  }
+};
+
+const validateForApproval = (instance) => {
+  const changed = instance.changed();
+  if (
+    Array.isArray(changed)
+    && changed.includes('calculatedStatus')
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED
+  ) {
+    const { error } = activityReportSchema.validate(instance.dataValues);
+    if (error) {
+      const items = error.details.map(
+        (d) => new ValidationErrorItem(d.message, 'Validation error', d.path.join('.'), d.context?.value),
+      );
+      throw new ValidationError('Activity report validation failed', items);
+    }
+  }
+};
+
 const beforeUpdate = async (sequelize, instance, options) => {
+  validateForSubmission(instance);
+  validateForApproval(instance);
   copyStatus(instance);
   purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   setSubmittedDate(sequelize, instance, options);
@@ -1051,4 +1088,6 @@ export {
   revisionBump,
   revisionBumpBroadcast,
   forceStatusEventOnReopenedGoal,
+  validateForSubmission,
+  validateForApproval,
 };

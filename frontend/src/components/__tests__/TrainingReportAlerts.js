@@ -206,7 +206,7 @@ describe('TrainingReportAlerts', () => {
       const link = screen.getByText('Create a session');
       expect(link).toHaveAttribute(
         'href',
-        '/training-report/12345/session/new/',
+        '/training-report/R01-PD-12345/session/new/',
       );
     });
   });
@@ -230,7 +230,7 @@ describe('TrainingReportAlerts', () => {
       const link = screen.getByText('Missing event info');
       expect(link).toHaveAttribute(
         'href',
-        '/training-report/67890/event-summary',
+        '/training-report/R01-PD-67890/event-summary',
       );
     });
   });
@@ -254,7 +254,7 @@ describe('TrainingReportAlerts', () => {
       const link = screen.getByText('Missing session info');
       expect(link).toHaveAttribute(
         'href',
-        '/training-report/11111/session/123/session-summary',
+        '/training-report/R01-PD-11111/session/123/session-summary',
       );
     });
   });
@@ -276,7 +276,7 @@ describe('TrainingReportAlerts', () => {
 
     await waitFor(() => {
       const link = screen.getByText('Event not completed');
-      expect(link).toHaveAttribute('href', '/training-report/view/22222');
+      expect(link).toHaveAttribute('href', '/training-report/view/R01-PD-22222');
     });
   });
 
@@ -301,7 +301,7 @@ describe('TrainingReportAlerts', () => {
       const link = screen.getByText('Waiting for approval');
       expect(link).toHaveAttribute(
         'href',
-        '/training-report/33333/session/456/review',
+        '/training-report/R01-PD-33333/session/456/review',
       );
     });
   });
@@ -326,7 +326,7 @@ describe('TrainingReportAlerts', () => {
       const link = screen.getByText('Changes needed');
       expect(link).toHaveAttribute(
         'href',
-        '/training-report/44444/session/789/review',
+        '/training-report/R01-PD-44444/session/789/review',
       );
     });
   });

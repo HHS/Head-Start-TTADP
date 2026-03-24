@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Usage: bin/run-tool [--local|--build|--auto] <src-path> [args...]
+#   auto mode (default): local -> tsx <src-path>, cloud -> node ./build/server/<src-path>
+#   local mode (--local): tsx <src-path>
+#   build mode (--build): node ./build/server/<src-path>
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: bin/run-tool [--local|--build|--auto] <src-path> [args...]
+  --auto   Default. Use tsx locally, node from build output in cloud (when VCAP_APPLICATION is set).
+  --local  Force local mode (tsx).
+  --build  Force build mode (node ./build/server/...)
+USAGE
+}
+
+resolve_build_path() {
+  local input_path="$1"
+
+  # If a build path is already provided, keep it.
+  if [[ "$input_path" == *"build/server/"* ]]; then
+    echo "$input_path"
+    return 0
+  fi
+
+  # Build output is JavaScript, even when source path is TypeScript.
+  if [[ "$input_path" == *.ts ]]; then
+    input_path="${input_path%.ts}.js"
+  fi
+
+  echo "./build/server/$input_path"
+}
+
+mode="auto"
+case "${1:-}" in
+  --local)
+    mode="local"
+    shift
+    ;;
+  --build)
+    mode="build"
+    shift
+    ;;
+  --auto)
+    mode="auto"
+    shift
+    ;;
+  -h|--help)
+    usage
+    exit 0
+    ;;
+esac
+
+src="${1:-}"
+if [[ -z "$src" ]]; then
+  usage >&2
+  exit 1
+fi
+shift
+
+if [[ "$mode" == "auto" ]]; then
+  if [[ -n "${VCAP_APPLICATION:-}" ]]; then
+    mode="build"
+  else
+    mode="local"
+  fi
+fi
+
+if [[ "$mode" == "local" ]]; then
+  exec tsx "$src" "$@"
+fi
+
+build_path="$(resolve_build_path "$src")"
+exec node "$build_path" "$@"

@@ -114,7 +114,7 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', `/training-report/view/${defaultEvent.data.eventId}`);
   });
 
   it('hides the edit and create options for completed event with write permissions', () => {
@@ -133,7 +133,7 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', `/training-report/view/${defaultEvent.data.eventId}`);
   });
 
   it('only shows the view options with view permission', async () => {
@@ -217,7 +217,7 @@ describe('EventCard', () => {
     expect(await screen.findByText(/are you sure you want to delete this event/i)).toBeInTheDocument();
     const confirmBtn = screen.getByRole('button', { name: /delete event/i });
     userEvent.click(confirmBtn);
-    expect(onDeleteEvent).toHaveBeenCalledWith('1234', 1);
+    expect(onDeleteEvent).toHaveBeenCalledWith(defaultEvent.data.eventId, 1);
   });
 
   it('cannot edit suspended events', () => {
@@ -243,21 +243,21 @@ describe('EventCard', () => {
     const editEvent = screen.queryByText(/edit event/i);
     expect(editEvent).toBeInTheDocument();
     userEvent.click(editEvent);
-    expect(history.push).toHaveBeenCalledWith('/training-report/1234/event-summary');
+    expect(history.push).toHaveBeenCalledWith(`/training-report/${defaultEvent.data.eventId}/event-summary`);
 
     // Create session.
     userEvent.click(contextBtn);
     const createSession = screen.queryByText(/create session/i);
     expect(createSession).toBeInTheDocument();
     userEvent.click(createSession);
-    expect(history.push).toHaveBeenCalledWith('/training-report/1234/session/new/');
+    expect(history.push).toHaveBeenCalledWith(`/training-report/${defaultEvent.data.eventId}/session/new/`);
 
     // View/Print event.
     contextBtn.click();
     const viewEvent = screen.queryByText(/view\/print event/i);
     expect(viewEvent).toBeInTheDocument();
     userEvent.click(viewEvent);
-    expect(history.push).toHaveBeenCalledWith('/training-report/view/1234');
+    expect(history.push).toHaveBeenCalledWith(`/training-report/view/${defaultEvent.data.eventId}`);
   });
 
   it('hides edit if eventSubmitted is set', () => {
@@ -355,7 +355,7 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     const completeEvent = screen.queryByText(/complete event/i);
     expect(completeEvent).toBeInTheDocument();
-    fetchMock.put('/api/events/id/1234', { message: 'success', id: 1 });
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, { message: 'success', id: 1 });
     act(() => {
       userEvent.click(completeEvent);
     });
@@ -376,7 +376,7 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     const completeEvent = screen.queryByText(/complete event/i);
     expect(completeEvent).toBeInTheDocument();
-    fetchMock.put('/api/events/id/1234', 500);
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, 500);
     act(() => {
       userEvent.click(completeEvent);
     });
@@ -449,7 +449,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     const suspendEvent = screen.queryByText(/suspend event/i);
-    fetchMock.put('/api/events/id/1234', { message: 'success', id: 1 });
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, { message: 'success', id: 1 });
 
     act(() => {
       userEvent.click(suspendEvent);
@@ -467,7 +467,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     const suspendEvent = screen.queryByText(/suspend event/i);
-    fetchMock.put('/api/events/id/1234', 500);
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, 500);
 
     act(() => {
       userEvent.click(suspendEvent);
@@ -541,7 +541,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     const resumeEvent = screen.queryByText(/resume event/i);
-    fetchMock.put('/api/events/id/1234', { message: 'success', id: 1 });
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, { message: 'success', id: 1 });
 
     act(() => {
       userEvent.click(resumeEvent);
@@ -559,7 +559,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     const resumeEvent = screen.queryByText(/resume event/i);
-    fetchMock.put('/api/events/id/1234', 500);
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, 500);
 
     act(() => {
       userEvent.click(resumeEvent);

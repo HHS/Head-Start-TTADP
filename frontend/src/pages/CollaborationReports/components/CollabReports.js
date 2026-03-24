@@ -24,6 +24,7 @@ const CollabReports = ({
     direction: 'desc',
     activePage: 1,
     offset: 0,
+    perPage: 10,
   }, sortKey);
 
   const requestSort = useRequestSort(setSortConfig);

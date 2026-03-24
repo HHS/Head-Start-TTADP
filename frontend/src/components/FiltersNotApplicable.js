@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
@@ -6,11 +7,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import colors from '../colors';
 import Tooltip from './Tooltip';
 
-const FiltersNotApplicable = () => (
+const FiltersNotApplicable = ({ showLeadingDash }) => (
   <>
     <span className="ttahub-filters-not-applicable font-sans-xs margin-right-1">
-      {' '}
-      - Filters not applied
+      {showLeadingDash ? ' - Filters not applied' : 'Filters not applied'}
     </span>
     <Tooltip
       displayText={<FontAwesomeIcon icon={faQuestionCircle} color={colors.ttahubMediumBlue} size="lg" />}
@@ -21,5 +21,13 @@ const FiltersNotApplicable = () => (
     />
   </>
 );
+
+FiltersNotApplicable.defaultProps = {
+  showLeadingDash: true,
+};
+
+FiltersNotApplicable.propTypes = {
+  showLeadingDash: PropTypes.bool,
+};
 
 export default FiltersNotApplicable;

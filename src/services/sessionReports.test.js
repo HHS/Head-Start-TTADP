@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
@@ -25,7 +26,6 @@ describe('session reports service', () => {
   let event;
 
   const eventId = 'R01-PD-99_888';
-  const eventIdSubstring = '99_888';
 
   beforeAll(async () => {
     const eventData = {
@@ -52,7 +52,7 @@ describe('session reports service', () => {
 
       expect(created).toMatchObject({
         id: expect.anything(),
-        eventId: eventIdSubstring,
+        eventId,
       });
 
       await destroySession(created.id);
@@ -70,7 +70,7 @@ describe('session reports service', () => {
       const created = await createSession({ eventId: event.id, data: {} });
 
       const updatedData = {
-        eventId: eventIdSubstring,
+        eventId,
         data: {
           harry: 'potter',
         },
@@ -78,7 +78,7 @@ describe('session reports service', () => {
       const updated = await updateSession(created.id, updatedData);
 
       expect(updated).toMatchObject({
-        eventId: eventIdSubstring,
+        eventId,
         data: updatedData.data,
       });
 
@@ -94,7 +94,7 @@ describe('session reports service', () => {
 
       expect(updated).toMatchObject({
         id: expect.anything(),
-        eventId: eventIdSubstring,
+        eventId,
         data: updatedData.data,
       });
 
@@ -170,7 +170,7 @@ describe('session reports service', () => {
 
       expect(found).toMatchObject({
         id: created.id,
-        eventId: eventIdSubstring,
+        eventId,
       });
 
       await destroySession(created.id);
@@ -445,10 +445,15 @@ describe('session reports service', () => {
         data: {
           eventId: testEventLongId,
           eventName: 'Test Event for Sessions',
+          // Use IN_PROGRESS so sessions can be created (the beforeCreate hook blocks
+          // session creation on COMPLETE events). IN_PROGRESS still passes getSessionReports'
+          // event filter which accepts both COMPLETE and IN_PROGRESS.
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         },
       });
 
       // Create test sessions with varied data for sorting/filtering
+      // Sessions must have status: COMPLETE to be returned by getSessionReports
       testSessions = await Promise.all([
         createSession({
           eventId: testEvent.id,
@@ -457,6 +462,7 @@ describe('session reports service', () => {
             startDate: '01/15/2024',
             endDate: '01/16/2024',
             objectiveTopics: ['Topic A', 'Topic B'],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
         createSession({
@@ -466,6 +472,7 @@ describe('session reports service', () => {
             startDate: '01/10/2024',
             endDate: '01/11/2024',
             objectiveTopics: ['Topic C'],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
         createSession({
@@ -475,6 +482,7 @@ describe('session reports service', () => {
             startDate: '01/20/2024',
             endDate: '01/21/2024',
             objectiveTopics: [],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
       ]);

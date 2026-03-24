@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
-import Joi from '@hapi/joi';
+import Joi from 'joi';
 import { root, validateSchema } from './common';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
 

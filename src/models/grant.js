@@ -43,6 +43,22 @@ export default (sequelize, DataTypes) => {
         as: 'sessionReports',
       });
 
+      // Monitoring Fact Tables.
+      Grant.hasMany(models.GrantDeliveredReview, { foreignKey: 'grantId', as: 'grantDeliveredReviews' });
+      Grant.hasMany(models.GrantCitation, { foreignKey: 'grantId', as: 'grantCitations' });
+      Grant.belongsToMany(models.DeliveredReview, {
+        through: models.GrantDeliveredReview,
+        foreignKey: 'grantId',
+        otherKey: 'deliveredReviewId',
+        as: 'deliveredReviews',
+      });
+      Grant.belongsToMany(models.Citation, {
+        through: models.GrantCitation,
+        foreignKey: 'grantId',
+        otherKey: 'citationId',
+        as: 'citations',
+      });
+
       Grant.addScope('defaultScope', {
         include: [
           { model: models.Recipient, as: 'recipient' },

@@ -3,15 +3,16 @@ import PropTypes from 'prop-types';
 import { Dropdown } from '@trussworks/react-uswds';
 
 export function displayGrantsStatus(q) {
-  if (q === 'active') {
+  const val = Array.isArray(q) ? q[0] : q;
+  if (val === 'active') {
     return 'Active';
   }
 
-  if (q === 'inactive') {
+  if (val === 'inactive') {
     return 'Inactive';
   }
 
-  if (q === 'interim-management-cdi') {
+  if (val === 'interim-management-cdi') {
     return 'Interim management (CDI)';
   }
 

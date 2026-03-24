@@ -7,7 +7,8 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SCOPE_IDS } from '@ttahub/common';
+import selectEvent from 'react-select-event';
+import { COMMUNICATION_RESULTS, SCOPE_IDS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import RegionalCommunicationLog from '..';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -257,6 +258,31 @@ describe('RegionalCommunicationLogDashboard', () => {
     expect(fetchMock.called(filterURL)).toBe(true);
   });
 
+  it('lets you apply a result filter', async () => {
+    const response = { count: 0, rows: [] };
+    act(() => renderComm(userCentralOffice, '/communication-log'));
+    const open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+    await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
+
+    const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastTopic, 'result'));
+
+    const [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastCondition, 'is'));
+
+    const select = await screen.findByText(/select result to filter by/i);
+    await selectEvent.select(select, [COMMUNICATION_RESULTS[0]]);
+
+    const filterURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&result.in[]=${encodeURIComponent(COMMUNICATION_RESULTS[0])}`;
+    fetchMock.get(filterURL, response);
+
+    const apply = screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i });
+    act(() => userEvent.click(apply));
+
+    await waitFor(() => expect(fetchMock.called(filterURL)).toBe(true));
+  });
+
   it('does not show the region filter when the user has only one region', async () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -279,10 +305,10 @@ describe('RegionalCommunicationLogDashboard', () => {
 
   it('allows you to remove a filter', async () => {
     act(() => renderComm(userWithTwoRegions, '/communication-log'));
-    await waitFor(() => expect(screen.getByRole('button', { name: /this button removes the filter: communication date is/i })).toBeInTheDocument());
-    const remove = screen.getByRole('button', { name: /this button removes the filter: communication date is/i });
+    await waitFor(() => expect(screen.getByRole('button', { name: /this button removes the filter/i })).toBeInTheDocument());
+    const remove = screen.getByRole('button', { name: /this button removes the filter/i });
     act(() => userEvent.click(remove));
-    await waitFor(() => expect(screen.queryByRole('button', { name: /this button removes the filter: communication date is/i })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('button', { name: /this button removes the filter/i })).not.toBeInTheDocument());
   });
 
   it('shows an error message if the fetch fails', async () => {

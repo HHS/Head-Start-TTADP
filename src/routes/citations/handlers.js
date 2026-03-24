@@ -19,7 +19,19 @@ export const getTextByCitation = async (req, res) => {
     const { citationIds } = req.query;
 
     // Get the citations for the grant.
-    const citations = await textByCitation([citationIds].flat());
+    const citationIdsArray = (() => {
+      if (Array.isArray(citationIds)) {
+        return citationIds;
+      }
+
+      if (citationIds && typeof citationIds === 'object') {
+        return Object.values(citationIds);
+      }
+
+      return citationIds === undefined ? [] : [citationIds];
+    })();
+
+    const citations = await textByCitation(citationIdsArray.flat());
 
     // Return the text
     res.status(httpCodes.OK).send(citations);

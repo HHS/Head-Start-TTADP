@@ -25,6 +25,7 @@ import {
   getReportsByManyIds,
   getGroups,
 } from './handlers';
+import { checkReviewReportBody } from './middleware';
 import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
 import { nameTransactionByBase, nameTransactionByPath } from '../../middleware/newRelicMiddleware';
@@ -58,7 +59,12 @@ router.post('/reportsByManyIds', transactionWrapper(getReportsByManyIds));
 router.put('/:activityReportId', checkActivityReportIdParam, transactionWrapper(saveReport));
 router.delete('/:activityReportId', checkActivityReportIdParam, transactionWrapper(softDeleteReport));
 router.put('/:activityReportId/reset', checkActivityReportIdParam, transactionWrapper(resetToDraft));
-router.put('/:activityReportId/review', checkActivityReportIdParam, transactionWrapper(reviewReport));
+router.put(
+  '/:activityReportId/review',
+  checkActivityReportIdParam,
+  checkReviewReportBody,
+  transactionWrapper(reviewReport),
+);
 router.put('/:activityReportId/submit', checkActivityReportIdParam, transactionWrapper(submitReport));
 router.put('/:activityReportId/unlock', checkActivityReportIdParam, transactionWrapper(unlockReport));
 router.put('/:activityReportId/goals/edit', checkActivityReportIdParam, transactionWrapper(setGoalAsActivelyEdited));

@@ -650,13 +650,24 @@ function check_active_tasks() {
             return 0  # No active tasks
         fi
 
+        # Build a compact list of active tasks as "id:name(state)".
+        local active_task_summary
+        active_task_summary=$(echo "$active_tasks" | awk '/^[0-9]+/ {printf "%s:%s(%s) ", $1, $2, $3}' | sed 's/[[:space:]]*$//')
+
         current_time=$(date +%s)
         if (( current_time - start_time >= timeout )); then
             log "ERROR" "Timeout reached while waiting for active tasks to complete in application '$app_name'."
+            if [ -n "$active_task_summary" ]; then
+                log "ERROR" "Active tasks at timeout: $active_task_summary"
+            fi
             return 1  # Timeout reached
         fi
 
-        log "INFO" "Active tasks found. Waiting for tasks to complete..."
+        if [ -n "$active_task_summary" ]; then
+            log "INFO" "Active tasks found: $active_task_summary. Waiting for tasks to complete..."
+        else
+            log "INFO" "Active tasks found. Waiting for tasks to complete..."
+        fi
         sleep 10
     done
 }

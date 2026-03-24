@@ -88,6 +88,9 @@ const hsesUsers = [
     name: 'Corinne tta', hsesUsername: 'test.tta.corinne', hsesUserId: '55228', email: 'no-send_smith96@yahoo.com',
   },
   {
+    name: 'Yvette tta', hsesUsername: 'test.tta.juanayvette', hsesUserId: '58238', email: 'no-send_smith97@yahoo.com',
+  },
+  {
     name: 'Does tta', hsesUsername: 'test.tta.doesnotexist', hsesUserId: '31337', email: 'does.notexist@adhocteam.us',
   },
 ];

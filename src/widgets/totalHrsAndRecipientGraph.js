@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { REPORT_STATUSES, TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common';
+import { REPORT_STATUSES, TRACE_IDS as TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common';
 import { ActivityReport } from '../models';
 
 function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {

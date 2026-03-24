@@ -10,7 +10,7 @@ import {
   GetSessionReportsParams,
   SessionReportSortSortMap,
 } from './types/sessionReport';
-import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
+import { findEventBySmartsheetId, findEventByDbId } from './event';
 import filtersToScopes from '../scopes';
 
 const {
@@ -173,16 +173,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     return session;
   }
 
-  const eventId = (() => {
-    if (session.event) {
-      const fullId = session.event.data.eventId;
-      // we need to get the last four digits of the smartsheet provided
-      // event id, which is in the format R01-PD-1037
-      return fullId.substring(fullId.lastIndexOf('-') + 1);
-    }
-
-    return null;
-  })();
+  const eventId = session.event ? session.event.data.eventId : null;
 
   return {
     id: session?.id,
@@ -255,7 +246,7 @@ export async function updateSession(id: number, request) {
   const existingData = session.data;
   const newData = { ...existingData, ...data };
 
-  const event = await findEventBySmartsheetIdSuffix(eventId);
+  const event = await findEventBySmartsheetId(eventId);
 
   const update = {
     eventId: event.id,
@@ -403,8 +394,8 @@ export async function getSessionReports(
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'startDate\' AS DATE)')],
-    endDate: [sequelize.literal('CAST("SessionReportPilot".data->>\'endDate\' AS DATE)')],
+    startDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'startDate\', \'\'), \'MM/DD/YYYY\')')],
+    endDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'endDate\', \'\'), \'MM/DD/YYYY\')')],
     eventId: ['event', sequelize.literal('data->>\'eventId\'::text')],
     eventName: ['event', sequelize.literal('data->>\'eventName\'::text')],
     supportingGoals: [sequelize.literal('(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)')],
@@ -458,6 +449,9 @@ export async function getSessionReports(
     ],
     where: {
       eventId: events.map(({ id }) => id),
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+      },
     },
     include: [
       {
@@ -493,6 +487,7 @@ export async function getSessionReports(
       [Op.and]: [
         queryOptions.where,
         ...sessionReportScopes,
+
       ],
     },
     include: [
