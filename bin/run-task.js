@@ -10,6 +10,7 @@ const { execFileSync, spawn } = require('node:child_process');
 const {
   TERMINAL_STATUSES,
   NON_TERMINAL_STATUSES,
+  TaskNotFoundError,
   parseTaskStatus,
 } = require('./cf-task-utils');
 
@@ -223,7 +224,22 @@ async function waitForTask(appName, taskName, options = {}) {
   let previousStatus = null;
 
   async function poll() {
-    const status = getTaskStatus(appName, taskName, runCfCommandImpl);
+    let status;
+    try {
+      status = getTaskStatus(appName, taskName, runCfCommandImpl);
+    } catch (error) {
+      if (!(error instanceof TaskNotFoundError)) {
+        throw error;
+      }
+
+      if ((Date.now() - startedAt) >= timeoutSeconds * 1000) {
+        throw new Error(`Timed out waiting for task ${taskName} after ${timeoutSeconds} seconds`);
+      }
+
+      await sleepImpl(pollIntervalMs);
+      return poll();
+    }
+
     if (status !== previousStatus) {
       onStatus(status);
       previousStatus = status;

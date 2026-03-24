@@ -40,6 +40,26 @@ id   name          state
     expect(runCmd).toHaveBeenCalledWith('sleep 10', false);
   });
 
+  it('retries until the task appears in cf tasks output', () => {
+    const runCmd = jest.fn()
+      .mockReturnValueOnce(`
+id   name          state
+`)
+      .mockReturnValueOnce('')
+      .mockReturnValueOnce(`
+id   name          state
+1    import-task   RUNNING
+`)
+      .mockReturnValueOnce('')
+      .mockReturnValueOnce(`
+id   name          state
+1    import-task   SUCCEEDED
+`);
+
+    expect(watchTask('tta-smarthub-prod', 'import-task', runCmd)).toBe('SUCCEEDED');
+    expect(runCmd).toHaveBeenCalledWith('sleep 10', false);
+  });
+
   it('returns failed for terminal failed state', () => {
     const runCmd = jest.fn()
       .mockReturnValueOnce(`

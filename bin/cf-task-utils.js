@@ -3,6 +3,13 @@
 const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED']);
 const NON_TERMINAL_STATUSES = new Set(['PENDING', 'RUNNING']);
 
+class TaskNotFoundError extends Error {
+  constructor(taskName) {
+    super(`Task ${taskName} not found`);
+    this.name = 'TaskNotFoundError';
+  }
+}
+
 function parseTaskStatus(output, taskName) {
   const lines = output
     .split('\n')
@@ -15,7 +22,7 @@ function parseTaskStatus(output, taskName) {
   });
 
   if (!matchedLine) {
-    throw new Error(`Task ${taskName} not found`);
+    throw new TaskNotFoundError(taskName);
   }
 
   const [, , status] = matchedLine.split(/\s+/);
@@ -29,5 +36,6 @@ function parseTaskStatus(output, taskName) {
 module.exports = {
   NON_TERMINAL_STATUSES,
   TERMINAL_STATUSES,
+  TaskNotFoundError,
   parseTaskStatus,
 };

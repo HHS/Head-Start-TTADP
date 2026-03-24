@@ -111,6 +111,35 @@ id   name          state
     expect(sleepImpl).toHaveBeenCalledTimes(2);
   });
 
+  it('retries until the task appears in cf tasks output', async () => {
+    const runCfCommandImpl = jest.fn()
+      .mockReturnValueOnce(`
+id   name          state
+`)
+      .mockReturnValueOnce(`
+id   name          state
+1    import-task   RUNNING
+`)
+      .mockReturnValueOnce(`
+id   name          state
+1    import-task   SUCCEEDED
+`);
+    const sleepImpl = jest.fn().mockResolvedValue();
+    const onStatus = jest.fn();
+
+    await expect(waitForTask('tta-smarthub-prod', 'import-task', {
+      runCfCommandImpl,
+      sleepImpl,
+      pollIntervalMs: 1,
+      timeoutSeconds: 5,
+      onStatus,
+    })).resolves.toBe('SUCCEEDED');
+
+    expect(onStatus).toHaveBeenNthCalledWith(1, 'RUNNING');
+    expect(onStatus).toHaveBeenNthCalledWith(2, 'SUCCEEDED');
+    expect(sleepImpl).toHaveBeenCalledTimes(2);
+  });
+
   it('times out when the task never reaches a terminal state', async () => {
     const runCfCommandImpl = jest.fn().mockReturnValue(`
 id   name          state

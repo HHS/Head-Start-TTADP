@@ -8,6 +8,7 @@ const { execSync } = require('child_process');
 const {
   TERMINAL_STATUSES,
   NON_TERMINAL_STATUSES,
+  TaskNotFoundError,
   parseTaskStatus,
 } = require('./cf-task-utils');
 
@@ -46,8 +47,19 @@ function logTaskErrors(appName, taskName, runCmdImpl = runCmd) {
 }
 
 function watchTask(appName, taskName, runCmdImpl = runCmd) {
-  while (true) {
-    const status = checkStatus(appName, taskName, runCmdImpl);
+  for (;;) {
+    let status;
+    try {
+      status = checkStatus(appName, taskName, runCmdImpl);
+    } catch (error) {
+      if (!(error instanceof TaskNotFoundError)) {
+        throw error;
+      }
+
+      runCmdImpl('sleep 10', false);
+      continue;
+    }
+
     if (TERMINAL_STATUSES.has(status)) {
       return status;
     }
