@@ -15,19 +15,11 @@ fi
 
 task_count=$(jq '.taskRuns | length' "$STATUS_FILE")
 failed_count=$(jq '[.taskRuns[] | select(.status != "SUCCEEDED")] | length' "$STATUS_FILE")
-target_env=$(jq -r '.metadata.targetEnv // empty' "$STATUS_FILE")
-started_at=$(jq -r '.metadata.startedAt // (.taskRuns[0].startedAt // empty)' "$STATUS_FILE")
-finished_at=$(jq -r '.taskRuns[-1].finishedAt // empty' "$STATUS_FILE")
 
 if [[ "$task_count" -eq "$EXPECTED_TASKS" && "$failed_count" -eq 0 ]]; then
   overall_status="SUCCEEDED"
 else
   overall_status="FAILED"
-fi
-
-partial_run="false"
-if [[ "$task_count" -lt "$EXPECTED_TASKS" ]]; then
-  partial_run="true"
 fi
 
 failed_phase=$(jq -r '
@@ -44,49 +36,93 @@ if [[ -z "$failed_phase" && "$task_count" -eq 0 && -f "$LOGIN_LOG" ]]; then
   failed_phase="login"
 fi
 
-{
-  echo "Import data cron status: ${overall_status}"
-  echo "Environment: ${target_env}"
-  echo "Started: ${started_at}"
-  echo "Finished: ${finished_at}"
-  if [[ -n "$failed_phase" ]]; then
-    echo "Failed phase: ${failed_phase}"
-  fi
-  if [[ "$partial_run" == "true" ]]; then
-    echo "Partial run: yes"
-  fi
-  echo
-  echo "Phase results:"
-  jq -r '
-    def phase_name:
-      (.logFile // .taskName // "unknown")
-      | split("/")
-      | last
-      | sub("^phase-"; "")
-      | sub("\\.log$"; "");
-    .taskRuns[] | "- \(phase_name): \(.status) (exit \(.exitCode))"
-  ' "$STATUS_FILE"
-} > "$SUMMARY_FILE"
-
 report_log="${ARTIFACT_DIR}/logs/phase-report_updates.log"
-if [[ -f "$report_log" ]]; then
-  results=$(grep -o "Recent Monitoring Updates.*" "$report_log" | tail -n 1 || true)
-  if [[ -n "$results" ]]; then
-    delim=":"
-    json_data=${results#*"$delim"}
-    if [[ "$json_data" == " []" || "$json_data" == "[]" ]]; then
-      echo >> "$SUMMARY_FILE"
-      echo "Monitoring updates: none" >> "$SUMMARY_FILE"
-    else
+
+extract_failure_message() {
+  local phase="$1"
+  local log_file
+  local error_line
+  local fallback_line
+  local ignore_pattern='^(PHASE_|Task .* status: |Starting task |Uploading|Waiting for task|Showing logs|OK$|[[:space:]]*$)'
+
+  if [[ "$phase" == "login" ]]; then
+    log_file="$LOGIN_LOG"
+  else
+    log_file="${ARTIFACT_DIR}/logs/phase-${phase}.log"
+  fi
+
+  if [[ -f "$log_file" ]]; then
+    error_line=$(
+      grep -Eiv "$ignore_pattern" "$log_file" \
+        | grep -Ei '(error|failed|failure|exception|timed out|unable|not found|missing|invalid|denied)' \
+        | tail -n 1 \
+        | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+        || true
+    )
+
+    if [[ -n "$error_line" ]]; then
+      printf '%s' "$error_line"
+      return
+    fi
+
+    fallback_line=$(
+      grep -Eiv "$ignore_pattern" "$log_file" \
+        | tail -n 1 \
+        | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+        || true
+    )
+
+    if [[ -n "$fallback_line" ]]; then
+      printf '%s' "$fallback_line"
+      return
+    fi
+  fi
+
+  if [[ -n "$phase" ]]; then
+    printf 'Phase failed: %s' "$phase"
+  else
+    printf 'Monitoring import failed'
+  fi
+}
+
+write_success_summary() {
+  local results
+  local json_data
+  local goals
+
+  if [[ -f "$report_log" ]]; then
+    results=$(grep -o "Recent Monitoring Updates.*" "$report_log" | tail -n 1 || true)
+    if [[ -n "$results" ]]; then
+      json_data=${results#*:}
       goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", (.region | tostring), ")\n"' 2>/dev/null || true)
       if [[ -n "$goals" ]]; then
-        echo >> "$SUMMARY_FILE"
-        echo "Monitoring updates:" >> "$SUMMARY_FILE"
-        printf '```%s```' "$goals" >> "$SUMMARY_FILE"
-        echo >> "$SUMMARY_FILE"
+        {
+          printf 'Monitoring Updates: ```\n'
+          printf '%s\n' "$goals"
+          printf '```\n'
+        } > "$SUMMARY_FILE"
+        return
       fi
     fi
   fi
+
+  printf 'Monitoring Updates: none\n' > "$SUMMARY_FILE"
+}
+
+write_failure_summary() {
+  local failure_message
+  failure_message=$(extract_failure_message "$failed_phase")
+  {
+    printf 'Monitoring job failure: ```\n'
+    printf '%s\n' "$failure_message"
+    printf '```'
+  } > "$SUMMARY_FILE"
+}
+
+if [[ "$overall_status" == "SUCCEEDED" ]]; then
+  write_success_summary
+else
+  write_failure_summary
 fi
 
 echo
