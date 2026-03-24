@@ -44,23 +44,23 @@
 
 @media print {
   .ttahub-recipient-record--tabs_back-to-search {
-    display: none !important;
+    display: none;
   }
 
   .maxw-desktop {
     max-width: 100%;
-    margin-left: 0 !important;
+    margin-left: 0;
   }
 
   .maxw-desktop.padding-x-4.padding-y-5 {
-    padding-top: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
   }
 
   .page-heading {
-    margin-left: 0 !important;
-    margin-bottom: 0.75rem !important;
+    margin-left: 0;
+    margin-bottom: 0.75rem;
     font-size: 2.25rem;
     line-height: 1.15;
   }
@@ -76,7 +76,7 @@
   }
 
   .goal-summary-heading-row {
-    margin-bottom: 0.9rem !important;
+    margin-bottom: 1rem;
   }
 
   .recipient-goal-print-accent {
@@ -85,7 +85,7 @@
   }
 
   .recipient-goal-print-accent [data-testid='read-only-label'] {
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.25rem;
   }
 
   .recipient-goal-print-accent [data-testid='read-only-value'] {
@@ -97,10 +97,10 @@
   }
 
   .usa-accordion__content.view-standard-goals-accordion {
-    border-left: 0 !important;
-    border-right: 0 !important;
-    border-bottom: 0 !important;
-    padding-left: 0 !important;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding-left: 0;
   }
 
   .view-standard-goals-accordion.usa-accordion__heading {
@@ -119,15 +119,15 @@
   }
 
   .goal-history-content [data-testid='read-only-label'] {
-    margin-top: 0.6rem !important;
-    margin-bottom: 0.1rem !important;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
     font-size: 1rem;
     line-height: 1.25;
   }
 
   .goal-history-content [data-testid='read-only-value'] {
-    margin-top: 0 !important;
-    margin-bottom: 0.55rem;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
     font-size: 1rem;
     line-height: 1.45;
   }
@@ -135,7 +135,7 @@
   .usa-accordion__content.view-standard-goals-accordion--with-divider .goal-history-content {
     border-top: 1px solid $base-lighter;
     margin-top: 0.75rem;
-    padding-top: 0.85rem;
+    padding-top: 1rem;
   }
 
   .goal-history-content .usa-summary-box {
@@ -145,7 +145,7 @@
   }
 
   .goal-history-content .usa-summary-box__heading {
-    font-size: 1.17em;
+    font-size: 1.125rem;
     line-height: 1.2;
   }
 
@@ -154,22 +154,22 @@
   }
 
   .goal-history-print-overview p {
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.25rem;
   }
 
   .goal-history-print-overview p:first-child {
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
   }
 
   .goal-history-content h3 {
     margin-top: 1rem;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.5rem;
     line-height: 1.2;
   }
 
   .goal-history-content .usa-list {
-    margin-top: 0.2rem;
-    margin-bottom: 0.6rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
     padding-left: 1rem;
   }
 
