@@ -226,4 +226,228 @@ describe('FeedbackSurveys', () => {
     window.URL.createObjectURL = originalCreateObjectURL;
     window.URL.revokeObjectURL = originalRevokeObjectURL;
   });
+
+  it('shows an error alert when fetching responses fails', async () => {
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', 500);
+
+    render(<FeedbackSurveys />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /there was an error fetching feedback survey responses/i,
+    );
+    expect(screen.queryByText(/loading feedback survey responses/i)).not.toBeInTheDocument();
+  });
+
+  it('supports sorting across all sortable columns and toggles submitted sort direction', async () => {
+    const rows = [
+      {
+        id: 21,
+        userId: 44,
+        user: { name: 'Sort Person', email: 'sort-person@example.com' },
+        pageId: 'alpha-page',
+        surveyType: 'scale',
+        rating: 8,
+        thumbs: null,
+        comment: 'Sorting row',
+        createdAt: '2026-03-18T10:10:00.000Z',
+        submittedAt: '2026-03-18T12:10:00.000Z',
+      },
+    ];
+
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', rows);
+    fetchMock.get('begin:/api/admin/feedback-surveys?', rows);
+
+    render(<FeedbackSurveys />);
+
+    const submittedButton = await screen.findByRole('button', { name: /submitted/i });
+    const pageIdButton = screen.getByRole('button', { name: /page id/i });
+    const surveyTypeButton = screen.getByRole('button', { name: /survey type/i });
+    const ratingButton = screen.getByRole('button', { name: /rating/i });
+
+    await userEvent.click(pageIdButton);
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=pageId&sortDir=asc&limit=500')).toBe(true);
+    });
+
+    await userEvent.click(surveyTypeButton);
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=surveyType&sortDir=asc&limit=500')).toBe(true);
+    });
+
+    await userEvent.click(ratingButton);
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=rating&sortDir=asc&limit=500')).toBe(true);
+    });
+
+    await userEvent.click(submittedButton);
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=asc&limit=500')).toBe(true);
+    });
+
+    await userEvent.click(submittedButton);
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
+    });
+  });
+
+  it('resets filters and sort to defaults', async () => {
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+      {
+        id: 31,
+        userId: 55,
+        user: { name: 'Reset User', email: 'reset@example.com' },
+        pageId: 'reset-page',
+        surveyType: 'thumbs',
+        rating: 10,
+        thumbs: 'up',
+        comment: 'Reset me',
+        createdAt: '2026-03-18T10:00:00.000Z',
+        submittedAt: '2026-03-18T12:00:00.000Z',
+      },
+    ]);
+    fetchMock.get('begin:/api/admin/feedback-surveys?', []);
+
+    render(<FeedbackSurveys />);
+
+    const searchInput = await screen.findByLabelText(/^search$/i);
+    const pageIdSelect = screen.getByLabelText(/^page id$/i);
+    const surveyTypeSelect = screen.getByLabelText(/^survey type$/i);
+    const thumbsSelect = screen.getByLabelText(/^thumbs$/i);
+    const fromDate = screen.getByLabelText(/created at \(from\)/i);
+    const toDate = screen.getByLabelText(/created at \(to\)/i);
+
+    await userEvent.type(searchInput, 'feedback');
+    await userEvent.selectOptions(pageIdSelect, 'reset-page');
+    await userEvent.selectOptions(surveyTypeSelect, 'thumbs');
+    await userEvent.selectOptions(thumbsSelect, 'up');
+    await userEvent.type(fromDate, '2026-03-01');
+    await userEvent.type(toDate, '2026-03-31');
+    await userEvent.click(screen.getByRole('button', { name: /submitted/i }));
+
+    await userEvent.click(screen.getByRole('button', { name: /reset filters/i }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^search$/i)).toHaveValue('');
+      expect(screen.getByLabelText(/^page id$/i)).toHaveValue('');
+      expect(screen.getByLabelText(/^survey type$/i)).toHaveValue('');
+      expect(screen.getByLabelText(/^thumbs$/i)).toHaveValue('');
+      expect(screen.getByLabelText(/created at \(from\)/i)).toHaveValue('');
+      expect(screen.getByLabelText(/created at \(to\)/i)).toHaveValue('');
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
+    });
+  });
+
+  it('exports CSV with fallback values and escaped content', async () => {
+    const csvRows = [
+      {
+        id: 41,
+        userId: 777,
+        user: null,
+        pageId: '',
+        surveyType: 'thumbs',
+        rating: null,
+        thumbs: null,
+        comment: '',
+        createdAt: '2026-03-18T10:00:00.000Z',
+        submittedAt: null,
+      },
+      {
+        id: 42,
+        userId: 778,
+        user: { email: 'fallback@example.com' },
+        pageId: 'quoted-page',
+        surveyType: 'scale',
+        rating: 9,
+        thumbs: null,
+        comment: 'Line with "quotes"',
+        createdAt: '2026-03-18T10:00:00.000Z',
+        submittedAt: 'invalid-date',
+      },
+    ];
+
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', csvRows);
+
+    const originalCreateObjectURL = window.URL.createObjectURL;
+    const originalRevokeObjectURL = window.URL.revokeObjectURL;
+    const createObjectURLSpy = jest.fn(() => 'blob:csv');
+    const revokeObjectURLSpy = jest.fn();
+    window.URL.createObjectURL = createObjectURLSpy;
+    window.URL.revokeObjectURL = revokeObjectURLSpy;
+
+    render(<FeedbackSurveys />);
+
+    await screen.findByRole('heading', { name: /feedback survey responses/i });
+    expect(await screen.findByRole('cell', { name: 'User #777' })).toBeVisible();
+    expect(screen.getByRole('cell', { name: 'fallback@example.com' })).toBeVisible();
+
+    await userEvent.click(screen.getByRole('button', { name: /export table/i }));
+
+    expect(createObjectURLSpy).toHaveBeenCalled();
+
+    expect(revokeObjectURLSpy).toHaveBeenCalled();
+    window.URL.createObjectURL = originalCreateObjectURL;
+    window.URL.revokeObjectURL = originalRevokeObjectURL;
+  });
+
+  it('handles invalid chart rows and large thumbs counts', async () => {
+    const thumbsRows = Array.from({ length: 14 }, (_, index) => ({
+      id: 500 + index,
+      userId: 900 + index,
+      user: { name: `Thumb User ${index}`, email: `thumb${index}@example.com` },
+      pageId: 'thumb-page',
+      surveyType: 'thumbs',
+      rating: 10,
+      thumbs: 'up',
+      comment: '',
+      createdAt: '2026-03-01T10:00:00.000Z',
+      submittedAt: '2026-03-05T12:00:00.000Z',
+    }));
+
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+      {
+        id: 61,
+        userId: 301,
+        user: {},
+        pageId: 'fallback-user-page',
+        surveyType: 'thumbs',
+        rating: 10,
+        thumbs: null,
+        comment: '',
+        createdAt: '2026-03-08T10:00:00.000Z',
+        submittedAt: '2026-03-08T12:00:00.000Z',
+      },
+      {
+        id: 62,
+        userId: 302,
+        user: { name: 'Invalid Scale', email: 'invalid-scale@example.com' },
+        pageId: 'invalid-scale',
+        surveyType: 'scale',
+        rating: 'not-a-number',
+        thumbs: null,
+        comment: 'invalid scale rating',
+        createdAt: '2026-03-09T10:00:00.000Z',
+        submittedAt: '2026-03-09T12:00:00.000Z',
+      },
+      {
+        id: 63,
+        userId: 303,
+        user: { name: 'Invalid Date', email: 'invalid-date@example.com' },
+        pageId: 'invalid-date',
+        surveyType: 'thumbs',
+        rating: 1,
+        thumbs: 'down',
+        comment: 'bad date',
+        createdAt: 'invalid-date',
+        submittedAt: null,
+      },
+      ...thumbsRows,
+    ]);
+
+    render(<FeedbackSurveys />);
+
+    expect(await screen.findByRole('button', { name: /save screenshot/i })).toBeVisible();
+    const fallbackUserCell = await screen.findByRole('cell', { name: 'User #301' });
+    const fallbackRow = fallbackUserCell.closest('tr');
+    expect(fallbackRow).toHaveTextContent('--');
+  });
 });
