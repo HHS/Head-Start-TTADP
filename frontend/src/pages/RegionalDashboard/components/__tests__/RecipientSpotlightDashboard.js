@@ -1,11 +1,13 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import {
+  render, screen, waitFor,
+} from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import RecipientSpotlightDashboard from '../RecipientSpotlightDashboard';
+import { getRecipientSpotlight } from '../../../../fetchers/recipientSpotlight';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import FilterContext from '../../../../FilterContext';
-import { getRecipientSpotlight } from '../../../../fetchers/recipientSpotlight';
-import RecipientSpotlightDashboard from '../RecipientSpotlightDashboard';
 
 jest.mock('../../../../fetchers/recipientSpotlight');
 
@@ -43,7 +45,7 @@ describe('Recipient spotlight Dashboard page', () => {
             />
           </BrowserRouter>
         </FilterContext.Provider>
-      </AppLoadingContext.Provider>
+      </AppLoadingContext.Provider>,
     );
   };
 
@@ -58,10 +60,7 @@ describe('Recipient spotlight Dashboard page', () => {
   it('passes filtersToApply to RecipientSpotlightDataController', async () => {
     const filters = [
       {
-        id: '1',
-        topic: 'region',
-        condition: 'is',
-        query: '1',
+        id: '1', topic: 'region', condition: 'is', query: '1',
       },
     ];
     renderTest({ filtersToApply: filters });
@@ -74,7 +73,7 @@ describe('Recipient spotlight Dashboard page', () => {
         expect.stringContaining('region'),
         expect.any(Number),
         null,
-        true
+        true,
       );
     });
   });
@@ -131,9 +130,7 @@ describe('Recipient spotlight Dashboard page', () => {
 
     await waitFor(() => {
       expect(screen.getByText('No results found.')).toBeInTheDocument();
-      expect(
-        screen.getByText('At this time, there are no recipients that have a priority indicator.')
-      ).toBeInTheDocument();
+      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
     });
   });
 
@@ -168,9 +165,7 @@ describe('Recipient spotlight Dashboard page', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('No results found.')).not.toBeInTheDocument();
-      expect(
-        screen.queryByText('At this time, there are no recipients that have a priority indicator.')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
     });
   });
 
@@ -194,7 +189,7 @@ describe('Recipient spotlight Dashboard page', () => {
         '',
         10,
         null,
-        true
+        true,
       );
     });
   });

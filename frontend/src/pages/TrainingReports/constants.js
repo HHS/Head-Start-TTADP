@@ -2,11 +2,11 @@ import PropTypes from 'prop-types';
 
 import {
   startDateFilter as baseStartDateFilter,
+  regionFilter,
   collaboratorsFilter,
   creatorFilter,
   eventIdFilter,
   goalCategoryFilter,
-  regionFilter,
 } from '../../components/filter/trainingReportFilters';
 
 // Create page-specific filter with "Event start date" label

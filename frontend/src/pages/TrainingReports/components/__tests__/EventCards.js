@@ -1,57 +1,56 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SCOPE_IDS } from '@ttahub/common';
-import React from 'react';
 import { MemoryRouter } from 'react-router';
+import { SCOPE_IDS } from '@ttahub/common';
+import EventCards from '../EventCards';
 import UserContext from '../../../../UserContext';
 import { EVENT_STATUS } from '../../constants';
-import EventCards from '../EventCards';
 
 describe('EventCards', () => {
-  const defaultEvents = [
-    {
-      id: 1,
-      ownerId: 1,
-      collaboratorIds: [],
-      pocIds: [],
-      data: {
-        eventName: 'Sample event 1',
-        eventId: 'Sample event ID 1',
-        eventOrganizer: 'Sample event organizer 1',
-        startDate: '01/02/2021',
-        endDate: '01/03/2021',
-      },
-      sessionReports: [],
+  const defaultEvents = [{
+    id: 1,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocIds: [],
+    data: {
+      eventName: 'Sample event 1',
+      eventId: 'Sample event ID 1',
+      eventOrganizer: 'Sample event organizer 1',
+      startDate: '01/02/2021',
+      endDate: '01/03/2021',
     },
-    {
-      id: 2,
-      ownerId: 1,
-      collaboratorIds: [],
-      pocIds: [],
-      data: {
-        eventName: 'Sample event 2',
-        eventId: 'Sample event ID 2',
-        eventOrganizer: 'Sample event organizer 2',
-        startDate: '02/02/2021',
-        endDate: '02/03/2021',
-      },
-      sessionReports: [],
+    sessionReports: [],
+  },
+  {
+    id: 2,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocIds: [],
+    data: {
+      eventName: 'Sample event 2',
+      eventId: 'Sample event ID 2',
+      eventOrganizer: 'Sample event organizer 2',
+      startDate: '02/02/2021',
+      endDate: '02/03/2021',
     },
-    {
-      id: 3,
-      ownerId: 1,
-      collaboratorIds: [],
-      pocIds: [],
-      data: {
-        eventName: 'Sample event 3',
-        eventId: 'Sample event ID 3',
-        eventOrganizer: 'Sample event organizer 3',
-        reasons: null,
-        startDate: '03/02/2021',
-        endDate: '03/03/2021',
-      },
-      sessionReports: [],
+    sessionReports: [],
+  },
+  {
+    id: 3,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocIds: [],
+    data: {
+      eventName: 'Sample event 3',
+      eventId: 'Sample event ID 3',
+      eventOrganizer: 'Sample event organizer 3',
+      reasons: null,
+      startDate: '03/02/2021',
+      endDate: '03/03/2021',
     },
+    sessionReports: [],
+  },
   ];
 
   const DEFAULT_USER = {
@@ -70,9 +69,9 @@ describe('EventCards', () => {
     events = defaultEvents,
     eventType = EVENT_STATUS.NOT_STARTED,
     user = DEFAULT_USER,
-    onDeleteEvent = jest.fn()
+    onDeleteEvent = jest.fn(),
   ) => {
-    render(
+    render((
       <MemoryRouter>
         <UserContext.Provider value={{ user }}>
           <EventCards
@@ -88,8 +87,7 @@ describe('EventCards', () => {
             }}
           />
         </UserContext.Provider>
-      </MemoryRouter>
-    );
+      </MemoryRouter>));
   };
 
   it('renders correctly', () => {
@@ -140,38 +138,36 @@ describe('EventCards', () => {
   });
 
   it('collaborator can edit reports they collaborate on and view reports in their region', () => {
-    const collaboratorEvents = [
-      {
-        id: 1,
-        ownerId: 2,
-        regionId: 1,
-        collaboratorIds: [],
-        pocIds: [2],
-        data: {
-          eventName: 'Collab Event 1',
-          eventId: 'TR-R01-1234',
-          eventOrganizer: 'Sample Collab event organizer 1',
-          startDate: '01/02/2021',
-          endDate: '01/03/2021',
-        },
-        sessionReports: [],
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 2,
+      regionId: 1,
+      collaboratorIds: [],
+      pocIds: [2],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'TR-R01-1234',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
       },
-      {
-        id: 2,
-        regionId: 1,
-        ownerId: 12,
-        collaboratorIds: [],
-        pocIds: [3],
-        data: {
-          eventName: 'Region event 2',
-          eventId: 'TR-R02-1235',
-          eventOrganizer: 'Sample Region event organizer 2',
-          startDate: '02/02/2021',
-          endDate: '02/03/2021',
-        },
-        sessionReports: [],
+      sessionReports: [],
+    },
+    {
+      id: 2,
+      regionId: 1,
+      ownerId: 12,
+      collaboratorIds: [],
+      pocIds: [3],
+      data: {
+        eventName: 'Region event 2',
+        eventId: 'TR-R02-1235',
+        eventOrganizer: 'Sample Region event organizer 2',
+        startDate: '02/02/2021',
+        endDate: '02/03/2021',
       },
-    ];
+      sessionReports: [],
+    }];
 
     const COLLABORATOR_USER = {
       id: 2,
@@ -218,23 +214,21 @@ describe('EventCards', () => {
   });
 
   it('POC cannot create sessions', () => {
-    const collaboratorEvents = [
-      {
-        id: 1,
-        ownerId: 3,
-        regionId: 1,
-        collaboratorIds: [],
-        pocIds: [2],
-        data: {
-          eventName: 'Collab Event 1',
-          eventId: 'TR-R01-1234',
-          eventOrganizer: 'Sample Collab event organizer 1',
-          startDate: '01/02/2021',
-          endDate: '01/03/2021',
-        },
-        sessionReports: [],
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 3,
+      regionId: 1,
+      collaboratorIds: [],
+      pocIds: [2],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'TR-R01-1234',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
       },
-    ];
+      sessionReports: [],
+    }];
 
     const COLLABORATOR_USER = {
       id: 2,
@@ -267,23 +261,21 @@ describe('EventCards', () => {
   });
 
   it('collaborators cannot edit training', () => {
-    const collaboratorEvents = [
-      {
-        id: 1,
-        ownerId: 3,
-        regionId: 1,
-        collaboratorIds: [2],
-        pocIds: [4],
-        data: {
-          eventName: 'Collab Event 1',
-          eventId: 'TR-R01-1234',
-          eventOrganizer: 'Sample Collab event organizer 1',
-          startDate: '01/02/2021',
-          endDate: '01/03/2021',
-        },
-        sessionReports: [],
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 3,
+      regionId: 1,
+      collaboratorIds: [2],
+      pocIds: [4],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'TR-R01-1234',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
       },
-    ];
+      sessionReports: [],
+    }];
 
     const COLLABORATOR_USER = {
       id: 2,
@@ -316,23 +308,21 @@ describe('EventCards', () => {
   });
 
   it('viewers unattached see no buttons', () => {
-    const collaboratorEvents = [
-      {
-        id: 1,
-        ownerId: 2,
-        regionId: 1,
-        collaboratorIds: [3],
-        pocIds: [4],
-        data: {
-          eventName: 'Collab Event 1',
-          eventId: 'TR-R01-1234',
-          eventOrganizer: 'Sample Collab event organizer 1',
-          startDate: '01/02/2021',
-          endDate: '01/03/2021',
-        },
-        sessionReports: [],
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 2,
+      regionId: 1,
+      collaboratorIds: [3],
+      pocIds: [4],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'TR-R01-1234',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
       },
-    ];
+      sessionReports: [],
+    }];
 
     const COLLABORATOR_USER = {
       id: 1,
@@ -367,24 +357,22 @@ describe('EventCards', () => {
 
   it('admins see edit and delete event', () => {
     const deleteFunction = jest.fn();
-    const collaboratorEvents = [
-      {
-        id: 1,
-        ownerId: 2,
-        regionId: 1,
-        collaboratorIds: [3],
-        pocIds: [4],
-        data: {
-          eventName: 'Collab Event 1',
-          eventId: 'R01-PD-25-1234',
-          eventOrganizer: 'Sample Collab event organizer 1',
-          startDate: '01/02/2021',
-          endDate: '01/03/2021',
-          status: 'Not started',
-        },
-        sessionReports: [],
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 2,
+      regionId: 1,
+      collaboratorIds: [3],
+      pocIds: [4],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'R01-PD-25-1234',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
+        status: 'Not started',
       },
-    ];
+      sessionReports: [],
+    }];
 
     const COLLABORATOR_USER = {
       id: 1,
@@ -402,7 +390,7 @@ describe('EventCards', () => {
       collaboratorEvents,
       EVENT_STATUS.NOT_STARTED,
       COLLABORATOR_USER,
-      deleteFunction
+      deleteFunction,
     );
 
     // Collaborator Event.
@@ -436,9 +424,9 @@ describe('EventCards', () => {
       events = defaultEvents,
       eventType = EVENT_STATUS.NOT_STARTED,
       user = DEFAULT_USER,
-      onDeleteEvent = jest.fn()
+      onDeleteEvent = jest.fn(),
     ) => {
-      render(
+      render((
         <MemoryRouter>
           <UserContext.Provider value={{ user }}>
             <EventCards
@@ -454,8 +442,7 @@ describe('EventCards', () => {
               }}
             />
           </UserContext.Provider>
-        </MemoryRouter>
-      );
+        </MemoryRouter>));
     };
     renderECWithAlert();
     expect(screen.getByText('Test Alert')).toBeInTheDocument();

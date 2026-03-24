@@ -1,12 +1,11 @@
 /* eslint-disable max-len */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-
-import { renderHook } from '@testing-library/react-hooks';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
+import { renderHook } from '@testing-library/react-hooks';
+import { useForm, FormProvider } from 'react-hook-form';
 import useEventAndSessionStaff from '../useEventAndSessionStaff';
+import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 import useFetch from '../useFetch';
 
 jest.mock('../useFetch');
@@ -20,22 +19,13 @@ const mockRegionalTrainers = [
 // Mock data with roles for AA filtering tests
 const mockRegionalTrainersWithRoles = [
   {
-    id: 1,
-    fullName: 'Regional Trainer 1',
-    nameWithNationalCenters: 'Regional Trainer 1',
-    roles: [{ name: 'HS' }],
+    id: 1, fullName: 'Regional Trainer 1', nameWithNationalCenters: 'Regional Trainer 1', roles: [{ name: 'HS' }],
   },
   {
-    id: 2,
-    fullName: 'Regional Trainer 2',
-    nameWithNationalCenters: 'Regional Trainer 2',
-    roles: [{ name: 'ECS' }],
+    id: 2, fullName: 'Regional Trainer 2', nameWithNationalCenters: 'Regional Trainer 2', roles: [{ name: 'ECS' }],
   },
   {
-    id: 5,
-    fullName: 'AA User',
-    nameWithNationalCenters: 'AA User',
-    roles: [{ name: 'AA' }],
+    id: 5, fullName: 'AA User', nameWithNationalCenters: 'AA User', roles: [{ name: 'AA' }],
   },
 ];
 
@@ -45,16 +35,14 @@ const mockNationalCenterTrainers = [
 ];
 
 // Wrapper component to provide form context
-const createWrapper =
-  (facilitation = null) =>
-  ({ children }) => {
-    const methods = useForm({
-      defaultValues: {
-        facilitation,
-      },
-    });
-    return <FormProvider {...methods}>{children}</FormProvider>;
-  };
+const createWrapper = (facilitation = null) => (({ children }) => {
+  const methods = useForm({
+    defaultValues: {
+      facilitation,
+    },
+  });
+  return <FormProvider {...methods}>{children}</FormProvider>;
+});
 
 describe('useEventAndSessionStaff', () => {
   beforeEach(() => {
@@ -153,7 +141,11 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper();
       renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
-      expect(useFetch).toHaveBeenCalledWith([], expect.any(Function), [5]);
+      expect(useFetch).toHaveBeenCalledWith(
+        [],
+        expect.any(Function),
+        [5],
+      );
     });
 
     it('fetches national center trainers when event.regionId exists', () => {
@@ -171,7 +163,11 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('national_center');
       renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
-      expect(useFetch).toHaveBeenCalledWith([], expect.any(Function), [5]);
+      expect(useFetch).toHaveBeenCalledWith(
+        [],
+        expect.any(Function),
+        [5],
+      );
     });
 
     it('returns empty arrays when event.regionId is null', () => {
@@ -389,7 +385,7 @@ describe('useEventAndSessionStaff', () => {
 
       expect(Array.isArray(result.current.trainerOptions)).toBe(true);
       expect(result.current.trainerOptions).not.toContainEqual(
-        expect.objectContaining({ label: expect.any(String) })
+        expect.objectContaining({ label: expect.any(String) }),
       );
     });
   });
@@ -629,10 +625,7 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('both');
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
-      expect(result.current.optionsForValue).toEqual([
-        ...mockNationalCenterTrainers,
-        ...mockRegionalTrainers,
-      ]);
+      expect(result.current.optionsForValue).toEqual([...mockNationalCenterTrainers, ...mockRegionalTrainers]);
       expect(result.current.trainerOptions).toEqual([
         {
           label: 'National Center trainers',
@@ -739,14 +732,13 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
 
       const wrapper1 = createWrapper('national_center');
-      const { result: result1 } = renderHook(() => useEventAndSessionStaff(event, false), {
-        wrapper: wrapper1,
-      });
+      const { result: result1 } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper: wrapper1 });
 
-      const isFlatArray =
-        Array.isArray(result1.current.trainerOptions) &&
-        result1.current.trainerOptions.length > 0 &&
-        !('label' in result1.current.trainerOptions[0]);
+      const isFlatArray = (
+        Array.isArray(result1.current.trainerOptions)
+        && result1.current.trainerOptions.length > 0
+        && !('label' in result1.current.trainerOptions[0])
+      );
 
       expect(isFlatArray).toBe(true);
 
@@ -756,14 +748,16 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
 
       const wrapper2 = createWrapper('both');
-      const { result: result2 } = renderHook(() => useEventAndSessionStaff(event, false), {
-        wrapper: wrapper2,
-      });
+      const { result: result2 } = renderHook(
+        () => useEventAndSessionStaff(event, false),
+        { wrapper: wrapper2 },
+      );
 
-      const isGroupedArray =
-        Array.isArray(result2.current.trainerOptions) &&
-        result2.current.trainerOptions.length > 0 &&
-        'label' in result2.current.trainerOptions[0];
+      const isGroupedArray = (
+        Array.isArray(result2.current.trainerOptions)
+        && result2.current.trainerOptions.length > 0
+        && ('label' in result2.current.trainerOptions[0])
+      );
 
       expect(isGroupedArray).toBe(true);
     });
@@ -788,10 +782,13 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
 
       const wrapper = createWrapper('national_center');
-      const { result, rerender } = renderHook(({ event }) => useEventAndSessionStaff(event), {
-        wrapper,
-        initialProps: { event: event1 },
-      });
+      const { result, rerender } = renderHook(
+        ({ event }) => useEventAndSessionStaff(event),
+        {
+          wrapper,
+          initialProps: { event: event1 },
+        },
+      );
 
       const firstResult = result.current;
 
@@ -816,10 +813,13 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: mockRegionalTrainers, loading: false, error: null });
 
       const wrapper = createWrapper();
-      const { result, rerender } = renderHook(({ event }) => useEventAndSessionStaff(event), {
-        wrapper,
-        initialProps: { event: event1 },
-      });
+      const { result, rerender } = renderHook(
+        ({ event }) => useEventAndSessionStaff(event),
+        {
+          wrapper,
+          initialProps: { event: event1 },
+        },
+      );
 
       const firstResult = result.current;
 
@@ -840,7 +840,10 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: [...mockRegionalTrainers], loading: false, error: null });
 
       const wrapper = createWrapper();
-      const { result, rerender } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
+      const { result, rerender } = renderHook(
+        () => useEventAndSessionStaff(event),
+        { wrapper },
+      );
 
       const firstResult = result.current;
 

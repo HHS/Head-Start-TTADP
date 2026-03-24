@@ -1,12 +1,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
-
-import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import CollabReports from '../components/CollabReports';
+import { getReports, getAlerts } from '../../../fetchers/collaborationReports';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { NOOP } from '../../../Constants';
-import { getAlerts, getReports } from '../../../fetchers/collaborationReports';
 import UserContext from '../../../UserContext';
-import CollabReports from '../components/CollabReports';
 
 jest.mock('../../../fetchers/collaborationReports');
 
@@ -26,7 +25,7 @@ describe('CollabReports', () => {
         <UserContext.Provider value={{ user: { id: 1 } }}>
           <CollabReports {...props} />
         </UserContext.Provider>
-      </AppLoadingContext.Provider>
+      </AppLoadingContext.Provider>,
     );
   };
 
@@ -81,7 +80,9 @@ describe('CollabReports', () => {
     getReports.mockResolvedValue({ count: 0, rows: [] });
     renderTest({});
     await waitFor(() => {
-      expect(getReports).toHaveBeenCalledWith(expect.objectContaining({ perPage: 10 }));
+      expect(getReports).toHaveBeenCalledWith(
+        expect.objectContaining({ perPage: 10 }),
+      );
     });
   });
 

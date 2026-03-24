@@ -1,14 +1,20 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import React from 'react';
+import {
+  render,
+  screen,
+  act,
+  within,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route } from 'react-router-dom';
 import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import moment from 'moment';
-import React from 'react';
-import { MemoryRouter, Route } from 'react-router-dom';
+import ViewGoalDetails from '..';
+import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { DATE_DISPLAY_FORMAT, OBJECTIVE_STATUS } from '../../../../../Constants';
-import UserContext from '../../../../../UserContext';
-import ViewGoalDetails from '..';
 
 const formatDate = (date) => moment.utc(date).format(DATE_DISPLAY_FORMAT);
 
@@ -60,10 +66,7 @@ const mockGoalHistory = [
                 },
               ],
             },
-            topics: [
-              { id: 1, name: 'Topic A' },
-              { id: 2, name: 'Topic B' },
-            ],
+            topics: [{ id: 1, name: 'Topic A' }, { id: 2, name: 'Topic B' }],
             resources: [{ id: 1, url: 'http://example.com/resource1', title: 'Resource 1' }],
             files: [
               { id: 201, originalFileName: 'report101-file1.pdf' },
@@ -80,12 +83,11 @@ const mockGoalHistory = [
               author: { id: 10, name: 'Alice Specialist', roles: [{ name: 'Program Specialist' }] },
               activityReportCollaborators: [],
             },
-            topics: [
-              { id: 2, name: 'Topic B' },
-              { id: 3, name: 'Topic C' },
-            ],
+            topics: [{ id: 2, name: 'Topic B' }, { id: 3, name: 'Topic C' }],
             resources: [{ id: 2, url: 'http://example.com/resource2' }],
-            files: [{ id: 203, originalFileName: 'report102-file1.xlsx' }],
+            files: [
+              { id: 203, originalFileName: 'report102-file1.xlsx' },
+            ],
             activityReportObjectiveCourses: [
               { course: { id: 302, name: 'Classroom Management' } },
               { course: { id: 303, name: 'Family Engagement Strategies' } },
@@ -116,61 +118,27 @@ const mockGoalHistory = [
     // status changes sorted by backend
     statusChanges: [
       {
-        id: 1,
-        goalId: 1,
-        userId: 1,
-        oldStatus: null,
-        newStatus: GOAL_STATUS.NOT_STARTED,
-        createdAt: '2025-01-01T00:00:00.000Z',
-        user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 2,
-        goalId: 1,
-        userId: 1,
-        oldStatus: GOAL_STATUS.NOT_STARTED,
-        newStatus: GOAL_STATUS.IN_PROGRESS,
-        createdAt: '2025-01-02T00:00:00.000Z',
-        user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 2, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 3,
-        goalId: 1,
-        userId: 2,
-        oldStatus: GOAL_STATUS.IN_PROGRESS,
-        newStatus: GOAL_STATUS.SUSPENDED,
-        createdAt: '2025-01-10T00:00:00.000Z',
-        user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        id: 3, goalId: 1, userId: 2, oldStatus: GOAL_STATUS.IN_PROGRESS, newStatus: GOAL_STATUS.SUSPENDED, createdAt: '2025-01-10T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
       },
       {
-        id: 4,
-        goalId: 1,
-        userId: 1,
-        oldStatus: GOAL_STATUS.SUSPENDED,
-        newStatus: 'Complete',
-        createdAt: '2025-01-12T00:00:00.000Z',
-        user: null,
+        id: 4, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.SUSPENDED, newStatus: 'Complete', createdAt: '2025-01-12T00:00:00.000Z', user: null,
       },
       {
-        id: 6,
-        goalId: 1,
-        userId: 2,
-        oldStatus: 'Complete',
-        newStatus: GOAL_STATUS.CLOSED,
-        createdAt: '2025-01-13T00:00:00.000Z',
-        user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        id: 6, goalId: 1, userId: 2, oldStatus: 'Complete', newStatus: GOAL_STATUS.CLOSED, createdAt: '2025-01-13T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
       },
       {
-        id: 5,
-        goalId: 1,
-        userId: 1,
-        oldStatus: GOAL_STATUS.CLOSED,
-        newStatus: 'Unknown Status',
-        createdAt: '2025-01-14T00:00:00.000Z',
-        user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 5, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.CLOSED, newStatus: 'Unknown Status', createdAt: '2025-01-14T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
     ],
-    responses: [{ id: 1, goalId: 1, response: ['Root cause 1', 'Root cause 2'] }],
+    responses: [
+      { id: 1, goalId: 1, response: ['Root cause 1', 'Root cause 2'] },
+    ],
   },
   {
     id: 2,
@@ -184,13 +152,7 @@ const mockGoalHistory = [
     objectives: [],
     statusChanges: [
       {
-        id: 10,
-        goalId: 2,
-        userId: null,
-        oldStatus: null,
-        newStatus: GOAL_STATUS.NOT_STARTED,
-        createdAt: '2024-12-01T00:00:00.000Z',
-        user: null,
+        id: 10, goalId: 2, userId: null, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2024-12-01T00:00:00.000Z', user: null,
       },
     ],
     goalCollaborators: [],
@@ -206,13 +168,7 @@ const mockGoalHistory = [
     objectives: [],
     statusChanges: [
       {
-        id: 11,
-        goalId: 4,
-        userId: null,
-        oldStatus: null,
-        newStatus: GOAL_STATUS.NOT_STARTED,
-        createdAt: '2024-11-01T00:00:00.000Z',
-        user: null,
+        id: 11, goalId: 4, userId: null, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2024-11-01T00:00:00.000Z', user: null,
       },
     ],
     goalCollaborators: [
@@ -288,25 +244,21 @@ describe('ViewGoalDetails', () => {
     permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
   };
 
-  const renderViewGoalDetails = (user = DEFAULT_USER, search = `?goalId=${goalId}`) =>
-    render(
-      <UserContext.Provider value={{ user }}>
-        <AppLoadingContext.Provider
-          value={{
-            setIsAppLoading: jest.fn(),
-            setAppLoadingText: jest.fn(),
-          }}
-        >
-          <MemoryRouter
-            initialEntries={[`/recipient-tta-records/1/region/1/goals/standard${search}`]}
-          >
-            <Route path="/recipient-tta-records/:recipientId/region/:regionId/goals/standard">
-              <ViewGoalDetails recipient={recipient} regionId={regionId} />
-            </Route>
-          </MemoryRouter>
-        </AppLoadingContext.Provider>
-      </UserContext.Provider>
-    );
+  const renderViewGoalDetails = (user = DEFAULT_USER, search = `?goalId=${goalId}`) => render(
+    <UserContext.Provider value={{ user }}>
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
+      >
+        <MemoryRouter initialEntries={[`/recipient-tta-records/1/region/1/goals/standard${search}`]}>
+          <Route path="/recipient-tta-records/:recipientId/region/:regionId/goals/standard">
+            <ViewGoalDetails recipient={recipient} regionId={regionId} />
+          </Route>
+        </MemoryRouter>
+      </AppLoadingContext.Provider>
+    </UserContext.Provider>,
+  );
 
   afterEach(() => fetchMock.restore());
 
@@ -316,10 +268,7 @@ describe('ViewGoalDetails', () => {
       renderViewGoalDetails();
     });
     await waitFor(() => expect(fetchMock.called(goalHistoryUrl)).toBe(true));
-    const heading = await screen.findByRole('heading', {
-      name: /TTA Goals for John Doe - Region 1/i,
-      level: 1,
-    });
+    const heading = await screen.findByRole('heading', { name: /TTA Goals for John Doe - Region 1/i, level: 1 });
     expect(heading).toBeInTheDocument();
   });
 
@@ -413,9 +362,7 @@ describe('ViewGoalDetails', () => {
     });
     // fetch shouldn't happen because of early return
     expect(fetchMock.called(goalHistoryUrl)).toBe(false);
-    expect(
-      await screen.findByText(/You don't have permission to view this page/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/You don't have permission to view this page/i)).toBeInTheDocument();
   });
 
   test('renders the back to RTTAPA link', async () => {
@@ -437,32 +384,18 @@ describe('ViewGoalDetails', () => {
     // ensure accordion is expanded if needed (it should be by default for the first item)
     await waitFor(() => expect(firstAccordionItem).toHaveAttribute('aria-expanded', 'true'));
 
-    const accordionContent = document.getElementById(
-      firstAccordionItem.getAttribute('aria-controls')
-    );
-    const updatesList = within(accordionContent).getByRole('list', {
-      name: /Goal status updates/i,
-    });
+    const accordionContent = document.getElementById(firstAccordionItem.getAttribute('aria-controls'));
+    const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
     const updates = within(updatesList).getAllByRole('listitem');
 
     // check ordering and formatting
     expect(updates).toHaveLength(6);
-    expect(updates[0]).toHaveTextContent(
-      `Added on ${formatDate('2025-01-01T00:00:00.000Z')} by Test User`
-    );
-    expect(updates[1]).toHaveTextContent(
-      `Started on ${formatDate('2025-01-02T00:00:00.000Z')} by Test User`
-    );
-    expect(updates[2]).toHaveTextContent(
-      `Suspended on ${formatDate('2025-01-10T00:00:00.000Z')} by Another User`
-    );
+    expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2025-01-01T00:00:00.000Z')} by Test User`);
+    expect(updates[1]).toHaveTextContent(`Started on ${formatDate('2025-01-02T00:00:00.000Z')} by Test User`);
+    expect(updates[2]).toHaveTextContent(`Suspended on ${formatDate('2025-01-10T00:00:00.000Z')} by Another User`);
     expect(updates[3]).toHaveTextContent(`Completed on ${formatDate('2025-01-12T00:00:00.000Z')}`); // User is null, so no 'by'
-    expect(updates[4]).toHaveTextContent(
-      `Closed on ${formatDate('2025-01-13T00:00:00.000Z')} by Another User`
-    ); // Check Closed status
-    expect(updates[5]).toHaveTextContent(
-      `Unknown Status on ${formatDate('2025-01-14T00:00:00.000Z')} by Test User`
-    );
+    expect(updates[4]).toHaveTextContent(`Closed on ${formatDate('2025-01-13T00:00:00.000Z')} by Another User`); // Check Closed status
+    expect(updates[5]).toHaveTextContent(`Unknown Status on ${formatDate('2025-01-14T00:00:00.000Z')} by Test User`);
   });
 
   test('renders objective information including reports, topics, and resources', async () => {
@@ -472,14 +405,10 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(
-      firstAccordionButton.getAttribute('aria-controls')
-    );
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
 
     // objective 1: has reports, topics, resources
-    const objective1 = within(firstAccordionContent)
-      .getByText('Implement new curriculum')
-      .closest('div.margin-bottom-3');
+    const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
     expect(within(objective1).getByText('Objective summary')).toBeInTheDocument();
     expect(within(objective1).getByText('Implement new curriculum')).toBeInTheDocument();
     expect(within(objective1).getByText('In Progress')).toBeInTheDocument();
@@ -487,8 +416,7 @@ describe('ViewGoalDetails', () => {
     // reports
     const reportsLabel = within(objective1).getByText('Reports');
     const reportsContainer = reportsLabel.closest('div').parentElement;
-    const reportsValue = within(reportsContainer)
-      .getAllByTestId('read-only-value')
+    const reportsValue = within(reportsContainer).getAllByTestId('read-only-value')
       .find((el) => el.textContent.includes('R-101'));
 
     const reportLink1 = within(reportsValue).getByRole('link', { name: 'R-101' });
@@ -500,8 +428,7 @@ describe('ViewGoalDetails', () => {
     // topics (unique and sorted)
     const topicsLabel = within(objective1).getByText('Topics');
     const topicsContainer = topicsLabel.closest('div').parentElement;
-    const topicsValue = within(topicsContainer)
-      .getAllByTestId('read-only-value')
+    const topicsValue = within(topicsContainer).getAllByTestId('read-only-value')
       .find((el) => el.textContent.includes('Topic'));
 
     expect(topicsValue).toHaveTextContent('Topic A, Topic B, Topic C'); // check unique, comma-separated
@@ -520,31 +447,24 @@ describe('ViewGoalDetails', () => {
     const coursesList = within(resourcesContainer).getAllByRole('list');
     expect(coursesList.length).toBeGreaterThanOrEqual(1);
 
-    const courses = within(resourcesContainer).getAllByText(
-      (content, element) =>
-        [
-          'Early Childhood Development Course',
-          'Classroom Management',
-          'Family Engagement Strategies',
-        ].includes(content) && element.tagName.toLowerCase() === 'li'
-    );
+    const courses = within(resourcesContainer).getAllByText((content, element) => (
+      ['Early Childhood Development Course', 'Classroom Management', 'Family Engagement Strategies'].includes(content)
+      && element.tagName.toLowerCase() === 'li'
+    ));
     expect(courses).toHaveLength(3);
     expect(courses[0]).toHaveTextContent('Early Childhood Development Course');
 
     // Check resource links
     const resourceLink1 = within(resourcesContainer).getByRole('link', { name: 'Resource 1' });
-    const resourceLink2 = within(resourcesContainer).getByRole('link', {
-      name: 'http://example.com/resource2',
-    });
+    const resourceLink2 = within(resourcesContainer).getByRole('link', { name: 'http://example.com/resource2' });
     expect(resourceLink1).toHaveAttribute('href', 'http://example.com/resource1');
     expect(resourceLink2).toHaveAttribute('href', 'http://example.com/resource2');
 
     // Check files
-    const files = within(resourcesContainer).getAllByText(
-      (content, element) =>
-        ['report101-file1.pdf', 'report101-file2.docx', 'report102-file1.xlsx'].includes(content) &&
-        element.tagName.toLowerCase() === 'li'
-    );
+    const files = within(resourcesContainer).getAllByText((content, element) => (
+      ['report101-file1.pdf', 'report101-file2.docx', 'report102-file1.xlsx'].includes(content)
+      && element.tagName.toLowerCase() === 'li'
+    ));
     expect(files).toHaveLength(3);
     expect(files[0]).toHaveTextContent('report101-file1.pdf');
     expect(files[1]).toHaveTextContent('report101-file2.docx');
@@ -558,15 +478,11 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(
-      firstAccordionButton.getAttribute('aria-controls')
-    );
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
 
     // objective 1 has two ARs: both with author Alice (id 10) and AR-101 has collaborator Bob
     // Alice should appear once (deduplicated), Bob should appear once
-    const objective1 = within(firstAccordionContent)
-      .getByText('Implement new curriculum')
-      .closest('div.margin-bottom-3');
+    const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
     const specialistsLabel = within(objective1).getByText('TTA specialists');
     expect(specialistsLabel).toBeInTheDocument();
 
@@ -577,9 +493,7 @@ describe('ViewGoalDetails', () => {
     // Check that both specialists are present with their roles
     expect(specialistsValue).toHaveTextContent('Alice Specialist, Program Specialist');
     expect(specialistsValue).toHaveTextContent('Bob Collaborator, Grants Specialist');
-    expect(specialistsValue).toHaveTextContent(
-      'Alice Specialist, Program Specialist; Bob Collaborator, Grants Specialist'
-    );
+    expect(specialistsValue).toHaveTextContent('Alice Specialist, Program Specialist; Bob Collaborator, Grants Specialist');
     // Verify Alice only appears once (deduplicated even though she's author on both ARs)
     const aliceMatches = specialistsValue.textContent.match(/Alice Specialist/g);
     expect(aliceMatches).toHaveLength(1);
@@ -592,14 +506,10 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(
-      firstAccordionButton.getAttribute('aria-controls')
-    );
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
 
     // objective 2 has no activityReportObjectives
-    const objective2 = within(firstAccordionContent)
-      .getByText('Objective with no reports/topics/resources')
-      .closest('div.margin-bottom-3');
+    const objective2 = within(firstAccordionContent).getByText('Objective with no reports/topics/resources').closest('div.margin-bottom-3');
     expect(within(objective2).queryByText('TTA specialists')).not.toBeInTheDocument();
   });
 
@@ -626,14 +536,10 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(
-      firstAccordionButton.getAttribute('aria-controls')
-    );
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
 
     // Objective has no AROs because backend filtered out all non-approved ARs
-    const objective = within(firstAccordionContent)
-      .getByText('Objective with only non-approved ARs')
-      .closest('div.margin-bottom-3');
+    const objective = within(firstAccordionContent).getByText('Objective with only non-approved ARs').closest('div.margin-bottom-3');
     // TTA specialists should not appear because there are no approved ARs
     expect(within(objective).queryByText('TTA specialists')).not.toBeInTheDocument();
     // Reports section should also not appear since no approved ARs exist
@@ -647,14 +553,10 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(
-      firstAccordionButton.getAttribute('aria-controls')
-    );
+    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
 
     expect(within(firstAccordionContent).getByText('Root causes')).toBeInTheDocument();
-    expect(
-      within(firstAccordionContent).getByText('Root cause 1, Root cause 2')
-    ).toBeInTheDocument();
+    expect(within(firstAccordionContent).getByText('Root cause 1, Root cause 2')).toBeInTheDocument();
   });
   test('does not render root causes section when responses are null or empty', async () => {
     // test case 1: responses is null
@@ -664,13 +566,9 @@ describe('ViewGoalDetails', () => {
       renderViewGoalDetails();
     });
     const accordionButtonNull = await screen.findByRole('button', { name: /G-2 \| Closed/i });
-    await act(async () => {
-      userEvent.click(accordionButtonNull);
-    });
+    await act(async () => { userEvent.click(accordionButtonNull); });
     await waitFor(() => expect(accordionButtonNull).toHaveAttribute('aria-expanded', 'true'));
-    const accordionContentNull = document.getElementById(
-      accordionButtonNull.getAttribute('aria-controls')
-    );
+    const accordionContentNull = document.getElementById(accordionButtonNull.getAttribute('aria-controls'));
     await waitFor(() => {
       expect(within(accordionContentNull).queryByText('Root causes')).not.toBeInTheDocument();
     });
@@ -684,9 +582,7 @@ describe('ViewGoalDetails', () => {
     });
     const accordionButtonEmpty = await screen.findByRole('button', { name: /G-3 \| In Progress/i });
     await waitFor(() => expect(accordionButtonEmpty).toHaveAttribute('aria-expanded', 'true'));
-    const accordionContentEmpty = document.getElementById(
-      accordionButtonEmpty.getAttribute('aria-controls')
-    );
+    const accordionContentEmpty = document.getElementById(accordionButtonEmpty.getAttribute('aria-controls'));
     await waitFor(() => {
       expect(within(accordionContentEmpty).queryByText('Root causes')).not.toBeInTheDocument();
     });
@@ -700,25 +596,17 @@ describe('ViewGoalDetails', () => {
 
     // find the accordion button for G-5
     const accordionButtonG5 = await screen.findByRole('button', { name: /G-5 \| Not Started/i });
-    await act(async () => {
-      userEvent.click(accordionButtonG5);
-    });
+    await act(async () => { userEvent.click(accordionButtonG5); });
     await waitFor(() => expect(accordionButtonG5).toHaveAttribute('aria-expanded', 'true'));
 
-    const accordionContentG5 = document.getElementById(
-      accordionButtonG5.getAttribute('aria-controls')
-    );
-    const updatesList = within(accordionContentG5).getByRole('list', {
-      name: /Goal status updates/i,
-    });
+    const accordionContentG5 = document.getElementById(accordionButtonG5.getAttribute('aria-controls'));
+    const updatesList = within(accordionContentG5).getByRole('list', { name: /Goal status updates/i });
     const updates = within(updatesList).getAllByRole('listitem');
 
     // G-5 has no statusChanges, so it uses the fallback rendering
     // It has a creator with a user object, so it should display 'by Pizza Man'
     expect(updates).toHaveLength(1);
-    expect(updates[0]).toHaveTextContent(
-      `Added on ${formatDate('2024-10-01T00:00:00.000Z')} by Pizza Man`
-    );
+    expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2024-10-01T00:00:00.000Z')} by Pizza Man`);
   });
 
   test('renders by ohs tool tip if goal is monitoring and status is Not Started', async () => {
@@ -729,10 +617,10 @@ describe('ViewGoalDetails', () => {
       standard: 'Monitoring',
     };
 
-    fetchMock.get(goalHistoryUrl, {
-      goals: [monitoringGoal, ...mockGoalHistory],
-      overview: mockOverview,
-    });
+    fetchMock.get(
+      goalHistoryUrl,
+      { goals: [monitoringGoal, ...mockGoalHistory], overview: mockOverview },
+    );
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -752,22 +640,10 @@ describe('ViewGoalDetails', () => {
       objectives: [],
       statusChanges: [
         {
-          id: 70,
-          goalId: 7,
-          userId: 10,
-          oldStatus: GOAL_STATUS.NOT_STARTED,
-          newStatus: GOAL_STATUS.IN_PROGRESS,
-          createdAt: '2025-02-03T00:00:00.000Z',
-          user: { name: 'Jane Doe', roles: [{ name: 'Program Specialist' }] },
+          id: 70, goalId: 7, userId: 10, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-02-03T00:00:00.000Z', user: { name: 'Jane Doe', roles: [{ name: 'Program Specialist' }] },
         },
         {
-          id: 71,
-          goalId: 7,
-          userId: 11,
-          oldStatus: GOAL_STATUS.IN_PROGRESS,
-          newStatus: 'Complete',
-          createdAt: '2025-02-10T00:00:00.000Z',
-          user: { name: 'Another PS', roles: [{ name: 'Program Specialist' }] },
+          id: 71, goalId: 7, userId: 11, oldStatus: GOAL_STATUS.IN_PROGRESS, newStatus: 'Complete', createdAt: '2025-02-10T00:00:00.000Z', user: { name: 'Another PS', roles: [{ name: 'Program Specialist' }] },
         },
       ],
       goalCollaborators: [
@@ -781,10 +657,7 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/7/history', {
-      goals: [goalWithMissingAdded],
-      overview: emptyOverview,
-    });
+    fetchMock.get('/api/goals/7/history', { goals: [goalWithMissingAdded], overview: emptyOverview });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=7');
     });
@@ -792,22 +665,14 @@ describe('ViewGoalDetails', () => {
     const accordionButton = await screen.findByRole('button', { name: /G-7 \| In Progress/i });
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
-    const updatesList = within(accordionContent).getByRole('list', {
-      name: /Goal status updates/i,
-    });
+    const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
     const updates = within(updatesList).getAllByRole('listitem');
 
     // Should synthesize the first entry as Added on <createdAt> by Tom Jones
-    expect(updates[0]).toHaveTextContent(
-      `Added on ${formatDate('2025-02-01T00:00:00.000Z')} by Tom Jones`
-    );
+    expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2025-02-01T00:00:00.000Z')} by Tom Jones`);
     // Followed by the existing updates in ascending order
-    expect(updates[1]).toHaveTextContent(
-      `Started on ${formatDate('2025-02-03T00:00:00.000Z')} by Jane Doe`
-    );
-    expect(updates[2]).toHaveTextContent(
-      `Completed on ${formatDate('2025-02-10T00:00:00.000Z')} by Another PS`
-    );
+    expect(updates[1]).toHaveTextContent(`Started on ${formatDate('2025-02-03T00:00:00.000Z')} by Jane Doe`);
+    expect(updates[2]).toHaveTextContent(`Completed on ${formatDate('2025-02-10T00:00:00.000Z')} by Another PS`);
   });
 
   test('hides resource section when no courses, links, or files exist', async () => {
@@ -840,10 +705,7 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/8/history', {
-      goals: [goalWithEmptyResources],
-      overview: emptyOverview,
-    });
+    fetchMock.get('/api/goals/8/history', { goals: [goalWithEmptyResources], overview: emptyOverview });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=8');
     });
@@ -852,9 +714,7 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
-    const objective = within(accordionContent)
-      .getByText('Objective with no resources')
-      .closest('div.margin-bottom-3');
+    const objective = within(accordionContent).getByText('Objective with no resources').closest('div.margin-bottom-3');
 
     // The 'Resources' heading should not be present
     expect(within(objective).queryByText('Resources')).not.toBeInTheDocument();
@@ -880,7 +740,9 @@ describe('ViewGoalDetails', () => {
               topics: [{ id: 901, name: 'Topic Y' }],
               resources: [], // Empty resources
               files: [], // Empty files
-              activityReportObjectiveCourses: [{ course: { id: 901, name: 'Course Only Test' } }],
+              activityReportObjectiveCourses: [
+                { course: { id: 901, name: 'Course Only Test' } },
+              ],
             },
           ],
         },
@@ -890,10 +752,7 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/9/history', {
-      goals: [goalWithOnlyCourses],
-      overview: emptyOverview,
-    });
+    fetchMock.get('/api/goals/9/history', { goals: [goalWithOnlyCourses], overview: emptyOverview });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=9');
     });
@@ -902,9 +761,7 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
-    const objective = within(accordionContent)
-      .getByText('Objective with only courses')
-      .closest('div.margin-bottom-3');
+    const objective = within(accordionContent).getByText('Objective with only courses').closest('div.margin-bottom-3');
 
     // The 'Resources' heading should be present
     expect(within(objective).getByText('Resources')).toBeInTheDocument();
@@ -933,9 +790,7 @@ describe('ViewGoalDetails', () => {
             {
               activityReport: { id: 1001, displayId: 'R-1001' },
               topics: [{ id: 1001, name: 'Topic Z' }],
-              resources: [
-                { id: 1001, url: 'http://example.com/resource-only', title: 'Resource Only Test' },
-              ],
+              resources: [{ id: 1001, url: 'http://example.com/resource-only', title: 'Resource Only Test' }],
               files: [], // Empty files
               activityReportObjectiveCourses: [], // Empty courses
             },
@@ -956,18 +811,14 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
-    const objective = within(accordionContent)
-      .getByText('Objective with only links')
-      .closest('div.margin-bottom-3');
+    const objective = within(accordionContent).getByText('Objective with only links').closest('div.margin-bottom-3');
 
     // The 'Resources' heading should be present
     expect(within(objective).getByText('Resources')).toBeInTheDocument();
 
     // And the resource link should be visible
     const resourceContainer = within(objective).getByText('Resources').nextElementSibling;
-    const resourceLink = within(resourceContainer).getByRole('link', {
-      name: 'Resource Only Test',
-    });
+    const resourceLink = within(resourceContainer).getByRole('link', { name: 'Resource Only Test' });
     expect(resourceLink).toHaveAttribute('href', 'http://example.com/resource-only');
   });
 
@@ -1010,9 +861,7 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
-    const objective = within(accordionContent)
-      .getByText('Objective with only files')
-      .closest('div.margin-bottom-3');
+    const objective = within(accordionContent).getByText('Objective with only files').closest('div.margin-bottom-3');
 
     // The 'Resources' heading should be present
     expect(within(objective).getByText('Resources')).toBeInTheDocument();

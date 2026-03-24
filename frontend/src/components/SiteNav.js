@@ -1,13 +1,14 @@
 /* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
-
+import React, {
+  useState, useContext, useEffect, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useRef, useState } from 'react';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import SiteNavDisclosureGroup from './SiteNavDisclosureGroup';
 import './SiteNav.scss';
-import { allRegionsUserHasPermissionTo } from '../permissions';
-import UserContext from '../UserContext';
 import FeatureFlag from './FeatureFlag';
+import UserContext from '../UserContext';
+import { allRegionsUserHasPermissionTo } from '../permissions';
 
 const navLinkClasses = [
   'display-block',
@@ -43,7 +44,11 @@ NavLink.defaultProps = {
   withinDisclosure: false,
 };
 
-const SiteNav = ({ authenticated, location, hasAlerts }) => {
+const SiteNav = ({
+  authenticated,
+  location,
+  hasAlerts,
+}) => {
   const { user } = useContext(UserContext);
   const siteNavContent = useRef(null);
   const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
@@ -103,45 +108,47 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
           Please leave feedback
         </a>
       </div>
-      <div
-        ref={siteNavContent}
-        className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print"
-      >
+      <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
         {authenticated && (
           <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">
             <div className="width-full smart-hub-sitenav-separator--after">
               <div role="complementary" className="padding-2 smart-hub-sitenav-word-wrap--break">
-                <p className="text-bold margin-top-2 desktop:margin-top-5 margin-bottom-1">
-                  {user.name}
-                </p>
-                <p className="font-sans-3xs margin-bottom-2 desktop:margin-bottom-5 margin-top-1">
-                  {regionLabel()}
-                </p>
+                <p className="text-bold margin-top-2 desktop:margin-top-5 margin-bottom-1">{user.name}</p>
+                <p className="font-sans-3xs margin-bottom-2 desktop:margin-bottom-5 margin-top-1">{regionLabel()}</p>
               </div>
             </div>
-            <nav
-              className="display-flex flex-column flex-justify flex-1"
-              aria-label="main navigation"
-            >
+            <nav className="display-flex flex-column flex-justify flex-1" aria-label="main navigation">
               <div className="width-full margin-bottom-2 margin-top-2 desktop:margin-top-6">
                 <SiteNavDisclosureGroup title="TTA Reporting">
                   <li>
-                    <NavLink withinDisclosure to="/activity-reports">
+                    <NavLink
+                      withinDisclosure
+                      to="/activity-reports"
+                    >
                       Activity Reports
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink withinDisclosure to="/collaboration-reports">
+                    <NavLink
+                      withinDisclosure
+                      to="/collaboration-reports"
+                    >
                       Collaboration Reports
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink withinDisclosure to="/communication-log">
+                    <NavLink
+                      withinDisclosure
+                      to="/communication-log"
+                    >
                       Communication Log
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink withinDisclosure to="/training-reports/not-started">
+                    <NavLink
+                      withinDisclosure
+                      to="/training-reports/not-started"
+                    >
                       Training Reports
                     </NavLink>
                   </li>
@@ -149,7 +156,10 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
                 <SiteNavDisclosureGroup title="Dashboards">
                   <FeatureFlag flag="quality_assurance_dashboard">
                     <li>
-                      <NavLink withinDisclosure to="/dashboards/qa-dashboard">
+                      <NavLink
+                        withinDisclosure
+                        to="/dashboards/qa-dashboard"
+                      >
                         Quality Assurance Dashboard
                       </NavLink>
                     </li>
@@ -158,22 +168,28 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
                     <NavLink
                       withinDisclosure
                       to="/dashboards/regional-dashboard/activity-reports"
-                      isActive={(match, loc) =>
-                        loc.pathname.startsWith('/dashboards/regional-dashboard/')
-                      }
+                      isActive={(match, loc) => loc.pathname.startsWith('/dashboards/regional-dashboard/')}
                     >
                       Regional Dashboard
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink withinDisclosure to="/dashboards/resources-dashboard">
+                    <NavLink
+                      withinDisclosure
+                      to="/dashboards/resources-dashboard"
+                    >
                       Resource Dashboard
                     </NavLink>
                   </li>
+
                 </SiteNavDisclosureGroup>
                 <ul className="add-list-reset">
                   <li>
-                    <NavLink to="/recipient-tta-records">Recipient TTA Records</NavLink>
+                    <NavLink
+                      to="/recipient-tta-records"
+                    >
+                      Recipient TTA Records
+                    </NavLink>
                   </li>
                 </ul>
               </div>

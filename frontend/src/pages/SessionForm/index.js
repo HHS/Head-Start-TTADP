@@ -1,38 +1,45 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-
-import { Alert, Grid } from '@trussworks/react-uswds';
-import { isValidResourceUrl, TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import { REPORT_STATUSES } from '@ttahub/common/src/constants';
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useRef,
+} from 'react';
 import moment from 'moment';
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Helmet } from 'react-helmet';
-import { FormProvider, useForm } from 'react-hook-form';
-import { Redirect, useHistory } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import AppLoadingContext from '../../AppLoadingContext';
-import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
-import BackLink from '../../components/BackLink';
-import Navigator from '../../components/Navigator';
-import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
-import useHookFormPageState from '../../hooks/useHookFormPageState';
-import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
+import { Helmet } from 'react-helmet';
+import {
+  Alert, Grid,
+} from '@trussworks/react-uswds';
+import { useHistory, Redirect } from 'react-router-dom';
+import { FormProvider, useForm } from 'react-hook-form';
+import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
+import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
+import useHookFormPageState from '../../hooks/useHookFormPageState';
+import {
+  defaultValues, baseDefaultValues, istKeys, pocKeys,
+} from './constants';
+import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
-import { baseDefaultValues, defaultValues, istKeys, pocKeys } from './constants';
+import Navigator from '../../components/Navigator';
+import BackLink from '../../components/BackLink';
+import AppLoadingContext from '../../AppLoadingContext';
+import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
+import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
 
-const reduceDataToMatchKeys = (keys, data) =>
-  keys.reduce((acc, key) => {
-    if (data && Object.hasOwn(data, key)) {
-      acc[key] = data[key];
-    }
-    return acc;
-  }, {});
+const reduceDataToMatchKeys = (keys, data) => keys.reduce((acc, key) => {
+  if (data && Object.prototype.hasOwnProperty.call(data, key)) {
+    acc[key] = data[key];
+  }
+  return acc;
+}, {});
 
 const determineKeyArray = ({
   isAdminUser,
@@ -45,11 +52,9 @@ const determineKeyArray = ({
   isSubmitted = false,
 }) => {
   // eslint-disable-next-line max-len
-  const isRegionalNoNationalCenters =
-    TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+  const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
 
-  const facilitationIncludesRegion =
-    facilitation === 'regional_tta_staff' || facilitation === 'both';
+  const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
 
   // Treat owner as collaborator for field access
   const isOwnerOrCollaborator = isOwner || isCollaborator;
@@ -70,14 +75,14 @@ const determineKeyArray = ({
 };
 
 /**
- * this is just a simple handler to "flatten"
- * the JSON column data into the form
- *
- * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
- *  replaces the form with those values; it also calls the standard form.reset event
- * @param {*} event - not an HTML event, but the event object from the database, which has some
- * information stored at the top level of the object, and some stored in a data column
- */
+   * this is just a simple handler to "flatten"
+   * the JSON column data into the form
+   *
+   * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
+   *  replaces the form with those values; it also calls the standard form.reset event
+   * @param {*} event - not an HTML event, but the event object from the database, which has some
+   * information stored at the top level of the object, and some stored in a data column
+   */
 const resetFormData = ({
   reset,
   updatedSession,
@@ -99,7 +104,11 @@ const resetFormData = ({
     isSubmitted: updatedSession.submitted,
   });
 
-  const { data, updatedAt, ...fields } = updatedSession;
+  const {
+    data,
+    updatedAt,
+    ...fields
+  } = updatedSession;
 
   // Get all the DEFAULT VALUES that appear in the keyAarray.
   let roleDefaultValues = reduceDataToMatchKeys(keyArray, defaultValues);
@@ -122,9 +131,7 @@ const resetFormData = ({
 };
 
 export default function SessionForm({ match }) {
-  const {
-    params: { sessionId, currentPage, trainingReportId },
-  } = match;
+  const { params: { sessionId, currentPage, trainingReportId } } = match;
 
   const reportId = useRef(sessionId);
 
@@ -156,7 +163,7 @@ export default function SessionForm({ match }) {
   const [datePickerKey, setDatePickerKey] = useState(`i${Date.now().toString()}`);
 
   /* ============
-   */
+    */
   const hookForm = useForm({
     mode: 'onBlur',
     defaultValues,
@@ -171,10 +178,14 @@ export default function SessionForm({ match }) {
   const eventOrganizer = formData.event?.data?.eventOrganizer || '';
 
   // eslint-disable-next-line max-len
-  const isRegionalNoNationalCenters =
-    TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+  const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
 
-  const { socket, setSocketPath, socketPath, messageStore } = useSocket(user);
+  const {
+    socket,
+    setSocketPath,
+    socketPath,
+    messageStore,
+  } = useSocket(user);
 
   const {
     isPoc,
@@ -218,9 +229,7 @@ export default function SessionForm({ match }) {
     // we check to see if we have a session ID and aren't on a form page
     // if we aren't, redirect to the first form page
     if (reportFetched && sessionId && sessionId !== 'new' && !currentPage && redirectPagePath) {
-      history.replace(
-        `/training-report/${trainingReportId}/session/${sessionId}/${redirectPagePath}`
-      );
+      history.replace(`/training-report/${trainingReportId}/session/${sessionId}/${redirectPagePath}`);
     }
   }, [reportFetched, sessionId, currentPage, history, trainingReportId, redirectPagePath]);
 
@@ -235,14 +244,9 @@ export default function SessionForm({ match }) {
         const session = await createSession(trainingReportId);
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
         // eslint-disable-next-line max-len
-        const isCollaboratorFromSession =
-          session.event.collaboratorIds.includes(user.id) && !isAdminUser;
+        const isCollaboratorFromSession = session.event.collaboratorIds.includes(user.id) && !isAdminUser;
         const isOwnerFromSession = session.event.ownerId === user.id;
-        const {
-          event: {
-            data: { eventOrganizer: eventOrganizerFromSession },
-          },
-        } = session;
+        const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
         const { approverId } = session;
         const isApproverUser = user.id === Number(approverId);
         // we don't want to refetch if we've extracted the session data
@@ -302,26 +306,17 @@ export default function SessionForm({ match }) {
         // eslint-disable-next-line max-len
         const isPocFromSession = (session.event.pocIds || []).includes(user.id) && !isAdminUser;
         // eslint-disable-next-line max-len
-        const isCollaboratorFromSession =
-          (session.event.collaboratorIds || []).includes(user.id) && !isAdminUser;
+        const isCollaboratorFromSession = (session.event.collaboratorIds || []).includes(user.id) && !isAdminUser;
 
         const isOwnerFromSession = session.event.ownerId === user.id;
 
         // check the event organizer and user role
-        const {
-          event: {
-            data: { eventOrganizer: eventOrganizerFromSession },
-          },
-        } = session;
+        const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
 
         // eslint-disable-next-line max-len
-        const isRegionalEventPoc =
-          eventOrganizerFromSession === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS &&
-          isPocFromSession &&
-          !isAdminUser;
+        const isRegionalEventPoc = eventOrganizerFromSession === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && isPocFromSession && !isAdminUser;
         // eslint-disable-next-line max-len
-        const isFormUser =
-          (isPocFromSession || isOwnerFromSession || isCollaboratorFromSession) && !isAdminUser;
+        const isFormUser = (isPocFromSession || isOwnerFromSession || isCollaboratorFromSession) && !isAdminUser;
 
         const submittedFormUser = submitted && isFormUser && !isNeedsAction && !isApproverUser;
         const completeSessionFormUser = sessionComplete && (isFormUser || isApproverUser);
@@ -329,11 +324,11 @@ export default function SessionForm({ match }) {
 
         // when do we redirect to the "View" page?
         if (
-          notSubmittedApprover || // approver, session not submitted yet
-          submittedFormUser || // when the form is submitted and we are a form-filler
-          completeSessionFormUser || // when the form is complete and we are a form-filler
-          needsActionApprover || // when we are an approver and the form is needs action
-          isRegionalEventPocAndNotApproverUser // if it's a "regional" session and
+          notSubmittedApprover // approver, session not submitted yet
+          || submittedFormUser // when the form is submitted and we are a form-filler
+          || completeSessionFormUser // when the form is complete and we are a form-filler
+          || needsActionApprover // when we are an approver and the form is needs action
+          || isRegionalEventPocAndNotApproverUser // if it's a "regional" session and
           //  we are a POC and not an approver (corner case)
         ) {
           history.push(viewTrUrl);
@@ -386,9 +381,7 @@ export default function SessionForm({ match }) {
   const pageExists = currentPage && applicationPages.some((p) => p.path === currentPage);
   if (redirectPagePath && (!currentPage || !pageExists)) {
     return (
-      <Redirect
-        to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`}
-      />
+      <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`} />
     );
   }
 
@@ -412,14 +405,15 @@ export default function SessionForm({ match }) {
     const updatedRoleData = { ...roleData };
     if (!isAdminUser) {
       if (isPoc && roleData.facilitation === 'national_center') {
-        // Remove collabComplete as this is tracked from the owner.
+      // Remove collabComplete as this is tracked from the owner.
         delete updatedRoleData.collabComplete;
       } else if (
-        isPoc &&
-        eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+        isPoc && eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
       ) {
         updatedRoleData.collabComplete = true;
-      } else if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
+      } else if (
+        eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
+      ) {
         updatedRoleData.pocComplete = true;
       } else {
         // Remove pocComplete as this is tracked from the POC.
@@ -459,9 +453,8 @@ export default function SessionForm({ match }) {
         if (!isPoc && roleData.objectiveResources) {
           roleData = {
             ...roleData,
-            objectiveResources: data.objectiveResources.filter(
-              (r) => r && isValidResourceUrl(r.value)
-            ),
+            objectiveResources: data.objectiveResources.filter((r) => (
+              r && isValidResourceUrl(r.value))),
           };
         }
 
@@ -514,7 +507,10 @@ export default function SessionForm({ match }) {
       setIsAppLoading(true);
 
       // grab the newest data from the form
-      const { approvalStatus, ...data } = hookForm.getValues();
+      const {
+        approvalStatus,
+        ...data
+      } = hookForm.getValues();
 
       const status = (() => {
         if (approvalStatus === REPORT_STATUSES.APPROVED) {
@@ -564,7 +560,9 @@ export default function SessionForm({ match }) {
       setIsAppLoading(true);
 
       // grab the newest data from the form
-      const { ...data } = hookForm.getValues();
+      const {
+        ...data
+      } = hookForm.getValues();
 
       // Get form data based on role IST vs POC.
       const keyArray = determineKeyArray({
@@ -642,16 +640,16 @@ export default function SessionForm({ match }) {
 
   return (
     <div className="smart-hub-training-report--session">
-      {error && (
+      { error
+        && (
         <Alert type="error" className="margin-bottom-3">
           {error}
         </Alert>
-      )}
-      <Helmet
-        titleTemplate="%s - Training Report | TTA Hub"
-        defaultTitle="Session - Training Report | TTA Hub"
-      />
-      <BackLink to="/training-reports/in-progress">Back to Training Reports</BackLink>
+        )}
+      <Helmet titleTemplate="%s - Training Report | TTA Hub" defaultTitle="Session - Training Report | TTA Hub" />
+      <BackLink to="/training-reports/in-progress">
+        Back to Training Reports
+      </BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-2 margin-bottom-4">
@@ -659,7 +657,10 @@ export default function SessionForm({ match }) {
               Training report - Session
             </h1>
             <div className="lead-paragraph">
-              {formData.eventId}: {formData?.event?.data?.eventName || ''}
+              {formData.eventId}
+              :
+              {' '}
+              {formData?.event?.data?.eventName || ''}
             </div>
           </div>
         </Grid>

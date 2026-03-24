@@ -1,13 +1,17 @@
-import { DECIMAL_BASE } from '@ttahub/common';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import PropTypes from 'prop-types';
-import React, { useEffect, useRef, useState } from 'react';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { useMediaQuery } from 'react-responsive';
-import { arrayExistsAndHasLength } from '../Constants';
 import colors from '../colors';
-import NoResultsFound from '../components/NoResultsFound';
-import HorizontalTableWidget from './HorizontalTableWidget';
 import LegendControl from './LegendControl';
 import LegendControlFieldset from './LegendControlFieldset';
+import HorizontalTableWidget from './HorizontalTableWidget';
+import { arrayExistsAndHasLength } from '../Constants';
+import NoResultsFound from '../components/NoResultsFound';
 
 const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
 const MAX_WIDTH_MEDIUM = 1200;
@@ -106,7 +110,9 @@ export default function LineGraph({
 
   useEffect(() => {
     const chartElement = lines.current;
-    const handleChartClick = onChartClick ? (event) => onChartClick(event) : null;
+    const handleChartClick = onChartClick
+      ? (event) => onChartClick(event)
+      : null;
 
     if (chartElement && handleChartClick) {
       chartElement.addEventListener('click', handleChartClick);
@@ -231,12 +237,7 @@ export default function LineGraph({
 
     // draw the plot
     import('plotly.js-basic-dist').then((Plotly) => {
-      if (lines.current)
-        Plotly.newPlot(lines.current, tracesToDraw, layout, {
-          displayModeBar: false,
-          hovermode: 'none',
-          responsive: true,
-        });
+      if (lines.current) Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
     });
   }, [
     data,
@@ -258,49 +259,52 @@ export default function LineGraph({
 
   return (
     <div className="ttahub-three-trace-line-graph" ref={widgetRef}>
-      {showTabularData ? (
-        <HorizontalTableWidget
-          headers={tableConfig.headings}
-          data={tableConfig.data}
-          caption={tableConfig.caption}
-          firstHeading={tableConfig.firstHeading}
-          enableSorting={tableConfig.enableSorting}
-          sortConfig={tableConfig.sortConfig}
-          requestSort={tableConfig.requestSort}
-          enableCheckboxes={tableConfig.enableCheckboxes}
-          checkboxes={tableConfig.checkboxes}
-          setCheckboxes={tableConfig.setCheckboxes}
-          showTotalColumn={tableConfig.showTotalColumn}
-          footerData={tableConfig.footer.showFooter ? tableConfig.footer.data : false}
-          selectAllIdPrefix={tableConfig.selectAllIdPrefix}
-          stickyLastDataColumn={tableConfig.stickyLastDataColumn}
-        />
-      ) : (
-        <div className="padding-3">
-          <LegendControlFieldset legend="Toggle individual lines by checking or unchecking a legend item.">
-            {legends.map((legend) => (
-              <LegendControl
-                key={legend.id}
-                id={legend.id}
-                label={legend.label}
-                selected={legend.selected}
-                setSelected={(selected) => {
-                  const updatedLegends = legends.map((l) => {
-                    if (l.id === legend.id) {
-                      return { ...l, selected };
-                    }
-                    return l;
-                  });
-                  setLegends(updatedLegends);
-                }}
-                shape={legend.shape}
-              />
-            ))}
-          </LegendControlFieldset>
-          <div data-testid="lines" ref={lines} />
-        </div>
-      )}
+      { showTabularData
+        ? (
+          <HorizontalTableWidget
+            headers={tableConfig.headings}
+            data={tableConfig.data}
+            caption={tableConfig.caption}
+            firstHeading={tableConfig.firstHeading}
+            enableSorting={tableConfig.enableSorting}
+            sortConfig={tableConfig.sortConfig}
+            requestSort={tableConfig.requestSort}
+            enableCheckboxes={tableConfig.enableCheckboxes}
+            checkboxes={tableConfig.checkboxes}
+            setCheckboxes={tableConfig.setCheckboxes}
+            showTotalColumn={tableConfig.showTotalColumn}
+            footerData={tableConfig.footer.showFooter ? tableConfig.footer.data : false}
+            selectAllIdPrefix={tableConfig.selectAllIdPrefix}
+            stickyLastDataColumn={tableConfig.stickyLastDataColumn}
+          />
+        )
+        : (
+          <div className="padding-3">
+            <LegendControlFieldset legend="Toggle individual lines by checking or unchecking a legend item.">
+              {legends.map((legend) => (
+                <LegendControl
+                  key={legend.id}
+                  id={legend.id}
+                  label={legend.label}
+                  selected={legend.selected}
+                  setSelected={(selected) => {
+                    const updatedLegends = legends.map((l) => {
+                      if (l.id === legend.id) {
+                        return { ...l, selected };
+                      }
+                      return l;
+                    });
+                    setLegends(updatedLegends);
+                  }}
+                  shape={legend.shape}
+                />
+              ))}
+            </LegendControlFieldset>
+            <div data-testid="lines" ref={lines} />
+          </div>
+        )}
     </div>
+
   );
 }
 
@@ -311,26 +315,22 @@ LineGraph.propTypes = {
       x: PropTypes.arrayOf(PropTypes.string),
       y: PropTypes.arrayOf(PropTypes.number),
       month: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.arrayOf(PropTypes.string),
-        PropTypes.arrayOf(PropTypes.bool),
+        PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.arrayOf(PropTypes.bool),
       ]),
       id: PropTypes.string,
-    })
+    }),
   ),
   hideYAxis: PropTypes.bool,
   xAxisTitle: PropTypes.string,
   yAxisTitle: PropTypes.string,
   yAxisTickStep: PropTypes.number,
   onChartClick: PropTypes.func,
-  legendConfig: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string.isRequired,
-      id: PropTypes.string.isRequired,
-      selected: PropTypes.bool.isRequired,
-      shape: PropTypes.oneOf(['circle', 'triangle', 'square']).isRequired,
-    })
-  ),
+  legendConfig: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    id: PropTypes.string.isRequired,
+    selected: PropTypes.bool.isRequired,
+    shape: PropTypes.oneOf(['circle', 'triangle', 'square']).isRequired,
+  })),
   tableConfig: PropTypes.shape({
     headings: PropTypes.arrayOf(PropTypes.string).isRequired,
     firstHeading: PropTypes.string.isRequired,
@@ -353,17 +353,13 @@ LineGraph.propTypes = {
       showFooter: PropTypes.bool.isRequired,
     }),
     selectAllIdPrefix: PropTypes.string,
-    data: PropTypes.arrayOf(
-      PropTypes.shape({
-        heading: PropTypes.string.isRequired,
-        data: PropTypes.arrayOf(
-          PropTypes.shape({
-            value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-            title: PropTypes.string.isRequired,
-          })
-        ).isRequired,
-      })
-    ).isRequired,
+    data: PropTypes.arrayOf(PropTypes.shape({
+      heading: PropTypes.string.isRequired,
+      data: PropTypes.arrayOf(PropTypes.shape({
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        title: PropTypes.string.isRequired,
+      })).isRequired,
+    })).isRequired,
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   widgetRef: PropTypes.object.isRequired,

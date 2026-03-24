@@ -1,12 +1,13 @@
 /* eslint-disable react/jsx-props-no-spreading */
-
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import React from 'react';
+import {
+  render, screen, fireEvent, waitFor,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import * as collaborationReportsFetchers from '../../../fetchers/collaborationReports';
+import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import UserContext from '../../../UserContext';
 import CollabReportAlertsTable, { ReportLink } from '../components/CollabReportAlertsTable';
+import * as collaborationReportsFetchers from '../../../fetchers/collaborationReports';
 
 jest.mock('../../../fetchers/collaborationReports');
 
@@ -24,7 +25,7 @@ describe('CollabReportAlertsTable', () => {
         <UserContext.Provider value={{ user: { id: 1 } }}>
           <CollabReportAlertsTable {...defaultProps} {...props} />
         </UserContext.Provider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
   };
 
@@ -41,12 +42,8 @@ describe('CollabReportAlertsTable', () => {
   it('renders create message when showCreateMsgOnEmpty is true', () => {
     renderTest({ showCreateMsgOnEmpty: true });
     expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Document your work connecting Head Start programs/)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/To get started, click the "New Collaboration Report" button./)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Document your work connecting Head Start programs/)).toBeInTheDocument();
+    expect(screen.getByText(/To get started, click the "New Collaboration Report" button./)).toBeInTheDocument();
   });
 
   it('renders table when reports are present', () => {
@@ -112,7 +109,7 @@ describe('ReportLink', () => {
     render(
       <MemoryRouter>
         <ReportLink report={report} userId={userId} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
   };
 
@@ -207,14 +204,13 @@ describe('Delete Functionality', () => {
     submissionStatus: REPORT_STATUSES.DRAFT,
   };
 
-  const renderReportTable = (props, userId = 1) =>
-    render(
-      <MemoryRouter>
-        <UserContext.Provider value={{ user: { id: userId } }}>
-          <CollabReportAlertsTable {...defaultProps} {...props} />
-        </UserContext.Provider>
-      </MemoryRouter>
-    );
+  const renderReportTable = (props, userId = 1) => render(
+    <MemoryRouter>
+      <UserContext.Provider value={{ user: { id: userId } }}>
+        <CollabReportAlertsTable {...defaultProps} {...props} />
+      </UserContext.Provider>
+    </MemoryRouter>,
+  );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -286,7 +282,7 @@ describe('Delete Functionality', () => {
   });
 
   it('handles deletion error gracefully', async () => {
-    const mockError = new TypeError("Cannot read properties of null (reading 'id')");
+    const mockError = new TypeError('Cannot read properties of null (reading \'id\')');
     const mockDelete = jest.fn().mockRejectedValue(mockError);
     collaborationReportsFetchers.deleteReport = mockDelete;
 

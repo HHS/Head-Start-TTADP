@@ -1,8 +1,12 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import AppLoadingContext from '../../AppLoadingContext';
+import {
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { ActiveDeficientCitationsWithTtaSupportWidget } from '../ActiveDeficientCitationsWithTtaSupport';
+import AppLoadingContext from '../../AppLoadingContext';
 
 jest.mock('plotly.js-basic-dist', () => ({
   newPlot: jest.fn(),
@@ -43,14 +47,14 @@ describe('ActiveDeficientCitationsWithTtaSupportWidget', () => {
             },
           ]}
         />
-      </AppLoadingContext.Provider>
+      </AppLoadingContext.Provider>,
     );
 
     expect(
-      await screen.findByRole('checkbox', { name: 'Derived legend label one' })
+      await screen.findByRole('checkbox', { name: 'Derived legend label one' }),
     ).toBeInTheDocument();
     expect(
-      await screen.findByRole('checkbox', { name: 'Derived legend label two' })
+      await screen.findByRole('checkbox', { name: 'Derived legend label two' }),
     ).toBeInTheDocument();
   });
 
@@ -58,15 +62,10 @@ describe('ActiveDeficientCitationsWithTtaSupportWidget', () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
         <ActiveDeficientCitationsWithTtaSupportWidget data={TEST_DATA} />
-      </AppLoadingContext.Provider>
+      </AppLoadingContext.Provider>,
     );
 
-    expect(
-      await screen.findByRole('heading', {
-        level: 2,
-        name: /Active deficient citations with TTA support/i,
-      })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: /Active deficient citations with TTA support/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
     fireEvent.click(screen.getByText('Display table'));

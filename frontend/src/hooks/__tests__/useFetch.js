@@ -1,18 +1,16 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
-import PropTypes from 'prop-types';
 import React from 'react';
-import AppLoadingContext from '../../AppLoadingContext';
+import PropTypes from 'prop-types';
+import { render, screen, waitFor } from '@testing-library/react';
 import useFetch from '../useFetch';
+import AppLoadingContext from '../../AppLoadingContext';
 
-const TestComponent = ({ fetcher, dependencies, initialValue, errorMessage, useAppLoading }) => {
-  const { data, error, loading, statusCode } = useFetch(
-    initialValue,
-    fetcher,
-    dependencies,
-    errorMessage,
-    useAppLoading
-  );
+const TestComponent = ({
+  fetcher, dependencies, initialValue, errorMessage, useAppLoading,
+}) => {
+  const {
+    data, error, loading, statusCode,
+  } = useFetch(initialValue, fetcher, dependencies, errorMessage, useAppLoading);
 
   return (
     <div>
@@ -27,7 +25,7 @@ const TestComponent = ({ fetcher, dependencies, initialValue, errorMessage, useA
 TestComponent.propTypes = {
   fetcher: PropTypes.func.isRequired,
   dependencies: PropTypes.arrayOf(
-    PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.object])
+    PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.object]),
   ).isRequired,
   initialValue: PropTypes.oneOfType([
     PropTypes.object,
@@ -46,12 +44,11 @@ TestComponent.defaultProps = {
 };
 
 describe('useFetch', () => {
-  const renderWithContext = (component, setIsAppLoading = jest.fn()) =>
-    render(
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading }}>
-        {component}
-      </AppLoadingContext.Provider>
-    );
+  const renderWithContext = (component, setIsAppLoading = jest.fn()) => render(
+    <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading }}>
+      {component}
+    </AppLoadingContext.Provider>,
+  );
 
   it('loading starts as true', () => {
     const fetcher = jest.fn(() => Promise.resolve({ result: 'success' }));
@@ -111,7 +108,7 @@ describe('useFetch', () => {
         initialValue={null}
         dependencies={[]}
         errorMessage={errorMessage}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -144,12 +141,12 @@ describe('useFetch', () => {
 
   it('uses initialValue before fetch completes', () => {
     const initialValue = { initial: true };
-    const fetcher = jest.fn(
-      () => new Promise((resolve) => setTimeout(() => resolve({ result: 'success' }), 100))
-    );
-    renderWithContext(
-      <TestComponent fetcher={fetcher} initialValue={initialValue} dependencies={[]} />
-    );
+    const fetcher = jest.fn(() => new Promise((resolve) => setTimeout(() => resolve({ result: 'success' }), 100)));
+    renderWithContext(<TestComponent
+      fetcher={fetcher}
+      initialValue={initialValue}
+      dependencies={[]}
+    />);
 
     const data = screen.getByTestId('data');
     expect(data).toHaveTextContent(JSON.stringify(initialValue));
@@ -165,7 +162,7 @@ describe('useFetch', () => {
     });
 
     const { rerender } = renderWithContext(
-      <TestComponent fetcher={fetcher} initialValue={null} dependencies={[1]} />
+      <TestComponent fetcher={fetcher} initialValue={null} dependencies={[1]} />,
     );
 
     // Wait for first fetch to fail
@@ -179,7 +176,7 @@ describe('useFetch', () => {
     rerender(
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
         <TestComponent fetcher={fetcher} initialValue={null} dependencies={[2]} />
-      </AppLoadingContext.Provider>
+      </AppLoadingContext.Provider>,
     );
 
     // Wait for error to be cleared
@@ -192,7 +189,7 @@ describe('useFetch', () => {
   it('calls fetcher when dependencies change', async () => {
     const fetcher = jest.fn(() => Promise.resolve({ result: 'success' }));
     const { rerender } = renderWithContext(
-      <TestComponent fetcher={fetcher} initialValue={null} dependencies={[1]} />
+      <TestComponent fetcher={fetcher} initialValue={null} dependencies={[1]} />,
     );
 
     await waitFor(() => {
@@ -203,7 +200,7 @@ describe('useFetch', () => {
     rerender(
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
         <TestComponent fetcher={fetcher} initialValue={null} dependencies={[2]} />
-      </AppLoadingContext.Provider>
+      </AppLoadingContext.Provider>,
     );
 
     await waitFor(() => {
@@ -216,7 +213,7 @@ describe('useFetch', () => {
     const fetcher = jest.fn(() => Promise.resolve({ result: 'success' }));
     renderWithContext(
       <TestComponent fetcher={fetcher} initialValue={null} dependencies={[]} useAppLoading />,
-      setIsAppLoading
+      setIsAppLoading,
     );
 
     await waitFor(() => {
@@ -235,7 +232,7 @@ describe('useFetch', () => {
         dependencies={[]}
         useAppLoading={false}
       />,
-      setIsAppLoading
+      setIsAppLoading,
     );
 
     await waitFor(() => {
@@ -251,7 +248,7 @@ describe('useFetch', () => {
     const fetcher = jest.fn(() => Promise.reject(new Error('Failed')));
     renderWithContext(
       <TestComponent fetcher={fetcher} initialValue={null} dependencies={[]} useAppLoading />,
-      setIsAppLoading
+      setIsAppLoading,
     );
 
     await waitFor(() => {

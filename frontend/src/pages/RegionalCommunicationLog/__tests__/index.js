@@ -1,77 +1,55 @@
 /* eslint-disable react/prop-types */
-
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import React from 'react';
+import { createMemoryHistory } from 'history';
+import { MemoryRouter, Route } from 'react-router';
+import {
+  render, screen, waitFor, act, within,
+} from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import { COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
-import fetchMock from 'fetch-mock';
-import { createMemoryHistory } from 'history';
-import React from 'react';
-import { MemoryRouter, Route } from 'react-router';
-import AppLoadingContext from '../../../AppLoadingContext';
-import NetworkContext from '../../../NetworkContext';
-import { mockRSSData } from '../../../testHelpers';
-import UserContext from '../../../UserContext';
 import RegionalCommunicationLog, { shouldFetch } from '..';
+import NetworkContext from '../../../NetworkContext';
+import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
+import { mockRSSData } from '../../../testHelpers';
 
-jest.mock(
-  '../../../components/RichEditor',
-  () =>
-    function MockRichEditor({ ariaLabel, value, onChange }) {
-      return (
-        <textarea
-          aria-label={ariaLabel}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-        />
-      );
-    }
-);
+jest.mock('../../../components/RichEditor', () => function MockRichEditor({
+  ariaLabel,
+  value,
+  onChange,
+}) {
+  return (
+    <textarea
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+});
 
 const completeLog = {
   displayId: 'R01-CL-13213',
   id: 13213,
   userId: 355,
   data: {
-    goals: [{ label: 'CQI and Data', value: '24740' }],
-    notes: '<p>sf</p>',
-    method: 'In person',
-    result: 'New TTA accepted',
-    purpose: "Program Specialist's site visit",
-    duration: 1,
-    regionId: '1',
-    createdAt: '2025-01-30T01:34:04.142Z',
-    displayId: 'R01-CL-13213',
-    pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
-    otherStaff: [{ label: 'OtherStaff', value: '74' }],
-    pocComplete: false,
-    recipientId: '',
-    communicationDate: '01/15/2025',
-    recipientNextSteps: [{ note: 'hh', completeDate: '01/23/2025' }],
-    specialistNextSteps: [{ note: 'ff', completeDate: '01/21/2025' }],
-    'pageVisited-next-steps': 'true',
-    'pageVisited-supporting-attachments': 'true',
+    goals: [{ label: 'CQI and Data', value: '24740' }], notes: '<p>sf</p>', method: 'In person', result: 'New TTA accepted', purpose: "Program Specialist's site visit", duration: 1, regionId: '1', createdAt: '2025-01-30T01:34:04.142Z', displayId: 'R01-CL-13213', pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' }, otherStaff: [{ label: 'OtherStaff', value: '74' }], pocComplete: false, recipientId: '', communicationDate: '01/15/2025', recipientNextSteps: [{ note: 'hh', completeDate: '01/23/2025' }], specialistNextSteps: [{ note: 'ff', completeDate: '01/21/2025' }], 'pageVisited-next-steps': 'true', 'pageVisited-supporting-attachments': 'true',
   },
   createdAt: '2025-01-30T01:34:04.142Z',
   updatedAt: '2025-01-30T14:37:25.437Z',
   authorName: 'Author Name',
-  recipients: [
-    {
-      id: 707,
-      uei: 'FND1A6MY3JD3',
-      name: 'Abshire and Sons',
-      recipientType: 'Community Action Agency (CAA)',
-      deleted: false,
-      createdAt: '2021-03-16T01:20:43.530Z',
-      updatedAt: '2025-01-01T09:00:01.970Z',
-      CommunicationLogRecipient: {
-        id: 13209,
-        recipientId: 707,
-        communicationLogId: 13213,
-        createdAt: '2025-01-30T01:34:04.471Z',
-        updatedAt: '2025-01-30T01:34:04.471Z',
-      },
+  recipients: [{
+    id: 707,
+    uei: 'FND1A6MY3JD3',
+    name: 'Abshire and Sons',
+    recipientType: 'Community Action Agency (CAA)',
+    deleted: false,
+    createdAt: '2021-03-16T01:20:43.530Z',
+    updatedAt: '2025-01-01T09:00:01.970Z',
+    CommunicationLogRecipient: {
+      id: 13209, recipientId: 707, communicationLogId: 13213, createdAt: '2025-01-30T01:34:04.471Z', updatedAt: '2025-01-30T01:34:04.471Z',
     },
-  ],
+  }],
   files: [],
   author: { name: 'Author Name', id: 355 },
 };
@@ -94,7 +72,7 @@ describe('RegionalCommunicationLog', () => {
             </NetworkContext.Provider>
           </AppLoadingContext.Provider>
         </UserContext.Provider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
   };
 
@@ -105,12 +83,10 @@ describe('RegionalCommunicationLog', () => {
     fetchMock.get('/api/communication-logs/region/1/additional-data', {
       regionalUsers: [{ value: 74, label: 'OtherStaff' }],
       standardGoals: [{ label: 'CQI and Data', value: '24740' }],
-      recipients: [
-        {
-          value: 707,
-          label: 'Abshire and Sons',
-        },
-      ],
+      recipients: [{
+        value: 707,
+        label: 'Abshire and Sons',
+      }],
       groups: [],
     });
   });
@@ -128,11 +104,7 @@ describe('RegionalCommunicationLog', () => {
 
     renderComponent(`/region/${regionId}/log/${logId}/log`);
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('heading', { name: 'Communication log - your region' })
-      ).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
   });
 
   it('handles an error fetching log', async () => {
@@ -149,11 +121,7 @@ describe('RegionalCommunicationLog', () => {
   it('does not fetch if log is "new"', async () => {
     renderComponent('/region/1/log/new/log');
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('heading', { name: 'Communication log - your region' })
-      ).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
     expect(fetchMock.called('/api/communication-logs/region/1/log/new')).toBe(false);
   });
 
@@ -246,20 +214,12 @@ describe('RegionalCommunicationLog', () => {
 
     renderComponent(`/region/${regionId}/log/${logId}/log`);
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('heading', { name: 'Communication log - your region' })
-      ).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
 
     const saveButton = screen.getByRole('button', { name: 'Save and continue' });
     userEvent.click(saveButton);
 
-    await waitFor(() =>
-      expect(
-        screen.getByText('There was an error saving the communication log. Please try again later.')
-      ).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText('There was an error saving the communication log. Please try again later.')).toBeInTheDocument());
   });
 
   it('shows a specific message when save and continue fails for a deleted log', async () => {
@@ -271,22 +231,12 @@ describe('RegionalCommunicationLog', () => {
 
     renderComponent(`/region/${regionId}/log/${logId}/log`);
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('heading', { name: 'Communication log - your region' })
-      ).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
 
     const saveButton = screen.getByRole('button', { name: 'Save and continue' });
     userEvent.click(saveButton);
 
-    await waitFor(() =>
-      expect(
-        screen.getByText(
-          'This communication log was deleted in another window. Your changes were not saved.'
-        )
-      ).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText('This communication log was deleted in another window. Your changes were not saved.')).toBeInTheDocument());
   });
 
   it('successfully updates an existing communication log', async () => {
@@ -299,11 +249,7 @@ describe('RegionalCommunicationLog', () => {
 
     renderComponent(`/region/${regionId}/log/${logId}/log`);
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('heading', { name: 'Communication log - your region' })
-      ).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
 
     const duration = await screen.findByLabelText(/duration in hours/i);
     userEvent.clear(duration);
@@ -313,12 +259,7 @@ describe('RegionalCommunicationLog', () => {
     userEvent.click(saveButton);
 
     await waitFor(() => {
-      const updateCalls = fetchMock
-        .calls()
-        .filter(
-          ([url, options]) =>
-            url.includes(`/api/communication-logs/log/${logId}`) && options.method === 'PUT'
-        );
+      const updateCalls = fetchMock.calls().filter(([url, options]) => url.includes(`/api/communication-logs/log/${logId}`) && options.method === 'PUT');
       expect(updateCalls).toHaveLength(1);
     });
   });
@@ -328,19 +269,13 @@ describe('RegionalCommunicationLog', () => {
 
     renderComponent(`/region/${regionId}/log/new/log`);
 
-    await waitFor(() =>
-      expect(
-        screen.getByRole('heading', { name: 'Communication log - your region' })
-      ).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
 
     const saveButton = screen.getByRole('button', { name: 'Save and continue' });
     userEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(
-        fetchMock.calls().filter(([url]) => url.includes('/api/communication-logs/log'))
-      ).toHaveLength(0);
+      expect(fetchMock.calls().filter(([url]) => url.includes('/api/communication-logs/log'))).toHaveLength(0);
     });
   });
 

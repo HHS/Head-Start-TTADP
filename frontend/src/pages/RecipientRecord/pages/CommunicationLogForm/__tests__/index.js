@@ -1,44 +1,53 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable max-len */
-
-import { act, render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
-import fetchMock from 'fetch-mock';
-import { createMemoryHistory } from 'history';
 import React from 'react';
-import { Router } from 'react-router';
 import join from 'url-join';
-import AppLoadingContext from '../../../../../AppLoadingContext';
-import { LogProvider } from '../../../../../components/CommunicationLog/components/LogContext';
-import { COMPLETE, NOT_STARTED } from '../../../../../components/Navigator/constants';
+import {
+  render, screen, act, waitFor,
+  within,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
+import { COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import UserContext from '../../../../../UserContext';
+import AppLoadingContext from '../../../../../AppLoadingContext';
+import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
 import CommunicationLogForm from '../index';
+import { LogProvider } from '../../../../../components/CommunicationLog/components/LogContext';
 
-jest.mock(
-  '../../../../../components/RichEditor',
-  () =>
-    function MockRichEditor({ ariaLabel, value, onChange }) {
-      return (
-        <textarea
-          aria-label={ariaLabel}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-        />
-      );
-    }
-);
+jest.mock('../../../../../components/RichEditor', () => function MockRichEditor({
+  ariaLabel,
+  value,
+  onChange,
+}) {
+  return (
+    <textarea
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+});
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;
 const RECIPIENT_NAME = 'Little Lord Wigglytoes';
 
-const communicationLogUrl = join('/', 'api', 'communication-logs');
+const communicationLogUrl = join(
+  '/',
+  'api',
+  'communication-logs',
+);
 
 describe('CommunicationLogForm', () => {
   const history = createMemoryHistory();
 
-  const renderTest = (communicationLogId = 'new', currentPage = 'log') => {
+  const renderTest = (
+    communicationLogId = 'new',
+    currentPage = 'log',
+  ) => {
     render(
       <Router history={history}>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
@@ -60,7 +69,7 @@ describe('CommunicationLogForm', () => {
             </UserContext.Provider>
           </LogProvider>
         </AppLoadingContext.Provider>
-      </Router>
+      </Router>,
     );
   };
 
@@ -77,35 +86,27 @@ describe('CommunicationLogForm', () => {
   });
 
   it('renders training report form', async () => {
-    await act(() =>
-      waitFor(() => {
-        renderTest();
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest();
+    }));
 
     expect(screen.getByText(/Little Lord Wigglytoes/i)).toBeInTheDocument();
   });
 
   it('redirects to log', async () => {
-    await act(() =>
-      waitFor(() => {
-        renderTest('new', '');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('new', '');
+    }));
 
-    expect(history.location.pathname).toEqual(
-      `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/new/log`
-    );
+    expect(history.location.pathname).toEqual(`/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/new/log`);
   });
 
   it('fetches additional data', async () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/additional-data`;
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('new', 'log');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('new', 'log');
+    }));
 
     expect(fetchMock.called(url)).toBe(true);
 
@@ -128,11 +129,9 @@ describe('CommunicationLogForm', () => {
       },
     });
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('1', 'log');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('1', 'log');
+    }));
 
     expect(fetchMock.called(url)).toBe(true);
 
@@ -157,11 +156,9 @@ describe('CommunicationLogForm', () => {
       recipients: [],
     });
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('1', 'log');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('1', 'log');
+    }));
 
     const notesField = await screen.findByLabelText(/notes/i);
     expect(notesField.value).toBe('<p>Existing note</p>');
@@ -171,11 +168,9 @@ describe('CommunicationLogForm', () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
     fetchMock.get(url, 500);
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('1', 'log');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('1', 'log');
+    }));
 
     expect(fetchMock.called(url)).toBe(true);
 
@@ -186,39 +181,31 @@ describe('CommunicationLogForm', () => {
   it('Validates required fields', async () => {
     fetchMock.reset();
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('new', 'log');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('new', 'log');
+    }));
 
     const onSaveButton = screen.getByText(/save and continue/i);
-    await act(() =>
-      waitFor(() => {
-        userEvent.click(onSaveButton);
-      })
-    );
+    await act(() => waitFor(() => {
+      userEvent.click(onSaveButton);
+    }));
 
     expect(fetchMock.called()).toBe(false);
 
-    await Promise.all(
-      [
-        /Select a communication method/i,
-        /enter duration/i,
-        /enter valid date/i,
-        /Select a purpose of communication/i,
-      ].map(async (message) => {
-        expect(await screen.findByText(message)).toBeInTheDocument();
-      })
-    );
+    await Promise.all([
+      /Select a communication method/i,
+      /enter duration/i,
+      /enter valid date/i,
+      /Select a purpose of communication/i,
+    ].map(async (message) => {
+      expect(await screen.findByText(message)).toBeInTheDocument();
+    }));
   });
 
   it('allows a page to be completed', async () => {
-    await act(() =>
-      waitFor(() => {
-        renderTest('new', 'log');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('new', 'log');
+    }));
 
     const view = screen.getByTestId('otherStaff-click-container');
     const select = within(view).getByText(/- select -/i);
@@ -262,21 +249,17 @@ describe('CommunicationLogForm', () => {
     });
 
     const onSaveButton = screen.getByText(/save and continue/i);
-    await act(() =>
-      waitFor(() => {
-        userEvent.click(onSaveButton);
-      })
-    );
+    await act(() => waitFor(() => {
+      userEvent.click(onSaveButton);
+    }));
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'post' })).toBe(true));
   });
 
   it('handles an error saving page', async () => {
-    await act(() =>
-      waitFor(() => {
-        renderTest('new', 'log');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('new', 'log');
+    }));
 
     const view = screen.getByTestId('otherStaff-click-container');
     const select = within(view).getByText(/- select -/i);
@@ -308,20 +291,12 @@ describe('CommunicationLogForm', () => {
     fetchMock.post(url, 500);
 
     const onSaveButton = screen.getByText(/save and continue/i);
-    await act(() =>
-      waitFor(() => {
-        userEvent.click(onSaveButton);
-      })
-    );
+    await act(() => waitFor(() => {
+      userEvent.click(onSaveButton);
+    }));
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'post' })).toBe(true));
-    await waitFor(() =>
-      expect(
-        screen.getAllByText(
-          /There was an error saving the communication log. Please try again later/i
-        ).length
-      ).toBeGreaterThan(0)
-    );
+    await waitFor(() => expect(screen.getAllByText(/There was an error saving the communication log. Please try again later/i).length).toBeGreaterThan(0));
   });
 
   it('shows a specific message when save and continue fails for a deleted log', async () => {
@@ -365,27 +340,17 @@ describe('CommunicationLogForm', () => {
     fetchMock.get(url, formData);
     fetchMock.put(putUrl, 404);
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('1', 'supporting-attachments');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('1', 'supporting-attachments');
+    }));
 
     expect(fetchMock.called(url, { method: 'get' })).toBe(true);
     const onSaveButton = screen.getByText(/save and continue/i);
-    await act(() =>
-      waitFor(() => {
-        userEvent.click(onSaveButton);
-      })
-    );
+    await act(() => waitFor(() => {
+      userEvent.click(onSaveButton);
+    }));
     await waitFor(() => expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true));
-    await waitFor(() =>
-      expect(
-        screen.getAllByText(
-          /This communication log was deleted in another window. Your changes were not saved/i
-        ).length
-      ).toBeGreaterThan(0)
-    );
+    await waitFor(() => expect(screen.getAllByText(/This communication log was deleted in another window. Your changes were not saved/i).length).toBeGreaterThan(0));
   });
 
   it('you can complete support attachment', async () => {
@@ -429,33 +394,25 @@ describe('CommunicationLogForm', () => {
     fetchMock.get(url, formData);
     fetchMock.put(putUrl, formData);
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('1', 'supporting-attachments');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('1', 'supporting-attachments');
+    }));
 
     expect(fetchMock.called(url, { method: 'get' })).toBe(true);
     const onSaveButton = screen.getByText(/save and continue/i);
-    await act(() =>
-      waitFor(() => {
-        userEvent.click(onSaveButton);
-      })
-    );
+    await act(() => waitFor(() => {
+      userEvent.click(onSaveButton);
+    }));
     await waitFor(() => expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true));
-    expect(history.location.pathname).toEqual(
-      `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/1/next-steps`
-    );
+    expect(history.location.pathname).toEqual(`/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/1/next-steps`);
   });
 
   it('can submit the form', async () => {
     const formData = {
       id: 1,
-      recipients: [
-        {
-          id: RECIPIENT_ID,
-        },
-      ],
+      recipients: [{
+        id: RECIPIENT_ID,
+      }],
       userId: '1',
       updatedAt: new Date(),
       files: [],
@@ -497,33 +454,25 @@ describe('CommunicationLogForm', () => {
     fetchMock.get(url, formData);
     fetchMock.put(putUrl, formData);
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('1', 'next-steps');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('1', 'next-steps');
+    }));
 
     expect(fetchMock.called(url, { method: 'get' })).toBe(true);
     const submit = screen.getByText(/save log/i);
-    await act(() =>
-      waitFor(() => {
-        userEvent.click(submit);
-      })
-    );
+    await act(() => waitFor(() => {
+      userEvent.click(submit);
+    }));
     expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true);
-    expect(history.location.pathname).toEqual(
-      `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication`
-    );
+    expect(history.location.pathname).toEqual(`/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication`);
   });
 
   it('handles error submitting the form', async () => {
     const formData = {
       id: 1,
-      recipients: [
-        {
-          id: RECIPIENT_ID,
-        },
-      ],
+      recipients: [{
+        id: RECIPIENT_ID,
+      }],
       userId: '1',
       updatedAt: new Date(),
       files: [],
@@ -565,37 +514,25 @@ describe('CommunicationLogForm', () => {
     fetchMock.get(url, formData);
     fetchMock.put(putUrl, 500);
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('1', 'next-steps');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('1', 'next-steps');
+    }));
 
     expect(fetchMock.called(url, { method: 'get' })).toBe(true);
     const submit = screen.getByText(/save log/i);
-    await act(() =>
-      waitFor(() => {
-        userEvent.click(submit);
-      })
-    );
+    await act(() => waitFor(() => {
+      userEvent.click(submit);
+    }));
     expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true);
-    await waitFor(() =>
-      expect(
-        screen.getAllByText(
-          /There was an error saving the communication log. Please try again later/i
-        ).length
-      ).toBeGreaterThan(0)
-    );
+    await waitFor(() => expect(screen.getAllByText(/There was an error saving the communication log. Please try again later/i).length).toBeGreaterThan(0));
   });
 
   it('shows a specific message when the log was deleted in another window', async () => {
     const formData = {
       id: 1,
-      recipients: [
-        {
-          id: RECIPIENT_ID,
-        },
-      ],
+      recipients: [{
+        id: RECIPIENT_ID,
+      }],
       userId: '1',
       updatedAt: new Date(),
       files: [],
@@ -637,27 +574,17 @@ describe('CommunicationLogForm', () => {
     fetchMock.get(url, formData);
     fetchMock.put(putUrl, 404);
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('1', 'next-steps');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('1', 'next-steps');
+    }));
 
     expect(fetchMock.called(url, { method: 'get' })).toBe(true);
     const submit = screen.getByText(/save log/i);
-    await act(() =>
-      waitFor(() => {
-        userEvent.click(submit);
-      })
-    );
+    await act(() => waitFor(() => {
+      userEvent.click(submit);
+    }));
     expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true);
-    await waitFor(() =>
-      expect(
-        screen.getAllByText(
-          /This communication log was deleted in another window. Your changes were not saved/i
-        ).length
-      ).toBeGreaterThan(0)
-    );
+    await waitFor(() => expect(screen.getAllByText(/This communication log was deleted in another window. Your changes were not saved/i).length).toBeGreaterThan(0));
   });
 
   it('can go back', async () => {
@@ -705,22 +632,16 @@ describe('CommunicationLogForm', () => {
     fetchMock.get(url, formData);
     fetchMock.put(putUrl, formData);
 
-    await act(() =>
-      waitFor(() => {
-        renderTest('1', 'next-steps');
-      })
-    );
+    await act(() => waitFor(() => {
+      renderTest('1', 'next-steps');
+    }));
 
     expect(fetchMock.called(url, { method: 'get' })).toBe(true);
     const back = await screen.findByRole('button', { name: /back/i });
-    await act(() =>
-      waitFor(() => {
-        userEvent.click(back);
-      })
-    );
+    await act(() => waitFor(() => {
+      userEvent.click(back);
+    }));
     expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true);
-    expect(history.location.pathname).toEqual(
-      `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/1/supporting-attachments`
-    );
+    expect(history.location.pathname).toEqual(`/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/1/supporting-attachments`);
   });
 });

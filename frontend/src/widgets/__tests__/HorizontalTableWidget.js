@@ -1,9 +1,11 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { createMemoryHistory } from 'history';
-import React from 'react';
 import { Router } from 'react-router';
+import React from 'react';
+import userEvent from '@testing-library/user-event';
+import {
+  render, screen, waitFor,
+} from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import HorizontalTableWidget from '../HorizontalTableWidget';
 
 const history = createMemoryHistory();
@@ -18,24 +20,23 @@ const renderHorizontalTableWidget = (
   requestSort = () => {},
   enableCheckboxes = false,
   showTotalColumn = true,
-  showDashForNullValue = false
-) =>
-  render(
-    <Router history={history}>
-      <HorizontalTableWidget
-        headers={headers}
-        data={data}
-        firstHeading={firstHeading}
-        enableSorting={enableSorting}
-        lastHeading={lastHeading}
-        sortConfig={sortConfig}
-        requestSort={requestSort}
-        enableCheckboxes={enableCheckboxes}
-        showTotalColumn={showTotalColumn}
-        showDashForNullValue={showDashForNullValue}
-      />
-    </Router>
-  );
+  showDashForNullValue = false,
+) => render(
+  <Router history={history}>
+    <HorizontalTableWidget
+      headers={headers}
+      data={data}
+      firstHeading={firstHeading}
+      enableSorting={enableSorting}
+      lastHeading={lastHeading}
+      sortConfig={sortConfig}
+      requestSort={requestSort}
+      enableCheckboxes={enableCheckboxes}
+      showTotalColumn={showTotalColumn}
+      showDashForNullValue={showDashForNullValue}
+    />
+  </Router>,
+);
 
 describe('Horizontal Table Widget', () => {
   it('renders correctly with data', async () => {
@@ -159,9 +160,7 @@ describe('Horizontal Table Widget', () => {
     renderHorizontalTableWidget(headers, data, 'First Heading', true);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /col1\. activate to sort ascending/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /col1\. activate to sort ascending/i })).toBeInTheDocument();
   });
 
   it('calls sort request', async () => {
@@ -179,15 +178,7 @@ describe('Horizontal Table Widget', () => {
         ],
       },
     ];
-    renderHorizontalTableWidget(
-      headers,
-      data,
-      'First Heading',
-      true,
-      'Last Heading',
-      {},
-      requestSort
-    );
+    renderHorizontalTableWidget(headers, data, 'First Heading', true, 'Last Heading', {}, requestSort);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
     const sortBtn = screen.getByRole('button', { name: /col1\. activate to sort ascending/i });
@@ -225,7 +216,7 @@ describe('Horizontal Table Widget', () => {
       true,
       'Last Heading',
       sortConfig,
-      requestSort
+      requestSort,
     );
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
@@ -253,17 +244,7 @@ describe('Horizontal Table Widget', () => {
       },
     ];
 
-    renderHorizontalTableWidget(
-      headers,
-      data,
-      'First Heading',
-      false,
-      'Last Heading',
-      {},
-      {},
-      false,
-      false
-    );
+    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
     const url = screen.getByText(/Test Link/i);
@@ -289,17 +270,7 @@ describe('Horizontal Table Widget', () => {
       },
     ];
 
-    renderHorizontalTableWidget(
-      headers,
-      data,
-      'First Heading',
-      false,
-      'Last Heading',
-      {},
-      {},
-      false,
-      false
-    );
+    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
     const url = screen.getByText(/Test Link/i);
@@ -336,7 +307,7 @@ describe('Horizontal Table Widget', () => {
       true,
       'Last Heading',
       sortConfig,
-      requestSort
+      requestSort,
     );
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
@@ -359,16 +330,7 @@ describe('Horizontal Table Widget', () => {
         ],
       },
     ];
-    renderHorizontalTableWidget(
-      headers,
-      data,
-      'First Heading',
-      false,
-      'Last Heading',
-      {},
-      {},
-      true
-    );
+    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, true);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
     expect(screen.queryAllByRole('checkbox')).toHaveLength(2);
@@ -397,17 +359,7 @@ describe('Horizontal Table Widget', () => {
       },
     ];
 
-    renderHorizontalTableWidget(
-      headers,
-      data,
-      'First Heading',
-      false,
-      'Last Heading',
-      {},
-      {},
-      false,
-      false
-    );
+    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/col1/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
     expect(screen.getByText(/col2/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
@@ -444,17 +396,7 @@ describe('Horizontal Table Widget', () => {
       },
     ];
 
-    const { container } = renderHorizontalTableWidget(
-      headers,
-      data,
-      'First Heading',
-      false,
-      'Last Heading',
-      {},
-      {},
-      false,
-      true
-    );
+    const { container } = renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, true);
     expect(container.querySelector('.fa-arrow-up-right-from-square')).toBeNull();
   });
 
@@ -485,12 +427,10 @@ describe('Horizontal Table Widget', () => {
           footerData={['', 'Total', '17', '18']}
           stickyLastDataColumn
         />
-      </Router>
+      </Router>,
     );
 
-    const stickyCells = container.querySelectorAll(
-      '.smarthub-horizontal-table-sticky-last-data-column'
-    );
+    const stickyCells = container.querySelectorAll('.smarthub-horizontal-table-sticky-last-data-column');
     expect(stickyCells.length).toBeGreaterThan(0);
   });
 
@@ -518,12 +458,10 @@ describe('Horizontal Table Widget', () => {
           showTotalColumn={false}
           stickyLastDataColumn
         />
-      </Router>
+      </Router>,
     );
 
-    const stickyCells = container.querySelectorAll(
-      '.smarthub-horizontal-table-sticky-last-data-column'
-    );
+    const stickyCells = container.querySelectorAll('.smarthub-horizontal-table-sticky-last-data-column');
     expect(stickyCells.length).toBe(0);
   });
 });

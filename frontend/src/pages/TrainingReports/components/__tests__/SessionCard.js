@@ -1,21 +1,19 @@
-import { render, screen } from '@testing-library/react';
-import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
-import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
-import UserContext from '../../../../UserContext';
+import { SUPPORT_TYPES, SCOPE_IDS } from '@ttahub/common';
+import { render, screen } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import SessionCard from '../SessionCard';
+import UserContext from '../../../../UserContext';
 
 const defaultUser = {
   id: 1,
   homeRegionId: 1,
-  permissions: [
-    {
-      regionId: 2,
-      scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-    },
-  ],
+  permissions: [{
+    regionId: 2,
+    scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+  }],
 };
 
 describe('SessionCard', () => {
@@ -23,10 +21,7 @@ describe('SessionCard', () => {
   const defaultSession = {
     id: 1,
     approverId: 999,
-    goalTemplates: [
-      { id: 1, standard: 'FEI' },
-      { id: 2, standard: 'CQI and Data' },
-    ],
+    goalTemplates: [{ id: 1, standard: 'FEI' }, { id: 2, standard: 'CQI and Data' }],
     trainers: [{ fullName: 'Trainer 1' }, { fullName: 'Trainer 2' }],
     data: {
       regionId: 1,
@@ -50,9 +45,9 @@ describe('SessionCard', () => {
     isOwner = true,
     isPoc = false,
     isCollaborator = false,
-    eventOrganizer = 'Regional PD Event (with National Centers)'
+    eventOrganizer = 'Regional PD Event (with National Centers)',
   ) => {
-    render(
+    render((
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
           <SessionCard
@@ -67,8 +62,7 @@ describe('SessionCard', () => {
             eventOrganizer={eventOrganizer}
           />
         </UserContext.Provider>
-      </Router>
-    );
+      </Router>));
   };
 
   it('renders correctly', () => {
@@ -90,7 +84,7 @@ describe('SessionCard', () => {
       defaultUser,
       true, // isOwner
       false, // isPoc
-      false // isCollaborator
+      false, // isCollaborator
     );
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
@@ -120,7 +114,7 @@ describe('SessionCard', () => {
       defaultUser,
       false, // isOwner
       false, // isPoc
-      true // isCollaborator
+      true, // isCollaborator
     );
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
@@ -128,11 +122,7 @@ describe('SessionCard', () => {
   });
 
   it('renders complete status', () => {
-    renderSessionCard({
-      id: 1,
-      approverId: 999,
-      data: { ...defaultSession.data, status: 'Complete' },
-    });
+    renderSessionCard({ id: 1, approverId: 999, data: { ...defaultSession.data, status: 'Complete' } });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/complete/i)).toBeInTheDocument();
   });
@@ -180,12 +170,10 @@ describe('SessionCard', () => {
     const adminUser = {
       id: 1,
       homeRegionId: 1,
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPE_IDS.ADMIN,
-        },
-      ],
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
+      }],
     };
     renderSessionCard(
       defaultSession,
@@ -193,7 +181,7 @@ describe('SessionCard', () => {
       adminUser,
       false,
       false,
-      true
+      true,
     );
     expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
@@ -203,35 +191,27 @@ describe('SessionCard', () => {
     const superUser = {
       id: 1,
       homeRegionId: 1,
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-        },
-        {
-          regionId: 2,
-          scopeId: SCOPE_IDS.ADMIN,
-        },
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+      },
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
+      },
       ],
     };
 
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          ownerId: 1,
-          pocComplete: true,
-          collabComplete: true,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        ownerId: 1,
+        pocComplete: true,
+        collabComplete: true,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      superUser,
-      false,
-      false,
-      true
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -241,35 +221,28 @@ describe('SessionCard', () => {
     const superUser = {
       id: 1,
       homeRegionId: 1,
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPE_IDS.POC_TRAINING_REPORTS,
-        },
-        {
-          regionId: 2,
-          scopeId: SCOPE_IDS.ADMIN,
-        },
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.POC_TRAINING_REPORTS,
+      },
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
+      },
       ],
     };
 
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          ownerId: 3,
-          pocIds: [1],
-          pocComplete: true,
-          collabComplete: true,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        ownerId: 3,
+        pocIds: [1],
+        pocComplete: true,
+        collabComplete: true,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      superUser,
-      false,
-      true
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -279,12 +252,10 @@ describe('SessionCard', () => {
     const adminUser = {
       id: 1,
       homeRegionId: 1,
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPE_IDS.ADMIN,
-        },
-      ],
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
+      }],
     };
     renderSessionCard(
       defaultSession,
@@ -292,7 +263,7 @@ describe('SessionCard', () => {
       adminUser,
       false,
       false,
-      true
+      true,
     );
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
@@ -300,44 +271,31 @@ describe('SessionCard', () => {
   });
 
   it('hides the edit session button if the poc work is complete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        goalTemplates: defaultSession.goalTemplates,
-        data: {
-          ...defaultSession.data,
-          pocComplete: true,
-          collabComplete: false,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      goalTemplates: defaultSession.goalTemplates,
+      data: {
+        ...defaultSession.data,
+        pocComplete: true,
+        collabComplete: false,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      true,
-      false
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true, false);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
   it('shows the edit button when user is Owner+POC and only owner work is complete (POC can still edit)', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: false,
-          collabComplete: true,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        collabComplete: true,
       },
-      true,
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      true
-    );
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     // Owner blocked (collabComplete=true), but POC is not (pocComplete=false) → edit allowed
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
@@ -345,88 +303,60 @@ describe('SessionCard', () => {
   });
 
   it('hides the edit session button if the user is a collaborator and the owner work is complete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: false,
-          collabComplete: true,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        collabComplete: true,
       },
-      true,
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      false,
-      true
-    );
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
   it('shows the edit session button if the owner work is not complete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: true,
-          collabComplete: false,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: true,
+        collabComplete: false,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      false,
-      true
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
   it('shows the edit session button if the poc work is not complete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: false,
-          collabComplete: true,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        collabComplete: true,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      true
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 
   it('shows the edit button if the user is a collaborator and the owner work is not complete', () => {
-    renderSessionCard(
-      {
-        id: 1,
-        approverId: 999,
-        data: {
-          ...defaultSession.data,
-          pocComplete: false,
-          collabComplete: false,
-        },
+    renderSessionCard({
+      id: 1,
+      approverId: 999,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        collabComplete: false,
       },
-      TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      defaultUser,
-      false,
-      false,
-      true
-    );
+    }, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
@@ -441,7 +371,7 @@ describe('SessionCard', () => {
         false,
         true, // isPoc
         false,
-        'Regional TTA Hosted Event (no National Centers)'
+        'Regional TTA Hosted Event (no National Centers)',
       );
       expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
     });
@@ -460,7 +390,7 @@ describe('SessionCard', () => {
         false,
         true, // isPoc
         false,
-        'Regional PD Event (with National Centers)'
+        'Regional PD Event (with National Centers)',
       );
       expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
     });
@@ -479,7 +409,7 @@ describe('SessionCard', () => {
         false,
         true, // isPoc
         false,
-        'Regional PD Event (with National Centers)'
+        'Regional PD Event (with National Centers)',
       );
       expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
     });
@@ -500,7 +430,7 @@ describe('SessionCard', () => {
         false,
         false,
         true, // isCollaborator
-        'Regional PD Event (with National Centers)'
+        'Regional PD Event (with National Centers)',
       );
       expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
     });
@@ -519,7 +449,7 @@ describe('SessionCard', () => {
         false,
         false,
         true, // isCollaborator
-        'Regional PD Event (with National Centers)'
+        'Regional PD Event (with National Centers)',
       );
       expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
     });
@@ -538,7 +468,7 @@ describe('SessionCard', () => {
         false,
         false,
         true, // isCollaborator
-        'Regional PD Event (with National Centers)'
+        'Regional PD Event (with National Centers)',
       );
       expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
     });
@@ -549,12 +479,10 @@ describe('SessionCard', () => {
       const approverUser = {
         id: 999, // matches approverId in defaultSession
         homeRegionId: 1,
-        permissions: [
-          {
-            regionId: 2,
-            scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-          },
-        ],
+        permissions: [{
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+        }],
       };
 
       renderSessionCard(
@@ -570,7 +498,7 @@ describe('SessionCard', () => {
         approverUser,
         false,
         false,
-        false
+        false,
       );
       expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();

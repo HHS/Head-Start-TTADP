@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import RecipientSpotlightCardsHeader from '../RecipientSpotlightCardsHeader';
 
 describe('RecipientSpotlightCardsHeader', () => {
@@ -24,7 +24,7 @@ describe('RecipientSpotlightCardsHeader', () => {
         perPage={mergedProps.perPage}
         perPageChange={mergedProps.perPageChange}
         count={mergedProps.count}
-      />
+      />,
     );
   };
 
@@ -36,11 +36,7 @@ describe('RecipientSpotlightCardsHeader', () => {
     renderHeader();
 
     expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'These are the recipients that currently have at least one priority indicator.'
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByText('These are the recipients that currently have at least one priority indicator.')).toBeInTheDocument();
   });
 
   it('renders the sort dropdown with correct label', () => {
@@ -116,7 +112,7 @@ describe('RecipientSpotlightCardsHeader', () => {
 
     const perPageDropdown = screen.getByLabelText('Show');
     const allOption = Array.from(perPageDropdown.querySelectorAll('option')).find(
-      (option) => option.textContent === 'All'
+      (option) => option.textContent === 'All',
     );
 
     expect(allOption).toHaveValue('75');
@@ -156,7 +152,7 @@ describe('RecipientSpotlightCardsHeader', () => {
         perPage={newProps.perPage}
         perPageChange={newProps.perPageChange}
         count={newProps.count}
-      />
+      />,
     );
 
     const sortDropdown = screen.getByLabelText('Sort by');
@@ -185,7 +181,7 @@ describe('RecipientSpotlightCardsHeader', () => {
 
     let perPageDropdown = screen.getByLabelText('Show');
     let allOption = Array.from(perPageDropdown.querySelectorAll('option')).find(
-      (option) => option.textContent === 'All'
+      (option) => option.textContent === 'All',
     );
     expect(allOption).toHaveValue('100');
 
@@ -196,12 +192,12 @@ describe('RecipientSpotlightCardsHeader', () => {
         perPage={defaultProps.perPage}
         perPageChange={defaultProps.perPageChange}
         count={250}
-      />
+      />,
     );
 
     perPageDropdown = screen.getByLabelText('Show');
     allOption = Array.from(perPageDropdown.querySelectorAll('option')).find(
-      (option) => option.textContent === 'All'
+      (option) => option.textContent === 'All',
     );
     expect(allOption).toHaveValue('250');
   });

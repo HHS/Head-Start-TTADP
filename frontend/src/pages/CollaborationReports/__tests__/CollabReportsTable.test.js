@@ -1,8 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
-
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import CollabReportsTable from '../components/CollabReportsTable';
 
@@ -76,19 +80,15 @@ describe('CollabReportsTable', () => {
   it('renders create message when showCreateMsgOnEmpty is true', () => {
     render(<CollabReportsTable {...defaultProps} showCreateMsgOnEmpty />);
     expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Document your work connecting Head Start programs/)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/To get started, click the "New Collaboration Report" button./)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Document your work connecting Head Start programs/)).toBeInTheDocument();
+    expect(screen.getByText(/To get started, click the "New Collaboration Report" button./)).toBeInTheDocument();
   });
 
   it('renders table when reports are present', () => {
     render(
       <MemoryRouter>
         <CollabReportsTable {...defaultProps} data={mockReportData} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
@@ -103,7 +103,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       // Find the perPage select dropdown
@@ -118,7 +118,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const perPageSelect = screen.getByLabelText('Select per page');
@@ -148,7 +148,7 @@ describe('CollabReportsTable', () => {
             sortConfig={sortConfigOnPage2}
             data={mockReportData}
           />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       const perPageSelect = screen.getByLabelText('Select per page');
@@ -173,7 +173,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={paginatedData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
       const pageBtns = await screen.findAllByRole('button', { name: /page 2/i });
       fireEvent.click(pageBtns[0]);
@@ -192,7 +192,7 @@ describe('CollabReportsTable', () => {
             sortConfig={sortConfigWith25}
             data={paginatedData}
           />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
       const pageBtns = await screen.findAllByRole('button', { name: /page 2/i });
       fireEvent.click(pageBtns[0]);
@@ -205,7 +205,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={paginatedData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
       const pageBtns = await screen.findAllByRole('button', { name: /page 2/i });
       fireEvent.click(pageBtns[0]);
@@ -222,13 +222,11 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       // Look for the menu button using the correct aria-label
-      const menuButton = screen.getByRole('button', {
-        name: /open actions for collaboration reports/i,
-      });
+      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
       fireEvent.click(menuButton);
 
       expect(screen.getByText('Export table')).toBeInTheDocument();
@@ -238,12 +236,10 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
-      const menuButton = screen.getByRole('button', {
-        name: /open actions for collaboration reports/i,
-      });
+      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
       fireEvent.click(menuButton);
 
       const exportAllButton = screen.getByText('Export table');
@@ -258,12 +254,10 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
-      const menuButton = screen.getByRole('button', {
-        name: /open actions for collaboration reports/i,
-      });
+      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
       fireEvent.click(menuButton);
 
       expect(screen.queryByText('Export selected rows')).not.toBeInTheDocument();
@@ -275,7 +269,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       // Select a checkbox for report with id 1
@@ -283,9 +277,7 @@ describe('CollabReportsTable', () => {
       userEvent.click(checkbox);
 
       // Open menu
-      const menuButton = screen.getByRole('button', {
-        name: /open actions for collaboration reports/i,
-      });
+      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
       fireEvent.click(menuButton);
 
       expect(screen.getByText('Export selected rows')).toBeInTheDocument();
@@ -295,7 +287,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       // Select checkboxes for reports
@@ -306,9 +298,7 @@ describe('CollabReportsTable', () => {
       userEvent.click(checkbox2);
 
       // Open menu and click Export selected
-      const menuButton = screen.getByRole('button', {
-        name: /open actions for collaboration reports/i,
-      });
+      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
       fireEvent.click(menuButton);
 
       const exportSelectedButton = screen.getByText('Export selected rows');
@@ -323,13 +313,11 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>
+        </MemoryRouter>,
       );
 
       // Initially no Export selected option
-      const menuButton = screen.getByRole('button', {
-        name: /open actions for collaboration reports/i,
-      });
+      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
       fireEvent.click(menuButton);
       expect(screen.queryByText('Export selected rows')).not.toBeInTheDocument();
 

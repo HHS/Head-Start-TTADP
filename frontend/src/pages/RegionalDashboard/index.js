@@ -1,18 +1,22 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, {
+  useMemo,
+  useContext,
+  useState,
+} from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
-import RegionPermissionModal from '../../components/RegionPermissionModal';
-import useFilters from '../../hooks/useFilters';
 import { hasApproveActivityReport } from '../../permissions';
 import UserContext from '../../UserContext';
-import { showFilterWithMyRegions } from '../regionHelpers';
 import { DASHBOARD_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG } from './constants';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
+import { showFilterWithMyRegions } from '../regionHelpers';
+import { specialistNameFilter } from '../../components/filter/activityReportFilters';
+import useFilters from '../../hooks/useFilters';
 import './index.css';
 import TabsNav from '../../components/TabsNav';
-import useDashboardFilterKey from '../../hooks/useDashboardFilterKey';
 import Dashboard from './components/Dashboard';
+import useDashboardFilterKey from '../../hooks/useDashboardFilterKey';
 
 const filterConfiguration = {
   'recipient-spotlight': RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
@@ -89,15 +93,19 @@ export default function RegionalDashboard({ match }) {
     onApplyFilters,
     onRemoveFilter,
     filterConfig,
-  } = useFilters(user, filterKey, true, [], filterConfigToUse);
+  } = useFilters(
+    user,
+    filterKey,
+    true,
+    [],
+    filterConfigToUse,
+  );
 
   const {
     h1Text,
     showFilters,
-    // eslint-disable-next-line max-len
-  } =
-    pageConfig(userHasOnlyOneRegion, defaultRegion)[reportType] ||
-    pageConfig(userHasOnlyOneRegion, defaultRegion).default;
+  // eslint-disable-next-line max-len
+  } = pageConfig(userHasOnlyOneRegion, defaultRegion)[reportType] || pageConfig(userHasOnlyOneRegion, defaultRegion).default;
 
   const filtersToUse = useMemo(() => {
     const config = [...filterConfig];
@@ -116,23 +124,25 @@ export default function RegionalDashboard({ match }) {
       <RegionPermissionModal
         filters={filters}
         user={user}
-        showFilterWithMyRegions={() =>
-          showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+        showFilterWithMyRegions={
+          () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
         }
       />
       <TabsNav ariaLabel="Dashboard navigation" links={links} />
-      <h1 className="landing margin-top-0 margin-bottom-3">{h1Text}</h1>
+      <h1 className="landing margin-top-0 margin-bottom-3">
+        {h1Text}
+      </h1>
       {showFilters && (
-        <FilterPanelContainer>
-          <FilterPanel
-            applyButtonAria="apply filters for regional dashboard"
-            filters={filters}
-            onApplyFilters={onApplyFilters}
-            onRemoveFilter={onRemoveFilter}
-            filterConfig={filtersToUse}
-            allUserRegions={regions}
-          />
-        </FilterPanelContainer>
+      <FilterPanelContainer>
+        <FilterPanel
+          applyButtonAria="apply filters for regional dashboard"
+          filters={filters}
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={filtersToUse}
+          allUserRegions={regions}
+        />
+      </FilterPanelContainer>
       )}
       <Dashboard
         reportType={reportType}

@@ -7,9 +7,8 @@ module.exports = {
         },
       },
       ignoreWarnings: [
-        (warning) =>
-          typeof warning?.message === 'string' &&
-          warning.message.includes('Failed to parse source map'),
+        (warning) => typeof warning?.message === 'string'
+          && warning.message.includes('Failed to parse source map'),
       ],
     },
   },

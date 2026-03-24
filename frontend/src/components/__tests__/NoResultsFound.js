@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { render, screen } from '@testing-library/react';
 
 import NoResultsFound from '../NoResultsFound';
 
@@ -46,14 +46,8 @@ describe('NoResultsFound', () => {
 
     render(<NoResultsFound drawerConfig={drawerConfig} />);
 
-    expect(screen.getByTestId('no-results-drawer')).toHaveAttribute(
-      'data-title',
-      drawerConfig.title
-    );
-    expect(screen.getByTestId('no-results-feed-content')).toHaveAttribute(
-      'data-tag-name',
-      drawerConfig.tagName
-    );
+    expect(screen.getByTestId('no-results-drawer')).toHaveAttribute('data-title', drawerConfig.title);
+    expect(screen.getByTestId('no-results-feed-content')).toHaveAttribute('data-tag-name', drawerConfig.tagName);
   });
 
   test.each([
