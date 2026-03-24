@@ -4,16 +4,7 @@ import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
-import {
-  // @ts-expect-error
-  GoalTemplate,
-  Grant,
-  Permission,
-  Recipient,
-  Role,
-  User,
-  UserRole,
-} from '../../models';
+import db from '../../models';
 import Policy from '../../policies/communicationLog';
 import UserPolicy from '../../policies/user';
 import filtersToScopes from '../../scopes';
@@ -33,6 +24,7 @@ import { groupsByRegion } from '../../services/groups';
 import { userById, usersByRoles } from '../../services/users';
 
 const namespace = 'HANDLERS:COMMUNICATION_LOG';
+const { GoalTemplate, Grant, Permission, Recipient, Role, User, UserRole } = db;
 
 const logContext = { namespace };
 
