@@ -33,4 +33,4 @@ const findOrFailExistingGoal = (needle, haystack, translate = goalFieldTransate)
   });
 };
 
-export { findOrFailExistingGoal, responsesForComparison, goalFieldTransate };
+export { findOrFailExistingGoal, goalFieldTransate, responsesForComparison };

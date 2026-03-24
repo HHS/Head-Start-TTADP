@@ -101,4 +101,4 @@ const beforeDestroy = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
 };
 
-export { afterCreate, afterUpdate, beforeCreate, beforeUpdate, beforeDestroy };
+export { afterCreate, afterUpdate, beforeCreate, beforeDestroy, beforeUpdate };

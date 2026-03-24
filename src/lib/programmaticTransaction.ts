@@ -284,13 +284,13 @@ const hasModifiedData = async (snapShot, transactionId) => {
 };
 
 export {
-  type MaxIdRecord,
   type ChangeRecord,
-  fetchMaxIds,
-  fetchAndAggregateChanges,
-  revertChange,
-  revertAllChanges,
   captureSnapshot,
-  rollbackToSnapshot,
+  fetchAndAggregateChanges,
+  fetchMaxIds,
   hasModifiedData,
+  type MaxIdRecord,
+  revertAllChanges,
+  revertChange,
+  rollbackToSnapshot,
 };

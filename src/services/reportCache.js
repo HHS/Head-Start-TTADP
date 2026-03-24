@@ -517,9 +517,9 @@ async function destroyActivityReportObjectiveMetadata(
 
 export {
   cacheFiles,
+  cacheGoalMetadata,
+  cacheObjectiveMetadata,
   cacheResources,
   cacheTopics,
-  cacheObjectiveMetadata,
-  cacheGoalMetadata,
   destroyActivityReportObjectiveMetadata,
 };

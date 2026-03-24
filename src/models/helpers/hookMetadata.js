@@ -32,4 +32,4 @@ const getSingularOrPluralData = (options, singular, plural) => {
   return data;
 };
 
-export { hasHookMetadata, hasHookMetadataKey, getSingularOrPluralData };
+export { getSingularOrPluralData, hasHookMetadata, hasHookMetadataKey };

@@ -90,4 +90,4 @@ const afterDestroy = async (sequelize, instance, options) => {
   await cleanupOrphanResources(sequelize, instance.resourceId);
 };
 
-export { propagateOnAR, recalculateOnAR, afterCreate, afterDestroy };
+export { afterCreate, afterDestroy, propagateOnAR, recalculateOnAR };

@@ -284,10 +284,10 @@ const nestedRawish = (
 
 export {
   dataTypeMapping,
-  modelForTable,
+  filterDataToModel,
   getColumnInformation,
   getColumnNamesFromModelForType,
   includeToFindAll,
-  filterDataToModel,
+  modelForTable,
   nestedRawish,
 };

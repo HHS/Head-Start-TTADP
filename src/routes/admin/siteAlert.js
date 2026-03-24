@@ -156,6 +156,6 @@ router.delete(
   transactionWrapper(deleteAlert)
 );
 
-export { getAlerts, getAlert, deleteAlert, createAlert, saveAlert };
+export { createAlert, deleteAlert, getAlert, getAlerts, saveAlert };
 
 export default router;

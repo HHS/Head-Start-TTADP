@@ -288,4 +288,4 @@ registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
   }
 });
 
-export { enqueueImportMaintenanceJob, importDownload, importProcess, importMaintenance };
+export { enqueueImportMaintenanceJob, importDownload, importMaintenance, importProcess };

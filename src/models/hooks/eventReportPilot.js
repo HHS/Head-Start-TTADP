@@ -60,4 +60,4 @@ const afterCreate = async (sequelize, instance, options) => {
   await notifyNewOwner(sequelize, instance);
 };
 
-export { afterUpdate, beforeUpdate, beforeCreate, afterCreate };
+export { afterCreate, afterUpdate, beforeCreate, beforeUpdate };

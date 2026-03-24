@@ -338,11 +338,11 @@ const createLogByRegionId = async (req: Request, res: Response) => {
 export {
   communicationLogAdditionalData,
   communicationLogById,
-  communicationLogsByRecipientId,
   communicationLogs,
-  updateLogById,
-  deleteLogById,
+  communicationLogsByRecipientId,
   createLogByRecipientId,
-  getAvailableUsersRecipientsAndGoals,
   createLogByRegionId,
+  deleteLogById,
+  getAvailableUsersRecipientsAndGoals,
+  updateLogById,
 };

@@ -47,4 +47,4 @@ const moreToProcess = async (importId: number): Promise<boolean> =>
  */
 const getImportSchedules = async () => importSchedules();
 
-export { download, process, moreToDownload, moreToProcess, getImportSchedules };
+export { download, getImportSchedules, moreToDownload, moreToProcess, process };

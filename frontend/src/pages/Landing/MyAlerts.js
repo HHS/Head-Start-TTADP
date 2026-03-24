@@ -1,6 +1,4 @@
 /* eslint-disable react/forbid-prop-types */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-
 import { Table, Tag } from '@trussworks/react-uswds';
 import { uniq } from 'lodash';
 import moment from 'moment';
@@ -292,20 +290,18 @@ function MyAlerts(props) {
         {disableSort ? (
           displayName
         ) : (
-          <a
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             onClick={() => {
               sortHandler(name);
             }}
-            onKeyPress={() => sortHandler(name)}
             className={`sortable ${sortClassName}`}
             aria-label={`${displayName}. Activate to sort ${
               sortClassName === 'asc' ? 'descending' : 'ascending'
             }`}
           >
             {displayName}
-          </a>
+          </button>
         )}
       </th>
     );

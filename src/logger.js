@@ -157,4 +157,4 @@ const testingHooks = {
   formatFunc,
 };
 
-export { logger, auditLogger, requestLogger, errorLogger, testingHooks };
+export { auditLogger, errorLogger, logger, requestLogger, testingHooks };

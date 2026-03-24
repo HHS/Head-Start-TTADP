@@ -377,4 +377,4 @@ class SftpClient {
 }
 
 export default SftpClient; // Export the FtpClient class as the default export
-export type { FileInfo, ConnectConfig as SFTPSettings, FileListing }; // Export the FileInfo interface
+export type { ConnectConfig as SFTPSettings, FileInfo, FileListing }; // Export the FileInfo interface

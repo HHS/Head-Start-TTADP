@@ -310,14 +310,14 @@ const clearGrantNumberLink = async (sequelize, instance, options) =>
   );
 
 export {
-  syncLink,
+  clearGrantNumberLink,
   syncGrantNumberLink,
+  syncLink,
+  syncMonitoringFindingHistoryStatusLink,
+  syncMonitoringFindingLink,
+  syncMonitoringFindingStatusLink,
+  syncMonitoringGranteeLink,
   syncMonitoringReviewLink,
   syncMonitoringReviewStatusLink,
-  syncMonitoringFindingStatusLink,
-  syncMonitoringFindingHistoryStatusLink,
   syncMonitoringStandardLink,
-  syncMonitoringGranteeLink,
-  syncMonitoringFindingLink,
-  clearGrantNumberLink,
 };

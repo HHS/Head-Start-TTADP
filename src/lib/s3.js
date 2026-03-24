@@ -184,12 +184,12 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
 };
 
 export {
-  s3Client,
-  downloadFile,
-  getSignedDownloadUrl,
-  uploadFile,
-  generateS3Config,
-  verifyVersioning,
   deleteFileFromS3,
   deleteFileFromS3Job,
+  downloadFile,
+  generateS3Config,
+  getSignedDownloadUrl,
+  s3Client,
+  uploadFile,
+  verifyVersioning,
 };

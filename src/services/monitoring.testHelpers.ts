@@ -508,10 +508,10 @@ async function destroyReportAndCitationData(
 }
 
 export {
-  createMonitoringData,
-  destroyMonitoringData,
   createAdditionalMonitoringData,
-  destroyAdditionalMonitoringData,
+  createMonitoringData,
   createReportAndCitationData,
+  destroyAdditionalMonitoringData,
+  destroyMonitoringData,
   destroyReportAndCitationData,
 };

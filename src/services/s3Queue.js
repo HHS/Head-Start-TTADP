@@ -44,4 +44,4 @@ const processS3Queue = () => {
   );
 };
 
-export { s3Queue, addDeleteFileToQueue, onFailedS3Queue, onCompletedS3Queue, processS3Queue };
+export { addDeleteFileToQueue, onCompletedS3Queue, onFailedS3Queue, processS3Queue, s3Queue };

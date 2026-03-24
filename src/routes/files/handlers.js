@@ -570,4 +570,4 @@ async function deleteActivityReportObjectiveFile(req, res) {
   }
 }
 
-export { deleteHandler, uploadHandler, deleteOnlyFile, deleteActivityReportObjectiveFile };
+export { deleteActivityReportObjectiveFile, deleteHandler, deleteOnlyFile, uploadHandler };

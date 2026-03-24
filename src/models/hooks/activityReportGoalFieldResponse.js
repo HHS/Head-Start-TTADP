@@ -73,4 +73,4 @@ const afterCreate = async (sequelize, instance, options) =>
 const afterDestroy = async (sequelize, instance, options) =>
   Promise.all([recalculateOnAR(sequelize, instance, options)]);
 
-export { propagateOnAR, recalculateOnAR, afterCreate, afterDestroy };
+export { afterCreate, afterDestroy, propagateOnAR, recalculateOnAR };

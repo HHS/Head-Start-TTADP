@@ -96,4 +96,4 @@ const subscribe = async (req, res) => {
   }
 };
 
-export { getUserSettings, getUserEmailSettings, subscribe, unsubscribe, updateSettings };
+export { getUserEmailSettings, getUserSettings, subscribe, unsubscribe, updateSettings };

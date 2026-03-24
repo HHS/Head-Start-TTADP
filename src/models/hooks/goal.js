@@ -199,13 +199,13 @@ const afterDestroy = async (sequelize, instance, options) => {
 };
 
 export {
-  processForEmbeddedResources,
-  autoPopulateOnApprovedAR,
-  createInitialStatusChange,
-  beforeValidate,
-  beforeUpdate,
   afterCreate,
-  afterUpdate,
-  beforeCreate,
   afterDestroy,
+  afterUpdate,
+  autoPopulateOnApprovedAR,
+  beforeCreate,
+  beforeUpdate,
+  beforeValidate,
+  createInitialStatusChange,
+  processForEmbeddedResources,
 };

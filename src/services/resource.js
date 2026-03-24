@@ -1081,54 +1081,54 @@ const getResourcesForActivityReportObjectives = async (
 // -----------------------------------------------------------------------------
 
 export {
+  // Helper functions
+  calculateIsAutoDetected,
+  // ActivityReports Resource Processing
+  calculateIsAutoDetectedForActivityReport,
+  // ActivityReportGoal Resource Processing
+  calculateIsAutoDetectedForActivityReportGoal,
+  // ActivityReportObjective Resource Processing
+  calculateIsAutoDetectedForActivityReportObjective,
+  // Goal Resource processing
+  calculateIsAutoDetectedForGoal,
+  // Goal Template Resource processing
+  calculateIsAutoDetectedForGoalTemplate,
+  // NextSteps Resource Processing
+  calculateIsAutoDetectedForNextStep,
+  collectURLsFromField,
+  filterResourcesForSync,
   // Resource Table
   findOrCreateResource,
   findOrCreateResources,
-  // Helper functions
-  calculateIsAutoDetected,
-  remapAttributes,
-  collectURLsFromField,
-  resourcesFromField,
-  mergeRecordsByUrlAndGenericId,
-  transformRecordByURLToResource,
-  filterResourcesForSync,
-  genericProcessEntityForResourcesById,
   genericProcessEntityForResources,
+  genericProcessEntityForResourcesById,
   genericSyncResourcesForEntity,
-  // ActivityReports Resource Processing
-  calculateIsAutoDetectedForActivityReport,
-  syncResourcesForActivityReport,
+  getResourcesForActivityReportGoals,
+  getResourcesForActivityReportObjectives,
+  getResourcesForActivityReports,
+  getResourcesForGoals,
+  getResourcesForGoalTemplates,
+  getResourcesForNextSteps,
+  mergeRecordsByUrlAndGenericId,
   processActivityReportForResources,
   processActivityReportForResourcesById,
-  getResourcesForActivityReports,
-  // NextSteps Resource Processing
-  calculateIsAutoDetectedForNextStep,
-  syncResourcesForNextStep,
-  processNextStepForResources,
-  processNextStepForResourcesById,
-  getResourcesForNextSteps,
-  // Goal Resource processing
-  calculateIsAutoDetectedForGoal,
-  syncResourcesForGoal,
-  processGoalForResources,
-  processGoalForResourcesById,
-  getResourcesForGoals,
-  // Goal Template Resource processing
-  calculateIsAutoDetectedForGoalTemplate,
-  syncResourcesForGoalTemplate,
-  processGoalTemplateForResources,
-  processGoalTemplateForResourcesById,
-  getResourcesForGoalTemplates,
-  // ActivityReportGoal Resource Processing
-  calculateIsAutoDetectedForActivityReportGoal,
-  syncResourcesForActivityReportGoal,
   processActivityReportGoalForResources,
   processActivityReportGoalForResourcesById,
-  getResourcesForActivityReportGoals,
-  // ActivityReportObjective Resource Processing
-  calculateIsAutoDetectedForActivityReportObjective,
-  syncResourcesForActivityReportObjective,
   processActivityReportObjectiveForResources,
   processActivityReportObjectiveForResourcesById,
-  getResourcesForActivityReportObjectives,
+  processGoalForResources,
+  processGoalForResourcesById,
+  processGoalTemplateForResources,
+  processGoalTemplateForResourcesById,
+  processNextStepForResources,
+  processNextStepForResourcesById,
+  remapAttributes,
+  resourcesFromField,
+  syncResourcesForActivityReport,
+  syncResourcesForActivityReportGoal,
+  syncResourcesForActivityReportObjective,
+  syncResourcesForGoal,
+  syncResourcesForGoalTemplate,
+  syncResourcesForNextStep,
+  transformRecordByURLToResource,
 };
