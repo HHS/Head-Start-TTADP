@@ -697,7 +697,7 @@ jobs:
     - set_env_vars:
         target_env: << parameters.target_env >>
     - run:
-        name: Run monitoring import phases
+        name: Run monitoring import
         no_output_timeout: 30m
         command: |
           set -u
