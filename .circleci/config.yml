@@ -133,6 +133,7 @@ workflows:
             - production
     jobs:
     - run_import_job:
+        serial-group: import-data/prod
         target_env: "prod"
         slack_channel: acf-ohs-ttahub--contractor-customer-team
 
@@ -141,6 +142,7 @@ workflows:
     when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
     jobs:
     - run_import_job:
+        serial-group: import-data/<< pipeline.parameters.target_env >>
         target_env: "<< pipeline.parameters.target_env >>"
 
   reset_env_cron:
@@ -690,34 +692,20 @@ jobs:
         default: acf-head-start-alerts-lower
     steps:
     - checkout
-    - cf_task:
-        the_command: |
-          yarn cli:import-system download 1
-          yarn cli:import-system process 1
-          yarn cli:create-monitoring-goals
-          yarn cli:query-monitoring-data
-          yarn cli:maintain-monitoring-data
-          yarn cli:updateMonitoringFactTables
+    - install_cf_tools
+    - set_env_vars:
         target_env: << parameters.target_env >>
-        logfile: cmd_log.txt
     - run:
-        when: always
+        name: Run monitoring import phases
+        no_output_timeout: 60m
+        command: |
+          chmod +x ./.circleci/scripts/run_import_job.sh
+          ./.circleci/scripts/run_import_job.sh "<< parameters.target_env >>"
+    - run:
         name: Create monitoring updates summary
         command: |
-          if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
-            echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
-          else
-            results=$(grep -o "Recent Monitoring Updates.*" cmd_log.txt | tail -n 1)
-            delim=":"
-            json_data=${results#*"$delim"}
-            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
-            echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
-          fi
-          last_error=$(grep -oi "error.*" cmd_log.txt | tail -n 1 || true)
-          if [ -n "$last_error" ]; then
-            echo "$last_error" >> monitoring-updates.txt
-          fi
-          cat monitoring-updates.txt
+          chmod +x ./.circleci/scripts/build_import_summary.sh
+          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt
     - when:
         condition:
           equal: [ << parameters.target_env >>, "prod" ]
@@ -726,8 +714,17 @@ jobs:
             message_text_file: monitoring-updates.txt
             slack_channel: << parameters.slack_channel >>
     - store_artifacts:
-        when: always
-        path: cmd_log.txt
+        path: import-artifacts
+    - store_artifacts:
+        path: monitoring-updates.txt
+    - run:
+        name: Fail if any import phase failed
+        command: |
+          status=$(jq -r '.overallStatus' import-artifacts/import-status.json)
+          if [ "$status" != "SUCCEEDED" ]; then
+            echo "Import data cron failed or ran partially."
+            exit 1
+          fi
 
   clear_cache_job:
     executor: docker-executor
@@ -1094,11 +1091,12 @@ commands:
         name: "Wait for task to complete"
         no_output_timeout: 30m
         command: |
-          set +e
           sleep 15
-          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME}
+          TASK_EXIT=0
+          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME} || TASK_EXIT=$?
           sleep 30
-          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
+          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep -F "${TASK_NAME}" | tee << parameters.logfile >> || true
+          exit ${TASK_EXIT}
 
     - run:
         name: Logout of service account

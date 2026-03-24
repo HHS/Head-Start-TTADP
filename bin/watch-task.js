@@ -6,6 +6,9 @@
 const { parseArgs } = require('node:util');
 const { execSync } = require('child_process');
 
+const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED']);
+const NON_TERMINAL_STATUSES = new Set(['PENDING', 'RUNNING']);
+
 function parse() {
   const args = process.argv.slice(2);
   const parsedArgs = parseArgs({
@@ -27,34 +30,74 @@ function runCmd(cmd, verbose = true) {
   return output;
 }
 
-function checkStatus(appName, taskName) {
-  const output = runCmd(`cf tasks ${appName} | grep ${taskName}`, false);
-  const status = output.split(/\s+/)[2];
+function parseTaskStatus(output, taskName) {
+  const lines = output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => /^\d+\s+/.test(line));
+
+  const matchedLine = lines.find((line) => {
+    const [, name] = line.split(/\s+/);
+    return name === taskName;
+  });
+
+  if (!matchedLine) {
+    throw new Error(`Task ${taskName} not found`);
+  }
+
+  const [, , status] = matchedLine.split(/\s+/);
+  if (!status) {
+    throw new Error(`Task ${taskName} did not include a status`);
+  }
+
   return status;
 }
 
-function main() {
+function checkStatus(appName, taskName, runCmdImpl = runCmd) {
+  const output = runCmdImpl(`cf tasks ${appName}`, false);
+  return parseTaskStatus(output, taskName);
+}
+
+function logTaskErrors(appName, taskName, runCmdImpl = runCmd) {
+  try {
+    runCmdImpl(`cf logs ${appName} --recent | grep -F "${taskName}" | grep -i "error"`, true);
+  } catch (err) {
+    console.log(`Unable to fetch error logs for ${taskName}: ${err.message}`);
+  }
+}
+
+function watchTask(appName, taskName, runCmdImpl = runCmd) {
+  while (true) {
+    const status = checkStatus(appName, taskName, runCmdImpl);
+    if (TERMINAL_STATUSES.has(status)) {
+      return status;
+    }
+    if (!NON_TERMINAL_STATUSES.has(status)) {
+      throw new Error(`Unexpected task status: ${status}`);
+    }
+    runCmdImpl('sleep 10', false);
+  }
+}
+
+function main(runCmdImpl = runCmd) {
   const argv = parse();
   const appName = argv[0];
   const taskName = argv[1];
-  let complete = false;
   let status;
-  while (!complete) {
-    status = checkStatus(appName, taskName);
-    if (status !== 'RUNNING') {
-      complete = true;
-    } else {
-      runCmd('sleep 10', false);
-    }
+
+  try {
+    status = watchTask(appName, taskName, runCmdImpl);
+    console.log(`Status: ${status}`);
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
   }
 
-  console.log(`Status: ${status}`);
   if (status === 'SUCCEEDED') {
     process.exit(0);
   } else {
-  // wait for task logs to propagate
-    runCmd('sleep 15');
-    runCmd(`cf logs ${appName} --recent | grep ${taskName} | grep -i "error"`);
+    runCmdImpl('sleep 15');
+    logTaskErrors(appName, taskName, runCmdImpl);
     console.log('Task failed');
     process.exit(1);
   }
@@ -63,3 +106,13 @@ function main() {
 if (require.main === module) {
   main();
 }
+
+module.exports = {
+  TERMINAL_STATUSES,
+  NON_TERMINAL_STATUSES,
+  parseTaskStatus,
+  checkStatus,
+  logTaskErrors,
+  watchTask,
+  main,
+};
