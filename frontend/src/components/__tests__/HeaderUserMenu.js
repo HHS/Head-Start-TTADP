@@ -1,56 +1,51 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { SCOPE_IDS } from '@ttahub/common';
-import fetchMock from 'fetch-mock';
-import join from 'url-join';
 import {
   screen, render, fireEvent,
 } from '@testing-library/react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
-import App from '../../App';
-import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../../testHelpers';
-
-const mockBuildInfo = {
-  branch: 'main',
-  commit: 'abcdef12345',
-  buildNumber: '123',
-  timestamp: '2024-11-13 12:34:56',
-};
+import HeaderUserMenu from '../HeaderUserMenu';
+import UserContext from '../../UserContext';
+import { mockWindowProperty, mockDocumentProperty } from '../../testHelpers';
 
 describe('HeaderUserMenu', () => {
-  const user = { name: 'harry potter', permissions: [] };
   const adminUser = {
+    id: 1,
     name: 'harry potter',
+    roles: [],
     permissions: [{ regionId: 1, scopeId: SCOPE_IDS.ADMIN }],
   };
-  const userUrl = join('api', 'user');
-  const logoutUrl = join('api', 'logout');
-  const cleanupUrl = join('api', 'activity-reports', 'storage-cleanup');
-  const feedUrl = join('api', 'feeds', 'whats-new');
-  const groupsUrl = join('api', 'groups');
-  const buildInfoUrl = '/api/admin/buildInfo'; // Add build info URL here
+  const hydratedUser = {
+    id: 1,
+    name: 'harry potter',
+    permissions: [],
+    roles: [],
+  };
 
-  const before = async (admin = false) => {
-    if (admin) {
-      fetchMock.get(userUrl, { ...adminUser });
-    } else {
-      fetchMock.get(userUrl, { ...user });
-    }
+  const renderHeaderUserMenu = (user = hydratedUser) => {
+    const history = createMemoryHistory();
 
-    fetchMock.get(logoutUrl, 200);
-    fetchMock.get(cleanupUrl, []);
-    fetchMock.get(feedUrl, mockRSSData());
-    fetchMock.get(groupsUrl, []);
-    fetchMock.get(buildInfoUrl, mockBuildInfo); // Mock build info response
+    render(
+      <Router history={history}>
+        <UserContext.Provider value={{ user }}>
+          <HeaderUserMenu
+            areThereUnreadNotifications={false}
+            setAreThereUnreadNotifications={jest.fn()}
+          />
+        </UserContext.Provider>
+      </Router>,
+    );
 
-    render(<App />);
+    return history;
+  };
 
-    // Use BrowserRouter to go to the home page '/'.
-    // This is necessary because the 404 hides the avatar (as it should).
-    window.history.pushState({}, 'Home page', '/');
-
-    await screen.findByText('Office of Head Start TTA Hub');
-    fireEvent.click(screen.getByTestId('header-avatar'));
+  const openMenu = async (user = hydratedUser) => {
+    const history = renderHeaderUserMenu(user);
+    await userEvent.click(screen.getByTestId('header-avatar'));
+    return history;
   };
 
   mockDocumentProperty('documentElement', {
@@ -59,8 +54,7 @@ describe('HeaderUserMenu', () => {
 
   describe('when authenticated', () => {
     describe('as non-admin user', () => {
-      beforeEach(async () => before());
-      afterEach(() => fetchMock.restore());
+      beforeEach(async () => openMenu());
 
       it('displays the logout button', async () => {
         const logoutLink = screen.getByRole('link', { name: 'Log out' });
@@ -69,8 +63,7 @@ describe('HeaderUserMenu', () => {
     });
 
     describe('as admin user', () => {
-      beforeEach(async () => before(true));
-      afterEach(() => fetchMock.restore());
+      beforeEach(async () => openMenu(adminUser));
 
       it('displays the admin button', async () => {
         const adminLink = screen.getByRole('link', { name: 'Admin' });
@@ -82,14 +75,14 @@ describe('HeaderUserMenu', () => {
         const getItem = jest.fn(() => true);
         const removeItem = jest.fn();
 
-        jest.mock('../../hooks/helpers', () => ({
-          storageAvailable: jest.fn(() => true),
-        }));
-
         mockWindowProperty('sessionStorage', {
           setItem,
           getItem,
           removeItem,
+        });
+
+        beforeEach(() => {
+          removeItem.mockClear();
         });
 
         afterAll(() => jest.restoreAllMocks());
@@ -97,27 +90,25 @@ describe('HeaderUserMenu', () => {
         it('displays the admin button', async () => {
           const btn = await screen.findByRole('button', { name: /stop impersonating/i });
           expect(btn).toBeVisible();
-          userEvent.click(btn);
+          await userEvent.click(btn);
           expect(removeItem).toHaveBeenCalled();
         });
       });
     });
 
     describe('when navigating', () => {
-      beforeEach(async () => before(true));
-      afterEach(() => fetchMock.restore());
-
       it('closes', async () => {
+        const history = await openMenu(adminUser);
         const adminLink = screen.getByRole('link', { name: 'Admin' });
         expect(adminLink).toBeVisible();
         fireEvent.click(adminLink);
+        expect(history.location.pathname).toBe('/admin');
         expect(screen.queryByRole('link', { name: 'Admin' })).toBeNull();
       });
     });
 
     describe('logout button', () => {
-      beforeEach(async () => before());
-      afterEach(() => fetchMock.restore());
+      beforeEach(async () => openMenu());
 
       it('points to the RP-initiated logout endpoint', () => {
         const logoutLink = screen.getByRole('link', { name: /log out/i });
@@ -130,16 +121,11 @@ describe('HeaderUserMenu', () => {
   });
 
   describe('when unauthenticated', () => {
-    beforeEach(async () => {
-      fetchMock.get(userUrl, 401);
-      fetchMock.get(buildInfoUrl, mockBuildInfo); // Ensure buildInfo mock exists here too
-      render(<App />);
-      await screen.findByText('Office of Head Start TTA Hub');
+    beforeEach(() => {
+      renderHeaderUserMenu(null);
     });
-    afterEach(() => fetchMock.restore());
 
     it('doesn\'t show the user menu', async () => {
-      // item with testid 'header-avatar' is not on the dom
       expect(screen.queryByTestId('header-avatar')).toBeNull();
     });
   });

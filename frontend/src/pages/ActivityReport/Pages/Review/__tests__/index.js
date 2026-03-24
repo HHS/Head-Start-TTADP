@@ -291,9 +291,9 @@ describe('ReviewSubmit', () => {
       renderReview(
         allComplete, isApprover, isPendingApprover, calculatedStatus, formData, onSubmit, onReview,
       );
-      userEvent.selectOptions(document.querySelector('.usa-select'), ['approved']);
+      await userEvent.selectOptions(document.querySelector('.usa-select'), ['approved']);
       const reviewButton = await screen.findByRole('button', { name: 'Submit' });
-      userEvent.click(reviewButton);
+      await userEvent.click(reviewButton);
       const error = await screen.findByText('Unable to review report');
       expect(error).toBeVisible();
     });
@@ -304,12 +304,19 @@ describe('ReviewSubmit', () => {
       const allComplete = false;
       const isApprover = false;
       const isPendingApprover = false;
+      const onSubmit = jest.fn();
 
-      renderReview(allComplete, isApprover, isPendingApprover);
+      renderReview(
+        allComplete,
+        isApprover,
+        isPendingApprover,
+        REPORT_STATUSES.DRAFT,
+        undefined,
+        onSubmit,
+      );
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
-      userEvent.click(button);
-      const error = await screen.findByTestId('errorMessage');
-      expect(error).toBeVisible();
+      await userEvent.click(button);
+      await waitFor(() => expect(onSubmit).not.toHaveBeenCalled());
     });
   });
 
@@ -339,7 +346,7 @@ describe('ReviewSubmit', () => {
         formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
-      userEvent.click(button);
+      await userEvent.click(button);
       await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     });
 
@@ -362,7 +369,7 @@ describe('ReviewSubmit', () => {
         formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
-      userEvent.click(button);
+      await userEvent.click(button);
       const error = await screen.findByText('Unable to submit report');
       expect(error).toBeVisible();
     });
@@ -381,7 +388,7 @@ describe('ReviewSubmit', () => {
 
     const history = renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus,
       formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
-    userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
     await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
   });
 

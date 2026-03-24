@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import AlertReview from '../AlertReview';
@@ -41,22 +41,21 @@ describe('AlertReview', () => {
     renderAlertReview({ ...DEFAULT_ALERT, message: newAlert.message });
 
     const titleInput = screen.getByLabelText(/Title/i);
-    act(() => userEvent.type(titleInput, newAlert.title));
+    await userEvent.type(titleInput, newAlert.title);
 
     const startDateInput = screen.getByLabelText(/Start date/i);
-    act(() => userEvent.type(startDateInput, newAlert.startDate));
+    await userEvent.type(startDateInput, newAlert.startDate);
 
     const endDateInput = screen.getByLabelText(/End date/i);
-    act(() => userEvent.type(endDateInput, newAlert.endDate));
+    await userEvent.type(endDateInput, newAlert.endDate);
 
     const statusInput = screen.getByRole('combobox', { name: /Status/i });
-    act(() => userEvent.selectOptions(statusInput, newAlert.status));
+    await userEvent.selectOptions(statusInput, newAlert.status);
 
     expect(fetchMock.called()).toBe(false);
     const saveButton = screen.getByRole('button', { name: 'Save changes' });
-    act(() => userEvent.click(saveButton));
-
-    expect(fetchMock.called()).toBe(true);
+    await userEvent.click(saveButton);
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
   });
 
   it('calls the update endpoint', async () => {
@@ -74,16 +73,15 @@ describe('AlertReview', () => {
     renderAlertReview(newAlert);
 
     const edit = screen.getByRole('checkbox', { name: 'Edit?' });
-    act(() => userEvent.click(edit));
+    await userEvent.click(edit);
 
     const statusInput = screen.getByRole('combobox', { name: /Status/i });
-    act(() => userEvent.selectOptions(statusInput, 'Unpublished'));
+    await userEvent.selectOptions(statusInput, 'Unpublished');
 
     expect(fetchMock.called()).toBe(false);
     const saveButton = screen.getByRole('button', { name: 'Save changes' });
-    act(() => userEvent.click(saveButton));
-
-    expect(fetchMock.called()).toBe(true);
+    await userEvent.click(saveButton);
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
   });
 
   it('calls the delete function', async () => {
@@ -100,10 +98,10 @@ describe('AlertReview', () => {
     renderAlertReview(newAlert, onDelete);
 
     const edit = screen.getByRole('checkbox', { name: 'Edit?' });
-    act(() => userEvent.click(edit));
+    await userEvent.click(edit);
 
     const deleteButton = screen.getByRole('button', { name: 'Delete' });
-    act(() => userEvent.click(deleteButton));
+    await userEvent.click(deleteButton);
 
     expect(onDelete).toHaveBeenCalledWith(newAlert);
   });

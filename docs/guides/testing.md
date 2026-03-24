@@ -9,7 +9,7 @@ If you switch branches and Docker deps get out of sync, run `yarn docker:refresh
 Common Yarn-first test commands:
 
 - Backend unit/integration tests: `yarn test` or `yarn test:ci`
-- Frontend tests: `cd frontend && yarn test --watchAll=false` or `cd frontend && yarn test:ci`
+- Frontend tests: `yarn --cwd frontend test` or `yarn --cwd frontend test:ci`
 - Run backend + frontend CI suites: `yarn test:all`
 - Playwright E2E: `yarn test:e2e`
 - Playwright API: `yarn test:e2e:api`
@@ -38,8 +38,10 @@ yarn test                                   # Run all backend tests (includes bu
 
 ```bash
 yarn --cwd frontend test -- SomeComponent   # Run specific test
-yarn --cwd frontend test                    # Run all frontend tests
+yarn --cwd frontend test                    # Run all frontend tests once
 ```
+
+Frontend test scripts still use Jest and set `TZ=America/New_York` internally, so no extra env flags are needed.
 
 **All Tests:**
 

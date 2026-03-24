@@ -57,12 +57,12 @@ describe('ReportsRow', () => {
     const removeAlert = jest.fn();
     renderReportsRow(removeAlert);
     const [context] = await screen.findAllByRole('button', { name: /view activity report 1/i });
-    userEvent.click(context);
+    await userEvent.click(context);
     const [deleteButton] = await screen.findAllByRole('button', { name: /delete/i });
-    userEvent.click(deleteButton);
+    await userEvent.click(deleteButton);
     const confirmDelete = document.querySelector('[aria-label="This button will permanently delete the report."]');
-    userEvent.click(confirmDelete);
-    expect(fetchMock.called()).toBe(true);
+    await userEvent.click(confirmDelete);
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
     await waitFor(() => expect(removeAlert).toHaveBeenCalled());
     expect(removeItem).toHaveBeenCalled();
   });

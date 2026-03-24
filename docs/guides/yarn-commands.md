@@ -10,8 +10,11 @@ This guide is the source of truth for local command usage. For common operations
 | Install dependencies (non-frozen) | `yarn deps:install` |
 | Audit dependencies | `yarn deps:audit` |
 | Start backend dev watcher | `yarn server` |
-| Start frontend dev server | `yarn start:fe` |
+| Start frontend Vite dev server | `yarn start:fe` |
 | Start worker dev watcher | `yarn start:worker:watch` |
+| Run frontend tests | `yarn --cwd frontend test` |
+| Run frontend tests (CI coverage) | `yarn --cwd frontend test:ci` |
+| Run frontend lint | `yarn --cwd frontend lint` |
 | Start backend + frontend + worker locally | `yarn start:stack:local` |
 | Start backend from build output | `yarn start:be` |
 | Start backend with debugger | `yarn start:debug` |
