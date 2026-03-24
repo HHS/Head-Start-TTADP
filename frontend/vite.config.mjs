@@ -52,6 +52,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: {
+      global: 'globalThis',
       'process.env': {
         NODE_ENV: mode,
         ...reactAppEnv,
@@ -66,6 +67,9 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       esbuildOptions: {
+        define: {
+          global: 'globalThis',
+        },
         loader: {
           '.js': 'jsx',
         },
