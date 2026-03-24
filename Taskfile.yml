@@ -39,7 +39,7 @@ tasks:
     desc: Internal task to abstract common stack-up steps
     internal: true
     vars:
-      STACK: '{{default .DEV_DEBUG .STACK.DEV_DEBUG}}'
+      STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
       - yarn deps:install
       - cmd: docker compose -f {{.COMPOSE_FILE}} down
