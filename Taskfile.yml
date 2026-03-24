@@ -1,4 +1,5 @@
 version: "3"
+dotenv: [".env"]
 
 vars:
   PROJECT_NAME: "ttahub"
